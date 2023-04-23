@@ -11,7 +11,7 @@ namespace libscratchcpp
 class LIBSCRATCHCPP_EXPORT OperatorBlocks : public IBlockSection
 {
     public:
-	OperatorBlocks();
+        OperatorBlocks();
 
         std::string name() const override;
 };

@@ -21,11 +21,11 @@ class IBlockSection
         /*! Returns the name of the block section. */
         virtual std::string name() const = 0;
 
-	/*!
-	 * Returns true if the category in the block palette should be visible.\n
-	 * For example, there isn't a list category in the Scratch user interface.
-	 */
-	virtual bool categoryVisible() const { return true; }
+        /*!
+         * Returns true if the category in the block palette should be visible.\n
+         * For example, there isn't a list category in the Scratch user interface.
+         */
+        virtual bool categoryVisible() const { return true; }
 
         /*!
          * Returns a pointer to the implementation function of the given block opcode.\n

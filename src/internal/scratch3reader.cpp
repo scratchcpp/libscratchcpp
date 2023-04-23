@@ -263,13 +263,13 @@ void Scratch3Reader::read()
     std::string out;
     int count = 1;
     for (char ch : str) {
-	if (ch == '{')
-	    count++;
-	else if (ch == '}')
-	    count--;
-	out.push_back(ch);
-	if (count == 0)
-	    break;
+        if (ch == '{')
+            count++;
+        else if (ch == '}')
+            count--;
+        out.push_back(ch);
+        if (count == 0)
+            break;
     }
 
     // Parse the JSON

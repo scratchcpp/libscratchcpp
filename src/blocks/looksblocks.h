@@ -11,7 +11,7 @@ namespace libscratchcpp
 class LIBSCRATCHCPP_EXPORT LooksBlocks : public IBlockSection
 {
     public:
-	LooksBlocks();
+        LooksBlocks();
 
         std::string name() const override;
 };

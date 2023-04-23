@@ -11,7 +11,7 @@ namespace libscratchcpp
 class LIBSCRATCHCPP_EXPORT SensingBlocks : public IBlockSection
 {
     public:
-	SensingBlocks();
+        SensingBlocks();
 
         std::string name() const override;
 };

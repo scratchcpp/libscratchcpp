@@ -11,10 +11,10 @@ namespace libscratchcpp
 class LIBSCRATCHCPP_EXPORT ListBlocks : public IBlockSection
 {
     public:
-	ListBlocks();
+        ListBlocks();
 
         std::string name() const override;
-	bool categoryVisible() const override;
+        bool categoryVisible() const override;
 };
 
 } // namespace libscratchcpp

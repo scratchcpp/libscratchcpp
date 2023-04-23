@@ -11,7 +11,7 @@ namespace libscratchcpp
 class LIBSCRATCHCPP_EXPORT SoundBlocks : public IBlockSection
 {
     public:
-	SoundBlocks();
+        SoundBlocks();
 
         std::string name() const override;
 };
