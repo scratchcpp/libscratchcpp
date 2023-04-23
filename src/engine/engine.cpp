@@ -14,6 +14,7 @@ using namespace libscratchcpp;
 /*! Constructs engine. */
 Engine::Engine()
 {
+    srand(time(NULL));
 }
 
 /*! Clears the engine so that it can be used with another project. */

@@ -17,4 +17,10 @@ namespace libscratchcpp
  */
 using BlockImpl = std::function<Value(const BlockArgs &)>;
 
+/*! Generates a random number in the given interval like the random.randint() function in Python. */
+inline int randint(int start, int end)
+{
+    return rand() % (end - start + 1) + start;
+}
+
 } // namespace libscratchcpp
