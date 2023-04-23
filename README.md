@@ -95,8 +95,6 @@ We're working on the documentation, it'll be available soon.
 
 A minimal CLI program for running Scratch projects:
 ```cpp
-#include <cassert>
-#include <iostream>
 #include <scratchproject.h>
 
 int main(int argc, char **argv) {

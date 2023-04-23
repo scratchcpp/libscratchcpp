@@ -9,8 +9,6 @@ of a sprite change.
 
 ## CLI-only example
 ```cpp
-#include <cassert>
-#include <iostream>
 #include <scratchproject.h>
 
 int main(int argc, char **argv) {
