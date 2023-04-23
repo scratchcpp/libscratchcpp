@@ -3,6 +3,7 @@
 #pragma once
 
 #include "value.h"
+#include "ientity.h"
 #include <memory>
 
 namespace libscratchcpp
@@ -43,11 +44,19 @@ class LIBSCRATCHCPP_EXPORT InputValue
         const std::string &valueBlockId() const;
         void setValueBlockId(const std::string &newValueBlockId);
 
+        std::shared_ptr<IEntity> valuePtr() const;
+        void setValuePtr(const std::shared_ptr<IEntity> &newValuePtr);
+
+        std::string valueId() const;
+        void setValueId(const std::string &newValueId);
+
     private:
         Type m_type;
         Value m_value;
         std::shared_ptr<Block> m_valueBlock = nullptr;
         std::string m_valueBlockId;
+        std::shared_ptr<IEntity> m_valuePtr = nullptr;
+        std::string m_valueId;
 };
 
 } // namespace libscratchcpp

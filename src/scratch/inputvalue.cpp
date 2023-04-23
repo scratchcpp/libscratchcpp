@@ -71,3 +71,30 @@ void InputValue::setValueBlockId(const std::string &newValueBlockId)
 {
     m_valueBlockId = newValueBlockId;
 }
+
+/*! Returns a pointer to the value (e. g. a variable). */
+std::shared_ptr<IEntity> InputValue::valuePtr() const
+{
+    return m_valuePtr;
+}
+
+/*! Sets the value pointer. */
+void InputValue::setValuePtr(const std::shared_ptr<IEntity> &newValuePtr)
+{
+    m_valuePtr = newValuePtr;
+}
+
+/*! Returns the ID of the value. */
+std::string InputValue::valueId() const
+{
+    if (m_valuePtr)
+        return m_valuePtr->id();
+    else
+        return m_valueId;
+}
+
+void InputValue::setValueId(const std::string &newValueId)
+{
+    m_valuePtr = nullptr;
+    m_valueId = newValueId;
+}
