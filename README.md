@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
 - [ ] Custom blocks
 - [ ] Reporter blocks
 - [ ] Broadcasts
-- [ ] Variables
+- [x] Variables (monitors are not implemented yet)
 - [ ] Lists
 - [ ] Timer
 - [ ] API for monitors
