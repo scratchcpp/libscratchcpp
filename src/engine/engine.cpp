@@ -46,6 +46,8 @@ void Engine::compile()
                 input->setValueBlock(getBlock(input->valueBlockId()));
                 if (section)
                     input->setInputId(section->resolveInput(input->name()));
+                input->primaryValue()->setValuePtr(getEntity(input->primaryValue()->valueId()));
+                input->secondaryValue()->setValuePtr(getEntity(input->primaryValue()->valueId()));
             }
 
             auto fields = block->fields();
