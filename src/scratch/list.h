@@ -34,6 +34,8 @@ class LIBSCRATCHCPP_EXPORT List : public IEntity
         void insert(int index, const Value &value);
         void replace(int index, const Value &value);
 
+        std::string toString() const;
+
     private:
         std::string m_name;
         std::vector<Value> m_items;

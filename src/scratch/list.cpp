@@ -100,3 +100,15 @@ void List::replace(int index, const Value &value)
 {
     m_items[index] = value;
 }
+
+/*! Joins the list items with spaces. */
+std::string List::toString() const
+{
+    std::string ret;
+    for (int i = 0; i < m_items.size(); i++) {
+        ret.append(m_items[i].toStdString());
+        if (i + 1 < m_items.size())
+            ret.push_back(' ');
+    }
+    return ret;
+}
