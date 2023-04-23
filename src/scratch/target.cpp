@@ -53,6 +53,18 @@ int Target::findVariable(const std::string &variableName) const
     return -1;
 }
 
+/*! Returns the index of the variable with the given ID. */
+int Target::findVariableById(const std::string &id) const
+{
+    int i = 0;
+    for (auto var : m_variables) {
+        if (var->id() == id)
+            return i;
+        i++;
+    }
+    return -1;
+}
+
 /*! Returns the list of Scratch lists. */
 std::vector<std::shared_ptr<List>> Target::lists() const
 {
@@ -78,6 +90,18 @@ int Target::findList(const std::string &listName) const
     int i = 0;
     for (auto list : m_lists) {
         if (list->name() == listName)
+            return i;
+        i++;
+    }
+    return -1;
+}
+
+/*! Returns the index of the list with the given ID. */
+int Target::findListById(const std::string &id) const
+{
+    int i = 0;
+    for (auto list : m_lists) {
+        if (list->id() == id)
             return i;
         i++;
     }

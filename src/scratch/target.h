@@ -37,11 +37,13 @@ class LIBSCRATCHCPP_EXPORT Target
         int addVariable(std::shared_ptr<Variable> variable);
         std::shared_ptr<Variable> variableAt(int index) const;
         int findVariable(const std::string &variableName) const;
+        int findVariableById(const std::string &id) const;
 
         std::vector<std::shared_ptr<List>> lists() const;
         int addList(std::shared_ptr<List> list);
         std::shared_ptr<List> listAt(int index) const;
         int findList(const std::string &listName) const;
+        int findListById(const std::string &id) const;
 
         std::vector<std::shared_ptr<Block>> blocks() const;
         int addBlock(std::shared_ptr<Block> block);
