@@ -1,0 +1,3 @@
+[submodule "thirdparty/zip"]
+	path = thirdparty/zip
+	url = https://github.com/kuba--/zip
