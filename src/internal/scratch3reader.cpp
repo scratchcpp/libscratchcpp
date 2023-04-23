@@ -84,6 +84,8 @@ bool Scratch3Reader::load()
                 if (primary.is_array()) {
                     input->setPrimaryValue(jsonToValue(primary[1]));
                     input->primaryValue()->setType(static_cast<InputValue::Type>(primary[0]));
+                    if (primary.size() >= 3)
+                        input->primaryValue()->setValueId(jsonToValue(primary[2]).toStdString());
                 } else if (primary.is_null())
                     input->setValueBlockId("");
                 else
@@ -93,6 +95,8 @@ bool Scratch3Reader::load()
                     if (secondary.is_array()) {
                         input->setSecondaryValue(jsonToValue(secondary[1]));
                         input->secondaryValue()->setType(static_cast<InputValue::Type>(secondary[0]));
+                        if (secondary.size() >= 3)
+                            input->secondaryValue()->setValueId(jsonToValue(secondary[2]).toStdString());
                     }
                 }
                 block->addInput(input);
