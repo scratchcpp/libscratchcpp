@@ -372,7 +372,7 @@ std::shared_ptr<Variable> Engine::getVariable(std::string id)
         return nullptr;
 
     for (auto target : m_targets) {
-        int index = target->findVariable(id);
+        int index = target->findVariableById(id);
         if (index != -1)
             return target->variableAt(index);
     }
@@ -387,7 +387,7 @@ std::shared_ptr<List> Engine::getList(std::string id)
         return nullptr;
 
     for (auto target : m_targets) {
-        int index = target->findList(id);
+        int index = target->findListById(id);
         if (index != -1)
             return target->listAt(index);
     }
