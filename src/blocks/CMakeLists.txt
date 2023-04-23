@@ -1,0 +1,22 @@
+target_sources(scratchcpp
+  PRIVATE
+    standardblocks.cpp
+    standardblocks.h
+    motionblocks.cpp
+    looksblocks.cpp
+    soundblocks.cpp
+    eventblocks.cpp
+    controlblocks.cpp
+    sensingblocks.cpp
+    operatorblocks.cpp
+    variableblocks.cpp
+  PUBLIC
+    motionblocks.h
+    looksblocks.h
+    soundblocks.h
+    eventblocks.h
+    controlblocks.h
+    sensingblocks.h
+    operatorblocks.h
+    variableblocks.h
+)

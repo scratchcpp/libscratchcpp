@@ -1,0 +1,11 @@
+target_sources(scratchcpp
+  PRIVATE
+    engine.cpp
+    blockargs.cpp
+  PUBLIC
+    engine.h
+    global.h
+    blockargs.h
+    iblocksection.h
+    iextension.h
+)

@@ -1,0 +1,35 @@
+target_sources(scratchcpp
+  PRIVATE
+    target.cpp
+    variable.cpp
+    value.cpp
+    list.cpp
+    block.cpp
+    input.cpp
+    inputvalue.cpp
+    field.cpp
+    asset.cpp
+    costume.cpp
+    sound.cpp
+    stage.cpp
+    sprite.cpp
+    broadcast.cpp
+    runningscript.cpp
+    ientity.h
+  PUBLIC
+    target.h
+    variable.h
+    value.h
+    list.h
+    block.h
+    input.h
+    inputvalue.h
+    field.h
+    asset.h
+    costume.h
+    sound.h
+    stage.h
+    sprite.h
+    broadcast.h
+    runningscript.h
+)

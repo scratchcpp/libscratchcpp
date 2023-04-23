@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "ientity.h"
+#include "value.h"
+#include <string>
+
+namespace libscratchcpp
+{
+
+/*! \brief The Variable class represents a Scratch variable. */
+class LIBSCRATCHCPP_EXPORT Variable : public IEntity
+{
+    public:
+        Variable(std::string id, std::string name, Value value = Value(), bool isCloudVariable = false);
+        Variable(std::string id, std::string name, bool isCloudVariable);
+        Variable(const Variable &) = delete;
+
+        std::string name() const;
+
+        Value value() const;
+        void setValue(const Value &value);
+
+        bool isCloudVariable() const;
+        void setIsCloudVariable(bool isCloudVariable);
+
+    private:
+        std::string m_name;
+        Value m_value;
+        bool m_isCloudVariable;
+};
+
+} // namespace libscratchcpp
