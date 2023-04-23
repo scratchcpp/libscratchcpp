@@ -188,11 +188,11 @@ void Engine::stopTarget(Target *target, RunningScript *exceptScript)
  */
 void Engine::run()
 {
-    auto lastFrameTime = std::chrono::steady_clock::now();
     auto frameDuration = std::chrono::milliseconds(33);
     start();
 
     while (true) {
+        auto lastFrameTime = std::chrono::steady_clock::now();
         // Execute the frame
         frame();
         if (scriptCount <= 0)
