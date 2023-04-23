@@ -256,6 +256,22 @@ void Scratch3Reader::read()
     buf = (unsigned char *)calloc(sizeof(unsigned char), bufsize);
     zip_entry_noallocread(m_zip, (void *)buf, bufsize);
     zip_entry_close(m_zip);
-    m_json = json::parse(buf);
+    std::string str(reinterpret_cast<char const *>(buf));
     free(buf);
+
+    // Remove garbage after the JSON
+    std::string out;
+    int count = 1;
+    for (char ch : str) {
+	if (ch == '{')
+	    count++;
+	else if (ch == '}')
+	    count--;
+	out.push_back(ch);
+	if (count == 0)
+	    break;
+    }
+
+    // Parse the JSON
+    m_json = json::parse(out);
 }
