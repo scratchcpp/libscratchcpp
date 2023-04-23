@@ -260,17 +260,13 @@ void Scratch3Reader::read()
     free(buf);
 
     // Remove garbage after the JSON
-    std::string out;
-    int count = 1;
-    for (char ch : str) {
-        if (ch == '{')
-            count++;
-        else if (ch == '}')
-            count--;
-        out.push_back(ch);
-        if (count == 0)
+    int end;
+    for (end = str.size(); end >= 0; end--) {
+        char ch = str[end];
+        if (ch == '}')
             break;
     }
+    std::string out = str.substr(0, end + 1);
 
     // Parse the JSON
     m_json = json::parse(out);
