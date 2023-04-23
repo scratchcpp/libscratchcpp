@@ -7,13 +7,14 @@
 namespace libscratchcpp
 {
 
-/*! \brief The VariableBlocks class contains the implementation of variable blocks. */
-class LIBSCRATCHCPP_EXPORT VariableBlocks : public IBlockSection
+/*! \brief The ListBlocks class contains the implementation of list blocks. */
+class LIBSCRATCHCPP_EXPORT ListBlocks : public IBlockSection
 {
     public:
-	VariableBlocks();
+	ListBlocks();
 
         std::string name() const override;
+	bool categoryVisible() const override;
 };
 
 } // namespace libscratchcpp

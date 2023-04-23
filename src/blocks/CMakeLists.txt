@@ -10,6 +10,7 @@ target_sources(scratchcpp
     sensingblocks.cpp
     operatorblocks.cpp
     variableblocks.cpp
+    listblocks.cpp
   PUBLIC
     motionblocks.h
     looksblocks.h
@@ -19,4 +20,5 @@ target_sources(scratchcpp
     sensingblocks.h
     operatorblocks.h
     variableblocks.h
+    listblocks.h
 )
