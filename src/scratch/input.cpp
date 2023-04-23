@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "input.h"
+#include "list.h"
 #include "block.h"
+#include "variable.h"
 #include <iostream>
 
 using namespace libscratchcpp;
@@ -63,12 +65,32 @@ Value Input::value() const
         case Type::NoShadow:
             return Value();
         case Type::ObscuredShadow: {
-            auto block = m_primaryValue.valueBlock();
-            if (!block) {
-                std::cout << "warning: attempted to get value of an input shadow obscured by a null block" << std::endl;
-                return Value();
+            switch (m_primaryValue.type()) {
+                case InputValue::Type::Variable: {
+                    auto variable = std::static_pointer_cast<Variable>(m_primaryValue.valuePtr());
+                    if (!variable) {
+                        std::cout << "warning: attempted to read a null variable" << std::endl;
+                        return Value();
+                    }
+                    return variable->value();
+                }
+                case InputValue::Type::List: {
+                    auto list = std::static_pointer_cast<List>(m_primaryValue.valuePtr());
+                    if (!list) {
+                        std::cout << "warning: attempted to read a null list" << std::endl;
+                        return Value();
+                    }
+                    return list->toString();
+                }
+                default: {
+                    auto block = m_primaryValue.valueBlock();
+                    if (!block) {
+                        std::cout << "warning: attempted to get value of an input shadow obscured by a null block" << std::endl;
+                        return Value();
+                    }
+                    return block->run();
+                }
             }
-            return block->run();
         }
     }
     return Value();
