@@ -28,23 +28,17 @@ Value::Value(bool boolValue) :
 {
 }
 
-/*! Constructs a UTF-16 string Value. */
-Value::Value(std::u16string stringValue) :
+/*! Constructs a string Value. */
+Value::Value(std::string stringValue) :
     m_stringValue(stringValue),
     m_type(Type::String)
 {
     bool ok;
-    float f = stringToFloat(utf8::utf16to8(m_stringValue), &ok);
+    float f = stringToFloat(m_stringValue, &ok);
     if (ok) {
         m_numberValue = f;
         m_type = Type::Number;
     }
-}
-
-/*! Constructs a string Value. */
-Value::Value(std::string stringValue) :
-    Value(utf8::utf8to16(stringValue))
-{
 }
 
 /*! Constructs a string Value. */
@@ -112,7 +106,7 @@ float Value::toNumber() const
         case Type::Bool:
             return m_boolValue;
         case Type::String:
-            return stringToFloat(utf8::utf16to8(m_stringValue));
+            return stringToFloat(m_stringValue);
         case Type::Special:
             if (m_isInfinity)
                 return std::numeric_limits<float>::infinity();
@@ -131,7 +125,7 @@ bool Value::toBool() const
         case Type::Bool:
             return m_boolValue;
         case Type::String: {
-            std::string str = utf8::utf16to8(m_stringValue);
+            std::string str = m_stringValue;
             return (stringsEqual(str, "true") || str == "1");
         }
         case Type::Special:
@@ -140,8 +134,8 @@ bool Value::toBool() const
     return false;
 }
 
-/*! Returns the UTF-16 string representation of the value. */
-std::u16string Value::toString() const
+/*! Returns the string representation of the value. */
+std::string Value::toString() const
 {
     switch (m_type) {
         case Type::Number: {
@@ -150,25 +144,25 @@ std::u16string Value::toString() const
             if (s.back() == '.') {
                 s.pop_back();
             }
-            return utf8::utf8to16(s);
+            return s;
         }
         case Type::Bool:
-            return m_boolValue ? utf8::utf8to16("true") : utf8::utf8to16("false");
+            return m_boolValue ? "true" : "false";
         case Type::String:
             return m_stringValue;
         case Type::Special:
             if (m_isInfinity)
-                return utf8::utf8to16("Infinity");
+                return "Infinity";
             else
-                return utf8::utf8to16("NaN");
+                return "NaN";
     }
-    return std::u16string();
+    return "";
 }
 
-/*! Returns the string representation of the value. */
-std::string Value::toStdString() const
+/*! Returns the UTF-16 representation of the value. */
+std::u16string Value::toUtf16() const
 {
-    return utf8::utf16to8(toString());
+    return utf8::utf8to16(toString());
 }
 
 bool Value::stringsEqual(std::u16string s1, std::u16string s2)

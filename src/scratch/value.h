@@ -29,7 +29,6 @@ class LIBSCRATCHCPP_EXPORT Value
         Value(float numberValue = 0);
         Value(double numberValue);
         Value(bool boolValue);
-        Value(std::u16string stringValue);
         Value(std::string stringValue);
         Value(const char *stringValue);
         Value(SpecialValue specialValue);
@@ -44,8 +43,8 @@ class LIBSCRATCHCPP_EXPORT Value
 
         float toNumber() const;
         bool toBool() const;
-        std::u16string toString() const;
-        std::string toStdString() const;
+        std::string toString() const;
+        std::u16string toUtf16() const;
 
     private:
         static bool stringsEqual(std::u16string s1, std::u16string s2);
@@ -57,7 +56,7 @@ class LIBSCRATCHCPP_EXPORT Value
         Type m_type;
         float m_numberValue = 0;
         bool m_boolValue = false;
-        std::u16string m_stringValue;
+        std::string m_stringValue;
 
         friend inline bool operator==(const Value &v1, const Value &v2)
         {
@@ -69,7 +68,7 @@ class LIBSCRATCHCPP_EXPORT Value
                     case Type::Bool:
                         return v1.m_boolValue == v2.m_boolValue;
                     case Type::String:
-                        return stringsEqual(v1.m_stringValue, v2.m_stringValue);
+                        return stringsEqual(v1.toUtf16(), v2.toUtf16());
                     default:
                         return false;
                 }
@@ -79,7 +78,7 @@ class LIBSCRATCHCPP_EXPORT Value
                 else if (v1.isBool() || v2.isBool())
                     return v1.toBool() == v2.toBool();
                 else if (v1.isString() || v2.isString())
-                    return v1.toString() == v2.toString();
+                    return stringsEqual(v1.toUtf16(), v2.toUtf16());
                 else
                     return false;
             }

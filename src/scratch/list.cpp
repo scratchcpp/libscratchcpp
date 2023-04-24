@@ -106,7 +106,7 @@ std::string List::toString() const
 {
     std::string ret;
     for (int i = 0; i < m_items.size(); i++) {
-        ret.append(m_items[i].toStdString());
+        ret.append(m_items[i].toString());
         if (i + 1 < m_items.size())
             ret.push_back(' ');
     }

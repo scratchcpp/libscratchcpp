@@ -133,7 +133,7 @@ Value ControlBlocks::ifElseStatement(const BlockArgs &args)
 
 Value ControlBlocks::stop(const BlockArgs &args)
 {
-    std::string option = args.field(STOP_OPTION)->value().toStdString();
+    std::string option = args.field(STOP_OPTION)->value().toString();
     // TODO: Register special field values and compile them to integers
     if (option == "all")
         args.engine()->stop();
