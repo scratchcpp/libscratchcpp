@@ -50,6 +50,7 @@ class LIBSCRATCHCPP_EXPORT Value
     private:
         static bool stringsEqual(std::u16string s1, std::u16string s2);
         static bool stringsEqual(std::string s1, std::string s2);
+        static float stringToFloat(std::string s, bool *ok = nullptr);
 
         bool m_isInfinity = false;
         bool m_isNaN = false;

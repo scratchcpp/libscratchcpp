@@ -33,6 +33,12 @@ Value::Value(std::u16string stringValue) :
     m_stringValue(stringValue),
     m_type(Type::String)
 {
+    bool ok;
+    float f = stringToFloat(utf8::utf16to8(m_stringValue), &ok);
+    if (ok) {
+        m_numberValue = f;
+        m_type = Type::Number;
+    }
 }
 
 /*! Constructs a string Value. */
@@ -106,7 +112,7 @@ float Value::toNumber() const
         case Type::Bool:
             return m_boolValue;
         case Type::String:
-            return std::stof(utf8::utf16to8(m_stringValue));
+            return stringToFloat(utf8::utf16to8(m_stringValue));
         case Type::Special:
             if (m_isInfinity)
                 return std::numeric_limits<float>::infinity();
@@ -171,4 +177,23 @@ bool Value::stringsEqual(std::string s1, std::string s2)
     std::transform(s1.begin(), s1.end(), s2.begin(), ::tolower);
     std::transform(s2.begin(), s2.end(), s2.begin(), ::tolower);
     return (s1.compare(s2) == 0);
+}
+
+float Value::stringToFloat(std::string s, bool *ok)
+{
+    if (ok)
+        *ok = false;
+    std::string digits = "0123456789.eE+-";
+    for (char c : s) {
+        if (digits.find(c) == std::string::npos) {
+            return 0;
+        }
+    }
+    try {
+        if (ok)
+            *ok = true;
+        return std::stof(s);
+    } catch (...) {
+        return 0;
+    }
 }
