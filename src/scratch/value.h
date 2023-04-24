@@ -73,8 +73,16 @@ class LIBSCRATCHCPP_EXPORT Value
                     default:
                         return false;
                 }
-            } else
-                return false;
+            } else {
+                if (v1.isNumber() || v2.isNumber())
+                    return v1.toNumber() == v2.toNumber();
+                else if (v1.isBool() || v2.isBool())
+                    return v1.toBool() == v2.toBool();
+                else if (v1.isString() || v2.isString())
+                    return v1.toString() == v2.toString();
+                else
+                    return false;
+            }
         }
 };
 
