@@ -144,8 +144,14 @@ bool Value::toBool() const
 std::u16string Value::toString() const
 {
     switch (m_type) {
-        case Type::Number:
-            return utf8::utf8to16(std::to_string(m_numberValue));
+        case Type::Number: {
+            std::string s = std::to_string(m_numberValue);
+            s.erase(s.find_last_not_of('0') + 1, std::string::npos);
+            if (s.back() == '.') {
+                s.pop_back();
+            }
+            return utf8::utf8to16(s);
+        }
         case Type::Bool:
             return m_boolValue ? utf8::utf8to16("true") : utf8::utf8to16("false");
         case Type::String:
