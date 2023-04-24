@@ -168,7 +168,7 @@ std::u16string Value::toString() const
 /*! Returns the string representation of the value. */
 std::string Value::toStdString() const
 {
-    return utf8::utf16to8(m_stringValue);
+    return utf8::utf16to8(toString());
 }
 
 bool Value::stringsEqual(std::u16string s1, std::u16string s2)
