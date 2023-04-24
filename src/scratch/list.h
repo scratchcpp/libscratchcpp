@@ -5,7 +5,7 @@
 #include "ientity.h"
 #include "value.h"
 #include <string>
-#include <vector>
+#include <deque>
 
 namespace libscratchcpp
 {
@@ -20,7 +20,7 @@ class LIBSCRATCHCPP_EXPORT List : public IEntity
         std::string name();
         void setName(const std::string &name);
 
-        std::vector<Value> items() const;
+        std::deque<Value> items() const;
         Value at(int index) const;
         int indexOf(const Value &value) const;
         int size() const;
@@ -38,7 +38,7 @@ class LIBSCRATCHCPP_EXPORT List : public IEntity
 
     private:
         std::string m_name;
-        std::vector<Value> m_items;
+        std::deque<Value> m_items;
 };
 
 } // namespace libscratchcpp

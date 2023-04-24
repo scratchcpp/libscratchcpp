@@ -25,7 +25,7 @@ void List::setName(const std::string &name)
 }
 
 /*! Returns the list of items. */
-std::vector<Value> List::items() const
+std::deque<Value> List::items() const
 {
     return m_items;
 }
