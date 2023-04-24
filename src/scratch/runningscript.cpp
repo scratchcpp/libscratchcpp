@@ -151,7 +151,8 @@ bool RunningScript::substackEnd()
     m_atCMouthEnd = true;
     bool ret = cMouthBlock->run(this, true).toBool();
     m_atCMouthEnd = false;
-    m_engine->breakFrame();
+    if (!m_engine->isAtomic())
+        m_engine->breakFrame();
     if (ret) {
         m_currentBlock = cMouthBlock;
         m_tree.pop_back();

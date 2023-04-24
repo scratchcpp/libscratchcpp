@@ -5,7 +5,6 @@
 #include "../scratchconfiguration.h"
 #include "iblocksection.h"
 #include <cassert>
-#include <chrono>
 #include <iostream>
 #include <thread>
 
@@ -65,14 +64,17 @@ void Engine::compile()
  * Use this if you want to use a custom event loop
  * in your project player.
  * \note Nothing will happen until start() is called.
+ * \param[in] timeLimit The time limit for the frame (for atomic scripts). Set to 0 for no limit.
  */
-void Engine::frame()
+void Engine::frame(std::chrono::milliseconds timeLimit)
 {
+    auto frameStartTime = std::chrono::steady_clock::now();
     std::vector<std::shared_ptr<RunningScript>> scriptsToRemove;
     auto scripts = m_runningScripts;
     for (auto script : scripts) {
         std::shared_ptr<Block> block;
         m_breakFrame = false;
+        m_atomic = true;
 
         do {
             block = script->currentBlock();
@@ -97,6 +99,12 @@ void Engine::frame()
                     // This means the script has finished
                     scriptsToRemove.push_back(script);
                 }
+            }
+
+            if (timeLimit.count() > 0) {
+                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - frameStartTime);
+                if (duration > timeLimit)
+                    break;
             }
         } while (block != nullptr && !m_breakFrame);
     }
@@ -197,7 +205,7 @@ void Engine::run()
     while (true) {
         auto lastFrameTime = std::chrono::steady_clock::now();
         // Execute the frame
-        frame();
+        frame(frameDuration);
         if (scriptCount <= 0)
             break;
 
@@ -226,6 +234,21 @@ void Engine::breakFrame()
 void libscratchcpp::Engine::stayOnCurrentBlock()
 {
     m_stayOnCurrentBlock = true;
+}
+
+/*!
+ * Call this from a block implementation to force screen refresh after the current loop period (if the block is in a loop).\n
+ * This should for example called from some motion and looks blocks.
+ */
+void Engine::breakAtomicScript()
+{
+    m_atomic = false;
+}
+
+/*! Returns true if the current script is atomic (e. g. there's a loop running without screen refresh). */
+bool Engine::isAtomic()
+{
+    return m_atomic;
 }
 
 /*! Registers the given block section. */

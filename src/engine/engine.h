@@ -9,6 +9,7 @@
 #include "global.h"
 #include <map>
 #include <memory>
+#include <chrono>
 
 namespace libscratchcpp
 {
@@ -30,7 +31,7 @@ class LIBSCRATCHCPP_EXPORT Engine
         void clear();
         void compile();
 
-        void frame();
+        void frame(std::chrono::milliseconds timeLimit = std::chrono::milliseconds(0));
         void start();
         void stop();
         void startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target);
@@ -40,6 +41,8 @@ class LIBSCRATCHCPP_EXPORT Engine
 
         void breakFrame();
         void stayOnCurrentBlock();
+        void breakAtomicScript();
+        bool isAtomic();
 
         void registerSection(std::shared_ptr<IBlockSection> section);
         BlockImpl resolveBlock(const std::string &opcode) const;
@@ -70,6 +73,7 @@ class LIBSCRATCHCPP_EXPORT Engine
         std::vector<std::shared_ptr<RunningScript>> m_runningScripts;
         bool m_breakFrame = false;
         bool m_stayOnCurrentBlock = false;
+        bool m_atomic = true;
         int scriptCount = 0;
 };
 
