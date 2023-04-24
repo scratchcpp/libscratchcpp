@@ -26,7 +26,8 @@ class LIBSCRATCHCPP_EXPORT Value
             Special
         };
 
-        Value(double numberValue = 0);
+        Value(float numberValue = 0);
+        Value(double numberValue);
         Value(bool boolValue);
         Value(std::u16string stringValue);
         Value(std::string stringValue);
@@ -41,7 +42,7 @@ class LIBSCRATCHCPP_EXPORT Value
         bool isBool() const;
         bool isString() const;
 
-        double toNumber() const;
+        float toNumber() const;
         bool toBool() const;
         std::u16string toString() const;
         std::string toStdString() const;
@@ -53,7 +54,7 @@ class LIBSCRATCHCPP_EXPORT Value
         bool m_isInfinity = false;
         bool m_isNaN = false;
         Type m_type;
-        double m_numberValue = 0;
+        float m_numberValue = 0;
         bool m_boolValue = false;
         std::u16string m_stringValue;
 

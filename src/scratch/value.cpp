@@ -8,6 +8,13 @@
 using namespace libscratchcpp;
 
 /*! Constructs a number Value. */
+Value::Value(float numberValue) :
+    m_numberValue(numberValue),
+    m_type(Type::Number)
+{
+}
+
+/*! Constructs a number Value. */
 Value::Value(double numberValue) :
     m_numberValue(numberValue),
     m_type(Type::Number)
@@ -91,7 +98,7 @@ bool Value::isString() const
 }
 
 /*! Returns the number representation of the value. */
-double Value::toNumber() const
+float Value::toNumber() const
 {
     switch (m_type) {
         case Type::Number:
@@ -99,10 +106,10 @@ double Value::toNumber() const
         case Type::Bool:
             return m_boolValue;
         case Type::String:
-            return std::stod(utf8::utf16to8(m_stringValue));
+            return std::stof(utf8::utf16to8(m_stringValue));
         case Type::Special:
             if (m_isInfinity)
-                return std::numeric_limits<double>::infinity();
+                return std::numeric_limits<float>::infinity();
             else
                 return 0;
     }
