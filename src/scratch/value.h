@@ -28,6 +28,8 @@ class LIBSCRATCHCPP_EXPORT Value
 
         Value(float numberValue = 0);
         Value(double numberValue);
+        Value(int numberValue);
+        Value(uint32_t numberValue);
         Value(bool boolValue);
         Value(std::string stringValue);
         Value(const char *stringValue);

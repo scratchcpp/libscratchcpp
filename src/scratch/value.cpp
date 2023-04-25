@@ -21,6 +21,20 @@ Value::Value(double numberValue) :
 {
 }
 
+/*! Constructs a number Value. */
+Value::Value(int numberValue) :
+    m_numberValue(numberValue),
+    m_type(Type::Number)
+{
+}
+
+/*! Constructs a number Value. */
+Value::Value(uint32_t numberValue) :
+    m_numberValue(numberValue),
+    m_type(Type::Number)
+{
+}
+
 /*! Constructs a boolean Value. */
 Value::Value(bool boolValue) :
     m_boolValue(boolValue),
