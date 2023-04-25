@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
 - [ ] Reporter blocks
 - [ ] Broadcasts
 - [x] Variables (monitors are not implemented yet)
-- [ ] Lists
+- [x] Lists (monitors are not implemented yet)
 - [ ] Timer
 - [ ] API for monitors
 - [ ] Project metadata
