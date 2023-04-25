@@ -25,8 +25,8 @@ class LIBSCRATCHCPP_EXPORT VariableBlocks : public IBlockSection
 
         std::string name() const override;
 
-        Value setVariable(const BlockArgs &args);
-        Value changeVariableBy(const BlockArgs &args);
+        static Value setVariable(const BlockArgs &args);
+        static Value changeVariableBy(const BlockArgs &args);
 };
 
 } // namespace libscratchcpp

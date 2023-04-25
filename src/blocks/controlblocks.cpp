@@ -5,6 +5,8 @@
 namespace libscratchcpp
 {
 
+std::map<std::pair<RunningScript *, Block *>, std::pair<int, int>> ControlBlocks::repeatLoops;
+
 ControlBlocks::ControlBlocks()
 {
     // Blocks

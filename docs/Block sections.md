@@ -19,12 +19,20 @@ See the [Scratch Wiki](https://en.scratch-wiki.info/wiki/Scratch_File_Format#Blo
 To add a block, create a block implementation function.
 For example, a `print` block would look like this:
 ```cpp
+class MySection : public IBlockSection {
+    public:
+        ...
+        static Value print(const BlockArgs &args);
+};
+
 Value MySection::print(const BlockArgs &args) {
     std::cout << args.input("TEXT").value().toStdString();
     return Value();
 }
 ```
 \note You shouldn't find inputs by name because it affects performance. See the "Adding inputs" section below for more information.
+\par
+\note Make sure the function is **static**.
 
 Register the block using the \link libscratchcpp::IBlockSection::addBlock() addBlock() \endlink method in the constructor:
 ```cpp

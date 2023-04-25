@@ -28,17 +28,17 @@ class LIBSCRATCHCPP_EXPORT ControlBlocks : public IBlockSection
 
         std::string name() const override;
 
-        Value repeatForever(const BlockArgs &args);
-        Value repeat(const BlockArgs &args);
-        Value repeatUntil(const BlockArgs &args);
-        Value repeatWhile(const BlockArgs &args);
-        Value ifStatement(const BlockArgs &args);
-        Value ifElseStatement(const BlockArgs &args);
-        Value stop(const BlockArgs &args);
+        static Value repeatForever(const BlockArgs &args);
+        static Value repeat(const BlockArgs &args);
+        static Value repeatUntil(const BlockArgs &args);
+        static Value repeatWhile(const BlockArgs &args);
+        static Value ifStatement(const BlockArgs &args);
+        static Value ifElseStatement(const BlockArgs &args);
+        static Value stop(const BlockArgs &args);
 
     private:
         // pair<script, C mouth>, pair<current index, repeat count>
-        std::map<std::pair<RunningScript *, Block *>, std::pair<int, int>> repeatLoops;
+        static std::map<std::pair<RunningScript *, Block *>, std::pair<int, int>> repeatLoops;
 };
 
 } // namespace libscratchcpp
