@@ -37,7 +37,7 @@ Value MySection::print(const BlockArgs &args) {
 Register the block using the \link libscratchcpp::IBlockSection::addBlock() addBlock() \endlink method in the constructor:
 ```cpp
 MySection::MySection() {
-    addBlock(this, "mysection_print", &MySection::print);
+    addBlock("mysection_print", &MySection::print);
 }
 ```
 Where `mysection_print` is the opcode of the `print` block.

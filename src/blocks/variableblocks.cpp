@@ -7,8 +7,8 @@ using namespace libscratchcpp;
 VariableBlocks::VariableBlocks()
 {
     // Blocks
-    addBlock(this, "data_setvariableto", &VariableBlocks::setVariable);
-    addBlock(this, "data_changevariableby", &VariableBlocks::changeVariableBy);
+    addBlock("data_setvariableto", &VariableBlocks::setVariable);
+    addBlock("data_changevariableby", &VariableBlocks::changeVariableBy);
 
     // Inputs
     addInput("VALUE", VALUE);

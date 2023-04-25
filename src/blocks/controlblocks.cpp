@@ -10,12 +10,12 @@ std::map<std::pair<RunningScript *, Block *>, std::pair<int, int>> ControlBlocks
 ControlBlocks::ControlBlocks()
 {
     // Blocks
-    addBlock(this, "control_forever", &ControlBlocks::repeatForever);
-    addBlock(this, "control_repeat", &ControlBlocks::repeat);
-    addBlock(this, "control_repeat_until", &ControlBlocks::repeatUntil);
-    addBlock(this, "control_if", &ControlBlocks::ifStatement);
-    addBlock(this, "control_if_else", &ControlBlocks::ifElseStatement);
-    addBlock(this, "control_stop", &ControlBlocks::stop);
+    addBlock("control_forever", &ControlBlocks::repeatForever);
+    addBlock("control_repeat", &ControlBlocks::repeat);
+    addBlock("control_repeat_until", &ControlBlocks::repeatUntil);
+    addBlock("control_if", &ControlBlocks::ifStatement);
+    addBlock("control_if_else", &ControlBlocks::ifElseStatement);
+    addBlock("control_stop", &ControlBlocks::stop);
 
     // Inputs
     addInput("SUBSTACK", SUBSTACK);

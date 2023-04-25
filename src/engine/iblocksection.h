@@ -63,14 +63,13 @@ class IBlockSection
     protected:
         /*!
          * Assigns a block implementation pointer to a block opcode.
-         * \param[in] obj The instance of the IBlockSection subclass (`this`, if used from in the constructor)
          * \param[in] opcode The block opcode
          * \param[in] f A pointer to the block implementation function
          */
-        template<class T, class F>
-        void addBlock(T *obj, const std::string &opcode, F &&f)
+        template<class F>
+        void addBlock(const std::string &opcode, F &&f)
         {
-            m_blocks[opcode] = std::bind(f, obj, std::placeholders::_1);
+            m_blocks[opcode] = std::bind(f, std::placeholders::_1);
         }
 
         /*! Assigns an input ID to an input name. */
