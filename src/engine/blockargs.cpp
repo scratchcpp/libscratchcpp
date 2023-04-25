@@ -16,7 +16,6 @@ BlockArgs::BlockArgs(Target *target, Engine *engine, RunningScript *script, Bloc
 {
     assert(target);
     assert(engine);
-    assert(script);
     assert(block);
 }
 
