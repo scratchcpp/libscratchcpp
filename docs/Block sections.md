@@ -26,7 +26,7 @@ class MySection : public IBlockSection {
 };
 
 Value MySection::print(const BlockArgs &args) {
-    std::cout << args.input("TEXT").value().toStdString();
+    std::cout << args.input("TEXT").value().toStdString() << std::endl;
     return Value();
 }
 ```
@@ -64,7 +64,7 @@ The compiler will assign the input with the `TEXT` ID. In this case, the ID is 0
 To use the input, get it using the \link libscratchcpp::BlockArgs::input() input() \endlink function in the block implementation:
 ```cpp
 Value MySection::print(const BlockArgs &args) {
-    std::cout << args.input(TEXT).value().toStdString();
+    std::cout << args.input(TEXT).value().toStdString() << std::endl;
     return Value();
 }
 ```
@@ -89,7 +89,7 @@ MySection::MySection() {
 Get the value of the field using the \link libscratchcpp::BlockArgs::field() field() \endlink function:
 ```cpp
 Value MySection::someBlock(const BlockArgs &args) {
-    std::cout << args.field(SOME_MENU).value().toStdString();
+    std::cout << args.field(SOME_MENU).value().toStdString() << std::endl;
     return Value();
 }
 ```
