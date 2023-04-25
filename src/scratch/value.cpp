@@ -33,6 +33,8 @@ Value::Value(std::string stringValue) :
     m_stringValue(stringValue),
     m_type(Type::String)
 {
+    if (m_stringValue.empty())
+        return;
     bool ok;
     float f = stringToFloat(m_stringValue, &ok);
     if (ok) {
