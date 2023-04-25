@@ -183,14 +183,14 @@ std::u16string Value::toUtf16() const
 
 bool Value::stringsEqual(std::u16string s1, std::u16string s2)
 {
-    std::transform(s1.begin(), s1.end(), s2.begin(), ::tolower);
+    std::transform(s1.begin(), s1.end(), s1.begin(), ::tolower);
     std::transform(s2.begin(), s2.end(), s2.begin(), ::tolower);
     return (s1.compare(s2) == 0);
 }
 
 bool Value::stringsEqual(std::string s1, std::string s2)
 {
-    std::transform(s1.begin(), s1.end(), s2.begin(), ::tolower);
+    std::transform(s1.begin(), s1.end(), s1.begin(), ::tolower);
     std::transform(s2.begin(), s2.end(), s2.begin(), ::tolower);
     return (s1.compare(s2) == 0);
 }
