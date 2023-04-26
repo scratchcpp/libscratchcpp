@@ -94,6 +94,42 @@ Value MySection::someBlock(const BlockArgs &args) {
 }
 ```
 
+### Adding field values
+If a field uses a predefined set of string values, for example rotation style `left-right`, `all around` and `don't rotate`,
+you can assign integer IDs to them to speed up the execution of scripts.
+```cpp
+class MySection : public IBlockSection {
+    ...
+    enum FieldValues {
+        RotateLeftRight,
+        RotateAllAround,
+        DoNotRotate
+    };
+    ...
+};
+
+MySection::MySection() {
+    ...
+    addField("SOME_MENU", SOME_MENU);
+    addFieldValue("left-right", RotateLeftRight);
+    addFieldValue("all around", RotateAllAround);
+    addFieldValue("don't rotate", DoNotRotate);
+}
+```
+Use the \link libscratchcpp::Field::specialValueId() specialValueId() \endlink function to get the ID of the value:
+```cpp
+Value MySection::someBlock(const BlockArgs &args) {
+    switch(args.field(SOME_MENU)->specialValueId()) {
+        case RotateLeftRight:
+            ...
+        ...
+    }
+    return Value();
+}
+```
+\note Don't confuse \link libscratchcpp::Field::specialValueId() specialValueId() \endlink with \link libscratchcpp::Field::valueId() valueId() \endlink
+because \link libscratchcpp::Field::valueId() valueId() \endlink stores the ID of the block, variable, list or broadcast selected in the dropdown list.
+
 ### Registering the block section
 Block sections are registered in the \link libscratchcpp::IExtension::registerSections() registerSections() \endlink
 function of an extension:
