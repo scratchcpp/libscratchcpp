@@ -25,6 +25,11 @@ ControlBlocks::ControlBlocks()
 
     // Fields
     addField("STOP_OPTION", STOP_OPTION);
+
+    // Field values
+    addFieldValue("all", StopAll);
+    addFieldValue("this script", StopThisScript);
+    addFieldValue("other scripts in sprite", StopOtherScriptsInSprite);
 }
 
 std::string ControlBlocks::name() const
@@ -135,13 +140,12 @@ Value ControlBlocks::ifElseStatement(const BlockArgs &args)
 
 Value ControlBlocks::stop(const BlockArgs &args)
 {
-    std::string option = args.field(STOP_OPTION)->value().toString();
-    // TODO: Register special field values and compile them to integers
-    if (option == "all")
+    int option = args.field(STOP_OPTION)->specialValueId();
+    if (option == StopAll)
         args.engine()->stop();
-    else if (option == "this script")
+    else if (option == StopThisScript)
         args.engine()->stopScript(args.script());
-    else if (option == "other scripts in sprite")
+    else if (option == StopOtherScriptsInSprite)
         args.engine()->stopTarget(args.target(), args.script());
     return Value();
 }

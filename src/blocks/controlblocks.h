@@ -24,6 +24,13 @@ class LIBSCRATCHCPP_EXPORT ControlBlocks : public IBlockSection
             STOP_OPTION
         };
 
+        enum FieldValues
+        {
+            StopAll,
+            StopThisScript,
+            StopOtherScriptsInSprite
+        };
+
         ControlBlocks();
 
         std::string name() const override;
