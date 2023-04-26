@@ -52,8 +52,11 @@ void Engine::compile()
             auto fields = block->fields();
             for (auto field : fields) {
                 field->setValuePtr(getEntity(field->valueId()));
-                if (section)
+                if (section) {
                     field->setFieldId(section->resolveField(field->name()));
+                    if (!field->valuePtr())
+                        field->setSpecialValueId(section->resolveFieldValue(field->value().toString()));
+                }
             }
         }
     }
