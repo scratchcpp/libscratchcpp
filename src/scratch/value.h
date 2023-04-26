@@ -15,6 +15,7 @@ class LIBSCRATCHCPP_EXPORT Value
         enum class SpecialValue
         {
             Infinity,
+            NegativeInfinity,
             NaN
         };
 
@@ -38,6 +39,7 @@ class LIBSCRATCHCPP_EXPORT Value
         Type type() const;
 
         bool isInfinity() const;
+        bool isNegativeInfinity() const;
         bool isNaN() const;
         bool isNumber() const;
         bool isBool() const;
@@ -54,6 +56,7 @@ class LIBSCRATCHCPP_EXPORT Value
         static float stringToFloat(std::string s, bool *ok = nullptr);
 
         bool m_isInfinity = false;
+        bool m_isNegativeInfinity = false;
         bool m_isNaN = false;
         Type m_type;
         float m_numberValue = 0;

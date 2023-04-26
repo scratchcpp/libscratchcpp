@@ -69,6 +69,8 @@ Value::Value(SpecialValue specialValue) :
 {
     if (specialValue == SpecialValue::Infinity)
         m_isInfinity = true;
+    else if (specialValue == SpecialValue::NegativeInfinity)
+        m_isNegativeInfinity = true;
     else if (specialValue == SpecialValue::NaN)
         m_isNaN = true;
     else {
@@ -83,10 +85,16 @@ Value::Type Value::type() const
     return m_type;
 }
 
-/*! Returns true if the value is not finite. */
+/*! Returns true if the value is infinity. */
 bool Value::isInfinity() const
 {
     return m_isInfinity;
+}
+
+/*! Returns true if the value is negative infinity. */
+bool Value::isNegativeInfinity() const
+{
+    return m_isNegativeInfinity;
 }
 
 /*! Returns true if the value is NaN (Not a Number). */
@@ -126,6 +134,8 @@ float Value::toNumber() const
         case Type::Special:
             if (m_isInfinity)
                 return std::numeric_limits<float>::infinity();
+            else if (m_isNegativeInfinity)
+                return -std::numeric_limits<float>::infinity();
             else
                 return 0;
     }
@@ -169,6 +179,8 @@ std::string Value::toString() const
         case Type::Special:
             if (m_isInfinity)
                 return "Infinity";
+            else if (m_isNegativeInfinity)
+                return "-Infinity";
             else
                 return "NaN";
     }
@@ -199,6 +211,21 @@ float Value::stringToFloat(std::string s, bool *ok)
 {
     if (ok)
         *ok = false;
+
+    if (s == "Infinity") {
+        if (ok)
+            *ok = true;
+        return std::numeric_limits<float>::infinity();
+    } else if (s == "-Infinity") {
+        if (ok)
+            *ok = true;
+        return -std::numeric_limits<float>::infinity();
+    } else if (s == "NaN") {
+        if (ok)
+            *ok = true;
+        return 0;
+    }
+
     std::string digits = "0123456789.eE+-";
     for (char c : s) {
         if (digits.find(c) == std::string::npos) {
