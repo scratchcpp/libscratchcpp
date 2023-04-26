@@ -30,12 +30,16 @@ class LIBSCRATCHCPP_EXPORT Field
 
         std::string valueId() const;
 
+        int specialValueId() const;
+        void setSpecialValueId(int newSpecialValueId);
+
     private:
         std::string m_name;
         int m_fieldId = -1;
         Value m_value;
         std::shared_ptr<IEntity> m_valuePtr = nullptr;
         std::string m_valueId;
+        int m_specialValueId = -1;
 };
 
 } // namespace libscratchcpp

@@ -67,3 +67,21 @@ std::string Field::valueId() const
 {
     return m_valueId;
 }
+
+/*!
+ * Returns the ID that was assigned to the value.
+ *  \see IBlockSection::addFieldValue()
+ */
+int Field::specialValueId() const
+{
+    return m_specialValueId;
+}
+
+/*!
+ * Assigns an ID to the value.
+ *  \see IBlockSection::addFieldValue()
+ */
+void Field::setSpecialValueId(int newSpecialValueId)
+{
+    m_specialValueId = newSpecialValueId;
+}
