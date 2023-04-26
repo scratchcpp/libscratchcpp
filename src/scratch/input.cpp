@@ -63,7 +63,6 @@ Value Input::value() const
         case Type::Shadow:
             return m_primaryValue.value();
         case Type::NoShadow:
-            return Value();
         case Type::ObscuredShadow: {
             switch (m_primaryValue.type()) {
                 case InputValue::Type::Variable: {
@@ -85,7 +84,8 @@ Value Input::value() const
                 default: {
                     auto block = m_primaryValue.valueBlock();
                     if (!block) {
-                        std::cout << "warning: attempted to get value of an input shadow obscured by a null block" << std::endl;
+                        if (m_type == Type::ObscuredShadow)
+                            std::cout << "warning: attempted to get value of an input shadow obscured by a null block" << std::endl;
                         return Value();
                     }
                     return block->run();
