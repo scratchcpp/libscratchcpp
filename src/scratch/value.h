@@ -74,19 +74,118 @@ class LIBSCRATCHCPP_EXPORT Value
                         return v1.m_boolValue == v2.m_boolValue;
                     case Type::String:
                         return stringsEqual(v1.toUtf16(), v2.toUtf16());
-                    default:
-                        return false;
+                    case Type::Special:
+                        if (v1.isNaN() || v2.isNaN())
+                            return false;
+                        else
+                            return ((v1.isInfinity() && v2.isInfinity()) || (v1.isNegativeInfinity() && v2.isNegativeInfinity()));
                 }
             } else {
                 if (v1.isNumber() || v2.isNumber())
                     return v1.toNumber() == v2.toNumber();
                 else if (v1.isBool() || v2.isBool())
-                    return v1.toBool() == v2.toBool();
+                    return ((!v1.isNaN() && !v2.isNaN()) && (v1.toBool() == v2.toBool()));
                 else if (v1.isString() || v2.isString())
                     return stringsEqual(v1.toUtf16(), v2.toUtf16());
                 else
                     return false;
             }
+            return false;
+        }
+
+        friend inline bool operator>(const Value &v1, const Value &v2)
+        {
+            if (v1.isInfinity()) {
+                return !v2.isInfinity();
+            } else if (v1.isNegativeInfinity())
+                return false;
+            else if (v2.isInfinity())
+                return false;
+            else if (v2.isNegativeInfinity())
+                return true;
+            return v1.toNumber() > v2.toNumber();
+        }
+
+        friend inline bool operator<(const Value &v1, const Value &v2)
+        {
+            if (v1.isInfinity()) {
+                return false;
+            } else if (v1.isNegativeInfinity())
+                return !v2.isNegativeInfinity();
+            else if (v2.isInfinity())
+                return !v1.isInfinity();
+            else if (v2.isNegativeInfinity())
+                return false;
+            return v1.toNumber() < v2.toNumber();
+        }
+
+        friend inline bool operator>=(const Value &v1, const Value &v2) { return v1 > v2 || v1 == v2; }
+
+        friend inline bool operator<=(const Value &v1, const Value &v2) { return v1 < v2 || v1 == v2; }
+
+        friend inline Value operator+(const Value &v1, const Value &v2)
+        {
+            if ((v1.isInfinity() && v2.isNegativeInfinity()) || (v1.isNegativeInfinity() && v2.isInfinity()))
+                return Value(SpecialValue::NaN);
+            else if (v1.isInfinity() || v2.isInfinity())
+                return Value(SpecialValue::Infinity);
+            else if (v1.isNegativeInfinity() || v2.isNegativeInfinity())
+                return Value(SpecialValue::NegativeInfinity);
+            return v1.toNumber() + v2.toNumber();
+        }
+
+        friend inline Value operator-(const Value &v1, const Value &v2)
+        {
+            if ((v1.isInfinity() && v2.isInfinity()) || (v1.isNegativeInfinity() && v2.isNegativeInfinity()))
+                return Value(SpecialValue::NaN);
+            else if (v1.isInfinity() || v2.isNegativeInfinity())
+                return Value(SpecialValue::Infinity);
+            else if (v1.isNegativeInfinity() || v2.isInfinity())
+                return Value(SpecialValue::NegativeInfinity);
+            return v1.toNumber() - v2.toNumber();
+        }
+
+        friend inline Value operator*(const Value &v1, const Value &v2)
+        {
+            if (v1.isInfinity() || v1.isNegativeInfinity() || v2.isInfinity() || v2.isNegativeInfinity()) {
+                bool mode = (v1.isInfinity() || v2.isInfinity());
+                const Value &value = (v1.isInfinity() || v1.isNegativeInfinity()) ? v2 : v1;
+                if (value > 0)
+                    return Value(mode ? SpecialValue::Infinity : SpecialValue::NegativeInfinity);
+                else if (value < 0)
+                    return Value(mode ? SpecialValue::NegativeInfinity : SpecialValue::Infinity);
+                else
+                    return Value(SpecialValue::NaN);
+            }
+            return v1.toNumber() * v2.toNumber();
+        }
+
+        friend inline Value operator/(const Value &v1, const Value &v2)
+        {
+
+            if ((v1 == 0) && (v2 == 0))
+                return Value(SpecialValue::NaN);
+            else if (v2 == 0) {
+                if (v2.isInfinity() || v2.isNegativeInfinity()) {
+                    if (v1.isInfinity() || v1.isNegativeInfinity())
+                        return Value(SpecialValue::NaN);
+                    else
+                        return 0;
+                } else
+                    return Value(v1 > 0 ? SpecialValue::Infinity : SpecialValue::NegativeInfinity);
+            }
+            return v1.toNumber() / v2.toNumber();
+        }
+
+        friend inline Value operator%(const Value &v1, const Value &v2)
+        {
+
+            if ((v2 == 0) || (v1.isInfinity() || v1.isNegativeInfinity()))
+                return Value(SpecialValue::NaN);
+            else if (v2.isInfinity() || v2.isNegativeInfinity()) {
+                return v1.toNumber();
+            }
+            return static_cast<int>(v1.toNumber()) % static_cast<int>(v2.toNumber());
         }
 };
 

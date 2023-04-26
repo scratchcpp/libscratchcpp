@@ -49,6 +49,20 @@ Value::Value(std::string stringValue) :
 {
     if (m_stringValue.empty())
         return;
+    else if (m_stringValue == "Infinity") {
+        m_isInfinity = true;
+        m_type = Type::Special;
+        return;
+    } else if (m_stringValue == "-Infinity") {
+        m_isNegativeInfinity = true;
+        m_type = Type::Special;
+        return;
+    } else if (m_stringValue == "NaN") {
+        m_isNaN = true;
+        m_type = Type::Special;
+        return;
+    }
+
     bool ok;
     float f = stringToFloat(m_stringValue, &ok);
     if (ok) {
