@@ -28,11 +28,11 @@ class LIBSCRATCHCPP_EXPORT BlockArgs
 
         std::shared_ptr<Input> input(const std::string &name) const;
         std::shared_ptr<Input> input(const char *name) const;
-        std::shared_ptr<Input> input(int id) const;
+        Input *input(int id) const;
 
         std::shared_ptr<Field> field(const std::string &name) const;
         std::shared_ptr<Field> field(const char *name) const;
-        std::shared_ptr<Field> field(int id) const;
+        Field *field(int id) const;
 
     private:
         Target *m_target = nullptr;

@@ -7,6 +7,7 @@
 #include "ientity.h"
 #include "input.h"
 #include <memory>
+#include <map>
 #include <string>
 
 namespace libscratchcpp
@@ -40,13 +41,15 @@ class LIBSCRATCHCPP_EXPORT Block : public IEntity
         int addInput(std::shared_ptr<Input> input);
         std::shared_ptr<Input> inputAt(int index) const;
         int findInput(const std::string &inputName) const;
-        int findInputById(int id);
+        Input *findInputById(int id) const;
+        void updateInputMap();
 
         std::vector<std::shared_ptr<Field>> fields() const;
         int addField(std::shared_ptr<Field> field);
         std::shared_ptr<Field> fieldAt(int index) const;
         int findField(const std::string &fieldName) const;
-        int findFieldById(int id) const;
+        Field *findFieldById(int id) const;
+        void updateFieldMap();
 
         bool shadow() const;
         void setShadow(bool newShadow);
@@ -66,7 +69,9 @@ class LIBSCRATCHCPP_EXPORT Block : public IEntity
         std::shared_ptr<Block> m_parent = nullptr;
         std::string m_parentId;
         std::vector<std::shared_ptr<Input>> m_inputs;
+        std::unordered_map<int, Input *> m_inputMap;
         std::vector<std::shared_ptr<Field>> m_fields;
+        std::unordered_map<int, Field *> m_fieldMap;
         bool m_shadow = false;
         bool m_topLevel = false;
         Engine *m_engine = nullptr;

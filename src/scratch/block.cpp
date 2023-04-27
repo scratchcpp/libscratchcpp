@@ -133,16 +133,20 @@ int Block::findInput(const std::string &inputName) const
     return -1;
 }
 
-/*! Returns the index of the input with the given ID. */
-int Block::findInputById(int id)
+/*! Returns the input with the given ID. */
+Input *Block::findInputById(int id) const
 {
-    int i = 0;
-    for (auto input : m_inputs) {
-        if (input->inputId() == id)
-            return i;
-        i++;
-    }
-    return -1;
+    if (m_inputMap.count(id) == 1)
+        return m_inputMap.at(id);
+    return nullptr;
+}
+
+/*! Updates the map that assigns input IDs to input indexes. Used internally by Engine. */
+void Block::updateInputMap()
+{
+    m_inputMap.clear();
+    for (auto input : m_inputs)
+        m_inputMap[input->inputId()] = input.get();
 }
 
 /*! Returns the list of fields. */
@@ -177,15 +181,19 @@ int Block::findField(const std::string &fieldName) const
 }
 
 /*! Returns the index of the field with the given ID. */
-int Block::findFieldById(int id) const
+Field *Block::findFieldById(int id) const
 {
-    int i = 0;
-    for (auto field : m_fields) {
-        if (field->fieldId() == id)
-            return i;
-        i++;
-    }
-    return -1;
+    if (m_fieldMap.count(id) == 1)
+        return m_fieldMap.at(id);
+    return nullptr;
+}
+
+/*! Updates the map that assigns input IDs to input indexes. Used internally by Engine. */
+void Block::updateFieldMap()
+{
+    m_fieldMap.clear();
+    for (auto field : m_fields)
+        m_fieldMap[field->fieldId()] = field.get();
 }
 
 /*! Returns true if this is a shadow block. */

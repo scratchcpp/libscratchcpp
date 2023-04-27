@@ -104,9 +104,9 @@ void RunningScript::moveToSubstack(const BlockArgs &args, int inputId)
 std::shared_ptr<Block> RunningScript::getSubstack(const BlockArgs &args, int inputId) const
 {
     auto block = args.block();
-    int index = block->findInputById(inputId);
-    if (index != -1) {
-        auto ret = block->inputAt(index)->valueBlock();
+    auto input = block->findInputById(inputId);
+    if (input) {
+        auto ret = input->valueBlock();
         if (ret)
             return ret;
     }

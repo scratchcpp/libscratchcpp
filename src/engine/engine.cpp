@@ -58,6 +58,9 @@ void Engine::compile()
                         field->setSpecialValueId(section->resolveFieldValue(field->value().toString()));
                 }
             }
+
+            block->updateInputMap();
+            block->updateFieldMap();
         }
     }
 }

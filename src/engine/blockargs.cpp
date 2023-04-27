@@ -56,9 +56,9 @@ std::shared_ptr<Input> BlockArgs::input(const char *name) const
 }
 
 /*! Returns the input with the given ID. */
-std::shared_ptr<Input> BlockArgs::input(int id) const
+Input *BlockArgs::input(int id) const
 {
-    return m_block->inputAt(m_block->findInputById(id));
+    return m_block->findInputById(id);
 }
 
 /*! Returns the field with the given name. */
@@ -74,9 +74,9 @@ std::shared_ptr<Field> BlockArgs::field(const char *name) const
 }
 
 /*! Returns the field with the given ID. */
-std::shared_ptr<Field> BlockArgs::field(int id) const
+Field *BlockArgs::field(int id) const
 {
-    return m_block->fieldAt(m_block->findFieldById(id));
+    return m_block->findFieldById(id);
 }
 
 } // namespace libscratchcpp
