@@ -31,7 +31,13 @@ class LIBSCRATCHCPP_EXPORT Input
         InputValue *primaryValue();
         InputValue *secondaryValue();
 
-        Value value() const;
+        /*!
+         * Returns the value of the input.\n
+         * If there's an obscured shadow, the value will
+         * be retrieved from the block that obscures the shadow.\n
+         * Use secondaryValue() to get the value of the shadow.
+         */
+        virtual Value value() const = 0;
 
         void setPrimaryValue(Value value);
         void setSecondaryValue(Value value);
@@ -41,12 +47,14 @@ class LIBSCRATCHCPP_EXPORT Input
         void setValueBlock(std::shared_ptr<Block> block);
         void setValueBlockId(std::string id);
 
+    protected:
+        InputValue m_primaryValue;
+        InputValue m_secondaryValue;
+
     private:
         std::string m_name;
         int m_inputId = -1;
         Type m_type;
-        InputValue m_primaryValue;
-        InputValue m_secondaryValue;
 };
 
 } // namespace libscratchcpp

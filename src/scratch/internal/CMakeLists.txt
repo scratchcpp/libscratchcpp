@@ -1,0 +1,11 @@
+target_sources(scratchcpp
+  PRIVATE
+    shadowinput.cpp
+    shadowinput.h
+    blockinput.cpp
+    blockinput.h
+    variableinput.cpp
+    variableinput.h
+    listinput.cpp
+    listinput.h
+)

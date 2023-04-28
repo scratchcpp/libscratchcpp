@@ -33,3 +33,5 @@ target_sources(scratchcpp
     broadcast.h
     runningscript.h
 )
+
+add_subdirectory(internal)

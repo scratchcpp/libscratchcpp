@@ -3,6 +3,10 @@
 #include "scratch3reader.h"
 #include "../scratch/sprite.h"
 #include "../scratch/stage.h"
+#include "../scratch/internal/shadowinput.h"
+#include "../scratch/internal/variableinput.h"
+#include "../scratch/internal/listinput.h"
+#include "../scratch/internal/blockinput.h"
 #include "reader_common.h"
 
 using namespace libscratchcpp;
@@ -79,8 +83,29 @@ bool Scratch3Reader::load()
             auto inputs = blockInfo["inputs"];
             for (json::iterator it = inputs.begin(); it != inputs.end(); ++it) {
                 auto inputInfo = it.value();
-                auto input = std::make_shared<Input>(it.key(), static_cast<Input::Type>(inputInfo[0]));
+                auto type = static_cast<Input::Type>(inputInfo[0]);
                 auto primary = inputInfo[1];
+                std::shared_ptr<Input> input;
+                if (type == Input::Type::Shadow)
+                    input = std::make_shared<ShadowInput>(it.key(), type);
+                else {
+                    if (primary.is_array()) {
+                        auto valueType = static_cast<InputValue::Type>(primary[0]);
+                        switch (valueType) {
+                            case InputValue::Type::Variable:
+                                input = std::make_shared<VariableInput>(it.key(), type);
+                                break;
+                            case InputValue::Type::List:
+                                input = std::make_shared<ListInput>(it.key(), type);
+                                break;
+                            default:
+                                assert(false); // a block can only be obscured by a variable or a list in this case
+                                break;
+                        }
+                    } else
+                        input = std::make_shared<BlockInput>(it.key(), type);
+                }
+
                 if (primary.is_array()) {
                     input->setPrimaryValue(jsonToValue(primary[1]));
                     input->primaryValue()->setType(static_cast<InputValue::Type>(primary[0]));

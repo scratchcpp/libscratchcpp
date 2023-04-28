@@ -51,51 +51,6 @@ InputValue *Input::secondaryValue()
     return &m_secondaryValue;
 }
 
-/*!
- * Returns the value of the input.\n
- * If there's an obscured shadow, the value will
- * be retrieved from the block that obscures the shadow.\n
- * Use secondaryValue() to get the value of the shadow.
- */
-Value Input::value() const
-{
-    switch (m_type) {
-        case Type::Shadow:
-            return m_primaryValue.value();
-        case Type::NoShadow:
-        case Type::ObscuredShadow: {
-            switch (m_primaryValue.type()) {
-                case InputValue::Type::Variable: {
-                    auto variable = std::static_pointer_cast<Variable>(m_primaryValue.valuePtr());
-                    if (!variable) {
-                        std::cout << "warning: attempted to read a null variable" << std::endl;
-                        return Value();
-                    }
-                    return variable->value();
-                }
-                case InputValue::Type::List: {
-                    auto list = std::static_pointer_cast<List>(m_primaryValue.valuePtr());
-                    if (!list) {
-                        std::cout << "warning: attempted to read a null list" << std::endl;
-                        return Value();
-                    }
-                    return list->toString();
-                }
-                default: {
-                    auto block = m_primaryValue.valueBlock();
-                    if (!block) {
-                        if (m_type == Type::ObscuredShadow)
-                            std::cout << "warning: attempted to get value of an input shadow obscured by a null block" << std::endl;
-                        return Value();
-                    }
-                    return block->run();
-                }
-            }
-        }
-    }
-    return Value();
-}
-
 /*! Sets the primary value. */
 void Input::setPrimaryValue(Value value)
 {
