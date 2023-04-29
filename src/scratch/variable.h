@@ -19,7 +19,7 @@ class LIBSCRATCHCPP_EXPORT Variable : public IEntity
 
         std::string name() const;
 
-        Value value() const;
+        const Value &value() const;
         void setValue(const Value &value);
 
         bool isCloudVariable() const;

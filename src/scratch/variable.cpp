@@ -26,7 +26,7 @@ std::string Variable::name() const
 }
 
 /*! Returns the value. */
-Value Variable::value() const
+const Value &Variable::value() const
 {
     return m_value;
 }
