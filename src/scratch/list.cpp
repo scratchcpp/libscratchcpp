@@ -31,7 +31,7 @@ std::deque<Value> List::items() const
 }
 
 /*! Returns the item at index. */
-Value List::at(int index) const
+const Value &List::at(int index) const
 {
     return m_items[index];
 }

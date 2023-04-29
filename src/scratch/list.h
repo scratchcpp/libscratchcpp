@@ -21,7 +21,7 @@ class LIBSCRATCHCPP_EXPORT List : public IEntity
         void setName(const std::string &name);
 
         std::deque<Value> items() const;
-        Value at(int index) const;
+        const Value &at(int index) const;
         int indexOf(const Value &value) const;
         int size() const;
         int length() const;
