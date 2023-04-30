@@ -32,6 +32,6 @@ Value VariableBlocks::setVariable(const BlockArgs &args)
 Value VariableBlocks::changeVariableBy(const BlockArgs &args)
 {
     auto variable = std::static_pointer_cast<Variable>(args.field(VARIABLE)->valuePtr());
-    variable->setValue(variable->value().toNumber() + args.input(VALUE)->value().toNumber());
+    variable->setValue(variable->value() + args.input(VALUE)->value());
     return Value();
 }

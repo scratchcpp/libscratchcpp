@@ -4,6 +4,8 @@
 
 #include "../libscratchcpp_global.h"
 #include <string>
+#include <variant>
+#include <ctgmath>
 
 namespace libscratchcpp
 {
@@ -27,12 +29,12 @@ class LIBSCRATCHCPP_EXPORT Value
             Special
         };
 
-        Value(float numberValue = 0);
+        Value(float numberValue);
         Value(double numberValue);
-        Value(int numberValue);
-        Value(uint32_t numberValue);
+        Value(int numberValue = 0);
+        Value(long numberValue);
         Value(bool boolValue);
-        Value(std::string stringValue);
+        Value(const std::string &stringValue);
         Value(const char *stringValue);
         Value(SpecialValue specialValue);
 
@@ -45,23 +47,73 @@ class LIBSCRATCHCPP_EXPORT Value
         bool isBool() const;
         bool isString() const;
 
-        float toNumber() const;
+        int toInt() const;
+        long toLong() const;
+        double toDouble() const;
         bool toBool() const;
         std::string toString() const;
         std::u16string toUtf16() const;
 
+        inline const Value &operator=(float v)
+        {
+            m_type = Type::Number;
+            m_value = v;
+            return *this;
+        }
+
+        inline const Value &operator=(double v)
+        {
+            m_type = Type::Number;
+            m_value = v;
+            return *this;
+        }
+
+        inline const Value &operator=(int v)
+        {
+            m_type = Type::Number;
+            m_value = v;
+            return *this;
+        }
+
+        inline const Value &operator=(long v)
+        {
+            m_type = Type::Number;
+            m_value = v;
+            return *this;
+        }
+
+        inline const Value &operator=(bool v)
+        {
+            m_type = Type::Bool;
+            m_value = v;
+            return *this;
+        }
+
+        inline const Value &operator=(const std::string &v)
+        {
+            m_type = Type::String;
+            m_value = v;
+            return *this;
+        }
+
+        inline const Value &operator=(const char *v)
+        {
+            m_type = Type::String;
+            m_value = v;
+            return *this;
+        }
+
     private:
         static bool stringsEqual(std::u16string s1, std::u16string s2);
         static bool stringsEqual(std::string s1, std::string s2);
-        static float stringToFloat(std::string s, bool *ok = nullptr);
+        static double stringToDouble(const std::string &s, bool *ok = nullptr);
+        static long stringToLong(const std::string &s, bool *ok = nullptr);
 
         bool m_isInfinity = false;
         bool m_isNegativeInfinity = false;
         bool m_isNaN = false;
         Type m_type;
-        float m_numberValue = 0;
-        bool m_boolValue = false;
-        std::string m_stringValue;
+        std::variant<long, double, bool, std::string> m_value;
 
         friend inline bool operator==(const Value &v1, const Value &v2)
         {
@@ -69,20 +121,20 @@ class LIBSCRATCHCPP_EXPORT Value
                 auto type = v1.m_type;
                 switch (type) {
                     case Type::Number:
-                        return v1.m_numberValue == v2.m_numberValue;
+                        return v1.toDouble() == v2.toDouble();
                     case Type::Bool:
-                        return v1.m_boolValue == v2.m_boolValue;
+                        return v1.toBool() == v2.toBool();
                     case Type::String:
                         return stringsEqual(v1.toUtf16(), v2.toUtf16());
                     case Type::Special:
                         if (v1.isNaN() || v2.isNaN())
                             return false;
                         else
-                            return ((v1.isInfinity() && v2.isInfinity()) || (v1.isNegativeInfinity() && v2.isNegativeInfinity()));
+                            return ((v1.m_isInfinity && v2.m_isInfinity) || (v1.m_isNegativeInfinity && v2.m_isNegativeInfinity));
                 }
             } else {
                 if (v1.isNumber() || v2.isNumber())
-                    return v1.toNumber() == v2.toNumber();
+                    return v1.toDouble() == v2.toDouble();
                 else if (v1.isBool() || v2.isBool())
                     return ((!v1.isNaN() && !v2.isNaN()) && (v1.toBool() == v2.toBool()));
                 else if (v1.isString() || v2.isString())
@@ -95,28 +147,28 @@ class LIBSCRATCHCPP_EXPORT Value
 
         friend inline bool operator>(const Value &v1, const Value &v2)
         {
-            if (v1.isInfinity()) {
-                return !v2.isInfinity();
-            } else if (v1.isNegativeInfinity())
+            if (v1.m_isInfinity) {
+                return !v2.m_isInfinity;
+            } else if (v1.m_isNegativeInfinity)
                 return false;
-            else if (v2.isInfinity())
+            else if (v2.m_isInfinity)
                 return false;
-            else if (v2.isNegativeInfinity())
+            else if (v2.m_isNegativeInfinity)
                 return true;
-            return v1.toNumber() > v2.toNumber();
+            return v1.toDouble() > v2.toDouble();
         }
 
         friend inline bool operator<(const Value &v1, const Value &v2)
         {
-            if (v1.isInfinity()) {
+            if (v1.m_isInfinity) {
                 return false;
-            } else if (v1.isNegativeInfinity())
-                return !v2.isNegativeInfinity();
-            else if (v2.isInfinity())
-                return !v1.isInfinity();
-            else if (v2.isNegativeInfinity())
+            } else if (v1.m_isNegativeInfinity)
+                return !v2.m_isNegativeInfinity;
+            else if (v2.m_isInfinity)
+                return !v1.m_isInfinity;
+            else if (v2.m_isNegativeInfinity)
                 return false;
-            return v1.toNumber() < v2.toNumber();
+            return v1.toDouble() < v2.toDouble();
         }
 
         friend inline bool operator>=(const Value &v1, const Value &v2) { return v1 > v2 || v1 == v2; }
@@ -125,31 +177,31 @@ class LIBSCRATCHCPP_EXPORT Value
 
         friend inline Value operator+(const Value &v1, const Value &v2)
         {
-            if ((v1.isInfinity() && v2.isNegativeInfinity()) || (v1.isNegativeInfinity() && v2.isInfinity()))
+            if ((v1.m_isInfinity && v2.m_isNegativeInfinity) || (v1.m_isNegativeInfinity && v2.m_isInfinity))
                 return Value(SpecialValue::NaN);
-            else if (v1.isInfinity() || v2.isInfinity())
+            else if (v1.m_isInfinity || v2.m_isInfinity)
                 return Value(SpecialValue::Infinity);
-            else if (v1.isNegativeInfinity() || v2.isNegativeInfinity())
+            else if (v1.m_isNegativeInfinity || v2.m_isNegativeInfinity)
                 return Value(SpecialValue::NegativeInfinity);
-            return v1.toNumber() + v2.toNumber();
+            return v1.toDouble() + v2.toDouble();
         }
 
         friend inline Value operator-(const Value &v1, const Value &v2)
         {
-            if ((v1.isInfinity() && v2.isInfinity()) || (v1.isNegativeInfinity() && v2.isNegativeInfinity()))
+            if ((v1.m_isInfinity && v2.m_isInfinity) || (v1.m_isNegativeInfinity && v2.m_isNegativeInfinity))
                 return Value(SpecialValue::NaN);
-            else if (v1.isInfinity() || v2.isNegativeInfinity())
+            else if (v1.m_isInfinity || v2.m_isNegativeInfinity)
                 return Value(SpecialValue::Infinity);
-            else if (v1.isNegativeInfinity() || v2.isInfinity())
+            else if (v1.m_isNegativeInfinity || v2.m_isInfinity)
                 return Value(SpecialValue::NegativeInfinity);
-            return v1.toNumber() - v2.toNumber();
+            return v1.toDouble() - v2.toDouble();
         }
 
         friend inline Value operator*(const Value &v1, const Value &v2)
         {
-            if (v1.isInfinity() || v1.isNegativeInfinity() || v2.isInfinity() || v2.isNegativeInfinity()) {
-                bool mode = (v1.isInfinity() || v2.isInfinity());
-                const Value &value = (v1.isInfinity() || v1.isNegativeInfinity()) ? v2 : v1;
+            if (v1.m_isInfinity || v1.m_isNegativeInfinity || v2.m_isInfinity || v2.m_isNegativeInfinity) {
+                bool mode = (v1.m_isInfinity || v2.m_isInfinity);
+                const Value &value = (v1.m_isInfinity || v1.m_isNegativeInfinity) ? v2 : v1;
                 if (value > 0)
                     return Value(mode ? SpecialValue::Infinity : SpecialValue::NegativeInfinity);
                 else if (value < 0)
@@ -157,7 +209,7 @@ class LIBSCRATCHCPP_EXPORT Value
                 else
                     return Value(SpecialValue::NaN);
             }
-            return v1.toNumber() * v2.toNumber();
+            return v1.toDouble() * v2.toDouble();
         }
 
         friend inline Value operator/(const Value &v1, const Value &v2)
@@ -166,26 +218,26 @@ class LIBSCRATCHCPP_EXPORT Value
             if ((v1 == 0) && (v2 == 0))
                 return Value(SpecialValue::NaN);
             else if (v2 == 0) {
-                if (v2.isInfinity() || v2.isNegativeInfinity()) {
-                    if (v1.isInfinity() || v1.isNegativeInfinity())
+                if (v2.m_isInfinity || v2.m_isNegativeInfinity) {
+                    if (v1.m_isInfinity || v1.m_isNegativeInfinity)
                         return Value(SpecialValue::NaN);
                     else
                         return 0;
                 } else
                     return Value(v1 > 0 ? SpecialValue::Infinity : SpecialValue::NegativeInfinity);
             }
-            return v1.toNumber() / v2.toNumber();
+            return v1.toDouble() / v2.toDouble();
         }
 
         friend inline Value operator%(const Value &v1, const Value &v2)
         {
 
-            if ((v2 == 0) || (v1.isInfinity() || v1.isNegativeInfinity()))
+            if ((v2 == 0) || (v1.m_isInfinity || v1.m_isNegativeInfinity))
                 return Value(SpecialValue::NaN);
-            else if (v2.isInfinity() || v2.isNegativeInfinity()) {
-                return v1.toNumber();
+            else if (v2.m_isInfinity || v2.m_isNegativeInfinity) {
+                return v1.toDouble();
             }
-            return static_cast<int>(v1.toNumber()) % static_cast<int>(v2.toNumber());
+            return fmod(v1.toDouble(), v2.toDouble());
         }
 };
 

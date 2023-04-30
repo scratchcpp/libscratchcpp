@@ -64,7 +64,7 @@ Value ControlBlocks::repeat(const BlockArgs &args)
         } else
             return false;
     } else {
-        int count = args.input(TIMES)->value().toNumber();
+        int count = args.input(TIMES)->value().toInt();
         if (count > 0) {
             auto substack = script->getSubstack(args, SUBSTACK);
             if (substack) {

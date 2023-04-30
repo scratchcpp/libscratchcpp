@@ -59,7 +59,7 @@ Value ListBlocks::deleteFromList(const BlockArgs &args)
         } else
             return Value();
     } else
-        index = validateIndex(value.toNumber(), list->length());
+        index = validateIndex(value.toInt(), list->length());
     if (index == 0)
         return Value();
     list->removeAt(index - 1);
@@ -88,7 +88,7 @@ Value ListBlocks::insertToList(const BlockArgs &args)
         } else
             return Value();
     } else {
-        index = validateIndex(value.toNumber(), list->length());
+        index = validateIndex(value.toInt(), list->length());
         if (index == 0)
             return Value();
     }
@@ -110,7 +110,7 @@ Value ListBlocks::replaceItemOfList(const BlockArgs &args)
         } else
             return Value();
     } else
-        index = validateIndex(value.toNumber(), list->length());
+        index = validateIndex(value.toInt(), list->length());
     if (index == 0)
         return Value();
     list->replace(index - 1, args.input(ITEM)->value());
@@ -131,7 +131,7 @@ Value ListBlocks::itemOfList(const BlockArgs &args)
         } else
             return "";
     } else
-        index = validateIndex(value.toNumber(), list->length());
+        index = validateIndex(value.toInt(), list->length());
     if (index == 0)
         return "";
     return list->at(index - 1);

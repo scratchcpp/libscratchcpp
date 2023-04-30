@@ -56,7 +56,7 @@ Value OperatorBlocks::divide(const BlockArgs &args)
 
 Value OperatorBlocks::pickRandom(const BlockArgs &args)
 {
-    return randint(args.input(FROM)->value().toNumber(), args.input(TO)->value().toNumber());
+    return randint(args.input(FROM)->value().toDouble(), args.input(TO)->value().toDouble());
 }
 
 Value OperatorBlocks::lessThan(const BlockArgs &args)
