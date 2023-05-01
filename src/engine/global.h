@@ -4,7 +4,7 @@
 
 #include "blockargs.h"
 #include <functional>
-#include <vector>
+#include <random>
 
 /*! \brief The main namespace of the library. */
 namespace libscratchcpp
@@ -18,14 +18,22 @@ namespace libscratchcpp
 using BlockImpl = std::function<Value(const BlockArgs &)>;
 
 /*! Generates a random number in the given interval like the random.randint() function in Python. */
-inline int randint(int start, int end)
+template<typename T>
+inline T randint(T start, T end)
 {
     if (start > end) {
-        int tmp = start;
+        auto tmp = start;
         start = end;
         end = tmp;
     }
-    return rand() % (end - start + 1) + start;
+    std::default_random_engine generator;
+    if constexpr (std::is_integral<T>()) {
+        std::uniform_int_distribution<T> distribution(start, end);
+        return distribution(generator);
+    } else {
+        std::uniform_real_distribution<T> distribution(start, end);
+        return distribution(generator);
+    }
 }
 
 } // namespace libscratchcpp
