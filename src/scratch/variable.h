@@ -13,14 +13,17 @@ namespace libscratchcpp
 class LIBSCRATCHCPP_EXPORT Variable : public IEntity
 {
     public:
-        Variable(std::string id, std::string name, Value value = Value(), bool isCloudVariable = false);
-        Variable(std::string id, std::string name, bool isCloudVariable);
+        Variable(const std::string &id, const std::string &name, const Value &value = Value(), bool isCloudVariable = false);
+        Variable(const std::string &id, const std::string &name, bool isCloudVariable);
         Variable(const Variable &) = delete;
 
-        std::string name() const;
+        const std::string &name() const;
 
-        const Value &value() const;
-        void setValue(const Value &value);
+        /*! Returns the value. */
+        inline const Value &value() const { return m_value; }
+
+        /*! Sets the value. */
+        inline void setValue(const Value &value) { m_value = value; }
 
         bool isCloudVariable() const;
         void setIsCloudVariable(bool isCloudVariable);
