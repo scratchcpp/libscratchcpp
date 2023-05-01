@@ -20,7 +20,7 @@ class LIBSCRATCHCPP_EXPORT Block : public IEntity
         Block(std::string id, std::string opcode);
         Block(const Block &) = delete;
 
-        Value run(RunningScript *script = nullptr, Value defaultRetValue = Value());
+        Value run(RunningScript *script = nullptr, const Value &defaultRetValue = Value());
 
         std::string opcode() const;
 

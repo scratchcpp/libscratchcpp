@@ -19,7 +19,7 @@ Block::Block(std::string id, std::string opcode) :
  * \param[in] script The script from which the block was called. Call be nullptr for reporter blocks.
  * \param[out] defaultRetValue Value to return when the block isn't supported.
  */
-Value Block::run(RunningScript *script, Value defaultRetValue)
+Value Block::run(RunningScript *script, const Value &defaultRetValue)
 {
     if (m_implementation)
         return m_implementation(BlockArgs(m_target, m_engine, script, this));
