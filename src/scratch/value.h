@@ -247,28 +247,42 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
 
         friend inline bool operator>(const Value &v1, const Value &v2)
         {
-            if (v1.m_type == Type::Infinity) {
-                return v2.m_type != Type::Infinity;
-            } else if (v1.m_type == Type::NegativeInfinity)
-                return false;
-            else if (v2.m_type == Type::Infinity)
-                return false;
-            else if (v2.m_type == Type::NegativeInfinity)
-                return true;
-            return v1.toDouble() > v2.toDouble();
+            if ((static_cast<int>(v1.m_type) < 0) || (static_cast<int>(v2.m_type) < 0)) {
+                if (v1.m_type == Type::Infinity) {
+                    return v2.m_type != Type::Infinity;
+                } else if (v1.m_type == Type::NegativeInfinity)
+                    return false;
+                else if (v2.m_type == Type::Infinity)
+                    return false;
+                else if (v2.m_type == Type::NegativeInfinity)
+                    return true;
+            }
+            auto p1 = std::get_if<long>(&v1);
+            auto p2 = std::get_if<long>(&v2);
+            if (p1 && p2)
+                return *p1 > *p2;
+            else
+                return v1.toDouble() > v2.toDouble();
         }
 
         friend inline bool operator<(const Value &v1, const Value &v2)
         {
-            if (v1.m_type == Type::Infinity) {
-                return false;
-            } else if (v1.m_type == Type::NegativeInfinity)
-                return v2.m_type != Type::NegativeInfinity;
-            else if (v2.m_type == Type::Infinity)
-                return v1.m_type != Type::Infinity;
-            else if (v2.m_type == Type::NegativeInfinity)
-                return false;
-            return v1.toDouble() < v2.toDouble();
+            if ((static_cast<int>(v1.m_type) < 0) || (static_cast<int>(v2.m_type) < 0)) {
+                if (v1.m_type == Type::Infinity) {
+                    return false;
+                } else if (v1.m_type == Type::NegativeInfinity)
+                    return v2.m_type != Type::NegativeInfinity;
+                else if (v2.m_type == Type::Infinity)
+                    return v1.m_type != Type::Infinity;
+                else if (v2.m_type == Type::NegativeInfinity)
+                    return false;
+            }
+            auto p1 = std::get_if<long>(&v1);
+            auto p2 = std::get_if<long>(&v2);
+            if (p1 && p2)
+                return *p1 < *p2;
+            else
+                return v1.toDouble() < v2.toDouble();
         }
 
         friend inline bool operator>=(const Value &v1, const Value &v2) { return v1 > v2 || v1 == v2; }
