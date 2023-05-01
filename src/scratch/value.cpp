@@ -3,77 +3,73 @@
 #include "value.h"
 #include <algorithm>
 #include <limits>
-#include <utf8.h>
 
 using namespace libscratchcpp;
 
 /*! Constructs a number Value. */
 Value::Value(float numberValue) :
-    m_value(numberValue),
+    ValueVariant(numberValue),
     m_type(Type::Number)
 {
 }
 
 /*! Constructs a number Value. */
 Value::Value(double numberValue) :
-    m_value(numberValue),
+    ValueVariant(numberValue),
     m_type(Type::Number)
 {
 }
 
 /*! Constructs a number Value. */
 Value::Value(int numberValue) :
-    m_value(numberValue),
+    ValueVariant(numberValue),
     m_type(Type::Number)
 {
 }
 
 /*! Constructs a number Value. */
 Value::Value(size_t numberValue) :
-    m_value(static_cast<long>(numberValue)),
+    ValueVariant(static_cast<long>(numberValue)),
     m_type(Type::Number)
 {
 }
 
 /*! Constructs a number Value. */
 Value::Value(long numberValue) :
-    m_value(numberValue),
+    ValueVariant(numberValue),
     m_type(Type::Number)
 {
 }
 
 /*! Constructs a boolean Value. */
 Value::Value(bool boolValue) :
-    m_value(boolValue),
+    ValueVariant(boolValue),
     m_type(Type::Bool)
 {
 }
 
 /*! Constructs a string Value. */
 Value::Value(const std::string &stringValue) :
-    m_value(stringValue),
+    ValueVariant(stringValue),
     m_type(Type::String)
 {
     if (stringValue.empty())
         return;
     else if (stringValue == "Infinity") {
-        m_isInfinity = true;
-        m_type = Type::Special;
+        m_type = Type::Infinity;
         return;
     } else if (stringValue == "-Infinity") {
-        m_isNegativeInfinity = true;
-        m_type = Type::Special;
+        m_type = Type::NegativeInfinity;
         return;
     } else if (stringValue == "NaN") {
-        m_isNaN = true;
-        m_type = Type::Special;
+        m_type = Type::NaN;
         return;
     }
 
     bool ok;
     float f = stringToDouble(stringValue, &ok);
     if (ok) {
-        m_value = f;
+        *this = f;
         m_type = Type::Number;
     }
 }
@@ -86,18 +82,16 @@ Value::Value(const char *stringValue) :
 
 /*! Constructs a special Value. */
 Value::Value(SpecialValue specialValue) :
-    m_type(Type::Special)
+    ValueVariant(0)
 {
     if (specialValue == SpecialValue::Infinity)
-        m_isInfinity = true;
+        m_type = Type::Infinity;
     else if (specialValue == SpecialValue::NegativeInfinity)
-        m_isNegativeInfinity = true;
+        m_type = Type::NegativeInfinity;
     else if (specialValue == SpecialValue::NaN)
-        m_isNaN = true;
-    else {
+        m_type = Type::NaN;
+    else
         m_type = Type::Number;
-        m_value = 0;
-    }
 }
 
 /*! Returns the type of the value. */
@@ -109,19 +103,19 @@ Value::Type Value::type() const
 /*! Returns true if the value is infinity. */
 bool Value::isInfinity() const
 {
-    return m_isInfinity;
+    return m_type == Type::Infinity;
 }
 
 /*! Returns true if the value is negative infinity. */
 bool Value::isNegativeInfinity() const
 {
-    return m_isNegativeInfinity;
+    return m_type == Type::NegativeInfinity;
 }
 
 /*! Returns true if the value is NaN (Not a Number). */
 bool Value::isNaN() const
 {
-    return m_isNaN;
+    return m_type == Type::NaN;
 }
 
 /*! Returns true if the value is a number. */
@@ -140,113 +134,6 @@ bool Value::isBool() const
 bool Value::isString() const
 {
     return m_type == Type::String;
-}
-
-/*! Returns the int representation of the value. */
-int Value::toInt() const
-{
-    return toLong();
-}
-
-/*! Returns the long representation of the value. */
-inline long Value::toLong() const
-{
-    if (std::holds_alternative<long>(m_value))
-        return std::get<long>(m_value);
-    else if (std::holds_alternative<double>(m_value))
-        return std::get<double>(m_value);
-    else if (std::holds_alternative<bool>(m_value))
-        return std::get<bool>(m_value);
-    else if (std::holds_alternative<std::string>(m_value))
-        return stringToLong(std::get<std::string>(m_value));
-    else if (m_isInfinity)
-        return std::numeric_limits<long>::infinity();
-    else if (m_isNegativeInfinity)
-        return -std::numeric_limits<long>::infinity();
-    else
-        return 0;
-}
-
-/*! Returns the double representation of the value. */
-double Value::toDouble() const
-{
-    if (std::holds_alternative<double>(m_value))
-        return std::get<double>(m_value);
-    else if (std::holds_alternative<long>(m_value))
-        return std::get<long>(m_value);
-    else if (std::holds_alternative<bool>(m_value))
-        return std::get<bool>(m_value);
-    else if (std::holds_alternative<std::string>(m_value))
-        return stringToDouble(std::get<std::string>(m_value));
-    else if (m_isInfinity)
-        return std::numeric_limits<double>::infinity();
-    else if (m_isNegativeInfinity)
-        return -std::numeric_limits<double>::infinity();
-    else
-        return 0;
-}
-
-/*! Returns the boolean representation of the value. */
-bool Value::toBool() const
-{
-    if (std::holds_alternative<bool>(m_value))
-        return std::get<bool>(m_value);
-    else if (std::holds_alternative<long>(m_value))
-        return std::get<long>(m_value) == 1 ? true : false;
-    else if (std::holds_alternative<double>(m_value))
-        return std::get<double>(m_value) == 1 ? true : false;
-    else if (std::holds_alternative<std::string>(m_value)) {
-        const std::string &str = std::get<std::string>(m_value);
-        return (stringsEqual(str, "true") || str == "1");
-    } else
-        return false;
-}
-
-/*! Returns the string representation of the value. */
-std::string Value::toString() const
-{
-    if (std::holds_alternative<std::string>(m_value))
-        return std::get<std::string>(m_value);
-    else if (std::holds_alternative<long>(m_value))
-        return std::to_string(std::get<long>(m_value));
-    else if (std::holds_alternative<double>(m_value)) {
-        std::string s = std::to_string(std::get<double>(m_value));
-        s.erase(s.find_last_not_of('0') + 1, std::string::npos);
-        if (s.back() == '.') {
-            s.pop_back();
-        }
-        return s;
-    } else if (std::holds_alternative<bool>(m_value))
-        return std::get<bool>(m_value) ? "true" : "false";
-    else if (m_isInfinity)
-        return "Infinity";
-    else if (m_isNegativeInfinity)
-        return "-Infinity";
-    else
-        return "NaN";
-}
-
-/*! Returns the UTF-16 representation of the value. */
-std::u16string Value::toUtf16() const
-{
-    return utf8::utf8to16(toString());
-}
-
-/*! Adds the given value to the value. */
-void Value::add(const Value &v)
-{
-    if ((m_isInfinity && v.m_isNegativeInfinity) || (m_isNegativeInfinity && v.m_isInfinity)) {
-        m_isInfinity = false;
-        m_isNegativeInfinity = false;
-        m_isNaN = true;
-    } else if (m_isInfinity || v.m_isInfinity) {
-        m_type = Type::Special;
-        m_isInfinity = true;
-    } else if (m_isNegativeInfinity || v.m_isNegativeInfinity) {
-        m_type = Type::Special;
-        m_isNegativeInfinity = true;
-    }
-    m_value = toDouble() + v.toDouble();
 }
 
 bool Value::stringsEqual(std::u16string s1, std::u16string s2)
