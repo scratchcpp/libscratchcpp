@@ -232,6 +232,23 @@ std::u16string Value::toUtf16() const
     return utf8::utf8to16(toString());
 }
 
+/*! Adds the given value to the value. */
+void Value::add(const Value &v)
+{
+    if ((m_isInfinity && v.m_isNegativeInfinity) || (m_isNegativeInfinity && v.m_isInfinity)) {
+        m_isInfinity = false;
+        m_isNegativeInfinity = false;
+        m_isNaN = true;
+    } else if (m_isInfinity || v.m_isInfinity) {
+        m_type = Type::Special;
+        m_isInfinity = true;
+    } else if (m_isNegativeInfinity || v.m_isNegativeInfinity) {
+        m_type = Type::Special;
+        m_isNegativeInfinity = true;
+    }
+    m_value = toDouble() + v.toDouble();
+}
+
 bool Value::stringsEqual(std::u16string s1, std::u16string s2)
 {
     std::transform(s1.begin(), s1.end(), s1.begin(), ::tolower);

@@ -55,6 +55,8 @@ class LIBSCRATCHCPP_EXPORT Value
         std::string toString() const;
         std::u16string toUtf16() const;
 
+        void add(const Value &v);
+
         inline const Value &operator=(float v)
         {
             m_type = Type::Number;
