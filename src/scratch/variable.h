@@ -25,6 +25,9 @@ class LIBSCRATCHCPP_EXPORT Variable : public IEntity
         bool isCloudVariable() const;
         void setIsCloudVariable(bool isCloudVariable);
 
+        /*! Adds the given value to the variable's value. \see Value::add() */
+        inline void add(const Value &v) { m_value.add(v); }
+
     private:
         std::string m_name;
         Value m_value;
