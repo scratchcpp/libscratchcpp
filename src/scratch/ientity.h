@@ -15,7 +15,7 @@ class LIBSCRATCHCPP_EXPORT IEntity
         virtual ~IEntity() { }
 
         /*! Returns the ID. */
-        virtual std::string id() const final { return m_id; };
+        virtual const std::string &id() const final { return m_id; };
         /*! Sets the ID. */
         virtual void setId(const std::string &newId) final { m_id = newId; };
 
