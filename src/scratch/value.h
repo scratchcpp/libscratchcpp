@@ -32,6 +32,7 @@ class LIBSCRATCHCPP_EXPORT Value
         Value(float numberValue);
         Value(double numberValue);
         Value(int numberValue = 0);
+        Value(size_t numberValue);
         Value(long numberValue);
         Value(bool boolValue);
         Value(const std::string &stringValue);

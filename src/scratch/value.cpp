@@ -29,6 +29,13 @@ Value::Value(int numberValue) :
 }
 
 /*! Constructs a number Value. */
+Value::Value(size_t numberValue) :
+    m_value(static_cast<long>(numberValue)),
+    m_type(Type::Number)
+{
+}
+
+/*! Constructs a number Value. */
 Value::Value(long numberValue) :
     m_value(numberValue),
     m_type(Type::Number)
