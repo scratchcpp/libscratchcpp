@@ -38,7 +38,7 @@ class LIBSCRATCHCPP_EXPORT ListBlocks : public IBlockSection
         static Value listContainsItem(const BlockArgs &args);
 
     private:
-        static int validateIndex(int index, int listLength);
+        static int validateIndex(size_t index, size_t listLength);
 };
 
 } // namespace libscratchcpp

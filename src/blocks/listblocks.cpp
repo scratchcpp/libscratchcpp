@@ -38,7 +38,7 @@ bool ListBlocks::categoryVisible() const
 Value ListBlocks::addToList(const BlockArgs &args)
 {
     auto list = std::static_pointer_cast<List>(args.field(LIST)->valuePtr());
-    list->append(args.input(ITEM)->value());
+    list->push_back(args.input(ITEM)->value());
     return Value();
 }
 
@@ -46,20 +46,20 @@ Value ListBlocks::deleteFromList(const BlockArgs &args)
 {
     auto list = std::static_pointer_cast<List>(args.field(LIST)->valuePtr());
     Value value = args.input(INDEX)->value();
-    int index;
+    size_t index;
     if (value.isString()) {
         std::string str = value.toString();
         if (str == "last")
-            index = list->length();
+            index = list->size();
         else if (str == "all") {
             list->clear();
             return Value();
         } else if (str == "random") {
-            index = list->length() == 0 ? 0 : randint(1, list->length());
+            index = list->size() == 0 ? 0 : randint<size_t>(1, list->size());
         } else
             return Value();
     } else
-        index = validateIndex(value.toInt(), list->length());
+        index = validateIndex(value.toInt(), list->size());
     if (index == 0)
         return Value();
     list->removeAt(index - 1);
@@ -81,14 +81,14 @@ Value ListBlocks::insertToList(const BlockArgs &args)
     if (value.isString()) {
         std::string str = value.toString();
         if (str == "last") {
-            list->append(args.input(ITEM)->value());
+            list->push_back(args.input(ITEM)->value());
             return Value();
         } else if (str == "random") {
-            index = list->length() == 0 ? 1 : randint(1, list->length());
+            index = list->size() == 0 ? 1 : randint<size_t>(1, list->size());
         } else
             return Value();
     } else {
-        index = validateIndex(value.toInt(), list->length());
+        index = validateIndex(value.toInt(), list->size());
         if (index == 0)
             return Value();
     }
@@ -104,13 +104,13 @@ Value ListBlocks::replaceItemOfList(const BlockArgs &args)
     if (value.isString()) {
         std::string str = value.toString();
         if (str == "last")
-            index = list->length();
+            index = list->size();
         else if (str == "random") {
-            index = list->length() == 0 ? 0 : randint(1, list->length());
+            index = list->size() == 0 ? 0 : randint<size_t>(1, list->size());
         } else
             return Value();
     } else
-        index = validateIndex(value.toInt(), list->length());
+        index = validateIndex(value.toInt(), list->size());
     if (index == 0)
         return Value();
     list->replace(index - 1, args.input(ITEM)->value());
@@ -125,13 +125,13 @@ Value ListBlocks::itemOfList(const BlockArgs &args)
     if (value.isString()) {
         std::string str = value.toString();
         if (str == "last")
-            index = list->length();
+            index = list->size();
         else if (str == "random") {
-            index = list->length() == 0 ? 0 : randint(1, list->length());
+            index = list->size() == 0 ? 0 : randint<size_t>(1, list->size());
         } else
             return "";
     } else
-        index = validateIndex(value.toInt(), list->length());
+        index = validateIndex(value.toInt(), list->size());
     if (index == 0)
         return "";
     return list->at(index - 1);
@@ -146,7 +146,7 @@ Value ListBlocks::itemNumberInList(const BlockArgs &args)
 Value ListBlocks::lengthOfList(const BlockArgs &args)
 {
     auto list = std::static_pointer_cast<List>(args.field(LIST)->valuePtr());
-    return list->length();
+    return list->size();
 }
 
 Value ListBlocks::listContainsItem(const BlockArgs &args)
@@ -155,7 +155,7 @@ Value ListBlocks::listContainsItem(const BlockArgs &args)
     return list->contains(args.input(ITEM)->value());
 }
 
-int ListBlocks::validateIndex(int index, int listLength)
+int ListBlocks::validateIndex(size_t index, size_t listLength)
 {
     if (listLength == 0) {
         if (index != 1)

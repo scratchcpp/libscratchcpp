@@ -49,7 +49,7 @@ bool Scratch3Reader::load()
             auto list = std::make_shared<List>(it.key(), listInfo[0]);
             auto arr = listInfo[1];
             for (auto item : arr)
-                list->append(jsonToValue(item));
+                list->push_back(jsonToValue(item));
             target->addList(list);
         }
 

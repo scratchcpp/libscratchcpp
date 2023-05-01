@@ -11,7 +11,9 @@ namespace libscratchcpp
 {
 
 /*! \brief The List class represents a Scratch list. */
-class LIBSCRATCHCPP_EXPORT List : public IEntity
+class LIBSCRATCHCPP_EXPORT List
+    : public std::deque<Value>
+    , public IEntity
 {
     public:
         List(std::string id, std::string name);
@@ -20,25 +22,22 @@ class LIBSCRATCHCPP_EXPORT List : public IEntity
         std::string name();
         void setName(const std::string &name);
 
-        std::deque<Value> items() const;
-        const Value &at(int index) const;
-        int indexOf(const Value &value) const;
-        int size() const;
-        int length() const;
-        int count() const;
+        size_t indexOf(const Value &value) const;
         bool contains(const Value &value) const;
 
-        void clear();
-        void removeAt(int index);
-        void append(const Value &value);
-        void insert(int index, const Value &value);
-        void replace(int index, const Value &value);
+        /*! Removes the item at index. */
+        inline void removeAt(int index) { erase(begin() + index); }
+
+        /*! Inserts an item at index. */
+        inline void insert(int index, const Value &value) { std::deque<Value>::insert(begin() + index, value); }
+
+        /*! Replaces the item at index. */
+        inline void replace(int index, const Value &value) { at(index) = value; }
 
         std::string toString() const;
 
     private:
         std::string m_name;
-        std::deque<Value> m_items;
 };
 
 } // namespace libscratchcpp
