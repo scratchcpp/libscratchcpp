@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "controlblocks.h"
+#include "../scratch/runningscript.h"
 
 namespace libscratchcpp
 {
