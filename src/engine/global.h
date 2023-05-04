@@ -13,9 +13,9 @@ namespace libscratchcpp
 /*!
  * \typedef BlockImpl
  *
- * BlockImpl is used to store block implementation functions as std::function in blocks.
+ * BlockImpl is a function pointer for block implementation functions.
  */
-using BlockImpl = std::function<Value(const BlockArgs &)>;
+using BlockImpl = Value (*)(const BlockArgs &);
 
 /*! Generates a random number in the given interval like the random.randint() function in Python. */
 template<typename T>

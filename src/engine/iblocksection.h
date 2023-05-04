@@ -80,7 +80,7 @@ class IBlockSection
         template<class F>
         void addBlock(const std::string &opcode, F &&f)
         {
-            m_blocks[opcode] = std::bind(f, std::placeholders::_1);
+            m_blocks[opcode] = f;
         }
 
         /*! Assigns an input ID to an input name. */
