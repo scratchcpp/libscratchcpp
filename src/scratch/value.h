@@ -166,6 +166,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                     m_type = Type::Infinity;
                 else if (m_type == Type::NegativeInfinity || v.m_type == Type::NegativeInfinity)
                     m_type = Type::NegativeInfinity;
+                return;
             }
             auto p1 = std::get_if<long>(this);
             auto p2 = std::get_if<long>(&v);
@@ -173,6 +174,69 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 *this = *p1 + *p2;
             else
                 *this = toDouble() + v.toDouble();
+        }
+
+        /*! Subtracts the given value from the value. */
+        inline void subtract(const Value &v)
+        {
+            if ((static_cast<int>(m_type) < 0) || (static_cast<int>(v.m_type) < 0)) {
+                if ((m_type == Type::Infinity && v.m_type == Type::Infinity) || (m_type == Type::NegativeInfinity && v.m_type == Type::NegativeInfinity))
+                    m_type = Type::NaN;
+                else if (m_type == Type::Infinity || v.m_type == Type::NegativeInfinity)
+                    m_type = Type::Infinity;
+                else if (m_type == Type::NegativeInfinity || v.m_type == Type::Infinity)
+                    m_type = Type::NegativeInfinity;
+                return;
+            }
+            auto p1 = std::get_if<long>(this);
+            auto p2 = std::get_if<long>(&v);
+            if (p1 && p2)
+                *this = *p1 - *p2;
+            else
+                *this = toDouble() - v.toDouble();
+        }
+
+        /*! Multiplies the given value with the value. */
+        inline void multiply(const Value &v)
+        {
+            if ((static_cast<int>(m_type) < 0) || (static_cast<int>(v.m_type) < 0)) {
+                if (m_type == Type::Infinity || m_type == Type::NegativeInfinity || v.m_type == Type::Infinity || v.m_type == Type::NegativeInfinity) {
+                    bool mode = (m_type == Type::Infinity || v.m_type == Type::Infinity);
+                    const Value &value = (m_type == Type::Infinity || m_type == Type::NegativeInfinity) ? v : *this;
+                    if (value > 0)
+                        m_type = mode ? Type::Infinity : Type::NegativeInfinity;
+                    else if (value < 0)
+                        m_type = mode ? Type::NegativeInfinity : Type::Infinity;
+                    else
+                        m_type = Type::NaN;
+                    return;
+                }
+            }
+            auto p1 = std::get_if<long>(this);
+            auto p2 = std::get_if<long>(&v);
+            if (p1 && p2)
+                *this = *p1 * *p2;
+            else
+                *this = toDouble() * v.toDouble();
+        }
+
+        /*! Divides the value by the given value. */
+        inline void divide(const Value &v)
+        {
+            if ((toDouble() == 0) && (v.toDouble() == 0)) {
+                m_type = Type::NaN;
+                return;
+            } else if (v.toDouble() == 0) {
+                if (v.m_type == Type::Infinity || v.m_type == Type::NegativeInfinity) {
+                    if (m_type == Type::Infinity || m_type == Type::NegativeInfinity)
+                        m_type = Type::NaN;
+                    else
+                        *this = 0;
+                } else
+                    m_type = toDouble() > 0 ? Type::Infinity : Type::NegativeInfinity;
+                return;
+            }
+            *this = toDouble() / v.toDouble();
         }
 
         inline const Value &operator=(float v)
