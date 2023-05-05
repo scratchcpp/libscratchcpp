@@ -59,79 +59,98 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         /*! Returns the long representation of the value. */
         inline long toLong() const
         {
-            if (auto p = std::get_if<long>(this))
-                return *p;
-            else if (auto p = std::get_if<double>(this))
-                return *p;
-            else if (auto p = std::get_if<bool>(this))
-                return *p;
-            else if (auto p = std::get_if<std::string>(this))
-                return stringToLong(*p);
-            else if (m_type == Type::Infinity)
-                return std::numeric_limits<long>::infinity();
-            else if (m_type == Type::NegativeInfinity)
-                return -std::numeric_limits<long>::infinity();
-            else
-                return 0;
+            if (static_cast<int>(m_type) < 0) {
+                if (m_type == Type::Infinity)
+                    return std::numeric_limits<long>::infinity();
+                else if (m_type == Type::NegativeInfinity)
+                    return -std::numeric_limits<long>::infinity();
+                else
+                    return 0;
+            } else {
+                if (auto p = std::get_if<long>(this))
+                    return *p;
+                else if (auto p = std::get_if<double>(this))
+                    return *p;
+                else if (auto p = std::get_if<bool>(this))
+                    return *p;
+                else if (auto p = std::get_if<std::string>(this))
+                    return stringToLong(*p);
+                else
+                    return 0;
+            }
         }
 
         /*! Returns the double representation of the value. */
         inline double toDouble() const
         {
-            if (std::holds_alternative<double>(*this))
-                return std::get<double>(*this);
-            else if (std::holds_alternative<long>(*this))
-                return std::get<long>(*this);
-            else if (std::holds_alternative<bool>(*this))
-                return std::get<bool>(*this);
-            else if (std::holds_alternative<std::string>(*this))
-                return stringToDouble(std::get<std::string>(*this));
-            else if (m_type == Type::Infinity)
-                return std::numeric_limits<double>::infinity();
-            else if (m_type == Type::NegativeInfinity)
-                return -std::numeric_limits<double>::infinity();
-            else
-                return 0;
+            if (static_cast<int>(m_type) < 0) {
+                if (m_type == Type::Infinity)
+                    return std::numeric_limits<double>::infinity();
+                if (m_type == Type::NegativeInfinity)
+                    return -std::numeric_limits<double>::infinity();
+                else
+                    return 0;
+            } else {
+                if (std::holds_alternative<double>(*this))
+                    return std::get<double>(*this);
+                else if (std::holds_alternative<long>(*this))
+                    return std::get<long>(*this);
+                else if (std::holds_alternative<bool>(*this))
+                    return std::get<bool>(*this);
+                else if (std::holds_alternative<std::string>(*this))
+                    return stringToDouble(std::get<std::string>(*this));
+                else
+                    return 0;
+            }
         };
 
         /*! Returns the boolean representation of the value. */
         inline bool toBool() const
         {
-            if (std::holds_alternative<bool>(*this))
-                return std::get<bool>(*this);
-            else if (std::holds_alternative<long>(*this))
-                return std::get<long>(*this) == 1 ? true : false;
-            else if (std::holds_alternative<double>(*this))
-                return std::get<double>(*this) == 1 ? true : false;
-            else if (std::holds_alternative<std::string>(*this)) {
-                const std::string &str = std::get<std::string>(*this);
-                return (stringsEqual(str, "true") || str == "1");
-            } else
+            if (static_cast<int>(m_type) < 0) {
                 return false;
+            } else {
+                if (std::holds_alternative<bool>(*this))
+                    return std::get<bool>(*this);
+                else if (std::holds_alternative<long>(*this))
+                    return std::get<long>(*this) == 1 ? true : false;
+                else if (std::holds_alternative<double>(*this))
+                    return std::get<double>(*this) == 1 ? true : false;
+                else if (std::holds_alternative<std::string>(*this)) {
+                    const std::string &str = std::get<std::string>(*this);
+                    return (stringsEqual(str, "true") || str == "1");
+                } else
+                    return false;
+            }
         };
 
         /*! Returns the string representation of the value. */
         inline std::string toString() const
         {
-            if (std::holds_alternative<std::string>(*this))
-                return std::get<std::string>(*this);
-            else if (std::holds_alternative<long>(*this))
-                return std::to_string(std::get<long>(*this));
-            else if (std::holds_alternative<double>(*this)) {
-                std::string s = std::to_string(std::get<double>(*this));
-                s.erase(s.find_last_not_of('0') + 1, std::string::npos);
-                if (s.back() == '.') {
-                    s.pop_back();
-                }
-                return s;
-            } else if (std::holds_alternative<bool>(*this))
-                return std::get<bool>(*this) ? "true" : "false";
-            else if (m_type == Type::Infinity)
-                return "Infinity";
-            else if (m_type == Type::NegativeInfinity)
-                return "-Infinity";
-            else
-                return "NaN";
+            if (static_cast<int>(m_type) < 0) {
+                if (m_type == Type::Infinity)
+                    return "Infinity";
+                else if (m_type == Type::NegativeInfinity)
+                    return "-Infinity";
+                else
+                    return "NaN";
+            } else {
+                if (std::holds_alternative<std::string>(*this))
+                    return std::get<std::string>(*this);
+                else if (std::holds_alternative<long>(*this))
+                    return std::to_string(std::get<long>(*this));
+                else if (std::holds_alternative<double>(*this)) {
+                    std::string s = std::to_string(std::get<double>(*this));
+                    s.erase(s.find_last_not_of('0') + 1, std::string::npos);
+                    if (s.back() == '.') {
+                        s.pop_back();
+                    }
+                    return s;
+                } else if (std::holds_alternative<bool>(*this))
+                    return std::get<bool>(*this) ? "true" : "false";
+                else
+                    return "";
+            }
         };
 
         /*! Returns the UTF-16 representation of the value. */
