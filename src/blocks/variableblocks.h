@@ -25,6 +25,9 @@ class LIBSCRATCHCPP_EXPORT VariableBlocks : public IBlockSection
 
         std::string name() const override;
 
+        static void compileSetVariable(Compiler *compiler);
+        static void compileChangeVariableBy(Compiler *compiler);
+
         static Value setVariable(const BlockArgs &args);
         static Value changeVariableBy(const BlockArgs &args);
 };
