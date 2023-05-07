@@ -10,12 +10,21 @@
 namespace libscratchcpp
 {
 
+class LIBSCRATCHCPP_EXPORT VirtualMachine;
+
 /*!
  * \typedef BlockImpl
  *
  * BlockImpl is a function pointer for block implementation functions.
  */
 using BlockImpl = Value (*)(const BlockArgs &);
+
+/*!
+ * \typedef BlockFunc
+ *
+ * BlockFunc is a function pointer for block implementation functions.
+ */
+using BlockFunc = unsigned int (*)(VirtualMachine *vm);
 
 /*! Generates a random number in the given interval like the random.randint() function in Python. */
 template<typename T>

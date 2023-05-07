@@ -2,10 +2,12 @@ target_sources(scratchcpp
   PRIVATE
     engine.cpp
     blockargs.cpp
+    virtualmachine.cpp
   PUBLIC
     engine.h
     global.h
     blockargs.h
+    virtualmachine.h
     iblocksection.h
     iextension.h
 )
