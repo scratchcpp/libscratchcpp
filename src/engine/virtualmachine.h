@@ -64,6 +64,8 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
 
         void setFunctions(const std::vector<BlockFunc> &functions);
         void setConstValues(const std::vector<Value> &values);
+        void setVariables(const std::vector<Value *> &variables);
+        void setLists(const std::vector<List *> &lists);
         void setBytecode(const std::vector<unsigned int> &code);
 
         const Value *getInput(unsigned int index, unsigned int argCount) const { return m_regs[m_regCount - argCount + index]; };
@@ -95,8 +97,12 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
 
         Value **m_regs = nullptr;
         size_t m_regCount = 0;
+
         Value **m_variables = nullptr;
+        std::vector<Value *> m_variablesVector;
+
         List **m_lists = nullptr;
+        std::vector<List *> m_listsVector;
 };
 
 } // namespace libscratchcpp

@@ -5,6 +5,7 @@
 #include "../scratchconfiguration.h"
 #include "../scratch/runningscript.h"
 #include "iblocksection.h"
+#include "compiler.h"
 #include <cassert>
 #include <iostream>
 #include <thread>
@@ -26,12 +27,12 @@ void Engine::clear()
 }
 
 /*!
- * Turns ID references into pointers to make projects run faster.\n
- * It also resolves all block opcodes and saves them as function pointers.
+ * Compiles all scripts to bytecode.
+ * \see Compiler
  */
 void Engine::compile()
 {
-    // TODO: Compiling takes lots of time, so compile blocks when they're added by the project loader.
+    // Resolve entities by ID
     for (auto target : m_targets) {
         auto blocks = target->blocks();
         for (auto block : blocks) {
@@ -64,6 +65,33 @@ void Engine::compile()
 
             block->updateInputMap();
             block->updateFieldMap();
+        }
+    }
+
+    // Compile scripts to bytecode
+    for (auto target : m_targets) {
+        std::vector<Variable *> variables;
+        std::vector<List *> lists;
+        std::vector<InputValue *> constInputValues;
+        auto blocks = target->blocks();
+        for (auto block : blocks) {
+            if (block->topLevel()) {
+                auto section = blockSection(block->opcode());
+                Compiler compiler(this, block);
+                compiler.setConstInputValues(constInputValues);
+                compiler.setVariables(variables);
+                compiler.setLists(lists);
+                compiler.compile();
+                variables = compiler.variables();
+                lists = compiler.lists();
+                auto vm = std::make_shared<VirtualMachine>();
+                vm->setFunctions(m_functions);
+                vm->setConstValues(compiler.constValues());
+                vm->setVariables(compiler.variablePtrs());
+                vm->setLists(lists);
+                vm->setBytecode(compiler.bytecode());
+                m_scripts[block] = vm;
+            }
         }
     }
 }

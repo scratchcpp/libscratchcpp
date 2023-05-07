@@ -70,6 +70,7 @@ class LIBSCRATCHCPP_EXPORT Engine
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::vector<std::string> m_extensions;
         std::vector<std::shared_ptr<RunningScript>> m_runningScripts;
+        std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<VirtualMachine>> m_scripts;
         bool m_breakFrame = false;
         bool m_stayOnCurrentBlock = false;
         bool m_atomic = true;

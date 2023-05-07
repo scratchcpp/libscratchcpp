@@ -47,6 +47,20 @@ void VirtualMachine::setConstValues(const std::vector<Value> &values)
     m_constValues = m_constValuesVector.data();
 }
 
+/*! Sets the list of variables. */
+void VirtualMachine::setVariables(const std::vector<Value *> &variables)
+{
+    m_variablesVector = variables;
+    m_variables = m_variablesVector.data();
+}
+
+/*! Sets the list of lists. */
+void VirtualMachine::setLists(const std::vector<List *> &lists)
+{
+    m_listsVector = lists;
+    m_lists = m_listsVector.data();
+}
+
 /*! Sets the bytecode of the script. */
 void VirtualMachine::setBytecode(const std::vector<unsigned int> &code)
 {
