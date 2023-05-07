@@ -21,6 +21,7 @@ class LIBSCRATCHCPP_EXPORT Block : public IEntity
         Block(const Block &) = delete;
 
         Value run(RunningScript *script = nullptr, const Value &defaultRetValue = Value());
+        void compile(Compiler *compiler);
 
         std::string opcode() const;
 
@@ -61,9 +62,13 @@ class LIBSCRATCHCPP_EXPORT Block : public IEntity
 
         void setTarget(Target *newTarget);
 
+        BlockComp compileFunction() const;
+        void setCompileFunction(BlockComp newCompileFunction);
+
     private:
         std::string m_opcode;
         BlockImpl m_implementation = nullptr;
+        BlockComp m_compileFunction = nullptr;
         std::shared_ptr<Block> m_next = nullptr;
         std::string m_nextId;
         std::shared_ptr<Block> m_parent = nullptr;

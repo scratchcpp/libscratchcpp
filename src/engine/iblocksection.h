@@ -39,6 +39,17 @@ class IBlockSection
         }
 
         /*!
+         * Returns a pointer to the compile function of the given block opcode.\n
+         * Used internally by Engine.
+         */
+        virtual BlockComp resolveBlockCompileFunc(const std::string &opcode) const final
+        {
+            if (m_compileFunctions.count(opcode) == 1)
+                return m_compileFunctions.at(opcode);
+            return nullptr;
+        }
+
+        /*!
          * Returns the ID of the input with the given name.\n
          * Used internally by Engine.
          */
@@ -83,6 +94,17 @@ class IBlockSection
             m_blocks[opcode] = f;
         }
 
+        /*!
+         * Assigns a compile function pointer to a block opcode.
+         * \param[in] opcode The block opcode
+         * \param[in] f A pointer to the compile function
+         */
+        template<class F>
+        void addCompileFunction(const std::string &opcode, F &&f)
+        {
+            m_compileFunctions[opcode] = f;
+        }
+
         /*! Assigns an input ID to an input name. */
         virtual void addInput(const std::string &name, int id) final { m_inputs[name] = id; }
 
@@ -94,6 +116,7 @@ class IBlockSection
 
     private:
         std::map<std::string, BlockImpl> m_blocks;
+        std::map<std::string, BlockComp> m_compileFunctions;
         std::map<std::string, int> m_inputs;
         std::map<std::string, int> m_fields;
         std::map<std::string, int> m_fieldValues;

@@ -23,9 +23,13 @@ Value Block::run(RunningScript *script, const Value &defaultRetValue)
 {
     if (m_implementation)
         return m_implementation(BlockArgs(m_target, m_engine, script, this));
-    else
-        std::cout << "warning: unsupported block: " << m_opcode << std::endl;
     return defaultRetValue;
+}
+
+/*! Calls the compile function. */
+void Block::compile(Compiler *compiler)
+{
+    return m_compileFunction(compiler);
 }
 
 /*! Returns the opcode. */
@@ -44,6 +48,18 @@ BlockImpl Block::implementation() const
 void Block::setImplementation(BlockImpl impl)
 {
     m_implementation = impl;
+}
+
+/*! Returns the compile function. \see <a href="blockSections.html">Block sections</a> */
+BlockComp Block::compileFunction() const
+{
+    return m_compileFunction;
+}
+
+/*! Sets the compile function. \see <a href="blockSections.html">Block sections</a> */
+void Block::setCompileFunction(BlockComp newCompileFunction)
+{
+    m_compileFunction = newCompileFunction;
 }
 
 /*! Returns the next block. */

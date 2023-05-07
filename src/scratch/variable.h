@@ -22,6 +22,9 @@ class LIBSCRATCHCPP_EXPORT Variable : public IEntity
         /*! Returns the value. */
         inline const Value &value() const { return m_value; }
 
+        /*! Returns a pointer to the value. */
+        inline Value *valuePtr() { return &m_value; }
+
         /*! Sets the value. */
         inline void setValue(const Value &value) { m_value = value; }
 

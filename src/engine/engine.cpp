@@ -38,8 +38,10 @@ void Engine::compile()
             auto section = blockSection(block->opcode());
             block->setNext(getBlock(block->nextId()));
             block->setParent(getBlock(block->parentId()));
-            if (section)
+            if (section) {
                 block->setImplementation(section->resolveBlock(block->opcode()));
+                block->setCompileFunction(section->resolveBlockCompileFunc(block->opcode()));
+            }
 
             auto inputs = block->inputs();
             for (auto input : inputs) {
