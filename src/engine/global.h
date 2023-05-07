@@ -26,7 +26,8 @@ inline T randint(T start, T end)
         start = end;
         end = tmp;
     }
-    std::default_random_engine generator;
+    std::random_device d;
+    std::default_random_engine generator(d());
     if constexpr (std::is_integral<T>()) {
         std::uniform_int_distribution<T> distribution(start, end);
         return distribution(generator);
