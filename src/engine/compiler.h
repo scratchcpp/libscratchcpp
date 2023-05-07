@@ -31,12 +31,13 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void setLists(std::vector<List *> lists);
 
         void addInstruction(vm::Opcode opcode, std::initializer_list<unsigned int> args = {});
-        void addInput(Input *input);
+        void addInput(int id);
         void addFunctionCall(BlockFunc f);
 
         Input *input(int id) const;
         Field *field(int id) const;
         unsigned int variableIndex(std::shared_ptr<IEntity> varEntity);
+        unsigned int listIndex(std::shared_ptr<IEntity> listEntity);
 
     private:
         unsigned int constIndex(InputValue *value);

@@ -103,12 +103,13 @@ void Compiler::addInstruction(Opcode opcode, std::initializer_list<unsigned int>
         m_bytecode.push_back(arg);
 }
 
-/*! Compiles the given input and adds it to the bytecode. */
-void Compiler::addInput(Input *input)
+/*! Compiles the given input (resolved by ID) and adds it to the bytecode. */
+void Compiler::addInput(int id)
 {
-    switch (input->type()) {
+    auto in = input(id);
+    switch (in->type()) {
         case Input::Type::Shadow:
-            addInstruction(OP_CONST, { constIndex(input->primaryValue()) });
+            addInstruction(OP_CONST, { constIndex(in->primaryValue()) });
             break;
 
         case Input::Type::NoShadow:
@@ -148,6 +149,17 @@ unsigned int Compiler::variableIndex(std::shared_ptr<IEntity> varEntity)
         return it - m_variables.begin();
     m_variables.push_back(var);
     return m_variables.size() - 1;
+}
+
+/*! Returns the index of the given list. */
+unsigned int Compiler::listIndex(std::shared_ptr<IEntity> listEntity)
+{
+    auto list = dynamic_cast<List *>(listEntity.get());
+    auto it = std::find(m_lists.begin(), m_lists.end(), list);
+    if (it != m_lists.end())
+        return it - m_lists.begin();
+    m_lists.push_back(list);
+    return m_lists.size() - 1;
 }
 
 unsigned int Compiler::constIndex(InputValue *value)
