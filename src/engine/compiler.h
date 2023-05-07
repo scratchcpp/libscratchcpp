@@ -32,6 +32,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
 
         void addInstruction(vm::Opcode opcode, std::initializer_list<unsigned int> args = {});
         void addInput(Input *input);
+        void addFunctionCall(BlockFunc f);
 
         Input *input(int id) const;
         Field *field(int id) const;

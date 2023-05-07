@@ -307,6 +307,16 @@ BlockImpl Engine::resolveBlock(const std::string &opcode) const
     return nullptr;
 }
 
+/*! Returns the index of the given block function. */
+unsigned int Engine::functionIndex(BlockFunc f)
+{
+    auto it = std::find(m_functions.begin(), m_functions.end(), f);
+    if (it != m_functions.end())
+        return it - m_functions.begin();
+    m_functions.push_back(f);
+    return m_functions.size() - 1;
+}
+
 /*! Resolves the block and returns the block section in which it has been registered. */
 std::shared_ptr<IBlockSection> Engine::blockSection(const std::string &opcode) const
 {

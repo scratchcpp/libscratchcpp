@@ -45,6 +45,7 @@ class LIBSCRATCHCPP_EXPORT Engine
 
         void registerSection(std::shared_ptr<IBlockSection> section);
         BlockImpl resolveBlock(const std::string &opcode) const;
+        unsigned int functionIndex(BlockFunc f);
         std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
 
         std::vector<std::shared_ptr<Broadcast>> broadcasts() const;
@@ -71,6 +72,8 @@ class LIBSCRATCHCPP_EXPORT Engine
         std::vector<std::string> m_extensions;
         std::vector<std::shared_ptr<RunningScript>> m_runningScripts;
         std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<VirtualMachine>> m_scripts;
+        std::vector<BlockFunc> m_functions;
+
         bool m_breakFrame = false;
         bool m_stayOnCurrentBlock = false;
         bool m_atomic = true;
