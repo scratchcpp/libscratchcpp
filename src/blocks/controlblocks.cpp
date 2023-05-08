@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "controlblocks.h"
+#include "../engine/compiler.h"
 
 namespace libscratchcpp
 {
@@ -10,12 +11,17 @@ std::map<std::pair<RunningScript *, Block *>, std::pair<int, int>> ControlBlocks
 ControlBlocks::ControlBlocks()
 {
     // Blocks
+    addCompileFunction("control_forever", &ControlBlocks::compileRepeatForever);
+    addCompileFunction("control_repeat", &ControlBlocks::compileRepeat);
+    addCompileFunction("control_repeat_until", &ControlBlocks::compileRepeatUntil);
+    addCompileFunction("control_if", &ControlBlocks::compileIfStatement);
+    addCompileFunction("control_if_else", &ControlBlocks::compileIfElseStatement);
+    addCompileFunction("control_stop", &ControlBlocks::compileStop);
     addBlock("control_forever", &ControlBlocks::repeatForever);
     addBlock("control_repeat", &ControlBlocks::repeat);
     addBlock("control_repeat_until", &ControlBlocks::repeatUntil);
     addBlock("control_if", &ControlBlocks::ifStatement);
     addBlock("control_if_else", &ControlBlocks::ifElseStatement);
-    addBlock("control_stop", &ControlBlocks::stop);
 
     // Inputs
     addInput("SUBSTACK", SUBSTACK);
@@ -35,6 +41,104 @@ ControlBlocks::ControlBlocks()
 std::string ControlBlocks::name() const
 {
     return "Control";
+}
+
+void ControlBlocks::compileRepeatForever(Compiler *compiler)
+{
+    compiler->addInstruction(vm::OP_FOREVER_LOOP);
+    compiler->moveToSubstack(compiler->inputBlock(SUBSTACK), Compiler::SubstackType::Loop);
+}
+
+void ControlBlocks::compileRepeat(Compiler *compiler)
+{
+    auto substack = compiler->inputBlock(SUBSTACK);
+    if (substack) {
+        compiler->addInput(TIMES);
+        compiler->addInstruction(vm::OP_REPEAT_LOOP);
+        compiler->moveToSubstack(substack, Compiler::SubstackType::Loop);
+    }
+}
+
+void ControlBlocks::compileRepeatUntil(Compiler *compiler)
+{
+    auto substack = compiler->inputBlock(SUBSTACK);
+    if (substack) {
+        compiler->addInstruction(vm::OP_UNTIL_LOOP);
+        compiler->addInput(CONDITION);
+        compiler->addInstruction(vm::OP_BEGIN_UNTIL_LOOP);
+        compiler->moveToSubstack(substack, Compiler::SubstackType::Loop);
+    }
+}
+
+void ControlBlocks::compileRepeatWhile(Compiler *compiler)
+{
+    auto substack = compiler->inputBlock(SUBSTACK);
+    if (substack) {
+        compiler->addInstruction(vm::OP_UNTIL_LOOP);
+        compiler->addInput(CONDITION);
+        compiler->addInstruction(vm::OP_NOT);
+        compiler->addInstruction(vm::OP_BEGIN_UNTIL_LOOP);
+        compiler->moveToSubstack(substack, Compiler::SubstackType::Loop);
+    }
+}
+
+void ControlBlocks::compileIfStatement(Compiler *compiler)
+{
+    auto substack = compiler->inputBlock(SUBSTACK);
+    if (substack) {
+        compiler->addInput(CONDITION);
+        compiler->addInstruction(vm::OP_IF);
+        compiler->moveToSubstack(substack, Compiler::SubstackType::IfStatement);
+    }
+}
+
+void ControlBlocks::compileIfElseStatement(Compiler *compiler)
+{
+    auto substack1 = compiler->inputBlock(SUBSTACK);
+    auto substack2 = compiler->inputBlock(SUBSTACK2);
+    if (substack1 || substack2)
+        compiler->addInput(CONDITION);
+    if (substack1 && substack2) {
+        compiler->addInstruction(vm::OP_IF);
+        compiler->moveToSubstack(substack1, substack2, Compiler::SubstackType::IfStatement);
+    } else if (substack1) {
+        compiler->addInstruction(vm::OP_IF);
+        compiler->moveToSubstack(substack1, Compiler::SubstackType::IfStatement);
+    } else if (substack2) {
+        compiler->addInstruction(vm::OP_NOT);
+        compiler->addInstruction(vm::OP_IF);
+        compiler->moveToSubstack(substack2, Compiler::SubstackType::IfStatement);
+    }
+}
+
+void ControlBlocks::compileStop(Compiler *compiler)
+{
+    int option = compiler->field(STOP_OPTION)->specialValueId();
+    switch (option) {
+        case StopAll:
+            compiler->addFunctionCall(&stopAll);
+            break;
+
+        case StopThisScript:
+            compiler->addInstruction(vm::OP_HALT);
+            break;
+
+        case StopOtherScriptsInSprite:
+            compiler->addFunctionCall(&stopOtherScriptsInSprite);
+            break;
+    }
+}
+
+unsigned int ControlBlocks::stopAll(VirtualMachine *vm)
+{
+    vm->engine()->stop();
+    return 0;
+}
+
+unsigned int ControlBlocks::stopOtherScriptsInSprite(VirtualMachine *vm)
+{
+    vm->engine()->stopTarget(vm->target(), vm);
+    return 0;
 }
 
 Value ControlBlocks::repeatForever(const BlockArgs &args)
@@ -136,18 +240,6 @@ Value ControlBlocks::ifElseStatement(const BlockArgs &args)
             script->moveToSubstack(args, SUBSTACK2);
         return Value();
     }
-}
-
-Value ControlBlocks::stop(const BlockArgs &args)
-{
-    int option = args.field(STOP_OPTION)->specialValueId();
-    if (option == StopAll)
-        args.engine()->stop();
-    else if (option == StopThisScript)
-        args.engine()->stopScript(args.script());
-    else if (option == StopOtherScriptsInSprite)
-        args.engine()->stopTarget(args.target(), args.script());
-    return Value();
 }
 
 } // namespace libscratchcpp
