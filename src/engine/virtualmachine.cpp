@@ -73,6 +73,7 @@ void VirtualMachine::setBytecode(const std::vector<unsigned int> &code)
 /*! Runs the script. */
 unsigned int *VirtualMachine::run(RunningScript *script)
 {
+    m_atEnd = false;
     return run(m_bytecode, script);
 }
 
@@ -127,6 +128,7 @@ do_halt:
     if (m_regCount > 0) {
         std::cout << "warning: VM: " << m_regCount << " registers were leaked by the script; this is most likely a bug in the VM or in the compiler" << std::endl;
     }
+    m_atEnd = true;
     return pos;
 
 do_const:

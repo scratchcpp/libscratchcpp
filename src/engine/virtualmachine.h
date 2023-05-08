@@ -77,6 +77,9 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
 
         unsigned int *run(RunningScript *script);
 
+        /*! Returns true if the VM has reached the vm::OP_HALT instruction. */
+        bool atEnd() const { return m_atEnd; };
+
     private:
         unsigned int *run(unsigned int *pos, RunningScript *script);
 
@@ -89,6 +92,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         Engine *m_engine = nullptr;
         RunningScript *m_script = nullptr;
         unsigned int *m_globalPos = nullptr;
+        bool m_atEnd = false;
 
         BlockFunc *m_functions;
         std::vector<BlockFunc> m_functionsVector;
