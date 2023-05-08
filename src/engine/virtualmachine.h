@@ -65,13 +65,18 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
     public:
         VirtualMachine();
         VirtualMachine(Target *target, Engine *engine);
+        VirtualMachine(const VirtualMachine &) = delete;
         ~VirtualMachine();
 
         void setFunctions(const std::vector<BlockFunc> &functions);
         void setConstValues(const std::vector<Value> &values);
         void setVariables(const std::vector<Value *> &variables);
         void setLists(const std::vector<List *> &lists);
+
         void setBytecode(const std::vector<unsigned int> &code);
+
+        /*! Returns the bytecode array. */
+        unsigned int *bytecode() const { return m_bytecode; };
 
         Target *target() const { return m_target; };
         Engine *engine() const { return m_engine; };

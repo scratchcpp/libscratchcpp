@@ -83,13 +83,13 @@ void Engine::compile()
                     variables = compiler.variables();
                     lists = compiler.lists();
                     constInputValues = compiler.constInputValues();
-                    m_scripts[block] = VirtualMachine(target.get(), this);
-                    VirtualMachine &vm = m_scripts[block];
-                    vm.setFunctions(m_functions);
-                    vm.setConstValues(compiler.constValues());
-                    vm.setVariables(compiler.variablePtrs());
-                    vm.setLists(lists);
-                    vm.setBytecode(compiler.bytecode());
+                    auto vm = std::make_shared<VirtualMachine>(target.get(), this);
+                    vm->setFunctions(m_functions);
+                    vm->setConstValues(compiler.constValues());
+                    vm->setVariables(compiler.variablePtrs());
+                    vm->setLists(lists);
+                    vm->setBytecode(compiler.bytecode());
+                    m_scripts[block] = vm;
                 } else
                     std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
             }
@@ -106,19 +106,22 @@ void Engine::compile()
  */
 void Engine::frame()
 {
-    for (VirtualMachine &script : m_runningScripts) {
+    for (int i = 0; i < m_runningScripts.size(); i++) {
+        auto script = m_runningScripts[i];
         m_breakFrame = false;
 
         do {
-            script.run();
-        } while (script.atEnd() && !m_breakFrame);
+            m_scriptPositions[i] = script->run();
+            if (script->atEnd())
+                m_scriptsToRemove.push_back(script);
+        } while (!script->atEnd() && !m_breakFrame);
     }
 
     for (auto script : m_scriptsToRemove) {
-        auto it = std::find(m_runningScriptPtrs.begin(), m_runningScriptPtrs.end(), script);
-        auto index = it - m_runningScriptPtrs.begin();
+        auto it = std::find(m_runningScripts.begin(), m_runningScripts.end(), script);
+        auto index = it - m_runningScripts.begin();
         m_runningScripts.erase(m_runningScripts.begin() + index);
-        m_runningScriptPtrs.erase(m_runningScriptPtrs.begin() + index);
+        m_scriptPositions.erase(m_scriptPositions.begin() + index);
         scriptCount--;
     }
     m_scriptsToRemove.clear();
@@ -160,8 +163,9 @@ void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<T
     }
 
     if (topLevelBlock->next()) {
-        m_runningScripts.push_back(m_scripts[topLevelBlock]);
-        m_runningScriptPtrs.push_back(&m_runningScripts.back());
+        auto vm = m_scripts[topLevelBlock].get();
+        m_runningScripts.push_back(vm);
+        m_scriptPositions.push_back(vm->bytecode());
         scriptCount++;
     }
 }
@@ -181,9 +185,9 @@ void Engine::stopScript(VirtualMachine *vm)
 void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
 {
     std::vector<VirtualMachine *> scripts;
-    for (VirtualMachine &script : m_runningScripts) {
-        if ((script.target() == target) && (&script != exceptScript))
-            scripts.push_back(&script);
+    for (auto script : m_runningScripts) {
+        if ((script->target() == target) && (script != exceptScript))
+            scripts.push_back(script);
     }
 
     for (auto script : scripts)

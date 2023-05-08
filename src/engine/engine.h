@@ -70,10 +70,10 @@ class LIBSCRATCHCPP_EXPORT Engine
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::vector<std::string> m_extensions;
-        std::vector<VirtualMachine> m_runningScripts;
-        std::vector<VirtualMachine *> m_runningScriptPtrs;
+        std::vector<VirtualMachine *> m_runningScripts;
+        std::vector<unsigned int *> m_scriptPositions;
         std::vector<VirtualMachine *> m_scriptsToRemove;
-        std::unordered_map<std::shared_ptr<Block>, VirtualMachine> m_scripts;
+        std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<VirtualMachine>> m_scripts;
         std::vector<BlockFunc> m_functions;
 
         bool m_breakFrame = false;
