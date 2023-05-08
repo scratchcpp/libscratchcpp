@@ -3,7 +3,6 @@
 #include "engine.h"
 #include "../blocks/standardblocks.h"
 #include "../scratchconfiguration.h"
-#include "../scratch/runningscript.h"
 #include "iblocksection.h"
 #include "compiler.h"
 #include <cassert>

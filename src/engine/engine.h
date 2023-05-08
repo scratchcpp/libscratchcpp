@@ -4,6 +4,7 @@
 
 #include "../libscratchcpp_global.h"
 #include "../scratch/broadcast.h"
+#include "../scratch/runningscript.h"
 #include "../scratch/target.h"
 #include "global.h"
 #include <map>
