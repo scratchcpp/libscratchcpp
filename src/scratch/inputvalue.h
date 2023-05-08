@@ -10,6 +10,7 @@ namespace libscratchcpp
 {
 
 class LIBSCRATCHCPP_EXPORT Block;
+class LIBSCRATCHCPP_EXPORT Compiler;
 
 /*! \brief The InputValue class provides methods for the value of an Input. */
 class LIBSCRATCHCPP_EXPORT InputValue
@@ -31,6 +32,8 @@ class LIBSCRATCHCPP_EXPORT InputValue
 
         InputValue();
         InputValue(Type type);
+
+        void compile(Compiler *compiler);
 
         Type type() const;
         void setType(Type newType);

@@ -126,13 +126,31 @@ void Compiler::addInput(int id)
             addInstruction(OP_CONST, { constIndex(in->primaryValue()) });
             break;
 
-        case Input::Type::NoShadow:
-            addInstruction(OP_NULL);
+        case Input::Type::NoShadow: {
+            auto previousBlock = m_block;
+            m_block = in->valueBlock();
+            assert(m_block);
+            if (m_block->compileFunction())
+                m_block->compile(this);
+            else
+                std::cout << "warning: unsupported reporter block: " << m_block->opcode() << std::endl;
+            m_block = previousBlock;
             break;
+        }
 
-        case Input::Type::ObscuredShadow:
-            // TODO
+        case Input::Type::ObscuredShadow: {
+            auto previousBlock = m_block;
+            m_block = in->valueBlock();
+            if (m_block) {
+                if (m_block->compileFunction())
+                    m_block->compile(this);
+                else
+                    std::cout << "warning: unsupported reporter block: " << m_block->opcode() << std::endl;
+            } else
+                in->primaryValue()->compile(this);
+            m_block = previousBlock;
             break;
+        }
     }
 }
 

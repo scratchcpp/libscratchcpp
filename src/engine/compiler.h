@@ -47,9 +47,9 @@ class LIBSCRATCHCPP_EXPORT Compiler
         std::shared_ptr<Block> inputBlock(int id) const;
         unsigned int variableIndex(std::shared_ptr<IEntity> varEntity);
         unsigned int listIndex(std::shared_ptr<IEntity> listEntity);
+        unsigned int constIndex(InputValue *value);
 
     private:
-        unsigned int constIndex(InputValue *value);
         void substackEnd();
 
         Engine *m_engine;

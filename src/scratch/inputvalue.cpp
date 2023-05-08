@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "inputvalue.h"
+#include "../engine/compiler.h"
 #include <map>
 
 using namespace libscratchcpp;
@@ -20,6 +21,32 @@ InputValue::InputValue()
 InputValue::InputValue(Type type) :
     m_type(type)
 {
+}
+
+/*! Compiles the input value. */
+void InputValue::compile(Compiler *compiler)
+{
+    switch (m_type) {
+        case Type::Color:
+            // TODO: Add support for colors
+            break;
+
+        case Type::Broadcast:
+            // TODO: Add support for broadcasts
+            break;
+
+        case Type::Variable:
+            compiler->addInstruction(vm::OP_READ_VAR, { compiler->variableIndex(m_valuePtr) });
+            break;
+
+        case Type::List:
+            compiler->addInstruction(vm::OP_READ_LIST, { compiler->listIndex(m_valuePtr) });
+            break;
+
+        default:
+            compiler->addInstruction(vm::OP_CONST, { compiler->constIndex(this) });
+            break;
+    }
 }
 
 /*! Returns the type of the value. */
