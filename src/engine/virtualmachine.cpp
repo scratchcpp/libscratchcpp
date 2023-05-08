@@ -149,14 +149,14 @@ do_null:
 
 do_if:
     if (!READ_LAST_REG()->toBool()) {
-        while (*pos != OP_ELSE && *pos != OP_ENDIF && *pos != OP_HALT)
+        while (*pos != OP_ELSE && *pos != OP_ENDIF)
             pos += instruction_arg_count[*pos++];
     }
     FREE_REGS(1);
     DISPATCH();
 
 do_else:
-    while (*pos != OP_ENDIF && *pos != OP_HALT)
+    while (*pos != OP_ENDIF)
         pos += instruction_arg_count[*pos++];
 
 do_endif:
@@ -171,7 +171,7 @@ do_repeat_loop:
     FREE_REGS(1);
     if (loopCount <= 0) {
         loopEnd = pos;
-        while (*loopEnd != OP_LOOP_END && *loopEnd != OP_HALT)
+        while (*loopEnd != OP_LOOP_END)
             loopEnd += instruction_arg_count[*loopEnd++];
     } else {
         for (size_t i = 0; i < loopCount; i++)
@@ -191,7 +191,7 @@ do_until_loop:
         FREE_REGS(1);
     } else {
         loopEnd = loopStart;
-        while (*loopEnd != OP_LOOP_END && *loopEnd != OP_HALT)
+        while (*loopEnd != OP_LOOP_END)
             loopEnd += instruction_arg_count[*loopEnd++];
     }
     pos = loopEnd;
