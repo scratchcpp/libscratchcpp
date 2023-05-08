@@ -6,22 +6,15 @@
 namespace libscratchcpp
 {
 
-std::map<std::pair<RunningScript *, Block *>, std::pair<int, int>> ControlBlocks::repeatLoops;
-
 ControlBlocks::ControlBlocks()
 {
     // Blocks
-    addCompileFunction("control_forever", &ControlBlocks::compileRepeatForever);
-    addCompileFunction("control_repeat", &ControlBlocks::compileRepeat);
-    addCompileFunction("control_repeat_until", &ControlBlocks::compileRepeatUntil);
-    addCompileFunction("control_if", &ControlBlocks::compileIfStatement);
-    addCompileFunction("control_if_else", &ControlBlocks::compileIfElseStatement);
-    addCompileFunction("control_stop", &ControlBlocks::compileStop);
-    addBlock("control_forever", &ControlBlocks::repeatForever);
-    addBlock("control_repeat", &ControlBlocks::repeat);
-    addBlock("control_repeat_until", &ControlBlocks::repeatUntil);
-    addBlock("control_if", &ControlBlocks::ifStatement);
-    addBlock("control_if_else", &ControlBlocks::ifElseStatement);
+    addCompileFunction("control_forever", &compileRepeatForever);
+    addCompileFunction("control_repeat", &compileRepeat);
+    addCompileFunction("control_repeat_until", &compileRepeatUntil);
+    addCompileFunction("control_if", &compileIfStatement);
+    addCompileFunction("control_if_else", &compileIfElseStatement);
+    addCompileFunction("control_stop", &compileStop);
 
     // Inputs
     addInput("SUBSTACK", SUBSTACK);
@@ -139,107 +132,6 @@ unsigned int ControlBlocks::stopOtherScriptsInSprite(VirtualMachine *vm)
 {
     vm->engine()->stopTarget(vm->target(), vm);
     return 0;
-}
-
-Value ControlBlocks::repeatForever(const BlockArgs &args)
-{
-    auto script = args.script();
-    if (script->atCMouthEnd()) {
-        // Return false to prevent breaking from a forever loop
-        return false;
-    } else {
-        // Move to the C mouth
-        script->moveToSubstack(args, SUBSTACK);
-        return Value();
-    }
-}
-
-Value ControlBlocks::repeat(const BlockArgs &args)
-{
-    auto script = args.script();
-    if (script->atCMouthEnd()) {
-        Block *cMouth = script->cMouth().get();
-        auto loop = repeatLoops[{ script, cMouth }];
-        int i = loop.first + 1;
-        repeatLoops[{ script, cMouth }] = { i, loop.second };
-        if (i >= loop.second) {
-            repeatLoops.erase({ script, cMouth });
-            return true;
-        } else
-            return false;
-    } else {
-        int count = args.input(TIMES)->value().toInt();
-        if (count > 0) {
-            auto substack = script->getSubstack(args, SUBSTACK);
-            if (substack) {
-                // Create the loop
-                repeatLoops[{ script, script->currentBlock().get() }] = { 0, count };
-
-                script->moveToSubstack(substack);
-            }
-        }
-        return Value();
-    }
-}
-
-Value ControlBlocks::repeatUntil(const BlockArgs &args)
-{
-    auto script = args.script();
-    bool cond = args.input(CONDITION)->value().toBool();
-    if (script->atCMouthEnd())
-        return cond;
-    else {
-        if (cond)
-            script->skipSubstack();
-        else
-            script->moveToSubstack(args, SUBSTACK);
-        return Value();
-    }
-}
-
-Value ControlBlocks::repeatWhile(const BlockArgs &args)
-{
-    auto script = args.script();
-    bool cond = args.input(CONDITION)->value().toBool();
-    if (script->atCMouthEnd())
-        return !cond;
-    else {
-        if (cond)
-            script->moveToSubstack(args, SUBSTACK);
-        else
-            script->skipSubstack();
-        return Value();
-    }
-}
-
-Value ControlBlocks::ifStatement(const BlockArgs &args)
-{
-    auto script = args.script();
-    bool cond = args.input(CONDITION)->value().toBool();
-    if (script->atCMouthEnd())
-        return true;
-    else {
-        if (cond)
-            script->moveToSubstack(args, SUBSTACK);
-        else
-            script->skipSubstack();
-        return Value();
-    }
-}
-
-Value ControlBlocks::ifElseStatement(const BlockArgs &args)
-{
-    auto script = args.script();
-    bool cond = args.input(CONDITION)->value().toBool();
-    if (script->atCMouthEnd())
-        return true;
-    else {
-        if (cond)
-            script->moveToSubstack(args, SUBSTACK);
-        else
-            script->moveToSubstack(args, SUBSTACK2);
-        return Value();
-    }
 }
 
 } // namespace libscratchcpp

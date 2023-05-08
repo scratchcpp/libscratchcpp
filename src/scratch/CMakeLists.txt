@@ -14,7 +14,6 @@ target_sources(scratchcpp
     stage.cpp
     sprite.cpp
     broadcast.cpp
-    runningscript.cpp
     ientity.h
   PUBLIC
     target.h
@@ -31,7 +30,4 @@ target_sources(scratchcpp
     stage.h
     sprite.h
     broadcast.h
-    runningscript.h
 )
-
-add_subdirectory(internal)

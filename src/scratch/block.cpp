@@ -2,7 +2,6 @@
 
 #include "block.h"
 #include "../engine/engine.h"
-#include "runningscript.h"
 #include <iostream>
 
 using namespace libscratchcpp;
@@ -12,18 +11,6 @@ Block::Block(std::string id, std::string opcode) :
     m_opcode(opcode)
 {
     setId(id);
-}
-
-/*!
- * Calls the block implementation.
- * \param[in] script The script from which the block was called. Call be nullptr for reporter blocks.
- * \param[out] defaultRetValue Value to return when the block isn't supported.
- */
-Value Block::run(RunningScript *script, const Value &defaultRetValue)
-{
-    if (m_implementation)
-        return m_implementation(BlockArgs(m_target, m_engine, script, this));
-    return defaultRetValue;
 }
 
 /*! Calls the compile function. */
@@ -36,18 +23,6 @@ void Block::compile(Compiler *compiler)
 std::string Block::opcode() const
 {
     return m_opcode;
-}
-
-/*! Returns the implementation function. \see <a href="blockSections.html">Block sections</a> */
-BlockImpl Block::implementation() const
-{
-    return m_implementation;
-}
-
-/*! Sets the implementation function. \see <a href="blockSections.html">Block sections</a> */
-void Block::setImplementation(BlockImpl impl)
-{
-    m_implementation = impl;
 }
 
 /*! Returns the compile function. \see <a href="blockSections.html">Block sections</a> */

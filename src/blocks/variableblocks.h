@@ -27,9 +27,6 @@ class LIBSCRATCHCPP_EXPORT VariableBlocks : public IBlockSection
 
         static void compileSetVariable(Compiler *compiler);
         static void compileChangeVariableBy(Compiler *compiler);
-
-        static Value setVariable(const BlockArgs &args);
-        static Value changeVariableBy(const BlockArgs &args);
 };
 
 } // namespace libscratchcpp

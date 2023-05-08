@@ -4,7 +4,6 @@
 
 #include "../libscratchcpp_global.h"
 #include "../scratch/broadcast.h"
-#include "../scratch/runningscript.h"
 #include "../scratch/target.h"
 #include "global.h"
 #include "virtualmachine.h"
@@ -46,7 +45,6 @@ class LIBSCRATCHCPP_EXPORT Engine
         bool isAtomic();
 
         void registerSection(std::shared_ptr<IBlockSection> section);
-        BlockImpl resolveBlock(const std::string &opcode) const;
         unsigned int functionIndex(BlockFunc f);
         std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
 

@@ -2,7 +2,9 @@
 
 #pragma once
 
-#include "../scratch/runningscript.h"
+#include "global.h"
+#include "../scratch/value.h"
+#include "../scratch/target.h"
 
 namespace libscratchcpp
 {
@@ -55,6 +57,8 @@ enum Opcode
 
 }
 
+class LIBSCRATCHCPP_EXPORT Engine;
+
 /*! \brief The VirtualMachine class is a virtual machine for compiled Scratch scripts. */
 class LIBSCRATCHCPP_EXPORT VirtualMachine
 {
@@ -78,13 +82,13 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         void addReturnValue(const Value &v) { *m_regs[m_regCount++] = v; };
         void replaceReturnValue(const Value &v, unsigned int offset) { *m_regs[m_regCount - offset] = v; };
 
-        unsigned int *run(RunningScript *script);
+        unsigned int *run();
 
         /*! Returns true if the VM has reached the vm::OP_HALT instruction. */
         bool atEnd() const { return m_atEnd; };
 
     private:
-        unsigned int *run(unsigned int *pos, RunningScript *script);
+        unsigned int *run(unsigned int *pos);
 
         static inline const unsigned int instruction_arg_count[] = { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
@@ -93,7 +97,6 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
 
         Target *m_target = nullptr;
         Engine *m_engine = nullptr;
-        RunningScript *m_script = nullptr;
         unsigned int *m_globalPos = nullptr;
         bool m_atEnd = false;
 

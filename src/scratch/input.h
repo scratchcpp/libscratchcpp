@@ -31,14 +31,6 @@ class LIBSCRATCHCPP_EXPORT Input
         InputValue *primaryValue();
         InputValue *secondaryValue();
 
-        /*!
-         * Returns the value of the input.\n
-         * If there's an obscured shadow, the value will
-         * be retrieved from the block that obscures the shadow.\n
-         * Use secondaryValue() to get the value of the shadow.
-         */
-        virtual Value value() const = 0;
-
         void setPrimaryValue(Value value);
         void setSecondaryValue(Value value);
 

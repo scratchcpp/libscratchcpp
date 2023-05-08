@@ -8,28 +8,17 @@ using namespace libscratchcpp;
 OperatorBlocks::OperatorBlocks()
 {
     // Blocks
-    addCompileFunction("operator_add", &OperatorBlocks::compileAdd);
-    addCompileFunction("operator_subtract", &OperatorBlocks::compileSubtract);
-    addCompileFunction("operator_multiply", &OperatorBlocks::compileMultiply);
-    addCompileFunction("operator_divide", &OperatorBlocks::compileDivide);
-    addCompileFunction("operator_random", &OperatorBlocks::compilePickRandom);
-    addCompileFunction("operator_lt", &OperatorBlocks::compileLessThan);
-    addCompileFunction("operator_equals", &OperatorBlocks::compileEquals);
-    addCompileFunction("operator_gt", &OperatorBlocks::compileGreaterThan);
-    addCompileFunction("operator_and", &OperatorBlocks::compileAnd);
-    addCompileFunction("operator_or", &OperatorBlocks::compileOr);
-    addCompileFunction("operator_not", &OperatorBlocks::compileNot);
-    addBlock("operator_add", &OperatorBlocks::add);
-    addBlock("operator_subtract", &OperatorBlocks::subtract);
-    addBlock("operator_multiply", &OperatorBlocks::multiply);
-    addBlock("operator_divide", &OperatorBlocks::divide);
-    addBlock("operator_random", &OperatorBlocks::pickRandom);
-    addBlock("operator_lt", &OperatorBlocks::lessThan);
-    addBlock("operator_equals", &OperatorBlocks::equals);
-    addBlock("operator_gt", &OperatorBlocks::greaterThan);
-    addBlock("operator_and", &OperatorBlocks::andGate);
-    addBlock("operator_or", &OperatorBlocks::orGate);
-    addBlock("operator_not", &OperatorBlocks::notGate);
+    addCompileFunction("operator_add", &compileAdd);
+    addCompileFunction("operator_subtract", &compileSubtract);
+    addCompileFunction("operator_multiply", &compileMultiply);
+    addCompileFunction("operator_divide", &compileDivide);
+    addCompileFunction("operator_random", &compilePickRandom);
+    addCompileFunction("operator_lt", &compileLessThan);
+    addCompileFunction("operator_equals", &compileEquals);
+    addCompileFunction("operator_gt", &compileGreaterThan);
+    addCompileFunction("operator_and", &compileAnd);
+    addCompileFunction("operator_or", &compileOr);
+    addCompileFunction("operator_not", &compileNot);
 
     // Inputs
     addInput("NUM1", NUM1);
@@ -120,59 +109,4 @@ void OperatorBlocks::compileNot(Compiler *compiler)
 {
     compiler->addInput(OPERAND);
     compiler->addInstruction(vm::OP_NOT);
-}
-
-Value OperatorBlocks::add(const BlockArgs &args)
-{
-    return args.input(NUM1)->value() + args.input(NUM2)->value();
-}
-
-Value OperatorBlocks::subtract(const BlockArgs &args)
-{
-    return args.input(NUM1)->value() - args.input(NUM2)->value();
-}
-
-Value OperatorBlocks::multiply(const BlockArgs &args)
-{
-    return args.input(NUM1)->value() * args.input(NUM2)->value();
-}
-
-Value OperatorBlocks::divide(const BlockArgs &args)
-{
-    return args.input(NUM1)->value() / args.input(NUM2)->value();
-}
-
-Value OperatorBlocks::pickRandom(const BlockArgs &args)
-{
-    return randint<double>(args.input(FROM)->value().toDouble(), args.input(TO)->value().toDouble());
-}
-
-Value OperatorBlocks::lessThan(const BlockArgs &args)
-{
-    return args.input(OPERAND1)->value() < args.input(OPERAND2)->value();
-}
-
-Value OperatorBlocks::equals(const BlockArgs &args)
-{
-    return args.input(OPERAND1)->value() == args.input(OPERAND2)->value();
-}
-
-Value OperatorBlocks::greaterThan(const BlockArgs &args)
-{
-    return args.input(OPERAND1)->value() > args.input(OPERAND2)->value();
-}
-
-Value OperatorBlocks::andGate(const BlockArgs &args)
-{
-    return args.input(OPERAND1)->value().toBool() && args.input(OPERAND2)->value().toBool();
-}
-
-Value OperatorBlocks::orGate(const BlockArgs &args)
-{
-    return args.input(OPERAND1)->value().toBool() || args.input(OPERAND2)->value().toBool();
-}
-
-Value OperatorBlocks::notGate(const BlockArgs &args)
-{
-    return !args.input(OPERAND)->value().toBool();
 }

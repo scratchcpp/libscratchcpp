@@ -45,16 +45,6 @@ class LIBSCRATCHCPP_EXPORT ControlBlocks : public IBlockSection
 
         static unsigned int stopAll(VirtualMachine *vm);
         static unsigned int stopOtherScriptsInSprite(VirtualMachine *vm);
-        static Value repeatForever(const BlockArgs &args);
-        static Value repeat(const BlockArgs &args);
-        static Value repeatUntil(const BlockArgs &args);
-        static Value repeatWhile(const BlockArgs &args);
-        static Value ifStatement(const BlockArgs &args);
-        static Value ifElseStatement(const BlockArgs &args);
-
-    private:
-        // pair<script, C mouth>, pair<current index, repeat count>
-        static std::map<std::pair<RunningScript *, Block *>, std::pair<int, int>> repeatLoops;
 };
 
 } // namespace libscratchcpp

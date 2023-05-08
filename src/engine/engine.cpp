@@ -38,10 +38,8 @@ void Engine::compile()
             auto section = blockSection(block->opcode());
             block->setNext(getBlock(block->nextId()));
             block->setParent(getBlock(block->parentId()));
-            if (section) {
-                block->setImplementation(section->resolveBlock(block->opcode()));
+            if (section)
                 block->setCompileFunction(section->resolveBlockCompileFunc(block->opcode()));
-            }
 
             auto inputs = block->inputs();
             for (auto input : inputs) {
@@ -112,7 +110,7 @@ void Engine::frame()
         m_breakFrame = false;
 
         do {
-            script.run(nullptr);
+            script.run();
         } while (script.atEnd() && !m_breakFrame);
     }
 
@@ -259,18 +257,6 @@ void Engine::registerSection(std::shared_ptr<IBlockSection> section)
         m_sections.push_back(section);
 }
 
-/*! Returns a pointer to the implementation function of the given block opcode. */
-BlockImpl Engine::resolveBlock(const std::string &opcode) const
-{
-    for (auto section : m_sections) {
-        auto block = section->resolveBlock(opcode);
-        if (block)
-            return block;
-    }
-
-    return nullptr;
-}
-
 /*! Returns the index of the given block function. */
 unsigned int Engine::functionIndex(BlockFunc f)
 {
@@ -285,7 +271,7 @@ unsigned int Engine::functionIndex(BlockFunc f)
 std::shared_ptr<IBlockSection> Engine::blockSection(const std::string &opcode) const
 {
     for (auto section : m_sections) {
-        auto block = section->resolveBlock(opcode);
+        auto block = section->resolveBlockCompileFunc(opcode);
         if (block)
             return section;
     }

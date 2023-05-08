@@ -13,6 +13,9 @@
 namespace libscratchcpp
 {
 
+class LIBSCRATCHCPP_EXPORT Engine;
+class LIBSCRATCHCPP_EXPORT Target;
+
 /*! \brief The Block class represents a Scratch block. */
 class LIBSCRATCHCPP_EXPORT Block : public IEntity
 {
@@ -20,13 +23,9 @@ class LIBSCRATCHCPP_EXPORT Block : public IEntity
         Block(std::string id, std::string opcode);
         Block(const Block &) = delete;
 
-        Value run(RunningScript *script = nullptr, const Value &defaultRetValue = Value());
         void compile(Compiler *compiler);
 
         std::string opcode() const;
-
-        BlockImpl implementation() const;
-        void setImplementation(BlockImpl impl);
 
         std::shared_ptr<Block> next() const;
         std::string nextId() const;
@@ -67,7 +66,6 @@ class LIBSCRATCHCPP_EXPORT Block : public IEntity
 
     private:
         std::string m_opcode;
-        BlockImpl m_implementation = nullptr;
         BlockComp m_compileFunction = nullptr;
         std::shared_ptr<Block> m_next = nullptr;
         std::string m_nextId;

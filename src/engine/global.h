@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "blockargs.h"
+#include "../libscratchcpp_global.h"
 #include <functional>
 #include <random>
 
@@ -12,13 +12,6 @@ namespace libscratchcpp
 
 class LIBSCRATCHCPP_EXPORT VirtualMachine;
 class LIBSCRATCHCPP_EXPORT Compiler;
-
-/*!
- * \typedef BlockImpl
- *
- * BlockImpl is a function pointer for block implementation functions.
- */
-using BlockImpl = Value (*)(const BlockArgs &);
 
 /*!
  * \typedef BlockFunc

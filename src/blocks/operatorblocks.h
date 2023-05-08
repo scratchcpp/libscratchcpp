@@ -37,17 +37,6 @@ class LIBSCRATCHCPP_EXPORT OperatorBlocks : public IBlockSection
         static void compileAnd(Compiler *compiler);
         static void compileOr(Compiler *compiler);
         static void compileNot(Compiler *compiler);
-        static Value add(const BlockArgs &args);
-        static Value subtract(const BlockArgs &args);
-        static Value multiply(const BlockArgs &args);
-        static Value divide(const BlockArgs &args);
-        static Value pickRandom(const BlockArgs &args);
-        static Value lessThan(const BlockArgs &args);
-        static Value equals(const BlockArgs &args);
-        static Value greaterThan(const BlockArgs &args);
-        static Value andGate(const BlockArgs &args);
-        static Value orGate(const BlockArgs &args);
-        static Value notGate(const BlockArgs &args);
 };
 
 } // namespace libscratchcpp

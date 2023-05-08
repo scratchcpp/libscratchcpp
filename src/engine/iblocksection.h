@@ -28,17 +28,6 @@ class IBlockSection
         virtual bool categoryVisible() const { return true; }
 
         /*!
-         * Returns a pointer to the implementation function of the given block opcode.\n
-         * Used internally by Engine.
-         */
-        virtual BlockImpl resolveBlock(const std::string &opcode) const final
-        {
-            if (m_blocks.count(opcode) == 1)
-                return m_blocks.at(opcode);
-            return nullptr;
-        }
-
-        /*!
          * Returns a pointer to the compile function of the given block opcode.\n
          * Used internally by Engine.
          */
@@ -84,17 +73,6 @@ class IBlockSection
 
     protected:
         /*!
-         * Assigns a block implementation pointer to a block opcode.
-         * \param[in] opcode The block opcode
-         * \param[in] f A pointer to the block implementation function
-         */
-        template<class F>
-        void addBlock(const std::string &opcode, F &&f)
-        {
-            m_blocks[opcode] = f;
-        }
-
-        /*!
          * Assigns a compile function pointer to a block opcode.
          * \param[in] opcode The block opcode
          * \param[in] f A pointer to the compile function
@@ -115,7 +93,6 @@ class IBlockSection
         virtual void addFieldValue(const std::string &value, int id) final { m_fieldValues[value] = id; }
 
     private:
-        std::map<std::string, BlockImpl> m_blocks;
         std::map<std::string, BlockComp> m_compileFunctions;
         std::map<std::string, int> m_inputs;
         std::map<std::string, int> m_fields;

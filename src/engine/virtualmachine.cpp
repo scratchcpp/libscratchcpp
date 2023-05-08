@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "virtualmachine.h"
+#include "../scratch/list.h"
 #include <iostream>
 
 #define MAX_REG_COUNT 1024
@@ -79,13 +80,13 @@ void VirtualMachine::setBytecode(const std::vector<unsigned int> &code)
 }
 
 /*! Runs the script. */
-unsigned int *VirtualMachine::run(RunningScript *script)
+unsigned int *VirtualMachine::run()
 {
     m_atEnd = false;
-    return run(m_bytecode, script);
+    return run(m_bytecode);
 }
 
-unsigned int *VirtualMachine::run(unsigned int *pos, RunningScript *script)
+unsigned int *VirtualMachine::run(unsigned int *pos)
 {
     static const void *dispatch_table[] = {
         nullptr,
@@ -164,7 +165,7 @@ do_endif:
 
 do_forever_loop:
     while (true)
-        run(pos, script);
+        run(pos);
 
 do_repeat_loop:
     loopCount = READ_LAST_REG()->toLong();
@@ -175,18 +176,18 @@ do_repeat_loop:
             loopEnd += instruction_arg_count[*loopEnd++];
     } else {
         for (size_t i = 0; i < loopCount; i++)
-            loopEnd = run(pos, script);
+            loopEnd = run(pos);
     }
     pos = loopEnd;
     DISPATCH();
 
 do_until_loop:
-    loopStart = run(pos, script);
+    loopStart = run(pos);
     if (!READ_LAST_REG()->toBool()) {
         do {
             FREE_REGS(1);
-            loopEnd = run(loopStart, script);
-            run(pos, script);
+            loopEnd = run(loopStart);
+            run(pos);
         } while (!READ_LAST_REG()->toBool());
         FREE_REGS(1);
     } else {
@@ -411,7 +412,6 @@ do_list_contains:
 
 do_exec:
     m_globalPos = pos;
-    m_script = script;
     int ret = m_functions[*++pos](this);
     FREE_REGS(ret);
     pos += ret;

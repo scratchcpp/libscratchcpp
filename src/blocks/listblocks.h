@@ -36,15 +36,6 @@ class LIBSCRATCHCPP_EXPORT ListBlocks : public IBlockSection
         static void compileItemNumberInList(Compiler *compiler);
         static void compileLengthOfList(Compiler *compiler);
         static void compileListContainsItem(Compiler *compiler);
-        static Value addToList(const BlockArgs &args);
-        static Value deleteFromList(const BlockArgs &args);
-        static Value deleteAllOfList(const BlockArgs &args);
-        static Value insertToList(const BlockArgs &args);
-        static Value replaceItemOfList(const BlockArgs &args);
-        static Value itemOfList(const BlockArgs &args);
-        static Value itemNumberInList(const BlockArgs &args);
-        static Value lengthOfList(const BlockArgs &args);
-        static Value listContainsItem(const BlockArgs &args);
 
     private:
         static int validateIndex(size_t index, size_t listLength);
