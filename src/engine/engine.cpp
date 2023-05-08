@@ -77,21 +77,24 @@ void Engine::compile()
         for (auto block : blocks) {
             if (block->topLevel()) {
                 auto section = blockSection(block->opcode());
-                Compiler compiler(this, block);
-                compiler.setConstInputValues(constInputValues);
-                compiler.setVariables(variables);
-                compiler.setLists(lists);
-                compiler.compile();
-                variables = compiler.variables();
-                lists = compiler.lists();
-                constInputValues = compiler.constInputValues();
-                auto vm = std::make_shared<VirtualMachine>();
-                vm->setFunctions(m_functions);
-                vm->setConstValues(compiler.constValues());
-                vm->setVariables(compiler.variablePtrs());
-                vm->setLists(lists);
-                vm->setBytecode(compiler.bytecode());
-                m_scripts[block] = vm;
+                if (section) {
+                    Compiler compiler(this, block);
+                    compiler.setConstInputValues(constInputValues);
+                    compiler.setVariables(variables);
+                    compiler.setLists(lists);
+                    compiler.compile();
+                    variables = compiler.variables();
+                    lists = compiler.lists();
+                    constInputValues = compiler.constInputValues();
+                    auto vm = std::make_shared<VirtualMachine>();
+                    vm->setFunctions(m_functions);
+                    vm->setConstValues(compiler.constValues());
+                    vm->setVariables(compiler.variablePtrs());
+                    vm->setLists(lists);
+                    vm->setBytecode(compiler.bytecode());
+                    m_scripts[block] = vm;
+                } else
+                    std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
             }
         }
     }
