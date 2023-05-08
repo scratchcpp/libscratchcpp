@@ -7,6 +7,7 @@
 #include "../scratch/runningscript.h"
 #include "../scratch/target.h"
 #include "global.h"
+#include "virtualmachine.h"
 #include <map>
 #include <memory>
 #include <chrono>
@@ -31,12 +32,12 @@ class LIBSCRATCHCPP_EXPORT Engine
         void clear();
         void compile();
 
-        void frame(std::chrono::milliseconds timeLimit = std::chrono::milliseconds(0));
+        void frame();
         void start();
         void stop();
         void startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target);
-        void stopScript(RunningScript *script);
-        void stopTarget(Target *target, RunningScript *exceptScript = nullptr);
+        void stopScript(VirtualMachine *vm);
+        void stopTarget(Target *target, VirtualMachine *exceptScript);
         void run();
 
         void breakFrame();
@@ -71,8 +72,10 @@ class LIBSCRATCHCPP_EXPORT Engine
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::vector<std::string> m_extensions;
-        std::vector<std::shared_ptr<RunningScript>> m_runningScripts;
-        std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<VirtualMachine>> m_scripts;
+        std::vector<VirtualMachine> m_runningScripts;
+        std::vector<VirtualMachine *> m_runningScriptPtrs;
+        std::vector<VirtualMachine *> m_scriptsToRemove;
+        std::unordered_map<std::shared_ptr<Block>, VirtualMachine> m_scripts;
         std::vector<BlockFunc> m_functions;
 
         bool m_breakFrame = false;

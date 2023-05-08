@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "virtualmachine.h"
+#include <iostream>
 
 #define MAX_REG_COUNT 1024
 
@@ -21,6 +22,13 @@ using namespace vm;
 
 /*! Constructs VirtualMachine. */
 VirtualMachine::VirtualMachine()
+{
+}
+
+/*! \copydoc VirtualMachine() */
+VirtualMachine::VirtualMachine(Target *target, Engine *engine) :
+    m_target(target),
+    m_engine(engine)
 {
     m_regs = new Value *[MAX_REG_COUNT];
     for (int i = 0; i < MAX_REG_COUNT; i++)

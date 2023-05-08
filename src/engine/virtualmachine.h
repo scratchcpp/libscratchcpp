@@ -60,7 +60,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
 {
     public:
         VirtualMachine();
-        VirtualMachine(const VirtualMachine &) = delete;
+        VirtualMachine(Target *target, Engine *engine);
         ~VirtualMachine();
 
         void setFunctions(const std::vector<BlockFunc> &functions);
@@ -68,6 +68,9 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         void setVariables(const std::vector<Value *> &variables);
         void setLists(const std::vector<List *> &lists);
         void setBytecode(const std::vector<unsigned int> &code);
+
+        Target *target() const { return m_target; };
+        Engine *engine() const { return m_engine; };
 
         const Value *getInput(unsigned int index, unsigned int argCount) const { return m_regs[m_regCount - argCount + index]; };
         unsigned int getFieldIndex(unsigned int index) const { return m_globalPos[index]; };

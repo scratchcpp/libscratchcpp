@@ -3,6 +3,7 @@
 #include "compiler.h"
 #include "engine.h"
 #include <cassert>
+#include <iostream>
 
 using namespace libscratchcpp;
 using namespace vm;

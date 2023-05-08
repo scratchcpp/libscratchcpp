@@ -85,13 +85,13 @@ void Engine::compile()
                     variables = compiler.variables();
                     lists = compiler.lists();
                     constInputValues = compiler.constInputValues();
-                    auto vm = std::make_shared<VirtualMachine>();
-                    vm->setFunctions(m_functions);
-                    vm->setConstValues(compiler.constValues());
-                    vm->setVariables(compiler.variablePtrs());
-                    vm->setLists(lists);
-                    vm->setBytecode(compiler.bytecode());
-                    m_scripts[block] = vm;
+                    m_scripts[block] = VirtualMachine(target.get(), this);
+                    VirtualMachine &vm = m_scripts[block];
+                    vm.setFunctions(m_functions);
+                    vm.setConstValues(compiler.constValues());
+                    vm.setVariables(compiler.variablePtrs());
+                    vm.setLists(lists);
+                    vm.setBytecode(compiler.bytecode());
                 } else
                     std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
             }
@@ -106,53 +106,24 @@ void Engine::compile()
  * \note Nothing will happen until start() is called.
  * \param[in] timeLimit The time limit for the frame (for atomic scripts). Set to 0 for no limit.
  */
-void Engine::frame(std::chrono::milliseconds timeLimit)
+void Engine::frame()
 {
-    auto frameStartTime = std::chrono::steady_clock::now();
-    std::vector<std::shared_ptr<RunningScript>> scriptsToRemove;
-    auto scripts = m_runningScripts;
-    for (auto script : scripts) {
-        std::shared_ptr<Block> block;
+    for (VirtualMachine &script : m_runningScripts) {
         m_breakFrame = false;
-        m_atomic = true;
 
         do {
-            block = script->currentBlock();
-            if (!script->currentBlock()) {
-                std::cout << "warning: encountered a null block in one of the scripts" << std::endl;
-                scriptsToRemove.push_back(script);
-                continue;
-            }
-
-            // Call the implementation of the block (if it has an implementation)
-            block->run(script.get());
-
-            // Move to next block
-            if (m_stayOnCurrentBlock) {
-                m_stayOnCurrentBlock = false;
-                block = script->currentBlock();
-            } else {
-                script->moveToNextBlock();
-                block = script->currentBlock();
-                if (!block) {
-                    // There isn't any block to move to
-                    // This means the script has finished
-                    scriptsToRemove.push_back(script);
-                }
-            }
-
-            if (timeLimit.count() > 0) {
-                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - frameStartTime);
-                if (duration > timeLimit)
-                    break;
-            }
-        } while (block != nullptr && !m_breakFrame);
+            script.run(nullptr);
+        } while (script.atEnd() && !m_breakFrame);
     }
 
-    for (auto script : scriptsToRemove) {
-        m_runningScripts.erase(std::remove(m_runningScripts.begin(), m_runningScripts.end(), script), m_runningScripts.end());
+    for (auto script : m_scriptsToRemove) {
+        auto it = std::find(m_runningScriptPtrs.begin(), m_runningScriptPtrs.end(), script);
+        auto index = it - m_runningScriptPtrs.begin();
+        m_runningScripts.erase(m_runningScripts.begin() + index);
+        m_runningScriptPtrs.erase(m_runningScriptPtrs.begin() + index);
         scriptCount--;
     }
+    m_scriptsToRemove.clear();
 }
 
 /*!
@@ -191,26 +162,17 @@ void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<T
     }
 
     if (topLevelBlock->next()) {
-        auto script = std::make_shared<RunningScript>(topLevelBlock, target, this);
-        m_runningScripts.push_back(script);
-        script->moveToNextBlock();
+        m_runningScripts.push_back(m_scripts[topLevelBlock]);
+        m_runningScriptPtrs.push_back(&m_runningScripts.back());
         scriptCount++;
     }
 }
 
 /*! Stops the given script. */
-void Engine::stopScript(RunningScript *script)
+void Engine::stopScript(VirtualMachine *vm)
 {
-    assert(script);
-    int i = 0;
-    for (auto s : m_runningScripts) {
-        if (s.get() == script) {
-            m_runningScripts.erase(m_runningScripts.begin() + i);
-            break;
-        }
-        i++;
-    }
-    scriptCount--;
+    assert(vm);
+    m_scriptsToRemove.push_back(vm);
 }
 
 /*!
@@ -218,13 +180,12 @@ void Engine::stopScript(RunningScript *script)
  * \param[in] target The Target to stop.
  * \param[in] exceptScript Sets this parameter to stop all scripts except the given script.
  */
-void Engine::stopTarget(Target *target, RunningScript *exceptScript)
+void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
 {
-    std::vector<RunningScript *> scripts;
-    for (auto script : m_runningScripts) {
-        RunningScript *s = script.get();
-        if ((script->target().get() == target) && (s != exceptScript))
-            scripts.push_back(s);
+    std::vector<VirtualMachine *> scripts;
+    for (VirtualMachine &script : m_runningScripts) {
+        if ((script.target() == target) && (&script != exceptScript))
+            scripts.push_back(&script);
     }
 
     for (auto script : scripts)
@@ -245,7 +206,7 @@ void Engine::run()
     while (true) {
         auto lastFrameTime = std::chrono::steady_clock::now();
         // Execute the frame
-        frame(frameDuration);
+        frame();
         if (scriptCount <= 0)
             break;
 
