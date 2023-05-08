@@ -84,6 +84,7 @@ void Engine::compile()
                 compiler.compile();
                 variables = compiler.variables();
                 lists = compiler.lists();
+                constInputValues = compiler.constInputValues();
                 auto vm = std::make_shared<VirtualMachine>();
                 vm->setFunctions(m_functions);
                 vm->setConstValues(compiler.constValues());
