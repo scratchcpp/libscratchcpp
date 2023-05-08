@@ -1,12 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "listblocks.h"
+#include "../engine/compiler.h"
 
 using namespace libscratchcpp;
 
 ListBlocks::ListBlocks()
 {
     // Blocks
+    addCompileFunction("data_addtolist", &ListBlocks::compileAddToList);
+    addCompileFunction("data_deleteoflist", &ListBlocks::compileDeleteFromList);
+    addCompileFunction("data_deletealloflist", &ListBlocks::compileDeleteAllOfList);
+    addCompileFunction("data_insertatlist", &ListBlocks::compileInsertToList);
+    addCompileFunction("data_replaceitemoflist", &ListBlocks::compileReplaceItemOfList);
+    addCompileFunction("data_itemoflist", &ListBlocks::compileItemOfList);
+    addCompileFunction("data_itemnumoflist", &ListBlocks::compileItemNumberInList);
+    addCompileFunction("data_lengthoflist", &ListBlocks::compileLengthOfList);
+    addCompileFunction("data_listcontainsitem", &ListBlocks::compileListContainsItem);
     addBlock("data_addtolist", &ListBlocks::addToList);
     addBlock("data_deleteoflist", &ListBlocks::deleteFromList);
     addBlock("data_deletealloflist", &ListBlocks::deleteAllOfList);
@@ -33,6 +43,60 @@ std::string ListBlocks::name() const
 bool ListBlocks::categoryVisible() const
 {
     return false;
+}
+
+void ListBlocks::compileAddToList(Compiler *compiler)
+{
+    compiler->addInput(ITEM);
+    compiler->addInstruction(vm::OP_LIST_APPEND, { compiler->listIndex(compiler->field(LIST)->valuePtr()) });
+}
+
+void ListBlocks::compileDeleteFromList(Compiler *compiler)
+{
+    compiler->addInput(INDEX);
+    compiler->addInstruction(vm::OP_LIST_DEL, { compiler->listIndex(compiler->field(LIST)->valuePtr()) });
+}
+
+void ListBlocks::compileDeleteAllOfList(Compiler *compiler)
+{
+    compiler->addInstruction(vm::OP_LIST_DEL_ALL, { compiler->listIndex(compiler->field(LIST)->valuePtr()) });
+}
+
+void ListBlocks::compileInsertToList(Compiler *compiler)
+{
+    compiler->addInput(ITEM);
+    compiler->addInput(INDEX);
+    compiler->addInstruction(vm::OP_LIST_INSERT, { compiler->listIndex(compiler->field(LIST)->valuePtr()) });
+}
+
+void ListBlocks::compileReplaceItemOfList(Compiler *compiler)
+{
+    compiler->addInput(INDEX);
+    compiler->addInput(ITEM);
+    compiler->addInstruction(vm::OP_LIST_REPLACE, { compiler->listIndex(compiler->field(LIST)->valuePtr()) });
+}
+
+void ListBlocks::compileItemOfList(Compiler *compiler)
+{
+    compiler->addInput(INDEX);
+    compiler->addInstruction(vm::OP_LIST_GET_ITEM, { compiler->listIndex(compiler->field(LIST)->valuePtr()) });
+}
+
+void ListBlocks::compileItemNumberInList(Compiler *compiler)
+{
+    compiler->addInput(ITEM);
+    compiler->addInstruction(vm::OP_LIST_INDEX_OF, { compiler->listIndex(compiler->field(LIST)->valuePtr()) });
+}
+
+void ListBlocks::compileLengthOfList(Compiler *compiler)
+{
+    compiler->addInstruction(vm::OP_LIST_LENGTH, { compiler->listIndex(compiler->field(LIST)->valuePtr()) });
+}
+
+void ListBlocks::compileListContainsItem(Compiler *compiler)
+{
+    compiler->addInput(ITEM);
+    compiler->addInstruction(vm::OP_LIST_LENGTH, { compiler->listIndex(compiler->field(LIST)->valuePtr()) });
 }
 
 Value ListBlocks::addToList(const BlockArgs &args)

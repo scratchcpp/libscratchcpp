@@ -27,6 +27,15 @@ class LIBSCRATCHCPP_EXPORT ListBlocks : public IBlockSection
         std::string name() const override;
         bool categoryVisible() const override;
 
+        static void compileAddToList(Compiler *compiler);
+        static void compileDeleteFromList(Compiler *compiler);
+        static void compileDeleteAllOfList(Compiler *compiler);
+        static void compileInsertToList(Compiler *compiler);
+        static void compileReplaceItemOfList(Compiler *compiler);
+        static void compileItemOfList(Compiler *compiler);
+        static void compileItemNumberInList(Compiler *compiler);
+        static void compileLengthOfList(Compiler *compiler);
+        static void compileListContainsItem(Compiler *compiler);
         static Value addToList(const BlockArgs &args);
         static Value deleteFromList(const BlockArgs &args);
         static Value deleteAllOfList(const BlockArgs &args);
