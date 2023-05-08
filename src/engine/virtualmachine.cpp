@@ -152,8 +152,8 @@ do_forever_loop:
         run(pos, script);
 
 do_repeat_loop:
-    FREE_REGS(1);
     loopCount = READ_LAST_REG()->toLong();
+    FREE_REGS(1);
     if (loopCount <= 0) {
         loopEnd = pos;
         while (*loopEnd != OP_LOOP_END && *loopEnd != OP_HALT)
