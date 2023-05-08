@@ -132,8 +132,10 @@ void Compiler::addInput(int id)
             assert(m_block);
             if (m_block->compileFunction())
                 m_block->compile(this);
-            else
+            else {
                 std::cout << "warning: unsupported reporter block: " << m_block->opcode() << std::endl;
+                addInstruction(OP_NULL);
+            }
             m_block = previousBlock;
             break;
         }
@@ -144,8 +146,10 @@ void Compiler::addInput(int id)
             if (m_block) {
                 if (m_block->compileFunction())
                     m_block->compile(this);
-                else
+                else {
                     std::cout << "warning: unsupported reporter block: " << m_block->opcode() << std::endl;
+                    addInstruction(OP_NULL);
+                }
             } else
                 in->primaryValue()->compile(this);
             m_block = previousBlock;
