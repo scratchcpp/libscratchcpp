@@ -20,6 +20,7 @@ enum Opcode
     OP_IF,               /*!< Jumps to the next instruction if the last register holds "true". If it's false, jumps to OP_ELSE or OP_ENDIF. */
     OP_ELSE,             /*!< Jumps to OP_ENDIF. This instruction is typically reached when the if statement condition was "true". */
     OP_ENDIF,            /*!< Doesn't do anything, but is used by OP_IF and OP_ELSE. */
+    OP_FOREVER_LOOP,     /*!< Runs a forever loop. */
     OP_REPEAT_LOOP,      /*!< Runs a repeat loop with the number of periods stored in the last register. */
     OP_UNTIL_LOOP,       /*!< Evaluates the condition before OP_BEGIN_UNTIL_LOOP and runs a repeat until loop. */
     OP_BEGIN_UNTIL_LOOP, /*!< Used by OP_UNTIL_LOOP. */
@@ -79,7 +80,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
     private:
         unsigned int *run(unsigned int *pos, RunningScript *script);
 
-        static inline const unsigned int instruction_arg_count[] = { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+        static inline const unsigned int instruction_arg_count[] = { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
         unsigned int *m_bytecode;
         std::vector<unsigned int> m_bytecodeVector;

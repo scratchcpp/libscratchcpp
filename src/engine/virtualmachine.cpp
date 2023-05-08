@@ -77,10 +77,44 @@ unsigned int *VirtualMachine::run(RunningScript *script)
 unsigned int *VirtualMachine::run(unsigned int *pos, RunningScript *script)
 {
     static const void *dispatch_table[] = {
-        nullptr,          &&do_halt,         &&do_const,         &&do_null,          &&do_if,          &&do_else,          &&do_endif,     &&do_repeat_loop,  &&do_until_loop, &&do_begin_until_loop,
-        &&do_loop_end,    &&do_print,        &&do_add,           &&do_subtract,      &&do_multiply,    &&do_divide,        &&do_random,    &&do_greater_than, &&do_less_than,  &&do_equals,
-        &&do_and,         &&do_or,           &&do_not,           &&do_set_var,       &&do_change_var,  &&do_read_var,      &&do_read_list, &&do_list_append,  &&do_list_del,   &&do_list_del_all,
-        &&do_list_insert, &&do_list_replace, &&do_list_get_item, &&do_list_index_of, &&do_list_length, &&do_list_contains, &&do_exec
+        nullptr,
+        &&do_halt,
+        &&do_const,
+        &&do_null,
+        &&do_if,
+        &&do_else,
+        &&do_endif,
+        &&do_forever_loop,
+        &&do_repeat_loop,
+        &&do_until_loop,
+        &&do_begin_until_loop,
+        &&do_loop_end,
+        &&do_print,
+        &&do_add,
+        &&do_subtract,
+        &&do_multiply,
+        &&do_divide,
+        &&do_random,
+        &&do_greater_than,
+        &&do_less_than,
+        &&do_equals,
+        &&do_and,
+        &&do_or,
+        &&do_not,
+        &&do_set_var,
+        &&do_change_var,
+        &&do_read_var,
+        &&do_read_list,
+        &&do_list_append,
+        &&do_list_del,
+        &&do_list_del_all,
+        &&do_list_insert,
+        &&do_list_replace,
+        &&do_list_get_item,
+        &&do_list_index_of,
+        &&do_list_length,
+        &&do_list_contains,
+        &&do_exec
     };
     unsigned int *loopStart;
     unsigned int *loopEnd;
@@ -112,6 +146,10 @@ do_else:
 
 do_endif:
     DISPATCH();
+
+do_forever_loop:
+    while (true)
+        run(pos, script);
 
 do_repeat_loop:
     FREE_REGS(1);
