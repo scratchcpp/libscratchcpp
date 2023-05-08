@@ -33,6 +33,7 @@ void Engine::compile()
 {
     // Resolve entities by ID
     for (auto target : m_targets) {
+        std::cout << "Processing target " << target->name() << "..." << std::endl;
         auto blocks = target->blocks();
         for (auto block : blocks) {
             auto section = blockSection(block->opcode());
@@ -67,6 +68,7 @@ void Engine::compile()
 
     // Compile scripts to bytecode
     for (auto target : m_targets) {
+        std::cout << "Compiling scripts in target " << target->name() << "..." << std::endl;
         std::vector<Variable *> variables;
         std::vector<List *> lists;
         std::vector<InputValue *> constInputValues;
