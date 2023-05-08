@@ -65,7 +65,7 @@ void VirtualMachine::setLists(const std::vector<List *> &lists)
 void VirtualMachine::setBytecode(const std::vector<unsigned int> &code)
 {
     m_bytecodeVector = code;
-    m_bytecode = &m_bytecodeVector[0];
+    m_bytecode = m_bytecodeVector.data();
 }
 
 /*! Runs the script. */
