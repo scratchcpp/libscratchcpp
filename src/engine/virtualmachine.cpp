@@ -178,6 +178,7 @@ do_until_loop:
             loopEnd = run(loopStart, script);
             run(pos, script);
         } while (!READ_LAST_REG()->toBool());
+        FREE_REGS(1);
     } else {
         loopEnd = loopStart;
         while (*loopEnd != OP_LOOP_END && *loopEnd != OP_HALT)
