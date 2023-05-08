@@ -2,6 +2,8 @@
 
 #include "virtualmachine.h"
 
+#define MAX_REG_COUNT 1024
+
 #define DISPATCH() goto *dispatch_table[*++pos]
 #define FREE_REGS(count) m_regCount -= count
 #define ADD_RET_VALUE(value) *m_regs[m_regCount++] = value
@@ -20,15 +22,15 @@ using namespace vm;
 /*! Constructs VirtualMachine. */
 VirtualMachine::VirtualMachine()
 {
-    m_regs = new Value *[1024];
-    for (int i = 0; i < 1024; i++)
+    m_regs = new Value *[MAX_REG_COUNT];
+    for (int i = 0; i < MAX_REG_COUNT; i++)
         m_regs[i] = new Value();
 }
 
 /*! Destroys the VirtualMachine object. */
 VirtualMachine::~VirtualMachine()
 {
-    for (int i = 0; i < 1024; i++)
+    for (int i = 0; i < MAX_REG_COUNT; i++)
         delete m_regs[i];
     delete m_regs;
 }
@@ -122,6 +124,9 @@ unsigned int *VirtualMachine::run(unsigned int *pos, RunningScript *script)
     DISPATCH();
 
 do_halt:
+    if (m_regCount > 0) {
+        std::cout << "warning: VM: " << m_regCount << " registers were leaked by the script; this is most likely a bug in the VM or in the compiler" << std::endl;
+    }
     return pos;
 
 do_const:
