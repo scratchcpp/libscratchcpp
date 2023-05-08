@@ -24,11 +24,21 @@ void Compiler::compile()
 
     m_block = m_block->next();
     while (m_block) {
+        size_t substacks = m_substackTree.size();
+
         if (m_block->compileFunction())
             m_block->compile(this);
         else
             std::cout << "warning: unsupported block: " << m_block->opcode() << std::endl;
-        m_block = m_block->next();
+
+        if (substacks != m_substackTree.size())
+            continue;
+
+        if (m_block)
+            m_block = m_block->next();
+
+        if (!m_block && !m_substackTree.empty())
+            substackEnd();
     }
 
     // Add end instruction (halt)
@@ -107,6 +117,10 @@ void Compiler::addInstruction(Opcode opcode, std::initializer_list<unsigned int>
 void Compiler::addInput(int id)
 {
     auto in = input(id);
+    if (!in) {
+        addInstruction(OP_NULL);
+        return;
+    }
     switch (in->type()) {
         case Input::Type::Shadow:
             addInstruction(OP_CONST, { constIndex(in->primaryValue()) });
@@ -128,6 +142,21 @@ void Compiler::addFunctionCall(BlockFunc f)
     addInstruction(OP_EXEC, { m_engine->functionIndex(f) });
 }
 
+/*! Jumps to the given substack. The second substack is used for example for the if/else block. */
+void Compiler::moveToSubstack(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2, SubstackType type)
+{
+    m_substackTree.push_back({ { m_block, substack2 }, type });
+    m_block = substack1;
+    if (!m_block)
+        substackEnd();
+}
+
+/*! Jumps to the given substack. */
+void Compiler::moveToSubstack(std::shared_ptr<Block> substack, SubstackType type)
+{
+    moveToSubstack(substack, nullptr, type);
+}
+
 /*! Returns the input with the given ID. */
 Input *Compiler::input(int id) const
 {
@@ -138,6 +167,13 @@ Input *Compiler::input(int id) const
 Field *Compiler::field(int id) const
 {
     return m_block->findFieldById(id);
+}
+
+/*! Returns the block in the given input. Same as input(id)->valueBlock(), but with a null pointer check. */
+std::shared_ptr<Block> Compiler::inputBlock(int id) const
+{
+    auto in = input(id);
+    return in ? in->valueBlock() : nullptr;
 }
 
 /*! Returns the index of the given variable. */
@@ -169,4 +205,27 @@ unsigned int Compiler::constIndex(InputValue *value)
         return it - m_constValues.begin();
     m_constValues.push_back(value);
     return m_constValues.size() - 1;
+}
+
+void Compiler::substackEnd()
+{
+    auto parent = m_substackTree.back();
+    switch (parent.second) {
+        case SubstackType::Loop:
+            addInstruction(OP_LOOP_END);
+            break;
+        case SubstackType::IfStatement:
+            if (parent.first.second) {
+                addInstruction(OP_ELSE);
+                m_block = parent.first.second;
+                m_substackTree[m_substackTree.size() - 1].first.second = nullptr;
+                return;
+            } else
+                addInstruction(OP_ENDIF);
+            break;
+    }
+    m_block = parent.first.first->next();
+    m_substackTree.pop_back();
+    if (!m_block && !m_substackTree.empty())
+        substackEnd();
 }

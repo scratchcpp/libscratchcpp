@@ -12,6 +12,12 @@ namespace libscratchcpp
 class LIBSCRATCHCPP_EXPORT Compiler
 {
     public:
+        enum class SubstackType
+        {
+            Loop,
+            IfStatement
+        };
+
         Compiler(Engine *engine, std::shared_ptr<Block> topLevelBlock);
         Compiler(const Compiler &) = delete;
 
@@ -33,17 +39,22 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void addInstruction(vm::Opcode opcode, std::initializer_list<unsigned int> args = {});
         void addInput(int id);
         void addFunctionCall(BlockFunc f);
+        void moveToSubstack(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2, SubstackType type);
+        void moveToSubstack(std::shared_ptr<Block> substack, SubstackType type);
 
         Input *input(int id) const;
         Field *field(int id) const;
+        std::shared_ptr<Block> inputBlock(int id) const;
         unsigned int variableIndex(std::shared_ptr<IEntity> varEntity);
         unsigned int listIndex(std::shared_ptr<IEntity> listEntity);
 
     private:
         unsigned int constIndex(InputValue *value);
+        void substackEnd();
 
         Engine *m_engine;
         std::shared_ptr<Block>(m_block);
+        std::vector<std::pair<std::pair<std::shared_ptr<Block>, std::shared_ptr<Block>>, SubstackType>> m_substackTree;
 
         std::vector<unsigned int> m_bytecode;
         std::vector<InputValue *> m_constValues;
