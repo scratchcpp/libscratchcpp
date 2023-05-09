@@ -6,6 +6,7 @@ using namespace libscratchcpp;
 
 EventBlocks::EventBlocks()
 {
+    addHatBlock("event_whenflagclicked");
 }
 
 std::string EventBlocks::name() const
