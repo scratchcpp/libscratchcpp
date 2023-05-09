@@ -68,7 +68,7 @@ It provides an API for reading and running Scratch projects which makes it easy
 to create a GUI application that runs Scratch projects.
 
 The idea is to implement Scratch blocks in C++ to build a fast project player
-that is faster than Scratch modifications such as TurboWarp.
+that is faster than the original Scratch VM.
 
 ## NOTE
 This library is still in development and it shouldn't be used
