@@ -83,6 +83,12 @@ class IBlockSection
             m_compileFunctions[opcode] = f;
         }
 
+        /*!
+         * Registers a hat block.
+         * \param[in] opcode The block opcode
+         */
+        virtual void addHatBlock(const std::string &opcode) { addCompileFunction(opcode, &dummyFunction); }
+
         /*! Assigns an input ID to an input name. */
         virtual void addInput(const std::string &name, int id) final { m_inputs[name] = id; }
 
@@ -93,6 +99,7 @@ class IBlockSection
         virtual void addFieldValue(const std::string &value, int id) final { m_fieldValues[value] = id; }
 
     private:
+        static void dummyFunction(Compiler *compiler){};
         std::map<std::string, BlockComp> m_compileFunctions;
         std::map<std::string, int> m_inputs;
         std::map<std::string, int> m_fields;
