@@ -4,6 +4,7 @@
 
 #include "engine.h"
 #include <string>
+#include <map>
 
 namespace libscratchcpp
 {

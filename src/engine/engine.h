@@ -7,7 +7,7 @@
 #include "../scratch/target.h"
 #include "global.h"
 #include "virtualmachine.h"
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <chrono>
 
