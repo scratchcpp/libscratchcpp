@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "list.h"
-#include <bits/stdc++.h>
+#include <algorithm>
 
 using namespace libscratchcpp;
 
