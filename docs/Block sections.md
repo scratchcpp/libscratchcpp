@@ -16,34 +16,39 @@ using namespace libscratchcpp;
 ### Adding blocks
 See the [Scratch Wiki](https://en.scratch-wiki.info/wiki/Scratch_File_Format#Blocks) for more information about blocks.
 
-To add a block, create a block implementation function.
-For example, a `print` block would look like this:
+Scratch projects are compiled by the \link libscratchcpp::Compiler Compiler \endlink class.
+To add a block, you have to let the compiler know how to compile it.
+Start by defining a **compile function**.
+For example, the compile function for a `hello world` block would look like this:
 ```cpp
 class MySection : public IBlockSection {
     public:
         ...
-        static Value print(const BlockArgs &args);
+        static void compileHelloWorld(Compiler *compiler);
+        static unsigned int helloWorld(VirtualMachine *vm);
 };
 
-Value MySection::print(const BlockArgs &args) {
-    std::cout << args.input("TEXT").value().toStdString() << std::endl;
-    return Value();
+void MySection::compileHelloWorld(Compiler *compiler) {
+    compiler->addFunctionCall(&helloWorld);
+}
+
+unsigned int MySection::helloWorld(VirtualMachine *vm) {
+    std::cout << "Hello, world!" << std::endl;
+    return 0;
 }
 ```
-\note You shouldn't find inputs by name because it affects performance. See the "Adding inputs" section below for more information.
-\par
-\note Make sure the function is **static**.
+\note Make sure the functions are **static**.
 
-Register the block using the \link libscratchcpp::IBlockSection::addBlock() addBlock() \endlink method in the constructor:
+Register the compile function using the \link libscratchcpp::IBlockSection::addCompileFunction() addCompileFunction() \endlink method in the constructor:
 ```cpp
 MySection::MySection() {
-    addBlock("mysection_print", &MySection::print);
+    addCompileFunction("mysection_helloworld", &MySection::compileHelloWorld);
 }
 ```
-Where `mysection_print` is the opcode of the `print` block.
+Where `mysection_helloworld` is the opcode of the `hello world` block.
 
 ### Adding inputs
-To add inputs, create an Inputs enumeration in your block section:
+To add inputs, create an `Inputs` enumeration in your block section:
 ```hpp
 class MySection : public IBlockSection {
     enum Inputs {
@@ -59,76 +64,87 @@ MySection::MySection() {
     addInput("TEXT", TEXT);
 }
 ```
-The compiler will assign the input with the `TEXT` ID. In this case, the ID is 0 because it's the first member of the enumeration.
+The compiler will assign the input name with the `TEXT` ID. In this case, the ID is 0 because it's the first member of the enumeration.
 
-To use the input, get it using the \link libscratchcpp::BlockArgs::input() input() \endlink function in the block implementation:
+To add the input to the compiled code, call the \link libscratchcpp::Compiler::addInput() addInput() \endlink function:
 ```cpp
-Value MySection::print(const BlockArgs &args) {
-    std::cout << args.input(TEXT).value().toStdString() << std::endl;
-    return Value();
+void MySection::compileHelloWorld(Compiler *compiler) {
+    compiler->addInput(TEXT);
+    compiler->addFunctionCall(&helloWorld);
 }
 ```
-This improves performance because the input is no longer being found by its name, but only by an integer.
+
+The value of the input can be read during runtime using the \link libscratchcpp::VirtualMachine::getArg() getArg() \endlink function:
+```cpp
+unsigned int MySection::helloWorld(VirtualMachine *vm) {
+    std::cout << "Hello, " << vm->getArg(0, 1)->toString() << "!" << std::endl;
+    return 1;
+}
+```
+\note The order of the inputs is the same as in the compile function. Do not use the `Inputs` enumeration in runtime functions.
+
+```cpp
+vm->getArg(0, 1)
+```
+The first argument is the index of the input and the second argument is the amount of inputs.
+\note Make sure to return the amount of inputs in the `helloWorld` function.
 
 ### Adding fields
-Fields can be added using the same way as inputs:
+**Fields** are drop-down menus into which one cannot drop a reporter.
+Fields have a predefined set of values.
 ```cpp
 class MySection : public IBlockSection {
     ...
     enum Fields {
-        SOME_MENU
+        ANIMAL
     };
-    ...
-};
 
-MySection::MySection() {
-    ...
-    addField("SOME_MENU", SOME_MENU);
-}
-```
-Get the value of the field using the \link libscratchcpp::BlockArgs::field() field() \endlink function:
-```cpp
-Value MySection::someBlock(const BlockArgs &args) {
-    std::cout << args.field(SOME_MENU).value().toStdString() << std::endl;
-    return Value();
-}
-```
-
-### Adding field values
-If a field uses a predefined set of string values, for example rotation style `left-right`, `all around` and `don't rotate`,
-you can assign integer IDs to them to speed up the execution of scripts.
-```cpp
-class MySection : public IBlockSection {
-    ...
     enum FieldValues {
-        RotateLeftRight,
-        RotateAllAround,
-        DoNotRotate
+        Cat,
+        Dog
     };
     ...
 };
 
 MySection::MySection() {
     ...
-    addField("SOME_MENU", SOME_MENU);
-    addFieldValue("left-right", RotateLeftRight);
-    addFieldValue("all around", RotateAllAround);
-    addFieldValue("don't rotate", DoNotRotate);
+    addField("ANIMAL", ANIMAL);
 }
 ```
-Use the \link libscratchcpp::Field::specialValueId() specialValueId() \endlink function to get the ID of the value:
+
+Because fields are handled at compile time, you can read them from the compile function:
 ```cpp
-Value MySection::someBlock(const BlockArgs &args) {
-    switch(args.field(SOME_MENU)->specialValueId()) {
-        case RotateLeftRight:
-            ...
-        ...
+void MySection::compileHelloWorld(Compiler *compiler) {
+    int id = compiler->field(ANIMAL)->specialValueId();
+
+    switch(id) {
+        case Cat:
+            compiler->addFunctionCall(&helloCat);
+            break;
+
+        case Dog:
+            compiler->addFunctionCall(&helloDog);
+            break;
+
+        default:
+            break;
     }
-    return Value();
+}
+
+unsigned int MySection::helloCat(VirtualMachine *vm) {
+    std::cout << "Hello, cat!" << std::endl;
+    return 0;
+}
+
+unsigned int MySection::helloDog(VirtualMachine *vm) {
+    std::cout << "Hello, dog!" << std::endl;
+    return 0;
 }
 ```
 \note Don't confuse \link libscratchcpp::Field::specialValueId() specialValueId() \endlink with \link libscratchcpp::Field::valueId() valueId() \endlink
 because \link libscratchcpp::Field::valueId() valueId() \endlink stores the ID of the block, variable, list or broadcast selected in the dropdown list.
+
+To get a pointer to the block, variable, list or broadcast selected in the dropdown list, use \link libscratchcpp::Field::valuePtr() valuePtr() \endlink.
 
 ### Registering the block section
 Block sections are registered in the \link libscratchcpp::IExtension::registerSections() registerSections() \endlink
