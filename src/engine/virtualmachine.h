@@ -82,7 +82,6 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         Engine *engine() const { return m_engine; };
 
         const Value *getInput(unsigned int index, unsigned int argCount) const { return m_regs[m_regCount - argCount + index]; };
-        unsigned int getFieldIndex(unsigned int index) const { return m_globalPos[index]; };
 
         void addReturnValue(const Value &v) { *m_regs[m_regCount++] = v; };
         void replaceReturnValue(const Value &v, unsigned int offset) { *m_regs[m_regCount - offset] = v; };
@@ -102,7 +101,6 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
 
         Target *m_target = nullptr;
         Engine *m_engine = nullptr;
-        unsigned int *m_globalPos = nullptr;
         bool m_atEnd = false;
 
         BlockFunc *m_functions;

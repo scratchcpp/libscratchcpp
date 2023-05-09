@@ -411,9 +411,6 @@ do_list_contains:
     DISPATCH();
 
 do_exec:
-    m_globalPos = pos;
-    int ret = m_functions[*++pos](this);
-    FREE_REGS(ret);
-    pos += ret;
+    FREE_REGS(m_functions[*++pos](this));
     DISPATCH();
 }
