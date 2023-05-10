@@ -19,7 +19,35 @@ class LIBSCRATCHCPP_EXPORT OperatorBlocks : public IBlockSection
             TO,
             OPERAND1,
             OPERAND2,
-            OPERAND
+            OPERAND,
+            STRING1,
+            STRING2,
+            LETTER,
+            STRING,
+            NUM
+        };
+
+        enum Fields
+        {
+            OPERATOR
+        };
+
+        enum FieldValues
+        {
+            Abs,
+            Floor,
+            Ceiling,
+            Sqrt,
+            Sin,
+            Cos,
+            Tan,
+            Asin,
+            Acos,
+            Atan,
+            Ln,
+            Log,
+            Eexp,
+            Op_10exp
         };
 
         OperatorBlocks();
@@ -37,6 +65,19 @@ class LIBSCRATCHCPP_EXPORT OperatorBlocks : public IBlockSection
         static void compileAnd(Compiler *compiler);
         static void compileOr(Compiler *compiler);
         static void compileNot(Compiler *compiler);
+        static void compileJoin(Compiler *compiler);
+        static void compileLetterOf(Compiler *compiler);
+        static void compileLength(Compiler *compiler);
+        static void compileContains(Compiler *compiler);
+        static void compileMod(Compiler *compiler);
+        static void compileRound(Compiler *compiler);
+        static void compileMathOp(Compiler *compiler);
+
+    private:
+        static unsigned int op_ln(VirtualMachine *vm);
+        static unsigned int op_log(VirtualMachine *vm);
+        static unsigned int op_eexp(VirtualMachine *vm);
+        static unsigned int op_10exp(VirtualMachine *vm);
 };
 
 } // namespace libscratchcpp
