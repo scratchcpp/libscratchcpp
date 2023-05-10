@@ -124,7 +124,6 @@ int main(int argc, char **argv) {
 - [ ] Control blocks
 - [ ] Sensing blocks
 - [ ] Operator blocks
-- [ ] Variables blocks
 - [ ] Custom blocks
 - [ ] Reporter blocks
 - [ ] Broadcasts
