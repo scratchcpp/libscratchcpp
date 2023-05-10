@@ -127,6 +127,10 @@ unsigned int *VirtualMachine::run(unsigned int *pos)
         &&do_list_index_of,
         &&do_list_length,
         &&do_list_contains,
+        &&do_str_concat,
+        &&do_str_at,
+        &&do_str_length,
+        &&do_str_contains,
         &&do_exec
     };
     unsigned int *loopStart;
@@ -415,6 +419,25 @@ do_list_length:
 
 do_list_contains:
     REPLACE_RET_VALUE(m_lists[*++pos]->contains(*READ_LAST_REG()), 1);
+    DISPATCH();
+
+do_str_concat:
+    REPLACE_RET_VALUE(READ_REG(0, 2)->toString() + READ_REG(1, 2)->toString(), 2);
+    FREE_REGS(1);
+    DISPATCH();
+
+do_str_at:
+    REPLACE_RET_VALUE(READ_REG(0, 2)->toUtf16()[READ_REG(1, 2)->toLong()], 2);
+    FREE_REGS(1);
+    DISPATCH();
+
+do_str_length:
+    REPLACE_RET_VALUE(static_cast<long>(READ_REG(0, 1)->toUtf16().size()), 1);
+    DISPATCH();
+
+do_str_contains:
+    REPLACE_RET_VALUE(READ_REG(0, 2)->toUtf16().find(READ_REG(1, 2)->toUtf16()) != std::u16string::npos, 2);
+    FREE_REGS(1);
     DISPATCH();
 
 do_exec:
