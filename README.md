@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
 - [ ] Event blocks
 - [ ] Control blocks
 - [ ] Sensing blocks
-- [ ] Operator blocks
+- [x] Operator blocks
 - [ ] Custom blocks
 - [ ] Reporter blocks
 - [ ] Broadcasts
