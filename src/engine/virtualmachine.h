@@ -34,6 +34,17 @@ enum Opcode
     OP_DIVIDE,           /*!< Divides the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
     OP_MOD,              /*!< Calculates module of the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
     OP_RANDOM,           /*!< Generates a random value in the range stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
+    OP_ROUND,            /*!< Rounds the number in the last register and stores the result in the last register. */
+    OP_ABS,              /*!< Calculates the absolute value of the number in the last register and stores the result in the last register. */
+    OP_FLOOR,            /*!< Calculates the floor of the number in the last register and stores the result in the last register. */
+    OP_CEIL,             /*!< Calculates the ceiling of the number in the last register and stores the result in the last register. */
+    OP_SQRT,             /*!< Calculates the square root of the number in the last register and stores the result in the last register. */
+    OP_SIN,              /*!< Calculates the sine of the number in the last register and stores the result in the last register. */
+    OP_COS,              /*!< Calculates the cosine of the number in the last register and stores the result in the last register. */
+    OP_TAN,              /*!< Calculates the tangent of the number in the last register and stores the result in the last register. */
+    OP_ASIN,             /*!< Calculates the arcsine of the number in the last register and stores the result in the last register. */
+    OP_ACOS,             /*!< Calculates the arccosine of the number in the last register and stores the result in the last register. */
+    OP_ATAN,             /*!< Calculates the arctangent of the number in the last register and stores the result in the last register. */
     OP_GREATER_THAN,     /*!< Compares (>) the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
     OP_LESS_THAN,        /*!< Compares (<) the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
     OP_EQUALS,           /*!< Compares (==) the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
@@ -99,7 +110,9 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
     private:
         unsigned int *run(unsigned int *pos);
 
-        static inline const unsigned int instruction_arg_count[] = { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1 };
+        static inline const unsigned int instruction_arg_count[] = {
+            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1
+        };
 
         unsigned int *m_bytecode;
         std::vector<unsigned int> m_bytecodeVector;

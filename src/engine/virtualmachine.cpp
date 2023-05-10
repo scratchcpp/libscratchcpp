@@ -21,6 +21,8 @@
 using namespace libscratchcpp;
 using namespace vm;
 
+static const double pi = std::acos(-1); // TODO: Use std::numbers::pi in C++20
+
 /*! Constructs VirtualMachine. */
 VirtualMachine::VirtualMachine()
 {
@@ -108,6 +110,17 @@ unsigned int *VirtualMachine::run(unsigned int *pos)
         &&do_divide,
         &&do_mod,
         &&do_random,
+        &&do_round,
+        &&do_abs,
+        &&do_floor,
+        &&do_ceil,
+        &&do_sqrt,
+        &&do_sin,
+        &&do_cos,
+        &&do_tan,
+        &&do_asin,
+        &&do_acos,
+        &&do_atan,
         &&do_greater_than,
         &&do_less_than,
         &&do_equals,
@@ -248,6 +261,106 @@ do_random:
     REPLACE_RET_VALUE(randint<long>(READ_REG(0, 2)->toDouble(), READ_REG(1, 2)->toDouble()), 2);
     FREE_REGS(1);
     DISPATCH();
+
+do_round : {
+    const Value *v = READ_REG(0, 1);
+    if (!v->isInfinity() && !v->isNegativeInfinity())
+        REPLACE_RET_VALUE(static_cast<long>(std::round(v->toDouble())), 1);
+    DISPATCH();
+}
+
+do_abs : {
+    const Value *v = READ_REG(0, 1);
+    if (v->isNegativeInfinity())
+        REPLACE_RET_VALUE(Value(Value::SpecialValue::Infinity), 1);
+    else if (!v->isInfinity())
+        REPLACE_RET_VALUE(std::abs(v->toDouble()), 1);
+    DISPATCH();
+}
+
+do_floor : {
+    const Value *v = READ_REG(0, 1);
+    if (!v->isInfinity() && !v->isNegativeInfinity())
+        REPLACE_RET_VALUE(std::floor(v->toDouble()), 1);
+    DISPATCH();
+}
+
+do_ceil : {
+    const Value *v = READ_REG(0, 1);
+    if (!v->isInfinity() && !v->isNegativeInfinity())
+        REPLACE_RET_VALUE(std::ceil(v->toDouble()), 1);
+    DISPATCH();
+}
+
+do_sqrt : {
+    const Value &v = *READ_REG(0, 1);
+    if (v < 0)
+        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+    else if (!v.isInfinity())
+        REPLACE_RET_VALUE(std::sqrt(v.toDouble()), 1);
+    DISPATCH();
+}
+
+do_sin : {
+    const Value *v = READ_REG(0, 1);
+    if (v->isInfinity() || v->isNegativeInfinity())
+        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+    else
+        REPLACE_RET_VALUE(std::sin(v->toDouble() * pi / 180), 1);
+    DISPATCH();
+}
+
+do_cos : {
+    const Value *v = READ_REG(0, 1);
+    if (v->isInfinity() || v->isNegativeInfinity())
+        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+    else
+        REPLACE_RET_VALUE(std::cos(v->toDouble() * pi / 180), 1);
+    DISPATCH();
+}
+
+do_tan : {
+    const Value *v = READ_REG(0, 1);
+    if (v->isInfinity() || v->isNegativeInfinity())
+        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+    else {
+        long mod = v->toLong() % 360;
+        if (mod == 90)
+            REPLACE_RET_VALUE(Value(Value::SpecialValue::Infinity), 1);
+        else if (mod == 270)
+            REPLACE_RET_VALUE(Value(Value::SpecialValue::NegativeInfinity), 1);
+        else
+            REPLACE_RET_VALUE(std::tan(v->toDouble() * pi / 180), 1);
+    }
+    DISPATCH();
+}
+
+do_asin : {
+    const Value &v = *READ_REG(0, 1);
+    if (v < -1 || v > 1)
+        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+    else
+        REPLACE_RET_VALUE(std::asin(v.toDouble()) * 180 / pi, 1);
+    DISPATCH();
+}
+
+do_acos : {
+    const Value &v = *READ_REG(0, 1);
+    if (v < -1 || v > 1)
+        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+    else
+        REPLACE_RET_VALUE(std::acos(v.toDouble()) * 180 / pi, 1);
+    DISPATCH();
+}
+
+do_atan : {
+    const Value &v = *READ_REG(0, 1);
+    if (v < -1 || v > 1)
+        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+    else
+        REPLACE_RET_VALUE(std::atan(v.toDouble()) * 180 / pi, 1);
+    DISPATCH();
+}
 
 do_greater_than:
     REPLACE_RET_VALUE(*READ_REG(0, 2) > *READ_REG(1, 2), 2);
