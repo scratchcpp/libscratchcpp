@@ -106,6 +106,7 @@ unsigned int *VirtualMachine::run(unsigned int *pos)
         &&do_subtract,
         &&do_multiply,
         &&do_divide,
+        &&do_mod,
         &&do_random,
         &&do_greater_than,
         &&do_less_than,
@@ -230,6 +231,12 @@ do_multiply:
 do_divide:
     REPLACE_RET_VALUE(*READ_REG(0, 2), 2);
     READ_REG(0, 2)->divide(*READ_REG(1, 2));
+    FREE_REGS(1);
+    DISPATCH();
+
+do_mod:
+    REPLACE_RET_VALUE(*READ_REG(0, 2), 2);
+    READ_REG(0, 2)->mod(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
 

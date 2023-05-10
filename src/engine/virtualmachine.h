@@ -32,6 +32,7 @@ enum Opcode
     OP_SUBTRACT,         /*!< Subtracts the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
     OP_MULTIPLY,         /*!< Multiplies the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
     OP_DIVIDE,           /*!< Divides the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
+    OP_MOD,              /*!< Calculates module of the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
     OP_RANDOM,           /*!< Generates a random value in the range stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
     OP_GREATER_THAN,     /*!< Compares (>) the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
     OP_LESS_THAN,        /*!< Compares (<) the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
@@ -94,7 +95,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
     private:
         unsigned int *run(unsigned int *pos);
 
-        static inline const unsigned int instruction_arg_count[] = { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+        static inline const unsigned int instruction_arg_count[] = { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
         unsigned int *m_bytecode;
         std::vector<unsigned int> m_bytecodeVector;

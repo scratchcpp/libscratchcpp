@@ -89,6 +89,7 @@ OP_LOOP_END
 - \link libscratchcpp::vm::OP_SUBTRACT OP_SUBTRACT \endlink
 - \link libscratchcpp::vm::OP_MULTIPLY OP_MULTIPLY \endlink
 - \link libscratchcpp::vm::OP_DIVIDE OP_DIVIDE \endlink
+- \link libscratchcpp::vm::OP_MOD OP_MOD \endlink
 
 ### Relational operators
 - \link libscratchcpp::vm::OP_GREATER_THAN OP_GREATER_THAN \endlink
