@@ -239,6 +239,17 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
             *this = toDouble() / v.toDouble();
         }
 
+        /*! Replaces the value with modulo of the value and the given value. */
+        inline void mod(const Value &v)
+        {
+            if ((v == 0) || (m_type == Type::Infinity || m_type == Type::NegativeInfinity))
+                m_type = Type::NaN;
+            else if (v.m_type == Type::Infinity || v.m_type == Type::NegativeInfinity) {
+                return;
+            }
+            *this = fmod(toDouble(), v.toDouble());
+        }
+
         inline const Value &operator=(float v)
         {
             m_type = Type::Number;
