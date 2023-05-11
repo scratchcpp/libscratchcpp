@@ -23,7 +23,6 @@ void Compiler::compile()
     // Add start instruction
     addInstruction(OP_START);
 
-    m_block = m_block->next();
     while (m_block) {
         size_t substacks = m_substackTree.size();
 
