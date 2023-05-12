@@ -36,6 +36,7 @@ VirtualMachine::VirtualMachine(Target *target, Engine *engine) :
     m_regs = new Value *[MAX_REG_COUNT];
     for (int i = 0; i < MAX_REG_COUNT; i++)
         m_regs[i] = new Value();
+    m_loops.reserve(256);
 }
 
 /*! Destroys the VirtualMachine object. */
@@ -192,35 +193,54 @@ do_repeat_loop:
         loopEnd = pos;
         while (*loopEnd != OP_LOOP_END)
             loopEnd += instruction_arg_count[*loopEnd++];
+        pos = loopEnd;
     } else {
-        for (size_t i = 0; i < loopCount; i++)
-            loopEnd = run(pos);
+        Loop l;
+        l.isRepeatLoop = true;
+        l.start = pos;
+        l.index = 0;
+        l.max = loopCount;
+        m_loops.push_back(l);
     }
-    pos = loopEnd;
     DISPATCH();
 
 do_until_loop:
     loopStart = run(pos);
     if (!READ_LAST_REG()->toBool()) {
-        do {
-            FREE_REGS(1);
-            loopEnd = run(loopStart);
-            run(pos);
-        } while (!READ_LAST_REG()->toBool());
-        FREE_REGS(1);
+        Loop l;
+        l.isRepeatLoop = false;
+        l.start = pos;
+        m_loops.push_back(l);
+        pos = loopStart;
     } else {
-        loopEnd = loopStart;
-        while (*loopEnd != OP_LOOP_END)
-            loopEnd += instruction_arg_count[*loopEnd++];
+        pos = loopStart;
+        while (*pos != OP_LOOP_END)
+            pos += instruction_arg_count[*pos++];
     }
-    pos = loopEnd;
+    FREE_REGS(1);
     DISPATCH();
 
 do_begin_until_loop:
     return pos;
 
-do_loop_end:
-    return pos;
+do_loop_end : {
+    Loop &l = m_loops.back();
+    if (l.isRepeatLoop) {
+        if (++l.index < l.max)
+            pos = l.start;
+        else
+            m_loops.pop_back();
+        DISPATCH();
+    } else {
+        loopStart = run(l.start);
+        if (!READ_LAST_REG()->toBool())
+            pos = loopStart;
+        else
+            m_loops.pop_back();
+        FREE_REGS(1);
+        DISPATCH();
+    }
+}
 
 do_print:
     std::cout << READ_LAST_REG()->toString() << std::endl;

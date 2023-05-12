@@ -114,12 +114,20 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
             0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1
         };
 
+        typedef struct
+        {
+                bool isRepeatLoop;
+                unsigned int *start;
+                size_t index, max;
+        } Loop;
+
         unsigned int *m_bytecode;
         std::vector<unsigned int> m_bytecodeVector;
 
         Target *m_target = nullptr;
         Engine *m_engine = nullptr;
         bool m_atEnd = false;
+        std::vector<Loop> m_loops;
 
         BlockFunc *m_functions;
         std::vector<BlockFunc> m_functionsVector;
