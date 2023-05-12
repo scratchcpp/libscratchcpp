@@ -68,7 +68,8 @@ enum Opcode
     OP_STR_AT,        /*! Stores the character at index in the last register of the string in the second last register, in the last register. */
     OP_STR_LENGTH,    /*! Stores the length of the string in the last register, in the last register. */
     OP_STR_CONTAINS,  /*! Stores true in the last register if the string stored in the second last register contains the substring in the last register. */
-    OP_EXEC           /*!< Calls the function with the index in the argument. */
+    OP_EXEC,          /*!< Calls the function with the index in the argument. */
+    OP_CALL_PROCEDURE /*! Calls the procedure (custom block) with the index in the argument. */
 };
 
 }
@@ -84,6 +85,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         VirtualMachine(const VirtualMachine &) = delete;
         ~VirtualMachine();
 
+        void setProcedures(const std::vector<unsigned int *> &procedures);
         void setFunctions(const std::vector<BlockFunc> &functions);
         void setConstValues(const std::vector<Value> &values);
         void setVariables(const std::vector<Value *> &variables);
@@ -111,7 +113,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         unsigned int *run(unsigned int *pos);
 
         static inline const unsigned int instruction_arg_count[] = {
-            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1
+            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1
         };
 
         typedef struct
@@ -128,6 +130,10 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         Engine *m_engine = nullptr;
         bool m_atEnd = false;
         std::vector<Loop> m_loops;
+        std::vector<unsigned int *> m_callTree;
+
+        unsigned int **m_procedures = nullptr;
+        std::vector<unsigned int *> m_proceduresVector;
 
         BlockFunc *m_functions;
         std::vector<BlockFunc> m_functionsVector;

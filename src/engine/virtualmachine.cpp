@@ -37,6 +37,7 @@ VirtualMachine::VirtualMachine(Target *target, Engine *engine) :
     for (int i = 0; i < MAX_REG_COUNT; i++)
         m_regs[i] = new Value();
     m_loops.reserve(256);
+    m_callTree.reserve(1024);
 }
 
 /*! Destroys the VirtualMachine object. */
@@ -45,6 +46,13 @@ VirtualMachine::~VirtualMachine()
     for (int i = 0; i < MAX_REG_COUNT; i++)
         delete m_regs[i];
     delete m_regs;
+}
+
+/*! Sets the list of procedures (custom blocks). */
+void VirtualMachine::setProcedures(const std::vector<unsigned int *> &procedures)
+{
+    m_proceduresVector = procedures;
+    m_procedures = m_proceduresVector.data();
 }
 
 /*! Sets the list of functions. */
@@ -145,7 +153,8 @@ unsigned int *VirtualMachine::run(unsigned int *pos)
         &&do_str_at,
         &&do_str_length,
         &&do_str_contains,
-        &&do_exec
+        &&do_exec,
+        &&do_call_procedure
     };
     unsigned int *loopStart;
     unsigned int *loopEnd;
@@ -156,8 +165,14 @@ do_halt:
     if (m_regCount > 0) {
         std::cout << "warning: VM: " << m_regCount << " registers were leaked by the script; this is most likely a bug in the VM or in the compiler" << std::endl;
     }
-    m_atEnd = true;
-    return pos;
+    if (m_callTree.empty()) {
+        m_atEnd = true;
+        return pos;
+    } else {
+        pos = m_callTree.back();
+        m_callTree.pop_back();
+        DISPATCH();
+    }
 
 do_const:
     ADD_RET_VALUE(GET_NEXT_ARG());
@@ -575,5 +590,10 @@ do_str_contains:
 
 do_exec:
     FREE_REGS(m_functions[*++pos](this));
+    DISPATCH();
+
+do_call_procedure:
+    m_callTree.push_back(++pos);
+    pos = m_procedures[*pos];
     DISPATCH();
 }
