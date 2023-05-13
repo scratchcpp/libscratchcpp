@@ -72,6 +72,8 @@ void Engine::compile()
         std::vector<Variable *> variables;
         std::vector<List *> lists;
         std::vector<InputValue *> constInputValues;
+        std::vector<std::string> procedures;
+        std::unordered_map<std::string, unsigned int *> procedureBytecodeMap;
         auto blocks = target->blocks();
         for (auto block : blocks) {
             if (block->topLevel()) {
@@ -81,20 +83,36 @@ void Engine::compile()
                     compiler.setConstInputValues(constInputValues);
                     compiler.setVariables(variables);
                     compiler.setLists(lists);
+                    compiler.setProcedures(procedures);
                     compiler.compile();
                     variables = compiler.variables();
                     lists = compiler.lists();
                     constInputValues = compiler.constInputValues();
+                    procedures = compiler.procedures();
+
                     auto vm = std::make_shared<VirtualMachine>(target.get(), this);
                     vm->setFunctions(m_functions);
                     vm->setConstValues(compiler.constValues());
                     vm->setVariables(compiler.variablePtrs());
                     vm->setLists(lists);
                     vm->setBytecode(compiler.bytecode());
+                    if (block->opcode() == "procedures_definition") {
+                        auto b = block->inputAt(block->findInput("custom_block"))->valueBlock();
+                        procedureBytecodeMap[b->mutationPrototype()->procCode()] = vm->bytecode();
+                    }
                     m_scripts[block] = vm;
                 } else
                     std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
             }
+        }
+
+        std::vector<unsigned int *> procedureBytecodes;
+        for (const std::string &code : procedures)
+            procedureBytecodes.push_back(procedureBytecodeMap[code]);
+
+        for (auto block : blocks) {
+            if (m_scripts.count(block) == 1)
+                m_scripts[block]->setProcedures(procedureBytecodes);
         }
     }
 }
