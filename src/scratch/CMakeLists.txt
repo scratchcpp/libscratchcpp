@@ -5,6 +5,7 @@ target_sources(scratchcpp
     value.cpp
     list.cpp
     block.cpp
+    blockprototype.cpp
     input.cpp
     inputvalue.cpp
     field.cpp
@@ -21,6 +22,7 @@ target_sources(scratchcpp
     value.h
     list.h
     block.h
+    blockprototype.h
     input.h
     inputvalue.h
     field.h
