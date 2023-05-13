@@ -48,18 +48,25 @@ class LIBSCRATCHCPP_EXPORT Compiler
         unsigned int variableIndex(std::shared_ptr<IEntity> varEntity);
         unsigned int listIndex(std::shared_ptr<IEntity> listEntity);
         unsigned int constIndex(InputValue *value);
+        unsigned int procedureIndex(std::string proc);
+
+        const std::vector<std::string> &procedures() const;
+        void setProcedures(const std::vector<std::string> &newProcedures);
+
+        const std::shared_ptr<Block> &block() const;
 
     private:
         void substackEnd();
 
         Engine *m_engine;
-        std::shared_ptr<Block>(m_block);
+        std::shared_ptr<Block> m_block;
         std::vector<std::pair<std::pair<std::shared_ptr<Block>, std::shared_ptr<Block>>, SubstackType>> m_substackTree;
 
         std::vector<unsigned int> m_bytecode;
         std::vector<InputValue *> m_constValues;
         std::vector<Variable *> m_variables;
         std::vector<List *> m_lists;
+        std::vector<std::string> m_procedures;
 };
 
 } // namespace libscratchcpp

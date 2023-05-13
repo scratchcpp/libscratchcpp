@@ -229,6 +229,16 @@ unsigned int Compiler::constIndex(InputValue *value)
     return m_constValues.size() - 1;
 }
 
+/*! Returns the index of the procedure code of the given block. */
+unsigned int Compiler::procedureIndex(std::string proc)
+{
+    auto it = std::find(m_procedures.begin(), m_procedures.end(), proc);
+    if (it != m_procedures.end())
+        return it - m_procedures.begin();
+    m_procedures.push_back(proc);
+    return m_procedures.size() - 1;
+}
+
 void Compiler::substackEnd()
 {
     auto parent = m_substackTree.back();
@@ -250,4 +260,22 @@ void Compiler::substackEnd()
     m_substackTree.pop_back();
     if (!m_block && !m_substackTree.empty())
         substackEnd();
+}
+
+/*! Returns the list of custom block prototypes. */
+const std::vector<std::string> &Compiler::procedures() const
+{
+    return m_procedures;
+}
+
+/*! Sets the list of custom block prototypes. */
+void Compiler::setProcedures(const std::vector<std::string> &newProcedures)
+{
+    m_procedures = newProcedures;
+}
+
+/*! Returns the current block. */
+const std::shared_ptr<Block> &Compiler::block() const
+{
+    return m_block;
 }
