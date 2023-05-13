@@ -8,7 +8,7 @@
 namespace libscratchcpp
 {
 
-/*! \brief The Compiler class provides an API for compiling Scratch scripts to bytecode. */
+/*! \brief The Compiler class provides an API for compiling scripts of targets to bytecode. */
 class LIBSCRATCHCPP_EXPORT Compiler
 {
     public:
@@ -18,23 +18,20 @@ class LIBSCRATCHCPP_EXPORT Compiler
             IfStatement
         };
 
-        Compiler(Engine *engine, std::shared_ptr<Block> topLevelBlock);
+        Compiler(Engine *engine);
         Compiler(const Compiler &) = delete;
 
-        void compile();
+        void compile(std::shared_ptr<Block> topLevelBlock);
 
         const std::vector<unsigned int> &bytecode() const;
 
         const std::vector<InputValue *> &constInputValues() const;
         std::vector<Value> constValues() const;
-        void setConstInputValues(const std::vector<InputValue *> &values);
 
         const std::vector<Variable *> &variables() const;
         std::vector<Value *> variablePtrs() const;
-        void setVariables(std::vector<Variable *> variables);
 
         const std::vector<List *> &lists() const;
-        void setLists(std::vector<List *> lists);
 
         void addInstruction(vm::Opcode opcode, std::initializer_list<unsigned int> args = {});
         void addInput(int id);
@@ -51,7 +48,6 @@ class LIBSCRATCHCPP_EXPORT Compiler
         unsigned int procedureIndex(std::string proc);
 
         const std::vector<std::string> &procedures() const;
-        void setProcedures(const std::vector<std::string> &newProcedures);
 
         const std::shared_ptr<Block> &block() const;
 

@@ -69,32 +69,20 @@ void Engine::compile()
     // Compile scripts to bytecode
     for (auto target : m_targets) {
         std::cout << "Compiling scripts in target " << target->name() << "..." << std::endl;
-        std::vector<Variable *> variables;
-        std::vector<List *> lists;
-        std::vector<InputValue *> constInputValues;
-        std::vector<std::string> procedures;
         std::unordered_map<std::string, unsigned int *> procedureBytecodeMap;
+        Compiler compiler(this);
         auto blocks = target->blocks();
         for (auto block : blocks) {
             if (block->topLevel()) {
                 auto section = blockSection(block->opcode());
                 if (section) {
-                    Compiler compiler(this, block);
-                    compiler.setConstInputValues(constInputValues);
-                    compiler.setVariables(variables);
-                    compiler.setLists(lists);
-                    compiler.setProcedures(procedures);
-                    compiler.compile();
-                    variables = compiler.variables();
-                    lists = compiler.lists();
-                    constInputValues = compiler.constInputValues();
-                    procedures = compiler.procedures();
+                    compiler.compile(block);
 
                     auto vm = std::make_shared<VirtualMachine>(target.get(), this);
                     vm->setFunctions(m_functions);
                     vm->setConstValues(compiler.constValues());
                     vm->setVariables(compiler.variablePtrs());
-                    vm->setLists(lists);
+                    vm->setLists(compiler.lists());
                     vm->setBytecode(compiler.bytecode());
                     if (block->opcode() == "procedures_definition") {
                         auto b = block->inputAt(block->findInput("custom_block"))->valueBlock();
@@ -106,6 +94,7 @@ void Engine::compile()
             }
         }
 
+        const std::vector<std::string> &procedures = compiler.procedures();
         std::vector<unsigned int *> procedureBytecodes;
         for (const std::string &code : procedures)
             procedureBytecodes.push_back(procedureBytecodeMap[code]);
