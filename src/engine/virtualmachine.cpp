@@ -198,8 +198,12 @@ do_endif:
     DISPATCH();
 
 do_forever_loop:
-    while (true)
-        run(pos);
+    Loop l;
+    l.isRepeatLoop = true;
+    l.start = pos;
+    l.index = -1;
+    m_loops.push_back(l);
+    DISPATCH();
 
 do_repeat_loop:
     loopCount = READ_LAST_REG()->toLong();
@@ -241,7 +245,7 @@ do_begin_until_loop:
 do_loop_end : {
     Loop &l = m_loops.back();
     if (l.isRepeatLoop) {
-        if (++l.index < l.max)
+        if ((l.index == -1) || (++l.index < l.max))
             pos = l.start;
         else
             m_loops.pop_back();
