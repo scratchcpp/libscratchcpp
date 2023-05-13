@@ -118,6 +118,32 @@ bool Scratch3Reader::load()
                 block->addField(field);
             }
 
+            // mutation
+            if (blockInfo.contains("mutation")) {
+                auto mutation = blockInfo["mutation"];
+                if (mutation.contains("hasnext"))
+                    block->setMutationHasNext(jsonToValue(mutation["hasnext"]).toBool());
+                BlockPrototype *prototype = block->mutationPrototype();
+                if (mutation.contains("proccode"))
+                    prototype->setProcCode(mutation["proccode"].get<std::string>());
+                if (mutation.contains("argumentids")) {
+                    std::vector<std::string> argIDs;
+                    auto argIDsJson = json::parse(mutation["argumentids"].get<std::string>());
+                    for (auto arg : argIDsJson)
+                        argIDs.push_back(arg.get<std::string>());
+                    prototype->setArgumentIds(argIDs);
+                }
+                if (mutation.contains("argumentnames")) {
+                    std::vector<std::string> argNames;
+                    auto argNamesJson = json::parse(mutation["argumentnames"].get<std::string>());
+                    for (auto arg : argNamesJson)
+                        argNames.push_back(arg.get<std::string>());
+                    prototype->setArgumentNames(argNames);
+                }
+                if (mutation.contains("warp"))
+                    prototype->setWarp(jsonToValue(mutation["warp"]).toBool());
+            }
+
             // shadow
             block->setShadow(blockInfo["shadow"]);
 
