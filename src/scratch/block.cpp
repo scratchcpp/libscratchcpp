@@ -37,6 +37,24 @@ void Block::setCompileFunction(BlockComp newCompileFunction)
     m_compileFunction = newCompileFunction;
 }
 
+/*! Returns true if the block can have a block following it. */
+bool Block::mutationHasNext() const
+{
+    return m_mutationHasNext;
+}
+
+/*! Sets whether the block can have a block following it. */
+void Block::setMutationHasNext(bool newMutationHasNext)
+{
+    m_mutationHasNext = newMutationHasNext;
+}
+
+/*! Returns the block prototype (in custom block definition). */
+BlockPrototype *Block::mutationPrototype()
+{
+    return &m_mutationPrototype;
+}
+
 /*! Returns the next block. */
 std::shared_ptr<Block> Block::next() const
 {

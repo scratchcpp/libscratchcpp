@@ -6,6 +6,7 @@
 #include "field.h"
 #include "ientity.h"
 #include "input.h"
+#include "blockprototype.h"
 #include <memory>
 #include <unordered_map>
 #include <string>
@@ -64,6 +65,11 @@ class LIBSCRATCHCPP_EXPORT Block : public IEntity
         BlockComp compileFunction() const;
         void setCompileFunction(BlockComp newCompileFunction);
 
+        bool mutationHasNext() const;
+        void setMutationHasNext(bool newMutationHasNext);
+
+        BlockPrototype *mutationPrototype();
+
     private:
         std::string m_opcode;
         BlockComp m_compileFunction = nullptr;
@@ -79,6 +85,8 @@ class LIBSCRATCHCPP_EXPORT Block : public IEntity
         bool m_topLevel = false;
         Engine *m_engine = nullptr;
         Target *m_target = nullptr;
+        BlockPrototype m_mutationPrototype;
+        bool m_mutationHasNext = true;
 };
 
 } // namespace libscratchcpp
