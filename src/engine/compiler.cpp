@@ -19,6 +19,8 @@ Compiler::Compiler(Engine *engine) :
 void Compiler::compile(std::shared_ptr<Block> topLevelBlock)
 {
     m_bytecode.clear();
+    m_procedurePrototype = nullptr;
+
     // Add start instruction
     addInstruction(OP_START);
 
@@ -95,22 +97,21 @@ void Compiler::addInstruction(Opcode opcode, std::initializer_list<unsigned int>
         m_bytecode.push_back(arg);
 }
 
-/*! Compiles the given input (resolved by ID) and adds it to the bytecode. */
-void Compiler::addInput(int id)
+/*! Compiles the given input and adds it to the bytecode. */
+void Compiler::addInput(Input *input)
 {
-    auto in = input(id);
-    if (!in) {
+    if (!input) {
         addInstruction(OP_NULL);
         return;
     }
-    switch (in->type()) {
+    switch (input->type()) {
         case Input::Type::Shadow:
-            addInstruction(OP_CONST, { constIndex(in->primaryValue()) });
+            addInstruction(OP_CONST, { constIndex(input->primaryValue()) });
             break;
 
         case Input::Type::NoShadow: {
             auto previousBlock = m_block;
-            m_block = in->valueBlock();
+            m_block = input->valueBlock();
             assert(m_block);
             if (m_block->compileFunction())
                 m_block->compile(this);
@@ -124,7 +125,7 @@ void Compiler::addInput(int id)
 
         case Input::Type::ObscuredShadow: {
             auto previousBlock = m_block;
-            m_block = in->valueBlock();
+            m_block = input->valueBlock();
             if (m_block) {
                 if (m_block->compileFunction())
                     m_block->compile(this);
@@ -133,17 +134,29 @@ void Compiler::addInput(int id)
                     addInstruction(OP_NULL);
                 }
             } else
-                in->primaryValue()->compile(this);
+                input->primaryValue()->compile(this);
             m_block = previousBlock;
             break;
         }
     }
 }
 
+/*! Compiles the given input (resolved by ID) and adds it to the bytecode. */
+void Compiler::addInput(int id)
+{
+    addInput(input(id));
+}
+
 /*! Adds a function call to the bytecode (the OP_EXEC instruction). */
 void Compiler::addFunctionCall(BlockFunc f)
 {
     addInstruction(OP_EXEC, { m_engine->functionIndex(f) });
+}
+
+/*! Adds an argument to a procedure (custom block). */
+void Compiler::addProcedureArg(std::string procCode, std::string argName)
+{
+    m_procedureArgs[procCode].push_back(argName);
 }
 
 /*! Jumps to the given substack. The second substack is used for example for the if/else block. */
@@ -221,6 +234,21 @@ unsigned int Compiler::procedureIndex(std::string proc)
     return m_procedures.size() - 1;
 }
 
+/*! Returns the index of the argument of the given procedure (custom block). */
+long Compiler::procedureArgIndex(std::string procCode, std::string argName)
+{
+    if (m_procedureArgs.count(procCode) == 0) {
+        std::cout << "warning: could not find custom block '" << procCode << "'" << std::endl;
+        return -1;
+    }
+    const std::vector<std::string> args = m_procedureArgs[procCode];
+    auto it = std::find(args.begin(), args.end(), argName);
+    if (it != args.end())
+        return it - args.begin();
+    std::cout << "warning: could not find argument '" << argName << "' in custom block '" << procCode << "'" << std::endl;
+    return -1;
+}
+
 void Compiler::substackEnd()
 {
     auto parent = m_substackTree.back();
@@ -242,6 +270,18 @@ void Compiler::substackEnd()
     m_substackTree.pop_back();
     if (!m_block && !m_substackTree.empty())
         substackEnd();
+}
+
+/*! Returns the prototype of the current custom block. */
+BlockPrototype *Compiler::procedurePrototype() const
+{
+    return m_procedurePrototype;
+}
+
+/*! Sets the prototype of the current custom block. */
+void Compiler::setProcedurePrototype(BlockPrototype *prototype)
+{
+    m_procedurePrototype = prototype;
 }
 
 /*! Returns the list of custom block prototypes. */
