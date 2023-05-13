@@ -10,6 +10,7 @@
 #include "operatorblocks.h"
 #include "variableblocks.h"
 #include "listblocks.h"
+#include "customblocks.h"
 
 using namespace libscratchcpp;
 
@@ -39,4 +40,5 @@ void StandardBlocks::registerSections(Engine *engine)
     engine->registerSection(std::make_shared<OperatorBlocks>());
     engine->registerSection(std::make_shared<VariableBlocks>());
     engine->registerSection(std::make_shared<ListBlocks>());
+    engine->registerSection(std::make_shared<CustomBlocks>());
 }
