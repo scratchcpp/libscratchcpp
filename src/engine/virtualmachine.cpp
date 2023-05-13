@@ -154,7 +154,10 @@ unsigned int *VirtualMachine::run(unsigned int *pos)
         &&do_str_length,
         &&do_str_contains,
         &&do_exec,
-        &&do_call_procedure
+        &&do_init_procedure,
+        &&do_call_procedure,
+        &&do_add_arg,
+        &&do_read_arg
     };
     unsigned int *loopStart;
     unsigned int *loopEnd;
@@ -171,6 +174,11 @@ do_halt:
     } else {
         pos = m_callTree.back();
         m_callTree.pop_back();
+        m_procedureArgTree.pop_back();
+        if (m_procedureArgTree.empty())
+            m_procedureArgs = nullptr;
+        else
+            m_procedureArgs = &m_procedureArgTree.back();
         DISPATCH();
     }
 
@@ -596,8 +604,26 @@ do_exec:
     FREE_REGS(m_functions[*++pos](this));
     DISPATCH();
 
+do_init_procedure:
+    m_procedureArgTree.push_back({});
+    if (m_procedureArgTree.size() >= 2)
+        m_procedureArgs = &m_procedureArgTree[m_procedureArgTree.size() - 2];
+    m_nextProcedureArgs = &m_procedureArgTree.back();
+    DISPATCH();
+
 do_call_procedure:
     m_callTree.push_back(++pos);
+    m_procedureArgs = m_nextProcedureArgs;
+    m_nextProcedureArgs = nullptr;
     pos = m_procedures[*pos];
+    DISPATCH();
+
+do_add_arg:
+    m_nextProcedureArgs->push_back(*READ_LAST_REG());
+    FREE_REGS(1);
+    DISPATCH();
+
+do_read_arg:
+    ADD_RET_VALUE(m_procedureArgs->operator[](*++pos));
     DISPATCH();
 }
