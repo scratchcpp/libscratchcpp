@@ -121,7 +121,9 @@ void Engine::frame()
         m_breakFrame = false;
 
         do {
-            m_scriptPositions[i] = script->run(m_scriptPositions[i]);
+            auto ret = script->run(m_scriptPositions[i]);
+            if (script->savePos())
+                m_scriptPositions[i] = ret;
             if (script->atEnd())
                 m_scriptsToRemove.push_back(script);
         } while (!script->atEnd() && !m_breakFrame);
@@ -181,7 +183,7 @@ void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<T
 }
 
 /*! Starts the script of the broadcast with the given index. */
-void libscratchcpp::Engine::broadcast(unsigned int index)
+void libscratchcpp::Engine::broadcast(unsigned int index, VirtualMachine *sourceScript)
 {
     const std::vector<VirtualMachine *> scripts = m_broadcastMap[index];
     for (auto vm : scripts) {
@@ -190,6 +192,8 @@ void libscratchcpp::Engine::broadcast(unsigned int index)
             // Reset the script if it's already running
             auto i = it - m_runningScripts.begin();
             m_scriptPositions[i] = m_runningScripts[i]->bytecode();
+            if (vm == sourceScript)
+                vm->stop(false, true);
         } else {
             m_runningScripts.push_back(vm);
             m_scriptPositions.push_back(vm->bytecode());

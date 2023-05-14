@@ -111,8 +111,23 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         unsigned int *run();
         unsigned int *run(unsigned int *pos);
 
+        /*!
+         * Use this to stop the script from a function.
+         * \param[in] savePos Changes the return value of savePos().
+         * \param[in] breakAtomic Whether to break the frame after stopping the script.
+         */
+        void stop(bool savePos = true, bool breakAtomic = false)
+        {
+            m_stop = true;
+            m_savePos = savePos;
+            m_atomic = !breakAtomic;
+        }
+
         /*! Returns true if the VM has reached the vm::OP_HALT instruction. */
         bool atEnd() const { return m_atEnd; };
+
+        /*! Used by Engine to check whether the position can be preserved. */
+        bool savePos() const { return m_savePos; }
 
     private:
         static inline const unsigned int instruction_arg_count[] = {
@@ -138,6 +153,8 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         std::vector<Value> *m_procedureArgs = nullptr;
         std::vector<Value> *m_nextProcedureArgs = nullptr;
         bool m_atomic;
+        bool m_stop = false;
+        bool m_savePos = true;
 
         unsigned int **m_procedures = nullptr;
         std::vector<unsigned int *> m_proceduresVector;

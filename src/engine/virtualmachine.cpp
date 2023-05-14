@@ -614,6 +614,19 @@ do_str_contains:
 
 do_exec:
     FREE_REGS(m_functions[*++pos](this));
+    if (m_stop) {
+        m_stop = false;
+        if (m_regCount > 0) {
+            std::cout << "warning: VM: " << m_regCount << " registers were leaked by the script; this is most likely a bug in the VM or in the compiler" << std::endl;
+        }
+        m_callTree.clear();
+        m_procedureArgTree.clear();
+        m_procedureArgs = nullptr;
+        m_nextProcedureArgs = nullptr;
+        if (!m_atomic)
+            m_engine->breakFrame();
+        return pos;
+    }
     DISPATCH();
 
 do_init_procedure:

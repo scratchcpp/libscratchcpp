@@ -35,7 +35,7 @@ class LIBSCRATCHCPP_EXPORT Engine
         void start();
         void stop();
         void startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target);
-        void broadcast(unsigned int index);
+        void broadcast(unsigned int index, VirtualMachine *sourceScript);
         void stopScript(VirtualMachine *vm);
         void stopTarget(Target *target, VirtualMachine *exceptScript);
         void run();
