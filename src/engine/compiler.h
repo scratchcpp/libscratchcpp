@@ -25,6 +25,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
 
         const std::vector<unsigned int> &bytecode() const;
 
+        Engine *engine() const;
+
         const std::vector<InputValue *> &constInputValues() const;
         std::vector<Value> constValues() const;
 

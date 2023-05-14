@@ -53,6 +53,12 @@ const std::vector<unsigned int> &Compiler::bytecode() const
     return m_bytecode;
 }
 
+/*! Returns the Engine. */
+Engine *Compiler::engine() const
+{
+    return m_engine;
+}
+
 /*! Returns the list of constant input values. */
 const std::vector<InputValue *> &Compiler::constInputValues() const
 {
