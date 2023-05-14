@@ -24,6 +24,69 @@ using namespace vm;
 
 static const double pi = std::acos(-1); // TODO: Use std::numbers::pi in C++20
 
+const unsigned int VirtualMachine::instruction_arg_count[] = {
+    0, // OP_START
+    0, // OP_HALT
+    1, // OP_CONST
+    0, // OP_NULL
+    0, // OP_IF
+    0, // OP_ELSE
+    0, // OP_ENDIF
+    0, // OP_FOREVER_LOOP
+    0, // OP_REPEAT_LOOP
+    0, // OP_UNTIL_LOOP
+    0, // OP_BEGIN_UNTIL_LOOP
+    0, // OP_LOOP_END
+    0, // OP_PRINT
+    0, // OP_ADD
+    0, // OP_SUBTRACT
+    0, // OP_MULTIPLY
+    0, // OP_DIVIDE
+    0, // OP_MOD
+    0, // OP_RANDOM
+    0, // OP_ROUND
+    0, // OP_ABS
+    0, // OP_FLOOR
+    0, // OP_CEIL
+    0, // OP_SQRT
+    0, // OP_SIN
+    0, // OP_COS
+    0, // OP_TAN
+    0, // OP_ASIN
+    0, // OP_ACOS
+    0, // OP_ATAN
+    0, // OP_GREATER_THAN
+    0, // OP_LESS_THAN
+    0, // OP_EQUALS
+    0, // OP_AND
+    0, // OP_OR
+    0, // OP_NOT
+    1, // OP_SET_VAR
+    1, // OP_CHANGE_VAR
+    1, // OP_READ_VAR
+    1, // OP_READ_LIST
+    1, // OP_LIST_APPEND
+    1, // OP_LIST_DEL
+    1, // OP_LIST_DEL_ALL
+    1, // OP_LIST_INSERT
+    1, // OP_LIST_REPLACE
+    1, // OP_LIST_GET_ITEM
+    1, // OP_LIST_INDEX_OF
+    1, // OP_LIST_LENGTH
+    1, // OP_LIST_CONTAINS
+    0, // OP_STR_CONCAT
+    0, // OP_STR_AT
+    0, // OP_STR_LENGTH
+    0, // OP_STR_CONTAINS
+    1, // OP_EXEC
+    0, // OP_INIT_PROCEDURE
+    1, // OP_CALL_PROCEDURE
+    0, // OP_ADD_ARG
+    1, // OP_READ_ARG
+    0  // OP_BREAK_ATOMIC
+};
+;
+
 /*! Constructs VirtualMachine. */
 VirtualMachine::VirtualMachine()
 {

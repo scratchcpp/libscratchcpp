@@ -132,9 +132,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         bool savePos() const { return m_savePos; }
 
     private:
-        static inline const unsigned int instruction_arg_count[] = {
-            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0
-        };
+        static const unsigned int instruction_arg_count[];
 
         typedef struct
         {
