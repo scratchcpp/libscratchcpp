@@ -164,6 +164,7 @@ void Engine::start()
 void Engine::stop()
 {
     m_runningScripts.clear();
+    m_scriptPositions.clear();
 }
 
 /*! Starts a script with the given top level block as the given Target (a sprite or the stage). */
