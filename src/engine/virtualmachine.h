@@ -73,7 +73,8 @@ enum Opcode
     OP_CALL_PROCEDURE, /*! Calls the procedure (custom block) with the index in the argument. */
     OP_ADD_ARG,        /*!< Adds a procedure (custom block) argument with the value from the last register. */
     OP_READ_ARG,       /*!< Reads the procedure (custom block) argument with the index in the argument and stores the value in the last register. */
-    OP_BREAK_ATOMIC    /*!< Breaks current frame at the end of the loop. */
+    OP_BREAK_ATOMIC,   /*!< Breaks current frame at the end of the loop. */
+    OP_WARP            /*! Runs the script without screen refresh. */
 };
 
 }
@@ -116,9 +117,12 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
          * \param[in] savePos Changes the return value of savePos().
          * \param[in] breakAtomic Whether to break the frame after stopping the script.
          * \param[in] goBack Whether to go back so that the current instruction can run again in the future.
+         * \note Nothing will happen if the script is set to run without screen refresh.
          */
         void stop(bool savePos = true, bool breakAtomic = false, bool goBack = false)
         {
+            if (m_warp)
+                return;
             m_stop = true;
             m_savePos = savePos;
             m_atomic = !breakAtomic;
@@ -153,6 +157,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         std::vector<Value> *m_procedureArgs = nullptr;
         std::vector<Value> *m_nextProcedureArgs = nullptr;
         bool m_atomic;
+        bool m_warp;
         bool m_stop = false;
         bool m_savePos = true;
         bool m_goBack = false;

@@ -83,7 +83,8 @@ const unsigned int VirtualMachine::instruction_arg_count[] = {
     1, // OP_CALL_PROCEDURE
     0, // OP_ADD_ARG
     1, // OP_READ_ARG
-    0  // OP_BREAK_ATOMIC
+    0, // OP_BREAK_ATOMIC
+    0  // OP_WARP
 };
 ;
 
@@ -222,13 +223,15 @@ unsigned int *VirtualMachine::run(unsigned int *pos)
         &&do_call_procedure,
         &&do_add_arg,
         &&do_read_arg,
-        &&do_break_atomic
+        &&do_break_atomic,
+        &&do_warp
     };
     unsigned int *loopStart;
     unsigned int *loopEnd;
     size_t loopCount;
     m_atEnd = false;
     m_atomic = true;
+    m_warp = false;
     DISPATCH();
 
 do_halt:
@@ -324,13 +327,13 @@ do_loop_end : {
             pos = l.start;
         else
             m_loops.pop_back();
-        if (!m_atomic) {
+        if (!m_atomic && !m_warp) {
             m_engine->breakFrame();
             return pos;
         }
         DISPATCH();
     } else {
-        if (!m_atomic) {
+        if (!m_atomic && !m_warp) {
             m_engine->breakFrame();
             return pos - 1;
         }
@@ -683,7 +686,7 @@ do_exec : {
         m_procedureArgTree.clear();
         m_procedureArgs = nullptr;
         m_nextProcedureArgs = nullptr;
-        if (!m_atomic)
+        if (!m_atomic && !m_warp)
             m_engine->breakFrame();
         if (m_goBack) {
             m_goBack = false;
@@ -691,7 +694,10 @@ do_exec : {
             m_freeExecRegs = ret;
         } else
             FREE_REGS(ret);
-        return pos;
+        if (m_warp)
+            DISPATCH();
+        else
+            return pos;
     }
     FREE_REGS(ret);
     DISPATCH();
@@ -722,5 +728,9 @@ do_read_arg:
 
 do_break_atomic:
     m_atomic = false;
+    DISPATCH();
+
+do_warp:
+    m_warp = true;
     DISPATCH();
 }
