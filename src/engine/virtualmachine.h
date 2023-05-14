@@ -115,12 +115,14 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
          * Use this to stop the script from a function.
          * \param[in] savePos Changes the return value of savePos().
          * \param[in] breakAtomic Whether to break the frame after stopping the script.
+         * \param[in] goBack Whether to go back so that the current instruction can run again in the future.
          */
-        void stop(bool savePos = true, bool breakAtomic = false)
+        void stop(bool savePos = true, bool breakAtomic = false, bool goBack = false)
         {
             m_stop = true;
             m_savePos = savePos;
             m_atomic = !breakAtomic;
+            m_goBack = goBack;
         }
 
         /*! Returns true if the VM has reached the vm::OP_HALT instruction. */
@@ -155,6 +157,8 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         bool m_atomic;
         bool m_stop = false;
         bool m_savePos = true;
+        bool m_goBack = false;
+        unsigned int m_freeExecRegs;
 
         unsigned int **m_procedures = nullptr;
         std::vector<unsigned int *> m_proceduresVector;

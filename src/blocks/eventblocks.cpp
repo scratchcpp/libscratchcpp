@@ -11,6 +11,7 @@ EventBlocks::EventBlocks()
     // Blocks
     addHatBlock("event_whenflagclicked");
     addCompileFunction("event_broadcast", &compileBroadcast);
+    addCompileFunction("event_broadcastandwait", &compileBroadcastAndWait);
     addCompileFunction("event_whenbroadcastreceived", &compileWhenBroadcastReceived);
 
     // Inputs
@@ -36,6 +37,22 @@ void EventBlocks::compileBroadcast(Compiler *compiler)
         compiler->addFunctionCall(&broadcast);
 }
 
+void EventBlocks::compileBroadcastAndWait(Compiler *compiler)
+{
+    auto input = compiler->input(BROADCAST_INPUT);
+    compiler->addInput(input);
+    if (input->type() != Input::Type::ObscuredShadow) {
+        input->primaryValue()->setValue(compiler->engine()->findBroadcast(input->primaryValue()->value().toString()));
+        compiler->addFunctionCall(&broadcastByIndex);
+        compiler->addInput(input);
+        compiler->addFunctionCall(&checkBroadcastByIndex);
+    } else {
+        compiler->addFunctionCall(&broadcast);
+        compiler->addInput(input);
+        compiler->addFunctionCall(&checkBroadcast);
+    }
+}
+
 void EventBlocks::compileWhenBroadcastReceived(Compiler *compiler)
 {
     auto broadcast = std::static_pointer_cast<Broadcast>(compiler->field(BROADCAST_OPTION)->valuePtr());
@@ -51,5 +68,19 @@ unsigned int EventBlocks::broadcast(VirtualMachine *vm)
 unsigned int EventBlocks::broadcastByIndex(VirtualMachine *vm)
 {
     vm->engine()->broadcast(vm->getInput(0, 1)->toLong(), vm);
+    return 1;
+}
+
+unsigned int EventBlocks::checkBroadcast(VirtualMachine *vm)
+{
+    if (vm->engine()->broadcastRunning(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString())))
+        vm->stop(true, true, true);
+    return 1;
+}
+
+unsigned int EventBlocks::checkBroadcastByIndex(VirtualMachine *vm)
+{
+    if (vm->engine()->broadcastRunning(vm->getInput(0, 1)->toLong()))
+        vm->stop(true, true, true);
     return 1;
 }

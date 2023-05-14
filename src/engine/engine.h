@@ -40,6 +40,8 @@ class LIBSCRATCHCPP_EXPORT Engine
         void stopTarget(Target *target, VirtualMachine *exceptScript);
         void run();
 
+        bool broadcastRunning(unsigned int index);
+
         void breakFrame();
         void stayOnCurrentBlock();
         void breakAtomicScript();

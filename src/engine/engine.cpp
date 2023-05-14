@@ -121,11 +121,19 @@ void Engine::frame()
         m_breakFrame = false;
 
         do {
+            std::string opcode;
+            for (auto const &[key, value] : m_scripts) {
+                if (value.get() == script)
+                    opcode = key->opcode();
+            }
             auto ret = script->run(m_scriptPositions[i]);
             if (script->savePos())
                 m_scriptPositions[i] = ret;
-            if (script->atEnd())
+            if (script->atEnd()) {
+                for (auto &[key, value] : m_broadcastMap)
+                    value.erase(std::remove(value.begin(), value.end(), script), value.end());
                 m_scriptsToRemove.push_back(script);
+            }
         } while (!script->atEnd() && !m_breakFrame);
     }
 
@@ -185,7 +193,7 @@ void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<T
 /*! Starts the script of the broadcast with the given index. */
 void libscratchcpp::Engine::broadcast(unsigned int index, VirtualMachine *sourceScript)
 {
-    const std::vector<VirtualMachine *> scripts = m_broadcastMap[index];
+    const std::vector<VirtualMachine *> &scripts = m_broadcastMap[index];
     for (auto vm : scripts) {
         auto it = std::find(m_runningScripts.begin(), m_runningScripts.end(), vm);
         if (it != m_runningScripts.end()) {
@@ -254,6 +262,12 @@ void Engine::run()
 
         lastFrameTime = currentTime;
     }
+}
+
+/*! Returns true if there are any running script of the broadcast with the given index. */
+bool Engine::broadcastRunning(unsigned int index)
+{
+    return !m_broadcastMap[index].empty();
 }
 
 /*!
