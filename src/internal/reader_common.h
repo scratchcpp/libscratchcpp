@@ -15,7 +15,7 @@ Value LIBSCRATCHCPP_EXPORT jsonToValue(nlohmann::json value)
     if (value.is_string())
         return value.get<std::string>();
     else if (value.is_number())
-        return std::stof(value.dump());
+        return std::stod(value.dump());
     else if (value.is_boolean())
         return value.get<bool>();
     else
