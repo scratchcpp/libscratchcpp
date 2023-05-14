@@ -35,6 +35,7 @@ class LIBSCRATCHCPP_EXPORT Engine
         void start();
         void stop();
         void startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target);
+        void broadcast(unsigned int index);
         void stopScript(VirtualMachine *vm);
         void stopTarget(Target *target, VirtualMachine *exceptScript);
         void run();
@@ -54,6 +55,8 @@ class LIBSCRATCHCPP_EXPORT Engine
         int findBroadcast(const std::string &broadcastName) const;
         int findBroadcastById(const std::string &broadcastId) const;
 
+        void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast);
+
         std::vector<std::shared_ptr<Target>> targets() const;
         void setTargets(const std::vector<std::shared_ptr<Target>> &newTargets);
         Target *targetAt(int index) const;
@@ -71,6 +74,7 @@ class LIBSCRATCHCPP_EXPORT Engine
         std::vector<std::shared_ptr<IBlockSection>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
+        std::unordered_map<unsigned int, std::vector<VirtualMachine *>> m_broadcastMap;
         std::vector<std::string> m_extensions;
         std::vector<VirtualMachine *> m_runningScripts;
         std::vector<unsigned int *> m_scriptPositions;

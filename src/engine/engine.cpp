@@ -76,9 +76,11 @@ void Engine::compile()
             if (block->topLevel()) {
                 auto section = blockSection(block->opcode());
                 if (section) {
+                    auto vm = std::make_shared<VirtualMachine>(target.get(), this);
+                    m_scripts[block] = vm;
+
                     compiler.compile(block);
 
-                    auto vm = std::make_shared<VirtualMachine>(target.get(), this);
                     vm->setFunctions(m_functions);
                     vm->setConstValues(compiler.constValues());
                     vm->setVariables(compiler.variablePtrs());
@@ -88,7 +90,6 @@ void Engine::compile()
                         auto b = block->inputAt(block->findInput("custom_block"))->valueBlock();
                         procedureBytecodeMap[b->mutationPrototype()->procCode()] = vm->bytecode();
                     }
-                    m_scripts[block] = vm;
                 } else
                     std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
             }
@@ -176,6 +177,24 @@ void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<T
         m_runningScripts.push_back(vm);
         m_scriptPositions.push_back(vm->bytecode());
         scriptCount++;
+    }
+}
+
+/*! Starts the script of the broadcast with the given index. */
+void libscratchcpp::Engine::broadcast(unsigned int index)
+{
+    const std::vector<VirtualMachine *> scripts = m_broadcastMap[index];
+    for (auto vm : scripts) {
+        auto it = std::find(m_runningScripts.begin(), m_runningScripts.end(), vm);
+        if (it != m_runningScripts.end()) {
+            // Reset the script if it's already running
+            auto i = it - m_runningScripts.begin();
+            m_scriptPositions[i] = m_runningScripts[i]->bytecode();
+        } else {
+            m_runningScripts.push_back(vm);
+            m_scriptPositions.push_back(vm->bytecode());
+            scriptCount++;
+        }
     }
 }
 
