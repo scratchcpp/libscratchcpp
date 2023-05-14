@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
 - [x] Operator blocks
 - [x] Custom blocks
 - [ ] Top level reporter blocks
-- [ ] Broadcasts
+- [x] Broadcasts
 - [x] Variables (monitors are not implemented yet)
 - [x] Lists (monitors are not implemented yet)
 - [ ] Timer
