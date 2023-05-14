@@ -50,8 +50,9 @@ class LIBSCRATCHCPP_EXPORT Engine
 
         std::vector<std::shared_ptr<Broadcast>> broadcasts() const;
         void setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadcasts);
-        Broadcast *broadcastAt(int index) const;
+        std::shared_ptr<Broadcast> broadcastAt(int index) const;
         int findBroadcast(const std::string &broadcastName) const;
+        int findBroadcastById(const std::string &broadcastId) const;
 
         std::vector<std::shared_ptr<Target>> targets() const;
         void setTargets(const std::vector<std::shared_ptr<Target>> &newTargets);
@@ -65,6 +66,7 @@ class LIBSCRATCHCPP_EXPORT Engine
         std::shared_ptr<Block> getBlock(std::string id);
         std::shared_ptr<Variable> getVariable(std::string id);
         std::shared_ptr<List> getList(std::string id);
+        std::shared_ptr<Broadcast> getBroadcast(std::string id);
         std::shared_ptr<IEntity> getEntity(std::string id);
         std::vector<std::shared_ptr<IBlockSection>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;

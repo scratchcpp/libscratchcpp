@@ -305,9 +305,9 @@ void Engine::setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadc
 }
 
 /*! Returns the broadcast at index. */
-Broadcast *Engine::broadcastAt(int index) const
+std::shared_ptr<Broadcast> Engine::broadcastAt(int index) const
 {
-    return m_broadcasts[index].get();
+    return m_broadcasts[index];
 }
 
 /*! Returns the index of the broadcast with the given name. */
@@ -320,6 +320,29 @@ int Engine::findBroadcast(const std::string &broadcastName) const
         i++;
     }
     return -1;
+}
+
+/*! Returns the index of the broadcast with the given ID. */
+int Engine::findBroadcastById(const std::string &broadcastId) const
+{
+    int i = 0;
+    for (auto broadcast : m_broadcasts) {
+        if (broadcast->id() == broadcastId)
+            return i;
+        i++;
+    }
+    return -1;
+}
+
+/*! Registers the broadcast script. */
+void libscratchcpp::Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast)
+{
+    auto id = findBroadcast(broadcast->name());
+    if (m_broadcastMap.count(id) == 1) {
+        std::vector<VirtualMachine *> &scripts = m_broadcastMap[id];
+        scripts.push_back(m_scripts[whenReceivedBlock].get());
+    } else
+        m_broadcastMap[id] = { m_scripts[whenReceivedBlock].get() };
 }
 
 /*! Returns the list of targets. */
@@ -431,6 +454,19 @@ std::shared_ptr<List> Engine::getList(std::string id)
     return nullptr;
 }
 
+/*! Returns the broadcast with the given ID. */
+std::shared_ptr<Broadcast> Engine::getBroadcast(std::string id)
+{
+    if (id.empty())
+        return nullptr;
+
+    int index = findBroadcastById(id);
+    if (index != -1)
+        return broadcastAt(index);
+
+    return nullptr;
+}
+
 /*! Returns the entity with the given ID. \see IEntity */
 std::shared_ptr<IEntity> Engine::getEntity(std::string id)
 {
@@ -448,6 +484,11 @@ std::shared_ptr<IEntity> Engine::getEntity(std::string id)
     auto list = getList(id);
     if (list)
         return std::static_pointer_cast<IEntity>(list);
+
+    // Broadcasts
+    auto broadcast = getBroadcast(id);
+    if (broadcast)
+        return std::static_pointer_cast<IEntity>(broadcast);
 
     return nullptr;
 }
