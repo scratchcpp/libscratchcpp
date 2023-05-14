@@ -20,6 +20,7 @@ void Compiler::compile(std::shared_ptr<Block> topLevelBlock)
 {
     m_bytecode.clear();
     m_procedurePrototype = nullptr;
+    m_atomic = true;
 
     // Add start instruction
     addInstruction(OP_START);
@@ -180,6 +181,15 @@ void Compiler::moveToSubstack(std::shared_ptr<Block> substack, SubstackType type
     moveToSubstack(substack, nullptr, type);
 }
 
+/*!
+ * Adds the vm::OP_BREAK_ATOMIC instruction at the end of the current loop.
+ * This can be used for example in motion blocks.
+ */
+void Compiler::breakAtomicScript()
+{
+    m_atomic = false;
+}
+
 /*! Returns the input with the given ID. */
 Input *Compiler::input(int id) const
 {
@@ -260,6 +270,10 @@ void Compiler::substackEnd()
     auto parent = m_substackTree.back();
     switch (parent.second) {
         case SubstackType::Loop:
+            if (!m_atomic) {
+                addInstruction(OP_BREAK_ATOMIC);
+                m_atomic = true;
+            }
             addInstruction(OP_LOOP_END);
             break;
         case SubstackType::IfStatement:
