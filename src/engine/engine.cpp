@@ -121,7 +121,7 @@ void Engine::frame()
         m_breakFrame = false;
 
         do {
-            m_scriptPositions[i] = script->run();
+            m_scriptPositions[i] = script->run(m_scriptPositions[i]);
             if (script->atEnd())
                 m_scriptsToRemove.push_back(script);
         } while (!script->atEnd() && !m_breakFrame);
