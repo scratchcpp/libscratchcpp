@@ -43,6 +43,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void moveToSubstack(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2, SubstackType type);
         void moveToSubstack(std::shared_ptr<Block> substack, SubstackType type);
         void breakAtomicScript();
+        void warp();
 
         Input *input(int id) const;
         Field *field(int id) const;
@@ -75,6 +76,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         std::unordered_map<std::string, std::vector<std::string>> m_procedureArgs;
         BlockPrototype *m_procedurePrototype = nullptr;
         bool m_atomic;
+        bool m_warp;
 };
 
 } // namespace libscratchcpp

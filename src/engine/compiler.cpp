@@ -21,6 +21,7 @@ void Compiler::compile(std::shared_ptr<Block> topLevelBlock)
     m_bytecode.clear();
     m_procedurePrototype = nullptr;
     m_atomic = true;
+    m_warp = false;
 
     // Add start instruction
     addInstruction(OP_START);
@@ -184,10 +185,18 @@ void Compiler::moveToSubstack(std::shared_ptr<Block> substack, SubstackType type
 /*!
  * Adds the vm::OP_BREAK_ATOMIC instruction at the end of the current loop.
  * This can be used for example in motion blocks.
+ * \note Nothing will happen if the script is set to run without screen refresh.
  */
 void Compiler::breakAtomicScript()
 {
     m_atomic = false;
+}
+
+/*! Makes current script run without screen refresh. */
+void Compiler::warp()
+{
+    m_warp = true;
+    addInstruction(vm::OP_WARP);
 }
 
 /*! Returns the input with the given ID. */
@@ -231,6 +240,7 @@ unsigned int Compiler::listIndex(std::shared_ptr<IEntity> listEntity)
     return m_lists.size() - 1;
 }
 
+/*! Returns the index of the given constant input value. */
 unsigned int Compiler::constIndex(InputValue *value)
 {
     auto it = std::find(m_constValues.begin(), m_constValues.end(), value);
@@ -271,7 +281,8 @@ void Compiler::substackEnd()
     switch (parent.second) {
         case SubstackType::Loop:
             if (!m_atomic) {
-                addInstruction(OP_BREAK_ATOMIC);
+                if (!m_warp)
+                    addInstruction(OP_BREAK_ATOMIC);
                 m_atomic = true;
             }
             addInstruction(OP_LOOP_END);
