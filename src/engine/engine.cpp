@@ -142,7 +142,6 @@ void Engine::frame()
         auto index = it - m_runningScripts.begin();
         m_runningScripts.erase(m_runningScripts.begin() + index);
         m_scriptPositions.erase(m_scriptPositions.begin() + index);
-        scriptCount--;
     }
     m_scriptsToRemove.clear();
 }
@@ -153,7 +152,6 @@ void Engine::frame()
  */
 void Engine::start()
 {
-    scriptCount = 0;
     for (auto target : m_targets) {
         auto gfBlocks = target->greenFlagBlocks();
         for (auto block : gfBlocks)
@@ -165,7 +163,6 @@ void Engine::start()
 void Engine::stop()
 {
     m_runningScripts.clear();
-    scriptCount = 0;
 }
 
 /*! Starts a script with the given top level block as the given Target (a sprite or the stage). */
@@ -186,7 +183,6 @@ void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<T
         auto vm = m_scripts[topLevelBlock].get();
         m_runningScripts.push_back(vm);
         m_scriptPositions.push_back(vm->bytecode());
-        scriptCount++;
     }
 }
 
@@ -205,7 +201,6 @@ void libscratchcpp::Engine::broadcast(unsigned int index, VirtualMachine *source
         } else {
             m_runningScripts.push_back(vm);
             m_scriptPositions.push_back(vm->bytecode());
-            scriptCount++;
         }
     }
 }
@@ -249,7 +244,7 @@ void Engine::run()
         auto lastFrameTime = std::chrono::steady_clock::now();
         // Execute the frame
         frame();
-        if (scriptCount <= 0)
+        if (m_runningScripts.size() <= 0)
             break;
 
         // Sleep until the time for the next frame
@@ -277,27 +272,6 @@ bool Engine::broadcastRunning(unsigned int index)
 void Engine::breakFrame()
 {
     m_breakFrame = true;
-}
-
-/*! Call this from a block implementation to prevent the engine from moving to next block. */
-void libscratchcpp::Engine::stayOnCurrentBlock()
-{
-    m_stayOnCurrentBlock = true;
-}
-
-/*!
- * Call this from a block implementation to force screen refresh after the current loop period (if the block is in a loop).\n
- * This should for example called from some motion and looks blocks.
- */
-void Engine::breakAtomicScript()
-{
-    m_atomic = false;
-}
-
-/*! Returns true if the current script is atomic (e. g. there's a loop running without screen refresh). */
-bool Engine::isAtomic()
-{
-    return m_atomic;
 }
 
 /*! Registers the given block section. */

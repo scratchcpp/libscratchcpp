@@ -43,9 +43,6 @@ class LIBSCRATCHCPP_EXPORT Engine
         bool broadcastRunning(unsigned int index);
 
         void breakFrame();
-        void stayOnCurrentBlock();
-        void breakAtomicScript();
-        bool isAtomic();
 
         void registerSection(std::shared_ptr<IBlockSection> section);
         unsigned int functionIndex(BlockFunc f);
@@ -85,9 +82,6 @@ class LIBSCRATCHCPP_EXPORT Engine
         std::vector<BlockFunc> m_functions;
 
         bool m_breakFrame = false;
-        bool m_stayOnCurrentBlock = false;
-        bool m_atomic = true;
-        int scriptCount = 0;
 };
 
 } // namespace libscratchcpp
