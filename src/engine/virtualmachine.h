@@ -72,7 +72,8 @@ enum Opcode
     OP_INIT_PROCEDURE, /*!< Initializes the list of procedure (custom block) arguments. */
     OP_CALL_PROCEDURE, /*! Calls the procedure (custom block) with the index in the argument. */
     OP_ADD_ARG,        /*!< Adds a procedure (custom block) argument with the value from the last register. */
-    OP_READ_ARG        /*!< Reads the procedure (custom block) argument with the index in the argument and stores the value in the last register. */
+    OP_READ_ARG,       /*!< Reads the procedure (custom block) argument with the index in the argument and stores the value in the last register. */
+    OP_BREAK_ATOMIC    /*!< Breaks current frame at the end of the loop. */
 };
 
 }
@@ -108,15 +109,14 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         void replaceReturnValue(const Value &v, unsigned int offset) { *m_regs[m_regCount - offset] = v; };
 
         unsigned int *run();
+        unsigned int *run(unsigned int *pos);
 
         /*! Returns true if the VM has reached the vm::OP_HALT instruction. */
         bool atEnd() const { return m_atEnd; };
 
     private:
-        unsigned int *run(unsigned int *pos);
-
         static inline const unsigned int instruction_arg_count[] = {
-            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0
+            0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0
         };
 
         typedef struct
@@ -137,6 +137,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         std::vector<std::vector<Value>> m_procedureArgTree;
         std::vector<Value> *m_procedureArgs = nullptr;
         std::vector<Value> *m_nextProcedureArgs = nullptr;
+        bool m_atomic;
 
         unsigned int **m_procedures = nullptr;
         std::vector<unsigned int *> m_proceduresVector;

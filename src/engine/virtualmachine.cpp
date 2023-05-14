@@ -2,6 +2,7 @@
 
 #include "virtualmachine.h"
 #include "../scratch/list.h"
+#include "../engine/engine.h"
 #include <iostream>
 
 #define MAX_REG_COUNT 1024
@@ -93,10 +94,10 @@ void VirtualMachine::setBytecode(const std::vector<unsigned int> &code)
 /*! Runs the script. */
 unsigned int *VirtualMachine::run()
 {
-    m_atEnd = false;
     return run(m_bytecode);
 }
 
+/*! Continues running the script from the given position (the first instruction is skipped). */
 unsigned int *VirtualMachine::run(unsigned int *pos)
 {
     static const void *dispatch_table[] = {
@@ -157,11 +158,14 @@ unsigned int *VirtualMachine::run(unsigned int *pos)
         &&do_init_procedure,
         &&do_call_procedure,
         &&do_add_arg,
-        &&do_read_arg
+        &&do_read_arg,
+        &&do_break_atomic
     };
     unsigned int *loopStart;
     unsigned int *loopEnd;
     size_t loopCount;
+    m_atEnd = false;
+    m_atomic = true;
     DISPATCH();
 
 do_halt:
@@ -257,8 +261,16 @@ do_loop_end : {
             pos = l.start;
         else
             m_loops.pop_back();
+        if (!m_atomic) {
+            m_engine->breakFrame();
+            return pos;
+        }
         DISPATCH();
     } else {
+        if (!m_atomic) {
+            m_engine->breakFrame();
+            return pos - 1;
+        }
         loopStart = run(l.start);
         if (!READ_LAST_REG()->toBool())
             pos = loopStart;
@@ -625,5 +637,9 @@ do_add_arg:
 
 do_read_arg:
     ADD_RET_VALUE(m_procedureArgs->operator[](*++pos));
+    DISPATCH();
+
+do_break_atomic:
+    m_atomic = false;
     DISPATCH();
 }
