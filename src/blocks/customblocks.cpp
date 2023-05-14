@@ -29,6 +29,8 @@ void CustomBlocks::compileDefinition(Compiler *compiler)
 {
     auto prototype = compiler->input(CUSTOM_BLOCK)->valueBlock()->mutationPrototype();
     compiler->setProcedurePrototype(prototype);
+    if (prototype->warp())
+        compiler->warp();
     const std::vector<std::string> &args = prototype->argumentNames();
     const std::string &code = prototype->procCode();
     for (const std::string &arg : args)
