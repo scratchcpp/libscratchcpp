@@ -147,7 +147,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
                 size_t index, max;
         } Loop;
 
-        unsigned int *m_bytecode;
+        unsigned int *m_bytecode = nullptr;
         std::vector<unsigned int> m_bytecodeVector;
 
         Target *m_target = nullptr;

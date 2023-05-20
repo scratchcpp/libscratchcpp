@@ -4,6 +4,7 @@
 #include "../scratch/list.h"
 #include "../engine/engine.h"
 #include <iostream>
+#include <cassert>
 
 #define MAX_REG_COUNT 1024
 
@@ -221,6 +222,7 @@ unsigned int *VirtualMachine::run(unsigned int *pos)
         &&do_break_atomic,
         &&do_warp
     };
+    assert(pos);
     unsigned int *loopStart;
     unsigned int *loopEnd;
     size_t loopCount;
