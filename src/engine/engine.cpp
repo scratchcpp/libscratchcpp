@@ -5,6 +5,7 @@
 #include "../scratchconfiguration.h"
 #include "iblocksection.h"
 #include "compiler.h"
+#include "script.h"
 #include <cassert>
 #include <iostream>
 #include <thread>
@@ -76,16 +77,16 @@ void Engine::compile()
             if (block->topLevel()) {
                 auto section = blockSection(block->opcode());
                 if (section) {
-                    auto vm = std::make_shared<VirtualMachine>(target.get(), this);
-                    m_scripts[block] = vm;
+                    auto script = std::make_shared<Script>(target.get(), this);
+                    m_scripts[block] = script;
 
                     compiler.compile(block);
 
-                    vm->setFunctions(m_functions);
-                    vm->setBytecode(compiler.bytecode());
+                    script->setFunctions(m_functions);
+                    script->setBytecode(compiler.bytecode());
                     if (block->opcode() == "procedures_definition") {
                         auto b = block->inputAt(block->findInput("custom_block"))->valueBlock();
-                        procedureBytecodeMap[b->mutationPrototype()->procCode()] = vm->bytecode();
+                        procedureBytecodeMap[b->mutationPrototype()->procCode()] = script->bytecode();
                     }
                 } else
                     std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
@@ -122,25 +123,26 @@ void Engine::frame()
         m_breakFrame = false;
 
         do {
-            std::string opcode;
-            for (auto const &[key, value] : m_scripts) {
-                if (value.get() == script)
-                    opcode = key->opcode();
-            }
             auto ret = script->run(m_scriptPositions[i]);
             if (script->savePos())
                 m_scriptPositions[i] = ret;
             if (script->atEnd()) {
                 for (auto &[key, value] : m_broadcastMap)
-                    value.erase(std::remove(value.begin(), value.end(), script), value.end());
-                m_scriptsToRemove.push_back(script);
+                    value.erase(std::remove(value.begin(), value.end(), script->script()), value.end());
+                m_scriptsToRemove.push_back(script.get());
             }
         } while (!script->atEnd() && !m_breakFrame);
     }
 
     for (auto script : m_scriptsToRemove) {
-        auto it = std::find(m_runningScripts.begin(), m_runningScripts.end(), script);
-        auto index = it - m_runningScripts.begin();
+        size_t index = -1;
+        for (size_t i = 0; i < m_runningScripts.size(); i++) {
+            if (m_runningScripts[i].get() == script) {
+                index = i;
+                break;
+            }
+        }
+        assert(index != -1);
         m_runningScripts.erase(m_runningScripts.begin() + index);
         m_scriptPositions.erase(m_scriptPositions.begin() + index);
     }
@@ -182,27 +184,32 @@ void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<T
     }
 
     if (topLevelBlock->next()) {
-        auto vm = m_scripts[topLevelBlock].get();
-        m_runningScripts.push_back(vm);
-        m_scriptPositions.push_back(vm->bytecode());
+        auto script = m_scripts[topLevelBlock];
+        m_runningScripts.push_back(script->start());
+        m_scriptPositions.push_back(script->bytecode());
     }
 }
 
 /*! Starts the script of the broadcast with the given index. */
 void libscratchcpp::Engine::broadcast(unsigned int index, VirtualMachine *sourceScript)
 {
-    const std::vector<VirtualMachine *> &scripts = m_broadcastMap[index];
-    for (auto vm : scripts) {
-        auto it = std::find(m_runningScripts.begin(), m_runningScripts.end(), vm);
-        if (it != m_runningScripts.end()) {
+    const std::vector<Script *> &scripts = m_broadcastMap[index];
+    for (auto script : scripts) {
+        size_t index = -1;
+        for (size_t i = 0; i < m_runningScripts.size(); i++) {
+            if (m_runningScripts[i]->script() == script) {
+                index = i;
+                break;
+            }
+        }
+        if (index != -1) {
             // Reset the script if it's already running
-            auto i = it - m_runningScripts.begin();
-            m_scriptPositions[i] = m_runningScripts[i]->bytecode();
-            if (vm == sourceScript)
-                vm->stop(false, true);
+            m_scriptPositions[index] = m_runningScripts[index]->bytecode();
+            if (script == sourceScript->script())
+                sourceScript->stop(false, true);
         } else {
-            m_runningScripts.push_back(vm);
-            m_scriptPositions.push_back(vm->bytecode());
+            m_runningScripts.push_back(script->start());
+            m_scriptPositions.push_back(script->bytecode());
         }
     }
 }
@@ -223,8 +230,8 @@ void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
 {
     std::vector<VirtualMachine *> scripts;
     for (auto script : m_runningScripts) {
-        if ((script->target() == target) && (script != exceptScript))
-            scripts.push_back(script);
+        if ((script->target() == target) && (script.get() != exceptScript))
+            scripts.push_back(script.get());
     }
 
     for (auto script : scripts)
@@ -352,7 +359,7 @@ void libscratchcpp::Engine::addBroadcastScript(std::shared_ptr<Block> whenReceiv
 {
     auto id = findBroadcast(broadcast->name());
     if (m_broadcastMap.count(id) == 1) {
-        std::vector<VirtualMachine *> &scripts = m_broadcastMap[id];
+        std::vector<Script *> &scripts = m_broadcastMap[id];
         scripts.push_back(m_scripts[whenReceivedBlock].get());
     } else
         m_broadcastMap[id] = { m_scripts[whenReceivedBlock].get() };

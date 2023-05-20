@@ -15,6 +15,7 @@ namespace libscratchcpp
 {
 
 class LIBSCRATCHCPP_EXPORT IBlockSection;
+class LIBSCRATCHCPP_EXPORT Script;
 
 /*!
  * \brief The Engine class provides an API for running Scratch projects.
@@ -73,12 +74,12 @@ class LIBSCRATCHCPP_EXPORT Engine
         std::vector<std::shared_ptr<IBlockSection>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
-        std::unordered_map<unsigned int, std::vector<VirtualMachine *>> m_broadcastMap;
+        std::unordered_map<unsigned int, std::vector<Script *>> m_broadcastMap;
         std::vector<std::string> m_extensions;
-        std::vector<VirtualMachine *> m_runningScripts;
+        std::vector<std::shared_ptr<VirtualMachine>> m_runningScripts;
         std::vector<unsigned int *> m_scriptPositions;
         std::vector<VirtualMachine *> m_scriptsToRemove;
-        std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<VirtualMachine>> m_scripts;
+        std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> m_scripts;
         std::vector<BlockFunc> m_functions;
 
         bool m_breakFrame = false;

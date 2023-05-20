@@ -94,9 +94,10 @@ VirtualMachine::VirtualMachine()
 }
 
 /*! \copydoc VirtualMachine() */
-VirtualMachine::VirtualMachine(Target *target, Engine *engine) :
+VirtualMachine::VirtualMachine(Target *target, Engine *engine, Script *script) :
     m_target(target),
-    m_engine(engine)
+    m_engine(engine),
+    m_script(script)
 {
     m_regs = new Value *[MAX_REG_COUNT];
     for (int i = 0; i < MAX_REG_COUNT; i++)
@@ -113,46 +114,40 @@ VirtualMachine::~VirtualMachine()
     delete m_regs;
 }
 
-/*! Sets the list of procedures (custom blocks). */
-void VirtualMachine::setProcedures(const std::vector<unsigned int *> &procedures)
+/*! Sets the array of procedures (custom blocks). */
+void VirtualMachine::setProcedures(unsigned int **procedures)
 {
-    m_proceduresVector = procedures;
-    m_procedures = m_proceduresVector.data();
+    m_procedures = procedures;
 }
 
 /*! Sets the list of functions. */
-void VirtualMachine::setFunctions(const std::vector<BlockFunc> &functions)
+void VirtualMachine::setFunctions(BlockFunc *functions)
 {
-    m_functionsVector = functions;
-    m_functions = m_functionsVector.data();
+    m_functions = functions;
 }
 
 /*! Sets the list of constant values. */
-void VirtualMachine::setConstValues(const std::vector<Value> &values)
+void VirtualMachine::setConstValues(const Value *values)
 {
-    m_constValuesVector = values;
-    m_constValues = m_constValuesVector.data();
+    m_constValues = values;
 }
 
 /*! Sets the list of variables. */
-void VirtualMachine::setVariables(const std::vector<Value *> &variables)
+void VirtualMachine::setVariables(Value **variables)
 {
-    m_variablesVector = variables;
-    m_variables = m_variablesVector.data();
+    m_variables = variables;
 }
 
 /*! Sets the list of lists. */
-void VirtualMachine::setLists(const std::vector<List *> &lists)
+void VirtualMachine::setLists(List **lists)
 {
-    m_listsVector = lists;
-    m_lists = m_listsVector.data();
+    m_lists = lists;
 }
 
 /*! Sets the bytecode of the script. */
-void VirtualMachine::setBytecode(const std::vector<unsigned int> &code)
+void VirtualMachine::setBytecode(unsigned int *code)
 {
-    m_bytecodeVector = code;
-    m_bytecode = m_bytecodeVector.data();
+    m_bytecode = code;
 }
 
 /*! Runs the script. */

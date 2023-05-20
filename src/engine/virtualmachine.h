@@ -80,29 +80,31 @@ enum Opcode
 }
 
 class LIBSCRATCHCPP_EXPORT Engine;
+class LIBSCRATCHCPP_EXPORT Script;
 
 /*! \brief The VirtualMachine class is a virtual machine for compiled Scratch scripts. */
 class LIBSCRATCHCPP_EXPORT VirtualMachine
 {
     public:
         VirtualMachine();
-        VirtualMachine(Target *target, Engine *engine);
+        VirtualMachine(Target *target, Engine *engine, Script *script);
         VirtualMachine(const VirtualMachine &) = delete;
         ~VirtualMachine();
 
-        void setProcedures(const std::vector<unsigned int *> &procedures);
-        void setFunctions(const std::vector<BlockFunc> &functions);
-        void setConstValues(const std::vector<Value> &values);
-        void setVariables(const std::vector<Value *> &variables);
-        void setLists(const std::vector<List *> &lists);
+        void setProcedures(unsigned int **procedures);
+        void setFunctions(BlockFunc *functions);
+        void setConstValues(const Value *values);
+        void setVariables(Value **variables);
+        void setLists(List **lists);
 
-        void setBytecode(const std::vector<unsigned int> &code);
+        void setBytecode(unsigned int *code);
 
         /*! Returns the bytecode array. */
         unsigned int *bytecode() const { return m_bytecode; };
 
         Target *target() const { return m_target; };
         Engine *engine() const { return m_engine; };
+        Script *script() const { return m_script; };
 
         const Value *getInput(unsigned int index, unsigned int argCount) const { return m_regs[m_regCount - argCount + index]; };
 
@@ -150,6 +152,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
 
         Target *m_target = nullptr;
         Engine *m_engine = nullptr;
+        Script *m_script = nullptr;
         bool m_atEnd = false;
         std::vector<Loop> m_loops;
         std::vector<unsigned int *> m_callTree;
@@ -164,22 +167,13 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         unsigned int m_freeExecRegs;
 
         unsigned int **m_procedures = nullptr;
-        std::vector<unsigned int *> m_proceduresVector;
-
         BlockFunc *m_functions;
-        std::vector<BlockFunc> m_functionsVector;
-
         const Value *m_constValues = nullptr;
-        std::vector<Value> m_constValuesVector;
+        Value **m_variables = nullptr;
+        List **m_lists = nullptr;
 
         Value **m_regs = nullptr;
         size_t m_regCount = 0;
-
-        Value **m_variables = nullptr;
-        std::vector<Value *> m_variablesVector;
-
-        List **m_lists = nullptr;
-        std::vector<List *> m_listsVector;
 };
 
 } // namespace libscratchcpp

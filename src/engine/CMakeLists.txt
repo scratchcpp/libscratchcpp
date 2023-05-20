@@ -3,11 +3,13 @@ target_sources(scratchcpp
     engine.cpp
     virtualmachine.cpp
     compiler.cpp
+    script.cpp
   PUBLIC
     engine.h
     global.h
     virtualmachine.h
     compiler.h
+    script.h
     iblocksection.h
     iextension.h
 )
