@@ -111,8 +111,8 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         void addReturnValue(const Value &v) { *m_regs[m_regCount++] = v; };
         void replaceReturnValue(const Value &v, unsigned int offset) { *m_regs[m_regCount - offset] = v; };
 
-        unsigned int *run();
-        unsigned int *run(unsigned int *pos);
+        void run();
+        void reset();
 
         /*!
          * Use this to stop the script from a function.
@@ -134,10 +134,12 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         /*! Returns true if the VM has reached the vm::OP_HALT instruction. */
         bool atEnd() const { return m_atEnd; };
 
-        /*! Used by Engine to check whether the position can be preserved. */
+        /*! Used to check whether the position can be preserved. */
         bool savePos() const { return m_savePos; }
 
     private:
+        unsigned int *run(unsigned int *pos);
+
         static const unsigned int instruction_arg_count[];
 
         typedef struct
@@ -153,6 +155,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         Target *m_target = nullptr;
         Engine *m_engine = nullptr;
         Script *m_script = nullptr;
+        unsigned int *m_pos = nullptr;
         bool m_atEnd = false;
         std::vector<Loop> m_loops;
         std::vector<unsigned int *> m_callTree;

@@ -77,7 +77,6 @@ class LIBSCRATCHCPP_EXPORT Engine
         std::unordered_map<unsigned int, std::vector<Script *>> m_broadcastMap;
         std::vector<std::string> m_extensions;
         std::vector<std::shared_ptr<VirtualMachine>> m_runningScripts;
-        std::vector<unsigned int *> m_scriptPositions;
         std::vector<VirtualMachine *> m_scriptsToRemove;
         std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> m_scripts;
         std::vector<BlockFunc> m_functions;

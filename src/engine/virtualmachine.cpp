@@ -149,15 +149,25 @@ void VirtualMachine::setLists(List **lists)
 void VirtualMachine::setBytecode(unsigned int *code)
 {
     m_bytecode = code;
+    m_pos = code;
 }
 
-/*! Runs the script. */
-unsigned int *VirtualMachine::run()
+/*! Continues running the script from last position (the first instruction is skipped). */
+void VirtualMachine::run()
 {
-    return run(m_bytecode);
+    unsigned int *ret = run(m_pos);
+    assert(ret);
+    if (m_savePos)
+        m_pos = ret;
 }
 
-/*! Continues running the script from the given position (the first instruction is skipped). */
+/*! Jumps back to the initial position. */
+void VirtualMachine::reset()
+{
+    assert(m_bytecode);
+    m_pos = m_bytecode;
+}
+
 unsigned int *VirtualMachine::run(unsigned int *pos)
 {
     static const void *dispatch_table[] = {

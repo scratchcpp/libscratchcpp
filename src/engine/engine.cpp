@@ -123,9 +123,7 @@ void Engine::frame()
         m_breakFrame = false;
 
         do {
-            auto ret = script->run(m_scriptPositions[i]);
-            if (script->savePos())
-                m_scriptPositions[i] = ret;
+            script->run();
             if (script->atEnd()) {
                 for (auto &[key, value] : m_broadcastMap)
                     value.erase(std::remove(value.begin(), value.end(), script->script()), value.end());
@@ -144,7 +142,6 @@ void Engine::frame()
         }
         assert(index != -1);
         m_runningScripts.erase(m_runningScripts.begin() + index);
-        m_scriptPositions.erase(m_scriptPositions.begin() + index);
     }
     m_scriptsToRemove.clear();
 }
@@ -166,7 +163,6 @@ void Engine::start()
 void Engine::stop()
 {
     m_runningScripts.clear();
-    m_scriptPositions.clear();
 }
 
 /*! Starts a script with the given top level block as the given Target (a sprite or the stage). */
@@ -186,7 +182,6 @@ void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<T
     if (topLevelBlock->next()) {
         auto script = m_scripts[topLevelBlock];
         m_runningScripts.push_back(script->start());
-        m_scriptPositions.push_back(script->bytecode());
     }
 }
 
@@ -204,12 +199,11 @@ void libscratchcpp::Engine::broadcast(unsigned int index, VirtualMachine *source
         }
         if (index != -1) {
             // Reset the script if it's already running
-            m_scriptPositions[index] = m_runningScripts[index]->bytecode();
+            m_runningScripts[index]->reset();
             if (script == sourceScript->script())
                 sourceScript->stop(false, true);
         } else {
             m_runningScripts.push_back(script->start());
-            m_scriptPositions.push_back(script->bytecode());
         }
     }
 }
