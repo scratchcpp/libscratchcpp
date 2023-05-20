@@ -2,6 +2,7 @@
 
 #include "controlblocks.h"
 #include "../engine/compiler.h"
+#include <cassert>
 
 namespace libscratchcpp
 {
@@ -15,12 +16,14 @@ ControlBlocks::ControlBlocks()
     addCompileFunction("control_if", &compileIfStatement);
     addCompileFunction("control_if_else", &compileIfElseStatement);
     addCompileFunction("control_stop", &compileStop);
+    addCompileFunction("control_wait", &compileWait);
 
     // Inputs
     addInput("SUBSTACK", SUBSTACK);
     addInput("SUBSTACK2", SUBSTACK2);
     addInput("TIMES", TIMES);
     addInput("CONDITION", CONDITION);
+    addInput("DURATION", DURATION);
 
     // Fields
     addField("STOP_OPTION", STOP_OPTION);
@@ -122,6 +125,13 @@ void ControlBlocks::compileStop(Compiler *compiler)
     }
 }
 
+void ControlBlocks::compileWait(Compiler *compiler)
+{
+    compiler->addInput(DURATION);
+    compiler->addFunctionCall(&startWait);
+    compiler->addFunctionCall(&wait);
+}
+
 unsigned int ControlBlocks::stopAll(VirtualMachine *vm)
 {
     vm->engine()->stop();
@@ -131,6 +141,26 @@ unsigned int ControlBlocks::stopAll(VirtualMachine *vm)
 unsigned int ControlBlocks::stopOtherScriptsInSprite(VirtualMachine *vm)
 {
     vm->engine()->stopTarget(vm->target(), vm);
+    return 0;
+}
+
+unsigned int ControlBlocks::startWait(VirtualMachine *vm)
+{
+    auto currentTime = std::chrono::steady_clock::now();
+    assert(m_startTimeMap.count(vm) == 0);
+    m_timeMap[vm] = { currentTime, vm->getInput(0, 1)->toDouble() * 1000 };
+    return 1;
+}
+
+unsigned int ControlBlocks::wait(VirtualMachine *vm)
+{
+    auto currentTime = std::chrono::steady_clock::now();
+    assert(m_startTimeMap.count(vm) == 1);
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - m_timeMap[vm].first).count() >= m_timeMap[vm].second) {
+        m_timeMap.erase(vm);
+        vm->stop(true, true, false);
+    } else
+        vm->stop(true, true, true);
     return 0;
 }
 
