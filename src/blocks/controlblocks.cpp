@@ -17,6 +17,7 @@ ControlBlocks::ControlBlocks()
     addCompileFunction("control_if_else", &compileIfElseStatement);
     addCompileFunction("control_stop", &compileStop);
     addCompileFunction("control_wait", &compileWait);
+    addCompileFunction("control_wait_until", &compileWaitUntil);
 
     // Inputs
     addInput("SUBSTACK", SUBSTACK);
@@ -132,6 +133,13 @@ void ControlBlocks::compileWait(Compiler *compiler)
     compiler->addFunctionCall(&wait);
 }
 
+void ControlBlocks::compileWaitUntil(Compiler *compiler)
+{
+    compiler->addInstruction(vm::OP_CHECKPOINT);
+    compiler->addInput(CONDITION);
+    compiler->addFunctionCall(&waitUntil);
+}
+
 unsigned int ControlBlocks::stopAll(VirtualMachine *vm)
 {
     vm->engine()->stop();
@@ -162,6 +170,15 @@ unsigned int ControlBlocks::wait(VirtualMachine *vm)
     } else
         vm->stop(true, true, true);
     return 0;
+}
+
+unsigned int ControlBlocks::waitUntil(VirtualMachine *vm)
+{
+    if (!vm->getInput(0, 1)->toBool()) {
+        vm->moveToLastCheckpoint();
+        vm->stop(true, true, false);
+    }
+    return 1;
 }
 
 } // namespace libscratchcpp

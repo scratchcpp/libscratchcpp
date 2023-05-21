@@ -44,12 +44,14 @@ class LIBSCRATCHCPP_EXPORT ControlBlocks : public IBlockSection
         static void compileIfElseStatement(Compiler *compiler);
         static void compileStop(Compiler *compiler);
         static void compileWait(Compiler *compiler);
+        static void compileWaitUntil(Compiler *compiler);
 
     private:
         static unsigned int stopAll(VirtualMachine *vm);
         static unsigned int stopOtherScriptsInSprite(VirtualMachine *vm);
         static unsigned int startWait(VirtualMachine *vm);
         static unsigned int wait(VirtualMachine *vm);
+        static unsigned int waitUntil(VirtualMachine *vm);
 
         static inline std::unordered_map<VirtualMachine *, std::pair<std::chrono::steady_clock::time_point, int>> m_timeMap;
 };
