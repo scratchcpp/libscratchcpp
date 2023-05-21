@@ -15,51 +15,53 @@ namespace vm
 
 enum Opcode
 {
-    OP_START,            /*!< The first instruction of every bytecode. */
-    OP_HALT,             /*!< The last instruction of every bytecode. */
-    OP_CONST,            /*!< Adds a constant value with the index in the argument to the next register. */
-    OP_NULL,             /*!< Adds a null (zero) value to the next register. */
-    OP_CHECKPOINT,       /*!< A checkpoint for the VirtualMachine::moveToLastCheckpoint() method. */
-    OP_IF,               /*!< Jumps to the next instruction if the last register holds "true". If it's false, jumps to OP_ELSE or OP_ENDIF. */
-    OP_ELSE,             /*!< Jumps to OP_ENDIF. This instruction is typically reached when the if statement condition was "true". */
-    OP_ENDIF,            /*!< Doesn't do anything, but is used by OP_IF and OP_ELSE. */
-    OP_FOREVER_LOOP,     /*!< Runs a forever loop. */
-    OP_REPEAT_LOOP,      /*!< Runs a repeat loop with the number of periods stored in the last register. */
-    OP_UNTIL_LOOP,       /*!< Evaluates the condition before OP_BEGIN_UNTIL_LOOP and runs a repeat until loop. */
-    OP_BEGIN_UNTIL_LOOP, /*!< Used by OP_UNTIL_LOOP. */
-    OP_LOOP_END,         /*!< Ends the loop. */
-    OP_PRINT,            /*!< Prints the value stored in the last register. */
-    OP_ADD,              /*!< Adds the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
-    OP_SUBTRACT,         /*!< Subtracts the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
-    OP_MULTIPLY,         /*!< Multiplies the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
-    OP_DIVIDE,           /*!< Divides the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
-    OP_MOD,              /*!< Calculates module of the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
-    OP_RANDOM,           /*!< Generates a random value in the range stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
-    OP_ROUND,            /*!< Rounds the number in the last register and stores the result in the last register. */
-    OP_ABS,              /*!< Calculates the absolute value of the number in the last register and stores the result in the last register. */
-    OP_FLOOR,            /*!< Calculates the floor of the number in the last register and stores the result in the last register. */
-    OP_CEIL,             /*!< Calculates the ceiling of the number in the last register and stores the result in the last register. */
-    OP_SQRT,             /*!< Calculates the square root of the number in the last register and stores the result in the last register. */
-    OP_SIN,              /*!< Calculates the sine of the number in the last register and stores the result in the last register. */
-    OP_COS,              /*!< Calculates the cosine of the number in the last register and stores the result in the last register. */
-    OP_TAN,              /*!< Calculates the tangent of the number in the last register and stores the result in the last register. */
-    OP_ASIN,             /*!< Calculates the arcsine of the number in the last register and stores the result in the last register. */
-    OP_ACOS,             /*!< Calculates the arccosine of the number in the last register and stores the result in the last register. */
-    OP_ATAN,             /*!< Calculates the arctangent of the number in the last register and stores the result in the last register. */
-    OP_GREATER_THAN,     /*!< Compares (>) the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
-    OP_LESS_THAN,        /*!< Compares (<) the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
-    OP_EQUALS,           /*!< Compares (==) the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
-    OP_AND,              /*!< AND gate. The result is stored in the last registry and the input registers are deleted. */
-    OP_OR,               /*!< OR gate. The result is stored in the last registry and the input registers are deleted. */
-    OP_NOT,              /*!< NOT gate. The result is stored in the last registry and the input registers are deleted. */
-    OP_SET_VAR,          /*!< Sets the variable with the index in the argument to the value stored in the last register. */
-    OP_CHANGE_VAR,       /*!< Increments (or decrements) the variable with the index in the argument by the value stored in the last register. */
-    OP_READ_VAR,         /*!< Reads the variable with the index in the argument and stores the value in the last register. */
-    OP_READ_LIST,        /*!< Converts the list with the index in the argument to a string and stores the result in the last register. */
-    OP_LIST_APPEND,      /*!< Appens the value stored in the last register to the list with the index in the argument. */
-    OP_LIST_DEL,         /*!< Deletes the index (or item like "last" or "random") stored in the last register of the list with the index in the argument. */
-    OP_LIST_DEL_ALL,     /*!< Clears the list with the index in the argument. */
-    OP_LIST_INSERT,      /*!< Inserts the value from the second last register at the index (or item like "last" or "random") stored in the last register to the list with the index in the argument. */
+    OP_START,              /*!< The first instruction of every bytecode. */
+    OP_HALT,               /*!< The last instruction of every bytecode. */
+    OP_CONST,              /*!< Adds a constant value with the index in the argument to the next register. */
+    OP_NULL,               /*!< Adds a null (zero) value to the next register. */
+    OP_CHECKPOINT,         /*!< A checkpoint for the VirtualMachine::moveToLastCheckpoint() method. */
+    OP_IF,                 /*!< Jumps to the next instruction if the last register holds "true". If it's false, jumps to OP_ELSE or OP_ENDIF. */
+    OP_ELSE,               /*!< Jumps to OP_ENDIF. This instruction is typically reached when the if statement condition was "true". */
+    OP_ENDIF,              /*!< Doesn't do anything, but is used by OP_IF and OP_ELSE. */
+    OP_FOREVER_LOOP,       /*!< Runs a forever loop. */
+    OP_REPEAT_LOOP,        /*!< Runs a repeat loop with the number of periods stored in the last register. */
+    OP_REPEAT_LOOP_INDEX,  /*!< Returns the index of current repeat loop. */
+    OP_REPEAT_LOOP_INDEX1, /*!< Returns the index of current repeat loop plus 1. */
+    OP_UNTIL_LOOP,         /*!< Evaluates the condition before OP_BEGIN_UNTIL_LOOP and runs a repeat until loop. */
+    OP_BEGIN_UNTIL_LOOP,   /*!< Used by OP_UNTIL_LOOP. */
+    OP_LOOP_END,           /*!< Ends the loop. */
+    OP_PRINT,              /*!< Prints the value stored in the last register. */
+    OP_ADD,                /*!< Adds the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
+    OP_SUBTRACT,           /*!< Subtracts the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
+    OP_MULTIPLY,           /*!< Multiplies the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
+    OP_DIVIDE,             /*!< Divides the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
+    OP_MOD,                /*!< Calculates module of the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
+    OP_RANDOM,             /*!< Generates a random value in the range stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
+    OP_ROUND,              /*!< Rounds the number in the last register and stores the result in the last register. */
+    OP_ABS,                /*!< Calculates the absolute value of the number in the last register and stores the result in the last register. */
+    OP_FLOOR,              /*!< Calculates the floor of the number in the last register and stores the result in the last register. */
+    OP_CEIL,               /*!< Calculates the ceiling of the number in the last register and stores the result in the last register. */
+    OP_SQRT,               /*!< Calculates the square root of the number in the last register and stores the result in the last register. */
+    OP_SIN,                /*!< Calculates the sine of the number in the last register and stores the result in the last register. */
+    OP_COS,                /*!< Calculates the cosine of the number in the last register and stores the result in the last register. */
+    OP_TAN,                /*!< Calculates the tangent of the number in the last register and stores the result in the last register. */
+    OP_ASIN,               /*!< Calculates the arcsine of the number in the last register and stores the result in the last register. */
+    OP_ACOS,               /*!< Calculates the arccosine of the number in the last register and stores the result in the last register. */
+    OP_ATAN,               /*!< Calculates the arctangent of the number in the last register and stores the result in the last register. */
+    OP_GREATER_THAN,       /*!< Compares (>) the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
+    OP_LESS_THAN,          /*!< Compares (<) the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
+    OP_EQUALS,             /*!< Compares (==) the values stored in the last 2 registers and stores the result in the last registry, deleting the input registers. */
+    OP_AND,                /*!< AND gate. The result is stored in the last registry and the input registers are deleted. */
+    OP_OR,                 /*!< OR gate. The result is stored in the last registry and the input registers are deleted. */
+    OP_NOT,                /*!< NOT gate. The result is stored in the last registry and the input registers are deleted. */
+    OP_SET_VAR,            /*!< Sets the variable with the index in the argument to the value stored in the last register. */
+    OP_CHANGE_VAR,         /*!< Increments (or decrements) the variable with the index in the argument by the value stored in the last register. */
+    OP_READ_VAR,           /*!< Reads the variable with the index in the argument and stores the value in the last register. */
+    OP_READ_LIST,          /*!< Converts the list with the index in the argument to a string and stores the result in the last register. */
+    OP_LIST_APPEND,        /*!< Appens the value stored in the last register to the list with the index in the argument. */
+    OP_LIST_DEL,           /*!< Deletes the index (or item like "last" or "random") stored in the last register of the list with the index in the argument. */
+    OP_LIST_DEL_ALL,       /*!< Clears the list with the index in the argument. */
+    OP_LIST_INSERT,    /*!< Inserts the value from the second last register at the index (or item like "last" or "random") stored in the last register to the list with the index in the argument. */
     OP_LIST_REPLACE,   /*!< Replaces the index (or item like "last" or "random") stored in the second last register with the value from the last register in the list with the index in the argument. */
     OP_LIST_GET_ITEM,  /*!< Stores the value at the index (or item like "last" or "random") (of the list with the index in the argument) stored in the last register, in the last register. */
     OP_LIST_INDEX_OF,  /*!< Stores the index of the value from the last register in the last register (of the list with the index in the argument). */

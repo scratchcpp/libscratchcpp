@@ -36,6 +36,8 @@ const unsigned int VirtualMachine::instruction_arg_count[] = {
     0, // OP_ENDIF
     0, // OP_FOREVER_LOOP
     0, // OP_REPEAT_LOOP
+    0, // OP_REPEAT_LOOP_INDEX
+    0, // OP_REPEAT_LOOP_INDEX1
     0, // OP_UNTIL_LOOP
     0, // OP_BEGIN_UNTIL_LOOP
     0, // OP_LOOP_END
@@ -190,6 +192,8 @@ unsigned int *VirtualMachine::run(unsigned int *pos)
         &&do_endif,
         &&do_forever_loop,
         &&do_repeat_loop,
+        &&do_repeat_loop_index,
+        &&do_repeat_loop_index1,
         &&do_until_loop,
         &&do_begin_until_loop,
         &&do_loop_end,
@@ -321,6 +325,22 @@ do_repeat_loop:
         m_loops.push_back(l);
     }
     DISPATCH();
+
+do_repeat_loop_index : {
+    assert(!m_loops.empty());
+    Loop &l = m_loops.back();
+    assert(l.isRepeatLoop);
+    ADD_RET_VALUE(static_cast<long>(l.index));
+    DISPATCH();
+}
+
+do_repeat_loop_index1 : {
+    assert(!m_loops.empty());
+    Loop &l = m_loops.back();
+    assert(l.isRepeatLoop);
+    ADD_RET_VALUE(static_cast<long>(l.index + 1));
+    DISPATCH();
+}
 
 do_until_loop:
     loopStart = run(pos);
