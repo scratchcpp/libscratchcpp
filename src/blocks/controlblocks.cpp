@@ -63,24 +63,20 @@ void ControlBlocks::compileRepeat(Compiler *compiler)
 void ControlBlocks::compileRepeatUntil(Compiler *compiler)
 {
     auto substack = compiler->inputBlock(SUBSTACK);
-    if (substack) {
-        compiler->addInstruction(vm::OP_UNTIL_LOOP);
-        compiler->addInput(CONDITION);
-        compiler->addInstruction(vm::OP_BEGIN_UNTIL_LOOP);
-        compiler->moveToSubstack(substack, Compiler::SubstackType::Loop);
-    }
+    compiler->addInstruction(vm::OP_UNTIL_LOOP);
+    compiler->addInput(CONDITION);
+    compiler->addInstruction(vm::OP_BEGIN_UNTIL_LOOP);
+    compiler->moveToSubstack(substack, Compiler::SubstackType::Loop);
 }
 
 void ControlBlocks::compileRepeatWhile(Compiler *compiler)
 {
     auto substack = compiler->inputBlock(SUBSTACK);
-    if (substack) {
-        compiler->addInstruction(vm::OP_UNTIL_LOOP);
-        compiler->addInput(CONDITION);
-        compiler->addInstruction(vm::OP_NOT);
-        compiler->addInstruction(vm::OP_BEGIN_UNTIL_LOOP);
-        compiler->moveToSubstack(substack, Compiler::SubstackType::Loop);
-    }
+    compiler->addInstruction(vm::OP_UNTIL_LOOP);
+    compiler->addInput(CONDITION);
+    compiler->addInstruction(vm::OP_NOT);
+    compiler->addInstruction(vm::OP_BEGIN_UNTIL_LOOP);
+    compiler->moveToSubstack(substack, Compiler::SubstackType::Loop);
 }
 
 void ControlBlocks::compileRepeatForEach(Compiler *compiler)
