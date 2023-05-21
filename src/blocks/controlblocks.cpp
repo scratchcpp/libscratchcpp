@@ -147,7 +147,7 @@ unsigned int ControlBlocks::stopOtherScriptsInSprite(VirtualMachine *vm)
 unsigned int ControlBlocks::startWait(VirtualMachine *vm)
 {
     auto currentTime = std::chrono::steady_clock::now();
-    assert(m_startTimeMap.count(vm) == 0);
+    assert(m_timeMap.count(vm) == 0);
     m_timeMap[vm] = { currentTime, vm->getInput(0, 1)->toDouble() * 1000 };
     return 1;
 }
@@ -155,7 +155,7 @@ unsigned int ControlBlocks::startWait(VirtualMachine *vm)
 unsigned int ControlBlocks::wait(VirtualMachine *vm)
 {
     auto currentTime = std::chrono::steady_clock::now();
-    assert(m_startTimeMap.count(vm) == 1);
+    assert(m_timeMap.count(vm) == 1);
     if (std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - m_timeMap[vm].first).count() >= m_timeMap[vm].second) {
         m_timeMap.erase(vm);
         vm->stop(true, true, false);
