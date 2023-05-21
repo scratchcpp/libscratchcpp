@@ -13,6 +13,7 @@ ControlBlocks::ControlBlocks()
     addCompileFunction("control_forever", &compileRepeatForever);
     addCompileFunction("control_repeat", &compileRepeat);
     addCompileFunction("control_repeat_until", &compileRepeatUntil);
+    addCompileFunction("control_for_each", &compileRepeatForEach);
     addCompileFunction("control_if", &compileIfStatement);
     addCompileFunction("control_if_else", &compileIfElseStatement);
     addCompileFunction("control_stop", &compileStop);
@@ -25,9 +26,11 @@ ControlBlocks::ControlBlocks()
     addInput("TIMES", TIMES);
     addInput("CONDITION", CONDITION);
     addInput("DURATION", DURATION);
+    addInput("VALUE", VALUE);
 
     // Fields
     addField("STOP_OPTION", STOP_OPTION);
+    addField("VARIABLE", VARIABLE);
 
     // Field values
     addFieldValue("all", StopAll);
@@ -77,6 +80,19 @@ void ControlBlocks::compileRepeatWhile(Compiler *compiler)
         compiler->addInstruction(vm::OP_BEGIN_UNTIL_LOOP);
         compiler->moveToSubstack(substack, Compiler::SubstackType::Loop);
     }
+}
+
+void ControlBlocks::compileRepeatForEach(Compiler *compiler)
+{
+    compiler->addInput(VALUE);
+    auto substack = compiler->inputBlock(SUBSTACK);
+    if (substack) {
+        compiler->addInstruction(vm::OP_REPEAT_LOOP);
+        compiler->addInstruction(vm::OP_REPEAT_LOOP_INDEX1);
+        compiler->addInstruction(vm::OP_SET_VAR, { compiler->variableIndex(compiler->field(VARIABLE)->valuePtr()) });
+        compiler->moveToSubstack(substack, Compiler::SubstackType::Loop);
+    } else
+        compiler->addInstruction(vm::OP_SET_VAR, { compiler->variableIndex(compiler->field(VARIABLE)->valuePtr()) });
 }
 
 void ControlBlocks::compileIfStatement(Compiler *compiler)

@@ -17,12 +17,14 @@ class LIBSCRATCHCPP_EXPORT ControlBlocks : public IBlockSection
             SUBSTACK2,
             TIMES,
             CONDITION,
-            DURATION
+            DURATION,
+            VALUE
         };
 
         enum Fields
         {
-            STOP_OPTION
+            STOP_OPTION,
+            VARIABLE
         };
 
         enum FieldValues
@@ -40,6 +42,7 @@ class LIBSCRATCHCPP_EXPORT ControlBlocks : public IBlockSection
         static void compileRepeat(Compiler *compiler);
         static void compileRepeatUntil(Compiler *compiler);
         static void compileRepeatWhile(Compiler *compiler);
+        static void compileRepeatForEach(Compiler *compiler);
         static void compileIfStatement(Compiler *compiler);
         static void compileIfElseStatement(Compiler *compiler);
         static void compileStop(Compiler *compiler);
