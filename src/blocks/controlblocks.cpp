@@ -13,6 +13,7 @@ ControlBlocks::ControlBlocks()
     addCompileFunction("control_forever", &compileRepeatForever);
     addCompileFunction("control_repeat", &compileRepeat);
     addCompileFunction("control_repeat_until", &compileRepeatUntil);
+    addCompileFunction("control_while", &compileRepeatWhile);
     addCompileFunction("control_for_each", &compileRepeatForEach);
     addCompileFunction("control_if", &compileIfStatement);
     addCompileFunction("control_if_else", &compileIfElseStatement);
