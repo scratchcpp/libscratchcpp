@@ -129,6 +129,7 @@ int main(int argc, char **argv) {
 - [x] Broadcasts
 - [x] Variables (monitors are not implemented yet)
 - [x] Lists (monitors are not implemented yet)
+- [ ] Clones
 - [ ] Timer
 - [ ] API for monitors
 - [ ] Project metadata
