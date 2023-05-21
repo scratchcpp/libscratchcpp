@@ -19,6 +19,7 @@ enum Opcode
     OP_HALT,             /*!< The last instruction of every bytecode. */
     OP_CONST,            /*!< Adds a constant value with the index in the argument to the next register. */
     OP_NULL,             /*!< Adds a null (zero) value to the next register. */
+    OP_CHECKPOINT,       /*!< A checkpoint for the VirtualMachine::moveToLastCheckpoint() method. */
     OP_IF,               /*!< Jumps to the next instruction if the last register holds "true". If it's false, jumps to OP_ELSE or OP_ENDIF. */
     OP_ELSE,             /*!< Jumps to OP_ENDIF. This instruction is typically reached when the if statement condition was "true". */
     OP_ENDIF,            /*!< Doesn't do anything, but is used by OP_IF and OP_ELSE. */
@@ -113,6 +114,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
 
         void run();
         void reset();
+        void moveToLastCheckpoint();
 
         /*!
          * Use this to stop the script from a function.
@@ -156,6 +158,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         Engine *m_engine = nullptr;
         Script *m_script = nullptr;
         unsigned int *m_pos = nullptr;
+        unsigned int *m_checkpoint = nullptr;
         bool m_atEnd = false;
         std::vector<Loop> m_loops;
         std::vector<unsigned int *> m_callTree;
@@ -168,6 +171,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         bool m_savePos = true;
         bool m_goBack = false;
         unsigned int m_freeExecRegs;
+        bool m_updatePos = false;
 
         unsigned int **m_procedures = nullptr;
         BlockFunc *m_functions;

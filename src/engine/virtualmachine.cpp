@@ -30,6 +30,7 @@ const unsigned int VirtualMachine::instruction_arg_count[] = {
     0, // OP_HALT
     1, // OP_CONST
     0, // OP_NULL
+    0, // OP_CHECKPOINT
     0, // OP_IF
     0, // OP_ELSE
     0, // OP_ENDIF
@@ -168,6 +169,14 @@ void VirtualMachine::reset()
     m_pos = m_bytecode;
 }
 
+/*! Moves back to the last vm::OP_CHECKPOINT instruction in the bytecode. */
+void VirtualMachine::moveToLastCheckpoint()
+{
+    assert(m_checkpoint);
+    m_pos = m_checkpoint;
+    m_updatePos = true;
+}
+
 unsigned int *VirtualMachine::run(unsigned int *pos)
 {
     static const void *dispatch_table[] = {
@@ -175,6 +184,7 @@ unsigned int *VirtualMachine::run(unsigned int *pos)
         &&do_halt,
         &&do_const,
         &&do_null,
+        &&do_checkpoint,
         &&do_if,
         &&do_else,
         &&do_endif,
@@ -265,6 +275,10 @@ do_const:
 
 do_null:
     ADD_RET_VALUE(Value());
+    DISPATCH();
+
+do_checkpoint:
+    m_checkpoint = pos - 1;
     DISPATCH();
 
 do_if:
@@ -687,6 +701,10 @@ do_str_contains:
 
 do_exec : {
     auto ret = m_functions[*++pos](this);
+    if (m_updatePos) {
+        pos = m_pos;
+        m_updatePos = false;
+    }
     if (m_stop) {
         m_stop = false;
         m_callTree.clear();
