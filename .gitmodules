@@ -1,3 +1,6 @@
 [submodule "thirdparty/zip"]
 	path = thirdparty/zip
 	url = https://github.com/kuba--/zip
+[submodule "thirdparty/googletest"]
+	path = thirdparty/googletest
+	url = https://github.com/google/googletest
