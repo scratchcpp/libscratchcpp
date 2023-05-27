@@ -25,3 +25,8 @@ target_link_libraries(scratchcpp PRIVATE utf8cpp)
 target_link_libraries(scratchcpp PRIVATE zip)
 
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_LIBRARY)
+
+set (BUILD_TESTING TRUE)
+if (BUILD_TESTING)
+    add_subdirectory(test)
+endif()
