@@ -12,6 +12,7 @@ find_package(utf8cpp REQUIRED)
 
 add_library(scratchcpp SHARED)
 add_subdirectory(src)
+include_directories(src)
 
 add_library(zip SHARED
 	${ZIP_SRC}/zip.c
