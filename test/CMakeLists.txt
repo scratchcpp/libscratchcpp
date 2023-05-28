@@ -3,6 +3,7 @@ project(my_project)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_compile_definitions(DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(GTEST_DIR thirdparty/googletest)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../${GTEST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/${GTEST_DIR})
