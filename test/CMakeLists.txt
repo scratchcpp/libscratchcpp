@@ -15,3 +15,4 @@ enable_testing()
 
 include(GoogleTest)
 add_subdirectory(zip)
+add_subdirectory(load_project)
