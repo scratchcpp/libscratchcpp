@@ -14,3 +14,4 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 enable_testing()
 
 include(GoogleTest)
+add_subdirectory(zip)
