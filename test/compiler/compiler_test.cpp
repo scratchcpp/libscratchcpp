@@ -2,6 +2,7 @@
 #include "scratch/stage.h"
 #include "scratch/sprite.h"
 #include "engine/compiler.h"
+#include "engine/script.h"
 #include "internal/scratch3reader.h"
 #include "../common.h"
 
@@ -474,4 +475,27 @@ TEST(CompilerTest, CustomBlocks)
     ASSERT_TRUE(definition);
     compiler.compile(definition);
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 1, vm::OP_SET_VAR, 2, vm::OP_HALT }));
+}
+
+TEST(CompilerTest, MultipleTargets)
+{
+    LOAD_PROJECT("load_test.sb3", engine);
+    engine.compile();
+    auto scripts = engine.scripts();
+
+    auto sprite1 = engine.targetAt(engine.findTarget("Sprite1"));
+    auto script = scripts.at(sprite1->greenFlagBlocks().at(0));
+    ASSERT_EQ(script->bytecodeVector().size(), 30);
+    auto vm = script->start();
+    ASSERT_EQ(vm->target(), sprite1);
+    ASSERT_EQ(vm->engine(), &engine);
+    ASSERT_EQ(vm->script(), script.get());
+
+    auto sprite2 = engine.targetAt(engine.findTarget("Balloon1"));
+    script = scripts.at(sprite2->greenFlagBlocks().at(0));
+    ASSERT_EQ(script->bytecodeVector().size(), 6);
+    vm = script->start();
+    ASSERT_EQ(vm->target(), sprite2);
+    ASSERT_EQ(vm->engine(), &engine);
+    ASSERT_EQ(vm->script(), script.get());
 }
