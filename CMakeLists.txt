@@ -30,5 +30,6 @@ target_link_libraries(scratchcpp PRIVATE zip)
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_LIBRARY)
 
 if (LIBSCRATCHCPP_BUILD_UNIT_TESTS)
+    enable_testing()
     add_subdirectory(test)
 endif()
