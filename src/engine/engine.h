@@ -30,6 +30,7 @@ class LIBSCRATCHCPP_EXPORT Engine
         Engine(const Engine &) = delete;
 
         void clear();
+        void resolveIds();
         void compile();
 
         void frame();

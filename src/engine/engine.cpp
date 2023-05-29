@@ -27,12 +27,11 @@ void Engine::clear()
 }
 
 /*!
- * Compiles all scripts to bytecode.
- * \see Compiler
+ * Resolves ID references and sets pointers of entities.
+ * \note This function shouldn't normally be called because it's called from compile().
  */
-void Engine::compile()
+void Engine::resolveIds()
 {
-    // Resolve entities by ID
     for (auto target : m_targets) {
         std::cout << "Processing target " << target->name() << "..." << std::endl;
         auto blocks = target->blocks();
@@ -66,6 +65,16 @@ void Engine::compile()
             block->updateFieldMap();
         }
     }
+}
+
+/*!
+ * Compiles all scripts to bytecode.
+ * \see Compiler
+ */
+void Engine::compile()
+{
+    // Resolve entities by ID
+    resolveIds();
 
     // Compile scripts to bytecode
     for (auto target : m_targets) {
