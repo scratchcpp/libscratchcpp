@@ -15,6 +15,7 @@ class LIBSCRATCHCPP_EXPORT Script
         Script(const Script &) = delete;
 
         unsigned int *bytecode() const;
+        const std::vector<unsigned int> &bytecodeVector() const;
         void setBytecode(const std::vector<unsigned int> &code);
 
         void setProcedures(const std::vector<unsigned int *> &procedures);
