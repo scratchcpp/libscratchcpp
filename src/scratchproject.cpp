@@ -120,3 +120,9 @@ void ScratchProject::setScratchVersion(const Version &version)
     else
         std::cerr << "Unsupported Scratch version: " << static_cast<int>(version) << std::endl;
 }
+
+/*! Returns a read-only pointer to the Engine of the project. */
+const Engine *ScratchProject::engine() const
+{
+    return &m_engine;
+}
