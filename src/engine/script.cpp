@@ -12,7 +12,7 @@ Script::Script(Target *target, Engine *engine) :
 }
 
 /*! Returns the bytecode array. */
-unsigned int *Script::bytecode()
+unsigned int *Script::bytecode() const
 {
     return m_bytecode;
 }
