@@ -2,6 +2,7 @@
 #include "scratch/stage.h"
 #include "scratch/sprite.h"
 #include "engine/engine.h"
+#include "scratchproject.h"
 #include "../common.h"
 
 #define ASSERT_VAR(target, varName)                                                                                                                                                                    \
@@ -28,13 +29,15 @@ using namespace libscratchcpp;
 
 static Scratch3Reader s3reader;
 static const std::vector<IProjectReader *> readers = { &s3reader };
-static const std::unordered_map<IProjectReader *, std::string> fileExtensions = { { &s3reader, ".sb3" } };
+static const std::vector<ScratchProject::Version> scratchVersions = { ScratchProject::Version::Scratch3 };
+static const std::vector<std::string> fileExtensions = { ".sb3" };
 
 TEST(LoadProjectTest, EmptyProject)
 {
+    int i = 0;
     for (auto reader : readers) {
         reader->clear();
-        reader->setFileName("empty_project" + fileExtensions.at(reader));
+        reader->setFileName("empty_project" + fileExtensions[i]);
 
         ASSERT_TRUE(reader->load());
         ASSERT_TRUE(reader->isValid());
@@ -64,14 +67,17 @@ TEST(LoadProjectTest, EmptyProject)
         ASSERT_FALSE(backdrop.assetId().empty());
         ASSERT_EQ(backdrop.md5ext(), backdrop.assetId() + ".svg");
         ASSERT_EQ(backdrop.dataFormat(), "svg");
+
+        i++;
     }
 }
 
 TEST(LoadProjectTest, LoadTestProject)
 {
+    int i = 0;
     for (auto reader : readers) {
         reader->clear();
-        reader->setFileName("load_test" + fileExtensions.at(reader));
+        reader->setFileName("load_test" + fileExtensions[i]);
 
         ASSERT_TRUE(reader->load());
         ASSERT_TRUE(reader->isValid());
@@ -258,5 +264,30 @@ TEST(LoadProjectTest, LoadTestProject)
         // Balloon1: lists
         ASSERT_LIST(sprite2, "list2");
         ASSERT_EQ(GET_LIST(sprite2, "list2")->toString(), "0 4 3 4 1 5 6 9 4 8");
+
+        i++;
     }
+}
+
+TEST(LoadProjectTest, ScratchProjectTest)
+{
+    int i = 0;
+    for (auto version : scratchVersions) {
+        std::string name = "load_test" + fileExtensions[i];
+        ScratchProject p(name, version);
+        ASSERT_EQ(p.fileName(), name);
+        ASSERT_EQ(p.scratchVersion(), version);
+        ASSERT_TRUE(p.load());
+
+        i++;
+    }
+}
+
+TEST(LoadProjectTest, ScratchProjectInvalidTest)
+{
+    std::string name = "load_test.sb3";
+    ScratchProject p(name, ScratchProject::Version::Invalid);
+    ASSERT_EQ(p.fileName(), name);
+    ASSERT_EQ(p.scratchVersion(), ScratchProject::Version::Invalid);
+    ASSERT_FALSE(p.load());
 }
