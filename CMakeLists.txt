@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(ZIP_SRC thirdparty/zip/src)
 
+option(LIBSCRATCHCPP_BUILD_UNIT_TESTS "Build unit tests" ON)
+
 find_package(nlohmann_json 3.9.1 REQUIRED)
 find_package(utf8cpp REQUIRED)
 
@@ -27,7 +29,6 @@ target_link_libraries(scratchcpp PRIVATE zip)
 
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_LIBRARY)
 
-set (BUILD_TESTING TRUE)
-if (BUILD_TESTING)
+if (LIBSCRATCHCPP_BUILD_UNIT_TESTS)
     add_subdirectory(test)
 endif()
