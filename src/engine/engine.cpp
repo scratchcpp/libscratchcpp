@@ -432,6 +432,12 @@ void Engine::setExtensions(const std::vector<std::string> &newExtensions)
     }
 }
 
+/*! Returns the map of scripts (each top level block has a Script object). */
+const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &Engine::scripts() const
+{
+    return m_scripts;
+}
+
 /*! Returns the block with the given ID. */
 std::shared_ptr<Block> Engine::getBlock(std::string id)
 {

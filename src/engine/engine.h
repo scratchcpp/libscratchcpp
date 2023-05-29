@@ -66,6 +66,8 @@ class LIBSCRATCHCPP_EXPORT Engine
         std::vector<std::string> extensions() const;
         void setExtensions(const std::vector<std::string> &newExtensions);
 
+        const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &scripts() const;
+
     private:
         std::shared_ptr<Block> getBlock(std::string id);
         std::shared_ptr<Variable> getVariable(std::string id);
