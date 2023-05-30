@@ -33,6 +33,7 @@ void BlockPrototype::setProcCode(const std::string &newProcCode)
         if (c == '%')
             arg = true;
         else if (arg) {
+            arg = false;
             switch (c) {
                 case 's':
                     m_argumentDefaults.push_back("");
