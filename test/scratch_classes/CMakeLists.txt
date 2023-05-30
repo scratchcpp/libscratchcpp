@@ -53,3 +53,17 @@ target_link_libraries(
 )
 
 gtest_discover_tests(stage_test)
+
+# target_test
+add_executable(
+  target_test
+  target_test.cpp
+)
+
+target_link_libraries(
+  target_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(target_test)
