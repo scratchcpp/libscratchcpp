@@ -25,7 +25,7 @@ void List::setName(const std::string &name)
 }
 
 /*! Returns the index of the given item. */
-size_t List::indexOf(const Value &value) const
+long List::indexOf(const Value &value) const
 {
     auto it = std::find(begin(), end(), value);
 

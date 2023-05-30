@@ -22,7 +22,7 @@ class LIBSCRATCHCPP_EXPORT List
         std::string name();
         void setName(const std::string &name);
 
-        size_t indexOf(const Value &value) const;
+        long indexOf(const Value &value) const;
         bool contains(const Value &value) const;
 
         /*! Removes the item at index. */
