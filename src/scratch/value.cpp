@@ -53,25 +53,7 @@ Value::Value(const std::string &stringValue) :
     ValueVariant(stringValue),
     m_type(Type::String)
 {
-    if (stringValue.empty())
-        return;
-    else if (stringValue == "Infinity") {
-        m_type = Type::Infinity;
-        return;
-    } else if (stringValue == "-Infinity") {
-        m_type = Type::NegativeInfinity;
-        return;
-    } else if (stringValue == "NaN") {
-        m_type = Type::NaN;
-        return;
-    }
-
-    bool ok;
-    float f = stringToDouble(stringValue, &ok);
-    if (ok) {
-        *this = f;
-        m_type = Type::Number;
-    }
+    initString(stringValue);
 }
 
 /*! Constructs a string Value. */

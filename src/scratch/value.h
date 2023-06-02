@@ -289,6 +289,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         {
             m_type = Type::String;
             ValueVariant::operator=(v);
+            initString(v);
             return *this;
         }
 
@@ -296,6 +297,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         {
             m_type = Type::String;
             ValueVariant::operator=(std::string(v));
+            initString(v);
             return *this;
         }
 
@@ -304,6 +306,31 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         static bool stringsEqual(std::string s1, std::string s2);
         static double stringToDouble(const std::string &s, bool *ok = nullptr);
         static long stringToLong(const std::string &s, bool *ok = nullptr);
+
+        inline void initString(const std::string &str)
+        {
+            if (str.empty())
+                return;
+            else if (str == "Infinity") {
+                m_type = Type::Infinity;
+                return;
+            } else if (str == "-Infinity") {
+                m_type = Type::NegativeInfinity;
+                return;
+            } else if (str == "NaN") {
+                m_type = Type::NaN;
+                return;
+            }
+
+            bool ok;
+            float f = stringToDouble(str, &ok);
+            if (ok) {
+                *this = f;
+                m_type = Type::Number;
+            }
+        }
+
+        inline void initString(const char *str) { initString(std::string(str)); }
 
         Type m_type;
 
