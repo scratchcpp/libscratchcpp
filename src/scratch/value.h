@@ -323,9 +323,9 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
             }
 
             bool ok;
-            float f = stringToDouble(str, &ok);
+            double d = stringToDouble(str, &ok);
             if (ok) {
-                *this = f;
+                *this = d;
                 m_type = Type::Number;
             }
         }
