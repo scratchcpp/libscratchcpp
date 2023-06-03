@@ -17,6 +17,12 @@ unsigned int *Script::bytecode() const
     return m_bytecode;
 }
 
+/*! Returns the bytecode vector. */
+const std::vector<unsigned int> &Script::bytecodeVector() const
+{
+    return m_bytecodeVector;
+}
+
 /*! Sets the bytecode of the script. */
 void Script::setBytecode(const std::vector<unsigned int> &code)
 {

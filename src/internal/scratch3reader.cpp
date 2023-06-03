@@ -257,6 +257,14 @@ bool Scratch3Reader::isValid()
     return (semver.substr(0, semver.find(".")) == "3");
 }
 
+void Scratch3Reader::clear()
+{
+    m_json = "";
+    m_targets.clear();
+    m_broadcasts.clear();
+    m_extensions.clear();
+}
+
 std::vector<std::shared_ptr<Target>> Scratch3Reader::targets()
 {
     return m_targets;

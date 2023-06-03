@@ -36,6 +36,8 @@ class LIBSCRATCHCPP_EXPORT ScratchProject
         Version scratchVersion() const;
         void setScratchVersion(const Version &version);
 
+        const Engine *engine() const;
+
     private:
         std::string m_fileName;
         Version m_scratchVersion = Version::Invalid;
