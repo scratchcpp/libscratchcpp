@@ -247,12 +247,16 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         /*! Replaces the value with modulo of the value and the given value. */
         inline void mod(const Value &v)
         {
-            if ((v == 0) || (m_type == Type::Infinity || m_type == Type::NegativeInfinity))
+            if ((v == 0) || (m_type == Type::Infinity || m_type == Type::NegativeInfinity)) {
                 m_type = Type::NaN;
-            else if (v.m_type == Type::Infinity || v.m_type == Type::NegativeInfinity) {
+                return;
+            } else if (v.m_type == Type::Infinity || v.m_type == Type::NegativeInfinity) {
                 return;
             }
-            *this = fmod(toDouble(), v.toDouble());
+            if (*this < 0 || v < 0)
+                *this = fmod(v.toDouble() + fmod(toDouble(), -v.toDouble()), v.toDouble());
+            else
+                *this = fmod(toDouble(), v.toDouble());
         }
 
         inline const Value &operator=(float v)
@@ -511,7 +515,10 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
             else if (v2.m_type == Type::Infinity || v2.m_type == Type::NegativeInfinity) {
                 return v1.toDouble();
             }
-            return fmod(v1.toDouble(), v2.toDouble());
+            if (v1 < 0 || v2 < 0)
+                return fmod(v2.toDouble() + fmod(v1.toDouble(), -v2.toDouble()), v2.toDouble());
+            else
+                return fmod(v1.toDouble(), v2.toDouble());
         }
 };
 
