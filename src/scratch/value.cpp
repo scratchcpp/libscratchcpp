@@ -160,7 +160,7 @@ double Value::stringToDouble(const std::string &s, bool *ok)
     try {
         if (ok)
             *ok = true;
-        return std::stof(s);
+        return std::stod(s);
     } catch (...) {
         return 0;
     }
