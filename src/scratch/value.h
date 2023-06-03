@@ -228,13 +228,17 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 m_type = Type::NaN;
                 return;
             } else if (v.toDouble() == 0) {
-                if (v.m_type == Type::Infinity || v.m_type == Type::NegativeInfinity) {
-                    if (m_type == Type::Infinity || m_type == Type::NegativeInfinity)
-                        m_type = Type::NaN;
-                    else
-                        *this = 0;
-                } else
-                    m_type = toDouble() > 0 ? Type::Infinity : Type::NegativeInfinity;
+                m_type = *this > 0 ? Type::Infinity : Type::NegativeInfinity;
+                return;
+            } else if ((m_type == Type::Infinity || m_type == Type::NegativeInfinity) && (v.m_type == Type::Infinity || v.m_type == Type::NegativeInfinity)) {
+                m_type = Type::NaN;
+                return;
+            } else if (m_type == Type::Infinity || m_type == Type::NegativeInfinity) {
+                if (v.toDouble() < 0)
+                    m_type = m_type == Type::Infinity ? Type::NegativeInfinity : Type::Infinity;
+                return;
+            } else if (v.m_type == Type::Infinity || v.m_type == Type::NegativeInfinity) {
+                *this = 0;
                 return;
             }
             *this = toDouble() / v.toDouble();
@@ -484,14 +488,17 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         {
             if ((v1 == 0) && (v2 == 0))
                 return Value(SpecialValue::NaN);
-            else if (v2 == 0) {
-                if (v2.m_type == Type::Infinity || v2.m_type == Type::NegativeInfinity) {
-                    if (v1.m_type == Type::Infinity || v1.m_type == Type::NegativeInfinity)
-                        return Value(SpecialValue::NaN);
-                    else
-                        return 0;
-                } else
-                    return Value(v1 > 0 ? SpecialValue::Infinity : SpecialValue::NegativeInfinity);
+            else if (v2.toDouble() == 0)
+                return v1 > 0 ? Value(SpecialValue::Infinity) : Value(SpecialValue::NegativeInfinity);
+            else if ((v1.m_type == Type::Infinity || v1.m_type == Type::NegativeInfinity) && (v2.m_type == Type::Infinity || v2.m_type == Type::NegativeInfinity)) {
+                return Value(SpecialValue::NaN);
+            } else if (v1.m_type == Type::Infinity || v1.m_type == Type::NegativeInfinity) {
+                if (v2.toDouble() < 0)
+                    return v1.m_type == Type::Infinity ? Value(SpecialValue::NegativeInfinity) : Value(SpecialValue::Infinity);
+                else
+                    return v1.m_type == Type::Infinity ? Value(SpecialValue::Infinity) : Value(SpecialValue::NegativeInfinity);
+            } else if (v2.m_type == Type::Infinity || v2.m_type == Type::NegativeInfinity) {
+                return 0;
             }
             return v1.toDouble() / v2.toDouble();
         }
