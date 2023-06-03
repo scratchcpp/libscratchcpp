@@ -162,6 +162,8 @@ double Value::stringToDouble(const std::string &s, bool *ok)
             *ok = true;
         return std::stod(s);
     } catch (...) {
+        if (ok)
+            *ok = false;
         return 0;
     }
 }
@@ -190,6 +192,8 @@ long Value::stringToLong(const std::string &s, bool *ok)
             *ok = true;
         return std::stol(s);
     } catch (...) {
+        if (ok)
+            *ok = false;
         return 0;
     }
 }
