@@ -199,10 +199,11 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         /*! Multiplies the given value with the value. */
         inline void multiply(const Value &v)
         {
-            if ((static_cast<int>(m_type) < 0) || (static_cast<int>(v.m_type) < 0)) {
-                if (m_type == Type::Infinity || m_type == Type::NegativeInfinity || v.m_type == Type::Infinity || v.m_type == Type::NegativeInfinity) {
-                    bool mode = (m_type == Type::Infinity || v.m_type == Type::Infinity);
-                    const Value &value = (m_type == Type::Infinity || m_type == Type::NegativeInfinity) ? v : *this;
+            Type t1 = m_type, t2 = v.m_type;
+            if ((static_cast<int>(t1) < 0 && t1 != Type::NaN) || (static_cast<int>(t2) < 0 && t2 != Type::NaN)) {
+                if (t1 == Type::Infinity || t1 == Type::NegativeInfinity || t2 == Type::Infinity || t2 == Type::NegativeInfinity) {
+                    bool mode = (t1 == Type::Infinity || t2 == Type::Infinity);
+                    const Value &value = ((t1 == Type::Infinity && (t2 == Type::Infinity || t2 == Type::NegativeInfinity)) || (t2 != Type::Infinity && t2 != Type::NegativeInfinity)) ? v : *this;
                     if (value > 0)
                         m_type = mode ? Type::Infinity : Type::NegativeInfinity;
                     else if (value < 0)
@@ -458,10 +459,11 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
 
         friend inline Value operator*(const Value &v1, const Value &v2)
         {
-            if ((static_cast<int>(v1.m_type) < 0) || (static_cast<int>(v2.m_type) < 0)) {
-                if (v1.m_type == Type::Infinity || v1.m_type == Type::NegativeInfinity || v2.m_type == Type::Infinity || v2.m_type == Type::NegativeInfinity) {
-                    bool mode = (v1.m_type == Type::Infinity || v2.m_type == Type::Infinity);
-                    const Value &value = (v1.m_type == Type::Infinity || v1.m_type == Type::NegativeInfinity) ? v2 : v1;
+            Type t1 = v1.m_type, t2 = v2.m_type;
+            if ((static_cast<int>(t1) < 0 && t1 != Type::NaN) || (static_cast<int>(t2) < 0 && t2 != Type::NaN)) {
+                if (t1 == Type::Infinity || t1 == Type::NegativeInfinity || t2 == Type::Infinity || t2 == Type::NegativeInfinity) {
+                    bool mode = (t1 == Type::Infinity || t2 == Type::Infinity);
+                    const Value &value = ((t1 == Type::Infinity && (t2 == Type::Infinity || t2 == Type::NegativeInfinity)) || (t2 != Type::Infinity && t2 != Type::NegativeInfinity)) ? v2 : v1;
                     if (value > 0)
                         return Value(mode ? SpecialValue::Infinity : SpecialValue::NegativeInfinity);
                     else if (value < 0)
