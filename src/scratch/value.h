@@ -323,9 +323,19 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
             }
 
             bool ok;
-            double d = stringToDouble(str, &ok);
+            bool isLong = false;
+            long l;
+            double d;
+            if ((str.find_first_of('.') == std::string::npos) && (str.find_first_of('e') == std::string::npos) && (str.find_first_of('E') == std::string::npos)) {
+                l = stringToLong(str, &ok);
+                isLong = true;
+            } else
+                d = stringToDouble(str, &ok);
             if (ok) {
-                *this = d;
+                if (isLong)
+                    *this = l;
+                else
+                    *this = d;
                 m_type = Type::Number;
             }
         }
