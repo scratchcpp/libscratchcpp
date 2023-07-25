@@ -102,6 +102,9 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
 
         void setBytecode(unsigned int *code);
 
+        /*! Returns the array of constant values. */
+        const Value *constValues() const { return m_constValues; };
+
         /*! Returns the bytecode array. */
         unsigned int *bytecode() const { return m_bytecode; };
 
