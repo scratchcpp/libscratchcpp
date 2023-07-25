@@ -93,7 +93,8 @@ const unsigned int VirtualMachine::instruction_arg_count[] = {
 ;
 
 /*! Constructs VirtualMachine. */
-VirtualMachine::VirtualMachine()
+VirtualMachine::VirtualMachine() :
+    VirtualMachine(nullptr, nullptr, nullptr)
 {
 }
 
