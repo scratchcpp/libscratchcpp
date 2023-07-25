@@ -45,6 +45,7 @@ class LIBSCRATCHCPP_EXPORT Engine
         bool broadcastRunning(unsigned int index);
 
         void breakFrame();
+        bool breakingCurrentFrame();
 
         void registerSection(std::shared_ptr<IBlockSection> section);
         unsigned int functionIndex(BlockFunc f);

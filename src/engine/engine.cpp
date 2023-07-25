@@ -286,6 +286,12 @@ void Engine::breakFrame()
     m_breakFrame = true;
 }
 
+/*! Returns true if breakFrame() was called. */
+bool libscratchcpp::Engine::breakingCurrentFrame()
+{
+    return m_breakFrame;
+}
+
 /*! Registers the given block section. */
 void Engine::registerSection(std::shared_ptr<IBlockSection> section)
 {
