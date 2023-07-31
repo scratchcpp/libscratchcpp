@@ -431,8 +431,12 @@ do_random:
 
 do_round : {
     const Value *v = READ_REG(0, 1);
-    if (!v->isInfinity() && !v->isNegativeInfinity())
-        REPLACE_RET_VALUE(static_cast<long>(std::round(v->toDouble())), 1);
+    if (!v->isInfinity() && !v->isNegativeInfinity()) {
+        if (v->toDouble() < 0) {
+            REPLACE_RET_VALUE(static_cast<long>(std::floor(v->toDouble() + 0.5)), 1);
+        } else
+            REPLACE_RET_VALUE(static_cast<long>(v->toDouble() + 0.5), 1);
+    }
     DISPATCH();
 }
 
