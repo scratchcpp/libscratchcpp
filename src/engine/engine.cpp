@@ -27,12 +27,11 @@ void Engine::clear()
 }
 
 /*!
- * Compiles all scripts to bytecode.
- * \see Compiler
+ * Resolves ID references and sets pointers of entities.
+ * \note This function shouldn't normally be called because it's called from compile().
  */
-void Engine::compile()
+void Engine::resolveIds()
 {
-    // Resolve entities by ID
     for (auto target : m_targets) {
         std::cout << "Processing target " << target->name() << "..." << std::endl;
         auto blocks = target->blocks();
@@ -66,6 +65,16 @@ void Engine::compile()
             block->updateFieldMap();
         }
     }
+}
+
+/*!
+ * Compiles all scripts to bytecode.
+ * \see Compiler
+ */
+void Engine::compile()
+{
+    // Resolve entities by ID
+    resolveIds();
 
     // Compile scripts to bytecode
     for (auto target : m_targets) {
@@ -277,6 +286,12 @@ void Engine::breakFrame()
     m_breakFrame = true;
 }
 
+/*! Returns true if breakFrame() was called. */
+bool libscratchcpp::Engine::breakingCurrentFrame()
+{
+    return m_breakFrame;
+}
+
 /*! Registers the given block section. */
 void Engine::registerSection(std::shared_ptr<IBlockSection> section)
 {
@@ -421,6 +436,12 @@ void Engine::setExtensions(const std::vector<std::string> &newExtensions)
         else
             std::cerr << "Unsupported extension: " << ext << std::endl;
     }
+}
+
+/*! Returns the map of scripts (each top level block has a Script object). */
+const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &Engine::scripts() const
+{
+    return m_scripts;
 }
 
 /*! Returns the block with the given ID. */

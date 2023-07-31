@@ -14,6 +14,7 @@ class LIBSCRATCHCPP_EXPORT Scratch3Reader : public IProjectReader
     public:
         bool load() override;
         bool isValid() override;
+        void clear() override;
         std::vector<std::shared_ptr<Target>> targets() override;
         std::vector<std::shared_ptr<Broadcast>> broadcasts() override;
         std::vector<std::string> extensions() override;

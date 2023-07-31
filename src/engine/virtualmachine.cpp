@@ -431,8 +431,12 @@ do_random:
 
 do_round : {
     const Value *v = READ_REG(0, 1);
-    if (!v->isInfinity() && !v->isNegativeInfinity())
-        REPLACE_RET_VALUE(static_cast<long>(std::round(v->toDouble())), 1);
+    if (!v->isInfinity() && !v->isNegativeInfinity()) {
+        if (v->toDouble() < 0) {
+            REPLACE_RET_VALUE(static_cast<long>(std::floor(v->toDouble() + 0.5)), 1);
+        } else
+            REPLACE_RET_VALUE(static_cast<long>(v->toDouble() + 0.5), 1);
+    }
     DISPATCH();
 }
 
@@ -491,7 +495,11 @@ do_tan : {
     if (v->isInfinity() || v->isNegativeInfinity())
         REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
     else {
-        long mod = v->toLong() % 360;
+        long mod;
+        if (v->toLong() < 0)
+            mod = (v->toLong() + 360) % 360;
+        else
+            mod = v->toLong() % 360;
         if (mod == 90)
             REPLACE_RET_VALUE(Value(Value::SpecialValue::Infinity), 1);
         else if (mod == 270)
@@ -522,8 +530,10 @@ do_acos : {
 
 do_atan : {
     const Value &v = *READ_REG(0, 1);
-    if (v < -1 || v > 1)
-        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+    if (v.isInfinity())
+        REPLACE_RET_VALUE(90, 1);
+    else if (v.isNegativeInfinity())
+        REPLACE_RET_VALUE(-90, 1);
     else
         REPLACE_RET_VALUE(std::atan(v.toDouble()) * 180 / pi, 1);
     DISPATCH();

@@ -19,6 +19,7 @@ class LIBSCRATCHCPP_EXPORT IProjectReader
 
         virtual bool load() = 0;
         virtual bool isValid() = 0;
+        virtual void clear() = 0;
         virtual std::vector<std::shared_ptr<Target>> targets() = 0;
         virtual std::vector<std::shared_ptr<Broadcast>> broadcasts() = 0;
         virtual std::vector<std::string> extensions() = 0;

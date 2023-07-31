@@ -30,6 +30,7 @@ class LIBSCRATCHCPP_EXPORT Engine
         Engine(const Engine &) = delete;
 
         void clear();
+        void resolveIds();
         void compile();
 
         void frame();
@@ -44,6 +45,7 @@ class LIBSCRATCHCPP_EXPORT Engine
         bool broadcastRunning(unsigned int index);
 
         void breakFrame();
+        bool breakingCurrentFrame();
 
         void registerSection(std::shared_ptr<IBlockSection> section);
         unsigned int functionIndex(BlockFunc f);
@@ -64,6 +66,8 @@ class LIBSCRATCHCPP_EXPORT Engine
 
         std::vector<std::string> extensions() const;
         void setExtensions(const std::vector<std::string> &newExtensions);
+
+        const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &scripts() const;
 
     private:
         std::shared_ptr<Block> getBlock(std::string id);
