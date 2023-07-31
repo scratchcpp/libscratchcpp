@@ -495,7 +495,11 @@ do_tan : {
     if (v->isInfinity() || v->isNegativeInfinity())
         REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
     else {
-        long mod = v->toLong() % 360;
+        long mod;
+        if (v->toLong() < 0)
+            mod = (v->toLong() + 360) % 360;
+        else
+            mod = v->toLong() % 360;
         if (mod == 90)
             REPLACE_RET_VALUE(Value(Value::SpecialValue::Infinity), 1);
         else if (mod == 270)
