@@ -530,8 +530,10 @@ do_acos : {
 
 do_atan : {
     const Value &v = *READ_REG(0, 1);
-    if (v < -1 || v > 1)
-        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+    if (v.isInfinity())
+        REPLACE_RET_VALUE(90, 1);
+    else if (v.isNegativeInfinity())
+        REPLACE_RET_VALUE(-90, 1);
     else
         REPLACE_RET_VALUE(std::atan(v.toDouble()) * 180 / pi, 1);
     DISPATCH();
