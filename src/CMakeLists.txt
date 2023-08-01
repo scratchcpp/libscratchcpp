@@ -5,8 +5,9 @@ target_sources(scratchcpp
     project_p.cpp
     project_p.h
     scratchconfiguration.cpp
+    scratchconfiguration_p.cpp
+    scratchconfiguration_p.h
   PUBLIC
-    scratchconfiguration.h
     iscratchsprite.h
     iscratchstage.h
 )

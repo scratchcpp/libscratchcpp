@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "engine.h"
-#include "../blocks/standardblocks.h"
-#include "../scratchconfiguration.h"
-#include "iblocksection.h"
-#include "compiler.h"
-#include "script.h"
+#include <scratchcpp/scratchconfiguration.h>
 #include <cassert>
 #include <iostream>
 #include <thread>
+
+#include "engine.h"
+#include "../blocks/standardblocks.h"
+#include "iblocksection.h"
+#include "compiler.h"
+#include "script.h"
 
 using namespace libscratchcpp;
 

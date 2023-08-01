@@ -2,14 +2,16 @@
 
 #pragma once
 
-#include "libscratchcpp_global.h"
 #include <memory>
 #include <vector>
+
+#include "global.h"
 
 namespace libscratchcpp
 {
 
 class IExtension;
+class ScratchConfigurationPrivate;
 
 /*! \brief The ScratchConfiguration class provides methods for adding custom extensions. */
 class LIBSCRATCHCPP_EXPORT ScratchConfiguration
@@ -18,13 +20,14 @@ class LIBSCRATCHCPP_EXPORT ScratchConfiguration
         ScratchConfiguration() = delete;
 
         static void registerExtension(std::shared_ptr<IExtension> extension);
-        static IExtension *getExtension(std::string name);
+        static IExtension *getExtension(const std::string &name);
 
         /*! Finds the extension of class T. Returns nullptr if it isn't registered. */
         template<class T>
         static IExtension *getExtension()
         {
-            for (auto ext : m_extensions) {
+            auto &extensions = getExtensions();
+            for (auto ext : extensions) {
                 if (dynamic_cast<T *>(ext.get()))
                     return ext.get();
             }
@@ -33,7 +36,9 @@ class LIBSCRATCHCPP_EXPORT ScratchConfiguration
         };
 
     private:
-        static std::vector<std::shared_ptr<IExtension>> m_extensions;
+        static const std::vector<std::shared_ptr<IExtension>> getExtensions();
+
+        static std::unique_ptr<ScratchConfigurationPrivate> impl;
 };
 
 } // namespace libscratchcpp
