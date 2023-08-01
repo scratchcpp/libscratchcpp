@@ -18,7 +18,6 @@ Engine::Engine()
     srand(time(NULL));
 }
 
-/*! Clears the engine so that it can be used with another project. */
 void Engine::clear()
 {
     m_sections.clear();
@@ -26,10 +25,7 @@ void Engine::clear()
     m_broadcasts.clear();
 }
 
-/*!
- * Resolves ID references and sets pointers of entities.
- * \note This function shouldn't normally be called because it's called from compile().
- */
+// Resolves ID references and sets pointers of entities.
 void Engine::resolveIds()
 {
     for (auto target : m_targets) {
@@ -67,10 +63,6 @@ void Engine::resolveIds()
     }
 }
 
-/*!
- * Compiles all scripts to bytecode.
- * \see Compiler
- */
 void Engine::compile()
 {
     // Resolve entities by ID
@@ -118,13 +110,6 @@ void Engine::compile()
     }
 }
 
-/*!
- * Runs a single frame.\n
- * Use this if you want to use a custom event loop
- * in your project player.
- * \note Nothing will happen until start() is called.
- * \param[in] timeLimit The time limit for the frame (for atomic scripts). Set to 0 for no limit.
- */
 void Engine::frame()
 {
     for (int i = 0; i < m_runningScripts.size(); i++) {
@@ -155,10 +140,6 @@ void Engine::frame()
     m_scriptsToRemove.clear();
 }
 
-/*!
- * Calls all "when green flag clicked" blocks.
- * \note Nothing will happen until run() or frame() is called.
- */
 void Engine::start()
 {
     for (auto target : m_targets) {
@@ -168,7 +149,6 @@ void Engine::start()
     }
 }
 
-/*! Stops all scripts. */
 void Engine::stop()
 {
     m_runningScripts.clear();
@@ -241,12 +221,6 @@ void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
         stopScript(script);
 }
 
-/*!
- * Runs the event loop and calls "when green flag clicked" blocks.
- * \note This function returns when all scripts finish.\n
- * If you need to implement something advanced, such as a GUI with the
- * green flag button, use frame().
- */
 void Engine::run()
 {
     auto frameDuration = std::chrono::milliseconds(33);
@@ -271,28 +245,21 @@ void Engine::run()
     }
 }
 
-/*! Returns true if there are any running script of the broadcast with the given index. */
 bool Engine::broadcastRunning(unsigned int index)
 {
     return !m_broadcastMap[index].empty();
 }
 
-/*!
- * Call this from a block implementation to force a "screen refresh".
- * \note This has no effect in "run without screen refresh" custom blocks.
- */
 void Engine::breakFrame()
 {
     m_breakFrame = true;
 }
 
-/*! Returns true if breakFrame() was called. */
 bool libscratchcpp::Engine::breakingCurrentFrame()
 {
     return m_breakFrame;
 }
 
-/*! Registers the given block section. */
 void Engine::registerSection(std::shared_ptr<IBlockSection> section)
 {
     if (section)
@@ -309,7 +276,6 @@ unsigned int Engine::functionIndex(BlockFunc f)
     return m_functions.size() - 1;
 }
 
-/*! Resolves the block and returns the block section in which it has been registered. */
 std::shared_ptr<IBlockSection> Engine::blockSection(const std::string &opcode) const
 {
     for (auto section : m_sections) {
@@ -413,13 +379,11 @@ int Engine::findTarget(const std::string &targetName) const
     return -1;
 }
 
-/*! Returns the list of extension names. */
 const std::vector<std::string> &Engine::extensions() const
 {
     return m_extensions;
 }
 
-/*! Sets the list of extension names. */
 void Engine::setExtensions(const std::vector<std::string> &newExtensions)
 {
     m_sections.clear();

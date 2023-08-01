@@ -2,54 +2,49 @@
 
 #pragma once
 
+#include <scratchcpp/iengine.h>
+#include <unordered_map>
+#include <memory>
+#include <chrono>
+
 #include "../libscratchcpp_global.h"
 #include "../scratch/broadcast.h"
 #include "../scratch/target.h"
 #include "global.h"
 #include "virtualmachine.h"
-#include <unordered_map>
-#include <memory>
-#include <chrono>
 
 namespace libscratchcpp
 {
 
-class LIBSCRATCHCPP_EXPORT IBlockSection;
 class LIBSCRATCHCPP_EXPORT Script;
 
-/*!
- * \brief The Engine class provides an API for running Scratch projects.
- *
- * This class is can be used to load Scratch projects using custom methods.\n
- * If you want to load a project from a standard Scratch project file, use the ScratchProject class.
- */
-class LIBSCRATCHCPP_EXPORT Engine
+class LIBSCRATCHCPP_EXPORT Engine : public IEngine
 {
     public:
         Engine();
         Engine(const Engine &) = delete;
 
-        void clear();
+        void clear() override;
         void resolveIds();
-        void compile();
+        void compile() override;
 
-        void frame();
-        void start();
-        void stop();
+        void frame() override;
+        void start() override;
+        void stop() override;
         void startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target);
         void broadcast(unsigned int index, VirtualMachine *sourceScript);
         void stopScript(VirtualMachine *vm);
         void stopTarget(Target *target, VirtualMachine *exceptScript);
-        void run();
+        void run() override;
 
-        bool broadcastRunning(unsigned int index);
+        bool broadcastRunning(unsigned int index) override;
 
-        void breakFrame();
-        bool breakingCurrentFrame();
+        void breakFrame() override;
+        bool breakingCurrentFrame() override;
 
-        void registerSection(std::shared_ptr<IBlockSection> section);
+        void registerSection(std::shared_ptr<IBlockSection> section) override;
         unsigned int functionIndex(BlockFunc f);
-        std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
+        std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const override;
 
         const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const;
         void setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadcasts);
@@ -64,8 +59,8 @@ class LIBSCRATCHCPP_EXPORT Engine
         Target *targetAt(int index) const;
         int findTarget(const std::string &targetName) const;
 
-        const std::vector<std::string> &extensions() const;
-        void setExtensions(const std::vector<std::string> &newExtensions);
+        const std::vector<std::string> &extensions() const override;
+        void setExtensions(const std::vector<std::string> &newExtensions) override;
 
         const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &scripts() const;
 

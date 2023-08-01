@@ -1,11 +1,11 @@
 target_sources(scratchcpp
   PRIVATE
     engine.cpp
+    engine.h
     virtualmachine.cpp
     compiler.cpp
     script.cpp
   PUBLIC
-    engine.h
     global.h
     virtualmachine.h
     compiler.h

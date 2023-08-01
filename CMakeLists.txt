@@ -21,6 +21,7 @@ target_sources(scratchcpp
   PUBLIC
     include/scratchcpp/global.h
     include/scratchcpp/project.h
+    include/scratchcpp/iengine.h
 )
 
 add_library(zip SHARED
