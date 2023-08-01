@@ -12,6 +12,8 @@ namespace libscratchcpp
 
 class ProjectPrivate;
 
+class LIBSCRATCHCPP_EXPORT IEngine;
+
 class LIBSCRATCHCPP_EXPORT Project
 {
     public:
@@ -31,6 +33,8 @@ class LIBSCRATCHCPP_EXPORT Project
 
         ScratchVersion scratchVersion() const;
         void setScratchVersion(const ScratchVersion &version);
+
+        std::shared_ptr<IEngine> engine() const;
 
     private:
         spimpl::unique_impl_ptr<ProjectPrivate> impl;

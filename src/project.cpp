@@ -93,3 +93,9 @@ void Project::setScratchVersion(const ScratchVersion &version)
 {
     impl->setScratchVersion(version);
 }
+
+/*! Returns the engine of the loaded project. \see IEngine */
+std::shared_ptr<IEngine> Project::engine() const
+{
+    return impl->engine;
+}
