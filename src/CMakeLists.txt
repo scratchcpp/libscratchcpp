@@ -1,6 +1,9 @@
 target_sources(scratchcpp
   PRIVATE
     libscratchcpp_global.h
+    project.cpp
+    project_p.cpp
+    project_p.h
     scratchproject.cpp
     scratchconfiguration.cpp
   PUBLIC

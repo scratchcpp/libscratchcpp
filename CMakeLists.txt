@@ -14,7 +14,14 @@ find_package(utf8cpp REQUIRED)
 
 add_library(scratchcpp SHARED)
 add_subdirectory(src)
-include_directories(src)
+include_directories(src) # TODO: Remove this line
+include_directories(include)
+
+target_sources(scratchcpp
+  PUBLIC
+    include/scratchcpp/global.h
+    include/scratchcpp/project.h
+)
 
 add_library(zip SHARED
 	${ZIP_SRC}/zip.c
