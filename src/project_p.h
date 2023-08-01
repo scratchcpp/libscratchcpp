@@ -25,7 +25,7 @@ struct ProjectPrivate
 
         void setScratchVersion(ScratchVersion version);
 
-        ScratchVersion scratchVersion;
+        ScratchVersion scratchVersion = ScratchVersion::Invalid;
         std::string fileName;
         std::shared_ptr<IEngine> engine = nullptr;
 };
