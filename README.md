@@ -95,10 +95,10 @@ We're working on the documentation, it'll be available soon.
 
 A minimal CLI program for running Scratch projects:
 ```cpp
-#include <scratchproject.h>
+#include <scratchcpp/project.h>
 
 int main(int argc, char **argv) {
-  libscratchcpp::ScratchProject p("/path/to/project.sb3");
+  libscratchcpp::Project p("/path/to/project.sb3");
   bool ret = p.load();
   if (!ret)
     return 1;
