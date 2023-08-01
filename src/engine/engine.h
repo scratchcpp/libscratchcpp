@@ -51,7 +51,7 @@ class LIBSCRATCHCPP_EXPORT Engine
         unsigned int functionIndex(BlockFunc f);
         std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
 
-        std::vector<std::shared_ptr<Broadcast>> broadcasts() const;
+        const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const;
         void setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadcasts);
         std::shared_ptr<Broadcast> broadcastAt(int index) const;
         int findBroadcast(const std::string &broadcastName) const;
@@ -59,22 +59,22 @@ class LIBSCRATCHCPP_EXPORT Engine
 
         void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast);
 
-        std::vector<std::shared_ptr<Target>> targets() const;
+        const std::vector<std::shared_ptr<Target>> &targets() const;
         void setTargets(const std::vector<std::shared_ptr<Target>> &newTargets);
         Target *targetAt(int index) const;
         int findTarget(const std::string &targetName) const;
 
-        std::vector<std::string> extensions() const;
+        const std::vector<std::string> &extensions() const;
         void setExtensions(const std::vector<std::string> &newExtensions);
 
         const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &scripts() const;
 
     private:
-        std::shared_ptr<Block> getBlock(std::string id);
-        std::shared_ptr<Variable> getVariable(std::string id);
-        std::shared_ptr<List> getList(std::string id);
-        std::shared_ptr<Broadcast> getBroadcast(std::string id);
-        std::shared_ptr<IEntity> getEntity(std::string id);
+        std::shared_ptr<Block> getBlock(const std::string &id);
+        std::shared_ptr<Variable> getVariable(const std::string &id);
+        std::shared_ptr<List> getList(const std::string &id);
+        std::shared_ptr<Broadcast> getBroadcast(const std::string &id);
+        std::shared_ptr<IEntity> getEntity(const std::string &id);
         std::vector<std::shared_ptr<IBlockSection>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;

@@ -322,7 +322,7 @@ std::shared_ptr<IBlockSection> Engine::blockSection(const std::string &opcode) c
 }
 
 /*! Returns the list of broadcasts. */
-std::vector<std::shared_ptr<Broadcast>> Engine::broadcasts() const
+const std::vector<std::shared_ptr<Broadcast>> &Engine::broadcasts() const
 {
     return m_broadcasts;
 }
@@ -375,7 +375,7 @@ void libscratchcpp::Engine::addBroadcastScript(std::shared_ptr<Block> whenReceiv
 }
 
 /*! Returns the list of targets. */
-std::vector<std::shared_ptr<Target>> Engine::targets() const
+const std::vector<std::shared_ptr<Target>> &Engine::targets() const
 {
     return m_targets;
 }
@@ -414,7 +414,7 @@ int Engine::findTarget(const std::string &targetName) const
 }
 
 /*! Returns the list of extension names. */
-std::vector<std::string> Engine::extensions() const
+const std::vector<std::string> &Engine::extensions() const
 {
     return m_extensions;
 }
@@ -445,7 +445,7 @@ const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &Engin
 }
 
 /*! Returns the block with the given ID. */
-std::shared_ptr<Block> Engine::getBlock(std::string id)
+std::shared_ptr<Block> Engine::getBlock(const std::string &id)
 {
     if (id.empty())
         return nullptr;
@@ -460,7 +460,7 @@ std::shared_ptr<Block> Engine::getBlock(std::string id)
 }
 
 /*! Returns the variable with the given ID. */
-std::shared_ptr<Variable> Engine::getVariable(std::string id)
+std::shared_ptr<Variable> Engine::getVariable(const std::string &id)
 {
     if (id.empty())
         return nullptr;
@@ -475,7 +475,7 @@ std::shared_ptr<Variable> Engine::getVariable(std::string id)
 }
 
 /*! Returns the Scratch list with the given ID. */
-std::shared_ptr<List> Engine::getList(std::string id)
+std::shared_ptr<List> Engine::getList(const std::string &id)
 {
     if (id.empty())
         return nullptr;
@@ -490,7 +490,7 @@ std::shared_ptr<List> Engine::getList(std::string id)
 }
 
 /*! Returns the broadcast with the given ID. */
-std::shared_ptr<Broadcast> Engine::getBroadcast(std::string id)
+std::shared_ptr<Broadcast> Engine::getBroadcast(const std::string &id)
 {
     if (id.empty())
         return nullptr;
@@ -503,7 +503,7 @@ std::shared_ptr<Broadcast> Engine::getBroadcast(std::string id)
 }
 
 /*! Returns the entity with the given ID. \see IEntity */
-std::shared_ptr<IEntity> Engine::getEntity(std::string id)
+std::shared_ptr<IEntity> Engine::getEntity(const std::string &id)
 {
     // Blocks
     auto block = getBlock(id);
