@@ -1,4 +1,5 @@
-#include "scratchproject.h"
+#include "project_p.h"
+
 #include "scratch/stage.h"
 #include "scratch/sprite.h"
 #include "engine/compiler.h"
@@ -26,9 +27,9 @@ using namespace libscratchcpp;
 
 TEST(CompilerTest, EmptyProject)
 {
-    ScratchProject p("empty_project.sb3", ScratchProject::Version::Scratch3);
+    ProjectPrivate p("empty_project.sb3", ScratchVersion::Scratch3);
     ASSERT_TRUE(p.load());
-    const Engine *engine = p.engine();
+    const Engine *engine = &p.engine;
     ASSERT_EQ(engine->targets().size(), 1);
     ASSERT_EQ(engine->extensions().size(), 0);
     ASSERT_EQ(engine->broadcasts().size(), 0);
@@ -38,9 +39,9 @@ TEST(CompilerTest, EmptyProject)
 
 TEST(CompilerTest, ResolveIds)
 {
-    ScratchProject p("resolve_id_test.sb3", ScratchProject::Version::Scratch3);
+    ProjectPrivate p("resolve_id_test.sb3", ScratchVersion::Scratch3);
     ASSERT_TRUE(p.load());
-    const Engine *engine = p.engine();
+    const Engine *engine = &p.engine;
     ASSERT_EQ(engine->targets().size(), 2);
     ASSERT_EQ(engine->extensions().size(), 0);
     ASSERT_EQ(engine->broadcasts().size(), 1);

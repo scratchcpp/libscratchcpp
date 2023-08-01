@@ -4,10 +4,8 @@ target_sources(scratchcpp
     project.cpp
     project_p.cpp
     project_p.h
-    scratchproject.cpp
     scratchconfiguration.cpp
   PUBLIC
-    scratchproject.h
     scratchconfiguration.h
     iscratchsprite.h
     iscratchstage.h

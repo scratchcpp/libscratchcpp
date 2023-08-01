@@ -1,15 +1,16 @@
+#include <scratchcpp/project.h>
+
 #include "internal/scratch3reader.h"
 #include "scratch/stage.h"
 #include "scratch/sprite.h"
 #include "engine/engine.h"
-#include "scratchproject.h"
 #include "../common.h"
 
 using namespace libscratchcpp;
 
 static Scratch3Reader s3reader;
 static const std::vector<IProjectReader *> readers = { &s3reader };
-static const std::vector<ScratchProject::Version> scratchVersions = { ScratchProject::Version::Scratch3 };
+static const std::vector<ScratchVersion> scratchVersions = { ScratchVersion::Scratch3 };
 static const std::vector<std::string> fileExtensions = { ".sb3" };
 
 TEST(LoadProjectTest, EmptyProject)
@@ -254,7 +255,7 @@ TEST(LoadProjectTest, ScratchProjectTest)
     int i = 0;
     for (auto version : scratchVersions) {
         std::string name = "load_test" + fileExtensions[i];
-        ScratchProject p(name, version);
+        Project p(name, version);
         ASSERT_EQ(p.fileName(), name);
         ASSERT_EQ(p.scratchVersion(), version);
         ASSERT_TRUE(p.load());
@@ -266,8 +267,8 @@ TEST(LoadProjectTest, ScratchProjectTest)
 TEST(LoadProjectTest, ScratchProjectInvalidTest)
 {
     std::string name = "load_test.sb3";
-    ScratchProject p(name, ScratchProject::Version::Invalid);
+    Project p(name, ScratchVersion::Invalid);
     ASSERT_EQ(p.fileName(), name);
-    ASSERT_EQ(p.scratchVersion(), ScratchProject::Version::Invalid);
+    ASSERT_EQ(p.scratchVersion(), ScratchVersion::Invalid);
     ASSERT_FALSE(p.load());
 }
