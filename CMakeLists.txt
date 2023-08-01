@@ -23,6 +23,8 @@ add_library(zip SHARED
 )
 include_directories(thirdparty/zip/src)
 
+include_directories(thirdparty/spimpl)
+
 target_link_libraries(scratchcpp PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(scratchcpp PRIVATE utf8cpp)
 target_link_libraries(scratchcpp PRIVATE zip)
