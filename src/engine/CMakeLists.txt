@@ -11,5 +11,4 @@ target_sources(scratchcpp
     compiler.h
     script.h
     iblocksection.h
-    iextension.h
 )

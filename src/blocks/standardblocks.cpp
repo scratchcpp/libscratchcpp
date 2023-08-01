@@ -29,7 +29,7 @@ bool StandardBlocks::includeByDefault() const
     return true;
 }
 
-void StandardBlocks::registerSections(Engine *engine)
+void StandardBlocks::registerSections(IEngine *engine)
 {
     engine->registerSection(std::make_shared<MotionBlocks>());
     engine->registerSection(std::make_shared<LooksBlocks>());

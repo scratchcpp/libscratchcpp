@@ -2,13 +2,14 @@
 
 #pragma once
 
-#include "engine/iextension.h"
 #include "libscratchcpp_global.h"
 #include <memory>
 #include <vector>
 
 namespace libscratchcpp
 {
+
+class IExtension;
 
 /*! \brief The ScratchConfiguration class provides methods for adding custom extensions. */
 class LIBSCRATCHCPP_EXPORT ScratchConfiguration
