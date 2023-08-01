@@ -128,6 +128,7 @@ REPEAT_BRIEF           = YES
 # specifies, contains, represents, a, an and the.
 
 ABBREVIATE_BRIEF       = "The $name class" \
+                         "The $name interface" \
                          "The $name widget" \
                          "The $name file" \
                          is \
@@ -180,7 +181,7 @@ STRIP_FROM_PATH        =
 # specify the list of include paths that are normally passed to the compiler
 # using the -I flag.
 
-STRIP_FROM_INC_PATH    = src
+STRIP_FROM_INC_PATH    = include
 
 # If the SHORT_NAMES tag is set to YES, doxygen will generate much shorter (but
 # less readable) file names. This can be useful is your file systems doesn't
@@ -865,7 +866,7 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = src \
+INPUT                  = include \
                          docs
 
 # This tag can be used to specify the character encoding of the source files
