@@ -10,7 +10,7 @@ Target::Target()
 }
 
 /*! Returns the name of the target. */
-std::string Target::name() const
+const std::string &Target::name() const
 {
     return m_name;
 }
@@ -22,7 +22,7 @@ void Target::setName(const std::string &name)
 }
 
 /*! Returns the list of variables. */
-std::vector<std::shared_ptr<Variable>> Target::variables() const
+const std::vector<std::shared_ptr<Variable>> &Target::variables() const
 {
     return m_variables;
 }
@@ -65,7 +65,7 @@ int Target::findVariableById(const std::string &id) const
 }
 
 /*! Returns the list of Scratch lists. */
-std::vector<std::shared_ptr<List>> Target::lists() const
+const std::vector<std::shared_ptr<List>> &Target::lists() const
 {
     return m_lists;
 }
@@ -108,7 +108,7 @@ int Target::findListById(const std::string &id) const
 }
 
 /*! Returns the list of blocks. */
-std::vector<std::shared_ptr<Block>> Target::blocks() const
+const std::vector<std::shared_ptr<Block>> &Target::blocks() const
 {
     return m_blocks;
 }
@@ -163,7 +163,7 @@ void Target::setCurrentCostume(int newCostume)
 }
 
 /*! Returns the list of costumes. */
-std::vector<Costume> Target::costumes() const
+const std::vector<Costume> &Target::costumes() const
 {
     return m_costumes;
 }
@@ -194,7 +194,7 @@ int Target::findCostume(const std::string &costumeName) const
 }
 
 /*! Returns the list of sounds. */
-std::vector<Sound> Target::sounds() const
+const std::vector<Sound> &Target::sounds() const
 {
     return m_sounds;
 }

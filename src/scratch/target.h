@@ -30,22 +30,22 @@ class LIBSCRATCHCPP_EXPORT Target
         /*! Sets the target interface. */
         virtual void setInterface(IScratchTarget *newInterface) = 0;
 
-        std::string name() const;
+        const std::string &name() const;
         void setName(const std::string &name);
 
-        std::vector<std::shared_ptr<Variable>> variables() const;
+        const std::vector<std::shared_ptr<Variable>> &variables() const;
         int addVariable(std::shared_ptr<Variable> variable);
         std::shared_ptr<Variable> variableAt(int index) const;
         int findVariable(const std::string &variableName) const;
         int findVariableById(const std::string &id) const;
 
-        std::vector<std::shared_ptr<List>> lists() const;
+        const std::vector<std::shared_ptr<List>> &lists() const;
         int addList(std::shared_ptr<List> list);
         std::shared_ptr<List> listAt(int index) const;
         int findList(const std::string &listName) const;
         int findListById(const std::string &id) const;
 
-        std::vector<std::shared_ptr<Block>> blocks() const;
+        const std::vector<std::shared_ptr<Block>> &blocks() const;
         int addBlock(std::shared_ptr<Block> block);
         std::shared_ptr<Block> blockAt(int index) const;
         int findBlock(const std::string &id) const;
@@ -54,12 +54,12 @@ class LIBSCRATCHCPP_EXPORT Target
         int currentCostume() const;
         void setCurrentCostume(int newCostume);
 
-        std::vector<Costume> costumes() const;
+        const std::vector<Costume> &costumes() const;
         int addCostume(const Costume &costume);
         Costume costumeAt(int index) const;
         int findCostume(const std::string &costumeName) const;
 
-        std::vector<Sound> sounds() const;
+        const std::vector<Sound> &sounds() const;
         int addSound(const Sound &sound);
         Sound soundAt(int index) const;
         int findSound(const std::string &soundName) const;
