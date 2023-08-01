@@ -62,7 +62,7 @@ void Stage::setVideoState(VideoState newVideoState)
 }
 
 /*! \copydoc setVideoState() */
-void Stage::setVideoState(std::string newVideoState)
+void Stage::setVideoState(const std::string &newVideoState)
 {
     if (newVideoState == "on")
         setVideoState(VideoState::On);
@@ -93,7 +93,7 @@ void Stage::setVideoTransparency(int newVideoTransparency)
 }
 
 /*! Returns the text to speech language. */
-std::string Stage::textToSpeechLanguage() const
+const std::string &Stage::textToSpeechLanguage() const
 {
     return m_textToSpeechLanguage;
 }

@@ -29,13 +29,13 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
         VideoState videoState() const;
         std::string videoStateStr() const;
         void setVideoState(VideoState newVideoState);
-        void setVideoState(std::string newVideoState);
+        void setVideoState(const std::string &newVideoState);
         void setVideoState(const char *newVideoState);
 
         int videoTransparency() const;
         void setVideoTransparency(int newVideoTransparency);
 
-        std::string textToSpeechLanguage() const;
+        const std::string &textToSpeechLanguage() const;
         void setTextToSpeechLanguage(const std::string &newTextToSpeechLanguage);
 
     protected:
