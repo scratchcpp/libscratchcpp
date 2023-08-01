@@ -5,10 +5,10 @@
 #include <scratchcpp/project.h>
 #include <string>
 
-#include "engine/engine.h"
-
 namespace libscratchcpp
 {
+
+class LIBSCRATCHCPP_EXPORT IEngine;
 
 struct ProjectPrivate
 {
@@ -27,7 +27,7 @@ struct ProjectPrivate
 
         ScratchVersion scratchVersion;
         std::string fileName;
-        Engine engine;
+        std::shared_ptr<IEngine> engine = nullptr;
 };
 
 }; // namespace libscratchcpp

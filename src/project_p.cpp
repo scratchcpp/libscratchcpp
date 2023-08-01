@@ -4,15 +4,18 @@
 
 #include "project_p.h"
 #include "internal/scratch3reader.h"
+#include "engine/engine.h"
 
 using namespace libscratchcpp;
 
-ProjectPrivate::ProjectPrivate()
+ProjectPrivate::ProjectPrivate() :
+    engine(std::make_shared<Engine>())
 {
 }
 
 ProjectPrivate::ProjectPrivate(const std::string &fileName) :
-    fileName(fileName)
+    fileName(fileName),
+    engine(std::make_shared<Engine>())
 {
     // Auto detect Scratch version
     scratchVersion = ScratchVersion::Invalid;
@@ -26,7 +29,8 @@ ProjectPrivate::ProjectPrivate(const std::string &fileName) :
 }
 
 ProjectPrivate::ProjectPrivate(const std::string &fileName, ScratchVersion scratchVersion) :
-    fileName(fileName)
+    fileName(fileName),
+    engine(std::make_shared<Engine>())
 {
     setScratchVersion(scratchVersion);
 }
@@ -54,27 +58,28 @@ bool ProjectPrivate::load()
     if (!ret)
         return false;
 
-    engine.clear();
-    engine.setTargets(reader->targets());
-    engine.setBroadcasts(reader->broadcasts());
-    engine.setExtensions(reader->extensions());
-    engine.compile();
+    engine->clear();
+    // TODO: Remove the casts
+    std::reinterpret_pointer_cast<Engine>(engine)->setTargets(reader->targets());
+    std::reinterpret_pointer_cast<Engine>(engine)->setBroadcasts(reader->broadcasts());
+    engine->setExtensions(reader->extensions());
+    engine->compile();
     return true;
 }
 
 void ProjectPrivate::frame()
 {
-    engine.frame();
+    engine->frame();
 }
 
 void ProjectPrivate::start()
 {
-    engine.start();
+    engine->start();
 }
 
 void ProjectPrivate::run()
 {
-    engine.run();
+    engine->run();
 }
 
 void ProjectPrivate::setScratchVersion(ScratchVersion version)
