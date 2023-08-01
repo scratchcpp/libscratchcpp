@@ -124,7 +124,7 @@ void Sprite::setRotationStyle(RotationStyle newRotationStyle)
 }
 
 /*! \copydoc setRotationStyle() */
-void Sprite::setRotationStyle(std::string newRotationStyle)
+void Sprite::setRotationStyle(const std::string &newRotationStyle)
 {
     if (newRotationStyle == "all around")
         setRotationStyle(RotationStyle::AllAround);

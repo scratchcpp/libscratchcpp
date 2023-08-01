@@ -43,7 +43,7 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
         RotationStyle rotationStyle() const;
         std::string rotationStyleStr() const;
         void setRotationStyle(RotationStyle newRotationStyle);
-        void setRotationStyle(std::string newRotationStyle);
+        void setRotationStyle(const std::string &newRotationStyle);
         void setRotationStyle(const char *newRotationStyle);
 
     protected:
