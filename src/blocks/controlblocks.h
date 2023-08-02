@@ -2,7 +2,9 @@
 
 #pragma once
 
-#include "../engine/iblocksection.h"
+#include <scratchcpp/iblocksection.h>
+#include <chrono>
+#include "engine/compiler.h"
 
 namespace libscratchcpp
 {
@@ -34,9 +36,9 @@ class LIBSCRATCHCPP_EXPORT ControlBlocks : public IBlockSection
             StopOtherScriptsInSprite
         };
 
-        ControlBlocks();
-
         std::string name() const override;
+
+        void registerBlocks(IEngine *engine) override;
 
         static void compileRepeatForever(Compiler *compiler);
         static void compileRepeat(Compiler *compiler);

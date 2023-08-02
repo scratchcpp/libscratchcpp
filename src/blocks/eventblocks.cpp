@@ -1,29 +1,34 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/iengine.h>
+
 #include "eventblocks.h"
 #include "../engine/compiler.h"
 #include "../scratch/broadcast.h"
 
+// TODO: Remove this
+#include "engine/engine.h"
+
 using namespace libscratchcpp;
-
-EventBlocks::EventBlocks()
-{
-    // Blocks
-    addHatBlock("event_whenflagclicked");
-    addCompileFunction("event_broadcast", &compileBroadcast);
-    addCompileFunction("event_broadcastandwait", &compileBroadcastAndWait);
-    addCompileFunction("event_whenbroadcastreceived", &compileWhenBroadcastReceived);
-
-    // Inputs
-    addInput("BROADCAST_INPUT", BROADCAST_INPUT);
-
-    // Fields
-    addField("BROADCAST_OPTION", BROADCAST_OPTION);
-}
 
 std::string EventBlocks::name() const
 {
     return "Events";
+}
+
+void EventBlocks::registerBlocks(IEngine *engine)
+{
+    // Blocks
+    engine->addHatBlock(this, "event_whenflagclicked");
+    engine->addCompileFunction(this, "event_broadcast", &compileBroadcast);
+    engine->addCompileFunction(this, "event_broadcastandwait", &compileBroadcastAndWait);
+    engine->addCompileFunction(this, "event_whenbroadcastreceived", &compileWhenBroadcastReceived);
+
+    // Inputs
+    engine->addInput(this, "BROADCAST_INPUT", BROADCAST_INPUT);
+
+    // Fields
+    engine->addField(this, "BROADCAST_OPTION", BROADCAST_OPTION);
 }
 
 void EventBlocks::compileBroadcast(Compiler *compiler)

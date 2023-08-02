@@ -4,11 +4,11 @@
 
 using namespace libscratchcpp;
 
-MotionBlocks::MotionBlocks()
-{
-}
-
 std::string MotionBlocks::name() const
 {
     return "Motion";
+}
+
+void MotionBlocks::registerBlocks(IEngine *engine)
+{
 }

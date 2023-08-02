@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include "../engine/iblocksection.h"
+#include <scratchcpp/iblocksection.h>
+#include "engine/compiler.h"
 
 namespace libscratchcpp
 {
@@ -22,10 +23,10 @@ class LIBSCRATCHCPP_EXPORT ListBlocks : public IBlockSection
             LIST
         };
 
-        ListBlocks();
-
         std::string name() const override;
         bool categoryVisible() const override;
+
+        void registerBlocks(IEngine *engine) override;
 
         static void compileAddToList(Compiler *compiler);
         static void compileDeleteFromList(Compiler *compiler);

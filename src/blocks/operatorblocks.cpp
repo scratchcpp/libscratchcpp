@@ -1,69 +1,71 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/iengine.h>
+
 #include "operatorblocks.h"
 #include "../engine/compiler.h"
 
 using namespace libscratchcpp;
 
-OperatorBlocks::OperatorBlocks()
-{
-    // Blocks
-    addCompileFunction("operator_add", &compileAdd);
-    addCompileFunction("operator_subtract", &compileSubtract);
-    addCompileFunction("operator_multiply", &compileMultiply);
-    addCompileFunction("operator_divide", &compileDivide);
-    addCompileFunction("operator_random", &compilePickRandom);
-    addCompileFunction("operator_lt", &compileLessThan);
-    addCompileFunction("operator_equals", &compileEquals);
-    addCompileFunction("operator_gt", &compileGreaterThan);
-    addCompileFunction("operator_and", &compileAnd);
-    addCompileFunction("operator_or", &compileOr);
-    addCompileFunction("operator_not", &compileNot);
-    addCompileFunction("operator_join", &compileJoin);
-    addCompileFunction("operator_letter_of", &compileLetterOf);
-    addCompileFunction("operator_length", &compileLength);
-    addCompileFunction("operator_contains", &compileContains);
-    addCompileFunction("operator_mod", &compileMod);
-    addCompileFunction("operator_round", &compileRound);
-    addCompileFunction("operator_mathop", &compileMathOp);
-
-    // Inputs
-    addInput("NUM1", NUM1);
-    addInput("NUM2", NUM2);
-    addInput("FROM", FROM);
-    addInput("TO", TO);
-    addInput("OPERAND1", OPERAND1);
-    addInput("OPERAND2", OPERAND2);
-    addInput("OPERAND", OPERAND);
-    addInput("STRING1", STRING1);
-    addInput("STRING2", STRING2);
-    addInput("LETTER", LETTER);
-    addInput("STRING", STRING);
-    addInput("NUM", NUM);
-
-    // Fields
-    addField("OPERATOR", OPERATOR);
-
-    // Field values
-    addFieldValue("abs", Abs);
-    addFieldValue("floor", Floor);
-    addFieldValue("ceiling", Ceiling);
-    addFieldValue("sqrt", Sqrt);
-    addFieldValue("sin", Sin);
-    addFieldValue("cos", Cos);
-    addFieldValue("tan", Tan);
-    addFieldValue("asin", Asin);
-    addFieldValue("acos", Acos);
-    addFieldValue("atan", Atan);
-    addFieldValue("ln", Ln);
-    addFieldValue("log", Log);
-    addFieldValue("e ^", Eexp);
-    addFieldValue("10 ^", Op_10exp);
-}
-
 std::string OperatorBlocks::name() const
 {
     return "Operators";
+}
+
+void OperatorBlocks::registerBlocks(IEngine *engine)
+{
+    // Blocks
+    engine->addCompileFunction(this, "operator_add", &compileAdd);
+    engine->addCompileFunction(this, "operator_subtract", &compileSubtract);
+    engine->addCompileFunction(this, "operator_multiply", &compileMultiply);
+    engine->addCompileFunction(this, "operator_divide", &compileDivide);
+    engine->addCompileFunction(this, "operator_random", &compilePickRandom);
+    engine->addCompileFunction(this, "operator_lt", &compileLessThan);
+    engine->addCompileFunction(this, "operator_equals", &compileEquals);
+    engine->addCompileFunction(this, "operator_gt", &compileGreaterThan);
+    engine->addCompileFunction(this, "operator_and", &compileAnd);
+    engine->addCompileFunction(this, "operator_or", &compileOr);
+    engine->addCompileFunction(this, "operator_not", &compileNot);
+    engine->addCompileFunction(this, "operator_join", &compileJoin);
+    engine->addCompileFunction(this, "operator_letter_of", &compileLetterOf);
+    engine->addCompileFunction(this, "operator_length", &compileLength);
+    engine->addCompileFunction(this, "operator_contains", &compileContains);
+    engine->addCompileFunction(this, "operator_mod", &compileMod);
+    engine->addCompileFunction(this, "operator_round", &compileRound);
+    engine->addCompileFunction(this, "operator_mathop", &compileMathOp);
+
+    // Inputs
+    engine->addInput(this, "NUM1", NUM1);
+    engine->addInput(this, "NUM2", NUM2);
+    engine->addInput(this, "FROM", FROM);
+    engine->addInput(this, "TO", TO);
+    engine->addInput(this, "OPERAND1", OPERAND1);
+    engine->addInput(this, "OPERAND2", OPERAND2);
+    engine->addInput(this, "OPERAND", OPERAND);
+    engine->addInput(this, "STRING1", STRING1);
+    engine->addInput(this, "STRING2", STRING2);
+    engine->addInput(this, "LETTER", LETTER);
+    engine->addInput(this, "STRING", STRING);
+    engine->addInput(this, "NUM", NUM);
+
+    // Fields
+    engine->addField(this, "OPERATOR", OPERATOR);
+
+    // Field values
+    engine->addFieldValue(this, "abs", Abs);
+    engine->addFieldValue(this, "floor", Floor);
+    engine->addFieldValue(this, "ceiling", Ceiling);
+    engine->addFieldValue(this, "sqrt", Sqrt);
+    engine->addFieldValue(this, "sin", Sin);
+    engine->addFieldValue(this, "cos", Cos);
+    engine->addFieldValue(this, "tan", Tan);
+    engine->addFieldValue(this, "asin", Asin);
+    engine->addFieldValue(this, "acos", Acos);
+    engine->addFieldValue(this, "atan", Atan);
+    engine->addFieldValue(this, "ln", Ln);
+    engine->addFieldValue(this, "log", Log);
+    engine->addFieldValue(this, "e ^", Eexp);
+    engine->addFieldValue(this, "10 ^", Op_10exp);
 }
 
 void OperatorBlocks::compileAdd(Compiler *compiler)

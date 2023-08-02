@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include "../engine/iblocksection.h"
+#include <scratchcpp/iblocksection.h>
+#include "engine/compiler.h"
 
 namespace libscratchcpp
 {
@@ -50,9 +51,9 @@ class LIBSCRATCHCPP_EXPORT OperatorBlocks : public IBlockSection
             Op_10exp
         };
 
-        OperatorBlocks();
-
         std::string name() const override;
+
+        void registerBlocks(IEngine *engine) override;
 
         static void compileAdd(Compiler *compiler);
         static void compileSubtract(Compiler *compiler);

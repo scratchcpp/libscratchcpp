@@ -12,6 +12,7 @@
 #include "../scratch/target.h"
 #include "global.h"
 #include "virtualmachine.h"
+#include "blocksectioncontainer.h"
 
 namespace libscratchcpp
 {
@@ -44,7 +45,12 @@ class LIBSCRATCHCPP_EXPORT Engine : public IEngine
 
         void registerSection(std::shared_ptr<IBlockSection> section) override;
         unsigned int functionIndex(BlockFunc f);
-        std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const override;
+
+        void addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f) override;
+        void addInput(IBlockSection *section, const std::string &name, int id) override;
+        void addField(IBlockSection *section, const std::string &name, int id) override;
+        void addFieldValue(IBlockSection *section, const std::string &value, int id) override;
+        void addHatBlock(IBlockSection *section, const std::string &opcode) override;
 
         const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const;
         void setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadcasts);
@@ -70,7 +76,11 @@ class LIBSCRATCHCPP_EXPORT Engine : public IEngine
         std::shared_ptr<List> getList(const std::string &id);
         std::shared_ptr<Broadcast> getBroadcast(const std::string &id);
         std::shared_ptr<IEntity> getEntity(const std::string &id);
-        std::vector<std::shared_ptr<IBlockSection>> m_sections;
+        std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
+        BlockSectionContainer *blockSectionContainer(const std::string &opcode) const;
+        BlockSectionContainer *blockSectionContainer(IBlockSection *section) const;
+
+        std::unordered_map<std::shared_ptr<IBlockSection>, std::unique_ptr<BlockSectionContainer>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<unsigned int, std::vector<Script *>> m_broadcastMap;

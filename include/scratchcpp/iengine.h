@@ -7,6 +7,9 @@
 
 #include "global.h"
 
+// TODO: Remove this
+#include "engine/global.h"
+
 namespace libscratchcpp
 {
 
@@ -74,13 +77,43 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Returns true if breakFrame() was called. */
         virtual bool breakingCurrentFrame() = 0;
 
-        /*! Registers the given block section. */
+        /*!
+         * Registers the given block section.
+         * \see <a href="blockSections.html">Block sections</a>
+         */
         virtual void registerSection(std::shared_ptr<IBlockSection> section) = 0;
 
         // virtual unsigned int functionIndex(BlockFunc f);
 
-        /*! Resolves the block and returns the block section in which it has been registered. */
-        virtual std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const = 0;
+        /*!
+         * Call this from IBlockSection#registerBlocks() to add a compile function to a block section.
+         * \see <a href="blockSections.html">Block sections</a>
+         */
+        virtual void addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f) = 0;
+
+        /*!
+         * Call this from IBlockSection#registerBlocks() to add a hat block to a block section.
+         * \see <a href="blockSections.html">Block sections</a>
+         */
+        virtual void addHatBlock(IBlockSection *section, const std::string &opcode) = 0;
+
+        /*!
+         * Call this from IBlockSection#registerBlocks() to add an input to a block section.
+         * \see <a href="blockSections.html">Block sections</a>
+         */
+        virtual void addInput(IBlockSection *section, const std::string &name, int id) = 0;
+
+        /*!
+         * Call this from IBlockSection#registerBlocks() to add a field to a block section.
+         * \see <a href="blockSections.html">Block sections</a>
+         */
+        virtual void addField(IBlockSection *section, const std::string &name, int id) = 0;
+
+        /*!
+         * Call this from IBlockSection#registerBlocks() to add a field value to a block section.
+         * \see <a href="blockSections.html">Block sections</a>
+         */
+        virtual void addFieldValue(IBlockSection *section, const std::string &value, int id) = 0;
 
         /*virtual const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const = 0;
         virtual void setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadcasts) = 0;

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "../engine/iblocksection.h"
+#include <scratchcpp/iblocksection.h>
 
 namespace libscratchcpp
 {
@@ -11,9 +11,9 @@ namespace libscratchcpp
 class LIBSCRATCHCPP_EXPORT SensingBlocks : public IBlockSection
 {
     public:
-        SensingBlocks();
-
         std::string name() const override;
+
+        void registerBlocks(IEngine *engine) override;
 };
 
 } // namespace libscratchcpp

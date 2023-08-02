@@ -1,30 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/iengine.h>
+
 #include "listblocks.h"
 #include "../engine/compiler.h"
 
 using namespace libscratchcpp;
-
-ListBlocks::ListBlocks()
-{
-    // Blocks
-    addCompileFunction("data_addtolist", &compileAddToList);
-    addCompileFunction("data_deleteoflist", &compileDeleteFromList);
-    addCompileFunction("data_deletealloflist", &compileDeleteAllOfList);
-    addCompileFunction("data_insertatlist", &compileInsertToList);
-    addCompileFunction("data_replaceitemoflist", &compileReplaceItemOfList);
-    addCompileFunction("data_itemoflist", &compileItemOfList);
-    addCompileFunction("data_itemnumoflist", &compileItemNumberInList);
-    addCompileFunction("data_lengthoflist", &compileLengthOfList);
-    addCompileFunction("data_listcontainsitem", &compileListContainsItem);
-
-    // Inputs
-    addInput("ITEM", ITEM);
-    addInput("INDEX", INDEX);
-
-    // Fields
-    addField("LIST", LIST);
-}
 
 std::string ListBlocks::name() const
 {
@@ -34,6 +15,27 @@ std::string ListBlocks::name() const
 bool ListBlocks::categoryVisible() const
 {
     return false;
+}
+
+void ListBlocks::registerBlocks(IEngine *engine)
+{
+    // Blocks
+    engine->addCompileFunction(this, "data_addtolist", &compileAddToList);
+    engine->addCompileFunction(this, "data_deleteoflist", &compileDeleteFromList);
+    engine->addCompileFunction(this, "data_deletealloflist", &compileDeleteAllOfList);
+    engine->addCompileFunction(this, "data_insertatlist", &compileInsertToList);
+    engine->addCompileFunction(this, "data_replaceitemoflist", &compileReplaceItemOfList);
+    engine->addCompileFunction(this, "data_itemoflist", &compileItemOfList);
+    engine->addCompileFunction(this, "data_itemnumoflist", &compileItemNumberInList);
+    engine->addCompileFunction(this, "data_lengthoflist", &compileLengthOfList);
+    engine->addCompileFunction(this, "data_listcontainsitem", &compileListContainsItem);
+
+    // Inputs
+    engine->addInput(this, "ITEM", ITEM);
+    engine->addInput(this, "INDEX", INDEX);
+
+    // Fields
+    engine->addField(this, "LIST", LIST);
 }
 
 void ListBlocks::compileAddToList(Compiler *compiler)

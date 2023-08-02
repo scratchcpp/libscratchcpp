@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include "../engine/iblocksection.h"
+#include <scratchcpp/iblocksection.h>
+#include "engine/compiler.h"
 
 namespace libscratchcpp
 {
@@ -21,9 +22,9 @@ class LIBSCRATCHCPP_EXPORT EventBlocks : public IBlockSection
             BROADCAST_OPTION
         };
 
-        EventBlocks();
-
         std::string name() const override;
+
+        void registerBlocks(IEngine *engine) override;
 
         static void compileBroadcast(Compiler *compiler);
         static void compileBroadcastAndWait(Compiler *compiler);

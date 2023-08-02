@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/scratchconfiguration.h>
+#include <scratchcpp/iblocksection.h>
 #include <cassert>
 #include <iostream>
 #include <thread>
 
 #include "engine.h"
 #include "../blocks/standardblocks.h"
-#include "iblocksection.h"
 #include "compiler.h"
 #include "script.h"
 
@@ -33,17 +33,17 @@ void Engine::resolveIds()
         std::cout << "Processing target " << target->name() << "..." << std::endl;
         auto blocks = target->blocks();
         for (auto block : blocks) {
-            auto section = blockSection(block->opcode());
+            auto container = blockSectionContainer(block->opcode());
             block->setNext(getBlock(block->nextId()));
             block->setParent(getBlock(block->parentId()));
-            if (section)
-                block->setCompileFunction(section->resolveBlockCompileFunc(block->opcode()));
+            if (container)
+                block->setCompileFunction(container->resolveBlockCompileFunc(block->opcode()));
 
             auto inputs = block->inputs();
             for (auto input : inputs) {
                 input->setValueBlock(getBlock(input->valueBlockId()));
-                if (section)
-                    input->setInputId(section->resolveInput(input->name()));
+                if (container)
+                    input->setInputId(container->resolveInput(input->name()));
                 input->primaryValue()->setValuePtr(getEntity(input->primaryValue()->valueId()));
                 input->secondaryValue()->setValuePtr(getEntity(input->primaryValue()->valueId()));
             }
@@ -51,10 +51,10 @@ void Engine::resolveIds()
             auto fields = block->fields();
             for (auto field : fields) {
                 field->setValuePtr(getEntity(field->valueId()));
-                if (section) {
-                    field->setFieldId(section->resolveField(field->name()));
+                if (container) {
+                    field->setFieldId(container->resolveField(field->name()));
                     if (!field->valuePtr())
-                        field->setSpecialValueId(section->resolveFieldValue(field->value().toString()));
+                        field->setSpecialValueId(container->resolveFieldValue(field->value().toString()));
                 }
             }
 
@@ -263,8 +263,15 @@ bool libscratchcpp::Engine::breakingCurrentFrame()
 
 void Engine::registerSection(std::shared_ptr<IBlockSection> section)
 {
-    if (section)
-        m_sections.push_back(section);
+    if (section) {
+        if (m_sections.find(section) != m_sections.cend()) {
+            std::cerr << "Warning: block section \"" << section->name() << "\" is already registered" << std::endl;
+            return;
+        }
+
+        section->registerBlocks(this);
+        m_sections[section] = std::make_unique<BlockSectionContainer>();
+    }
 }
 
 /*! Returns the index of the given block function. */
@@ -277,15 +284,44 @@ unsigned int Engine::functionIndex(BlockFunc f)
     return m_functions.size() - 1;
 }
 
-std::shared_ptr<IBlockSection> Engine::blockSection(const std::string &opcode) const
+void libscratchcpp::Engine::addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f)
 {
-    for (auto section : m_sections) {
-        auto block = section->resolveBlockCompileFunc(opcode);
-        if (block)
-            return section;
-    }
+    auto container = blockSectionContainer(section);
 
-    return nullptr;
+    if (container)
+        container->addCompileFunction(opcode, f);
+}
+
+void libscratchcpp::Engine::addInput(IBlockSection *section, const std::string &name, int id)
+{
+    auto container = blockSectionContainer(section);
+
+    if (container)
+        container->addInput(name, id);
+}
+
+void libscratchcpp::Engine::addField(IBlockSection *section, const std::string &name, int id)
+{
+    auto container = blockSectionContainer(section);
+
+    if (container)
+        container->addField(name, id);
+}
+
+void libscratchcpp::Engine::addFieldValue(IBlockSection *section, const std::string &value, int id)
+{
+    auto container = blockSectionContainer(section);
+
+    if (container)
+        container->addFieldValue(value, id);
+}
+
+void libscratchcpp::Engine::addHatBlock(IBlockSection *section, const std::string &opcode)
+{
+    auto container = blockSectionContainer(section);
+
+    if (container)
+        container->addHatBlock(opcode);
 }
 
 /*! Returns the list of broadcasts. */
@@ -489,6 +525,41 @@ std::shared_ptr<IEntity> Engine::getEntity(const std::string &id)
     auto broadcast = getBroadcast(id);
     if (broadcast)
         return std::static_pointer_cast<IEntity>(broadcast);
+
+    return nullptr;
+}
+
+std::shared_ptr<IBlockSection> Engine::blockSection(const std::string &opcode) const
+{
+    for (const auto &pair : m_sections) {
+        auto block = pair.second->resolveBlockCompileFunc(opcode);
+        if (block)
+            return pair.first;
+    }
+
+    return nullptr;
+}
+
+BlockSectionContainer *Engine::blockSectionContainer(const std::string &opcode) const
+{
+    for (const auto &pair : m_sections) {
+        auto block = pair.second->resolveBlockCompileFunc(opcode);
+        if (block)
+            return pair.second.get();
+    }
+
+    return nullptr;
+}
+
+BlockSectionContainer *Engine::blockSectionContainer(IBlockSection *section) const
+{
+    if (!section)
+        return nullptr;
+
+    for (const auto &pair : m_sections) {
+        if (pair.first.get() == section)
+            return pair.second.get();
+    }
 
     return nullptr;
 }
