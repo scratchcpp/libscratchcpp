@@ -4,7 +4,7 @@
 
 #include <string>
 #include <map>
-#include <spimpl.h>
+#include "spimpl.h"
 
 #include "global.h"
 
