@@ -10,6 +10,8 @@ target_sources(scratchcpp
     inputvalue.cpp
     field.cpp
     asset.cpp
+    asset_p.cpp
+    asset_p.h
     costume.cpp
     sound.cpp
     stage.cpp
@@ -26,7 +28,6 @@ target_sources(scratchcpp
     input.h
     inputvalue.h
     field.h
-    asset.h
     costume.h
     sound.h
     stage.h

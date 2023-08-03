@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "asset.h"
+#include <scratchcpp/asset.h>
 
 namespace libscratchcpp
 {

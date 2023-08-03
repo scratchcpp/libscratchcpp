@@ -25,6 +25,7 @@ target_sources(scratchcpp
     include/scratchcpp/iengine.h
     include/scratchcpp/iextension.h
     include/scratchcpp/iblocksection.h
+    include/scratchcpp/asset.h
 )
 
 add_library(zip SHARED
