@@ -269,8 +269,8 @@ void Engine::registerSection(std::shared_ptr<IBlockSection> section)
             return;
         }
 
-        section->registerBlocks(this);
         m_sections[section] = std::make_unique<BlockSectionContainer>();
+        section->registerBlocks(this);
     }
 }
 
