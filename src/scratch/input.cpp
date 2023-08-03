@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <iostream>
+#include <scratchcpp/variable.h>
+
 #include "input.h"
 #include "list.h"
 #include "block.h"
-#include "variable.h"
-#include <iostream>
 
 using namespace libscratchcpp;
 

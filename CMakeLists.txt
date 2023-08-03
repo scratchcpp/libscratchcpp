@@ -30,6 +30,7 @@ target_sources(scratchcpp
     include/scratchcpp/sound.h
     include/scratchcpp/value.h
     include/scratchcpp/entity.h
+    include/scratchcpp/variable.h
 )
 
 add_library(zip SHARED

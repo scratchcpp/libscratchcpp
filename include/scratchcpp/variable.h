@@ -9,6 +9,8 @@
 namespace libscratchcpp
 {
 
+class VariablePrivate;
+
 /*! \brief The Variable class represents a Scratch variable. */
 class LIBSCRATCHCPP_EXPORT Variable : public Entity
 {
@@ -19,25 +21,19 @@ class LIBSCRATCHCPP_EXPORT Variable : public Entity
 
         const std::string &name() const;
 
-        /*! Returns the value. */
-        inline const Value &value() const { return m_value; }
+        const Value &value() const;
 
-        /*! Returns a pointer to the value. */
-        inline Value *valuePtr() { return &m_value; }
+        Value *valuePtr();
 
-        /*! Sets the value. */
-        inline void setValue(const Value &value) { m_value = value; }
+        void setValue(const Value &value);
 
         bool isCloudVariable() const;
         void setIsCloudVariable(bool isCloudVariable);
 
-        /*! Adds the given value to the variable's value. \see Value::add() */
-        inline void add(const Value &v) { m_value.add(v); }
+        void add(const Value &v);
 
     private:
-        std::string m_name;
-        Value m_value;
-        bool m_isCloudVariable;
+        spimpl::unique_impl_ptr<VariablePrivate> impl;
 };
 
 } // namespace libscratchcpp

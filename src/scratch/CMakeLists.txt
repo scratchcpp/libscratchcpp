@@ -2,6 +2,8 @@ target_sources(scratchcpp
   PRIVATE
     target.cpp
     variable.cpp
+    variable_p.cpp
+    variable_p.h
     list.cpp
     block.cpp
     blockprototype.cpp
@@ -25,7 +27,6 @@ target_sources(scratchcpp
     entity_p.h
   PUBLIC
     target.h
-    variable.h
     list.h
     block.h
     blockprototype.h

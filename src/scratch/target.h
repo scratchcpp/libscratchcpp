@@ -7,11 +7,11 @@
 #include <vector>
 #include <scratchcpp/sound.h>
 #include <scratchcpp/costume.h>
+#include <scratchcpp/variable.h>
 
 #include "../libscratchcpp_global.h"
 #include "block.h"
 #include "list.h"
-#include "variable.h"
 
 namespace libscratchcpp
 {
