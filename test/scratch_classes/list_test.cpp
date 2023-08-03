@@ -1,4 +1,5 @@
-#include "scratch/list.h"
+#include <scratchcpp/list.h>
+
 #include "../common.h"
 
 using namespace libscratchcpp;

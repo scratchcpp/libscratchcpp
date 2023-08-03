@@ -8,10 +8,10 @@
 #include <scratchcpp/sound.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
 
 #include "../libscratchcpp_global.h"
 #include "block.h"
-#include "list.h"
 
 namespace libscratchcpp
 {

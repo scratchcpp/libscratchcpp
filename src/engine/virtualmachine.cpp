@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "virtualmachine.h"
-#include "../scratch/list.h"
 #include "../engine/engine.h"
 #include <iostream>
 #include <cassert>

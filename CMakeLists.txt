@@ -31,6 +31,7 @@ target_sources(scratchcpp
     include/scratchcpp/value.h
     include/scratchcpp/entity.h
     include/scratchcpp/variable.h
+    include/scratchcpp/list.h
 )
 
 add_library(zip SHARED

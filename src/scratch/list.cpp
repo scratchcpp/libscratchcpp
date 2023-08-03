@@ -1,27 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "list.h"
+#include <scratchcpp/list.h>
 #include <algorithm>
+
+#include "list_p.h"
 
 using namespace libscratchcpp;
 
 /*! Constructs List. */
 List::List(const std::string &id, const std::string &name) :
     Entity(id),
-    m_name(name)
+    impl(spimpl::make_unique_impl<ListPrivate>(name))
 {
 }
 
 /*! Returns the name of the list. */
-std::string List::name()
+const std::string &List::name()
 {
-    return m_name;
+    return impl->name;
 }
 
 /*! Sets the name of the list. */
 void List::setName(const std::string &name)
 {
-    m_name = name;
+    impl->name = name;
 }
 
 /*! Returns the index of the given item. */

@@ -4,7 +4,6 @@
 #include <scratchcpp/variable.h>
 
 #include "input.h"
-#include "list.h"
 #include "block.h"
 
 using namespace libscratchcpp;
