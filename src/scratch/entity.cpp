@@ -8,7 +8,7 @@ using namespace libscratchcpp;
 
 /*! Constructs Entity. */
 Entity::Entity(const std::string &id) :
-    impl(spimpl::make_impl<EntityPrivate>(id))
+    impl(spimpl::make_unique_impl<EntityPrivate>(id))
 {
 }
 

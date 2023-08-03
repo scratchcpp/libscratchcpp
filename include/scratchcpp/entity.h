@@ -17,6 +17,8 @@ class LIBSCRATCHCPP_EXPORT Entity
 {
     public:
         Entity(const std::string &id);
+        Entity(const Entity &) = delete;
+
         virtual ~Entity() { }
 
         const std::string &id() const;
@@ -24,7 +26,7 @@ class LIBSCRATCHCPP_EXPORT Entity
         void setId(const std::string &newId);
 
     private:
-        spimpl::impl_ptr<EntityPrivate> impl;
+        spimpl::unique_impl_ptr<EntityPrivate> impl;
 };
 
 } // namespace libscratchcpp
