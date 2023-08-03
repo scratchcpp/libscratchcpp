@@ -504,27 +504,27 @@ std::shared_ptr<Broadcast> Engine::getBroadcast(const std::string &id)
 }
 
 /*! Returns the entity with the given ID. \see IEntity */
-std::shared_ptr<IEntity> Engine::getEntity(const std::string &id)
+std::shared_ptr<Entity> Engine::getEntity(const std::string &id)
 {
     // Blocks
     auto block = getBlock(id);
     if (block)
-        return std::static_pointer_cast<IEntity>(block);
+        return std::static_pointer_cast<Entity>(block);
 
     // Variables
     auto variable = getVariable(id);
     if (variable)
-        return std::static_pointer_cast<IEntity>(variable);
+        return std::static_pointer_cast<Entity>(variable);
 
     // Lists
     auto list = getList(id);
     if (list)
-        return std::static_pointer_cast<IEntity>(list);
+        return std::static_pointer_cast<Entity>(list);
 
     // Broadcasts
     auto broadcast = getBroadcast(id);
     if (broadcast)
-        return std::static_pointer_cast<IEntity>(broadcast);
+        return std::static_pointer_cast<Entity>(broadcast);
 
     return nullptr;
 }

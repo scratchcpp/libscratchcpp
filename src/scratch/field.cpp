@@ -5,7 +5,7 @@
 using namespace libscratchcpp;
 
 /*! Constructs Field. */
-Field::Field(std::string name, Value value, std::shared_ptr<IEntity> valuePtr) :
+Field::Field(std::string name, Value value, std::shared_ptr<Entity> valuePtr) :
     m_name(name),
     m_value(value),
     m_valuePtr(valuePtr)
@@ -51,13 +51,13 @@ Value Field::value() const
 }
 
 /*! Returns a pointer to the value (e. g. a variable). */
-std::shared_ptr<IEntity> Field::valuePtr() const
+std::shared_ptr<Entity> Field::valuePtr() const
 {
     return m_valuePtr;
 }
 
 /*! Sets the value pointer. */
-void Field::setValuePtr(const std::shared_ptr<IEntity> &newValuePtr)
+void Field::setValuePtr(const std::shared_ptr<Entity> &newValuePtr)
 {
     m_valuePtr = newValuePtr;
 }

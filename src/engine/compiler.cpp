@@ -219,7 +219,7 @@ std::shared_ptr<Block> Compiler::inputBlock(int id) const
 }
 
 /*! Returns the index of the given variable. */
-unsigned int Compiler::variableIndex(std::shared_ptr<IEntity> varEntity)
+unsigned int Compiler::variableIndex(std::shared_ptr<Entity> varEntity)
 {
     auto var = dynamic_cast<Variable *>(varEntity.get());
     auto it = std::find(m_variables.begin(), m_variables.end(), var);
@@ -230,7 +230,7 @@ unsigned int Compiler::variableIndex(std::shared_ptr<IEntity> varEntity)
 }
 
 /*! Returns the index of the given list. */
-unsigned int Compiler::listIndex(std::shared_ptr<IEntity> listEntity)
+unsigned int Compiler::listIndex(std::shared_ptr<Entity> listEntity)
 {
     auto list = dynamic_cast<List *>(listEntity.get());
     auto it = std::find(m_lists.begin(), m_lists.end(), list);

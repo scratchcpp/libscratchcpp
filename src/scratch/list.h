@@ -5,8 +5,7 @@
 #include <string>
 #include <deque>
 #include <scratchcpp/value.h>
-
-#include "ientity.h"
+#include <scratchcpp/entity.h>
 
 namespace libscratchcpp
 {
@@ -14,10 +13,10 @@ namespace libscratchcpp
 /*! \brief The List class represents a Scratch list. */
 class LIBSCRATCHCPP_EXPORT List
     : public std::deque<Value>
-    , public IEntity
+    , public Entity
 {
     public:
-        List(std::string id, std::string name);
+        List(const std::string &id, const std::string &name);
         List(const List &) = delete;
 
         std::string name();

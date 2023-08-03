@@ -2,14 +2,15 @@
 
 #pragma once
 
-#include "../engine/global.h"
-#include "field.h"
-#include "ientity.h"
-#include "input.h"
-#include "blockprototype.h"
+#include <scratchcpp/entity.h>
 #include <memory>
 #include <unordered_map>
 #include <string>
+
+#include "../engine/global.h"
+#include "field.h"
+#include "input.h"
+#include "blockprototype.h"
 
 namespace libscratchcpp
 {
@@ -18,10 +19,10 @@ class LIBSCRATCHCPP_EXPORT Engine;
 class LIBSCRATCHCPP_EXPORT Target;
 
 /*! \brief The Block class represents a Scratch block. */
-class LIBSCRATCHCPP_EXPORT Block : public IEntity
+class LIBSCRATCHCPP_EXPORT Block : public Entity
 {
     public:
-        Block(std::string id, std::string opcode);
+        Block(const std::string &id, const std::string &opcode);
         Block(const Block &) = delete;
 
         void compile(Compiler *compiler);

@@ -7,10 +7,10 @@
 using namespace libscratchcpp;
 
 /*! Constructs Block */
-Block::Block(std::string id, std::string opcode) :
+Block::Block(const std::string &id, const std::string &opcode) :
+    Entity(id),
     m_opcode(opcode)
 {
-    setId(id);
 }
 
 /*! Calls the compile function. */

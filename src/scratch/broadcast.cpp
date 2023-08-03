@@ -5,14 +5,14 @@
 using namespace libscratchcpp;
 
 /*! Constructs Broadcast. */
-Broadcast::Broadcast(std::string id, std::string name) :
+Broadcast::Broadcast(const std::string &id, const std::string &name) :
+    Entity(id),
     m_name(name)
 {
-    setId(id);
 }
 
 /*! Returns the name of the broadcast. */
-std::string Broadcast::name() const
+const std::string &Broadcast::name() const
 {
     return m_name;
 }

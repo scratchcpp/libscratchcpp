@@ -8,6 +8,8 @@
 namespace libscratchcpp
 {
 
+class Entity;
+
 /*! \brief The Compiler class provides an API for compiling scripts of targets to bytecode. */
 class LIBSCRATCHCPP_EXPORT Compiler
 {
@@ -48,8 +50,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
         Input *input(int id) const;
         Field *field(int id) const;
         std::shared_ptr<Block> inputBlock(int id) const;
-        unsigned int variableIndex(std::shared_ptr<IEntity> varEntity);
-        unsigned int listIndex(std::shared_ptr<IEntity> listEntity);
+        unsigned int variableIndex(std::shared_ptr<Entity> varEntity);
+        unsigned int listIndex(std::shared_ptr<Entity> listEntity);
         unsigned int constIndex(InputValue *value);
         unsigned int procedureIndex(std::string proc);
         long procedureArgIndex(std::string procCode, std::string argName);

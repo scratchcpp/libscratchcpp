@@ -6,10 +6,10 @@
 using namespace libscratchcpp;
 
 /*! Constructs List. */
-List::List(std::string id, std::string name) :
+List::List(const std::string &id, const std::string &name) :
+    Entity(id),
     m_name(name)
 {
-    setId(id);
 }
 
 /*! Returns the name of the list. */

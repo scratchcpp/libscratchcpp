@@ -75,7 +75,7 @@ class LIBSCRATCHCPP_EXPORT Engine : public IEngine
         std::shared_ptr<Variable> getVariable(const std::string &id);
         std::shared_ptr<List> getList(const std::string &id);
         std::shared_ptr<Broadcast> getBroadcast(const std::string &id);
-        std::shared_ptr<IEntity> getEntity(const std::string &id);
+        std::shared_ptr<Entity> getEntity(const std::string &id);
         std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
         BlockSectionContainer *blockSectionContainer(const std::string &opcode) const;
         BlockSectionContainer *blockSectionContainer(IBlockSection *section) const;

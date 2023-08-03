@@ -6,11 +6,11 @@ using namespace libscratchcpp;
 
 /*! Constructs Variable. */
 Variable::Variable(const std::string &id, const std::string &name, const Value &value, bool isCloudVariable) :
+    Entity(id),
     m_name(name),
     m_value(value),
     m_isCloudVariable(isCloudVariable)
 {
-    setId(id);
 }
 
 /*! Constructs an empty Variable. */

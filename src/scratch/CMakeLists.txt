@@ -20,7 +20,9 @@ target_sources(scratchcpp
     stage.cpp
     sprite.cpp
     broadcast.cpp
-    ientity.h
+    entity.cpp
+    entity_p.cpp
+    entity_p.h
   PUBLIC
     target.h
     variable.h

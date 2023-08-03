@@ -5,16 +5,16 @@
 #include <scratchcpp/value.h>
 #include <memory>
 
-#include "ientity.h"
-
 namespace libscratchcpp
 {
+
+class Entity;
 
 /*! \brief The Field class represents a Scratch block field. */
 class LIBSCRATCHCPP_EXPORT Field
 {
     public:
-        Field(std::string name, Value value, std::shared_ptr<IEntity> valuePtr = nullptr);
+        Field(std::string name, Value value, std::shared_ptr<Entity> valuePtr = nullptr);
         Field(std::string name, Value value, std::string valueId);
         Field(std::string name, Value value, const char *valueId);
         Field(const Field &) = delete;
@@ -26,8 +26,8 @@ class LIBSCRATCHCPP_EXPORT Field
 
         Value value() const;
 
-        std::shared_ptr<IEntity> valuePtr() const;
-        void setValuePtr(const std::shared_ptr<IEntity> &newValuePtr);
+        std::shared_ptr<Entity> valuePtr() const;
+        void setValuePtr(const std::shared_ptr<Entity> &newValuePtr);
 
         std::string valueId() const;
 
@@ -38,7 +38,7 @@ class LIBSCRATCHCPP_EXPORT Field
         std::string m_name;
         int m_fieldId = -1;
         Value m_value;
-        std::shared_ptr<IEntity> m_valuePtr = nullptr;
+        std::shared_ptr<Entity> m_valuePtr = nullptr;
         std::string m_valueId;
         int m_specialValueId = -1;
 };

@@ -4,14 +4,13 @@
 
 #include <string>
 #include <scratchcpp/value.h>
-
-#include "ientity.h"
+#include <scratchcpp/entity.h>
 
 namespace libscratchcpp
 {
 
 /*! \brief The Variable class represents a Scratch variable. */
-class LIBSCRATCHCPP_EXPORT Variable : public IEntity
+class LIBSCRATCHCPP_EXPORT Variable : public Entity
 {
     public:
         Variable(const std::string &id, const std::string &name, const Value &value = Value(), bool isCloudVariable = false);

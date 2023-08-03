@@ -5,13 +5,12 @@
 #include <scratchcpp/value.h>
 #include <memory>
 
-#include "ientity.h"
-
 namespace libscratchcpp
 {
 
 class LIBSCRATCHCPP_EXPORT Block;
 class LIBSCRATCHCPP_EXPORT Compiler;
+class Entity;
 
 /*! \brief The InputValue class provides methods for the value of an Input. */
 class LIBSCRATCHCPP_EXPORT InputValue
@@ -48,8 +47,8 @@ class LIBSCRATCHCPP_EXPORT InputValue
         const std::string &valueBlockId() const;
         void setValueBlockId(const std::string &newValueBlockId);
 
-        std::shared_ptr<IEntity> valuePtr() const;
-        void setValuePtr(const std::shared_ptr<IEntity> &newValuePtr);
+        std::shared_ptr<Entity> valuePtr() const;
+        void setValuePtr(const std::shared_ptr<Entity> &newValuePtr);
 
         std::string valueId() const;
         void setValueId(const std::string &newValueId);
@@ -59,7 +58,7 @@ class LIBSCRATCHCPP_EXPORT InputValue
         Value m_value;
         std::shared_ptr<Block> m_valueBlock = nullptr;
         std::string m_valueBlockId;
-        std::shared_ptr<IEntity> m_valuePtr = nullptr;
+        std::shared_ptr<Entity> m_valuePtr = nullptr;
         std::string m_valueId;
 };
 
