@@ -12,6 +12,8 @@ target_sources(scratchcpp
     input.cpp
     inputvalue.cpp
     field.cpp
+    field_p.cpp
+    field_p.h
     asset.cpp
     asset_p.cpp
     asset_p.h
@@ -33,7 +35,6 @@ target_sources(scratchcpp
     blockprototype.h
     input.h
     inputvalue.h
-    field.h
     stage.h
     sprite.h
     broadcast.h

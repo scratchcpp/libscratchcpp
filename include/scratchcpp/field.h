@@ -2,45 +2,45 @@
 
 #pragma once
 
-#include <scratchcpp/value.h>
+#include <string>
 #include <memory>
+
+#include "global.h"
+#include "spimpl.h"
 
 namespace libscratchcpp
 {
 
 class Entity;
+class Value;
+class FieldPrivate;
 
 /*! \brief The Field class represents a Scratch block field. */
 class LIBSCRATCHCPP_EXPORT Field
 {
     public:
-        Field(std::string name, Value value, std::shared_ptr<Entity> valuePtr = nullptr);
-        Field(std::string name, Value value, std::string valueId);
-        Field(std::string name, Value value, const char *valueId);
+        Field(const std::string &name, const Value &value, std::shared_ptr<Entity> valuePtr = nullptr);
+        Field(const std::string &name, const Value &value, const std::string &valueId);
+        Field(const std::string &name, const Value &value, const char *valueId);
         Field(const Field &) = delete;
 
-        std::string name() const;
+        const std::string &name() const;
 
         int fieldId() const;
         void setFieldId(int newFieldId);
 
-        Value value() const;
+        const Value &value() const;
 
         std::shared_ptr<Entity> valuePtr() const;
         void setValuePtr(const std::shared_ptr<Entity> &newValuePtr);
 
-        std::string valueId() const;
+        const std::string &valueId() const;
 
         int specialValueId() const;
         void setSpecialValueId(int newSpecialValueId);
 
     private:
-        std::string m_name;
-        int m_fieldId = -1;
-        Value m_value;
-        std::shared_ptr<Entity> m_valuePtr = nullptr;
-        std::string m_valueId;
-        int m_specialValueId = -1;
+        spimpl::unique_impl_ptr<FieldPrivate> impl;
 };
 
 } // namespace libscratchcpp

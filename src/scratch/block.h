@@ -3,12 +3,12 @@
 #pragma once
 
 #include <scratchcpp/entity.h>
+#include <scratchcpp/field.h>
 #include <memory>
 #include <unordered_map>
 #include <string>
 
 #include "../engine/global.h"
-#include "field.h"
 #include "input.h"
 #include "blockprototype.h"
 
