@@ -2,16 +2,21 @@
 
 #pragma once
 
-#include <scratchcpp/asset.h>
+#include <spimpl.h>
+
+#include "asset.h"
 
 namespace libscratchcpp
 {
+
+class CostumePrivate;
 
 /*! \brief The Costume class represents a Scratch costume. */
 class LIBSCRATCHCPP_EXPORT Costume : public Asset
 {
     public:
         Costume(std::string name, std::string id, std::string format);
+
         double bitmapResolution() const;
         void setBitmapResolution(double newBitmapResolution);
 
@@ -22,9 +27,7 @@ class LIBSCRATCHCPP_EXPORT Costume : public Asset
         void setRotationCenterY(int newRotationCenterY);
 
     private:
-        double m_bitmapResolution = 1;
-        int m_rotationCenterX = 0;
-        int m_rotationCenterY = 0;
+        spimpl::impl_ptr<CostumePrivate> impl;
 };
 
 } // namespace libscratchcpp

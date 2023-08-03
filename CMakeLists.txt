@@ -26,6 +26,7 @@ target_sources(scratchcpp
     include/scratchcpp/iextension.h
     include/scratchcpp/iblocksection.h
     include/scratchcpp/asset.h
+    include/scratchcpp/costume.h
     include/scratchcpp/sound.h
 )
 

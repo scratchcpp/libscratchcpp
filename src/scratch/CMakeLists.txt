@@ -13,6 +13,8 @@ target_sources(scratchcpp
     asset_p.cpp
     asset_p.h
     costume.cpp
+    costume_p.cpp
+    costume_p.h
     sound.cpp
     sound_p.cpp
     sound_p.h
@@ -30,7 +32,6 @@ target_sources(scratchcpp
     input.h
     inputvalue.h
     field.h
-    costume.h
     stage.h
     sprite.h
     broadcast.h
