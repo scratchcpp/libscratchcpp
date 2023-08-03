@@ -2,16 +2,30 @@
 
 #pragma once
 
-#include "virtualmachine.h"
+#include <vector>
+#include <memory>
+
+#include "global.h"
+#include "spimpl.h"
+
+// TODO: Remove this
+#include "engine/global.h"
 
 namespace libscratchcpp
 {
+
+class Target;
+class IEngine;
+class Value;
+class VirtualMachine;
+class List;
+class ScriptPrivate;
 
 /*! \brief The Script class represents a compiled Scratch script. */
 class LIBSCRATCHCPP_EXPORT Script
 {
     public:
-        Script(Target *target, Engine *engine);
+        Script(Target *target, IEngine *engine);
         Script(const Script &) = delete;
 
         unsigned int *bytecode() const;
@@ -27,26 +41,7 @@ class LIBSCRATCHCPP_EXPORT Script
         std::shared_ptr<VirtualMachine> start();
 
     private:
-        unsigned int *m_bytecode;
-        std::vector<unsigned int> m_bytecodeVector;
-
-        Target *m_target;
-        Engine *m_engine;
-
-        unsigned int **m_procedures = nullptr;
-        std::vector<unsigned int *> m_proceduresVector;
-
-        BlockFunc *m_functions;
-        std::vector<BlockFunc> m_functionsVector;
-
-        const Value *m_constValues = nullptr;
-        std::vector<Value> m_constValuesVector;
-
-        Value **m_variables = nullptr;
-        std::vector<Value *> m_variablesVector;
-
-        List **m_lists = nullptr;
-        std::vector<List *> m_listsVector;
+        spimpl::unique_impl_ptr<ScriptPrivate> impl;
 };
 
 } // namespace libscratchcpp

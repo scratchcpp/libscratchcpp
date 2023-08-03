@@ -5,11 +5,12 @@ target_sources(scratchcpp
     virtualmachine.cpp
     compiler.cpp
     script.cpp
+    script_p.cpp
+    script_p.h
     blocksectioncontainer.cpp
     blocksectioncontainer.h
   PUBLIC
     global.h
     virtualmachine.h
     compiler.h
-    script.h
 )

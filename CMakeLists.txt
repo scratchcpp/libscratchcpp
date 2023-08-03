@@ -33,6 +33,7 @@ target_sources(scratchcpp
     include/scratchcpp/variable.h
     include/scratchcpp/list.h
     include/scratchcpp/field.h
+    include/scratchcpp/script.h
 )
 
 add_library(zip SHARED

@@ -2,6 +2,7 @@
 
 #include <scratchcpp/scratchconfiguration.h>
 #include <scratchcpp/iblocksection.h>
+#include <scratchcpp/script.h>
 #include <cassert>
 #include <iostream>
 #include <thread>
@@ -9,7 +10,6 @@
 #include "engine.h"
 #include "../blocks/standardblocks.h"
 #include "compiler.h"
-#include "script.h"
 
 using namespace libscratchcpp;
 
