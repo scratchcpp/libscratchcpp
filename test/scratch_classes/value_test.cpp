@@ -1,4 +1,5 @@
-#include "scratch/value.h"
+#include <scratchcpp/value.h>
+
 #include "../common.h"
 
 using namespace libscratchcpp;

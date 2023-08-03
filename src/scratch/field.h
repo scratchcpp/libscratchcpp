@@ -2,9 +2,10 @@
 
 #pragma once
 
-#include "ientity.h"
-#include "value.h"
+#include <scratchcpp/value.h>
 #include <memory>
+
+#include "ientity.h"
 
 namespace libscratchcpp
 {

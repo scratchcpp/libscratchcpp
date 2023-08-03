@@ -2,11 +2,14 @@
 
 #pragma once
 
-#include "../libscratchcpp_global.h"
 #include <string>
 #include <variant>
+#include <algorithm>
+#include <limits>
 #include <ctgmath>
 #include <utf8.h>
+
+#include "global.h"
 
 namespace libscratchcpp
 {
@@ -34,30 +37,102 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
             NaN = -3
         };
 
-        Value(float numberValue);
-        Value(double numberValue);
-        Value(int numberValue = 0);
-        Value(size_t numberValue);
-        Value(long numberValue);
-        Value(bool boolValue);
-        Value(const std::string &stringValue);
-        Value(const char *stringValue);
-        Value(SpecialValue specialValue);
+        /*! Constructs a number Value. */
+        Value(float numberValue) :
+            ValueVariant(numberValue),
+            m_type(Type::Number)
+        {
+        }
 
-        Type type() const;
+        /*! Constructs a number Value. */
+        Value(double numberValue) :
+            ValueVariant(numberValue),
+            m_type(Type::Number)
+        {
+        }
 
-        bool isInfinity() const;
-        bool isNegativeInfinity() const;
-        bool isNaN() const;
-        bool isNumber() const;
-        bool isBool() const;
-        bool isString() const;
+        /*! Constructs a number Value. */
+        Value(int numberValue = 0) :
+            ValueVariant(numberValue),
+            m_type(Type::Number)
+        {
+        }
+
+        /*! Constructs a number Value. */
+        Value(size_t numberValue) :
+            ValueVariant(static_cast<long>(numberValue)),
+            m_type(Type::Number)
+        {
+        }
+
+        /*! Constructs a number Value. */
+        Value(long numberValue) :
+            ValueVariant(numberValue),
+            m_type(Type::Number)
+        {
+        }
+
+        /*! Constructs a boolean Value. */
+        Value(bool boolValue) :
+            ValueVariant(boolValue),
+            m_type(Type::Bool)
+        {
+        }
+
+        /*! Constructs a string Value. */
+        Value(const std::string &stringValue) :
+            ValueVariant(stringValue),
+            m_type(Type::String)
+        {
+            initString(stringValue);
+        }
+
+        /*! Constructs a string Value. */
+        Value(const char *stringValue) :
+            Value(std::string(stringValue))
+        {
+        }
+
+        /*! Constructs a special Value. */
+        Value(SpecialValue specialValue) :
+            ValueVariant(0)
+        {
+            if (specialValue == SpecialValue::Infinity)
+                m_type = Type::Infinity;
+            else if (specialValue == SpecialValue::NegativeInfinity)
+                m_type = Type::NegativeInfinity;
+            else if (specialValue == SpecialValue::NaN)
+                m_type = Type::NaN;
+            else
+                m_type = Type::Number;
+        }
+
+        /*! Returns the type of the value. */
+        Type type() const { return m_type; }
+
+        /*! Returns true if the value is infinity. */
+        bool isInfinity() const { return m_type == Type::Infinity; }
+
+        /*! Returns true if the value is negative infinity. */
+        bool isNegativeInfinity() const { return m_type == Type::NegativeInfinity; }
+
+        /*! Returns true if the value is NaN (Not a Number). */
+        bool isNaN() const { return m_type == Type::NaN; }
+
+        /*! Returns true if the value is a number. */
+        bool isNumber() const { return m_type == Type::Number; }
+
+        /*! Returns true if the value is a boolean. */
+        bool isBool() const { return m_type == Type::Bool; }
+
+        /*! Returns true if the value is a string. */
+        bool isString() const { return m_type == Type::String; }
 
         /*! Returns the int representation of the value. */
-        inline int toInt() const { return toLong(); };
+        int toInt() const { return toLong(); }
 
         /*! Returns the long representation of the value. */
-        inline long toLong() const
+        long toLong() const
         {
             if (static_cast<int>(m_type) < 0) {
                 if (m_type == Type::Infinity)
@@ -81,7 +156,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         }
 
         /*! Returns the double representation of the value. */
-        inline double toDouble() const
+        double toDouble() const
         {
             if (static_cast<int>(m_type) < 0) {
                 if (m_type == Type::Infinity)
@@ -105,7 +180,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         };
 
         /*! Returns the boolean representation of the value. */
-        inline bool toBool() const
+        bool toBool() const
         {
             if (static_cast<int>(m_type) < 0) {
                 return false;
@@ -125,7 +200,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         };
 
         /*! Returns the string representation of the value. */
-        inline std::string toString() const
+        std::string toString() const
         {
             if (static_cast<int>(m_type) < 0) {
                 if (m_type == Type::Infinity)
@@ -157,7 +232,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         std::u16string toUtf16() const { return utf8::utf8to16(toString()); };
 
         /*! Adds the given value to the value. */
-        inline void add(const Value &v)
+        void add(const Value &v)
         {
             if ((static_cast<int>(m_type) < 0) || (static_cast<int>(v.m_type) < 0)) {
                 if ((m_type == Type::Infinity && v.m_type == Type::NegativeInfinity) || (m_type == Type::NegativeInfinity && v.m_type == Type::Infinity))
@@ -177,7 +252,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         }
 
         /*! Subtracts the given value from the value. */
-        inline void subtract(const Value &v)
+        void subtract(const Value &v)
         {
             if ((static_cast<int>(m_type) < 0) || (static_cast<int>(v.m_type) < 0)) {
                 if ((m_type == Type::Infinity && v.m_type == Type::Infinity) || (m_type == Type::NegativeInfinity && v.m_type == Type::NegativeInfinity))
@@ -197,7 +272,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         }
 
         /*! Multiplies the given value with the value. */
-        inline void multiply(const Value &v)
+        void multiply(const Value &v)
         {
             Type t1 = m_type, t2 = v.m_type;
             if ((static_cast<int>(t1) < 0 && t1 != Type::NaN) || (static_cast<int>(t2) < 0 && t2 != Type::NaN)) {
@@ -222,7 +297,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         }
 
         /*! Divides the value by the given value. */
-        inline void divide(const Value &v)
+        void divide(const Value &v)
         {
             if ((toDouble() == 0) && (v.toDouble() == 0)) {
                 m_type = Type::NaN;
@@ -245,7 +320,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         }
 
         /*! Replaces the value with modulo of the value and the given value. */
-        inline void mod(const Value &v)
+        void mod(const Value &v)
         {
             if ((v == 0) || (m_type == Type::Infinity || m_type == Type::NegativeInfinity)) {
                 m_type = Type::NaN;
@@ -259,42 +334,42 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 *this = fmod(toDouble(), v.toDouble());
         }
 
-        inline const Value &operator=(float v)
+        const Value &operator=(float v)
         {
             m_type = Type::Number;
             ValueVariant::operator=(v);
             return *this;
         }
 
-        inline const Value &operator=(double v)
+        const Value &operator=(double v)
         {
             m_type = Type::Number;
             ValueVariant::operator=(v);
             return *this;
         }
 
-        inline const Value &operator=(int v)
+        const Value &operator=(int v)
         {
             m_type = Type::Number;
             ValueVariant::operator=(v);
             return *this;
         }
 
-        inline const Value &operator=(long v)
+        const Value &operator=(long v)
         {
             m_type = Type::Number;
             ValueVariant::operator=(v);
             return *this;
         }
 
-        inline const Value &operator=(bool v)
+        const Value &operator=(bool v)
         {
             m_type = Type::Bool;
             ValueVariant::operator=(v);
             return *this;
         }
 
-        inline const Value &operator=(const std::string &v)
+        const Value &operator=(const std::string &v)
         {
             m_type = Type::String;
             ValueVariant::operator=(v);
@@ -302,7 +377,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
             return *this;
         }
 
-        inline const Value &operator=(const char *v)
+        const Value &operator=(const char *v)
         {
             m_type = Type::String;
             ValueVariant::operator=(std::string(v));
@@ -311,12 +386,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         }
 
     private:
-        static bool stringsEqual(std::u16string s1, std::u16string s2);
-        static bool stringsEqual(std::string s1, std::string s2);
-        static double stringToDouble(const std::string &s, bool *ok = nullptr);
-        static long stringToLong(const std::string &s, bool *ok = nullptr);
-
-        inline void initString(const std::string &str)
+        void initString(const std::string &str)
         {
             if (str.empty())
                 return;
@@ -349,11 +419,11 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
             }
         }
 
-        inline void initString(const char *str) { initString(std::string(str)); }
+        void initString(const char *str) { initString(std::string(str)); }
 
         Type m_type;
 
-        friend inline bool operator==(const Value &v1, const Value &v2)
+        friend bool operator==(const Value &v1, const Value &v2)
         {
             if (v1.m_type == v2.m_type) {
                 auto type = v1.m_type;
@@ -385,7 +455,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
             return false;
         }
 
-        friend inline bool operator>(const Value &v1, const Value &v2)
+        friend bool operator>(const Value &v1, const Value &v2)
         {
             if ((static_cast<int>(v1.m_type) < 0) || (static_cast<int>(v2.m_type) < 0)) {
                 if (v1.m_type == Type::Infinity) {
@@ -405,7 +475,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 return v1.toDouble() > v2.toDouble();
         }
 
-        friend inline bool operator<(const Value &v1, const Value &v2)
+        friend bool operator<(const Value &v1, const Value &v2)
         {
             if ((static_cast<int>(v1.m_type) < 0) || (static_cast<int>(v2.m_type) < 0)) {
                 if (v1.m_type == Type::Infinity) {
@@ -425,9 +495,9 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 return v1.toDouble() < v2.toDouble();
         }
 
-        friend inline bool operator>=(const Value &v1, const Value &v2) { return v1 > v2 || v1 == v2; }
+        friend bool operator>=(const Value &v1, const Value &v2) { return v1 > v2 || v1 == v2; }
 
-        friend inline bool operator<=(const Value &v1, const Value &v2) { return v1 < v2 || v1 == v2; }
+        friend bool operator<=(const Value &v1, const Value &v2) { return v1 < v2 || v1 == v2; }
 
         friend Value operator+(const Value &v1, const Value &v2)
         {
@@ -447,7 +517,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 return v1.toDouble() + v2.toDouble();
         }
 
-        friend inline Value operator-(const Value &v1, const Value &v2)
+        friend Value operator-(const Value &v1, const Value &v2)
         {
             if ((static_cast<int>(v1.m_type) < 0) || (static_cast<int>(v2.m_type) < 0)) {
                 if ((v1.m_type == Type::Infinity && v2.m_type == Type::Infinity) || (v1.m_type == Type::NegativeInfinity && v2.m_type == Type::NegativeInfinity))
@@ -465,7 +535,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 return v1.toDouble() - v2.toDouble();
         }
 
-        friend inline Value operator*(const Value &v1, const Value &v2)
+        friend Value operator*(const Value &v1, const Value &v2)
         {
             Type t1 = v1.m_type, t2 = v2.m_type;
             if ((static_cast<int>(t1) < 0 && t1 != Type::NaN) || (static_cast<int>(t2) < 0 && t2 != Type::NaN)) {
@@ -488,7 +558,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 return v1.toDouble() * v2.toDouble();
         }
 
-        friend inline Value operator/(const Value &v1, const Value &v2)
+        friend Value operator/(const Value &v1, const Value &v2)
         {
             if ((v1 == 0) && (v2 == 0))
                 return Value(SpecialValue::NaN);
@@ -507,7 +577,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
             return v1.toDouble() / v2.toDouble();
         }
 
-        friend inline Value operator%(const Value &v1, const Value &v2)
+        friend Value operator%(const Value &v1, const Value &v2)
         {
 
             if ((v2 == 0) || (v1.m_type == Type::Infinity || v1.m_type == Type::NegativeInfinity))
@@ -519,6 +589,86 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 return fmod(v2.toDouble() + fmod(v1.toDouble(), -v2.toDouble()), v2.toDouble());
             else
                 return fmod(v1.toDouble(), v2.toDouble());
+        }
+
+        static bool stringsEqual(std::u16string s1, std::u16string s2)
+        {
+            std::transform(s1.begin(), s1.end(), s1.begin(), ::tolower);
+            std::transform(s2.begin(), s2.end(), s2.begin(), ::tolower);
+            return (s1.compare(s2) == 0);
+        }
+
+        static bool stringsEqual(std::string s1, std::string s2)
+        {
+            std::transform(s1.begin(), s1.end(), s1.begin(), ::tolower);
+            std::transform(s2.begin(), s2.end(), s2.begin(), ::tolower);
+            return (s1.compare(s2) == 0);
+        }
+
+        static double stringToDouble(const std::string &s, bool *ok = nullptr)
+        {
+            if (ok)
+                *ok = false;
+
+            if (s == "Infinity") {
+                if (ok)
+                    *ok = true;
+                return std::numeric_limits<double>::infinity();
+            } else if (s == "-Infinity") {
+                if (ok)
+                    *ok = true;
+                return -std::numeric_limits<double>::infinity();
+            } else if (s == "NaN") {
+                if (ok)
+                    *ok = true;
+                return 0;
+            }
+
+            static const std::string digits = "0123456789.eE+-";
+            for (char c : s) {
+                if (digits.find(c) == std::string::npos) {
+                    return 0;
+                }
+            }
+            try {
+                if (ok)
+                    *ok = true;
+                return std::stod(s);
+            } catch (...) {
+                if (ok)
+                    *ok = false;
+                return 0;
+            }
+        }
+
+        static long stringToLong(const std::string &s, bool *ok = nullptr)
+        {
+            if (ok)
+                *ok = false;
+
+            if (s == "Infinity") {
+                if (ok)
+                    *ok = true;
+                return std::numeric_limits<long>::infinity();
+            } else if (s == "-Infinity") {
+                if (ok)
+                    *ok = true;
+                return -std::numeric_limits<long>::infinity();
+            } else if (s == "NaN") {
+                if (ok)
+                    *ok = true;
+                return 0;
+            }
+
+            try {
+                if (ok)
+                    *ok = true;
+                return std::stol(s);
+            } catch (...) {
+                if (ok)
+                    *ok = false;
+                return 0;
+            }
         }
 };
 

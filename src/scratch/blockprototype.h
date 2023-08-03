@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "value.h"
+#include <scratchcpp/value.h>
 #include <vector>
 
 namespace libscratchcpp

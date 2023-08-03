@@ -2,8 +2,9 @@
 
 #pragma once
 
+#include <scratchcpp/value.h>
+
 #include "global.h"
-#include "../scratch/value.h"
 #include "../scratch/target.h"
 
 namespace libscratchcpp

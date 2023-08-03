@@ -2,10 +2,11 @@
 
 #pragma once
 
-#include "../libscratchcpp_global.h"
-#include "../scratch/value.h"
 #include <nlohmann/json.hpp>
 #include <string>
+#include <scratchcpp/value.h>
+
+#include "../libscratchcpp_global.h"
 
 namespace libscratchcpp
 {
