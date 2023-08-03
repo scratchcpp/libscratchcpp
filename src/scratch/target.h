@@ -2,15 +2,16 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <vector>
+#include <scratchcpp/sound.h>
+
 #include "../libscratchcpp_global.h"
 #include "block.h"
 #include "costume.h"
 #include "list.h"
-#include "sound.h"
 #include "variable.h"
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace libscratchcpp
 {

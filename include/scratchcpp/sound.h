@@ -2,16 +2,21 @@
 
 #pragma once
 
-#include <scratchcpp/asset.h>
+#include <spimpl.h>
+
+#include "asset.h"
 
 namespace libscratchcpp
 {
+
+class SoundPrivate;
 
 /*! \brief The Sound class represents a Scratch sound. */
 class LIBSCRATCHCPP_EXPORT Sound : public Asset
 {
     public:
-        Sound(std::string name, std::string id, std::string format);
+        Sound(const std::string &name, const std::string &id, const std::string &format);
+
         int rate() const;
         void setRate(int newRate);
 
@@ -19,8 +24,7 @@ class LIBSCRATCHCPP_EXPORT Sound : public Asset
         void setSampleCount(int newSampleCount);
 
     private:
-        int m_rate = 0;
-        int m_sampleCount = 0;
+        spimpl::impl_ptr<SoundPrivate> impl;
 };
 
 } // namespace libscratchcpp
