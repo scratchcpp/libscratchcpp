@@ -4,13 +4,11 @@
 
 #include <scratchcpp/iextension.h>
 
-#include "../libscratchcpp_global.h"
-
 namespace libscratchcpp
 {
 
 /*! \brief The StandardBlocks class provides the default Scratch blocks. */
-class LIBSCRATCHCPP_EXPORT StandardBlocks : public IExtension
+class StandardBlocks : public IExtension
 {
     public:
         std::string name() const override;

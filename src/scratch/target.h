@@ -10,13 +10,12 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 
-#include "../libscratchcpp_global.h"
 #include "block.h"
 
 namespace libscratchcpp
 {
 
-class LIBSCRATCHCPP_EXPORT IScratchTarget;
+class IScratchTarget;
 
 /*! \brief The Target class is the Stage or a Sprite. */
 class LIBSCRATCHCPP_EXPORT Target

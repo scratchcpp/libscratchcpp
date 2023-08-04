@@ -7,7 +7,6 @@
 #include <memory>
 #include <chrono>
 
-#include "../libscratchcpp_global.h"
 #include "../scratch/target.h"
 #include "global.h"
 #include "blocksectioncontainer.h"
@@ -15,10 +14,10 @@
 namespace libscratchcpp
 {
 
-class LIBSCRATCHCPP_EXPORT Script;
+class Script;
 class Broadcast;
 
-class LIBSCRATCHCPP_EXPORT Engine : public IEngine
+class Engine : public IEngine
 {
     public:
         Engine();

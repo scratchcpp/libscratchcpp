@@ -6,12 +6,10 @@
 #include <string>
 #include <scratchcpp/value.h>
 
-#include "../libscratchcpp_global.h"
-
 namespace libscratchcpp
 {
 
-Value LIBSCRATCHCPP_EXPORT jsonToValue(nlohmann::json value)
+Value jsonToValue(nlohmann::json value)
 {
     if (value.is_string())
         return value.get<std::string>();
