@@ -2,7 +2,9 @@
 
 #pragma once
 
-#include "inputvalue.h"
+// TODO: Use this
+//#include "inputvalue.h"
+#include <scratchcpp/inputvalue.h>
 
 namespace libscratchcpp
 {

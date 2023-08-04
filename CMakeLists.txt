@@ -32,6 +32,7 @@ target_sources(scratchcpp
     include/scratchcpp/entity.h
     include/scratchcpp/variable.h
     include/scratchcpp/list.h
+    include/scratchcpp/inputvalue.h
     include/scratchcpp/field.h
     include/scratchcpp/script.h
     include/scratchcpp/broadcast.h

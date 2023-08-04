@@ -2,15 +2,18 @@
 
 #pragma once
 
-#include <scratchcpp/value.h>
 #include <memory>
+
+#include "spimpl.h"
+#include "value.h"
 
 namespace libscratchcpp
 {
 
-class LIBSCRATCHCPP_EXPORT Block;
-class LIBSCRATCHCPP_EXPORT Compiler;
+class Block;
+class Compiler;
 class Entity;
+class InputValuePrivate;
 
 /*! \brief The InputValue class provides methods for the value of an Input. */
 class LIBSCRATCHCPP_EXPORT InputValue
@@ -30,8 +33,7 @@ class LIBSCRATCHCPP_EXPORT InputValue
             List = 13
         };
 
-        InputValue();
-        InputValue(Type type);
+        InputValue(Type type = Type::Number);
 
         void compile(Compiler *compiler);
 
@@ -50,16 +52,11 @@ class LIBSCRATCHCPP_EXPORT InputValue
         std::shared_ptr<Entity> valuePtr() const;
         void setValuePtr(const std::shared_ptr<Entity> &newValuePtr);
 
-        std::string valueId() const;
+        const std::string &valueId() const;
         void setValueId(const std::string &newValueId);
 
     private:
-        Type m_type;
-        Value m_value;
-        std::shared_ptr<Block> m_valueBlock = nullptr;
-        std::string m_valueBlockId;
-        std::shared_ptr<Entity> m_valuePtr = nullptr;
-        std::string m_valueId;
+        spimpl::impl_ptr<InputValuePrivate> impl;
 };
 
 } // namespace libscratchcpp
