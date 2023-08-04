@@ -3,6 +3,7 @@
 #include <scratchcpp/scratchconfiguration.h>
 #include <scratchcpp/iblocksection.h>
 #include <scratchcpp/script.h>
+#include <scratchcpp/broadcast.h>
 #include <cassert>
 #include <iostream>
 #include <thread>

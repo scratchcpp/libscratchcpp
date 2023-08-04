@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/broadcast.h>
+
 #include "scratch3reader.h"
 #include "../scratch/sprite.h"
 #include "../scratch/stage.h"

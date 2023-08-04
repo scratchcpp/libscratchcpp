@@ -26,6 +26,8 @@ target_sources(scratchcpp
     stage.cpp
     sprite.cpp
     broadcast.cpp
+    broadcast_p.cpp
+    broadcast_p.h
     entity.cpp
     entity_p.cpp
     entity_p.h
@@ -37,5 +39,4 @@ target_sources(scratchcpp
     inputvalue.h
     stage.h
     sprite.h
-    broadcast.h
 )

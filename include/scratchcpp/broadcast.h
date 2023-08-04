@@ -2,11 +2,12 @@
 
 #pragma once
 
-#include <scratchcpp/entity.h>
-#include <string>
+#include "entity.h"
 
 namespace libscratchcpp
 {
+
+class BroadcastPrivate;
 
 /*! \brief The Broadcast class represents a Scratch broadcast. */
 class LIBSCRATCHCPP_EXPORT Broadcast : public Entity
@@ -19,7 +20,7 @@ class LIBSCRATCHCPP_EXPORT Broadcast : public Entity
         void setName(const std::string &newName);
 
     private:
-        std::string m_name;
+        spimpl::unique_impl_ptr<BroadcastPrivate> impl;
 };
 
 } // namespace libscratchcpp

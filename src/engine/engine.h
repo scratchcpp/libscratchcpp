@@ -8,7 +8,6 @@
 #include <chrono>
 
 #include "../libscratchcpp_global.h"
-#include "../scratch/broadcast.h"
 #include "../scratch/target.h"
 #include "global.h"
 #include "virtualmachine.h"
@@ -18,6 +17,7 @@ namespace libscratchcpp
 {
 
 class LIBSCRATCHCPP_EXPORT Script;
+class Broadcast;
 
 class LIBSCRATCHCPP_EXPORT Engine : public IEngine
 {

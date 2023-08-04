@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include "../libscratchcpp_global.h"
-#include "../scratch/broadcast.h"
 #include "../scratch/target.h"
 
 #ifndef NDEBUG
@@ -16,6 +15,8 @@
 
 namespace libscratchcpp
 {
+
+class Broadcast;
 
 class LIBSCRATCHCPP_EXPORT IProjectReader
 {
