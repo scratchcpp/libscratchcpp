@@ -4,11 +4,15 @@
 
 #include <scratchcpp/value.h>
 
-#include "global.h"
-#include "../scratch/target.h"
+#include "spimpl.h"
+
+// TODO: Remove this
+#include "engine/global.h"
 
 namespace libscratchcpp
 {
+
+class VirtualMachinePrivate;
 
 /*! \brief A namespace for global variables and enumerations of the VirtualMachine. */
 namespace vm
@@ -83,17 +87,18 @@ enum Opcode
 
 }
 
-class LIBSCRATCHCPP_EXPORT Engine;
-class LIBSCRATCHCPP_EXPORT Script;
+class Target;
+class IEngine;
+class Script;
+class List;
 
 /*! \brief The VirtualMachine class is a virtual machine for compiled Scratch scripts. */
 class LIBSCRATCHCPP_EXPORT VirtualMachine
 {
     public:
         VirtualMachine();
-        VirtualMachine(Target *target, Engine *engine, Script *script);
+        VirtualMachine(Target *target, IEngine *engine, Script *script);
         VirtualMachine(const VirtualMachine &) = delete;
-        ~VirtualMachine();
 
         void setProcedures(unsigned int **procedures);
         void setFunctions(BlockFunc *functions);
@@ -103,90 +108,31 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
 
         void setBytecode(unsigned int *code);
 
-        /*! Returns the array of constant values. */
-        const Value *constValues() const { return m_constValues; };
+        const Value *constValues() const;
 
-        /*! Returns the bytecode array. */
-        unsigned int *bytecode() const { return m_bytecode; };
+        unsigned int *bytecode() const;
 
-        Target *target() const { return m_target; };
-        Engine *engine() const { return m_engine; };
-        Script *script() const { return m_script; };
+        Target *target() const;
+        IEngine *engine() const;
+        Script *script() const;
 
-        const Value *getInput(unsigned int index, unsigned int argCount) const { return m_regs[m_regCount - argCount + index]; };
+        const Value *getInput(unsigned int index, unsigned int argCount) const;
 
-        void addReturnValue(const Value &v) { *m_regs[m_regCount++] = v; };
-        void replaceReturnValue(const Value &v, unsigned int offset) { *m_regs[m_regCount - offset] = v; };
+        void addReturnValue(const Value &v);
+        void replaceReturnValue(const Value &v, unsigned int offset);
 
         void run();
         void reset();
         void moveToLastCheckpoint();
 
-        /*!
-         * Use this to stop the script from a function.
-         * \param[in] savePos Changes the return value of savePos().
-         * \param[in] breakAtomic Whether to break the frame after stopping the script.
-         * \param[in] goBack Whether to go back so that the current instruction can run again in the future.
-         * \note Nothing will happen if the script is set to run without screen refresh.
-         */
-        void stop(bool savePos = true, bool breakAtomic = false, bool goBack = false)
-        {
-            if (m_warp)
-                return;
-            m_stop = true;
-            m_savePos = savePos;
-            m_atomic = !breakAtomic;
-            m_goBack = goBack;
-        }
+        void stop(bool savePos = true, bool breakAtomic = false, bool goBack = false);
 
-        /*! Returns true if the VM has reached the vm::OP_HALT instruction. */
-        bool atEnd() const { return m_atEnd; };
+        bool atEnd() const;
 
-        /*! Used to check whether the position can be preserved. */
-        bool savePos() const { return m_savePos; }
+        bool savePos() const;
 
     private:
-        unsigned int *run(unsigned int *pos);
-
-        static const unsigned int instruction_arg_count[];
-
-        typedef struct
-        {
-                bool isRepeatLoop;
-                unsigned int *start;
-                size_t index, max;
-        } Loop;
-
-        unsigned int *m_bytecode = nullptr;
-        std::vector<unsigned int> m_bytecodeVector;
-
-        Target *m_target = nullptr;
-        Engine *m_engine = nullptr;
-        Script *m_script = nullptr;
-        unsigned int *m_pos = nullptr;
-        unsigned int *m_checkpoint = nullptr;
-        bool m_atEnd = false;
-        std::vector<Loop> m_loops;
-        std::vector<unsigned int *> m_callTree;
-        std::vector<std::vector<Value>> m_procedureArgTree;
-        std::vector<Value> *m_procedureArgs = nullptr;
-        std::vector<Value> *m_nextProcedureArgs = nullptr;
-        bool m_atomic;
-        bool m_warp;
-        bool m_stop = false;
-        bool m_savePos = true;
-        bool m_goBack = false;
-        unsigned int m_freeExecRegs;
-        bool m_updatePos = false;
-
-        unsigned int **m_procedures = nullptr;
-        BlockFunc *m_functions;
-        const Value *m_constValues = nullptr;
-        Value **m_variables = nullptr;
-        List **m_lists = nullptr;
-
-        Value **m_regs = nullptr;
-        size_t m_regCount = 0;
+        spimpl::unique_impl_ptr<VirtualMachinePrivate> impl;
 };
 
 } // namespace libscratchcpp

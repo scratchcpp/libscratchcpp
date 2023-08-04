@@ -3,6 +3,8 @@ target_sources(scratchcpp
     engine.cpp
     engine.h
     virtualmachine.cpp
+    virtualmachine_p.cpp
+    virtualmachine_p.h
     compiler.cpp
     compiler_p.cpp
     compiler_p.h
@@ -13,5 +15,4 @@ target_sources(scratchcpp
     blocksectioncontainer.h
   PUBLIC
     global.h
-    virtualmachine.h
 )

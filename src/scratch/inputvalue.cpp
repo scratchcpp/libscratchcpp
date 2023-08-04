@@ -2,6 +2,7 @@
 
 #include <map>
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/entity.h>
 
 #include "inputvalue.h"
 

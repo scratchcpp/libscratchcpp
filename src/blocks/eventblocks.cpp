@@ -68,13 +68,15 @@ void EventBlocks::compileWhenBroadcastReceived(Compiler *compiler)
 
 unsigned int EventBlocks::broadcast(VirtualMachine *vm)
 {
-    vm->engine()->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()), vm);
+    // TODO: Remove the cast
+    dynamic_cast<Engine *>(vm->engine())->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()), vm);
     return 1;
 }
 
 unsigned int EventBlocks::broadcastByIndex(VirtualMachine *vm)
 {
-    vm->engine()->broadcast(vm->getInput(0, 1)->toLong(), vm);
+    // TODO: Remove the cast
+    dynamic_cast<Engine *>(vm->engine())->broadcast(vm->getInput(0, 1)->toLong(), vm);
     return 1;
 }
 

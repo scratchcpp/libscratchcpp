@@ -166,7 +166,8 @@ unsigned int ControlBlocks::stopAll(VirtualMachine *vm)
 
 unsigned int ControlBlocks::stopOtherScriptsInSprite(VirtualMachine *vm)
 {
-    vm->engine()->stopTarget(vm->target(), vm);
+    // TODO: Remove the cast
+    dynamic_cast<Engine *>(vm->engine())->stopTarget(vm->target(), vm);
     return 0;
 }
 

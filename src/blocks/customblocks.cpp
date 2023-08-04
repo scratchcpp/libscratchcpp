@@ -5,6 +5,10 @@
 
 #include "customblocks.h"
 
+// TODO: Remove these lines
+#include "scratch/input.h"
+#include "scratch/block.h"
+
 using namespace libscratchcpp;
 
 std::string CustomBlocks::name() const

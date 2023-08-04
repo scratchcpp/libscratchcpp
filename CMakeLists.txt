@@ -36,6 +36,7 @@ target_sources(scratchcpp
     include/scratchcpp/script.h
     include/scratchcpp/broadcast.h
     include/scratchcpp/compiler.h
+    include/scratchcpp/virtualmachine.h
 )
 
 add_library(zip SHARED

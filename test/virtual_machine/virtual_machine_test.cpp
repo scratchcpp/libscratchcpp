@@ -1,4 +1,5 @@
-#include "engine/virtualmachine.h"
+#include <scratchcpp/virtualmachine.h>
+
 #include "engine/engine.h"
 #include "../common.h"
 

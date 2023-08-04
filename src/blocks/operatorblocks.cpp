@@ -2,6 +2,7 @@
 
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/field.h>
 
 #include "operatorblocks.h"
 

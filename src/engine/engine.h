@@ -10,7 +10,6 @@
 #include "../libscratchcpp_global.h"
 #include "../scratch/target.h"
 #include "global.h"
-#include "virtualmachine.h"
 #include "blocksectioncontainer.h"
 
 namespace libscratchcpp

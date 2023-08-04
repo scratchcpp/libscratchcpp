@@ -7,11 +7,11 @@
 
 #include "global.h"
 #include "spimpl.h"
+#include "virtualmachine.h"
 #include "value.h"
 
-// TODO: Remove these lines
+// TODO: Remove this
 #include "engine/global.h"
-#include "engine/virtualmachine.h"
 
 namespace libscratchcpp
 {

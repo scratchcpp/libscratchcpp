@@ -2,6 +2,9 @@
 
 #include "compiler_p.h"
 
+// TODO: Remove this
+#include "scratch/block.h"
+
 using namespace libscratchcpp;
 using namespace vm;
 

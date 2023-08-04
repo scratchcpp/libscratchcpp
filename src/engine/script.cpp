@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/script.h>
+#include <scratchcpp/virtualmachine.h>
 
 #include "script_p.h"
-#include "virtualmachine.h"
 
 // TODO: Remove this
 #include "engine.h"
