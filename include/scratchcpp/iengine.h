@@ -14,6 +14,7 @@ namespace libscratchcpp
 {
 
 class LIBSCRATCHCPP_EXPORT IBlockSection;
+class Broadcast;
 
 /*!
  * \brief The IEngine interface provides an API for running Scratch projects.
@@ -115,11 +116,20 @@ class LIBSCRATCHCPP_EXPORT IEngine
          */
         virtual void addFieldValue(IBlockSection *section, const std::string &value, int id) = 0;
 
-        /*virtual const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const = 0;
+        /*! Returns the list of broadcasts. */
+        virtual const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const = 0;
+
+        /*! Sets the list of broadcasts. */
         virtual void setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadcasts) = 0;
+
+        /*! Returns the broadcast at index. */
         virtual std::shared_ptr<Broadcast> broadcastAt(int index) const = 0;
+
+        /*! Returns the index of the broadcast with the given name. */
         virtual int findBroadcast(const std::string &broadcastName) const = 0;
-        virtual int findBroadcastById(const std::string &broadcastId) const = 0;*/
+
+        /*! Returns the index of the broadcast with the given ID. */
+        virtual int findBroadcastById(const std::string &broadcastId) const = 0;
 
         // virtual void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast) = 0;
 

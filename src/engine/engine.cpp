@@ -325,25 +325,21 @@ void libscratchcpp::Engine::addHatBlock(IBlockSection *section, const std::strin
         container->addHatBlock(opcode);
 }
 
-/*! Returns the list of broadcasts. */
 const std::vector<std::shared_ptr<Broadcast>> &Engine::broadcasts() const
 {
     return m_broadcasts;
 }
 
-/*! Sets the list of broadcasts. */
 void Engine::setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadcasts)
 {
     m_broadcasts = broadcasts;
 }
 
-/*! Returns the broadcast at index. */
 std::shared_ptr<Broadcast> Engine::broadcastAt(int index) const
 {
     return m_broadcasts[index];
 }
 
-/*! Returns the index of the broadcast with the given name. */
 int Engine::findBroadcast(const std::string &broadcastName) const
 {
     int i = 0;
@@ -355,7 +351,6 @@ int Engine::findBroadcast(const std::string &broadcastName) const
     return -1;
 }
 
-/*! Returns the index of the broadcast with the given ID. */
 int Engine::findBroadcastById(const std::string &broadcastId) const
 {
     int i = 0;
