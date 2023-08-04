@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/iengine.h>
+#include <scratchcpp/compiler.h>
 
 #include "operatorblocks.h"
-#include "../engine/compiler.h"
 
 using namespace libscratchcpp;
 

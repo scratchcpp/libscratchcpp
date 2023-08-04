@@ -3,10 +3,11 @@
 #pragma once
 
 #include <scratchcpp/iblocksection.h>
-#include "engine/compiler.h"
 
 namespace libscratchcpp
 {
+
+class Compiler;
 
 class CustomBlocks : public IBlockSection
 {

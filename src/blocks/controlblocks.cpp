@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/iengine.h>
+#include <scratchcpp/compiler.h>
+#include <cassert>
 
 #include "controlblocks.h"
-#include "../engine/compiler.h"
-#include <cassert>
 
 // TODO: Remove this
 #include "engine/engine.h"

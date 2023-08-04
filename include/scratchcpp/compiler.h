@@ -2,13 +2,30 @@
 
 #pragma once
 
-#include "virtualmachine.h"
 #include <vector>
+#include <memory>
+
+#include "global.h"
+#include "spimpl.h"
+#include "value.h"
+
+// TODO: Remove these lines
+#include "engine/global.h"
+#include "engine/virtualmachine.h"
 
 namespace libscratchcpp
 {
 
+class IEngine;
+class Block;
+class Input;
+class InputValue;
+class Field;
+class Variable;
+class List;
+class BlockPrototype;
 class Entity;
+class CompilerPrivate;
 
 /*! \brief The Compiler class provides an API for compiling scripts of targets to bytecode. */
 class LIBSCRATCHCPP_EXPORT Compiler
@@ -20,14 +37,14 @@ class LIBSCRATCHCPP_EXPORT Compiler
             IfStatement
         };
 
-        Compiler(Engine *engine);
+        Compiler(IEngine *engine);
         Compiler(const Compiler &) = delete;
 
         void compile(std::shared_ptr<Block> topLevelBlock);
 
         const std::vector<unsigned int> &bytecode() const;
 
-        Engine *engine() const;
+        IEngine *engine() const;
 
         const std::vector<InputValue *> &constInputValues() const;
         std::vector<Value> constValues() const;
@@ -64,21 +81,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void setProcedurePrototype(BlockPrototype *prototype);
 
     private:
-        void substackEnd();
-
-        Engine *m_engine;
-        std::shared_ptr<Block> m_block;
-        std::vector<std::pair<std::pair<std::shared_ptr<Block>, std::shared_ptr<Block>>, SubstackType>> m_substackTree;
-
-        std::vector<unsigned int> m_bytecode;
-        std::vector<InputValue *> m_constValues;
-        std::vector<Variable *> m_variables;
-        std::vector<List *> m_lists;
-        std::vector<std::string> m_procedures;
-        std::unordered_map<std::string, std::vector<std::string>> m_procedureArgs;
-        BlockPrototype *m_procedurePrototype = nullptr;
-        bool m_atomic;
-        bool m_warp;
+        spimpl::unique_impl_ptr<CompilerPrivate> impl;
 };
 
 } // namespace libscratchcpp

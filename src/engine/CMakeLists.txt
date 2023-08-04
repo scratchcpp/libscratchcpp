@@ -4,6 +4,8 @@ target_sources(scratchcpp
     engine.h
     virtualmachine.cpp
     compiler.cpp
+    compiler_p.cpp
+    compiler_p.h
     script.cpp
     script_p.cpp
     script_p.h
@@ -12,5 +14,4 @@ target_sources(scratchcpp
   PUBLIC
     global.h
     virtualmachine.h
-    compiler.h
 )

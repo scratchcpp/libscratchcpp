@@ -3,11 +3,14 @@
 #pragma once
 
 #include <scratchcpp/iblocksection.h>
+#include <unordered_map>
 #include <chrono>
-#include "engine/compiler.h"
 
 namespace libscratchcpp
 {
+
+class Compiler;
+class VirtualMachine;
 
 /*! \brief The ControlBlocks class contains the implementation of control blocks. */
 class LIBSCRATCHCPP_EXPORT ControlBlocks : public IBlockSection

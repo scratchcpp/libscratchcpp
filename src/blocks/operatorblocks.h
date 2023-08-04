@@ -3,10 +3,12 @@
 #pragma once
 
 #include <scratchcpp/iblocksection.h>
-#include "engine/compiler.h"
 
 namespace libscratchcpp
 {
+
+class Compiler;
+class VirtualMachine;
 
 /*! \brief The OperatorBlocks class contains the implementation of operator blocks. */
 class LIBSCRATCHCPP_EXPORT OperatorBlocks : public IBlockSection

@@ -3,10 +3,12 @@
 #pragma once
 
 #include <scratchcpp/iblocksection.h>
-#include "engine/compiler.h"
 
 namespace libscratchcpp
 {
+
+class Compiler;
+class VirtualMachine;
 
 /*! \brief The EventBlocks class contains the implementation of event blocks. */
 class LIBSCRATCHCPP_EXPORT EventBlocks : public IBlockSection

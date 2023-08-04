@@ -2,9 +2,9 @@
 
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/broadcast.h>
+#include <scratchcpp/compiler.h>
 
 #include "eventblocks.h"
-#include "../engine/compiler.h"
 
 // TODO: Remove this
 #include "engine/engine.h"
@@ -61,7 +61,9 @@ void EventBlocks::compileBroadcastAndWait(Compiler *compiler)
 void EventBlocks::compileWhenBroadcastReceived(Compiler *compiler)
 {
     auto broadcast = std::static_pointer_cast<Broadcast>(compiler->field(BROADCAST_OPTION)->valuePtr());
-    compiler->engine()->addBroadcastScript(compiler->block(), broadcast);
+
+    // TODO: Remove the cast
+    dynamic_cast<Engine *>(compiler->engine())->addBroadcastScript(compiler->block(), broadcast);
 }
 
 unsigned int EventBlocks::broadcast(VirtualMachine *vm)

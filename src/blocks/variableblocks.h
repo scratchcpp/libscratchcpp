@@ -3,10 +3,11 @@
 #pragma once
 
 #include <scratchcpp/iblocksection.h>
-#include "engine/compiler.h"
 
 namespace libscratchcpp
 {
+
+class Compiler;
 
 /*! \brief The VariableBlocks class contains the implementation of variable blocks. */
 class LIBSCRATCHCPP_EXPORT VariableBlocks : public IBlockSection

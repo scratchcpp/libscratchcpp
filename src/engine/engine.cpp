@@ -4,13 +4,13 @@
 #include <scratchcpp/iblocksection.h>
 #include <scratchcpp/script.h>
 #include <scratchcpp/broadcast.h>
+#include <scratchcpp/compiler.h>
 #include <cassert>
 #include <iostream>
 #include <thread>
 
 #include "engine.h"
 #include "../blocks/standardblocks.h"
-#include "compiler.h"
 
 using namespace libscratchcpp;
 
