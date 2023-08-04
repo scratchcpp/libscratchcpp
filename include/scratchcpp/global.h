@@ -17,6 +17,7 @@
 #define LIBSCRATCHCPP_EXPORT DECL_IMPORT
 #endif
 
+/*! \brief The main namespace of the library. */
 namespace libscratchcpp
 {
 
@@ -26,6 +27,23 @@ enum class ScratchVersion
     Scratch3 = 3 /*!< Scratch 3.0 */
 };
 
-}
+class VirtualMachine;
+class Compiler;
+
+/*!
+ * \typedef BlockFunc
+ *
+ * BlockFunc is a function pointer for block implementation functions.
+ */
+using BlockFunc = unsigned int (*)(VirtualMachine *vm);
+
+/*!
+ * \typedef BlockComp
+ *
+ * BlockComp is a function pointer for functions which are used to compile blocks to bytecode.
+ */
+using BlockComp = void (*)(Compiler *);
+
+} // namespace libscratchcpp
 
 #endif // LIBSCRATCHCPP_GLOBAL_H

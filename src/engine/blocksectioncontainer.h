@@ -4,8 +4,7 @@
 
 #include <unordered_map>
 #include <string>
-
-#include "global.h"
+#include <scratchcpp/global.h>
 
 namespace libscratchcpp
 {
