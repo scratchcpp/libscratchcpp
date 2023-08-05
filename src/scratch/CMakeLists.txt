@@ -37,12 +37,12 @@ target_sources(scratchcpp
     stage_p.cpp
     stage_p.h
     sprite.cpp
+    sprite_p.cpp
+    sprite_p.h
     broadcast.cpp
     broadcast_p.cpp
     broadcast_p.h
     entity.cpp
     entity_p.cpp
     entity_p.h
-  PUBLIC
-    sprite.h
 )

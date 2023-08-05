@@ -7,10 +7,10 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/stage.h>
+#include <scratchcpp/sprite.h>
 
 #include "project_p.h"
 #include "engine/engine.h"
-#include "scratch/sprite.h"
 #include "internal/scratch3reader.h"
 #include "../common.h"
 

@@ -3,14 +3,10 @@
 #pragma once
 
 #include "global.h"
-
-// TODO: Remove this
-#include "scratch/sprite.h"
+#include "sprite.h"
 
 namespace libscratchcpp
 {
-
-class Sprite;
 
 /*! \brief The ISpriteHandler class provides a sprite interface for Scratch project players. */
 class LIBSCRATCHCPP_EXPORT ISpriteHandler

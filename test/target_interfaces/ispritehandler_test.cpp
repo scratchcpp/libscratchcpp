@@ -1,4 +1,3 @@
-#include "scratch/sprite.h"
 #include "testspriteinterface.h"
 #include "../common.h"
 

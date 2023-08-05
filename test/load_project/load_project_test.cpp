@@ -8,9 +8,9 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/sound.h>
+#include <scratchcpp/sprite.h>
 
 #include "internal/scratch3reader.h"
-#include "scratch/sprite.h"
 #include "engine/engine.h"
 #include "../common.h"
 

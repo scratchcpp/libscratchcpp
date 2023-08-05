@@ -2,12 +2,13 @@
 
 #pragma once
 
-#include <scratchcpp/target.h>
+#include "target.h"
 
 namespace libscratchcpp
 {
 
 class ISpriteHandler;
+class SpritePrivate;
 
 /*! \brief The Sprite class represents a Scratch sprite. */
 class LIBSCRATCHCPP_EXPORT Sprite : public Target
@@ -19,6 +20,8 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
             LeftRight,
             DoNotRotate
         };
+
+        Sprite();
 
         void setInterface(ISpriteHandler *newInterface);
 
@@ -47,16 +50,7 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
         void setRotationStyle(const char *newRotationStyle);
 
     private:
-        void setCostumeData(const char *data);
-
-        ISpriteHandler *m_iface = nullptr;
-        bool m_visible = true;
-        double m_x = 0;
-        double m_y = 0;
-        double m_size = 100;
-        double m_direction = 90;
-        bool m_draggable = false;
-        RotationStyle m_rotationStyle = RotationStyle::AllAround;
+        spimpl::unique_impl_ptr<SpritePrivate> impl;
 };
 
 } // namespace libscratchcpp
