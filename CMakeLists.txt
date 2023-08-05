@@ -44,6 +44,7 @@ target_sources(scratchcpp
     include/scratchcpp/istagehandler.h
     include/scratchcpp/ispritehandler.h
     include/scratchcpp/target.h
+    include/scratchcpp/stage.h
 )
 
 add_library(zip SHARED

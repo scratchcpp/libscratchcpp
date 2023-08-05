@@ -1,18 +1,26 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include <cassert>
+#include <scratchcpp/stage.h>
 #include <scratchcpp/istagehandler.h>
+#include <cassert>
 
-#include "stage.h"
+#include "stage_p.h"
 
 using namespace libscratchcpp;
+
+/*! Constructs Stage. */
+Stage::Stage() :
+    Target(),
+    impl(spimpl::make_unique_impl<StagePrivate>())
+{
+}
 
 /*! Sets the stage interface. */
 void Stage::setInterface(IStageHandler *newInterface)
 {
     assert(newInterface);
-    m_iface = newInterface;
-    m_iface->onStageChanged(this);
+    impl->iface = newInterface;
+    impl->iface->onStageChanged(this);
 }
 
 /*! Returns true. */
@@ -24,27 +32,27 @@ bool Stage::isStage() const
 /*! Returns the tempo. */
 int Stage::tempo() const
 {
-    return m_tempo;
+    return impl->tempo;
 }
 
 /*! Sets the tempo. */
 void Stage::setTempo(int newTempo)
 {
-    m_tempo = newTempo;
-    if (m_iface)
-        m_iface->onTempoChanged(m_tempo);
+    impl->tempo = newTempo;
+    if (impl->iface)
+        impl->iface->onTempoChanged(impl->tempo);
 }
 
 /*! Returns the video state. */
 Stage::VideoState Stage::videoState() const
 {
-    return m_videoState;
+    return impl->videoState;
 }
 
 /*! Returns the video state as a string. */
 std::string Stage::videoStateStr() const
 {
-    switch (m_videoState) {
+    switch (impl->videoState) {
         case VideoState::Off:
             return "off";
         case VideoState::On:
@@ -58,9 +66,9 @@ std::string Stage::videoStateStr() const
 /*! Sets the video state. */
 void Stage::setVideoState(VideoState newVideoState)
 {
-    m_videoState = newVideoState;
-    if (m_iface)
-        m_iface->onVideoStateChanged(m_videoState);
+    impl->videoState = newVideoState;
+    if (impl->iface)
+        impl->iface->onVideoStateChanged(impl->videoState);
 }
 
 /*! \copydoc setVideoState() */
@@ -83,31 +91,25 @@ void Stage::setVideoState(const char *newVideoState)
 /*! Returns the video transparency. */
 int Stage::videoTransparency() const
 {
-    return m_videoTransparency;
+    return impl->videoTransparency;
 }
 
 /*! Sets the video transparency. */
 void Stage::setVideoTransparency(int newVideoTransparency)
 {
-    m_videoTransparency = newVideoTransparency;
-    if (m_iface)
-        m_iface->onVideoTransparencyChanged(m_videoTransparency);
+    impl->videoTransparency = newVideoTransparency;
+    if (impl->iface)
+        impl->iface->onVideoTransparencyChanged(impl->videoTransparency);
 }
 
 /*! Returns the text to speech language. */
 const std::string &Stage::textToSpeechLanguage() const
 {
-    return m_textToSpeechLanguage;
+    return impl->textToSpeechLanguage;
 }
 
 /*! Sets the text to speech language. */
 void Stage::setTextToSpeechLanguage(const std::string &newTextToSpeechLanguage)
 {
-    m_textToSpeechLanguage = newTextToSpeechLanguage;
-}
-
-void Stage::setCostumeData(const char *data)
-{
-    if (m_iface)
-        m_iface->onCostumeChanged(data);
+    impl->textToSpeechLanguage = newTextToSpeechLanguage;
 }

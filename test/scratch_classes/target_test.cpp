@@ -1,7 +1,9 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/costume.h>
+#include <scratchcpp/sound.h>
 
-#include "scratch/stage.h"
 #include "../common.h"
 
 using namespace libscratchcpp;

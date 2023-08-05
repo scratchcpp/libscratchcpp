@@ -5,9 +5,11 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/block.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/costume.h>
+#include <scratchcpp/sound.h>
 
 #include "internal/scratch3reader.h"
-#include "scratch/stage.h"
 #include "scratch/sprite.h"
 #include "engine/engine.h"
 #include "../common.h"

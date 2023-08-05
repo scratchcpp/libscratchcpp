@@ -2,13 +2,15 @@
 
 #pragma once
 
-#include <scratchcpp/target.h>
 #include <string>
+
+#include "target.h"
 
 namespace libscratchcpp
 {
 
 class IStageHandler;
+class StagePrivate;
 
 /*! \brief The Stage class is the project stage. */
 class LIBSCRATCHCPP_EXPORT Stage : public Target
@@ -20,6 +22,8 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
             Off,
             OnFlipped
         };
+
+        Stage();
 
         void setInterface(IStageHandler *newInterface);
 
@@ -40,13 +44,7 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
         void setTextToSpeechLanguage(const std::string &newTextToSpeechLanguage);
 
     private:
-        void setCostumeData(const char *data);
-
-        IStageHandler *m_iface = nullptr;
-        int m_tempo;
-        VideoState m_videoState = VideoState::Off;
-        int m_videoTransparency = 50;
-        std::string m_textToSpeechLanguage;
+        spimpl::unique_impl_ptr<StagePrivate> impl;
 };
 
 } // namespace libscratchcpp

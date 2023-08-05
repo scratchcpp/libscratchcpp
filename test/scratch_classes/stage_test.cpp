@@ -1,4 +1,5 @@
-#include "scratch/stage.h"
+#include <scratchcpp/stage.h>
+
 #include "../common.h"
 
 using namespace libscratchcpp;

@@ -3,14 +3,10 @@
 #pragma once
 
 #include "global.h"
-
-// TODO: Remove this
-#include "scratch/stage.h"
+#include "stage.h"
 
 namespace libscratchcpp
 {
-
-class Stage;
 
 /*! \brief The IStageHandler class provides a stage interface for Scratch project players. */
 class LIBSCRATCHCPP_EXPORT IStageHandler

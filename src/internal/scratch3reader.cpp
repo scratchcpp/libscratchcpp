@@ -9,10 +9,10 @@
 #include <scratchcpp/list.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/sound.h>
+#include <scratchcpp/stage.h>
 
 #include "scratch3reader.h"
 #include "../scratch/sprite.h"
-#include "../scratch/stage.h"
 #include "reader_common.h"
 
 using namespace libscratchcpp;

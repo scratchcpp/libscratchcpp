@@ -34,6 +34,8 @@ target_sources(scratchcpp
     sound_p.cpp
     sound_p.h
     stage.cpp
+    stage_p.cpp
+    stage_p.h
     sprite.cpp
     broadcast.cpp
     broadcast_p.cpp
@@ -42,6 +44,5 @@ target_sources(scratchcpp
     entity_p.cpp
     entity_p.h
   PUBLIC
-    stage.h
     sprite.h
 )
