@@ -4,11 +4,9 @@
 
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 #include "global.h"
-
-// TODO: Remove this
-#include "engine/global.h"
 
 namespace libscratchcpp
 {

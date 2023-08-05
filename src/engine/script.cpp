@@ -5,9 +5,6 @@
 
 #include "script_p.h"
 
-// TODO: Remove this
-#include "engine.h"
-
 using namespace libscratchcpp;
 
 /*! Constructs Script. */
@@ -38,8 +35,7 @@ void Script::setBytecode(const std::vector<unsigned int> &code)
 /*! Starts the script (creates a virtual machine). */
 std::shared_ptr<VirtualMachine> Script::start()
 {
-    // TODO: Remove the cast
-    auto vm = std::make_shared<VirtualMachine>(impl->target, dynamic_cast<Engine *>(impl->engine), this);
+    auto vm = std::make_shared<VirtualMachine>(impl->target, impl->engine, this);
     vm->setBytecode(impl->bytecode);
     vm->setProcedures(impl->procedures);
     vm->setFunctions(impl->functions);

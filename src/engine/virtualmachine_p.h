@@ -3,9 +3,8 @@
 #pragma once
 
 #include <vector>
-
-// TODO: Remove this
-#include "global.h"
+#include <cstddef>
+#include <scratchcpp/global.h>
 
 namespace libscratchcpp
 {

@@ -6,9 +6,6 @@
 
 #include "spimpl.h"
 
-// TODO: Remove this
-#include "engine/global.h"
-
 namespace libscratchcpp
 {
 

@@ -7,9 +7,6 @@
 
 #include "controlblocks.h"
 
-// TODO: Remove this
-#include "engine/engine.h"
-
 namespace libscratchcpp
 {
 
@@ -167,8 +164,7 @@ unsigned int ControlBlocks::stopAll(VirtualMachine *vm)
 
 unsigned int ControlBlocks::stopOtherScriptsInSprite(VirtualMachine *vm)
 {
-    // TODO: Remove the cast
-    dynamic_cast<Engine *>(vm->engine())->stopTarget(vm->target(), vm);
+    vm->engine()->stopTarget(vm->target(), vm);
     return 0;
 }
 

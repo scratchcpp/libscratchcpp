@@ -8,6 +8,7 @@
 #include <cassert>
 
 #include "virtualmachine_p.h"
+#include "global.h"
 
 #define MAX_REG_COUNT 1024
 

@@ -9,9 +9,6 @@
 
 #include "eventblocks.h"
 
-// TODO: Remove this
-#include "engine/engine.h"
-
 using namespace libscratchcpp;
 
 std::string EventBlocks::name() const
@@ -65,21 +62,18 @@ void EventBlocks::compileWhenBroadcastReceived(Compiler *compiler)
 {
     auto broadcast = std::static_pointer_cast<Broadcast>(compiler->field(BROADCAST_OPTION)->valuePtr());
 
-    // TODO: Remove the cast
-    dynamic_cast<Engine *>(compiler->engine())->addBroadcastScript(compiler->block(), broadcast);
+    compiler->engine()->addBroadcastScript(compiler->block(), broadcast);
 }
 
 unsigned int EventBlocks::broadcast(VirtualMachine *vm)
 {
-    // TODO: Remove the cast
-    dynamic_cast<Engine *>(vm->engine())->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()), vm);
+    vm->engine()->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()), vm);
     return 1;
 }
 
 unsigned int EventBlocks::broadcastByIndex(VirtualMachine *vm)
 {
-    // TODO: Remove the cast
-    dynamic_cast<Engine *>(vm->engine())->broadcast(vm->getInput(0, 1)->toLong(), vm);
+    vm->engine()->broadcast(vm->getInput(0, 1)->toLong(), vm);
     return 1;
 }
 

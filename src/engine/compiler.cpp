@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/iengine.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/block.h>
@@ -9,9 +10,6 @@
 #include <iostream>
 
 #include "compiler_p.h"
-
-// TODO: Remove this
-#include "engine.h"
 
 using namespace libscratchcpp;
 using namespace vm;
@@ -163,8 +161,7 @@ void Compiler::addInput(int id)
 /*! Adds a function call to the bytecode (the OP_EXEC instruction). */
 void Compiler::addFunctionCall(BlockFunc f)
 {
-    // TODO: Remove the cast;
-    addInstruction(OP_EXEC, { dynamic_cast<Engine *>(impl->engine)->functionIndex(f) });
+    addInstruction(OP_EXEC, { impl->engine->functionIndex(f) });
 }
 
 /*! Adds an argument to a procedure (custom block). */

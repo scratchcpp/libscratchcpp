@@ -59,9 +59,8 @@ bool ProjectPrivate::load()
         return false;
 
     engine->clear();
-    // TODO: Remove the casts
-    std::reinterpret_pointer_cast<Engine>(engine)->setTargets(reader->targets());
-    std::reinterpret_pointer_cast<Engine>(engine)->setBroadcasts(reader->broadcasts());
+    engine->setTargets(reader->targets());
+    engine->setBroadcasts(reader->broadcasts());
     engine->setExtensions(reader->extensions());
     engine->compile();
     return true;

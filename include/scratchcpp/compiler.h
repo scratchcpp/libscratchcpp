@@ -10,9 +10,6 @@
 #include "virtualmachine.h"
 #include "value.h"
 
-// TODO: Remove this
-#include "engine/global.h"
-
 namespace libscratchcpp
 {
 
