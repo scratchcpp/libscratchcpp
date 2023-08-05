@@ -2,21 +2,17 @@
 
 #pragma once
 
-#include <scratchcpp/entity.h>
-#include <scratchcpp/field.h>
-#include <scratchcpp/blockprototype.h>
-#include <memory>
-#include <unordered_map>
-#include <string>
-
-#include "../engine/global.h"
+#include "entity.h"
+#include "blockprototype.h"
 
 namespace libscratchcpp
 {
 
-class LIBSCRATCHCPP_EXPORT Engine;
-class LIBSCRATCHCPP_EXPORT Target;
+class IEngine;
+class Target;
 class Input;
+class Field;
+class BlockPrivate;
 
 /*! \brief The Block class represents a Scratch block. */
 class LIBSCRATCHCPP_EXPORT Block : public Entity
@@ -59,7 +55,7 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
         bool topLevel() const;
         void setTopLevel(bool newTopLevel);
 
-        void setEngine(Engine *newEngine);
+        void setEngine(IEngine *newEngine);
 
         void setTarget(Target *newTarget);
 
@@ -72,22 +68,7 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
         BlockPrototype *mutationPrototype();
 
     private:
-        std::string m_opcode;
-        BlockComp m_compileFunction = nullptr;
-        std::shared_ptr<Block> m_next = nullptr;
-        std::string m_nextId;
-        std::shared_ptr<Block> m_parent = nullptr;
-        std::string m_parentId;
-        std::vector<std::shared_ptr<Input>> m_inputs;
-        std::unordered_map<int, Input *> m_inputMap;
-        std::vector<std::shared_ptr<Field>> m_fields;
-        std::unordered_map<int, Field *> m_fieldMap;
-        bool m_shadow = false;
-        bool m_topLevel = false;
-        Engine *m_engine = nullptr;
-        Target *m_target = nullptr;
-        BlockPrototype m_mutationPrototype;
-        bool m_mutationHasNext = true;
+        spimpl::unique_impl_ptr<BlockPrivate> impl;
 };
 
 } // namespace libscratchcpp

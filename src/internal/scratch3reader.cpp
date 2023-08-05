@@ -3,6 +3,10 @@
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
+#include <scratchcpp/field.h>
+#include <scratchcpp/block.h>
+#include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
 
 #include "scratch3reader.h"
 #include "../scratch/sprite.h"

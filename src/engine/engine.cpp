@@ -7,6 +7,10 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
+#include <scratchcpp/field.h>
+#include <scratchcpp/block.h>
+#include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
 #include <cassert>
 #include <iostream>
 #include <thread>

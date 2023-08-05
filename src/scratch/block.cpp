@@ -1,142 +1,142 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include <iostream>
+#include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
+#include <scratchcpp/field.h>
 
-#include "block.h"
-#include "../engine/engine.h"
+#include "block_p.h"
 
 using namespace libscratchcpp;
 
 /*! Constructs Block */
 Block::Block(const std::string &id, const std::string &opcode) :
     Entity(id),
-    m_opcode(opcode)
+    impl(spimpl::make_unique_impl<BlockPrivate>(opcode))
 {
 }
 
 /*! Calls the compile function. */
 void Block::compile(Compiler *compiler)
 {
-    return m_compileFunction(compiler);
+    return impl->compileFunction(compiler);
 }
 
 /*! Returns the opcode. */
 std::string Block::opcode() const
 {
-    return m_opcode;
+    return impl->opcode;
 }
 
 /*! Returns the compile function. \see <a href="blockSections.html">Block sections</a> */
 BlockComp Block::compileFunction() const
 {
-    return m_compileFunction;
+    return impl->compileFunction;
 }
 
 /*! Sets the compile function. \see <a href="blockSections.html">Block sections</a> */
 void Block::setCompileFunction(BlockComp newCompileFunction)
 {
-    m_compileFunction = newCompileFunction;
+    impl->compileFunction = newCompileFunction;
 }
 
 /*! Returns true if the block can have a block following it. */
 bool Block::mutationHasNext() const
 {
-    return m_mutationHasNext;
+    return impl->mutationHasNext;
 }
 
 /*! Sets whether the block can have a block following it. */
 void Block::setMutationHasNext(bool newMutationHasNext)
 {
-    m_mutationHasNext = newMutationHasNext;
+    impl->mutationHasNext = newMutationHasNext;
 }
 
 /*! Returns the block prototype (in custom block definition). */
 BlockPrototype *Block::mutationPrototype()
 {
-    return &m_mutationPrototype;
+    return &impl->mutationPrototype;
 }
 
 /*! Returns the next block. */
 std::shared_ptr<Block> Block::next() const
 {
-    return m_next;
+    return impl->next;
 }
 
 /*! Returns the ID of the next block. */
 std::string Block::nextId() const
 {
-    if (m_next)
-        return m_next->id();
+    if (impl->next)
+        return impl->next->id();
     else
-        return m_nextId;
+        return impl->nextId;
 }
 
 /*! Sets the next block. */
 void Block::setNext(std::shared_ptr<Block> block)
 {
-    m_next = block;
+    impl->next = block;
 }
 
 /*! Sets the next block by ID. */
 void Block::setNextId(const std::string &nextId)
 {
-    m_nextId = nextId;
-    m_next = nullptr;
+    impl->nextId = nextId;
+    impl->next = nullptr;
 }
 
 /*! Returns the parent block. */
 std::shared_ptr<Block> Block::parent() const
 {
-    return m_parent;
+    return impl->parent;
 }
 
 /*! Returns the ID of the parent block. */
 std::string Block::parentId() const
 {
-    if (m_parent)
-        return m_parent->id();
+    if (impl->parent)
+        return impl->parent->id();
     else
-        return m_parentId;
+        return impl->parentId;
 }
 
 /*! Sets the parent block. */
 void Block::setParent(std::shared_ptr<Block> block)
 {
-    m_parent = block;
+    impl->parent = block;
 }
 
 /*! Sets the parent block by ID. */
 void Block::setParentId(const std::string &id)
 {
-    m_parentId = id;
-    m_parent = nullptr;
+    impl->parentId = id;
+    impl->parent = nullptr;
 }
 
 /*! Returns the list of inputs. */
 std::vector<std::shared_ptr<Input>> Block::inputs() const
 {
-    return m_inputs;
+    return impl->inputs;
 }
 
 /*! Adds an input and returns its index. */
 int Block::addInput(std::shared_ptr<Input> input)
 {
-    m_inputs.push_back(input);
-    return m_inputs.size() - 1;
+    impl->inputs.push_back(input);
+    return impl->inputs.size() - 1;
 }
 
 /*! Returns the input at index. */
 std::shared_ptr<Input> Block::inputAt(int index) const
 {
-    return m_inputs[index];
+    return impl->inputs[index];
 }
 
 /*! Returns the index of the input with the given name. */
 int Block::findInput(const std::string &inputName) const
 {
     int i = 0;
-    for (auto input : m_inputs) {
+    for (auto input : impl->inputs) {
         if (input->name() == inputName)
             return i;
         i++;
@@ -147,43 +147,43 @@ int Block::findInput(const std::string &inputName) const
 /*! Returns the input with the given ID. */
 Input *Block::findInputById(int id) const
 {
-    if (m_inputMap.count(id) == 1)
-        return m_inputMap.at(id);
+    if (impl->inputMap.count(id) == 1)
+        return impl->inputMap.at(id);
     return nullptr;
 }
 
 /*! Updates the map that assigns input IDs to input indexes. Used internally by Engine. */
 void Block::updateInputMap()
 {
-    m_inputMap.clear();
-    for (auto input : m_inputs)
-        m_inputMap[input->inputId()] = input.get();
+    impl->inputMap.clear();
+    for (auto input : impl->inputs)
+        impl->inputMap[input->inputId()] = input.get();
 }
 
 /*! Returns the list of fields. */
 std::vector<std::shared_ptr<Field>> Block::fields() const
 {
-    return m_fields;
+    return impl->fields;
 }
 
 /*! Adds a field and returns its index. */
 int Block::addField(std::shared_ptr<Field> field)
 {
-    m_fields.push_back(field);
-    return m_fields.size() - 1;
+    impl->fields.push_back(field);
+    return impl->fields.size() - 1;
 }
 
 /*! Returns the field at index. */
 std::shared_ptr<Field> Block::fieldAt(int index) const
 {
-    return m_fields[index];
+    return impl->fields[index];
 }
 
 /*! Returns the index of the field with the given name. */
 int Block::findField(const std::string &fieldName) const
 {
     int i = 0;
-    for (auto field : m_fields) {
+    for (auto field : impl->fields) {
         if (field->name() == fieldName)
             return i;
         i++;
@@ -194,29 +194,29 @@ int Block::findField(const std::string &fieldName) const
 /*! Returns the index of the field with the given ID. */
 Field *Block::findFieldById(int id) const
 {
-    if (m_fieldMap.count(id) == 1)
-        return m_fieldMap.at(id);
+    if (impl->fieldMap.count(id) == 1)
+        return impl->fieldMap.at(id);
     return nullptr;
 }
 
 /*! Updates the map that assigns input IDs to input indexes. Used internally by Engine. */
 void Block::updateFieldMap()
 {
-    m_fieldMap.clear();
-    for (auto field : m_fields)
-        m_fieldMap[field->fieldId()] = field.get();
+    impl->fieldMap.clear();
+    for (auto field : impl->fields)
+        impl->fieldMap[field->fieldId()] = field.get();
 }
 
 /*! Returns true if this is a shadow block. */
 bool Block::shadow() const
 {
-    return m_shadow;
+    return impl->shadow;
 }
 
 /*! Toggles whether this block is a shadow block. */
 void Block::setShadow(bool newShadow)
 {
-    m_shadow = newShadow;
+    impl->shadow = newShadow;
 }
 
 /*! Returns true if this is a top level block. */
@@ -224,23 +224,23 @@ bool Block::topLevel() const
 {
     // TODO: Return true if parentId() == ""
     // and remove the setter
-    return m_topLevel;
+    return impl->topLevel;
 }
 
 /*! Toggles whether this block is a top level block. */
 void Block::setTopLevel(bool newTopLevel)
 {
-    m_topLevel = newTopLevel;
+    impl->topLevel = newTopLevel;
 }
 
 /*! Sets the Engine. */
-void Block::setEngine(Engine *newEngine)
+void Block::setEngine(IEngine *newEngine)
 {
-    m_engine = newEngine;
+    impl->engine = newEngine;
 }
 
 /*! Sets the Target. */
 void Block::setTarget(Target *newTarget)
 {
-    m_target = newTarget;
+    impl->target = newTarget;
 }

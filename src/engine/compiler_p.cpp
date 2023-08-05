@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "compiler_p.h"
+#include <scratchcpp/block.h>
 
-// TODO: Remove this
-#include "scratch/block.h"
+#include "compiler_p.h"
 
 using namespace libscratchcpp;
 using namespace vm;

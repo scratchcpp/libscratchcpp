@@ -3,11 +3,10 @@
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/input.h>
+#include <scratchcpp/field.h>
+#include <scratchcpp/block.h>
 
 #include "customblocks.h"
-
-// TODO: Remove this
-#include "scratch/block.h"
 
 using namespace libscratchcpp;
 

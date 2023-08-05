@@ -3,9 +3,9 @@
 #include <iostream>
 #include <scratchcpp/input.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/block.h>
 
 #include "input_p.h"
-#include "block.h"
 
 using namespace libscratchcpp;
 

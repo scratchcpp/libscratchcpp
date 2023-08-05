@@ -2,6 +2,10 @@
 #include <scratchcpp/script.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
+#include <scratchcpp/field.h>
+#include <scratchcpp/block.h>
+#include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
 
 #include "project_p.h"
 #include "engine/engine.h"

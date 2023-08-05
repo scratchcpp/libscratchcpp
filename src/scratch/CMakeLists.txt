@@ -8,6 +8,8 @@ target_sources(scratchcpp
     list_p.cpp
     list_p.h
     block.cpp
+    block_p.cpp
+    block_p.h
     blockprototype.cpp
     blockprototype_p.cpp
     blockprototype_p.h
@@ -39,7 +41,6 @@ target_sources(scratchcpp
     entity_p.h
   PUBLIC
     target.h
-    block.h
     stage.h
     sprite.h
 )

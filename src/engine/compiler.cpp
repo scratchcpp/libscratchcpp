@@ -3,6 +3,9 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
+#include <scratchcpp/block.h>
+#include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
 #include <iostream>
 
 #include "compiler_p.h"

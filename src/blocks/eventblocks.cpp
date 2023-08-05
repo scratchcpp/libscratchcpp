@@ -5,6 +5,7 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
+#include <scratchcpp/field.h>
 
 #include "eventblocks.h"
 

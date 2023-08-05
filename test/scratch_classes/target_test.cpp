@@ -1,3 +1,6 @@
+#include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
+
 #include "scratch/stage.h"
 #include "../common.h"
 

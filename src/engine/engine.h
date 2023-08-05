@@ -16,6 +16,7 @@ namespace libscratchcpp
 
 class Script;
 class Broadcast;
+class Entity;
 
 class Engine : public IEngine
 {

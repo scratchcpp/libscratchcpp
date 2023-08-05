@@ -7,15 +7,14 @@
 #include <vector>
 #include <scratchcpp/sound.h>
 #include <scratchcpp/costume.h>
-#include <scratchcpp/variable.h>
-#include <scratchcpp/list.h>
-
-#include "block.h"
 
 namespace libscratchcpp
 {
 
 class IScratchTarget;
+class Block;
+class Variable;
+class List;
 
 /*! \brief The Target class is the Stage or a Sprite. */
 class LIBSCRATCHCPP_EXPORT Target
