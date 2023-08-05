@@ -1,4 +1,5 @@
 #include <scratchcpp/project.h>
+#include <scratchcpp/iengine.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/field.h>
@@ -10,31 +11,27 @@
 #include <scratchcpp/sound.h>
 #include <scratchcpp/sprite.h>
 
-#include "internal/scratch3reader.h"
-#include "engine/engine.h"
 #include "../common.h"
 
 using namespace libscratchcpp;
 
-static Scratch3Reader s3reader;
-static const std::vector<IProjectReader *> readers = { &s3reader };
 static const std::vector<ScratchVersion> scratchVersions = { ScratchVersion::Scratch3 };
 static const std::vector<std::string> fileExtensions = { ".sb3" };
 
 TEST(LoadProjectTest, EmptyProject)
 {
     int i = 0;
-    for (auto reader : readers) {
-        reader->clear();
-        reader->setFileName("empty_project" + fileExtensions[i]);
+    for (auto version : scratchVersions) {
+        Project p("empty_project" + fileExtensions[i], version);
 
-        ASSERT_TRUE(reader->load());
-        ASSERT_TRUE(reader->isValid());
-        ASSERT_EQ(reader->targets().size(), 1);
-        ASSERT_EQ(reader->extensions().size(), 0);
-        ASSERT_EQ(reader->broadcasts().size(), 0);
+        ASSERT_TRUE(p.load());
 
-        std::shared_ptr<Stage> stage = std::reinterpret_pointer_cast<Stage>(reader->targets().at(0));
+        auto engine = p.engine();
+        ASSERT_EQ(engine->targets().size(), 1);
+        ASSERT_EQ(engine->extensions().size(), 0);
+        ASSERT_EQ(engine->broadcasts().size(), 0);
+
+        std::shared_ptr<Stage> stage = std::reinterpret_pointer_cast<Stage>(engine->targets().at(0));
         ASSERT_TRUE(stage->isStage());
         ASSERT_EQ(stage->name(), "Stage");
         ASSERT_EQ(stage->variables().size(), 0);
@@ -64,24 +61,19 @@ TEST(LoadProjectTest, EmptyProject)
 TEST(LoadProjectTest, LoadTestProject)
 {
     int i = 0;
-    for (auto reader : readers) {
-        reader->clear();
-        reader->setFileName("load_test" + fileExtensions[i]);
+    for (auto version : scratchVersions) {
+        Project p("load_test" + fileExtensions[i], version);
 
-        ASSERT_TRUE(reader->load());
-        ASSERT_TRUE(reader->isValid());
-        ASSERT_EQ(reader->targets().size(), 3);
-        ASSERT_EQ(reader->extensions().size(), 0);
-        ASSERT_EQ(reader->broadcasts().size(), 1);
-        Engine engine;
-        engine.setTargets(reader->targets());
-        engine.setBroadcasts(reader->broadcasts());
-        engine.setExtensions(reader->extensions());
-        engine.compile();
+        ASSERT_TRUE(p.load());
+
+        auto engine = p.engine();
+        ASSERT_EQ(engine->targets().size(), 3);
+        ASSERT_EQ(engine->extensions().size(), 0);
+        ASSERT_EQ(engine->broadcasts().size(), 1);
 
         // Stage
-        ASSERT_NE(engine.findTarget("Stage"), -1);
-        Stage *stage = dynamic_cast<Stage *>(engine.targetAt(engine.findTarget("Stage")));
+        ASSERT_NE(engine->findTarget("Stage"), -1);
+        Stage *stage = dynamic_cast<Stage *>(engine->targetAt(engine->findTarget("Stage")));
         ASSERT_EQ(stage->variables().size(), 2);
         ASSERT_EQ(stage->lists().size(), 1);
 
@@ -96,8 +88,8 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(GET_LIST(stage, "list1")->toString(), "3 1 4 8 7 6 7 7 2 4");
 
         // Sprite1
-        ASSERT_NE(engine.findTarget("Sprite1"), -1);
-        Sprite *sprite1 = dynamic_cast<Sprite *>(engine.targetAt(engine.findTarget("Sprite1")));
+        ASSERT_NE(engine->findTarget("Sprite1"), -1);
+        Sprite *sprite1 = dynamic_cast<Sprite *>(engine->targetAt(engine->findTarget("Sprite1")));
         ASSERT_FALSE(sprite1->isStage());
         ASSERT_EQ(sprite1->name(), "Sprite1");
         ASSERT_EQ(sprite1->variables().size(), 1);
@@ -221,8 +213,8 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(argBlock->opcode(), "argument_reporter_string_number");
 
         // Balloon1
-        ASSERT_NE(engine.findTarget("Balloon1"), -1);
-        Sprite *sprite2 = dynamic_cast<Sprite *>(engine.targetAt(engine.findTarget("Balloon1")));
+        ASSERT_NE(engine->findTarget("Balloon1"), -1);
+        Sprite *sprite2 = dynamic_cast<Sprite *>(engine->targetAt(engine->findTarget("Balloon1")));
         ASSERT_FALSE(sprite2->isStage());
         ASSERT_EQ(sprite2->name(), "Balloon1");
         ASSERT_EQ(sprite2->variables().size(), 1);
