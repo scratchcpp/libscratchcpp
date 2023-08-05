@@ -12,7 +12,7 @@ namespace libscratchcpp
 
 class ProjectPrivate;
 
-class LIBSCRATCHCPP_EXPORT IEngine;
+class IEngine;
 
 class LIBSCRATCHCPP_EXPORT Project
 {

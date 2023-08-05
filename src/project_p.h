@@ -8,7 +8,7 @@
 namespace libscratchcpp
 {
 
-class LIBSCRATCHCPP_EXPORT IEngine;
+class IEngine;
 
 struct ProjectPrivate
 {

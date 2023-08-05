@@ -11,7 +11,7 @@
 namespace libscratchcpp
 {
 
-class LIBSCRATCHCPP_EXPORT IBlockSection;
+class IBlockSection;
 class Broadcast;
 class Block;
 class Target;
