@@ -20,7 +20,6 @@
 
 using namespace libscratchcpp;
 
-/*! Constructs engine. */
 Engine::Engine()
 {
     srand(time(NULL));
@@ -162,7 +161,6 @@ void Engine::stop()
     m_runningScripts.clear();
 }
 
-/*! Starts a script with the given top level block as the given Target (a sprite or the stage). */
 void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target)
 {
     if (!topLevelBlock) {
@@ -182,7 +180,6 @@ void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<T
     }
 }
 
-/*! Starts the script of the broadcast with the given index. */
 void libscratchcpp::Engine::broadcast(unsigned int index, VirtualMachine *sourceScript)
 {
     const std::vector<Script *> &scripts = m_broadcastMap[index];
@@ -205,18 +202,12 @@ void libscratchcpp::Engine::broadcast(unsigned int index, VirtualMachine *source
     }
 }
 
-/*! Stops the given script. */
 void Engine::stopScript(VirtualMachine *vm)
 {
     assert(vm);
     m_scriptsToRemove.push_back(vm);
 }
 
-/*!
- * Stops all scripts in the given target.
- * \param[in] target The Target to stop.
- * \param[in] exceptScript Sets this parameter to stop all scripts except the given script.
- */
 void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
 {
     std::vector<VirtualMachine *> scripts;
@@ -281,7 +272,6 @@ void Engine::registerSection(std::shared_ptr<IBlockSection> section)
     }
 }
 
-/*! Returns the index of the given block function. */
 unsigned int Engine::functionIndex(BlockFunc f)
 {
     auto it = std::find(m_functions.begin(), m_functions.end(), f);
@@ -297,6 +287,14 @@ void libscratchcpp::Engine::addCompileFunction(IBlockSection *section, const std
 
     if (container)
         container->addCompileFunction(opcode, f);
+}
+
+void libscratchcpp::Engine::addHatBlock(IBlockSection *section, const std::string &opcode)
+{
+    auto container = blockSectionContainer(section);
+
+    if (container)
+        container->addHatBlock(opcode);
 }
 
 void libscratchcpp::Engine::addInput(IBlockSection *section, const std::string &name, int id)
@@ -321,14 +319,6 @@ void libscratchcpp::Engine::addFieldValue(IBlockSection *section, const std::str
 
     if (container)
         container->addFieldValue(value, id);
-}
-
-void libscratchcpp::Engine::addHatBlock(IBlockSection *section, const std::string &opcode)
-{
-    auto container = blockSectionContainer(section);
-
-    if (container)
-        container->addHatBlock(opcode);
 }
 
 const std::vector<std::shared_ptr<Broadcast>> &Engine::broadcasts() const
@@ -368,7 +358,6 @@ int Engine::findBroadcastById(const std::string &broadcastId) const
     return -1;
 }
 
-/*! Registers the broadcast script. */
 void libscratchcpp::Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast)
 {
     auto id = findBroadcast(broadcast->name());
@@ -379,13 +368,11 @@ void libscratchcpp::Engine::addBroadcastScript(std::shared_ptr<Block> whenReceiv
         m_broadcastMap[id] = { m_scripts[whenReceivedBlock].get() };
 }
 
-/*! Returns the list of targets. */
 const std::vector<std::shared_ptr<Target>> &Engine::targets() const
 {
     return m_targets;
 }
 
-/*! Sets the list of targets. */
 void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
 {
     m_targets = newTargets;
@@ -400,13 +387,11 @@ void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
     }
 }
 
-/*! Returns the target at index. */
 Target *Engine::targetAt(int index) const
 {
     return m_targets[index].get();
 }
 
-/*! Returns the index of the target with the given name. */
 int Engine::findTarget(const std::string &targetName) const
 {
     int i = 0;
@@ -441,13 +426,12 @@ void Engine::setExtensions(const std::vector<std::string> &newExtensions)
     }
 }
 
-/*! Returns the map of scripts (each top level block has a Script object). */
 const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &Engine::scripts() const
 {
     return m_scripts;
 }
 
-/*! Returns the block with the given ID. */
+// Returns the block with the given ID.
 std::shared_ptr<Block> Engine::getBlock(const std::string &id)
 {
     if (id.empty())
@@ -462,7 +446,7 @@ std::shared_ptr<Block> Engine::getBlock(const std::string &id)
     return nullptr;
 }
 
-/*! Returns the variable with the given ID. */
+// Returns the variable with the given ID.
 std::shared_ptr<Variable> Engine::getVariable(const std::string &id)
 {
     if (id.empty())
@@ -477,7 +461,7 @@ std::shared_ptr<Variable> Engine::getVariable(const std::string &id)
     return nullptr;
 }
 
-/*! Returns the Scratch list with the given ID. */
+// Returns the Scratch list with the given ID.
 std::shared_ptr<List> Engine::getList(const std::string &id)
 {
     if (id.empty())
@@ -492,7 +476,7 @@ std::shared_ptr<List> Engine::getList(const std::string &id)
     return nullptr;
 }
 
-/*! Returns the broadcast with the given ID. */
+// Returns the broadcast with the given ID.
 std::shared_ptr<Broadcast> Engine::getBroadcast(const std::string &id)
 {
     if (id.empty())
@@ -505,7 +489,7 @@ std::shared_ptr<Broadcast> Engine::getBroadcast(const std::string &id)
     return nullptr;
 }
 
-/*! Returns the entity with the given ID. \see IEntity */
+// Returns the entity with the given ID. \see IEntity
 std::shared_ptr<Entity> Engine::getEntity(const std::string &id)
 {
     // Blocks
