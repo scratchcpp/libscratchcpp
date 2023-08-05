@@ -7,7 +7,7 @@
 namespace libscratchcpp
 {
 
-class LIBSCRATCHCPP_EXPORT IScratchStage;
+class IStageHandler;
 
 /*! \brief The Stage class is the project stage. */
 class LIBSCRATCHCPP_EXPORT Stage : public Target
@@ -20,7 +20,7 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
             OnFlipped
         };
 
-        void setInterface(IScratchTarget *newInterface) override;
+        void setInterface(IStageHandler *newInterface);
 
         bool isStage() const override;
         int tempo() const;
@@ -42,7 +42,7 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
         void setCostumeData(const char *data) override;
 
     private:
-        IScratchStage *m_interface = nullptr;
+        IStageHandler *m_iface = nullptr;
         int m_tempo;
         VideoState m_videoState = VideoState::Off;
         int m_videoTransparency = 50;

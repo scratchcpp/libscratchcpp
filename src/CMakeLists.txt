@@ -6,9 +6,6 @@ target_sources(scratchcpp
     scratchconfiguration.cpp
     scratchconfiguration_p.cpp
     scratchconfiguration_p.h
-  PUBLIC
-    iscratchsprite.h
-    iscratchstage.h
 )
 
 add_subdirectory(blocks)

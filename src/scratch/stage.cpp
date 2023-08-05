@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "stage.h"
-#include "../iscratchstage.h"
 #include <cassert>
+#include <scratchcpp/istagehandler.h>
+
+#include "stage.h"
 
 using namespace libscratchcpp;
 
-void Stage::setInterface(IScratchTarget *newInterface)
+/*! Sets the stage interface. */
+void Stage::setInterface(IStageHandler *newInterface)
 {
     assert(newInterface);
-    m_interface = dynamic_cast<IScratchStage *>(newInterface);
-    m_interface->setTarget(this);
+    m_iface = newInterface;
+    m_iface->onStageChanged(this);
 }
 
 /*! Returns true. */
@@ -29,8 +31,8 @@ int Stage::tempo() const
 void Stage::setTempo(int newTempo)
 {
     m_tempo = newTempo;
-    if (m_interface)
-        m_interface->setTempo(m_tempo);
+    if (m_iface)
+        m_iface->onTempoChanged(m_tempo);
 }
 
 /*! Returns the video state. */
@@ -57,8 +59,8 @@ std::string Stage::videoStateStr() const
 void Stage::setVideoState(VideoState newVideoState)
 {
     m_videoState = newVideoState;
-    if (m_interface)
-        m_interface->setVideoState(m_videoState);
+    if (m_iface)
+        m_iface->onVideoStateChanged(m_videoState);
 }
 
 /*! \copydoc setVideoState() */
@@ -88,8 +90,8 @@ int Stage::videoTransparency() const
 void Stage::setVideoTransparency(int newVideoTransparency)
 {
     m_videoTransparency = newVideoTransparency;
-    if (m_interface)
-        m_interface->setVideoTransparency(m_videoTransparency);
+    if (m_iface)
+        m_iface->onVideoTransparencyChanged(m_videoTransparency);
 }
 
 /*! Returns the text to speech language. */
@@ -106,6 +108,6 @@ void Stage::setTextToSpeechLanguage(const std::string &newTextToSpeechLanguage)
 
 void Stage::setCostumeData(const char *data)
 {
-    if (m_interface)
-        m_interface->setCostume(data);
+    if (m_iface)
+        m_iface->onCostumeChanged(data);
 }

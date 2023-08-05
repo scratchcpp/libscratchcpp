@@ -11,7 +11,6 @@
 namespace libscratchcpp
 {
 
-class IScratchTarget;
 class Block;
 class Variable;
 class List;
@@ -25,9 +24,6 @@ class LIBSCRATCHCPP_EXPORT Target
 
         /*! Returns true if this Target is the stage. */
         virtual bool isStage() const { return false; };
-
-        /*! Sets the target interface. */
-        virtual void setInterface(IScratchTarget *newInterface) = 0;
 
         const std::string &name() const;
         void setName(const std::string &name);

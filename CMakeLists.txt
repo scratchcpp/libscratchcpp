@@ -41,6 +41,8 @@ target_sources(scratchcpp
     include/scratchcpp/virtualmachine.h
     include/scratchcpp/blockprototype.h
     include/scratchcpp/block.h
+    include/scratchcpp/istagehandler.h
+    include/scratchcpp/ispritehandler.h
 )
 
 add_library(zip SHARED

@@ -7,7 +7,7 @@
 namespace libscratchcpp
 {
 
-class LIBSCRATCHCPP_EXPORT IScratchSprite;
+class ISpriteHandler;
 
 /*! \brief The Sprite class represents a Scratch sprite. */
 class LIBSCRATCHCPP_EXPORT Sprite : public Target
@@ -20,7 +20,7 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
             DoNotRotate
         };
 
-        void setInterface(IScratchTarget *newInterface) override;
+        void setInterface(ISpriteHandler *newInterface);
 
         bool visible() const;
         void setVisible(bool newVisible);
@@ -50,7 +50,7 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
         void setCostumeData(const char *data) override;
 
     private:
-        IScratchSprite *m_interface = nullptr;
+        ISpriteHandler *m_iface = nullptr;
         bool m_visible = true;
         double m_x = 0;
         double m_y = 0;

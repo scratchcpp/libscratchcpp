@@ -4,22 +4,27 @@ TestStageInterface::TestStageInterface()
 {
 }
 
-void TestStageInterface::setTempo(int tempo)
+void TestStageInterface::onStageChanged(Stage *stage)
+{
+    this->stage = stage;
+}
+
+void TestStageInterface::onTempoChanged(int tempo)
 {
     this->tempo = tempo;
 }
 
-void TestStageInterface::setVideoState(Stage::VideoState videoState)
+void TestStageInterface::onVideoStateChanged(Stage::VideoState videoState)
 {
     this->videoState = videoState;
 }
 
-void TestStageInterface::setVideoTransparency(int videoTransparency)
+void TestStageInterface::onVideoTransparencyChanged(int videoTransparency)
 {
     this->videoTrasparency = videoTransparency;
 }
 
-void TestStageInterface::setCostume(const char *data)
+void TestStageInterface::onCostumeChanged(const char *data)
 {
     costumeData = data;
 }

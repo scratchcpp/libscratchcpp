@@ -9,7 +9,13 @@ using namespace libscratchcpp;
 Sprite sprite;
 TestSpriteInterface spriteInterface;
 
-TEST(IScratchSpriteTest, Visible)
+TEST(ISpriteHandlerTest, Sprite)
+{
+    INIT_SPRITE();
+    ASSERT_EQ(spriteInterface.sprite, &sprite);
+}
+
+TEST(ISpriteHandlerTest, Visible)
 {
     INIT_SPRITE();
     sprite.setVisible(false);
@@ -18,7 +24,7 @@ TEST(IScratchSpriteTest, Visible)
     ASSERT_EQ(spriteInterface.visible, true);
 }
 
-TEST(IScratchSpriteTest, X)
+TEST(ISpriteHandlerTest, X)
 {
     INIT_SPRITE();
     sprite.setX(300);
@@ -27,7 +33,7 @@ TEST(IScratchSpriteTest, X)
     ASSERT_EQ(spriteInterface.x, 5.25);
 }
 
-TEST(IScratchSpriteTest, Y)
+TEST(ISpriteHandlerTest, Y)
 {
     INIT_SPRITE();
     sprite.setY(300);
@@ -36,7 +42,7 @@ TEST(IScratchSpriteTest, Y)
     ASSERT_EQ(spriteInterface.y, 5.25);
 }
 
-TEST(IScratchSpriteTest, Size)
+TEST(ISpriteHandlerTest, Size)
 {
     INIT_SPRITE();
     sprite.setSize(50);
@@ -45,7 +51,7 @@ TEST(IScratchSpriteTest, Size)
     ASSERT_EQ(spriteInterface.size, 75.5);
 }
 
-TEST(IScratchSpriteTest, Direction)
+TEST(ISpriteHandlerTest, Direction)
 {
     INIT_SPRITE();
     sprite.setDirection(85);
@@ -54,7 +60,7 @@ TEST(IScratchSpriteTest, Direction)
     ASSERT_EQ(spriteInterface.direction, 179.715);
 }
 
-TEST(IScratchSpriteTest, RotationStyle)
+TEST(ISpriteHandlerTest, RotationStyle)
 {
     INIT_SPRITE();
     sprite.setRotationStyle(Sprite::RotationStyle::DoNotRotate);
@@ -63,7 +69,7 @@ TEST(IScratchSpriteTest, RotationStyle)
     ASSERT_EQ(spriteInterface.rotationStyle, Sprite::RotationStyle::LeftRight);
 }
 
-TEST(IScratchSpriteTest, CostumeData)
+TEST(ISpriteHandlerTest, CostumeData)
 {
     INIT_SPRITE();
     // TODO: Add tests for costume data

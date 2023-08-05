@@ -9,7 +9,13 @@ using namespace libscratchcpp;
 Stage stage;
 TestStageInterface stageInterface;
 
-TEST(IScratchStageTest, Tempo)
+TEST(IStageHandlerTest, Sprite)
+{
+    INIT_STAGE();
+    ASSERT_EQ(stageInterface.stage, &stage);
+}
+
+TEST(IStageHandlerTest, Tempo)
 {
     INIT_STAGE();
     stage.setTempo(120);
@@ -18,7 +24,7 @@ TEST(IScratchStageTest, Tempo)
     ASSERT_EQ(stage.tempo(), 55);
 }
 
-TEST(IScratchStageTest, VideoState)
+TEST(IStageHandlerTest, VideoState)
 {
     INIT_STAGE();
     stage.setVideoState(Stage::VideoState::On);
@@ -27,7 +33,7 @@ TEST(IScratchStageTest, VideoState)
     ASSERT_EQ(stageInterface.videoState, Stage::VideoState::OnFlipped);
 }
 
-TEST(IScratchStageTest, CostumeData)
+TEST(IStageHandlerTest, CostumeData)
 {
     INIT_STAGE();
     // TODO: Add tests for costume data
