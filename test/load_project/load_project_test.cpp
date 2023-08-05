@@ -258,7 +258,7 @@ TEST(LoadProjectTest, LoadTestProject)
     }
 }
 
-TEST(LoadProjectTest, ScratchProjectTest)
+TEST(LoadProjectTest, ProjectTest)
 {
     int i = 0;
     for (auto version : scratchVersions) {
@@ -268,11 +268,17 @@ TEST(LoadProjectTest, ScratchProjectTest)
         ASSERT_EQ(p.scratchVersion(), version);
         ASSERT_TRUE(p.load());
 
+        auto engine = p.engine();
+
+        ASSERT_EQ(engine->targets().size(), 3);
+        ASSERT_EQ(engine->extensions().size(), 0);
+        ASSERT_EQ(engine->broadcasts().size(), 1);
+
         i++;
     }
 }
 
-TEST(LoadProjectTest, ScratchProjectInvalidTest)
+TEST(LoadProjectTest, ProjectInvalidTest)
 {
     std::string name = "load_test.sb3";
     Project p(name, ScratchVersion::Invalid);
