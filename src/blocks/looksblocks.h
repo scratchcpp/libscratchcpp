@@ -2,18 +2,18 @@
 
 #pragma once
 
-#include "../engine/iblocksection.h"
+#include <scratchcpp/iblocksection.h>
 
 namespace libscratchcpp
 {
 
 /*! \brief The LooksBlocks class contains the implementation of looks blocks. */
-class LIBSCRATCHCPP_EXPORT LooksBlocks : public IBlockSection
+class LooksBlocks : public IBlockSection
 {
     public:
-        LooksBlocks();
-
         std::string name() const override;
+
+        void registerBlocks(IEngine *engine) override;
 };
 
 } // namespace libscratchcpp

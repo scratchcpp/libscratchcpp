@@ -14,7 +14,39 @@ find_package(utf8cpp REQUIRED)
 
 add_library(scratchcpp SHARED)
 add_subdirectory(src)
-include_directories(src)
+include_directories(src) # TODO: Remove this line
+include_directories(include)
+
+target_sources(scratchcpp
+  PUBLIC
+    include/scratchcpp/global.h
+    include/scratchcpp/project.h
+    include/scratchcpp/scratchconfiguration.h
+    include/scratchcpp/iengine.h
+    include/scratchcpp/iextension.h
+    include/scratchcpp/iblocksection.h
+    include/scratchcpp/asset.h
+    include/scratchcpp/costume.h
+    include/scratchcpp/sound.h
+    include/scratchcpp/value.h
+    include/scratchcpp/entity.h
+    include/scratchcpp/variable.h
+    include/scratchcpp/list.h
+    include/scratchcpp/inputvalue.h
+    include/scratchcpp/input.h
+    include/scratchcpp/field.h
+    include/scratchcpp/script.h
+    include/scratchcpp/broadcast.h
+    include/scratchcpp/compiler.h
+    include/scratchcpp/virtualmachine.h
+    include/scratchcpp/blockprototype.h
+    include/scratchcpp/block.h
+    include/scratchcpp/istagehandler.h
+    include/scratchcpp/ispritehandler.h
+    include/scratchcpp/target.h
+    include/scratchcpp/stage.h
+    include/scratchcpp/sprite.h
+)
 
 add_library(zip SHARED
 	${ZIP_SRC}/zip.c
@@ -22,6 +54,8 @@ add_library(zip SHARED
 	${ZIP_SRC}/miniz.h
 )
 include_directories(thirdparty/zip/src)
+
+include_directories(thirdparty/spimpl)
 
 target_link_libraries(scratchcpp PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(scratchcpp PRIVATE utf8cpp)

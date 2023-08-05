@@ -1,23 +1,27 @@
 #pragma once
 
-#include <iscratchstage.h>
+#include <scratchcpp/istagehandler.h>
 
 using namespace libscratchcpp;
 
-class TestStageInterface : public IScratchStage
+class TestStageInterface : public IStageHandler
 {
     public:
         TestStageInterface();
 
-        void setTempo(int tempo) override;
-        void setVideoState(Stage::VideoState videoState) override;
-        void setVideoTransparency(int videoTransparency) override;
+        void onStageChanged(Stage *stage) override;
 
-        void setCostume(const char *data) override;
+        void onCostumeChanged(const char *data) override;
+
+        void onTempoChanged(int tempo) override;
+        void onVideoStateChanged(Stage::VideoState videoState) override;
+        void onVideoTransparencyChanged(int videoTransparency) override;
+
+        Stage *stage = nullptr;
+
+        const char *costumeData = nullptr;
 
         int tempo = 60;
         Stage::VideoState videoState = Stage::VideoState::Off;
         int videoTrasparency = 50;
-
-        const char *costumeData = nullptr;
 };

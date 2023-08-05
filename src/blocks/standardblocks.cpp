@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/iengine.h>
+
 #include "standardblocks.h"
 #include "controlblocks.h"
 #include "eventblocks.h"
@@ -29,7 +31,7 @@ bool StandardBlocks::includeByDefault() const
     return true;
 }
 
-void StandardBlocks::registerSections(Engine *engine)
+void StandardBlocks::registerSections(IEngine *engine)
 {
     engine->registerSection(std::make_shared<MotionBlocks>());
     engine->registerSection(std::make_shared<LooksBlocks>());

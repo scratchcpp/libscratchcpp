@@ -4,11 +4,11 @@
 
 using namespace libscratchcpp;
 
-LooksBlocks::LooksBlocks()
-{
-}
-
 std::string LooksBlocks::name() const
 {
     return "Looks";
+}
+
+void LooksBlocks::registerBlocks(IEngine *engine)
+{
 }

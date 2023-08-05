@@ -2,18 +2,18 @@
 
 #pragma once
 
-#include "../engine/iblocksection.h"
+#include <scratchcpp/iblocksection.h>
 
 namespace libscratchcpp
 {
 
 /*! \brief The SensingBlocks class contains the implementation of sensing blocks. */
-class LIBSCRATCHCPP_EXPORT SensingBlocks : public IBlockSection
+class SensingBlocks : public IBlockSection
 {
     public:
-        SensingBlocks();
-
         std::string name() const override;
+
+        void registerBlocks(IEngine *engine) override;
 };
 
 } // namespace libscratchcpp

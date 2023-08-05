@@ -1,24 +1,30 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "engine.h"
-#include "../blocks/standardblocks.h"
-#include "../scratchconfiguration.h"
-#include "iblocksection.h"
-#include "compiler.h"
-#include "script.h"
+#include <scratchcpp/scratchconfiguration.h>
+#include <scratchcpp/iblocksection.h>
+#include <scratchcpp/script.h>
+#include <scratchcpp/broadcast.h>
+#include <scratchcpp/compiler.h>
+#include <scratchcpp/input.h>
+#include <scratchcpp/inputvalue.h>
+#include <scratchcpp/field.h>
+#include <scratchcpp/block.h>
+#include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
 #include <cassert>
 #include <iostream>
 #include <thread>
 
+#include "engine.h"
+#include "../blocks/standardblocks.h"
+
 using namespace libscratchcpp;
 
-/*! Constructs engine. */
 Engine::Engine()
 {
     srand(time(NULL));
 }
 
-/*! Clears the engine so that it can be used with another project. */
 void Engine::clear()
 {
     m_sections.clear();
@@ -26,27 +32,24 @@ void Engine::clear()
     m_broadcasts.clear();
 }
 
-/*!
- * Resolves ID references and sets pointers of entities.
- * \note This function shouldn't normally be called because it's called from compile().
- */
+// Resolves ID references and sets pointers of entities.
 void Engine::resolveIds()
 {
     for (auto target : m_targets) {
         std::cout << "Processing target " << target->name() << "..." << std::endl;
         auto blocks = target->blocks();
         for (auto block : blocks) {
-            auto section = blockSection(block->opcode());
+            auto container = blockSectionContainer(block->opcode());
             block->setNext(getBlock(block->nextId()));
             block->setParent(getBlock(block->parentId()));
-            if (section)
-                block->setCompileFunction(section->resolveBlockCompileFunc(block->opcode()));
+            if (container)
+                block->setCompileFunction(container->resolveBlockCompileFunc(block->opcode()));
 
             auto inputs = block->inputs();
             for (auto input : inputs) {
                 input->setValueBlock(getBlock(input->valueBlockId()));
-                if (section)
-                    input->setInputId(section->resolveInput(input->name()));
+                if (container)
+                    input->setInputId(container->resolveInput(input->name()));
                 input->primaryValue()->setValuePtr(getEntity(input->primaryValue()->valueId()));
                 input->secondaryValue()->setValuePtr(getEntity(input->primaryValue()->valueId()));
             }
@@ -54,10 +57,10 @@ void Engine::resolveIds()
             auto fields = block->fields();
             for (auto field : fields) {
                 field->setValuePtr(getEntity(field->valueId()));
-                if (section) {
-                    field->setFieldId(section->resolveField(field->name()));
+                if (container) {
+                    field->setFieldId(container->resolveField(field->name()));
                     if (!field->valuePtr())
-                        field->setSpecialValueId(section->resolveFieldValue(field->value().toString()));
+                        field->setSpecialValueId(container->resolveFieldValue(field->value().toString()));
                 }
             }
 
@@ -67,10 +70,6 @@ void Engine::resolveIds()
     }
 }
 
-/*!
- * Compiles all scripts to bytecode.
- * \see Compiler
- */
 void Engine::compile()
 {
     // Resolve entities by ID
@@ -118,13 +117,6 @@ void Engine::compile()
     }
 }
 
-/*!
- * Runs a single frame.\n
- * Use this if you want to use a custom event loop
- * in your project player.
- * \note Nothing will happen until start() is called.
- * \param[in] timeLimit The time limit for the frame (for atomic scripts). Set to 0 for no limit.
- */
 void Engine::frame()
 {
     for (int i = 0; i < m_runningScripts.size(); i++) {
@@ -155,10 +147,6 @@ void Engine::frame()
     m_scriptsToRemove.clear();
 }
 
-/*!
- * Calls all "when green flag clicked" blocks.
- * \note Nothing will happen until run() or frame() is called.
- */
 void Engine::start()
 {
     for (auto target : m_targets) {
@@ -168,13 +156,11 @@ void Engine::start()
     }
 }
 
-/*! Stops all scripts. */
 void Engine::stop()
 {
     m_runningScripts.clear();
 }
 
-/*! Starts a script with the given top level block as the given Target (a sprite or the stage). */
 void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target)
 {
     if (!topLevelBlock) {
@@ -194,7 +180,6 @@ void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<T
     }
 }
 
-/*! Starts the script of the broadcast with the given index. */
 void libscratchcpp::Engine::broadcast(unsigned int index, VirtualMachine *sourceScript)
 {
     const std::vector<Script *> &scripts = m_broadcastMap[index];
@@ -217,18 +202,12 @@ void libscratchcpp::Engine::broadcast(unsigned int index, VirtualMachine *source
     }
 }
 
-/*! Stops the given script. */
 void Engine::stopScript(VirtualMachine *vm)
 {
     assert(vm);
     m_scriptsToRemove.push_back(vm);
 }
 
-/*!
- * Stops all scripts in the given target.
- * \param[in] target The Target to stop.
- * \param[in] exceptScript Sets this parameter to stop all scripts except the given script.
- */
 void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
 {
     std::vector<VirtualMachine *> scripts;
@@ -241,12 +220,6 @@ void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
         stopScript(script);
 }
 
-/*!
- * Runs the event loop and calls "when green flag clicked" blocks.
- * \note This function returns when all scripts finish.\n
- * If you need to implement something advanced, such as a GUI with the
- * green flag button, use frame().
- */
 void Engine::run()
 {
     auto frameDuration = std::chrono::milliseconds(33);
@@ -271,35 +244,34 @@ void Engine::run()
     }
 }
 
-/*! Returns true if there are any running script of the broadcast with the given index. */
 bool Engine::broadcastRunning(unsigned int index)
 {
     return !m_broadcastMap[index].empty();
 }
 
-/*!
- * Call this from a block implementation to force a "screen refresh".
- * \note This has no effect in "run without screen refresh" custom blocks.
- */
 void Engine::breakFrame()
 {
     m_breakFrame = true;
 }
 
-/*! Returns true if breakFrame() was called. */
 bool libscratchcpp::Engine::breakingCurrentFrame()
 {
     return m_breakFrame;
 }
 
-/*! Registers the given block section. */
 void Engine::registerSection(std::shared_ptr<IBlockSection> section)
 {
-    if (section)
-        m_sections.push_back(section);
+    if (section) {
+        if (m_sections.find(section) != m_sections.cend()) {
+            std::cerr << "Warning: block section \"" << section->name() << "\" is already registered" << std::endl;
+            return;
+        }
+
+        m_sections[section] = std::make_unique<BlockSectionContainer>();
+        section->registerBlocks(this);
+    }
 }
 
-/*! Returns the index of the given block function. */
 unsigned int Engine::functionIndex(BlockFunc f)
 {
     auto it = std::find(m_functions.begin(), m_functions.end(), f);
@@ -309,37 +281,61 @@ unsigned int Engine::functionIndex(BlockFunc f)
     return m_functions.size() - 1;
 }
 
-/*! Resolves the block and returns the block section in which it has been registered. */
-std::shared_ptr<IBlockSection> Engine::blockSection(const std::string &opcode) const
+void libscratchcpp::Engine::addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f)
 {
-    for (auto section : m_sections) {
-        auto block = section->resolveBlockCompileFunc(opcode);
-        if (block)
-            return section;
-    }
+    auto container = blockSectionContainer(section);
 
-    return nullptr;
+    if (container)
+        container->addCompileFunction(opcode, f);
 }
 
-/*! Returns the list of broadcasts. */
+void libscratchcpp::Engine::addHatBlock(IBlockSection *section, const std::string &opcode)
+{
+    auto container = blockSectionContainer(section);
+
+    if (container)
+        container->addHatBlock(opcode);
+}
+
+void libscratchcpp::Engine::addInput(IBlockSection *section, const std::string &name, int id)
+{
+    auto container = blockSectionContainer(section);
+
+    if (container)
+        container->addInput(name, id);
+}
+
+void libscratchcpp::Engine::addField(IBlockSection *section, const std::string &name, int id)
+{
+    auto container = blockSectionContainer(section);
+
+    if (container)
+        container->addField(name, id);
+}
+
+void libscratchcpp::Engine::addFieldValue(IBlockSection *section, const std::string &value, int id)
+{
+    auto container = blockSectionContainer(section);
+
+    if (container)
+        container->addFieldValue(value, id);
+}
+
 const std::vector<std::shared_ptr<Broadcast>> &Engine::broadcasts() const
 {
     return m_broadcasts;
 }
 
-/*! Sets the list of broadcasts. */
 void Engine::setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadcasts)
 {
     m_broadcasts = broadcasts;
 }
 
-/*! Returns the broadcast at index. */
 std::shared_ptr<Broadcast> Engine::broadcastAt(int index) const
 {
     return m_broadcasts[index];
 }
 
-/*! Returns the index of the broadcast with the given name. */
 int Engine::findBroadcast(const std::string &broadcastName) const
 {
     int i = 0;
@@ -351,7 +347,6 @@ int Engine::findBroadcast(const std::string &broadcastName) const
     return -1;
 }
 
-/*! Returns the index of the broadcast with the given ID. */
 int Engine::findBroadcastById(const std::string &broadcastId) const
 {
     int i = 0;
@@ -363,7 +358,6 @@ int Engine::findBroadcastById(const std::string &broadcastId) const
     return -1;
 }
 
-/*! Registers the broadcast script. */
 void libscratchcpp::Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast)
 {
     auto id = findBroadcast(broadcast->name());
@@ -374,13 +368,11 @@ void libscratchcpp::Engine::addBroadcastScript(std::shared_ptr<Block> whenReceiv
         m_broadcastMap[id] = { m_scripts[whenReceivedBlock].get() };
 }
 
-/*! Returns the list of targets. */
 const std::vector<std::shared_ptr<Target>> &Engine::targets() const
 {
     return m_targets;
 }
 
-/*! Sets the list of targets. */
 void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
 {
     m_targets = newTargets;
@@ -395,13 +387,11 @@ void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
     }
 }
 
-/*! Returns the target at index. */
 Target *Engine::targetAt(int index) const
 {
     return m_targets[index].get();
 }
 
-/*! Returns the index of the target with the given name. */
 int Engine::findTarget(const std::string &targetName) const
 {
     int i = 0;
@@ -413,13 +403,11 @@ int Engine::findTarget(const std::string &targetName) const
     return -1;
 }
 
-/*! Returns the list of extension names. */
 const std::vector<std::string> &Engine::extensions() const
 {
     return m_extensions;
 }
 
-/*! Sets the list of extension names. */
 void Engine::setExtensions(const std::vector<std::string> &newExtensions)
 {
     m_sections.clear();
@@ -438,13 +426,12 @@ void Engine::setExtensions(const std::vector<std::string> &newExtensions)
     }
 }
 
-/*! Returns the map of scripts (each top level block has a Script object). */
 const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &Engine::scripts() const
 {
     return m_scripts;
 }
 
-/*! Returns the block with the given ID. */
+// Returns the block with the given ID.
 std::shared_ptr<Block> Engine::getBlock(const std::string &id)
 {
     if (id.empty())
@@ -459,7 +446,7 @@ std::shared_ptr<Block> Engine::getBlock(const std::string &id)
     return nullptr;
 }
 
-/*! Returns the variable with the given ID. */
+// Returns the variable with the given ID.
 std::shared_ptr<Variable> Engine::getVariable(const std::string &id)
 {
     if (id.empty())
@@ -474,7 +461,7 @@ std::shared_ptr<Variable> Engine::getVariable(const std::string &id)
     return nullptr;
 }
 
-/*! Returns the Scratch list with the given ID. */
+// Returns the Scratch list with the given ID.
 std::shared_ptr<List> Engine::getList(const std::string &id)
 {
     if (id.empty())
@@ -489,7 +476,7 @@ std::shared_ptr<List> Engine::getList(const std::string &id)
     return nullptr;
 }
 
-/*! Returns the broadcast with the given ID. */
+// Returns the broadcast with the given ID.
 std::shared_ptr<Broadcast> Engine::getBroadcast(const std::string &id)
 {
     if (id.empty())
@@ -502,28 +489,63 @@ std::shared_ptr<Broadcast> Engine::getBroadcast(const std::string &id)
     return nullptr;
 }
 
-/*! Returns the entity with the given ID. \see IEntity */
-std::shared_ptr<IEntity> Engine::getEntity(const std::string &id)
+// Returns the entity with the given ID. \see IEntity
+std::shared_ptr<Entity> Engine::getEntity(const std::string &id)
 {
     // Blocks
     auto block = getBlock(id);
     if (block)
-        return std::static_pointer_cast<IEntity>(block);
+        return std::static_pointer_cast<Entity>(block);
 
     // Variables
     auto variable = getVariable(id);
     if (variable)
-        return std::static_pointer_cast<IEntity>(variable);
+        return std::static_pointer_cast<Entity>(variable);
 
     // Lists
     auto list = getList(id);
     if (list)
-        return std::static_pointer_cast<IEntity>(list);
+        return std::static_pointer_cast<Entity>(list);
 
     // Broadcasts
     auto broadcast = getBroadcast(id);
     if (broadcast)
-        return std::static_pointer_cast<IEntity>(broadcast);
+        return std::static_pointer_cast<Entity>(broadcast);
+
+    return nullptr;
+}
+
+std::shared_ptr<IBlockSection> Engine::blockSection(const std::string &opcode) const
+{
+    for (const auto &pair : m_sections) {
+        auto block = pair.second->resolveBlockCompileFunc(opcode);
+        if (block)
+            return pair.first;
+    }
+
+    return nullptr;
+}
+
+BlockSectionContainer *Engine::blockSectionContainer(const std::string &opcode) const
+{
+    for (const auto &pair : m_sections) {
+        auto block = pair.second->resolveBlockCompileFunc(opcode);
+        if (block)
+            return pair.second.get();
+    }
+
+    return nullptr;
+}
+
+BlockSectionContainer *Engine::blockSectionContainer(IBlockSection *section) const
+{
+    if (!section)
+        return nullptr;
+
+    for (const auto &pair : m_sections) {
+        if (pair.first.get() == section)
+            return pair.second.get();
+    }
 
     return nullptr;
 }

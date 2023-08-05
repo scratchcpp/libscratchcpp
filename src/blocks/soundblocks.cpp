@@ -4,11 +4,11 @@
 
 using namespace libscratchcpp;
 
-SoundBlocks::SoundBlocks()
-{
-}
-
 std::string SoundBlocks::name() const
 {
     return "Sound";
+}
+
+void SoundBlocks::registerBlocks(IEngine *engine)
+{
 }

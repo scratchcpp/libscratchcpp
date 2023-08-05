@@ -1,15 +1,18 @@
 target_sources(scratchcpp
   PRIVATE
     engine.cpp
-    virtualmachine.cpp
-    compiler.cpp
-    script.cpp
-  PUBLIC
     engine.h
+    virtualmachine.cpp
+    virtualmachine_p.cpp
+    virtualmachine_p.h
+    compiler.cpp
+    compiler_p.cpp
+    compiler_p.h
+    script.cpp
+    script_p.cpp
+    script_p.h
+    blocksectioncontainer.cpp
+    blocksectioncontainer.h
+  PUBLIC
     global.h
-    virtualmachine.h
-    compiler.h
-    script.h
-    iblocksection.h
-    iextension.h
 )

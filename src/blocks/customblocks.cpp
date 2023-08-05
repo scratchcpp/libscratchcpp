@@ -1,28 +1,33 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/iengine.h>
+#include <scratchcpp/compiler.h>
+#include <scratchcpp/input.h>
+#include <scratchcpp/field.h>
+#include <scratchcpp/block.h>
+
 #include "customblocks.h"
-#include "../engine/compiler.h"
 
 using namespace libscratchcpp;
-
-CustomBlocks::CustomBlocks()
-{
-    // Blocks
-    addCompileFunction("procedures_definition", &compileDefinition);
-    addCompileFunction("procedures_call", &compileCall);
-    addCompileFunction("argument_reporter_boolean", &compileArgument);
-    addCompileFunction("argument_reporter_string_number", &compileArgument);
-
-    // Inputs
-    addInput("custom_block", CUSTOM_BLOCK);
-
-    // Fields
-    addField("VALUE", VALUE);
-}
 
 std::string CustomBlocks::name() const
 {
     return "Custom blocks";
+}
+
+void CustomBlocks::registerBlocks(IEngine *engine)
+{
+    // Blocks
+    engine->addCompileFunction(this, "procedures_definition", &compileDefinition);
+    engine->addCompileFunction(this, "procedures_call", &compileCall);
+    engine->addCompileFunction(this, "argument_reporter_boolean", &compileArgument);
+    engine->addCompileFunction(this, "argument_reporter_string_number", &compileArgument);
+
+    // Inputs
+    engine->addInput(this, "custom_block", CUSTOM_BLOCK);
+
+    // Fields
+    engine->addField(this, "VALUE", VALUE);
 }
 
 void CustomBlocks::compileDefinition(Compiler *compiler)

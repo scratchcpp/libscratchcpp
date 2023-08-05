@@ -1,79 +1,81 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "script.h"
+#include <scratchcpp/script.h>
+#include <scratchcpp/virtualmachine.h>
+
+#include "script_p.h"
 
 using namespace libscratchcpp;
 
 /*! Constructs Script. */
-Script::Script(Target *target, Engine *engine) :
-    m_target(target),
-    m_engine(engine)
+Script::Script(Target *target, IEngine *engine) :
+    impl(spimpl::make_unique_impl<ScriptPrivate>(target, engine))
 {
 }
 
 /*! Returns the bytecode array. */
 unsigned int *Script::bytecode() const
 {
-    return m_bytecode;
+    return impl->bytecode;
 }
 
 /*! Returns the bytecode vector. */
 const std::vector<unsigned int> &Script::bytecodeVector() const
 {
-    return m_bytecodeVector;
+    return impl->bytecodeVector;
 }
 
 /*! Sets the bytecode of the script. */
 void Script::setBytecode(const std::vector<unsigned int> &code)
 {
-    m_bytecodeVector = code;
-    m_bytecode = m_bytecodeVector.data();
+    impl->bytecodeVector = code;
+    impl->bytecode = impl->bytecodeVector.data();
 }
 
 /*! Starts the script (creates a virtual machine). */
 std::shared_ptr<VirtualMachine> Script::start()
 {
-    auto vm = std::make_shared<VirtualMachine>(m_target, m_engine, this);
-    vm->setBytecode(m_bytecode);
-    vm->setProcedures(m_procedures);
-    vm->setFunctions(m_functions);
-    vm->setConstValues(m_constValues);
-    vm->setVariables(m_variables);
-    vm->setLists(m_lists);
+    auto vm = std::make_shared<VirtualMachine>(impl->target, impl->engine, this);
+    vm->setBytecode(impl->bytecode);
+    vm->setProcedures(impl->procedures);
+    vm->setFunctions(impl->functions);
+    vm->setConstValues(impl->constValues);
+    vm->setVariables(impl->variables);
+    vm->setLists(impl->lists);
     return vm;
 }
 
 /*! Sets the list of procedures (custom blocks). */
 void Script::setProcedures(const std::vector<unsigned int *> &procedures)
 {
-    m_proceduresVector = procedures;
-    m_procedures = m_proceduresVector.data();
+    impl->proceduresVector = procedures;
+    impl->procedures = impl->proceduresVector.data();
 }
 
 /*! Sets the list of functions. */
 void Script::setFunctions(const std::vector<BlockFunc> &functions)
 {
-    m_functionsVector = functions;
-    m_functions = m_functionsVector.data();
+    impl->functionsVector = functions;
+    impl->functions = impl->functionsVector.data();
 }
 
 /*! Sets the list of constant values. */
 void Script::setConstValues(const std::vector<Value> &values)
 {
-    m_constValuesVector = values;
-    m_constValues = m_constValuesVector.data();
+    impl->constValuesVector = values;
+    impl->constValues = impl->constValuesVector.data();
 }
 
 /*! Sets the list of variables. */
 void Script::setVariables(const std::vector<Value *> &variables)
 {
-    m_variablesVector = variables;
-    m_variables = m_variablesVector.data();
+    impl->variablesVector = variables;
+    impl->variables = impl->variablesVector.data();
 }
 
 /*! Sets the list of lists. */
 void Script::setLists(const std::vector<List *> &lists)
 {
-    m_listsVector = lists;
-    m_lists = m_listsVector.data();
+    impl->listsVector = lists;
+    impl->lists = impl->listsVector.data();
 }

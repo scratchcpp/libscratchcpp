@@ -1,26 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/iengine.h>
+#include <scratchcpp/compiler.h>
+#include <scratchcpp/field.h>
+
 #include "variableblocks.h"
-#include "../engine/compiler.h"
 
 using namespace libscratchcpp;
-
-VariableBlocks::VariableBlocks()
-{
-    // Blocks
-    addCompileFunction("data_setvariableto", &compileSetVariable);
-    addCompileFunction("data_changevariableby", &compileChangeVariableBy);
-
-    // Inputs
-    addInput("VALUE", VALUE);
-
-    // Fields
-    addField("VARIABLE", VARIABLE);
-}
 
 std::string VariableBlocks::name() const
 {
     return "Variables";
+}
+
+void VariableBlocks::registerBlocks(IEngine *engine)
+{
+    // Blocks
+    engine->addCompileFunction(this, "data_setvariableto", &compileSetVariable);
+    engine->addCompileFunction(this, "data_changevariableby", &compileChangeVariableBy);
+
+    // Inputs
+    engine->addInput(this, "VALUE", VALUE);
+
+    // Fields
+    engine->addField(this, "VARIABLE", VARIABLE);
 }
 
 void VariableBlocks::compileSetVariable(Compiler *compiler)

@@ -4,37 +4,42 @@ TestSpriteInterface::TestSpriteInterface()
 {
 }
 
-void TestSpriteInterface::setVisible(bool visible)
+void TestSpriteInterface::onSpriteChanged(Sprite *sprite)
+{
+    this->sprite = sprite;
+}
+
+void TestSpriteInterface::onVisibleChanged(bool visible)
 {
     this->visible = visible;
 }
 
-void TestSpriteInterface::setX(double x)
+void TestSpriteInterface::onXChanged(double x)
 {
     this->x = x;
 }
 
-void TestSpriteInterface::setY(double y)
+void TestSpriteInterface::onYChanged(double y)
 {
     this->y = y;
 }
 
-void TestSpriteInterface::setSize(double size)
+void TestSpriteInterface::onSizeChanged(double size)
 {
     this->size = size;
 }
 
-void TestSpriteInterface::setDirection(double direction)
+void TestSpriteInterface::onDirectionChanged(double direction)
 {
     this->direction = direction;
 }
 
-void TestSpriteInterface::setRotationStyle(libscratchcpp::Sprite::RotationStyle rotationStyle)
+void TestSpriteInterface::onRotationStyleChanged(libscratchcpp::Sprite::RotationStyle rotationStyle)
 {
     this->rotationStyle = rotationStyle;
 }
 
-void TestSpriteInterface::setCostume(const char *data)
+void TestSpriteInterface::onCostumeChanged(const char *data)
 {
     costumeData = data;
 }

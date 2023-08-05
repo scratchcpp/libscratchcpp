@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "inputvalue.h"
-#include "../engine/compiler.h"
+#include <scratchcpp/inputvalue.h>
+#include <scratchcpp/compiler.h>
+#include <scratchcpp/entity.h>
 #include <map>
+
+#include "inputvalue_p.h"
 
 using namespace libscratchcpp;
 
@@ -12,21 +15,16 @@ static const std::map<Value::Type, InputValue::Type> VALUE_TYPE_MAP = {
     { Value::Type::NegativeInfinity, InputValue::Type::String }, { Value::Type::NaN, InputValue::Type::String }
 };
 
-/*! Constructs InputValue. */
-InputValue::InputValue()
-{
-}
-
 /*! Constructs InputValue with the given type. */
 InputValue::InputValue(Type type) :
-    m_type(type)
+    impl(spimpl::make_impl<InputValuePrivate>(type))
 {
 }
 
 /*! Compiles the input value. */
 void InputValue::compile(Compiler *compiler)
 {
-    switch (m_type) {
+    switch (impl->type) {
         case Type::Color:
             // TODO: Add support for colors
             break;
@@ -36,11 +34,11 @@ void InputValue::compile(Compiler *compiler)
             break;
 
         case Type::Variable:
-            compiler->addInstruction(vm::OP_READ_VAR, { compiler->variableIndex(m_valuePtr) });
+            compiler->addInstruction(vm::OP_READ_VAR, { compiler->variableIndex(impl->valuePtr) });
             break;
 
         case Type::List:
-            compiler->addInstruction(vm::OP_READ_LIST, { compiler->listIndex(m_valuePtr) });
+            compiler->addInstruction(vm::OP_READ_LIST, { compiler->listIndex(impl->valuePtr) });
             break;
 
         default:
@@ -52,75 +50,75 @@ void InputValue::compile(Compiler *compiler)
 /*! Returns the type of the value. */
 InputValue::Type InputValue::type() const
 {
-    return m_type;
+    return impl->type;
 }
 
 /*! Sets the type of the value. */
 void InputValue::setType(Type newType)
 {
-    m_type = newType;
+    impl->type = newType;
 }
 
 /*! Returns the value. */
 const Value &InputValue::value() const
 {
-    return m_value;
+    return impl->value;
 }
 
 /*! Sets the value. */
 void InputValue::setValue(const Value &newValue)
 {
-    setType(VALUE_TYPE_MAP.at(m_value.type()));
-    m_value = newValue;
+    setType(VALUE_TYPE_MAP.at(impl->value.type()));
+    impl->value = newValue;
 }
 
 /*! Returns the block. \see Input::valueBlock() */
 const std::shared_ptr<Block> &InputValue::valueBlock() const
 {
-    return m_valueBlock;
+    return impl->valueBlock;
 }
 
 /*! Sets the block. \see Input::setValueBlock() */
 void InputValue::setValueBlock(const std::shared_ptr<Block> &newValueBlock)
 {
-    m_valueBlock = newValueBlock;
+    impl->valueBlock = newValueBlock;
 }
 
 /*! Returns the ID of the block. \see valueBlock() */
 const std::string &InputValue::valueBlockId() const
 {
-    return m_valueBlockId;
+    return impl->valueBlockId;
 }
 
 /*! Sets the ID of the block. \see setValueBlock() */
 void InputValue::setValueBlockId(const std::string &newValueBlockId)
 {
-    m_valueBlockId = newValueBlockId;
+    impl->valueBlockId = newValueBlockId;
 }
 
 /*! Returns a pointer to the value (e. g. a variable). */
-std::shared_ptr<IEntity> InputValue::valuePtr() const
+std::shared_ptr<Entity> InputValue::valuePtr() const
 {
-    return m_valuePtr;
+    return impl->valuePtr;
 }
 
 /*! Sets the value pointer. */
-void InputValue::setValuePtr(const std::shared_ptr<IEntity> &newValuePtr)
+void InputValue::setValuePtr(const std::shared_ptr<Entity> &newValuePtr)
 {
-    m_valuePtr = newValuePtr;
+    impl->valuePtr = newValuePtr;
 }
 
 /*! Returns the ID of the value. */
-std::string InputValue::valueId() const
+const std::string &InputValue::valueId() const
 {
-    if (m_valuePtr)
-        return m_valuePtr->id();
+    if (impl->valuePtr)
+        return impl->valuePtr->id();
     else
-        return m_valueId;
+        return impl->valueId;
 }
 
 void InputValue::setValueId(const std::string &newValueId)
 {
-    m_valuePtr = nullptr;
-    m_valueId = newValueId;
+    impl->valuePtr = nullptr;
+    impl->valueId = newValueId;
 }

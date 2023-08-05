@@ -2,80 +2,82 @@
 
 #pragma once
 
-#include "../libscratchcpp_global.h"
-#include "../scratch/broadcast.h"
-#include "../scratch/target.h"
-#include "global.h"
-#include "virtualmachine.h"
+#include <scratchcpp/iengine.h>
+#include <scratchcpp/target.h>
 #include <unordered_map>
 #include <memory>
 #include <chrono>
 
+#include "global.h"
+#include "blocksectioncontainer.h"
+
 namespace libscratchcpp
 {
 
-class LIBSCRATCHCPP_EXPORT IBlockSection;
-class LIBSCRATCHCPP_EXPORT Script;
+class Entity;
 
-/*!
- * \brief The Engine class provides an API for running Scratch projects.
- *
- * This class is can be used to load Scratch projects using custom methods.\n
- * If you want to load a project from a standard Scratch project file, use the ScratchProject class.
- */
-class LIBSCRATCHCPP_EXPORT Engine
+class Engine : public IEngine
 {
     public:
         Engine();
         Engine(const Engine &) = delete;
 
-        void clear();
+        void clear() override;
         void resolveIds();
-        void compile();
+        void compile() override;
 
-        void frame();
-        void start();
-        void stop();
-        void startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target);
-        void broadcast(unsigned int index, VirtualMachine *sourceScript);
-        void stopScript(VirtualMachine *vm);
-        void stopTarget(Target *target, VirtualMachine *exceptScript);
-        void run();
+        void frame() override;
+        void start() override;
+        void stop() override;
+        void startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target) override;
+        void broadcast(unsigned int index, VirtualMachine *sourceScript) override;
+        void stopScript(VirtualMachine *vm) override;
+        void stopTarget(Target *target, VirtualMachine *exceptScript) override;
+        void run() override;
 
-        bool broadcastRunning(unsigned int index);
+        bool broadcastRunning(unsigned int index) override;
 
-        void breakFrame();
-        bool breakingCurrentFrame();
+        void breakFrame() override;
+        bool breakingCurrentFrame() override;
 
-        void registerSection(std::shared_ptr<IBlockSection> section);
-        unsigned int functionIndex(BlockFunc f);
-        std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
+        void registerSection(std::shared_ptr<IBlockSection> section) override;
+        unsigned int functionIndex(BlockFunc f) override;
 
-        const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const;
-        void setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadcasts);
-        std::shared_ptr<Broadcast> broadcastAt(int index) const;
-        int findBroadcast(const std::string &broadcastName) const;
-        int findBroadcastById(const std::string &broadcastId) const;
+        void addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f) override;
+        void addHatBlock(IBlockSection *section, const std::string &opcode) override;
+        void addInput(IBlockSection *section, const std::string &name, int id) override;
+        void addField(IBlockSection *section, const std::string &name, int id) override;
+        void addFieldValue(IBlockSection *section, const std::string &value, int id) override;
 
-        void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast);
+        const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const override;
+        void setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadcasts) override;
+        std::shared_ptr<Broadcast> broadcastAt(int index) const override;
+        int findBroadcast(const std::string &broadcastName) const override;
+        int findBroadcastById(const std::string &broadcastId) const override;
 
-        const std::vector<std::shared_ptr<Target>> &targets() const;
-        void setTargets(const std::vector<std::shared_ptr<Target>> &newTargets);
-        Target *targetAt(int index) const;
-        int findTarget(const std::string &targetName) const;
+        void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast) override;
 
-        const std::vector<std::string> &extensions() const;
-        void setExtensions(const std::vector<std::string> &newExtensions);
+        const std::vector<std::shared_ptr<Target>> &targets() const override;
+        void setTargets(const std::vector<std::shared_ptr<Target>> &newTargets) override;
+        Target *targetAt(int index) const override;
+        int findTarget(const std::string &targetName) const override;
 
-        const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &scripts() const;
+        const std::vector<std::string> &extensions() const override;
+        void setExtensions(const std::vector<std::string> &newExtensions) override;
+
+        const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &scripts() const override;
 
     private:
         std::shared_ptr<Block> getBlock(const std::string &id);
         std::shared_ptr<Variable> getVariable(const std::string &id);
         std::shared_ptr<List> getList(const std::string &id);
         std::shared_ptr<Broadcast> getBroadcast(const std::string &id);
-        std::shared_ptr<IEntity> getEntity(const std::string &id);
-        std::vector<std::shared_ptr<IBlockSection>> m_sections;
+        std::shared_ptr<Entity> getEntity(const std::string &id);
+        std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
+        BlockSectionContainer *blockSectionContainer(const std::string &opcode) const;
+        BlockSectionContainer *blockSectionContainer(IBlockSection *section) const;
+
+        std::unordered_map<std::shared_ptr<IBlockSection>, std::unique_ptr<BlockSectionContainer>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<unsigned int, std::vector<Script *>> m_broadcastMap;

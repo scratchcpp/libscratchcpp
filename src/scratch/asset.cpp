@@ -1,37 +1,37 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "asset.h"
+#include <scratchcpp/asset.h>
+
+#include "asset_p.h"
 
 using namespace libscratchcpp;
 
 /*! Constructs Asset. */
 Asset::Asset(std::string name, std::string id, std::string format) :
-    m_name(name),
-    m_assetId(id),
-    m_dataFormat(format)
+    impl(spimpl::make_impl<AssetPrivate>(name, id, format))
 {
 }
 
 /*! Returns the MD5 hash of the asset file. */
-std::string Asset::assetId() const
+const std::string &Asset::assetId() const
 {
-    return m_assetId;
+    return impl->assetId;
 }
 
 /*! Returns the name of the asset. */
-std::string Asset::name() const
+const std::string &Asset::name() const
 {
-    return m_name;
+    return impl->name;
 }
 
 /*! Returns the name of the asset file. */
-std::string Asset::md5ext() const
+const std::string &Asset::md5ext() const
 {
-    return m_assetId + "." + m_dataFormat;
+    return impl->fileName;
 }
 
 /*! Returns the name of the format of the asset file. */
-std::string Asset::dataFormat() const
+const std::string &Asset::dataFormat() const
 {
-    return m_dataFormat;
+    return impl->dataFormat;
 }

@@ -4,11 +4,11 @@
 
 using namespace libscratchcpp;
 
-SensingBlocks::SensingBlocks()
-{
-}
-
 std::string SensingBlocks::name() const
 {
     return "Sensing";
+}
+
+void SensingBlocks::registerBlocks(IEngine *engine)
+{
 }

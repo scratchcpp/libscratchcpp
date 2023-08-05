@@ -1,4 +1,5 @@
-#include "scratch/sprite.h"
+#include <scratchcpp/sprite.h>
+
 #include "../common.h"
 
 using namespace libscratchcpp;

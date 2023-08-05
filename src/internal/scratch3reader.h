@@ -9,7 +9,7 @@
 namespace libscratchcpp
 {
 
-class LIBSCRATCHCPP_EXPORT Scratch3Reader : public IProjectReader
+class Scratch3Reader : public IProjectReader
 {
     public:
         bool load() override;

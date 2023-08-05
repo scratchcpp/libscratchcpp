@@ -53,16 +53,16 @@ OP_LOOP_END
 ### Repeat until
 Scratch has a while loop, but until is used more frequently, so the VM doesn't support the while loop.
 
-The repeat until loop can be implemented using \link libscratchcpp::vm::OP_REPEAT_UNTIL OP_REPEAT_UNTIL \endlink
+The repeat until loop can be implemented using \link libscratchcpp::vm::OP_UNTIL_LOOP OP_UNTIL_LOOP \endlink
 and \link libscratchcpp::vm::OP_BEGIN_UNTIL_LOOP OP_BEGIN_UNTIL_LOOP \endlink.
 ```
-OP_REPEAT_UNTIL
+OP_UNTIL_LOOP
 (evaluate the condition here)
 OP_BEGIN_UNTIL_LOOP
 ...
 OP_LOOP_END
 ```
-\note The condition is evaluated after \link libscratchcpp::vm::OP_REPEAT_UNTIL OP_REPEAT_UNTIL \endlink and the loop
+\note The condition is evaluated after \link libscratchcpp::vm::OP_UNTIL_LOOP OP_UNTIL_LOOP \endlink and the loop
 starts with \link libscratchcpp::vm::OP_BEGIN_UNTIL_LOOP OP_BEGIN_UNTIL_LOOP \endlink.
 
 ### Forever
@@ -75,7 +75,7 @@ OP_LOOP_END
 
 This is equivalent to:
 ```
-OP_REPEAT_UNTIL
+OP_UNTIL_LOOP
 OP_NULL
 OP_BEGIN_UNTIL_LOOP
 ...

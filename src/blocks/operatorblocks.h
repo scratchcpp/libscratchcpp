@@ -2,13 +2,16 @@
 
 #pragma once
 
-#include "../engine/iblocksection.h"
+#include <scratchcpp/iblocksection.h>
 
 namespace libscratchcpp
 {
 
+class Compiler;
+class VirtualMachine;
+
 /*! \brief The OperatorBlocks class contains the implementation of operator blocks. */
-class LIBSCRATCHCPP_EXPORT OperatorBlocks : public IBlockSection
+class OperatorBlocks : public IBlockSection
 {
     public:
         enum Inputs
@@ -50,9 +53,9 @@ class LIBSCRATCHCPP_EXPORT OperatorBlocks : public IBlockSection
             Op_10exp
         };
 
-        OperatorBlocks();
-
         std::string name() const override;
+
+        void registerBlocks(IEngine *engine) override;
 
         static void compileAdd(Compiler *compiler);
         static void compileSubtract(Compiler *compiler);

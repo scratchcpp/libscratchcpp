@@ -1,13 +1,11 @@
 target_sources(scratchcpp
   PRIVATE
-    libscratchcpp_global.h
-    scratchproject.cpp
+    project.cpp
+    project_p.cpp
+    project_p.h
     scratchconfiguration.cpp
-  PUBLIC
-    scratchproject.h
-    scratchconfiguration.h
-    iscratchsprite.h
-    iscratchstage.h
+    scratchconfiguration_p.cpp
+    scratchconfiguration_p.h
 )
 
 add_subdirectory(blocks)

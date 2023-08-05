@@ -1,35 +1,38 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "sound.h"
+#include <scratchcpp/sound.h>
+
+#include "sound_p.h"
 
 using namespace libscratchcpp;
 
 /*! Constructs Sound. */
-Sound::Sound(std::string name, std::string id, std::string format) :
-    Asset(name, id, format)
+Sound::Sound(const std::string &name, const std::string &id, const std::string &format) :
+    Asset(name, id, format),
+    impl(spimpl::make_impl<SoundPrivate>())
 {
 }
 
 /*! Returns the sampling rate of the sound in Hertz. */
 int Sound::rate() const
 {
-    return m_rate;
+    return impl->rate;
 }
 
 /*! Sets the sampling rate of the sound in Hertz. */
 void Sound::setRate(int newRate)
 {
-    m_rate = newRate;
+    impl->rate = newRate;
 }
 
 /*! Returns the number of samples. */
 int Sound::sampleCount() const
 {
-    return m_sampleCount;
+    return impl->sampleCount;
 }
 
 /*! Sets the number of samples. */
 void Sound::setSampleCount(int newSampleCount)
 {
-    m_sampleCount = newSampleCount;
+    impl->sampleCount = newSampleCount;
 }

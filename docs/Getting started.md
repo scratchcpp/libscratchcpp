@@ -1,18 +1,18 @@
 \page gettingStarted Getting started
 
 libscratchcpp doesn't have any GUI support, but sprites and the stage can be easily implemented using
-the \link libscratchcpp::IScratchStage IScratchStage \endlink and
-\link libscratchcpp::IScratchTarget IScratchTarget \endlink interfaces.
+the \link libscratchcpp::IStageHandler IStageHandler \endlink and
+\link libscratchcpp::ISpriteHandler ISpriteHandler \endlink interfaces.
 
 They can be subclassed for listening to events such as when the X and Y coordinates
 of a sprite change.
 
 ## CLI-only example
 ```cpp
-#include <scratchproject.h>
+#include <scratchcpp/project.h>
 
 int main(int argc, char **argv) {
-  libscratchcpp::ScratchProject p("/path/to/project.sb3");
+  libscratchcpp::Project p("/path/to/project.sb3");
   bool ret = p.load();
   if (!ret)
     return 1;
@@ -21,9 +21,9 @@ int main(int argc, char **argv) {
   return 0;
 }
 ```
-The \link libscratchcpp::ScratchProject::run() run() \endlink method runs an event loop which stops after all scripts finish.
+The \link libscratchcpp::Project::run() run() \endlink method runs an event loop which stops after all scripts finish.
 
-For CLI project players, using \link libscratchcpp::ScratchProject::run() run() \endlink is enough. If you are developing
+For CLI project players, using \link libscratchcpp::Project::run() run() \endlink is enough. If you are developing
 a GUI project player and need to receive input events such as key presses, you'll need to implement your own event loop
 or use the one provided by the GUI framework.
 
@@ -33,18 +33,19 @@ Qt provides an event loop which can be easily used to run frames with a specific
 For example, a `Player` class which **inherits from QObject** can use a timer:
 ```cpp
 #include <QObject>
-#include <scratchproject.h>
+#include <scratchcpp/project.h>
 
 class Player : public QObject {
     Q_OBJECT
     public:
         Player(QObject *parent = nullptr);
+        Player(const Player &) = delete; // Project is not copyable
 
     protected:
         void timerEvent(QTimerEvent *event) override;
 
     private:
-        libscratchcpp::ScratchProject m_proj;
+        libscratchcpp::Project m_proj;
 }
 
 Player::Player(QObject *parent) {

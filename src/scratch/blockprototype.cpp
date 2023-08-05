@@ -1,101 +1,79 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "blockprototype.h"
+#include <scratchcpp/blockprototype.h>
+
+#include "blockprototype_p.h"
 
 using namespace libscratchcpp;
 
 /*! Constructs BlockPrototype. */
-BlockPrototype::BlockPrototype()
+BlockPrototype::BlockPrototype() :
+    impl(spimpl::make_impl<BlockPrototypePrivate>())
 {
 }
 
-/*! Constructs BlockPrototype. */
-BlockPrototype::BlockPrototype(const std::string &procCode)
+/*! Constructs BlockPrototype with the given proc code. */
+BlockPrototype::BlockPrototype(const std::string &procCode) :
+    impl(spimpl::make_impl<BlockPrototypePrivate>(procCode))
 {
-    setProcCode(procCode);
 }
 
 /*! Returns the name of the custom block, including inputs. */
 const std::string &BlockPrototype::procCode() const
 {
-    return m_procCode;
+    return impl->procCode;
 }
 
 /*! Sets the name of the custom block, including inputs. */
 void BlockPrototype::setProcCode(const std::string &newProcCode)
 {
-    m_procCode = newProcCode;
-    m_argumentDefaults.clear();
-    m_argumentTypes.clear();
-    bool arg = false;
-
-    for (auto c : m_procCode) {
-        if (c == '%')
-            arg = true;
-        else if (arg) {
-            arg = false;
-            switch (c) {
-                case 's':
-                    m_argumentDefaults.push_back("");
-                    m_argumentTypes.push_back(ArgType::StringNum);
-                    break;
-
-                case 'b':
-                    m_argumentDefaults.push_back(false);
-                    m_argumentTypes.push_back(ArgType::Bool);
-                    break;
-
-                default:
-                    break;
-            }
-        }
-    }
+    impl->setProcCode(newProcCode);
 }
 
 /*! Returns the list of argument IDs. */
 const std::vector<std::string> &BlockPrototype::argumentIds() const
 {
-    return m_argumentIds;
+    return impl->argumentIds;
 }
 
 /*! Sets the list of argument IDs. */
 void BlockPrototype::setArgumentIds(const std::vector<std::string> &newArgumentIds)
 {
-    m_argumentIds = newArgumentIds;
+    impl->argumentIds = newArgumentIds;
 }
 
 /*! Returns the list of argument names. */
 const std::vector<std::string> &BlockPrototype::argumentNames() const
 {
-    return m_argumentNames;
+    return impl->argumentNames;
 }
 
 /*! Sets the list of argument names. */
 void BlockPrototype::setArgumentNames(const std::vector<std::string> &newArgumentNames)
 {
-    m_argumentNames = newArgumentNames;
+    impl->argumentNames = newArgumentNames;
 }
 
 /*! Returns the list of argument default values. */
 const std::vector<Value> &BlockPrototype::argumentDefaults() const
 {
-    return m_argumentDefaults;
+    return impl->argumentDefaults;
 }
 
 /*! Returns the list of argument types. */
 const std::vector<BlockPrototype::ArgType> &BlockPrototype::argumentTypes() const
 {
-    return m_argumentTypes;
+    return impl->argumentTypes;
 }
 
 /*! Returns true if the block is set to run without screen refresh. */
 bool BlockPrototype::warp() const
 {
-    return m_warp;
+    return impl->warp;
 }
 
 /*! Sets whether to run the block without screen refresh. */
 void BlockPrototype::setWarp(bool newWarp)
 {
-    m_warp = newWarp;
+    impl->warp = newWarp;
 }

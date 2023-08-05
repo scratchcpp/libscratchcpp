@@ -1,47 +1,50 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "controlblocks.h"
-#include "../engine/compiler.h"
+#include <scratchcpp/iengine.h>
+#include <scratchcpp/compiler.h>
+#include <scratchcpp/field.h>
 #include <cassert>
+
+#include "controlblocks.h"
 
 namespace libscratchcpp
 {
 
-ControlBlocks::ControlBlocks()
-{
-    // Blocks
-    addCompileFunction("control_forever", &compileRepeatForever);
-    addCompileFunction("control_repeat", &compileRepeat);
-    addCompileFunction("control_repeat_until", &compileRepeatUntil);
-    addCompileFunction("control_while", &compileRepeatWhile);
-    addCompileFunction("control_for_each", &compileRepeatForEach);
-    addCompileFunction("control_if", &compileIfStatement);
-    addCompileFunction("control_if_else", &compileIfElseStatement);
-    addCompileFunction("control_stop", &compileStop);
-    addCompileFunction("control_wait", &compileWait);
-    addCompileFunction("control_wait_until", &compileWaitUntil);
-
-    // Inputs
-    addInput("SUBSTACK", SUBSTACK);
-    addInput("SUBSTACK2", SUBSTACK2);
-    addInput("TIMES", TIMES);
-    addInput("CONDITION", CONDITION);
-    addInput("DURATION", DURATION);
-    addInput("VALUE", VALUE);
-
-    // Fields
-    addField("STOP_OPTION", STOP_OPTION);
-    addField("VARIABLE", VARIABLE);
-
-    // Field values
-    addFieldValue("all", StopAll);
-    addFieldValue("this script", StopThisScript);
-    addFieldValue("other scripts in sprite", StopOtherScriptsInSprite);
-}
-
 std::string ControlBlocks::name() const
 {
     return "Control";
+}
+
+void ControlBlocks::registerBlocks(IEngine *engine)
+{
+    // Blocks
+    engine->addCompileFunction(this, "control_forever", &compileRepeatForever);
+    engine->addCompileFunction(this, "control_repeat", &compileRepeat);
+    engine->addCompileFunction(this, "control_repeat_until", &compileRepeatUntil);
+    engine->addCompileFunction(this, "control_while", &compileRepeatWhile);
+    engine->addCompileFunction(this, "control_for_each", &compileRepeatForEach);
+    engine->addCompileFunction(this, "control_if", &compileIfStatement);
+    engine->addCompileFunction(this, "control_if_else", &compileIfElseStatement);
+    engine->addCompileFunction(this, "control_stop", &compileStop);
+    engine->addCompileFunction(this, "control_wait", &compileWait);
+    engine->addCompileFunction(this, "control_wait_until", &compileWaitUntil);
+
+    // Inputs
+    engine->addInput(this, "SUBSTACK", SUBSTACK);
+    engine->addInput(this, "SUBSTACK2", SUBSTACK2);
+    engine->addInput(this, "TIMES", TIMES);
+    engine->addInput(this, "CONDITION", CONDITION);
+    engine->addInput(this, "DURATION", DURATION);
+    engine->addInput(this, "VALUE", VALUE);
+
+    // Fields
+    engine->addField(this, "STOP_OPTION", STOP_OPTION);
+    engine->addField(this, "VARIABLE", VARIABLE);
+
+    // Field values
+    engine->addFieldValue(this, "all", StopAll);
+    engine->addFieldValue(this, "this script", StopThisScript);
+    engine->addFieldValue(this, "other scripts in sprite", StopOtherScriptsInSprite);
 }
 
 void ControlBlocks::compileRepeatForever(Compiler *compiler)

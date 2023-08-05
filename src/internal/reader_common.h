@@ -2,15 +2,14 @@
 
 #pragma once
 
-#include "../libscratchcpp_global.h"
-#include "../scratch/value.h"
 #include <nlohmann/json.hpp>
 #include <string>
+#include <scratchcpp/value.h>
 
 namespace libscratchcpp
 {
 
-Value LIBSCRATCHCPP_EXPORT jsonToValue(nlohmann::json value)
+Value jsonToValue(nlohmann::json value)
 {
     if (value.is_string())
         return value.get<std::string>();

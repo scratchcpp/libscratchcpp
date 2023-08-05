@@ -1,81 +1,82 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "input.h"
-#include "list.h"
-#include "block.h"
-#include "variable.h"
 #include <iostream>
+#include <scratchcpp/input.h>
+#include <scratchcpp/variable.h>
+#include <scratchcpp/block.h>
+
+#include "input_p.h"
 
 using namespace libscratchcpp;
 
 /*! Constructs Input. */
-Input::Input(std::string name, Type type) :
-    m_name(name),
-    m_type(type)
+Input::Input(const std::string &name, Type type) :
+    impl(spimpl::make_unique_impl<InputPrivate>(name, type))
 {
 }
 
 /*! Returns the name of the input. */
-std::string Input::name() const
+const std::string &Input::name() const
 {
-    return m_name;
+    return impl->name;
 }
 
 /*! Returns the ID of the input. */
 int Input::inputId() const
 {
-    return m_inputId;
+    return impl->inputId;
 }
 
 /*! Sets the ID of the input. */
 void Input::setInputId(int newInputId)
 {
-    m_inputId = newInputId;
+    impl->inputId = newInputId;
 }
 
 /*! Returns the type of the input. */
 Input::Type Input::type() const
 {
-    return m_type;
+    return impl->type;
 }
 
 /*! Returns the primary value. */
 InputValue *Input::primaryValue()
 {
-    return &m_primaryValue;
+    return &impl->primaryValue;
 }
 
 /*! Returns the secondary value (usually the value of an obscured shadow). */
 InputValue *Input::secondaryValue()
 {
-    return &m_secondaryValue;
+    return &impl->secondaryValue;
 }
 
 /*! Sets the primary value. */
-void Input::setPrimaryValue(Value value)
+void Input::setPrimaryValue(const Value &value)
 {
-    m_primaryValue.setValue(value);
+    impl->primaryValue.setValue(value);
 }
 
 /*! Sets the secondary value. */
-void Input::setSecondaryValue(Value value)
+void Input::setSecondaryValue(const Value &value)
 {
+    impl->secondaryValue.setValue(value);
 }
 
 /*! Returns the block which obscures the shadow. */
 std::shared_ptr<Block> Input::valueBlock() const
 {
-    return m_primaryValue.valueBlock();
+    return impl->primaryValue.valueBlock();
 }
 
 /*! Returns the ID of the block which obscures the shadow or,
  *  if there's a shadow, returns the block the input points to. */
-std::string Input::valueBlockId() const
+const std::string &Input::valueBlockId() const
 {
     if (valueBlock())
         return valueBlock()->id();
     else
-        return m_primaryValue.valueBlockId();
+        return impl->primaryValue.valueBlockId();
 }
 
 /*!
@@ -84,12 +85,12 @@ std::string Input::valueBlockId() const
  */
 void Input::setValueBlock(std::shared_ptr<Block> block)
 {
-    m_primaryValue.setValueBlock(block);
+    impl->primaryValue.setValueBlock(block);
 }
 
 /*! Sets the ID of the value block. \see setValueBlock() */
-void Input::setValueBlockId(std::string id)
+void Input::setValueBlockId(const std::string &id)
 {
-    m_primaryValue.setValueBlockId(id);
-    m_primaryValue.setValueBlock(nullptr);
+    impl->primaryValue.setValueBlockId(id);
+    impl->primaryValue.setValueBlock(nullptr);
 }

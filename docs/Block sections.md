@@ -74,17 +74,17 @@ void MySection::compileHelloWorld(Compiler *compiler) {
 }
 ```
 
-The value of the input can be read during runtime using the \link libscratchcpp::VirtualMachine::getArg() getArg() \endlink function:
+The value of the input can be read during runtime using the \link libscratchcpp::VirtualMachine::getInput() getInput() \endlink function:
 ```cpp
 unsigned int MySection::helloWorld(VirtualMachine *vm) {
-    std::cout << "Hello, " << vm->getArg(0, 1)->toString() << "!" << std::endl;
+    std::cout << "Hello, " << vm->getInput(0, 1)->toString() << "!" << std::endl;
     return 1;
 }
 ```
 \note The order of the inputs is the same as in the compile function. Do not use the `Inputs` enumeration in runtime functions.
 
 ```cpp
-vm->getArg(0, 1)
+vm->getInput(0, 1)
 ```
 The first argument is the index of the input and the second argument is the amount of inputs.
 \note Make sure to return the amount of inputs in the `helloWorld` function.

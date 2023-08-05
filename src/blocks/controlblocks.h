@@ -2,13 +2,18 @@
 
 #pragma once
 
-#include "../engine/iblocksection.h"
+#include <scratchcpp/iblocksection.h>
+#include <unordered_map>
+#include <chrono>
 
 namespace libscratchcpp
 {
 
+class Compiler;
+class VirtualMachine;
+
 /*! \brief The ControlBlocks class contains the implementation of control blocks. */
-class LIBSCRATCHCPP_EXPORT ControlBlocks : public IBlockSection
+class ControlBlocks : public IBlockSection
 {
     public:
         enum Inputs
@@ -34,9 +39,9 @@ class LIBSCRATCHCPP_EXPORT ControlBlocks : public IBlockSection
             StopOtherScriptsInSprite
         };
 
-        ControlBlocks();
-
         std::string name() const override;
+
+        void registerBlocks(IEngine *engine) override;
 
         static void compileRepeatForever(Compiler *compiler);
         static void compileRepeat(Compiler *compiler);

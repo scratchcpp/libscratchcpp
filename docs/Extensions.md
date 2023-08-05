@@ -20,7 +20,7 @@ using namespace libscratchcpp;
 ### Registering block sections
 Block sections can be registered by overriding the \link libscratchcpp::IExtension::registerSections() registerSections() \endlink function:
 ```cpp
-void MyExtension::registerSections(Engine *engine) {
+void MyExtension::registerSections(IEngine *engine) {
     engine->registerSection(std::make_shared<MySection>());
 }
 ```

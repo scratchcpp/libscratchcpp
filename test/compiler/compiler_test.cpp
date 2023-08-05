@@ -1,8 +1,16 @@
-#include "scratchproject.h"
-#include "scratch/stage.h"
-#include "scratch/sprite.h"
-#include "engine/compiler.h"
-#include "engine/script.h"
+#include <scratchcpp/compiler.h>
+#include <scratchcpp/script.h>
+#include <scratchcpp/input.h>
+#include <scratchcpp/inputvalue.h>
+#include <scratchcpp/field.h>
+#include <scratchcpp/block.h>
+#include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/sprite.h>
+
+#include "project_p.h"
+#include "engine/engine.h"
 #include "internal/scratch3reader.h"
 #include "../common.h"
 
@@ -26,28 +34,32 @@ using namespace libscratchcpp;
 
 TEST(CompilerTest, EmptyProject)
 {
-    ScratchProject p("empty_project.sb3", ScratchProject::Version::Scratch3);
+    ProjectPrivate p("empty_project.sb3", ScratchVersion::Scratch3);
     ASSERT_TRUE(p.load());
-    const Engine *engine = p.engine();
-    ASSERT_EQ(engine->targets().size(), 1);
+    auto engine = p.engine;
+    // TODO: Remove the cast
+    ASSERT_EQ(std::static_pointer_cast<Engine>(engine)->targets().size(), 1);
     ASSERT_EQ(engine->extensions().size(), 0);
     ASSERT_EQ(engine->broadcasts().size(), 0);
-    Stage *stage = dynamic_cast<Stage *>(engine->targetAt(0));
+    // TODO: Remove the IEngine to Engine cast
+    Stage *stage = dynamic_cast<Stage *>(std::static_pointer_cast<Engine>(engine)->targetAt(0));
     ASSERT_EQ(stage->blocks().size(), 0);
 }
 
 TEST(CompilerTest, ResolveIds)
 {
-    ScratchProject p("resolve_id_test.sb3", ScratchProject::Version::Scratch3);
+    ProjectPrivate p("resolve_id_test.sb3", ScratchVersion::Scratch3);
     ASSERT_TRUE(p.load());
-    const Engine *engine = p.engine();
-    ASSERT_EQ(engine->targets().size(), 2);
+    auto engine = p.engine;
+    // TODO: Remove the cast
+    ASSERT_EQ(std::static_pointer_cast<Engine>(engine)->targets().size(), 2);
     ASSERT_EQ(engine->extensions().size(), 0);
     ASSERT_EQ(engine->broadcasts().size(), 1);
 
     // Stage
-    ASSERT_NE(engine->findTarget("Stage"), -1);
-    Stage *stage = dynamic_cast<Stage *>(engine->targetAt(engine->findTarget("Stage")));
+    // TODO: Remove the IEngine to Engine casts
+    ASSERT_NE(std::static_pointer_cast<Engine>(engine)->findTarget("Stage"), -1);
+    Stage *stage = dynamic_cast<Stage *>(std::static_pointer_cast<Engine>(engine)->targetAt(std::static_pointer_cast<Engine>(engine)->findTarget("Stage")));
     ASSERT_TRUE(stage);
     ASSERT_EQ(stage->blocks().size(), 2);
     auto block = stage->greenFlagBlocks().at(0);
@@ -65,8 +77,9 @@ TEST(CompilerTest, ResolveIds)
     ASSERT_FALSE(block->next());
 
     // Sprite1
-    ASSERT_NE(engine->findTarget("Sprite1"), -1);
-    Sprite *sprite1 = dynamic_cast<Sprite *>(engine->targetAt(engine->findTarget("Sprite1")));
+    // TODO: Remove the IEngine to Engine casts
+    ASSERT_NE(std::static_pointer_cast<Engine>(engine)->findTarget("Sprite1"), -1);
+    Sprite *sprite1 = dynamic_cast<Sprite *>(std::static_pointer_cast<Engine>(engine)->targetAt(std::static_pointer_cast<Engine>(engine)->findTarget("Sprite1")));
     ASSERT_TRUE(sprite1);
     ASSERT_EQ(sprite1->blocks().size(), 5);
     block = sprite1->greenFlagBlocks().at(0);

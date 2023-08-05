@@ -2,13 +2,15 @@
 
 #pragma once
 
-#include "../engine/iblocksection.h"
+#include <scratchcpp/iblocksection.h>
 
 namespace libscratchcpp
 {
 
+class Compiler;
+
 /*! \brief The VariableBlocks class contains the implementation of variable blocks. */
-class LIBSCRATCHCPP_EXPORT VariableBlocks : public IBlockSection
+class VariableBlocks : public IBlockSection
 {
     public:
         enum Inputs
@@ -21,9 +23,9 @@ class LIBSCRATCHCPP_EXPORT VariableBlocks : public IBlockSection
             VARIABLE
         };
 
-        VariableBlocks();
-
         std::string name() const override;
+
+        void registerBlocks(IEngine *engine) override;
 
         static void compileSetVariable(Compiler *compiler);
         static void compileChangeVariableBy(Compiler *compiler);

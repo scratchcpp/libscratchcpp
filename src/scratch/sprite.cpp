@@ -1,110 +1,121 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "sprite.h"
-#include "../iscratchsprite.h"
+#include <scratchcpp/sprite.h>
+#include <scratchcpp/ispritehandler.h>
+#include <string>
 #include <cassert>
+
+#include "sprite_p.h"
 
 using namespace libscratchcpp;
 
-void Sprite::setInterface(IScratchTarget *newInterface)
+/*! Constructs Sprite. */
+Sprite::Sprite() :
+    Target(),
+    impl(spimpl::make_unique_impl<SpritePrivate>())
+{
+}
+
+/*! Sets the sprite interface. */
+void Sprite::setInterface(ISpriteHandler *newInterface)
 {
     assert(newInterface);
-    m_interface = dynamic_cast<IScratchSprite *>(newInterface);
-    m_interface->setTarget(this);
+    impl->iface = newInterface;
+    impl->iface->onSpriteChanged(this);
 }
 
 /*! Returns true if the sprite is visible. */
 bool Sprite::visible() const
 {
-    return m_visible;
+    return impl->visible;
 }
 
 /*! Sets the visibility of the sprite. */
 void Sprite::setVisible(bool newVisible)
 {
-    m_visible = newVisible;
-    if (m_interface)
-        m_interface->setVisible(m_visible);
+    impl->visible = newVisible;
+    if (impl->iface)
+        impl->iface->onVisibleChanged(impl->visible);
 }
 
 /*! Returns the X position of the sprite. */
 double Sprite::x() const
 {
-    return m_x;
+    return impl->x;
 }
 
 /*! Sets the X position of the sprite. */
 void Sprite::setX(double newX)
 {
-    m_x = newX;
-    if (m_interface)
-        m_interface->setX(m_x);
+    impl->x = newX;
+    if (impl->iface)
+        impl->iface->onXChanged(impl->x);
 }
 
 /*! Returns the Y position of the sprite. */
 double Sprite::y() const
 {
-    return m_y;
+    return impl->y;
 }
 
 /*! Sets the Y position of the sprite. */
 void Sprite::setY(double newY)
 {
-    m_y = newY;
-    if (m_interface)
-        m_interface->setY(m_y);
+    impl->y = newY;
+    if (impl->iface)
+        impl->iface->onYChanged(impl->y);
 }
 
 /*! Returns the size. */
 double Sprite::size() const
 {
-    return m_size;
+    return impl->size;
 }
 
 /*! Sets the size. */
 void Sprite::setSize(double newSize)
 {
-    m_size = newSize;
-    if (m_interface)
-        m_interface->setSize(m_size);
+    impl->size = newSize;
+    if (impl->iface)
+        impl->iface->onSizeChanged(impl->size);
 }
 
 /*! Returns the direction. */
 double Sprite::direction() const
 {
-    return m_direction;
+    return impl->direction;
 }
 
 /*! Sets the direction. */
 void Sprite::setDirection(double newDirection)
 {
-    m_direction = newDirection;
-    if (m_interface)
-        m_interface->setDirection(m_direction);
+    impl->direction = newDirection;
+    if (impl->iface)
+        impl->iface->onDirectionChanged(impl->direction);
 }
 
 /*! Returns true if the sprite is draggable. */
 bool Sprite::draggable() const
 {
-    return m_draggable;
+    return impl->draggable;
 }
 
 /*! Toggles whether the sprite is draggable. */
 void Sprite::setDraggable(bool newDraggable)
 {
-    m_draggable = newDraggable;
+    impl->draggable = newDraggable;
 }
 
 /*! Returns the rotation style. */
 Sprite::RotationStyle Sprite::rotationStyle() const
 {
-    return m_rotationStyle;
+    return impl->rotationStyle;
 }
 
 /*! Returns the rotation style as a string. */
 std::string Sprite::rotationStyleStr() const
 {
-    switch (m_rotationStyle) {
+    switch (impl->rotationStyle) {
         case RotationStyle::AllAround:
             return "all around";
         case RotationStyle::LeftRight:
@@ -118,9 +129,9 @@ std::string Sprite::rotationStyleStr() const
 /*! Sets the rotation style. */
 void Sprite::setRotationStyle(RotationStyle newRotationStyle)
 {
-    m_rotationStyle = newRotationStyle;
-    if (m_interface)
-        m_interface->setRotationStyle(m_rotationStyle);
+    impl->rotationStyle = newRotationStyle;
+    if (impl->iface)
+        impl->iface->onRotationStyleChanged(impl->rotationStyle);
 }
 
 /*! \copydoc setRotationStyle() */
@@ -138,10 +149,4 @@ void Sprite::setRotationStyle(const std::string &newRotationStyle)
 void Sprite::setRotationStyle(const char *newRotationStyle)
 {
     setRotationStyle(std::string(newRotationStyle));
-}
-
-void Sprite::setCostumeData(const char *data)
-{
-    if (m_interface)
-        m_interface->setCostume(data);
 }

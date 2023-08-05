@@ -1,35 +1,48 @@
 target_sources(scratchcpp
   PRIVATE
     target.cpp
+    target_p.cpp
+    target_p.h
     variable.cpp
-    value.cpp
+    variable_p.cpp
+    variable_p.h
     list.cpp
+    list_p.cpp
+    list_p.h
     block.cpp
+    block_p.cpp
+    block_p.h
     blockprototype.cpp
+    blockprototype_p.cpp
+    blockprototype_p.h
     input.cpp
+    input_p.cpp
+    input_p.h
     inputvalue.cpp
+    inputvalue_p.cpp
+    inputvalue_p.h
     field.cpp
+    field_p.cpp
+    field_p.h
     asset.cpp
+    asset_p.cpp
+    asset_p.h
     costume.cpp
+    costume_p.cpp
+    costume_p.h
     sound.cpp
+    sound_p.cpp
+    sound_p.h
     stage.cpp
+    stage_p.cpp
+    stage_p.h
     sprite.cpp
+    sprite_p.cpp
+    sprite_p.h
     broadcast.cpp
-    ientity.h
-  PUBLIC
-    target.h
-    variable.h
-    value.h
-    list.h
-    block.h
-    blockprototype.h
-    input.h
-    inputvalue.h
-    field.h
-    asset.h
-    costume.h
-    sound.h
-    stage.h
-    sprite.h
-    broadcast.h
+    broadcast_p.cpp
+    broadcast_p.h
+    entity.cpp
+    entity_p.cpp
+    entity_p.h
 )

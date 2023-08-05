@@ -1,22 +1,28 @@
 #pragma once
 
-#include <iscratchsprite.h>
+#include <scratchcpp/ispritehandler.h>
 
 using namespace libscratchcpp;
 
-class TestSpriteInterface : public IScratchSprite
+class TestSpriteInterface : public ISpriteHandler
 {
     public:
         TestSpriteInterface();
 
-        void setVisible(bool visible) override;
-        void setX(double x) override;
-        void setY(double y) override;
-        void setSize(double size) override;
-        void setDirection(double direction) override;
-        void setRotationStyle(Sprite::RotationStyle rotationStyle) override;
+        void onSpriteChanged(Sprite *sprite) override;
 
-        void setCostume(const char *data) override;
+        void onCostumeChanged(const char *data) override;
+
+        void onVisibleChanged(bool visible) override;
+        void onXChanged(double x) override;
+        void onYChanged(double y) override;
+        void onSizeChanged(double size) override;
+        void onDirectionChanged(double direction) override;
+        void onRotationStyleChanged(Sprite::RotationStyle rotationStyle) override;
+
+        Sprite *sprite = nullptr;
+
+        const char *costumeData = nullptr;
 
         bool visible = true;
         double x = 0;
@@ -24,6 +30,4 @@ class TestSpriteInterface : public IScratchSprite
         double size = 100;
         double direction = 90;
         Sprite::RotationStyle rotationStyle = Sprite::RotationStyle::AllAround;
-
-        const char *costumeData = nullptr;
 };
