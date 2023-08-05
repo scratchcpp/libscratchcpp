@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "target.h"
+#include <scratchcpp/target.h>
 
 namespace libscratchcpp
 {
@@ -46,10 +46,9 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
         void setRotationStyle(const std::string &newRotationStyle);
         void setRotationStyle(const char *newRotationStyle);
 
-    protected:
-        void setCostumeData(const char *data) override;
-
     private:
+        void setCostumeData(const char *data);
+
         ISpriteHandler *m_iface = nullptr;
         bool m_visible = true;
         double m_x = 0;

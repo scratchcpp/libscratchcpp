@@ -3,11 +3,11 @@
 #pragma once
 
 #include <scratchcpp/iengine.h>
+#include <scratchcpp/target.h>
 #include <unordered_map>
 #include <memory>
 #include <chrono>
 
-#include "../scratch/target.h"
 #include "global.h"
 #include "blocksectioncontainer.h"
 

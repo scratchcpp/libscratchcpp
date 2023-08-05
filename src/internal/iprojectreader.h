@@ -3,8 +3,8 @@
 #pragma once
 
 #include <iostream>
-
-#include "../scratch/target.h"
+#include <vector>
+#include <memory>
 
 #ifndef NDEBUG
 #define READER_STEP(ptr, str) ptr = str
@@ -15,6 +15,7 @@
 namespace libscratchcpp
 {
 
+class Target;
 class Broadcast;
 
 class IProjectReader

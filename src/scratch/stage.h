@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include "target.h"
+#include <scratchcpp/target.h>
+#include <string>
 
 namespace libscratchcpp
 {
@@ -38,10 +39,9 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
         const std::string &textToSpeechLanguage() const;
         void setTextToSpeechLanguage(const std::string &newTextToSpeechLanguage);
 
-    protected:
-        void setCostumeData(const char *data) override;
-
     private:
+        void setCostumeData(const char *data);
+
         IStageHandler *m_iface = nullptr;
         int m_tempo;
         VideoState m_videoState = VideoState::Off;

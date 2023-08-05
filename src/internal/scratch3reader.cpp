@@ -7,6 +7,8 @@
 #include <scratchcpp/block.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/costume.h>
+#include <scratchcpp/sound.h>
 
 #include "scratch3reader.h"
 #include "../scratch/sprite.h"

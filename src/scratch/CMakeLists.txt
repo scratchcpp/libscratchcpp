@@ -1,6 +1,8 @@
 target_sources(scratchcpp
   PRIVATE
     target.cpp
+    target_p.cpp
+    target_p.h
     variable.cpp
     variable_p.cpp
     variable_p.h
@@ -40,7 +42,6 @@ target_sources(scratchcpp
     entity_p.cpp
     entity_p.h
   PUBLIC
-    target.h
     stage.h
     sprite.h
 )

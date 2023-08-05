@@ -43,6 +43,7 @@ target_sources(scratchcpp
     include/scratchcpp/block.h
     include/scratchcpp/istagehandler.h
     include/scratchcpp/ispritehandler.h
+    include/scratchcpp/target.h
 )
 
 add_library(zip SHARED

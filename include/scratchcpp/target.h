@@ -2,18 +2,20 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
 #include <vector>
-#include <scratchcpp/sound.h>
-#include <scratchcpp/costume.h>
+
+#include "global.h"
+#include "spimpl.h"
 
 namespace libscratchcpp
 {
 
-class Block;
 class Variable;
 class List;
+class Block;
+class Costume;
+class Sound;
+class TargetPrivate;
 
 /*! \brief The Target class is the Stage or a Sprite. */
 class LIBSCRATCHCPP_EXPORT Target
@@ -23,7 +25,7 @@ class LIBSCRATCHCPP_EXPORT Target
         Target(const Target &) = delete;
 
         /*! Returns true if this Target is the stage. */
-        virtual bool isStage() const { return false; };
+        virtual bool isStage() const { return false; }
 
         const std::string &name() const;
         void setName(const std::string &name);
@@ -65,20 +67,8 @@ class LIBSCRATCHCPP_EXPORT Target
         int volume() const;
         void setVolume(int newVolume);
 
-    protected:
-        /*! Passes costume data to the target interface. */
-        virtual void setCostumeData(const char *data) = 0;
-
     private:
-        std::string m_name;
-        std::vector<std::shared_ptr<Variable>> m_variables;
-        std::vector<std::shared_ptr<List>> m_lists;
-        std::vector<std::shared_ptr<Block>> m_blocks;
-        int m_currentCostume = 1;
-        std::vector<Costume> m_costumes;
-        std::vector<Sound> m_sounds;
-        int m_layerOrder = 0;
-        int m_volume = 100;
+        spimpl::unique_impl_ptr<TargetPrivate> impl;
 };
 
 } // namespace libscratchcpp
