@@ -17,6 +17,7 @@ add_subdirectory(mocks)
 
 add_subdirectory(zip)
 add_subdirectory(load_project)
+add_subdirectory(project)
 add_subdirectory(compiler)
 add_subdirectory(virtual_machine)
 add_subdirectory(scratch_classes)
