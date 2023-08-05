@@ -13,7 +13,7 @@ class Compiler;
 class VirtualMachine;
 
 /*! \brief The ControlBlocks class contains the implementation of control blocks. */
-class LIBSCRATCHCPP_EXPORT ControlBlocks : public IBlockSection
+class ControlBlocks : public IBlockSection
 {
     public:
         enum Inputs

@@ -11,7 +11,7 @@ class Compiler;
 class VirtualMachine;
 
 /*! \brief The EventBlocks class contains the implementation of event blocks. */
-class LIBSCRATCHCPP_EXPORT EventBlocks : public IBlockSection
+class EventBlocks : public IBlockSection
 {
     public:
         enum Inputs

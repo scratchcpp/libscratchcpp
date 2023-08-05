@@ -10,7 +10,7 @@ namespace libscratchcpp
 class Compiler;
 
 /*! \brief The ListBlocks class contains the implementation of list blocks. */
-class LIBSCRATCHCPP_EXPORT ListBlocks : public IBlockSection
+class ListBlocks : public IBlockSection
 {
     public:
         enum Inputs

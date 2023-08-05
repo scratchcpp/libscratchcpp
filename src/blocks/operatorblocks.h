@@ -11,7 +11,7 @@ class Compiler;
 class VirtualMachine;
 
 /*! \brief The OperatorBlocks class contains the implementation of operator blocks. */
-class LIBSCRATCHCPP_EXPORT OperatorBlocks : public IBlockSection
+class OperatorBlocks : public IBlockSection
 {
     public:
         enum Inputs

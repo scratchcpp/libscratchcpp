@@ -10,7 +10,7 @@ namespace libscratchcpp
 class Compiler;
 
 /*! \brief The VariableBlocks class contains the implementation of variable blocks. */
-class LIBSCRATCHCPP_EXPORT VariableBlocks : public IBlockSection
+class VariableBlocks : public IBlockSection
 {
     public:
         enum Inputs

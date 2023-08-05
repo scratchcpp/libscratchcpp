@@ -8,7 +8,7 @@ namespace libscratchcpp
 {
 
 /*! \brief The SoundBlocks class contains the implementation of sound blocks. */
-class LIBSCRATCHCPP_EXPORT SoundBlocks : public IBlockSection
+class SoundBlocks : public IBlockSection
 {
     public:
         std::string name() const override;

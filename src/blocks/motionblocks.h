@@ -8,7 +8,7 @@ namespace libscratchcpp
 {
 
 /*! \brief The MotionBlocks class contains the implementation of motion blocks. */
-class LIBSCRATCHCPP_EXPORT MotionBlocks : public IBlockSection
+class MotionBlocks : public IBlockSection
 {
     public:
         std::string name() const override;

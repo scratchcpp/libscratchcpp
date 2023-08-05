@@ -8,7 +8,7 @@ namespace libscratchcpp
 {
 
 /*! \brief The LooksBlocks class contains the implementation of looks blocks. */
-class LIBSCRATCHCPP_EXPORT LooksBlocks : public IBlockSection
+class LooksBlocks : public IBlockSection
 {
     public:
         std::string name() const override;
