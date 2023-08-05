@@ -1,4 +1,4 @@
-#include "scratch/blockprototype.h"
+#include <scratchcpp/blockprototype.h>
 #include "../common.h"
 
 using namespace libscratchcpp;

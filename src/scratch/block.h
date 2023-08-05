@@ -4,12 +4,12 @@
 
 #include <scratchcpp/entity.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/blockprototype.h>
 #include <memory>
 #include <unordered_map>
 #include <string>
 
 #include "../engine/global.h"
-#include "blockprototype.h"
 
 namespace libscratchcpp
 {

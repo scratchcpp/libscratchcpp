@@ -2,11 +2,15 @@
 
 #pragma once
 
-#include <scratchcpp/value.h>
 #include <vector>
+
+#include "spimpl.h"
+#include "value.h"
 
 namespace libscratchcpp
 {
+
+class BlockPrototypePrivate;
 
 /*! \brief The BlockPrototype class represents the prototype of a custom block. */
 class LIBSCRATCHCPP_EXPORT BlockPrototype
@@ -38,12 +42,7 @@ class LIBSCRATCHCPP_EXPORT BlockPrototype
         void setWarp(bool newWarp);
 
     private:
-        std::string m_procCode;
-        std::vector<std::string> m_argumentIds;
-        std::vector<std::string> m_argumentNames;
-        std::vector<Value> m_argumentDefaults;
-        std::vector<ArgType> m_argumentTypes;
-        bool m_warp = false;
+        spimpl::impl_ptr<BlockPrototypePrivate> impl;
 };
 
 } // namespace libscratchcpp

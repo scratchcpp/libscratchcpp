@@ -9,6 +9,8 @@ target_sources(scratchcpp
     list_p.h
     block.cpp
     blockprototype.cpp
+    blockprototype_p.cpp
+    blockprototype_p.h
     input.cpp
     input_p.cpp
     input_p.h
@@ -38,7 +40,6 @@ target_sources(scratchcpp
   PUBLIC
     target.h
     block.h
-    blockprototype.h
     stage.h
     sprite.h
 )

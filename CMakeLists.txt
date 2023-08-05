@@ -39,6 +39,7 @@ target_sources(scratchcpp
     include/scratchcpp/broadcast.h
     include/scratchcpp/compiler.h
     include/scratchcpp/virtualmachine.h
+    include/scratchcpp/blockprototype.h
 )
 
 add_library(zip SHARED
