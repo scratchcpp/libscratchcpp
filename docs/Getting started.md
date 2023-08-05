@@ -1,8 +1,8 @@
 \page gettingStarted Getting started
 
 libscratchcpp doesn't have any GUI support, but sprites and the stage can be easily implemented using
-the \link libscratchcpp::IScratchStage IScratchStage \endlink and
-\link libscratchcpp::IScratchTarget IScratchTarget \endlink interfaces.
+the \link libscratchcpp::IStageHandler IStageHandler \endlink and
+\link libscratchcpp::ISpriteHandler ISpriteHandler \endlink interfaces.
 
 They can be subclassed for listening to events such as when the X and Y coordinates
 of a sprite change.
