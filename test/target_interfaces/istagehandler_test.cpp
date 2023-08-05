@@ -1,41 +1,40 @@
 #include <scratchcpp/stage.h>
+#include <stagehandlermock.h>
 
-#include "teststageinterface.h"
 #include "../common.h"
-
-#define INIT_STAGE() stage.setInterface(&stageInterface);
 
 using namespace libscratchcpp;
 
-Stage stage;
-TestStageInterface stageInterface;
-
-TEST(IStageHandlerTest, Sprite)
+class IStageHandlerTest : public testing::Test
 {
-    INIT_STAGE();
-    ASSERT_EQ(stageInterface.stage, &stage);
+    public:
+        void SetUp() override
+        {
+            EXPECT_CALL(m_handler, onStageChanged(&m_stage)).Times(1);
+            m_stage.setInterface(&m_handler);
+        }
+
+        Stage m_stage;
+        StageHandlerMock m_handler;
+};
+
+TEST_F(IStageHandlerTest, Tempo)
+{
+    EXPECT_CALL(m_handler, onTempoChanged(120)).Times(1);
+    m_stage.setTempo(120);
 }
 
-TEST(IStageHandlerTest, Tempo)
+TEST_F(IStageHandlerTest, VideoState)
 {
-    INIT_STAGE();
-    stage.setTempo(120);
-    ASSERT_EQ(stageInterface.tempo, 120);
-    stage.setTempo(55);
-    ASSERT_EQ(stage.tempo(), 55);
+    EXPECT_CALL(m_handler, onVideoStateChanged(Stage::VideoState::On)).Times(1);
+    m_stage.setVideoState(Stage::VideoState::On);
+
+    EXPECT_CALL(m_handler, onVideoStateChanged(Stage::VideoState::OnFlipped)).Times(1);
+    m_stage.setVideoState(Stage::VideoState::OnFlipped);
 }
 
-TEST(IStageHandlerTest, VideoState)
+TEST_F(IStageHandlerTest, CostumeData)
 {
-    INIT_STAGE();
-    stage.setVideoState(Stage::VideoState::On);
-    ASSERT_EQ(stageInterface.videoState, Stage::VideoState::On);
-    stage.setVideoState(Stage::VideoState::OnFlipped);
-    ASSERT_EQ(stageInterface.videoState, Stage::VideoState::OnFlipped);
-}
-
-TEST(IStageHandlerTest, CostumeData)
-{
-    INIT_STAGE();
-    // TODO: Add tests for costume data
+    // TODO: Add test for costume data
+    // EXPECT_CALL(m_handler, onCostumeChanged(...)).Times(1);
 }
