@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/broadcast.h>
+#include <scratchcpp/input.h>
+#include <scratchcpp/inputvalue.h>
 
 #include "scratch3reader.h"
 #include "../scratch/sprite.h"

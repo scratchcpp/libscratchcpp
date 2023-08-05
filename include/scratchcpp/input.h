@@ -2,12 +2,16 @@
 
 #pragma once
 
-// TODO: Use this
-//#include "inputvalue.h"
-#include <scratchcpp/inputvalue.h>
+#include "global.h"
+#include "spimpl.h"
 
 namespace libscratchcpp
 {
+
+class InputValue;
+class Value;
+class Block;
+class InputPrivate;
 
 /*! \brief The Input class represents a Scratch block input. */
 class LIBSCRATCHCPP_EXPORT Input
@@ -20,10 +24,10 @@ class LIBSCRATCHCPP_EXPORT Input
             ObscuredShadow = 3 // there's a block inside the shadow block
         };
 
-        Input(std::string name, Type type);
+        Input(const std::string &name, Type type);
         Input(const Input &) = delete;
 
-        std::string name() const;
+        const std::string &name() const;
 
         int inputId() const;
         void setInputId(int newInputId);
@@ -33,22 +37,16 @@ class LIBSCRATCHCPP_EXPORT Input
         InputValue *primaryValue();
         InputValue *secondaryValue();
 
-        void setPrimaryValue(Value value);
-        void setSecondaryValue(Value value);
+        void setPrimaryValue(const Value &value);
+        void setSecondaryValue(const Value &value);
 
         std::shared_ptr<Block> valueBlock() const;
-        std::string valueBlockId() const;
+        const std::string &valueBlockId() const;
         void setValueBlock(std::shared_ptr<Block> block);
-        void setValueBlockId(std::string id);
-
-    protected:
-        InputValue m_primaryValue;
-        InputValue m_secondaryValue;
+        void setValueBlockId(const std::string &id);
 
     private:
-        std::string m_name;
-        int m_inputId = -1;
-        Type m_type;
+        spimpl::unique_impl_ptr<InputPrivate> impl;
 };
 
 } // namespace libscratchcpp

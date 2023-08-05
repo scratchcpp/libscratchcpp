@@ -1,4 +1,6 @@
 #include <scratchcpp/project.h>
+#include <scratchcpp/input.h>
+#include <scratchcpp/inputvalue.h>
 
 #include "internal/scratch3reader.h"
 #include "scratch/stage.h"

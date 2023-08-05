@@ -5,6 +5,8 @@
 #include <scratchcpp/script.h>
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/input.h>
+#include <scratchcpp/inputvalue.h>
 #include <cassert>
 #include <iostream>
 #include <thread>

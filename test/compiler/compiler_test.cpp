@@ -1,5 +1,7 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/script.h>
+#include <scratchcpp/input.h>
+#include <scratchcpp/inputvalue.h>
 
 #include "project_p.h"
 #include "engine/engine.h"

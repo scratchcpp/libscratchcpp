@@ -9,7 +9,6 @@
 #include <string>
 
 #include "../engine/global.h"
-#include "input.h"
 #include "blockprototype.h"
 
 namespace libscratchcpp
@@ -17,6 +16,7 @@ namespace libscratchcpp
 
 class LIBSCRATCHCPP_EXPORT Engine;
 class LIBSCRATCHCPP_EXPORT Target;
+class Input;
 
 /*! \brief The Block class represents a Scratch block. */
 class LIBSCRATCHCPP_EXPORT Block : public Entity

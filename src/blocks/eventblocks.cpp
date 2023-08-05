@@ -3,6 +3,8 @@
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/input.h>
+#include <scratchcpp/inputvalue.h>
 
 #include "eventblocks.h"
 

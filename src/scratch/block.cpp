@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <iostream>
+#include <scratchcpp/input.h>
+
 #include "block.h"
 #include "../engine/engine.h"
-#include <iostream>
 
 using namespace libscratchcpp;
 
