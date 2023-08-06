@@ -221,7 +221,7 @@ int Target::addCostume(const Costume &costume)
 }
 
 /*! Returns the costume at index. */
-Costume Target::costumeAt(int index) const
+const libscratchcpp::Costume &Target::costumeAt(int index) const
 {
     // TODO: Add range check
     return impl->costumes[index];
@@ -267,7 +267,7 @@ int Target::addSound(const Sound &sound)
 }
 
 /*! Returns the sound at index. */
-Sound Target::soundAt(int index) const
+const libscratchcpp::Sound &Target::soundAt(int index) const
 {
     // TODO: Add range check
     return impl->sounds[index];

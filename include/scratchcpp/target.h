@@ -53,12 +53,12 @@ class LIBSCRATCHCPP_EXPORT Target
 
         const std::vector<Costume> &costumes() const;
         int addCostume(const Costume &costume);
-        Costume costumeAt(int index) const;
+        const Costume &costumeAt(int index) const;
         int findCostume(const std::string &costumeName) const;
 
         const std::vector<Sound> &sounds() const;
         int addSound(const Sound &sound);
-        Sound soundAt(int index) const;
+        const Sound &soundAt(int index) const;
         int findSound(const std::string &soundName) const;
 
         int layerOrder() const;
