@@ -48,6 +48,9 @@ int Target::addVariable(std::shared_ptr<Variable> variable)
 /*! Returns the variable at index. */
 std::shared_ptr<Variable> Target::variableAt(int index) const
 {
+    if (index < 0 || index >= impl->variables.size())
+        return nullptr;
+
     return impl->variables[index];
 }
 
@@ -96,6 +99,9 @@ int Target::addList(std::shared_ptr<List> list)
 /*! Returns the list at index. */
 std::shared_ptr<List> Target::listAt(int index) const
 {
+    if (index < 0 || index >= impl->lists.size())
+        return nullptr;
+
     return impl->lists[index];
 }
 
@@ -144,6 +150,9 @@ int Target::addBlock(std::shared_ptr<Block> block)
 /*! Returns the block at index. */
 std::shared_ptr<Block> Target::blockAt(int index) const
 {
+    if (index < 0 || index >= impl->blocks.size())
+        return nullptr;
+
     return impl->blocks[index];
 }
 
@@ -214,6 +223,7 @@ int Target::addCostume(const Costume &costume)
 /*! Returns the costume at index. */
 Costume Target::costumeAt(int index) const
 {
+    // TODO: Add range check
     return impl->costumes[index];
 }
 
@@ -259,6 +269,7 @@ int Target::addSound(const Sound &sound)
 /*! Returns the sound at index. */
 Sound Target::soundAt(int index) const
 {
+    // TODO: Add range check
     return impl->sounds[index];
 }
 
