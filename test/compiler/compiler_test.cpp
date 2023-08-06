@@ -13,10 +13,11 @@
 #include "engine/engine.h"
 #include "internal/scratch3reader.h"
 #include "../common.h"
+#include "testblocksection.h"
 
 #define INIT_COMPILER(engineName, compilerName)                                                                                                                                                        \
     Engine engineName;                                                                                                                                                                                 \
-    Compiler compilerName(&engine);
+    Compiler compilerName(&engineName);
 
 #define LOAD_PROJECT(fileName, engineName)                                                                                                                                                             \
     Engine engineName;                                                                                                                                                                                 \
@@ -32,7 +33,74 @@
 
 using namespace libscratchcpp;
 
-TEST(CompilerTest, EmptyProject)
+class CompilerTest : public testing::Test
+{
+    public:
+        void SetUp() override { m_section = std::make_shared<TestBlockSection>(); }
+
+        std::shared_ptr<IBlockSection> m_section;
+};
+
+TEST_F(CompilerTest, Constructors)
+{
+    Engine engine;
+    Compiler compiler(&engine);
+    ASSERT_EQ(compiler.engine(), &engine);
+}
+
+TEST_F(CompilerTest, ConstValues)
+{
+    InputValue v1;
+    v1.setValue(5.3);
+
+    InputValue v2;
+    v2.setValue(10);
+
+    InputValue v3;
+    v3.setValue("test");
+
+    INIT_COMPILER(engine, compiler);
+    ASSERT_EQ(compiler.constIndex(&v1), 0);
+    ASSERT_EQ(compiler.constIndex(&v2), 1);
+    ASSERT_EQ(compiler.constIndex(&v3), 2);
+    ASSERT_EQ(compiler.constIndex(&v2), 1); // test index of value that was added before
+
+    ASSERT_EQ(compiler.constInputValues(), std::vector<InputValue *>({ &v1, &v2, &v3 }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 5.3, 10, "test" }));
+}
+
+TEST_F(CompilerTest, Variables)
+{
+    auto v1 = std::make_shared<Variable>("", "var1");
+    auto v2 = std::make_shared<Variable>("", "var2");
+    auto v3 = std::make_shared<Variable>("", "var3");
+
+    INIT_COMPILER(engine, compiler);
+    ASSERT_EQ(compiler.variableIndex(v1), 0);
+    ASSERT_EQ(compiler.variableIndex(v2), 1);
+    ASSERT_EQ(compiler.variableIndex(v3), 2);
+    ASSERT_EQ(compiler.variableIndex(v2), 1); // test index of variable that was added before
+
+    ASSERT_EQ(compiler.variables(), std::vector<Variable *>({ v1.get(), v2.get(), v3.get() }));
+    ASSERT_EQ(compiler.variablePtrs(), std::vector<Value *>({ v1->valuePtr(), v2->valuePtr(), v3->valuePtr() }));
+}
+
+TEST_F(CompilerTest, Lists)
+{
+    auto l1 = std::make_shared<List>("", "var1");
+    auto l2 = std::make_shared<List>("", "var2");
+    auto l3 = std::make_shared<List>("", "var3");
+
+    INIT_COMPILER(engine, compiler);
+    ASSERT_EQ(compiler.listIndex(l1), 0);
+    ASSERT_EQ(compiler.listIndex(l2), 1);
+    ASSERT_EQ(compiler.listIndex(l3), 2);
+    ASSERT_EQ(compiler.listIndex(l2), 1); // test index of list that was added before
+
+    ASSERT_EQ(compiler.lists(), std::vector<List *>({ l1.get(), l2.get(), l3.get() }));
+}
+
+TEST_F(CompilerTest, EmptyProject)
 {
     ProjectPrivate p("empty_project.sb3", ScratchVersion::Scratch3);
     ASSERT_TRUE(p.load());
@@ -46,7 +114,7 @@ TEST(CompilerTest, EmptyProject)
     ASSERT_EQ(stage->blocks().size(), 0);
 }
 
-TEST(CompilerTest, ResolveIds)
+TEST_F(CompilerTest, ResolveIds)
 {
     ProjectPrivate p("resolve_id_test.sb3", ScratchVersion::Scratch3);
     ASSERT_TRUE(p.load());
@@ -125,7 +193,7 @@ TEST(CompilerTest, ResolveIds)
     ASSERT_FALSE(block->next());
 }
 
-TEST(CompilerTest, AddInstruction)
+TEST_F(CompilerTest, AddInstruction)
 {
     INIT_COMPILER(engine, compiler);
     compiler.addInstruction(vm::OP_START);
@@ -143,7 +211,7 @@ void compileTestBlock(Compiler *compiler)
     compiler->addInstruction(vm::OP_NULL);
 }
 
-TEST(CompilerTest, AddShadowInput)
+TEST_F(CompilerTest, AddShadowInput)
 {
     INIT_COMPILER(engine, compiler);
     compiler.addInstruction(vm::OP_START);
@@ -157,7 +225,7 @@ TEST(CompilerTest, AddShadowInput)
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_PRINT, vm::OP_HALT }));
 }
 
-TEST(CompilerTest, AddObscuredInput)
+TEST_F(CompilerTest, AddObscuredInput)
 {
     INIT_COMPILER(engine, compiler);
     compiler.addInstruction(vm::OP_START);
@@ -183,7 +251,7 @@ TEST(CompilerTest, AddObscuredInput)
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CHECKPOINT, vm::OP_NULL, vm::OP_PRINT, vm::OP_CONST, 0, vm::OP_PRINT, vm::OP_NULL, vm::OP_PRINT, vm::OP_HALT }));
 }
 
-TEST(CompilerTest, AddNoShadowInput)
+TEST_F(CompilerTest, AddNoShadowInput)
 {
     INIT_COMPILER(engine, compiler);
     compiler.addInstruction(vm::OP_START);
@@ -208,6 +276,47 @@ TEST(CompilerTest, AddNoShadowInput)
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CHECKPOINT, vm::OP_NULL, vm::OP_PRINT, vm::OP_NULL, vm::OP_PRINT, vm::OP_HALT }));
 }
 
+TEST_F(CompilerTest, ResolveInput)
+{
+    INIT_COMPILER(engine, compiler);
+
+    engine.registerSection(m_section);
+
+    auto block = std::make_shared<Block>("a", "test_block1");
+    auto reporter = std::make_shared<Block>("a", "test_reporter");
+    auto input = std::make_shared<Input>("INPUT1", Input::Type::Shadow);
+    input->setPrimaryValue("test");
+    input->setInputId(TestBlockSection::INPUT1);
+    input->setValueBlock(reporter);
+    block->addInput(input);
+    block->updateInputMap();
+    block->setCompileFunction(&TestBlockSection::compileTestBlock1);
+
+    compiler.compile(block);
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_PRINT, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "test" }));
+}
+
+TEST_F(CompilerTest, ResolveField)
+{
+    INIT_COMPILER(engine, compiler);
+
+    engine.registerSection(m_section);
+
+    auto block = std::make_shared<Block>("a", "test_block2");
+    auto field = std::make_shared<Field>("FIELD1", "test");
+    field->setFieldId(TestBlockSection::FIELD1);
+    field->setSpecialValueId(TestBlockSection::TestValue);
+    block->addField(field);
+    block->updateFieldMap();
+    block->setCompileFunction(&TestBlockSection::compileTestBlock2);
+
+    compiler.compile(block);
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_NULL, vm::OP_PRINT, vm::OP_HALT }));
+}
+
 unsigned int testFunction1(VirtualMachine *vm)
 {
     return 0;
@@ -219,7 +328,7 @@ unsigned int testFunction2(VirtualMachine *vm)
     return 1;
 }
 
-TEST(CompilerTest, AddFunctionCall)
+TEST_F(CompilerTest, AddFunctionCall)
 {
     INIT_COMPILER(engine, compiler);
     compiler.addInstruction(vm::OP_START);
@@ -231,7 +340,22 @@ TEST(CompilerTest, AddFunctionCall)
     ASSERT_EQ(engine.functionIndex(&testFunction2), 1);
 }
 
-TEST(CompilerTest, Warp)
+TEST_F(CompilerTest, BreakAtomicScript)
+{
+    static const int SUBSTACK = 0;
+
+    INIT_COMPILER(engine, compiler);
+    compiler.addInstruction(vm::OP_START);
+
+    compiler.addInstruction(vm::OP_FOREVER_LOOP);
+    compiler.breakAtomicScript();
+    compiler.moveToSubstack(nullptr, Compiler::SubstackType::Loop);
+
+    compiler.addInstruction(vm::OP_HALT);
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_FOREVER_LOOP, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
+}
+
+TEST_F(CompilerTest, Warp)
 {
     INIT_COMPILER(engine, compiler);
     compiler.addInstruction(vm::OP_START);
@@ -240,7 +364,53 @@ TEST(CompilerTest, Warp)
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_WARP, vm::OP_HALT }));
 }
 
-TEST(CompilerTest, RepeatLoop)
+TEST_F(CompilerTest, Procedures)
+{
+    std::string p1 = "procedure 1";
+    std::string p2 = "procedure 2";
+    std::string p3 = "procedure 3";
+
+    INIT_COMPILER(engine, compiler);
+    ASSERT_EQ(compiler.procedureIndex(p1), 0);
+    ASSERT_EQ(compiler.procedureIndex(p2), 1);
+    ASSERT_EQ(compiler.procedureIndex(p3), 2);
+    ASSERT_EQ(compiler.procedureIndex(p2), 1); // test index of procedure that was added before
+
+    ASSERT_EQ(compiler.procedures(), std::vector<std::string>({ p1, p2, p3 }));
+}
+
+TEST_F(CompilerTest, ProcedureArgs)
+{
+    INIT_COMPILER(engine, compiler);
+    compiler.addProcedureArg("procedure 1", "arg 1");
+    compiler.addProcedureArg("procedure 1", "arg 2");
+    compiler.addProcedureArg("procedure 2", "arg 1");
+    compiler.addProcedureArg("procedure 2", "arg 1"); // add existing argument
+    compiler.addProcedureArg("procedure 2", "arg 2");
+    compiler.addProcedureArg("procedure 3", "arg 1");
+    compiler.addProcedureArg("procedure 3", "arg 2");
+    compiler.addProcedureArg("procedure 3", "arg 3");
+
+    ASSERT_EQ(compiler.procedureArgIndex("procedure 1", "arg 1"), 0);
+    ASSERT_EQ(compiler.procedureArgIndex("procedure 1", "arg 2"), 1);
+    ASSERT_EQ(compiler.procedureArgIndex("procedure 2", "arg 1"), 0);
+    ASSERT_EQ(compiler.procedureArgIndex("procedure 2", "arg 2"), 1);
+    ASSERT_EQ(compiler.procedureArgIndex("procedure 3", "arg 1"), 0);
+    ASSERT_EQ(compiler.procedureArgIndex("procedure 3", "arg 2"), 1);
+    ASSERT_EQ(compiler.procedureArgIndex("procedure 3", "arg 3"), 2);
+}
+
+TEST_F(CompilerTest, ProcedurePrototype)
+{
+    INIT_COMPILER(engine, compiler);
+    BlockPrototype prototype;
+
+    ASSERT_EQ(compiler.procedurePrototype(), nullptr);
+    compiler.setProcedurePrototype(&prototype);
+    ASSERT_EQ(compiler.procedurePrototype(), &prototype);
+}
+
+TEST_F(CompilerTest, RepeatLoop)
 {
     LOAD_PROJECT("repeat10.sb3", engine);
     engine.resolveIds();
@@ -255,7 +425,21 @@ TEST(CompilerTest, RepeatLoop)
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 10, 1 }));
 }
 
-TEST(CompilerTest, ForeverLoop)
+TEST_F(CompilerTest, EmptyRepeatLoop)
+{
+    LOAD_PROJECT("repeat_empty.sb3", engine);
+    engine.resolveIds();
+    Compiler compiler(&engine);
+    compiler.compile(engine.targetAt(0)->greenFlagBlocks().at(0));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_SET_VAR, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.variablePtrs().size(), 1);
+    ASSERT_EQ(compiler.variablePtrs()[0]->toString(), "test");
+    ASSERT_EQ(compiler.lists().size(), 0);
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0], 0);
+}
+
+TEST_F(CompilerTest, ForeverLoop)
 {
     LOAD_PROJECT("forever_loop.sb3", engine);
     engine.resolveIds();
@@ -267,7 +451,7 @@ TEST(CompilerTest, ForeverLoop)
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 1 }));
 }
 
-TEST(CompilerTest, RepeatUntilLoop)
+TEST_F(CompilerTest, RepeatUntilLoop)
 {
     LOAD_PROJECT("repeat_until.sb3", engine);
     engine.resolveIds();
@@ -291,9 +475,10 @@ TEST(CompilerTest, RepeatUntilLoop)
               0,
               vm::OP_LOOP_END,
               vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 1 }));
 }
 
-TEST(CompilerTest, RepeatWhileLoop)
+TEST_F(CompilerTest, RepeatWhileLoop)
 {
     LOAD_PROJECT("repeat_while.sb3", engine);
     engine.resolveIds();
@@ -318,9 +503,10 @@ TEST(CompilerTest, RepeatWhileLoop)
               0,
               vm::OP_LOOP_END,
               vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 1 }));
 }
 
-TEST(CompilerTest, RepeatForEachLoop)
+TEST_F(CompilerTest, RepeatForEachLoop)
 {
     LOAD_PROJECT("repeat_for_each.sb3", engine);
     engine.resolveIds();
@@ -346,9 +532,20 @@ TEST(CompilerTest, RepeatForEachLoop)
               0,
               vm::OP_LOOP_END,
               vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 10, 1 }));
 }
 
-TEST(CompilerTest, IfStatement)
+TEST_F(CompilerTest, EmptyRepeatForEachLoop)
+{
+    LOAD_PROJECT("repeat_for_each_empty.sb3", engine);
+    engine.resolveIds();
+    Compiler compiler(&engine);
+    compiler.compile(engine.targetAt(0)->greenFlagBlocks().at(0));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_SET_VAR, 0, vm::OP_CONST, 1, vm::OP_SET_VAR, 1, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 10 }));
+}
+
+TEST_F(CompilerTest, IfStatement)
 {
     LOAD_PROJECT("if.sb3", engine);
     engine.resolveIds();
@@ -359,7 +556,16 @@ TEST(CompilerTest, IfStatement)
         std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_SET_VAR, 0, vm::OP_NULL, vm::OP_NOT, vm::OP_IF, vm::OP_CONST, 1, vm::OP_CHANGE_VAR, 0, vm::OP_ENDIF, vm::OP_HALT }));
 }
 
-TEST(CompilerTest, IfElseStatement)
+TEST_F(CompilerTest, EmptyIfStatement)
+{
+    LOAD_PROJECT("if_empty.sb3", engine);
+    engine.resolveIds();
+    Compiler compiler(&engine);
+    compiler.compile(engine.targetAt(0)->greenFlagBlocks().at(0));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_SET_VAR, 0, vm::OP_HALT }));
+}
+
+TEST_F(CompilerTest, IfElseStatement)
 {
     LOAD_PROJECT("if_else.sb3", engine);
     engine.resolveIds();
@@ -390,7 +596,21 @@ TEST(CompilerTest, IfElseStatement)
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 1, -1 }));
 }
 
-TEST(CompilerTest, NestedStatements)
+TEST_F(CompilerTest, EmptyIfElseStatement)
+{
+    LOAD_PROJECT("if_else_empty.sb3", engine);
+    engine.resolveIds();
+    Compiler compiler(&engine);
+    compiler.compile(engine.targetAt(0)->greenFlagBlocks().at(0));
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>(
+            { vm::OP_START, vm::OP_CONST, 0,         vm::OP_SET_VAR, 0, vm::OP_NULL,       vm::OP_NOT, vm::OP_NOT,   vm::OP_IF,  vm::OP_CONST, 1, vm::OP_CHANGE_VAR, 0, vm::OP_ENDIF,
+              vm::OP_NULL,  vm::OP_NOT,   vm::OP_IF, vm::OP_CONST,   2, vm::OP_CHANGE_VAR, 0,          vm::OP_ENDIF, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, -1, 1 }));
+}
+
+TEST_F(CompilerTest, NestedStatements)
 {
     LOAD_PROJECT("nested_statements.sb3", engine);
     engine.resolveIds();
@@ -444,7 +664,7 @@ TEST(CompilerTest, NestedStatements)
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 1, 10, 2, 10, -1, 1 }));
 }
 
-TEST(CompilerTest, CustomBlocks)
+TEST_F(CompilerTest, CustomBlocks)
 {
     LOAD_PROJECT("custom_blocks.sb3", engine);
     engine.resolveIds();
@@ -490,7 +710,7 @@ TEST(CompilerTest, CustomBlocks)
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 1, vm::OP_SET_VAR, 2, vm::OP_HALT }));
 }
 
-TEST(CompilerTest, MultipleTargets)
+TEST_F(CompilerTest, MultipleTargets)
 {
     LOAD_PROJECT("load_test.sb3", engine);
     engine.compile();

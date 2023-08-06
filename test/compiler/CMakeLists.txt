@@ -1,6 +1,8 @@
 add_executable(
   compiler_test
   compiler_test.cpp
+  testblocksection.cpp
+  testblocksection.h
 )
 
 target_link_libraries(
