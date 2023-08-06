@@ -4,35 +4,18 @@
 
 using namespace libscratchcpp;
 
-TEST(ListTest, ToString)
+TEST(ListTest, Constructors)
 {
-    List list("", "test list");
-    ASSERT_EQ(list.toString(), "");
+    List list("abc", "test list");
+    ASSERT_EQ(list.id(), "abc");
+    ASSERT_EQ(list.name(), "test list");
+}
 
-    list.push_back("");
-    ASSERT_EQ(list.toString(), "");
-
-    list.push_back("");
-    list.push_back("");
-    ASSERT_EQ(list.toString(), "  ");
-
-    list.clear();
-    list.push_back("item1");
-    list.push_back("i t e m 2");
-    list.push_back("item 3");
-    ASSERT_EQ(list.toString(), "item1 i t e m 2 item 3");
-
-    list.clear();
-    list.push_back(" ");
-    list.push_back("a ");
-    list.push_back(" b");
-    list.push_back(" c ");
-    ASSERT_EQ(list.toString(), "  a   b  c ");
-
-    list.clear();
-    list.push_back("áä");
-    list.push_back("ľ š");
-    ASSERT_EQ(list.toString(), "áä ľ š");
+TEST(ListTest, Name)
+{
+    List list("", "");
+    list.setName("test list");
+    ASSERT_EQ(list.name(), "test list");
 }
 
 TEST(ListTest, IndexOf)
@@ -137,4 +120,35 @@ TEST(ListTest, Replace)
     ASSERT_EQ(list.toString(), "test1 ipsum dolor sit test2");
     list.replace(2, "test3");
     ASSERT_EQ(list.toString(), "test1 ipsum test3 sit test2");
+}
+
+TEST(ListTest, ToString)
+{
+    List list("", "test list");
+    ASSERT_EQ(list.toString(), "");
+
+    list.push_back("");
+    ASSERT_EQ(list.toString(), "");
+
+    list.push_back("");
+    list.push_back("");
+    ASSERT_EQ(list.toString(), "  ");
+
+    list.clear();
+    list.push_back("item1");
+    list.push_back("i t e m 2");
+    list.push_back("item 3");
+    ASSERT_EQ(list.toString(), "item1 i t e m 2 item 3");
+
+    list.clear();
+    list.push_back(" ");
+    list.push_back("a ");
+    list.push_back(" b");
+    list.push_back(" c ");
+    ASSERT_EQ(list.toString(), "  a   b  c ");
+
+    list.clear();
+    list.push_back("áä");
+    list.push_back("ľ š");
+    ASSERT_EQ(list.toString(), "áä ľ š");
 }
