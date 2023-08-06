@@ -36,6 +36,11 @@ const std::vector<std::shared_ptr<Variable>> &Target::variables() const
 /*! Adds a variable and returns its index. */
 int Target::addVariable(std::shared_ptr<Variable> variable)
 {
+    auto it = std::find(impl->variables.begin(), impl->variables.end(), variable);
+
+    if (it != impl->variables.end())
+        return it - impl->variables.begin();
+
     impl->variables.push_back(variable);
     return impl->variables.size() - 1;
 }
@@ -43,6 +48,9 @@ int Target::addVariable(std::shared_ptr<Variable> variable)
 /*! Returns the variable at index. */
 std::shared_ptr<Variable> Target::variableAt(int index) const
 {
+    if (index < 0 || index >= impl->variables.size())
+        return nullptr;
+
     return impl->variables[index];
 }
 
@@ -79,6 +87,11 @@ const std::vector<std::shared_ptr<List>> &Target::lists() const
 /*! Adds a list and returns its index. */
 int Target::addList(std::shared_ptr<List> list)
 {
+    auto it = std::find(impl->lists.begin(), impl->lists.end(), list);
+
+    if (it != impl->lists.end())
+        return it - impl->lists.begin();
+
     impl->lists.push_back(list);
     return impl->lists.size() - 1;
 }
@@ -86,6 +99,9 @@ int Target::addList(std::shared_ptr<List> list)
 /*! Returns the list at index. */
 std::shared_ptr<List> Target::listAt(int index) const
 {
+    if (index < 0 || index >= impl->lists.size())
+        return nullptr;
+
     return impl->lists[index];
 }
 
@@ -122,6 +138,11 @@ const std::vector<std::shared_ptr<Block>> &Target::blocks() const
 /*! Adds a block and returns its index. */
 int Target::addBlock(std::shared_ptr<Block> block)
 {
+    auto it = std::find(impl->blocks.begin(), impl->blocks.end(), block);
+
+    if (it != impl->blocks.end())
+        return it - impl->blocks.begin();
+
     impl->blocks.push_back(block);
     return impl->blocks.size() - 1;
 }
@@ -129,6 +150,9 @@ int Target::addBlock(std::shared_ptr<Block> block)
 /*! Returns the block at index. */
 std::shared_ptr<Block> Target::blockAt(int index) const
 {
+    if (index < 0 || index >= impl->blocks.size())
+        return nullptr;
+
     return impl->blocks[index];
 }
 
@@ -177,13 +201,29 @@ const std::vector<Costume> &Target::costumes() const
 /*! Adds a costume and returns its index. */
 int Target::addCostume(const Costume &costume)
 {
+    // TODO: Use shared_ptr for assets
+    /*auto it = std::find(impl->costumes.begin(), impl->costumes.end(), costume);
+
+    if (it != impl->blocks.end())
+        return it - impl->blocks.begin();*/
+
+    int i = 0;
+
+    for (const auto &c : impl->costumes) {
+        if (c.name() == costume.name())
+            return i;
+
+        i++;
+    }
+
     impl->costumes.push_back(costume);
     return impl->costumes.size() - 1;
 }
 
 /*! Returns the costume at index. */
-Costume Target::costumeAt(int index) const
+const libscratchcpp::Costume &Target::costumeAt(int index) const
 {
+    // TODO: Add range check
     return impl->costumes[index];
 }
 
@@ -208,13 +248,28 @@ const std::vector<Sound> &Target::sounds() const
 /*! Adds a sound and returns its index. */
 int Target::addSound(const Sound &sound)
 {
+    // TODO: Use shared_ptr for assets
+    /*auto it = std::find(impl->sounds.begin(), impl->sounds.end(), sound);
+
+    if (it != impl->sounds.end())
+        return it - impl->sounds.begin();*/
+
+    int i = 0;
+
+    for (const auto &s : impl->sounds) {
+        if (s.name() == sound.name())
+            return i;
+
+        i++;
+    }
     impl->sounds.push_back(sound);
     return impl->sounds.size() - 1;
 }
 
 /*! Returns the sound at index. */
-Sound Target::soundAt(int index) const
+const libscratchcpp::Sound &Target::soundAt(int index) const
 {
+    // TODO: Add range check
     return impl->sounds[index];
 }
 
