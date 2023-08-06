@@ -1,75 +1,66 @@
-#include "testspriteinterface.h"
-#include "../common.h"
+#include <spritehandlermock.h>
 
-#define INIT_SPRITE() sprite.setInterface(&spriteInterface);
+#include "../common.h"
 
 using namespace libscratchcpp;
 
-Sprite sprite;
-TestSpriteInterface spriteInterface;
-
-TEST(ISpriteHandlerTest, Sprite)
+class ISpriteHandlerTest : public testing::Test
 {
-    INIT_SPRITE();
-    ASSERT_EQ(spriteInterface.sprite, &sprite);
+    public:
+        void SetUp() override
+        {
+            EXPECT_CALL(m_handler, onSpriteChanged(&m_sprite)).Times(1);
+            m_sprite.setInterface(&m_handler);
+        }
+
+        Sprite m_sprite;
+        SpriteHandlerMock m_handler;
+};
+
+TEST_F(ISpriteHandlerTest, Visible)
+{
+    EXPECT_CALL(m_handler, onVisibleChanged(false)).Times(1);
+    m_sprite.setVisible(false);
+
+    EXPECT_CALL(m_handler, onVisibleChanged(true)).Times(1);
+    m_sprite.setVisible(true);
 }
 
-TEST(ISpriteHandlerTest, Visible)
+TEST_F(ISpriteHandlerTest, X)
 {
-    INIT_SPRITE();
-    sprite.setVisible(false);
-    ASSERT_EQ(spriteInterface.visible, false);
-    sprite.setVisible(true);
-    ASSERT_EQ(spriteInterface.visible, true);
+    EXPECT_CALL(m_handler, onXChanged(300.25)).Times(1);
+    m_sprite.setX(300.25);
 }
 
-TEST(ISpriteHandlerTest, X)
+TEST_F(ISpriteHandlerTest, Y)
 {
-    INIT_SPRITE();
-    sprite.setX(300);
-    ASSERT_EQ(spriteInterface.x, 300);
-    sprite.setX(5.25);
-    ASSERT_EQ(spriteInterface.x, 5.25);
+    EXPECT_CALL(m_handler, onYChanged(-153.7)).Times(1);
+    m_sprite.setY(-153.7);
 }
 
-TEST(ISpriteHandlerTest, Y)
+TEST_F(ISpriteHandlerTest, Size)
 {
-    INIT_SPRITE();
-    sprite.setY(300);
-    ASSERT_EQ(spriteInterface.y, 300);
-    sprite.setY(5.25);
-    ASSERT_EQ(spriteInterface.y, 5.25);
+    EXPECT_CALL(m_handler, onSizeChanged(53.8)).Times(1);
+    m_sprite.setSize(53.8);
 }
 
-TEST(ISpriteHandlerTest, Size)
+TEST_F(ISpriteHandlerTest, Direction)
 {
-    INIT_SPRITE();
-    sprite.setSize(50);
-    ASSERT_EQ(spriteInterface.size, 50);
-    sprite.setSize(75.5);
-    ASSERT_EQ(spriteInterface.size, 75.5);
+    EXPECT_CALL(m_handler, onDirectionChanged(179.715)).Times(1);
+    m_sprite.setDirection(179.715);
 }
 
-TEST(ISpriteHandlerTest, Direction)
+TEST_F(ISpriteHandlerTest, RotationStyle)
 {
-    INIT_SPRITE();
-    sprite.setDirection(85);
-    ASSERT_EQ(spriteInterface.direction, 85);
-    sprite.setDirection(179.715);
-    ASSERT_EQ(spriteInterface.direction, 179.715);
+    EXPECT_CALL(m_handler, onRotationStyleChanged(Sprite::RotationStyle::DoNotRotate)).Times(1);
+    m_sprite.setRotationStyle(Sprite::RotationStyle::DoNotRotate);
+
+    EXPECT_CALL(m_handler, onRotationStyleChanged(Sprite::RotationStyle::LeftRight)).Times(1);
+    m_sprite.setRotationStyle(Sprite::RotationStyle::LeftRight);
 }
 
-TEST(ISpriteHandlerTest, RotationStyle)
+TEST_F(ISpriteHandlerTest, CostumeData)
 {
-    INIT_SPRITE();
-    sprite.setRotationStyle(Sprite::RotationStyle::DoNotRotate);
-    ASSERT_EQ(spriteInterface.rotationStyle, Sprite::RotationStyle::DoNotRotate);
-    sprite.setRotationStyle(Sprite::RotationStyle::LeftRight);
-    ASSERT_EQ(spriteInterface.rotationStyle, Sprite::RotationStyle::LeftRight);
-}
-
-TEST(ISpriteHandlerTest, CostumeData)
-{
-    INIT_SPRITE();
-    // TODO: Add tests for costume data
+    // TODO: Add test for costume data
+    // EXPECT_CALL(m_handler, onCostumeChanged(...)).Times(1);
 }
