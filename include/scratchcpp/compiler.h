@@ -51,11 +51,11 @@ class LIBSCRATCHCPP_EXPORT Compiler
 
         const std::vector<List *> &lists() const;
 
-        void addInstruction(vm::Opcode opcode, std::initializer_list<unsigned int> args = {});
+        void addInstruction(vm::Opcode opcode, const std::initializer_list<unsigned int> &args = {});
         void addInput(Input *input);
         void addInput(int id);
         void addFunctionCall(BlockFunc f);
-        void addProcedureArg(std::string procCode, std::string argName);
+        void addProcedureArg(const std::string &procCode, const std::string &argName);
         void moveToSubstack(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2, SubstackType type);
         void moveToSubstack(std::shared_ptr<Block> substack, SubstackType type);
         void breakAtomicScript();
@@ -67,8 +67,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
         unsigned int variableIndex(std::shared_ptr<Entity> varEntity);
         unsigned int listIndex(std::shared_ptr<Entity> listEntity);
         unsigned int constIndex(InputValue *value);
-        unsigned int procedureIndex(std::string proc);
-        long procedureArgIndex(std::string procCode, std::string argName);
+        unsigned int procedureIndex(const std::string &proc);
+        long procedureArgIndex(const std::string &procCode, const std::string &argName);
 
         const std::vector<std::string> &procedures() const;
 

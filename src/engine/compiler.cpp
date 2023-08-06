@@ -103,7 +103,7 @@ const std::vector<List *> &Compiler::lists() const
 }
 
 /*! Adds an instruction to the bytecode. */
-void Compiler::addInstruction(Opcode opcode, std::initializer_list<unsigned int> args)
+void Compiler::addInstruction(Opcode opcode, const std::initializer_list<unsigned int> &args)
 {
     impl->addInstruction(opcode, args);
 }
@@ -165,8 +165,15 @@ void Compiler::addFunctionCall(BlockFunc f)
 }
 
 /*! Adds an argument to a procedure (custom block). */
-void Compiler::addProcedureArg(std::string procCode, std::string argName)
+void Compiler::addProcedureArg(const std::string &procCode, const std::string &argName)
 {
+    if (impl->procedureArgs.find(procCode) != impl->procedureArgs.cend()) {
+        const auto &procedure = impl->procedureArgs[procCode];
+
+        if (std::find(procedure.begin(), procedure.end(), argName) != procedure.end())
+            return;
+    }
+
     impl->procedureArgs[procCode].push_back(argName);
 }
 
@@ -254,7 +261,7 @@ unsigned int Compiler::constIndex(InputValue *value)
 }
 
 /*! Returns the index of the procedure code of the given block. */
-unsigned int Compiler::procedureIndex(std::string proc)
+unsigned int Compiler::procedureIndex(const std::string &proc)
 {
     auto it = std::find(impl->procedures.begin(), impl->procedures.end(), proc);
     if (it != impl->procedures.end())
@@ -264,7 +271,7 @@ unsigned int Compiler::procedureIndex(std::string proc)
 }
 
 /*! Returns the index of the argument of the given procedure (custom block). */
-long Compiler::procedureArgIndex(std::string procCode, std::string argName)
+long Compiler::procedureArgIndex(const std::string &procCode, const std::string &argName)
 {
     if (impl->procedureArgs.count(procCode) == 0) {
         std::cout << "warning: could not find custom block '" << procCode << "'" << std::endl;

@@ -42,7 +42,14 @@ void CompilerPrivate::substackEnd()
                 addInstruction(OP_ENDIF);
             break;
     }
-    block = parent.first.first->next();
+
+    auto parentBlock = parent.first.first;
+
+    if (parentBlock)
+        block = parentBlock->next();
+    else
+        block = nullptr;
+
     substackTree.pop_back();
     if (!block && !substackTree.empty())
         substackEnd();
