@@ -167,6 +167,13 @@ void Compiler::addFunctionCall(BlockFunc f)
 /*! Adds an argument to a procedure (custom block). */
 void Compiler::addProcedureArg(std::string procCode, std::string argName)
 {
+    if (impl->procedureArgs.find(procCode) != impl->procedureArgs.cend()) {
+        const auto &procedure = impl->procedureArgs[procCode];
+
+        if (std::find(procedure.begin(), procedure.end(), argName) != procedure.end())
+            return;
+    }
+
     impl->procedureArgs[procCode].push_back(argName);
 }
 
