@@ -4,6 +4,12 @@
 
 using namespace libscratchcpp;
 
+TEST(SpriteTest, IsStage)
+{
+    Sprite sprite;
+    ASSERT_FALSE(sprite.isStage());
+}
+
 TEST(SpriteTest, Visible)
 {
     Sprite sprite;
