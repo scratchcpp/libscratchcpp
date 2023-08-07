@@ -69,6 +69,12 @@ unsigned int *VirtualMachine::bytecode() const
     return impl->bytecode;
 }
 
+/*! Returns number of currently used registers. */
+size_t VirtualMachine::registerCount() const
+{
+    return impl->regCount;
+}
+
 /*! Returns the Target the VM belongs to. */
 Target *VirtualMachine::target() const
 {

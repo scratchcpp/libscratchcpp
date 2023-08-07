@@ -109,6 +109,8 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
 
         unsigned int *bytecode() const;
 
+        size_t registerCount() const;
+
         Target *target() const;
         IEngine *engine() const;
         Script *script() const;
