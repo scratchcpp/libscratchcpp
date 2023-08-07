@@ -330,31 +330,26 @@ do_print:
     DISPATCH();
 
 do_add:
-    REPLACE_RET_VALUE(*READ_REG(0, 2), 2);
     READ_REG(0, 2)->add(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
 
 do_subtract:
-    REPLACE_RET_VALUE(*READ_REG(0, 2), 2);
     READ_REG(0, 2)->subtract(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
 
 do_multiply:
-    REPLACE_RET_VALUE(*READ_REG(0, 2), 2);
     READ_REG(0, 2)->multiply(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
 
 do_divide:
-    REPLACE_RET_VALUE(*READ_REG(0, 2), 2);
     READ_REG(0, 2)->divide(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
 
 do_mod:
-    REPLACE_RET_VALUE(*READ_REG(0, 2), 2);
     READ_REG(0, 2)->mod(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
