@@ -105,7 +105,13 @@ void VirtualMachine::addReturnValue(const Value &v)
     *impl->regs[impl->regCount++] = v;
 }
 
-/*! Replaces the given register (last register minus offset). */
+/*!
+ * Replaces the given register. For example:
+ * \code
+ * replaceReturnValue("...", 1) // write to last register
+ * replaceReturnValue("...", 2) // write to second last register
+ * \endcode
+ */
 void VirtualMachine::replaceReturnValue(const Value &v, unsigned int offset)
 {
     *impl->regs[impl->regCount - offset] = v;
