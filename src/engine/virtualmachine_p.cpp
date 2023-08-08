@@ -669,7 +669,7 @@ do_str_contains:
 do_exec : {
     auto ret = functions[*++pos](vm);
     if (updatePos) {
-        pos = pos;
+        pos = this->pos;
         updatePos = false;
     }
     if (stop) {
