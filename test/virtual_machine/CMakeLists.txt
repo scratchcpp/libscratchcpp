@@ -8,6 +8,7 @@ target_link_libraries(
   GTest::gtest_main
   GTest::gmock_main
   scratchcpp
+  scratchcpp_mocks
 )
 
 gtest_discover_tests(virtual_machine_test)
