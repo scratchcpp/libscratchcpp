@@ -683,6 +683,8 @@ do_exec : {
         if (goBack) {
             goBack = false;
             pos -= instruction_arg_count[OP_EXEC] + 1;
+            // NOTE: Going back leaks all registers for the next time the same function is called.
+            // This is for example used in the wait block (to call it again with the same time value).
         } else
             FREE_REGS(ret);
         return pos;
