@@ -678,17 +678,14 @@ do_exec : {
         procedureArgTree.clear();
         procedureArgs = nullptr;
         nextProcedureArgs = nullptr;
-        if (!atomic && !warp)
+        if (!atomic)
             engine->breakFrame();
         if (goBack) {
             goBack = false;
             pos -= instruction_arg_count[OP_EXEC] + 1;
         } else
             FREE_REGS(ret);
-        if (warp)
-            DISPATCH();
-        else
-            return pos;
+        return pos;
     }
     FREE_REGS(ret);
     DISPATCH();
