@@ -115,7 +115,7 @@ VirtualMachinePrivate::~VirtualMachinePrivate()
     delete regs;
 }
 
-unsigned int *VirtualMachinePrivate::run(unsigned int *pos)
+unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
 {
     static const void *dispatch_table[] = {
         nullptr,
@@ -186,9 +186,11 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos)
     unsigned int *loopStart;
     unsigned int *loopEnd;
     size_t loopCount;
-    atEnd = false;
-    atomic = true;
-    warp = false;
+    if (reset) {
+        atEnd = false;
+        atomic = true;
+        warp = false;
+    }
     DISPATCH();
 
 do_halt:
@@ -279,7 +281,7 @@ do_repeat_loop_index1 : {
 }
 
 do_until_loop:
-    loopStart = run(pos);
+    loopStart = run(pos, false);
     if (!READ_LAST_REG()->toBool()) {
         Loop l;
         l.isRepeatLoop = false;
@@ -314,7 +316,7 @@ do_loop_end : {
             engine->breakFrame();
             return pos - 1;
         }
-        loopStart = run(l.start);
+        loopStart = run(l.start, false);
         if (!READ_LAST_REG()->toBool())
             pos = loopStart;
         else
