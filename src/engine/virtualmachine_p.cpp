@@ -646,10 +646,16 @@ do_str_concat:
     FREE_REGS(1);
     DISPATCH();
 
-do_str_at:
-    REPLACE_RET_VALUE(utf8::utf16to8(std::u16string({ READ_REG(0, 2)->toUtf16()[READ_REG(1, 2)->toLong() - 1] })), 2);
+do_str_at : {
+    size_t index = READ_REG(1, 2)->toLong() - 1;
+    std::u16string str = READ_REG(0, 2)->toUtf16();
+    if (index < 0 || index >= str.size())
+        REPLACE_RET_VALUE("", 2);
+    else
+        REPLACE_RET_VALUE(utf8::utf16to8(std::u16string({ str[index] })), 2);
     FREE_REGS(1);
     DISPATCH();
+}
 
 do_str_length:
     REPLACE_RET_VALUE(static_cast<long>(READ_REG(0, 1)->toUtf16().size()), 1);
