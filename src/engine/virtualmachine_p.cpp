@@ -647,7 +647,7 @@ do_str_concat:
     DISPATCH();
 
 do_str_at:
-    REPLACE_RET_VALUE(READ_REG(0, 2)->toUtf16()[READ_REG(1, 2)->toLong()], 2);
+    REPLACE_RET_VALUE(utf8::utf16to8(std::u16string({ READ_REG(0, 2)->toUtf16()[READ_REG(1, 2)->toLong() - 1] })), 2);
     FREE_REGS(1);
     DISPATCH();
 
