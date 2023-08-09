@@ -227,6 +227,8 @@ void Engine::run()
 
     while (true) {
         auto lastFrameTime = std::chrono::steady_clock::now();
+        m_skipFrame = false;
+
         // Execute the frame
         frame();
         if (m_runningScripts.size() <= 0)
@@ -236,9 +238,14 @@ void Engine::run()
         auto currentTime = std::chrono::steady_clock::now();
         auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastFrameTime);
         auto sleepTime = frameDuration - elapsedTime;
+        bool timeOut = sleepTime <= std::chrono::milliseconds::zero();
 
-        if (sleepTime > std::chrono::milliseconds::zero())
+        if (!timeOut && !m_skipFrame)
             std::this_thread::sleep_for(sleepTime);
+
+        if ((m_skipFrame && timeOut) || !m_skipFrame) {
+            // TODO: Repaint here
+        }
 
         lastFrameTime = currentTime;
     }
@@ -257,6 +264,12 @@ void Engine::breakFrame()
 bool libscratchcpp::Engine::breakingCurrentFrame()
 {
     return m_breakFrame;
+}
+
+void Engine::skipFrame()
+{
+    breakFrame();
+    m_skipFrame = true;
 }
 
 void Engine::registerSection(std::shared_ptr<IBlockSection> section)

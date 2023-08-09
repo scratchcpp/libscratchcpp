@@ -40,6 +40,8 @@ class Engine : public IEngine
         void breakFrame() override;
         bool breakingCurrentFrame() override;
 
+        void skipFrame() override;
+
         void registerSection(std::shared_ptr<IBlockSection> section) override;
         unsigned int functionIndex(BlockFunc f) override;
 
@@ -88,6 +90,7 @@ class Engine : public IEngine
         std::vector<BlockFunc> m_functions;
 
         bool m_breakFrame = false;
+        bool m_skipFrame = false;
 };
 
 } // namespace libscratchcpp

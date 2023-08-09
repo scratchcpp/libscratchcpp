@@ -91,6 +91,13 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual bool breakingCurrentFrame() = 0;
 
         /*!
+         * Call this from a block implementation to skip a frame and run the next frame immediately.\n
+         * The screen will be refreshed according to the frame rate.
+         * \note This also works in "run without screen refresh" custom blocks.
+         */
+        virtual void skipFrame() = 0;
+
+        /*!
          * Registers the given block section.
          * \see <a href="blockSections.html">Block sections</a>
          */
