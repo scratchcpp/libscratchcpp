@@ -22,7 +22,7 @@ struct VirtualMachinePrivate
         VirtualMachinePrivate(const VirtualMachinePrivate &) = delete;
         ~VirtualMachinePrivate();
 
-        unsigned int *run(unsigned int *pos);
+        unsigned int *run(unsigned int *pos, bool reset = true);
 
         static const unsigned int instruction_arg_count[];
 

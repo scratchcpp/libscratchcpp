@@ -115,7 +115,7 @@ VirtualMachinePrivate::~VirtualMachinePrivate()
     delete regs;
 }
 
-unsigned int *VirtualMachinePrivate::run(unsigned int *pos)
+unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
 {
     static const void *dispatch_table[] = {
         nullptr,
@@ -186,9 +186,11 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos)
     unsigned int *loopStart;
     unsigned int *loopEnd;
     size_t loopCount;
-    atEnd = false;
-    atomic = true;
-    warp = false;
+    if (reset) {
+        atEnd = false;
+        atomic = true;
+        warp = false;
+    }
     DISPATCH();
 
 do_halt:
@@ -279,7 +281,7 @@ do_repeat_loop_index1 : {
 }
 
 do_until_loop:
-    loopStart = run(pos);
+    loopStart = run(pos, false);
     if (!READ_LAST_REG()->toBool()) {
         Loop l;
         l.isRepeatLoop = false;
@@ -314,7 +316,7 @@ do_loop_end : {
             engine->breakFrame();
             return pos - 1;
         }
-        loopStart = run(l.start);
+        loopStart = run(l.start, false);
         if (!READ_LAST_REG()->toBool())
             pos = loopStart;
         else
@@ -330,31 +332,26 @@ do_print:
     DISPATCH();
 
 do_add:
-    REPLACE_RET_VALUE(*READ_REG(0, 2), 2);
     READ_REG(0, 2)->add(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
 
 do_subtract:
-    REPLACE_RET_VALUE(*READ_REG(0, 2), 2);
     READ_REG(0, 2)->subtract(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
 
 do_multiply:
-    REPLACE_RET_VALUE(*READ_REG(0, 2), 2);
     READ_REG(0, 2)->multiply(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
 
 do_divide:
-    REPLACE_RET_VALUE(*READ_REG(0, 2), 2);
     READ_REG(0, 2)->divide(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
 
 do_mod:
-    REPLACE_RET_VALUE(*READ_REG(0, 2), 2);
     READ_REG(0, 2)->mod(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
@@ -651,10 +648,16 @@ do_str_concat:
     FREE_REGS(1);
     DISPATCH();
 
-do_str_at:
-    REPLACE_RET_VALUE(READ_REG(0, 2)->toUtf16()[READ_REG(1, 2)->toLong()], 2);
+do_str_at : {
+    size_t index = READ_REG(1, 2)->toLong() - 1;
+    std::u16string str = READ_REG(0, 2)->toUtf16();
+    if (index < 0 || index >= str.size())
+        REPLACE_RET_VALUE("", 2);
+    else
+        REPLACE_RET_VALUE(utf8::utf16to8(std::u16string({ str[index] })), 2);
     FREE_REGS(1);
     DISPATCH();
+}
 
 do_str_length:
     REPLACE_RET_VALUE(static_cast<long>(READ_REG(0, 1)->toUtf16().size()), 1);
@@ -668,7 +671,7 @@ do_str_contains:
 do_exec : {
     auto ret = functions[*++pos](vm);
     if (updatePos) {
-        pos = pos;
+        pos = this->pos;
         updatePos = false;
     }
     if (stop) {
@@ -677,17 +680,16 @@ do_exec : {
         procedureArgTree.clear();
         procedureArgs = nullptr;
         nextProcedureArgs = nullptr;
-        if (!atomic && !warp)
+        if (!atomic)
             engine->breakFrame();
         if (goBack) {
             goBack = false;
             pos -= instruction_arg_count[OP_EXEC] + 1;
+            // NOTE: Going back leaks all registers for the next time the same function is called.
+            // This is for example used in the wait block (to call it again with the same time value).
         } else
             FREE_REGS(ret);
-        if (warp)
-            DISPATCH();
-        else
-            return pos;
+        return pos;
     }
     FREE_REGS(ret);
     DISPATCH();
