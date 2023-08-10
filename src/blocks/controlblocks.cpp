@@ -184,6 +184,8 @@ unsigned int ControlBlocks::wait(VirtualMachine *vm)
         vm->stop(true, true, false);
     } else
         vm->stop(true, true, true);
+
+    vm->engine()->lockFrame();
     return 0;
 }
 
