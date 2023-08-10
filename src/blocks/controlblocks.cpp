@@ -171,7 +171,6 @@ unsigned int ControlBlocks::stopOtherScriptsInSprite(VirtualMachine *vm)
 unsigned int ControlBlocks::startWait(VirtualMachine *vm)
 {
     auto currentTime = std::chrono::steady_clock::now();
-    assert(m_timeMap.count(vm) == 0);
     m_timeMap[vm] = { currentTime, vm->getInput(0, 1)->toDouble() * 1000 };
     return 1;
 }
