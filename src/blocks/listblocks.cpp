@@ -90,5 +90,5 @@ void ListBlocks::compileLengthOfList(Compiler *compiler)
 void ListBlocks::compileListContainsItem(Compiler *compiler)
 {
     compiler->addInput(ITEM);
-    compiler->addInstruction(vm::OP_LIST_LENGTH, { compiler->listIndex(compiler->field(LIST)->valuePtr()) });
+    compiler->addInstruction(vm::OP_LIST_CONTAINS, { compiler->listIndex(compiler->field(LIST)->valuePtr()) });
 }
