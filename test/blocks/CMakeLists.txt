@@ -13,3 +13,19 @@ target_link_libraries(
 )
 
 gtest_discover_tests(variable_blocks_test)
+
+# list_blocks_test
+add_executable(
+  list_blocks_test
+  list_blocks_test.cpp
+)
+
+target_link_libraries(
+  list_blocks_test
+  GTest::gtest_main
+  GTest::gmock_main
+  scratchcpp
+  scratchcpp_mocks
+)
+
+gtest_discover_tests(list_blocks_test)
