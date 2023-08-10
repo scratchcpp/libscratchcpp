@@ -35,6 +35,8 @@ class EventBlocks : public IBlockSection
     private:
         static unsigned int broadcast(VirtualMachine *vm);
         static unsigned int broadcastByIndex(VirtualMachine *vm);
+        static unsigned int broadcastAndWait(VirtualMachine *vm);
+        static unsigned int broadcastByIndexAndWait(VirtualMachine *vm);
         static unsigned int checkBroadcast(VirtualMachine *vm);
         static unsigned int checkBroadcastByIndex(VirtualMachine *vm);
 };

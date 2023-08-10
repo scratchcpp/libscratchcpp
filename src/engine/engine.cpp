@@ -126,8 +126,19 @@ void Engine::frame()
         do {
             script->run();
             if (script->atEnd()) {
-                for (auto &[key, value] : m_broadcastMap)
-                    value.erase(std::remove(value.begin(), value.end(), script->script()), value.end());
+                for (auto &[key, value] : m_runningBroadcastMap) {
+                    size_t index = 0;
+
+                    for (const auto &pair : value) {
+                        if (pair.second == script.get()) {
+                            value.erase(value.begin() + index);
+                            break;
+                        }
+
+                        index++;
+                    }
+                }
+
                 m_scriptsToRemove.push_back(script.get());
             }
         } while (!script->atEnd() && !m_breakFrame);
@@ -180,24 +191,48 @@ void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<T
     }
 }
 
-void libscratchcpp::Engine::broadcast(unsigned int index, VirtualMachine *sourceScript)
+void libscratchcpp::Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait)
 {
+    bool previousSkipFrame = m_skipFrame;
+    skipFrame();
     const std::vector<Script *> &scripts = m_broadcastMap[index];
+
     for (auto script : scripts) {
-        size_t index = -1;
-        for (size_t i = 0; i < m_runningScripts.size(); i++) {
+        long scriptIndex = -1;
+        for (long i = 0; i < m_runningScripts.size(); i++) {
             if (m_runningScripts[i]->script() == script) {
-                index = i;
+                scriptIndex = i;
                 break;
             }
         }
-        if (index != -1) {
+
+        if (scriptIndex != -1) {
             // Reset the script if it's already running
-            m_runningScripts[index]->reset();
-            if (script == sourceScript->script())
+            auto vm = m_runningScripts[scriptIndex];
+            vm->reset();
+
+            // Remove the script from scripts to remove because it's going to run again
+            m_scriptsToRemove.erase(std::remove(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm.get()), m_scriptsToRemove.end());
+            assert(std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), m_runningScripts[scriptIndex].get()) == m_scriptsToRemove.end());
+
+            auto &scripts = m_runningBroadcastMap[index];
+
+            for (auto &pair : scripts) {
+                if (pair.second->script() == script)
+                    pair.first = sourceScript;
+            }
+
+            if (script == sourceScript->script()) {
                 sourceScript->stop(false, true);
+
+                if (!previousSkipFrame && !wait)
+                    m_skipFrame = false;
+            } else
+                sourceScript->stop(true, true);
         } else {
-            m_runningScripts.push_back(script->start());
+            auto vm = script->start();
+            m_runningScripts.push_back(vm);
+            m_runningBroadcastMap[index].push_back({ sourceScript, vm.get() });
         }
     }
 }
@@ -251,9 +286,16 @@ void Engine::run()
     }
 }
 
-bool Engine::broadcastRunning(unsigned int index)
+bool Engine::broadcastRunning(unsigned int index, VirtualMachine *sourceScript)
 {
-    return !m_broadcastMap[index].empty();
+    const auto &scripts = m_runningBroadcastMap[index];
+
+    for (const auto &pair : scripts) {
+        if (pair.first == sourceScript)
+            return true;
+    }
+
+    return false;
 }
 
 void Engine::breakFrame()
@@ -377,8 +419,13 @@ void libscratchcpp::Engine::addBroadcastScript(std::shared_ptr<Block> whenReceiv
     if (m_broadcastMap.count(id) == 1) {
         std::vector<Script *> &scripts = m_broadcastMap[id];
         scripts.push_back(m_scripts[whenReceivedBlock].get());
-    } else
+    } else {
         m_broadcastMap[id] = { m_scripts[whenReceivedBlock].get() };
+
+        // Create a vector of running scripts for this broadcast
+        // so we don't need to check if it's there
+        m_runningBroadcastMap[id] = {};
+    }
 }
 
 const std::vector<std::shared_ptr<Target>> &Engine::targets() const
