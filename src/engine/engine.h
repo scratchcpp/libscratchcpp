@@ -30,15 +30,18 @@ class Engine : public IEngine
         void start() override;
         void stop() override;
         void startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target) override;
-        void broadcast(unsigned int index, VirtualMachine *sourceScript) override;
+        void broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait = false) override;
         void stopScript(VirtualMachine *vm) override;
         void stopTarget(Target *target, VirtualMachine *exceptScript) override;
         void run() override;
 
-        bool broadcastRunning(unsigned int index) override;
+        bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) override;
 
         void breakFrame() override;
         bool breakingCurrentFrame() override;
+
+        void skipFrame() override;
+        void lockFrame() override;
 
         void registerSection(std::shared_ptr<IBlockSection> section) override;
         unsigned int functionIndex(BlockFunc f) override;
@@ -81,6 +84,7 @@ class Engine : public IEngine
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<unsigned int, std::vector<Script *>> m_broadcastMap;
+        std::unordered_map<unsigned int, std::vector<std::pair<VirtualMachine *, VirtualMachine *>>> m_runningBroadcastMap; // source script, "when received" script
         std::vector<std::string> m_extensions;
         std::vector<std::shared_ptr<VirtualMachine>> m_runningScripts;
         std::vector<VirtualMachine *> m_scriptsToRemove;
@@ -88,6 +92,8 @@ class Engine : public IEngine
         std::vector<BlockFunc> m_functions;
 
         bool m_breakFrame = false;
+        bool m_skipFrame = false;
+        bool m_lockFrame = false;
 };
 
 } // namespace libscratchcpp

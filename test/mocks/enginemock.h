@@ -18,15 +18,18 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, start, (), (override));
         MOCK_METHOD(void, stop, (), (override));
         MOCK_METHOD(void, startScript, (std::shared_ptr<Block>, std::shared_ptr<Target>), (override));
-        MOCK_METHOD(void, broadcast, (unsigned int, VirtualMachine *), (override));
+        MOCK_METHOD(void, broadcast, (unsigned int, VirtualMachine *, bool), (override));
         MOCK_METHOD(void, stopScript, (VirtualMachine *), (override));
         MOCK_METHOD(void, stopTarget, (Target *, VirtualMachine *), (override));
         MOCK_METHOD(void, run, (), (override));
 
-        MOCK_METHOD(bool, broadcastRunning, (unsigned int), (override));
+        MOCK_METHOD(bool, broadcastRunning, (unsigned int, VirtualMachine *), (override));
 
         MOCK_METHOD(void, breakFrame, (), (override));
         MOCK_METHOD(bool, breakingCurrentFrame, (), (override));
+
+        MOCK_METHOD(void, skipFrame, (), (override));
+        MOCK_METHOD(void, lockFrame, (), (override));
 
         MOCK_METHOD(void, registerSection, (std::shared_ptr<IBlockSection>), (override));
         MOCK_METHOD(unsigned int, functionIndex, (BlockFunc), (override));

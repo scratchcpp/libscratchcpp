@@ -58,7 +58,7 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target) = 0;
 
         /*! Starts the script of the broadcast with the given index. */
-        virtual void broadcast(unsigned int index, VirtualMachine *sourceScript) = 0;
+        virtual void broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait = false) = 0;
 
         /*! Stops the given script. */
         virtual void stopScript(VirtualMachine *vm) = 0;
@@ -79,7 +79,7 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void run() = 0;
 
         /*! Returns true if there are any running script of the broadcast with the given index. */
-        virtual bool broadcastRunning(unsigned int index) = 0;
+        virtual bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) = 0;
 
         /*!
          * Call this from a block implementation to force a "screen refresh".
@@ -89,6 +89,16 @@ class LIBSCRATCHCPP_EXPORT IEngine
 
         /*! Returns true if breakFrame() was called. */
         virtual bool breakingCurrentFrame() = 0;
+
+        /*!
+         * Call this from a block implementation to skip a frame and run the next frame immediately.\n
+         * The screen will be refreshed according to the frame rate.
+         * \note This also works in "run without screen refresh" custom blocks.
+         */
+        virtual void skipFrame() = 0;
+
+        /*! Call this from a block implementation to ignore calls to skipFrame() until the current frame ends. */
+        virtual void lockFrame() = 0;
 
         /*!
          * Registers the given block section.

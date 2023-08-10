@@ -48,11 +48,11 @@ void EventBlocks::compileBroadcastAndWait(Compiler *compiler)
     compiler->addInput(input);
     if (input->type() != Input::Type::ObscuredShadow) {
         input->primaryValue()->setValue(compiler->engine()->findBroadcast(input->primaryValue()->value().toString()));
-        compiler->addFunctionCall(&broadcastByIndex);
+        compiler->addFunctionCall(&broadcastByIndexAndWait);
         compiler->addInput(input);
         compiler->addFunctionCall(&checkBroadcastByIndex);
     } else {
-        compiler->addFunctionCall(&broadcast);
+        compiler->addFunctionCall(&broadcastAndWait);
         compiler->addInput(input);
         compiler->addFunctionCall(&checkBroadcast);
     }
@@ -77,16 +77,28 @@ unsigned int EventBlocks::broadcastByIndex(VirtualMachine *vm)
     return 1;
 }
 
+unsigned int EventBlocks::broadcastAndWait(VirtualMachine *vm)
+{
+    vm->engine()->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()), vm, true);
+    return 1;
+}
+
+unsigned int EventBlocks::broadcastByIndexAndWait(VirtualMachine *vm)
+{
+    vm->engine()->broadcast(vm->getInput(0, 1)->toLong(), vm, true);
+    return 1;
+}
+
 unsigned int EventBlocks::checkBroadcast(VirtualMachine *vm)
 {
-    if (vm->engine()->broadcastRunning(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString())))
+    if (vm->engine()->broadcastRunning(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()), vm))
         vm->stop(true, true, true);
     return 1;
 }
 
 unsigned int EventBlocks::checkBroadcastByIndex(VirtualMachine *vm)
 {
-    if (vm->engine()->broadcastRunning(vm->getInput(0, 1)->toLong()))
+    if (vm->engine()->broadcastRunning(vm->getInput(0, 1)->toLong(), vm))
         vm->stop(true, true, true);
     return 1;
 }
