@@ -97,6 +97,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
          */
         virtual void skipFrame() = 0;
 
+        /*! Call this from a block implementation to ignore calls to skipFrame() until the current frame ends. */
+        virtual void lockFrame() = 0;
+
         /*!
          * Registers the given block section.
          * \see <a href="blockSections.html">Block sections</a>

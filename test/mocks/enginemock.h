@@ -29,6 +29,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(bool, breakingCurrentFrame, (), (override));
 
         MOCK_METHOD(void, skipFrame, (), (override));
+        MOCK_METHOD(void, lockFrame, (), (override));
 
         MOCK_METHOD(void, registerSection, (std::shared_ptr<IBlockSection>), (override));
         MOCK_METHOD(unsigned int, functionIndex, (BlockFunc), (override));

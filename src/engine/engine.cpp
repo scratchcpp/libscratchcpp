@@ -119,6 +119,8 @@ void Engine::compile()
 
 void Engine::frame()
 {
+    m_lockFrame = false;
+
     for (int i = 0; i < m_runningScripts.size(); i++) {
         auto script = m_runningScripts[i];
         m_breakFrame = false;
@@ -310,8 +312,16 @@ bool libscratchcpp::Engine::breakingCurrentFrame()
 
 void Engine::skipFrame()
 {
-    breakFrame();
-    m_skipFrame = true;
+    if (!m_lockFrame) {
+        breakFrame();
+        m_skipFrame = true;
+    }
+}
+
+void Engine::lockFrame()
+{
+    m_skipFrame = false;
+    m_lockFrame = true;
 }
 
 void Engine::registerSection(std::shared_ptr<IBlockSection> section)

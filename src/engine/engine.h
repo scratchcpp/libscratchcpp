@@ -41,6 +41,7 @@ class Engine : public IEngine
         bool breakingCurrentFrame() override;
 
         void skipFrame() override;
+        void lockFrame() override;
 
         void registerSection(std::shared_ptr<IBlockSection> section) override;
         unsigned int functionIndex(BlockFunc f) override;
@@ -92,6 +93,7 @@ class Engine : public IEngine
 
         bool m_breakFrame = false;
         bool m_skipFrame = false;
+        bool m_lockFrame = false;
 };
 
 } // namespace libscratchcpp
