@@ -48,6 +48,57 @@ TEST_F(CompilerTest, Constructors)
     ASSERT_EQ(compiler.engine(), &engine);
 }
 
+TEST_F(CompilerTest, Block)
+{
+    Engine engine;
+    Compiler compiler(&engine);
+    ASSERT_EQ(compiler.block(), nullptr);
+    auto block = std::make_shared<Block>("", "");
+    compiler.setBlock(block);
+    ASSERT_EQ(compiler.block(), block);
+}
+
+TEST_F(CompilerTest, Init)
+{
+    Engine engine;
+    Compiler compiler(&engine);
+    ASSERT_TRUE(compiler.bytecode().empty());
+
+    BlockPrototype prototype;
+    compiler.setProcedurePrototype(&prototype);
+    compiler.init();
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START }));
+    ASSERT_EQ(compiler.procedurePrototype(), nullptr);
+
+    compiler.setProcedurePrototype(&prototype);
+    compiler.init();
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START }));
+    ASSERT_EQ(compiler.procedurePrototype(), &prototype);
+}
+
+TEST_F(CompilerTest, End)
+{
+    Engine engine;
+    Compiler compiler(&engine);
+    ASSERT_TRUE(compiler.bytecode().empty());
+
+    compiler.end();
+    ASSERT_TRUE(compiler.bytecode().empty());
+
+    compiler.init();
+    compiler.end();
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
+    compiler.end();
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
+
+    compiler.init();
+    compiler.init();
+    compiler.end();
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
+
+    compiler.init();
+}
+
 TEST_F(CompilerTest, ConstValues)
 {
     InputValue v1;

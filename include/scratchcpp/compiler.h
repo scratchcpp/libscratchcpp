@@ -37,7 +37,9 @@ class LIBSCRATCHCPP_EXPORT Compiler
         Compiler(IEngine *engine);
         Compiler(const Compiler &) = delete;
 
+        void init();
         void compile(std::shared_ptr<Block> topLevelBlock);
+        void end();
 
         const std::vector<unsigned int> &bytecode() const;
 
@@ -73,6 +75,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         const std::vector<std::string> &procedures() const;
 
         const std::shared_ptr<Block> &block() const;
+        void setBlock(std::shared_ptr<Block> block);
 
         BlockPrototype *procedurePrototype() const;
         void setProcedurePrototype(BlockPrototype *prototype);

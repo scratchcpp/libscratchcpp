@@ -19,6 +19,8 @@ struct CompilerPrivate
         std::shared_ptr<Block> block;
         std::vector<std::pair<std::pair<std::shared_ptr<Block>, std::shared_ptr<Block>>, Compiler::SubstackType>> substackTree;
 
+        bool initialized = false;
+
         std::vector<unsigned int> bytecode;
         std::vector<InputValue *> constValues;
         std::vector<Variable *> variables;
