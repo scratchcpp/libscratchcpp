@@ -76,7 +76,6 @@ class OperatorBlocks : public IBlockSection
         static void compileRound(Compiler *compiler);
         static void compileMathOp(Compiler *compiler);
 
-    private:
         static unsigned int op_ln(VirtualMachine *vm);
         static unsigned int op_log(VirtualMachine *vm);
         static unsigned int op_eexp(VirtualMachine *vm);
