@@ -45,3 +45,19 @@ target_link_libraries(
 )
 
 gtest_discover_tests(operator_blocks_test)
+
+# event_blocks_test
+add_executable(
+  event_blocks_test
+  event_blocks_test.cpp
+)
+
+target_link_libraries(
+  event_blocks_test
+  GTest::gtest_main
+  GTest::gmock_main
+  scratchcpp
+  scratchcpp_mocks
+)
+
+gtest_discover_tests(event_blocks_test)
