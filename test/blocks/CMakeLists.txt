@@ -29,3 +29,19 @@ target_link_libraries(
 )
 
 gtest_discover_tests(list_blocks_test)
+
+# operator_blocks_test
+add_executable(
+  operator_blocks_test
+  operator_blocks_test.cpp
+)
+
+target_link_libraries(
+  operator_blocks_test
+  GTest::gtest_main
+  GTest::gmock_main
+  scratchcpp
+  scratchcpp_mocks
+)
+
+gtest_discover_tests(operator_blocks_test)
