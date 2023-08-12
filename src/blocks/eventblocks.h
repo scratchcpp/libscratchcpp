@@ -32,7 +32,6 @@ class EventBlocks : public IBlockSection
         static void compileBroadcastAndWait(Compiler *compiler);
         static void compileWhenBroadcastReceived(Compiler *compiler);
 
-    private:
         static unsigned int broadcast(VirtualMachine *vm);
         static unsigned int broadcastByIndex(VirtualMachine *vm);
         static unsigned int broadcastAndWait(VirtualMachine *vm);
