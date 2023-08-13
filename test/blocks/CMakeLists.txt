@@ -77,3 +77,19 @@ target_link_libraries(
 )
 
 gtest_discover_tests(control_blocks_test)
+
+# custom_blocks_test
+add_executable(
+  custom_blocks_test
+  custom_blocks_test.cpp
+)
+
+target_link_libraries(
+  custom_blocks_test
+  GTest::gtest_main
+  GTest::gmock_main
+  scratchcpp
+  scratchcpp_mocks
+)
+
+gtest_discover_tests(custom_blocks_test)
