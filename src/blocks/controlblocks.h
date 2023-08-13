@@ -54,7 +54,6 @@ class ControlBlocks : public IBlockSection
         static void compileWait(Compiler *compiler);
         static void compileWaitUntil(Compiler *compiler);
 
-    private:
         static unsigned int stopAll(VirtualMachine *vm);
         static unsigned int stopOtherScriptsInSprite(VirtualMachine *vm);
         static unsigned int startWait(VirtualMachine *vm);

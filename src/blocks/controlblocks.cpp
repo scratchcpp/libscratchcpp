@@ -7,8 +7,7 @@
 
 #include "controlblocks.h"
 
-namespace libscratchcpp
-{
+using namespace libscratchcpp;
 
 std::string ControlBlocks::name() const
 {
@@ -197,5 +196,3 @@ unsigned int ControlBlocks::waitUntil(VirtualMachine *vm)
     }
     return 1;
 }
-
-} // namespace libscratchcpp
