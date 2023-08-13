@@ -10,6 +10,8 @@
 
 using namespace libscratchcpp;
 
+using ::testing::Return;
+
 class OperatorBlocksTest : public testing::Test
 {
     public:
@@ -633,7 +635,7 @@ TEST_F(OperatorBlocksTest, Round)
 
 TEST_F(OperatorBlocksTest, MathOp)
 {
-    Compiler compiler(&m_engine);
+    Compiler compiler(&m_engineMock);
     std::vector<std::shared_ptr<Block>> blocks;
     std::shared_ptr<Block> block;
 
@@ -725,6 +727,24 @@ TEST_F(OperatorBlocksTest, MathOp)
 
     for (auto block : blocks) {
         compiler.setBlock(block);
+
+        switch (block->fieldAt(0)->specialValueId()) {
+            case OperatorBlocks::Ln:
+                EXPECT_CALL(m_engineMock, functionIndex(&OperatorBlocks::op_ln)).WillOnce(Return(0));
+                break;
+            case OperatorBlocks::Log:
+                EXPECT_CALL(m_engineMock, functionIndex(&OperatorBlocks::op_log)).WillOnce(Return(1));
+                break;
+            case OperatorBlocks::Eexp:
+                EXPECT_CALL(m_engineMock, functionIndex(&OperatorBlocks::op_eexp)).WillOnce(Return(2));
+                break;
+            case OperatorBlocks::Op_10exp:
+                EXPECT_CALL(m_engineMock, functionIndex(&OperatorBlocks::op_10exp)).WillOnce(Return(3));
+                break;
+            default:
+                break;
+        }
+
         OperatorBlocks::compileMathOp(&compiler);
     }
 
