@@ -25,3 +25,17 @@ target_link_libraries(
 )
 
 gtest_discover_tests(costume_test)
+
+# sound_test
+add_executable(
+  sound_test
+  sound_test.cpp
+)
+
+target_link_libraries(
+  sound_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(sound_test)
