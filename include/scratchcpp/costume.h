@@ -15,7 +15,7 @@ class CostumePrivate;
 class LIBSCRATCHCPP_EXPORT Costume : public Asset
 {
     public:
-        Costume(std::string name, std::string id, std::string format);
+        Costume(const std::string &name, const std::string &id, const std::string &format);
 
         double bitmapResolution() const;
         void setBitmapResolution(double newBitmapResolution);
