@@ -16,7 +16,7 @@ class AssetPrivate;
 class LIBSCRATCHCPP_EXPORT Asset
 {
     public:
-        Asset(std::string name, std::string id, std::string format);
+        Asset(const std::string &name, const std::string &id, const std::string &format);
 
         const std::string &assetId() const;
 

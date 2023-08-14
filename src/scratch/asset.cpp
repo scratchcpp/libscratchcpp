@@ -7,7 +7,7 @@
 using namespace libscratchcpp;
 
 /*! Constructs Asset. */
-Asset::Asset(std::string name, std::string id, std::string format) :
+Asset::Asset(const std::string &name, const std::string &id, const std::string &format) :
     impl(spimpl::make_impl<AssetPrivate>(name, id, format))
 {
 }
