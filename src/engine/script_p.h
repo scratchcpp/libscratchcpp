@@ -19,16 +19,16 @@ struct ScriptPrivate
         ScriptPrivate(Target *target, IEngine *engine);
         ScriptPrivate(const ScriptPrivate &) = delete;
 
-        unsigned int *bytecode;
+        unsigned int *bytecode = nullptr;
         std::vector<unsigned int> bytecodeVector;
 
-        Target *target;
-        IEngine *engine;
+        Target *target = nullptr;
+        IEngine *engine = nullptr;
 
         unsigned int **procedures = nullptr;
         std::vector<unsigned int *> proceduresVector;
 
-        BlockFunc *functions;
+        BlockFunc *functions = nullptr;
         std::vector<BlockFunc> functionsVector;
 
         const Value *constValues = nullptr;
