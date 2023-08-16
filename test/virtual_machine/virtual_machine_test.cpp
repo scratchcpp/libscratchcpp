@@ -25,6 +25,17 @@ TEST(VirtualMachineTest, Constructors)
     ASSERT_EQ(vm2.script(), &script);
 }
 
+TEST(VirtualMachineTest, Procedures)
+{
+    static unsigned int procedure[] = { OP_START, OP_HALT };
+    static unsigned int *procedures[] = { procedure };
+
+    VirtualMachine vm;
+    ASSERT_EQ(vm.procedures(), nullptr);
+    vm.setProcedures(procedures);
+    ASSERT_EQ(vm.procedures(), procedures);
+}
+
 TEST(VirtualMachineTest, ConstValues)
 {
     static Value constValues[] = { "test1", "test2" };
@@ -33,6 +44,28 @@ TEST(VirtualMachineTest, ConstValues)
     ASSERT_EQ(vm.constValues(), nullptr);
     vm.setConstValues(constValues);
     ASSERT_EQ(vm.constValues(), constValues);
+}
+
+TEST(VirtualMachineTest, Variables)
+{
+    Value var;
+    Value *variables[] = { &var };
+
+    VirtualMachine vm;
+    ASSERT_EQ(vm.variables(), nullptr);
+    vm.setVariables(variables);
+    ASSERT_EQ(vm.variables(), variables);
+}
+
+TEST(VirtualMachineTest, Lists)
+{
+    List list("", "");
+    List *lists[] = { &list };
+
+    VirtualMachine vm;
+    ASSERT_EQ(vm.lists(), nullptr);
+    vm.setLists(lists);
+    ASSERT_EQ(vm.lists(), lists);
 }
 
 TEST(VirtualMachineTest, Bytecode)
@@ -1240,7 +1273,17 @@ TEST(VirtualMachineTest, OP_EXEC)
     }
 }
 
-TEST(VirtualMachineTest, Procedures)
+TEST(VirtualMachineTest, Functions)
+{
+    static BlockFunc functions[] = { &testFunction1, &testFunction2 };
+
+    VirtualMachine vm;
+    ASSERT_EQ(vm.functions(), nullptr);
+    vm.setFunctions(functions);
+    ASSERT_EQ(vm.functions(), functions);
+}
+
+TEST(VirtualMachineTest, RunProcedures)
 {
     static unsigned int bytecode[] = {
         OP_START, OP_INIT_PROCEDURE, OP_CONST, 0, OP_ADD_ARG, OP_CONST, 1, OP_ADD_ARG, OP_CALL_PROCEDURE, 0, OP_NULL, OP_EXEC, 0, OP_INIT_PROCEDURE, OP_CALL_PROCEDURE, 1, OP_HALT
