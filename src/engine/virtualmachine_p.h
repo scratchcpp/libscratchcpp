@@ -56,7 +56,7 @@ struct VirtualMachinePrivate
         bool updatePos = false;
 
         unsigned int **procedures = nullptr;
-        BlockFunc *functions;
+        BlockFunc *functions = nullptr;
         const Value *constValues = nullptr;
         Value **variables = nullptr;
         List **lists = nullptr;
