@@ -57,10 +57,34 @@ void VirtualMachine::setBytecode(unsigned int *code)
     impl->pos = code;
 }
 
+/*! Returns the array of procedures. */
+unsigned int **VirtualMachine::procedures() const
+{
+    return impl->procedures;
+}
+
+/*! Returns the array of functions (block implementation function pointers). */
+const BlockFunc *VirtualMachine::functions() const
+{
+    return impl->functions;
+}
+
 /*! Returns the array of constant values. */
 const Value *VirtualMachine::constValues() const
 {
     return impl->constValues;
+}
+
+/*! Returns the array of Value pointers of variables. */
+Value **VirtualMachine::variables() const
+{
+    return impl->variables;
+}
+
+/*! Returns the array of lists. */
+List **VirtualMachine::lists() const
+{
+    return impl->lists;
 }
 
 /*! Returns the bytecode array. */

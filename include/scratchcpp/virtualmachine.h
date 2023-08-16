@@ -105,7 +105,11 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
 
         void setBytecode(unsigned int *code);
 
+        unsigned int **procedures() const;
+        const BlockFunc *functions() const;
         const Value *constValues() const;
+        Value **variables() const;
+        List **lists() const;
 
         unsigned int *bytecode() const;
 
