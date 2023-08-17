@@ -17,7 +17,7 @@ TEST(InputValueTest, Constructors)
     ASSERT_EQ(value2.type(), InputValue::Type::String);
 }
 
-TEST(InputTest, Type)
+TEST(InputValueTest, Type)
 {
     InputValue value;
 
@@ -25,7 +25,7 @@ TEST(InputTest, Type)
     ASSERT_EQ(value.type(), InputValue::Type::Color);
 }
 
-TEST(InputTest, Value)
+TEST(InputValueTest, Value)
 {
     InputValue value;
     ASSERT_EQ(value.value(), Value());
@@ -34,7 +34,7 @@ TEST(InputTest, Value)
     ASSERT_EQ(value.value().toString(), "test");
 }
 
-TEST(InputTest, ValueBlock)
+TEST(InputValueTest, ValueBlock)
 {
     InputValue value;
     ASSERT_EQ(value.valueBlock(), nullptr);
@@ -54,7 +54,7 @@ TEST(InputTest, ValueBlock)
     ASSERT_EQ(value.valueBlock(), nullptr);
 }
 
-TEST(InputTest, ValuePtr)
+TEST(InputValueTest, ValuePtr)
 {
     InputValue value1;
     ASSERT_EQ(value1.valuePtr(), nullptr);
