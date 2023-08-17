@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/field.h>
+#include <scratchcpp/entity.h>
 
 #include "field_p.h"
 
@@ -58,6 +59,11 @@ std::shared_ptr<Entity> Field::valuePtr() const
 void Field::setValuePtr(const std::shared_ptr<Entity> &newValuePtr)
 {
     impl->valuePtr = newValuePtr;
+
+    if (newValuePtr)
+        impl->valueId = newValuePtr->id();
+    else
+        impl->valueId = "";
 }
 
 /*! Returns the ID of the value (e. g. a variable). */
