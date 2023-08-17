@@ -137,3 +137,17 @@ target_link_libraries(
 )
 
 gtest_discover_tests(inputvalue_test)
+
+# field_test
+add_executable(
+  field_test
+  field_test.cpp
+)
+
+target_link_libraries(
+  field_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(field_test)
