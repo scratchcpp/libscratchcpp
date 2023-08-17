@@ -33,10 +33,6 @@ void InputValue::compile(Compiler *compiler)
             // TODO: Add support for colors
             break;
 
-        case Type::Broadcast:
-            // TODO: Add support for broadcasts
-            break;
-
         case Type::Variable:
             compiler->addInstruction(vm::OP_READ_VAR, { compiler->variableIndex(impl->valuePtr) });
             break;
