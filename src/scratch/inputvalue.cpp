@@ -7,6 +7,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <map>
+#include <iostream>
 
 #include "inputvalue_p.h"
 
@@ -117,6 +118,7 @@ void InputValue::setValuePtr(const std::shared_ptr<Entity> &newValuePtr)
     else {
         impl->valuePtr = nullptr;
         impl->valueId = "";
+        std::cout << "warning: unsupported input value type (use InputValue::setValueBlock() to set the block)" << std::endl;
         return;
     }
 
