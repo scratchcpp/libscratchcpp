@@ -91,6 +91,6 @@ void Input::setValueBlock(std::shared_ptr<Block> block)
 /*! Sets the ID of the value block. \see setValueBlock() */
 void Input::setValueBlockId(const std::string &id)
 {
-    impl->primaryValue.setValueBlockId(id);
     impl->primaryValue.setValueBlock(nullptr);
+    impl->primaryValue.setValueBlockId(id);
 }
