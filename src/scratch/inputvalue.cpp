@@ -2,7 +2,7 @@
 
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/compiler.h>
-#include <scratchcpp/entity.h>
+#include <scratchcpp/block.h>
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
@@ -86,6 +86,11 @@ const std::shared_ptr<Block> &InputValue::valueBlock() const
 void InputValue::setValueBlock(const std::shared_ptr<Block> &newValueBlock)
 {
     impl->valueBlock = newValueBlock;
+
+    if (newValueBlock)
+        impl->valueBlockId = newValueBlock->id();
+    else
+        impl->valueBlockId = "";
 }
 
 /*! Returns the ID of the block. \see valueBlock() */
@@ -98,6 +103,7 @@ const std::string &InputValue::valueBlockId() const
 void InputValue::setValueBlockId(const std::string &newValueBlockId)
 {
     impl->valueBlockId = newValueBlockId;
+    impl->valueBlock = nullptr;
 }
 
 /*! Returns a pointer to the value (e. g. a variable). */
