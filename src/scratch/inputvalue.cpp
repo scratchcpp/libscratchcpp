@@ -116,10 +116,12 @@ void InputValue::setValuePtr(const std::shared_ptr<Entity> &newValuePtr)
         setType(Type::List);
     else {
         impl->valuePtr = nullptr;
+        impl->valueId = "";
         return;
     }
 
     impl->valuePtr = newValuePtr;
+    impl->valueId = newValuePtr->id();
 }
 
 /*! Returns the ID of the value. */
