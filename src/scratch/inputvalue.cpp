@@ -3,6 +3,9 @@
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/entity.h>
+#include <scratchcpp/broadcast.h>
+#include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
 #include <map>
 
 #include "inputvalue_p.h"
@@ -105,6 +108,17 @@ std::shared_ptr<Entity> InputValue::valuePtr() const
 /*! Sets the value pointer. */
 void InputValue::setValuePtr(const std::shared_ptr<Entity> &newValuePtr)
 {
+    if (std::dynamic_pointer_cast<Broadcast>(newValuePtr))
+        setType(Type::Broadcast);
+    else if (std::dynamic_pointer_cast<Variable>(newValuePtr))
+        setType(Type::Variable);
+    else if (std::dynamic_pointer_cast<List>(newValuePtr))
+        setType(Type::List);
+    else {
+        impl->valuePtr = nullptr;
+        return;
+    }
+
     impl->valuePtr = newValuePtr;
 }
 
