@@ -58,4 +58,9 @@ TEST(InputTest, ValueBlock)
     input.setValueBlockId("hello");
     ASSERT_EQ(input.valueBlockId(), "hello");
     ASSERT_EQ(input.valueBlock(), nullptr);
+
+    input.setValueBlock(block);
+    input.setValueBlock(nullptr);
+    ASSERT_EQ(input.valueBlock(), nullptr);
+    ASSERT_EQ(input.valueBlockId(), "");
 }
