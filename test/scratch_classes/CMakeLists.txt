@@ -153,3 +153,19 @@ target_link_libraries(
 )
 
 gtest_discover_tests(field_test)
+
+# block_test
+add_executable(
+  block_test
+  block_test.cpp
+)
+
+target_link_libraries(
+  block_test
+  GTest::gtest_main
+  GTest::gmock_main
+  scratchcpp
+  scratchcpp_mocks
+)
+
+gtest_discover_tests(block_test)
