@@ -18,7 +18,8 @@ Block::Block(const std::string &id, const std::string &opcode) :
 /*! Calls the compile function. */
 void Block::compile(Compiler *compiler)
 {
-    return impl->compileFunction(compiler);
+    if (impl->compileFunction)
+        return impl->compileFunction(compiler);
 }
 
 /*! Returns the opcode. */
