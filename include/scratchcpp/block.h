@@ -53,11 +53,12 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
         void setShadow(bool newShadow);
 
         bool topLevel() const;
-        void setTopLevel(bool newTopLevel);
 
         void setEngine(IEngine *newEngine);
+        IEngine *engine() const;
 
         void setTarget(Target *newTarget);
+        Target *target() const;
 
         BlockComp compileFunction() const;
         void setCompileFunction(BlockComp newCompileFunction);

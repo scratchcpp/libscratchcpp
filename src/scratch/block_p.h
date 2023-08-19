@@ -29,7 +29,6 @@ struct BlockPrivate
         std::vector<std::shared_ptr<Field>> fields;
         std::unordered_map<int, Field *> fieldMap;
         bool shadow = false;
-        bool topLevel = false;
         IEngine *engine = nullptr;
         Target *target = nullptr;
         BlockPrototype mutationPrototype;

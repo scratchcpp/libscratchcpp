@@ -18,7 +18,8 @@ Block::Block(const std::string &id, const std::string &opcode) :
 /*! Calls the compile function. */
 void Block::compile(Compiler *compiler)
 {
-    return impl->compileFunction(compiler);
+    if (impl->compileFunction)
+        return impl->compileFunction(compiler);
 }
 
 /*! Returns the opcode. */
@@ -66,16 +67,18 @@ std::shared_ptr<Block> Block::next() const
 /*! Returns the ID of the next block. */
 std::string Block::nextId() const
 {
-    if (impl->next)
-        return impl->next->id();
-    else
-        return impl->nextId;
+    return impl->nextId;
 }
 
 /*! Sets the next block. */
 void Block::setNext(std::shared_ptr<Block> block)
 {
     impl->next = block;
+
+    if (block)
+        impl->nextId = block->id();
+    else
+        impl->nextId = "";
 }
 
 /*! Sets the next block by ID. */
@@ -94,16 +97,18 @@ std::shared_ptr<Block> Block::parent() const
 /*! Returns the ID of the parent block. */
 std::string Block::parentId() const
 {
-    if (impl->parent)
-        return impl->parent->id();
-    else
-        return impl->parentId;
+    return impl->parentId;
 }
 
 /*! Sets the parent block. */
 void Block::setParent(std::shared_ptr<Block> block)
 {
     impl->parent = block;
+
+    if (block)
+        impl->parentId = block->id();
+    else
+        impl->parentId = "";
 }
 
 /*! Sets the parent block by ID. */
@@ -122,6 +127,11 @@ std::vector<std::shared_ptr<Input>> Block::inputs() const
 /*! Adds an input and returns its index. */
 int Block::addInput(std::shared_ptr<Input> input)
 {
+    auto it = std::find(impl->inputs.begin(), impl->inputs.end(), input);
+
+    if (it != impl->inputs.end())
+        return it - impl->inputs.begin();
+
     impl->inputs.push_back(input);
     return impl->inputs.size() - 1;
 }
@@ -129,6 +139,9 @@ int Block::addInput(std::shared_ptr<Input> input)
 /*! Returns the input at index. */
 std::shared_ptr<Input> Block::inputAt(int index) const
 {
+    if (index < 0 || index >= impl->inputs.size())
+        return nullptr;
+
     return impl->inputs[index];
 }
 
@@ -169,6 +182,11 @@ std::vector<std::shared_ptr<Field>> Block::fields() const
 /*! Adds a field and returns its index. */
 int Block::addField(std::shared_ptr<Field> field)
 {
+    auto it = std::find(impl->fields.begin(), impl->fields.end(), field);
+
+    if (it != impl->fields.end())
+        return it - impl->fields.begin();
+
     impl->fields.push_back(field);
     return impl->fields.size() - 1;
 }
@@ -176,6 +194,9 @@ int Block::addField(std::shared_ptr<Field> field)
 /*! Returns the field at index. */
 std::shared_ptr<Field> Block::fieldAt(int index) const
 {
+    if (index < 0 || index >= impl->fields.size())
+        return nullptr;
+
     return impl->fields[index];
 }
 
@@ -222,15 +243,7 @@ void Block::setShadow(bool newShadow)
 /*! Returns true if this is a top level block. */
 bool Block::topLevel() const
 {
-    // TODO: Return true if parentId() == ""
-    // and remove the setter
-    return impl->topLevel;
-}
-
-/*! Toggles whether this block is a top level block. */
-void Block::setTopLevel(bool newTopLevel)
-{
-    impl->topLevel = newTopLevel;
+    return (impl->parentId == "" && !impl->parent);
 }
 
 /*! Sets the Engine. */
@@ -239,8 +252,20 @@ void Block::setEngine(IEngine *newEngine)
     impl->engine = newEngine;
 }
 
+/*! Returns the Engine. */
+IEngine *Block::engine() const
+{
+    return impl->engine;
+}
+
 /*! Sets the Target. */
 void Block::setTarget(Target *newTarget)
 {
     impl->target = newTarget;
+}
+
+/*! Returns the Target. */
+Target *Block::target() const
+{
+    return impl->target;
 }
