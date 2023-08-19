@@ -66,16 +66,18 @@ std::shared_ptr<Block> Block::next() const
 /*! Returns the ID of the next block. */
 std::string Block::nextId() const
 {
-    if (impl->next)
-        return impl->next->id();
-    else
-        return impl->nextId;
+    return impl->nextId;
 }
 
 /*! Sets the next block. */
 void Block::setNext(std::shared_ptr<Block> block)
 {
     impl->next = block;
+
+    if (block)
+        impl->nextId = block->id();
+    else
+        impl->nextId = "";
 }
 
 /*! Sets the next block by ID. */
@@ -94,16 +96,18 @@ std::shared_ptr<Block> Block::parent() const
 /*! Returns the ID of the parent block. */
 std::string Block::parentId() const
 {
-    if (impl->parent)
-        return impl->parent->id();
-    else
-        return impl->parentId;
+    return impl->parentId;
 }
 
 /*! Sets the parent block. */
 void Block::setParent(std::shared_ptr<Block> block)
 {
     impl->parent = block;
+
+    if (block)
+        impl->parentId = block->id();
+    else
+        impl->parentId = "";
 }
 
 /*! Sets the parent block by ID. */
