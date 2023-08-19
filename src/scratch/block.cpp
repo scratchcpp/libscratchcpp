@@ -251,8 +251,20 @@ void Block::setEngine(IEngine *newEngine)
     impl->engine = newEngine;
 }
 
+/*! Returns the Engine. */
+IEngine *Block::engine() const
+{
+    return impl->engine;
+}
+
 /*! Sets the Target. */
 void Block::setTarget(Target *newTarget)
 {
     impl->target = newTarget;
+}
+
+/*! Returns the Target. */
+Target *Block::target() const
+{
+    return impl->target;
 }
