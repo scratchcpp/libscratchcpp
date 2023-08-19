@@ -138,6 +138,9 @@ int Block::addInput(std::shared_ptr<Input> input)
 /*! Returns the input at index. */
 std::shared_ptr<Input> Block::inputAt(int index) const
 {
+    if (index < 0 || index >= impl->inputs.size())
+        return nullptr;
+
     return impl->inputs[index];
 }
 
@@ -190,6 +193,9 @@ int Block::addField(std::shared_ptr<Field> field)
 /*! Returns the field at index. */
 std::shared_ptr<Field> Block::fieldAt(int index) const
 {
+    if (index < 0 || index >= impl->fields.size())
+        return nullptr;
+
     return impl->fields[index];
 }
 
