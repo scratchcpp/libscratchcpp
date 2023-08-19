@@ -126,6 +126,11 @@ std::vector<std::shared_ptr<Input>> Block::inputs() const
 /*! Adds an input and returns its index. */
 int Block::addInput(std::shared_ptr<Input> input)
 {
+    auto it = std::find(impl->inputs.begin(), impl->inputs.end(), input);
+
+    if (it != impl->inputs.end())
+        return it - impl->inputs.begin();
+
     impl->inputs.push_back(input);
     return impl->inputs.size() - 1;
 }
@@ -173,6 +178,11 @@ std::vector<std::shared_ptr<Field>> Block::fields() const
 /*! Adds a field and returns its index. */
 int Block::addField(std::shared_ptr<Field> field)
 {
+    auto it = std::find(impl->fields.begin(), impl->fields.end(), field);
+
+    if (it != impl->fields.end())
+        return it - impl->fields.begin();
+
     impl->fields.push_back(field);
     return impl->fields.size() - 1;
 }
