@@ -177,10 +177,6 @@ bool Scratch3Reader::load()
                 READER_STEP(step, "target -> block -> shadow");
                 block->setShadow(blockInfo["shadow"]);
 
-                // topLevel
-                READER_STEP(step, "target -> block -> topLevel");
-                block->setTopLevel(blockInfo["topLevel"]);
-
                 target->addBlock(block);
             }
 

@@ -222,15 +222,7 @@ void Block::setShadow(bool newShadow)
 /*! Returns true if this is a top level block. */
 bool Block::topLevel() const
 {
-    // TODO: Return true if parentId() == ""
-    // and remove the setter
-    return impl->topLevel;
-}
-
-/*! Toggles whether this block is a top level block. */
-void Block::setTopLevel(bool newTopLevel)
-{
-    impl->topLevel = newTopLevel;
+    return (impl->parentId == "" && !impl->parent);
 }
 
 /*! Sets the Engine. */
