@@ -48,9 +48,3 @@ void Variable::setIsCloudVariable(bool isCloudVariable)
 {
     impl->isCloudVariable = isCloudVariable;
 }
-
-/*! Adds the given value to the variable's value. \see Value::add() */
-void Variable::add(const Value &v)
-{
-    impl->value.add(v);
-}
