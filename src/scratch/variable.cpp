@@ -13,12 +13,6 @@ Variable::Variable(const std::string &id, const std::string &name, const Value &
 {
 }
 
-/*! Constructs an empty Variable. */
-Variable::Variable(const std::string &id, const std::string &name, bool isCloudVariable) :
-    Variable(id, name, Value(), isCloudVariable)
-{
-}
-
 /*! Returns the name of the variable. */
 const std::string &Variable::name() const
 {
