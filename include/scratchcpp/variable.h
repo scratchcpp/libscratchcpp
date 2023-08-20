@@ -16,7 +16,6 @@ class LIBSCRATCHCPP_EXPORT Variable : public Entity
 {
     public:
         Variable(const std::string &id, const std::string &name, const Value &value = Value(), bool isCloudVariable = false);
-        Variable(const std::string &id, const std::string &name, bool isCloudVariable);
         Variable(const Variable &) = delete;
 
         const std::string &name() const;
@@ -29,8 +28,6 @@ class LIBSCRATCHCPP_EXPORT Variable : public Entity
 
         bool isCloudVariable() const;
         void setIsCloudVariable(bool isCloudVariable);
-
-        void add(const Value &v);
 
     private:
         spimpl::unique_impl_ptr<VariablePrivate> impl;
