@@ -44,6 +44,7 @@ class Engine : public IEngine
         void lockFrame() override;
 
         void registerSection(std::shared_ptr<IBlockSection> section) override;
+        std::vector<std::shared_ptr<IBlockSection>> registeredSections() const;
         unsigned int functionIndex(BlockFunc f) override;
 
         void addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f) override;

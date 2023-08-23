@@ -337,6 +337,16 @@ void Engine::registerSection(std::shared_ptr<IBlockSection> section)
     }
 }
 
+std::vector<std::shared_ptr<IBlockSection>> Engine::registeredSections() const
+{
+    std::vector<std::shared_ptr<IBlockSection>> ret;
+
+    for (const auto &[key, value] : m_sections)
+        ret.push_back(key);
+
+    return ret;
+}
+
 unsigned int Engine::functionIndex(BlockFunc f)
 {
     auto it = std::find(m_functions.begin(), m_functions.end(), f);
