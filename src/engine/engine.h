@@ -71,6 +71,9 @@ class Engine : public IEngine
 
         const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &scripts() const override;
 
+        BlockSectionContainer *blockSectionContainer(const std::string &opcode) const;
+        BlockSectionContainer *blockSectionContainer(IBlockSection *section) const;
+
     private:
         std::shared_ptr<Block> getBlock(const std::string &id);
         std::shared_ptr<Variable> getVariable(const std::string &id);
@@ -78,8 +81,6 @@ class Engine : public IEngine
         std::shared_ptr<Broadcast> getBroadcast(const std::string &id);
         std::shared_ptr<Entity> getEntity(const std::string &id);
         std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
-        BlockSectionContainer *blockSectionContainer(const std::string &opcode) const;
-        BlockSectionContainer *blockSectionContainer(IBlockSection *section) const;
 
         std::unordered_map<std::shared_ptr<IBlockSection>, std::unique_ptr<BlockSectionContainer>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;
