@@ -193,7 +193,7 @@ void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<T
     }
 }
 
-void libscratchcpp::Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait)
+void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait)
 {
     bool previousSkipFrame = m_skipFrame;
     skipFrame();
@@ -305,7 +305,7 @@ void Engine::breakFrame()
     m_breakFrame = true;
 }
 
-bool libscratchcpp::Engine::breakingCurrentFrame()
+bool Engine::breakingCurrentFrame()
 {
     return m_breakFrame;
 }
@@ -337,6 +337,16 @@ void Engine::registerSection(std::shared_ptr<IBlockSection> section)
     }
 }
 
+std::vector<std::shared_ptr<IBlockSection>> Engine::registeredSections() const
+{
+    std::vector<std::shared_ptr<IBlockSection>> ret;
+
+    for (const auto &[key, value] : m_sections)
+        ret.push_back(key);
+
+    return ret;
+}
+
 unsigned int Engine::functionIndex(BlockFunc f)
 {
     auto it = std::find(m_functions.begin(), m_functions.end(), f);
@@ -346,7 +356,7 @@ unsigned int Engine::functionIndex(BlockFunc f)
     return m_functions.size() - 1;
 }
 
-void libscratchcpp::Engine::addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f)
+void Engine::addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f)
 {
     auto container = blockSectionContainer(section);
 
@@ -354,7 +364,7 @@ void libscratchcpp::Engine::addCompileFunction(IBlockSection *section, const std
         container->addCompileFunction(opcode, f);
 }
 
-void libscratchcpp::Engine::addHatBlock(IBlockSection *section, const std::string &opcode)
+void Engine::addHatBlock(IBlockSection *section, const std::string &opcode)
 {
     auto container = blockSectionContainer(section);
 
@@ -362,7 +372,7 @@ void libscratchcpp::Engine::addHatBlock(IBlockSection *section, const std::strin
         container->addHatBlock(opcode);
 }
 
-void libscratchcpp::Engine::addInput(IBlockSection *section, const std::string &name, int id)
+void Engine::addInput(IBlockSection *section, const std::string &name, int id)
 {
     auto container = blockSectionContainer(section);
 
@@ -370,7 +380,7 @@ void libscratchcpp::Engine::addInput(IBlockSection *section, const std::string &
         container->addInput(name, id);
 }
 
-void libscratchcpp::Engine::addField(IBlockSection *section, const std::string &name, int id)
+void Engine::addField(IBlockSection *section, const std::string &name, int id)
 {
     auto container = blockSectionContainer(section);
 
@@ -378,7 +388,7 @@ void libscratchcpp::Engine::addField(IBlockSection *section, const std::string &
         container->addField(name, id);
 }
 
-void libscratchcpp::Engine::addFieldValue(IBlockSection *section, const std::string &value, int id)
+void Engine::addFieldValue(IBlockSection *section, const std::string &value, int id)
 {
     auto container = blockSectionContainer(section);
 
@@ -398,6 +408,9 @@ void Engine::setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadc
 
 std::shared_ptr<Broadcast> Engine::broadcastAt(int index) const
 {
+    if (index < 0 || index >= m_broadcasts.size())
+        return nullptr;
+
     return m_broadcasts[index];
 }
 
@@ -423,7 +436,7 @@ int Engine::findBroadcastById(const std::string &broadcastId) const
     return -1;
 }
 
-void libscratchcpp::Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast)
+void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast)
 {
     auto id = findBroadcast(broadcast->name());
     if (m_broadcastMap.count(id) == 1) {
@@ -459,6 +472,9 @@ void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
 
 Target *Engine::targetAt(int index) const
 {
+    if (index < 0 || index >= m_targets.size())
+        return nullptr;
+
     return m_targets[index].get();
 }
 
