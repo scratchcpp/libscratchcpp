@@ -4,4 +4,6 @@ target_sources(scratchcpp
     scratch3reader.cpp
     scratch3reader.h
     reader_common.h
+    zipreader.cpp
+    zipreader.h
 )
