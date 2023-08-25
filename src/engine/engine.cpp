@@ -408,6 +408,9 @@ void Engine::setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadc
 
 std::shared_ptr<Broadcast> Engine::broadcastAt(int index) const
 {
+    if (index < 0 || index >= m_broadcasts.size())
+        return nullptr;
+
     return m_broadcasts[index];
 }
 
@@ -469,6 +472,9 @@ void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
 
 Target *Engine::targetAt(int index) const
 {
+    if (index < 0 || index >= m_targets.size())
+        return nullptr;
+
     return m_targets[index].get();
 }
 
