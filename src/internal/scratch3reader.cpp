@@ -14,6 +14,7 @@
 
 #include "scratch3reader.h"
 #include "reader_common.h"
+#include "zipreader.h"
 
 using namespace libscratchcpp;
 using json = nlohmann::json;
@@ -299,14 +300,9 @@ bool Scratch3Reader::load()
         else
             printErr(std::string("could not parse ") + step, e.what());
 
-        // Close the zip file
-        zip_close(m_zip);
-
         return false;
     }
 
-    // Close the zip file
-    zip_close(m_zip);
     return true;
 }
 
@@ -352,37 +348,15 @@ std::vector<std::string> Scratch3Reader::extensions()
 
 void Scratch3Reader::read()
 {
-    // Open the zip file
-    unsigned char *buf;
-    size_t bufsize;
-    m_zip = zip_open(fileName().c_str(), 0, 'r');
-    if (!m_zip) {
-        std::cerr << "Failed to open project file" << std::endl;
-        return;
-    }
-
-    // Extract project.json
-    zip_entry_open(m_zip, "project.json");
-    bufsize = zip_entry_size(m_zip);
-    buf = (unsigned char *)calloc(sizeof(unsigned char), bufsize);
-    zip_entry_noallocread(m_zip, (void *)buf, bufsize);
-    zip_entry_close(m_zip);
-    std::string str(reinterpret_cast<char const *>(buf));
-    free(buf);
-
-    // Remove garbage after the JSON
-    int end;
-    for (end = str.size(); end >= 0; end--) {
-        char ch = str[end];
-        if (ch == '}')
-            break;
-    }
-    std::string out = str.substr(0, end + 1);
-
-    // Parse the JSON
-    try {
-        m_json = json::parse(out);
-    } catch (std::exception &e) {
-        printErr("invalid JSON file", e.what());
-    }
+    // Read project.json
+    ZipReader reader(fileName());
+    if (reader.open()) {
+        // Parse the JSON
+        try {
+            m_json = json::parse(reader.readFileToString("project.json"));
+        } catch (std::exception &e) {
+            printErr("invalid JSON file", e.what());
+        }
+    } else
+        printErr("could not read " + fileName());
 }
