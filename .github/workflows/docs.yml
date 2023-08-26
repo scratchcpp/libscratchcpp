@@ -32,7 +32,7 @@ jobs:
         git checkout --orphan new-branch
         sudo chown -R $(whoami):$(whoami) ../docs
         git rm -rf . || true
-        mv ../docs-output/* ./
+        sudo mv ../docs-output/* ./
         git config user.name "GitHub Actions Bot"
         git config user.email "<>"
         git add -A
