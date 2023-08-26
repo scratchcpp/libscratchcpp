@@ -11,8 +11,8 @@ target_sources(scratchcpp
     script.cpp
     script_p.cpp
     script_p.h
-    blocksectioncontainer.cpp
-    blocksectioncontainer.h
+    internal/blocksectioncontainer.cpp
+    internal/blocksectioncontainer.h
   PUBLIC
     global.h
 )

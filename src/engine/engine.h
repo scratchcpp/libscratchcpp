@@ -9,7 +9,7 @@
 #include <chrono>
 
 #include "global.h"
-#include "blocksectioncontainer.h"
+#include "internal/blocksectioncontainer.h"
 
 namespace libscratchcpp
 {
