@@ -5,7 +5,7 @@
 #include <vector>
 #include <scratchcpp/value.h>
 
-#include "engine/global.h"
+#include "engine/internal/global.h"
 
 namespace libscratchcpp
 {
