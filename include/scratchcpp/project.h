@@ -14,6 +14,7 @@ class ProjectPrivate;
 
 class IEngine;
 
+/*! \brief The Project class provides API for reading and running Scratch projects. */
 class LIBSCRATCHCPP_EXPORT Project
 {
     public:
