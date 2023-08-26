@@ -5,6 +5,7 @@ add_executable(
 
 target_link_libraries(
   zip_test
+  scratchcpp
   GTest::gtest_main
   zip
 )

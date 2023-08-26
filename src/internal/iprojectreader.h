@@ -34,6 +34,7 @@ class IProjectReader
         virtual std::vector<std::string> extensions() = 0;
 
     protected:
+        virtual void printErr(const std::string &errStr) final { std::cerr << "Failed to read project: " << errStr << std::endl; }
         virtual void printErr(const std::string &errStr, const char *what) final { std::cerr << "Failed to read project: " << errStr << std::endl << what << std::endl; }
 
     private:
