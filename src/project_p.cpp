@@ -4,7 +4,7 @@
 
 #include "project_p.h"
 #include "internal/scratch3reader.h"
-#include "engine/engine.h"
+#include "engine/internal/engine.h"
 
 using namespace libscratchcpp;
 

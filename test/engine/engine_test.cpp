@@ -1,9 +1,9 @@
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/block.h>
-#include <engine/engine.h>
 
 #include "../common.h"
 #include "testsection.h"
+#include "engine/internal/engine.h"
 
 using namespace libscratchcpp;
 

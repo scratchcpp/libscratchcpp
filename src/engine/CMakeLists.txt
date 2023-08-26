@@ -1,7 +1,5 @@
 target_sources(scratchcpp
   PRIVATE
-    engine.cpp
-    engine.h
     virtualmachine.cpp
     virtualmachine_p.cpp
     virtualmachine_p.h
@@ -11,6 +9,8 @@ target_sources(scratchcpp
     script.cpp
     script_p.cpp
     script_p.h
+    internal/engine.cpp
+    internal/engine.h
     internal/blocksectioncontainer.cpp
     internal/blocksectioncontainer.h
   PUBLIC

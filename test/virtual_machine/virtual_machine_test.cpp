@@ -3,7 +3,7 @@
 #include <scratchcpp/script.h>
 #include <enginemock.h>
 
-#include "engine/engine.h"
+#include "engine/internal/engine.h"
 #include "../common.h"
 
 using namespace libscratchcpp;

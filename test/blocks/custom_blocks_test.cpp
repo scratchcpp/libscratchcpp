@@ -6,7 +6,7 @@
 
 #include "../common.h"
 #include "blocks/customblocks.h"
-#include "engine/engine.h"
+#include "engine/internal/engine.h"
 
 using namespace libscratchcpp;
 

@@ -16,7 +16,8 @@
 #include <thread>
 
 #include "engine.h"
-#include "../blocks/standardblocks.h"
+#include "blocksectioncontainer.h"
+#include "../../blocks/standardblocks.h"
 
 using namespace libscratchcpp;
 

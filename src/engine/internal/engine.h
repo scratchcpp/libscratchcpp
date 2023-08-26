@@ -8,8 +8,7 @@
 #include <memory>
 #include <chrono>
 
-#include "global.h"
-#include "internal/blocksectioncontainer.h"
+#include "blocksectioncontainer.h"
 
 namespace libscratchcpp
 {

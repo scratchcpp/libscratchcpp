@@ -10,7 +10,7 @@
 #include <scratchcpp/sprite.h>
 
 #include "project_p.h"
-#include "engine/engine.h"
+#include "engine/internal/engine.h"
 #include "internal/scratch3reader.h"
 #include "../common.h"
 #include "testblocksection.h"
