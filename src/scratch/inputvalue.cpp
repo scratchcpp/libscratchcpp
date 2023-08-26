@@ -120,7 +120,10 @@ void InputValue::setValuePtr(const std::shared_ptr<Entity> &newValuePtr)
     else {
         impl->valuePtr = nullptr;
         impl->valueId = "";
-        std::cout << "warning: unsupported input value type (use InputValue::setValueBlock() to set the block)" << std::endl;
+
+        if (newValuePtr)
+            std::cout << "warning: unsupported input value type (use InputValue::setValueBlock() to set the block)" << std::endl;
+
         return;
     }
 
