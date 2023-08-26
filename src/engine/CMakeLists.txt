@@ -13,6 +13,5 @@ target_sources(scratchcpp
     internal/engine.h
     internal/blocksectioncontainer.cpp
     internal/blocksectioncontainer.h
-  PUBLIC
-    global.h
+    internal/global.h
 )
