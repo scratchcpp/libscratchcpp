@@ -660,6 +660,14 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 return 0;
             }
 
+            static const std::string digits = "0123456789+-";
+
+            for (char c : s) {
+                if (digits.find(c) == std::string::npos) {
+                    return 0;
+                }
+            }
+
             try {
                 if (ok)
                     *ok = true;
