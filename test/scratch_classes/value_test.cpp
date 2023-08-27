@@ -124,6 +124,30 @@ TEST(ValueTest, StdStringConstructor)
     }
 
     {
+        Value v(std::string("532"));
+        ASSERT_EQ(v.toString(), "532");
+        ASSERT_EQ(v.type(), Value::Type::Number);
+        ASSERT_FALSE(v.isInfinity());
+        ASSERT_FALSE(v.isNegativeInfinity());
+        ASSERT_FALSE(v.isNaN());
+        ASSERT_TRUE(v.isNumber());
+        ASSERT_FALSE(v.isBool());
+        ASSERT_FALSE(v.isString());
+    }
+
+    {
+        Value v(std::string("1 2 3"));
+        ASSERT_EQ(v.toString(), "1 2 3");
+        ASSERT_EQ(v.type(), Value::Type::String);
+        ASSERT_FALSE(v.isInfinity());
+        ASSERT_FALSE(v.isNegativeInfinity());
+        ASSERT_FALSE(v.isNaN());
+        ASSERT_FALSE(v.isNumber());
+        ASSERT_FALSE(v.isBool());
+        ASSERT_TRUE(v.isString());
+    }
+
+    {
         Value v(std::string("Infinity"));
         ASSERT_EQ(v.toString(), "Infinity");
         ASSERT_EQ(v.type(), Value::Type::Infinity);
