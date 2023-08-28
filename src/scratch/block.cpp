@@ -58,6 +58,41 @@ BlockPrototype *Block::mutationPrototype()
     return &impl->mutationPrototype;
 }
 
+/*! Returns true if this is a top level reporter block for a variable or a list. */
+bool Block::isTopLevelReporter() const
+{
+    return impl->isTopLevelReporter;
+}
+
+/*!
+ * Sets whether this block is a top level reporter block for a variable or a list.
+ * \note Setting this to true will allow the use topLevelReporterInfo().
+ */
+void Block::setIsTopLevelReporter(bool isTopLevelReporter)
+{
+    impl->isTopLevelReporter = isTopLevelReporter;
+
+    if (isTopLevelReporter && !impl->topLevelReporterInfo)
+        impl->topLevelReporterInfo = std::make_unique<InputValue>(InputValue::Type::Variable);
+    else if (impl->topLevelReporterInfo) {
+        impl->topLevelReporterInfo.reset();
+        impl->topLevelReporterInfo = nullptr;
+    }
+}
+
+/*!
+ * Returns the information about this top level reporter block (if this is a top level reporter block).
+ * \note This function will return nullptr if this isn't a top level reporter block. Use setIsTopLevelReporter(true)
+ * before using this function.
+ */
+InputValue *Block::topLevelReporterInfo()
+{
+    if (impl->topLevelReporterInfo)
+        return impl->topLevelReporterInfo.get();
+    else
+        return nullptr;
+}
+
 /*! Returns the next block. */
 std::shared_ptr<Block> Block::next() const
 {

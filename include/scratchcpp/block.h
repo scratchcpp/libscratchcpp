@@ -12,6 +12,7 @@ class IEngine;
 class Target;
 class Input;
 class Field;
+class InputValue;
 class BlockPrivate;
 
 /*! \brief The Block class represents a Scratch block. */
@@ -67,6 +68,11 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
         void setMutationHasNext(bool newMutationHasNext);
 
         BlockPrototype *mutationPrototype();
+
+        bool isTopLevelReporter() const;
+        void setIsTopLevelReporter(bool isTopLevelReporter);
+
+        InputValue *topLevelReporterInfo();
 
     private:
         spimpl::unique_impl_ptr<BlockPrivate> impl;

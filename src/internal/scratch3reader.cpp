@@ -79,11 +79,22 @@ bool Scratch3Reader::load()
             auto blocks = jsonTarget["blocks"];
             for (json::iterator it = blocks.begin(); it != blocks.end(); ++it) {
                 auto blockInfo = it.value();
+
                 if (blockInfo.is_array()) {
-                    // TODO: Find out what these "array" blocks that look like input values are for
-                    // Let's ignore them for now...
+                    // This is a top level reporter block for a variable/list
+                    READER_STEP(step, "target -> block -> top level reporter info");
+                    auto block = std::make_shared<Block>(it.key(), "");
+                    block->setIsTopLevelReporter(true);
+                    InputValue *reporterInfo = block->topLevelReporterInfo();
+
+                    reporterInfo->setValue(jsonToValue(blockInfo[1]));
+                    reporterInfo->setValueId(jsonToValue(blockInfo[2]).toString());
+                    reporterInfo->setType(static_cast<InputValue::Type>(blockInfo[0]));
+
+                    target->addBlock(block);
                     continue;
                 }
+
                 READER_STEP(step, "target -> block -> opcode");
                 auto block = std::make_shared<Block>(it.key(), blockInfo["opcode"]);
                 std::string nextId;

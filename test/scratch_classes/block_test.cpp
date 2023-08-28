@@ -241,3 +241,20 @@ TEST_F(BlockTest, MutationPrototype)
     Block block("", "");
     ASSERT_TRUE(block.mutationPrototype());
 }
+
+TEST_F(BlockTest, TopLevelReporter)
+{
+    Block block("", "");
+    ASSERT_FALSE(block.isTopLevelReporter());
+    ASSERT_EQ(block.topLevelReporterInfo(), nullptr);
+
+    for (int i = 0; i < 2; i++) {
+        block.setIsTopLevelReporter(true);
+        ASSERT_TRUE(block.isTopLevelReporter());
+        ASSERT_TRUE(block.topLevelReporterInfo());
+
+        block.setIsTopLevelReporter(false);
+        ASSERT_FALSE(block.isTopLevelReporter());
+        ASSERT_EQ(block.topLevelReporterInfo(), nullptr);
+    }
+}
