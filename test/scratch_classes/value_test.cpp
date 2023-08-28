@@ -8,7 +8,7 @@ TEST(ValueTest, DefaultConstructor)
 {
     Value v;
     ASSERT_EQ(v.toInt(), 0);
-    ASSERT_EQ(v.type(), Value::Type::Number);
+    ASSERT_EQ(v.type(), Value::Type::Integer);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -21,7 +21,7 @@ TEST(ValueTest, FloatConstructor)
 {
     Value v(3.14f);
     ASSERT_EQ(v.toDouble(), 3.14f);
-    ASSERT_EQ(v.type(), Value::Type::Number);
+    ASSERT_EQ(v.type(), Value::Type::Double);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -34,7 +34,7 @@ TEST(ValueTest, DoubleConstructor)
 {
     Value v(static_cast<double>(3.14));
     ASSERT_EQ(v.toDouble(), 3.14);
-    ASSERT_EQ(v.type(), Value::Type::Number);
+    ASSERT_EQ(v.type(), Value::Type::Double);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -47,7 +47,7 @@ TEST(ValueTest, IntConstructor)
 {
     Value v(static_cast<int>(55));
     ASSERT_EQ(v.toInt(), 55);
-    ASSERT_EQ(v.type(), Value::Type::Number);
+    ASSERT_EQ(v.type(), Value::Type::Integer);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -60,7 +60,7 @@ TEST(ValueTest, SizeTConstructor)
 {
     Value v(static_cast<size_t>(100));
     ASSERT_EQ(v.toLong(), 100);
-    ASSERT_EQ(v.type(), Value::Type::Number);
+    ASSERT_EQ(v.type(), Value::Type::Integer);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -73,7 +73,7 @@ TEST(ValueTest, LongConstructor)
 {
     Value v(999999999999999999L);
     ASSERT_EQ(v.toLong(), 999999999999999999L);
-    ASSERT_EQ(v.type(), Value::Type::Number);
+    ASSERT_EQ(v.type(), Value::Type::Integer);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -126,7 +126,7 @@ TEST(ValueTest, StdStringConstructor)
     {
         Value v(std::string("532"));
         ASSERT_EQ(v.toString(), "532");
-        ASSERT_EQ(v.type(), Value::Type::Number);
+        ASSERT_EQ(v.type(), Value::Type::Integer);
         ASSERT_FALSE(v.isInfinity());
         ASSERT_FALSE(v.isNegativeInfinity());
         ASSERT_FALSE(v.isNaN());
@@ -273,16 +273,94 @@ TEST(ValueTest, NaNConstructor)
 
 TEST(ValueTest, CopyConstructor)
 {
-    Value v1(50);
-    Value v2(v1);
-    ASSERT_EQ(v2.toInt(), 50);
-    ASSERT_EQ(v1.type(), v2.type());
-    ASSERT_FALSE(v2.isInfinity());
-    ASSERT_FALSE(v2.isNegativeInfinity());
-    ASSERT_FALSE(v2.isNaN());
-    ASSERT_TRUE(v2.isNumber());
-    ASSERT_FALSE(v2.isBool());
-    ASSERT_FALSE(v2.isString());
+    {
+        Value v1(50);
+        Value v2(v1);
+        ASSERT_EQ(v1.toInt(), v2.toInt());
+        ASSERT_EQ(v1.type(), v2.type());
+        ASSERT_FALSE(v2.isInfinity());
+        ASSERT_FALSE(v2.isNegativeInfinity());
+        ASSERT_FALSE(v2.isNaN());
+        ASSERT_TRUE(v2.isNumber());
+        ASSERT_FALSE(v2.isBool());
+        ASSERT_FALSE(v2.isString());
+    }
+
+    {
+        Value v1(5.5);
+        Value v2(v1);
+        ASSERT_EQ(v1.toDouble(), v2.toDouble());
+        ASSERT_EQ(v1.type(), v2.type());
+        ASSERT_FALSE(v2.isInfinity());
+        ASSERT_FALSE(v2.isNegativeInfinity());
+        ASSERT_FALSE(v2.isNaN());
+        ASSERT_TRUE(v2.isNumber());
+        ASSERT_FALSE(v2.isBool());
+        ASSERT_FALSE(v2.isString());
+    }
+
+    {
+        Value v1(true);
+        Value v2(v1);
+        ASSERT_EQ(v1.toBool(), v2.toBool());
+        ASSERT_EQ(v1.type(), v2.type());
+        ASSERT_FALSE(v2.isInfinity());
+        ASSERT_FALSE(v2.isNegativeInfinity());
+        ASSERT_FALSE(v2.isNaN());
+        ASSERT_FALSE(v2.isNumber());
+        ASSERT_TRUE(v2.isBool());
+        ASSERT_FALSE(v2.isString());
+    }
+
+    {
+        Value v1("test");
+        Value v2(v1);
+        ASSERT_EQ(v1.toString(), v2.toString());
+        ASSERT_EQ(v1.type(), v2.type());
+        ASSERT_FALSE(v2.isInfinity());
+        ASSERT_FALSE(v2.isNegativeInfinity());
+        ASSERT_FALSE(v2.isNaN());
+        ASSERT_FALSE(v2.isNumber());
+        ASSERT_FALSE(v2.isBool());
+        ASSERT_TRUE(v2.isString());
+    }
+
+    {
+        Value v1(Value::SpecialValue::NaN);
+        Value v2(v1);
+        ASSERT_EQ(v2.toDouble(), 0);
+        ASSERT_EQ(v1.type(), v2.type());
+        ASSERT_FALSE(v2.isInfinity());
+        ASSERT_FALSE(v2.isNegativeInfinity());
+        ASSERT_TRUE(v2.isNaN());
+        ASSERT_FALSE(v2.isNumber());
+        ASSERT_FALSE(v2.isBool());
+        ASSERT_FALSE(v2.isString());
+    }
+
+    {
+        Value v1(Value::SpecialValue::Infinity);
+        Value v2(v1);
+        ASSERT_EQ(v1.type(), v2.type());
+        ASSERT_TRUE(v2.isInfinity());
+        ASSERT_FALSE(v2.isNegativeInfinity());
+        ASSERT_FALSE(v2.isNaN());
+        ASSERT_FALSE(v2.isNumber());
+        ASSERT_FALSE(v2.isBool());
+        ASSERT_FALSE(v2.isString());
+    }
+
+    {
+        Value v1(Value::SpecialValue::NegativeInfinity);
+        Value v2(v1);
+        ASSERT_EQ(v1.type(), v2.type());
+        ASSERT_FALSE(v2.isInfinity());
+        ASSERT_TRUE(v2.isNegativeInfinity());
+        ASSERT_FALSE(v2.isNaN());
+        ASSERT_FALSE(v2.isNumber());
+        ASSERT_FALSE(v2.isBool());
+        ASSERT_FALSE(v2.isString());
+    }
 }
 
 TEST(ValueTest, FloatAssignment)
@@ -290,7 +368,7 @@ TEST(ValueTest, FloatAssignment)
     Value v;
     v = 3.14f;
     ASSERT_EQ(v.toDouble(), 3.14f);
-    ASSERT_EQ(v.type(), Value::Type::Number);
+    ASSERT_EQ(v.type(), Value::Type::Double);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -304,7 +382,7 @@ TEST(ValueTest, DoubleAssignment)
     Value v;
     v = static_cast<double>(3.14);
     ASSERT_EQ(v.toDouble(), 3.14);
-    ASSERT_EQ(v.type(), Value::Type::Number);
+    ASSERT_EQ(v.type(), Value::Type::Double);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -318,7 +396,7 @@ TEST(ValueTest, IntAssignment)
     Value v;
     v = static_cast<int>(55);
     ASSERT_EQ(v.toInt(), 55);
-    ASSERT_EQ(v.type(), Value::Type::Number);
+    ASSERT_EQ(v.type(), Value::Type::Integer);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -332,7 +410,7 @@ TEST(ValueTest, LongAssignment)
     Value v;
     v = 999999999999999999L;
     ASSERT_EQ(v.toLong(), 999999999999999999L);
-    ASSERT_EQ(v.type(), Value::Type::Number);
+    ASSERT_EQ(v.type(), Value::Type::Integer);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -521,17 +599,101 @@ TEST(ValueTest, NaNAssignment)
 
 TEST(ValueTest, CopyAssignment)
 {
-    Value v1(50);
-    Value v2;
-    v2 = v1;
-    ASSERT_EQ(v2.toInt(), 50);
-    ASSERT_EQ(v1.type(), v2.type());
-    ASSERT_FALSE(v2.isInfinity());
-    ASSERT_FALSE(v2.isNegativeInfinity());
-    ASSERT_FALSE(v2.isNaN());
-    ASSERT_TRUE(v2.isNumber());
-    ASSERT_FALSE(v2.isBool());
-    ASSERT_FALSE(v2.isString());
+    {
+        Value v1(50);
+        Value v2;
+        v2 = v1;
+        ASSERT_EQ(v2.toInt(), v1.toInt());
+        ASSERT_EQ(v1.type(), v2.type());
+        ASSERT_FALSE(v2.isInfinity());
+        ASSERT_FALSE(v2.isNegativeInfinity());
+        ASSERT_FALSE(v2.isNaN());
+        ASSERT_TRUE(v2.isNumber());
+        ASSERT_FALSE(v2.isBool());
+        ASSERT_FALSE(v2.isString());
+    }
+
+    {
+        Value v1(5.5);
+        Value v2;
+        v2 = v1;
+        ASSERT_EQ(v1.toDouble(), v2.toDouble());
+        ASSERT_EQ(v1.type(), v2.type());
+        ASSERT_FALSE(v2.isInfinity());
+        ASSERT_FALSE(v2.isNegativeInfinity());
+        ASSERT_FALSE(v2.isNaN());
+        ASSERT_TRUE(v2.isNumber());
+        ASSERT_FALSE(v2.isBool());
+        ASSERT_FALSE(v2.isString());
+    }
+
+    {
+        Value v1(true);
+        Value v2;
+        v2 = v1;
+        ASSERT_EQ(v1.toBool(), v2.toBool());
+        ASSERT_EQ(v1.type(), v2.type());
+        ASSERT_FALSE(v2.isInfinity());
+        ASSERT_FALSE(v2.isNegativeInfinity());
+        ASSERT_FALSE(v2.isNaN());
+        ASSERT_FALSE(v2.isNumber());
+        ASSERT_TRUE(v2.isBool());
+        ASSERT_FALSE(v2.isString());
+    }
+
+    {
+        Value v1("test");
+        Value v2;
+        v2 = v1;
+        ASSERT_EQ(v1.toString(), v2.toString());
+        ASSERT_EQ(v1.type(), v2.type());
+        ASSERT_FALSE(v2.isInfinity());
+        ASSERT_FALSE(v2.isNegativeInfinity());
+        ASSERT_FALSE(v2.isNaN());
+        ASSERT_FALSE(v2.isNumber());
+        ASSERT_FALSE(v2.isBool());
+        ASSERT_TRUE(v2.isString());
+    }
+
+    {
+        Value v1(Value::SpecialValue::NaN);
+        Value v2;
+        v2 = v1;
+        ASSERT_EQ(v2.toDouble(), 0);
+        ASSERT_EQ(v1.type(), v2.type());
+        ASSERT_FALSE(v2.isInfinity());
+        ASSERT_FALSE(v2.isNegativeInfinity());
+        ASSERT_TRUE(v2.isNaN());
+        ASSERT_FALSE(v2.isNumber());
+        ASSERT_FALSE(v2.isBool());
+        ASSERT_FALSE(v2.isString());
+    }
+
+    {
+        Value v1(Value::SpecialValue::Infinity);
+        Value v2;
+        v2 = v1;
+        ASSERT_EQ(v1.type(), v2.type());
+        ASSERT_TRUE(v2.isInfinity());
+        ASSERT_FALSE(v2.isNegativeInfinity());
+        ASSERT_FALSE(v2.isNaN());
+        ASSERT_FALSE(v2.isNumber());
+        ASSERT_FALSE(v2.isBool());
+        ASSERT_FALSE(v2.isString());
+    }
+
+    {
+        Value v1(Value::SpecialValue::NegativeInfinity);
+        Value v2;
+        v2 = v1;
+        ASSERT_EQ(v1.type(), v2.type());
+        ASSERT_FALSE(v2.isInfinity());
+        ASSERT_TRUE(v2.isNegativeInfinity());
+        ASSERT_FALSE(v2.isNaN());
+        ASSERT_FALSE(v2.isNumber());
+        ASSERT_FALSE(v2.isBool());
+        ASSERT_FALSE(v2.isString());
+    }
 }
 
 TEST(ValueTest, ToInt)

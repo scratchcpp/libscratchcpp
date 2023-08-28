@@ -14,10 +14,8 @@
 namespace libscratchcpp
 {
 
-using ValueVariant = std::variant<long, double, bool, std::string>;
-
 /*! \brief The Value class represents a Scratch value. */
-class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
+class LIBSCRATCHCPP_EXPORT Value
 {
     public:
         enum class SpecialValue
@@ -29,9 +27,10 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
 
         enum class Type
         {
-            Number = 0,
-            Bool = 1,
-            String = 2,
+            Integer = 0,
+            Double = 1,
+            Bool = 2,
+            String = 3,
             Infinity = -1,
             NegativeInfinity = -2,
             NaN = -3
@@ -39,51 +38,51 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
 
         /*! Constructs a number Value. */
         Value(float numberValue) :
-            ValueVariant(numberValue),
-            m_type(Type::Number)
+            m_type(Type::Double)
         {
+            m_doubleValue = numberValue;
         }
 
         /*! Constructs a number Value. */
         Value(double numberValue) :
-            ValueVariant(numberValue),
-            m_type(Type::Number)
+            m_type(Type::Double)
         {
+            m_doubleValue = numberValue;
         }
 
         /*! Constructs a number Value. */
         Value(int numberValue = 0) :
-            ValueVariant(numberValue),
-            m_type(Type::Number)
+            m_type(Type::Integer)
         {
+            m_intValue = numberValue;
         }
 
         /*! Constructs a number Value. */
         Value(size_t numberValue) :
-            ValueVariant(static_cast<long>(numberValue)),
-            m_type(Type::Number)
+            m_type(Type::Integer)
         {
+            m_intValue = numberValue;
         }
 
         /*! Constructs a number Value. */
         Value(long numberValue) :
-            ValueVariant(numberValue),
-            m_type(Type::Number)
+            m_type(Type::Integer)
         {
+            m_intValue = numberValue;
         }
 
         /*! Constructs a boolean Value. */
         Value(bool boolValue) :
-            ValueVariant(boolValue),
             m_type(Type::Bool)
         {
+            m_boolValue = boolValue;
         }
 
         /*! Constructs a string Value. */
         Value(const std::string &stringValue) :
-            ValueVariant(stringValue),
             m_type(Type::String)
         {
+            new (&m_stringValue) std::string(stringValue);
             initString(stringValue);
         }
 
@@ -94,8 +93,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         }
 
         /*! Constructs a special Value. */
-        Value(SpecialValue specialValue) :
-            ValueVariant(0)
+        Value(SpecialValue specialValue)
         {
             if (specialValue == SpecialValue::Infinity)
                 m_type = Type::Infinity;
@@ -103,8 +101,38 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 m_type = Type::NegativeInfinity;
             else if (specialValue == SpecialValue::NaN)
                 m_type = Type::NaN;
-            else
-                m_type = Type::Number;
+            else {
+                m_type = Type::Integer;
+                m_intValue = 0;
+            }
+        }
+
+        Value(const Value &v)
+        {
+            m_type = v.m_type;
+
+            switch (m_type) {
+                case Type::Integer:
+                    m_intValue = v.m_intValue;
+                    break;
+                case Type::Double:
+                    m_doubleValue = v.m_doubleValue;
+                    break;
+                case Type::Bool:
+                    m_boolValue = v.m_boolValue;
+                    break;
+                case Type::String:
+                    new (&m_stringValue) std::string(v.m_stringValue);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        ~Value()
+        {
+            if (m_type == Type::String)
+                m_stringValue.~basic_string();
         }
 
         /*! Returns the type of the value. */
@@ -120,7 +148,7 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         bool isNaN() const { return m_type == Type::NaN; }
 
         /*! Returns true if the value is a number. */
-        bool isNumber() const { return m_type == Type::Number; }
+        bool isNumber() const { return m_type == Type::Integer || m_type == Type::Double; }
 
         /*! Returns true if the value is a boolean. */
         bool isBool() const { return m_type == Type::Bool; }
@@ -135,23 +163,27 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         long toLong() const
         {
             if (static_cast<int>(m_type) < 0) {
-                if (m_type == Type::Infinity)
-                    return std::numeric_limits<long>::infinity();
-                else if (m_type == Type::NegativeInfinity)
-                    return -std::numeric_limits<long>::infinity();
-                else
-                    return 0;
+                switch (m_type) {
+                    case Type::Infinity:
+                        return std::numeric_limits<long>::infinity();
+                    case Type::NegativeInfinity:
+                        return -std::numeric_limits<long>::infinity();
+                    default:
+                        return 0;
+                }
             } else {
-                if (auto p = std::get_if<long>(this))
-                    return *p;
-                else if (auto p = std::get_if<double>(this))
-                    return *p;
-                else if (auto p = std::get_if<bool>(this))
-                    return *p;
-                else if (auto p = std::get_if<std::string>(this))
-                    return stringToLong(*p);
-                else
-                    return 0;
+                switch (m_type) {
+                    case Type::Integer:
+                        return m_intValue;
+                    case Type::Double:
+                        return m_doubleValue;
+                    case Type::Bool:
+                        return m_boolValue;
+                    case Type::String:
+                        return stringToLong(m_stringValue);
+                    default:
+                        return 0;
+                }
             }
         }
 
@@ -159,23 +191,27 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         double toDouble() const
         {
             if (static_cast<int>(m_type) < 0) {
-                if (m_type == Type::Infinity)
-                    return std::numeric_limits<double>::infinity();
-                if (m_type == Type::NegativeInfinity)
-                    return -std::numeric_limits<double>::infinity();
-                else
-                    return 0;
+                switch (m_type) {
+                    case Type::Infinity:
+                        return std::numeric_limits<double>::infinity();
+                    case Type::NegativeInfinity:
+                        return -std::numeric_limits<double>::infinity();
+                    default:
+                        return 0;
+                }
             } else {
-                if (std::holds_alternative<double>(*this))
-                    return std::get<double>(*this);
-                else if (std::holds_alternative<long>(*this))
-                    return std::get<long>(*this);
-                else if (std::holds_alternative<bool>(*this))
-                    return std::get<bool>(*this);
-                else if (std::holds_alternative<std::string>(*this))
-                    return stringToDouble(std::get<std::string>(*this));
-                else
-                    return 0;
+                switch (m_type) {
+                    case Type::Double:
+                        return m_doubleValue;
+                    case Type::Integer:
+                        return m_intValue;
+                    case Type::Bool:
+                        return m_boolValue;
+                    case Type::String:
+                        return stringToDouble(m_stringValue);
+                    default:
+                        return 0;
+                }
             }
         };
 
@@ -185,17 +221,20 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
             if (static_cast<int>(m_type) < 0) {
                 return false;
             } else {
-                if (std::holds_alternative<bool>(*this))
-                    return std::get<bool>(*this);
-                else if (std::holds_alternative<long>(*this))
-                    return std::get<long>(*this) == 1 ? true : false;
-                else if (std::holds_alternative<double>(*this))
-                    return std::get<double>(*this) == 1 ? true : false;
-                else if (std::holds_alternative<std::string>(*this)) {
-                    const std::string &str = std::get<std::string>(*this);
-                    return (stringsEqual(str, "true") || str == "1");
-                } else
-                    return false;
+                switch (m_type) {
+                    case Type::Bool:
+                        return m_boolValue;
+                    case Type::Integer:
+                        return m_intValue == 1 ? true : false;
+                    case Type::Double:
+                        return m_doubleValue == 1 ? true : false;
+                    case Type::String: {
+                        const std::string &str = m_stringValue;
+                        return (stringsEqual(str, "true") || str == "1");
+                    }
+                    default:
+                        return false;
+                }
             }
         };
 
@@ -203,28 +242,33 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         std::string toString() const
         {
             if (static_cast<int>(m_type) < 0) {
-                if (m_type == Type::Infinity)
-                    return "Infinity";
-                else if (m_type == Type::NegativeInfinity)
-                    return "-Infinity";
-                else
-                    return "NaN";
+                switch (m_type) {
+                    case Type::Infinity:
+                        return "Infinity";
+                    case Type::NegativeInfinity:
+                        return "-Infinity";
+                    default:
+                        return "NaN";
+                }
             } else {
-                if (std::holds_alternative<std::string>(*this))
-                    return std::get<std::string>(*this);
-                else if (std::holds_alternative<long>(*this))
-                    return std::to_string(std::get<long>(*this));
-                else if (std::holds_alternative<double>(*this)) {
-                    std::string s = std::to_string(std::get<double>(*this));
-                    s.erase(s.find_last_not_of('0') + 1, std::string::npos);
-                    if (s.back() == '.') {
-                        s.pop_back();
+                switch (m_type) {
+                    case Type::String:
+                        return m_stringValue;
+                    case Type::Integer:
+                        return std::to_string(m_intValue);
+                    case Type::Double: {
+                        std::string s = std::to_string(m_doubleValue);
+                        s.erase(s.find_last_not_of('0') + 1, std::string::npos);
+                        if (s.back() == '.') {
+                            s.pop_back();
+                        }
+                        return s;
                     }
-                    return s;
-                } else if (std::holds_alternative<bool>(*this))
-                    return std::get<bool>(*this) ? "true" : "false";
-                else
-                    return "";
+                    case Type::Bool:
+                        return m_boolValue ? "true" : "false";
+                    default:
+                        return "";
+                }
             }
         };
 
@@ -243,10 +287,9 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                     m_type = Type::NegativeInfinity;
                 return;
             }
-            auto p1 = std::get_if<long>(this);
-            auto p2 = std::get_if<long>(&v);
-            if (p1 && p2)
-                *this = *p1 + *p2;
+
+            if (m_type == Type::Integer && v.m_type == Type::Integer)
+                m_intValue += v.m_intValue;
             else
                 *this = toDouble() + v.toDouble();
         }
@@ -263,10 +306,9 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                     m_type = Type::NegativeInfinity;
                 return;
             }
-            auto p1 = std::get_if<long>(this);
-            auto p2 = std::get_if<long>(&v);
-            if (p1 && p2)
-                *this = *p1 - *p2;
+
+            if (m_type == Type::Integer && v.m_type == Type::Integer)
+                m_intValue -= v.m_intValue;
             else
                 *this = toDouble() - v.toDouble();
         }
@@ -288,10 +330,9 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                     return;
                 }
             }
-            auto p1 = std::get_if<long>(this);
-            auto p2 = std::get_if<long>(&v);
-            if (p1 && p2)
-                *this = *p1 * *p2;
+
+            if (m_type == Type::Integer && v.m_type == Type::Integer)
+                m_intValue *= v.m_intValue;
             else
                 *this = toDouble() * v.toDouble();
         }
@@ -336,43 +377,43 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
 
         const Value &operator=(float v)
         {
-            m_type = Type::Number;
-            ValueVariant::operator=(v);
+            m_type = Type::Double;
+            m_doubleValue = v;
             return *this;
         }
 
         const Value &operator=(double v)
         {
-            m_type = Type::Number;
-            ValueVariant::operator=(v);
+            m_type = Type::Double;
+            m_doubleValue = v;
             return *this;
         }
 
         const Value &operator=(int v)
         {
-            m_type = Type::Number;
-            ValueVariant::operator=(v);
+            m_type = Type::Integer;
+            m_intValue = v;
             return *this;
         }
 
         const Value &operator=(long v)
         {
-            m_type = Type::Number;
-            ValueVariant::operator=(v);
+            m_type = Type::Integer;
+            m_intValue = v;
             return *this;
         }
 
         const Value &operator=(bool v)
         {
             m_type = Type::Bool;
-            ValueVariant::operator=(v);
+            m_boolValue = v;
             return *this;
         }
 
         const Value &operator=(const std::string &v)
         {
             m_type = Type::String;
-            ValueVariant::operator=(v);
+            new (&m_stringValue) std::string(v);
             initString(v);
             return *this;
         }
@@ -380,12 +421,44 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
         const Value &operator=(const char *v)
         {
             m_type = Type::String;
-            ValueVariant::operator=(std::string(v));
+            new (&m_stringValue) std::string(v);
             initString(v);
             return *this;
         }
 
+        const Value &operator=(const Value &v)
+        {
+            m_type = v.m_type;
+
+            switch (m_type) {
+                case Type::Integer:
+                    m_intValue = v.m_intValue;
+                    break;
+                case Type::Double:
+                    m_doubleValue = v.m_doubleValue;
+                    break;
+                case Type::Bool:
+                    m_boolValue = v.m_boolValue;
+                    break;
+                case Type::String:
+                    new (&m_stringValue) std::string(v.m_stringValue);
+                    break;
+                default:
+                    break;
+            }
+
+            return *this;
+        }
+
     private:
+        union
+        {
+                long m_intValue;
+                double m_doubleValue;
+                bool m_boolValue;
+                std::string m_stringValue;
+        };
+
         void initString(const std::string &str)
         {
             if (str.empty())
@@ -411,11 +484,13 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
             } else
                 d = stringToDouble(str, &ok);
             if (ok) {
-                if (isLong)
+                if (isLong) {
                     *this = l;
-                else
+                    m_type = Type::Integer;
+                } else {
                     *this = d;
-                m_type = Type::Number;
+                    m_type = Type::Double;
+                }
             }
         }
 
@@ -428,7 +503,9 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
             if (v1.m_type == v2.m_type) {
                 auto type = v1.m_type;
                 switch (type) {
-                    case Type::Number:
+                    case Type::Integer:
+                        return v1.toLong() == v2.toLong();
+                    case Type::Double:
                         return v1.toDouble() == v2.toDouble();
                     case Type::Bool:
                         return v1.toBool() == v2.toBool();
@@ -467,10 +544,9 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 else if (v2.m_type == Type::NegativeInfinity)
                     return true;
             }
-            auto p1 = std::get_if<long>(&v1);
-            auto p2 = std::get_if<long>(&v2);
-            if (p1 && p2)
-                return *p1 > *p2;
+
+            if (v1.m_type == Type::Integer && v2.m_type == Type::Integer)
+                return v1.m_intValue > v2.m_intValue;
             else
                 return v1.toDouble() > v2.toDouble();
         }
@@ -487,10 +563,9 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 else if (v2.m_type == Type::NegativeInfinity)
                     return false;
             }
-            auto p1 = std::get_if<long>(&v1);
-            auto p2 = std::get_if<long>(&v2);
-            if (p1 && p2)
-                return *p1 < *p2;
+
+            if (v1.m_type == Type::Integer && v2.m_type == Type::Integer)
+                return v1.m_intValue < v2.m_intValue;
             else
                 return v1.toDouble() < v2.toDouble();
         }
@@ -509,10 +584,9 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 else if (v1.m_type == Type::NegativeInfinity || v2.m_type == Type::NegativeInfinity)
                     return Value(SpecialValue::NegativeInfinity);
             }
-            auto p1 = std::get_if<long>(&v1);
-            auto p2 = std::get_if<long>(&v2);
-            if (p1 && p2)
-                return *p1 + *p2;
+
+            if (v1.m_type == Type::Integer && v2.m_type == Type::Integer)
+                return v1.m_intValue + v2.m_intValue;
             else
                 return v1.toDouble() + v2.toDouble();
         }
@@ -527,10 +601,9 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                 else if (v1.m_type == Type::NegativeInfinity || v2.m_type == Type::Infinity)
                     return Value(SpecialValue::NegativeInfinity);
             }
-            auto p1 = std::get_if<long>(&v1);
-            auto p2 = std::get_if<long>(&v2);
-            if (p1 && p2)
-                return *p1 - *p2;
+
+            if (v1.m_type == Type::Integer && v2.m_type == Type::Integer)
+                return v1.m_intValue - v2.m_intValue;
             else
                 return v1.toDouble() - v2.toDouble();
         }
@@ -550,10 +623,9 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
                         return Value(SpecialValue::NaN);
                 }
             }
-            auto p1 = std::get_if<long>(&v1);
-            auto p2 = std::get_if<long>(&v2);
-            if (p1 && p2)
-                return *p1 * *p2;
+
+            if (v1.m_type == Type::Integer && v2.m_type == Type::Integer)
+                return v1.m_intValue * v2.m_intValue;
             else
                 return v1.toDouble() * v2.toDouble();
         }
