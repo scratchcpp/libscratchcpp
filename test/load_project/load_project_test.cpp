@@ -10,6 +10,7 @@
 #include <scratchcpp/costume.h>
 #include <scratchcpp/sound.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/inputvalue.h>
 
 #include "../common.h"
 
@@ -124,17 +125,20 @@ TEST(LoadProjectTest, LoadTestProject)
         // Sprite1: blocks
         ASSERT_EQ(sprite1->greenFlagBlocks().size(), 1);
         ASSERT_TRUE(sprite1->greenFlagBlocks()[0]);
+        ASSERT_FALSE(sprite1->greenFlagBlocks()[0]->isTopLevelReporter());
         ASSERT_EQ(sprite1->greenFlagBlocks()[0]->opcode(), "event_whenflagclicked");
         auto block = sprite1->greenFlagBlocks()[0]->next();
         ASSERT_TRUE(block);
         ASSERT_EQ(block->parent(), sprite1->greenFlagBlocks()[0]);
         ASSERT_EQ(block->opcode(), "control_forever");
+        ASSERT_FALSE(block->isTopLevelReporter());
         ASSERT_INPUT(block, "SUBSTACK");
         block = GET_INPUT(block, "SUBSTACK")->valueBlock();
         ASSERT_TRUE(block);
 
         ASSERT_EQ(block->opcode(), "motion_goto");
         ASSERT_INPUT(block, "TO");
+        ASSERT_FALSE(block->isTopLevelReporter());
         auto inputBlock = GET_INPUT(block, "TO")->valueBlock();
         ASSERT_TRUE(inputBlock);
         ASSERT_EQ(inputBlock->opcode(), "motion_goto_menu");
@@ -155,6 +159,7 @@ TEST(LoadProjectTest, LoadTestProject)
         inputBlock = GET_INPUT(block, "VALUE")->valueBlock();
         ASSERT_TRUE(inputBlock);
         ASSERT_EQ(inputBlock->opcode(), "operator_random");
+        ASSERT_FALSE(inputBlock->isTopLevelReporter());
         ASSERT_INPUT(inputBlock, "FROM");
         ASSERT_EQ(GET_INPUT(inputBlock, "FROM")->primaryValue()->value().toInt(), 1);
         ASSERT_INPUT(inputBlock, "TO");
@@ -245,6 +250,47 @@ TEST(LoadProjectTest, LoadTestProject)
         // Balloon1: lists
         ASSERT_LIST(sprite2, "list2");
         ASSERT_EQ(GET_LIST(sprite2, "list2")->toString(), "0 4 3 4 1 5 6 9 4 8");
+
+        i++;
+    }
+}
+
+TEST(LoadProjectTest, LoadTopLevelReporterProject)
+{
+    int i = 0;
+    for (auto version : scratchVersions) {
+        Project p("top_level_reporter" + fileExtensions[i], version);
+
+        ASSERT_TRUE(p.load());
+
+        auto engine = p.engine();
+        ASSERT_EQ(engine->targets().size(), 2);
+
+        // Sprite1
+        ASSERT_NE(engine->findTarget("Sprite1"), -1);
+        Sprite *sprite1 = dynamic_cast<Sprite *>(engine->targetAt(engine->findTarget("Sprite1")));
+        ASSERT_EQ(sprite1->blocks().size(), 2);
+
+        // Sprite1: blocks
+        auto block1 = sprite1->blockAt(0);
+        ASSERT_TRUE(block1);
+        ASSERT_TRUE(block1->isTopLevelReporter());
+        InputValue *reporterInfo = block1->topLevelReporterInfo();
+        ASSERT_TRUE(reporterInfo);
+        ASSERT_EQ(reporterInfo->type(), InputValue::Type::Variable);
+        ASSERT_EQ(reporterInfo->value(), "var");
+        ASSERT_EQ(reporterInfo->valueId(), "b[Pq/qD6PJ+hpWtz;X`G");
+        ASSERT_EQ(reporterInfo->valuePtr(), sprite1->variableAt(0));
+
+        auto block2 = sprite1->blockAt(1);
+        ASSERT_TRUE(block2);
+        ASSERT_TRUE(block2->isTopLevelReporter());
+        reporterInfo = block2->topLevelReporterInfo();
+        ASSERT_TRUE(reporterInfo);
+        ASSERT_EQ(reporterInfo->type(), InputValue::Type::List);
+        ASSERT_EQ(reporterInfo->value(), "list");
+        ASSERT_EQ(reporterInfo->valueId(), "*BW*~d~DgcZee0q=v*T2");
+        ASSERT_EQ(reporterInfo->valuePtr(), sprite1->listAt(0));
 
         i++;
     }
