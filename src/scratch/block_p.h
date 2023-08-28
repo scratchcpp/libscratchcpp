@@ -3,6 +3,7 @@
 #pragma once
 
 #include <scratchcpp/blockprototype.h>
+#include <scratchcpp/inputvalue.h>
 
 namespace libscratchcpp
 {
@@ -33,6 +34,8 @@ struct BlockPrivate
         Target *target = nullptr;
         BlockPrototype mutationPrototype;
         bool mutationHasNext = true;
+        bool isTopLevelReporter = false;
+        std::unique_ptr<InputValue> topLevelReporterInfo = nullptr;
 };
 
 } // namespace libscratchcpp
