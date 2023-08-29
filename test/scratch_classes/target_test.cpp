@@ -4,6 +4,7 @@
 #include <scratchcpp/block.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/sound.h>
+#include <enginemock.h>
 
 #include "../common.h"
 
@@ -193,4 +194,14 @@ TEST(TargetTest, Volume)
     ASSERT_EQ(target.volume(), 100);
     target.setVolume(50);
     ASSERT_EQ(target.volume(), 50);
+}
+
+TEST(TargetTest, Engine)
+{
+    Target target;
+    ASSERT_EQ(target.engine(), nullptr);
+
+    EngineMock engine;
+    target.setEngine(&engine);
+    ASSERT_EQ(target.engine(), &engine);
 }

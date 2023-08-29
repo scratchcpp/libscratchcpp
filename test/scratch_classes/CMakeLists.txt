@@ -63,7 +63,9 @@ add_executable(
 target_link_libraries(
   target_test
   GTest::gtest_main
+  GTest::gmock_main
   scratchcpp
+  scratchcpp_mocks
 )
 
 gtest_discover_tests(target_test)

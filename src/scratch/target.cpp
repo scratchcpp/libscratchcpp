@@ -289,3 +289,15 @@ void Target::setVolume(int newVolume)
 {
     impl->volume = newVolume;
 }
+
+/*! Returns the engine. */
+IEngine *Target::engine() const
+{
+    return impl->engine;
+}
+
+/*! Sets the engine. */
+void Target::setEngine(IEngine *engine)
+{
+    impl->engine = engine;
+}
