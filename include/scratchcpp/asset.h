@@ -2,9 +2,8 @@
 
 #pragma once
 
-#include <string>
+#include "entity.h"
 #include "spimpl.h"
-
 #include "global.h"
 
 namespace libscratchcpp
@@ -13,12 +12,13 @@ namespace libscratchcpp
 class AssetPrivate;
 
 /*! \brief The Asset class represents a Scratch asset, for example a Costume or a Sound. */
-class LIBSCRATCHCPP_EXPORT Asset
+class LIBSCRATCHCPP_EXPORT Asset : public Entity
 {
     public:
         Asset(const std::string &name, const std::string &id, const std::string &format);
+        Asset(const Asset &) = delete;
 
-        const std::string &assetId() const;
+        void setId(const std::string &id);
 
         const std::string &name() const;
 

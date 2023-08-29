@@ -7,7 +7,7 @@ using namespace libscratchcpp;
 TEST(SoundTest, Constructors)
 {
     Sound sound("sound1", "a", "svg");
-    ASSERT_EQ(sound.assetId(), "a");
+    ASSERT_EQ(sound.id(), "a");
     ASSERT_EQ(sound.name(), "sound1");
     ASSERT_EQ(sound.dataFormat(), "svg");
     ASSERT_EQ(sound.md5ext(), "a.svg");

@@ -9,11 +9,10 @@ namespace libscratchcpp
 
 struct AssetPrivate
 {
-        AssetPrivate(const std::string &name, const std::string &id, const std::string &format);
+        AssetPrivate(const std::string &name, const std::string &format);
 
-        void updateFileName();
+        void updateFileName(const std::string &id);
 
-        std::string assetId;
         std::string name;
         std::string dataFormat;
         std::string fileName;

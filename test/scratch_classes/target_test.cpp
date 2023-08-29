@@ -123,9 +123,9 @@ TEST(TargetTest, CurrentCostume)
 
 TEST(TargetTest, Costumes)
 {
-    Costume c1("costume1", "", "svg");
-    Costume c2("costume2", "", "png");
-    Costume c3("costume3", "", "svg");
+    auto c1 = std::make_shared<Costume>("costume1", "", "svg");
+    auto c2 = std::make_shared<Costume>("costume2", "", "png");
+    auto c3 = std::make_shared<Costume>("costume3", "", "svg");
 
     Target target;
     ASSERT_EQ(target.addCostume(c1), 0);
@@ -136,13 +136,13 @@ TEST(TargetTest, Costumes)
     // TODO: Use shared_ptr for assets
     // ASSERT_EQ(target.costumes(), std::vector<std::shared_ptr<Costume>>({ c1, c2, c3 }));
     ASSERT_EQ(target.costumes().size(), 3);
-    ASSERT_EQ(target.costumes()[0].name(), c1.name());
-    ASSERT_EQ(target.costumes()[1].name(), c2.name());
-    ASSERT_EQ(target.costumes()[2].name(), c3.name());
+    ASSERT_EQ(target.costumes()[0]->name(), c1->name());
+    ASSERT_EQ(target.costumes()[1]->name(), c2->name());
+    ASSERT_EQ(target.costumes()[2]->name(), c3->name());
 
-    ASSERT_EQ(target.costumeAt(0).name(), c1.name());
-    ASSERT_EQ(target.costumeAt(1).name(), c2.name());
-    ASSERT_EQ(target.costumeAt(2).name(), c3.name());
+    ASSERT_EQ(target.costumeAt(0)->name(), c1->name());
+    ASSERT_EQ(target.costumeAt(1)->name(), c2->name());
+    ASSERT_EQ(target.costumeAt(2)->name(), c3->name());
 
     ASSERT_EQ(target.findCostume("invalid"), -1);
     ASSERT_EQ(target.findCostume("costume1"), 0);
@@ -152,9 +152,9 @@ TEST(TargetTest, Costumes)
 
 TEST(TargetTest, Sounds)
 {
-    Sound s1("sound1", "", "mp3");
-    Sound s2("sound2", "", "wav");
-    Sound s3("sound3", "", "mp3");
+    auto s1 = std::make_shared<Sound>("sound1", "", "mp3");
+    auto s2 = std::make_shared<Sound>("sound2", "", "wav");
+    auto s3 = std::make_shared<Sound>("sound3", "", "mp3");
 
     Target target;
     ASSERT_EQ(target.addSound(s1), 0);
@@ -165,13 +165,13 @@ TEST(TargetTest, Sounds)
     // TODO: Use shared_ptr for assets
     // ASSERT_EQ(target.sounds(), std::vector<std::shared_ptr<Sound>>({ s1, s2, s3 }));
     ASSERT_EQ(target.sounds().size(), 3);
-    ASSERT_EQ(target.sounds()[0].name(), s1.name());
-    ASSERT_EQ(target.sounds()[1].name(), s2.name());
-    ASSERT_EQ(target.sounds()[2].name(), s3.name());
+    ASSERT_EQ(target.sounds()[0]->name(), s1->name());
+    ASSERT_EQ(target.sounds()[1]->name(), s2->name());
+    ASSERT_EQ(target.sounds()[2]->name(), s3->name());
 
-    ASSERT_EQ(target.soundAt(0).name(), s1.name());
-    ASSERT_EQ(target.soundAt(1).name(), s2.name());
-    ASSERT_EQ(target.soundAt(2).name(), s3.name());
+    ASSERT_EQ(target.soundAt(0)->name(), s1->name());
+    ASSERT_EQ(target.soundAt(1)->name(), s2->name());
+    ASSERT_EQ(target.soundAt(2)->name(), s3->name());
 
     ASSERT_EQ(target.findSound("invalid"), -1);
     ASSERT_EQ(target.findSound("sound1"), 0);

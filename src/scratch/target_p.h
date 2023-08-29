@@ -25,8 +25,8 @@ struct TargetPrivate
         std::vector<std::shared_ptr<List>> lists;
         std::vector<std::shared_ptr<Block>> blocks;
         int currentCostume = 1;
-        std::vector<Costume> costumes;
-        std::vector<Sound> sounds;
+        std::vector<std::shared_ptr<Costume>> costumes;
+        std::vector<std::shared_ptr<Sound>> sounds;
         int layerOrder = 0;
         int volume = 100;
 };

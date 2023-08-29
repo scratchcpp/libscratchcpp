@@ -4,16 +4,14 @@
 
 using namespace libscratchcpp;
 
-AssetPrivate::AssetPrivate(const std::string &name, const std::string &id, const std::string &format) :
+AssetPrivate::AssetPrivate(const std::string &name, const std::string &format) :
     name(name),
-    assetId(id),
     dataFormat(format)
 {
-    updateFileName();
 }
 
-void AssetPrivate::updateFileName()
+void AssetPrivate::updateFileName(const std::string &id)
 {
-    // NOTE: fileName depends on assetId and dataFormat
-    fileName = assetId + "." + dataFormat;
+    // NOTE: fileName depends on id and dataFormat
+    fileName = id + "." + dataFormat;
 }

@@ -203,14 +203,14 @@ bool Scratch3Reader::load()
             auto costumes = jsonTarget["costumes"];
             for (auto jsonCostume : costumes) {
                 READER_STEP(step, "target -> costume -> { name, assetId, dataFormat }");
-                Costume costume(jsonCostume["name"], jsonCostume["assetId"], jsonCostume["dataFormat"]);
+                auto costume = std::make_shared<Costume>(jsonCostume["name"], jsonCostume["assetId"], jsonCostume["dataFormat"]);
                 READER_STEP(step, "target -> costume -> bitmapResolution");
                 if (jsonCostume.contains("bitmapResolution"))
-                    costume.setBitmapResolution(jsonCostume["bitmapResolution"]);
+                    costume->setBitmapResolution(jsonCostume["bitmapResolution"]);
                 READER_STEP(step, "target -> costume -> rotationCenterX");
-                costume.setRotationCenterX(jsonCostume["rotationCenterX"]);
+                costume->setRotationCenterX(jsonCostume["rotationCenterX"]);
                 READER_STEP(step, "target -> costume -> rotationCenterY");
-                costume.setRotationCenterY(jsonCostume["rotationCenterY"]);
+                costume->setRotationCenterY(jsonCostume["rotationCenterY"]);
                 target->addCostume(costume);
             }
 
@@ -219,11 +219,11 @@ bool Scratch3Reader::load()
             auto sounds = jsonTarget["sounds"];
             for (auto jsonSound : sounds) {
                 READER_STEP(step, "target -> sound -> { name, assetId, dataFormat }");
-                Sound sound(jsonSound["name"], jsonSound["assetId"], jsonSound["dataFormat"]);
+                auto sound = std::make_shared<Sound>(jsonSound["name"], jsonSound["assetId"], jsonSound["dataFormat"]);
                 READER_STEP(step, "target -> sound -> rate");
-                sound.setRate(jsonSound["rate"]);
+                sound->setRate(jsonSound["rate"]);
                 READER_STEP(step, "target -> sound -> sampleCount");
-                sound.setSampleCount(jsonSound["sampleCount"]);
+                sound->setSampleCount(jsonSound["sampleCount"]);
                 target->addSound(sound);
             }
 

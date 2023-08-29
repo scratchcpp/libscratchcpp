@@ -51,14 +51,14 @@ class LIBSCRATCHCPP_EXPORT Target
         int currentCostume() const;
         void setCurrentCostume(int newCostume);
 
-        const std::vector<Costume> &costumes() const;
-        int addCostume(const Costume &costume);
-        const Costume &costumeAt(int index) const;
+        const std::vector<std::shared_ptr<Costume>> &costumes() const;
+        int addCostume(std::shared_ptr<Costume> costume);
+        std::shared_ptr<Costume> costumeAt(int index) const;
         int findCostume(const std::string &costumeName) const;
 
-        const std::vector<Sound> &sounds() const;
-        int addSound(const Sound &sound);
-        const Sound &soundAt(int index) const;
+        const std::vector<std::shared_ptr<Sound>> &sounds() const;
+        int addSound(std::shared_ptr<Sound> sound);
+        std::shared_ptr<Sound> soundAt(int index) const;
         int findSound(const std::string &soundName) const;
 
         int layerOrder() const;
