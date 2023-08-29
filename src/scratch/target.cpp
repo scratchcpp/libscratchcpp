@@ -193,35 +193,25 @@ void Target::setCurrentCostume(int newCostume)
 }
 
 /*! Returns the list of costumes. */
-const std::vector<Costume> &Target::costumes() const
+const std::vector<std::shared_ptr<Costume>> &Target::costumes() const
 {
     return impl->costumes;
 }
 
 /*! Adds a costume and returns its index. */
-int Target::addCostume(const Costume &costume)
+int Target::addCostume(std::shared_ptr<Costume> costume)
 {
-    // TODO: Use shared_ptr for assets
-    /*auto it = std::find(impl->costumes.begin(), impl->costumes.end(), costume);
+    auto it = std::find(impl->costumes.begin(), impl->costumes.end(), costume);
 
-    if (it != impl->blocks.end())
-        return it - impl->blocks.begin();*/
-
-    int i = 0;
-
-    for (const auto &c : impl->costumes) {
-        if (c.name() == costume.name())
-            return i;
-
-        i++;
-    }
+    if (it != impl->costumes.end())
+        return it - impl->costumes.begin();
 
     impl->costumes.push_back(costume);
     return impl->costumes.size() - 1;
 }
 
 /*! Returns the costume at index. */
-const libscratchcpp::Costume &Target::costumeAt(int index) const
+std::shared_ptr<Costume> Target::costumeAt(int index) const
 {
     // TODO: Add range check
     return impl->costumes[index];
@@ -232,7 +222,7 @@ int Target::findCostume(const std::string &costumeName) const
 {
     int i = 0;
     for (auto costume : impl->costumes) {
-        if (costume.name() == costumeName)
+        if (costume->name() == costumeName)
             return i;
         i++;
     }
@@ -240,34 +230,25 @@ int Target::findCostume(const std::string &costumeName) const
 }
 
 /*! Returns the list of sounds. */
-const std::vector<Sound> &Target::sounds() const
+const std::vector<std::shared_ptr<Sound>> &Target::sounds() const
 {
     return impl->sounds;
 }
 
 /*! Adds a sound and returns its index. */
-int Target::addSound(const Sound &sound)
+int Target::addSound(std::shared_ptr<Sound> sound)
 {
-    // TODO: Use shared_ptr for assets
-    /*auto it = std::find(impl->sounds.begin(), impl->sounds.end(), sound);
+    auto it = std::find(impl->sounds.begin(), impl->sounds.end(), sound);
 
     if (it != impl->sounds.end())
-        return it - impl->sounds.begin();*/
+        return it - impl->sounds.begin();
 
-    int i = 0;
-
-    for (const auto &s : impl->sounds) {
-        if (s.name() == sound.name())
-            return i;
-
-        i++;
-    }
     impl->sounds.push_back(sound);
     return impl->sounds.size() - 1;
 }
 
 /*! Returns the sound at index. */
-const libscratchcpp::Sound &Target::soundAt(int index) const
+std::shared_ptr<Sound> Target::soundAt(int index) const
 {
     // TODO: Add range check
     return impl->sounds[index];
@@ -278,7 +259,7 @@ int Target::findSound(const std::string &soundName) const
 {
     int i = 0;
     for (auto sound : impl->sounds) {
-        if (sound.name() == soundName)
+        if (sound->name() == soundName)
             return i;
         i++;
     }

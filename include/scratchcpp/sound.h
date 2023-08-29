@@ -16,6 +16,7 @@ class LIBSCRATCHCPP_EXPORT Sound : public Asset
 {
     public:
         Sound(const std::string &name, const std::string &id, const std::string &format);
+        Sound(const Sound &) = delete;
 
         int rate() const;
         void setRate(int newRate);

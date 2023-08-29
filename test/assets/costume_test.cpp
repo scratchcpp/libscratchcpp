@@ -7,7 +7,7 @@ using namespace libscratchcpp;
 TEST(CostumeTest, Constructors)
 {
     Costume costume("costume1", "a", "svg");
-    ASSERT_EQ(costume.assetId(), "a");
+    ASSERT_EQ(costume.id(), "a");
     ASSERT_EQ(costume.name(), "costume1");
     ASSERT_EQ(costume.dataFormat(), "svg");
     ASSERT_EQ(costume.md5ext(), "a.svg");

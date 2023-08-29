@@ -50,10 +50,10 @@ TEST(LoadProjectTest, EmptyProject)
         ASSERT_TRUE(stage->textToSpeechLanguage().empty());
 
         auto backdrop = stage->costumeAt(0);
-        ASSERT_EQ(backdrop.name(), "backdrop1");
-        ASSERT_FALSE(backdrop.assetId().empty());
-        ASSERT_EQ(backdrop.md5ext(), backdrop.assetId() + ".svg");
-        ASSERT_EQ(backdrop.dataFormat(), "svg");
+        ASSERT_EQ(backdrop->name(), "backdrop1");
+        ASSERT_FALSE(backdrop->id().empty());
+        ASSERT_EQ(backdrop->md5ext(), backdrop->id() + ".svg");
+        ASSERT_EQ(backdrop->dataFormat(), "svg");
 
         i++;
     }
@@ -109,10 +109,10 @@ TEST(LoadProjectTest, LoadTestProject)
 
         // Sprite1: sounds
         auto sound = sprite1->soundAt(0);
-        ASSERT_EQ(sound.name(), "Meow");
-        ASSERT_FALSE(sound.assetId().empty());
-        ASSERT_EQ(sound.md5ext(), sound.assetId() + ".wav");
-        ASSERT_EQ(sound.dataFormat(), "wav");
+        ASSERT_EQ(sound->name(), "Meow");
+        ASSERT_FALSE(sound->id().empty());
+        ASSERT_EQ(sound->md5ext(), sound->id() + ".wav");
+        ASSERT_EQ(sound->dataFormat(), "wav");
 
         // Sprite1: variables
         ASSERT_VAR(sprite1, "var2");
@@ -238,10 +238,10 @@ TEST(LoadProjectTest, LoadTestProject)
 
         // Balloon1: sounds
         sound = sprite2->soundAt(0);
-        ASSERT_EQ(sound.name(), "Pop");
-        ASSERT_FALSE(sound.assetId().empty());
-        ASSERT_EQ(sound.md5ext(), sound.assetId() + ".wav");
-        ASSERT_EQ(sound.dataFormat(), "wav");
+        ASSERT_EQ(sound->name(), "Pop");
+        ASSERT_FALSE(sound->id().empty());
+        ASSERT_EQ(sound->md5ext(), sound->id() + ".wav");
+        ASSERT_EQ(sound->dataFormat(), "wav");
 
         // Balloon1: variables
         ASSERT_VAR(sprite2, "var2");
