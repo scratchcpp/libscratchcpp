@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
 - [ ] Sensing blocks
 - [x] Operator blocks
 - [x] Custom blocks
-- [ ] Top level reporter blocks
+- [x] Top level reporter blocks
 - [x] Broadcasts
 - [x] Variables (monitors are not implemented yet)
 - [x] Lists (monitors are not implemented yet)
