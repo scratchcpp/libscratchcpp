@@ -461,8 +461,9 @@ void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
 {
     m_targets = newTargets;
 
-    // Set engine and target in all blocks
+    // Set engine in targets and engine and target in all blocks
     for (auto target : m_targets) {
+        target->setEngine(this);
         auto blocks = target->blocks();
         for (auto block : blocks) {
             block->setEngine(this);

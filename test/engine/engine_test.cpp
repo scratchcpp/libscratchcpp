@@ -255,7 +255,11 @@ TEST(EngineTest, Targets)
     auto t1 = std::make_shared<Target>();
     t1->setName("Sprite1");
     auto t2 = std::make_shared<Target>();
+    auto block1 = std::make_shared<Block>("", "");
+    auto block2 = std::make_shared<Block>("", "");
     t2->setName("Sprite2");
+    t2->addBlock(block1);
+    t2->addBlock(block2);
     auto t3 = std::make_shared<Target>();
     t3->setName("Stage");
     engine.setTargets({ t1, t2, t3 });
@@ -271,4 +275,11 @@ TEST(EngineTest, Targets)
     ASSERT_EQ(engine.findTarget("Sprite1"), 0);
     ASSERT_EQ(engine.findTarget("Sprite2"), 1);
     ASSERT_EQ(engine.findTarget("Stage"), 2);
+
+    ASSERT_EQ(t1->engine(), &engine);
+    ASSERT_EQ(t2->engine(), &engine);
+    ASSERT_EQ(t3->engine(), &engine);
+
+    ASSERT_EQ(block1->engine(), &engine);
+    ASSERT_EQ(block2->engine(), &engine);
 }
