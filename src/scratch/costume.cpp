@@ -9,7 +9,7 @@ using namespace libscratchcpp;
 /*! Constructs Costume. */
 Costume::Costume(const std::string &name, const std::string &id, const std::string &format) :
     Asset(name, id, format),
-    impl(spimpl::make_impl<CostumePrivate>())
+    impl(spimpl::make_unique_impl<CostumePrivate>())
 {
 }
 

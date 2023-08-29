@@ -9,7 +9,7 @@ using namespace libscratchcpp;
 /*! Constructs Asset. */
 Asset::Asset(const std::string &name, const std::string &id, const std::string &format) :
     Entity(id),
-    impl(spimpl::make_impl<AssetPrivate>(name, format))
+    impl(spimpl::make_unique_impl<AssetPrivate>(name, format))
 {
     impl->updateFileName(id);
 }

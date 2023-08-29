@@ -27,7 +27,7 @@ class LIBSCRATCHCPP_EXPORT Asset : public Entity
         const std::string &dataFormat() const;
 
     private:
-        spimpl::impl_ptr<AssetPrivate> impl;
+        spimpl::unique_impl_ptr<AssetPrivate> impl;
 };
 
 } // namespace libscratchcpp

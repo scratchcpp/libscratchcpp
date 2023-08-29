@@ -9,7 +9,7 @@ using namespace libscratchcpp;
 /*! Constructs Sound. */
 Sound::Sound(const std::string &name, const std::string &id, const std::string &format) :
     Asset(name, id, format),
-    impl(spimpl::make_impl<SoundPrivate>())
+    impl(spimpl::make_unique_impl<SoundPrivate>())
 {
 }
 

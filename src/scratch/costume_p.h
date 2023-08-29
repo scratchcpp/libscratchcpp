@@ -8,6 +8,7 @@ namespace libscratchcpp
 struct CostumePrivate
 {
         CostumePrivate();
+        CostumePrivate(const CostumePrivate &) = delete;
 
         double bitmapResolution = 1;
         int rotationCenterX = 0;

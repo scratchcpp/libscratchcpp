@@ -28,7 +28,7 @@ class LIBSCRATCHCPP_EXPORT Costume : public Asset
         void setRotationCenterY(int newRotationCenterY);
 
     private:
-        spimpl::impl_ptr<CostumePrivate> impl;
+        spimpl::unique_impl_ptr<CostumePrivate> impl;
 };
 
 } // namespace libscratchcpp

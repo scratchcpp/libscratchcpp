@@ -10,6 +10,7 @@ namespace libscratchcpp
 struct SoundPrivate
 {
         SoundPrivate();
+        SoundPrivate(const SoundPrivate &) = delete;
 
         int rate = 0;
         int sampleCount = 0;

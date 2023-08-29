@@ -25,7 +25,7 @@ class LIBSCRATCHCPP_EXPORT Sound : public Asset
         void setSampleCount(int newSampleCount);
 
     private:
-        spimpl::impl_ptr<SoundPrivate> impl;
+        spimpl::unique_impl_ptr<SoundPrivate> impl;
 };
 
 } // namespace libscratchcpp
