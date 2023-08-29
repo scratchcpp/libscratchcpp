@@ -66,7 +66,7 @@ bool Block::isTopLevelReporter() const
 
 /*!
  * Sets whether this block is a top level reporter block for a variable or a list.
- * \note Setting this to true will allow the use topLevelReporterInfo().
+ * \note Setting this to true will allow the use of topLevelReporterInfo().
  */
 void Block::setIsTopLevelReporter(bool isTopLevelReporter)
 {
