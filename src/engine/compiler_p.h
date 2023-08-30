@@ -13,6 +13,8 @@ struct CompilerPrivate
 
         void addInstruction(vm::Opcode opcode, std::initializer_list<unsigned int> args = {});
 
+        unsigned int constIndex(InputValue *value, bool pointsToDropdownMenu = false, const std::string &selectedMenuItem = "");
+
         void substackEnd();
 
         IEngine *engine;
@@ -23,6 +25,7 @@ struct CompilerPrivate
 
         std::vector<unsigned int> bytecode;
         std::vector<InputValue *> constValues;
+        std::unordered_map<InputValue *, std::pair<bool, std::string>> constValueMenuInfo; // input value, <whether the input points to a dropdown menu, selected menu item>
         std::vector<Variable *> variables;
         std::vector<List *> lists;
         std::vector<std::string> procedures;

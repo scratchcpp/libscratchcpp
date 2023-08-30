@@ -329,11 +329,32 @@ TEST_F(CompilerTest, ResolveInput)
     engine.registerSection(m_section);
 
     auto block = std::make_shared<Block>("a", "test_block1");
-    auto reporter = std::make_shared<Block>("a", "test_reporter");
     auto input = std::make_shared<Input>("INPUT1", Input::Type::Shadow);
     input->setPrimaryValue("test");
     input->setInputId(TestBlockSection::INPUT1);
-    input->setValueBlock(reporter);
+    block->addInput(input);
+    block->updateInputMap();
+    block->setCompileFunction(&TestBlockSection::compileTestBlock1);
+
+    compiler.compile(block);
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_PRINT, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "test" }));
+}
+
+TEST_F(CompilerTest, ResolveDropdownMenuInput)
+{
+    INIT_COMPILER(engine, compiler);
+
+    engine.registerSection(m_section);
+
+    auto block = std::make_shared<Block>("a", "test_block1");
+    auto input = std::make_shared<Input>("INPUT1", Input::Type::Shadow);
+    auto menu = std::make_shared<Block>("a", "test_menu");
+    auto optionField = std::make_shared<Field>("OPTION", "test");
+    input->setInputId(TestBlockSection::INPUT1);
+    input->setValueBlock(menu);
+    menu->addField(optionField);
     block->addInput(input);
     block->updateInputMap();
     block->setCompileFunction(&TestBlockSection::compileTestBlock1);

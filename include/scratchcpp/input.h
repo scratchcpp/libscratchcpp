@@ -45,6 +45,9 @@ class LIBSCRATCHCPP_EXPORT Input
         void setValueBlock(std::shared_ptr<Block> block);
         void setValueBlockId(const std::string &id);
 
+        bool pointsToDropdownMenu() const;
+        std::string selectedMenuItem() const;
+
     private:
         spimpl::unique_impl_ptr<InputPrivate> impl;
 };
