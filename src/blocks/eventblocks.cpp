@@ -34,24 +34,28 @@ void EventBlocks::registerBlocks(IEngine *engine)
 void EventBlocks::compileBroadcast(Compiler *compiler)
 {
     auto input = compiler->input(BROADCAST_INPUT);
-    compiler->addInput(input);
+
     if (input->type() != Input::Type::ObscuredShadow) {
-        input->primaryValue()->setValue(compiler->engine()->findBroadcast(input->primaryValue()->value().toString()));
+        compiler->addConstValue(compiler->engine()->findBroadcast(input->primaryValue()->value().toString()));
         compiler->addFunctionCall(&broadcastByIndex);
-    } else
+    } else {
+        compiler->addInput(input);
         compiler->addFunctionCall(&broadcast);
+    }
 }
 
 void EventBlocks::compileBroadcastAndWait(Compiler *compiler)
 {
     auto input = compiler->input(BROADCAST_INPUT);
-    compiler->addInput(input);
+
     if (input->type() != Input::Type::ObscuredShadow) {
-        input->primaryValue()->setValue(compiler->engine()->findBroadcast(input->primaryValue()->value().toString()));
+        int index = compiler->engine()->findBroadcast(input->primaryValue()->value().toString());
+        compiler->addConstValue(index);
         compiler->addFunctionCall(&broadcastByIndexAndWait);
-        compiler->addInput(input);
+        compiler->addConstValue(index);
         compiler->addFunctionCall(&checkBroadcastByIndex);
     } else {
+        compiler->addInput(input);
         compiler->addFunctionCall(&broadcastAndWait);
         compiler->addInput(input);
         compiler->addFunctionCall(&checkBroadcast);
