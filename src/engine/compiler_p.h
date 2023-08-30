@@ -3,6 +3,7 @@
 #pragma once
 
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/inputvalue.h>
 
 namespace libscratchcpp
 {
@@ -10,6 +11,7 @@ namespace libscratchcpp
 struct CompilerPrivate
 {
         CompilerPrivate(IEngine *engine);
+        CompilerPrivate(const CompilerPrivate &) = delete;
 
         void addInstruction(vm::Opcode opcode, std::initializer_list<unsigned int> args = {});
 
@@ -25,6 +27,7 @@ struct CompilerPrivate
 
         std::vector<unsigned int> bytecode;
         std::vector<InputValue *> constValues;
+        std::vector<std::unique_ptr<InputValue>> customConstValues;
         std::unordered_map<InputValue *, std::pair<bool, std::string>> constValueMenuInfo; // input value, <whether the input points to a dropdown menu, selected menu item>
         std::vector<Variable *> variables;
         std::vector<List *> lists;

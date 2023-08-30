@@ -180,9 +180,8 @@ TEST_F(EventBlocksTest, BroadcastAndWait)
     ASSERT_EQ(
         compiler.bytecode(),
         std::vector<unsigned int>(
-            { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 0, vm::OP_EXEC, 1, vm::OP_NULL, vm::OP_NOT, vm::OP_EXEC, 2, vm::OP_NULL, vm::OP_NOT, vm::OP_EXEC, 3, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0].toDouble(), 0);
+            { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_NULL, vm::OP_NOT, vm::OP_EXEC, 2, vm::OP_NULL, vm::OP_NOT, vm::OP_EXEC, 3, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 0 }));
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
 }
