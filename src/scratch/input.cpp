@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <scratchcpp/input.h>
+#include <scratchcpp/field.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/block.h>
 
@@ -93,4 +94,36 @@ void Input::setValueBlockId(const std::string &id)
 {
     impl->primaryValue.setValueBlock(nullptr);
     impl->primaryValue.setValueBlockId(id);
+}
+
+/*!
+ * Returns true if the input points to a dropdown menu.\n
+ * (if type() == Type::Shadow and valueBlock() points to a block with a single field which does not point to an entity)
+ */
+bool Input::pointsToDropdownMenu() const
+{
+    auto block = valueBlock();
+
+    if ((impl->type != Type::Shadow) || !block)
+        return false;
+
+    const auto &fields = block->fields();
+
+    if (fields.size() != 1)
+        return false;
+
+    auto field = fields[0];
+    return (field && !field->valuePtr() && (field->valueId() == ""));
+}
+
+/*!
+ * Returns the selected item in the dropdown menu.\n
+ * Works only pointsToDropdownMenu() is true.
+ */
+std::string Input::selectedMenuItem() const
+{
+    if (!pointsToDropdownMenu())
+        return "";
+
+    return valueBlock()->fieldAt(0)->value().toString();
 }
