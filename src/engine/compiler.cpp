@@ -98,8 +98,14 @@ const std::vector<InputValue *> &Compiler::constInputValues() const
 std::vector<Value> Compiler::constValues() const
 {
     std::vector<Value> ret;
-    for (auto value : impl->constValues)
-        ret.push_back(value->value());
+    for (auto value : impl->constValues) {
+        const auto &menuInfo = impl->constValueMenuInfo.at(value);
+
+        if (menuInfo.first)
+            ret.push_back(menuInfo.second);
+        else
+            ret.push_back(value->value());
+    }
     return ret;
 }
 
@@ -139,7 +145,10 @@ void Compiler::addInput(Input *input)
     }
     switch (input->type()) {
         case Input::Type::Shadow:
-            addInstruction(OP_CONST, { constIndex(input->primaryValue()) });
+            if (input->pointsToDropdownMenu())
+                addInstruction(OP_CONST, { impl->constIndex(input->primaryValue(), true, input->selectedMenuItem()) });
+            else
+                addInstruction(OP_CONST, { impl->constIndex(input->primaryValue()) });
             break;
 
         case Input::Type::NoShadow: {
@@ -275,11 +284,7 @@ unsigned int Compiler::listIndex(std::shared_ptr<Entity> listEntity)
 /*! Returns the index of the given constant input value. */
 unsigned int Compiler::constIndex(InputValue *value)
 {
-    auto it = std::find(impl->constValues.begin(), impl->constValues.end(), value);
-    if (it != impl->constValues.end())
-        return it - impl->constValues.begin();
-    impl->constValues.push_back(value);
-    return impl->constValues.size() - 1;
+    return impl->constIndex(value);
 }
 
 /*! Returns the index of the procedure code of the given block. */

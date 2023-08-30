@@ -20,6 +20,16 @@ void CompilerPrivate::addInstruction(vm::Opcode opcode, std::initializer_list<un
         bytecode.push_back(arg);
 }
 
+unsigned int CompilerPrivate::constIndex(InputValue *value, bool pointsToDropdownMenu, const std::string &selectedMenuItem)
+{
+    auto it = std::find(constValues.begin(), constValues.end(), value);
+    if (it != constValues.end())
+        return it - constValues.begin();
+    constValues.push_back(value);
+    constValueMenuInfo[value] = { pointsToDropdownMenu, selectedMenuItem };
+    return constValues.size() - 1;
+}
+
 void CompilerPrivate::substackEnd()
 {
     auto parent = substackTree.back();
