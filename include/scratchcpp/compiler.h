@@ -56,6 +56,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void addInstruction(vm::Opcode opcode, const std::initializer_list<unsigned int> &args = {});
         void addInput(Input *input);
         void addInput(int id);
+        void addConstValue(const Value &value);
         void addFunctionCall(BlockFunc f);
         void addProcedureArg(const std::string &procCode, const std::string &argName);
         void moveToSubstack(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2, SubstackType type);

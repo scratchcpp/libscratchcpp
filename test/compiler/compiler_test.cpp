@@ -365,6 +365,27 @@ TEST_F(CompilerTest, ResolveDropdownMenuInput)
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "test" }));
 }
 
+TEST_F(CompilerTest, AddConstValue)
+{
+    INIT_COMPILER(engine, compiler);
+    compiler.addInstruction(vm::OP_START);
+
+    compiler.addConstValue(50);
+    compiler.addInstruction(vm::OP_PRINT);
+    compiler.addConstValue(50);
+    compiler.addInstruction(vm::OP_PRINT);
+    compiler.addConstValue("hello");
+    compiler.addInstruction(vm::OP_PRINT);
+    compiler.addConstValue("world");
+    compiler.addInstruction(vm::OP_PRINT);
+
+    compiler.addInstruction(vm::OP_HALT);
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_PRINT, vm::OP_CONST, 1, vm::OP_PRINT, vm::OP_CONST, 2, vm::OP_PRINT, vm::OP_CONST, 3, vm::OP_PRINT, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 50, 50, "hello", "world" }));
+}
+
 TEST_F(CompilerTest, ResolveField)
 {
     INIT_COMPILER(engine, compiler);

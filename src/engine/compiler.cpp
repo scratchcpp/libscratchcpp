@@ -3,7 +3,6 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/input.h>
-#include <scratchcpp/inputvalue.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
@@ -187,6 +186,14 @@ void Compiler::addInput(Input *input)
 void Compiler::addInput(int id)
 {
     addInput(input(id));
+}
+
+/*! Adds a constant value and an instruction to load it. Useful if you don't have an input for the addInput() method. */
+void libscratchcpp::Compiler::addConstValue(const Value &value)
+{
+    impl->customConstValues.push_back(std::make_unique<InputValue>());
+    impl->customConstValues.back()->setValue(value);
+    addInstruction(OP_CONST, { impl->constIndex(impl->customConstValues.back().get()) });
 }
 
 /*! Adds a function call to the bytecode (the OP_EXEC instruction). */
