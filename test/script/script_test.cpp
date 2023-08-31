@@ -81,4 +81,15 @@ TEST_F(ScriptTest, Start)
     ASSERT_EQ(vm->constValues()[0].toString(), constValues[0].toString());
     ASSERT_EQ(vm->variables()[0], variables[0]);
     ASSERT_EQ(vm->lists()[0], lists[0]);
+
+    Target target;
+    vm = script3.start(&target);
+    ASSERT_TRUE(vm);
+    ASSERT_EQ(vm->target(), &target);
+    ASSERT_EQ(vm->bytecode()[0], bytecode[0]);
+    ASSERT_EQ(vm->procedures()[0], procedures[0]);
+    ASSERT_EQ(vm->functions()[0], functions[0]);
+    ASSERT_EQ(vm->constValues()[0].toString(), constValues[0].toString());
+    ASSERT_EQ(vm->variables()[0], variables[0]);
+    ASSERT_EQ(vm->lists()[0], lists[0]);
 }

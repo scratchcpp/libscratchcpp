@@ -35,7 +35,13 @@ void Script::setBytecode(const std::vector<unsigned int> &code)
 /*! Starts the script (creates a virtual machine). */
 std::shared_ptr<VirtualMachine> Script::start()
 {
-    auto vm = std::make_shared<VirtualMachine>(impl->target, impl->engine, this);
+    return start(impl->target);
+}
+
+/*! Starts the script (creates a virtual machine). */
+std::shared_ptr<VirtualMachine> Script::start(Target *target)
+{
+    auto vm = std::make_shared<VirtualMachine>(target, impl->engine, this);
     vm->setBytecode(impl->bytecode);
     vm->setProcedures(impl->procedures);
     vm->setFunctions(impl->functions);

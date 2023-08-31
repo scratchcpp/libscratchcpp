@@ -36,6 +36,7 @@ class LIBSCRATCHCPP_EXPORT Script
         void setLists(const std::vector<List *> &lists);
 
         std::shared_ptr<VirtualMachine> start();
+        std::shared_ptr<VirtualMachine> start(Target *target);
 
     private:
         spimpl::unique_impl_ptr<ScriptPrivate> impl;
