@@ -32,6 +32,7 @@ class Engine : public IEngine
         void broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait = false) override;
         void stopScript(VirtualMachine *vm) override;
         void stopTarget(Target *target, VirtualMachine *exceptScript) override;
+        void initClone(libscratchcpp::Sprite *clone) override;
         void run() override;
 
         bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) override;
@@ -60,6 +61,8 @@ class Engine : public IEngine
 
         void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast) override;
 
+        void addCloneInitScript(std::shared_ptr<Block> hatBlock) override;
+
         const std::vector<std::shared_ptr<Target>> &targets() const override;
         void setTargets(const std::vector<std::shared_ptr<Target>> &newTargets) override;
         Target *targetAt(int index) const override;
@@ -86,6 +89,7 @@ class Engine : public IEngine
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<unsigned int, std::vector<Script *>> m_broadcastMap;
         std::unordered_map<unsigned int, std::vector<std::pair<VirtualMachine *, VirtualMachine *>>> m_runningBroadcastMap; // source script, "when received" script
+        std::unordered_map<Target *, std::vector<Script *>> m_cloneInitScriptsMap;                                          // target (no clones), "when I start as a clone" scripts
         std::vector<std::string> m_extensions;
         std::vector<std::shared_ptr<VirtualMachine>> m_runningScripts;
         std::vector<VirtualMachine *> m_scriptsToRemove;

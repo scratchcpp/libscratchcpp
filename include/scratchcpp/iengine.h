@@ -15,6 +15,7 @@ class IBlockSection;
 class Broadcast;
 class Block;
 class Target;
+class Sprite;
 class Script;
 
 /*!
@@ -69,6 +70,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
          * \param[in] exceptScript Sets this parameter to stop all scripts except the given script.
          */
         virtual void stopTarget(Target *target, VirtualMachine *exceptScript) = 0;
+
+        /*! Calls the "when I start as a clone" blocks of the given sprite. */
+        virtual void initClone(Sprite *clone) = 0;
 
         /*!
          * Runs the event loop and calls "when green flag clicked" blocks.
@@ -156,6 +160,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
 
         /*! Registers the broadcast script. */
         virtual void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast) = 0;
+
+        /* Registers the given "when I start as clone" script. */
+        virtual void addCloneInitScript(std::shared_ptr<Block> hatBlock) = 0;
 
         /*! Returns the list of targets. */
         virtual const std::vector<std::shared_ptr<Target>> &targets() const = 0;

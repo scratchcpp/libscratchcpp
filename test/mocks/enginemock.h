@@ -21,6 +21,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, broadcast, (unsigned int, VirtualMachine *, bool), (override));
         MOCK_METHOD(void, stopScript, (VirtualMachine *), (override));
         MOCK_METHOD(void, stopTarget, (Target *, VirtualMachine *), (override));
+        MOCK_METHOD(void, initClone, (Sprite *), (override));
         MOCK_METHOD(void, run, (), (override));
 
         MOCK_METHOD(bool, broadcastRunning, (unsigned int, VirtualMachine *), (override));
@@ -47,6 +48,8 @@ class EngineMock : public IEngine
         MOCK_METHOD(int, findBroadcastById, (const std::string &), (const, override));
 
         MOCK_METHOD(void, addBroadcastScript, (std::shared_ptr<Block>, std::shared_ptr<Broadcast>), (override));
+
+        MOCK_METHOD(void, addCloneInitScript, (std::shared_ptr<Block>), (override));
 
         MOCK_METHOD(const std::vector<std::shared_ptr<Target>> &, targets, (), (const, override));
         MOCK_METHOD(void, setTargets, (const std::vector<std::shared_ptr<Target>> &), (override));

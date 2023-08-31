@@ -3,6 +3,7 @@
 #include <scratchcpp/scratchconfiguration.h>
 #include <scratchcpp/iblocksection.h>
 #include <scratchcpp/script.h>
+#include <scratchcpp/sprite.h>
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/input.h>
@@ -258,6 +259,37 @@ void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
         stopScript(script);
 }
 
+void Engine::initClone(Sprite *clone)
+{
+    if (!clone)
+        return;
+
+    Sprite *source = clone->cloneParent();
+    Target *root = clone->cloneRoot();
+    assert(source);
+    assert(root);
+
+    if (!source || !root)
+        return;
+
+    auto it = m_cloneInitScriptsMap.find(root);
+
+    if (it != m_cloneInitScriptsMap.cend()) {
+        const auto &scripts = it->second;
+
+#ifndef NDEBUG
+        // Since we're initializing the clone, it shouldn't have any running scripts
+        for (const auto script : m_runningScripts)
+            assert(script->target() != clone);
+#endif
+
+        for (auto script : scripts) {
+            auto vm = script->start(clone);
+            m_runningScripts.push_back(vm);
+        }
+    }
+}
+
 void Engine::run()
 {
     auto frameDuration = std::chrono::milliseconds(33);
@@ -442,6 +474,7 @@ void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::s
     auto id = findBroadcast(broadcast->name());
     if (m_broadcastMap.count(id) == 1) {
         std::vector<Script *> &scripts = m_broadcastMap[id];
+        // TODO: Do not allow adding existing scripts
         scripts.push_back(m_scripts[whenReceivedBlock].get());
     } else {
         m_broadcastMap[id] = { m_scripts[whenReceivedBlock].get() };
@@ -449,6 +482,22 @@ void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::s
         // Create a vector of running scripts for this broadcast
         // so we don't need to check if it's there
         m_runningBroadcastMap[id] = {};
+    }
+}
+
+void Engine::addCloneInitScript(std::shared_ptr<Block> hatBlock)
+{
+    Target *target = hatBlock->target();
+    Script *script = m_scripts[hatBlock].get();
+    auto it = m_cloneInitScriptsMap.find(target);
+
+    if (it == m_cloneInitScriptsMap.cend())
+        m_cloneInitScriptsMap[target] = { m_scripts[hatBlock].get() };
+    else {
+        auto &scripts = it->second;
+
+        if (std::find(scripts.begin(), scripts.end(), script) == scripts.cend())
+            scripts.push_back(script);
     }
 }
 
