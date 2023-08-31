@@ -16,12 +16,39 @@ Sprite::Sprite() :
 {
 }
 
+/*! Destroys the Sprite object. */
+Sprite::~Sprite()
+{
+    if (isClone()) {
+        assert(impl->cloneParent);
+        impl->cloneParent->impl->removeClone(this);
+    }
+}
+
 /*! Sets the sprite interface. */
 void Sprite::setInterface(ISpriteHandler *newInterface)
 {
     assert(newInterface);
     impl->iface = newInterface;
     impl->iface->onSpriteChanged(this);
+}
+
+/*! Returns true if this is a clone. */
+bool Sprite::isClone() const
+{
+    return (impl->cloneParent != nullptr);
+}
+
+/*! Returns the sprite this clone was created from, or nullptr if this isn't a clone. */
+Sprite *Sprite::cloneRoot() const
+{
+    return impl->cloneRoot;
+}
+
+/*! Returns the sprite or clone this clone was created from, or nullptr if this isn't a clone. */
+Sprite *Sprite::cloneParent() const
+{
+    return impl->cloneParent;
 }
 
 /*! Returns true if the sprite is visible. */

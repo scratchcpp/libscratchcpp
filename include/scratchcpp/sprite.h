@@ -22,8 +22,14 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
         };
 
         Sprite();
+        ~Sprite();
 
         void setInterface(ISpriteHandler *newInterface);
+
+        bool isClone() const;
+
+        Sprite *cloneRoot() const;
+        Sprite *cloneParent() const;
 
         bool visible() const;
         void setVisible(bool newVisible);

@@ -10,6 +10,19 @@ SpritePrivate::SpritePrivate()
 {
 }
 
+void SpritePrivate::removeClone(Sprite *clone)
+{
+    int index = 0;
+    for (const auto &child : childClones) {
+        if (child.get() == clone) {
+            childClones.erase(childClones.begin() + index);
+            return;
+        }
+
+        index++;
+    }
+}
+
 void SpritePrivate::setCostumeData(const char *data)
 {
     if (iface)
