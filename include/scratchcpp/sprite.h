@@ -26,6 +26,8 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
 
         void setInterface(ISpriteHandler *newInterface);
 
+        std::shared_ptr<Sprite> clone();
+
         bool isClone() const;
 
         Sprite *cloneRoot() const;
