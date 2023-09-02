@@ -109,6 +109,26 @@ Sprite *Sprite::cloneParent() const
     return impl->cloneParent;
 }
 
+/*! Returns list of child clones. */
+const std::vector<std::shared_ptr<Sprite>> &Sprite::children() const
+{
+    return impl->childClones;
+}
+
+/*! Returns list of child clones and their children (recursive). */
+std::vector<std::shared_ptr<Sprite>> Sprite::allChildren() const
+{
+    std::vector<std::shared_ptr<Sprite>> ret;
+
+    for (auto clone : impl->childClones) {
+        ret.push_back(clone);
+        auto children = clone->allChildren();
+        ret.insert(ret.end(), children.begin(), children.end());
+    }
+
+    return ret;
+}
+
 /*! Returns true if the sprite is visible. */
 bool Sprite::visible() const
 {

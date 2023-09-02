@@ -129,6 +129,50 @@ TEST(SpriteTest, Clone)
     ASSERT_EQ(clone2->cloneParent(), clone1);
 
     checkCloneData(clone2);
+
+    Sprite *clone3;
+    EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone3));
+    ASSERT_EQ(clone1->clone().get(), clone3);
+
+    Sprite *clone4;
+    EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone4));
+    ASSERT_EQ(sprite.clone().get(), clone4);
+
+    // children
+    const auto &children1 = sprite.children();
+    ASSERT_EQ(children1.size(), 2);
+    ASSERT_EQ(children1[0].get(), clone1);
+    ASSERT_EQ(children1[1].get(), clone4);
+
+    const auto &children2 = clone1->children();
+    ASSERT_EQ(children2.size(), 2);
+    ASSERT_EQ(children2[0].get(), clone2);
+    ASSERT_EQ(children2[1].get(), clone3);
+
+    ASSERT_TRUE(clone2->children().empty());
+
+    ASSERT_TRUE(clone3->children().empty());
+
+    ASSERT_TRUE(clone4->children().empty());
+
+    // allChildren
+    auto allChildren = sprite.allChildren();
+    ASSERT_EQ(allChildren.size(), 4);
+    ASSERT_EQ(allChildren[0].get(), clone1);
+    ASSERT_EQ(allChildren[1].get(), clone2);
+    ASSERT_EQ(allChildren[2].get(), clone3);
+    ASSERT_EQ(allChildren[3].get(), clone4);
+
+    allChildren = clone1->allChildren();
+    ASSERT_EQ(allChildren.size(), 2);
+    ASSERT_EQ(allChildren[0].get(), clone2);
+    ASSERT_EQ(allChildren[1].get(), clone3);
+
+    ASSERT_TRUE(clone2->allChildren().empty());
+
+    ASSERT_TRUE(clone3->allChildren().empty());
+
+    ASSERT_TRUE(clone4->allChildren().empty());
 }
 
 TEST(SpriteTest, X)

@@ -32,6 +32,8 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
 
         Sprite *cloneRoot() const;
         Sprite *cloneParent() const;
+        const std::vector<std::shared_ptr<Sprite>> &children() const;
+        std::vector<std::shared_ptr<Sprite>> allChildren() const;
 
         bool visible() const;
         void setVisible(bool newVisible);
