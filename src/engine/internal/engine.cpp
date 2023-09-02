@@ -202,22 +202,21 @@ void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wa
     const std::vector<Script *> &scripts = m_broadcastMap[index];
 
     for (auto script : scripts) {
-        long scriptIndex = -1;
-        for (long i = 0; i < m_runningScripts.size(); i++) {
-            if (m_runningScripts[i]->script() == script) {
-                scriptIndex = i;
-                break;
+        std::vector<VirtualMachine *> runningBroadcastScripts;
+
+        for (auto vm : m_runningScripts) {
+            if (vm->script() == script) {
+                runningBroadcastScripts.push_back(vm.get());
             }
         }
 
-        if (scriptIndex != -1) {
-            // Reset the script if it's already running
-            auto vm = m_runningScripts[scriptIndex];
+        // Reset running scripts
+        for (VirtualMachine *vm : runningBroadcastScripts) {
             vm->reset();
 
             // Remove the script from scripts to remove because it's going to run again
-            m_scriptsToRemove.erase(std::remove(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm.get()), m_scriptsToRemove.end());
-            assert(std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), m_runningScripts[scriptIndex].get()) == m_scriptsToRemove.end());
+            m_scriptsToRemove.erase(std::remove(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm), m_scriptsToRemove.end());
+            assert(std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm) == m_scriptsToRemove.end());
 
             auto &scripts = m_runningBroadcastMap[index];
 
@@ -233,10 +232,29 @@ void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wa
                     m_skipFrame = false;
             } else
                 sourceScript->stop(true, true);
-        } else {
-            auto vm = script->start();
-            m_runningScripts.push_back(vm);
-            m_runningBroadcastMap[index].push_back({ sourceScript, vm.get() });
+        }
+
+        // Start scripts which are not running
+        Target *root = script->target();
+        std::vector<Target *> targets = { root };
+
+        if (!root->isStage()) {
+            Sprite *sprite = dynamic_cast<Sprite *>(root);
+            assert(sprite);
+            auto children = sprite->allChildren();
+
+            for (auto child : children)
+                targets.push_back(child.get());
+        }
+
+        for (Target *target : targets) {
+            auto it = std::find_if(runningBroadcastScripts.begin(), runningBroadcastScripts.end(), [target](VirtualMachine *vm) { return vm->target() == target; });
+
+            if (it == runningBroadcastScripts.end()) {
+                auto vm = script->start(target);
+                m_runningScripts.push_back(vm);
+                m_runningBroadcastMap[index].push_back({ sourceScript, vm.get() });
+            }
         }
     }
 }
