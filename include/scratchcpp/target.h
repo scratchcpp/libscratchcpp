@@ -71,6 +71,10 @@ class LIBSCRATCHCPP_EXPORT Target
         IEngine *engine() const;
         void setEngine(IEngine *engine);
 
+    protected:
+        /*! Override this method to set a custom data source for blocks and assets. */
+        virtual Target *dataSource() const { return nullptr; }
+
     private:
         spimpl::unique_impl_ptr<TargetPrivate> impl;
 };
