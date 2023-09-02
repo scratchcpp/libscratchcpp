@@ -12,6 +12,7 @@ namespace libscratchcpp
 
 class Target;
 class IEngine;
+class Variable;
 class List;
 
 struct ScriptPrivate
@@ -34,11 +35,10 @@ struct ScriptPrivate
         const Value *constValues = nullptr;
         std::vector<Value> constValuesVector;
 
-        Value **variables = nullptr;
-        std::vector<Value *> variablesVector;
+        std::vector<Value *> variableValues;
+        std::vector<Variable *> variables;
 
-        List **lists = nullptr;
-        std::vector<List *> listsVector;
+        std::vector<List *> lists;
 };
 
 } // namespace libscratchcpp

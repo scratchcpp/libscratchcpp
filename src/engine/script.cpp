@@ -2,6 +2,11 @@
 
 #include <scratchcpp/script.h>
 #include <scratchcpp/virtualmachine.h>
+#include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
+#include <scratchcpp/sprite.h>
+#include <scratchcpp/iengine.h>
+#include <iostream>
 
 #include "script_p.h"
 
@@ -44,7 +49,7 @@ std::shared_ptr<VirtualMachine> Script::start()
     return start(impl->target);
 }
 
-/*! Starts the script (creates a virtual machine). */
+/*! Starts the script (creates a virtual machine) as the given target (might be a clone). */
 std::shared_ptr<VirtualMachine> Script::start(Target *target)
 {
     auto vm = std::make_shared<VirtualMachine>(target, impl->engine, this);
@@ -52,8 +57,58 @@ std::shared_ptr<VirtualMachine> Script::start(Target *target)
     vm->setProcedures(impl->procedures);
     vm->setFunctions(impl->functions);
     vm->setConstValues(impl->constValues);
-    vm->setVariables(impl->variables);
-    vm->setLists(impl->lists);
+
+    Sprite *sprite = nullptr;
+    if (target && !target->isStage())
+        sprite = dynamic_cast<Sprite *>(target);
+
+    if (impl->target && sprite && sprite->isClone() && impl->engine) {
+        Target *root = sprite->cloneRoot();
+
+        if (root != impl->target) {
+            std::cout << "warning: a clone tried to start a script of another target (this is a bug in libscratchcpp or in your code!)" << std::endl;
+            vm->setVariables(impl->variableValues.data());
+            vm->setLists(impl->lists.data());
+            return vm;
+        }
+
+        // Use internal variables and lists from the clone
+        std::vector<Value *> variables;
+        std::vector<List *> lists;
+
+        for (const auto &var : impl->variables) {
+            Target *owner = impl->engine->variableOwner(var);
+
+            if (owner && (owner == root)) {
+                auto cloneVar = sprite->variableAt(sprite->findVariableById(var->id()));
+                assert(cloneVar);
+
+                if (cloneVar)
+                    variables.push_back(cloneVar->valuePtr());
+            } else
+                variables.push_back(var->valuePtr());
+        }
+
+        for (const auto &list : impl->lists) {
+            Target *owner = impl->engine->listOwner(list);
+
+            if (owner && (owner == root)) {
+                auto cloneList = sprite->listAt(sprite->findListById(list->id()));
+                assert(cloneList);
+
+                if (cloneList)
+                    lists.push_back(cloneList.get());
+            } else
+                lists.push_back(list);
+        }
+
+        vm->setVariablesVector(variables);
+        vm->setListsVector(lists);
+    } else {
+        vm->setVariables(impl->variableValues.data());
+        vm->setLists(impl->lists.data());
+    }
+
     return vm;
 }
 
@@ -79,15 +134,17 @@ void Script::setConstValues(const std::vector<Value> &values)
 }
 
 /*! Sets the list of variables. */
-void Script::setVariables(const std::vector<Value *> &variables)
+void Script::setVariables(const std::vector<Variable *> &variables)
 {
-    impl->variablesVector = variables;
-    impl->variables = impl->variablesVector.data();
+    impl->variables = variables;
+    impl->variableValues.clear();
+
+    for (const auto &var : variables)
+        impl->variableValues.push_back(var->valuePtr());
 }
 
 /*! Sets the list of lists. */
 void Script::setLists(const std::vector<List *> &lists)
 {
-    impl->listsVector = lists;
-    impl->lists = impl->listsVector.data();
+    impl->lists = lists;
 }

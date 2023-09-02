@@ -15,6 +15,7 @@ class Target;
 class IEngine;
 class Value;
 class VirtualMachine;
+class Variable;
 class List;
 class ScriptPrivate;
 
@@ -34,7 +35,7 @@ class LIBSCRATCHCPP_EXPORT Script
         void setProcedures(const std::vector<unsigned int *> &procedures);
         void setFunctions(const std::vector<BlockFunc> &functions);
         void setConstValues(const std::vector<Value> &values);
-        void setVariables(const std::vector<Value *> &variables);
+        void setVariables(const std::vector<Variable *> &variables);
         void setLists(const std::vector<List *> &lists);
 
         std::shared_ptr<VirtualMachine> start();

@@ -112,7 +112,7 @@ void Engine::compile()
             if (m_scripts.count(block) == 1) {
                 m_scripts[block]->setProcedures(procedureBytecodes);
                 m_scripts[block]->setConstValues(compiler.constValues());
-                m_scripts[block]->setVariables(compiler.variablePtrs());
+                m_scripts[block]->setVariables(compiler.variables());
                 m_scripts[block]->setLists(compiler.lists());
             }
         }
