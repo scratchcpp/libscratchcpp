@@ -15,6 +15,12 @@ class ScriptTest : public testing::Test
         EngineMock m_engine;
 };
 
+TEST_F(ScriptTest, Constructors)
+{
+    Script script(&m_target, &m_engine);
+    ASSERT_EQ(script.target(), &m_target);
+}
+
 TEST_F(ScriptTest, Bytecode)
 {
     Script script(nullptr, nullptr);

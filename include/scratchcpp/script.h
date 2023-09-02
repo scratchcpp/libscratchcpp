@@ -25,6 +25,8 @@ class LIBSCRATCHCPP_EXPORT Script
         Script(Target *target, IEngine *engine);
         Script(const Script &) = delete;
 
+        Target *target() const;
+
         unsigned int *bytecode() const;
         const std::vector<unsigned int> &bytecodeVector() const;
         void setBytecode(const std::vector<unsigned int> &code);

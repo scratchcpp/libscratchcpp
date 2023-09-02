@@ -13,6 +13,12 @@ Script::Script(Target *target, IEngine *engine) :
 {
 }
 
+/*! Returns the Target. */
+Target *Script::target() const
+{
+    return impl->target;
+}
+
 /*! Returns the bytecode array. */
 unsigned int *Script::bytecode() const
 {
