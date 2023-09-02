@@ -60,6 +60,8 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
         void setRotationStyle(const char *newRotationStyle);
 
     private:
+        Target *dataSource() const override;
+
         spimpl::unique_impl_ptr<SpritePrivate> impl;
 };
 

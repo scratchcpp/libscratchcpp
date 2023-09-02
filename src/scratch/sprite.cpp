@@ -255,3 +255,8 @@ void Sprite::setRotationStyle(const char *newRotationStyle)
 {
     setRotationStyle(std::string(newRotationStyle));
 }
+
+Target *Sprite::dataSource() const
+{
+    return impl->cloneRoot;
+}

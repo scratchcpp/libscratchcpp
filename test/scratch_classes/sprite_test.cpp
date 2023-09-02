@@ -1,6 +1,7 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/costume.h>
 #include <enginemock.h>
 
 #include "../common.h"
@@ -32,6 +33,8 @@ TEST(SpriteTest, Clone)
     auto var2 = std::make_shared<Variable>("b", "var2", "world");
     sprite.addVariable(var1);
     sprite.addVariable(var2);
+    auto c1 = std::make_shared<Costume>("costume1", "", "svg");
+    sprite.addCostume(c1);
 
     auto list1 = std::make_shared<List>("c", "list1");
     list1->push_back("item1");
@@ -173,6 +176,11 @@ TEST(SpriteTest, Clone)
     ASSERT_TRUE(clone3->allChildren().empty());
 
     ASSERT_TRUE(clone4->allChildren().empty());
+
+    ASSERT_EQ(clone2->costumes(), sprite.costumes());
+    auto c2 = std::make_shared<Costume>("costume2", "", "png");
+    clone2->addCostume(c2);
+    ASSERT_EQ(clone2->costumes(), sprite.costumes());
 }
 
 TEST(SpriteTest, X)
