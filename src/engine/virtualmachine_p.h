@@ -59,7 +59,9 @@ struct VirtualMachinePrivate
         BlockFunc *functions = nullptr;
         const Value *constValues = nullptr;
         Value **variables = nullptr;
+        std::vector<Value *> variablesVector;
         List **lists = nullptr;
+        std::vector<List *> listsVector;
 
         Value **regs = nullptr;
         size_t regCount = 0;

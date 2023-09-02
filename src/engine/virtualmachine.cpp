@@ -50,6 +50,26 @@ void VirtualMachine::setLists(List **lists)
     impl->lists = lists;
 }
 
+/*!
+ * Sets the vector of variables.
+ * Use this instead of setVariables() if you can't store the array (data pointer) anywhere.
+ */
+void VirtualMachine::setVariablesVector(const std::vector<Value *> &variables)
+{
+    impl->variablesVector = variables;
+    impl->variables = impl->variablesVector.data();
+}
+
+/*!
+ * Sets the vector of lists.
+ * Use this instead of setLists() if you can't store the array (data pointer) anywhere.
+ */
+void VirtualMachine::setListsVector(const std::vector<List *> &lists)
+{
+    impl->listsVector = lists;
+    impl->lists = impl->listsVector.data();
+}
+
 /*! Sets the bytecode of the script. */
 void VirtualMachine::setBytecode(unsigned int *code)
 {
