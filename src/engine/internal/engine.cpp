@@ -3,6 +3,7 @@
 #include <scratchcpp/scratchconfiguration.h>
 #include <scratchcpp/iblocksection.h>
 #include <scratchcpp/script.h>
+#include <scratchcpp/sprite.h>
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/input.h>
@@ -111,7 +112,7 @@ void Engine::compile()
             if (m_scripts.count(block) == 1) {
                 m_scripts[block]->setProcedures(procedureBytecodes);
                 m_scripts[block]->setConstValues(compiler.constValues());
-                m_scripts[block]->setVariables(compiler.variablePtrs());
+                m_scripts[block]->setVariables(compiler.variables());
                 m_scripts[block]->setLists(compiler.lists());
             }
         }
@@ -201,22 +202,21 @@ void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wa
     const std::vector<Script *> &scripts = m_broadcastMap[index];
 
     for (auto script : scripts) {
-        long scriptIndex = -1;
-        for (long i = 0; i < m_runningScripts.size(); i++) {
-            if (m_runningScripts[i]->script() == script) {
-                scriptIndex = i;
-                break;
+        std::vector<VirtualMachine *> runningBroadcastScripts;
+
+        for (auto vm : m_runningScripts) {
+            if (vm->script() == script) {
+                runningBroadcastScripts.push_back(vm.get());
             }
         }
 
-        if (scriptIndex != -1) {
-            // Reset the script if it's already running
-            auto vm = m_runningScripts[scriptIndex];
+        // Reset running scripts
+        for (VirtualMachine *vm : runningBroadcastScripts) {
             vm->reset();
 
             // Remove the script from scripts to remove because it's going to run again
-            m_scriptsToRemove.erase(std::remove(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm.get()), m_scriptsToRemove.end());
-            assert(std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), m_runningScripts[scriptIndex].get()) == m_scriptsToRemove.end());
+            m_scriptsToRemove.erase(std::remove(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm), m_scriptsToRemove.end());
+            assert(std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm) == m_scriptsToRemove.end());
 
             auto &scripts = m_runningBroadcastMap[index];
 
@@ -232,10 +232,29 @@ void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wa
                     m_skipFrame = false;
             } else
                 sourceScript->stop(true, true);
-        } else {
-            auto vm = script->start();
-            m_runningScripts.push_back(vm);
-            m_runningBroadcastMap[index].push_back({ sourceScript, vm.get() });
+        }
+
+        // Start scripts which are not running
+        Target *root = script->target();
+        std::vector<Target *> targets = { root };
+
+        if (!root->isStage()) {
+            Sprite *sprite = dynamic_cast<Sprite *>(root);
+            assert(sprite);
+            auto children = sprite->allChildren();
+
+            for (auto child : children)
+                targets.push_back(child.get());
+        }
+
+        for (Target *target : targets) {
+            auto it = std::find_if(runningBroadcastScripts.begin(), runningBroadcastScripts.end(), [target](VirtualMachine *vm) { return vm->target() == target; });
+
+            if (it == runningBroadcastScripts.end()) {
+                auto vm = script->start(target);
+                m_runningScripts.push_back(vm);
+                m_runningBroadcastMap[index].push_back({ sourceScript, vm.get() });
+            }
         }
     }
 }
@@ -256,6 +275,37 @@ void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
 
     for (auto script : scripts)
         stopScript(script);
+}
+
+void Engine::initClone(Sprite *clone)
+{
+    if (!clone)
+        return;
+
+    Sprite *source = clone->cloneParent();
+    Target *root = clone->cloneRoot();
+    assert(source);
+    assert(root);
+
+    if (!source || !root)
+        return;
+
+    auto it = m_cloneInitScriptsMap.find(root);
+
+    if (it != m_cloneInitScriptsMap.cend()) {
+        const auto &scripts = it->second;
+
+#ifndef NDEBUG
+        // Since we're initializing the clone, it shouldn't have any running scripts
+        for (const auto script : m_runningScripts)
+            assert(script->target() != clone);
+#endif
+
+        for (auto script : scripts) {
+            auto vm = script->start(clone);
+            m_runningScripts.push_back(vm);
+        }
+    }
 }
 
 void Engine::run()
@@ -442,6 +492,7 @@ void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::s
     auto id = findBroadcast(broadcast->name());
     if (m_broadcastMap.count(id) == 1) {
         std::vector<Script *> &scripts = m_broadcastMap[id];
+        // TODO: Do not allow adding existing scripts
         scripts.push_back(m_scripts[whenReceivedBlock].get());
     } else {
         m_broadcastMap[id] = { m_scripts[whenReceivedBlock].get() };
@@ -449,6 +500,22 @@ void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::s
         // Create a vector of running scripts for this broadcast
         // so we don't need to check if it's there
         m_runningBroadcastMap[id] = {};
+    }
+}
+
+void Engine::addCloneInitScript(std::shared_ptr<Block> hatBlock)
+{
+    Target *target = hatBlock->target();
+    Script *script = m_scripts[hatBlock].get();
+    auto it = m_cloneInitScriptsMap.find(target);
+
+    if (it == m_cloneInitScriptsMap.cend())
+        m_cloneInitScriptsMap[target] = { m_scripts[hatBlock].get() };
+    else {
+        auto &scripts = it->second;
+
+        if (std::find(scripts.begin(), scripts.end(), script) == scripts.cend())
+            scripts.push_back(script);
     }
 }
 
@@ -460,14 +527,31 @@ const std::vector<std::shared_ptr<Target>> &Engine::targets() const
 void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
 {
     m_targets = newTargets;
+    m_variableOwners.clear();
+    m_listOwners.clear();
 
-    // Set engine and target in all blocks
     for (auto target : m_targets) {
+        // Set engine in the target
+        target->setEngine(this);
         auto blocks = target->blocks();
+
         for (auto block : blocks) {
+            // Set engine and target in the block
             block->setEngine(this);
             block->setTarget(target.get());
         }
+
+        // Add variables to owner map
+        const auto &variables = target->variables();
+
+        for (auto variable : variables)
+            m_variableOwners[variable.get()] = target.get();
+
+        // Add lists to owner map
+        const auto &lists = target->lists();
+
+        for (auto list : lists)
+            m_listOwners[list.get()] = target.get();
     }
 }
 
@@ -488,6 +572,26 @@ int Engine::findTarget(const std::string &targetName) const
         i++;
     }
     return -1;
+}
+
+Target *Engine::variableOwner(Variable *variable) const
+{
+    auto it = m_variableOwners.find(variable);
+
+    if (it == m_variableOwners.cend())
+        return nullptr;
+
+    return it->second;
+}
+
+Target *Engine::listOwner(List *list) const
+{
+    auto it = m_listOwners.find(list);
+
+    if (it == m_listOwners.cend())
+        return nullptr;
+
+    return it->second;
 }
 
 const std::vector<std::string> &Engine::extensions() const

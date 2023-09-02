@@ -22,8 +22,18 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
         };
 
         Sprite();
+        ~Sprite();
 
         void setInterface(ISpriteHandler *newInterface);
+
+        std::shared_ptr<Sprite> clone();
+
+        bool isClone() const;
+
+        Sprite *cloneRoot() const;
+        Sprite *cloneParent() const;
+        const std::vector<std::shared_ptr<Sprite>> &children() const;
+        std::vector<std::shared_ptr<Sprite>> allChildren() const;
 
         bool visible() const;
         void setVisible(bool newVisible);
@@ -50,6 +60,8 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
         void setRotationStyle(const char *newRotationStyle);
 
     private:
+        Target *dataSource() const override;
+
         spimpl::unique_impl_ptr<SpritePrivate> impl;
 };
 

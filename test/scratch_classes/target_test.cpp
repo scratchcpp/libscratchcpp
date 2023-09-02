@@ -4,10 +4,14 @@
 #include <scratchcpp/block.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/sound.h>
+#include <enginemock.h>
+#include <targetmock.h>
 
 #include "../common.h"
 
 using namespace libscratchcpp;
+
+using ::testing::Return;
 
 TEST(TargetTest, IsStage)
 {
@@ -89,7 +93,9 @@ TEST(TargetTest, Blocks)
     auto b3 = std::make_shared<Block>("c", "motion_ifonedgebounce");
     auto b4 = std::make_shared<Block>("d", "event_whenflagclicked");
 
-    Target target;
+    TargetMock target;
+    EXPECT_CALL(target, dataSource()).Times(18).WillRepeatedly(Return(nullptr));
+
     ASSERT_EQ(target.addBlock(b1), 0);
     ASSERT_EQ(target.addBlock(b2), 1);
     ASSERT_EQ(target.addBlock(b3), 2);
@@ -111,6 +117,62 @@ TEST(TargetTest, Blocks)
     ASSERT_EQ(target.findBlock("d"), 3);
 
     ASSERT_EQ(target.greenFlagBlocks(), std::vector<std::shared_ptr<Block>>({ b1, b4 }));
+
+    // Test with custom data source
+    Target source;
+
+    EXPECT_CALL(target, dataSource()).WillOnce(Return(&source));
+
+    ASSERT_TRUE(target.blocks().empty());
+
+    TargetMock target2;
+    EXPECT_CALL(target2, dataSource()).Times(18).WillRepeatedly(Return(&source));
+
+    ASSERT_EQ(target2.addBlock(b1), 0);
+    ASSERT_EQ(target2.addBlock(b2), 1);
+    ASSERT_EQ(target2.addBlock(b3), 2);
+    ASSERT_EQ(target2.addBlock(b4), 3);
+    ASSERT_EQ(target2.addBlock(b2), 1); // add existing block
+
+    ASSERT_EQ(target2.blockAt(0), b1);
+    ASSERT_EQ(target2.blockAt(1), b2);
+    ASSERT_EQ(target2.blockAt(2), b3);
+    ASSERT_EQ(target2.blockAt(3), b4);
+    ASSERT_EQ(target2.blockAt(4), nullptr);
+    ASSERT_EQ(target2.blockAt(-1), nullptr);
+
+    ASSERT_EQ(target2.findBlock("e"), -1);
+    ASSERT_EQ(target2.findBlock("a"), 0);
+    ASSERT_EQ(target2.findBlock("b"), 1);
+    ASSERT_EQ(target2.findBlock("c"), 2);
+    ASSERT_EQ(target2.findBlock("d"), 3);
+
+    ASSERT_EQ(target2.greenFlagBlocks(), std::vector<std::shared_ptr<Block>>({ b1, b4 }));
+
+    ASSERT_EQ(target2.blocks(), source.blocks());
+
+    auto b5 = std::make_shared<Block>("e", "data_setvariableto");
+    ASSERT_EQ(source.addBlock(b5), 4);
+
+    EXPECT_CALL(target2, dataSource()).WillOnce(Return(&source));
+    ASSERT_EQ(target2.blocks(), source.blocks());
+
+    ASSERT_EQ(source.blockAt(0), b1);
+    ASSERT_EQ(source.blockAt(1), b2);
+    ASSERT_EQ(source.blockAt(2), b3);
+    ASSERT_EQ(source.blockAt(3), b4);
+    ASSERT_EQ(source.blockAt(4), b5);
+    ASSERT_EQ(source.blockAt(5), nullptr);
+    ASSERT_EQ(source.blockAt(-1), nullptr);
+
+    ASSERT_EQ(source.findBlock("f"), -1);
+    ASSERT_EQ(source.findBlock("a"), 0);
+    ASSERT_EQ(source.findBlock("b"), 1);
+    ASSERT_EQ(source.findBlock("c"), 2);
+    ASSERT_EQ(source.findBlock("d"), 3);
+    ASSERT_EQ(source.findBlock("e"), 4);
+
+    ASSERT_EQ(source.greenFlagBlocks(), std::vector<std::shared_ptr<Block>>({ b1, b4 }));
 }
 
 TEST(TargetTest, CurrentCostume)
@@ -127,7 +189,9 @@ TEST(TargetTest, Costumes)
     auto c2 = std::make_shared<Costume>("costume2", "", "png");
     auto c3 = std::make_shared<Costume>("costume3", "", "svg");
 
-    Target target;
+    TargetMock target;
+    EXPECT_CALL(target, dataSource()).Times(15).WillRepeatedly(Return(nullptr));
+
     ASSERT_EQ(target.addCostume(c1), 0);
     ASSERT_EQ(target.addCostume(c2), 1);
     ASSERT_EQ(target.addCostume(c3), 2);
@@ -148,6 +212,60 @@ TEST(TargetTest, Costumes)
     ASSERT_EQ(target.findCostume("costume1"), 0);
     ASSERT_EQ(target.findCostume("costume2"), 1);
     ASSERT_EQ(target.findCostume("costume3"), 2);
+
+    // Test with custom data source
+    Target source;
+
+    EXPECT_CALL(target, dataSource()).WillOnce(Return(&source));
+
+    ASSERT_TRUE(target.costumes().empty());
+
+    TargetMock target2;
+    EXPECT_CALL(target2, dataSource()).Times(16).WillRepeatedly(Return(&source));
+
+    ASSERT_EQ(target2.addCostume(c1), 0);
+    ASSERT_EQ(target2.addCostume(c2), 1);
+    ASSERT_EQ(target2.addCostume(c3), 2);
+    ASSERT_EQ(target2.addCostume(c2), 1); // add existing costume
+
+    ASSERT_EQ(target2.costumes().size(), 3);
+    ASSERT_EQ(target2.costumes()[0]->name(), c1->name());
+    ASSERT_EQ(target2.costumes()[1]->name(), c2->name());
+    ASSERT_EQ(target2.costumes()[2]->name(), c3->name());
+
+    ASSERT_EQ(target2.costumeAt(0)->name(), c1->name());
+    ASSERT_EQ(target2.costumeAt(1)->name(), c2->name());
+    ASSERT_EQ(target2.costumeAt(2)->name(), c3->name());
+
+    ASSERT_EQ(target2.findCostume("invalid"), -1);
+    ASSERT_EQ(target2.findCostume("costume1"), 0);
+    ASSERT_EQ(target2.findCostume("costume2"), 1);
+    ASSERT_EQ(target2.findCostume("costume3"), 2);
+
+    ASSERT_EQ(target2.costumes(), source.costumes());
+
+    auto c4 = std::make_shared<Costume>("costume4", "", "png");
+    ASSERT_EQ(source.addCostume(c4), 3);
+
+    EXPECT_CALL(target2, dataSource()).WillOnce(Return(&source));
+    ASSERT_EQ(target2.costumes(), source.costumes());
+
+    ASSERT_EQ(source.costumes().size(), 4);
+    ASSERT_EQ(source.costumes()[0]->name(), c1->name());
+    ASSERT_EQ(source.costumes()[1]->name(), c2->name());
+    ASSERT_EQ(source.costumes()[2]->name(), c3->name());
+    ASSERT_EQ(source.costumes()[3]->name(), c4->name());
+
+    ASSERT_EQ(source.costumeAt(0)->name(), c1->name());
+    ASSERT_EQ(source.costumeAt(1)->name(), c2->name());
+    ASSERT_EQ(source.costumeAt(2)->name(), c3->name());
+    ASSERT_EQ(source.costumeAt(3)->name(), c4->name());
+
+    ASSERT_EQ(source.findCostume("invalid"), -1);
+    ASSERT_EQ(source.findCostume("costume1"), 0);
+    ASSERT_EQ(source.findCostume("costume2"), 1);
+    ASSERT_EQ(source.findCostume("costume3"), 2);
+    ASSERT_EQ(source.findCostume("costume4"), 3);
 }
 
 TEST(TargetTest, Sounds)
@@ -156,7 +274,9 @@ TEST(TargetTest, Sounds)
     auto s2 = std::make_shared<Sound>("sound2", "", "wav");
     auto s3 = std::make_shared<Sound>("sound3", "", "mp3");
 
-    Target target;
+    TargetMock target;
+    EXPECT_CALL(target, dataSource()).Times(15).WillRepeatedly(Return(nullptr));
+
     ASSERT_EQ(target.addSound(s1), 0);
     ASSERT_EQ(target.addSound(s2), 1);
     ASSERT_EQ(target.addSound(s3), 2);
@@ -177,6 +297,60 @@ TEST(TargetTest, Sounds)
     ASSERT_EQ(target.findSound("sound1"), 0);
     ASSERT_EQ(target.findSound("sound2"), 1);
     ASSERT_EQ(target.findSound("sound3"), 2);
+
+    // Test with custom data source
+    Target source;
+
+    EXPECT_CALL(target, dataSource()).WillOnce(Return(&source));
+
+    ASSERT_TRUE(target.sounds().empty());
+
+    TargetMock target2;
+    EXPECT_CALL(target2, dataSource()).Times(16).WillRepeatedly(Return(&source));
+
+    ASSERT_EQ(target2.addSound(s1), 0);
+    ASSERT_EQ(target2.addSound(s2), 1);
+    ASSERT_EQ(target2.addSound(s3), 2);
+    ASSERT_EQ(target2.addSound(s2), 1); // add existing Sound
+
+    ASSERT_EQ(target2.sounds().size(), 3);
+    ASSERT_EQ(target2.sounds()[0]->name(), s1->name());
+    ASSERT_EQ(target2.sounds()[1]->name(), s2->name());
+    ASSERT_EQ(target2.sounds()[2]->name(), s3->name());
+
+    ASSERT_EQ(target2.soundAt(0)->name(), s1->name());
+    ASSERT_EQ(target2.soundAt(1)->name(), s2->name());
+    ASSERT_EQ(target2.soundAt(2)->name(), s3->name());
+
+    ASSERT_EQ(target2.findSound("invalid"), -1);
+    ASSERT_EQ(target2.findSound("sound1"), 0);
+    ASSERT_EQ(target2.findSound("sound2"), 1);
+    ASSERT_EQ(target2.findSound("sound3"), 2);
+
+    ASSERT_EQ(target2.sounds(), source.sounds());
+
+    auto s4 = std::make_shared<Sound>("sound4", "", "wav");
+    ASSERT_EQ(source.addSound(s4), 3);
+
+    EXPECT_CALL(target2, dataSource()).WillOnce(Return(&source));
+    ASSERT_EQ(target2.sounds(), source.sounds());
+
+    ASSERT_EQ(source.sounds().size(), 4);
+    ASSERT_EQ(source.sounds()[0]->name(), s1->name());
+    ASSERT_EQ(source.sounds()[1]->name(), s2->name());
+    ASSERT_EQ(source.sounds()[2]->name(), s3->name());
+    ASSERT_EQ(source.sounds()[3]->name(), s4->name());
+
+    ASSERT_EQ(source.soundAt(0)->name(), s1->name());
+    ASSERT_EQ(source.soundAt(1)->name(), s2->name());
+    ASSERT_EQ(source.soundAt(2)->name(), s3->name());
+    ASSERT_EQ(source.soundAt(3)->name(), s4->name());
+
+    ASSERT_EQ(source.findSound("invalid"), -1);
+    ASSERT_EQ(source.findSound("sound1"), 0);
+    ASSERT_EQ(source.findSound("sound2"), 1);
+    ASSERT_EQ(source.findSound("sound3"), 2);
+    ASSERT_EQ(source.findSound("sound4"), 3);
 }
 
 TEST(TargetTest, LayerOrder)
@@ -193,4 +367,20 @@ TEST(TargetTest, Volume)
     ASSERT_EQ(target.volume(), 100);
     target.setVolume(50);
     ASSERT_EQ(target.volume(), 50);
+}
+
+TEST(TargetTest, Engine)
+{
+    Target target;
+    ASSERT_EQ(target.engine(), nullptr);
+
+    EngineMock engine;
+    target.setEngine(&engine);
+    ASSERT_EQ(target.engine(), &engine);
+}
+
+TEST(TargetTest, DataSource)
+{
+    TargetMock target;
+    ASSERT_EQ(target.dataSourceBase(), nullptr);
 }

@@ -102,6 +102,8 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         void setConstValues(const Value *values);
         void setVariables(Value **variables);
         void setLists(List **lists);
+        void setVariablesVector(const std::vector<Value *> &variables);
+        void setListsVector(const std::vector<List *> &lists);
 
         void setBytecode(unsigned int *code);
 

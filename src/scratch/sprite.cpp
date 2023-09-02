@@ -2,7 +2,9 @@
 
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/ispritehandler.h>
-#include <string>
+#include <scratchcpp/iengine.h>
+#include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
 #include <cassert>
 
 #include "sprite_p.h"
@@ -16,12 +18,115 @@ Sprite::Sprite() :
 {
 }
 
+/*! Destroys the Sprite object. */
+Sprite::~Sprite()
+{
+    if (isClone()) {
+        assert(impl->cloneParent);
+        impl->cloneParent->impl->removeClone(this);
+    }
+}
+
 /*! Sets the sprite interface. */
 void Sprite::setInterface(ISpriteHandler *newInterface)
 {
     assert(newInterface);
     impl->iface = newInterface;
     impl->iface->onSpriteChanged(this);
+}
+
+/*! Creates a clone of the sprite. */
+std::shared_ptr<Sprite> Sprite::clone()
+{
+    IEngine *eng = engine();
+
+    if (eng) {
+        std::shared_ptr<Sprite> clone = std::make_shared<Sprite>();
+
+        if (impl->cloneRoot == nullptr)
+            clone->impl->cloneRoot = this;
+        else
+            clone->impl->cloneRoot = impl->cloneRoot;
+
+        clone->impl->cloneParent = this;
+        impl->childClones.push_back(clone);
+
+        // Copy data
+        clone->setName(name());
+
+        const auto &vars = variables();
+
+        for (auto var : vars)
+            clone->addVariable(std::make_shared<Variable>(var->id(), var->name(), var->value()));
+
+        const auto &l = lists();
+
+        for (auto list : l) {
+            auto newList = std::make_shared<List>(list->id(), list->name());
+            clone->addList(newList);
+
+            for (const Value &item : *list)
+                newList->push_back(item);
+        }
+
+        clone->setCurrentCostume(currentCostume());
+        clone->setLayerOrder(layerOrder());
+        clone->setVolume(volume());
+        clone->setEngine(engine());
+
+        clone->impl->visible = impl->visible;
+        clone->impl->x = impl->x;
+        clone->impl->y = impl->y;
+        clone->impl->size = impl->size;
+        clone->impl->direction = impl->direction;
+        clone->impl->draggable = impl->draggable;
+        clone->impl->rotationStyle = impl->rotationStyle;
+
+        // Call "when I start as clone" scripts
+        eng->initClone(clone.get());
+
+        return clone;
+    }
+
+    return nullptr;
+}
+
+/*! Returns true if this is a clone. */
+bool Sprite::isClone() const
+{
+    return (impl->cloneParent != nullptr);
+}
+
+/*! Returns the sprite this clone was created from, or nullptr if this isn't a clone. */
+Sprite *Sprite::cloneRoot() const
+{
+    return impl->cloneRoot;
+}
+
+/*! Returns the sprite or clone this clone was created from, or nullptr if this isn't a clone. */
+Sprite *Sprite::cloneParent() const
+{
+    return impl->cloneParent;
+}
+
+/*! Returns list of child clones. */
+const std::vector<std::shared_ptr<Sprite>> &Sprite::children() const
+{
+    return impl->childClones;
+}
+
+/*! Returns list of child clones and their children (recursive). */
+std::vector<std::shared_ptr<Sprite>> Sprite::allChildren() const
+{
+    std::vector<std::shared_ptr<Sprite>> ret;
+
+    for (auto clone : impl->childClones) {
+        ret.push_back(clone);
+        auto children = clone->allChildren();
+        ret.insert(ret.end(), children.begin(), children.end());
+    }
+
+    return ret;
 }
 
 /*! Returns true if the sprite is visible. */
@@ -149,4 +254,9 @@ void Sprite::setRotationStyle(const std::string &newRotationStyle)
 void Sprite::setRotationStyle(const char *newRotationStyle)
 {
     setRotationStyle(std::string(newRotationStyle));
+}
+
+Target *Sprite::dataSource() const
+{
+    return impl->cloneRoot;
 }

@@ -12,9 +12,14 @@ struct SpritePrivate
         SpritePrivate();
         SpritePrivate(const SpritePrivate &) = delete;
 
+        void removeClone(Sprite *clone);
+
         void setCostumeData(const char *data);
 
         ISpriteHandler *iface = nullptr;
+        Sprite *cloneRoot = nullptr;
+        Sprite *cloneParent = nullptr;
+        std::vector<std::shared_ptr<Sprite>> childClones;
         bool visible = true;
         double x = 0;
         double y = 0;

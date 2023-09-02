@@ -48,24 +48,35 @@ TEST(VirtualMachineTest, ConstValues)
 
 TEST(VirtualMachineTest, Variables)
 {
-    Value var;
-    Value *variables[] = { &var };
+    Value var1, var2;
+    Value *variables[] = { &var1, &var2 };
 
     VirtualMachine vm;
     ASSERT_EQ(vm.variables(), nullptr);
+
     vm.setVariables(variables);
     ASSERT_EQ(vm.variables(), variables);
+
+    vm.setVariablesVector({ &var1, &var2 });
+    ASSERT_EQ(vm.variables()[0], &var1);
+    ASSERT_EQ(vm.variables()[1], &var2);
 }
 
 TEST(VirtualMachineTest, Lists)
 {
-    List list("", "");
-    List *lists[] = { &list };
+    List list1("", "");
+    List list2("", "");
+    List *lists[] = { &list1, &list2 };
 
     VirtualMachine vm;
     ASSERT_EQ(vm.lists(), nullptr);
+
     vm.setLists(lists);
     ASSERT_EQ(vm.lists(), lists);
+
+    vm.setListsVector({ &list1, &list2 });
+    ASSERT_EQ(vm.lists()[0], &list1);
+    ASSERT_EQ(vm.lists()[1], &list2);
 }
 
 TEST(VirtualMachineTest, Bytecode)

@@ -132,12 +132,18 @@ int Target::findListById(const std::string &id) const
 /*! Returns the list of blocks. */
 const std::vector<std::shared_ptr<Block>> &Target::blocks() const
 {
+    if (Target *source = dataSource())
+        return source->blocks();
+
     return impl->blocks;
 }
 
 /*! Adds a block and returns its index. */
 int Target::addBlock(std::shared_ptr<Block> block)
 {
+    if (Target *source = dataSource())
+        return source->addBlock(block);
+
     auto it = std::find(impl->blocks.begin(), impl->blocks.end(), block);
 
     if (it != impl->blocks.end())
@@ -150,6 +156,9 @@ int Target::addBlock(std::shared_ptr<Block> block)
 /*! Returns the block at index. */
 std::shared_ptr<Block> Target::blockAt(int index) const
 {
+    if (Target *source = dataSource())
+        return source->blockAt(index);
+
     if (index < 0 || index >= impl->blocks.size())
         return nullptr;
 
@@ -159,6 +168,9 @@ std::shared_ptr<Block> Target::blockAt(int index) const
 /*! Returns the index of the block with the given ID. */
 int Target::findBlock(const std::string &id) const
 {
+    if (Target *source = dataSource())
+        return source->findBlock(id);
+
     int i = 0;
     for (auto block : impl->blocks) {
         if (block->id() == id)
@@ -172,7 +184,9 @@ int Target::findBlock(const std::string &id) const
 std::vector<std::shared_ptr<Block>> Target::greenFlagBlocks() const
 {
     std::vector<std::shared_ptr<Block>> ret;
-    for (auto block : impl->blocks) {
+    const auto &blockList = blocks();
+
+    for (auto block : blockList) {
         if (block->opcode() == "event_whenflagclicked")
             ret.push_back(block);
     }
@@ -195,12 +209,18 @@ void Target::setCurrentCostume(int newCostume)
 /*! Returns the list of costumes. */
 const std::vector<std::shared_ptr<Costume>> &Target::costumes() const
 {
+    if (Target *source = dataSource())
+        return source->costumes();
+
     return impl->costumes;
 }
 
 /*! Adds a costume and returns its index. */
 int Target::addCostume(std::shared_ptr<Costume> costume)
 {
+    if (Target *source = dataSource())
+        return source->addCostume(costume);
+
     auto it = std::find(impl->costumes.begin(), impl->costumes.end(), costume);
 
     if (it != impl->costumes.end())
@@ -213,6 +233,9 @@ int Target::addCostume(std::shared_ptr<Costume> costume)
 /*! Returns the costume at index. */
 std::shared_ptr<Costume> Target::costumeAt(int index) const
 {
+    if (Target *source = dataSource())
+        return source->costumeAt(index);
+
     // TODO: Add range check
     return impl->costumes[index];
 }
@@ -220,6 +243,9 @@ std::shared_ptr<Costume> Target::costumeAt(int index) const
 /*! Returns the index of the given costume. */
 int Target::findCostume(const std::string &costumeName) const
 {
+    if (Target *source = dataSource())
+        return source->findCostume(costumeName);
+
     int i = 0;
     for (auto costume : impl->costumes) {
         if (costume->name() == costumeName)
@@ -232,12 +258,18 @@ int Target::findCostume(const std::string &costumeName) const
 /*! Returns the list of sounds. */
 const std::vector<std::shared_ptr<Sound>> &Target::sounds() const
 {
+    if (Target *source = dataSource())
+        return source->sounds();
+
     return impl->sounds;
 }
 
 /*! Adds a sound and returns its index. */
 int Target::addSound(std::shared_ptr<Sound> sound)
 {
+    if (Target *source = dataSource())
+        return source->addSound(sound);
+
     auto it = std::find(impl->sounds.begin(), impl->sounds.end(), sound);
 
     if (it != impl->sounds.end())
@@ -250,6 +282,9 @@ int Target::addSound(std::shared_ptr<Sound> sound)
 /*! Returns the sound at index. */
 std::shared_ptr<Sound> Target::soundAt(int index) const
 {
+    if (Target *source = dataSource())
+        return source->soundAt(index);
+
     // TODO: Add range check
     return impl->sounds[index];
 }
@@ -257,6 +292,9 @@ std::shared_ptr<Sound> Target::soundAt(int index) const
 /*! Returns the index of the sound with the given name. */
 int Target::findSound(const std::string &soundName) const
 {
+    if (Target *source = dataSource())
+        return source->findSound(soundName);
+
     int i = 0;
     for (auto sound : impl->sounds) {
         if (sound->name() == soundName)
@@ -288,4 +326,16 @@ int Target::volume() const
 void Target::setVolume(int newVolume)
 {
     impl->volume = newVolume;
+}
+
+/*! Returns the engine. */
+IEngine *Target::engine() const
+{
+    return impl->engine;
+}
+
+/*! Sets the engine. */
+void Target::setEngine(IEngine *engine)
+{
+    impl->engine = engine;
 }

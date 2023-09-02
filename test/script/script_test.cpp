@@ -1,6 +1,8 @@
 #include <scratchcpp/script.h>
 #include <scratchcpp/virtualmachine.h>
 #include <scratchcpp/target.h>
+#include <scratchcpp/sprite.h>
+#include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <enginemock.h>
 
@@ -8,12 +10,20 @@
 
 using namespace libscratchcpp;
 
+using ::testing::Return;
+
 class ScriptTest : public testing::Test
 {
     public:
         Target m_target;
         EngineMock m_engine;
 };
+
+TEST_F(ScriptTest, Constructors)
+{
+    Script script(&m_target, &m_engine);
+    ASSERT_EQ(script.target(), &m_target);
+}
 
 TEST_F(ScriptTest, Bytecode)
 {
@@ -39,11 +49,13 @@ TEST_F(ScriptTest, Start)
     static std::vector<BlockFunc> functions = { &testFunction };
     static std::vector<Value> constValues = { "test" };
 
-    std::unique_ptr<Value> var = std::make_unique<Value>();
-    static std::vector<Value *> variables = { var.get() };
+    std::unique_ptr<Variable> var1 = std::make_unique<Variable>("a", "", Value());
+    std::unique_ptr<Variable> var2 = std::make_unique<Variable>("b", "", Value());
+    static std::vector<Variable *> variables = { var1.get(), var2.get() };
 
-    std::unique_ptr<List> list = std::make_unique<List>("", "");
-    static std::vector<List *> lists = { list.get() };
+    std::unique_ptr<List> list1 = std::make_unique<List>("c", "");
+    std::unique_ptr<List> list2 = std::make_unique<List>("d", "");
+    static std::vector<List *> lists = { list1.get(), list2.get() };
 
     Script script1(nullptr, nullptr);
 
@@ -79,6 +91,50 @@ TEST_F(ScriptTest, Start)
     ASSERT_EQ(vm->procedures()[0], procedures[0]);
     ASSERT_EQ(vm->functions()[0], functions[0]);
     ASSERT_EQ(vm->constValues()[0].toString(), constValues[0].toString());
-    ASSERT_EQ(vm->variables()[0], variables[0]);
+    ASSERT_EQ(vm->variables()[0], variables[0]->valuePtr());
     ASSERT_EQ(vm->lists()[0], lists[0]);
+
+    Target target;
+    vm = script3.start(&target);
+    ASSERT_TRUE(vm);
+    ASSERT_EQ(vm->target(), &target);
+    ASSERT_EQ(vm->bytecode()[0], bytecode[0]);
+    ASSERT_EQ(vm->procedures()[0], procedures[0]);
+    ASSERT_EQ(vm->functions()[0], functions[0]);
+    ASSERT_EQ(vm->constValues()[0].toString(), constValues[0].toString());
+    ASSERT_EQ(vm->variables()[0], variables[0]->valuePtr());
+    ASSERT_EQ(vm->lists()[0], lists[0]);
+
+    Sprite root;
+    root.setEngine(&m_engine);
+    root.addVariable(std::make_shared<Variable>("b", "", Value()));
+    root.addList(std::make_shared<List>("d", ""));
+
+    EXPECT_CALL(m_engine, initClone).Times(1);
+    auto clone = root.clone();
+
+    Script script4(&root, &m_engine);
+    script4.setBytecode(bytecode);
+    script4.setProcedures(procedures);
+    script4.setFunctions(functions);
+    script4.setConstValues(constValues);
+    script4.setVariables(variables);
+    script4.setLists(lists);
+
+    EXPECT_CALL(m_engine, variableOwner(var1.get())).WillOnce(Return(&target));
+    EXPECT_CALL(m_engine, variableOwner(var2.get())).WillOnce(Return(&root));
+    EXPECT_CALL(m_engine, listOwner(list1.get())).WillOnce(Return(&target));
+    EXPECT_CALL(m_engine, listOwner(list2.get())).WillOnce(Return(&root));
+    vm = script4.start(clone.get());
+
+    ASSERT_TRUE(vm);
+    ASSERT_EQ(vm->target(), clone.get());
+    ASSERT_EQ(vm->bytecode()[0], bytecode[0]);
+    ASSERT_EQ(vm->procedures()[0], procedures[0]);
+    ASSERT_EQ(vm->functions()[0], functions[0]);
+    ASSERT_EQ(vm->constValues()[0].toString(), constValues[0].toString());
+    ASSERT_EQ(vm->variables()[0], variables[0]->valuePtr());
+    ASSERT_EQ(vm->variables()[1], clone->variableAt(clone->findVariableById("b"))->valuePtr());
+    ASSERT_EQ(vm->lists()[0], lists[0]);
+    ASSERT_EQ(vm->lists()[1], clone->listAt(clone->findListById("d")).get());
 }

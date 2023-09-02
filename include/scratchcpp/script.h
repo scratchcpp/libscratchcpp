@@ -15,6 +15,7 @@ class Target;
 class IEngine;
 class Value;
 class VirtualMachine;
+class Variable;
 class List;
 class ScriptPrivate;
 
@@ -25,6 +26,8 @@ class LIBSCRATCHCPP_EXPORT Script
         Script(Target *target, IEngine *engine);
         Script(const Script &) = delete;
 
+        Target *target() const;
+
         unsigned int *bytecode() const;
         const std::vector<unsigned int> &bytecodeVector() const;
         void setBytecode(const std::vector<unsigned int> &code);
@@ -32,10 +35,11 @@ class LIBSCRATCHCPP_EXPORT Script
         void setProcedures(const std::vector<unsigned int *> &procedures);
         void setFunctions(const std::vector<BlockFunc> &functions);
         void setConstValues(const std::vector<Value> &values);
-        void setVariables(const std::vector<Value *> &variables);
+        void setVariables(const std::vector<Variable *> &variables);
         void setLists(const std::vector<List *> &lists);
 
         std::shared_ptr<VirtualMachine> start();
+        std::shared_ptr<VirtualMachine> start(Target *target);
 
     private:
         spimpl::unique_impl_ptr<ScriptPrivate> impl;
