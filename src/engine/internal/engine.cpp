@@ -509,15 +509,31 @@ const std::vector<std::shared_ptr<Target>> &Engine::targets() const
 void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
 {
     m_targets = newTargets;
+    m_variableOwners.clear();
+    m_listOwners.clear();
 
-    // Set engine in targets and engine and target in all blocks
     for (auto target : m_targets) {
+        // Set engine in the target
         target->setEngine(this);
         auto blocks = target->blocks();
+
         for (auto block : blocks) {
+            // Set engine and target in the block
             block->setEngine(this);
             block->setTarget(target.get());
         }
+
+        // Add variables to owner map
+        const auto &variables = target->variables();
+
+        for (auto variable : variables)
+            m_variableOwners[variable.get()] = target.get();
+
+        // Add lists to owner map
+        const auto &lists = target->lists();
+
+        for (auto list : lists)
+            m_listOwners[list.get()] = target.get();
     }
 }
 
@@ -538,6 +554,26 @@ int Engine::findTarget(const std::string &targetName) const
         i++;
     }
     return -1;
+}
+
+Target *Engine::variableOwner(Variable *variable) const
+{
+    auto it = m_variableOwners.find(variable);
+
+    if (it == m_variableOwners.cend())
+        return nullptr;
+
+    return it->second;
+}
+
+Target *Engine::listOwner(List *list) const
+{
+    auto it = m_listOwners.find(list);
+
+    if (it == m_listOwners.cend())
+        return nullptr;
+
+    return it->second;
 }
 
 const std::vector<std::string> &Engine::extensions() const

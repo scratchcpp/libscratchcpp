@@ -68,6 +68,9 @@ class Engine : public IEngine
         Target *targetAt(int index) const override;
         int findTarget(const std::string &targetName) const override;
 
+        Target *variableOwner(Variable *variable) const override;
+        Target *listOwner(List *list) const override;
+
         const std::vector<std::string> &extensions() const override;
         void setExtensions(const std::vector<std::string> &newExtensions) override;
 
@@ -95,6 +98,8 @@ class Engine : public IEngine
         std::vector<VirtualMachine *> m_scriptsToRemove;
         std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> m_scripts;
         std::vector<BlockFunc> m_functions;
+        std::unordered_map<Variable *, Target *> m_variableOwners;
+        std::unordered_map<List *, Target *> m_listOwners;
 
         bool m_breakFrame = false;
         bool m_skipFrame = false;

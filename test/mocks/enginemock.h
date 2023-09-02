@@ -56,6 +56,9 @@ class EngineMock : public IEngine
         MOCK_METHOD(Target *, targetAt, (int), (const, override));
         MOCK_METHOD(int, findTarget, (const std::string &), (const, override));
 
+        MOCK_METHOD(Target *, variableOwner, (Variable *), (const, override));
+        MOCK_METHOD(Target *, listOwner, (List *), (const, override));
+
         MOCK_METHOD(std::vector<std::string> &, extensions, (), (const, override));
         MOCK_METHOD(void, setExtensions, (const std::vector<std::string> &), (override));
 

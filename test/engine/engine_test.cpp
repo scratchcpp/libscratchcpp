@@ -1,5 +1,7 @@
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/block.h>
+#include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
 
 #include "../common.h"
 #include "testsection.h"
@@ -282,4 +284,50 @@ TEST(EngineTest, Targets)
 
     ASSERT_EQ(block1->engine(), &engine);
     ASSERT_EQ(block2->engine(), &engine);
+}
+
+TEST(EngineTest, VariableOwner)
+{
+    Engine engine;
+    auto t1 = std::make_shared<Target>();
+    auto t2 = std::make_shared<Target>();
+    auto t3 = std::make_shared<Target>();
+
+    auto var1 = std::make_shared<Variable>("", "", Value());
+    auto var2 = std::make_shared<Variable>("", "", Value());
+    auto var3 = std::make_shared<Variable>("", "", Value());
+    auto var4 = std::make_shared<Variable>("", "", Value());
+    t1->addVariable(var1);
+    t1->addVariable(var4);
+    t3->addVariable(var3);
+
+    engine.setTargets({ t1, t2, t3 });
+
+    ASSERT_EQ(engine.variableOwner(var1.get()), t1.get());
+    ASSERT_EQ(engine.variableOwner(var2.get()), nullptr);
+    ASSERT_EQ(engine.variableOwner(var3.get()), t3.get());
+    ASSERT_EQ(engine.variableOwner(var4.get()), t1.get());
+}
+
+TEST(EngineTest, ListOwner)
+{
+    Engine engine;
+    auto t1 = std::make_shared<Target>();
+    auto t2 = std::make_shared<Target>();
+    auto t3 = std::make_shared<Target>();
+
+    auto list1 = std::make_shared<List>("", "");
+    auto list2 = std::make_shared<List>("", "");
+    auto list3 = std::make_shared<List>("", "");
+    auto list4 = std::make_shared<List>("", "");
+    t1->addList(list1);
+    t1->addList(list4);
+    t3->addList(list3);
+
+    engine.setTargets({ t1, t2, t3 });
+
+    ASSERT_EQ(engine.listOwner(list1.get()), t1.get());
+    ASSERT_EQ(engine.listOwner(list2.get()), nullptr);
+    ASSERT_EQ(engine.listOwner(list3.get()), t3.get());
+    ASSERT_EQ(engine.listOwner(list4.get()), t1.get());
 }
