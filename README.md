@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
 - [ ] Looks blocks
 - [ ] Sound blocks
 - [ ] Event blocks
-- [ ] Control blocks
+- [x] Control blocks
 - [ ] Sensing blocks
 - [x] Operator blocks
 - [x] Custom blocks
@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
 - [x] Broadcasts
 - [x] Variables (monitors are not implemented yet)
 - [x] Lists (monitors are not implemented yet)
-- [ ] Clones
+- [x] Clones
 - [ ] Timer
 - [ ] API for monitors
 - [ ] Project metadata
