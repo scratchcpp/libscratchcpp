@@ -54,6 +54,7 @@ class ControlBlocks : public IBlockSection
         static void compileStop(Compiler *compiler);
         static void compileWait(Compiler *compiler);
         static void compileWaitUntil(Compiler *compiler);
+        static void compileStartAsClone(Compiler *compiler);
         static void compileCreateClone(Compiler *compiler);
 
         static unsigned int stopAll(VirtualMachine *vm);

@@ -30,6 +30,7 @@ void ControlBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "control_stop", &compileStop);
     engine->addCompileFunction(this, "control_wait", &compileWait);
     engine->addCompileFunction(this, "control_wait_until", &compileWaitUntil);
+    engine->addCompileFunction(this, "control_start_as_clone", &compileStartAsClone);
     engine->addCompileFunction(this, "control_create_clone_of", &compileCreateClone);
 
     // Inputs
@@ -158,6 +159,11 @@ void ControlBlocks::compileWaitUntil(Compiler *compiler)
     compiler->addInstruction(vm::OP_CHECKPOINT);
     compiler->addInput(CONDITION);
     compiler->addFunctionCall(&waitUntil);
+}
+
+void ControlBlocks::compileStartAsClone(Compiler *compiler)
+{
+    compiler->engine()->addCloneInitScript(compiler->block());
 }
 
 void ControlBlocks::compileCreateClone(Compiler *compiler)

@@ -151,6 +151,7 @@ TEST_F(ControlBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_stop", &ControlBlocks::compileStop)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_wait", &ControlBlocks::compileWait)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_wait_until", &ControlBlocks::compileWaitUntil)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_start_as_clone", &ControlBlocks::compileStartAsClone)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_create_clone_of", &ControlBlocks::compileCreateClone)).Times(1);
 
     // Inputs
@@ -925,4 +926,15 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(sprite.allChildren().size(), 4);
     ASSERT_EQ(sprite.children(), sprite.allChildren());
+}
+
+TEST_F(ControlBlocksTest, StartAsClone)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = createControlBlock("a", "control_start_as_clone");
+    compiler.setBlock(block);
+
+    EXPECT_CALL(m_engineMock, addCloneInitScript(block)).Times(1);
+    ControlBlocks::compileStartAsClone(&compiler);
 }
