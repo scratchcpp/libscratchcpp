@@ -2,7 +2,10 @@
 
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/sprite.h>
+#include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/block.h>
 #include <cassert>
 
 #include "controlblocks.h"
@@ -27,6 +30,7 @@ void ControlBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "control_stop", &compileStop);
     engine->addCompileFunction(this, "control_wait", &compileWait);
     engine->addCompileFunction(this, "control_wait_until", &compileWaitUntil);
+    engine->addCompileFunction(this, "control_create_clone_of", &compileCreateClone);
 
     // Inputs
     engine->addInput(this, "SUBSTACK", SUBSTACK);
@@ -35,6 +39,7 @@ void ControlBlocks::registerBlocks(IEngine *engine)
     engine->addInput(this, "CONDITION", CONDITION);
     engine->addInput(this, "DURATION", DURATION);
     engine->addInput(this, "VALUE", VALUE);
+    engine->addInput(this, "CLONE_OPTION", CLONE_OPTION);
 
     // Fields
     engine->addField(this, "STOP_OPTION", STOP_OPTION);
@@ -155,6 +160,27 @@ void ControlBlocks::compileWaitUntil(Compiler *compiler)
     compiler->addFunctionCall(&waitUntil);
 }
 
+void ControlBlocks::compileCreateClone(Compiler *compiler)
+{
+    Input *input = compiler->input(CLONE_OPTION);
+
+    if (input->type() != Input::Type::ObscuredShadow) {
+        assert(input->pointsToDropdownMenu());
+        std::string spriteName = input->selectedMenuItem();
+
+        if (spriteName == "_myself_")
+            compiler->addFunctionCall(&createCloneOfMyself);
+        else {
+            int index = compiler->engine()->findTarget(spriteName);
+            compiler->addConstValue(index);
+            compiler->addFunctionCall(&createCloneByIndex);
+        }
+    } else {
+        compiler->addInput(input);
+        compiler->addFunctionCall(&createClone);
+    }
+}
+
 unsigned int ControlBlocks::stopAll(VirtualMachine *vm)
 {
     vm->engine()->stop();
@@ -195,4 +221,43 @@ unsigned int ControlBlocks::waitUntil(VirtualMachine *vm)
         vm->stop(true, true, false);
     }
     return 1;
+}
+
+unsigned int ControlBlocks::createClone(VirtualMachine *vm)
+{
+    std::string spriteName = vm->getInput(0, 1)->toString();
+    Target *target;
+
+    if (spriteName == "_myself_")
+        target = vm->target();
+    else
+        target = vm->engine()->targetAt(vm->engine()->findTarget(spriteName));
+
+    Sprite *sprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite)
+        sprite->clone();
+
+    return 1;
+}
+
+unsigned int ControlBlocks::createCloneByIndex(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
+    Sprite *sprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite)
+        sprite->clone();
+
+    return 1;
+}
+
+unsigned int ControlBlocks::createCloneOfMyself(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->clone();
+
+    return 0;
 }

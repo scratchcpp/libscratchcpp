@@ -23,7 +23,8 @@ class ControlBlocks : public IBlockSection
             TIMES,
             CONDITION,
             DURATION,
-            VALUE
+            VALUE,
+            CLONE_OPTION
         };
 
         enum Fields
@@ -53,12 +54,16 @@ class ControlBlocks : public IBlockSection
         static void compileStop(Compiler *compiler);
         static void compileWait(Compiler *compiler);
         static void compileWaitUntil(Compiler *compiler);
+        static void compileCreateClone(Compiler *compiler);
 
         static unsigned int stopAll(VirtualMachine *vm);
         static unsigned int stopOtherScriptsInSprite(VirtualMachine *vm);
         static unsigned int startWait(VirtualMachine *vm);
         static unsigned int wait(VirtualMachine *vm);
         static unsigned int waitUntil(VirtualMachine *vm);
+        static unsigned int createClone(VirtualMachine *vm);
+        static unsigned int createCloneByIndex(VirtualMachine *vm);
+        static unsigned int createCloneOfMyself(VirtualMachine *vm);
 
         static inline std::unordered_map<VirtualMachine *, std::pair<std::chrono::steady_clock::time_point, int>> m_timeMap;
 };
