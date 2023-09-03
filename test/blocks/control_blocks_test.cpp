@@ -14,6 +14,8 @@
 using namespace libscratchcpp;
 
 using ::testing::Return;
+using ::testing::_;
+using ::testing::SaveArg;
 
 class ControlBlocksTest : public testing::Test
 {
@@ -153,6 +155,7 @@ TEST_F(ControlBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_wait_until", &ControlBlocks::compileWaitUntil)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_start_as_clone", &ControlBlocks::compileStartAsClone)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_create_clone_of", &ControlBlocks::compileCreateClone)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_delete_this_clone", &ControlBlocks::compileDeleteThisClone)).Times(1);
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SUBSTACK", ControlBlocks::SUBSTACK));
@@ -937,4 +940,48 @@ TEST_F(ControlBlocksTest, StartAsClone)
 
     EXPECT_CALL(m_engineMock, addCloneInitScript(block)).Times(1);
     ControlBlocks::compileStartAsClone(&compiler);
+}
+
+TEST_F(ControlBlocksTest, DeleteThisClone)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = createControlBlock("a", "control_delete_this_clone");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::deleteThisClone)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    ControlBlocks::compileDeleteThisClone(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
+}
+
+TEST_F(ControlBlocksTest, DeleteThisCloneImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &ControlBlocks::deleteThisClone };
+
+    Sprite sprite;
+    sprite.setEngine(&m_engineMock);
+
+    Sprite *clone;
+    EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+    sprite.clone();
+    ASSERT_TRUE(clone);
+
+    VirtualMachine vm(clone, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+
+    EXPECT_CALL(m_engineMock, stopTarget(clone, nullptr)).Times(1);
+
+    vm.setBytecode(bytecode);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(sprite.children().empty());
 }

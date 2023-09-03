@@ -32,6 +32,7 @@ void ControlBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "control_wait_until", &compileWaitUntil);
     engine->addCompileFunction(this, "control_start_as_clone", &compileStartAsClone);
     engine->addCompileFunction(this, "control_create_clone_of", &compileCreateClone);
+    engine->addCompileFunction(this, "control_delete_this_clone", &compileDeleteThisClone);
 
     // Inputs
     engine->addInput(this, "SUBSTACK", SUBSTACK);
@@ -187,6 +188,11 @@ void ControlBlocks::compileCreateClone(Compiler *compiler)
     }
 }
 
+void ControlBlocks::compileDeleteThisClone(Compiler *compiler)
+{
+    compiler->addFunctionCall(&deleteThisClone);
+}
+
 unsigned int ControlBlocks::stopAll(VirtualMachine *vm)
 {
     vm->engine()->stop();
@@ -264,6 +270,18 @@ unsigned int ControlBlocks::createCloneOfMyself(VirtualMachine *vm)
 
     if (sprite)
         sprite->clone();
+
+    return 0;
+}
+
+unsigned int ControlBlocks::deleteThisClone(VirtualMachine *vm)
+{
+    Target *target = vm->target();
+
+    if (target) {
+        vm->engine()->stopTarget(target, nullptr);
+        target->~Target();
+    }
 
     return 0;
 }

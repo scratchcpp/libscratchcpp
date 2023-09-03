@@ -56,6 +56,7 @@ class ControlBlocks : public IBlockSection
         static void compileWaitUntil(Compiler *compiler);
         static void compileStartAsClone(Compiler *compiler);
         static void compileCreateClone(Compiler *compiler);
+        static void compileDeleteThisClone(Compiler *compiler);
 
         static unsigned int stopAll(VirtualMachine *vm);
         static unsigned int stopOtherScriptsInSprite(VirtualMachine *vm);
@@ -65,6 +66,7 @@ class ControlBlocks : public IBlockSection
         static unsigned int createClone(VirtualMachine *vm);
         static unsigned int createCloneByIndex(VirtualMachine *vm);
         static unsigned int createCloneOfMyself(VirtualMachine *vm);
+        static unsigned int deleteThisClone(VirtualMachine *vm);
 
         static inline std::unordered_map<VirtualMachine *, std::pair<std::chrono::steady_clock::time_point, int>> m_timeMap;
 };
