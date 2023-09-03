@@ -3,15 +3,19 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/sprite.h>
 #include <enginemock.h>
 
 #include "../common.h"
 #include "blocks/controlblocks.h"
+#include "blocks/operatorblocks.h"
 #include "engine/internal/engine.h"
 
 using namespace libscratchcpp;
 
 using ::testing::Return;
+using ::testing::_;
+using ::testing::SaveArg;
 
 class ControlBlocksTest : public testing::Test
 {
@@ -24,6 +28,23 @@ class ControlBlocksTest : public testing::Test
 
         // For any control block
         std::shared_ptr<Block> createControlBlock(const std::string &id, const std::string &opcode) const { return std::make_shared<Block>(id, opcode); }
+
+        // For control_create_clone_of
+        std::shared_ptr<Block> createCloneBlock(const std::string &id, const std::string &spriteName, std::shared_ptr<Block> valueBlock = nullptr)
+        {
+            auto block = createControlBlock(id, "control_create_clone_of");
+
+            if (valueBlock)
+                addObscuredInput(block, "CLONE_OPTION", ControlBlocks::CLONE_OPTION, valueBlock);
+            else {
+                auto input = addNullInput(block, "CLONE_OPTION", ControlBlocks::CLONE_OPTION);
+                auto menu = createControlBlock(id + "_menu", "control_create_clone_of_menu");
+                input->setValueBlock(menu);
+                addDropdownField(menu, "CLONE_OPTION", static_cast<ControlBlocks::Fields>(-1), spriteName, static_cast<ControlBlocks::FieldValues>(-1));
+            }
+
+            return block;
+        }
 
         void addSubstackInput(std::shared_ptr<Block> block, const std::string &name, ControlBlocks::Inputs id, std::shared_ptr<Block> valueBlock) const
         {
@@ -52,12 +73,14 @@ class ControlBlocksTest : public testing::Test
             block->updateInputMap();
         }
 
-        void addNullInput(std::shared_ptr<Block> block, const std::string &name, ControlBlocks::Inputs id) const
+        std::shared_ptr<Input> addNullInput(std::shared_ptr<Block> block, const std::string &name, ControlBlocks::Inputs id) const
         {
             auto input = std::make_shared<Input>(name, Input::Type::Shadow);
             input->setInputId(id);
             block->addInput(input);
             block->updateInputMap();
+
+            return input;
         }
 
         void addDropdownField(std::shared_ptr<Block> block, const std::string &name, ControlBlocks::Fields id, const std::string &value, ControlBlocks::FieldValues valueId) const
@@ -130,6 +153,9 @@ TEST_F(ControlBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_stop", &ControlBlocks::compileStop)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_wait", &ControlBlocks::compileWait)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_wait_until", &ControlBlocks::compileWaitUntil)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_start_as_clone", &ControlBlocks::compileStartAsClone)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_create_clone_of", &ControlBlocks::compileCreateClone)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_delete_this_clone", &ControlBlocks::compileDeleteThisClone)).Times(1);
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SUBSTACK", ControlBlocks::SUBSTACK));
@@ -138,6 +164,7 @@ TEST_F(ControlBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "CONDITION", ControlBlocks::CONDITION));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DURATION", ControlBlocks::DURATION));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VALUE", ControlBlocks::VALUE));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "CLONE_OPTION", ControlBlocks::CLONE_OPTION));
 
     // Fields
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "STOP_OPTION", ControlBlocks::STOP_OPTION));
@@ -809,4 +836,152 @@ TEST_F(ControlBlocksTest, WaitUntilImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(vm.atEnd());
+}
+
+TEST_F(ControlBlocksTest, CreateCloneOf)
+{
+    Compiler compiler(&m_engineMock);
+
+    // create clone of [Sprite1]
+    auto block1 = createCloneBlock("a", "Sprite1");
+
+    // create clone of [myself]
+    auto block2 = createCloneBlock("b", "_myself_");
+
+    // create clone of (join "" "")
+    auto joinBlock = std::make_shared<Block>("d", "operator_join");
+    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
+    auto block3 = createCloneBlock("c", "", joinBlock);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite1")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::createCloneByIndex)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::createCloneOfMyself)).WillOnce(Return(1));
+    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::createClone)).WillOnce(Return(2));
+
+    compiler.init();
+    compiler.setBlock(block1);
+    ControlBlocks::compileCreateClone(&compiler);
+    compiler.setBlock(block2);
+    ControlBlocks::compileCreateClone(&compiler);
+    compiler.setBlock(block3);
+    ControlBlocks::compileCreateClone(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_NULL, vm::OP_NULL, vm::OP_STR_CONCAT, vm::OP_EXEC, 2, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), 4);
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
+}
+
+TEST_F(ControlBlocksTest, CreateCloneOfImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 2, vm::OP_HALT };
+    static BlockFunc functions[] = { &ControlBlocks::createCloneByIndex, &ControlBlocks::createCloneOfMyself, &ControlBlocks::createClone };
+    static Value constValues[] = { 4, "Sprite1", "_myself_" };
+
+    Sprite sprite;
+    sprite.setEngine(&m_engineMock);
+
+    VirtualMachine vm(&sprite, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
+    EXPECT_CALL(m_engineMock, initClone).Times(1);
+
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.allChildren().size(), 1);
+
+    EXPECT_CALL(m_engineMock, initClone).Times(1);
+
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.allChildren().size(), 2);
+    ASSERT_EQ(sprite.children(), sprite.allChildren());
+
+    EXPECT_CALL(m_engineMock, findTarget).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
+    EXPECT_CALL(m_engineMock, initClone).Times(1);
+
+    vm.setBytecode(bytecode3);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.allChildren().size(), 3);
+    ASSERT_EQ(sprite.children(), sprite.allChildren());
+
+    EXPECT_CALL(m_engineMock, initClone).Times(1);
+
+    vm.setBytecode(bytecode4);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.allChildren().size(), 4);
+    ASSERT_EQ(sprite.children(), sprite.allChildren());
+}
+
+TEST_F(ControlBlocksTest, StartAsClone)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = createControlBlock("a", "control_start_as_clone");
+    compiler.setBlock(block);
+
+    EXPECT_CALL(m_engineMock, addCloneInitScript(block)).Times(1);
+    ControlBlocks::compileStartAsClone(&compiler);
+}
+
+TEST_F(ControlBlocksTest, DeleteThisClone)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = createControlBlock("a", "control_delete_this_clone");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::deleteThisClone)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    ControlBlocks::compileDeleteThisClone(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
+}
+
+TEST_F(ControlBlocksTest, DeleteThisCloneImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &ControlBlocks::deleteThisClone };
+
+    Sprite sprite;
+    sprite.setEngine(&m_engineMock);
+
+    Sprite *clone;
+    EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+    sprite.clone();
+    ASSERT_TRUE(clone);
+
+    VirtualMachine vm(clone, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+
+    EXPECT_CALL(m_engineMock, stopTarget(clone, nullptr)).Times(1);
+
+    vm.setBytecode(bytecode);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(sprite.children().empty());
 }
