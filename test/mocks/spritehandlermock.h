@@ -10,6 +10,8 @@ class SpriteHandlerMock : public ISpriteHandler
     public:
         MOCK_METHOD(void, onSpriteChanged, (Sprite *), (override));
 
+        MOCK_METHOD(void, onCloned, (Sprite *), (override));
+
         MOCK_METHOD(void, onCostumeChanged, (const char *), (override));
 
         MOCK_METHOD(void, onVisibleChanged, (bool), (override));

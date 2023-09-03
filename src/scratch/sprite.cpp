@@ -85,6 +85,9 @@ std::shared_ptr<Sprite> Sprite::clone()
         // Call "when I start as clone" scripts
         eng->initClone(clone.get());
 
+        if (impl->iface)
+            impl->iface->onCloned(clone.get());
+
         return clone;
     }
 

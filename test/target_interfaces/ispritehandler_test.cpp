@@ -1,8 +1,13 @@
 #include <spritehandlermock.h>
+#include <enginemock.h>
 
 #include "../common.h"
 
 using namespace libscratchcpp;
+
+using ::testing::Return;
+using ::testing::_;
+using ::testing::SaveArg;
 
 class ISpriteHandlerTest : public testing::Test
 {
@@ -11,11 +16,25 @@ class ISpriteHandlerTest : public testing::Test
         {
             EXPECT_CALL(m_handler, onSpriteChanged(&m_sprite)).Times(1);
             m_sprite.setInterface(&m_handler);
+            m_sprite.setEngine(&m_engine);
         }
 
         Sprite m_sprite;
         SpriteHandlerMock m_handler;
+        EngineMock m_engine;
 };
+
+TEST_F(ISpriteHandlerTest, Clone)
+{
+    Sprite *clone;
+    Sprite *cloneArg;
+    EXPECT_CALL(m_engine, initClone(_)).WillOnce(SaveArg<0>(&clone));
+    EXPECT_CALL(m_handler, onCloned(_)).WillOnce(SaveArg<0>(&cloneArg));
+
+    m_sprite.clone();
+    ASSERT_TRUE(clone);
+    ASSERT_EQ(cloneArg, clone);
+}
 
 TEST_F(ISpriteHandlerTest, Visible)
 {
