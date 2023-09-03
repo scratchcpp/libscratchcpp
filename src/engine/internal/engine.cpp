@@ -143,7 +143,8 @@ void Engine::frame()
                     }
                 }
 
-                m_scriptsToRemove.push_back(script.get());
+                if (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) == m_scriptsToRemove.end())
+                    m_scriptsToRemove.push_back(script.get());
             }
         } while (!script->atEnd() && !m_breakFrame);
     }
@@ -262,7 +263,8 @@ void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wa
 void Engine::stopScript(VirtualMachine *vm)
 {
     assert(vm);
-    m_scriptsToRemove.push_back(vm);
+    if (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm) == m_scriptsToRemove.end())
+        m_scriptsToRemove.push_back(vm);
 }
 
 void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
