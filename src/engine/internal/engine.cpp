@@ -300,7 +300,7 @@ void Engine::initClone(Sprite *clone)
 #ifndef NDEBUG
         // Since we're initializing the clone, it shouldn't have any running scripts
         for (const auto script : m_runningScripts)
-            assert(script->target() != clone);
+            assert((script->target() != clone) || (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) != m_scriptsToRemove.end()));
 #endif
 
         for (auto script : scripts) {
