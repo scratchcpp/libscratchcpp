@@ -24,6 +24,7 @@ class LIBSCRATCHCPP_EXPORT Target
     public:
         Target();
         Target(const Target &) = delete;
+        virtual ~Target() { }
 
         /*! Returns true if this Target is the stage. */
         virtual bool isStage() const { return false; }
