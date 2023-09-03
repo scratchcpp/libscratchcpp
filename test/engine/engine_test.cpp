@@ -1,5 +1,6 @@
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/block.h>
+#include <scratchcpp/project.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 
@@ -330,4 +331,49 @@ TEST(EngineTest, ListOwner)
     ASSERT_EQ(engine.listOwner(list2.get()), nullptr);
     ASSERT_EQ(engine.listOwner(list3.get()), t3.get());
     ASSERT_EQ(engine.listOwner(list4.get()), t1.get());
+}
+
+TEST(EngineTest, Clones)
+{
+    Project p("clones.sb3");
+    ASSERT_TRUE(p.load());
+    p.run();
+
+    auto engine = p.engine();
+
+    Target *stage = engine->targetAt(engine->findTarget("Stage"));
+    ASSERT_TRUE(stage);
+
+    ASSERT_VAR(stage, "clone1");
+    ASSERT_EQ(GET_VAR(stage, "clone1")->value().toInt(), 1);
+    ASSERT_VAR(stage, "clone2");
+    ASSERT_EQ(GET_VAR(stage, "clone2")->value().toInt(), 1);
+    ASSERT_VAR(stage, "clone3");
+    ASSERT_EQ(GET_VAR(stage, "clone3")->value().toInt(), 1);
+    ASSERT_VAR(stage, "clone4");
+    ASSERT_EQ(GET_VAR(stage, "clone4")->value().toInt(), 1);
+    ASSERT_VAR(stage, "clone5");
+    ASSERT_EQ(GET_VAR(stage, "clone5")->value().toInt(), 110);
+    ASSERT_VAR(stage, "delete_passed");
+    ASSERT_TRUE(GET_VAR(stage, "delete_passed")->value().toBool());
+
+    ASSERT_LIST(stage, "log1");
+    auto list = GET_LIST(stage, "log1");
+
+    for (int i = 0; i < list->size(); i++) {
+        if (i < 10)
+            ASSERT_EQ((*list)[i].toInt(), 1);
+        else
+            ASSERT_EQ((*list)[i].toInt(), 2);
+    }
+
+    ASSERT_LIST(stage, "log2");
+    list = GET_LIST(stage, "log2");
+
+    for (int i = 0; i < list->size(); i++) {
+        if (i < 10)
+            ASSERT_EQ((*list)[i].toInt(), 1);
+        else
+            ASSERT_EQ((*list)[i].toString(), "1 2"); // TODO: Change this to "12" after #188 is fixed
+    }
 }
