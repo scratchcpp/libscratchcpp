@@ -1614,6 +1614,22 @@ TEST(ValueTest, EqualityOperators)
     }
 
     {
+        Value v1 = 0;
+        Value v2 = "0";
+        Value v3 = "1";
+        Value v4 = "test";
+
+        ASSERT_TRUE(v1 == v2);
+        ASSERT_FALSE(v1 != v2);
+
+        ASSERT_FALSE(v1 == v3);
+        ASSERT_TRUE(v1 != v3);
+
+        ASSERT_FALSE(v1 == v4);
+        ASSERT_TRUE(v1 != v4);
+    }
+
+    {
         Value v1 = 1;
         Value v2 = true;
         Value v3 = false;
