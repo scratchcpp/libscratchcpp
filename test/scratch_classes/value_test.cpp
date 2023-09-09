@@ -1467,3 +1467,355 @@ TEST(ValueTest, ModOperator)
     v = -150;
     ASSERT_EQ(v % "-Infinity", -150);
 }
+
+TEST(ValueTest, EqualityOperators)
+{
+    {
+        Value v1 = 10;
+        Value v2 = 10;
+        Value v3 = 8;
+
+        ASSERT_TRUE(v1 == v2);
+        ASSERT_FALSE(v1 != v2);
+
+        ASSERT_FALSE(v1 == v3);
+        ASSERT_TRUE(v1 != v3);
+
+        ASSERT_FALSE(v2 == v3);
+        ASSERT_TRUE(v2 != v3);
+    }
+
+    {
+        Value v1 = -4.25;
+        Value v2 = -4.25;
+        Value v3 = 5.312;
+
+        ASSERT_TRUE(v1 == v2);
+        ASSERT_FALSE(v1 != v2);
+
+        ASSERT_FALSE(v1 == v3);
+        ASSERT_TRUE(v1 != v3);
+
+        ASSERT_FALSE(v2 == v3);
+        ASSERT_TRUE(v2 != v3);
+    }
+
+    {
+        Value v1 = true;
+        Value v2 = true;
+        Value v3 = false;
+
+        ASSERT_TRUE(v1 == v2);
+        ASSERT_FALSE(v1 != v2);
+
+        ASSERT_FALSE(v1 == v3);
+        ASSERT_TRUE(v1 != v3);
+
+        ASSERT_FALSE(v2 == v3);
+        ASSERT_TRUE(v2 != v3);
+    }
+
+    {
+        Value v1 = "abC def";
+        Value v2 = "abC def";
+        Value v3 = "abc dEf";
+        Value v4 = "hello world";
+
+        ASSERT_TRUE(v1 == v2);
+        ASSERT_FALSE(v1 != v2);
+
+        ASSERT_TRUE(v1 == v3);
+        ASSERT_FALSE(v1 != v3);
+
+        ASSERT_TRUE(v2 == v3);
+        ASSERT_FALSE(v2 != v3);
+
+        ASSERT_FALSE(v1 == v4);
+        ASSERT_TRUE(v1 != v4);
+
+        ASSERT_FALSE(v2 == v4);
+        ASSERT_TRUE(v2 != v4);
+
+        ASSERT_FALSE(v3 == v4);
+        ASSERT_TRUE(v3 != v4);
+    }
+
+    {
+        Value v1(Value::SpecialValue::Infinity);
+        Value v2(Value::SpecialValue::Infinity);
+        Value v3(Value::SpecialValue::NegativeInfinity);
+        Value v4(Value::SpecialValue::NegativeInfinity);
+        Value v5(Value::SpecialValue::NaN);
+        Value v6(Value::SpecialValue::NaN);
+
+        ASSERT_TRUE(v1 == v2);
+        ASSERT_FALSE(v1 != v2);
+
+        ASSERT_TRUE(v3 == v4);
+        ASSERT_FALSE(v3 != v4);
+
+        // TODO: Enable this after #196 is fixed
+        /*ASSERT_TRUE(v5 == v6);
+        ASSERT_FALSE(v5 != v6);*/
+
+        ASSERT_FALSE(v1 == v3);
+        ASSERT_TRUE(v1 != v3);
+
+        ASSERT_FALSE(v1 == v5);
+        ASSERT_TRUE(v1 != v5);
+
+        ASSERT_FALSE(v3 == v5);
+        ASSERT_TRUE(v3 != v5);
+    }
+
+    {
+        Value v1 = 5.00;
+        Value v2 = 5;
+        Value v3 = 6;
+
+        ASSERT_TRUE(v1 == v2);
+        ASSERT_FALSE(v1 != v2);
+
+        ASSERT_FALSE(v1 == v3);
+        ASSERT_TRUE(v1 != v3);
+
+        ASSERT_FALSE(v2 == v3);
+        ASSERT_TRUE(v2 != v3);
+    }
+
+    {
+        Value v1 = 1;
+        Value v2 = true;
+        Value v3 = false;
+
+        ASSERT_TRUE(v1 == v2);
+        ASSERT_FALSE(v1 != v2);
+
+        ASSERT_FALSE(v1 == v3);
+        ASSERT_TRUE(v1 != v3);
+
+        ASSERT_FALSE(v2 == v3);
+        ASSERT_TRUE(v2 != v3);
+    }
+
+    {
+        Value v1 = 5.25;
+        Value v2 = "5.25";
+        Value v3 = "5.26";
+
+        ASSERT_TRUE(v1 == v2);
+        ASSERT_FALSE(v1 != v2);
+
+        ASSERT_FALSE(v1 == v3);
+        ASSERT_TRUE(v1 != v3);
+
+        ASSERT_FALSE(v2 == v3);
+        ASSERT_TRUE(v2 != v3);
+    }
+
+    {
+        Value v1 = 1;
+        Value v2 = true;
+        Value v3 = false;
+
+        ASSERT_TRUE(v1 == v2);
+        ASSERT_FALSE(v1 != v2);
+
+        ASSERT_FALSE(v1 == v3);
+        ASSERT_TRUE(v1 != v3);
+
+        ASSERT_FALSE(v2 == v3);
+        ASSERT_TRUE(v2 != v3);
+    }
+
+    {
+        Value v1 = 5;
+        Value v2 = 0;
+        Value v3(Value::SpecialValue::Infinity);
+        Value v4(Value::SpecialValue::NegativeInfinity);
+        Value v5(Value::SpecialValue::NaN);
+
+        ASSERT_FALSE(v1 == v3);
+        ASSERT_TRUE(v1 != v3);
+
+        ASSERT_FALSE(v1 == v4);
+        ASSERT_TRUE(v1 != v4);
+
+        ASSERT_FALSE(v1 == v5);
+        ASSERT_TRUE(v1 != v5);
+
+        // TODO: Enable this after #198 is fixed
+        /*ASSERT_FALSE(v2 == v5);
+        ASSERT_TRUE(v2 != v5);*/
+    }
+
+    {
+        Value v1 = true;
+        Value v2 = false;
+        Value v3 = "true";
+        Value v4 = "false";
+        Value v5 = "TRUE";
+        Value v6 = "FALSE";
+
+        ASSERT_TRUE(v1 == v3);
+        ASSERT_FALSE(v1 != v3);
+
+        ASSERT_TRUE(v2 == v4);
+        ASSERT_FALSE(v2 != v4);
+
+        ASSERT_FALSE(v1 == v2);
+        ASSERT_TRUE(v1 != v2);
+
+        ASSERT_FALSE(v2 == v3);
+        ASSERT_TRUE(v2 != v3);
+
+        ASSERT_TRUE(v1 == v5);
+        ASSERT_FALSE(v1 != v5);
+
+        ASSERT_TRUE(v2 == v6);
+        ASSERT_FALSE(v2 != v6);
+    }
+
+    {
+        Value v1 = true;
+        Value v2 = false;
+        Value v3(Value::SpecialValue::Infinity);
+        Value v4(Value::SpecialValue::NegativeInfinity);
+        Value v5(Value::SpecialValue::NaN);
+
+        ASSERT_FALSE(v1 == v3);
+        ASSERT_TRUE(v1 != v3);
+
+        ASSERT_FALSE(v1 == v4);
+        ASSERT_TRUE(v1 != v4);
+
+        ASSERT_FALSE(v1 == v5);
+        ASSERT_TRUE(v1 != v5);
+
+        ASSERT_FALSE(v2 == v5);
+        ASSERT_TRUE(v2 != v5);
+    }
+
+    {
+        Value v1 = "Infinity";
+        Value v2 = "infinity";
+        Value v3 = "-Infinity";
+        Value v4 = "-infinity";
+        Value v5 = "NaN";
+        Value v6 = "nan";
+        Value v7(Value::SpecialValue::Infinity);
+        Value v8(Value::SpecialValue::NegativeInfinity);
+        Value v9(Value::SpecialValue::NaN);
+
+        // Infinity
+        ASSERT_TRUE(v1 == v7);
+        ASSERT_FALSE(v1 != v7);
+
+        ASSERT_FALSE(v1 == v8);
+        ASSERT_TRUE(v1 != v8);
+
+        ASSERT_FALSE(v1 == v9);
+        ASSERT_TRUE(v1 != v9);
+
+        // infinity
+        ASSERT_TRUE(v2 == v7);
+        ASSERT_FALSE(v2 != v7);
+
+        ASSERT_FALSE(v2 == v8);
+        ASSERT_TRUE(v2 != v8);
+
+        ASSERT_FALSE(v2 == v9);
+        ASSERT_TRUE(v2 != v9);
+
+        // -Infinity
+        ASSERT_FALSE(v3 == v7);
+        ASSERT_TRUE(v3 != v7);
+
+        ASSERT_TRUE(v3 == v8);
+        ASSERT_FALSE(v3 != v8);
+
+        ASSERT_FALSE(v3 == v9);
+        ASSERT_TRUE(v3 != v9);
+
+        // -infinity
+        ASSERT_FALSE(v4 == v7);
+        ASSERT_TRUE(v4 != v7);
+
+        ASSERT_TRUE(v4 == v8);
+        ASSERT_FALSE(v4 != v8);
+
+        ASSERT_FALSE(v4 == v9);
+        ASSERT_TRUE(v4 != v9);
+
+        // NaN
+        ASSERT_FALSE(v5 == v7);
+        ASSERT_TRUE(v5 != v7);
+
+        ASSERT_FALSE(v5 == v8);
+        ASSERT_TRUE(v5 != v8);
+
+        // TODO: Enable this after #197 is fixed
+        /*ASSERT_TRUE(v5 == v9);
+        ASSERT_FALSE(v5 != v9);*/
+
+        // nan
+        ASSERT_FALSE(v6 == v7);
+        ASSERT_TRUE(v6 != v7);
+
+        ASSERT_FALSE(v6 == v8);
+        ASSERT_TRUE(v6 != v8);
+
+        ASSERT_TRUE(v6 == v9);
+        ASSERT_FALSE(v6 != v9);
+    }
+
+    {
+        Value v1 = "abc";
+        Value v2 = " ";
+        Value v3 = "";
+        Value v4 = "0";
+        Value v5(Value::SpecialValue::Infinity);
+        Value v6(Value::SpecialValue::NegativeInfinity);
+        Value v7(Value::SpecialValue::NaN);
+
+        // Infinity
+        ASSERT_FALSE(v1 == v5);
+        ASSERT_TRUE(v1 != v5);
+
+        ASSERT_FALSE(v2 == v5);
+        ASSERT_TRUE(v2 != v5);
+
+        ASSERT_FALSE(v3 == v5);
+        ASSERT_TRUE(v3 != v5);
+
+        ASSERT_FALSE(v4 == v5);
+        ASSERT_TRUE(v4 != v5);
+
+        // -Infinity
+        ASSERT_FALSE(v1 == v6);
+        ASSERT_TRUE(v1 != v6);
+
+        ASSERT_FALSE(v2 == v6);
+        ASSERT_TRUE(v2 != v6);
+
+        ASSERT_FALSE(v3 == v6);
+        ASSERT_TRUE(v3 != v6);
+
+        ASSERT_FALSE(v4 == v6);
+        ASSERT_TRUE(v4 != v6);
+
+        // NaN
+        ASSERT_FALSE(v1 == v7);
+        ASSERT_TRUE(v1 != v7);
+
+        ASSERT_FALSE(v2 == v7);
+        ASSERT_TRUE(v2 != v7);
+
+        ASSERT_FALSE(v3 == v7);
+        ASSERT_TRUE(v3 != v7);
+
+        // TODO: Enable this after #198 is fixed
+        /*ASSERT_FALSE(v4 == v7);
+        ASSERT_TRUE(v4 != v7);*/
+    }
+}
