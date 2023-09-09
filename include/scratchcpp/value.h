@@ -520,12 +520,12 @@ class LIBSCRATCHCPP_EXPORT Value
                         }
                 }
             } else {
-                if (v1.isNumber() || v2.isNumber())
+                if (v1.isString() || v2.isString())
+                    return stringsEqual(v1.toUtf16(), v2.toUtf16());
+                else if (v1.isNumber() || v2.isNumber())
                     return v1.toDouble() == v2.toDouble();
                 else if (v1.isBool() || v2.isBool())
                     return ((v1.m_type != Type::NaN && v2.m_type != Type::NaN) && (v1.toBool() == v2.toBool()));
-                else if (v1.isString() || v2.isString())
-                    return stringsEqual(v1.toUtf16(), v2.toUtf16());
                 else
                     return false;
             }
