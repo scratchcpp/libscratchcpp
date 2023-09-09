@@ -841,7 +841,7 @@ TEST(VirtualMachineTest, OP_LIST_APPEND)
     ASSERT_EQ(list1[0], 3.52);
 
     ASSERT_EQ(list2.size(), 1);
-    ASSERT_EQ(list2[1], "test");
+    ASSERT_EQ(list2[0], "test");
 
     ASSERT_EQ(vm.registerCount(), 0);
 }
