@@ -455,6 +455,8 @@ class LIBSCRATCHCPP_EXPORT Value : public ValueVariant
             return false;
         }
 
+        friend bool operator!=(const Value &v1, const Value &v2) { return !(v1 == v2); }
+
         friend bool operator>(const Value &v1, const Value &v2)
         {
             if ((static_cast<int>(v1.m_type) < 0) || (static_cast<int>(v2.m_type) < 0)) {
