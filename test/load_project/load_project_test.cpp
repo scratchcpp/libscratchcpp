@@ -191,7 +191,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(prototype->argumentIds().size(), 2);
         ASSERT_EQ(prototype->argumentNames(), std::vector<std::string>({ "num or text", "bool" }));
         ASSERT_EQ(prototype->argumentTypes(), std::vector<BlockPrototype::ArgType>({ BlockPrototype::ArgType::StringNum, BlockPrototype::ArgType::Bool }));
-        ASSERT_EQ(prototype->argumentDefaults(), std::vector<Value>({ 0, false }));
+        ASSERT_EQ(prototype->argumentDefaults(), std::vector<Value>({ "", false }));
         ASSERT_EQ(prototype->procCode(), "custom block %s %b");
         ASSERT_INPUT(blockPrototype, prototype->argumentIds()[0]);
         auto argBlock = GET_INPUT(blockPrototype, prototype->argumentIds()[0])->valueBlock();
