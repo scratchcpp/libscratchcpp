@@ -201,6 +201,9 @@ do_halt:
         atEnd = true;
         return pos;
     } else {
+        if (callTree.size() == 1)
+            warp = false;
+
         pos = callTree.back();
         callTree.pop_back();
         procedureArgTree.pop_back();
@@ -689,7 +692,11 @@ do_exec : {
             // This is for example used in the wait block (to call it again with the same time value).
         } else
             FREE_REGS(ret);
-        return pos;
+
+        if (!warp) // TODO: This should always return if there's a "warp timer" enabled
+            return pos;
+
+        DISPATCH(); // this avoids freeing registers after "stopping" a warp script
     }
     FREE_REGS(ret);
     DISPATCH();

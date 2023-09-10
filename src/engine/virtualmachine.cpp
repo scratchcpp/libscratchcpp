@@ -190,15 +190,14 @@ void VirtualMachine::moveToLastCheckpoint()
  * \param[in] savePos Changes the return value of savePos().
  * \param[in] breakAtomic Whether to break the frame after stopping the script.
  * \param[in] goBack Whether to go back so that the current instruction can run again in the future.
- * \note Nothing will happen if the script is set to run without screen refresh.
+ * \note If the script is set to run without screen refresh, the VM won't stop.
+ * The only parameter which won't be ignored is goBack.
  */
 void VirtualMachine::stop(bool savePos, bool breakAtomic, bool goBack)
 {
-    if (impl->warp)
-        return;
     impl->stop = true;
-    impl->savePos = savePos;
-    impl->atomic = !breakAtomic;
+    impl->savePos = savePos && !impl->warp;
+    impl->atomic = !breakAtomic || impl->warp;
     impl->goBack = goBack;
 }
 
