@@ -190,23 +190,17 @@ TEST(TargetTest, Costumes)
     auto c3 = std::make_shared<Costume>("costume3", "", "svg");
 
     TargetMock target;
-    EXPECT_CALL(target, dataSource()).Times(17).WillRepeatedly(Return(nullptr));
+    EXPECT_CALL(target, dataSource()).Times(14).WillRepeatedly(Return(nullptr));
 
     ASSERT_EQ(target.addCostume(c1), 0);
     ASSERT_EQ(target.addCostume(c2), 1);
     ASSERT_EQ(target.addCostume(c3), 2);
     ASSERT_EQ(target.addCostume(c2), 1); // add existing costume
 
-    // TODO: Use shared_ptr for assets
-    // ASSERT_EQ(target.costumes(), std::vector<std::shared_ptr<Costume>>({ c1, c2, c3 }));
-    ASSERT_EQ(target.costumes().size(), 3);
-    ASSERT_EQ(target.costumes()[0]->name(), c1->name());
-    ASSERT_EQ(target.costumes()[1]->name(), c2->name());
-    ASSERT_EQ(target.costumes()[2]->name(), c3->name());
-
-    ASSERT_EQ(target.costumeAt(0)->name(), c1->name());
-    ASSERT_EQ(target.costumeAt(1)->name(), c2->name());
-    ASSERT_EQ(target.costumeAt(2)->name(), c3->name());
+    ASSERT_EQ(target.costumes(), std::vector<std::shared_ptr<Costume>>({ c1, c2, c3 }));
+    ASSERT_EQ(target.costumeAt(0), c1);
+    ASSERT_EQ(target.costumeAt(1), c2);
+    ASSERT_EQ(target.costumeAt(2), c3);
     ASSERT_EQ(target.costumeAt(3), nullptr);
     ASSERT_EQ(target.costumeAt(-1), nullptr);
 
@@ -223,21 +217,17 @@ TEST(TargetTest, Costumes)
     ASSERT_TRUE(target.costumes().empty());
 
     TargetMock target2;
-    EXPECT_CALL(target2, dataSource()).Times(18).WillRepeatedly(Return(&source));
+    EXPECT_CALL(target2, dataSource()).Times(15).WillRepeatedly(Return(&source));
 
     ASSERT_EQ(target2.addCostume(c1), 0);
     ASSERT_EQ(target2.addCostume(c2), 1);
     ASSERT_EQ(target2.addCostume(c3), 2);
     ASSERT_EQ(target2.addCostume(c2), 1); // add existing costume
 
-    ASSERT_EQ(target2.costumes().size(), 3);
-    ASSERT_EQ(target2.costumes()[0]->name(), c1->name());
-    ASSERT_EQ(target2.costumes()[1]->name(), c2->name());
-    ASSERT_EQ(target2.costumes()[2]->name(), c3->name());
-
-    ASSERT_EQ(target2.costumeAt(0)->name(), c1->name());
-    ASSERT_EQ(target2.costumeAt(1)->name(), c2->name());
-    ASSERT_EQ(target2.costumeAt(2)->name(), c3->name());
+    ASSERT_EQ(target2.costumes(), std::vector<std::shared_ptr<Costume>>({ c1, c2, c3 }));
+    ASSERT_EQ(target2.costumeAt(0), c1);
+    ASSERT_EQ(target2.costumeAt(1), c2);
+    ASSERT_EQ(target2.costumeAt(2), c3);
     ASSERT_EQ(target2.costumeAt(3), nullptr);
     ASSERT_EQ(target2.costumeAt(-1), nullptr);
 
@@ -254,16 +244,11 @@ TEST(TargetTest, Costumes)
     EXPECT_CALL(target2, dataSource()).WillOnce(Return(&source));
     ASSERT_EQ(target2.costumes(), source.costumes());
 
-    ASSERT_EQ(source.costumes().size(), 4);
-    ASSERT_EQ(source.costumes()[0]->name(), c1->name());
-    ASSERT_EQ(source.costumes()[1]->name(), c2->name());
-    ASSERT_EQ(source.costumes()[2]->name(), c3->name());
-    ASSERT_EQ(source.costumes()[3]->name(), c4->name());
-
-    ASSERT_EQ(source.costumeAt(0)->name(), c1->name());
-    ASSERT_EQ(source.costumeAt(1)->name(), c2->name());
-    ASSERT_EQ(source.costumeAt(2)->name(), c3->name());
-    ASSERT_EQ(source.costumeAt(3)->name(), c4->name());
+    ASSERT_EQ(source.costumes(), std::vector<std::shared_ptr<Costume>>({ c1, c2, c3, c4 }));
+    ASSERT_EQ(source.costumeAt(0), c1);
+    ASSERT_EQ(source.costumeAt(1), c2);
+    ASSERT_EQ(source.costumeAt(2), c3);
+    ASSERT_EQ(source.costumeAt(3), c4);
     ASSERT_EQ(source.costumeAt(4), nullptr);
     ASSERT_EQ(source.costumeAt(-1), nullptr);
 
@@ -281,23 +266,17 @@ TEST(TargetTest, Sounds)
     auto s3 = std::make_shared<Sound>("sound3", "", "mp3");
 
     TargetMock target;
-    EXPECT_CALL(target, dataSource()).Times(17).WillRepeatedly(Return(nullptr));
+    EXPECT_CALL(target, dataSource()).Times(14).WillRepeatedly(Return(nullptr));
 
     ASSERT_EQ(target.addSound(s1), 0);
     ASSERT_EQ(target.addSound(s2), 1);
     ASSERT_EQ(target.addSound(s3), 2);
     ASSERT_EQ(target.addSound(s2), 1); // add existing Sound
 
-    // TODO: Use shared_ptr for assets
-    // ASSERT_EQ(target.sounds(), std::vector<std::shared_ptr<Sound>>({ s1, s2, s3 }));
-    ASSERT_EQ(target.sounds().size(), 3);
-    ASSERT_EQ(target.sounds()[0]->name(), s1->name());
-    ASSERT_EQ(target.sounds()[1]->name(), s2->name());
-    ASSERT_EQ(target.sounds()[2]->name(), s3->name());
-
-    ASSERT_EQ(target.soundAt(0)->name(), s1->name());
-    ASSERT_EQ(target.soundAt(1)->name(), s2->name());
-    ASSERT_EQ(target.soundAt(2)->name(), s3->name());
+    ASSERT_EQ(target.sounds(), std::vector<std::shared_ptr<Sound>>({ s1, s2, s3 }));
+    ASSERT_EQ(target.soundAt(0), s1);
+    ASSERT_EQ(target.soundAt(1), s2);
+    ASSERT_EQ(target.soundAt(2), s3);
     ASSERT_EQ(target.soundAt(3), nullptr);
     ASSERT_EQ(target.soundAt(-1), nullptr);
 
@@ -314,21 +293,17 @@ TEST(TargetTest, Sounds)
     ASSERT_TRUE(target.sounds().empty());
 
     TargetMock target2;
-    EXPECT_CALL(target2, dataSource()).Times(18).WillRepeatedly(Return(&source));
+    EXPECT_CALL(target2, dataSource()).Times(15).WillRepeatedly(Return(&source));
 
     ASSERT_EQ(target2.addSound(s1), 0);
     ASSERT_EQ(target2.addSound(s2), 1);
     ASSERT_EQ(target2.addSound(s3), 2);
     ASSERT_EQ(target2.addSound(s2), 1); // add existing Sound
 
-    ASSERT_EQ(target2.sounds().size(), 3);
-    ASSERT_EQ(target2.sounds()[0]->name(), s1->name());
-    ASSERT_EQ(target2.sounds()[1]->name(), s2->name());
-    ASSERT_EQ(target2.sounds()[2]->name(), s3->name());
-
-    ASSERT_EQ(target2.soundAt(0)->name(), s1->name());
-    ASSERT_EQ(target2.soundAt(1)->name(), s2->name());
-    ASSERT_EQ(target2.soundAt(2)->name(), s3->name());
+    ASSERT_EQ(target2.sounds(), std::vector<std::shared_ptr<Sound>>({ s1, s2, s3 }));
+    ASSERT_EQ(target2.soundAt(0), s1);
+    ASSERT_EQ(target2.soundAt(1), s2);
+    ASSERT_EQ(target2.soundAt(2), s3);
     ASSERT_EQ(target2.soundAt(3), nullptr);
     ASSERT_EQ(target2.soundAt(-1), nullptr);
 
@@ -345,16 +320,11 @@ TEST(TargetTest, Sounds)
     EXPECT_CALL(target2, dataSource()).WillOnce(Return(&source));
     ASSERT_EQ(target2.sounds(), source.sounds());
 
-    ASSERT_EQ(source.sounds().size(), 4);
-    ASSERT_EQ(source.sounds()[0]->name(), s1->name());
-    ASSERT_EQ(source.sounds()[1]->name(), s2->name());
-    ASSERT_EQ(source.sounds()[2]->name(), s3->name());
-    ASSERT_EQ(source.sounds()[3]->name(), s4->name());
-
-    ASSERT_EQ(source.soundAt(0)->name(), s1->name());
-    ASSERT_EQ(source.soundAt(1)->name(), s2->name());
-    ASSERT_EQ(source.soundAt(2)->name(), s3->name());
-    ASSERT_EQ(source.soundAt(3)->name(), s4->name());
+    ASSERT_EQ(source.sounds(), std::vector<std::shared_ptr<Sound>>({ s1, s2, s3, s4 }));
+    ASSERT_EQ(source.soundAt(0), s1);
+    ASSERT_EQ(source.soundAt(1), s2);
+    ASSERT_EQ(source.soundAt(2), s3);
+    ASSERT_EQ(source.soundAt(3), s4);
     ASSERT_EQ(source.soundAt(4), nullptr);
     ASSERT_EQ(source.soundAt(-1), nullptr);
 
