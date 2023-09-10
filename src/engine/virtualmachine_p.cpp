@@ -201,6 +201,9 @@ do_halt:
         atEnd = true;
         return pos;
     } else {
+        if (callTree.size() == 1)
+            warp = false;
+
         pos = callTree.back();
         callTree.pop_back();
         procedureArgTree.pop_back();
