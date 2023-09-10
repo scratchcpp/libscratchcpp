@@ -236,7 +236,9 @@ std::shared_ptr<Costume> Target::costumeAt(int index) const
     if (Target *source = dataSource())
         return source->costumeAt(index);
 
-    // TODO: Add range check
+    if (index < 0 || index >= impl->costumes.size())
+        return nullptr;
+
     return impl->costumes[index];
 }
 
@@ -285,7 +287,9 @@ std::shared_ptr<Sound> Target::soundAt(int index) const
     if (Target *source = dataSource())
         return source->soundAt(index);
 
-    // TODO: Add range check
+    if (index < 0 || index >= impl->sounds.size())
+        return nullptr;
+
     return impl->sounds[index];
 }
 

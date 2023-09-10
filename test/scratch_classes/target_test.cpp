@@ -190,7 +190,7 @@ TEST(TargetTest, Costumes)
     auto c3 = std::make_shared<Costume>("costume3", "", "svg");
 
     TargetMock target;
-    EXPECT_CALL(target, dataSource()).Times(15).WillRepeatedly(Return(nullptr));
+    EXPECT_CALL(target, dataSource()).Times(17).WillRepeatedly(Return(nullptr));
 
     ASSERT_EQ(target.addCostume(c1), 0);
     ASSERT_EQ(target.addCostume(c2), 1);
@@ -207,6 +207,8 @@ TEST(TargetTest, Costumes)
     ASSERT_EQ(target.costumeAt(0)->name(), c1->name());
     ASSERT_EQ(target.costumeAt(1)->name(), c2->name());
     ASSERT_EQ(target.costumeAt(2)->name(), c3->name());
+    ASSERT_EQ(target.costumeAt(3), nullptr);
+    ASSERT_EQ(target.costumeAt(-1), nullptr);
 
     ASSERT_EQ(target.findCostume("invalid"), -1);
     ASSERT_EQ(target.findCostume("costume1"), 0);
@@ -221,7 +223,7 @@ TEST(TargetTest, Costumes)
     ASSERT_TRUE(target.costumes().empty());
 
     TargetMock target2;
-    EXPECT_CALL(target2, dataSource()).Times(16).WillRepeatedly(Return(&source));
+    EXPECT_CALL(target2, dataSource()).Times(18).WillRepeatedly(Return(&source));
 
     ASSERT_EQ(target2.addCostume(c1), 0);
     ASSERT_EQ(target2.addCostume(c2), 1);
@@ -236,6 +238,8 @@ TEST(TargetTest, Costumes)
     ASSERT_EQ(target2.costumeAt(0)->name(), c1->name());
     ASSERT_EQ(target2.costumeAt(1)->name(), c2->name());
     ASSERT_EQ(target2.costumeAt(2)->name(), c3->name());
+    ASSERT_EQ(target2.costumeAt(3), nullptr);
+    ASSERT_EQ(target2.costumeAt(-1), nullptr);
 
     ASSERT_EQ(target2.findCostume("invalid"), -1);
     ASSERT_EQ(target2.findCostume("costume1"), 0);
@@ -260,6 +264,8 @@ TEST(TargetTest, Costumes)
     ASSERT_EQ(source.costumeAt(1)->name(), c2->name());
     ASSERT_EQ(source.costumeAt(2)->name(), c3->name());
     ASSERT_EQ(source.costumeAt(3)->name(), c4->name());
+    ASSERT_EQ(source.costumeAt(4), nullptr);
+    ASSERT_EQ(source.costumeAt(-1), nullptr);
 
     ASSERT_EQ(source.findCostume("invalid"), -1);
     ASSERT_EQ(source.findCostume("costume1"), 0);
@@ -275,7 +281,7 @@ TEST(TargetTest, Sounds)
     auto s3 = std::make_shared<Sound>("sound3", "", "mp3");
 
     TargetMock target;
-    EXPECT_CALL(target, dataSource()).Times(15).WillRepeatedly(Return(nullptr));
+    EXPECT_CALL(target, dataSource()).Times(17).WillRepeatedly(Return(nullptr));
 
     ASSERT_EQ(target.addSound(s1), 0);
     ASSERT_EQ(target.addSound(s2), 1);
@@ -292,6 +298,8 @@ TEST(TargetTest, Sounds)
     ASSERT_EQ(target.soundAt(0)->name(), s1->name());
     ASSERT_EQ(target.soundAt(1)->name(), s2->name());
     ASSERT_EQ(target.soundAt(2)->name(), s3->name());
+    ASSERT_EQ(target.soundAt(3), nullptr);
+    ASSERT_EQ(target.soundAt(-1), nullptr);
 
     ASSERT_EQ(target.findSound("invalid"), -1);
     ASSERT_EQ(target.findSound("sound1"), 0);
@@ -306,7 +314,7 @@ TEST(TargetTest, Sounds)
     ASSERT_TRUE(target.sounds().empty());
 
     TargetMock target2;
-    EXPECT_CALL(target2, dataSource()).Times(16).WillRepeatedly(Return(&source));
+    EXPECT_CALL(target2, dataSource()).Times(18).WillRepeatedly(Return(&source));
 
     ASSERT_EQ(target2.addSound(s1), 0);
     ASSERT_EQ(target2.addSound(s2), 1);
@@ -321,6 +329,8 @@ TEST(TargetTest, Sounds)
     ASSERT_EQ(target2.soundAt(0)->name(), s1->name());
     ASSERT_EQ(target2.soundAt(1)->name(), s2->name());
     ASSERT_EQ(target2.soundAt(2)->name(), s3->name());
+    ASSERT_EQ(target2.soundAt(3), nullptr);
+    ASSERT_EQ(target2.soundAt(-1), nullptr);
 
     ASSERT_EQ(target2.findSound("invalid"), -1);
     ASSERT_EQ(target2.findSound("sound1"), 0);
@@ -345,6 +355,8 @@ TEST(TargetTest, Sounds)
     ASSERT_EQ(source.soundAt(1)->name(), s2->name());
     ASSERT_EQ(source.soundAt(2)->name(), s3->name());
     ASSERT_EQ(source.soundAt(3)->name(), s4->name());
+    ASSERT_EQ(source.soundAt(4), nullptr);
+    ASSERT_EQ(source.soundAt(-1), nullptr);
 
     ASSERT_EQ(source.findSound("invalid"), -1);
     ASSERT_EQ(source.findSound("sound1"), 0);
