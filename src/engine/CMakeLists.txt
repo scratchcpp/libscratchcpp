@@ -11,6 +11,9 @@ target_sources(scratchcpp
     script_p.h
     internal/engine.cpp
     internal/engine.h
+    internal/clock.cpp
+    internal/clock.h
+    internal/iclock.h
     internal/blocksectioncontainer.cpp
     internal/blocksectioncontainer.h
     internal/global.h
