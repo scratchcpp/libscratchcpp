@@ -22,7 +22,7 @@ Timer::Timer(IClock *clock) :
 
 double Timer::value() const
 {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(m_clock->currentTime() - m_startTime).count() / 1000.0;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(m_clock->currentSteadyTime() - m_startTime).count() / 1000.0;
 }
 
 void Timer::reset()
@@ -33,5 +33,5 @@ void Timer::reset()
 // Required to avoid calling the virtual method from the constructors
 void Timer::resetTimer()
 {
-    m_startTime = m_clock->currentTime();
+    m_startTime = m_clock->currentSteadyTime();
 }
