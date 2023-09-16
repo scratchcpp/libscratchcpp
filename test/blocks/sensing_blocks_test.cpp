@@ -1,12 +1,15 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/block.h>
 #include <enginemock.h>
+#include <timermock.h>
 
 #include "../common.h"
 #include "blocks/sensingblocks.h"
 #include "engine/internal/engine.h"
 
 using namespace libscratchcpp;
+
+using ::testing::Return;
 
 class SensingBlocksTest : public testing::Test
 {
@@ -20,6 +23,7 @@ class SensingBlocksTest : public testing::Test
         std::unique_ptr<IBlockSection> m_section;
         EngineMock m_engineMock;
         Engine m_engine;
+        TimerMock m_timerMock;
 };
 
 TEST_F(SensingBlocksTest, Name)
@@ -34,5 +38,42 @@ TEST_F(SensingBlocksTest, CategoryVisible)
 
 TEST_F(SensingBlocksTest, RegisterBlocks)
 {
+    // Blocks
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_timer", &SensingBlocks::compileTimer)).Times(1);
+
     m_section->registerBlocks(&m_engineMock);
+}
+
+TEST_F(SensingBlocksTest, Timer)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "sensing_timer");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::timer)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    SensingBlocks::compileTimer(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+}
+
+TEST_F(SensingBlocksTest, TimerImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::timer };
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+
+    EXPECT_CALL(m_engineMock, timer()).WillOnce(Return(&m_timerMock));
+    EXPECT_CALL(m_timerMock, value()).WillOnce(Return(2.375));
+
+    vm.setBytecode(bytecode);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 2.375);
 }
