@@ -40,6 +40,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
 {
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_timer", &SensingBlocks::compileTimer)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_resettimer", &SensingBlocks::compileResetTimer)).Times(1);
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -76,4 +77,37 @@ TEST_F(SensingBlocksTest, TimerImpl)
 
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 2.375);
+}
+
+TEST_F(SensingBlocksTest, ResetTimer)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "sensing_resettimer");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::resetTimer)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    SensingBlocks::compileResetTimer(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+}
+
+TEST_F(SensingBlocksTest, ResetTimerImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::resetTimer };
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+
+    EXPECT_CALL(m_engineMock, timer()).WillOnce(Return(&m_timerMock));
+    EXPECT_CALL(m_timerMock, reset()).Times(1);
+
+    vm.setBytecode(bytecode);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
 }
