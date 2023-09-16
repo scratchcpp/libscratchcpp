@@ -19,6 +19,7 @@ class Sprite;
 class Variable;
 class List;
 class Script;
+class ITimer;
 
 /*!
  * \brief The IEngine interface provides an API for running Scratch projects.
@@ -105,6 +106,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
 
         /*! Call this from a block implementation to ignore calls to skipFrame() until the current frame ends. */
         virtual void lockFrame() = 0;
+
+        /*! Returns the timer of the project. */
+        virtual ITimer *timer() const = 0;
 
         /*!
          * Registers the given block section.

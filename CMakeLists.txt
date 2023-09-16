@@ -46,6 +46,7 @@ target_sources(scratchcpp
     include/scratchcpp/target.h
     include/scratchcpp/stage.h
     include/scratchcpp/sprite.h
+    include/scratchcpp/itimer.h
 )
 
 add_library(zip SHARED

@@ -4,6 +4,7 @@
 
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/target.h>
+#include <scratchcpp/itimer.h>
 #include <unordered_map>
 #include <memory>
 #include <chrono>
@@ -42,6 +43,9 @@ class Engine : public IEngine
 
         void skipFrame() override;
         void lockFrame() override;
+
+        ITimer *timer() const override;
+        void setTimer(ITimer *timer);
 
         void registerSection(std::shared_ptr<IBlockSection> section) override;
         std::vector<std::shared_ptr<IBlockSection>> registeredSections() const;
@@ -100,6 +104,9 @@ class Engine : public IEngine
         std::vector<BlockFunc> m_functions;
         std::unordered_map<Variable *, Target *> m_variableOwners;
         std::unordered_map<List *, Target *> m_listOwners;
+
+        std::unique_ptr<ITimer> m_defaultTimer;
+        ITimer *m_timer = nullptr;
 
         bool m_breakFrame = false;
         bool m_skipFrame = false;
