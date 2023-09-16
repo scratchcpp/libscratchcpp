@@ -3,6 +3,7 @@
 #include <scratchcpp/project.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <timermock.h>
 
 #include "../common.h"
 #include "testsection.h"
@@ -40,6 +41,26 @@ TEST(EngineTest, BreakFrame)
 
     engine.breakFrame();
     ASSERT_TRUE(engine.breakingCurrentFrame());
+}
+
+TEST(EngineTest, Timer)
+{
+    Engine engine;
+    ASSERT_TRUE(engine.timer());
+    engine.timer()->reset(); // shouldn't crash
+
+    TimerMock timer;
+    engine.setTimer(&timer);
+    ASSERT_EQ(engine.timer(), &timer);
+
+    EXPECT_CALL(timer, reset()).Times(1);
+    engine.start();
+
+    EXPECT_CALL(timer, reset()).Times(0);
+    engine.stop();
+
+    EXPECT_CALL(timer, reset()).Times(1);
+    engine.run();
 }
 
 TEST(EngineTest, Sections)

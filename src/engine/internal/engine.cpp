@@ -18,11 +18,14 @@
 
 #include "engine.h"
 #include "blocksectioncontainer.h"
+#include "timer.h"
 #include "../../blocks/standardblocks.h"
 
 using namespace libscratchcpp;
 
-Engine::Engine()
+Engine::Engine() :
+    m_defaultTimer(std::make_unique<Timer>()),
+    m_timer(m_defaultTimer.get())
 {
     srand(time(NULL));
 }
@@ -165,6 +168,8 @@ void Engine::frame()
 
 void Engine::start()
 {
+    m_timer->reset();
+
     for (auto target : m_targets) {
         auto gfBlocks = target->greenFlagBlocks();
         for (auto block : gfBlocks)
@@ -375,6 +380,16 @@ void Engine::lockFrame()
 {
     m_skipFrame = false;
     m_lockFrame = true;
+}
+
+ITimer *Engine::timer() const
+{
+    return m_timer;
+}
+
+void Engine::setTimer(ITimer *timer)
+{
+    m_timer = timer;
 }
 
 void Engine::registerSection(std::shared_ptr<IBlockSection> section)
