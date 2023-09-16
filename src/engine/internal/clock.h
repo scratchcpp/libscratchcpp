@@ -16,7 +16,8 @@ class Clock : public IClock
 
         static std::shared_ptr<Clock> instance();
 
-        std::chrono::steady_clock::time_point currentTime() const override;
+        std::chrono::steady_clock::time_point currentSteadyTime() const override;
+        std::chrono::system_clock::time_point currentSystemTime() const override;
 
     private:
         static std::shared_ptr<Clock> m_instance;
