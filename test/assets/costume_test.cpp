@@ -10,7 +10,7 @@ TEST(CostumeTest, Constructors)
     ASSERT_EQ(costume.id(), "a");
     ASSERT_EQ(costume.name(), "costume1");
     ASSERT_EQ(costume.dataFormat(), "svg");
-    ASSERT_EQ(costume.md5ext(), "a.svg");
+    ASSERT_EQ(costume.fileName(), "a.svg");
     ASSERT_EQ(costume.bitmapResolution(), 1);
     ASSERT_EQ(costume.rotationCenterX(), 0);
     ASSERT_EQ(costume.rotationCenterY(), 0);

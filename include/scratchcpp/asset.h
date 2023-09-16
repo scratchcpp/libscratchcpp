@@ -22,7 +22,7 @@ class LIBSCRATCHCPP_EXPORT Asset : public Entity
 
         const std::string &name() const;
 
-        const std::string &md5ext() const;
+        const std::string &fileName() const;
 
         const std::string &dataFormat() const;
 

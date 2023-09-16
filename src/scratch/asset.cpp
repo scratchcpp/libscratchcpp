@@ -28,7 +28,7 @@ const std::string &Asset::name() const
 }
 
 /*! Returns the name of the asset file. */
-const std::string &Asset::md5ext() const
+const std::string &Asset::fileName() const
 {
     return impl->fileName;
 }
