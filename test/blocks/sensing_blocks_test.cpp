@@ -2,6 +2,7 @@
 #include <scratchcpp/block.h>
 #include <enginemock.h>
 #include <timermock.h>
+#include <clockmock.h>
 
 #include "../common.h"
 #include "blocks/sensingblocks.h"
@@ -24,6 +25,7 @@ class SensingBlocksTest : public testing::Test
         EngineMock m_engineMock;
         Engine m_engine;
         TimerMock m_timerMock;
+        ClockMock m_clockMock;
 };
 
 TEST_F(SensingBlocksTest, Name)
@@ -41,6 +43,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_timer", &SensingBlocks::compileTimer)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_resettimer", &SensingBlocks::compileResetTimer)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_dayssince2000", &SensingBlocks::compileDaysSince2000)).Times(1);
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -110,4 +113,40 @@ TEST_F(SensingBlocksTest, ResetTimerImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
+}
+
+TEST_F(SensingBlocksTest, DaysSince2000)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "sensing_dayssince2000");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::daysSince2000)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    SensingBlocks::compileDaysSince2000(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+}
+
+TEST_F(SensingBlocksTest, DaysSince2000Impl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::daysSince2000 };
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+
+    std::chrono::system_clock::time_point time(std::chrono::milliseconds(1011243120562)); // Jan 17 2002 04:52:00
+    EXPECT_CALL(m_clockMock, currentSystemTime()).WillOnce(Return(time));
+
+    SensingBlocks::clock = &m_clockMock;
+    vm.setBytecode(bytecode);
+    vm.run();
+    SensingBlocks::clock = Clock::instance().get();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 747.20278428240817);
 }

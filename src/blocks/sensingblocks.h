@@ -3,6 +3,7 @@
 #pragma once
 
 #include <scratchcpp/iblocksection.h>
+#include "../engine/internal/clock.h"
 
 namespace libscratchcpp
 {
@@ -17,9 +18,13 @@ class SensingBlocks : public IBlockSection
 
         static void compileTimer(Compiler *compiler);
         static void compileResetTimer(Compiler *compiler);
+        static void compileDaysSince2000(Compiler *compiler);
 
         static unsigned int timer(VirtualMachine *vm);
         static unsigned int resetTimer(VirtualMachine *vm);
+        static unsigned int daysSince2000(VirtualMachine *vm);
+
+        static IClock *clock;
 };
 
 } // namespace libscratchcpp
