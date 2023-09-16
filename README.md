@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
 - [x] Variables (monitors are not implemented yet)
 - [x] Lists (monitors are not implemented yet)
 - [x] Clones
-- [ ] Timer
+- [x] Timer
 - [ ] API for monitors
 - [ ] Project metadata
 - [ ] Turbo mode

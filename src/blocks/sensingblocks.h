@@ -14,6 +14,12 @@ class SensingBlocks : public IBlockSection
         std::string name() const override;
 
         void registerBlocks(IEngine *engine) override;
+
+        static void compileTimer(Compiler *compiler);
+        static void compileResetTimer(Compiler *compiler);
+
+        static unsigned int timer(VirtualMachine *vm);
+        static unsigned int resetTimer(VirtualMachine *vm);
 };
 
 } // namespace libscratchcpp
