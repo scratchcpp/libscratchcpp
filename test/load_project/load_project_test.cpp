@@ -52,7 +52,7 @@ TEST(LoadProjectTest, EmptyProject)
         auto backdrop = stage->costumeAt(0);
         ASSERT_EQ(backdrop->name(), "backdrop1");
         ASSERT_FALSE(backdrop->id().empty());
-        ASSERT_EQ(backdrop->md5ext(), backdrop->id() + ".svg");
+        ASSERT_EQ(backdrop->fileName(), backdrop->id() + ".svg");
         ASSERT_EQ(backdrop->dataFormat(), "svg");
 
         i++;
@@ -111,7 +111,7 @@ TEST(LoadProjectTest, LoadTestProject)
         auto sound = sprite1->soundAt(0);
         ASSERT_EQ(sound->name(), "Meow");
         ASSERT_FALSE(sound->id().empty());
-        ASSERT_EQ(sound->md5ext(), sound->id() + ".wav");
+        ASSERT_EQ(sound->fileName(), sound->id() + ".wav");
         ASSERT_EQ(sound->dataFormat(), "wav");
 
         // Sprite1: variables
@@ -240,7 +240,7 @@ TEST(LoadProjectTest, LoadTestProject)
         sound = sprite2->soundAt(0);
         ASSERT_EQ(sound->name(), "Pop");
         ASSERT_FALSE(sound->id().empty());
-        ASSERT_EQ(sound->md5ext(), sound->id() + ".wav");
+        ASSERT_EQ(sound->fileName(), sound->id() + ".wav");
         ASSERT_EQ(sound->dataFormat(), "wav");
 
         // Balloon1: variables

@@ -10,7 +10,7 @@ TEST(SoundTest, Constructors)
     ASSERT_EQ(sound.id(), "a");
     ASSERT_EQ(sound.name(), "sound1");
     ASSERT_EQ(sound.dataFormat(), "svg");
-    ASSERT_EQ(sound.md5ext(), "a.svg");
+    ASSERT_EQ(sound.fileName(), "a.svg");
     ASSERT_EQ(sound.rate(), 0);
     ASSERT_EQ(sound.sampleCount(), 0);
 }
