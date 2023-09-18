@@ -108,6 +108,7 @@ class Engine : public IEngine
         std::unique_ptr<ITimer> m_defaultTimer;
         ITimer *m_timer = nullptr;
 
+        bool m_running = false;
         bool m_breakFrame = false;
         bool m_skipFrame = false;
         bool m_lockFrame = false;
