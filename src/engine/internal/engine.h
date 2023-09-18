@@ -36,6 +36,9 @@ class Engine : public IEngine
         void initClone(libscratchcpp::Sprite *clone) override;
         void run() override;
 
+        double fps() const override;
+        void setFps(double fps) override;
+
         bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) override;
 
         void breakFrame() override;
@@ -91,6 +94,8 @@ class Engine : public IEngine
         std::shared_ptr<Entity> getEntity(const std::string &id);
         std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
 
+        void updateFrameDuration();
+
         std::unordered_map<std::shared_ptr<IBlockSection>, std::unique_ptr<BlockSectionContainer>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
@@ -107,6 +112,8 @@ class Engine : public IEngine
 
         std::unique_ptr<ITimer> m_defaultTimer;
         ITimer *m_timer = nullptr;
+        double m_fps = 30;                         // default FPS
+        std::chrono::milliseconds m_frameDuration; // will be computed in run()
 
         bool m_breakFrame = false;
         bool m_skipFrame = false;

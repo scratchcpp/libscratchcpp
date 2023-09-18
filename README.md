@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
 - [ ] Project metadata
 - [ ] Turbo mode
 - [ ] Multithreading (experimental)
-- [ ] Custom FPS in the default event loop (`libscratchcpp::Engine::run()`)
+- [x] Custom FPS in the default event loop (`libscratchcpp::Engine::run()`)
 - [ ] Scratch 2.0 to 3.0 converter (help needed)
 - [ ] Scratch 1.4 and below to 3.0 converter (help needed)
 - [ ] API for comments
