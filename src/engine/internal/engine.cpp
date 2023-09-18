@@ -317,7 +317,7 @@ void Engine::initClone(Sprite *clone)
 
 void Engine::run()
 {
-    auto frameDuration = std::chrono::milliseconds(33);
+    updateFrameDuration();
     start();
 
     while (true) {
@@ -332,7 +332,7 @@ void Engine::run()
         // Sleep until the time for the next frame
         auto currentTime = std::chrono::steady_clock::now();
         auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastFrameTime);
-        auto sleepTime = frameDuration - elapsedTime;
+        auto sleepTime = m_frameDuration - elapsedTime;
         bool timeOut = sleepTime <= std::chrono::milliseconds::zero();
 
         if (!timeOut && !m_skipFrame)
@@ -344,6 +344,17 @@ void Engine::run()
 
         lastFrameTime = currentTime;
     }
+}
+
+double Engine::fps() const
+{
+    return m_fps;
+}
+
+void Engine::setFps(double fps)
+{
+    m_fps = fps;
+    updateFrameDuration();
 }
 
 bool Engine::broadcastRunning(unsigned int index, VirtualMachine *sourceScript)
@@ -756,4 +767,9 @@ BlockSectionContainer *Engine::blockSectionContainer(IBlockSection *section) con
     }
 
     return nullptr;
+}
+
+void Engine::updateFrameDuration()
+{
+    m_frameDuration = std::chrono::milliseconds(static_cast<long>(1000 / m_fps));
 }

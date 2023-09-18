@@ -85,6 +85,12 @@ class LIBSCRATCHCPP_EXPORT IEngine
          */
         virtual void run() = 0;
 
+        /*! Returns the framerate of the project. */
+        virtual double fps() const = 0;
+
+        /*! Sets the framerate of the project. */
+        virtual void setFps(double fps) = 0;
+
         /*! Returns true if there are any running script of the broadcast with the given index. */
         virtual bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) = 0;
 

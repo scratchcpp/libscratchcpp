@@ -34,6 +34,15 @@ TEST(EngineTest, Clear)
     ASSERT_TRUE(engine.registeredSections().empty());
 }
 
+TEST(EngineTest, Fps)
+{
+    Engine engine;
+    ASSERT_EQ(engine.fps(), 30);
+
+    engine.setFps(60.25);
+    ASSERT_EQ(engine.fps(), 60.25);
+}
+
 TEST(EngineTest, BreakFrame)
 {
     Engine engine;
