@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <unordered_map>
 #include <scratchcpp/blockprototype.h>
 #include <scratchcpp/inputvalue.h>
 
