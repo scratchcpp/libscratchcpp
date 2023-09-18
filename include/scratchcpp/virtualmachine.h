@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <vector>
 #include <scratchcpp/value.h>
 
 #include "spimpl.h"
