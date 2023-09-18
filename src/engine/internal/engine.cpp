@@ -132,7 +132,7 @@ void Engine::frame()
 
         do {
             script->run();
-            if (script->atEnd()) {
+            if (script->atEnd() && m_running) {
                 for (auto &[key, value] : m_runningBroadcastMap) {
                     size_t index = 0;
 
@@ -152,6 +152,8 @@ void Engine::frame()
         } while (!script->atEnd() && !m_breakFrame);
     }
 
+    assert(m_running || m_scriptsToRemove.empty());
+
     for (auto script : m_scriptsToRemove) {
         size_t index = -1;
         for (size_t i = 0; i < m_runningScripts.size(); i++) {
@@ -169,6 +171,7 @@ void Engine::frame()
 void Engine::start()
 {
     m_timer->reset();
+    m_running = true;
 
     for (auto target : m_targets) {
         auto gfBlocks = target->greenFlagBlocks();
@@ -180,6 +183,8 @@ void Engine::start()
 void Engine::stop()
 {
     m_runningScripts.clear();
+    m_scriptsToRemove.clear();
+    m_running = false;
 }
 
 void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target)
@@ -344,6 +349,8 @@ void Engine::run()
 
         lastFrameTime = currentTime;
     }
+
+    stop();
 }
 
 double Engine::fps() const

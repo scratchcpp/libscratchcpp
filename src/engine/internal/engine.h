@@ -115,6 +115,7 @@ class Engine : public IEngine
         double m_fps = 30;                         // default FPS
         std::chrono::milliseconds m_frameDuration; // will be computed in run()
 
+        bool m_running = false;
         bool m_breakFrame = false;
         bool m_skipFrame = false;
         bool m_lockFrame = false;
