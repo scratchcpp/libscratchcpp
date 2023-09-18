@@ -398,3 +398,11 @@ TEST(EngineTest, Clones)
             ASSERT_EQ((*list)[i].toString(), "1 2"); // TODO: Change this to "12" after #188 is fixed
     }
 }
+
+TEST(EngineTest, NoCrashAfterStop)
+{
+    // Regtest for #186
+    Project p("regtest_projects/186_crash_after_stop.sb3");
+    ASSERT_TRUE(p.load());
+    p.run();
+}
