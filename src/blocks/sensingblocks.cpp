@@ -10,7 +10,7 @@
 
 using namespace libscratchcpp;
 
-IClock *SensingBlocks::clock = Clock::instance().get();
+IClock *SensingBlocks::clock = nullptr;
 
 std::string SensingBlocks::name() const
 {
@@ -54,6 +54,9 @@ unsigned int SensingBlocks::resetTimer(VirtualMachine *vm)
 
 unsigned int SensingBlocks::daysSince2000(VirtualMachine *vm)
 {
+    if (!clock)
+        clock = Clock::instance().get();
+
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(clock->currentSystemTime().time_since_epoch()).count();
     vm->addReturnValue(ms / 86400000.0 - 10957);
 
