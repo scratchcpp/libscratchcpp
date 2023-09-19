@@ -653,12 +653,14 @@ do_str_concat:
 
 do_str_at : {
     size_t index = READ_REG(1, 2)->toLong() - 1;
-    std::u16string str = READ_REG(0, 2)->toUtf16();
-    if (index < 0 || index >= str.size())
-        REPLACE_RET_VALUE("", 2);
-    else
-        REPLACE_RET_VALUE(utf8::utf16to8(std::u16string({ str[index] })), 2);
-    FREE_REGS(1);
+    {
+        std::u16string str = READ_REG(0, 2)->toUtf16();
+        if (index < 0 || index >= str.size())
+            REPLACE_RET_VALUE("", 2);
+        else
+            REPLACE_RET_VALUE(utf8::utf16to8(std::u16string({ str[index] })), 2);
+        FREE_REGS(1);
+    }
     DISPATCH();
 }
 
