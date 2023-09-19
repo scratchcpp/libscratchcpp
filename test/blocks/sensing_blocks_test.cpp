@@ -138,15 +138,22 @@ TEST_F(SensingBlocksTest, DaysSince2000Impl)
 
     VirtualMachine vm(nullptr, &m_engineMock, nullptr);
     vm.setFunctions(functions);
+    vm.setBytecode(bytecode);
 
     std::chrono::system_clock::time_point time(std::chrono::milliseconds(1011243120562)); // Jan 17 2002 04:52:00
     EXPECT_CALL(m_clockMock, currentSystemTime()).WillOnce(Return(time));
 
-    SensingBlocks::clock = &m_clockMock;
-    vm.setBytecode(bytecode);
-    vm.run();
-    SensingBlocks::clock = Clock::instance().get();
+    vm.run(); // Test with the default clock - shouldn't crash (see #210)
 
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(std::round(vm.getInput(0, 1)->toDouble() * 100) / 100, std::round((ms / 86400000.0 - 10957) * 100) / 100);
+
+    SensingBlocks::clock = &m_clockMock;
+    vm.reset();
+    vm.run();
+    SensingBlocks::clock = nullptr;
+
+    ASSERT_EQ(vm.registerCount(), 2); // TODO: Change this to 1 after task #215 is completed
     ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 747.20278428240817);
 }
