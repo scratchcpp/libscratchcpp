@@ -12,16 +12,40 @@ namespace libscratchcpp
 class SensingBlocks : public IBlockSection
 {
     public:
+        enum Fields
+        {
+            CURRENTMENU
+        };
+
+        enum FieldValues
+        {
+            YEAR,
+            MONTH,
+            DATE,
+            DAYOFWEEK,
+            HOUR,
+            MINUTE,
+            SECOND
+        };
+
         std::string name() const override;
 
         void registerBlocks(IEngine *engine) override;
 
         static void compileTimer(Compiler *compiler);
         static void compileResetTimer(Compiler *compiler);
+        static void compileCurrent(Compiler *compiler);
         static void compileDaysSince2000(Compiler *compiler);
 
         static unsigned int timer(VirtualMachine *vm);
         static unsigned int resetTimer(VirtualMachine *vm);
+        static unsigned int currentYear(VirtualMachine *vm);
+        static unsigned int currentMonth(VirtualMachine *vm);
+        static unsigned int currentDate(VirtualMachine *vm);
+        static unsigned int currentDayOfWeek(VirtualMachine *vm);
+        static unsigned int currentHour(VirtualMachine *vm);
+        static unsigned int currentMinute(VirtualMachine *vm);
+        static unsigned int currentSecond(VirtualMachine *vm);
         static unsigned int daysSince2000(VirtualMachine *vm);
 
         static IClock *clock;

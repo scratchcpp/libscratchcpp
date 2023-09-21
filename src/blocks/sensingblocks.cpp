@@ -4,6 +4,7 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/itimer.h>
+#include <scratchcpp/field.h>
 #include "sensingblocks.h"
 
 #include "../engine/internal/clock.h"
@@ -22,7 +23,20 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     // Blocks
     engine->addCompileFunction(this, "sensing_timer", &compileTimer);
     engine->addCompileFunction(this, "sensing_resettimer", &compileResetTimer);
+    engine->addCompileFunction(this, "sensing_current", &compileCurrent);
     engine->addCompileFunction(this, "sensing_dayssince2000", &compileDaysSince2000);
+
+    // Fields
+    engine->addField(this, "CURRENTMENU", CURRENTMENU);
+
+    // Field values
+    engine->addFieldValue(this, "YEAR", YEAR);
+    engine->addFieldValue(this, "MONTH", MONTH);
+    engine->addFieldValue(this, "DATE", DATE);
+    engine->addFieldValue(this, "DAYOFWEEK", DAYOFWEEK);
+    engine->addFieldValue(this, "HOUR", HOUR);
+    engine->addFieldValue(this, "MINUTE", MINUTE);
+    engine->addFieldValue(this, "SECOND", SECOND);
 }
 
 void SensingBlocks::compileTimer(Compiler *compiler)
@@ -33,6 +47,44 @@ void SensingBlocks::compileTimer(Compiler *compiler)
 void SensingBlocks::compileResetTimer(Compiler *compiler)
 {
     compiler->addFunctionCall(&resetTimer);
+}
+
+void SensingBlocks::compileCurrent(Compiler *compiler)
+{
+    int id = compiler->field(CURRENTMENU)->specialValueId();
+
+    switch (id) {
+        case YEAR:
+            compiler->addFunctionCall(&currentYear);
+            break;
+
+        case MONTH:
+            compiler->addFunctionCall(&currentMonth);
+            break;
+
+        case DATE:
+            compiler->addFunctionCall(&currentDate);
+            break;
+
+        case DAYOFWEEK:
+            compiler->addFunctionCall(&currentDayOfWeek);
+            break;
+
+        case HOUR:
+            compiler->addFunctionCall(&currentHour);
+            break;
+
+        case MINUTE:
+            compiler->addFunctionCall(&currentMinute);
+            break;
+
+        case SECOND:
+            compiler->addFunctionCall(&currentSecond);
+            break;
+
+        default:
+            break;
+    }
 }
 
 void SensingBlocks::compileDaysSince2000(Compiler *compiler)
@@ -49,6 +101,69 @@ unsigned int SensingBlocks::timer(VirtualMachine *vm)
 unsigned int SensingBlocks::resetTimer(VirtualMachine *vm)
 {
     vm->engine()->timer()->reset();
+    return 0;
+}
+
+unsigned int SensingBlocks::currentYear(VirtualMachine *vm)
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    vm->addReturnValue(ltm->tm_year + 1900);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::currentMonth(VirtualMachine *vm)
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    vm->addReturnValue(ltm->tm_mon + 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::currentDate(VirtualMachine *vm)
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    vm->addReturnValue(ltm->tm_mday);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::currentDayOfWeek(VirtualMachine *vm)
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    vm->addReturnValue(ltm->tm_wday + 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::currentHour(VirtualMachine *vm)
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    vm->addReturnValue(ltm->tm_hour);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::currentMinute(VirtualMachine *vm)
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    vm->addReturnValue(ltm->tm_min);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::currentSecond(VirtualMachine *vm)
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    vm->addReturnValue(ltm->tm_sec);
+
     return 0;
 }
 
