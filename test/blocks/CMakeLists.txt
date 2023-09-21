@@ -109,3 +109,19 @@ target_link_libraries(
 )
 
 gtest_discover_tests(sensing_blocks_test)
+
+# motion_blocks_test
+add_executable(
+  motion_blocks_test
+  motion_blocks_test.cpp
+)
+
+target_link_libraries(
+  motion_blocks_test
+  GTest::gtest_main
+  GTest::gmock_main
+  scratchcpp
+  scratchcpp_mocks
+)
+
+gtest_discover_tests(motion_blocks_test)
