@@ -52,9 +52,11 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
 {
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_movesteps", &MotionBlocks::compileMoveSteps));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_turnright", &MotionBlocks::compileTurnRight));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "STEPS", MotionBlocks::STEPS));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DEGREES", MotionBlocks::DEGREES));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -99,4 +101,43 @@ TEST_F(MotionBlocksTest, MoveStepsImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(std::round(sprite.x() * 100) / 100, -21.36);
     ASSERT_EQ(std::round(sprite.y() * 100) / 100, 14.22);
+}
+
+TEST_F(MotionBlocksTest, TurnRight)
+{
+    Compiler compiler(&m_engineMock);
+
+    // turn right (12.05) degrees
+    auto block = std::make_shared<Block>("a", "motion_turnright");
+    addValueInput(block, "DEGREES", MotionBlocks::DEGREES, 12.05);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::turnRight)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compileTurnRight(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), 12.05);
+}
+
+TEST_F(MotionBlocksTest, TurnRightImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::turnRight };
+    static Value constValues[] = { 12.05 };
+
+    Sprite sprite;
+    sprite.setDirection(124.37);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(std::round(sprite.direction() * 100) / 100, 136.42);
 }

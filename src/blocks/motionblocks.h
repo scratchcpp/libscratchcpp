@@ -13,7 +13,8 @@ class MotionBlocks : public IBlockSection
     public:
         enum Inputs
         {
-            STEPS
+            STEPS,
+            DEGREES
         };
 
         std::string name() const override;
@@ -21,8 +22,10 @@ class MotionBlocks : public IBlockSection
         void registerBlocks(IEngine *engine) override;
 
         static void compileMoveSteps(Compiler *compiler);
+        static void compileTurnRight(Compiler *compiler);
 
         static unsigned int moveSteps(VirtualMachine *vm);
+        static unsigned int turnRight(VirtualMachine *vm);
 };
 
 } // namespace libscratchcpp
