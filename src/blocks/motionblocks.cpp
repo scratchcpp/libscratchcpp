@@ -20,6 +20,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     // Blocks
     engine->addCompileFunction(this, "motion_movesteps", &compileMoveSteps);
     engine->addCompileFunction(this, "motion_turnright", &compileTurnRight);
+    engine->addCompileFunction(this, "motion_turnleft", &compileTurnLeft);
 
     // Inputs
     engine->addInput(this, "STEPS", STEPS);
@@ -36,6 +37,12 @@ void MotionBlocks::compileTurnRight(Compiler *compiler)
 {
     compiler->addInput(DEGREES);
     compiler->addFunctionCall(&turnRight);
+}
+
+void MotionBlocks::compileTurnLeft(Compiler *compiler)
+{
+    compiler->addInput(DEGREES);
+    compiler->addFunctionCall(&turnLeft);
 }
 
 unsigned int MotionBlocks::moveSteps(VirtualMachine *vm)
@@ -58,6 +65,16 @@ unsigned int MotionBlocks::turnRight(VirtualMachine *vm)
 
     if (sprite)
         sprite->setDirection(sprite->direction() + vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int MotionBlocks::turnLeft(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setDirection(sprite->direction() - vm->getInput(0, 1)->toDouble());
 
     return 1;
 }

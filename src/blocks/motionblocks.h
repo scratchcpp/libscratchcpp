@@ -23,9 +23,11 @@ class MotionBlocks : public IBlockSection
 
         static void compileMoveSteps(Compiler *compiler);
         static void compileTurnRight(Compiler *compiler);
+        static void compileTurnLeft(Compiler *compiler);
 
         static unsigned int moveSteps(VirtualMachine *vm);
         static unsigned int turnRight(VirtualMachine *vm);
+        static unsigned int turnLeft(VirtualMachine *vm);
 };
 
 } // namespace libscratchcpp
