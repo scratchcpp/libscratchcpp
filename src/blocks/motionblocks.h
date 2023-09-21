@@ -11,9 +11,18 @@ namespace libscratchcpp
 class MotionBlocks : public IBlockSection
 {
     public:
+        enum Inputs
+        {
+            STEPS
+        };
+
         std::string name() const override;
 
         void registerBlocks(IEngine *engine) override;
+
+        static void compileMoveSteps(Compiler *compiler);
+
+        static unsigned int moveSteps(VirtualMachine *vm);
 };
 
 } // namespace libscratchcpp
