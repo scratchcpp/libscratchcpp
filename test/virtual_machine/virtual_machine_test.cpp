@@ -2,12 +2,17 @@
 #include <scratchcpp/list.h>
 #include <scratchcpp/script.h>
 #include <enginemock.h>
+#include <randomgeneratormock.h>
 
+#include "engine/virtualmachine_p.h"
 #include "engine/internal/engine.h"
+#include "engine/internal/randomgenerator.h"
 #include "../common.h"
 
 using namespace libscratchcpp;
 using namespace vm;
+
+using ::testing::Return;
 
 TEST(VirtualMachineTest, Constructors)
 {
@@ -867,11 +872,19 @@ TEST(VirtualMachineTest, OP_LIST_DEL)
     list1.push_back("h");
     List *lists[] = { &list1 };
 
+    RandomGeneratorMock rng;
+    VirtualMachinePrivate::rng = &rng;
+
     VirtualMachine vm;
     vm.setBytecode(bytecode);
     vm.setConstValues(constValues);
     vm.setLists(lists);
+
+    EXPECT_CALL(rng, randint(1, 4)).WillOnce(Return(2));
     vm.run();
+
+    VirtualMachinePrivate::rng = RandomGenerator::instance().get();
+
     ASSERT_EQ(vm.registerCount(), 14);
     ASSERT_EQ(vm.getInput(0, 14)->toString(), "a b d e f g h");
     ASSERT_EQ(vm.getInput(1, 14)->toString(), "b d e f g h");
@@ -931,11 +944,19 @@ TEST(VirtualMachineTest, OP_LIST_INSERT)
     list1.push_back("h");
     List *lists[] = { &list1 };
 
+    RandomGeneratorMock rng;
+    VirtualMachinePrivate::rng = &rng;
+
     VirtualMachine vm;
     vm.setBytecode(bytecode);
     vm.setConstValues(constValues);
     vm.setLists(lists);
+
+    EXPECT_CALL(rng, randint(1, 12)).WillOnce(Return(5));
     vm.run();
+
+    VirtualMachinePrivate::rng = RandomGenerator::instance().get();
+
     ASSERT_EQ(vm.registerCount(), 13);
     ASSERT_EQ(vm.getInput(0, 13)->toString(), "a b new item c d e f g h");
     ASSERT_EQ(vm.getInput(1, 13)->toString(), "new item a b new item c d e f g h");
@@ -976,11 +997,19 @@ TEST(VirtualMachineTest, OP_LIST_REPLACE)
     list1.push_back("h");
     List *lists[] = { &list1 };
 
+    RandomGeneratorMock rng;
+    VirtualMachinePrivate::rng = &rng;
+
     VirtualMachine vm;
     vm.setBytecode(bytecode);
     vm.setConstValues(constValues);
     vm.setLists(lists);
+
+    EXPECT_CALL(rng, randint(1, 8)).WillOnce(Return(7));
     vm.run();
+
+    VirtualMachinePrivate::rng = RandomGenerator::instance().get();
+
     ASSERT_EQ(vm.registerCount(), 13);
     ASSERT_EQ(vm.getInput(0, 13)->toString(), "a b new item d e f g h");
     ASSERT_EQ(vm.getInput(1, 13)->toString(), "new item b new item d e f g h");
@@ -1016,11 +1045,19 @@ TEST(VirtualMachineTest, OP_LIST_GET_ITEM)
     list1.push_back("h");
     List *lists[] = { &list1 };
 
+    RandomGeneratorMock rng;
+    VirtualMachinePrivate::rng = &rng;
+
     VirtualMachine vm;
     vm.setBytecode(bytecode);
     vm.setConstValues(constValues);
     vm.setLists(lists);
+
+    EXPECT_CALL(rng, randint(1, 8)).WillOnce(Return(1));
     vm.run();
+
+    VirtualMachinePrivate::rng = RandomGenerator::instance().get();
+
     ASSERT_EQ(vm.registerCount(), 13);
     ASSERT_EQ(vm.getInput(0, 13)->toString(), "c");
     ASSERT_EQ(vm.getInput(1, 13)->toString(), "a");

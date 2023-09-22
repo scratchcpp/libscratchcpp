@@ -18,7 +18,6 @@ target_sources(scratchcpp
     internal/timer.h
     internal/blocksectioncontainer.cpp
     internal/blocksectioncontainer.h
-    internal/global.h
     internal/randomgenerator.h
     internal/randomgenerator.cpp
     internal/irandomgenerator.h

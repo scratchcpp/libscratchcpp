@@ -15,6 +15,7 @@ class IEngine;
 class Script;
 class Value;
 class List;
+class IRandomGenerator;
 
 struct VirtualMachinePrivate
 {
@@ -65,6 +66,8 @@ struct VirtualMachinePrivate
 
         Value **regs = nullptr;
         size_t regCount = 0;
+
+        static IRandomGenerator *rng;
 };
 
 } // namespace libscratchcpp
