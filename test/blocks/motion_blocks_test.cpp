@@ -54,10 +54,12 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_movesteps", &MotionBlocks::compileMoveSteps));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_turnright", &MotionBlocks::compileTurnRight));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_turnleft", &MotionBlocks::compileTurnLeft));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_pointindirection", &MotionBlocks::compilePointInDirection));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "STEPS", MotionBlocks::STEPS));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DEGREES", MotionBlocks::DEGREES));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DIRECTION", MotionBlocks::DIRECTION));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -180,4 +182,43 @@ TEST_F(MotionBlocksTest, TurnLeftImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(std::round(sprite.direction() * 100) / 100, 112.32);
+}
+
+TEST_F(MotionBlocksTest, PointInDirection)
+{
+    Compiler compiler(&m_engineMock);
+
+    // point in direction (-60.5)
+    auto block = std::make_shared<Block>("a", "motion_pointindirection");
+    addValueInput(block, "DIRECTION", MotionBlocks::DIRECTION, -60.5);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::pointInDirection)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compilePointInDirection(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), -60.5);
+}
+
+TEST_F(MotionBlocksTest, PointInDirectionImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::pointInDirection };
+    static Value constValues[] = { -60.5 };
+
+    Sprite sprite;
+    sprite.setDirection(50.02);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.direction(), -60.5);
 }
