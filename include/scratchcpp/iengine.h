@@ -91,6 +91,18 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the framerate of the project. */
         virtual void setFps(double fps) = 0;
 
+        /*! Returns the X coordinate of the mouse pointer. */
+        virtual double mouseX() const = 0;
+
+        /*! Sets the X coordinate of the mouse pointer. */
+        virtual void setMouseX(double x) = 0;
+
+        /*! Returns the Y coordinate of the mouse pointer. */
+        virtual double mouseY() const = 0;
+
+        /*! Sets the Y coordinate of the mouse pointer. */
+        virtual void setMouseY(double y) = 0;
+
         /*! Returns true if there are any running script of the broadcast with the given index. */
         virtual bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) = 0;
 

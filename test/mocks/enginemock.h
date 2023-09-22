@@ -27,6 +27,12 @@ class EngineMock : public IEngine
         MOCK_METHOD(double, fps, (), (const, override));
         MOCK_METHOD(void, setFps, (double fps), (override));
 
+        MOCK_METHOD(double, mouseX, (), (const, override));
+        MOCK_METHOD(void, setMouseX, (double x), (override));
+
+        MOCK_METHOD(double, mouseY, (), (const, override));
+        MOCK_METHOD(void, setMouseY, (double y), (override));
+
         MOCK_METHOD(bool, broadcastRunning, (unsigned int, VirtualMachine *), (override));
 
         MOCK_METHOD(void, breakFrame, (), (override));

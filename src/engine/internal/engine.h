@@ -39,6 +39,12 @@ class Engine : public IEngine
         double fps() const override;
         void setFps(double fps) override;
 
+        double mouseX() const override;
+        void setMouseX(double x) override;
+
+        double mouseY() const override;
+        void setMouseY(double y) override;
+
         bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) override;
 
         void breakFrame() override;
@@ -114,6 +120,8 @@ class Engine : public IEngine
         ITimer *m_timer = nullptr;
         double m_fps = 30;                         // default FPS
         std::chrono::milliseconds m_frameDuration; // will be computed in run()
+        double m_mouseX = 0;
+        double m_mouseY = 0;
 
         bool m_running = false;
         bool m_breakFrame = false;
