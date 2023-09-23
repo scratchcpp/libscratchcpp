@@ -225,6 +225,30 @@ TEST(SpriteTest, Direction)
 
     sprite.setDirection(145.2);
     ASSERT_EQ(sprite.direction(), 145.2);
+
+    sprite.setDirection(182.5);
+    ASSERT_EQ(sprite.direction(), -177.5);
+
+    sprite.setDirection(270);
+    ASSERT_EQ(sprite.direction(), -90);
+
+    sprite.setDirection(360);
+    ASSERT_EQ(sprite.direction(), 0);
+
+    sprite.setDirection(500);
+    ASSERT_EQ(sprite.direction(), 140);
+
+    sprite.setDirection(-182.5);
+    ASSERT_EQ(sprite.direction(), 177.5);
+
+    sprite.setDirection(-270);
+    ASSERT_EQ(sprite.direction(), 90);
+
+    sprite.setDirection(-360);
+    ASSERT_EQ(sprite.direction(), 0);
+
+    sprite.setDirection(-500);
+    ASSERT_EQ(sprite.direction(), -140);
 }
 
 TEST(SpriteTest, Draggable)
