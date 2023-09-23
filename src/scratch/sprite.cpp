@@ -197,7 +197,13 @@ double Sprite::direction() const
 /*! Sets the direction. */
 void Sprite::setDirection(double newDirection)
 {
-    impl->direction = newDirection;
+    if (newDirection >= -180 && newDirection <= 180)
+        impl->direction = newDirection;
+    else if (newDirection < -180)
+        impl->direction = std::fmod(newDirection - 180, 360) + 180;
+    else
+        impl->direction = std::fmod(newDirection + 180, 360) - 180;
+
     if (impl->iface)
         impl->iface->onDirectionChanged(impl->direction);
 }
