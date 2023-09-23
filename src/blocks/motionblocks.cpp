@@ -7,12 +7,14 @@
 
 #include "motionblocks.h"
 #include "../engine/internal/randomgenerator.h"
+#include "../engine/internal/clock.h"
 
 using namespace libscratchcpp;
 
 static const double pi = std::acos(-1); // TODO: Use std::numbers::pi in C++20
 
 IRandomGenerator *MotionBlocks::rng = nullptr;
+IClock *MotionBlocks::clock = nullptr;
 
 std::string MotionBlocks::name() const
 {
@@ -29,6 +31,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_pointtowards", &compilePointTowards);
     engine->addCompileFunction(this, "motion_gotoxy", &compileGoToXY);
     engine->addCompileFunction(this, "motion_goto", &compileGoTo);
+    engine->addCompileFunction(this, "motion_glidesecstoxy", &compileGlideSecsToXY);
 
     // Inputs
     engine->addInput(this, "STEPS", STEPS);
@@ -38,6 +41,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addInput(this, "X", X);
     engine->addInput(this, "Y", Y);
     engine->addInput(this, "TO", TO);
+    engine->addInput(this, "SECS", SECS);
 }
 
 void MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -115,6 +119,15 @@ void MotionBlocks::compileGoTo(Compiler *compiler)
         compiler->addInput(input);
         compiler->addFunctionCall(&goTo);
     }
+}
+
+void MotionBlocks::compileGlideSecsToXY(Compiler *compiler)
+{
+    compiler->addInput(SECS);
+    compiler->addInput(X);
+    compiler->addInput(Y);
+    compiler->addFunctionCall(&startGlideSecsTo);
+    compiler->addFunctionCall(&glideSecsTo);
 }
 
 unsigned int MotionBlocks::moveSteps(VirtualMachine *vm)
@@ -324,6 +337,84 @@ unsigned int MotionBlocks::goToRandomPosition(VirtualMachine *vm)
 
         sprite->setX(rng->randint(-static_cast<int>(stageWidth / 2), stageWidth / 2));
         sprite->setY(rng->randint(-static_cast<int>(stageHeight / 2), stageHeight / 2));
+    }
+
+    return 0;
+}
+
+void MotionBlocks::startGlidingToPos(VirtualMachine *vm, double x, double y, double secs)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (!sprite)
+        return;
+
+    if (secs <= 0) {
+        if (sprite) {
+            sprite->setX(x);
+            sprite->setY(y);
+        }
+
+        return;
+    }
+
+    if (!clock)
+        clock = Clock::instance().get();
+
+    auto currentTime = clock->currentSteadyTime();
+    m_timeMap[vm] = { currentTime, secs * 1000 };
+    m_glideMap[vm] = { { sprite->x(), sprite->y() }, { x, y } };
+}
+
+void MotionBlocks::continueGliding(VirtualMachine *vm)
+{
+    if (!clock)
+        clock = Clock::instance().get();
+
+    auto currentTime = clock->currentSteadyTime();
+    auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - m_timeMap[vm].first).count();
+    auto maxTime = m_timeMap[vm].second;
+    assert(m_timeMap.count(vm) == 1);
+
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    double x = m_glideMap[vm].second.first;
+    double y = m_glideMap[vm].second.second;
+
+    if (elapsedTime >= maxTime) {
+        if (sprite) {
+            sprite->setX(x);
+            sprite->setY(y);
+        }
+
+        m_timeMap.erase(vm);
+        m_glideMap.erase(vm);
+    } else {
+        if (sprite) {
+            double startX = m_glideMap[vm].first.first;
+            double startY = m_glideMap[vm].first.second;
+            double factor = elapsedTime / static_cast<double>(maxTime);
+            assert(factor >= 0 && factor < 1);
+
+            sprite->setX(startX + (x - startX) * factor);
+            sprite->setY(startY + (y - startY) * factor);
+        }
+
+        vm->stop(true, true, true);
+        vm->engine()->lockFrame();
+    }
+}
+
+unsigned int MotionBlocks::startGlideSecsTo(VirtualMachine *vm)
+{
+    startGlidingToPos(vm, vm->getInput(1, 3)->toDouble(), vm->getInput(2, 3)->toDouble(), vm->getInput(0, 3)->toDouble());
+    return 3;
+}
+
+unsigned int MotionBlocks::glideSecsTo(VirtualMachine *vm)
+{
+    if (m_timeMap.find(vm) != m_timeMap.cend()) {
+        assert(m_glideMap.find(vm) != m_glideMap.cend());
+        continueGliding(vm);
     }
 
     return 0;
