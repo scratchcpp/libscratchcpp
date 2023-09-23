@@ -27,7 +27,6 @@ Engine::Engine() :
     m_defaultTimer(std::make_unique<Timer>()),
     m_timer(m_defaultTimer.get())
 {
-    srand(time(NULL));
 }
 
 void Engine::clear()

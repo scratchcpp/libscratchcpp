@@ -8,7 +8,7 @@
 #include <cassert>
 
 #include "virtualmachine_p.h"
-#include "internal/global.h"
+#include "internal/randomgenerator.h"
 
 #define MAX_REG_COUNT 1024
 
@@ -28,6 +28,8 @@ using namespace libscratchcpp;
 using namespace vm;
 
 static const double pi = std::acos(-1); // TODO: Use std::numbers::pi in C++20
+
+IRandomGenerator *VirtualMachinePrivate::rng = nullptr;
 
 const unsigned int VirtualMachinePrivate::instruction_arg_count[] = {
     0, // OP_START
@@ -106,6 +108,9 @@ VirtualMachinePrivate::VirtualMachinePrivate(VirtualMachine *vm, Target *target,
         regs[i] = new Value();
     loops.reserve(256);
     callTree.reserve(1024);
+
+    if (!rng)
+        rng = RandomGenerator::instance().get();
 }
 
 VirtualMachinePrivate::~VirtualMachinePrivate()
@@ -360,7 +365,7 @@ do_mod:
     DISPATCH();
 
 do_random:
-    REPLACE_RET_VALUE(randint<long>(READ_REG(0, 2)->toDouble(), READ_REG(1, 2)->toDouble()), 2);
+    REPLACE_RET_VALUE(rng->randint(READ_REG(0, 2)->toDouble(), READ_REG(1, 2)->toDouble()), 2);
     FREE_REGS(1);
     DISPATCH();
 
@@ -539,7 +544,7 @@ do_list_del : {
             index = 0;
         } else if (str == "random") {
             size_t size = list->size();
-            index = size == 0 ? 0 : randint<size_t>(1, size);
+            index = size == 0 ? 0 : rng->randint(1, size);
         } else
             index = 0;
     } else {
@@ -567,7 +572,7 @@ do_list_insert : {
             index = 0;
         } else if (str == "random") {
             size_t size = list->size();
-            index = size == 0 ? 1 : randint<size_t>(1, size);
+            index = size == 0 ? 1 : rng->randint(1, size);
         } else
             index = 0;
     } else {
@@ -594,7 +599,7 @@ do_list_replace : {
             index = list->size();
         else if (str == "random") {
             size_t size = list->size();
-            index = size == 0 ? 0 : randint<size_t>(1, size);
+            index = size == 0 ? 0 : rng->randint(1, size);
         } else
             index = 0;
     } else {
@@ -617,7 +622,7 @@ do_list_get_item : {
             index = list->size();
         else if (str == "random") {
             size_t size = list->size();
-            index = size == 0 ? 0 : randint<size_t>(1, size);
+            index = size == 0 ? 0 : rng->randint(1, size);
         } else
             index = 0;
     } else {
