@@ -27,12 +27,15 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_turnleft", &compileTurnLeft);
     engine->addCompileFunction(this, "motion_pointindirection", &compilePointInDirection);
     engine->addCompileFunction(this, "motion_pointtowards", &compilePointTowards);
+    engine->addCompileFunction(this, "motion_gotoxy", &compileGoToXY);
 
     // Inputs
     engine->addInput(this, "STEPS", STEPS);
     engine->addInput(this, "DEGREES", DEGREES);
     engine->addInput(this, "DIRECTION", DIRECTION);
     engine->addInput(this, "TOWARDS", TOWARDS);
+    engine->addInput(this, "X", X);
+    engine->addInput(this, "Y", Y);
 }
 
 void MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -80,6 +83,13 @@ void MotionBlocks::compilePointTowards(Compiler *compiler)
         compiler->addInput(input);
         compiler->addFunctionCall(&pointTowards);
     }
+}
+
+void MotionBlocks::compileGoToXY(Compiler *compiler)
+{
+    compiler->addInput(X);
+    compiler->addInput(Y);
+    compiler->addFunctionCall(&goToXY);
 }
 
 unsigned int MotionBlocks::moveSteps(VirtualMachine *vm)
@@ -202,4 +212,16 @@ unsigned int MotionBlocks::pointTowardsRandomPosition(VirtualMachine *vm)
     pointTowardsPos(dynamic_cast<Sprite *>(vm->target()), rng->randint(-static_cast<int>(stageWidth / 2), stageWidth / 2), rng->randint(-static_cast<int>(stageHeight / 2), stageHeight / 2));
 
     return 0;
+}
+
+unsigned int MotionBlocks::goToXY(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite) {
+        sprite->setX(vm->getInput(0, 2)->toDouble());
+        sprite->setY(vm->getInput(1, 2)->toDouble());
+    }
+
+    return 2;
 }

@@ -99,12 +99,15 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_turnleft", &MotionBlocks::compileTurnLeft));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_pointindirection", &MotionBlocks::compilePointInDirection));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_pointtowards", &MotionBlocks::compilePointTowards));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_gotoxy", &MotionBlocks::compileGoToXY));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "STEPS", MotionBlocks::STEPS));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DEGREES", MotionBlocks::DEGREES));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DIRECTION", MotionBlocks::DIRECTION));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TOWARDS", MotionBlocks::TOWARDS));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "X", MotionBlocks::X));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "Y", MotionBlocks::Y));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -435,4 +438,43 @@ TEST_F(MotionBlocksTest, PointTowardsImpl)
         ASSERT_EQ(vm.registerCount(), 0);
         ASSERT_EQ(std::round(sprite.direction() * 100) / 100, intPosResults[i]);
     }
+}
+
+TEST_F(MotionBlocksTest, GoToXY)
+{
+    Compiler compiler(&m_engineMock);
+
+    // turn right (12.05) degrees
+    auto block = std::make_shared<Block>("a", "motion_gotoxy");
+    addValueInput(block, "X", MotionBlocks::X, 95.2);
+    addValueInput(block, "Y", MotionBlocks::Y, -175.9);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::goToXY)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compileGoToXY(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 95.2, -175.9 }));
+}
+
+TEST_F(MotionBlocksTest, GoToXYImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::goToXY };
+    static Value constValues[] = { 95.2, -175.9 };
+
+    Sprite sprite;
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.x(), 95.2);
+    ASSERT_EQ(sprite.y(), -175.9);
 }
