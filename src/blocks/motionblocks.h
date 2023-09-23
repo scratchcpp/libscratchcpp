@@ -21,7 +21,8 @@ class MotionBlocks : public IBlockSection
             DIRECTION,
             TOWARDS,
             X,
-            Y
+            Y,
+            TO
         };
 
         enum Fields
@@ -42,6 +43,7 @@ class MotionBlocks : public IBlockSection
         static void compilePointInDirection(Compiler *compiler);
         static void compilePointTowards(Compiler *compiler);
         static void compileGoToXY(Compiler *compiler);
+        static void compileGoTo(Compiler *compiler);
 
         static unsigned int moveSteps(VirtualMachine *vm);
         static unsigned int turnRight(VirtualMachine *vm);
@@ -56,6 +58,10 @@ class MotionBlocks : public IBlockSection
         static unsigned int pointTowardsRandomPosition(VirtualMachine *vm);
 
         static unsigned int goToXY(VirtualMachine *vm);
+        static unsigned int goTo(VirtualMachine *vm);
+        static unsigned int goToByIndex(VirtualMachine *vm);
+        static unsigned int goToMousePointer(VirtualMachine *vm);
+        static unsigned int goToRandomPosition(VirtualMachine *vm);
 
         static IRandomGenerator *rng;
 };

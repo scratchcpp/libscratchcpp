@@ -28,6 +28,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_pointindirection", &compilePointInDirection);
     engine->addCompileFunction(this, "motion_pointtowards", &compilePointTowards);
     engine->addCompileFunction(this, "motion_gotoxy", &compileGoToXY);
+    engine->addCompileFunction(this, "motion_goto", &compileGoTo);
 
     // Inputs
     engine->addInput(this, "STEPS", STEPS);
@@ -36,6 +37,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addInput(this, "TOWARDS", TOWARDS);
     engine->addInput(this, "X", X);
     engine->addInput(this, "Y", Y);
+    engine->addInput(this, "TO", TO);
 }
 
 void MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -90,6 +92,29 @@ void MotionBlocks::compileGoToXY(Compiler *compiler)
     compiler->addInput(X);
     compiler->addInput(Y);
     compiler->addFunctionCall(&goToXY);
+}
+
+void MotionBlocks::compileGoTo(Compiler *compiler)
+{
+    Input *input = compiler->input(TO);
+
+    if (input->type() != Input::Type::ObscuredShadow) {
+        assert(input->pointsToDropdownMenu());
+        std::string value = input->selectedMenuItem();
+
+        if (value == "_mouse_")
+            compiler->addFunctionCall(&goToMousePointer);
+        else if (value == "_random_")
+            compiler->addFunctionCall(&goToRandomPosition);
+        else {
+            int index = compiler->engine()->findTarget(value);
+            compiler->addConstValue(index);
+            compiler->addFunctionCall(&goToByIndex);
+        }
+    } else {
+        compiler->addInput(input);
+        compiler->addFunctionCall(&goTo);
+    }
 }
 
 unsigned int MotionBlocks::moveSteps(VirtualMachine *vm)
@@ -224,4 +249,83 @@ unsigned int MotionBlocks::goToXY(VirtualMachine *vm)
     }
 
     return 2;
+}
+
+unsigned int MotionBlocks::goTo(VirtualMachine *vm)
+{
+    std::string value = vm->getInput(0, 1)->toString();
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (!sprite)
+        return 1;
+
+    if (value == "_mouse_") {
+        sprite->setX(vm->engine()->mouseX());
+        sprite->setY(vm->engine()->mouseY());
+    } else if (value == "_random_") {
+        // TODO: Read stage size from engine (#224)
+        static const unsigned int stageWidth = 480;
+        static const unsigned int stageHeight = 360;
+
+        if (!rng)
+            rng = RandomGenerator::instance().get();
+
+        sprite->setX(rng->randint(-static_cast<int>(stageWidth / 2), stageWidth / 2));
+        sprite->setY(rng->randint(-static_cast<int>(stageHeight / 2), stageHeight / 2));
+    } else {
+        Target *target = vm->engine()->targetAt(vm->engine()->findTarget(value));
+        Sprite *targetSprite = dynamic_cast<Sprite *>(target);
+
+        if (targetSprite) {
+            sprite->setX(targetSprite->x());
+            sprite->setY(targetSprite->y());
+        }
+    }
+
+    return 1;
+}
+
+unsigned int MotionBlocks::goToByIndex(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
+    Sprite *targetSprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite && targetSprite) {
+        sprite->setX(targetSprite->x());
+        sprite->setY(targetSprite->y());
+    }
+
+    return 1;
+}
+
+unsigned int MotionBlocks::goToMousePointer(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite) {
+        sprite->setX(vm->engine()->mouseX());
+        sprite->setY(vm->engine()->mouseY());
+    }
+
+    return 0;
+}
+
+unsigned int MotionBlocks::goToRandomPosition(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite) {
+        // TODO: Read stage size from engine (#224)
+        static const unsigned int stageWidth = 480;
+        static const unsigned int stageHeight = 360;
+
+        if (!rng)
+            rng = RandomGenerator::instance().get();
+
+        sprite->setX(rng->randint(-static_cast<int>(stageWidth / 2), stageWidth / 2));
+        sprite->setY(rng->randint(-static_cast<int>(stageHeight / 2), stageHeight / 2));
+    }
+
+    return 0;
 }
