@@ -446,7 +446,7 @@ TEST_F(MotionBlocksTest, GoToXY)
 {
     Compiler compiler(&m_engineMock);
 
-    // turn right (12.05) degrees
+    // go to x: (95.2) y: (-175.9)
     auto block = std::make_shared<Block>("a", "motion_gotoxy");
     addValueInput(block, "X", MotionBlocks::X, 95.2);
     addValueInput(block, "Y", MotionBlocks::Y, -175.9);
