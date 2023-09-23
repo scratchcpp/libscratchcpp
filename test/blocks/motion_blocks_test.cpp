@@ -10,6 +10,7 @@
 #include "blocks/motionblocks.h"
 #include "blocks/operatorblocks.h"
 #include "engine/internal/engine.h"
+#include "engine/internal/randomgenerator.h"
 
 using namespace libscratchcpp;
 
@@ -440,6 +441,8 @@ TEST_F(MotionBlocksTest, PointTowardsImpl)
         ASSERT_EQ(vm.registerCount(), 0);
         ASSERT_EQ(std::round(sprite.direction() * 100) / 100, intPosResults[i]);
     }
+
+    MotionBlocks::rng = RandomGenerator::instance().get();
 }
 
 TEST_F(MotionBlocksTest, GoToXY)
@@ -621,4 +624,6 @@ TEST_F(MotionBlocksTest, GoToImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(sprite.x(), 220);
     ASSERT_EQ(sprite.y(), -16);
+
+    MotionBlocks::rng = RandomGenerator::instance().get();
 }
