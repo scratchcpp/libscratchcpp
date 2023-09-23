@@ -184,7 +184,6 @@ void MotionBlocks::pointTowardsPos(Sprite *sprite, double x, double y)
 unsigned int MotionBlocks::pointTowards(VirtualMachine *vm)
 {
     std::string value = vm->getInput(0, 1)->toString();
-    Target *target;
 
     if (value == "_mouse_")
         pointTowardsPos(dynamic_cast<Sprite *>(vm->target()), vm->engine()->mouseX(), vm->engine()->mouseY());
@@ -198,7 +197,7 @@ unsigned int MotionBlocks::pointTowards(VirtualMachine *vm)
 
         pointTowardsPos(dynamic_cast<Sprite *>(vm->target()), rng->randint(-static_cast<int>(stageWidth / 2), stageWidth / 2), rng->randint(-static_cast<int>(stageHeight / 2), stageHeight / 2));
     } else {
-        target = vm->engine()->targetAt(vm->engine()->findTarget(value));
+        Target *target = vm->engine()->targetAt(vm->engine()->findTarget(value));
         Sprite *sprite = dynamic_cast<Sprite *>(target);
 
         if (sprite)
