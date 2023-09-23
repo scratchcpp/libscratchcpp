@@ -363,6 +363,26 @@ void Engine::setFps(double fps)
     updateFrameDuration();
 }
 
+double Engine::mouseX() const
+{
+    return m_mouseX;
+}
+
+void Engine::setMouseX(double x)
+{
+    m_mouseX = x;
+}
+
+double Engine::mouseY() const
+{
+    return m_mouseY;
+}
+
+void Engine::setMouseY(double y)
+{
+    m_mouseY = y;
+}
+
 bool Engine::broadcastRunning(unsigned int index, VirtualMachine *sourceScript)
 {
     const auto &scripts = m_runningBroadcastMap[index];

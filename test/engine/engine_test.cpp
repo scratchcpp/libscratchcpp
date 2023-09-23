@@ -43,6 +43,24 @@ TEST(EngineTest, Fps)
     ASSERT_EQ(engine.fps(), 60.25);
 }
 
+TEST(EngineTest, MouseX)
+{
+    Engine engine;
+    ASSERT_EQ(engine.mouseX(), 0);
+
+    engine.setMouseX(-128.038);
+    ASSERT_EQ(engine.mouseX(), -128.038);
+}
+
+TEST(EngineTest, MouseY)
+{
+    Engine engine;
+    ASSERT_EQ(engine.mouseY(), 0);
+
+    engine.setMouseY(179.9258);
+    ASSERT_EQ(engine.mouseY(), 179.9258);
+}
+
 TEST(EngineTest, BreakFrame)
 {
     Engine engine;
