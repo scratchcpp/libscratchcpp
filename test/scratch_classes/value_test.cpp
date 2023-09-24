@@ -824,6 +824,16 @@ TEST(ValueTest, ToDouble)
     v = "-255.625";
     ASSERT_EQ(v.toDouble(), -255.625);
 
+    v = "9432.4e-12";
+    ASSERT_EQ(v.toDouble(), 9.4324e-9);
+    v = "-9432.4e-12";
+    ASSERT_EQ(v.toDouble(), -9.4324e-9);
+
+    v = "9432.4e+6";
+    ASSERT_EQ(v.toDouble(), 9.4324e+9);
+    v = "-9432.4e+6";
+    ASSERT_EQ(v.toDouble(), -9.4324e+9);
+
     v = "false";
     ASSERT_EQ(v.toDouble(), 0.0);
     v = "true";
@@ -951,6 +961,20 @@ TEST(ValueTest, ToString)
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
     v = "-255.625";
     ASSERT_EQ(v.toString(), "-255.625");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+
+    v = "9432.4e-12";
+    ASSERT_EQ(v.toString(), "9.4324e-9");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    v = "-9432.4e-12";
+    ASSERT_EQ(v.toString(), "-9.4324e-9");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+
+    v = "9432.4e+6";
+    ASSERT_EQ(v.toString(), "9.4324e+9");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    v = "-9432.4e+6";
+    ASSERT_EQ(v.toString(), "-9.4324e+9");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
 
     v = "false";
