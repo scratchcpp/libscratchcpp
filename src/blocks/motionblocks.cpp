@@ -32,6 +32,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_gotoxy", &compileGoToXY);
     engine->addCompileFunction(this, "motion_goto", &compileGoTo);
     engine->addCompileFunction(this, "motion_glidesecstoxy", &compileGlideSecsToXY);
+    engine->addCompileFunction(this, "motion_glideto", &compileGlideTo);
 
     // Inputs
     engine->addInput(this, "STEPS", STEPS);
@@ -127,6 +128,33 @@ void MotionBlocks::compileGlideSecsToXY(Compiler *compiler)
     compiler->addInput(X);
     compiler->addInput(Y);
     compiler->addFunctionCall(&startGlideSecsTo);
+    compiler->addFunctionCall(&glideSecsTo);
+}
+
+void MotionBlocks::compileGlideTo(Compiler *compiler)
+{
+    compiler->addInput(SECS);
+
+    Input *input = compiler->input(TO);
+
+    if (input->type() != Input::Type::ObscuredShadow) {
+        assert(input->pointsToDropdownMenu());
+        std::string value = input->selectedMenuItem();
+
+        if (value == "_mouse_")
+            compiler->addFunctionCall(&startGlideToMousePointer);
+        else if (value == "_random_")
+            compiler->addFunctionCall(&startGlideToRandomPosition);
+        else {
+            int index = compiler->engine()->findTarget(value);
+            compiler->addConstValue(index);
+            compiler->addFunctionCall(&startGlideToByIndex);
+        }
+    } else {
+        compiler->addInput(input);
+        compiler->addFunctionCall(&startGlideTo);
+    }
+
     compiler->addFunctionCall(&glideSecsTo);
 }
 
@@ -265,11 +293,12 @@ unsigned int MotionBlocks::goToXY(VirtualMachine *vm)
 
 unsigned int MotionBlocks::goTo(VirtualMachine *vm)
 {
-    std::string value = vm->getInput(0, 1)->toString();
     Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
 
     if (!sprite)
         return 1;
+
+    std::string value = vm->getInput(0, 1)->toString();
 
     if (value == "_mouse_") {
         sprite->setX(vm->engine()->mouseX());
@@ -418,4 +447,75 @@ unsigned int MotionBlocks::glideSecsTo(VirtualMachine *vm)
     }
 
     return 0;
+}
+
+unsigned int MotionBlocks::startGlideTo(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (!sprite)
+        return 1;
+
+    std::string value = vm->getInput(1, 2)->toString();
+
+    if (value == "_mouse_")
+        startGlidingToPos(vm, vm->engine()->mouseX(), vm->engine()->mouseY(), vm->getInput(0, 2)->toDouble());
+    else if (value == "_random_") {
+        // TODO: Read stage size from engine (#224)
+        static const unsigned int stageWidth = 480;
+        static const unsigned int stageHeight = 360;
+
+        if (!rng)
+            rng = RandomGenerator::instance().get();
+
+        startGlidingToPos(vm, rng->randint(-static_cast<int>(stageWidth / 2), stageWidth / 2), rng->randint(-static_cast<int>(stageHeight / 2), stageHeight / 2), vm->getInput(0, 2)->toDouble());
+    } else {
+        Target *target = vm->engine()->targetAt(vm->engine()->findTarget(value));
+        Sprite *targetSprite = dynamic_cast<Sprite *>(target);
+
+        if (targetSprite)
+            startGlidingToPos(vm, targetSprite->x(), targetSprite->y(), vm->getInput(0, 2)->toDouble());
+    }
+
+    return 2;
+}
+
+unsigned int MotionBlocks::startGlideToByIndex(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->engine()->targetAt(vm->getInput(1, 2)->toInt());
+    Sprite *targetSprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite && targetSprite)
+        startGlidingToPos(vm, targetSprite->x(), targetSprite->y(), vm->getInput(0, 2)->toDouble());
+
+    return 2;
+}
+
+unsigned int MotionBlocks::startGlideToMousePointer(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        startGlidingToPos(vm, vm->engine()->mouseX(), vm->engine()->mouseY(), vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int MotionBlocks::startGlideToRandomPosition(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite) {
+        // TODO: Read stage size from engine (#224)
+        static const unsigned int stageWidth = 480;
+        static const unsigned int stageHeight = 360;
+
+        if (!rng)
+            rng = RandomGenerator::instance().get();
+
+        startGlidingToPos(vm, rng->randint(-static_cast<int>(stageWidth / 2), stageWidth / 2), rng->randint(-static_cast<int>(stageHeight / 2), stageHeight / 2), vm->getInput(0, 1)->toDouble());
+    }
+
+    return 1;
 }
