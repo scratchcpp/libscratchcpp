@@ -422,7 +422,7 @@ TEST(EngineTest, Clones)
         if (i < 10)
             ASSERT_EQ((*list)[i].toInt(), 1);
         else
-            ASSERT_EQ((*list)[i].toString(), "1 2"); // TODO: Change this to "12" after #188 is fixed
+            ASSERT_EQ((*list)[i].toString(), "12");
     }
 }
 
