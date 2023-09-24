@@ -257,11 +257,23 @@ class LIBSCRATCHCPP_EXPORT Value
                     case Type::Integer:
                         return std::to_string(m_intValue);
                     case Type::Double: {
-                        std::string s = std::to_string(m_doubleValue);
-                        s.erase(s.find_last_not_of('0') + 1, std::string::npos);
-                        if (s.back() == '.') {
-                            s.pop_back();
+                        std::stringstream stream;
+                        stream << m_doubleValue;
+                        std::string s = stream.str();
+                        std::size_t index;
+
+                        for (int i = 0; i < 2; i++) {
+                            if (i == 0)
+                                index = s.find("e+");
+                            else
+                                index = s.find("e-");
+
+                            if (index != std::string::npos) {
+                                while ((s.size() >= index + 3) && (s[index + 2] == '0'))
+                                    s.erase(index + 2, 1);
+                            }
                         }
+
                         return s;
                     }
                     case Type::Bool:
