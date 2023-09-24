@@ -43,14 +43,36 @@ bool List::contains(const Value &value) const
     return (indexOf(value) != -1);
 }
 
-/*! Joins the list items with spaces. */
+/*! Joins the list items with spaces or without any separator if there are only digits. */
 std::string List::toString() const
 {
     std::string ret;
-    for (int i = 0; i < size(); i++) {
-        ret.append(at(i).toString());
-        if (i + 1 < size())
-            ret.push_back(' ');
+    bool digits = true;
+
+    for (const auto &item : *this) {
+        if (item.type() == Value::Type::Integer) {
+            long num = item.toLong();
+
+            if (num < 0 || num >= 10) {
+                digits = false;
+                break;
+            }
+        } else {
+            digits = false;
+            break;
+        }
     }
+
+    if (digits) {
+        for (const auto &item : *this)
+            ret.append(item.toString());
+    } else {
+        for (int i = 0; i < size(); i++) {
+            ret.append(at(i).toString());
+            if (i + 1 < size())
+                ret.push_back(' ');
+        }
+    }
+
     return ret;
 }
