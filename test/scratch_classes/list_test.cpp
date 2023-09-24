@@ -151,4 +151,22 @@ TEST(ListTest, ToString)
     list.push_back("áä");
     list.push_back("ľ š");
     ASSERT_EQ(list.toString(), "áä ľ š");
+
+    list.clear();
+    list.push_back(-2);
+    list.push_back(5);
+    list.push_back(8);
+    ASSERT_EQ(list.toString(), "-2 5 8");
+
+    list.clear();
+    list.push_back(2);
+    list.push_back(10);
+    list.push_back(8);
+    ASSERT_EQ(list.toString(), "2 10 8");
+
+    list.clear();
+    list.push_back(0);
+    list.push_back(9);
+    list.push_back(8);
+    ASSERT_EQ(list.toString(), "098");
 }
