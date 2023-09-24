@@ -106,6 +106,7 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_goto", &MotionBlocks::compileGoTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_glidesecstoxy", &MotionBlocks::compileGlideSecsToXY));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_glideto", &MotionBlocks::compileGlideTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_changexby", &MotionBlocks::compileChangeXBy));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "STEPS", MotionBlocks::STEPS));
@@ -116,6 +117,7 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "Y", MotionBlocks::Y));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TO", MotionBlocks::TO));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SECS", MotionBlocks::SECS));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DX", MotionBlocks::DX));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -919,4 +921,43 @@ TEST_F(MotionBlocksTest, GlideToImpl)
 
     MotionBlocks::clock = Clock::instance().get();
     MotionBlocks::rng = RandomGenerator::instance().get();
+}
+
+TEST_F(MotionBlocksTest, ChangeXBy)
+{
+    Compiler compiler(&m_engineMock);
+
+    // change x by (56.54)
+    auto block = std::make_shared<Block>("a", "motion_changexby");
+    addValueInput(block, "DX", MotionBlocks::DX, 56.54);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::changeXBy)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compileChangeXBy(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), 56.54);
+}
+
+TEST_F(MotionBlocksTest, ChangeXByImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::changeXBy };
+    static Value constValues[] = { 56.54 };
+
+    Sprite sprite;
+    sprite.setX(-23.4);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.x(), 33.14);
 }
