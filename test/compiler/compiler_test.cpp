@@ -806,7 +806,7 @@ TEST_F(CompilerTest, MultipleTargets)
 
     auto sprite1 = engine.targetAt(engine.findTarget("Sprite1"));
     auto script = scripts.at(sprite1->greenFlagBlocks().at(0));
-    ASSERT_EQ(script->bytecodeVector().size(), 30);
+    ASSERT_EQ(script->bytecodeVector().size(), 32);
     auto vm = script->start();
     ASSERT_EQ(vm->target(), sprite1);
     ASSERT_EQ(vm->engine(), &engine);

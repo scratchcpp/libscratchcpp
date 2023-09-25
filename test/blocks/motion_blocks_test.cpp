@@ -5,11 +5,14 @@
 #include <scratchcpp/sprite.h>
 #include <enginemock.h>
 #include <randomgeneratormock.h>
+#include <clockmock.h>
 
 #include "../common.h"
 #include "blocks/motionblocks.h"
 #include "blocks/operatorblocks.h"
 #include "engine/internal/engine.h"
+#include "engine/internal/randomgenerator.h"
+#include "engine/internal/clock.h"
 
 using namespace libscratchcpp;
 
@@ -100,6 +103,12 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_pointindirection", &MotionBlocks::compilePointInDirection));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_pointtowards", &MotionBlocks::compilePointTowards));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_gotoxy", &MotionBlocks::compileGoToXY));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_goto", &MotionBlocks::compileGoTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_glidesecstoxy", &MotionBlocks::compileGlideSecsToXY));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_glideto", &MotionBlocks::compileGlideTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_changexby", &MotionBlocks::compileChangeXBy));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_setx", &MotionBlocks::compileSetX));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_changeyby", &MotionBlocks::compileChangeYBy));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "STEPS", MotionBlocks::STEPS));
@@ -108,6 +117,10 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TOWARDS", MotionBlocks::TOWARDS));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "X", MotionBlocks::X));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "Y", MotionBlocks::Y));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TO", MotionBlocks::TO));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SECS", MotionBlocks::SECS));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DX", MotionBlocks::DX));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DY", MotionBlocks::DY));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -438,13 +451,15 @@ TEST_F(MotionBlocksTest, PointTowardsImpl)
         ASSERT_EQ(vm.registerCount(), 0);
         ASSERT_EQ(std::round(sprite.direction() * 100) / 100, intPosResults[i]);
     }
+
+    MotionBlocks::rng = RandomGenerator::instance().get();
 }
 
 TEST_F(MotionBlocksTest, GoToXY)
 {
     Compiler compiler(&m_engineMock);
 
-    // turn right (12.05) degrees
+    // go to x: (95.2) y: (-175.9)
     auto block = std::make_shared<Block>("a", "motion_gotoxy");
     addValueInput(block, "X", MotionBlocks::X, 95.2);
     addValueInput(block, "Y", MotionBlocks::Y, -175.9);
@@ -477,4 +492,553 @@ TEST_F(MotionBlocksTest, GoToXYImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(sprite.x(), 95.2);
     ASSERT_EQ(sprite.y(), -175.9);
+}
+
+TEST_F(MotionBlocksTest, GoTo)
+{
+    Compiler compiler(&m_engineMock);
+
+    // go to (mouse-pointer)
+    auto block1 = std::make_shared<Block>("a", "motion_goto");
+    addDropdownInput(block1, "TO", MotionBlocks::TO, "_mouse_");
+
+    // go to (random position)
+    auto block2 = std::make_shared<Block>("b", "motion_goto");
+    addDropdownInput(block2, "TO", MotionBlocks::TO, "_random_");
+
+    // go to (Sprite2)
+    auto block3 = std::make_shared<Block>("c", "motion_goto");
+    addDropdownInput(block3, "TO", MotionBlocks::TO, "Sprite2");
+
+    // go to (join "" "")
+    auto joinBlock = std::make_shared<Block>("e", "operator_join");
+    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
+    auto block4 = std::make_shared<Block>("d", "motion_goto");
+    addDropdownInput(block4, "TO", MotionBlocks::TO, "", joinBlock);
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::goToMousePointer)).WillOnce(Return(0));
+    compiler.setBlock(block1);
+    MotionBlocks::compileGoTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::goToRandomPosition)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    MotionBlocks::compileGoTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(5));
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::goToByIndex)).WillOnce(Return(2));
+    compiler.setBlock(block3);
+    MotionBlocks::compileGoTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::goTo)).WillOnce(Return(3));
+    compiler.setBlock(block4);
+    MotionBlocks::compileGoTo(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_CONST, 0, vm::OP_EXEC, 2, vm::OP_NULL, vm::OP_NULL, vm::OP_STR_CONCAT, vm::OP_EXEC, 3, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), 5);
+}
+
+TEST_F(MotionBlocksTest, GoToImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode5[] = { vm::OP_START, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_EXEC, 3, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::goTo, &MotionBlocks::goToByIndex, &MotionBlocks::goToMousePointer, &MotionBlocks::goToRandomPosition };
+    static Value constValues[] = { "_mouse_", "_random_", "Sprite2", 3 };
+
+    Sprite sprite;
+    sprite.setX(70.1);
+    sprite.setY(-100.025);
+
+    Sprite anotherSprite;
+    anotherSprite.setX(-195.25);
+    anotherSprite.setY(148.02);
+
+    VirtualMachine vm(&sprite, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    RandomGeneratorMock rng;
+    MotionBlocks::rng = &rng;
+
+    // go to (join "_mouse_" "")
+    EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(70.56));
+    EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(45.2));
+
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.x(), 70.56);
+    ASSERT_EQ(sprite.y(), 45.2);
+
+    // go to (join "_random_" "")
+    EXPECT_CALL(rng, randint(-240, 240)).WillOnce(Return(-158));
+    EXPECT_CALL(rng, randint(-180, 180)).WillOnce(Return(65));
+
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.x(), -158);
+    ASSERT_EQ(sprite.y(), 65);
+
+    // go to (join "Sprite2" "")
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&anotherSprite));
+
+    vm.setBytecode(bytecode3);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.x(), anotherSprite.x());
+    ASSERT_EQ(sprite.y(), anotherSprite.y());
+
+    // go to (Sprite2)
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&anotherSprite));
+
+    vm.setBytecode(bytecode4);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.x(), anotherSprite.x());
+    ASSERT_EQ(sprite.y(), anotherSprite.y());
+
+    // go to (mouse-pointer)
+    EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(-239.92));
+    EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(-170.6));
+
+    vm.setBytecode(bytecode5);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.x(), -239.92);
+    ASSERT_EQ(sprite.y(), -170.6);
+
+    // go to (random position)
+    EXPECT_CALL(rng, randint(-240, 240)).WillOnce(Return(220));
+    EXPECT_CALL(rng, randint(-180, 180)).WillOnce(Return(-16));
+
+    vm.setBytecode(bytecode6);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.x(), 220);
+    ASSERT_EQ(sprite.y(), -16);
+
+    MotionBlocks::rng = RandomGenerator::instance().get();
+}
+
+TEST_F(MotionBlocksTest, GlideSecsToXY)
+{
+    Compiler compiler(&m_engineMock);
+
+    // glide (2.5) secs to x: (95.2) y: (-175.9)
+    auto block = std::make_shared<Block>("a", "motion_gotoxy");
+    addValueInput(block, "SECS", MotionBlocks::SECS, 2.5);
+    addValueInput(block, "X", MotionBlocks::X, 95.2);
+    addValueInput(block, "Y", MotionBlocks::Y, -175.9);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::startGlideSecsTo)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::glideSecsTo)).WillOnce(Return(1));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compileGlideSecsToXY(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 2.5, 95.2, -175.9 }));
+}
+
+TEST_F(MotionBlocksTest, GlideSecsToXYImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::startGlideSecsTo, &MotionBlocks::glideSecsTo };
+    static Value constValues[] = { 2.5, 95.2, -175.9 };
+
+    static const double startX = 100.32;
+    static const double startY = -50.12;
+
+    Sprite sprite;
+    sprite.setX(startX);
+    sprite.setY(startY);
+
+    VirtualMachine vm(&sprite, &m_engineMock, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    ClockMock clock;
+    MotionBlocks::clock = &clock;
+
+    std::chrono::steady_clock::time_point startTime(std::chrono::milliseconds(1000));
+    EXPECT_CALL(clock, currentSteadyTime()).Times(2).WillRepeatedly(Return(startTime));
+    EXPECT_CALL(m_engineMock, lockFrame()).Times(1);
+    EXPECT_CALL(m_engineMock, breakFrame()).Times(1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(MotionBlocks::m_timeMap.find(&vm) != MotionBlocks::m_timeMap.cend());
+    ASSERT_TRUE(MotionBlocks::m_glideMap.find(&vm) != MotionBlocks::m_glideMap.cend());
+    ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(sprite.x(), startX);
+    ASSERT_EQ(sprite.y(), startY);
+
+    std::chrono::steady_clock::time_point time1(std::chrono::milliseconds(3456));
+    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time1));
+    EXPECT_CALL(m_engineMock, lockFrame()).Times(1);
+    EXPECT_CALL(m_engineMock, breakFrame()).Times(1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(MotionBlocks::m_timeMap.find(&vm) != MotionBlocks::m_timeMap.cend());
+    ASSERT_TRUE(MotionBlocks::m_glideMap.find(&vm) != MotionBlocks::m_glideMap.cend());
+    ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(std::round(sprite.x() * 100) / 100, 95.29);
+    ASSERT_EQ(std::round(sprite.y() * 100) / 100, -173.69);
+
+    std::chrono::steady_clock::time_point time2(std::chrono::milliseconds(3500));
+    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time2));
+    EXPECT_CALL(m_engineMock, lockFrame()).Times(0);
+    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(MotionBlocks::m_timeMap.find(&vm) == MotionBlocks::m_timeMap.cend());
+    ASSERT_TRUE(MotionBlocks::m_glideMap.find(&vm) == MotionBlocks::m_glideMap.cend());
+    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(std::round(sprite.x() * 100) / 100, 95.2);
+    ASSERT_EQ(std::round(sprite.y() * 100) / 100, -175.9);
+
+    MotionBlocks::clock = Clock::instance().get();
+}
+
+TEST_F(MotionBlocksTest, GlideTo)
+{
+    Compiler compiler(&m_engineMock);
+
+    // glide (3.25) secs to (mouse-pointer)
+    auto block1 = std::make_shared<Block>("a", "motion_glideto");
+    addValueInput(block1, "SECS", MotionBlocks::SECS, 3.25);
+    addDropdownInput(block1, "TO", MotionBlocks::TO, "_mouse_");
+
+    // glide (2.5) secs to (random position)
+    auto block2 = std::make_shared<Block>("b", "motion_glideto");
+    addValueInput(block2, "SECS", MotionBlocks::SECS, 2.5);
+    addDropdownInput(block2, "TO", MotionBlocks::TO, "_random_");
+
+    // glide (5.01) secs to (Sprite2)
+    auto block3 = std::make_shared<Block>("c", "motion_glideto");
+    addValueInput(block3, "SECS", MotionBlocks::SECS, 3.25);
+    addDropdownInput(block3, "TO", MotionBlocks::TO, "Sprite2");
+
+    // glide (6.5) secs to (join "" "")
+    auto joinBlock = std::make_shared<Block>("e", "operator_join");
+    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
+    auto block4 = std::make_shared<Block>("d", "motion_glideto");
+    addValueInput(block4, "SECS", MotionBlocks::SECS, 6.5);
+    addDropdownInput(block4, "TO", MotionBlocks::TO, "", joinBlock);
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::startGlideToMousePointer)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::glideSecsTo)).WillOnce(Return(4));
+    compiler.setBlock(block1);
+    MotionBlocks::compileGlideTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::startGlideToRandomPosition)).WillOnce(Return(1));
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::glideSecsTo)).WillOnce(Return(4));
+    compiler.setBlock(block2);
+    MotionBlocks::compileGlideTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(5));
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::startGlideToByIndex)).WillOnce(Return(2));
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::glideSecsTo)).WillOnce(Return(4));
+    compiler.setBlock(block3);
+    MotionBlocks::compileGlideTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::startGlideTo)).WillOnce(Return(3));
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::glideSecsTo)).WillOnce(Return(4));
+    compiler.setBlock(block4);
+    MotionBlocks::compileGlideTo(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>(
+            { vm::OP_START,
+              vm::OP_CONST,
+              0,
+              vm::OP_EXEC,
+              0,
+              vm::OP_EXEC,
+              4,
+              vm::OP_CONST,
+              1,
+              vm::OP_EXEC,
+              1,
+              vm::OP_EXEC,
+              4,
+              vm::OP_CONST,
+              2,
+              vm::OP_CONST,
+              3,
+              vm::OP_EXEC,
+              2,
+              vm::OP_EXEC,
+              4,
+              vm::OP_CONST,
+              4,
+              vm::OP_NULL,
+              vm::OP_NULL,
+              vm::OP_STR_CONCAT,
+              vm::OP_EXEC,
+              3,
+              vm::OP_EXEC,
+              4,
+              vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 3.25, 2.5, 3.25, 5, 6.5 }));
+}
+
+TEST_F(MotionBlocksTest, GlideToImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_EXEC, 4, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 2, vm::OP_EXEC, 1, vm::OP_EXEC, 4, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 2, vm::OP_EXEC, 4, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 3, vm::OP_EXEC, 4, vm::OP_HALT };
+    static unsigned int *scripts[] = { bytecode1, bytecode2, bytecode3, bytecode4 };
+    static BlockFunc functions
+        [] = { &MotionBlocks::startGlideTo, &MotionBlocks::startGlideToByIndex, &MotionBlocks::startGlideToMousePointer, &MotionBlocks::startGlideToRandomPosition, &MotionBlocks::glideSecsTo };
+    static Value constValues[] = { 2.5, "Sprite2", 3 };
+
+    static const double startX = 100.32;
+    static const double startY = -50.12;
+    static const double endX = 95.2;
+    static const double endY = -175.9;
+
+    Sprite sprite;
+    Sprite anotherSprite;
+    anotherSprite.setX(endX);
+    anotherSprite.setY(endY);
+
+    VirtualMachine vm(&sprite, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    ClockMock clock;
+    RandomGeneratorMock rng;
+    MotionBlocks::clock = &clock;
+    MotionBlocks::rng = &rng;
+    int i = 0;
+
+    for (auto script : scripts) {
+        sprite.setX(startX);
+        sprite.setY(startY);
+
+        switch (i) {
+            case 0:
+                EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(3));
+                EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&anotherSprite));
+                break;
+
+            case 1:
+                EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&anotherSprite));
+                break;
+
+            case 2:
+                EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(endX));
+                EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(endY));
+                break;
+            case 3:
+                EXPECT_CALL(rng, randint(-240, 240)).WillOnce(Return(std::round(endX)));
+                EXPECT_CALL(rng, randint(-180, 180)).WillOnce(Return(std::round(endY)));
+            default:
+                break;
+        }
+
+        vm.setBytecode(script);
+        std::chrono::steady_clock::time_point startTime(std::chrono::milliseconds(1000));
+        EXPECT_CALL(clock, currentSteadyTime()).Times(2).WillRepeatedly(Return(startTime));
+        EXPECT_CALL(m_engineMock, lockFrame()).Times(1);
+        EXPECT_CALL(m_engineMock, breakFrame()).Times(1);
+        vm.run();
+
+        ASSERT_EQ(vm.registerCount(), 0);
+        ASSERT_TRUE(MotionBlocks::m_timeMap.find(&vm) != MotionBlocks::m_timeMap.cend());
+        ASSERT_TRUE(MotionBlocks::m_glideMap.find(&vm) != MotionBlocks::m_glideMap.cend());
+        ASSERT_FALSE(vm.atEnd());
+        ASSERT_EQ(sprite.x(), startX);
+        ASSERT_EQ(sprite.y(), startY);
+
+        std::chrono::steady_clock::time_point time1(std::chrono::milliseconds(3456));
+        EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time1));
+        EXPECT_CALL(m_engineMock, lockFrame()).Times(1);
+        EXPECT_CALL(m_engineMock, breakFrame()).Times(1);
+        vm.run();
+
+        ASSERT_EQ(vm.registerCount(), 0);
+        ASSERT_TRUE(MotionBlocks::m_timeMap.find(&vm) != MotionBlocks::m_timeMap.cend());
+        ASSERT_TRUE(MotionBlocks::m_glideMap.find(&vm) != MotionBlocks::m_glideMap.cend());
+        ASSERT_FALSE(vm.atEnd());
+
+        if (i == 3) {
+            ASSERT_EQ(std::round(sprite.x() * 100) / 100, 95.09);
+            ASSERT_EQ(std::round(sprite.y() * 100) / 100, -173.78);
+        } else {
+            ASSERT_EQ(std::round(sprite.x() * 100) / 100, 95.29);
+            ASSERT_EQ(std::round(sprite.y() * 100) / 100, -173.69);
+        }
+
+        std::chrono::steady_clock::time_point time2(std::chrono::milliseconds(3500));
+        EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time2));
+        EXPECT_CALL(m_engineMock, lockFrame()).Times(0);
+        EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
+        vm.run();
+
+        ASSERT_EQ(vm.registerCount(), 0);
+        ASSERT_TRUE(MotionBlocks::m_timeMap.find(&vm) == MotionBlocks::m_timeMap.cend());
+        ASSERT_TRUE(MotionBlocks::m_glideMap.find(&vm) == MotionBlocks::m_glideMap.cend());
+        ASSERT_TRUE(vm.atEnd());
+
+        if (i == 3) {
+            ASSERT_EQ(sprite.x(), std::round(endX));
+            ASSERT_EQ(sprite.y(), std::round(endY));
+        } else {
+            ASSERT_EQ(std::round(sprite.x() * 100) / 100, endX);
+            ASSERT_EQ(std::round(sprite.y() * 100) / 100, endY);
+        }
+
+        i++;
+    }
+
+    MotionBlocks::clock = Clock::instance().get();
+    MotionBlocks::rng = RandomGenerator::instance().get();
+}
+
+TEST_F(MotionBlocksTest, ChangeXBy)
+{
+    Compiler compiler(&m_engineMock);
+
+    // change x by (56.54)
+    auto block = std::make_shared<Block>("a", "motion_changexby");
+    addValueInput(block, "DX", MotionBlocks::DX, 56.54);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::changeXBy)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compileChangeXBy(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), 56.54);
+}
+
+TEST_F(MotionBlocksTest, ChangeXByImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::changeXBy };
+    static Value constValues[] = { 56.54 };
+
+    Sprite sprite;
+    sprite.setX(-23.4);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.x(), 33.14);
+}
+
+TEST_F(MotionBlocksTest, SetX)
+{
+    Compiler compiler(&m_engineMock);
+
+    // set x to (-63.4)
+    auto block = std::make_shared<Block>("a", "motion_setx");
+    addValueInput(block, "X", MotionBlocks::X, -63.4);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::setX)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compileSetX(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), -63.4);
+}
+
+TEST_F(MotionBlocksTest, SetXImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::setX };
+    static Value constValues[] = { -63.4 };
+
+    Sprite sprite;
+    sprite.setX(239.98);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.x(), -63.4);
+}
+
+TEST_F(MotionBlocksTest, ChangeYBy)
+{
+    Compiler compiler(&m_engineMock);
+
+    // change y by (135.2)
+    auto block = std::make_shared<Block>("a", "motion_changeyby");
+    addValueInput(block, "DY", MotionBlocks::DY, 135.2);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::changeYBy)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compileChangeYBy(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), 135.2);
+}
+
+TEST_F(MotionBlocksTest, ChangeYByImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::changeYBy };
+    static Value constValues[] = { 135.2 };
+
+    Sprite sprite;
+    sprite.setY(200.657);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(std::round(sprite.y() * 1000) / 1000, 335.857);
 }

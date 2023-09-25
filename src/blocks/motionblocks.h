@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include <unordered_map>
+#include <chrono>
+
 #include <scratchcpp/iblocksection.h>
 
 namespace libscratchcpp
@@ -9,6 +12,7 @@ namespace libscratchcpp
 
 class Sprite;
 class IRandomGenerator;
+class IClock;
 
 /*! \brief The MotionBlocks class contains the implementation of motion blocks. */
 class MotionBlocks : public IBlockSection
@@ -21,7 +25,11 @@ class MotionBlocks : public IBlockSection
             DIRECTION,
             TOWARDS,
             X,
-            Y
+            Y,
+            TO,
+            SECS,
+            DX,
+            DY
         };
 
         enum Fields
@@ -42,6 +50,12 @@ class MotionBlocks : public IBlockSection
         static void compilePointInDirection(Compiler *compiler);
         static void compilePointTowards(Compiler *compiler);
         static void compileGoToXY(Compiler *compiler);
+        static void compileGoTo(Compiler *compiler);
+        static void compileGlideSecsToXY(Compiler *compiler);
+        static void compileGlideTo(Compiler *compiler);
+        static void compileChangeXBy(Compiler *compiler);
+        static void compileSetX(Compiler *compiler);
+        static void compileChangeYBy(Compiler *compiler);
 
         static unsigned int moveSteps(VirtualMachine *vm);
         static unsigned int turnRight(VirtualMachine *vm);
@@ -56,8 +70,30 @@ class MotionBlocks : public IBlockSection
         static unsigned int pointTowardsRandomPosition(VirtualMachine *vm);
 
         static unsigned int goToXY(VirtualMachine *vm);
+        static unsigned int goTo(VirtualMachine *vm);
+        static unsigned int goToByIndex(VirtualMachine *vm);
+        static unsigned int goToMousePointer(VirtualMachine *vm);
+        static unsigned int goToRandomPosition(VirtualMachine *vm);
+
+        static void startGlidingToPos(VirtualMachine *vm, double x, double y, double secs);
+        static void continueGliding(VirtualMachine *vm);
+
+        static unsigned int startGlideSecsTo(VirtualMachine *vm);
+        static unsigned int glideSecsTo(VirtualMachine *vm);
+        static unsigned int startGlideTo(VirtualMachine *vm);
+        static unsigned int startGlideToByIndex(VirtualMachine *vm);
+        static unsigned int startGlideToMousePointer(VirtualMachine *vm);
+        static unsigned int startGlideToRandomPosition(VirtualMachine *vm);
+
+        static unsigned int changeXBy(VirtualMachine *vm);
+        static unsigned int setX(VirtualMachine *vm);
+        static unsigned int changeYBy(VirtualMachine *vm);
 
         static IRandomGenerator *rng;
+        static IClock *clock;
+
+        static inline std::unordered_map<VirtualMachine *, std::pair<std::chrono::steady_clock::time_point, int>> m_timeMap;
+        static inline std::unordered_map<VirtualMachine *, std::pair<std::pair<double, double>, std::pair<double, double>>> m_glideMap; // start pos, end pos
 };
 
 } // namespace libscratchcpp
