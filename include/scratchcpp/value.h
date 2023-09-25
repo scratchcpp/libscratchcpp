@@ -525,10 +525,7 @@ class LIBSCRATCHCPP_EXPORT Value
                         return stringsEqual(v1.toUtf16(), v2.toUtf16());
                     default:
                         if ((static_cast<int>(v1.m_type) < 0) && (static_cast<int>(v2.m_type) < 0)) {
-                            if (v1.m_type == Type::NaN || v2.m_type == Type::NaN)
-                                return false;
-                            else
-                                return ((v1.m_type == Type::Infinity && v2.m_type == Type::Infinity) || (v1.m_type == Type::NegativeInfinity && v2.m_type == Type::NegativeInfinity));
+                            return v1.m_type == v2.m_type;
                         }
                 }
             } else {

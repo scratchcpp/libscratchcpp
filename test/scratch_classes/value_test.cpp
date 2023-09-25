@@ -1740,9 +1740,8 @@ TEST(ValueTest, EqualityOperators)
         ASSERT_TRUE(v3 == v4);
         ASSERT_FALSE(v3 != v4);
 
-        // TODO: Enable this after #196 is fixed
-        /*ASSERT_TRUE(v5 == v6);
-        ASSERT_FALSE(v5 != v6);*/
+        ASSERT_TRUE(v5 == v6);
+        ASSERT_FALSE(v5 != v6);
 
         ASSERT_FALSE(v1 == v3);
         ASSERT_TRUE(v1 != v3);
