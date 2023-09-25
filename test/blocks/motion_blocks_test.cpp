@@ -107,6 +107,7 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_glidesecstoxy", &MotionBlocks::compileGlideSecsToXY));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_glideto", &MotionBlocks::compileGlideTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_changexby", &MotionBlocks::compileChangeXBy));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_setx", &MotionBlocks::compileSetX));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "STEPS", MotionBlocks::STEPS));
@@ -960,4 +961,43 @@ TEST_F(MotionBlocksTest, ChangeXByImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(sprite.x(), 33.14);
+}
+
+TEST_F(MotionBlocksTest, SetX)
+{
+    Compiler compiler(&m_engineMock);
+
+    // set x to (-63.4)
+    auto block = std::make_shared<Block>("a", "motion_setx");
+    addValueInput(block, "X", MotionBlocks::X, -63.4);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::setX)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compileSetX(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), -63.4);
+}
+
+TEST_F(MotionBlocksTest, SetXImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::setX };
+    static Value constValues[] = { -63.4 };
+
+    Sprite sprite;
+    sprite.setX(239.98);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.x(), -63.4);
 }

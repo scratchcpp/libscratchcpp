@@ -34,6 +34,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_glidesecstoxy", &compileGlideSecsToXY);
     engine->addCompileFunction(this, "motion_glideto", &compileGlideTo);
     engine->addCompileFunction(this, "motion_changexby", &compileChangeXBy);
+    engine->addCompileFunction(this, "motion_setx", &compileSetX);
 
     // Inputs
     engine->addInput(this, "STEPS", STEPS);
@@ -164,6 +165,12 @@ void MotionBlocks::compileChangeXBy(Compiler *compiler)
 {
     compiler->addInput(DX);
     compiler->addFunctionCall(&changeXBy);
+}
+
+void MotionBlocks::compileSetX(Compiler *compiler)
+{
+    compiler->addInput(X);
+    compiler->addFunctionCall(&setX);
 }
 
 unsigned int MotionBlocks::moveSteps(VirtualMachine *vm)
@@ -534,6 +541,16 @@ unsigned int MotionBlocks::changeXBy(VirtualMachine *vm)
 
     if (sprite)
         sprite->setX(sprite->x() + vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int MotionBlocks::setX(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setX(vm->getInput(0, 1)->toDouble());
 
     return 1;
 }

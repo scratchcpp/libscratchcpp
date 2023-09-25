@@ -53,6 +53,7 @@ class MotionBlocks : public IBlockSection
         static void compileGlideSecsToXY(Compiler *compiler);
         static void compileGlideTo(Compiler *compiler);
         static void compileChangeXBy(Compiler *compiler);
+        static void compileSetX(Compiler *compiler);
 
         static unsigned int moveSteps(VirtualMachine *vm);
         static unsigned int turnRight(VirtualMachine *vm);
@@ -83,6 +84,7 @@ class MotionBlocks : public IBlockSection
         static unsigned int startGlideToRandomPosition(VirtualMachine *vm);
 
         static unsigned int changeXBy(VirtualMachine *vm);
+        static unsigned int setX(VirtualMachine *vm);
 
         static IRandomGenerator *rng;
         static IClock *clock;
