@@ -108,6 +108,7 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_glideto", &MotionBlocks::compileGlideTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_changexby", &MotionBlocks::compileChangeXBy));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_setx", &MotionBlocks::compileSetX));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_changeyby", &MotionBlocks::compileChangeYBy));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "STEPS", MotionBlocks::STEPS));
@@ -119,6 +120,7 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TO", MotionBlocks::TO));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SECS", MotionBlocks::SECS));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DX", MotionBlocks::DX));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DY", MotionBlocks::DY));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -1000,4 +1002,43 @@ TEST_F(MotionBlocksTest, SetXImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(sprite.x(), -63.4);
+}
+
+TEST_F(MotionBlocksTest, ChangeYBy)
+{
+    Compiler compiler(&m_engineMock);
+
+    // change y by (135.2)
+    auto block = std::make_shared<Block>("a", "motion_changeyby");
+    addValueInput(block, "DY", MotionBlocks::DY, 135.2);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::changeYBy)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compileChangeYBy(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), 135.2);
+}
+
+TEST_F(MotionBlocksTest, ChangeYByImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::changeYBy };
+    static Value constValues[] = { 135.2 };
+
+    Sprite sprite;
+    sprite.setY(200.657);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(std::round(sprite.y() * 1000) / 1000, 335.857);
 }

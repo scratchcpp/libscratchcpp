@@ -28,7 +28,8 @@ class MotionBlocks : public IBlockSection
             Y,
             TO,
             SECS,
-            DX
+            DX,
+            DY
         };
 
         enum Fields
@@ -54,6 +55,7 @@ class MotionBlocks : public IBlockSection
         static void compileGlideTo(Compiler *compiler);
         static void compileChangeXBy(Compiler *compiler);
         static void compileSetX(Compiler *compiler);
+        static void compileChangeYBy(Compiler *compiler);
 
         static unsigned int moveSteps(VirtualMachine *vm);
         static unsigned int turnRight(VirtualMachine *vm);
@@ -85,6 +87,7 @@ class MotionBlocks : public IBlockSection
 
         static unsigned int changeXBy(VirtualMachine *vm);
         static unsigned int setX(VirtualMachine *vm);
+        static unsigned int changeYBy(VirtualMachine *vm);
 
         static IRandomGenerator *rng;
         static IClock *clock;
