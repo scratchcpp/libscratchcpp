@@ -36,6 +36,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_changexby", &compileChangeXBy);
     engine->addCompileFunction(this, "motion_setx", &compileSetX);
     engine->addCompileFunction(this, "motion_changeyby", &compileChangeYBy);
+    engine->addCompileFunction(this, "motion_sety", &compileSetY);
 
     // Inputs
     engine->addInput(this, "STEPS", STEPS);
@@ -179,6 +180,12 @@ void MotionBlocks::compileChangeYBy(Compiler *compiler)
 {
     compiler->addInput(DY);
     compiler->addFunctionCall(&changeYBy);
+}
+
+void MotionBlocks::compileSetY(Compiler *compiler)
+{
+    compiler->addInput(Y);
+    compiler->addFunctionCall(&setY);
 }
 
 unsigned int MotionBlocks::moveSteps(VirtualMachine *vm)
@@ -569,6 +576,16 @@ unsigned int MotionBlocks::changeYBy(VirtualMachine *vm)
 
     if (sprite)
         sprite->setY(sprite->y() + vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int MotionBlocks::setY(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setY(vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
