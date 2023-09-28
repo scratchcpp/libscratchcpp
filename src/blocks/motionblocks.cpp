@@ -4,6 +4,7 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/input.h>
+#include <scratchcpp/field.h>
 
 #include "motionblocks.h"
 #include "../engine/internal/randomgenerator.h"
@@ -37,6 +38,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_setx", &compileSetX);
     engine->addCompileFunction(this, "motion_changeyby", &compileChangeYBy);
     engine->addCompileFunction(this, "motion_sety", &compileSetY);
+    engine->addCompileFunction(this, "motion_setrotationstyle", &compileSetRotationStyle);
 
     // Inputs
     engine->addInput(this, "STEPS", STEPS);
@@ -49,6 +51,9 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addInput(this, "SECS", SECS);
     engine->addInput(this, "DX", DX);
     engine->addInput(this, "DY", DY);
+
+    // Fields
+    engine->addField(this, "STYLE", STYLE);
 }
 
 void MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -186,6 +191,28 @@ void MotionBlocks::compileSetY(Compiler *compiler)
 {
     compiler->addInput(Y);
     compiler->addFunctionCall(&setY);
+}
+
+void MotionBlocks::compileSetRotationStyle(Compiler *compiler)
+{
+    int option = compiler->field(STYLE)->specialValueId();
+
+    switch (option) {
+        case LeftRight:
+            compiler->addFunctionCall(&setLeftRightRotationStyle);
+            break;
+
+        case DoNotRotate:
+            compiler->addFunctionCall(&setDoNotRotateRotationStyle);
+            break;
+
+        case AllAround:
+            compiler->addFunctionCall(&setAllAroundRotationStyle);
+            break;
+
+        default:
+            break;
+    }
 }
 
 unsigned int MotionBlocks::moveSteps(VirtualMachine *vm)
@@ -588,4 +615,34 @@ unsigned int MotionBlocks::setY(VirtualMachine *vm)
         sprite->setY(vm->getInput(0, 1)->toDouble());
 
     return 1;
+}
+
+unsigned int MotionBlocks::setLeftRightRotationStyle(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setRotationStyle(Sprite::RotationStyle::LeftRight);
+
+    return 0;
+}
+
+unsigned int MotionBlocks::setDoNotRotateRotationStyle(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setRotationStyle(Sprite::RotationStyle::DoNotRotate);
+
+    return 0;
+}
+
+unsigned int MotionBlocks::setAllAroundRotationStyle(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setRotationStyle(Sprite::RotationStyle::AllAround);
+
+    return 0;
 }
