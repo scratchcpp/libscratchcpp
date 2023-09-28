@@ -62,6 +62,7 @@ class MotionBlocks : public IBlockSection
         static void compileChangeYBy(Compiler *compiler);
         static void compileSetY(Compiler *compiler);
         static void compileSetRotationStyle(Compiler *compiler);
+        static void compileXPosition(Compiler *compiler);
 
         static unsigned int moveSteps(VirtualMachine *vm);
         static unsigned int turnRight(VirtualMachine *vm);
@@ -98,6 +99,7 @@ class MotionBlocks : public IBlockSection
         static unsigned int setLeftRightRotationStyle(VirtualMachine *vm);
         static unsigned int setDoNotRotateRotationStyle(VirtualMachine *vm);
         static unsigned int setAllAroundRotationStyle(VirtualMachine *vm);
+        static unsigned int xPosition(VirtualMachine *vm);
 
         static IRandomGenerator *rng;
         static IClock *clock;

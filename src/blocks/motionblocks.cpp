@@ -39,6 +39,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_changeyby", &compileChangeYBy);
     engine->addCompileFunction(this, "motion_sety", &compileSetY);
     engine->addCompileFunction(this, "motion_setrotationstyle", &compileSetRotationStyle);
+    engine->addCompileFunction(this, "motion_xposition", &compileXPosition);
 
     // Inputs
     engine->addInput(this, "STEPS", STEPS);
@@ -213,6 +214,11 @@ void MotionBlocks::compileSetRotationStyle(Compiler *compiler)
         default:
             break;
     }
+}
+
+void MotionBlocks::compileXPosition(Compiler *compiler)
+{
+    compiler->addFunctionCall(&xPosition);
 }
 
 unsigned int MotionBlocks::moveSteps(VirtualMachine *vm)
@@ -643,6 +649,18 @@ unsigned int MotionBlocks::setAllAroundRotationStyle(VirtualMachine *vm)
 
     if (sprite)
         sprite->setRotationStyle(Sprite::RotationStyle::AllAround);
+
+    return 0;
+}
+
+unsigned int MotionBlocks::xPosition(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        vm->addReturnValue(sprite->x());
+    else
+        vm->addReturnValue(0);
 
     return 0;
 }
