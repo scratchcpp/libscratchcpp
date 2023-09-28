@@ -257,24 +257,7 @@ class LIBSCRATCHCPP_EXPORT Value
                     case Type::Integer:
                         return std::to_string(m_intValue);
                     case Type::Double: {
-                        std::stringstream stream;
-                        stream << m_doubleValue;
-                        std::string s = stream.str();
-                        std::size_t index;
-
-                        for (int i = 0; i < 2; i++) {
-                            if (i == 0)
-                                index = s.find("e+");
-                            else
-                                index = s.find("e-");
-
-                            if (index != std::string::npos) {
-                                while ((s.size() >= index + 3) && (s[index + 2] == '0'))
-                                    s.erase(index + 2, 1);
-                            }
-                        }
-
-                        return s;
+                        return doubleToString(m_doubleValue);
                     }
                     case Type::Bool:
                         return m_boolValue ? "true" : "false";
@@ -471,6 +454,26 @@ class LIBSCRATCHCPP_EXPORT Value
                 std::string m_stringValue;
         };
 
+        // -1 - error
+        // 0 - is string
+        // 1 - is long
+        // 2 - is double
+        static int checkString(const std::string &str, long *longValue, double *doubleValue)
+        {
+            if (!longValue || !doubleValue)
+                return -1;
+
+            bool ok;
+
+            if ((str.find_first_of('.') == std::string::npos) && (str.find_first_of('e') == std::string::npos) && (str.find_first_of('E') == std::string::npos)) {
+                *longValue = stringToLong(str, &ok);
+                return ok ? 1 : 0;
+            } else {
+                *doubleValue = stringToDouble(str, &ok);
+                return ok ? 2 : 0;
+            }
+        }
+
         void initString(const std::string &str)
         {
             if (str.empty())
@@ -486,23 +489,21 @@ class LIBSCRATCHCPP_EXPORT Value
                 return;
             }
 
-            bool ok;
-            bool isLong = false;
             long l;
             double d;
-            if ((str.find_first_of('.') == std::string::npos) && (str.find_first_of('e') == std::string::npos) && (str.find_first_of('E') == std::string::npos)) {
-                l = stringToLong(str, &ok);
-                isLong = true;
-            } else
-                d = stringToDouble(str, &ok);
-            if (ok) {
-                if (isLong) {
+            int type = checkString(str, &l, &d);
+
+            switch (type) {
+                case 1:
                     *this = l;
                     m_type = Type::Integer;
-                } else {
+                    break;
+                case 2:
                     *this = d;
                     m_type = Type::Double;
-                }
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -529,9 +530,30 @@ class LIBSCRATCHCPP_EXPORT Value
                         }
                 }
             } else {
-                if (v1.isString() || v2.isString())
-                    return stringsEqual(v1.toUtf16(), v2.toUtf16());
-                else if (v1.isNumber() || v2.isNumber())
+                if (v1.isString() || v2.isString()) {
+                    if (static_cast<int>(v1.m_type) < 0 || static_cast<int>(v2.m_type) < 0)
+                        return stringsEqual(v1.toUtf16(), v2.toUtf16());
+
+                    long l1, l2;
+                    double d1, d2;
+                    int type1 = checkString(v1.toString(), &l1, &d1);
+                    int type2 = checkString(v2.toString(), &l2, &d2);
+
+                    if (type1 == 1)
+                        d1 = l1;
+
+                    if (type2 == 1)
+                        d2 = l2;
+
+                    if (type1 > 0 && type2 > 0)
+                        return d1 == d2;
+                    else if (type2 > 0)
+                        return v1.toString() == doubleToString(d2);
+                    else if (type1 > 0)
+                        return doubleToString(d1) == v2.toString();
+                    else
+                        return stringsEqual(v1.toUtf16(), v2.toUtf16());
+                } else if (v1.isNumber() || v2.isNumber())
                     return v1.toDouble() == v2.toDouble();
                 else if (v1.isBool() || v2.isBool())
                     return ((v1.m_type != Type::NaN && v2.m_type != Type::NaN) && (v1.toBool() == v2.toBool()));
@@ -708,15 +730,37 @@ class LIBSCRATCHCPP_EXPORT Value
             }
 
             static const std::string digits = "0123456789.eE+-";
-            for (char c : s) {
+            const std::string *stringPtr = &s;
+            bool customStr = false;
+
+            if (!s.empty() && ((s[0] == ' ') || (s.back() == ' '))) {
+                std::string *localPtr = new std::string(s);
+                stringPtr = localPtr;
+                customStr = true;
+
+                while (!localPtr->empty() && (localPtr->at(0) == ' '))
+                    localPtr->erase(0, 1);
+
+                while (!localPtr->empty() && (localPtr->back() == ' '))
+                    localPtr->pop_back();
+            }
+
+            for (char c : *stringPtr) {
                 if (digits.find(c) == std::string::npos) {
                     return 0;
                 }
             }
+
             try {
                 if (ok)
                     *ok = true;
-                return std::stod(s);
+
+                double ret = std::stod(*stringPtr);
+
+                if (customStr)
+                    delete stringPtr;
+
+                return ret;
             } catch (...) {
                 if (ok)
                     *ok = false;
@@ -760,6 +804,28 @@ class LIBSCRATCHCPP_EXPORT Value
                     *ok = false;
                 return 0;
             }
+        }
+
+        static std::string doubleToString(double v)
+        {
+            std::stringstream stream;
+            stream << v;
+            std::string s = stream.str();
+            std::size_t index;
+
+            for (int i = 0; i < 2; i++) {
+                if (i == 0)
+                    index = s.find("e+");
+                else
+                    index = s.find("e-");
+
+                if (index != std::string::npos) {
+                    while ((s.size() >= index + 3) && (s[index + 2] == '0'))
+                        s.erase(index + 2, 1);
+                }
+            }
+
+            return s;
         }
 };
 

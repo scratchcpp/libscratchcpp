@@ -1786,16 +1786,44 @@ TEST(ValueTest, EqualityOperators)
     {
         Value v1 = 5.25;
         Value v2 = "5.25";
-        Value v3 = "5.26";
+        Value v3 = " 5.25";
+        Value v4 = "5.25 ";
+        Value v5 = " 5.25 ";
+        Value v6 = "  5.25  ";
+        Value v7 = "5.26";
 
         ASSERT_TRUE(v1 == v2);
         ASSERT_FALSE(v1 != v2);
 
-        ASSERT_FALSE(v1 == v3);
-        ASSERT_TRUE(v1 != v3);
+        ASSERT_TRUE(v1 == v3);
+        ASSERT_FALSE(v1 != v3);
 
-        ASSERT_FALSE(v2 == v3);
-        ASSERT_TRUE(v2 != v3);
+        ASSERT_TRUE(v1 == v4);
+        ASSERT_FALSE(v1 != v4);
+
+        ASSERT_TRUE(v1 == v5);
+        ASSERT_FALSE(v1 != v5);
+
+        ASSERT_TRUE(v1 == v6);
+        ASSERT_FALSE(v1 != v6);
+
+        ASSERT_FALSE(v1 == v7);
+        ASSERT_TRUE(v1 != v7);
+
+        ASSERT_FALSE(v2 == v7);
+        ASSERT_TRUE(v2 != v7);
+
+        ASSERT_FALSE(v3 == v7);
+        ASSERT_TRUE(v3 != v7);
+
+        ASSERT_FALSE(v4 == v7);
+        ASSERT_TRUE(v4 != v7);
+
+        ASSERT_FALSE(v5 == v7);
+        ASSERT_TRUE(v5 != v7);
+
+        ASSERT_FALSE(v6 == v7);
+        ASSERT_TRUE(v6 != v7);
     }
 
     {
