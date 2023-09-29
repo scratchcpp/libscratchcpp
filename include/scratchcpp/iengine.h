@@ -103,6 +103,18 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the Y coordinate of the mouse pointer. */
         virtual void setMouseY(double y) = 0;
 
+        /*! Returns the stage width. */
+        virtual unsigned int stageWidth() const = 0;
+
+        /*! Sets the stage width. */
+        virtual void setStageWidth(unsigned int width) = 0;
+
+        /*! Returns the stage height. */
+        virtual unsigned int stageHeight() const = 0;
+
+        /*! Sets the stage height. */
+        virtual void setStageHeight(unsigned int height) = 0;
+
         /*! Returns true if there are any running script of the broadcast with the given index. */
         virtual bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) = 0;
 

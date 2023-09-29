@@ -45,6 +45,12 @@ class Engine : public IEngine
         double mouseY() const override;
         void setMouseY(double y) override;
 
+        unsigned int stageWidth() const override;
+        void setStageWidth(unsigned int width) override;
+
+        unsigned int stageHeight() const override;
+        void setStageHeight(unsigned int height) override;
+
         bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) override;
 
         void breakFrame() override;
@@ -122,6 +128,8 @@ class Engine : public IEngine
         std::chrono::milliseconds m_frameDuration; // will be computed in run()
         double m_mouseX = 0;
         double m_mouseY = 0;
+        unsigned int m_stageWidth = 480;
+        unsigned int m_stageHeight = 360;
 
         bool m_running = false;
         bool m_breakFrame = false;
