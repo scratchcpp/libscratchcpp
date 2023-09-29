@@ -34,10 +34,14 @@ class MotionBlocks : public IBlockSection
 
         enum Fields
         {
+            STYLE
         };
 
         enum FieldValues
         {
+            LeftRight,
+            AllAround,
+            DoNotRotate
         };
 
         std::string name() const override;
@@ -56,6 +60,11 @@ class MotionBlocks : public IBlockSection
         static void compileChangeXBy(Compiler *compiler);
         static void compileSetX(Compiler *compiler);
         static void compileChangeYBy(Compiler *compiler);
+        static void compileSetY(Compiler *compiler);
+        static void compileSetRotationStyle(Compiler *compiler);
+        static void compileXPosition(Compiler *compiler);
+        static void compileYPosition(Compiler *compiler);
+        static void compileDirection(Compiler *compiler);
 
         static unsigned int moveSteps(VirtualMachine *vm);
         static unsigned int turnRight(VirtualMachine *vm);
@@ -88,6 +97,13 @@ class MotionBlocks : public IBlockSection
         static unsigned int changeXBy(VirtualMachine *vm);
         static unsigned int setX(VirtualMachine *vm);
         static unsigned int changeYBy(VirtualMachine *vm);
+        static unsigned int setY(VirtualMachine *vm);
+        static unsigned int setLeftRightRotationStyle(VirtualMachine *vm);
+        static unsigned int setDoNotRotateRotationStyle(VirtualMachine *vm);
+        static unsigned int setAllAroundRotationStyle(VirtualMachine *vm);
+        static unsigned int xPosition(VirtualMachine *vm);
+        static unsigned int yPosition(VirtualMachine *vm);
+        static unsigned int direction(VirtualMachine *vm);
 
         static IRandomGenerator *rng;
         static IClock *clock;

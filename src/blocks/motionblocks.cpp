@@ -4,6 +4,7 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/input.h>
+#include <scratchcpp/field.h>
 
 #include "motionblocks.h"
 #include "../engine/internal/randomgenerator.h"
@@ -36,6 +37,11 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_changexby", &compileChangeXBy);
     engine->addCompileFunction(this, "motion_setx", &compileSetX);
     engine->addCompileFunction(this, "motion_changeyby", &compileChangeYBy);
+    engine->addCompileFunction(this, "motion_sety", &compileSetY);
+    engine->addCompileFunction(this, "motion_setrotationstyle", &compileSetRotationStyle);
+    engine->addCompileFunction(this, "motion_xposition", &compileXPosition);
+    engine->addCompileFunction(this, "motion_yposition", &compileYPosition);
+    engine->addCompileFunction(this, "motion_direction", &compileDirection);
 
     // Inputs
     engine->addInput(this, "STEPS", STEPS);
@@ -48,6 +54,9 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addInput(this, "SECS", SECS);
     engine->addInput(this, "DX", DX);
     engine->addInput(this, "DY", DY);
+
+    // Fields
+    engine->addField(this, "STYLE", STYLE);
 }
 
 void MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -179,6 +188,49 @@ void MotionBlocks::compileChangeYBy(Compiler *compiler)
 {
     compiler->addInput(DY);
     compiler->addFunctionCall(&changeYBy);
+}
+
+void MotionBlocks::compileSetY(Compiler *compiler)
+{
+    compiler->addInput(Y);
+    compiler->addFunctionCall(&setY);
+}
+
+void MotionBlocks::compileSetRotationStyle(Compiler *compiler)
+{
+    int option = compiler->field(STYLE)->specialValueId();
+
+    switch (option) {
+        case LeftRight:
+            compiler->addFunctionCall(&setLeftRightRotationStyle);
+            break;
+
+        case DoNotRotate:
+            compiler->addFunctionCall(&setDoNotRotateRotationStyle);
+            break;
+
+        case AllAround:
+            compiler->addFunctionCall(&setAllAroundRotationStyle);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void MotionBlocks::compileXPosition(Compiler *compiler)
+{
+    compiler->addFunctionCall(&xPosition);
+}
+
+void MotionBlocks::compileYPosition(Compiler *compiler)
+{
+    compiler->addFunctionCall(&yPosition);
+}
+
+void MotionBlocks::compileDirection(Compiler *compiler)
+{
+    compiler->addFunctionCall(&direction);
 }
 
 unsigned int MotionBlocks::moveSteps(VirtualMachine *vm)
@@ -571,4 +623,80 @@ unsigned int MotionBlocks::changeYBy(VirtualMachine *vm)
         sprite->setY(sprite->y() + vm->getInput(0, 1)->toDouble());
 
     return 1;
+}
+
+unsigned int MotionBlocks::setY(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setY(vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int MotionBlocks::setLeftRightRotationStyle(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setRotationStyle(Sprite::RotationStyle::LeftRight);
+
+    return 0;
+}
+
+unsigned int MotionBlocks::setDoNotRotateRotationStyle(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setRotationStyle(Sprite::RotationStyle::DoNotRotate);
+
+    return 0;
+}
+
+unsigned int MotionBlocks::setAllAroundRotationStyle(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setRotationStyle(Sprite::RotationStyle::AllAround);
+
+    return 0;
+}
+
+unsigned int MotionBlocks::xPosition(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        vm->addReturnValue(sprite->x());
+    else
+        vm->addReturnValue(0);
+
+    return 0;
+}
+
+unsigned int MotionBlocks::yPosition(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        vm->addReturnValue(sprite->y());
+    else
+        vm->addReturnValue(0);
+
+    return 0;
+}
+
+unsigned int MotionBlocks::direction(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        vm->addReturnValue(sprite->direction());
+    else
+        vm->addReturnValue(0);
+
+    return 0;
 }

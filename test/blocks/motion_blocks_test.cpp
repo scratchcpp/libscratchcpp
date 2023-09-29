@@ -109,6 +109,11 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_changexby", &MotionBlocks::compileChangeXBy));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_setx", &MotionBlocks::compileSetX));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_changeyby", &MotionBlocks::compileChangeYBy));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_sety", &MotionBlocks::compileSetY));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_setrotationstyle", &MotionBlocks::compileSetRotationStyle));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_xposition", &MotionBlocks::compileXPosition));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_yposition", &MotionBlocks::compileYPosition));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_direction", &MotionBlocks::compileDirection));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "STEPS", MotionBlocks::STEPS));
@@ -121,6 +126,9 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SECS", MotionBlocks::SECS));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DX", MotionBlocks::DX));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DY", MotionBlocks::DY));
+
+    // Fields
+    EXPECT_CALL(m_engineMock, addField(m_section.get(), "STYLE", MotionBlocks::STYLE));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -1041,4 +1049,212 @@ TEST_F(MotionBlocksTest, ChangeYByImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(std::round(sprite.y() * 1000) / 1000, 335.857);
+}
+
+TEST_F(MotionBlocksTest, SetY)
+{
+    Compiler compiler(&m_engineMock);
+
+    // set y to (189.42)
+    auto block = std::make_shared<Block>("a", "motion_sety");
+    addValueInput(block, "Y", MotionBlocks::Y, 189.42);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::setY)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compileSetY(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), 189.42);
+}
+
+TEST_F(MotionBlocksTest, SetYImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::setY };
+    static Value constValues[] = { 189.42 };
+
+    Sprite sprite;
+    sprite.setY(-15.056);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.y(), 189.42);
+}
+
+TEST_F(MotionBlocksTest, SetRotationStyle)
+{
+    Compiler compiler(&m_engineMock);
+
+    // set rotation style [left-right]
+    auto block1 = std::make_shared<Block>("a", "motion_setrotationstyle");
+    addDropdownField(block1, "STYLE", MotionBlocks::STYLE, "left-right", MotionBlocks::LeftRight);
+
+    // set rotation style [don't rotate]
+    auto block2 = std::make_shared<Block>("b", "motion_setrotationstyle");
+    addDropdownField(block2, "STYLE", MotionBlocks::STYLE, "don't rotate", MotionBlocks::DoNotRotate);
+
+    // set rotation style [all around]
+    auto block3 = std::make_shared<Block>("c", "motion_setrotationstyle");
+    addDropdownField(block3, "STYLE", MotionBlocks::STYLE, "all around", MotionBlocks::AllAround);
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::setLeftRightRotationStyle)).WillOnce(Return(0));
+    compiler.setBlock(block1);
+    MotionBlocks::compileSetRotationStyle(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::setDoNotRotateRotationStyle)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    MotionBlocks::compileSetRotationStyle(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::setAllAroundRotationStyle)).WillOnce(Return(2));
+    compiler.setBlock(block3);
+    MotionBlocks::compileSetRotationStyle(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(MotionBlocksTest, SetRotationStyleImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_EXEC, 2, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::setLeftRightRotationStyle, &MotionBlocks::setDoNotRotateRotationStyle, &MotionBlocks::setAllAroundRotationStyle };
+
+    Sprite sprite;
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setFunctions(functions);
+
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::LeftRight);
+
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::DoNotRotate);
+
+    vm.setBytecode(bytecode3);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::AllAround);
+}
+
+TEST_F(MotionBlocksTest, XPosition)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "motion_xposition");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::xPosition)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compileXPosition(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(MotionBlocksTest, XPositionImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::xPosition };
+
+    Sprite sprite;
+    sprite.setX(198.0874);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 198.0874);
+}
+
+TEST_F(MotionBlocksTest, YPosition)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "motion_yposition");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::yPosition)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compileYPosition(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(MotionBlocksTest, YPositionImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::yPosition };
+
+    Sprite sprite;
+    sprite.setY(-68.5408);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), -68.5408);
+}
+
+TEST_F(MotionBlocksTest, Direction)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "motion_direction");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::direction)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compileDirection(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(MotionBlocksTest, DirectionImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::direction };
+
+    Sprite sprite;
+    sprite.setDirection(179.605);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 179.605);
 }
