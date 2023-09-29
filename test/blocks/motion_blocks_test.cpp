@@ -112,6 +112,7 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_sety", &MotionBlocks::compileSetY));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_setrotationstyle", &MotionBlocks::compileSetRotationStyle));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_xposition", &MotionBlocks::compileXPosition));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_yposition", &MotionBlocks::compileYPosition));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "STEPS", MotionBlocks::STEPS));
@@ -1187,4 +1188,38 @@ TEST_F(MotionBlocksTest, XPositionImpl)
 
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 198.0874);
+}
+
+TEST_F(MotionBlocksTest, YPosition)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "motion_yposition");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&MotionBlocks::yPosition)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    MotionBlocks::compileYPosition(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(MotionBlocksTest, YPositionImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &MotionBlocks::yPosition };
+
+    Sprite sprite;
+    sprite.setY(-68.5408);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), -68.5408);
 }
