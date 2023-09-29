@@ -1983,9 +1983,8 @@ TEST(ValueTest, EqualityOperators)
         ASSERT_FALSE(v5 == v8);
         ASSERT_TRUE(v5 != v8);
 
-        // TODO: Enable this after #197 is fixed
-        /*ASSERT_TRUE(v5 == v9);
-        ASSERT_FALSE(v5 != v9);*/
+        ASSERT_TRUE(v5 == v9);
+        ASSERT_FALSE(v5 != v9);
 
         // nan
         ASSERT_FALSE(v6 == v7);
