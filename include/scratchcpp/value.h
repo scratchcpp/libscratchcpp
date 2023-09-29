@@ -553,9 +553,12 @@ class LIBSCRATCHCPP_EXPORT Value
                         return doubleToString(d1) == v2.toString();
                     else
                         return stringsEqual(v1.toUtf16(), v2.toUtf16());
-                } else if (v1.isNumber() || v2.isNumber())
-                    return v1.toDouble() == v2.toDouble();
-                else if (v1.isBool() || v2.isBool())
+                } else if (v1.isNumber() || v2.isNumber()) {
+                    if (static_cast<int>(v1.m_type) < 0 || static_cast<int>(v2.m_type) < 0)
+                        return false;
+                    else
+                        return v1.toDouble() == v2.toDouble();
+                } else if (v1.isBool() || v2.isBool())
                     return ((v1.m_type != Type::NaN && v2.m_type != Type::NaN) && (v1.toBool() == v2.toBool()));
                 else
                     return false;
