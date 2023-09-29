@@ -1873,9 +1873,8 @@ TEST(ValueTest, EqualityOperators)
         ASSERT_FALSE(v1 == v5);
         ASSERT_TRUE(v1 != v5);
 
-        // TODO: Enable this after #198 is fixed
-        /*ASSERT_FALSE(v2 == v5);
-        ASSERT_TRUE(v2 != v5);*/
+        ASSERT_FALSE(v2 == v5);
+        ASSERT_TRUE(v2 != v5);
     }
 
     {
@@ -2042,8 +2041,7 @@ TEST(ValueTest, EqualityOperators)
         ASSERT_FALSE(v3 == v7);
         ASSERT_TRUE(v3 != v7);
 
-        // TODO: Enable this after #198 is fixed
-        /*ASSERT_FALSE(v4 == v7);
-        ASSERT_TRUE(v4 != v7);*/
+        ASSERT_FALSE(v4 == v7);
+        ASSERT_TRUE(v4 != v7);
     }
 }
