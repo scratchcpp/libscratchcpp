@@ -386,8 +386,10 @@ TEST_F(MotionBlocksTest, PointTowardsImpl)
     sprite.setY(std::round(sprite.y()));
 
     for (int i = 0; i < positions.size(); i++) {
-        EXPECT_CALL(rng, randint(-240, 240)).WillOnce(Return(std::round(positions[i].first)));
-        EXPECT_CALL(rng, randint(-180, 180)).WillOnce(Return(std::round(positions[i].second)));
+        EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(640));
+        EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(500));
+        EXPECT_CALL(rng, randint(-320, 320)).WillOnce(Return(std::round(positions[i].first)));
+        EXPECT_CALL(rng, randint(-250, 250)).WillOnce(Return(std::round(positions[i].second)));
 
         // TODO: Move setBytecode() out of the loop and use reset() after task #215 is completed
         vm.setBytecode(bytecode2);
@@ -449,8 +451,10 @@ TEST_F(MotionBlocksTest, PointTowardsImpl)
     sprite.setY(std::round(sprite.y()));
 
     for (int i = 0; i < positions.size(); i++) {
-        EXPECT_CALL(rng, randint(-240, 240)).WillOnce(Return(std::round(positions[i].first)));
-        EXPECT_CALL(rng, randint(-180, 180)).WillOnce(Return(std::round(positions[i].second)));
+        EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(640));
+        EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(500));
+        EXPECT_CALL(rng, randint(-320, 320)).WillOnce(Return(std::round(positions[i].first)));
+        EXPECT_CALL(rng, randint(-250, 250)).WillOnce(Return(std::round(positions[i].second)));
 
         // TODO: Move setBytecode() out of the loop and use reset() after task #215 is completed
         vm.setBytecode(bytecode6);
@@ -590,8 +594,10 @@ TEST_F(MotionBlocksTest, GoToImpl)
     ASSERT_EQ(sprite.y(), 45.2);
 
     // go to (join "_random_" "")
-    EXPECT_CALL(rng, randint(-240, 240)).WillOnce(Return(-158));
-    EXPECT_CALL(rng, randint(-180, 180)).WillOnce(Return(65));
+    EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(640));
+    EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(500));
+    EXPECT_CALL(rng, randint(-320, 320)).WillOnce(Return(-158));
+    EXPECT_CALL(rng, randint(-250, 250)).WillOnce(Return(65));
 
     vm.setBytecode(bytecode2);
     vm.run();
@@ -633,8 +639,10 @@ TEST_F(MotionBlocksTest, GoToImpl)
     ASSERT_EQ(sprite.y(), -170.6);
 
     // go to (random position)
-    EXPECT_CALL(rng, randint(-240, 240)).WillOnce(Return(220));
-    EXPECT_CALL(rng, randint(-180, 180)).WillOnce(Return(-16));
+    EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(640));
+    EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(500));
+    EXPECT_CALL(rng, randint(-320, 320)).WillOnce(Return(220));
+    EXPECT_CALL(rng, randint(-250, 250)).WillOnce(Return(-16));
 
     vm.setBytecode(bytecode6);
     vm.run();
@@ -869,8 +877,10 @@ TEST_F(MotionBlocksTest, GlideToImpl)
                 EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(endY));
                 break;
             case 3:
-                EXPECT_CALL(rng, randint(-240, 240)).WillOnce(Return(std::round(endX)));
-                EXPECT_CALL(rng, randint(-180, 180)).WillOnce(Return(std::round(endY)));
+                EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(640));
+                EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(500));
+                EXPECT_CALL(rng, randint(-320, 320)).WillOnce(Return(std::round(endX)));
+                EXPECT_CALL(rng, randint(-250, 250)).WillOnce(Return(std::round(endY)));
             default:
                 break;
         }
