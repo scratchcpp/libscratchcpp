@@ -33,6 +33,12 @@ class EngineMock : public IEngine
         MOCK_METHOD(double, mouseY, (), (const, override));
         MOCK_METHOD(void, setMouseY, (double y), (override));
 
+        MOCK_METHOD(unsigned int, stageWidth, (), (const, override));
+        MOCK_METHOD(void, setStageWidth, (unsigned int), (override));
+
+        MOCK_METHOD(unsigned int, stageHeight, (), (const, override));
+        MOCK_METHOD(void, setStageHeight, (unsigned int), (override));
+
         MOCK_METHOD(bool, broadcastRunning, (unsigned int, VirtualMachine *), (override));
 
         MOCK_METHOD(void, breakFrame, (), (override));

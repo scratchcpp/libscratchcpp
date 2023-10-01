@@ -61,6 +61,24 @@ TEST(EngineTest, MouseY)
     ASSERT_EQ(engine.mouseY(), 179.9258);
 }
 
+TEST(EngineTest, StageWidth)
+{
+    Engine engine;
+    ASSERT_EQ(engine.stageWidth(), 480);
+
+    engine.setStageWidth(640);
+    ASSERT_EQ(engine.stageWidth(), 640);
+}
+
+TEST(EngineTest, StageHeight)
+{
+    Engine engine;
+    ASSERT_EQ(engine.stageHeight(), 360);
+
+    engine.setStageHeight(515);
+    ASSERT_EQ(engine.stageHeight(), 515);
+}
+
 TEST(EngineTest, BreakFrame)
 {
     Engine engine;

@@ -383,6 +383,26 @@ void Engine::setMouseY(double y)
     m_mouseY = y;
 }
 
+unsigned int Engine::stageWidth() const
+{
+    return m_stageWidth;
+}
+
+void Engine::setStageWidth(unsigned int width)
+{
+    m_stageWidth = width;
+}
+
+unsigned int Engine::stageHeight() const
+{
+    return m_stageHeight;
+}
+
+void Engine::setStageHeight(unsigned int height)
+{
+    m_stageHeight = height;
+}
+
 bool Engine::broadcastRunning(unsigned int index, VirtualMachine *sourceScript)
 {
     const auto &scripts = m_runningBroadcastMap[index];

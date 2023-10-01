@@ -304,9 +304,8 @@ unsigned int MotionBlocks::pointTowards(VirtualMachine *vm)
     if (value == "_mouse_")
         pointTowardsPos(dynamic_cast<Sprite *>(vm->target()), vm->engine()->mouseX(), vm->engine()->mouseY());
     else if (value == "_random_") {
-        // TODO: Read stage size from engine (#224)
-        static const unsigned int stageWidth = 480;
-        static const unsigned int stageHeight = 360;
+        const unsigned int stageWidth = vm->engine()->stageWidth();
+        const unsigned int stageHeight = vm->engine()->stageHeight();
 
         if (!rng)
             rng = RandomGenerator::instance().get();
@@ -342,9 +341,8 @@ unsigned int MotionBlocks::pointTowardsMousePointer(VirtualMachine *vm)
 
 unsigned int MotionBlocks::pointTowardsRandomPosition(VirtualMachine *vm)
 {
-    // TODO: Read stage size from engine (#224)
-    static const unsigned int stageWidth = 480;
-    static const unsigned int stageHeight = 360;
+    const unsigned int stageWidth = vm->engine()->stageWidth();
+    const unsigned int stageHeight = vm->engine()->stageHeight();
 
     if (!rng)
         rng = RandomGenerator::instance().get();
@@ -379,9 +377,8 @@ unsigned int MotionBlocks::goTo(VirtualMachine *vm)
         sprite->setX(vm->engine()->mouseX());
         sprite->setY(vm->engine()->mouseY());
     } else if (value == "_random_") {
-        // TODO: Read stage size from engine (#224)
-        static const unsigned int stageWidth = 480;
-        static const unsigned int stageHeight = 360;
+        const unsigned int stageWidth = vm->engine()->stageWidth();
+        const unsigned int stageHeight = vm->engine()->stageHeight();
 
         if (!rng)
             rng = RandomGenerator::instance().get();
@@ -432,9 +429,8 @@ unsigned int MotionBlocks::goToRandomPosition(VirtualMachine *vm)
     Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
 
     if (sprite) {
-        // TODO: Read stage size from engine (#224)
-        static const unsigned int stageWidth = 480;
-        static const unsigned int stageHeight = 360;
+        const unsigned int stageWidth = vm->engine()->stageWidth();
+        const unsigned int stageHeight = vm->engine()->stageHeight();
 
         if (!rng)
             rng = RandomGenerator::instance().get();
@@ -536,9 +532,8 @@ unsigned int MotionBlocks::startGlideTo(VirtualMachine *vm)
     if (value == "_mouse_")
         startGlidingToPos(vm, vm->engine()->mouseX(), vm->engine()->mouseY(), vm->getInput(0, 2)->toDouble());
     else if (value == "_random_") {
-        // TODO: Read stage size from engine (#224)
-        static const unsigned int stageWidth = 480;
-        static const unsigned int stageHeight = 360;
+        const unsigned int stageWidth = vm->engine()->stageWidth();
+        const unsigned int stageHeight = vm->engine()->stageHeight();
 
         if (!rng)
             rng = RandomGenerator::instance().get();
@@ -582,9 +577,8 @@ unsigned int MotionBlocks::startGlideToRandomPosition(VirtualMachine *vm)
     Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
 
     if (sprite) {
-        // TODO: Read stage size from engine (#224)
-        static const unsigned int stageWidth = 480;
-        static const unsigned int stageHeight = 360;
+        const unsigned int stageWidth = vm->engine()->stageWidth();
+        const unsigned int stageHeight = vm->engine()->stageHeight();
 
         if (!rng)
             rng = RandomGenerator::instance().get();
