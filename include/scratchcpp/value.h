@@ -372,6 +372,9 @@ class LIBSCRATCHCPP_EXPORT Value
 
         const Value &operator=(float v)
         {
+            if (m_type == Type::String)
+                m_stringValue.~basic_string();
+
             m_type = Type::Double;
             m_doubleValue = v;
             return *this;
@@ -379,6 +382,9 @@ class LIBSCRATCHCPP_EXPORT Value
 
         const Value &operator=(double v)
         {
+            if (m_type == Type::String)
+                m_stringValue.~basic_string();
+
             m_type = Type::Double;
             m_doubleValue = v;
             return *this;
@@ -386,6 +392,9 @@ class LIBSCRATCHCPP_EXPORT Value
 
         const Value &operator=(int v)
         {
+            if (m_type == Type::String)
+                m_stringValue.~basic_string();
+
             m_type = Type::Integer;
             m_intValue = v;
             return *this;
@@ -393,6 +402,9 @@ class LIBSCRATCHCPP_EXPORT Value
 
         const Value &operator=(long v)
         {
+            if (m_type == Type::String)
+                m_stringValue.~basic_string();
+
             m_type = Type::Integer;
             m_intValue = v;
             return *this;
@@ -400,6 +412,9 @@ class LIBSCRATCHCPP_EXPORT Value
 
         const Value &operator=(bool v)
         {
+            if (m_type == Type::String)
+                m_stringValue.~basic_string();
+
             m_type = Type::Bool;
             m_boolValue = v;
             return *this;
@@ -407,40 +422,66 @@ class LIBSCRATCHCPP_EXPORT Value
 
         const Value &operator=(const std::string &v)
         {
-            m_type = Type::String;
-            new (&m_stringValue) std::string(v);
+            if (m_type == Type::String)
+                m_stringValue = v;
+            else {
+                new (&m_stringValue) std::string(v);
+                m_type = Type::String;
+            }
+
             initString(v);
             return *this;
         }
 
         const Value &operator=(const char *v)
         {
-            m_type = Type::String;
-            new (&m_stringValue) std::string(v);
+            if (m_type == Type::String)
+                m_stringValue = v;
+            else {
+                new (&m_stringValue) std::string(v);
+                m_type = Type::String;
+            }
+
             initString(v);
             return *this;
         }
 
         const Value &operator=(const Value &v)
         {
-            m_type = v.m_type;
-
-            switch (m_type) {
+            switch (v.m_type) {
                 case Type::Integer:
+                    if (m_type == Type::String)
+                        m_stringValue.~basic_string();
+
                     m_intValue = v.m_intValue;
                     break;
+
                 case Type::Double:
+                    if (m_type == Type::String)
+                        m_stringValue.~basic_string();
+
                     m_doubleValue = v.m_doubleValue;
                     break;
+
                 case Type::Bool:
+                    if (m_type == Type::String)
+                        m_stringValue.~basic_string();
+
                     m_boolValue = v.m_boolValue;
                     break;
+
                 case Type::String:
-                    new (&m_stringValue) std::string(v.m_stringValue);
+                    if (m_type == Type::String)
+                        m_stringValue = v.m_stringValue;
+                    else
+                        new (&m_stringValue) std::string(v.m_stringValue);
                     break;
+
                 default:
                     break;
             }
+
+            m_type = v.m_type;
 
             return *this;
         }
