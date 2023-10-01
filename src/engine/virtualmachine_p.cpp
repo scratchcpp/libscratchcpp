@@ -365,7 +365,10 @@ do_mod:
     DISPATCH();
 
 do_random:
-    REPLACE_RET_VALUE(rng->randint(READ_REG(0, 2)->toDouble(), READ_REG(1, 2)->toDouble()), 2);
+    if ((READ_REG(0, 2)->type() == Value::Type::Integer) && (READ_REG(1, 2)->type() == Value::Type::Integer))
+        REPLACE_RET_VALUE(rng->randint(READ_REG(0, 2)->toInt(), READ_REG(1, 2)->toInt()), 2);
+    else
+        REPLACE_RET_VALUE(rng->randintDouble(READ_REG(0, 2)->toDouble(), READ_REG(1, 2)->toDouble()), 2);
     FREE_REGS(1);
     DISPATCH();
 

@@ -362,6 +362,57 @@ TEST(VirtualMachineTest, OP_MOD)
     ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 1.5);
 }
 
+TEST(VirtualMachineTest, OP_RANDOM)
+{
+    static unsigned int bytecode1[] = { OP_START, OP_CONST, 0, OP_CONST, 1, OP_RANDOM, OP_HALT };
+    static unsigned int bytecode2[] = { OP_START, OP_CONST, 1, OP_CONST, 2, OP_RANDOM, OP_HALT };
+    static unsigned int bytecode3[] = { OP_START, OP_CONST, 3, OP_CONST, 0, OP_RANDOM, OP_HALT };
+    static unsigned int bytecode4[] = { OP_START, OP_CONST, 2, OP_CONST, 3, OP_RANDOM, OP_HALT };
+    static Value constValues[] = { -45, 12, 6.05, -78.686 };
+
+    VirtualMachinePrivate vm(nullptr, nullptr, nullptr, nullptr);
+    vm.constValues = constValues;
+
+    RandomGeneratorMock rng;
+    vm.rng = &rng;
+
+    EXPECT_CALL(rng, randint(-45, 12)).WillOnce(Return(-18));
+    vm.bytecode = bytecode1;
+    vm.pos = bytecode1;
+    vm.regCount = 0;
+    vm.run(vm.pos);
+
+    ASSERT_EQ(vm.regCount, 1);
+    ASSERT_EQ(vm.regs[vm.regCount - 1]->toDouble(), -18);
+
+    EXPECT_CALL(rng, randintDouble(12, 6.05)).WillOnce(Return(3.486789));
+    vm.bytecode = bytecode2;
+    vm.pos = bytecode2;
+    vm.regCount = 0;
+    vm.run(vm.pos);
+
+    ASSERT_EQ(vm.regCount, 1);
+    ASSERT_EQ(vm.regs[vm.regCount - 1]->toDouble(), 3.486789);
+
+    EXPECT_CALL(rng, randintDouble(-78.686, -45)).WillOnce(Return(-59.468873));
+    vm.bytecode = bytecode3;
+    vm.pos = bytecode3;
+    vm.regCount = 0;
+    vm.run(vm.pos);
+
+    ASSERT_EQ(vm.regCount, 1);
+    ASSERT_EQ(vm.regs[vm.regCount - 1]->toDouble(), -59.468873);
+
+    EXPECT_CALL(rng, randintDouble(6.05, -78.686)).WillOnce(Return(-28.648764));
+    vm.bytecode = bytecode4;
+    vm.pos = bytecode4;
+    vm.regCount = 0;
+    vm.run(vm.pos);
+
+    ASSERT_EQ(vm.regCount, 1);
+    ASSERT_EQ(vm.regs[vm.regCount - 1]->toDouble(), -28.648764);
+}
+
 TEST(VirtualMachineTest, OP_ROUND)
 {
     static unsigned int bytecode[] = {
