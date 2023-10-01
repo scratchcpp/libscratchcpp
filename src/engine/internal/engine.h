@@ -36,6 +36,8 @@ class Engine : public IEngine
         void initClone(libscratchcpp::Sprite *clone) override;
         void run() override;
 
+        bool isRunning() const override;
+
         double fps() const override;
         void setFps(double fps) override;
 

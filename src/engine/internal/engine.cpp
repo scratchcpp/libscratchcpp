@@ -352,6 +352,11 @@ void Engine::run()
     stop();
 }
 
+bool Engine::isRunning() const
+{
+    return m_running;
+}
+
 double Engine::fps() const
 {
     return m_fps;
