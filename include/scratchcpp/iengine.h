@@ -85,6 +85,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
          */
         virtual void run() = 0;
 
+        /*! Returns true if the project is currently running. */
+        virtual bool isRunning() const = 0;
+
         /*! Returns the framerate of the project. */
         virtual double fps() const = 0;
 

@@ -34,6 +34,22 @@ TEST(EngineTest, Clear)
     ASSERT_TRUE(engine.registeredSections().empty());
 }
 
+TEST(EngineTest, IsRunning)
+{
+    Engine engine;
+    ASSERT_FALSE(engine.isRunning());
+
+    engine.start();
+    ASSERT_TRUE(engine.isRunning());
+
+    engine.stop();
+    ASSERT_FALSE(engine.isRunning());
+
+    engine.start();
+    engine.run();
+    ASSERT_FALSE(engine.isRunning());
+}
+
 TEST(EngineTest, Fps)
 {
     Engine engine;
