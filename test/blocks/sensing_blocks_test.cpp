@@ -360,6 +360,6 @@ TEST_F(SensingBlocksTest, DaysSince2000Impl)
     vm.run();
     SensingBlocks::clock = nullptr;
 
-    ASSERT_EQ(vm.registerCount(), 2); // TODO: Change this to 1 after task #215 is completed
+    ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 747.20278428240817);
 }

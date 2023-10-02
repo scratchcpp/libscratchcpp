@@ -369,12 +369,13 @@ TEST_F(MotionBlocksTest, PointTowardsImpl)
     static const std::vector<double> intPosResults = { -101.31, 29.55, -90, 90, 90 };
 
     // point towards (join "_mouse_" "")
+    vm.setBytecode(bytecode1);
+
     for (int i = 0; i < positions.size(); i++) {
         EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(positions[i].first));
         EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(positions[i].second));
 
-        // TODO: Move setBytecode() out of the loop and use reset() after task #215 is completed
-        vm.setBytecode(bytecode1);
+        vm.reset();
         vm.run();
 
         ASSERT_EQ(vm.registerCount(), 0);
@@ -384,6 +385,7 @@ TEST_F(MotionBlocksTest, PointTowardsImpl)
     // point towards (join "_random_" "")
     sprite.setX(std::round(sprite.x()));
     sprite.setY(std::round(sprite.y()));
+    vm.setBytecode(bytecode2);
 
     for (int i = 0; i < positions.size(); i++) {
         EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(640));
@@ -391,8 +393,7 @@ TEST_F(MotionBlocksTest, PointTowardsImpl)
         EXPECT_CALL(rng, randint(-320, 320)).WillOnce(Return(std::round(positions[i].first)));
         EXPECT_CALL(rng, randint(-250, 250)).WillOnce(Return(std::round(positions[i].second)));
 
-        // TODO: Move setBytecode() out of the loop and use reset() after task #215 is completed
-        vm.setBytecode(bytecode2);
+        vm.reset();
         vm.run();
 
         ASSERT_EQ(vm.registerCount(), 0);
@@ -403,6 +404,8 @@ TEST_F(MotionBlocksTest, PointTowardsImpl)
     sprite.setY(-100.025);
 
     // point towards (join "Sprite2" "")
+    vm.setBytecode(bytecode3);
+
     for (int i = 0; i < positions.size(); i++) {
         anotherSprite.setX(positions[i].first);
         anotherSprite.setY(positions[i].second);
@@ -410,8 +413,7 @@ TEST_F(MotionBlocksTest, PointTowardsImpl)
         EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(3));
         EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&anotherSprite));
 
-        // TODO: Move setBytecode() out of the loop and use reset() after task #215 is completed
-        vm.setBytecode(bytecode3);
+        vm.reset();
         vm.run();
 
         ASSERT_EQ(vm.registerCount(), 0);
@@ -419,14 +421,15 @@ TEST_F(MotionBlocksTest, PointTowardsImpl)
     }
 
     // point towards (Sprite2)
+    vm.setBytecode(bytecode4);
+
     for (int i = 0; i < positions.size(); i++) {
         anotherSprite.setX(positions[i].first);
         anotherSprite.setY(positions[i].second);
 
         EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&anotherSprite));
 
-        // TODO: Move setBytecode() out of the loop and use reset() after task #215 is completed
-        vm.setBytecode(bytecode4);
+        vm.reset();
         vm.run();
 
         ASSERT_EQ(vm.registerCount(), 0);
@@ -434,12 +437,13 @@ TEST_F(MotionBlocksTest, PointTowardsImpl)
     }
 
     // point towards (mouse-pointer)
+    vm.setBytecode(bytecode5);
+
     for (int i = 0; i < positions.size(); i++) {
         EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(positions[i].first));
         EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(positions[i].second));
 
-        // TODO: Move setBytecode() out of the loop and use reset() after task #215 is completed
-        vm.setBytecode(bytecode5);
+        vm.reset();
         vm.run();
 
         ASSERT_EQ(vm.registerCount(), 0);
@@ -449,6 +453,7 @@ TEST_F(MotionBlocksTest, PointTowardsImpl)
     // point towards (random position)
     sprite.setX(std::round(sprite.x()));
     sprite.setY(std::round(sprite.y()));
+    vm.setBytecode(bytecode6);
 
     for (int i = 0; i < positions.size(); i++) {
         EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(640));
@@ -456,8 +461,7 @@ TEST_F(MotionBlocksTest, PointTowardsImpl)
         EXPECT_CALL(rng, randint(-320, 320)).WillOnce(Return(std::round(positions[i].first)));
         EXPECT_CALL(rng, randint(-250, 250)).WillOnce(Return(std::round(positions[i].second)));
 
-        // TODO: Move setBytecode() out of the loop and use reset() after task #215 is completed
-        vm.setBytecode(bytecode6);
+        vm.reset();
         vm.run();
 
         ASSERT_EQ(vm.registerCount(), 0);
