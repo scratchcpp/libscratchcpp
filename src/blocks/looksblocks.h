@@ -26,6 +26,10 @@ class LooksBlocks : public IBlockSection
         std::string name() const override;
 
         void registerBlocks(IEngine *engine) override;
+
+        static void compileShow(Compiler *compiler);
+
+        static unsigned int show(VirtualMachine *vm);
 };
 
 } // namespace libscratchcpp
