@@ -66,7 +66,7 @@ class MotionBlocksTest : public testing::Test
                 auto input = addNullInput(block, name, id);
                 auto menu = createMotionBlock(block->id() + "_menu", block->opcode() + "_menu");
                 input->setValueBlock(menu);
-                addDropdownField(menu, "CLONE_OPTION", static_cast<MotionBlocks::Fields>(-1), selectedValue, static_cast<MotionBlocks::FieldValues>(-1));
+                addDropdownField(menu, name, static_cast<MotionBlocks::Fields>(-1), selectedValue, static_cast<MotionBlocks::FieldValues>(-1));
             }
         }
 
