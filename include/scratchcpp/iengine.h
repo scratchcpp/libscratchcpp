@@ -16,6 +16,7 @@ class Broadcast;
 class Block;
 class Target;
 class Sprite;
+class Stage;
 class Variable;
 class List;
 class Script;
@@ -214,6 +215,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
 
         /*! Returns the index of the target with the given name. */
         virtual int findTarget(const std::string &targetName) const = 0;
+
+        /*! Returns the Stage. */
+        virtual Stage *stage() const = 0;
 
         /*! Returns the target which owns the given variable. If it is the stage, the variable is global. */
         virtual Target *variableOwner(Variable *variable) const = 0;

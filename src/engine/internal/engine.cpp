@@ -4,6 +4,7 @@
 #include <scratchcpp/iblocksection.h>
 #include <scratchcpp/script.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/stage.h>
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/input.h>
@@ -651,6 +652,16 @@ int Engine::findTarget(const std::string &targetName) const
         i++;
     }
     return -1;
+}
+
+Stage *Engine::stage() const
+{
+    auto it = std::find_if(m_targets.begin(), m_targets.end(), [](std::shared_ptr<Target> target) { return target && target->isStage(); });
+
+    if (it == m_targets.end())
+        return nullptr;
+    else
+        return dynamic_cast<Stage *>((*it).get());
 }
 
 Target *Engine::variableOwner(Variable *variable) const

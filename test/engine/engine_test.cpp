@@ -1,6 +1,8 @@
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/project.h>
+#include <scratchcpp/sprite.h>
+#include <scratchcpp/stage.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <timermock.h>
@@ -367,6 +369,33 @@ TEST(EngineTest, Targets)
 
     ASSERT_EQ(block1->engine(), &engine);
     ASSERT_EQ(block2->engine(), &engine);
+}
+
+TEST(EngineTest, Stage)
+{
+    Engine engine;
+    ASSERT_EQ(engine.stage(), nullptr);
+
+    auto t1 = std::make_shared<Sprite>();
+    t1->setName("Sprite1");
+    engine.setTargets({ t1 });
+    ASSERT_EQ(engine.stage(), nullptr);
+
+    auto t2 = std::make_shared<Stage>();
+    t2->setName("Stage");
+    engine.setTargets({ t1, t2 });
+    ASSERT_EQ(engine.stage(), t2.get());
+
+    auto t3 = std::make_shared<Sprite>();
+    t3->setName("Sprite2");
+    engine.setTargets({ t1, t2, t3 });
+    ASSERT_EQ(engine.stage(), t2.get());
+
+    engine.setTargets({ t2, t3 });
+    ASSERT_EQ(engine.stage(), t2.get());
+
+    engine.setTargets({ t1, t3 });
+    ASSERT_EQ(engine.stage(), nullptr);
 }
 
 TEST(EngineTest, VariableOwner)

@@ -89,6 +89,8 @@ class Engine : public IEngine
         Target *targetAt(int index) const override;
         int findTarget(const std::string &targetName) const override;
 
+        Stage *stage() const override;
+
         Target *variableOwner(Variable *variable) const override;
         Target *listOwner(List *list) const override;
 
