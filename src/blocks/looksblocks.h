@@ -11,6 +11,18 @@ namespace libscratchcpp
 class LooksBlocks : public IBlockSection
 {
     public:
+        enum Inputs
+        {
+        };
+
+        enum Fields
+        {
+        };
+
+        enum FieldValues
+        {
+        };
+
         std::string name() const override;
 
         void registerBlocks(IEngine *engine) override;
