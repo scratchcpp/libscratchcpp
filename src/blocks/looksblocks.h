@@ -28,8 +28,10 @@ class LooksBlocks : public IBlockSection
         void registerBlocks(IEngine *engine) override;
 
         static void compileShow(Compiler *compiler);
+        static void compileHide(Compiler *compiler);
 
         static unsigned int show(VirtualMachine *vm);
+        static unsigned int hide(VirtualMachine *vm);
 };
 
 } // namespace libscratchcpp

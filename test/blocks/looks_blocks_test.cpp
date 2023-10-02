@@ -93,6 +93,7 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
 {
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_show", &LooksBlocks::compileShow));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_hide", &LooksBlocks::compileHide));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -135,4 +136,44 @@ TEST_F(LooksBlocksTest, ShowImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(sprite.visible());
+}
+
+TEST_F(LooksBlocksTest, Hide)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "looks_hide");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::hide)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    LooksBlocks::compileHide(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(LooksBlocksTest, HideImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::hide };
+
+    Sprite sprite;
+    sprite.setVisible(true);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_FALSE(sprite.visible());
+
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_FALSE(sprite.visible());
 }
