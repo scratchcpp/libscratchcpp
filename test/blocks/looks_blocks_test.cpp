@@ -94,6 +94,10 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_show", &LooksBlocks::compileShow));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_hide", &LooksBlocks::compileHide));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_changesizeby", &LooksBlocks::compileChangeSizeBy));
+
+    // Inputs
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "CHANGE", LooksBlocks::CHANGE));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -176,4 +180,43 @@ TEST_F(LooksBlocksTest, HideImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_FALSE(sprite.visible());
+}
+
+TEST_F(LooksBlocksTest, ChangeSizeBy)
+{
+    Compiler compiler(&m_engineMock);
+
+    // change size by (10.05)
+    auto block = std::make_shared<Block>("a", "looks_changesizeby");
+    addValueInput(block, "CHANGE", LooksBlocks::CHANGE, 10.05);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::changeSizeBy)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    LooksBlocks::compileChangeSizeBy(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), 10.05);
+}
+
+TEST_F(LooksBlocksTest, ChangeSizeByImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::changeSizeBy };
+    static Value constValues[] = { 10.05 };
+
+    Sprite sprite;
+    sprite.setSize(1.308);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.size(), 11.358);
 }

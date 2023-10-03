@@ -13,6 +13,7 @@ class LooksBlocks : public IBlockSection
     public:
         enum Inputs
         {
+            CHANGE
         };
 
         enum Fields
@@ -29,9 +30,11 @@ class LooksBlocks : public IBlockSection
 
         static void compileShow(Compiler *compiler);
         static void compileHide(Compiler *compiler);
+        static void compileChangeSizeBy(Compiler *compiler);
 
         static unsigned int show(VirtualMachine *vm);
         static unsigned int hide(VirtualMachine *vm);
+        static unsigned int changeSizeBy(VirtualMachine *vm);
 };
 
 } // namespace libscratchcpp
