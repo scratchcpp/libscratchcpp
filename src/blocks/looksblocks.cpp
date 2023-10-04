@@ -20,6 +20,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_hide", &compileHide);
     engine->addCompileFunction(this, "looks_changesizeby", &compileChangeSizeBy);
     engine->addCompileFunction(this, "looks_setsizeto", &compileSetSizeTo);
+    engine->addCompileFunction(this, "looks_size", &compileSize);
 
     // Inputs
     engine->addInput(this, "CHANGE", CHANGE);
@@ -46,6 +47,11 @@ void LooksBlocks::compileSetSizeTo(Compiler *compiler)
 {
     compiler->addInput(SIZE);
     compiler->addFunctionCall(&setSizeTo);
+}
+
+void LooksBlocks::compileSize(Compiler *compiler)
+{
+    compiler->addFunctionCall(&size);
 }
 
 unsigned int LooksBlocks::show(VirtualMachine *vm)
@@ -86,4 +92,16 @@ unsigned int LooksBlocks::setSizeTo(VirtualMachine *vm)
         sprite->setSize(vm->getInput(0, 1)->toDouble());
 
     return 1;
+}
+
+unsigned int LooksBlocks::size(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        vm->addReturnValue(sprite->size());
+    else
+        vm->addReturnValue(0);
+
+    return 0;
 }

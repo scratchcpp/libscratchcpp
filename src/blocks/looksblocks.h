@@ -33,11 +33,13 @@ class LooksBlocks : public IBlockSection
         static void compileHide(Compiler *compiler);
         static void compileChangeSizeBy(Compiler *compiler);
         static void compileSetSizeTo(Compiler *compiler);
+        static void compileSize(Compiler *compiler);
 
         static unsigned int show(VirtualMachine *vm);
         static unsigned int hide(VirtualMachine *vm);
         static unsigned int changeSizeBy(VirtualMachine *vm);
         static unsigned int setSizeTo(VirtualMachine *vm);
+        static unsigned int size(VirtualMachine *vm);
 };
 
 } // namespace libscratchcpp
