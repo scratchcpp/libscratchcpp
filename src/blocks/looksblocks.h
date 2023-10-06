@@ -19,10 +19,13 @@ class LooksBlocks : public IBlockSection
 
         enum Fields
         {
+            NUMBER_NAME
         };
 
         enum FieldValues
         {
+            CostumeNumber,
+            CostumeName
         };
 
         std::string name() const override;
@@ -34,12 +37,15 @@ class LooksBlocks : public IBlockSection
         static void compileChangeSizeBy(Compiler *compiler);
         static void compileSetSizeTo(Compiler *compiler);
         static void compileSize(Compiler *compiler);
+        static void compileCostumeNumberName(Compiler *compiler);
 
         static unsigned int show(VirtualMachine *vm);
         static unsigned int hide(VirtualMachine *vm);
         static unsigned int changeSizeBy(VirtualMachine *vm);
         static unsigned int setSizeTo(VirtualMachine *vm);
         static unsigned int size(VirtualMachine *vm);
+        static unsigned int costumeNumber(VirtualMachine *vm);
+        static unsigned int costumeName(VirtualMachine *vm);
 };
 
 } // namespace libscratchcpp
