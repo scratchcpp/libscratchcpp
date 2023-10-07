@@ -84,7 +84,7 @@ void Engine::compile()
     for (auto target : m_targets) {
         std::cout << "Compiling scripts in target " << target->name() << "..." << std::endl;
         std::unordered_map<std::string, unsigned int *> procedureBytecodeMap;
-        Compiler compiler(this);
+        Compiler compiler(this, target.get());
         auto blocks = target->blocks();
         for (auto block : blocks) {
             if (block->topLevel()) {

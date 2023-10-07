@@ -7,8 +7,9 @@
 using namespace libscratchcpp;
 using namespace vm;
 
-CompilerPrivate::CompilerPrivate(IEngine *engine) :
-    engine(engine)
+CompilerPrivate::CompilerPrivate(IEngine *engine, Target *target) :
+    engine(engine),
+    target(target)
 {
     assert(engine);
 }
