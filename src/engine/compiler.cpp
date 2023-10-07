@@ -14,8 +14,8 @@ using namespace libscratchcpp;
 using namespace vm;
 
 /*! Constructs Compiler. */
-Compiler::Compiler(IEngine *engine) :
-    impl(spimpl::make_unique_impl<CompilerPrivate>(engine))
+Compiler::Compiler(IEngine *engine, Target *target) :
+    impl(spimpl::make_unique_impl<CompilerPrivate>(engine, target))
 {
 }
 
@@ -85,6 +85,11 @@ const std::vector<unsigned int> &Compiler::bytecode() const
 IEngine *Compiler::engine() const
 {
     return impl->engine;
+}
+
+Target *Compiler::target() const
+{
+    return impl->target;
 }
 
 /*! Returns the list of constant input values. */

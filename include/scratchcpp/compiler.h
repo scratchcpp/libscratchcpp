@@ -34,7 +34,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
             IfStatement
         };
 
-        Compiler(IEngine *engine);
+        Compiler(IEngine *engine, Target *target = nullptr);
         Compiler(const Compiler &) = delete;
 
         void init();
@@ -44,6 +44,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         const std::vector<unsigned int> &bytecode() const;
 
         IEngine *engine() const;
+        Target *target() const;
 
         const std::vector<InputValue *> &constInputValues() const;
         std::vector<Value> constValues() const;

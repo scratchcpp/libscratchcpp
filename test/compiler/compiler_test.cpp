@@ -44,8 +44,14 @@ class CompilerTest : public testing::Test
 TEST_F(CompilerTest, Constructors)
 {
     Engine engine;
-    Compiler compiler(&engine);
-    ASSERT_EQ(compiler.engine(), &engine);
+    Compiler compiler1(&engine);
+    ASSERT_EQ(compiler1.engine(), &engine);
+    ASSERT_EQ(compiler1.target(), nullptr);
+
+    Sprite sprite;
+    Compiler compiler2(&engine, &sprite);
+    ASSERT_EQ(compiler2.engine(), &engine);
+    ASSERT_EQ(compiler2.target(), &sprite);
 }
 
 TEST_F(CompilerTest, Block)

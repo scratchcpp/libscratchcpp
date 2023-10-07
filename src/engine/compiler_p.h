@@ -11,7 +11,7 @@ namespace libscratchcpp
 
 struct CompilerPrivate
 {
-        CompilerPrivate(IEngine *engine);
+        CompilerPrivate(IEngine *engine, Target *target);
         CompilerPrivate(const CompilerPrivate &) = delete;
 
         void addInstruction(vm::Opcode opcode, std::initializer_list<unsigned int> args = {});
@@ -20,7 +20,8 @@ struct CompilerPrivate
 
         void substackEnd();
 
-        IEngine *engine;
+        IEngine *engine = nullptr;
+        Target *target = nullptr;
         std::shared_ptr<Block> block;
         std::vector<std::pair<std::pair<std::shared_ptr<Block>, std::shared_ptr<Block>>, Compiler::SubstackType>> substackTree;
 
