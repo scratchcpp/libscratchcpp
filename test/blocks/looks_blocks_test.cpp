@@ -8,6 +8,7 @@
 
 #include "../common.h"
 #include "blocks/looksblocks.h"
+#include "blocks/operatorblocks.h"
 #include "engine/internal/engine.h"
 
 using namespace libscratchcpp;
@@ -98,11 +99,13 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_changesizeby", &LooksBlocks::compileChangeSizeBy));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_setsizeto", &LooksBlocks::compileSetSizeTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_size", &LooksBlocks::compileSize));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_switchcostumeto", &LooksBlocks::compileSwitchCostumeTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_costumenumbername", &LooksBlocks::compileCostumeNumberName));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "CHANGE", LooksBlocks::CHANGE));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SIZE", LooksBlocks::SIZE));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "COSTUME", LooksBlocks::COSTUME));
 
     // Fields
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "NUMBER_NAME", LooksBlocks::NUMBER_NAME));
@@ -304,6 +307,402 @@ TEST_F(LooksBlocksTest, SizeImpl)
 
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_EQ(vm.getInput(0, 1)->toDouble(), -51.0684);
+}
+
+TEST_F(LooksBlocksTest, SwitchCostumeTo)
+{
+    Target target;
+    Compiler compiler(&m_engineMock, &target);
+
+    // switch costume to (costume2)
+    auto block1 = std::make_shared<Block>("a", "looks_switchcostumeto");
+    addDropdownInput(block1, "COSTUME", LooksBlocks::COSTUME, "costume2");
+
+    // switch costume to (0)
+    auto block2 = std::make_shared<Block>("b", "looks_switchcostumeto");
+    addDropdownInput(block2, "COSTUME", LooksBlocks::COSTUME, "0");
+
+    // switch costume to (1)
+    auto block3 = std::make_shared<Block>("b", "looks_switchcostumeto");
+    addDropdownInput(block3, "COSTUME", LooksBlocks::COSTUME, "1");
+
+    // switch costume to (2)
+    auto block4 = std::make_shared<Block>("b", "looks_switchcostumeto");
+    addDropdownInput(block4, "COSTUME", LooksBlocks::COSTUME, "2");
+
+    // switch costume to (4)
+    auto block5 = std::make_shared<Block>("b", "looks_switchcostumeto");
+    addDropdownInput(block5, "COSTUME", LooksBlocks::COSTUME, "4");
+
+    // switch costume to (3) - there's a costume with this name
+    auto block6 = std::make_shared<Block>("c", "looks_switchcostumeto");
+    addDropdownInput(block6, "COSTUME", LooksBlocks::COSTUME, "3");
+
+    // switch costume to (next costume)
+    auto block7 = std::make_shared<Block>("d", "looks_switchcostumeto");
+    addDropdownInput(block7, "COSTUME", LooksBlocks::COSTUME, "next costume");
+
+    // switch costume to (next costume) - there's a costume with this name
+    auto block8 = std::make_shared<Block>("d", "looks_switchcostumeto");
+    addDropdownInput(block8, "COSTUME", LooksBlocks::COSTUME, "next costume");
+
+    // switch costume to (previous costume)
+    auto block9 = std::make_shared<Block>("e", "looks_switchcostumeto");
+    addDropdownInput(block9, "COSTUME", LooksBlocks::COSTUME, "previous costume");
+
+    // switch costume to (previous costume) - there's a costume with this name
+    auto block10 = std::make_shared<Block>("f", "looks_switchcostumeto");
+    addDropdownInput(block10, "COSTUME", LooksBlocks::COSTUME, "previous costume");
+
+    // switch costume to (join "" "")
+    auto joinBlock = std::make_shared<Block>("h", "operator_join");
+    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
+    auto block11 = std::make_shared<Block>("g", "looks_switchcostumeto");
+    addDropdownInput(block11, "COSTUME", LooksBlocks::COSTUME, "", joinBlock);
+
+    compiler.init();
+
+    // Test without any costumes first
+    compiler.setBlock(block1);
+    LooksBlocks::compileSwitchCostumeTo(&compiler);
+
+    target.addCostume(std::make_shared<Costume>("costume1", "c1", "svg"));
+    target.addCostume(std::make_shared<Costume>("costume2", "c2", "svg"));
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
+    compiler.setBlock(block1);
+    LooksBlocks::compileSwitchCostumeTo(&compiler);
+
+    target.addCostume(std::make_shared<Costume>("costume3", "c3", "svg"));
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
+    compiler.setBlock(block2);
+    LooksBlocks::compileSwitchCostumeTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
+    compiler.setBlock(block3);
+    LooksBlocks::compileSwitchCostumeTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
+    compiler.setBlock(block4);
+    LooksBlocks::compileSwitchCostumeTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
+    compiler.setBlock(block5);
+    LooksBlocks::compileSwitchCostumeTo(&compiler);
+
+    target.addCostume(std::make_shared<Costume>("3", "c4", "svg"));
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
+    compiler.setBlock(block6);
+    LooksBlocks::compileSwitchCostumeTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::nextCostume)).WillOnce(Return(1));
+    compiler.setBlock(block7);
+    LooksBlocks::compileSwitchCostumeTo(&compiler);
+
+    target.addCostume(std::make_shared<Costume>("next costume", "c5", "svg"));
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
+    compiler.setBlock(block8);
+    LooksBlocks::compileSwitchCostumeTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::previousCostume)).WillOnce(Return(2));
+    compiler.setBlock(block9);
+    LooksBlocks::compileSwitchCostumeTo(&compiler);
+
+    target.addCostume(std::make_shared<Costume>("previous costume", "c6", "svg"));
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
+    compiler.setBlock(block10);
+    LooksBlocks::compileSwitchCostumeTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeTo)).WillOnce(Return(3));
+    compiler.setBlock(block11);
+    LooksBlocks::compileSwitchCostumeTo(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>(
+            { vm::OP_START,
+              vm::OP_CONST,
+              0,
+              vm::OP_EXEC,
+              0,
+              vm::OP_CONST,
+              1,
+              vm::OP_EXEC,
+              0,
+              vm::OP_CONST,
+              2,
+              vm::OP_EXEC,
+              0,
+              vm::OP_CONST,
+              3,
+              vm::OP_EXEC,
+              0,
+              vm::OP_CONST,
+              4,
+              vm::OP_EXEC,
+              0,
+              vm::OP_CONST,
+              5,
+              vm::OP_EXEC,
+              0,
+              vm::OP_EXEC,
+              1,
+              vm::OP_CONST,
+              6,
+              vm::OP_EXEC,
+              0,
+              vm::OP_EXEC,
+              2,
+              vm::OP_CONST,
+              7,
+              vm::OP_EXEC,
+              0,
+              vm::OP_NULL,
+              vm::OP_NULL,
+              vm::OP_STR_CONCAT,
+              vm::OP_EXEC,
+              3,
+              vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 1, -1, 0, 1, 3, 3, 4, 5 }));
+}
+
+TEST_F(LooksBlocksTest, SwitchCostumeToImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode10[] = { vm::OP_START, vm::OP_CONST, 8, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode11[] = { vm::OP_START, vm::OP_CONST, 9, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode12[] = { vm::OP_START, vm::OP_CONST, 10, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::switchCostumeTo, &LooksBlocks::switchCostumeToByIndex };
+    static Value constValues[] = { "costume2", 0, 1, 2, 3, "next costume", "previous costume", -1, 0, 5, 6 };
+
+    Target target;
+    target.addCostume(std::make_shared<Costume>("costume1", "c1", "svg"));
+    target.addCostume(std::make_shared<Costume>("costume2", "c2", "svg"));
+    target.setCurrentCostume(1);
+
+    VirtualMachine vm(&target, nullptr, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    // "costume2"
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 2);
+
+    // 0
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 2);
+
+    target.setCurrentCostume(1);
+
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 2);
+
+    // 1
+    vm.setBytecode(bytecode3);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 1);
+
+    // 2
+    vm.setBytecode(bytecode4);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 2);
+
+    // 3
+    vm.setBytecode(bytecode5);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 1);
+
+    target.setCurrentCostume(2);
+
+    // "2"
+    target.addCostume(std::make_shared<Costume>("2", "c3", "svg"));
+    target.addCostume(std::make_shared<Costume>("test", "c4", "svg"));
+    target.setCurrentCostume(1);
+
+    vm.setBytecode(bytecode6);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 3);
+
+    // "next costume"
+    vm.setBytecode(bytecode7);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 4);
+
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 1);
+
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 2);
+
+    target.addCostume(std::make_shared<Costume>("next costume", "c5", "svg"));
+
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 5);
+
+    // "previous costume"
+    vm.setBytecode(bytecode8);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 4);
+
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 3);
+
+    target.setCurrentCostume(1);
+
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 5);
+
+    target.addCostume(std::make_shared<Costume>("previous costume", "c6", "svg"));
+
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 6);
+
+    // -1 (index)
+    target.setCurrentCostume(2);
+
+    vm.setBytecode(bytecode9);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 6);
+
+    // 0 (index)
+    vm.setBytecode(bytecode10);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 1);
+
+    // 5 (index)
+    vm.setBytecode(bytecode11);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 6);
+
+    // 6 (index)
+    vm.setBytecode(bytecode12);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 1);
+}
+
+TEST_F(LooksBlocksTest, NextCostume)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::nextCostume };
+
+    Target target;
+    target.addCostume(std::make_shared<Costume>("costume1", "c1", "svg"));
+    target.addCostume(std::make_shared<Costume>("costume2", "c2", "svg"));
+    target.addCostume(std::make_shared<Costume>("costume3", "c3", "svg"));
+    target.setCurrentCostume(1);
+
+    VirtualMachine vm(&target, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 2);
+
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 3);
+
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 1);
+}
+
+TEST_F(LooksBlocksTest, PreviousCostume)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::previousCostume };
+
+    Target target;
+    target.addCostume(std::make_shared<Costume>("costume1", "c1", "svg"));
+    target.addCostume(std::make_shared<Costume>("costume2", "c2", "svg"));
+    target.addCostume(std::make_shared<Costume>("costume3", "c3", "svg"));
+    target.setCurrentCostume(3);
+
+    VirtualMachine vm(&target, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 2);
+
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 1);
+
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.currentCostume(), 3);
 }
 
 TEST_F(LooksBlocksTest, CostumeNumberName)

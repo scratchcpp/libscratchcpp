@@ -7,6 +7,8 @@
 namespace libscratchcpp
 {
 
+class Target;
+
 /*! \brief The LooksBlocks class contains the implementation of looks blocks. */
 class LooksBlocks : public IBlockSection
 {
@@ -14,7 +16,8 @@ class LooksBlocks : public IBlockSection
         enum Inputs
         {
             CHANGE,
-            SIZE
+            SIZE,
+            COSTUME
         };
 
         enum Fields
@@ -37,6 +40,7 @@ class LooksBlocks : public IBlockSection
         static void compileChangeSizeBy(Compiler *compiler);
         static void compileSetSizeTo(Compiler *compiler);
         static void compileSize(Compiler *compiler);
+        static void compileSwitchCostumeTo(Compiler *compiler);
         static void compileCostumeNumberName(Compiler *compiler);
 
         static unsigned int show(VirtualMachine *vm);
@@ -44,6 +48,13 @@ class LooksBlocks : public IBlockSection
         static unsigned int changeSizeBy(VirtualMachine *vm);
         static unsigned int setSizeTo(VirtualMachine *vm);
         static unsigned int size(VirtualMachine *vm);
+
+        static void setCostumeByIndex(Target *target, long index);
+        static unsigned int switchCostumeToByIndex(VirtualMachine *vm);
+        static unsigned int switchCostumeTo(VirtualMachine *vm);
+        static unsigned int nextCostume(VirtualMachine *vm);
+        static unsigned int previousCostume(VirtualMachine *vm);
+
         static unsigned int costumeNumber(VirtualMachine *vm);
         static unsigned int costumeName(VirtualMachine *vm);
 };
