@@ -3,13 +3,17 @@
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/stage.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/costume.h>
 
 #include "looksblocks.h"
+#include "../engine/internal/randomgenerator.h"
 
 using namespace libscratchcpp;
+
+IRandomGenerator *LooksBlocks::rng = nullptr;
 
 std::string LooksBlocks::name() const
 {
@@ -26,12 +30,14 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_size", &compileSize);
     engine->addCompileFunction(this, "looks_switchcostumeto", &compileSwitchCostumeTo);
     engine->addCompileFunction(this, "looks_nextcostume", &compileNextCostume);
+    engine->addCompileFunction(this, "looks_switchbackdropto", &compileSwitchBackdropTo);
     engine->addCompileFunction(this, "looks_costumenumbername", &compileCostumeNumberName);
 
     // Inputs
     engine->addInput(this, "CHANGE", CHANGE);
     engine->addInput(this, "SIZE", SIZE);
     engine->addInput(this, "COSTUME", COSTUME);
+    engine->addInput(this, "BACKDROP", BACKDROP);
 
     // Fields
     engine->addField(this, "NUMBER_NAME", NUMBER_NAME);
@@ -108,6 +114,45 @@ void LooksBlocks::compileSwitchCostumeTo(Compiler *compiler)
 void LooksBlocks::compileNextCostume(Compiler *compiler)
 {
     compiler->addFunctionCall(&nextCostume);
+}
+
+void LooksBlocks::compileSwitchBackdropTo(Compiler *compiler)
+{
+    Stage *stage = compiler->engine()->stage();
+
+    if (!stage)
+        return;
+
+    Input *input = compiler->input(BACKDROP);
+
+    if (input->type() != Input::Type::ObscuredShadow) {
+        assert(input->pointsToDropdownMenu());
+        std::string value = input->selectedMenuItem();
+        int index = stage->findCostume(value);
+
+        if (index == -1) {
+            if (value == "next backdrop")
+                compiler->addFunctionCall(&nextBackdrop);
+            else if (value == "previous backdrop")
+                compiler->addFunctionCall(&previousBackdrop);
+            else if (value == "random backdrop")
+                compiler->addFunctionCall(&randomBackdrop);
+            else {
+                Value v(value);
+
+                if (v.type() == Value::Type::Integer) {
+                    compiler->addConstValue(v.toLong() - 1);
+                    compiler->addFunctionCall(&switchBackdropToByIndex);
+                }
+            }
+        } else {
+            compiler->addConstValue(index);
+            compiler->addFunctionCall(&switchBackdropToByIndex);
+        }
+    } else {
+        compiler->addInput(input);
+        compiler->addFunctionCall(&switchBackdropTo);
+    }
 }
 
 void LooksBlocks::compileCostumeNumberName(Compiler *compiler)
@@ -237,6 +282,73 @@ unsigned int LooksBlocks::previousCostume(VirtualMachine *vm)
 {
     if (Target *target = vm->target())
         setCostumeByIndex(target, target->currentCostume() - 2);
+
+    return 0;
+}
+
+unsigned int LooksBlocks::switchBackdropToByIndex(VirtualMachine *vm)
+{
+    if (Stage *stage = vm->engine()->stage())
+        setCostumeByIndex(stage, vm->getInput(0, 1)->toLong());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::switchBackdropTo(VirtualMachine *vm)
+{
+    Stage *stage = vm->engine()->stage();
+
+    if (!stage)
+        return 1;
+
+    const Value *name = vm->getInput(0, 1);
+    std::string nameStr = name->toString();
+    int index = stage->findCostume(nameStr);
+
+    if (index == -1) {
+        if (nameStr == "next backdrop")
+            nextBackdrop(vm);
+        else if (nameStr == "previous backdrop")
+            previousBackdrop(vm);
+        else if (nameStr == "random backdrop") {
+            randomBackdrop(vm);
+        } else {
+            if (name->type() == Value::Type::Integer)
+                setCostumeByIndex(stage, name->toLong() - 1);
+        }
+    } else
+        setCostumeByIndex(stage, index);
+
+    return 1;
+}
+
+unsigned int LooksBlocks::nextBackdrop(VirtualMachine *vm)
+{
+    if (Stage *stage = vm->engine()->stage())
+        setCostumeByIndex(stage, stage->currentCostume());
+
+    return 0;
+}
+
+unsigned int LooksBlocks::previousBackdrop(VirtualMachine *vm)
+{
+    if (Stage *stage = vm->engine()->stage())
+        setCostumeByIndex(stage, stage->currentCostume() - 2);
+
+    return 0;
+}
+
+unsigned int LooksBlocks::randomBackdrop(VirtualMachine *vm)
+{
+    if (!rng)
+        rng = RandomGenerator::instance().get();
+
+    if (Stage *stage = vm->engine()->stage()) {
+        std::size_t count = stage->costumes().size();
+
+        if (count > 0)
+            stage->setCurrentCostume(rng->randint(1, count));
+    }
 
     return 0;
 }

@@ -8,6 +8,7 @@ namespace libscratchcpp
 {
 
 class Target;
+class IRandomGenerator;
 
 /*! \brief The LooksBlocks class contains the implementation of looks blocks. */
 class LooksBlocks : public IBlockSection
@@ -17,7 +18,8 @@ class LooksBlocks : public IBlockSection
         {
             CHANGE,
             SIZE,
-            COSTUME
+            COSTUME,
+            BACKDROP
         };
 
         enum Fields
@@ -42,6 +44,7 @@ class LooksBlocks : public IBlockSection
         static void compileSize(Compiler *compiler);
         static void compileSwitchCostumeTo(Compiler *compiler);
         static void compileNextCostume(Compiler *compiler);
+        static void compileSwitchBackdropTo(Compiler *compiler);
         static void compileCostumeNumberName(Compiler *compiler);
 
         static unsigned int show(VirtualMachine *vm);
@@ -56,8 +59,16 @@ class LooksBlocks : public IBlockSection
         static unsigned int nextCostume(VirtualMachine *vm);
         static unsigned int previousCostume(VirtualMachine *vm);
 
+        static unsigned int switchBackdropToByIndex(VirtualMachine *vm);
+        static unsigned int switchBackdropTo(VirtualMachine *vm);
+        static unsigned int nextBackdrop(VirtualMachine *vm);
+        static unsigned int previousBackdrop(VirtualMachine *vm);
+        static unsigned int randomBackdrop(VirtualMachine *vm);
+
         static unsigned int costumeNumber(VirtualMachine *vm);
         static unsigned int costumeName(VirtualMachine *vm);
+
+        static IRandomGenerator *rng;
 };
 
 } // namespace libscratchcpp
