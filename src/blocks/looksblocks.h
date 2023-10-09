@@ -41,6 +41,7 @@ class LooksBlocks : public IBlockSection
         static void compileSetSizeTo(Compiler *compiler);
         static void compileSize(Compiler *compiler);
         static void compileSwitchCostumeTo(Compiler *compiler);
+        static void compileNextCostume(Compiler *compiler);
         static void compileCostumeNumberName(Compiler *compiler);
 
         static unsigned int show(VirtualMachine *vm);
