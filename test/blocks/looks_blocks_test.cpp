@@ -106,6 +106,7 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_nextcostume", &LooksBlocks::compileNextCostume));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_switchbackdropto", &LooksBlocks::compileSwitchBackdropTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_costumenumbername", &LooksBlocks::compileCostumeNumberName));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_backdropnumbername", &LooksBlocks::compileBackdropNumberName));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "CHANGE", LooksBlocks::CHANGE));
@@ -117,8 +118,8 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "NUMBER_NAME", LooksBlocks::NUMBER_NAME));
 
     // Field values
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "number", LooksBlocks::CostumeNumber));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "name", LooksBlocks::CostumeName));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "number", LooksBlocks::Number));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "name", LooksBlocks::Name));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -1249,11 +1250,11 @@ TEST_F(LooksBlocksTest, CostumeNumberName)
 
     // costume [number]
     auto block1 = std::make_shared<Block>("a", "looks_costumenumbername");
-    addDropdownField(block1, "NUMBER_NAME", LooksBlocks::NUMBER_NAME, "number", LooksBlocks::CostumeNumber);
+    addDropdownField(block1, "NUMBER_NAME", LooksBlocks::NUMBER_NAME, "number", LooksBlocks::Number);
 
     // costume [name]
     auto block2 = std::make_shared<Block>("b", "looks_costumenumbername");
-    addDropdownField(block2, "NUMBER_NAME", LooksBlocks::NUMBER_NAME, "name", LooksBlocks::CostumeName);
+    addDropdownField(block2, "NUMBER_NAME", LooksBlocks::NUMBER_NAME, "name", LooksBlocks::Name);
 
     compiler.init();
 
@@ -1319,4 +1320,88 @@ TEST_F(LooksBlocksTest, CostumeNumberNameImpl)
 
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_EQ(vm.getInput(0, 1)->toString(), "costume3");
+}
+
+TEST_F(LooksBlocksTest, BackdropNumberName)
+{
+    Compiler compiler(&m_engineMock);
+
+    // backdrop [number]
+    auto block1 = std::make_shared<Block>("a", "looks_backdropnumbername");
+    addDropdownField(block1, "NUMBER_NAME", LooksBlocks::NUMBER_NAME, "number", LooksBlocks::Number);
+
+    // backdrop [name]
+    auto block2 = std::make_shared<Block>("b", "looks_backdropnumbername");
+    addDropdownField(block2, "NUMBER_NAME", LooksBlocks::NUMBER_NAME, "name", LooksBlocks::Name);
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(0));
+    compiler.setBlock(block1);
+    LooksBlocks::compileBackdropNumberName(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropName)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    LooksBlocks::compileBackdropNumberName(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(LooksBlocksTest, BackdropNumberNameImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::backdropNumber, &LooksBlocks::backdropName };
+
+    auto b1 = std::make_shared<Costume>("backdrop1", "b1", "svg");
+    auto b2 = std::make_shared<Costume>("backdrop2", "b2", "svg");
+    auto b3 = std::make_shared<Costume>("backdrop3", "b3", "svg");
+
+    Target target;
+
+    Stage stage;
+    stage.addCostume(b1);
+    stage.addCostume(b2);
+    stage.addCostume(b3);
+
+    VirtualMachine vm(&target, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+
+    stage.setCurrentCostume(2);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 2);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toString(), "backdrop2");
+
+    stage.setCurrentCostume(3);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    vm.reset();
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 3);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toString(), "backdrop3");
 }

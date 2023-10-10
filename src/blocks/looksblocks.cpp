@@ -32,6 +32,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_nextcostume", &compileNextCostume);
     engine->addCompileFunction(this, "looks_switchbackdropto", &compileSwitchBackdropTo);
     engine->addCompileFunction(this, "looks_costumenumbername", &compileCostumeNumberName);
+    engine->addCompileFunction(this, "looks_backdropnumbername", &compileBackdropNumberName);
 
     // Inputs
     engine->addInput(this, "CHANGE", CHANGE);
@@ -43,8 +44,8 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addField(this, "NUMBER_NAME", NUMBER_NAME);
 
     // Field values
-    engine->addFieldValue(this, "number", CostumeNumber);
-    engine->addFieldValue(this, "name", CostumeName);
+    engine->addFieldValue(this, "number", Number);
+    engine->addFieldValue(this, "name", Name);
 }
 
 void LooksBlocks::compileShow(Compiler *compiler)
@@ -160,12 +161,27 @@ void LooksBlocks::compileCostumeNumberName(Compiler *compiler)
     int option = compiler->field(NUMBER_NAME)->specialValueId();
 
     switch (option) {
-        case CostumeNumber:
+        case Number:
             compiler->addFunctionCall(&costumeNumber);
             break;
 
-        case CostumeName:
+        case Name:
             compiler->addFunctionCall(&costumeName);
+            break;
+    }
+}
+
+void LooksBlocks::compileBackdropNumberName(Compiler *compiler)
+{
+    int option = compiler->field(NUMBER_NAME)->specialValueId();
+
+    switch (option) {
+        case Number:
+            compiler->addFunctionCall(&backdropNumber);
+            break;
+
+        case Name:
+            compiler->addFunctionCall(&backdropName);
             break;
     }
 }
@@ -367,6 +383,31 @@ unsigned int LooksBlocks::costumeName(VirtualMachine *vm)
 {
     if (Target *target = vm->target()) {
         auto costume = target->costumeAt(target->currentCostume() - 1);
+
+        if (costume)
+            vm->addReturnValue(costume->name());
+        else
+            vm->addReturnValue("");
+    } else
+        vm->addReturnValue("");
+
+    return 0;
+}
+
+unsigned int LooksBlocks::backdropNumber(VirtualMachine *vm)
+{
+    if (Stage *stage = vm->engine()->stage())
+        vm->addReturnValue(stage->currentCostume());
+    else
+        vm->addReturnValue(0);
+
+    return 0;
+}
+
+unsigned int LooksBlocks::backdropName(VirtualMachine *vm)
+{
+    if (Stage *stage = vm->engine()->stage()) {
+        auto costume = stage->costumeAt(stage->currentCostume() - 1);
 
         if (costume)
             vm->addReturnValue(costume->name());

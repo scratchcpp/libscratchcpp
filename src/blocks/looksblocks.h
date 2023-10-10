@@ -29,8 +29,8 @@ class LooksBlocks : public IBlockSection
 
         enum FieldValues
         {
-            CostumeNumber,
-            CostumeName
+            Number,
+            Name
         };
 
         std::string name() const override;
@@ -46,6 +46,7 @@ class LooksBlocks : public IBlockSection
         static void compileNextCostume(Compiler *compiler);
         static void compileSwitchBackdropTo(Compiler *compiler);
         static void compileCostumeNumberName(Compiler *compiler);
+        static void compileBackdropNumberName(Compiler *compiler);
 
         static unsigned int show(VirtualMachine *vm);
         static unsigned int hide(VirtualMachine *vm);
@@ -67,6 +68,8 @@ class LooksBlocks : public IBlockSection
 
         static unsigned int costumeNumber(VirtualMachine *vm);
         static unsigned int costumeName(VirtualMachine *vm);
+        static unsigned int backdropNumber(VirtualMachine *vm);
+        static unsigned int backdropName(VirtualMachine *vm);
 
         static IRandomGenerator *rng;
 };
