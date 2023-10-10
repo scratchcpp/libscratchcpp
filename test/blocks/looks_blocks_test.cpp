@@ -105,6 +105,7 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_switchcostumeto", &LooksBlocks::compileSwitchCostumeTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_nextcostume", &LooksBlocks::compileNextCostume));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_switchbackdropto", &LooksBlocks::compileSwitchBackdropTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_nextbackdrop", &LooksBlocks::compileNextBackdrop));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_costumenumbername", &LooksBlocks::compileCostumeNumberName));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_backdropnumbername", &LooksBlocks::compileBackdropNumberName));
 
@@ -1119,6 +1120,23 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.currentCostume(), 1);
+}
+
+TEST_F(LooksBlocksTest, NextBackdrop)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "looks_nextbackdrop");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::nextBackdrop)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    LooksBlocks::compileNextBackdrop(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
 }
 
 TEST_F(LooksBlocksTest, NextBackdropImpl)

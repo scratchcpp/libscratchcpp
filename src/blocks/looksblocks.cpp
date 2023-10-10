@@ -31,6 +31,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_switchcostumeto", &compileSwitchCostumeTo);
     engine->addCompileFunction(this, "looks_nextcostume", &compileNextCostume);
     engine->addCompileFunction(this, "looks_switchbackdropto", &compileSwitchBackdropTo);
+    engine->addCompileFunction(this, "looks_nextbackdrop", &compileNextBackdrop);
     engine->addCompileFunction(this, "looks_costumenumbername", &compileCostumeNumberName);
     engine->addCompileFunction(this, "looks_backdropnumbername", &compileBackdropNumberName);
 
@@ -154,6 +155,11 @@ void LooksBlocks::compileSwitchBackdropTo(Compiler *compiler)
         compiler->addInput(input);
         compiler->addFunctionCall(&switchBackdropTo);
     }
+}
+
+void LooksBlocks::compileNextBackdrop(Compiler *compiler)
+{
+    compiler->addFunctionCall(&nextBackdrop);
 }
 
 void LooksBlocks::compileCostumeNumberName(Compiler *compiler)

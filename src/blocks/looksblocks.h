@@ -45,6 +45,7 @@ class LooksBlocks : public IBlockSection
         static void compileSwitchCostumeTo(Compiler *compiler);
         static void compileNextCostume(Compiler *compiler);
         static void compileSwitchBackdropTo(Compiler *compiler);
+        static void compileNextBackdrop(Compiler *compiler);
         static void compileCostumeNumberName(Compiler *compiler);
         static void compileBackdropNumberName(Compiler *compiler);
 
