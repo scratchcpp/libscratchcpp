@@ -170,3 +170,22 @@ TEST(ListTest, ToString)
     list.push_back(8);
     ASSERT_EQ(list.toString(), "098");
 }
+
+TEST(ListTest, Clone)
+{
+    List list("abc", "test list");
+    list.push_back("Lorem");
+    list.push_back("ipsum");
+    list.push_back("dolor");
+    list.push_back("sit");
+    list.push_back("amet");
+
+    std::shared_ptr<List> clone = list.clone();
+    ASSERT_TRUE(clone);
+    ASSERT_EQ(clone->id(), list.id());
+    ASSERT_EQ(clone->name(), list.name());
+    ASSERT_EQ(clone->size(), list.size());
+
+    for (std::size_t i = 0; i < list.size(); i++)
+        ASSERT_EQ(list[i], (*clone)[i]);
+}

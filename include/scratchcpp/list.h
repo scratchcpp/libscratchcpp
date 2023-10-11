@@ -39,6 +39,8 @@ class LIBSCRATCHCPP_EXPORT List
 
         std::string toString() const;
 
+        std::shared_ptr<List> clone();
+
     private:
         spimpl::unique_impl_ptr<ListPrivate> impl;
 };

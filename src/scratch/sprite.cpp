@@ -61,13 +61,8 @@ std::shared_ptr<Sprite> Sprite::clone()
 
         const auto &l = lists();
 
-        for (auto list : l) {
-            auto newList = std::make_shared<List>(list->id(), list->name());
-            clone->addList(newList);
-
-            for (const Value &item : *list)
-                newList->push_back(item);
-        }
+        for (auto list : l)
+            clone->addList(list->clone());
 
         clone->setCurrentCostume(currentCostume());
         clone->setLayerOrder(layerOrder());

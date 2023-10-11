@@ -76,3 +76,14 @@ std::string List::toString() const
 
     return ret;
 }
+
+/*! Creates a copy of the list. */
+std::shared_ptr<List> List::clone()
+{
+    auto copy = std::make_shared<List>(id(), impl->name);
+
+    for (const Value &item : *this)
+        copy->push_back(item);
+
+    return copy;
+}
