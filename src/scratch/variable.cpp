@@ -48,3 +48,9 @@ void Variable::setIsCloudVariable(bool isCloudVariable)
 {
     impl->isCloudVariable = isCloudVariable;
 }
+
+/*! Creates a copy of the variable. */
+std::shared_ptr<Variable> Variable::clone()
+{
+    return std::make_shared<Variable>(id(), impl->name, impl->value, impl->isCloudVariable);
+}

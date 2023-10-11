@@ -56,3 +56,23 @@ TEST(VariableTest, IsCloudVariable)
     var.setIsCloudVariable(true);
     ASSERT_TRUE(var.isCloudVariable());
 }
+
+TEST(VariableTest, Clone)
+{
+    std::shared_ptr<Variable> clone;
+    std::vector<std::shared_ptr<Variable>> vars;
+
+    vars.push_back(std::make_shared<Variable>("abc", "var1"));
+    vars.push_back(std::make_shared<Variable>("abc", "var2", "test"));
+    vars.push_back(std::make_shared<Variable>("abc", "var3", "test", true));
+    vars.push_back(std::make_shared<Variable>("abc", "var4", "test", false));
+
+    for (auto var : vars) {
+        clone = var->clone();
+        ASSERT_TRUE(clone);
+        ASSERT_EQ(clone->id(), var->id());
+        ASSERT_EQ(clone->name(), var->name());
+        ASSERT_EQ(clone->value(), var->value());
+        ASSERT_EQ(clone->isCloudVariable(), var->isCloudVariable());
+    }
+}

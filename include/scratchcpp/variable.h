@@ -29,6 +29,8 @@ class LIBSCRATCHCPP_EXPORT Variable : public Entity
         bool isCloudVariable() const;
         void setIsCloudVariable(bool isCloudVariable);
 
+        std::shared_ptr<Variable> clone();
+
     private:
         spimpl::unique_impl_ptr<VariablePrivate> impl;
 };
