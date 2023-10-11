@@ -57,7 +57,7 @@ std::shared_ptr<Sprite> Sprite::clone()
         const auto &vars = variables();
 
         for (auto var : vars)
-            clone->addVariable(std::make_shared<Variable>(var->id(), var->name(), var->value()));
+            clone->addVariable(var->clone());
 
         const auto &l = lists();
 
