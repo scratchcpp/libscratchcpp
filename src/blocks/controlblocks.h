@@ -11,6 +11,7 @@ namespace libscratchcpp
 
 class Compiler;
 class VirtualMachine;
+class IClock;
 
 /*! \brief The ControlBlocks class contains the implementation of control blocks. */
 class ControlBlocks : public IBlockSection
@@ -69,6 +70,8 @@ class ControlBlocks : public IBlockSection
         static unsigned int deleteThisClone(VirtualMachine *vm);
 
         static inline std::unordered_map<VirtualMachine *, std::pair<std::chrono::steady_clock::time_point, int>> m_timeMap;
+
+        static IClock *clock;
 };
 
 } // namespace libscratchcpp

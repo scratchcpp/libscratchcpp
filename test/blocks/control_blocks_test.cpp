@@ -5,11 +5,13 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/sprite.h>
 #include <enginemock.h>
+#include <clockmock.h>
 
 #include "../common.h"
 #include "blocks/controlblocks.h"
 #include "blocks/operatorblocks.h"
 #include "engine/internal/engine.h"
+#include "engine/internal/clock.h"
 
 using namespace libscratchcpp;
 
@@ -732,6 +734,11 @@ TEST_F(ControlBlocksTest, WaitImpl)
     vm.setConstValues(constValues);
     vm.setBytecode(bytecode);
 
+    ClockMock clock;
+    ControlBlocks::clock = &clock;
+
+    std::chrono::steady_clock::time_point startTime(std::chrono::milliseconds(1000));
+    EXPECT_CALL(clock, currentSteadyTime()).Times(2).WillRepeatedly(Return(startTime));
     EXPECT_CALL(m_engineMock, lockFrame()).Times(1);
     EXPECT_CALL(m_engineMock, breakFrame()).Times(1);
     vm.run();
@@ -740,18 +747,20 @@ TEST_F(ControlBlocksTest, WaitImpl)
     ASSERT_TRUE(ControlBlocks::m_timeMap.find(&vm) != ControlBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm.atEnd());
 
+    std::chrono::steady_clock::time_point time1(std::chrono::milliseconds(6450));
+    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time1));
     EXPECT_CALL(m_engineMock, lockFrame()).Times(1);
     EXPECT_CALL(m_engineMock, breakFrame()).Times(1);
-    ControlBlocks::m_timeMap[&vm].first = std::chrono::steady_clock::now() - std::chrono::milliseconds(5250);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(ControlBlocks::m_timeMap.find(&vm) != ControlBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm.atEnd());
 
+    std::chrono::steady_clock::time_point time2(std::chrono::milliseconds(6500));
+    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time2));
     EXPECT_CALL(m_engineMock, lockFrame()).Times(1);
     EXPECT_CALL(m_engineMock, breakFrame()).Times(1);
-    ControlBlocks::m_timeMap[&vm].first = std::chrono::steady_clock::now() - std::chrono::milliseconds(5500);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -765,6 +774,8 @@ TEST_F(ControlBlocksTest, WaitImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(ControlBlocks::m_timeMap.find(&vm) == ControlBlocks::m_timeMap.cend());
     ASSERT_TRUE(vm.atEnd());
+
+    ControlBlocks::clock = Clock::instance().get();
 }
 
 TEST_F(ControlBlocksTest, WaitUntil)
