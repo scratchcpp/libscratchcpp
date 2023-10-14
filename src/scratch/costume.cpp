@@ -48,3 +48,12 @@ void Costume::setRotationCenterY(int newRotationCenterY)
 {
     impl->rotationCenterY = newRotationCenterY;
 }
+
+/*!
+ * Returns the Broadcast linked with this costume.
+ * \note This is used by the "switch backdrop to and wait" block.
+ */
+Broadcast *Costume::broadcast()
+{
+    return &impl->broadcast;
+}

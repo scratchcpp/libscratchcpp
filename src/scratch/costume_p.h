@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <scratchcpp/broadcast.h>
+
 namespace libscratchcpp
 {
 
@@ -13,6 +15,7 @@ struct CostumePrivate
         double bitmapResolution = 1;
         int rotationCenterX = 0;
         int rotationCenterY = 0;
+        Broadcast broadcast;
 };
 
 } // namespace libscratchcpp

@@ -4,6 +4,7 @@
 
 using namespace libscratchcpp;
 
-CostumePrivate::CostumePrivate()
+CostumePrivate::CostumePrivate() :
+    broadcast("", "")
 {
 }
