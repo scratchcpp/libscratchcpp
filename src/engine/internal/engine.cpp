@@ -212,10 +212,14 @@ void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wa
     if (index < 0 || index >= m_broadcasts.size())
         return;
 
+    broadcastByPtr(m_broadcasts[index].get(), sourceScript, wait);
+}
+
+void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait)
+{
     bool previousSkipFrame = m_skipFrame;
     skipFrame();
-    const std::vector<Script *> &scripts = m_broadcastMap[index];
-    auto broadcast = m_broadcasts[index];
+    const std::vector<Script *> &scripts = m_broadcastMap[broadcast];
 
     for (auto script : scripts) {
         std::vector<VirtualMachine *> runningBroadcastScripts;
@@ -234,7 +238,7 @@ void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wa
             m_scriptsToRemove.erase(std::remove(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm), m_scriptsToRemove.end());
             assert(std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm) == m_scriptsToRemove.end());
 
-            auto &scripts = m_runningBroadcastMap[broadcast.get()];
+            auto &scripts = m_runningBroadcastMap[broadcast];
 
             for (auto &pair : scripts) {
                 if (pair.second->script() == script)
@@ -269,18 +273,10 @@ void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wa
             if (it == runningBroadcastScripts.end()) {
                 auto vm = script->start(target);
                 m_runningScripts.push_back(vm);
-                m_runningBroadcastMap[broadcast.get()].push_back({ sourceScript, vm.get() });
+                m_runningBroadcastMap[broadcast].push_back({ sourceScript, vm.get() });
             }
         }
     }
-}
-
-void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait)
-{
-    auto it = std::find_if(m_broadcasts.begin(), m_broadcasts.end(), [broadcast](std::shared_ptr<Broadcast> b) { return b.get() == broadcast; });
-
-    if (it != m_broadcasts.end())
-        this->broadcast(it - m_broadcasts.begin(), sourceScript, wait);
 }
 
 void Engine::stopScript(VirtualMachine *vm)
@@ -595,21 +591,16 @@ int Engine::findBroadcastById(const std::string &broadcastId) const
 
 void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast)
 {
-    auto id = findBroadcast(broadcast->name());
-
-    if (id == -1)
-        return;
-
-    if (m_broadcastMap.count(id) == 1) {
-        std::vector<Script *> &scripts = m_broadcastMap[id];
+    if (m_broadcastMap.count(broadcast) == 1) {
+        std::vector<Script *> &scripts = m_broadcastMap[broadcast];
         // TODO: Do not allow adding existing scripts
         scripts.push_back(m_scripts[whenReceivedBlock].get());
     } else {
-        m_broadcastMap[id] = { m_scripts[whenReceivedBlock].get() };
+        m_broadcastMap[broadcast] = { m_scripts[whenReceivedBlock].get() };
 
         // Create a vector of running scripts for this broadcast
         // so we don't need to check if it's there
-        m_runningBroadcastMap[m_broadcasts[id].get()] = {};
+        m_runningBroadcastMap[broadcast] = {};
     }
 }
 

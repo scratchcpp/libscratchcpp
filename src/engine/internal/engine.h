@@ -117,7 +117,7 @@ class Engine : public IEngine
         std::unordered_map<std::shared_ptr<IBlockSection>, std::unique_ptr<BlockSectionContainer>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
-        std::unordered_map<unsigned int, std::vector<Script *>> m_broadcastMap;
+        std::unordered_map<Broadcast *, std::vector<Script *>> m_broadcastMap;
         std::unordered_map<Broadcast *, std::vector<std::pair<VirtualMachine *, VirtualMachine *>>> m_runningBroadcastMap; // source script, "when received" script
         std::unordered_map<Target *, std::vector<Script *>> m_cloneInitScriptsMap;                                         // target (no clones), "when I start as a clone" scripts
         std::vector<std::string> m_extensions;
