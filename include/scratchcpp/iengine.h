@@ -65,6 +65,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Starts the script of the broadcast with the given index. */
         virtual void broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait = false) = 0;
 
+        /*! Starts the script of the given broadcast. */
+        virtual void broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait = false) = 0;
+
         /*! Stops the given script. */
         virtual void stopScript(VirtualMachine *vm) = 0;
 
@@ -121,6 +124,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
 
         /*! Returns true if there are any running script of the broadcast with the given index. */
         virtual bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) = 0;
+
+        /*! Returns true if there are any running script of the given broadcast. */
+        virtual bool broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript) = 0;
 
         /*!
          * Call this from a block implementation to force a "screen refresh".

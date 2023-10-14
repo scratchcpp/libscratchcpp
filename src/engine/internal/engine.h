@@ -31,6 +31,7 @@ class Engine : public IEngine
         void stop() override;
         void startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target) override;
         void broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait = false) override;
+        void broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait = false) override;
         void stopScript(VirtualMachine *vm) override;
         void stopTarget(Target *target, VirtualMachine *exceptScript) override;
         void initClone(libscratchcpp::Sprite *clone) override;
@@ -54,6 +55,7 @@ class Engine : public IEngine
         void setStageHeight(unsigned int height) override;
 
         bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) override;
+        bool broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript) override;
 
         void breakFrame() override;
         bool breakingCurrentFrame() override;
@@ -116,8 +118,8 @@ class Engine : public IEngine
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<unsigned int, std::vector<Script *>> m_broadcastMap;
-        std::unordered_map<unsigned int, std::vector<std::pair<VirtualMachine *, VirtualMachine *>>> m_runningBroadcastMap; // source script, "when received" script
-        std::unordered_map<Target *, std::vector<Script *>> m_cloneInitScriptsMap;                                          // target (no clones), "when I start as a clone" scripts
+        std::unordered_map<Broadcast *, std::vector<std::pair<VirtualMachine *, VirtualMachine *>>> m_runningBroadcastMap; // source script, "when received" script
+        std::unordered_map<Target *, std::vector<Script *>> m_cloneInitScriptsMap;                                         // target (no clones), "when I start as a clone" scripts
         std::vector<std::string> m_extensions;
         std::vector<std::shared_ptr<VirtualMachine>> m_runningScripts;
         std::vector<VirtualMachine *> m_scriptsToRemove;
