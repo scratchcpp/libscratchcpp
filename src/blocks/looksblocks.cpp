@@ -350,26 +350,26 @@ unsigned int LooksBlocks::previousCostume(VirtualMachine *vm)
     return 0;
 }
 
-void LooksBlocks::startBackdropScripts(VirtualMachine *vm)
+void LooksBlocks::startBackdropScripts(VirtualMachine *vm, bool wait)
 {
-    if (Stage *stage = vm->engine()->stage())
-        vm->engine()->broadcastByPtr(stage->costumeAt(stage->currentCostume() - 1)->broadcast(), vm, true);
+    if (Stage *stage = vm->engine()->stage()) {
+        if (stage->costumes().size() > 0)
+            vm->engine()->broadcastByPtr(stage->costumeAt(stage->currentCostume() - 1)->broadcast(), vm, wait);
+    }
 }
 
-unsigned int LooksBlocks::switchBackdropToByIndex(VirtualMachine *vm)
+void LooksBlocks::switchBackdropToByIndexImpl(VirtualMachine *vm)
 {
     if (Stage *stage = vm->engine()->stage())
         setCostumeByIndex(stage, vm->getInput(0, 1)->toLong());
-
-    return 1;
 }
 
-unsigned int LooksBlocks::switchBackdropTo(VirtualMachine *vm)
+void LooksBlocks::switchBackdropToImpl(VirtualMachine *vm)
 {
     Stage *stage = vm->engine()->stage();
 
     if (!stage)
-        return 1;
+        return;
 
     const Value *name = vm->getInput(0, 1);
     std::string nameStr = name->toString();
@@ -377,72 +377,32 @@ unsigned int LooksBlocks::switchBackdropTo(VirtualMachine *vm)
 
     if (index == -1) {
         if (nameStr == "next backdrop")
-            nextBackdrop(vm);
+            nextBackdropImpl(vm);
         else if (nameStr == "previous backdrop")
-            previousBackdrop(vm);
+            previousBackdropImpl(vm);
         else if (nameStr == "random backdrop") {
-            randomBackdrop(vm);
+            randomBackdropImpl(vm);
         } else {
             if (name->type() == Value::Type::Integer)
                 setCostumeByIndex(stage, name->toLong() - 1);
         }
     } else
         setCostumeByIndex(stage, index);
-
-    return 1;
 }
 
-unsigned int LooksBlocks::switchBackdropToByIndexAndWait(VirtualMachine *vm)
-{
-    if (Stage *stage = vm->engine()->stage()) {
-        setCostumeByIndex(stage, vm->getInput(0, 1)->toLong());
-        startBackdropScripts(vm);
-    }
-
-    return 1;
-}
-
-unsigned int LooksBlocks::switchBackdropToAndWait(VirtualMachine *vm)
-{
-    switchBackdropTo(vm);
-    startBackdropScripts(vm);
-
-    return 1;
-}
-
-unsigned int LooksBlocks::nextBackdrop(VirtualMachine *vm)
+void LooksBlocks::nextBackdropImpl(VirtualMachine *vm)
 {
     if (Stage *stage = vm->engine()->stage())
         setCostumeByIndex(stage, stage->currentCostume());
-
-    return 0;
 }
 
-unsigned int LooksBlocks::nextBackdropAndWait(VirtualMachine *vm)
-{
-    nextBackdrop(vm);
-    startBackdropScripts(vm);
-
-    return 0;
-}
-
-unsigned int LooksBlocks::previousBackdrop(VirtualMachine *vm)
+void LooksBlocks::previousBackdropImpl(VirtualMachine *vm)
 {
     if (Stage *stage = vm->engine()->stage())
         setCostumeByIndex(stage, stage->currentCostume() - 2);
-
-    return 0;
 }
 
-unsigned int LooksBlocks::previousBackdropAndWait(VirtualMachine *vm)
-{
-    previousBackdrop(vm);
-    startBackdropScripts(vm);
-
-    return 0;
-}
-
-unsigned int LooksBlocks::randomBackdrop(VirtualMachine *vm)
+void LooksBlocks::randomBackdropImpl(VirtualMachine *vm)
 {
     if (!rng)
         rng = RandomGenerator::instance().get();
@@ -453,14 +413,84 @@ unsigned int LooksBlocks::randomBackdrop(VirtualMachine *vm)
         if (count > 0)
             stage->setCurrentCostume(rng->randint(1, count));
     }
+}
+
+unsigned int LooksBlocks::switchBackdropToByIndex(VirtualMachine *vm)
+{
+    switchBackdropToByIndexImpl(vm);
+    startBackdropScripts(vm, false);
+
+    return 1;
+}
+
+unsigned int LooksBlocks::switchBackdropTo(VirtualMachine *vm)
+{
+    switchBackdropToImpl(vm);
+    startBackdropScripts(vm, false);
+
+    return 1;
+}
+
+unsigned int LooksBlocks::switchBackdropToByIndexAndWait(VirtualMachine *vm)
+{
+    switchBackdropToByIndexImpl(vm);
+    startBackdropScripts(vm, true);
+
+    return 1;
+}
+
+unsigned int LooksBlocks::switchBackdropToAndWait(VirtualMachine *vm)
+{
+    switchBackdropToImpl(vm);
+    startBackdropScripts(vm, true);
+
+    return 1;
+}
+
+unsigned int LooksBlocks::nextBackdrop(VirtualMachine *vm)
+{
+    nextBackdropImpl(vm);
+    startBackdropScripts(vm, false);
+
+    return 0;
+}
+
+unsigned int LooksBlocks::nextBackdropAndWait(VirtualMachine *vm)
+{
+    nextBackdropImpl(vm);
+    startBackdropScripts(vm, true);
+
+    return 0;
+}
+
+unsigned int LooksBlocks::previousBackdrop(VirtualMachine *vm)
+{
+    previousBackdropImpl(vm);
+    startBackdropScripts(vm, false);
+
+    return 0;
+}
+
+unsigned int LooksBlocks::previousBackdropAndWait(VirtualMachine *vm)
+{
+    previousBackdropImpl(vm);
+    startBackdropScripts(vm, true);
+
+    return 0;
+}
+
+unsigned int LooksBlocks::randomBackdrop(VirtualMachine *vm)
+{
+    randomBackdropImpl(vm);
+    startBackdropScripts(vm, false);
 
     return 0;
 }
 
 unsigned int LooksBlocks::randomBackdropAndWait(VirtualMachine *vm)
 {
-    randomBackdrop(vm);
-    startBackdropScripts(vm);
+    randomBackdropImpl(vm);
+    startBackdropScripts(vm, true);
 
     return 0;
 }
