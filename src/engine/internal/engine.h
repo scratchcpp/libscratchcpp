@@ -82,7 +82,7 @@ class Engine : public IEngine
         int findBroadcast(const std::string &broadcastName) const override;
         int findBroadcastById(const std::string &broadcastId) const override;
 
-        void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast) override;
+        void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast) override;
 
         void addCloneInitScript(std::shared_ptr<Block> hatBlock) override;
 

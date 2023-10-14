@@ -205,7 +205,7 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual int findBroadcastById(const std::string &broadcastId) const = 0;
 
         /*! Registers the broadcast script. */
-        virtual void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast) = 0;
+        virtual void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast) = 0;
 
         /* Registers the given "when I start as clone" script. */
         virtual void addCloneInitScript(std::shared_ptr<Block> hatBlock) = 0;

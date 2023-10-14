@@ -221,7 +221,7 @@ TEST_F(EventBlocksTest, WhenBroadcastReceived)
     auto block1 = createEventBlock("a", "event_whenbroadcastreceived");
     addBroadcastField(block1, "BROADCAST_OPTION", EventBlocks::BROADCAST_OPTION, m_broadcast);
 
-    EXPECT_CALL(m_engineMock, addBroadcastScript(block1, m_broadcast)).Times(1);
+    EXPECT_CALL(m_engineMock, addBroadcastScript(block1, m_broadcast.get())).Times(1);
 
     compiler.init();
     compiler.setBlock(block1);

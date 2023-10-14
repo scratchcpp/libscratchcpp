@@ -593,7 +593,7 @@ int Engine::findBroadcastById(const std::string &broadcastId) const
     return -1;
 }
 
-void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, std::shared_ptr<Broadcast> broadcast)
+void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast)
 {
     auto id = findBroadcast(broadcast->name());
 

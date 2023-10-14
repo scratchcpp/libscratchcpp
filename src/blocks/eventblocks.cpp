@@ -66,7 +66,7 @@ void EventBlocks::compileWhenBroadcastReceived(Compiler *compiler)
 {
     auto broadcast = std::static_pointer_cast<Broadcast>(compiler->field(BROADCAST_OPTION)->valuePtr());
 
-    compiler->engine()->addBroadcastScript(compiler->block(), broadcast);
+    compiler->engine()->addBroadcastScript(compiler->block(), broadcast.get());
 }
 
 unsigned int EventBlocks::broadcast(VirtualMachine *vm)

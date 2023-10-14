@@ -68,7 +68,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(int, findBroadcast, (const std::string &), (const, override));
         MOCK_METHOD(int, findBroadcastById, (const std::string &), (const, override));
 
-        MOCK_METHOD(void, addBroadcastScript, (std::shared_ptr<Block>, std::shared_ptr<Broadcast>), (override));
+        MOCK_METHOD(void, addBroadcastScript, (std::shared_ptr<Block>, Broadcast *), (override));
 
         MOCK_METHOD(void, addCloneInitScript, (std::shared_ptr<Block>), (override));
 
