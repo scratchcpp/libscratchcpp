@@ -31,6 +31,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_switchcostumeto", &compileSwitchCostumeTo);
     engine->addCompileFunction(this, "looks_nextcostume", &compileNextCostume);
     engine->addCompileFunction(this, "looks_switchbackdropto", &compileSwitchBackdropTo);
+    engine->addCompileFunction(this, "looks_switchbackdroptoandwait", &compileSwitchBackdropToAndWait);
     engine->addCompileFunction(this, "looks_nextbackdrop", &compileNextBackdrop);
     engine->addCompileFunction(this, "looks_costumenumbername", &compileCostumeNumberName);
     engine->addCompileFunction(this, "looks_backdropnumbername", &compileBackdropNumberName);
@@ -155,6 +156,47 @@ void LooksBlocks::compileSwitchBackdropTo(Compiler *compiler)
         compiler->addInput(input);
         compiler->addFunctionCall(&switchBackdropTo);
     }
+}
+
+void LooksBlocks::compileSwitchBackdropToAndWait(Compiler *compiler)
+{
+    Stage *stage = compiler->engine()->stage();
+
+    if (!stage)
+        return;
+
+    Input *input = compiler->input(BACKDROP);
+
+    if (input->type() != Input::Type::ObscuredShadow) {
+        assert(input->pointsToDropdownMenu());
+        std::string value = input->selectedMenuItem();
+        int index = stage->findCostume(value);
+
+        if (index == -1) {
+            if (value == "next backdrop")
+                compiler->addFunctionCall(&nextBackdropAndWait);
+            else if (value == "previous backdrop")
+                compiler->addFunctionCall(&previousBackdropAndWait);
+            else if (value == "random backdrop")
+                compiler->addFunctionCall(&randomBackdropAndWait);
+            else {
+                Value v(value);
+
+                if (v.type() == Value::Type::Integer) {
+                    compiler->addConstValue(v.toLong() - 1);
+                    compiler->addFunctionCall(&switchBackdropToByIndexAndWait);
+                }
+            }
+        } else {
+            compiler->addConstValue(index);
+            compiler->addFunctionCall(&switchBackdropToByIndexAndWait);
+        }
+    } else {
+        compiler->addInput(input);
+        compiler->addFunctionCall(&switchBackdropToAndWait);
+    }
+
+    compiler->addFunctionCall(&checkBackdropScripts);
 }
 
 void LooksBlocks::compileNextBackdrop(Compiler *compiler)
@@ -308,6 +350,12 @@ unsigned int LooksBlocks::previousCostume(VirtualMachine *vm)
     return 0;
 }
 
+void LooksBlocks::startBackdropScripts(VirtualMachine *vm)
+{
+    if (Stage *stage = vm->engine()->stage())
+        vm->engine()->broadcastByPtr(stage->costumeAt(stage->currentCostume() - 1)->broadcast(), vm, true);
+}
+
 unsigned int LooksBlocks::switchBackdropToByIndex(VirtualMachine *vm)
 {
     if (Stage *stage = vm->engine()->stage())
@@ -344,6 +392,24 @@ unsigned int LooksBlocks::switchBackdropTo(VirtualMachine *vm)
     return 1;
 }
 
+unsigned int LooksBlocks::switchBackdropToByIndexAndWait(VirtualMachine *vm)
+{
+    if (Stage *stage = vm->engine()->stage()) {
+        setCostumeByIndex(stage, vm->getInput(0, 1)->toLong());
+        startBackdropScripts(vm);
+    }
+
+    return 1;
+}
+
+unsigned int LooksBlocks::switchBackdropToAndWait(VirtualMachine *vm)
+{
+    switchBackdropTo(vm);
+    startBackdropScripts(vm);
+
+    return 1;
+}
+
 unsigned int LooksBlocks::nextBackdrop(VirtualMachine *vm)
 {
     if (Stage *stage = vm->engine()->stage())
@@ -352,10 +418,26 @@ unsigned int LooksBlocks::nextBackdrop(VirtualMachine *vm)
     return 0;
 }
 
+unsigned int LooksBlocks::nextBackdropAndWait(VirtualMachine *vm)
+{
+    nextBackdrop(vm);
+    startBackdropScripts(vm);
+
+    return 0;
+}
+
 unsigned int LooksBlocks::previousBackdrop(VirtualMachine *vm)
 {
     if (Stage *stage = vm->engine()->stage())
         setCostumeByIndex(stage, stage->currentCostume() - 2);
+
+    return 0;
+}
+
+unsigned int LooksBlocks::previousBackdropAndWait(VirtualMachine *vm)
+{
+    previousBackdrop(vm);
+    startBackdropScripts(vm);
 
     return 0;
 }
@@ -371,6 +453,24 @@ unsigned int LooksBlocks::randomBackdrop(VirtualMachine *vm)
         if (count > 0)
             stage->setCurrentCostume(rng->randint(1, count));
     }
+
+    return 0;
+}
+
+unsigned int LooksBlocks::randomBackdropAndWait(VirtualMachine *vm)
+{
+    randomBackdrop(vm);
+    startBackdropScripts(vm);
+
+    return 0;
+}
+
+unsigned int LooksBlocks::checkBackdropScripts(VirtualMachine *vm)
+{
+    Stage *stage = vm->engine()->stage();
+
+    if (stage && vm->engine()->broadcastByPtrRunning(stage->costumeAt(stage->currentCostume() - 1)->broadcast(), vm))
+        vm->stop(true, true, true);
 
     return 0;
 }
