@@ -6,6 +6,8 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/costume.h>
 
 #include "eventblocks.h"
 
@@ -23,12 +25,14 @@ void EventBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "event_broadcast", &compileBroadcast);
     engine->addCompileFunction(this, "event_broadcastandwait", &compileBroadcastAndWait);
     engine->addCompileFunction(this, "event_whenbroadcastreceived", &compileWhenBroadcastReceived);
+    engine->addCompileFunction(this, "event_whenbackdropswitchesto", &compileWhenBackdropSwitchesTo);
 
     // Inputs
     engine->addInput(this, "BROADCAST_INPUT", BROADCAST_INPUT);
 
     // Fields
     engine->addField(this, "BROADCAST_OPTION", BROADCAST_OPTION);
+    engine->addField(this, "BACKDROP", BACKDROP);
 }
 
 void EventBlocks::compileBroadcast(Compiler *compiler)
@@ -67,6 +71,17 @@ void EventBlocks::compileWhenBroadcastReceived(Compiler *compiler)
     auto broadcast = std::static_pointer_cast<Broadcast>(compiler->field(BROADCAST_OPTION)->valuePtr());
 
     compiler->engine()->addBroadcastScript(compiler->block(), broadcast.get());
+}
+
+void EventBlocks::compileWhenBackdropSwitchesTo(Compiler *compiler)
+{
+    if (Stage *stage = compiler->engine()->stage()) {
+        std::string backdropName = compiler->field(BACKDROP)->value().toString();
+        int index = stage->findCostume(backdropName);
+
+        if (index != -1)
+            compiler->engine()->addBroadcastScript(compiler->block(), stage->costumeAt(index)->broadcast());
+    }
 }
 
 unsigned int EventBlocks::broadcast(VirtualMachine *vm)
