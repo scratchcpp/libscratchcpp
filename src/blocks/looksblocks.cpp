@@ -497,10 +497,10 @@ unsigned int LooksBlocks::randomBackdropAndWait(VirtualMachine *vm)
 
 unsigned int LooksBlocks::checkBackdropScripts(VirtualMachine *vm)
 {
-    Stage *stage = vm->engine()->stage();
-
-    if (stage && vm->engine()->broadcastByPtrRunning(stage->costumeAt(stage->currentCostume() - 1)->broadcast(), vm))
-        vm->stop(true, true, true);
+    if (Stage *stage = vm->engine()->stage()) {
+        if ((stage->costumes().size() > 0) && vm->engine()->broadcastByPtrRunning(stage->costumeAt(stage->currentCostume() - 1)->broadcast(), vm))
+            vm->stop(true, true, true);
+    }
 
     return 0;
 }

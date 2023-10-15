@@ -1388,19 +1388,19 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWait)
 
 TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 {
-    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 1, vm::OP_HALT };
-    static unsigned int bytecode10[] = { vm::OP_START, vm::OP_CONST, 8, vm::OP_EXEC, 1, vm::OP_HALT };
-    static unsigned int bytecode11[] = { vm::OP_START, vm::OP_CONST, 9, vm::OP_EXEC, 1, vm::OP_HALT };
-    static unsigned int bytecode12[] = { vm::OP_START, vm::OP_CONST, 10, vm::OP_EXEC, 1, vm::OP_HALT };
-    static BlockFunc functions[] = { &LooksBlocks::switchBackdropToAndWait, &LooksBlocks::switchBackdropToByIndexAndWait };
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode10[] = { vm::OP_START, vm::OP_CONST, 8, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode11[] = { vm::OP_START, vm::OP_CONST, 9, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode12[] = { vm::OP_START, vm::OP_CONST, 10, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::switchBackdropToAndWait, &LooksBlocks::switchBackdropToByIndexAndWait, &LooksBlocks::checkBackdropScripts };
     static Value constValues[] = { "backdrop2", 0, 1, 2, 3, "next backdrop", "previous backdrop", -1, 0, 5, 6 };
 
     Target target;
@@ -1415,45 +1415,74 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     vm.setConstValues(constValues);
 
     // "backdrop2"
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(1)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(true));
+    EXPECT_CALL(m_engineMock, breakFrame());
     vm.setBytecode(bytecode1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.currentCostume(), 2);
+    ASSERT_FALSE(vm.atEnd());
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(false));
+    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
 
     // 0
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(1)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(true));
+    EXPECT_CALL(m_engineMock, breakFrame());
     vm.setBytecode(bytecode2);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.currentCostume(), 2);
+    ASSERT_FALSE(vm.atEnd());
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(false));
+    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
 
     stage.setCurrentCostume(1);
 
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(1)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(false));
     vm.reset();
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.currentCostume(), 2);
+    ASSERT_TRUE(vm.atEnd());
 
     // 1
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(0)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast(), &vm)).WillOnce(Return(false));
+    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.setBytecode(bytecode3);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.currentCostume(), 1);
+    ASSERT_TRUE(vm.atEnd());
 
     // 2
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(1)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(false));
+    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.setBytecode(bytecode4);
     vm.run();
 
@@ -1461,8 +1490,9 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(stage.currentCostume(), 2);
 
     // 3
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(0)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast(), &vm)).WillOnce(Return(false));
     vm.setBytecode(bytecode5);
     vm.run();
 
@@ -1476,8 +1506,9 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     stage.addCostume(std::make_shared<Costume>("test", "b4", "svg"));
     stage.setCurrentCostume(1);
 
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(2)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast(), &vm)).WillOnce(Return(false));
     vm.setBytecode(bytecode6);
     vm.run();
 
@@ -1485,24 +1516,37 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(stage.currentCostume(), 3);
 
     // "next backdrop"
-    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(3)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(3)->broadcast(), &vm)).WillOnce(Return(true));
+    EXPECT_CALL(m_engineMock, breakFrame());
     vm.setBytecode(bytecode7);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.currentCostume(), 4);
+    ASSERT_FALSE(vm.atEnd());
 
-    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(3)->broadcast(), &vm)).WillOnce(Return(false));
+    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
+
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(0)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast(), &vm)).WillOnce(Return(false));
     vm.reset();
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.currentCostume(), 1);
 
-    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(1)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(false));
     vm.reset();
     vm.run();
 
@@ -1511,8 +1555,9 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 
     stage.addCostume(std::make_shared<Costume>("next backdrop", "b5", "svg"));
 
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(4)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(4)->broadcast(), &vm)).WillOnce(Return(false));
     vm.reset();
     vm.run();
 
@@ -1520,16 +1565,28 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(stage.currentCostume(), 5);
 
     // "previous backdrop"
-    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(3)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(3)->broadcast(), &vm)).WillOnce(Return(true));
+    EXPECT_CALL(m_engineMock, breakFrame());
     vm.setBytecode(bytecode8);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.currentCostume(), 4);
+    ASSERT_FALSE(vm.atEnd());
 
-    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(3)->broadcast(), &vm)).WillOnce(Return(false));
+    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
+
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(2)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast(), &vm)).WillOnce(Return(false));
     vm.reset();
     vm.run();
 
@@ -1538,8 +1595,9 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 
     stage.setCurrentCostume(1);
 
-    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(4)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(4)->broadcast(), &vm)).WillOnce(Return(false));
     vm.reset();
     vm.run();
 
@@ -1548,8 +1606,9 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 
     stage.addCostume(std::make_shared<Costume>("previous backdrop", "b6", "svg"));
 
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(5)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(5)->broadcast(), &vm)).WillOnce(Return(false));
     vm.reset();
     vm.run();
 
@@ -1559,26 +1618,40 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     // -1 (index)
     stage.setCurrentCostume(2);
 
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(5)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(5)->broadcast(), &vm)).WillOnce(Return(true));
+    EXPECT_CALL(m_engineMock, breakFrame());
     vm.setBytecode(bytecode9);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.currentCostume(), 6);
+    ASSERT_FALSE(vm.atEnd());
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(5)->broadcast(), &vm)).WillOnce(Return(false));
+    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
 
     // 0 (index)
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(0)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast(), &vm)).WillOnce(Return(false));
     vm.setBytecode(bytecode10);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.currentCostume(), 1);
+    ASSERT_TRUE(vm.atEnd());
 
     // 5 (index)
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(5)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(5)->broadcast(), &vm)).WillOnce(Return(false));
     vm.setBytecode(bytecode11);
     vm.run();
 
@@ -1586,8 +1659,9 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(stage.currentCostume(), 6);
 
     // 6 (index)
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(0)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast(), &vm)).WillOnce(Return(false));
     vm.setBytecode(bytecode12);
     vm.run();
 
@@ -1653,6 +1727,61 @@ TEST_F(LooksBlocksTest, NextBackdropImpl)
     ASSERT_EQ(stage.currentCostume(), 1);
 }
 
+TEST_F(LooksBlocksTest, NextBackdropAndWait)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::nextBackdropAndWait, &LooksBlocks::checkBackdropScripts };
+
+    Target target;
+
+    Stage stage;
+    stage.addCostume(std::make_shared<Costume>("backdrop1", "b1", "svg"));
+    stage.addCostume(std::make_shared<Costume>("backdrop2", "b2", "svg"));
+    stage.addCostume(std::make_shared<Costume>("backdrop3", "b3", "svg"));
+    stage.setCurrentCostume(1);
+
+    VirtualMachine vm(&target, &m_engineMock, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(1)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(true));
+    EXPECT_CALL(m_engineMock, breakFrame());
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.currentCostume(), 2);
+    ASSERT_FALSE(vm.atEnd());
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(false));
+    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
+
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(2)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast(), &vm)).WillOnce(Return(false));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.currentCostume(), 3);
+    ASSERT_TRUE(vm.atEnd());
+
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(0)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast(), &vm)).WillOnce(Return(false));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.currentCostume(), 1);
+}
+
 TEST_F(LooksBlocksTest, PreviousBackdrop)
 {
     static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
@@ -1687,6 +1816,61 @@ TEST_F(LooksBlocksTest, PreviousBackdrop)
 
     EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(2)->broadcast(), &vm, false));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.currentCostume(), 3);
+}
+
+TEST_F(LooksBlocksTest, PreviousBackdropAndWait)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::previousBackdropAndWait, &LooksBlocks::checkBackdropScripts };
+
+    Target target;
+
+    Stage stage;
+    stage.addCostume(std::make_shared<Costume>("backdrop1", "b1", "svg"));
+    stage.addCostume(std::make_shared<Costume>("backdrop2", "b2", "svg"));
+    stage.addCostume(std::make_shared<Costume>("backdrop3", "b3", "svg"));
+    stage.setCurrentCostume(3);
+
+    VirtualMachine vm(&target, &m_engineMock, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(1)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(true));
+    EXPECT_CALL(m_engineMock, breakFrame());
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.currentCostume(), 2);
+    ASSERT_FALSE(vm.atEnd());
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(false));
+    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
+
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(0)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast(), &vm)).WillOnce(Return(false));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.currentCostume(), 1);
+    ASSERT_TRUE(vm.atEnd());
+
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(2)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast(), &vm)).WillOnce(Return(false));
     vm.reset();
     vm.run();
 
@@ -1739,6 +1923,70 @@ TEST_F(LooksBlocksTest, RandomBackdrop)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.currentCostume(), 3);
+
+    LooksBlocks::rng = RandomGenerator::instance().get();
+}
+
+TEST_F(LooksBlocksTest, RandomBackdropAndWait)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::randomBackdropAndWait, &LooksBlocks::checkBackdropScripts };
+
+    Target target;
+
+    Stage stage;
+
+    VirtualMachine vm(&target, &m_engineMock, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+
+    RandomGeneratorMock rng;
+    LooksBlocks::rng = &rng;
+
+    EXPECT_CALL(rng, randint).Times(0);
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning).Times(0);
+    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    stage.addCostume(std::make_shared<Costume>("backdrop1", "b1", "svg"));
+    stage.addCostume(std::make_shared<Costume>("backdrop2", "b2", "svg"));
+    stage.addCostume(std::make_shared<Costume>("backdrop3", "b3", "svg"));
+
+    EXPECT_CALL(rng, randint(1, 3)).WillOnce(Return(2));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(1)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(true));
+    EXPECT_CALL(m_engineMock, breakFrame());
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.currentCostume(), 2);
+    ASSERT_FALSE(vm.atEnd());
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(false));
+    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
+
+    stage.addCostume(std::make_shared<Costume>("backdrop4", "b4", "svg"));
+
+    EXPECT_CALL(rng, randint(1, 4)).WillOnce(Return(3));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(2)->broadcast(), &vm, true));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast(), &vm)).WillOnce(Return(false));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.currentCostume(), 3);
+    ASSERT_TRUE(vm.atEnd());
 
     LooksBlocks::rng = RandomGenerator::instance().get();
 }
