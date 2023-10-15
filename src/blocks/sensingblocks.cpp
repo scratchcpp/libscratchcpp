@@ -4,7 +4,9 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/itimer.h>
+#include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/sprite.h>
 #include "sensingblocks.h"
 
 #include "../engine/internal/clock.h"
@@ -21,10 +23,14 @@ std::string SensingBlocks::name() const
 void SensingBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks
+    engine->addCompileFunction(this, "sensing_distanceto", &compileDistanceTo);
     engine->addCompileFunction(this, "sensing_timer", &compileTimer);
     engine->addCompileFunction(this, "sensing_resettimer", &compileResetTimer);
     engine->addCompileFunction(this, "sensing_current", &compileCurrent);
     engine->addCompileFunction(this, "sensing_dayssince2000", &compileDaysSince2000);
+
+    // Inputs
+    engine->addInput(this, "DISTANCETOMENU", DISTANCETOMENU);
 
     // Fields
     engine->addField(this, "CURRENTMENU", CURRENTMENU);
@@ -37,6 +43,27 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addFieldValue(this, "HOUR", HOUR);
     engine->addFieldValue(this, "MINUTE", MINUTE);
     engine->addFieldValue(this, "SECOND", SECOND);
+}
+
+void SensingBlocks::compileDistanceTo(Compiler *compiler)
+{
+    Input *input = compiler->input(DISTANCETOMENU);
+
+    if (input->type() != Input::Type::ObscuredShadow) {
+        assert(input->pointsToDropdownMenu());
+        std::string value = input->selectedMenuItem();
+
+        if (value == "_mouse_")
+            compiler->addFunctionCall(&distanceToMousePointer);
+        else {
+            int index = compiler->engine()->findTarget(value);
+            compiler->addConstValue(index);
+            compiler->addFunctionCall(&distanceToByIndex);
+        }
+    } else {
+        compiler->addInput(input);
+        compiler->addFunctionCall(&distanceTo);
+    }
 }
 
 void SensingBlocks::compileTimer(Compiler *compiler)
@@ -90,6 +117,58 @@ void SensingBlocks::compileCurrent(Compiler *compiler)
 void SensingBlocks::compileDaysSince2000(Compiler *compiler)
 {
     compiler->addFunctionCall(&daysSince2000);
+}
+
+unsigned int SensingBlocks::distanceTo(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (!sprite) {
+        vm->replaceReturnValue(10000, 1);
+        return 0;
+    }
+
+    std::string value = vm->getInput(0, 1)->toString();
+
+    if (value == "_mouse_")
+        vm->replaceReturnValue(std::sqrt(std::pow(sprite->x() - vm->engine()->mouseX(), 2) + std::pow(sprite->y() - vm->engine()->mouseY(), 2)), 1);
+    else {
+        Target *target = vm->engine()->targetAt(vm->engine()->findTarget(value));
+        Sprite *targetSprite = dynamic_cast<Sprite *>(target);
+
+        if (targetSprite)
+            vm->replaceReturnValue(std::sqrt(std::pow(sprite->x() - targetSprite->x(), 2) + std::pow(sprite->y() - targetSprite->y(), 2)), 1);
+        else
+            vm->replaceReturnValue(10000, 1);
+    }
+
+    return 0;
+}
+
+unsigned int SensingBlocks::distanceToByIndex(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
+    Sprite *targetSprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite && targetSprite)
+        vm->replaceReturnValue(std::sqrt(std::pow(sprite->x() - targetSprite->x(), 2) + std::pow(sprite->y() - targetSprite->y(), 2)), 1);
+    else
+        vm->replaceReturnValue(10000, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::distanceToMousePointer(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        vm->addReturnValue(std::sqrt(std::pow(sprite->x() - vm->engine()->mouseX(), 2) + std::pow(sprite->y() - vm->engine()->mouseY(), 2)));
+    else
+        vm->addReturnValue(10000);
+
+    return 0;
 }
 
 unsigned int SensingBlocks::timer(VirtualMachine *vm)
