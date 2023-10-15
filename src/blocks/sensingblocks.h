@@ -12,6 +12,11 @@ namespace libscratchcpp
 class SensingBlocks : public IBlockSection
 {
     public:
+        enum Inputs
+        {
+            DISTANCETOMENU
+        };
+
         enum Fields
         {
             CURRENTMENU
@@ -32,10 +37,15 @@ class SensingBlocks : public IBlockSection
 
         void registerBlocks(IEngine *engine) override;
 
+        static void compileDistanceTo(Compiler *compiler);
         static void compileTimer(Compiler *compiler);
         static void compileResetTimer(Compiler *compiler);
         static void compileCurrent(Compiler *compiler);
         static void compileDaysSince2000(Compiler *compiler);
+
+        static unsigned int distanceTo(VirtualMachine *vm);
+        static unsigned int distanceToByIndex(VirtualMachine *vm);
+        static unsigned int distanceToMousePointer(VirtualMachine *vm);
 
         static unsigned int timer(VirtualMachine *vm);
         static unsigned int resetTimer(VirtualMachine *vm);

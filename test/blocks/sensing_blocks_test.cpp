@@ -1,12 +1,15 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/block.h>
+#include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/sprite.h>
 #include <enginemock.h>
 #include <timermock.h>
 #include <clockmock.h>
 
 #include "../common.h"
 #include "blocks/sensingblocks.h"
+#include "blocks/operatorblocks.h"
 #include "engine/internal/engine.h"
 
 using namespace libscratchcpp;
@@ -34,6 +37,46 @@ class SensingBlocksTest : public testing::Test
             return block;
         }
 
+        void addObscuredInput(std::shared_ptr<Block> block, const std::string &name, SensingBlocks::Inputs id, std::shared_ptr<Block> valueBlock) const
+        {
+            auto input = std::make_shared<Input>(name, Input::Type::ObscuredShadow);
+            input->setValueBlock(valueBlock);
+            input->setInputId(id);
+            block->addInput(input);
+            block->updateInputMap();
+        }
+
+        std::shared_ptr<Input> addNullInput(std::shared_ptr<Block> block, const std::string &name, SensingBlocks::Inputs id) const
+        {
+            auto input = std::make_shared<Input>(name, Input::Type::Shadow);
+            input->setInputId(id);
+            block->addInput(input);
+            block->updateInputMap();
+
+            return input;
+        }
+
+        void addDropdownInput(std::shared_ptr<Block> block, const std::string &name, SensingBlocks::Inputs id, const std::string &selectedValue, std::shared_ptr<Block> valueBlock = nullptr) const
+        {
+            if (valueBlock)
+                addObscuredInput(block, name, id, valueBlock);
+            else {
+                auto input = addNullInput(block, name, id);
+                auto menu = std::make_shared<Block>(block->id() + "_menu", block->opcode() + "_menu");
+                input->setValueBlock(menu);
+                addDropdownField(menu, name, static_cast<SensingBlocks::Fields>(-1), selectedValue, static_cast<SensingBlocks::FieldValues>(-1));
+            }
+        }
+
+        void addDropdownField(std::shared_ptr<Block> block, const std::string &name, SensingBlocks::Fields id, const std::string &value, SensingBlocks::FieldValues valueId) const
+        {
+            auto field = std::make_shared<Field>(name, value);
+            field->setFieldId(id);
+            field->setSpecialValueId(valueId);
+            block->addField(field);
+            block->updateFieldMap();
+        }
+
         std::unique_ptr<IBlockSection> m_section;
         EngineMock m_engineMock;
         Engine m_engine;
@@ -54,10 +97,14 @@ TEST_F(SensingBlocksTest, CategoryVisible)
 TEST_F(SensingBlocksTest, RegisterBlocks)
 {
     // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_timer", &SensingBlocks::compileTimer)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_resettimer", &SensingBlocks::compileResetTimer)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_current", &SensingBlocks::compileCurrent)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_dayssince2000", &SensingBlocks::compileDaysSince2000)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_distanceto", &SensingBlocks::compileDistanceTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_timer", &SensingBlocks::compileTimer));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_resettimer", &SensingBlocks::compileResetTimer));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_current", &SensingBlocks::compileCurrent));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_dayssince2000", &SensingBlocks::compileDaysSince2000));
+
+    // Inputs
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU));
 
     // Fields
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "CURRENTMENU", SensingBlocks::CURRENTMENU));
@@ -72,6 +119,141 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "SECOND", SensingBlocks::SECOND));
 
     m_section->registerBlocks(&m_engineMock);
+}
+
+TEST_F(SensingBlocksTest, DistanceTo)
+{
+    Compiler compiler(&m_engineMock);
+
+    // distance to (Sprite2)
+    auto block1 = std::make_shared<Block>("a", "sensing_distanceto");
+    addDropdownInput(block1, "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU, "Sprite2");
+
+    // distance to (mouse-pointer)
+    auto block2 = std::make_shared<Block>("b", "sensing_distanceto");
+    addDropdownInput(block2, "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU, "_mouse_");
+
+    // distance to (join "" "")
+    auto joinBlock = std::make_shared<Block>("d", "operator_join");
+    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
+    auto block3 = std::make_shared<Block>("c", "sensing_distanceto");
+    addDropdownInput(block3, "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU, "", joinBlock);
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(5));
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::distanceToByIndex)).WillOnce(Return(0));
+    compiler.setBlock(block1);
+    SensingBlocks::compileDistanceTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::distanceToMousePointer)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    SensingBlocks::compileDistanceTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::distanceTo)).WillOnce(Return(2));
+    compiler.setBlock(block3);
+    SensingBlocks::compileDistanceTo(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_NULL, vm::OP_NULL, vm::OP_STR_CONCAT, vm::OP_EXEC, 2, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), 5);
+}
+
+TEST_F(SensingBlocksTest, DistanceToImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_EXEC, 2, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::distanceTo, &SensingBlocks::distanceToByIndex, &SensingBlocks::distanceToMousePointer };
+    static Value constValues[] = { "Sprite2", "_mouse_", "", 0, 1, -1, 2 };
+
+    Sprite sprite1;
+    sprite1.setX(-50.35);
+    sprite1.setY(33.04);
+
+    Sprite sprite2;
+    sprite2.setX(108.564);
+    sprite2.setY(-168.452);
+
+    VirtualMachine vm(&sprite1, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&sprite2));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(std::round(vm.getInput(0, 1)->toDouble() * 10000) / 10000, 256.6178);
+
+    EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(-239.98));
+    EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(-86.188));
+    vm.setBytecode(bytecode2);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(std::round(vm.getInput(0, 1)->toDouble() * 10000) / 10000, 223.9974);
+
+    EXPECT_CALL(m_engineMock, findTarget("")).WillOnce(Return(-1));
+    EXPECT_CALL(m_engineMock, targetAt(-1)).WillOnce(Return(nullptr));
+    vm.setBytecode(bytecode3);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 10000);
+
+    EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(&sprite1));
+    vm.setBytecode(bytecode4);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 0);
+
+    EXPECT_CALL(m_engineMock, targetAt(1)).WillOnce(Return(&sprite2));
+    vm.setBytecode(bytecode5);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(std::round(vm.getInput(0, 1)->toDouble() * 10000) / 10000, 256.6178);
+
+    EXPECT_CALL(m_engineMock, targetAt(-1)).WillOnce(Return(nullptr));
+    vm.setBytecode(bytecode6);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 10000);
+
+    EXPECT_CALL(m_engineMock, targetAt(2)).WillOnce(Return(nullptr));
+    vm.setBytecode(bytecode7);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 10000);
+
+    EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(168.087));
+    EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(175.908));
+    vm.setBytecode(bytecode8);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(std::round(vm.getInput(0, 1)->toDouble() * 10000) / 10000, 261.0096);
 }
 
 TEST_F(SensingBlocksTest, Timer)
