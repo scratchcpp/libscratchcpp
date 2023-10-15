@@ -9,6 +9,7 @@
 namespace libscratchcpp
 {
 
+class Broadcast;
 class CostumePrivate;
 
 /*! \brief The Costume class represents a Scratch costume. */
@@ -26,6 +27,8 @@ class LIBSCRATCHCPP_EXPORT Costume : public Asset
 
         int rotationCenterY() const;
         void setRotationCenterY(int newRotationCenterY);
+
+        Broadcast *broadcast();
 
     private:
         spimpl::unique_impl_ptr<CostumePrivate> impl;

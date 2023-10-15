@@ -4,6 +4,8 @@
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/broadcast.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/costume.h>
 #include <enginemock.h>
 
 #include "../common.h"
@@ -50,6 +52,14 @@ class EventBlocksTest : public testing::Test
             block->updateInputMap();
         }
 
+        void addValueField(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Fields id, const std::string &value) const
+        {
+            auto field = std::make_shared<Field>(name, value);
+            field->setFieldId(id);
+            block->addField(field);
+            block->updateFieldMap();
+        }
+
         void addBroadcastField(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Fields id, std::shared_ptr<Broadcast> broadcast) const
         {
             auto field = std::make_shared<Field>(name, Value(), broadcast);
@@ -77,16 +87,18 @@ TEST_F(EventBlocksTest, CategoryVisible)
 TEST_F(EventBlocksTest, RegisterBlocks)
 {
     // Blocks
-    EXPECT_CALL(m_engineMock, addHatBlock(m_section.get(), "event_whenflagclicked")).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_broadcast", &EventBlocks::compileBroadcast)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_broadcastandwait", &EventBlocks::compileBroadcastAndWait)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenbroadcastreceived", &EventBlocks::compileWhenBroadcastReceived)).Times(1);
+    EXPECT_CALL(m_engineMock, addHatBlock(m_section.get(), "event_whenflagclicked"));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_broadcast", &EventBlocks::compileBroadcast));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_broadcastandwait", &EventBlocks::compileBroadcastAndWait));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenbroadcastreceived", &EventBlocks::compileWhenBroadcastReceived));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenbackdropswitchesto", &EventBlocks::compileWhenBackdropSwitchesTo));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "BROADCAST_INPUT", EventBlocks::BROADCAST_INPUT)).Times(1);
 
     // Fields
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "BROADCAST_OPTION", EventBlocks::BROADCAST_OPTION));
+    EXPECT_CALL(m_engineMock, addField(m_section.get(), "BACKDROP", EventBlocks::BACKDROP));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -221,11 +233,37 @@ TEST_F(EventBlocksTest, WhenBroadcastReceived)
     auto block1 = createEventBlock("a", "event_whenbroadcastreceived");
     addBroadcastField(block1, "BROADCAST_OPTION", EventBlocks::BROADCAST_OPTION, m_broadcast);
 
-    EXPECT_CALL(m_engineMock, addBroadcastScript(block1, m_broadcast)).Times(1);
+    EXPECT_CALL(m_engineMock, addBroadcastScript(block1, m_broadcast.get())).Times(1);
 
     compiler.init();
     compiler.setBlock(block1);
     EventBlocks::compileWhenBroadcastReceived(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
+}
+
+TEST_F(EventBlocksTest, WhenBackdropSwitchesTo)
+{
+    Compiler compiler(&m_engineMock);
+    Stage stage;
+
+    // when backdrop switches to "backdrop2"
+    auto block1 = createEventBlock("a", "event_whenbackdropswitchesto");
+    addValueField(block1, "BACKDROP", EventBlocks::BACKDROP, "backdrop2");
+
+    auto backdrop = std::make_shared<Costume>("backdrop2", "a", "svg");
+    stage.addCostume(backdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, addBroadcastScript(block1, backdrop->broadcast()));
+
+    compiler.init();
+    compiler.setBlock(block1);
+    EventBlocks::compileWhenBackdropSwitchesTo(&compiler);
     compiler.end();
 
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));

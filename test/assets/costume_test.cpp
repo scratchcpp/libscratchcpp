@@ -1,4 +1,5 @@
 #include <scratchcpp/costume.h>
+#include <scratchcpp/broadcast.h>
 
 #include "../common.h"
 
@@ -38,4 +39,14 @@ TEST(CostumeTest, RotationCenterY)
 
     costume.setRotationCenterY(180);
     ASSERT_EQ(costume.rotationCenterY(), 180);
+}
+
+TEST(CostumeTest, Broadcast)
+{
+    Costume costume("costume1", "a", "svg");
+
+    Broadcast *broadcast = costume.broadcast();
+    ASSERT_TRUE(broadcast);
+    ASSERT_TRUE(broadcast->id().empty());
+    ASSERT_TRUE(broadcast->name().empty());
 }
