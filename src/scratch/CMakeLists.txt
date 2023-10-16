@@ -45,4 +45,7 @@ target_sources(scratchcpp
     entity.cpp
     entity_p.cpp
     entity_p.h
+    keyevent.cpp
+    keyevent_p.cpp
+    keyevent_p.h
 )
