@@ -210,6 +210,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /* Registers the given "when I start as clone" script. */
         virtual void addCloneInitScript(std::shared_ptr<Block> hatBlock) = 0;
 
+        /* Registers the given "when key pressed" script. */
+        virtual void addKeyPressScript(std::shared_ptr<Block> hatBlock, std::string keyName) = 0;
+
         /*! Returns the list of targets. */
         virtual const std::vector<std::shared_ptr<Target>> &targets() const = 0;
 
