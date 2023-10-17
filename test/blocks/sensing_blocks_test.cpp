@@ -98,6 +98,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
 {
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_distanceto", &SensingBlocks::compileDistanceTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_keypressed", &SensingBlocks::compileKeyPressed));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_timer", &SensingBlocks::compileTimer));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_resettimer", &SensingBlocks::compileResetTimer));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_current", &SensingBlocks::compileCurrent));
@@ -105,6 +106,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "KEY_OPTION", SensingBlocks::KEY_OPTION));
 
     // Fields
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "CURRENTMENU", SensingBlocks::CURRENTMENU));
@@ -254,6 +256,87 @@ TEST_F(SensingBlocksTest, DistanceToImpl)
 
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_EQ(std::round(vm.getInput(0, 1)->toDouble() * 10000) / 10000, 261.0096);
+}
+
+TEST_F(SensingBlocksTest, KeyPressed)
+{
+    Compiler compiler(&m_engineMock);
+
+    // key (space) pressed?
+    auto block1 = std::make_shared<Block>("a", "sensing_keypressed");
+    addDropdownInput(block1, "KEY_OPTION", SensingBlocks::KEY_OPTION, "space");
+
+    // key (any) pressed?
+    auto block2 = std::make_shared<Block>("b", "sensing_keypressed");
+    addDropdownInput(block2, "KEY_OPTION", SensingBlocks::KEY_OPTION, "any");
+
+    // key (join "" "") pressed?
+    auto joinBlock = std::make_shared<Block>("d", "operator_join");
+    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
+    auto block3 = std::make_shared<Block>("c", "sensing_keypressed");
+    addDropdownInput(block3, "KEY_OPTION", SensingBlocks::KEY_OPTION, "", joinBlock);
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::keyPressed)).WillOnce(Return(0));
+    compiler.setBlock(block1);
+    SensingBlocks::compileKeyPressed(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::keyPressed)).WillOnce(Return(0));
+    compiler.setBlock(block2);
+    SensingBlocks::compileKeyPressed(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::keyPressed)).WillOnce(Return(0));
+    compiler.setBlock(block3);
+    SensingBlocks::compileKeyPressed(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_NULL, vm::OP_NULL, vm::OP_STR_CONCAT, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "space", "any" }));
+}
+
+TEST_F(SensingBlocksTest, KeyPressedImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::keyPressed };
+    static Value constValues[] = { "space", "any" };
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, keyPressed("space")).WillOnce(Return(true));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toBool(), true);
+
+    EXPECT_CALL(m_engineMock, keyPressed("space")).WillOnce(Return(false));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toBool(), false);
+
+    EXPECT_CALL(m_engineMock, keyPressed("any")).WillOnce(Return(true));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toBool(), true);
+
+    EXPECT_CALL(m_engineMock, keyPressed("any")).WillOnce(Return(false));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toBool(), false);
 }
 
 TEST_F(SensingBlocksTest, Timer)
