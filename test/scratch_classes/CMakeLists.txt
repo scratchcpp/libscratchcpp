@@ -187,3 +187,17 @@ target_link_libraries(
 )
 
 gtest_discover_tests(variable_test)
+
+# keyevent_test
+add_executable(
+  keyevent_test
+  keyevent_test.cpp
+)
+
+target_link_libraries(
+  keyevent_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(keyevent_test)
