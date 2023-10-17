@@ -61,6 +61,44 @@ TEST(EngineTest, Fps)
     ASSERT_EQ(engine.fps(), 60.25);
 }
 
+TEST(EngineTest, KeyState)
+{
+    Engine engine;
+    ASSERT_FALSE(engine.keyPressed("a"));
+    ASSERT_FALSE(engine.keyPressed("b"));
+    ASSERT_FALSE(engine.keyPressed("up arrow"));
+
+    engine.setKeyState("a", true);
+    ASSERT_TRUE(engine.keyPressed("a"));
+    ASSERT_FALSE(engine.keyPressed("b"));
+    ASSERT_FALSE(engine.keyPressed("up arrow"));
+
+    engine.setKeyState("up arrow", true);
+    ASSERT_TRUE(engine.keyPressed("a"));
+    ASSERT_FALSE(engine.keyPressed("b"));
+    ASSERT_TRUE(engine.keyPressed("up arrow"));
+
+    engine.setKeyState("b", true);
+    ASSERT_TRUE(engine.keyPressed("a"));
+    ASSERT_TRUE(engine.keyPressed("b"));
+    ASSERT_TRUE(engine.keyPressed("up arrow"));
+
+    engine.setKeyState("a", false);
+    ASSERT_FALSE(engine.keyPressed("a"));
+    ASSERT_TRUE(engine.keyPressed("b"));
+    ASSERT_TRUE(engine.keyPressed("up arrow"));
+
+    engine.setKeyState("up arrow", false);
+    ASSERT_FALSE(engine.keyPressed("a"));
+    ASSERT_TRUE(engine.keyPressed("b"));
+    ASSERT_FALSE(engine.keyPressed("up arrow"));
+
+    engine.setKeyState("b", false);
+    ASSERT_FALSE(engine.keyPressed("a"));
+    ASSERT_FALSE(engine.keyPressed("b"));
+    ASSERT_FALSE(engine.keyPressed("up arrow"));
+}
+
 TEST(EngineTest, MouseX)
 {
     Engine engine;
