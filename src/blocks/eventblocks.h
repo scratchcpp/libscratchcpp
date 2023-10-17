@@ -22,7 +22,8 @@ class EventBlocks : public IBlockSection
         enum Fields
         {
             BROADCAST_OPTION,
-            BACKDROP
+            BACKDROP,
+            KEY_OPTION
         };
 
         std::string name() const override;
@@ -33,6 +34,7 @@ class EventBlocks : public IBlockSection
         static void compileBroadcastAndWait(Compiler *compiler);
         static void compileWhenBroadcastReceived(Compiler *compiler);
         static void compileWhenBackdropSwitchesTo(Compiler *compiler);
+        static void compileWhenKeyPressed(Compiler *compiler);
 
         static unsigned int broadcast(VirtualMachine *vm);
         static unsigned int broadcastByIndex(VirtualMachine *vm);

@@ -26,6 +26,7 @@ void EventBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "event_broadcastandwait", &compileBroadcastAndWait);
     engine->addCompileFunction(this, "event_whenbroadcastreceived", &compileWhenBroadcastReceived);
     engine->addCompileFunction(this, "event_whenbackdropswitchesto", &compileWhenBackdropSwitchesTo);
+    engine->addCompileFunction(this, "event_whenkeypressed", &compileWhenKeyPressed);
 
     // Inputs
     engine->addInput(this, "BROADCAST_INPUT", BROADCAST_INPUT);
@@ -33,6 +34,7 @@ void EventBlocks::registerBlocks(IEngine *engine)
     // Fields
     engine->addField(this, "BROADCAST_OPTION", BROADCAST_OPTION);
     engine->addField(this, "BACKDROP", BACKDROP);
+    engine->addField(this, "KEY_OPTION", KEY_OPTION);
 }
 
 void EventBlocks::compileBroadcast(Compiler *compiler)
@@ -82,6 +84,12 @@ void EventBlocks::compileWhenBackdropSwitchesTo(Compiler *compiler)
         if (index != -1)
             compiler->engine()->addBroadcastScript(compiler->block(), stage->costumeAt(index)->broadcast());
     }
+}
+
+void EventBlocks::compileWhenKeyPressed(Compiler *compiler)
+{
+    // NOTE: Field values don't have to be registered because keys are referenced by their names
+    compiler->engine()->addKeyPressScript(compiler->block(), compiler->field(KEY_OPTION)->value().toString());
 }
 
 unsigned int EventBlocks::broadcast(VirtualMachine *vm)

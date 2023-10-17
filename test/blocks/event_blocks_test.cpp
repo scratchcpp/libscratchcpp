@@ -92,6 +92,7 @@ TEST_F(EventBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_broadcastandwait", &EventBlocks::compileBroadcastAndWait));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenbroadcastreceived", &EventBlocks::compileWhenBroadcastReceived));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenbackdropswitchesto", &EventBlocks::compileWhenBackdropSwitchesTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenkeypressed", &EventBlocks::compileWhenKeyPressed));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "BROADCAST_INPUT", EventBlocks::BROADCAST_INPUT)).Times(1);
@@ -99,6 +100,7 @@ TEST_F(EventBlocksTest, RegisterBlocks)
     // Fields
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "BROADCAST_OPTION", EventBlocks::BROADCAST_OPTION));
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "BACKDROP", EventBlocks::BACKDROP));
+    EXPECT_CALL(m_engineMock, addField(m_section.get(), "KEY_OPTION", EventBlocks::KEY_OPTION));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -264,6 +266,36 @@ TEST_F(EventBlocksTest, WhenBackdropSwitchesTo)
     compiler.init();
     compiler.setBlock(block1);
     EventBlocks::compileWhenBackdropSwitchesTo(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
+}
+
+TEST_F(EventBlocksTest, WhenKeyPressed)
+{
+    Compiler compiler(&m_engineMock);
+
+    // when key "a" pressed
+    auto block1 = createEventBlock("a", "event_whenkeypressed");
+    addValueField(block1, "KEY_OPTION", EventBlocks::KEY_OPTION, "a");
+
+    // when key "left arrow" pressed
+    auto block2 = createEventBlock("b", "event_whenkeypressed");
+    addValueField(block2, "KEY_OPTION", EventBlocks::KEY_OPTION, "left arrow");
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, addKeyPressScript(block1, "a"));
+    compiler.setBlock(block1);
+    EventBlocks::compileWhenKeyPressed(&compiler);
+
+    EXPECT_CALL(m_engineMock, addKeyPressScript(block2, "left arrow"));
+    compiler.setBlock(block2);
+    EventBlocks::compileWhenKeyPressed(&compiler);
+
     compiler.end();
 
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
