@@ -67,36 +67,62 @@ TEST(EngineTest, KeyState)
     ASSERT_FALSE(engine.keyPressed("a"));
     ASSERT_FALSE(engine.keyPressed("b"));
     ASSERT_FALSE(engine.keyPressed("up arrow"));
+    ASSERT_FALSE(engine.keyPressed("any"));
 
-    engine.setKeyState("a", true);
+    engine.setKeyState("A", true);
     ASSERT_TRUE(engine.keyPressed("a"));
     ASSERT_FALSE(engine.keyPressed("b"));
     ASSERT_FALSE(engine.keyPressed("up arrow"));
+    ASSERT_TRUE(engine.keyPressed("any"));
 
     engine.setKeyState("up arrow", true);
     ASSERT_TRUE(engine.keyPressed("a"));
     ASSERT_FALSE(engine.keyPressed("b"));
     ASSERT_TRUE(engine.keyPressed("up arrow"));
+    ASSERT_FALSE(engine.keyPressed("U"));
+    ASSERT_TRUE(engine.keyPressed("any"));
 
+    engine.setKeyState("up arrow", false);
+    engine.setKeyState("UP arrow", true);
+    ASSERT_TRUE(engine.keyPressed("a"));
+    ASSERT_FALSE(engine.keyPressed("b"));
+    ASSERT_FALSE(engine.keyPressed("up arrow"));
+    ASSERT_TRUE(engine.keyPressed("u"));
+    ASSERT_TRUE(engine.keyPressed("U"));
+    ASSERT_TRUE(engine.keyPressed("any"));
+
+    engine.setKeyState("up arrow", true);
     engine.setKeyState("b", true);
     ASSERT_TRUE(engine.keyPressed("a"));
     ASSERT_TRUE(engine.keyPressed("b"));
     ASSERT_TRUE(engine.keyPressed("up arrow"));
+    ASSERT_TRUE(engine.keyPressed("any"));
 
     engine.setKeyState("a", false);
     ASSERT_FALSE(engine.keyPressed("a"));
     ASSERT_TRUE(engine.keyPressed("b"));
     ASSERT_TRUE(engine.keyPressed("up arrow"));
+    ASSERT_TRUE(engine.keyPressed("any"));
 
     engine.setKeyState("up arrow", false);
     ASSERT_FALSE(engine.keyPressed("a"));
     ASSERT_TRUE(engine.keyPressed("b"));
     ASSERT_FALSE(engine.keyPressed("up arrow"));
+    ASSERT_TRUE(engine.keyPressed("any"));
 
     engine.setKeyState("b", false);
     ASSERT_FALSE(engine.keyPressed("a"));
     ASSERT_FALSE(engine.keyPressed("b"));
     ASSERT_FALSE(engine.keyPressed("up arrow"));
+    ASSERT_TRUE(engine.keyPressed("any"));
+
+    engine.setKeyState("u", false);
+    ASSERT_FALSE(engine.keyPressed("any"));
+
+    engine.setKeyState("32", true);
+    ASSERT_TRUE(engine.keyPressed("32"));
+    ASSERT_TRUE(engine.keyPressed("space"));
+    ASSERT_TRUE(engine.keyPressed("any"));
 }
 
 TEST(EngineTest, MouseX)

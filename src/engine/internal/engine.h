@@ -42,8 +42,8 @@ class Engine : public IEngine
         double fps() const override;
         void setFps(double fps) override;
 
-        bool keyPressed(std::string name) const override;
-        void setKeyState(std::string name, bool pressed) override;
+        bool keyPressed(const std::string &name) const override;
+        void setKeyState(const std::string &name, bool pressed) override;
 
         double mouseX() const override;
         void setMouseX(double x) override;

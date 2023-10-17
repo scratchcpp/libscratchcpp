@@ -14,6 +14,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/costume.h>
+#include <scratchcpp/keyevent.h>
 #include <cassert>
 #include <iostream>
 #include <thread>
@@ -378,10 +379,19 @@ void Engine::setFps(double fps)
     updateFrameDuration();
 }
 
-bool Engine::keyPressed(std::string name) const
+bool Engine::keyPressed(const std::string &name) const
 {
-    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-    auto it = m_keyMap.find(name);
+    if (name == "any") {
+        for (const auto &[key, value] : m_keyMap) {
+            if (value)
+                return true;
+        }
+
+        return false;
+    }
+
+    KeyEvent event(name);
+    auto it = m_keyMap.find(event.name());
 
     if (it == m_keyMap.cend())
         return false;
@@ -389,10 +399,10 @@ bool Engine::keyPressed(std::string name) const
         return it->second;
 }
 
-void Engine::setKeyState(std::string name, bool pressed)
+void Engine::setKeyState(const std::string &name, bool pressed)
 {
-    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-    m_keyMap[name] = pressed;
+    KeyEvent event(name);
+    m_keyMap[event.name()] = pressed;
 }
 
 double Engine::mouseX() const
