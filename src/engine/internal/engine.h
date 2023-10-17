@@ -42,6 +42,9 @@ class Engine : public IEngine
         double fps() const override;
         void setFps(double fps) override;
 
+        bool keyPressed(std::string name) const override;
+        void setKeyState(std::string name, bool pressed) override;
+
         double mouseX() const override;
         void setMouseX(double x) override;
 
@@ -130,8 +133,9 @@ class Engine : public IEngine
 
         std::unique_ptr<ITimer> m_defaultTimer;
         ITimer *m_timer = nullptr;
-        double m_fps = 30;                         // default FPS
-        std::chrono::milliseconds m_frameDuration; // will be computed in run()
+        double m_fps = 30;                              // default FPS
+        std::chrono::milliseconds m_frameDuration;      // will be computed in run()
+        std::unordered_map<std::string, bool> m_keyMap; // holds key states
         double m_mouseX = 0;
         double m_mouseY = 0;
         unsigned int m_stageWidth = 480;

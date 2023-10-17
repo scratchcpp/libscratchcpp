@@ -378,6 +378,23 @@ void Engine::setFps(double fps)
     updateFrameDuration();
 }
 
+bool Engine::keyPressed(std::string name) const
+{
+    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+    auto it = m_keyMap.find(name);
+
+    if (it == m_keyMap.cend())
+        return false;
+    else
+        return it->second;
+}
+
+void Engine::setKeyState(std::string name, bool pressed)
+{
+    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+    m_keyMap[name] = pressed;
+}
+
 double Engine::mouseX() const
 {
     return m_mouseX;

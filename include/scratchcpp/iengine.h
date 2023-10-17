@@ -98,6 +98,12 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the framerate of the project. */
         virtual void setFps(double fps) = 0;
 
+        /*! Returns true if the given key is pressed. */
+        virtual bool keyPressed(std::string name) const = 0;
+
+        /*! Sets the state of the given key. */
+        virtual void setKeyState(std::string name, bool pressed) = 0;
+
         /*! Returns the X coordinate of the mouse pointer. */
         virtual double mouseX() const = 0;
 
