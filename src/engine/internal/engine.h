@@ -83,8 +83,8 @@ class Engine : public IEngine
         int findBroadcastById(const std::string &broadcastId) const override;
 
         void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast) override;
-
         void addCloneInitScript(std::shared_ptr<Block> hatBlock) override;
+        void addKeyPressScript(std::shared_ptr<Block> hatBlock, std::string keyName) override;
 
         const std::vector<std::shared_ptr<Target>> &targets() const override;
         void setTargets(const std::vector<std::shared_ptr<Target>> &newTargets) override;
@@ -120,6 +120,7 @@ class Engine : public IEngine
         std::unordered_map<Broadcast *, std::vector<Script *>> m_broadcastMap;
         std::unordered_map<Broadcast *, std::vector<std::pair<VirtualMachine *, VirtualMachine *>>> m_runningBroadcastMap; // source script, "when received" script
         std::unordered_map<Target *, std::vector<Script *>> m_cloneInitScriptsMap;                                         // target (no clones), "when I start as a clone" scripts
+        std::unordered_map<std::string, std::vector<Script *>> m_whenKeyPressedScripts;                                    // key name, "when key pressed" scripts
         std::vector<std::string> m_extensions;
         std::vector<std::shared_ptr<VirtualMachine>> m_runningScripts;
         std::vector<VirtualMachine *> m_scriptsToRemove;

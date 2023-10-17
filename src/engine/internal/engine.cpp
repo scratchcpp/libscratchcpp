@@ -620,6 +620,22 @@ void Engine::addCloneInitScript(std::shared_ptr<Block> hatBlock)
     }
 }
 
+void Engine::addKeyPressScript(std::shared_ptr<Block> hatBlock, std::string keyName)
+{
+    std::transform(keyName.begin(), keyName.end(), keyName.begin(), ::tolower);
+    Script *script = m_scripts[hatBlock].get();
+    auto it = m_whenKeyPressedScripts.find(keyName);
+
+    if (it == m_whenKeyPressedScripts.cend())
+        m_whenKeyPressedScripts[keyName] = { script };
+    else {
+        auto &scripts = it->second;
+
+        if (std::find(scripts.begin(), scripts.end(), script) == scripts.cend())
+            scripts.push_back(script);
+    }
+}
+
 const std::vector<std::shared_ptr<Target>> &Engine::targets() const
 {
     return m_targets;
