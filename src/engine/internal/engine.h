@@ -52,6 +52,9 @@ class Engine : public IEngine
         double mouseY() const override;
         void setMouseY(double y) override;
 
+        bool mousePressed() const override;
+        void setMousePressed(bool pressed) override;
+
         unsigned int stageWidth() const override;
         void setStageWidth(unsigned int width) override;
 
@@ -141,6 +144,7 @@ class Engine : public IEngine
         bool m_anyKeyPressed = false;
         double m_mouseX = 0;
         double m_mouseY = 0;
+        bool m_mousePressed = false;
         unsigned int m_stageWidth = 480;
         unsigned int m_stageHeight = 360;
 

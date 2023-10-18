@@ -160,6 +160,18 @@ TEST(EngineTest, MouseY)
     ASSERT_EQ(engine.mouseY(), 179.9258);
 }
 
+TEST(EngineTest, MousePressed)
+{
+    Engine engine;
+    ASSERT_FALSE(engine.mousePressed());
+
+    engine.setMousePressed(true);
+    ASSERT_TRUE(engine.mousePressed());
+
+    engine.setMousePressed(false);
+    ASSERT_FALSE(engine.mousePressed());
+}
+
 TEST(EngineTest, StageWidth)
 {
     Engine engine;
