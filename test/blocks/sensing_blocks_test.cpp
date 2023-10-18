@@ -99,6 +99,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_distanceto", &SensingBlocks::compileDistanceTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_keypressed", &SensingBlocks::compileKeyPressed));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_mousedown", &SensingBlocks::compileMouseDown));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_timer", &SensingBlocks::compileTimer));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_resettimer", &SensingBlocks::compileResetTimer));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_current", &SensingBlocks::compileCurrent));
@@ -332,6 +333,47 @@ TEST_F(SensingBlocksTest, KeyPressedImpl)
     ASSERT_EQ(vm.getInput(0, 1)->toBool(), true);
 
     EXPECT_CALL(m_engineMock, keyPressed("any")).WillOnce(Return(false));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toBool(), false);
+}
+
+TEST_F(SensingBlocksTest, MouseDown)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "sensing_mousedown");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::mouseDown)).WillOnce(Return(0));
+    compiler.init();
+
+    compiler.setBlock(block);
+    SensingBlocks::compileMouseDown(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(SensingBlocksTest, MouseDownImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::mouseDown };
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+
+    EXPECT_CALL(m_engineMock, mousePressed()).WillOnce(Return(true));
+    vm.setBytecode(bytecode);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toBool(), true);
+
+    EXPECT_CALL(m_engineMock, mousePressed()).WillOnce(Return(false));
     vm.reset();
     vm.run();
 
