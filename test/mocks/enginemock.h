@@ -40,6 +40,9 @@ class EngineMock : public IEngine
         MOCK_METHOD(double, mouseY, (), (const, override));
         MOCK_METHOD(void, setMouseY, (double y), (override));
 
+        MOCK_METHOD(bool, mousePressed, (), (const, override));
+        MOCK_METHOD(void, setMousePressed, (bool), (override));
+
         MOCK_METHOD(unsigned int, stageWidth, (), (const, override));
         MOCK_METHOD(void, setStageWidth, (unsigned int), (override));
 

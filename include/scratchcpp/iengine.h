@@ -119,6 +119,12 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the Y coordinate of the mouse pointer. */
         virtual void setMouseY(double y) = 0;
 
+        /*! Returns true if mouse is pressed. */
+        virtual bool mousePressed() const = 0;
+
+        /*! Sets the pressed state of mouse. */
+        virtual void setMousePressed(bool pressed) = 0;
+
         /*! Returns the stage width. */
         virtual unsigned int stageWidth() const = 0;
 

@@ -433,6 +433,16 @@ void Engine::setMouseY(double y)
     m_mouseY = y;
 }
 
+bool Engine::mousePressed() const
+{
+    return m_mousePressed;
+}
+
+void Engine::setMousePressed(bool pressed)
+{
+    m_mousePressed = pressed;
+}
+
 unsigned int Engine::stageWidth() const
 {
     return m_stageWidth;
