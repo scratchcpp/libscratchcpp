@@ -382,6 +382,9 @@ void Engine::setFps(double fps)
 bool Engine::keyPressed(const std::string &name) const
 {
     if (name == "any") {
+        if (m_anyKeyPressed)
+            return true;
+
         for (const auto &[key, value] : m_keyMap) {
             if (value)
                 return true;
@@ -403,6 +406,11 @@ void Engine::setKeyState(const std::string &name, bool pressed)
 {
     KeyEvent event(name);
     m_keyMap[event.name()] = pressed;
+}
+
+void Engine::setAnyKeyPressed(bool pressed)
+{
+    m_anyKeyPressed = pressed;
 }
 
 double Engine::mouseX() const

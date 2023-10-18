@@ -104,6 +104,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the state of the given key. */
         virtual void setKeyState(const std::string &name, bool pressed) = 0;
 
+        /*! Sets whether any key is pressed (use this for any key, even for unsupported keys). */
+        virtual void setAnyKeyPressed(bool pressed) = 0;
+
         /*! Returns the X coordinate of the mouse pointer. */
         virtual double mouseX() const = 0;
 

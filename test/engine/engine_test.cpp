@@ -123,6 +123,23 @@ TEST(EngineTest, KeyState)
     ASSERT_TRUE(engine.keyPressed("32"));
     ASSERT_TRUE(engine.keyPressed("space"));
     ASSERT_TRUE(engine.keyPressed("any"));
+
+    engine.setAnyKeyPressed(true);
+    ASSERT_TRUE(engine.keyPressed("any"));
+
+    engine.setAnyKeyPressed(false);
+    ASSERT_TRUE(engine.keyPressed("any"));
+
+    engine.setKeyState("space", false);
+    engine.setKeyState("a", false);
+    engine.setKeyState("b", false);
+    ASSERT_FALSE(engine.keyPressed("any"));
+
+    engine.setAnyKeyPressed(true);
+    ASSERT_TRUE(engine.keyPressed("any"));
+
+    engine.setAnyKeyPressed(false);
+    ASSERT_FALSE(engine.keyPressed("any"));
 }
 
 TEST(EngineTest, MouseX)

@@ -44,6 +44,7 @@ class Engine : public IEngine
 
         bool keyPressed(const std::string &name) const override;
         void setKeyState(const std::string &name, bool pressed) override;
+        void setAnyKeyPressed(bool pressed) override;
 
         double mouseX() const override;
         void setMouseX(double x) override;
@@ -137,6 +138,7 @@ class Engine : public IEngine
         double m_fps = 30;                              // default FPS
         std::chrono::milliseconds m_frameDuration;      // will be computed in run()
         std::unordered_map<std::string, bool> m_keyMap; // holds key states
+        bool m_anyKeyPressed = false;
         double m_mouseX = 0;
         double m_mouseY = 0;
         unsigned int m_stageWidth = 480;
