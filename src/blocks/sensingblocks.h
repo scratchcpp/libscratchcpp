@@ -41,6 +41,7 @@ class SensingBlocks : public IBlockSection
         static void compileDistanceTo(Compiler *compiler);
         static void compileKeyPressed(Compiler *compiler);
         static void compileMouseDown(Compiler *compiler);
+        static void compileMouseX(Compiler *compiler);
         static void compileTimer(Compiler *compiler);
         static void compileResetTimer(Compiler *compiler);
         static void compileCurrent(Compiler *compiler);
@@ -48,6 +49,7 @@ class SensingBlocks : public IBlockSection
 
         static unsigned int keyPressed(VirtualMachine *vm);
         static unsigned int mouseDown(VirtualMachine *vm);
+        static unsigned int mouseX(VirtualMachine *vm);
 
         static unsigned int distanceTo(VirtualMachine *vm);
         static unsigned int distanceToByIndex(VirtualMachine *vm);

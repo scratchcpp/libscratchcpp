@@ -26,6 +26,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_distanceto", &compileDistanceTo);
     engine->addCompileFunction(this, "sensing_keypressed", &compileKeyPressed);
     engine->addCompileFunction(this, "sensing_mousedown", &compileMouseDown);
+    engine->addCompileFunction(this, "sensing_mousex", &compileMouseX);
     engine->addCompileFunction(this, "sensing_timer", &compileTimer);
     engine->addCompileFunction(this, "sensing_resettimer", &compileResetTimer);
     engine->addCompileFunction(this, "sensing_current", &compileCurrent);
@@ -78,6 +79,11 @@ void SensingBlocks::compileKeyPressed(Compiler *compiler)
 void SensingBlocks::compileMouseDown(Compiler *compiler)
 {
     compiler->addFunctionCall(&mouseDown);
+}
+
+void SensingBlocks::compileMouseX(Compiler *compiler)
+{
+    compiler->addFunctionCall(&mouseX);
 }
 
 void SensingBlocks::compileTimer(Compiler *compiler)
@@ -142,6 +148,12 @@ unsigned int SensingBlocks::keyPressed(VirtualMachine *vm)
 unsigned int SensingBlocks::mouseDown(VirtualMachine *vm)
 {
     vm->addReturnValue(vm->engine()->mousePressed());
+    return 0;
+}
+
+unsigned int SensingBlocks::mouseX(VirtualMachine *vm)
+{
+    vm->addReturnValue(vm->engine()->mouseX());
     return 0;
 }
 
