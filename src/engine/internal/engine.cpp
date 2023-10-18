@@ -646,7 +646,7 @@ void Engine::addCloneInitScript(std::shared_ptr<Block> hatBlock)
     auto it = m_cloneInitScriptsMap.find(target);
 
     if (it == m_cloneInitScriptsMap.cend())
-        m_cloneInitScriptsMap[target] = { m_scripts[hatBlock].get() };
+        m_cloneInitScriptsMap[target] = { script };
     else {
         auto &scripts = it->second;
 
