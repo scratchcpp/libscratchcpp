@@ -28,6 +28,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_mousedown", &compileMouseDown);
     engine->addCompileFunction(this, "sensing_mousex", &compileMouseX);
     engine->addCompileFunction(this, "sensing_mousey", &compileMouseY);
+    engine->addCompileFunction(this, "sensing_setdragmode", &compileSetDragMode);
     engine->addCompileFunction(this, "sensing_timer", &compileTimer);
     engine->addCompileFunction(this, "sensing_resettimer", &compileResetTimer);
     engine->addCompileFunction(this, "sensing_current", &compileCurrent);
@@ -39,6 +40,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
 
     // Fields
     engine->addField(this, "CURRENTMENU", CURRENTMENU);
+    engine->addField(this, "DRAG_MODE", DRAG_MODE);
 
     // Field values
     engine->addFieldValue(this, "YEAR", YEAR);
@@ -48,6 +50,8 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addFieldValue(this, "HOUR", HOUR);
     engine->addFieldValue(this, "MINUTE", MINUTE);
     engine->addFieldValue(this, "SECOND", SECOND);
+    engine->addFieldValue(this, "draggable", Draggable);
+    engine->addFieldValue(this, "not draggable", NotDraggable);
 }
 
 void SensingBlocks::compileDistanceTo(Compiler *compiler)
@@ -90,6 +94,24 @@ void SensingBlocks::compileMouseX(Compiler *compiler)
 void SensingBlocks::compileMouseY(Compiler *compiler)
 {
     compiler->addFunctionCall(&mouseY);
+}
+
+void SensingBlocks::compileSetDragMode(Compiler *compiler)
+{
+    int option = compiler->field(DRAG_MODE)->specialValueId();
+
+    switch (option) {
+        case Draggable:
+            compiler->addFunctionCall(&setDraggableMode);
+            break;
+
+        case NotDraggable:
+            compiler->addFunctionCall(&setNotDraggableMode);
+            break;
+
+        default:
+            break;
+    }
 }
 
 void SensingBlocks::compileTimer(Compiler *compiler)
@@ -166,6 +188,22 @@ unsigned int SensingBlocks::mouseX(VirtualMachine *vm)
 unsigned int SensingBlocks::mouseY(VirtualMachine *vm)
 {
     vm->addReturnValue(vm->engine()->mouseY());
+    return 0;
+}
+
+unsigned int SensingBlocks::setDraggableMode(VirtualMachine *vm)
+{
+    if (Sprite *sprite = dynamic_cast<Sprite *>(vm->target()))
+        sprite->setDraggable(true);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::setNotDraggableMode(VirtualMachine *vm)
+{
+    if (Sprite *sprite = dynamic_cast<Sprite *>(vm->target()))
+        sprite->setDraggable(false);
+
     return 0;
 }
 

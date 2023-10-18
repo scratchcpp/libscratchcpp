@@ -20,7 +20,8 @@ class SensingBlocks : public IBlockSection
 
         enum Fields
         {
-            CURRENTMENU
+            CURRENTMENU,
+            DRAG_MODE
         };
 
         enum FieldValues
@@ -31,7 +32,9 @@ class SensingBlocks : public IBlockSection
             DAYOFWEEK,
             HOUR,
             MINUTE,
-            SECOND
+            SECOND,
+            Draggable,
+            NotDraggable
         };
 
         std::string name() const override;
@@ -43,6 +46,7 @@ class SensingBlocks : public IBlockSection
         static void compileMouseDown(Compiler *compiler);
         static void compileMouseX(Compiler *compiler);
         static void compileMouseY(Compiler *compiler);
+        static void compileSetDragMode(Compiler *compiler);
         static void compileTimer(Compiler *compiler);
         static void compileResetTimer(Compiler *compiler);
         static void compileCurrent(Compiler *compiler);
@@ -52,6 +56,9 @@ class SensingBlocks : public IBlockSection
         static unsigned int mouseDown(VirtualMachine *vm);
         static unsigned int mouseX(VirtualMachine *vm);
         static unsigned int mouseY(VirtualMachine *vm);
+
+        static unsigned int setDraggableMode(VirtualMachine *vm);
+        static unsigned int setNotDraggableMode(VirtualMachine *vm);
 
         static unsigned int distanceTo(VirtualMachine *vm);
         static unsigned int distanceToByIndex(VirtualMachine *vm);
