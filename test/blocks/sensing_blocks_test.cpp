@@ -99,6 +99,9 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_distanceto", &SensingBlocks::compileDistanceTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_keypressed", &SensingBlocks::compileKeyPressed));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_mousedown", &SensingBlocks::compileMouseDown));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_mousex", &SensingBlocks::compileMouseX));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_mousey", &SensingBlocks::compileMouseY));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_timer", &SensingBlocks::compileTimer));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_resettimer", &SensingBlocks::compileResetTimer));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_current", &SensingBlocks::compileCurrent));
@@ -337,6 +340,129 @@ TEST_F(SensingBlocksTest, KeyPressedImpl)
 
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_EQ(vm.getInput(0, 1)->toBool(), false);
+}
+
+TEST_F(SensingBlocksTest, MouseDown)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "sensing_mousedown");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::mouseDown)).WillOnce(Return(0));
+    compiler.init();
+
+    compiler.setBlock(block);
+    SensingBlocks::compileMouseDown(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(SensingBlocksTest, MouseDownImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::mouseDown };
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+
+    EXPECT_CALL(m_engineMock, mousePressed()).WillOnce(Return(true));
+    vm.setBytecode(bytecode);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toBool(), true);
+
+    EXPECT_CALL(m_engineMock, mousePressed()).WillOnce(Return(false));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toBool(), false);
+}
+
+TEST_F(SensingBlocksTest, MouseX)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "sensing_mousex");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::mouseX)).WillOnce(Return(0));
+    compiler.init();
+
+    compiler.setBlock(block);
+    SensingBlocks::compileMouseX(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(SensingBlocksTest, MouseXImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::mouseX };
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+
+    EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(48.165));
+    vm.setBytecode(bytecode);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 48.165);
+
+    EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(-239.09));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), -239.09);
+}
+
+TEST_F(SensingBlocksTest, MouseY)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "sensing_mousey");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::mouseY)).WillOnce(Return(0));
+    compiler.init();
+
+    compiler.setBlock(block);
+    SensingBlocks::compileMouseY(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(SensingBlocksTest, MouseYImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::mouseY };
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+
+    EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(159.084));
+    vm.setBytecode(bytecode);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 159.084);
+
+    EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(-95.564));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), -95.564);
 }
 
 TEST_F(SensingBlocksTest, Timer)
