@@ -102,6 +102,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_mousedown", &SensingBlocks::compileMouseDown));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_mousex", &SensingBlocks::compileMouseX));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_mousey", &SensingBlocks::compileMouseY));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_setdragmode", &SensingBlocks::compileSetDragMode));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_timer", &SensingBlocks::compileTimer));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_resettimer", &SensingBlocks::compileResetTimer));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_current", &SensingBlocks::compileCurrent));
@@ -113,6 +114,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
 
     // Fields
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "CURRENTMENU", SensingBlocks::CURRENTMENU));
+    EXPECT_CALL(m_engineMock, addField(m_section.get(), "DRAG_MODE", SensingBlocks::DRAG_MODE));
 
     // Field values
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "YEAR", SensingBlocks::YEAR));
@@ -122,6 +124,8 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "HOUR", SensingBlocks::HOUR));
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "MINUTE", SensingBlocks::MINUTE));
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "SECOND", SensingBlocks::SECOND));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "draggable", SensingBlocks::Draggable));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "not draggable", SensingBlocks::NotDraggable));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -463,6 +467,60 @@ TEST_F(SensingBlocksTest, MouseYImpl)
 
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_EQ(vm.getInput(0, 1)->toDouble(), -95.564);
+}
+
+TEST_F(SensingBlocksTest, SetDragMode)
+{
+    Compiler compiler(&m_engineMock);
+
+    // set drag mode [draggable]
+    auto block1 = std::make_shared<Block>("a", "sensing_setdragmode");
+    addDropdownField(block1, "DRAG_MODE", SensingBlocks::DRAG_MODE, "draggable", SensingBlocks::Draggable);
+
+    // set drag mode [not draggable]
+    auto block2 = std::make_shared<Block>("b", "sensing_setdragmode");
+    addDropdownField(block2, "DRAG_MODE", SensingBlocks::DRAG_MODE, "not draggable", SensingBlocks::NotDraggable);
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::setDraggableMode)).WillOnce(Return(0));
+    compiler.setBlock(block1);
+    SensingBlocks::compileSetDragMode(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::setNotDraggableMode)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    SensingBlocks::compileSetDragMode(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(SensingBlocksTest, SetDragModeImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::setDraggableMode, &SensingBlocks::setNotDraggableMode };
+
+    Sprite sprite;
+    sprite.setDraggable(false);
+
+    VirtualMachine vm(&sprite, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(sprite.draggable());
+
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_FALSE(sprite.draggable());
 }
 
 TEST_F(SensingBlocksTest, Timer)
