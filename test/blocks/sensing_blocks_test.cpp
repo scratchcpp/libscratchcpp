@@ -37,6 +37,15 @@ class SensingBlocksTest : public testing::Test
             return block;
         }
 
+        std::shared_ptr<Block> createNullBlock(const std::string &id)
+        {
+            std::shared_ptr<Block> block = std::make_shared<Block>(id, "");
+            BlockComp func = [](Compiler *compiler) { compiler->addInstruction(vm::OP_NULL); };
+            block->setCompileFunction(func);
+
+            return block;
+        }
+
         void addObscuredInput(std::shared_ptr<Block> block, const std::string &name, SensingBlocks::Inputs id, std::shared_ptr<Block> valueBlock) const
         {
             auto input = std::make_shared<Input>(name, Input::Type::ObscuredShadow);
@@ -142,11 +151,9 @@ TEST_F(SensingBlocksTest, DistanceTo)
     auto block2 = std::make_shared<Block>("b", "sensing_distanceto");
     addDropdownInput(block2, "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU, "_mouse_");
 
-    // distance to (join "" "")
-    auto joinBlock = std::make_shared<Block>("d", "operator_join");
-    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
+    // distance to (null block)
     auto block3 = std::make_shared<Block>("c", "sensing_distanceto");
-    addDropdownInput(block3, "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU, "", joinBlock);
+    addDropdownInput(block3, "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU, "", createNullBlock("d"));
 
     compiler.init();
 
@@ -165,9 +172,7 @@ TEST_F(SensingBlocksTest, DistanceTo)
 
     compiler.end();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_NULL, vm::OP_NULL, vm::OP_STR_CONCAT, vm::OP_EXEC, 2, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_NULL, vm::OP_EXEC, 2, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues().size(), 1);
     ASSERT_EQ(compiler.constValues()[0].toDouble(), 5);
 }
@@ -277,11 +282,9 @@ TEST_F(SensingBlocksTest, KeyPressed)
     auto block2 = std::make_shared<Block>("b", "sensing_keypressed");
     addDropdownInput(block2, "KEY_OPTION", SensingBlocks::KEY_OPTION, "any");
 
-    // key (join "" "") pressed?
-    auto joinBlock = std::make_shared<Block>("d", "operator_join");
-    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
+    // key (null block) pressed?
     auto block3 = std::make_shared<Block>("c", "sensing_keypressed");
-    addDropdownInput(block3, "KEY_OPTION", SensingBlocks::KEY_OPTION, "", joinBlock);
+    addDropdownInput(block3, "KEY_OPTION", SensingBlocks::KEY_OPTION, "", createNullBlock("d"));
 
     compiler.init();
 
@@ -299,9 +302,7 @@ TEST_F(SensingBlocksTest, KeyPressed)
 
     compiler.end();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_NULL, vm::OP_NULL, vm::OP_STR_CONCAT, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_NULL, vm::OP_EXEC, 0, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "space", "any" }));
 }
 
