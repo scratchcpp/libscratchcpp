@@ -30,6 +30,15 @@ class MotionBlocksTest : public testing::Test
         // For any motion block
         std::shared_ptr<Block> createMotionBlock(const std::string &id, const std::string &opcode) const { return std::make_shared<Block>(id, opcode); }
 
+        std::shared_ptr<Block> createNullBlock(const std::string &id)
+        {
+            std::shared_ptr<Block> block = std::make_shared<Block>(id, "");
+            BlockComp func = [](Compiler *compiler) { compiler->addInstruction(vm::OP_NULL); };
+            block->setCompileFunction(func);
+
+            return block;
+        }
+
         void addValueInput(std::shared_ptr<Block> block, const std::string &name, MotionBlocks::Inputs id, const Value &value) const
         {
             auto input = std::make_shared<Input>(name, Input::Type::Shadow);
@@ -308,11 +317,9 @@ TEST_F(MotionBlocksTest, PointTowards)
     auto block3 = std::make_shared<Block>("c", "motion_pointtowards");
     addDropdownInput(block3, "TOWARDS", MotionBlocks::TOWARDS, "Sprite2");
 
-    // point towards (join "" "")
-    auto joinBlock = std::make_shared<Block>("e", "operator_join");
-    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
+    // point towards (null block)
     auto block4 = std::make_shared<Block>("d", "motion_pointtowards");
-    addDropdownInput(block4, "TOWARDS", MotionBlocks::TOWARDS, "", joinBlock);
+    addDropdownInput(block4, "TOWARDS", MotionBlocks::TOWARDS, "", createNullBlock("e"));
 
     compiler.init();
 
@@ -335,9 +342,7 @@ TEST_F(MotionBlocksTest, PointTowards)
 
     compiler.end();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_CONST, 0, vm::OP_EXEC, 2, vm::OP_NULL, vm::OP_NULL, vm::OP_STR_CONCAT, vm::OP_EXEC, 3, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_CONST, 0, vm::OP_EXEC, 2, vm::OP_NULL, vm::OP_EXEC, 3, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues().size(), 1);
     ASSERT_EQ(compiler.constValues()[0].toDouble(), 5);
 }
@@ -526,11 +531,9 @@ TEST_F(MotionBlocksTest, GoTo)
     auto block3 = std::make_shared<Block>("c", "motion_goto");
     addDropdownInput(block3, "TO", MotionBlocks::TO, "Sprite2");
 
-    // go to (join "" "")
-    auto joinBlock = std::make_shared<Block>("e", "operator_join");
-    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
+    // go to (null block)
     auto block4 = std::make_shared<Block>("d", "motion_goto");
-    addDropdownInput(block4, "TO", MotionBlocks::TO, "", joinBlock);
+    addDropdownInput(block4, "TO", MotionBlocks::TO, "", createNullBlock("e"));
 
     compiler.init();
 
@@ -553,9 +556,7 @@ TEST_F(MotionBlocksTest, GoTo)
 
     compiler.end();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_CONST, 0, vm::OP_EXEC, 2, vm::OP_NULL, vm::OP_NULL, vm::OP_STR_CONCAT, vm::OP_EXEC, 3, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_CONST, 0, vm::OP_EXEC, 2, vm::OP_NULL, vm::OP_EXEC, 3, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues().size(), 1);
     ASSERT_EQ(compiler.constValues()[0].toDouble(), 5);
 }
@@ -762,12 +763,10 @@ TEST_F(MotionBlocksTest, GlideTo)
     addValueInput(block3, "SECS", MotionBlocks::SECS, 3.25);
     addDropdownInput(block3, "TO", MotionBlocks::TO, "Sprite2");
 
-    // glide (6.5) secs to (join "" "")
-    auto joinBlock = std::make_shared<Block>("e", "operator_join");
-    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
+    // glide (6.5) secs to (null block)
     auto block4 = std::make_shared<Block>("d", "motion_glideto");
     addValueInput(block4, "SECS", MotionBlocks::SECS, 6.5);
-    addDropdownInput(block4, "TO", MotionBlocks::TO, "", joinBlock);
+    addDropdownInput(block4, "TO", MotionBlocks::TO, "", createNullBlock("e"));
 
     compiler.init();
 
@@ -821,8 +820,6 @@ TEST_F(MotionBlocksTest, GlideTo)
               vm::OP_CONST,
               4,
               vm::OP_NULL,
-              vm::OP_NULL,
-              vm::OP_STR_CONCAT,
               vm::OP_EXEC,
               3,
               vm::OP_EXEC,
