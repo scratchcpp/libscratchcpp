@@ -7,6 +7,8 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/costume.h>
 #include "sensingblocks.h"
 
 #include "../engine/internal/clock.h"
@@ -31,16 +33,19 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_setdragmode", &compileSetDragMode);
     engine->addCompileFunction(this, "sensing_timer", &compileTimer);
     engine->addCompileFunction(this, "sensing_resettimer", &compileResetTimer);
+    engine->addCompileFunction(this, "sensing_of", &compileOf);
     engine->addCompileFunction(this, "sensing_current", &compileCurrent);
     engine->addCompileFunction(this, "sensing_dayssince2000", &compileDaysSince2000);
 
     // Inputs
     engine->addInput(this, "DISTANCETOMENU", DISTANCETOMENU);
     engine->addInput(this, "KEY_OPTION", KEY_OPTION);
+    engine->addInput(this, "OBJECT", OBJECT);
 
     // Fields
     engine->addField(this, "CURRENTMENU", CURRENTMENU);
     engine->addField(this, "DRAG_MODE", DRAG_MODE);
+    engine->addField(this, "PROPERTY", PROPERTY);
 
     // Field values
     engine->addFieldValue(this, "YEAR", YEAR);
@@ -52,6 +57,16 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addFieldValue(this, "SECOND", SECOND);
     engine->addFieldValue(this, "draggable", Draggable);
     engine->addFieldValue(this, "not draggable", NotDraggable);
+    engine->addFieldValue(this, "x position", XPosition);
+    engine->addFieldValue(this, "y position", YPosition);
+    engine->addFieldValue(this, "direction", Direction);
+    engine->addFieldValue(this, "costume #", CostumeNumber);
+    engine->addFieldValue(this, "costume name", CostumeName);
+    engine->addFieldValue(this, "size", Size);
+    engine->addFieldValue(this, "volume", Volume);
+    engine->addFieldValue(this, "background #", BackdropNumber); // Scratch 1.4 support
+    engine->addFieldValue(this, "backdrop #", BackdropNumber);
+    engine->addFieldValue(this, "backdrop name", BackdropName);
 }
 
 void SensingBlocks::compileDistanceTo(Compiler *compiler)
@@ -122,6 +137,111 @@ void SensingBlocks::compileTimer(Compiler *compiler)
 void SensingBlocks::compileResetTimer(Compiler *compiler)
 {
     compiler->addFunctionCall(&resetTimer);
+}
+
+void SensingBlocks::compileOf(Compiler *compiler)
+{
+    int option = compiler->field(PROPERTY)->specialValueId();
+    Input *input = compiler->input(OBJECT);
+    BlockFunc f = nullptr;
+
+    if (input->type() != Input::Type::ObscuredShadow) {
+        assert(input->pointsToDropdownMenu());
+        std::string value = input->selectedMenuItem();
+
+        int index = compiler->engine()->findTarget(value);
+
+        switch (option) {
+            case XPosition:
+                f = &xPositionOfSpriteByIndex;
+                break;
+
+            case YPosition:
+                f = &yPositionOfSpriteByIndex;
+                break;
+
+            case Direction:
+                f = &directionOfSpriteByIndex;
+                break;
+
+            case CostumeNumber:
+                f = &costumeNumberOfSpriteByIndex;
+                break;
+
+            case CostumeName:
+                f = &costumeNameOfSpriteByIndex;
+                break;
+
+            case Size:
+                f = &sizeOfSpriteByIndex;
+                break;
+
+            case Volume:
+                f = &volumeOfTargetByIndex;
+                break;
+
+            case BackdropNumber:
+                f = &backdropNumberOfStageByIndex;
+                break;
+
+            case BackdropName:
+                f = &backdropNameOfStageByIndex;
+                break;
+
+            default:
+                break;
+        }
+
+        if (f)
+            compiler->addConstValue(index);
+    } else {
+        switch (option) {
+            case XPosition:
+                f = &xPositionOfSprite;
+                break;
+
+            case YPosition:
+                f = &yPositionOfSprite;
+                break;
+
+            case Direction:
+                f = &directionOfSprite;
+                break;
+
+            case CostumeNumber:
+                f = &costumeNumberOfSprite;
+                break;
+
+            case CostumeName:
+                f = &costumeNameOfSprite;
+                break;
+
+            case Size:
+                f = &sizeOfSprite;
+                break;
+
+            case Volume:
+                f = &volumeOfTarget;
+                break;
+
+            case BackdropNumber:
+                f = &backdropNumberOfStage;
+                break;
+
+            case BackdropName:
+                f = &backdropNameOfStage;
+                break;
+
+            default:
+                break;
+        }
+
+        if (f)
+            compiler->addInput(input);
+    }
+
+    if (f)
+        compiler->addFunctionCall(f);
 }
 
 void SensingBlocks::compileCurrent(Compiler *compiler)
@@ -268,6 +388,238 @@ unsigned int SensingBlocks::timer(VirtualMachine *vm)
 unsigned int SensingBlocks::resetTimer(VirtualMachine *vm)
 {
     vm->engine()->timer()->reset();
+    return 0;
+}
+
+unsigned int SensingBlocks::xPositionOfSprite(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->engine()->findTarget(vm->getInput(0, 1)->toString()));
+    Sprite *sprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite)
+        vm->replaceReturnValue(sprite->x(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::xPositionOfSpriteByIndex(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
+    Sprite *sprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite)
+        vm->replaceReturnValue(sprite->x(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::yPositionOfSprite(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->engine()->findTarget(vm->getInput(0, 1)->toString()));
+    Sprite *sprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite)
+        vm->replaceReturnValue(sprite->y(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::yPositionOfSpriteByIndex(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
+    Sprite *sprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite)
+        vm->replaceReturnValue(sprite->y(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::directionOfSprite(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->engine()->findTarget(vm->getInput(0, 1)->toString()));
+    Sprite *sprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite)
+        vm->replaceReturnValue(sprite->direction(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::directionOfSpriteByIndex(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
+    Sprite *sprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite)
+        vm->replaceReturnValue(sprite->direction(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::costumeNumberOfSprite(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->engine()->findTarget(vm->getInput(0, 1)->toString()));
+    Sprite *sprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite)
+        vm->replaceReturnValue(sprite->currentCostume(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::costumeNumberOfSpriteByIndex(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
+    Sprite *sprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite)
+        vm->replaceReturnValue(sprite->currentCostume(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::costumeNameOfSprite(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->engine()->findTarget(vm->getInput(0, 1)->toString()));
+    Sprite *sprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite)
+        vm->replaceReturnValue(sprite->costumeAt(sprite->currentCostume() - 1)->name(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::costumeNameOfSpriteByIndex(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
+    Sprite *sprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite)
+        vm->replaceReturnValue(sprite->costumeAt(sprite->currentCostume() - 1)->name(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::sizeOfSprite(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->engine()->findTarget(vm->getInput(0, 1)->toString()));
+    Sprite *sprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite)
+        vm->replaceReturnValue(sprite->size(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::sizeOfSpriteByIndex(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
+    Sprite *sprite = dynamic_cast<Sprite *>(target);
+
+    if (sprite)
+        vm->replaceReturnValue(sprite->size(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::volumeOfTarget(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->engine()->findTarget(vm->getInput(0, 1)->toString()));
+
+    if (target)
+        vm->replaceReturnValue(target->volume(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::volumeOfTargetByIndex(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
+
+    if (target)
+        vm->replaceReturnValue(target->volume(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::backdropNumberOfStage(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->engine()->findTarget(vm->getInput(0, 1)->toString()));
+    Stage *stage = dynamic_cast<Stage *>(target);
+
+    if (stage)
+        vm->replaceReturnValue(stage->currentCostume(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::backdropNumberOfStageByIndex(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
+    Stage *stage = dynamic_cast<Stage *>(target);
+
+    if (stage)
+        vm->replaceReturnValue(stage->currentCostume(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::backdropNameOfStage(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->engine()->findTarget(vm->getInput(0, 1)->toString()));
+    Stage *stage = dynamic_cast<Stage *>(target);
+
+    if (stage)
+        vm->replaceReturnValue(stage->costumeAt(stage->currentCostume() - 1)->name(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
+    return 0;
+}
+
+unsigned int SensingBlocks::backdropNameOfStageByIndex(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
+    Stage *stage = dynamic_cast<Stage *>(target);
+
+    if (stage)
+        vm->replaceReturnValue(stage->costumeAt(stage->currentCostume() - 1)->name(), 1);
+    else
+        vm->replaceReturnValue(0, 1);
+
     return 0;
 }
 

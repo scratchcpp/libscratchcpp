@@ -15,13 +15,15 @@ class SensingBlocks : public IBlockSection
         enum Inputs
         {
             DISTANCETOMENU,
-            KEY_OPTION
+            KEY_OPTION,
+            OBJECT
         };
 
         enum Fields
         {
             CURRENTMENU,
-            DRAG_MODE
+            DRAG_MODE,
+            PROPERTY
         };
 
         enum FieldValues
@@ -34,7 +36,16 @@ class SensingBlocks : public IBlockSection
             MINUTE,
             SECOND,
             Draggable,
-            NotDraggable
+            NotDraggable,
+            XPosition,
+            YPosition,
+            Direction,
+            CostumeNumber,
+            CostumeName,
+            Size,
+            Volume,
+            BackdropNumber,
+            BackdropName
         };
 
         std::string name() const override;
@@ -49,6 +60,7 @@ class SensingBlocks : public IBlockSection
         static void compileSetDragMode(Compiler *compiler);
         static void compileTimer(Compiler *compiler);
         static void compileResetTimer(Compiler *compiler);
+        static void compileOf(Compiler *compiler);
         static void compileCurrent(Compiler *compiler);
         static void compileDaysSince2000(Compiler *compiler);
 
@@ -66,6 +78,26 @@ class SensingBlocks : public IBlockSection
 
         static unsigned int timer(VirtualMachine *vm);
         static unsigned int resetTimer(VirtualMachine *vm);
+
+        static unsigned int xPositionOfSprite(VirtualMachine *vm);
+        static unsigned int xPositionOfSpriteByIndex(VirtualMachine *vm);
+        static unsigned int yPositionOfSprite(VirtualMachine *vm);
+        static unsigned int yPositionOfSpriteByIndex(VirtualMachine *vm);
+        static unsigned int directionOfSprite(VirtualMachine *vm);
+        static unsigned int directionOfSpriteByIndex(VirtualMachine *vm);
+        static unsigned int costumeNumberOfSprite(VirtualMachine *vm);
+        static unsigned int costumeNumberOfSpriteByIndex(VirtualMachine *vm);
+        static unsigned int costumeNameOfSprite(VirtualMachine *vm);
+        static unsigned int costumeNameOfSpriteByIndex(VirtualMachine *vm);
+        static unsigned int sizeOfSprite(VirtualMachine *vm);
+        static unsigned int sizeOfSpriteByIndex(VirtualMachine *vm);
+        static unsigned int volumeOfTarget(VirtualMachine *vm);
+        static unsigned int volumeOfTargetByIndex(VirtualMachine *vm);
+        static unsigned int backdropNumberOfStage(VirtualMachine *vm);
+        static unsigned int backdropNumberOfStageByIndex(VirtualMachine *vm);
+        static unsigned int backdropNameOfStage(VirtualMachine *vm);
+        static unsigned int backdropNameOfStageByIndex(VirtualMachine *vm);
+
         static unsigned int currentYear(VirtualMachine *vm);
         static unsigned int currentMonth(VirtualMachine *vm);
         static unsigned int currentDate(VirtualMachine *vm);

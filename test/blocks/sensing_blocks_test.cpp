@@ -3,6 +3,8 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/costume.h>
 #include <enginemock.h>
 #include <timermock.h>
 #include <clockmock.h>
@@ -114,16 +116,19 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_setdragmode", &SensingBlocks::compileSetDragMode));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_timer", &SensingBlocks::compileTimer));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_resettimer", &SensingBlocks::compileResetTimer));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_of", &SensingBlocks::compileOf));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_current", &SensingBlocks::compileCurrent));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_dayssince2000", &SensingBlocks::compileDaysSince2000));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "KEY_OPTION", SensingBlocks::KEY_OPTION));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "OBJECT", SensingBlocks::OBJECT));
 
     // Fields
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "CURRENTMENU", SensingBlocks::CURRENTMENU));
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "DRAG_MODE", SensingBlocks::DRAG_MODE));
+    EXPECT_CALL(m_engineMock, addField(m_section.get(), "PROPERTY", SensingBlocks::PROPERTY));
 
     // Field values
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "YEAR", SensingBlocks::YEAR));
@@ -135,6 +140,16 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "SECOND", SensingBlocks::SECOND));
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "draggable", SensingBlocks::Draggable));
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "not draggable", SensingBlocks::NotDraggable));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "x position", SensingBlocks::XPosition));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "y position", SensingBlocks::YPosition));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "direction", SensingBlocks::Direction));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "costume #", SensingBlocks::CostumeNumber));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "costume name", SensingBlocks::CostumeName));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "size", SensingBlocks::Size));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "volume", SensingBlocks::Volume));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "background #", SensingBlocks::BackdropNumber));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "backdrop #", SensingBlocks::BackdropNumber));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "backdrop name", SensingBlocks::BackdropName));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -589,6 +604,584 @@ TEST_F(SensingBlocksTest, ResetTimerImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
+}
+
+TEST_F(SensingBlocksTest, Of)
+{
+    Compiler compiler(&m_engineMock);
+
+    // [x position] of (Sprite2)
+    auto block1 = std::make_shared<Block>("a", "sensing_of");
+    addDropdownField(block1, "PROPERTY", SensingBlocks::PROPERTY, "x position", SensingBlocks::XPosition);
+    addDropdownInput(block1, "OBJECT", SensingBlocks::OBJECT, "Sprite2");
+
+    // [x position] of (null block)
+    auto block2 = std::make_shared<Block>("b", "sensing_of");
+    addDropdownField(block2, "PROPERTY", SensingBlocks::PROPERTY, "x position", SensingBlocks::XPosition);
+    addDropdownInput(block2, "OBJECT", SensingBlocks::OBJECT, "", createNullBlock("c"));
+
+    // [y position] of (Sprite2)
+    auto block3 = std::make_shared<Block>("d", "sensing_of");
+    addDropdownField(block3, "PROPERTY", SensingBlocks::PROPERTY, "y position", SensingBlocks::YPosition);
+    addDropdownInput(block3, "OBJECT", SensingBlocks::OBJECT, "Sprite2");
+
+    // [y position] of (null block)
+    auto block4 = std::make_shared<Block>("e", "sensing_of");
+    addDropdownField(block4, "PROPERTY", SensingBlocks::PROPERTY, "y position", SensingBlocks::YPosition);
+    addDropdownInput(block4, "OBJECT", SensingBlocks::OBJECT, "", createNullBlock("f"));
+
+    // [direction] of (Sprite2)
+    auto block5 = std::make_shared<Block>("g", "sensing_of");
+    addDropdownField(block5, "PROPERTY", SensingBlocks::PROPERTY, "direction", SensingBlocks::Direction);
+    addDropdownInput(block5, "OBJECT", SensingBlocks::OBJECT, "Sprite2");
+
+    // [direction] of (null block)
+    auto block6 = std::make_shared<Block>("h", "sensing_of");
+    addDropdownField(block6, "PROPERTY", SensingBlocks::PROPERTY, "direction", SensingBlocks::Direction);
+    addDropdownInput(block6, "OBJECT", SensingBlocks::OBJECT, "", createNullBlock("i"));
+
+    // [costume #] of (Sprite2)
+    auto block7 = std::make_shared<Block>("j", "sensing_of");
+    addDropdownField(block7, "PROPERTY", SensingBlocks::PROPERTY, "costume #", SensingBlocks::CostumeNumber);
+    addDropdownInput(block7, "OBJECT", SensingBlocks::OBJECT, "Sprite2");
+
+    // [costume #] of (null block)
+    auto block8 = std::make_shared<Block>("k", "sensing_of");
+    addDropdownField(block8, "PROPERTY", SensingBlocks::PROPERTY, "costume #", SensingBlocks::CostumeNumber);
+    addDropdownInput(block8, "OBJECT", SensingBlocks::OBJECT, "", createNullBlock("l"));
+
+    // [costume name] of (Sprite2)
+    auto block9 = std::make_shared<Block>("m", "sensing_of");
+    addDropdownField(block9, "PROPERTY", SensingBlocks::PROPERTY, "costume name", SensingBlocks::CostumeName);
+    addDropdownInput(block9, "OBJECT", SensingBlocks::OBJECT, "Sprite2");
+
+    // [costume name] of (null block)
+    auto block10 = std::make_shared<Block>("n", "sensing_of");
+    addDropdownField(block10, "PROPERTY", SensingBlocks::PROPERTY, "costume name", SensingBlocks::CostumeName);
+    addDropdownInput(block10, "OBJECT", SensingBlocks::OBJECT, "", createNullBlock("o"));
+
+    // [size] of (Sprite2)
+    auto block11 = std::make_shared<Block>("p", "sensing_of");
+    addDropdownField(block11, "PROPERTY", SensingBlocks::PROPERTY, "size", SensingBlocks::Size);
+    addDropdownInput(block11, "OBJECT", SensingBlocks::OBJECT, "Sprite2");
+
+    // [size] of (null block)
+    auto block12 = std::make_shared<Block>("q", "sensing_of");
+    addDropdownField(block12, "PROPERTY", SensingBlocks::PROPERTY, "size", SensingBlocks::Size);
+    addDropdownInput(block12, "OBJECT", SensingBlocks::OBJECT, "", createNullBlock("r"));
+
+    // [volume] of (Sprite2)
+    auto block13 = std::make_shared<Block>("s", "sensing_of");
+    addDropdownField(block13, "PROPERTY", SensingBlocks::PROPERTY, "volume", SensingBlocks::Volume);
+    addDropdownInput(block13, "OBJECT", SensingBlocks::OBJECT, "Sprite2");
+
+    // [volume] of (null block)
+    auto block14 = std::make_shared<Block>("t", "sensing_of");
+    addDropdownField(block14, "PROPERTY", SensingBlocks::PROPERTY, "volume", SensingBlocks::Volume);
+    addDropdownInput(block14, "OBJECT", SensingBlocks::OBJECT, "", createNullBlock("u"));
+
+    // [background #] of (Stage)
+    auto block15 = std::make_shared<Block>("v", "sensing_of");
+    addDropdownField(block15, "PROPERTY", SensingBlocks::PROPERTY, "background #", SensingBlocks::BackdropNumber);
+    addDropdownInput(block15, "OBJECT", SensingBlocks::OBJECT, "_stage_");
+
+    // [background #] of (null block)
+    auto block16 = std::make_shared<Block>("w", "sensing_of");
+    addDropdownField(block16, "PROPERTY", SensingBlocks::PROPERTY, "background #", SensingBlocks::BackdropNumber);
+    addDropdownInput(block16, "OBJECT", SensingBlocks::OBJECT, "", createNullBlock("x"));
+
+    // [backdrop #] of (Stage)
+    auto block17 = std::make_shared<Block>("y", "sensing_of");
+    addDropdownField(block17, "PROPERTY", SensingBlocks::PROPERTY, "backdrop #", SensingBlocks::BackdropNumber);
+    addDropdownInput(block17, "OBJECT", SensingBlocks::OBJECT, "_stage_");
+
+    // [backdrop #] of (null block)
+    auto block18 = std::make_shared<Block>("z", "sensing_of");
+    addDropdownField(block18, "PROPERTY", SensingBlocks::PROPERTY, "backdrop #", SensingBlocks::BackdropNumber);
+    addDropdownInput(block18, "OBJECT", SensingBlocks::OBJECT, "", createNullBlock("aa"));
+
+    // [backdrop name] of (Stage)
+    auto block19 = std::make_shared<Block>("ab", "sensing_of");
+    addDropdownField(block19, "PROPERTY", SensingBlocks::PROPERTY, "backdrop name", SensingBlocks::BackdropName);
+    addDropdownInput(block19, "OBJECT", SensingBlocks::OBJECT, "_stage_");
+
+    // [backdrop name] of (null block)
+    auto block20 = std::make_shared<Block>("ac", "sensing_of");
+    addDropdownField(block20, "PROPERTY", SensingBlocks::PROPERTY, "backdrop name", SensingBlocks::BackdropName);
+    addDropdownInput(block20, "OBJECT", SensingBlocks::OBJECT, "", createNullBlock("ad"));
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).Times(7).WillRepeatedly(Return(6));
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).Times(3).WillRepeatedly(Return(0));
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::xPositionOfSpriteByIndex)).WillOnce(Return(0));
+    compiler.setBlock(block1);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::xPositionOfSprite)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::yPositionOfSpriteByIndex)).WillOnce(Return(2));
+    compiler.setBlock(block3);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::yPositionOfSprite)).WillOnce(Return(3));
+    compiler.setBlock(block4);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::directionOfSpriteByIndex)).WillOnce(Return(4));
+    compiler.setBlock(block5);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::directionOfSprite)).WillOnce(Return(5));
+    compiler.setBlock(block6);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::costumeNumberOfSpriteByIndex)).WillOnce(Return(6));
+    compiler.setBlock(block7);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::costumeNumberOfSprite)).WillOnce(Return(7));
+    compiler.setBlock(block8);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::costumeNameOfSpriteByIndex)).WillOnce(Return(8));
+    compiler.setBlock(block9);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::costumeNameOfSprite)).WillOnce(Return(9));
+    compiler.setBlock(block10);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::sizeOfSpriteByIndex)).WillOnce(Return(10));
+    compiler.setBlock(block11);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::sizeOfSprite)).WillOnce(Return(11));
+    compiler.setBlock(block12);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::volumeOfTargetByIndex)).WillOnce(Return(12));
+    compiler.setBlock(block13);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::volumeOfTarget)).WillOnce(Return(13));
+    compiler.setBlock(block14);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::backdropNumberOfStageByIndex)).WillOnce(Return(14));
+    compiler.setBlock(block15);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::backdropNumberOfStage)).WillOnce(Return(15));
+    compiler.setBlock(block16);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::backdropNumberOfStageByIndex)).WillOnce(Return(14));
+    compiler.setBlock(block17);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::backdropNumberOfStage)).WillOnce(Return(15));
+    compiler.setBlock(block18);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::backdropNameOfStageByIndex)).WillOnce(Return(16));
+    compiler.setBlock(block19);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::backdropNameOfStage)).WillOnce(Return(17));
+    compiler.setBlock(block20);
+    SensingBlocks::compileOf(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>(
+            { vm::OP_START,
+              vm::OP_CONST,
+              0,
+              vm::OP_EXEC,
+              0,
+              vm::OP_NULL,
+              vm::OP_EXEC,
+              1,
+              vm::OP_CONST,
+              1,
+              vm::OP_EXEC,
+              2,
+              vm::OP_NULL,
+              vm::OP_EXEC,
+              3,
+              vm::OP_CONST,
+              2,
+              vm::OP_EXEC,
+              4,
+              vm::OP_NULL,
+              vm::OP_EXEC,
+              5,
+              vm::OP_CONST,
+              3,
+              vm::OP_EXEC,
+              6,
+              vm::OP_NULL,
+              vm::OP_EXEC,
+              7,
+              vm::OP_CONST,
+              4,
+              vm::OP_EXEC,
+              8,
+              vm::OP_NULL,
+              vm::OP_EXEC,
+              9,
+              vm::OP_CONST,
+              5,
+              vm::OP_EXEC,
+              10,
+              vm::OP_NULL,
+              vm::OP_EXEC,
+              11,
+              vm::OP_CONST,
+              6,
+              vm::OP_EXEC,
+              12,
+              vm::OP_NULL,
+              vm::OP_EXEC,
+              13,
+              vm::OP_CONST,
+              7,
+              vm::OP_EXEC,
+              14,
+              vm::OP_NULL,
+              vm::OP_EXEC,
+              15,
+              vm::OP_CONST,
+              8,
+              vm::OP_EXEC,
+              14,
+              vm::OP_NULL,
+              vm::OP_EXEC,
+              15,
+              vm::OP_CONST,
+              9,
+              vm::OP_EXEC,
+              16,
+              vm::OP_NULL,
+              vm::OP_EXEC,
+              17,
+              vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 6, 6, 6, 6, 6, 6, 6, 0, 0, 0 }));
+}
+
+TEST_F(SensingBlocksTest, XPositionOfSprite)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::xPositionOfSprite, &SensingBlocks::xPositionOfSpriteByIndex };
+    static Value constValues[] = { "Sprite2", 6 };
+
+    Sprite sprite;
+    sprite.setX(-168.088);
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(6));
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), -168.088);
+
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), -168.088);
+}
+
+TEST_F(SensingBlocksTest, YPositionOfSprite)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::yPositionOfSprite, &SensingBlocks::yPositionOfSpriteByIndex };
+    static Value constValues[] = { "Sprite2", 6 };
+
+    Sprite sprite;
+    sprite.setY(-16.548);
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(6));
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), -16.548);
+
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), -16.548);
+}
+
+TEST_F(SensingBlocksTest, DirectionOfSprite)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::directionOfSprite, &SensingBlocks::directionOfSpriteByIndex };
+    static Value constValues[] = { "Sprite2", 6 };
+
+    Sprite sprite;
+    sprite.setDirection(-109.087);
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(6));
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), -109.087);
+
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), -109.087);
+}
+
+TEST_F(SensingBlocksTest, CostumeNumberOfSprite)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::costumeNumberOfSprite, &SensingBlocks::costumeNumberOfSpriteByIndex };
+    static Value constValues[] = { "Sprite2", 6 };
+
+    Sprite sprite;
+    sprite.addCostume(std::make_shared<Costume>("costume1", "a", "png"));
+    sprite.addCostume(std::make_shared<Costume>("costume2", "b", "svg"));
+    sprite.setCurrentCostume(2);
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(6));
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 2);
+
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 2);
+}
+
+TEST_F(SensingBlocksTest, CostumeNameOfSprite)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::costumeNameOfSprite, &SensingBlocks::costumeNameOfSpriteByIndex };
+    static Value constValues[] = { "Sprite2", 6 };
+
+    Sprite sprite;
+    sprite.addCostume(std::make_shared<Costume>("costume1", "a", "png"));
+    sprite.addCostume(std::make_shared<Costume>("costume2", "b", "svg"));
+    sprite.setCurrentCostume(2);
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(6));
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toString(), "costume2");
+
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toString(), "costume2");
+}
+
+TEST_F(SensingBlocksTest, SizeOfSprite)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::sizeOfSprite, &SensingBlocks::sizeOfSpriteByIndex };
+    static Value constValues[] = { "Sprite2", 6 };
+
+    Sprite sprite;
+    sprite.setSize(48.642);
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(6));
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 48.642);
+
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 48.642);
+}
+
+TEST_F(SensingBlocksTest, VolumeOfTarget)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::volumeOfTarget, &SensingBlocks::volumeOfTargetByIndex };
+    static Value constValues[] = { "Sprite2", "_stage_", 6, 0 };
+
+    Sprite sprite;
+    sprite.setVolume(85);
+
+    Stage stage;
+    stage.setVolume(48);
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(6));
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), sprite.volume());
+
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(&stage));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), stage.volume());
+
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.reset();
+    vm.setBytecode(bytecode3);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), sprite.volume());
+
+    EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(&stage));
+    vm.reset();
+    vm.setBytecode(bytecode4);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), stage.volume());
+}
+
+TEST_F(SensingBlocksTest, BackdropNumberOfStage)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::backdropNumberOfStage, &SensingBlocks::backdropNumberOfStageByIndex };
+    static Value constValues[] = { "_stage_", 6 };
+
+    Stage stage;
+    stage.addCostume(std::make_shared<Costume>("backdrop1", "a", "png"));
+    stage.addCostume(std::make_shared<Costume>("backdrop2", "b", "svg"));
+    stage.setCurrentCostume(2);
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(6));
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&stage));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 2);
+
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&stage));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 2);
+}
+
+TEST_F(SensingBlocksTest, BackdropNameOfStage)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::backdropNameOfStage, &SensingBlocks::backdropNameOfStageByIndex };
+    static Value constValues[] = { "_stage_", 6 };
+
+    Stage stage;
+    stage.addCostume(std::make_shared<Costume>("backdrop1", "a", "png"));
+    stage.addCostume(std::make_shared<Costume>("backdrop2", "b", "svg"));
+    stage.setCurrentCostume(2);
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(6));
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&stage));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toString(), "backdrop2");
+
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&stage));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toString(), "backdrop2");
 }
 
 TEST_F(SensingBlocksTest, Current)
