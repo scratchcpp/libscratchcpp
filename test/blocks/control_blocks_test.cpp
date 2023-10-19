@@ -48,6 +48,15 @@ class ControlBlocksTest : public testing::Test
             return block;
         }
 
+        std::shared_ptr<Block> createNullBlock(const std::string &id)
+        {
+            std::shared_ptr<Block> block = std::make_shared<Block>(id, "");
+            BlockComp func = [](Compiler *compiler) { compiler->addInstruction(vm::OP_NULL); };
+            block->setCompileFunction(func);
+
+            return block;
+        }
+
         void addSubstackInput(std::shared_ptr<Block> block, const std::string &name, ControlBlocks::Inputs id, std::shared_ptr<Block> valueBlock) const
         {
             auto input = std::make_shared<Input>(name, Input::Type::NoShadow);
@@ -859,10 +868,8 @@ TEST_F(ControlBlocksTest, CreateCloneOf)
     // create clone of [myself]
     auto block2 = createCloneBlock("b", "_myself_");
 
-    // create clone of (join "" "")
-    auto joinBlock = std::make_shared<Block>("d", "operator_join");
-    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
-    auto block3 = createCloneBlock("c", "", joinBlock);
+    // create clone of (null block)
+    auto block3 = createCloneBlock("c", "", createNullBlock("d"));
 
     EXPECT_CALL(m_engineMock, findTarget("Sprite1")).WillOnce(Return(4));
     EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::createCloneByIndex)).WillOnce(Return(0));
@@ -878,9 +885,7 @@ TEST_F(ControlBlocksTest, CreateCloneOf)
     ControlBlocks::compileCreateClone(&compiler);
     compiler.end();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_NULL, vm::OP_NULL, vm::OP_STR_CONCAT, vm::OP_EXEC, 2, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_NULL, vm::OP_EXEC, 2, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues().size(), 1);
     ASSERT_EQ(compiler.constValues()[0].toDouble(), 4);
     ASSERT_TRUE(compiler.variables().empty());
