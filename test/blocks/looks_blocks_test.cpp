@@ -30,6 +30,15 @@ class LooksBlocksTest : public testing::Test
         // For any looks block
         std::shared_ptr<Block> createLooksBlock(const std::string &id, const std::string &opcode) const { return std::make_shared<Block>(id, opcode); }
 
+        std::shared_ptr<Block> createNullBlock(const std::string &id)
+        {
+            std::shared_ptr<Block> block = std::make_shared<Block>(id, "");
+            BlockComp func = [](Compiler *compiler) { compiler->addInstruction(vm::OP_NULL); };
+            block->setCompileFunction(func);
+
+            return block;
+        }
+
         void addValueInput(std::shared_ptr<Block> block, const std::string &name, LooksBlocks::Inputs id, const Value &value) const
         {
             auto input = std::make_shared<Input>(name, Input::Type::Shadow);
@@ -363,11 +372,9 @@ TEST_F(LooksBlocksTest, SwitchCostumeTo)
     auto block10 = std::make_shared<Block>("f", "looks_switchcostumeto");
     addDropdownInput(block10, "COSTUME", LooksBlocks::COSTUME, "previous costume");
 
-    // switch costume to (join "" "")
-    auto joinBlock = std::make_shared<Block>("h", "operator_join");
-    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
+    // switch costume to (null block)
     auto block11 = std::make_shared<Block>("g", "looks_switchcostumeto");
-    addDropdownInput(block11, "COSTUME", LooksBlocks::COSTUME, "", joinBlock);
+    addDropdownInput(block11, "COSTUME", LooksBlocks::COSTUME, "", createNullBlock("h"));
 
     compiler.init();
 
@@ -473,8 +480,6 @@ TEST_F(LooksBlocksTest, SwitchCostumeTo)
               vm::OP_EXEC,
               0,
               vm::OP_NULL,
-              vm::OP_NULL,
-              vm::OP_STR_CONCAT,
               vm::OP_EXEC,
               3,
               vm::OP_HALT }));
@@ -785,11 +790,9 @@ TEST_F(LooksBlocksTest, SwitchBackdropTo)
     auto block12 = std::make_shared<Block>("h", "looks_switchbackdropto");
     addDropdownInput(block12, "BACKDROP", LooksBlocks::BACKDROP, "random backdrop");
 
-    // switch backdrop to (join "" "")
-    auto joinBlock = std::make_shared<Block>("j", "operator_join");
-    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
+    // switch backdrop to (null block)
     auto block13 = std::make_shared<Block>("i", "looks_switchbackdropto");
-    addDropdownInput(block13, "BACKDROP", LooksBlocks::BACKDROP, "", joinBlock);
+    addDropdownInput(block13, "BACKDROP", LooksBlocks::BACKDROP, "", createNullBlock("j"));
 
     compiler.init();
 
@@ -925,8 +928,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropTo)
               vm::OP_EXEC,
               0,
               vm::OP_NULL,
-              vm::OP_NULL,
-              vm::OP_STR_CONCAT,
               vm::OP_EXEC,
               4,
               vm::OP_HALT }));
@@ -1196,11 +1197,9 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWait)
     auto block12 = std::make_shared<Block>("h", "looks_switchbackdroptoandwait");
     addDropdownInput(block12, "BACKDROP", LooksBlocks::BACKDROP, "random backdrop");
 
-    // switch backdrop to (join "" "") and wait
-    auto joinBlock = std::make_shared<Block>("j", "operator_join");
-    joinBlock->setCompileFunction(&OperatorBlocks::compileJoin);
+    // switch backdrop to (null block) and wait
     auto block13 = std::make_shared<Block>("i", "looks_switchbackdroptoandwait");
-    addDropdownInput(block13, "BACKDROP", LooksBlocks::BACKDROP, "", joinBlock);
+    addDropdownInput(block13, "BACKDROP", LooksBlocks::BACKDROP, "", createNullBlock("j"));
 
     compiler.init();
 
@@ -1376,8 +1375,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWait)
               vm::OP_EXEC,
               5,
               vm::OP_NULL,
-              vm::OP_NULL,
-              vm::OP_STR_CONCAT,
               vm::OP_EXEC,
               4,
               vm::OP_EXEC,
