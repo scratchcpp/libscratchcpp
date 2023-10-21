@@ -43,6 +43,7 @@ struct VirtualMachinePrivate
         Script *script = nullptr;
         unsigned int *pos = nullptr;
         unsigned int *checkpoint = nullptr;
+        bool running = false;
         bool atEnd = false;
         std::vector<Loop> loops;
         std::vector<unsigned int *> callTree;
