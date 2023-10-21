@@ -521,3 +521,11 @@ TEST(EngineTest, NoCrashAfterStop)
     ASSERT_TRUE(p.load());
     p.run();
 }
+
+TEST(EngineTest, NoCrashOnBroadcastSelfCall)
+{
+    // Regtest for #256
+    Project p("regtest_projects/256_broadcast_self_call_crash.sb3");
+    ASSERT_TRUE(p.load());
+    p.run();
+}
