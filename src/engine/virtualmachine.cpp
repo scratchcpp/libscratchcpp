@@ -164,10 +164,15 @@ void VirtualMachine::replaceReturnValue(const Value &v, unsigned int offset)
 /*! Continues running the script from last position (the first instruction is skipped). */
 void VirtualMachine::run()
 {
+    impl->running = true;
+
     unsigned int *ret = impl->run(impl->pos);
     assert(ret);
+
     if (impl->savePos)
         impl->pos = ret;
+
+    impl->running = false;
 }
 
 /*! Jumps back to the initial position. */
@@ -175,8 +180,10 @@ void VirtualMachine::reset()
 {
     assert(impl->bytecode);
     impl->pos = impl->bytecode;
-    impl->regCount = 0;
     impl->atEnd = false;
+
+    if (!impl->running) // Registers will be freed when the script stops running
+        impl->regCount = 0;
 }
 
 /*! Moves back to the last vm::OP_CHECKPOINT instruction in the bytecode. */
