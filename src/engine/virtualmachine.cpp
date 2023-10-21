@@ -176,6 +176,7 @@ void VirtualMachine::reset()
     assert(impl->bytecode);
     impl->pos = impl->bytecode;
     impl->regCount = 0;
+    impl->atEnd = false;
 }
 
 /*! Moves back to the last vm::OP_CHECKPOINT instruction in the bytecode. */
