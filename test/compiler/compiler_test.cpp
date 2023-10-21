@@ -179,8 +179,7 @@ TEST_F(CompilerTest, ResolveIds)
     ASSERT_EQ(engine->broadcasts().size(), 1);
 
     // Stage
-    ASSERT_NE(engine->findTarget("Stage"), -1);
-    Stage *stage = dynamic_cast<Stage *>(engine->targetAt(engine->findTarget("Stage")));
+    Stage *stage = engine->stage();
     ASSERT_TRUE(stage);
     ASSERT_EQ(stage->blocks().size(), 2);
     auto block = stage->greenFlagBlocks().at(0);

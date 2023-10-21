@@ -440,7 +440,7 @@ TEST(EngineTest, Targets)
     t2->setName("Sprite2");
     t2->addBlock(block1);
     t2->addBlock(block2);
-    auto t3 = std::make_shared<Target>();
+    auto t3 = std::make_shared<Stage>();
     t3->setName("Stage");
     engine.setTargets({ t1, t2, t3 });
 
@@ -454,7 +454,18 @@ TEST(EngineTest, Targets)
     ASSERT_EQ(engine.findTarget("invalid"), -1);
     ASSERT_EQ(engine.findTarget("Sprite1"), 0);
     ASSERT_EQ(engine.findTarget("Sprite2"), 1);
+    ASSERT_EQ(engine.findTarget("Stage"), -1);
+    ASSERT_EQ(engine.findTarget("_stage_"), 2);
+
+    auto t4 = std::make_shared<Target>();
+    t4->setName("Stage");
+    engine.setTargets({ t1, t2, t4 });
     ASSERT_EQ(engine.findTarget("Stage"), 2);
+    ASSERT_EQ(engine.findTarget("_stage_"), -1);
+
+    engine.setTargets({ t1, t2, t3, t4 });
+    ASSERT_EQ(engine.findTarget("Stage"), 3);
+    ASSERT_EQ(engine.findTarget("_stage_"), 2);
 
     ASSERT_EQ(t1->engine(), &engine);
     ASSERT_EQ(t2->engine(), &engine);
@@ -545,7 +556,7 @@ TEST(EngineTest, Clones)
 
     auto engine = p.engine();
 
-    Target *stage = engine->targetAt(engine->findTarget("Stage"));
+    Stage *stage = engine->stage();
     ASSERT_TRUE(stage);
 
     ASSERT_VAR(stage, "clone1");
@@ -592,7 +603,7 @@ TEST(EngineTest, Clones)
 
     auto engine = p.engine();
 
-    Target *stage = engine->targetAt(engine->findTarget("Stage"));
+    Stage *stage = engine->stage();
     ASSERT_TRUE(stage);
 
     ASSERT_VAR(stage, "test1");
