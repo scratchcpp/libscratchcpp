@@ -237,7 +237,11 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Returns the target at index. */
         virtual Target *targetAt(int index) const = 0;
 
-        /*! Returns the index of the target with the given name. */
+        /*!
+         * Returns the index of the target with the given name.
+         * \note Using "Stage" will return the index of the sprite with this name, or nullptr if it doesn't exist.
+         *       Use the "_stage_" reserved name to get the stage, or use the stage() method.
+         */
         virtual int findTarget(const std::string &targetName) const = 0;
 
         /*! Returns the Stage. */

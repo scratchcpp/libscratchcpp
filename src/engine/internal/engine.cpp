@@ -729,7 +729,7 @@ int Engine::findTarget(const std::string &targetName) const
 {
     int i = 0;
     for (auto target : m_targets) {
-        if (target->name() == targetName)
+        if ((target->isStage() && targetName == "_stage_") || (!target->isStage() && target->name() == targetName))
             return i;
         i++;
     }
