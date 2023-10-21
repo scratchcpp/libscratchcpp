@@ -1327,6 +1327,21 @@ unsigned int testFunction5(VirtualMachine *vm)
     return 0;
 }
 
+unsigned int testFunction6(VirtualMachine *vm)
+{
+    vm->addReturnValue(0);
+    vm->stop(true, false, false);
+    return 1;
+}
+
+unsigned int testFunction7(VirtualMachine *vm)
+{
+    vm->addReturnValue(0);
+    vm->stop(true, false, false);
+    vm->reset();
+    return 1;
+}
+
 TEST(VirtualMachineTest, OP_EXEC)
 {
     static unsigned int bytecode[] = {
@@ -1518,18 +1533,41 @@ TEST(VirtualMachineTest, OP_WARP)
 
 TEST(VirtualMachineTest, Reset)
 {
-    static unsigned int bytecode[] = { OP_START, OP_NULL, OP_EXEC, 0, OP_HALT };
-    static BlockFunc functions[] = { &testFunction3 };
+    static unsigned int bytecode1[] = { OP_START, OP_NULL, OP_EXEC, 0, OP_HALT };
+    static unsigned int bytecode2[] = { OP_START, OP_NULL, OP_EXEC, 1, OP_HALT };
+    static BlockFunc functions[] = { &testFunction6, &testFunction7 };
 
     VirtualMachine vm;
-    vm.setBytecode(bytecode);
+    vm.setBytecode(bytecode1);
     vm.setFunctions(functions);
+
     vm.run();
     ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(vm.registerCount(), 1);
     vm.reset();
+    ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_FALSE(vm.atEnd());
     vm.run();
     ASSERT_FALSE(vm.atEnd());
     vm.run();
     ASSERT_TRUE(vm.atEnd());
+
+    vm.reset();
+    ASSERT_FALSE(vm.atEnd());
+
+    vm.setBytecode(bytecode2);
+
+    vm.run();
+    ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(vm.registerCount(), 1);
+    vm.reset();
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_FALSE(vm.atEnd());
+    vm.run();
+    ASSERT_FALSE(vm.atEnd());
+    vm.run();
+    ASSERT_TRUE(vm.atEnd());
+
+    vm.reset();
+    ASSERT_FALSE(vm.atEnd());
 }
