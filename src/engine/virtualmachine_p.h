@@ -30,6 +30,8 @@ struct VirtualMachinePrivate
         typedef struct
         {
                 bool isRepeatLoop;
+                bool isUntilLoop;
+                bool checkUntilLoopCond;
                 unsigned int *start;
                 size_t index, max;
         } Loop;

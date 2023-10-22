@@ -233,8 +233,32 @@ TEST(VirtualMachineTest, OP_REPEAT_LOOP)
     vm.setConstValues(constValues);
     testing::internal::CaptureStdout();
     EXPECT_CALL(engineMock, breakFrame()).Times(0);
-    vm.run();
+    EXPECT_CALL(engineMock, breakingCurrentFrame()).Times(3).WillRepeatedly(Return(false));
+    EXPECT_CALL(engineMock, skipFrame()).Times(3);
+
+    while (!vm.atEnd())
+        vm.run();
+
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\ntest\ntest\n");
+    ASSERT_EQ(vm.registerCount(), 0);
+}
+
+TEST(VirtualMachineTest, OP_REPEAT_LOOP_warp)
+{
+    static unsigned int bytecode[] = { OP_START, OP_WARP, OP_CONST, 0, OP_REPEAT_LOOP, OP_CONST, 1, OP_PRINT, OP_LOOP_END, OP_HALT };
+    static Value constValues[] = { 3, "test" };
+
+    EngineMock engineMock;
+    VirtualMachine vm(nullptr, &engineMock, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setConstValues(constValues);
+    testing::internal::CaptureStdout();
+    EXPECT_CALL(engineMock, breakFrame()).Times(0);
+
+    vm.run();
+
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\ntest\ntest\n");
+    ASSERT_TRUE(vm.atEnd());
     ASSERT_EQ(vm.registerCount(), 0);
 }
 
@@ -243,11 +267,17 @@ TEST(VirtualMachineTest, OP_REPEAT_LOOP_INDEX)
     static unsigned int bytecode[] = { OP_START, OP_CONST, 0, OP_REPEAT_LOOP, OP_REPEAT_LOOP_INDEX, OP_PRINT, OP_LOOP_END, OP_HALT };
     static Value constValues[] = { 3 };
 
-    VirtualMachine vm;
+    EngineMock engineMock;
+    VirtualMachine vm(nullptr, &engineMock, nullptr);
     vm.setBytecode(bytecode);
     vm.setConstValues(constValues);
     testing::internal::CaptureStdout();
-    vm.run();
+    EXPECT_CALL(engineMock, breakingCurrentFrame()).Times(3).WillRepeatedly(Return(false));
+    EXPECT_CALL(engineMock, skipFrame()).Times(3);
+
+    while (!vm.atEnd())
+        vm.run();
+
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "0\n1\n2\n");
     ASSERT_EQ(vm.registerCount(), 0);
 }
@@ -257,11 +287,16 @@ TEST(VirtualMachineTest, OP_REPEAT_LOOP_INDEX1)
     static unsigned int bytecode[] = { OP_START, OP_CONST, 0, OP_REPEAT_LOOP, OP_REPEAT_LOOP_INDEX1, OP_PRINT, OP_LOOP_END, OP_HALT };
     static Value constValues[] = { 3 };
 
-    VirtualMachine vm;
+    EngineMock engineMock;
+    VirtualMachine vm(nullptr, &engineMock, nullptr);
     vm.setBytecode(bytecode);
     vm.setConstValues(constValues);
     testing::internal::CaptureStdout();
-    vm.run();
+    EXPECT_CALL(engineMock, breakingCurrentFrame()).Times(3).WillRepeatedly(Return(false));
+    EXPECT_CALL(engineMock, skipFrame()).Times(3);
+
+    while (!vm.atEnd())
+        vm.run();
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "1\n2\n3\n");
     ASSERT_EQ(vm.registerCount(), 0);
 }
@@ -270,6 +305,61 @@ TEST(VirtualMachineTest, OP_UNTIL_LOOP)
 {
     static unsigned int bytecode[] = {
         OP_START, OP_CONST, 0, OP_SET_VAR, 0, OP_UNTIL_LOOP, OP_READ_VAR, 0, OP_CONST, 1, OP_EQUALS, OP_BEGIN_UNTIL_LOOP, OP_CONST, 2, OP_CHANGE_VAR, 0, OP_READ_VAR, 0, OP_PRINT, OP_LOOP_END, OP_HALT
+    };
+    static Value constValues[] = { 0, 3, 1 };
+    Value var;
+    Value *variables[] = { &var };
+
+    EngineMock engineMock;
+    VirtualMachine vm(nullptr, &engineMock, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setConstValues(constValues);
+    vm.setVariables(variables);
+    testing::internal::CaptureStdout();
+    EXPECT_CALL(engineMock, breakFrame()).Times(0);
+    EXPECT_CALL(engineMock, breakingCurrentFrame()).Times(3).WillRepeatedly(Return(false));
+    EXPECT_CALL(engineMock, skipFrame()).Times(3);
+
+    while (!vm.atEnd())
+        vm.run();
+
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "1\n2\n3\n");
+    ASSERT_EQ(vm.registerCount(), 0);
+}
+
+TEST(VirtualMachineTest, OP_UNTIL_LOOP_stop)
+{
+    static unsigned int bytecode[] = {
+        OP_START, OP_CONST, 0, OP_SET_VAR, 0, OP_UNTIL_LOOP, OP_READ_VAR, 0, OP_CONST, 1, OP_EQUALS, OP_BEGIN_UNTIL_LOOP, OP_READ_VAR, 0, OP_PRINT, OP_LOOP_END, OP_HALT
+    };
+    static Value constValues[] = { 0, 3, 1 };
+    Value var;
+    Value *variables[] = { &var };
+
+    EngineMock engineMock;
+    VirtualMachine vm(nullptr, &engineMock, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setConstValues(constValues);
+    vm.setVariables(variables);
+    testing::internal::CaptureStdout();
+    EXPECT_CALL(engineMock, breakFrame()).Times(0);
+    EXPECT_CALL(engineMock, breakingCurrentFrame()).Times(3).WillRepeatedly(Return(false));
+    EXPECT_CALL(engineMock, skipFrame()).Times(3);
+
+    while (!vm.atEnd()) {
+        vm.run();
+        var.add(1);
+    }
+
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "0\n1\n2\n");
+    ASSERT_EQ(vm.registerCount(), 0);
+}
+
+TEST(VirtualMachineTest, OP_UNTIL_LOOP_warp)
+{
+    static unsigned int bytecode[] = {
+        OP_START, OP_WARP, OP_CONST,      0, OP_SET_VAR,  0, OP_UNTIL_LOOP, OP_READ_VAR, 0,      OP_CONST, 1, OP_EQUALS, OP_BEGIN_UNTIL_LOOP,
+        OP_CONST, 2,       OP_CHANGE_VAR, 0, OP_READ_VAR, 0, OP_PRINT,      OP_LOOP_END, OP_HALT
     };
     static Value constValues[] = { 0, 3, 1 };
     Value var;

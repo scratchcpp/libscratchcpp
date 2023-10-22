@@ -218,8 +218,6 @@ void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wa
 
 void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait)
 {
-    bool previousSkipFrame = m_skipFrame;
-    skipFrame();
     const std::vector<Script *> &scripts = m_broadcastMap[broadcast];
 
     for (auto script : scripts) {
@@ -246,13 +244,10 @@ void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, 
                     pair.first = sourceScript;
             }
 
-            if (script == sourceScript->script()) {
-                sourceScript->stop(false, true);
-
-                if (!previousSkipFrame && !wait)
-                    m_skipFrame = false;
-            } else
-                sourceScript->stop(true, true);
+            if (script == sourceScript->script())
+                sourceScript->stop(false, !wait);
+            else
+                sourceScript->stop(true, false);
         }
 
         // Start scripts which are not running

@@ -249,6 +249,7 @@ do_endif:
 do_forever_loop:
     Loop l;
     l.isRepeatLoop = true;
+    l.isUntilLoop = false;
     l.start = pos;
     l.index = -1;
     loops.push_back(l);
@@ -265,6 +266,7 @@ do_repeat_loop:
     } else {
         Loop l;
         l.isRepeatLoop = true;
+        l.isUntilLoop = false;
         l.start = pos;
         l.index = 0;
         l.max = loopCount;
@@ -293,6 +295,8 @@ do_until_loop:
     if (!READ_LAST_REG()->toBool()) {
         Loop l;
         l.isRepeatLoop = false;
+        l.isUntilLoop = true;
+        l.checkUntilLoopCond = false;
         l.start = pos;
         loops.push_back(l);
         pos = loopStart;
@@ -314,21 +318,42 @@ do_loop_end : {
             pos = l.start;
         else
             loops.pop_back();
-        if (!atomic && !warp) {
-            engine->breakFrame();
+        if (!warp) {
+            if (atomic) {
+                if (!engine->breakingCurrentFrame())
+                    engine->skipFrame();
+            } else
+                engine->breakFrame();
             return pos;
         }
         DISPATCH();
     } else {
-        if (!atomic && !warp) {
-            engine->breakFrame();
-            return pos - 1;
+        if (!warp && !(l.isUntilLoop && l.checkUntilLoopCond)) {
+            if (atomic) {
+                if (!engine->breakingCurrentFrame())
+                    engine->skipFrame();
+            } else
+                engine->breakFrame();
+
+            if (l.isUntilLoop) {
+                if (!l.checkUntilLoopCond) {
+                    l.checkUntilLoopCond = true;
+                    return pos - 1;
+                }
+            } else
+                return pos - 1;
         }
+
+        if (l.isUntilLoop)
+            l.checkUntilLoopCond = false;
+
         loopStart = run(l.start, false);
+
         if (!READ_LAST_REG()->toBool())
             pos = loopStart;
         else
             loops.pop_back();
+
         FREE_REGS(1);
         DISPATCH();
     }

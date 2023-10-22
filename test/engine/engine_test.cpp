@@ -633,3 +633,23 @@ TEST(EngineTest, NoCrashOnBroadcastSelfCall)
     ASSERT_TRUE(p.load());
     p.run();
 }
+
+TEST(EngineTest, NoRefreshWhenCallingRunningBroadcast)
+{
+    // Regtest for #257
+    // TODO: Set "infinite" FPS (#254)
+    Project p("regtest_projects/257_double_broadcast_stop.sb3");
+    ASSERT_TRUE(p.load());
+    p.run();
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    ASSERT_VAR(stage, "passed1");
+    ASSERT_TRUE(GET_VAR(stage, "passed1")->value().toBool());
+
+    ASSERT_VAR(stage, "passed2");
+    ASSERT_TRUE(GET_VAR(stage, "passed2")->value().toBool());
+}
