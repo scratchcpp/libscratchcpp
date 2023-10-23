@@ -593,12 +593,12 @@ TEST(EngineTest, Clones)
     }
 }
 
-// TODO: Uncomment this after fixing #256 and #257
-/*TEST(EngineTest, BackdropBroadcasts)
+TEST(EngineTest, BackdropBroadcasts)
 {
     // TODO: Set "infinite" FPS (#254)
     Project p("backdrop_broadcasts.sb3");
     ASSERT_TRUE(p.load());
+    p.engine()->setFps(1000); // TODO: Remove this
     p.run();
 
     auto engine = p.engine();
@@ -616,7 +616,7 @@ TEST(EngineTest, Clones)
     ASSERT_EQ(GET_VAR(stage, "test4")->value().toInt(), 10);
     ASSERT_VAR(stage, "test5");
     ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 2 0 0");
-}*/
+}
 
 TEST(EngineTest, NoCrashAfterStop)
 {
