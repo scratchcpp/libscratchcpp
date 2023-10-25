@@ -49,6 +49,7 @@ target_sources(scratchcpp
     include/scratchcpp/itimer.h
     include/scratchcpp/keyevent.h
     include/scratchcpp/iimageformat.h
+    include/scratchcpp/iimageformatfactory.h
 )
 
 add_library(zip SHARED
