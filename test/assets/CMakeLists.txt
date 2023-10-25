@@ -2,6 +2,8 @@
 add_executable(
   asset_test
   asset_test.cpp
+  testasset.cpp
+  testasset.h
 )
 
 target_link_libraries(

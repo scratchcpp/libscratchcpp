@@ -28,6 +28,12 @@ class LIBSCRATCHCPP_EXPORT Asset : public Entity
 
         const std::string &dataFormat() const;
 
+        const char *data() const;
+        void setData(const char *data);
+
+    protected:
+        virtual void processData(const char *data) { }
+
     private:
         spimpl::unique_impl_ptr<AssetPrivate> impl;
 };

@@ -38,3 +38,16 @@ const std::string &Asset::dataFormat() const
 {
     return impl->dataFormat;
 }
+
+/*! Returns the asset data. */
+const char *Asset::data() const
+{
+    return impl->data;
+}
+
+/*! Sets the asset data. */
+void Asset::setData(const char *data)
+{
+    impl->data = data;
+    processData(data);
+}
