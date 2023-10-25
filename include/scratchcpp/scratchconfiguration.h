@@ -11,6 +11,8 @@ namespace libscratchcpp
 {
 
 class IExtension;
+class IImageFormat;
+class IImageFormatFactory;
 class ScratchConfigurationPrivate;
 
 /*! \brief The ScratchConfiguration class provides methods for adding custom extensions. */
@@ -34,6 +36,10 @@ class LIBSCRATCHCPP_EXPORT ScratchConfiguration
 
             return nullptr;
         };
+
+        static void registerImageFormat(const std::string &name, std::shared_ptr<IImageFormatFactory> formatFactory);
+        static void removeImageFormat(const std::string &name);
+        static std::shared_ptr<IImageFormat> createImageFormat(const std::string &name);
 
     private:
         static const std::vector<std::shared_ptr<IExtension>> getExtensions();
