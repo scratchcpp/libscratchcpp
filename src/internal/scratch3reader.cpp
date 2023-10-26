@@ -14,7 +14,6 @@
 
 #include "scratch3reader.h"
 #include "reader_common.h"
-#include "zipreader.h"
 
 using namespace libscratchcpp;
 using json = nlohmann::json;
@@ -211,6 +210,11 @@ bool Scratch3Reader::load()
                 costume->setRotationCenterX(jsonCostume["rotationCenterX"]);
                 READER_STEP(step, "target -> costume -> rotationCenterY");
                 costume->setRotationCenterY(jsonCostume["rotationCenterY"]);
+
+                void *data;
+                m_zipReader->readFile(costume->fileName(), &data);
+                costume->setData(static_cast<char *>(data));
+
                 target->addCostume(costume);
             }
 
@@ -360,11 +364,11 @@ std::vector<std::string> Scratch3Reader::extensions()
 void Scratch3Reader::read()
 {
     // Read project.json
-    ZipReader reader(fileName());
-    if (reader.open()) {
+    m_zipReader = std::make_unique<ZipReader>(fileName());
+    if (m_zipReader->open()) {
         // Parse the JSON
         try {
-            m_json = json::parse(reader.readFileToString("project.json"));
+            m_json = json::parse(m_zipReader->readFileToString("project.json"));
         } catch (std::exception &e) {
             printErr("invalid JSON file", e.what());
         }
