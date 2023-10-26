@@ -196,8 +196,10 @@ void Sprite::setCurrentCostume(int newCostume)
     // TODO: Make currentCostume() return the costume (not index)
     auto costume = costumeAt(newCostume - 1);
 
-    if (costume)
+    if (costume) {
         costume->setScale(impl->size / 100);
+        costume->setMirrorHorizontally(impl->rotationStyle == RotationStyle::LeftRight);
+    }
 
     Target::setCurrentCostume(newCostume);
 }
@@ -258,6 +260,12 @@ std::string Sprite::rotationStyleStr() const
 void Sprite::setRotationStyle(RotationStyle newRotationStyle)
 {
     impl->rotationStyle = newRotationStyle;
+    // TODO: Make currentCostume() return the costume (not index)
+    auto costume = costumeAt(currentCostume() - 1);
+
+    if (costume)
+        costume->setMirrorHorizontally(newRotationStyle == RotationStyle::LeftRight);
+
     if (impl->iface)
         impl->iface->onRotationStyleChanged(impl->rotationStyle);
 }
