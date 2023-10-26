@@ -209,10 +209,30 @@ TEST(SpriteTest, Y)
 
 TEST(SpriteTest, Size)
 {
+    auto c1 = std::make_shared<Costume>("", "", "");
+    auto c2 = std::make_shared<Costume>("", "", "");
+
     Sprite sprite;
     ASSERT_EQ(sprite.size(), 100);
+    sprite.addCostume(c1);
+    sprite.addCostume(c2);
+    sprite.setCurrentCostume(1);
+
+    ASSERT_EQ(c1->scale(), 1);
+
     sprite.setSize(63.724);
     ASSERT_EQ(sprite.size(), 63.724);
+    ASSERT_EQ(std::round(c1->scale() * 100000) / 100000, 0.63724);
+
+    sprite.setCurrentCostume(2);
+    ASSERT_EQ(std::round(c2->scale() * 100000) / 100000, 0.63724);
+
+    sprite.setSize(186.84);
+    ASSERT_EQ(sprite.size(), 186.84);
+    ASSERT_EQ(std::round(c2->scale() * 10000) / 10000, 1.8684);
+
+    sprite.setCurrentCostume(1);
+    ASSERT_EQ(std::round(c1->scale() * 10000) / 10000, 1.8684);
 }
 
 TEST(SpriteTest, Direction)
