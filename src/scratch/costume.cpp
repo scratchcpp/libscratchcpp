@@ -112,9 +112,9 @@ Broadcast *Costume::broadcast()
     return &impl->broadcast;
 }
 
-void Costume::processData(const char *data)
+void Costume::processData(unsigned int size, void *data)
 {
-    impl->image->setData(data);
+    impl->image->setData(size, data);
     impl->freeImage();
     impl->updateImage();
 }

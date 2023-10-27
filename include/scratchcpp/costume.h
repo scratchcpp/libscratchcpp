@@ -43,7 +43,7 @@ class LIBSCRATCHCPP_EXPORT Costume : public Asset
         Broadcast *broadcast();
 
     protected:
-        void processData(const char *data) override;
+        void processData(unsigned int size, void *data) override;
 
     private:
         spimpl::unique_impl_ptr<CostumePrivate> impl;

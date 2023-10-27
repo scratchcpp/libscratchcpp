@@ -212,8 +212,8 @@ bool Scratch3Reader::load()
                 costume->setRotationCenterY(jsonCostume["rotationCenterY"]);
 
                 void *data;
-                m_zipReader->readFile(costume->fileName(), &data);
-                costume->setData(static_cast<char *>(data));
+                unsigned int size = m_zipReader->readFile(costume->fileName(), &data);
+                costume->setData(size, data);
 
                 target->addCostume(costume);
             }

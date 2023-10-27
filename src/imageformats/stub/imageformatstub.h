@@ -12,7 +12,7 @@ class ImageFormatStub : public IImageFormat
     public:
         ImageFormatStub();
 
-        void setData(const char *) override;
+        void setData(unsigned int size, void *) override;
 
         unsigned int width() const override;
         unsigned int height() const override;

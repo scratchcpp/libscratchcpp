@@ -9,7 +9,7 @@ ImageFormatStub::ImageFormatStub()
 {
 }
 
-void ImageFormatStub::setData(const char *)
+void ImageFormatStub::setData(unsigned int size, void *)
 {
 }
 

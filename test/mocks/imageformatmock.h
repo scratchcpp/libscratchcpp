@@ -8,7 +8,7 @@ using namespace libscratchcpp;
 class ImageFormatMock : public IImageFormat
 {
     public:
-        MOCK_METHOD(void, setData, (const char *), (override));
+        MOCK_METHOD(void, setData, (unsigned int, void *), (override));
 
         MOCK_METHOD(unsigned int, width, (), (const, override));
         MOCK_METHOD(unsigned int, height, (), (const, override));

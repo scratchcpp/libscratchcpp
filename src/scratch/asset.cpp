@@ -40,14 +40,21 @@ const std::string &Asset::dataFormat() const
 }
 
 /*! Returns the asset data. */
-const char *Asset::data() const
+const void *Asset::data() const
 {
     return impl->data;
 }
 
-/*! Sets the asset data. */
-void Asset::setData(const char *data)
+/*! Returns the size of the asset data. */
+unsigned int Asset::dataSize() const
 {
+    return impl->dataSize;
+}
+
+/*! Sets the asset data. */
+void Asset::setData(unsigned int size, void *data)
+{
+    impl->dataSize = size;
     impl->data = data;
-    processData(data);
+    processData(size, data);
 }

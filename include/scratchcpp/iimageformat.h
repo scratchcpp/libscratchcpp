@@ -17,7 +17,7 @@ class LIBSCRATCHCPP_EXPORT IImageFormat
         virtual ~IImageFormat() { }
 
         /*! Sets the image data (buffer). */
-        virtual void setData(const char *data) = 0;
+        virtual void setData(unsigned int size, void *data) = 0;
 
         /*! Returns the width of the image. */
         virtual unsigned int width() const = 0;

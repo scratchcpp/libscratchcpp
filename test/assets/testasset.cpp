@@ -7,8 +7,9 @@ TestAsset::TestAsset() :
 {
 }
 
-void TestAsset::processData(const char *data)
+void TestAsset::processData(unsigned int size, void *data)
 {
+    this->size = size;
     processedData = data;
     callCount++;
 }

@@ -28,9 +28,10 @@ TEST(AssetTest, Data)
     TestAsset asset;
     ASSERT_EQ(asset.data(), nullptr);
 
-    static const char *data = "abcd";
-    asset.setData(data);
+    static char data[5] = "abcd";
+    asset.setData(5, data);
     ASSERT_EQ(asset.data(), data);
+    ASSERT_EQ(asset.size, 5);
     ASSERT_EQ(asset.processedData, data);
     ASSERT_EQ(asset.callCount, 1);
 }

@@ -56,10 +56,11 @@ TEST(LoadProjectTest, EmptyProject)
         ASSERT_EQ(backdrop->dataFormat(), "svg");
         ASSERT_TRUE(backdrop->data());
         ASSERT_EQ(
-            strcmp(
+            memcmp(
                 backdrop->data(),
                 "<svg version=\"1.1\" width=\"2\" height=\"2\" viewBox=\"-1 -1 2 2\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n  <!-- Exported by Scratch - "
-                "http://scratch.mit.edu/ -->\n</svg>"),
+                "http://scratch.mit.edu/ -->\n</svg>",
+                backdrop->dataSize()),
             0);
 
         i++;

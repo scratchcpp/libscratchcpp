@@ -112,8 +112,8 @@ TEST_F(CostumeTest, Bitmap)
     Costume costume("costume1", "a", "test");
 
     // Do not mirror horizontally
-    static const char *data = "abcd";
-    EXPECT_CALL(*m_imageFormat, setData(data));
+    static char data[5] = "abcd";
+    EXPECT_CALL(*m_imageFormat, setData(5, data));
     EXPECT_CALL(*m_imageFormat, width()).WillOnce(Return(4));
     EXPECT_CALL(*m_imageFormat, height()).WillOnce(Return(3));
 
@@ -131,7 +131,7 @@ TEST_F(CostumeTest, Bitmap)
     EXPECT_CALL(*m_imageFormat, colorAt(1, 2, 1)).WillOnce(Return(9));
     EXPECT_CALL(*m_imageFormat, colorAt(2, 2, 1)).WillOnce(Return(4));
     EXPECT_CALL(*m_imageFormat, colorAt(3, 2, 1)).WillOnce(Return(8));
-    costume.setData(data);
+    costume.setData(5, data);
 
     auto bitmap = costume.bitmap();
     ASSERT_TRUE(bitmap);

@@ -17,7 +17,8 @@ struct AssetPrivate
         std::string name;
         std::string dataFormat;
         std::string fileName;
-        const char *data = nullptr;
+        const void *data = nullptr;
+        unsigned int dataSize = 0;
 };
 
 } // namespace libscratchcpp

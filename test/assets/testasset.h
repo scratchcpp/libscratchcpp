@@ -10,11 +10,12 @@ class TestAsset : public Asset
     public:
         TestAsset();
 
-        const char *processedData = nullptr;
+        void *processedData = nullptr;
+        unsigned int size = 0;
         unsigned int callCount = 0;
 
     protected:
-        void processData(const char *data) override;
+        void processData(unsigned int size, void *data) override;
 };
 
 } // namespace libscratchcpp
