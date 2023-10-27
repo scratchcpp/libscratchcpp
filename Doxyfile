@@ -975,6 +975,7 @@ EXCLUDE_SYMLINKS       = NO
 
 EXCLUDE_PATTERNS       = */internal/* \
                          */src/blocks/* \
+                         */src/imageformats/* \
                          *_p.cpp \
                          *_p.h
 
