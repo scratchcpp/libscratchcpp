@@ -54,6 +54,13 @@ TEST(LoadProjectTest, EmptyProject)
         ASSERT_FALSE(backdrop->id().empty());
         ASSERT_EQ(backdrop->fileName(), backdrop->id() + ".svg");
         ASSERT_EQ(backdrop->dataFormat(), "svg");
+        ASSERT_TRUE(backdrop->data());
+        ASSERT_EQ(
+            strcmp(
+                backdrop->data(),
+                "<svg version=\"1.1\" width=\"2\" height=\"2\" viewBox=\"-1 -1 2 2\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n  <!-- Exported by Scratch - "
+                "http://scratch.mit.edu/ -->\n</svg>"),
+            0);
 
         i++;
     }

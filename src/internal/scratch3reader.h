@@ -5,6 +5,8 @@
 #include "iprojectreader.h"
 #include <nlohmann/json.hpp>
 
+#include "zipreader.h"
+
 namespace libscratchcpp
 {
 
@@ -20,6 +22,7 @@ class Scratch3Reader : public IProjectReader
 
     private:
         void read();
+        std::unique_ptr<ZipReader> m_zipReader;
         nlohmann::json m_json = "";
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;

@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/scratchconfiguration.h>
+#include <scratchcpp/iimageformatfactory.h>
 
 #include "scratchconfiguration_p.h"
 #include "blocks/standardblocks.h"
+#include "imageformats/stub/imageformatstub.h"
 
 using namespace libscratchcpp;
 
@@ -19,6 +21,29 @@ void ScratchConfiguration::registerExtension(std::shared_ptr<IExtension> extensi
 IExtension *ScratchConfiguration::getExtension(const std::string &name)
 {
     return impl->getExtension(name);
+}
+
+/*! Registers the given image format. */
+void ScratchConfiguration::registerImageFormat(const std::string &name, std::shared_ptr<IImageFormatFactory> formatFactory)
+{
+    impl->imageFormats[name] = formatFactory;
+}
+
+/*! Removes the given image format. */
+void ScratchConfiguration::removeImageFormat(const std::string &name)
+{
+    impl->imageFormats.erase(name);
+}
+
+/*! Creates an instance of the given image format. If the format doesn't exist, a "stub" format will be created. */
+std::shared_ptr<IImageFormat> ScratchConfiguration::createImageFormat(const std::string &name)
+{
+    auto it = impl->imageFormats.find(name);
+
+    if (it == impl->imageFormats.cend())
+        return std::make_shared<ImageFormatStub>(); // use stub if the format doesn't exist
+    else
+        return it->second->createInstance();
 }
 
 const std::vector<std::shared_ptr<IExtension>> ScratchConfiguration::getExtensions()

@@ -2,6 +2,8 @@
 add_executable(
   asset_test
   asset_test.cpp
+  testasset.cpp
+  testasset.h
 )
 
 target_link_libraries(
@@ -21,7 +23,9 @@ add_executable(
 target_link_libraries(
   costume_test
   GTest::gtest_main
+  GTest::gmock_main
   scratchcpp
+  scratchcpp_mocks
 )
 
 gtest_discover_tests(costume_test)

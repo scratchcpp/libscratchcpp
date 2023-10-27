@@ -5,6 +5,7 @@
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/costume.h>
 #include <cassert>
 
 #include "sprite_p.h"
@@ -181,6 +182,26 @@ void Sprite::setSize(double newSize)
     impl->size = newSize;
     if (impl->iface)
         impl->iface->onSizeChanged(impl->size);
+
+    // TODO: Make currentCostume() return the costume (not index)
+    auto costume = costumeAt(currentCostume() - 1);
+
+    if (costume)
+        costume->setScale(newSize / 100);
+}
+
+/*! Overrides Target#setCurrentCostume(). */
+void Sprite::setCurrentCostume(int newCostume)
+{
+    // TODO: Make currentCostume() return the costume (not index)
+    auto costume = costumeAt(newCostume - 1);
+
+    if (costume) {
+        costume->setScale(impl->size / 100);
+        costume->setMirrorHorizontally(impl->rotationStyle == RotationStyle::LeftRight);
+    }
+
+    Target::setCurrentCostume(newCostume);
 }
 
 /*! Returns the direction. */
@@ -239,6 +260,12 @@ std::string Sprite::rotationStyleStr() const
 void Sprite::setRotationStyle(RotationStyle newRotationStyle)
 {
     impl->rotationStyle = newRotationStyle;
+    // TODO: Make currentCostume() return the costume (not index)
+    auto costume = costumeAt(currentCostume() - 1);
+
+    if (costume)
+        costume->setMirrorHorizontally(newRotationStyle == RotationStyle::LeftRight);
+
     if (impl->iface)
         impl->iface->onRotationStyleChanged(impl->rotationStyle);
 }
