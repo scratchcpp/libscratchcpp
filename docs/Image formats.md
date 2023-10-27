@@ -1,7 +1,7 @@
 \page imageFormats Image formats
 
 To work with costumes, libscratchcpp has to read image files from Scratch projects.
-No formats are currently supported, but that will change soon.
+Only JPEG is currently supported, but support for PNG is coming soon.
 
 # Implementing a custom image format
 To implement a custom image format that libscratchcpp doesn't support,
