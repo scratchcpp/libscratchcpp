@@ -7,6 +7,10 @@
 #include "jpeg/jpegimageformatfactory.h"
 #endif
 
+#ifdef PNG_SUPPORT
+#include "png/pngimageformatfactory.h"
+#endif
+
 namespace libscratchcpp
 {
 
@@ -17,6 +21,10 @@ class DefaultImageFormats
         {
 #ifdef JPEG_SUPPORT
             ScratchConfiguration::registerImageFormat("jpg", std::make_shared<JpegImageFormatFactory>());
+#endif
+
+#ifdef PNG_SUPPORT
+            ScratchConfiguration::registerImageFormat("png", std::make_shared<PngImageFormatFactory>());
 #endif
         }
 };
