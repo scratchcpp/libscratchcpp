@@ -30,7 +30,6 @@ class OperatorBlocksTest : public testing::Test
             input->setPrimaryValue(value);
             input->setInputId(id);
             block->addInput(input);
-            block->updateInputMap();
         }
 
         void addObscuredInput(std::shared_ptr<Block> block, const std::string &name, OperatorBlocks::Inputs id, std::shared_ptr<Block> valueBlock) const
@@ -39,7 +38,6 @@ class OperatorBlocksTest : public testing::Test
             input->setValueBlock(valueBlock);
             input->setInputId(id);
             block->addInput(input);
-            block->updateInputMap();
         }
 
         void addNullInput(std::shared_ptr<Block> block, const std::string &name, OperatorBlocks::Inputs id) const
@@ -47,7 +45,6 @@ class OperatorBlocksTest : public testing::Test
             auto input = std::make_shared<Input>(name, Input::Type::Shadow);
             input->setInputId(id);
             block->addInput(input);
-            block->updateInputMap();
         }
 
         // For the mathop block
@@ -57,7 +54,6 @@ class OperatorBlocksTest : public testing::Test
             field->setFieldId(OperatorBlocks::OPERATOR);
             field->setSpecialValueId(operatorId);
             block->addField(field);
-            block->updateFieldMap();
         }
 
         std::unique_ptr<IBlockSection> m_section;

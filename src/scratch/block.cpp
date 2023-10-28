@@ -168,6 +168,8 @@ int Block::addInput(std::shared_ptr<Input> input)
         return it - impl->inputs.begin();
 
     impl->inputs.push_back(input);
+    impl->inputMap[input->inputId()] = input.get();
+
     return impl->inputs.size() - 1;
 }
 
@@ -200,7 +202,6 @@ Input *Block::findInputById(int id) const
     return nullptr;
 }
 
-/*! Updates the map that assigns input IDs to input indexes. Used internally by Engine. */
 void Block::updateInputMap()
 {
     impl->inputMap.clear();
@@ -223,6 +224,8 @@ int Block::addField(std::shared_ptr<Field> field)
         return it - impl->fields.begin();
 
     impl->fields.push_back(field);
+    impl->fieldMap[field->fieldId()] = field.get();
+
     return impl->fields.size() - 1;
 }
 
@@ -255,7 +258,6 @@ Field *Block::findFieldById(int id) const
     return nullptr;
 }
 
-/*! Updates the map that assigns input IDs to input indexes. Used internally by Engine. */
 void Block::updateFieldMap()
 {
     impl->fieldMap.clear();

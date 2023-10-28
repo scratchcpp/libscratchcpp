@@ -28,7 +28,6 @@ class ListBlocksTest : public testing::Test
             auto listField = std::make_shared<Field>("LIST", Value(), list);
             listField->setFieldId(ListBlocks::LIST);
             block->addField(listField);
-            block->updateFieldMap();
 
             return block;
         }
@@ -39,7 +38,6 @@ class ListBlocksTest : public testing::Test
             input->setPrimaryValue(item);
             input->setInputId(ListBlocks::ITEM);
             block->addInput(input);
-            block->updateInputMap();
         }
 
         void addIndexInput(std::shared_ptr<Block> block, const Value &index) const
@@ -48,7 +46,6 @@ class ListBlocksTest : public testing::Test
             input->setPrimaryValue(index);
             input->setInputId(ListBlocks::INDEX);
             block->addInput(input);
-            block->updateInputMap();
         }
 
         // For add item, item index and list contains item

@@ -27,7 +27,6 @@ class CustomBlocksTest : public testing::Test
             input->setValueBlock(prototypeBlock);
             input->setInputId(CustomBlocks::CUSTOM_BLOCK);
             definitionBlock->addInput(input);
-            definitionBlock->updateInputMap();
         }
 
         void addArgumentInput(std::shared_ptr<Block> block, const std::string &argId, const Value &value) const
@@ -94,7 +93,6 @@ TEST_F(CustomBlocksTest, CustomBlocks)
     auto valueField = std::make_shared<Field>("VALUE", "boolean");
     valueField->setFieldId(CustomBlocks::VALUE);
     argBlock->addField(valueField);
-    argBlock->updateFieldMap();
     input->setValueBlock(argBlock);
     input->setInputId(-100);
     testBlock->addInput(input);
@@ -105,12 +103,10 @@ TEST_F(CustomBlocksTest, CustomBlocks)
     valueField = std::make_shared<Field>("VALUE", "invalid");
     valueField->setFieldId(CustomBlocks::VALUE);
     argBlock->addField(valueField);
-    argBlock->updateFieldMap();
     input->setValueBlock(argBlock);
     input->setInputId(-101);
     testBlock->addInput(input);
 
-    testBlock->updateInputMap();
     testBlock->setCompileFunction([](Compiler *compiler) {
         compiler->addInput(-100);
         compiler->addInstruction(vm::OP_PRINT);

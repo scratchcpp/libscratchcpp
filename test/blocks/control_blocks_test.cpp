@@ -63,7 +63,6 @@ class ControlBlocksTest : public testing::Test
             input->setValueBlock(valueBlock);
             input->setInputId(id);
             block->addInput(input);
-            block->updateInputMap();
         }
 
         void addObscuredInput(std::shared_ptr<Block> block, const std::string &name, ControlBlocks::Inputs id, std::shared_ptr<Block> valueBlock) const
@@ -72,7 +71,6 @@ class ControlBlocksTest : public testing::Test
             input->setValueBlock(valueBlock);
             input->setInputId(id);
             block->addInput(input);
-            block->updateInputMap();
         }
 
         void addValueInput(std::shared_ptr<Block> block, const std::string &name, ControlBlocks::Inputs id, const Value &value) const
@@ -81,7 +79,6 @@ class ControlBlocksTest : public testing::Test
             input->setPrimaryValue(value);
             input->setInputId(id);
             block->addInput(input);
-            block->updateInputMap();
         }
 
         std::shared_ptr<Input> addNullInput(std::shared_ptr<Block> block, const std::string &name, ControlBlocks::Inputs id) const
@@ -89,7 +86,6 @@ class ControlBlocksTest : public testing::Test
             auto input = std::make_shared<Input>(name, Input::Type::Shadow);
             input->setInputId(id);
             block->addInput(input);
-            block->updateInputMap();
 
             return input;
         }
@@ -100,7 +96,6 @@ class ControlBlocksTest : public testing::Test
             field->setFieldId(id);
             field->setSpecialValueId(valueId);
             block->addField(field);
-            block->updateFieldMap();
         }
 
         void addVariableField(std::shared_ptr<Block> block, std::shared_ptr<Variable> variable)
@@ -108,7 +103,6 @@ class ControlBlocksTest : public testing::Test
             auto variableField = std::make_shared<Field>("VARIABLE", Value(), variable);
             variableField->setFieldId(ControlBlocks::VARIABLE);
             block->addField(variableField);
-            block->updateFieldMap();
         }
 
         std::shared_ptr<Block> createSubstack(const std::string &id)

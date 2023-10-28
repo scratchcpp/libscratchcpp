@@ -114,7 +114,6 @@ TEST_F(BlockTest, Inputs)
     ASSERT_EQ(block.findInput("VALUE2"), 1);
     ASSERT_EQ(block.findInput("VALUE3"), 2);
 
-    block.updateInputMap();
     ASSERT_EQ(block.findInputById(5), nullptr);
     ASSERT_EQ(block.findInputById(11), i1.get());
     ASSERT_EQ(block.findInputById(12), i2.get());
@@ -150,7 +149,6 @@ TEST_F(BlockTest, Fields)
     ASSERT_EQ(block.findField("VARIABLE2"), 1);
     ASSERT_EQ(block.findField("VARIABLE3"), 2);
 
-    block.updateFieldMap();
     ASSERT_EQ(block.findFieldById(5), nullptr);
     ASSERT_EQ(block.findFieldById(11), f1.get());
     ASSERT_EQ(block.findFieldById(12), f2.get());
