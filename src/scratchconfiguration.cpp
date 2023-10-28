@@ -2,6 +2,7 @@
 
 #include <scratchcpp/scratchconfiguration.h>
 #include <scratchcpp/iimageformatfactory.h>
+#include <iostream>
 
 #include "scratchconfiguration_p.h"
 #include "blocks/standardblocks.h"
@@ -40,9 +41,12 @@ std::shared_ptr<IImageFormat> ScratchConfiguration::createImageFormat(const std:
 {
     auto it = impl->imageFormats.find(name);
 
-    if (it == impl->imageFormats.cend())
-        return std::make_shared<ImageFormatStub>(); // use stub if the format doesn't exist
-    else
+    if (it == impl->imageFormats.cend()) {
+        std::cerr << "Unsupported image format: " << name << std::endl;
+
+        // Use stub if the format doesn't exist
+        return std::make_shared<ImageFormatStub>();
+    } else
         return it->second->createInstance();
 }
 
