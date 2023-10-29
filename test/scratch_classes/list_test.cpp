@@ -1,4 +1,5 @@
 #include <scratchcpp/list.h>
+#include <scratchcpp/target.h>
 
 #include "../common.h"
 
@@ -16,6 +17,16 @@ TEST(ListTest, Name)
     List list("", "");
     list.setName("test list");
     ASSERT_EQ(list.name(), "test list");
+}
+
+TEST(ListTest, Target)
+{
+    List list("", "");
+    ASSERT_EQ(list.target(), nullptr);
+
+    Target target;
+    list.setTarget(&target);
+    ASSERT_EQ(list.target(), &target);
 }
 
 TEST(ListTest, IndexOf)

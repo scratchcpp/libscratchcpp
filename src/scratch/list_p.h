@@ -7,11 +7,14 @@
 namespace libscratchcpp
 {
 
+class Target;
+
 struct ListPrivate
 {
         ListPrivate(const std::string &name);
 
         std::string name;
+        Target *target = nullptr;
 };
 
 } // namespace libscratchcpp
