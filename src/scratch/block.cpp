@@ -199,6 +199,12 @@ Input *Block::findInputById(int id) const
 {
     if (impl->inputMap.count(id) == 1)
         return impl->inputMap.at(id);
+    else {
+        auto it = std::find_if(impl->inputs.begin(), impl->inputs.end(), [id](std::shared_ptr<Input> input) { return input->inputId() == id; });
+
+        if (it != impl->inputs.end())
+            return it->get();
+    }
     return nullptr;
 }
 
@@ -255,6 +261,12 @@ Field *Block::findFieldById(int id) const
 {
     if (impl->fieldMap.count(id) == 1)
         return impl->fieldMap.at(id);
+    else {
+        auto it = std::find_if(impl->fields.begin(), impl->fields.end(), [id](std::shared_ptr<Field> field) { return field->fieldId() == id; });
+
+        if (it != impl->fields.end())
+            return it->get();
+    }
     return nullptr;
 }
 
