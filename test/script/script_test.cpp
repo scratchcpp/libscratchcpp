@@ -49,12 +49,12 @@ TEST_F(ScriptTest, Start)
     static std::vector<BlockFunc> functions = { &testFunction };
     static std::vector<Value> constValues = { "test" };
 
-    std::unique_ptr<Variable> var1 = std::make_unique<Variable>("a", "", Value());
-    std::unique_ptr<Variable> var2 = std::make_unique<Variable>("b", "", Value());
+    std::shared_ptr<Variable> var1 = std::make_unique<Variable>("a", "", Value());
+    std::shared_ptr<Variable> var2 = std::make_unique<Variable>("b", "", Value());
     static std::vector<Variable *> variables = { var1.get(), var2.get() };
 
-    std::unique_ptr<List> list1 = std::make_unique<List>("c", "");
-    std::unique_ptr<List> list2 = std::make_unique<List>("d", "");
+    std::shared_ptr<List> list1 = std::make_unique<List>("c", "");
+    std::shared_ptr<List> list2 = std::make_unique<List>("d", "");
     static std::vector<List *> lists = { list1.get(), list2.get() };
 
     Script script1(nullptr, nullptr);
@@ -95,6 +95,8 @@ TEST_F(ScriptTest, Start)
     ASSERT_EQ(vm->lists()[0], lists[0]);
 
     Target target;
+    target.addVariable(var1);
+    target.addList(list1);
     vm = script3.start(&target);
     ASSERT_TRUE(vm);
     ASSERT_EQ(vm->target(), &target);
@@ -107,8 +109,8 @@ TEST_F(ScriptTest, Start)
 
     Sprite root;
     root.setEngine(&m_engine);
-    root.addVariable(std::make_shared<Variable>("b", "", Value()));
-    root.addList(std::make_shared<List>("d", ""));
+    root.addVariable(var2);
+    root.addList(list2);
 
     EXPECT_CALL(m_engine, initClone).Times(1);
     auto clone = root.clone();
@@ -121,10 +123,6 @@ TEST_F(ScriptTest, Start)
     script4.setVariables(variables);
     script4.setLists(lists);
 
-    EXPECT_CALL(m_engine, variableOwner(var1.get())).WillOnce(Return(&target));
-    EXPECT_CALL(m_engine, variableOwner(var2.get())).WillOnce(Return(&root));
-    EXPECT_CALL(m_engine, listOwner(list1.get())).WillOnce(Return(&target));
-    EXPECT_CALL(m_engine, listOwner(list2.get())).WillOnce(Return(&root));
     vm = script4.start(clone.get());
 
     ASSERT_TRUE(vm);

@@ -77,7 +77,7 @@ std::shared_ptr<VirtualMachine> Script::start(Target *target)
         std::vector<List *> lists;
 
         for (const auto &var : impl->variables) {
-            Target *owner = impl->engine->variableOwner(var);
+            Target *owner = var->target();
 
             if (owner && (owner == root)) {
                 auto cloneVar = sprite->variableAt(sprite->findVariableById(var->id()));
@@ -90,7 +90,7 @@ std::shared_ptr<VirtualMachine> Script::start(Target *target)
         }
 
         for (const auto &list : impl->lists) {
-            Target *owner = impl->engine->listOwner(list);
+            Target *owner = list->target();
 
             if (owner && (owner == root)) {
                 auto cloneList = sprite->listAt(sprite->findListById(list->id()));
