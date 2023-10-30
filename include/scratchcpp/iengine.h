@@ -81,6 +81,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Calls the "when I start as a clone" blocks of the given sprite. */
         virtual void initClone(Sprite *clone) = 0;
 
+        /*! Automatically called from clones that are being deleted. */
+        virtual void deinitClone(Sprite *clone) = 0;
+
         /*!
          * Runs the event loop and calls "when green flag clicked" blocks.
          * \note This function returns when all scripts finish.\n

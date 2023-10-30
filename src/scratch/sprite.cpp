@@ -23,6 +23,16 @@ Sprite::Sprite() :
 Sprite::~Sprite()
 {
     if (isClone()) {
+        IEngine *eng = engine();
+
+        if (eng) {
+            eng->deinitClone(this);
+
+            auto children = allChildren();
+            for (auto child : children)
+                eng->deinitClone(child.get());
+        }
+
         assert(impl->cloneParent);
         impl->cloneParent->impl->removeClone(this);
     }
