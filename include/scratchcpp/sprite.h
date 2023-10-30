@@ -22,6 +22,7 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
         };
 
         Sprite();
+        Sprite(const Sprite &) = delete;
         ~Sprite();
 
         void setInterface(ISpriteHandler *newInterface);

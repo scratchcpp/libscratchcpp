@@ -24,6 +24,7 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
         };
 
         Stage();
+        Stage(const Stage &) = delete;
 
         void setInterface(IStageHandler *newInterface);
 
