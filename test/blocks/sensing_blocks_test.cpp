@@ -34,7 +34,6 @@ class SensingBlocksTest : public testing::Test
             optionField->setFieldId(SensingBlocks::CURRENTMENU);
             optionField->setSpecialValueId(option);
             block->addField(optionField);
-            block->updateFieldMap();
 
             return block;
         }
@@ -54,7 +53,6 @@ class SensingBlocksTest : public testing::Test
             input->setValueBlock(valueBlock);
             input->setInputId(id);
             block->addInput(input);
-            block->updateInputMap();
         }
 
         std::shared_ptr<Input> addNullInput(std::shared_ptr<Block> block, const std::string &name, SensingBlocks::Inputs id) const
@@ -62,7 +60,6 @@ class SensingBlocksTest : public testing::Test
             auto input = std::make_shared<Input>(name, Input::Type::Shadow);
             input->setInputId(id);
             block->addInput(input);
-            block->updateInputMap();
 
             return input;
         }
@@ -85,7 +82,6 @@ class SensingBlocksTest : public testing::Test
             field->setFieldId(id);
             field->setSpecialValueId(valueId);
             block->addField(field);
-            block->updateFieldMap();
         }
 
         std::unique_ptr<IBlockSection> m_section;

@@ -45,7 +45,6 @@ class LooksBlocksTest : public testing::Test
             input->setPrimaryValue(value);
             input->setInputId(id);
             block->addInput(input);
-            block->updateInputMap();
         }
 
         void addObscuredInput(std::shared_ptr<Block> block, const std::string &name, LooksBlocks::Inputs id, std::shared_ptr<Block> valueBlock) const
@@ -54,7 +53,6 @@ class LooksBlocksTest : public testing::Test
             input->setValueBlock(valueBlock);
             input->setInputId(id);
             block->addInput(input);
-            block->updateInputMap();
         }
 
         std::shared_ptr<Input> addNullInput(std::shared_ptr<Block> block, const std::string &name, LooksBlocks::Inputs id) const
@@ -62,7 +60,6 @@ class LooksBlocksTest : public testing::Test
             auto input = std::make_shared<Input>(name, Input::Type::Shadow);
             input->setInputId(id);
             block->addInput(input);
-            block->updateInputMap();
 
             return input;
         }
@@ -85,7 +82,6 @@ class LooksBlocksTest : public testing::Test
             field->setFieldId(id);
             field->setSpecialValueId(valueId);
             block->addField(field);
-            block->updateFieldMap();
         }
 
         std::unique_ptr<IBlockSection> m_section;

@@ -40,7 +40,6 @@ class EventBlocksTest : public testing::Test
             input->primaryValue()->setType(InputValue::Type::Broadcast);
             input->setInputId(id);
             block->addInput(input);
-            block->updateInputMap();
         }
 
         void addObscuredInput(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Inputs id, std::shared_ptr<Block> valueBlock) const
@@ -49,7 +48,6 @@ class EventBlocksTest : public testing::Test
             input->setValueBlock(valueBlock);
             input->setInputId(id);
             block->addInput(input);
-            block->updateInputMap();
         }
 
         void addValueField(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Fields id, const std::string &value) const
@@ -57,7 +55,6 @@ class EventBlocksTest : public testing::Test
             auto field = std::make_shared<Field>(name, value);
             field->setFieldId(id);
             block->addField(field);
-            block->updateFieldMap();
         }
 
         void addBroadcastField(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Fields id, std::shared_ptr<Broadcast> broadcast) const
@@ -65,7 +62,6 @@ class EventBlocksTest : public testing::Test
             auto field = std::make_shared<Field>(name, Value(), broadcast);
             field->setFieldId(id);
             block->addField(field);
-            block->updateFieldMap();
         }
 
         std::unique_ptr<IBlockSection> m_section;

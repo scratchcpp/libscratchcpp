@@ -338,7 +338,6 @@ TEST_F(CompilerTest, ResolveInput)
     input->setPrimaryValue("test");
     input->setInputId(TestBlockSection::INPUT1);
     block->addInput(input);
-    block->updateInputMap();
     block->setCompileFunction(&TestBlockSection::compileTestBlock1);
 
     compiler.compile(block);
@@ -361,7 +360,6 @@ TEST_F(CompilerTest, ResolveDropdownMenuInput)
     input->setValueBlock(menu);
     menu->addField(optionField);
     block->addInput(input);
-    block->updateInputMap();
     block->setCompileFunction(&TestBlockSection::compileTestBlock1);
 
     compiler.compile(block);
@@ -402,7 +400,6 @@ TEST_F(CompilerTest, ResolveField)
     field->setFieldId(TestBlockSection::FIELD1);
     field->setSpecialValueId(TestBlockSection::TestValue);
     block->addField(field);
-    block->updateFieldMap();
     block->setCompileFunction(&TestBlockSection::compileTestBlock2);
 
     compiler.compile(block);

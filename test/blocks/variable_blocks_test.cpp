@@ -28,13 +28,11 @@ class VariableBlocksTest : public testing::Test
             auto variableField = std::make_shared<Field>("VARIABLE", Value(), variable);
             variableField->setFieldId(VariableBlocks::VARIABLE);
             block->addField(variableField);
-            block->updateFieldMap();
 
             auto valueInput = std::make_shared<Input>("VALUE", Input::Type::Shadow);
             valueInput->setPrimaryValue(value);
             valueInput->setInputId(VariableBlocks::VALUE);
             block->addInput(valueInput);
-            block->updateInputMap();
 
             return block;
         }

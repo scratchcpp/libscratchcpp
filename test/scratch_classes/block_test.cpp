@@ -114,11 +114,15 @@ TEST_F(BlockTest, Inputs)
     ASSERT_EQ(block.findInput("VALUE2"), 1);
     ASSERT_EQ(block.findInput("VALUE3"), 2);
 
-    block.updateInputMap();
     ASSERT_EQ(block.findInputById(5), nullptr);
     ASSERT_EQ(block.findInputById(11), i1.get());
     ASSERT_EQ(block.findInputById(12), i2.get());
     ASSERT_EQ(block.findInputById(15), i3.get());
+
+    auto i4 = std::make_shared<Input>("VALUE4", Input::Type::Shadow);
+    block.addInput(i4);
+    i4->setInputId(20);
+    ASSERT_EQ(block.findInputById(20), i4.get());
 }
 
 TEST_F(BlockTest, Fields)
@@ -150,11 +154,15 @@ TEST_F(BlockTest, Fields)
     ASSERT_EQ(block.findField("VARIABLE2"), 1);
     ASSERT_EQ(block.findField("VARIABLE3"), 2);
 
-    block.updateFieldMap();
     ASSERT_EQ(block.findFieldById(5), nullptr);
     ASSERT_EQ(block.findFieldById(11), f1.get());
     ASSERT_EQ(block.findFieldById(12), f2.get());
     ASSERT_EQ(block.findFieldById(15), f3.get());
+
+    auto f4 = std::make_shared<Field>("VARIABLE4", Value());
+    block.addField(f4);
+    f4->setFieldId(20);
+    ASSERT_EQ(block.findFieldById(20), f4.get());
 }
 
 TEST_F(BlockTest, Shadow)
