@@ -689,8 +689,6 @@ const std::vector<std::shared_ptr<Target>> &Engine::targets() const
 void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
 {
     m_targets = newTargets;
-    m_variableOwners.clear();
-    m_listOwners.clear();
 
     for (auto target : m_targets) {
         // Set engine in the target
@@ -702,18 +700,6 @@ void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
             block->setEngine(this);
             block->setTarget(target.get());
         }
-
-        // Add variables to owner map
-        const auto &variables = target->variables();
-
-        for (auto variable : variables)
-            m_variableOwners[variable.get()] = target.get();
-
-        // Add lists to owner map
-        const auto &lists = target->lists();
-
-        for (auto list : lists)
-            m_listOwners[list.get()] = target.get();
     }
 }
 
@@ -744,26 +730,6 @@ Stage *Engine::stage() const
         return nullptr;
     else
         return dynamic_cast<Stage *>((*it).get());
-}
-
-Target *Engine::variableOwner(Variable *variable) const
-{
-    auto it = m_variableOwners.find(variable);
-
-    if (it == m_variableOwners.cend())
-        return nullptr;
-
-    return it->second;
-}
-
-Target *Engine::listOwner(List *list) const
-{
-    auto it = m_listOwners.find(list);
-
-    if (it == m_listOwners.cend())
-        return nullptr;
-
-    return it->second;
 }
 
 const std::vector<std::string> &Engine::extensions() const

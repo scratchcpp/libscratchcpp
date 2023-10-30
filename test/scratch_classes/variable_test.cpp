@@ -1,4 +1,5 @@
 #include <scratchcpp/variable.h>
+#include <scratchcpp/target.h>
 
 #include "../common.h"
 
@@ -55,6 +56,16 @@ TEST(VariableTest, IsCloudVariable)
 
     var.setIsCloudVariable(true);
     ASSERT_TRUE(var.isCloudVariable());
+}
+
+TEST(VariableTest, Target)
+{
+    Variable var("", "");
+    ASSERT_EQ(var.target(), nullptr);
+
+    Target target;
+    var.setTarget(&target);
+    ASSERT_EQ(var.target(), &target);
 }
 
 TEST(VariableTest, Clone)

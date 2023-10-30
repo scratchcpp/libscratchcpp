@@ -11,6 +11,7 @@
 namespace libscratchcpp
 {
 
+class Target;
 class ListPrivate;
 
 /*! \brief The List class represents a Scratch list. */
@@ -24,6 +25,9 @@ class LIBSCRATCHCPP_EXPORT List
 
         const std::string &name();
         void setName(const std::string &name);
+
+        Target *target() const;
+        void setTarget(Target *target);
 
         long indexOf(const Value &value) const;
         bool contains(const Value &value) const;

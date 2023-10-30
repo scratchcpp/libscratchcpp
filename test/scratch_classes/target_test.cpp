@@ -38,6 +38,10 @@ TEST(TargetTest, Variables)
     ASSERT_EQ(target.addVariable(v3), 2);
     ASSERT_EQ(target.addVariable(v2), 1); // add existing variable
 
+    ASSERT_EQ(v1->target(), &target);
+    ASSERT_EQ(v2->target(), &target);
+    ASSERT_EQ(v3->target(), &target);
+
     ASSERT_EQ(target.variables(), std::vector<std::shared_ptr<Variable>>({ v1, v2, v3 }));
     ASSERT_EQ(target.variableAt(0), v1);
     ASSERT_EQ(target.variableAt(1), v2);
@@ -67,6 +71,10 @@ TEST(TargetTest, Lists)
     ASSERT_EQ(target.addList(l2), 1);
     ASSERT_EQ(target.addList(l3), 2);
     ASSERT_EQ(target.addList(l2), 1); // add existing list
+
+    ASSERT_EQ(l1->target(), &target);
+    ASSERT_EQ(l2->target(), &target);
+    ASSERT_EQ(l3->target(), &target);
 
     ASSERT_EQ(target.lists(), std::vector<std::shared_ptr<List>>({ l1, l2, l3 }));
     ASSERT_EQ(target.listAt(0), l1);

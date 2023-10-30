@@ -9,6 +9,7 @@
 namespace libscratchcpp
 {
 
+class Target;
 class VariablePrivate;
 
 /*! \brief The Variable class represents a Scratch variable. */
@@ -28,6 +29,9 @@ class LIBSCRATCHCPP_EXPORT Variable : public Entity
 
         bool isCloudVariable() const;
         void setIsCloudVariable(bool isCloudVariable);
+
+        Target *target() const;
+        void setTarget(Target *target);
 
         std::shared_ptr<Variable> clone();
 

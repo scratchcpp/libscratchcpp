@@ -42,6 +42,8 @@ int Target::addVariable(std::shared_ptr<Variable> variable)
         return it - impl->variables.begin();
 
     impl->variables.push_back(variable);
+    variable->setTarget(this);
+
     return impl->variables.size() - 1;
 }
 
@@ -93,6 +95,8 @@ int Target::addList(std::shared_ptr<List> list)
         return it - impl->lists.begin();
 
     impl->lists.push_back(list);
+    list->setTarget(this);
+
     return impl->lists.size() - 1;
 }
 

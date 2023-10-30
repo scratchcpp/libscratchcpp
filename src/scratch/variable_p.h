@@ -7,6 +7,8 @@
 namespace libscratchcpp
 {
 
+class Target;
+
 struct VariablePrivate
 {
         VariablePrivate(const std::string &name, const Value &value = Value(), bool isCloudVariable = false);
@@ -15,6 +17,7 @@ struct VariablePrivate
         std::string name;
         Value value;
         bool isCloudVariable;
+        Target *target = nullptr;
 };
 
 } // namespace libscratchcpp

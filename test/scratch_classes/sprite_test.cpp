@@ -71,6 +71,7 @@ TEST(SpriteTest, Clone)
         ASSERT_EQ(clone->variableAt(1)->id(), "b");
         ASSERT_EQ(clone->variableAt(1)->name(), "var2");
         ASSERT_EQ(clone->variableAt(1)->value().toString(), "world");
+        ASSERT_EQ(clone->variableAt(1)->target(), clone);
 
         ASSERT_EQ(clone->lists().size(), 2);
         ASSERT_NE(clone->lists(), root->lists());
@@ -80,6 +81,7 @@ TEST(SpriteTest, Clone)
         ASSERT_EQ(clone->listAt(1)->id(), "d");
         ASSERT_EQ(clone->listAt(1)->name(), "list2");
         ASSERT_EQ(*clone->listAt(1), std::deque<Value>({ "test" }));
+        ASSERT_EQ(clone->listAt(1)->target(), clone);
 
         ASSERT_EQ(clone->currentCostume(), 2);
         ASSERT_EQ(clone->layerOrder(), 5);

@@ -49,6 +49,18 @@ void Variable::setIsCloudVariable(bool isCloudVariable)
     impl->isCloudVariable = isCloudVariable;
 }
 
+/*! Returns the sprite or stage this variable belongs to. */
+Target *Variable::target() const
+{
+    return impl->target;
+}
+
+/*! Sets the sprite or stage this variable belongs to. */
+void Variable::setTarget(Target *target)
+{
+    impl->target = target;
+}
+
 /*! Creates a copy of the variable. */
 std::shared_ptr<Variable> Variable::clone()
 {

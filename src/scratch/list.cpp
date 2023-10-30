@@ -26,6 +26,18 @@ void List::setName(const std::string &name)
     impl->name = name;
 }
 
+/*! Returns the sprite or stage this list belongs to. */
+Target *List::target() const
+{
+    return impl->target;
+}
+
+/*! Sets the sprite or stage this list belongs to. */
+void List::setTarget(Target *target)
+{
+    impl->target = target;
+}
+
 /*! Returns the index of the given item. */
 long List::indexOf(const Value &value) const
 {
