@@ -44,6 +44,8 @@ TEST(SpriteTest, Clone)
     sprite.addList(list1);
     sprite.addList(list2);
 
+    sprite.addCostume(std::make_shared<Costume>("", "", ""));
+    sprite.addCostume(std::make_shared<Costume>("", "", ""));
     sprite.setCurrentCostume(2);
     sprite.setLayerOrder(5);
     sprite.setVolume(50);

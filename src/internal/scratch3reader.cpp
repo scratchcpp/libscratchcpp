@@ -193,10 +193,6 @@ bool Scratch3Reader::load()
 
             // TODO: Add comments
 
-            // currentCostume
-            READER_STEP(step, "target -> currentCostume");
-            target->setCurrentCostume(jsonTarget["currentCostume"]);
-
             // costumes
             READER_STEP(step, "target -> costumes");
             auto costumes = jsonTarget["costumes"];
@@ -217,6 +213,10 @@ bool Scratch3Reader::load()
 
                 target->addCostume(costume);
             }
+
+            // currentCostume
+            READER_STEP(step, "target -> currentCostume");
+            target->setCurrentCostume(jsonToValue(jsonTarget["currentCostume"]).toInt() + 1);
 
             // sounds
             READER_STEP(step, "target -> sounds");

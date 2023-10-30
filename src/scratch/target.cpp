@@ -203,7 +203,8 @@ int Target::currentCostume() const
 /*! Sets the ID of the current costume. */
 void Target::setCurrentCostume(int newCostume)
 {
-    impl->currentCostume = newCostume;
+    if (newCostume > 0 && newCostume <= costumes().size())
+        impl->currentCostume = newCostume;
 }
 
 /*! Returns the list of costumes. */

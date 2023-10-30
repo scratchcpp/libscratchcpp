@@ -178,9 +178,31 @@ TEST(TargetTest, Blocks)
 TEST(TargetTest, CurrentCostume)
 {
     Target target;
+    ASSERT_EQ(target.currentCostume(), 0);
+
+    target.setCurrentCostume(1);
+    ASSERT_EQ(target.currentCostume(), 0);
+
+    target.setCurrentCostume(2);
+    ASSERT_EQ(target.currentCostume(), 0);
+
+    target.addCostume(std::make_shared<Costume>("", "", ""));
+    ASSERT_EQ(target.currentCostume(), 0);
+
+    target.setCurrentCostume(1);
     ASSERT_EQ(target.currentCostume(), 1);
-    target.setCurrentCostume(5);
-    ASSERT_EQ(target.currentCostume(), 5);
+
+    target.setCurrentCostume(2);
+    ASSERT_EQ(target.currentCostume(), 1);
+
+    target.addCostume(std::make_shared<Costume>("", "", ""));
+    ASSERT_EQ(target.currentCostume(), 1);
+
+    target.setCurrentCostume(2);
+    ASSERT_EQ(target.currentCostume(), 2);
+
+    target.setCurrentCostume(3);
+    ASSERT_EQ(target.currentCostume(), 2);
 }
 
 TEST(TargetTest, Costumes)
