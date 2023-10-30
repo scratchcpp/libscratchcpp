@@ -63,6 +63,9 @@ class Engine : public IEngine
         unsigned int stageHeight() const override;
         void setStageHeight(unsigned int height) override;
 
+        int cloneLimit() const override;
+        void setCloneLimit(int limit) override;
+
         bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) override;
         bool broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript) override;
 
@@ -146,6 +149,7 @@ class Engine : public IEngine
         bool m_mousePressed = false;
         unsigned int m_stageWidth = 480;
         unsigned int m_stageHeight = 360;
+        int m_cloneLimit = 300;
         std::vector<Sprite *> m_clones;
 
         bool m_running = false;

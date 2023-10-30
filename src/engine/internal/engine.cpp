@@ -311,7 +311,7 @@ void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
 
 void Engine::initClone(Sprite *clone)
 {
-    if (!clone)
+    if (!clone || ((m_cloneLimit >= 0) && (m_clones.size() >= m_cloneLimit)))
         return;
 
     Sprite *source = clone->cloneParent();
@@ -479,6 +479,16 @@ unsigned int Engine::stageHeight() const
 void Engine::setStageHeight(unsigned int height)
 {
     m_stageHeight = height;
+}
+
+int Engine::cloneLimit() const
+{
+    return m_cloneLimit;
+}
+
+void Engine::setCloneLimit(int limit)
+{
+    m_cloneLimit = limit < 0 ? -1 : limit;
 }
 
 bool Engine::broadcastRunning(unsigned int index, VirtualMachine *sourceScript)

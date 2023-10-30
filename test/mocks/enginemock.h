@@ -50,6 +50,9 @@ class EngineMock : public IEngine
         MOCK_METHOD(unsigned int, stageHeight, (), (const, override));
         MOCK_METHOD(void, setStageHeight, (unsigned int), (override));
 
+        MOCK_METHOD(int, cloneLimit, (), (const, override));
+        MOCK_METHOD(void, setCloneLimit, (int), (override));
+
         MOCK_METHOD(bool, broadcastRunning, (unsigned int, VirtualMachine *), (override));
         MOCK_METHOD(bool, broadcastByPtrRunning, (Broadcast *, VirtualMachine *), (override));
 

@@ -140,6 +140,12 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the stage height. */
         virtual void setStageHeight(unsigned int height) = 0;
 
+        /*! Returns the maximum number of clones (or -1 if the limit is disabled). */
+        virtual int cloneLimit() const = 0;
+
+        /*! Sets the maximum number of clones (use -1 or any negative number to disable the limit). */
+        virtual void setCloneLimit(int limit) = 0;
+
         /*! Returns true if there are any running script of the broadcast with the given index. */
         virtual bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) = 0;
 
