@@ -6,6 +6,9 @@ target_sources(scratchcpp
     scratchconfiguration.cpp
     scratchconfiguration_p.cpp
     scratchconfiguration_p.h
+    rect.cpp
+    rect_p.cpp
+    rect_p.h
 )
 
 add_subdirectory(blocks)
