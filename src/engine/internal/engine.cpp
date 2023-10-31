@@ -32,11 +32,17 @@ Engine::Engine() :
 {
 }
 
+Engine::~Engine()
+{
+    m_clones.clear();
+}
+
 void Engine::clear()
 {
     m_sections.clear();
     m_targets.clear();
     m_broadcasts.clear();
+    m_clones.clear();
 }
 
 // Resolves ID references and sets pointers of entities.
@@ -172,6 +178,11 @@ void Engine::frame()
 
 void Engine::start()
 {
+    if (m_running)
+        finalize();
+
+    deleteClones();
+
     m_timer->reset();
     m_running = true;
 
@@ -184,9 +195,8 @@ void Engine::start()
 
 void Engine::stop()
 {
-    m_runningScripts.clear();
-    m_scriptsToRemove.clear();
-    m_running = false;
+    finalize();
+    deleteClones();
 }
 
 void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target)
@@ -301,7 +311,7 @@ void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
 
 void Engine::initClone(Sprite *clone)
 {
-    if (!clone)
+    if (!clone || ((m_cloneLimit >= 0) && (m_clones.size() >= m_cloneLimit)))
         return;
 
     Sprite *source = clone->cloneParent();
@@ -328,6 +338,14 @@ void Engine::initClone(Sprite *clone)
             m_runningScripts.push_back(vm);
         }
     }
+
+    assert(std::find(m_clones.begin(), m_clones.end(), clone) == m_clones.end());
+    m_clones.push_back(clone);
+}
+
+void Engine::deinitClone(Sprite *clone)
+{
+    m_clones.erase(std::remove(m_clones.begin(), m_clones.end(), clone), m_clones.end());
 }
 
 void Engine::run()
@@ -360,7 +378,7 @@ void Engine::run()
         lastFrameTime = currentTime;
     }
 
-    stop();
+    finalize();
 }
 
 bool Engine::isRunning() const
@@ -461,6 +479,16 @@ unsigned int Engine::stageHeight() const
 void Engine::setStageHeight(unsigned int height)
 {
     m_stageHeight = height;
+}
+
+int Engine::cloneLimit() const
+{
+    return m_cloneLimit;
+}
+
+void Engine::setCloneLimit(int limit)
+{
+    m_cloneLimit = limit < 0 ? -1 : limit;
 }
 
 bool Engine::broadcastRunning(unsigned int index, VirtualMachine *sourceScript)
@@ -877,6 +905,31 @@ BlockSectionContainer *Engine::blockSectionContainer(IBlockSection *section) con
     }
 
     return nullptr;
+}
+
+void Engine::finalize()
+{
+    m_runningScripts.clear();
+    m_scriptsToRemove.clear();
+    m_running = false;
+}
+
+void Engine::deleteClones()
+{
+    m_clones.clear();
+
+    for (auto target : m_targets) {
+        Sprite *sprite = dynamic_cast<Sprite *>(target.get());
+
+        if (sprite) {
+            std::vector<std::shared_ptr<Sprite>> clones = sprite->children();
+
+            for (auto clone : clones) {
+                assert(clone);
+                clone->~Sprite();
+            }
+        }
+    }
 }
 
 void Engine::updateFrameDuration()

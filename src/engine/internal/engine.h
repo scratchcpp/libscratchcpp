@@ -21,6 +21,7 @@ class Engine : public IEngine
     public:
         Engine();
         Engine(const Engine &) = delete;
+        ~Engine();
 
         void clear() override;
         void resolveIds();
@@ -35,6 +36,7 @@ class Engine : public IEngine
         void stopScript(VirtualMachine *vm) override;
         void stopTarget(Target *target, VirtualMachine *exceptScript) override;
         void initClone(libscratchcpp::Sprite *clone) override;
+        void deinitClone(libscratchcpp::Sprite *clone) override;
         void run() override;
 
         bool isRunning() const override;
@@ -60,6 +62,9 @@ class Engine : public IEngine
 
         unsigned int stageHeight() const override;
         void setStageHeight(unsigned int height) override;
+
+        int cloneLimit() const override;
+        void setCloneLimit(int limit) override;
 
         bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) override;
         bool broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript) override;
@@ -109,6 +114,8 @@ class Engine : public IEngine
         BlockSectionContainer *blockSectionContainer(IBlockSection *section) const;
 
     private:
+        void finalize();
+        void deleteClones();
         std::shared_ptr<Block> getBlock(const std::string &id);
         std::shared_ptr<Variable> getVariable(const std::string &id);
         std::shared_ptr<List> getList(const std::string &id);
@@ -142,6 +149,8 @@ class Engine : public IEngine
         bool m_mousePressed = false;
         unsigned int m_stageWidth = 480;
         unsigned int m_stageHeight = 360;
+        int m_cloneLimit = 300;
+        std::vector<Sprite *> m_clones;
 
         bool m_running = false;
         bool m_breakFrame = false;

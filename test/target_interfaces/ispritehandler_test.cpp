@@ -34,6 +34,10 @@ TEST_F(ISpriteHandlerTest, Clone)
     m_sprite.clone();
     ASSERT_TRUE(clone);
     ASSERT_EQ(cloneArg, clone);
+
+    // Engine is used during deletion, so let's just set it to nullptr (this is tested elsewhere)
+    m_sprite.setEngine(nullptr);
+    clone->setEngine(nullptr);
 }
 
 TEST_F(ISpriteHandlerTest, Visible)
