@@ -43,10 +43,10 @@ void SpritePrivate::getBoundingRect(Rect *out) const
     auto costume = sprite->costumeAt(sprite->currentCostume() - 1);
 
     if (!costume) {
-        out->setLeft(0);
-        out->setTop(0);
-        out->setRight(0);
-        out->setBottom(0);
+        out->setLeft(x);
+        out->setTop(y);
+        out->setRight(x);
+        out->setBottom(y);
         return;
     }
 
