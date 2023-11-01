@@ -26,7 +26,11 @@ double Costume::bitmapResolution() const
 /*! Sets the reciprocal of the costume scaling factor for bitmap costumes. */
 void Costume::setBitmapResolution(double newBitmapResolution)
 {
+    if (impl->bitmapResolution == newBitmapResolution)
+        return;
+
     impl->bitmapResolution = newBitmapResolution;
+    impl->updateImage();
 }
 
 /*! Returns the x-coordinate of the rotation center. */
@@ -56,13 +60,13 @@ void Costume::setRotationCenterY(int newRotationCenterY)
 /*! Returns the costume width. */
 unsigned int Costume::width() const
 {
-    return impl->image->width() * impl->scale;
+    return impl->image->width() * impl->scale / impl->bitmapResolution;
 }
 
 /*! Returns the costume height. */
 unsigned int Costume::height() const
 {
-    return impl->image->height() * impl->scale;
+    return impl->image->height() * impl->scale / impl->bitmapResolution;
 }
 
 /*! Returns the image scale. */

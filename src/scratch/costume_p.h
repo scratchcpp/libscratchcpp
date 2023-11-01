@@ -19,6 +19,7 @@ struct CostumePrivate
         void updateImage();
         void freeImage();
 
+        double oldBitmapResolution = 1;
         double bitmapResolution = 1;
         int rotationCenterX = 0;
         int rotationCenterY = 0;
