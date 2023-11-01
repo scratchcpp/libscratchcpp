@@ -6,6 +6,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/costume.h>
+#include <scratchcpp/rect.h>
 #include <cassert>
 
 #include "sprite_p.h"
@@ -15,7 +16,7 @@ using namespace libscratchcpp;
 /*! Constructs Sprite. */
 Sprite::Sprite() :
     Target(),
-    impl(spimpl::make_unique_impl<SpritePrivate>())
+    impl(spimpl::make_unique_impl<SpritePrivate>(this))
 {
 }
 
@@ -295,6 +296,15 @@ void Sprite::setRotationStyle(const std::string &newRotationStyle)
 void Sprite::setRotationStyle(const char *newRotationStyle)
 {
     setRotationStyle(std::string(newRotationStyle));
+}
+
+/*! Returns the bounding rectangle of the sprite. */
+Rect Sprite::boundingRect() const
+{
+    Rect ret;
+    impl->getBoundingRect(&ret);
+
+    return ret;
 }
 
 Target *Sprite::dataSource() const

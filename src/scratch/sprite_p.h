@@ -7,15 +7,19 @@
 namespace libscratchcpp
 {
 
+class Rect;
+
 struct SpritePrivate
 {
-        SpritePrivate();
+        SpritePrivate(Sprite *sprite);
         SpritePrivate(const SpritePrivate &) = delete;
 
         void removeClone(Sprite *clone);
 
         void setCostumeData(const char *data);
+        void getBoundingRect(Rect *out) const;
 
+        Sprite *sprite = nullptr;
         ISpriteHandler *iface = nullptr;
         Sprite *cloneRoot = nullptr;
         Sprite *cloneParent = nullptr;
