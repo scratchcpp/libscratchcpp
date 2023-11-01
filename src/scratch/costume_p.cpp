@@ -16,15 +16,15 @@ CostumePrivate::~CostumePrivate()
 
 void CostumePrivate::updateImage()
 {
-    unsigned int scaledWidth = image->width() * scale;
-    unsigned int scaledHeight = image->height() * scale;
+    unsigned int scaledWidth = image->width() * scale / bitmapResolution;
+    unsigned int scaledHeight = image->height() * scale / bitmapResolution;
 
     if (scaledWidth == 0 || scaledHeight == 0) {
         freeImage();
         return;
     }
 
-    if (!bitmap || (scale != oldScale)) {
+    if (!bitmap || (scale != oldScale) || (bitmapResolution != oldBitmapResolution)) {
         freeImage();
         bitmap = static_cast<Rgb **>(malloc(sizeof(Rgb *) * scaledHeight));
 
@@ -32,13 +32,14 @@ void CostumePrivate::updateImage()
             bitmap[i] = static_cast<Rgb *>(malloc(sizeof(Rgb) * scaledWidth));
 
         oldScale = scale;
+        oldBitmapResolution = bitmapResolution;
         oldWidth = scaledWidth;
         oldHeight = scaledHeight;
     }
 
     for (unsigned int i = 0; i < scaledHeight; i++) {
         for (unsigned int j = 0; j < scaledWidth; j++) {
-            Rgb color = image->colorAt(mirrorHorizontally ? (scaledWidth - 1 - j) : j, i, scale);
+            Rgb color = image->colorAt(mirrorHorizontally ? (scaledWidth - 1 - j) : j, i, scale / bitmapResolution);
 
             // TODO: Apply graphics effects here
 

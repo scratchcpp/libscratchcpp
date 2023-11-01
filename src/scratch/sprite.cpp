@@ -162,7 +162,8 @@ double Sprite::x() const
 /*! Sets the X position of the sprite. */
 void Sprite::setX(double newX)
 {
-    impl->x = newX;
+    setXY(newX, impl->y);
+
     if (impl->iface)
         impl->iface->onXChanged(impl->x);
 }
@@ -176,7 +177,8 @@ double Sprite::y() const
 /*! Sets the Y position of the sprite. */
 void Sprite::setY(double newY)
 {
-    impl->y = newY;
+    setXY(impl->x, newY);
+
     if (impl->iface)
         impl->iface->onYChanged(impl->y);
 }
@@ -310,4 +312,9 @@ Rect Sprite::boundingRect() const
 Target *Sprite::dataSource() const
 {
     return impl->cloneRoot;
+}
+
+void Sprite::setXY(double x, double y)
+{
+    impl->getFencedPosition(x, y, &impl->x, &impl->y);
 }

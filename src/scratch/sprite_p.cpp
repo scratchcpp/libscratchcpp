@@ -3,6 +3,7 @@
 #include <scratchcpp/ispritehandler.h>
 #include <scratchcpp/rect.h>
 #include <scratchcpp/costume.h>
+#include <scratchcpp/iengine.h>
 #include <cmath>
 
 #include "sprite_p.h"
@@ -10,6 +11,7 @@
 using namespace libscratchcpp;
 
 static const double pi = std::acos(-1); // TODO: Use std::numbers::pi in C++20
+static const double FENCE_WIDTH = 15;
 
 SpritePrivate::SpritePrivate(Sprite *sprite) :
     sprite(sprite)
@@ -43,10 +45,10 @@ void SpritePrivate::getBoundingRect(Rect *out) const
     auto costume = sprite->costumeAt(sprite->currentCostume() - 1);
 
     if (!costume) {
-        out->setLeft(0);
-        out->setTop(0);
-        out->setRight(0);
-        out->setBottom(0);
+        out->setLeft(x);
+        out->setTop(y);
+        out->setRight(x);
+        out->setBottom(y);
         return;
     }
 
@@ -89,4 +91,44 @@ void SpritePrivate::getBoundingRect(Rect *out) const
     out->setTop(y + maxY);
     out->setRight(x + maxX);
     out->setBottom(y + minY);
+}
+
+void SpritePrivate::getFencedPosition(double x, double y, double *outX, double *outY) const
+{
+    assert(outX);
+    assert(outY);
+
+    if (!sprite->engine()) {
+        *outX = x;
+        *outY = y;
+        return;
+    }
+
+    // https://github.com/scratchfoundation/scratch-render/blob/0b51e5a66ae1c8102fe881107145d7ef3d71a1ab/src/RenderWebGL.js#L1526
+    double dx = x - this->x;
+    double dy = y - this->y;
+    Rect rect;
+    getBoundingRect(&rect);
+    double inset = std::floor(std::min(rect.width(), rect.height()) / 2);
+
+    double xRight = sprite->engine()->stageWidth() / 2;
+    double sx = xRight - std::min(FENCE_WIDTH, inset);
+
+    if (rect.right() + dx < -sx) {
+        x = std::ceil(this->x - (sx + rect.right()));
+    } else if (rect.left() + dx > sx) {
+        x = std::floor(this->x + (sx - rect.left()));
+    }
+
+    double yTop = sprite->engine()->stageHeight() / 2;
+    double sy = yTop - std::min(FENCE_WIDTH, inset);
+
+    if (rect.top() + dy < -sy) {
+        y = std::ceil(this->y - (sy + rect.top()));
+    } else if (rect.bottom() + dy > sy) {
+        y = std::floor(this->y + (sy - rect.bottom()));
+    }
+
+    *outX = x;
+    *outY = y;
 }
