@@ -66,6 +66,9 @@ class Engine : public IEngine
         int cloneLimit() const override;
         void setCloneLimit(int limit) override;
 
+        bool spriteFencingEnabled() const override;
+        void setSpriteFencingEnabled(bool enable) override;
+
         bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) override;
         bool broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript) override;
 
@@ -151,6 +154,7 @@ class Engine : public IEngine
         unsigned int m_stageHeight = 360;
         int m_cloneLimit = 300;
         std::vector<Sprite *> m_clones;
+        bool m_spriteFencingEnabled = true;
 
         bool m_running = false;
         bool m_breakFrame = false;

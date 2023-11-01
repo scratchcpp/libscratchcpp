@@ -316,5 +316,11 @@ Target *Sprite::dataSource() const
 
 void Sprite::setXY(double x, double y)
 {
-    impl->getFencedPosition(x, y, &impl->x, &impl->y);
+    IEngine *eng = engine();
+
+    if (eng && !eng->spriteFencingEnabled()) {
+        impl->x = x;
+        impl->y = y;
+    } else
+        impl->getFencedPosition(x, y, &impl->x, &impl->y);
 }

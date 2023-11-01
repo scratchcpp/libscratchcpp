@@ -190,6 +190,18 @@ TEST(EngineTest, StageHeight)
     ASSERT_EQ(engine.stageHeight(), 515);
 }
 
+TEST(EngineTest, SpriteFencingEnabled)
+{
+    Engine engine;
+    ASSERT_TRUE(engine.spriteFencingEnabled());
+
+    engine.setSpriteFencingEnabled(false);
+    ASSERT_FALSE(engine.spriteFencingEnabled());
+
+    engine.setSpriteFencingEnabled(true);
+    ASSERT_TRUE(engine.spriteFencingEnabled());
+}
+
 TEST(EngineTest, BreakFrame)
 {
     Engine engine;

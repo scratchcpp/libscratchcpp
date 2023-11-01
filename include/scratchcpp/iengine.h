@@ -146,6 +146,12 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the maximum number of clones (use -1 or any negative number to disable the limit). */
         virtual void setCloneLimit(int limit) = 0;
 
+        /*! Returns true if sprite fencing is enabled. */
+        virtual bool spriteFencingEnabled() const = 0;
+
+        /*! Toggles sprite fencing. */
+        virtual void setSpriteFencingEnabled(bool enable) = 0;
+
         /*! Returns true if there are any running script of the broadcast with the given index. */
         virtual bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) = 0;
 

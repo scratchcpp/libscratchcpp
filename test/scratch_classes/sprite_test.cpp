@@ -217,14 +217,14 @@ TEST(SpriteTest, XY)
     sprite.setX(-53.25);
     ASSERT_EQ(sprite.x(), -53.25);
 
-    sprite.setX(239.999);
-    ASSERT_EQ(sprite.x(), 239.999);
+    sprite.setX(259.999);
+    ASSERT_EQ(sprite.x(), 259.999);
 
     sprite.setY(-53.25);
     ASSERT_EQ(sprite.y(), -53.25);
 
-    sprite.setY(179.999);
-    ASSERT_EQ(sprite.y(), 179.999);
+    sprite.setY(189.999);
+    ASSERT_EQ(sprite.y(), 189.999);
 
     auto imageFormatFactory = std::make_shared<ImageFormatFactoryMock>();
     auto imageFormat = std::make_shared<ImageFormatMock>();
@@ -265,6 +265,7 @@ TEST(SpriteTest, XY)
 
     EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
     EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     sprite.setX(230);
@@ -272,6 +273,7 @@ TEST(SpriteTest, XY)
 
     EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
     EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     sprite.setX(-230);
@@ -279,20 +281,31 @@ TEST(SpriteTest, XY)
 
     EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
     EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     sprite.setX(250);
     ASSERT_EQ(sprite.x(), 241);
 
+    EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(false));
+    sprite.setX(250);
+    ASSERT_EQ(sprite.x(), 250);
+
     EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
     EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     sprite.setX(-250);
     ASSERT_EQ(sprite.x(), -241);
 
+    EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(false));
+    sprite.setX(-250);
+    ASSERT_EQ(sprite.x(), -250);
+
     EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
     EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     sprite.setY(170);
@@ -300,6 +313,7 @@ TEST(SpriteTest, XY)
 
     EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
     EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     sprite.setY(-170);
@@ -307,17 +321,27 @@ TEST(SpriteTest, XY)
 
     EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
     EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     sprite.setY(190);
     ASSERT_EQ(sprite.y(), 181);
 
+    EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(false));
+    sprite.setY(190);
+    ASSERT_EQ(sprite.y(), 190);
+
     EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
     EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     sprite.setY(-190);
     ASSERT_EQ(sprite.y(), -180);
+
+    EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(false));
+    sprite.setY(-190);
+    ASSERT_EQ(sprite.y(), -190);
 
     ScratchConfiguration::removeImageFormat("test");
 }

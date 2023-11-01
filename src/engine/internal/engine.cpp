@@ -491,6 +491,16 @@ void Engine::setCloneLimit(int limit)
     m_cloneLimit = limit < 0 ? -1 : limit;
 }
 
+bool Engine::spriteFencingEnabled() const
+{
+    return m_spriteFencingEnabled;
+}
+
+void Engine::setSpriteFencingEnabled(bool enable)
+{
+    m_spriteFencingEnabled = enable;
+}
+
 bool Engine::broadcastRunning(unsigned int index, VirtualMachine *sourceScript)
 {
     if (index < 0 || index >= m_broadcasts.size())
