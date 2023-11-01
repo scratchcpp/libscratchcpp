@@ -8,6 +8,7 @@ namespace libscratchcpp
 {
 
 class ISpriteHandler;
+class Rect;
 class SpritePrivate;
 
 /*! \brief The Sprite class represents a Scratch sprite. */
@@ -61,6 +62,8 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
         void setRotationStyle(RotationStyle newRotationStyle);
         void setRotationStyle(const std::string &newRotationStyle);
         void setRotationStyle(const char *newRotationStyle);
+
+        Rect boundingRect() const;
 
     private:
         Target *dataSource() const override;

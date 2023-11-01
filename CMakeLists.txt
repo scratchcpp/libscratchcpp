@@ -50,6 +50,7 @@ target_sources(scratchcpp
     include/scratchcpp/keyevent.h
     include/scratchcpp/iimageformat.h
     include/scratchcpp/iimageformatfactory.h
+    include/scratchcpp/rect.h
 )
 
 add_library(zip SHARED
