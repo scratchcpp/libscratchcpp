@@ -1,9 +1,11 @@
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/stage.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/scratchconfiguration.h>
 #include <scratchcpp/rect.h>
+#include <scratchcpp/project.h>
 #include <enginemock.h>
 #include <imageformatfactorymock.h>
 #include <imageformatmock.h>
@@ -206,28 +208,142 @@ TEST(SpriteTest, Clone)
     sprite.reset();
 }
 
-TEST(SpriteTest, X)
+TEST(SpriteTest, XY)
 {
     Sprite sprite;
     ASSERT_EQ(sprite.x(), 0);
+    ASSERT_EQ(sprite.y(), 0);
 
     sprite.setX(-53.25);
     ASSERT_EQ(sprite.x(), -53.25);
 
     sprite.setX(239.999);
     ASSERT_EQ(sprite.x(), 239.999);
-}
-
-TEST(SpriteTest, Y)
-{
-    Sprite sprite;
-    ASSERT_EQ(sprite.y(), 0);
 
     sprite.setY(-53.25);
     ASSERT_EQ(sprite.y(), -53.25);
 
     sprite.setY(179.999);
     ASSERT_EQ(sprite.y(), 179.999);
+
+    auto imageFormatFactory = std::make_shared<ImageFormatFactoryMock>();
+    auto imageFormat = std::make_shared<ImageFormatMock>();
+
+    ScratchConfiguration::registerImageFormat("test", imageFormatFactory);
+    EXPECT_CALL(*imageFormatFactory, createInstance()).WillOnce(Return(imageFormat));
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(0));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(0));
+    auto costume = std::make_shared<Costume>("costume1", "a", "test");
+
+    sprite.addCostume(costume);
+    sprite.setCurrentCostume(1);
+
+    static char data[5] = "abcd";
+    EXPECT_CALL(*imageFormat, setData(5, data));
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+
+    EXPECT_CALL(*imageFormat, colorAt(0, 0, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+    EXPECT_CALL(*imageFormat, colorAt(1, 0, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+    EXPECT_CALL(*imageFormat, colorAt(2, 0, 1)).WillOnce(Return(rgba(0, 0, 0, 255)));
+    EXPECT_CALL(*imageFormat, colorAt(3, 0, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+
+    EXPECT_CALL(*imageFormat, colorAt(0, 1, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+    EXPECT_CALL(*imageFormat, colorAt(1, 1, 1)).WillOnce(Return(rgba(0, 0, 0, 255)));
+    EXPECT_CALL(*imageFormat, colorAt(2, 1, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+    EXPECT_CALL(*imageFormat, colorAt(3, 1, 1)).WillOnce(Return(rgba(0, 0, 0, 255)));
+
+    EXPECT_CALL(*imageFormat, colorAt(0, 2, 1)).WillOnce(Return(rgba(0, 0, 0, 255)));
+    EXPECT_CALL(*imageFormat, colorAt(1, 2, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+    EXPECT_CALL(*imageFormat, colorAt(2, 2, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+    EXPECT_CALL(*imageFormat, colorAt(3, 2, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+    costume->setData(5, data);
+
+    EngineMock engine;
+    sprite.setEngine(&engine);
+    sprite.setDirection(34.45);
+
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
+    sprite.setX(230);
+    ASSERT_EQ(sprite.x(), 230);
+
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
+    sprite.setX(-230);
+    ASSERT_EQ(sprite.x(), -230);
+
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
+    sprite.setX(250);
+    ASSERT_EQ(sprite.x(), 241);
+
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
+    sprite.setX(-250);
+    ASSERT_EQ(sprite.x(), -241);
+
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
+    sprite.setY(170);
+    ASSERT_EQ(sprite.y(), 170);
+
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
+    sprite.setY(-170);
+    ASSERT_EQ(sprite.y(), -170);
+
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
+    sprite.setY(190);
+    ASSERT_EQ(sprite.y(), 181);
+
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
+    sprite.setY(-190);
+    ASSERT_EQ(sprite.y(), -180);
+
+    ScratchConfiguration::removeImageFormat("test");
+}
+
+TEST(SpriteTest, Fencing)
+{
+    Project p("sprite_fencing.sb3");
+    ASSERT_TRUE(p.load());
+    p.run();
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    ASSERT_VAR(stage, "maxX");
+    ASSERT_EQ(GET_VAR(stage, "maxX")->value().toDouble(), 240);
+
+    ASSERT_VAR(stage, "maxY");
+    ASSERT_EQ(GET_VAR(stage, "maxY")->value().toDouble(), 205);
+
+    ASSERT_VAR(stage, "minX");
+    ASSERT_EQ(GET_VAR(stage, "minX")->value().toDouble(), -362);
+
+    ASSERT_VAR(stage, "minY");
+    ASSERT_EQ(GET_VAR(stage, "minY")->value().toDouble(), -213);
 }
 
 TEST(SpriteTest, Size)

@@ -18,6 +18,7 @@ struct SpritePrivate
 
         void setCostumeData(const char *data);
         void getBoundingRect(Rect *out) const;
+        void getFencedPosition(double inX, double inY, double *outX, double *outY) const;
 
         Sprite *sprite = nullptr;
         ISpriteHandler *iface = nullptr;

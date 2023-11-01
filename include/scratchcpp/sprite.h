@@ -67,6 +67,7 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
 
     private:
         Target *dataSource() const override;
+        void setXY(double x, double y);
 
         spimpl::unique_impl_ptr<SpritePrivate> impl;
 };

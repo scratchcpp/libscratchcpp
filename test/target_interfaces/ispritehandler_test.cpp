@@ -51,13 +51,17 @@ TEST_F(ISpriteHandlerTest, Visible)
 
 TEST_F(ISpriteHandlerTest, X)
 {
-    EXPECT_CALL(m_handler, onXChanged(300.25)).Times(1);
-    m_sprite.setX(300.25);
+    EXPECT_CALL(m_handler, onXChanged(189.46)).Times(1);
+    EXPECT_CALL(m_engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(m_engine, stageHeight()).WillOnce(Return(360));
+    m_sprite.setX(189.46);
 }
 
 TEST_F(ISpriteHandlerTest, Y)
 {
     EXPECT_CALL(m_handler, onYChanged(-153.7)).Times(1);
+    EXPECT_CALL(m_engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(m_engine, stageHeight()).WillOnce(Return(360));
     m_sprite.setY(-153.7);
 }
 
