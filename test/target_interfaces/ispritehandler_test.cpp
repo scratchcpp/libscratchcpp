@@ -52,17 +52,27 @@ TEST_F(ISpriteHandlerTest, Visible)
 TEST_F(ISpriteHandlerTest, X)
 {
     EXPECT_CALL(m_handler, onXChanged(189.46)).Times(1);
+    EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(m_engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(m_engine, stageHeight()).WillOnce(Return(360));
     m_sprite.setX(189.46);
+
+    EXPECT_CALL(m_handler, onXChanged(284.61)).Times(1);
+    EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(false));
+    m_sprite.setX(284.61);
 }
 
 TEST_F(ISpriteHandlerTest, Y)
 {
     EXPECT_CALL(m_handler, onYChanged(-153.7)).Times(1);
+    EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(m_engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(m_engine, stageHeight()).WillOnce(Return(360));
     m_sprite.setY(-153.7);
+
+    EXPECT_CALL(m_handler, onYChanged(207.08)).Times(1);
+    EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(false));
+    m_sprite.setY(207.08);
 }
 
 TEST_F(ISpriteHandlerTest, Size)
