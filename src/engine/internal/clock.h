@@ -19,6 +19,8 @@ class Clock : public IClock
         std::chrono::steady_clock::time_point currentSteadyTime() const override;
         std::chrono::system_clock::time_point currentSystemTime() const override;
 
+        void sleep(const std::chrono::milliseconds &time) const override;
+
     private:
         static std::shared_ptr<Clock> m_instance;
 };
