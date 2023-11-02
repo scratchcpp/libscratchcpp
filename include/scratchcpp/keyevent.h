@@ -10,6 +10,7 @@ namespace libscratchcpp
 
 class KeyEventPrivate;
 
+/*! \brief The KeyEvent class represents a Scratch key event. */
 class LIBSCRATCHCPP_EXPORT KeyEvent
 {
     public:
