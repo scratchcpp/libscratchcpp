@@ -15,6 +15,7 @@ namespace libscratchcpp
 {
 
 class Entity;
+class IClock;
 
 class Engine : public IEngine
 {
@@ -115,6 +116,8 @@ class Engine : public IEngine
 
         BlockSectionContainer *blockSectionContainer(const std::string &opcode) const;
         BlockSectionContainer *blockSectionContainer(IBlockSection *section) const;
+
+        IClock *m_clock = nullptr;
 
     private:
         void finalize();

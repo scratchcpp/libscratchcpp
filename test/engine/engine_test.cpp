@@ -10,10 +10,17 @@
 #include "../common.h"
 #include "testsection.h"
 #include "engine/internal/engine.h"
+#include "engine/internal/clock.h"
 
 using namespace libscratchcpp;
 
 // NOTE: resolveIds() and compile() are tested in load_project_test
+
+TEST(EngineTest, Clock)
+{
+    Engine engine;
+    ASSERT_EQ(engine.m_clock, Clock::instance().get());
+}
 
 TEST(EngineTest, Clear)
 {

@@ -17,18 +17,19 @@
 #include <scratchcpp/keyevent.h>
 #include <cassert>
 #include <iostream>
-#include <thread>
 
 #include "engine.h"
 #include "blocksectioncontainer.h"
 #include "timer.h"
+#include "clock.h"
 #include "../../blocks/standardblocks.h"
 
 using namespace libscratchcpp;
 
 Engine::Engine() :
     m_defaultTimer(std::make_unique<Timer>()),
-    m_timer(m_defaultTimer.get())
+    m_timer(m_defaultTimer.get()),
+    m_clock(Clock::instance().get())
 {
 }
 
@@ -354,7 +355,7 @@ void Engine::run()
     start();
 
     while (true) {
-        auto lastFrameTime = std::chrono::steady_clock::now();
+        auto lastFrameTime = m_clock->currentSteadyTime();
         m_skipFrame = false;
 
         // Execute the frame
@@ -363,13 +364,13 @@ void Engine::run()
             break;
 
         // Sleep until the time for the next frame
-        auto currentTime = std::chrono::steady_clock::now();
+        auto currentTime = m_clock->currentSteadyTime();
         auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastFrameTime);
         auto sleepTime = m_frameDuration - elapsedTime;
         bool timeOut = sleepTime <= std::chrono::milliseconds::zero();
 
         if (!timeOut && !m_skipFrame)
-            std::this_thread::sleep_for(sleepTime);
+            m_clock->sleep(sleepTime);
 
         if ((m_skipFrame && timeOut) || !m_skipFrame) {
             // TODO: Repaint here
