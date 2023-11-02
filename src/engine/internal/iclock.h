@@ -14,6 +14,8 @@ class IClock
 
         virtual std::chrono::steady_clock::time_point currentSteadyTime() const = 0;
         virtual std::chrono::system_clock::time_point currentSystemTime() const = 0;
+
+        virtual void sleep(const std::chrono::milliseconds &time) const = 0;
 };
 
 } // namespace libscratchcpp

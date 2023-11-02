@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <thread>
+
 #include "clock.h"
 
 using namespace libscratchcpp;
@@ -23,4 +25,9 @@ std::chrono::steady_clock::time_point Clock::currentSteadyTime() const
 std::chrono::system_clock::time_point Clock::currentSystemTime() const
 {
     return std::chrono::system_clock::now();
+}
+
+void Clock::sleep(const std::chrono::milliseconds &time) const
+{
+    std::this_thread::sleep_for(time);
 }

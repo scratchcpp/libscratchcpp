@@ -6,14 +6,24 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <timermock.h>
+#include <clockmock.h>
 
 #include "../common.h"
 #include "testsection.h"
 #include "engine/internal/engine.h"
+#include "engine/internal/clock.h"
 
 using namespace libscratchcpp;
 
+using ::testing::Return;
+
 // NOTE: resolveIds() and compile() are tested in load_project_test
+
+TEST(EngineTest, Clock)
+{
+    Engine engine;
+    ASSERT_EQ(engine.m_clock, Clock::instance().get());
+}
 
 TEST(EngineTest, Clear)
 {
@@ -59,6 +69,33 @@ TEST(EngineTest, Fps)
 
     engine.setFps(60.25);
     ASSERT_EQ(engine.fps(), 60.25);
+}
+
+TEST(EngineTest, FpsProject)
+{
+    Project p("2_frames.sb3");
+    ASSERT_TRUE(p.load());
+
+    ClockMock clock;
+    Engine *engine = dynamic_cast<Engine *>(p.engine().get());
+    engine->m_clock = &clock;
+
+    std::chrono::steady_clock::time_point time1(std::chrono::milliseconds(50));
+    std::chrono::steady_clock::time_point time2(std::chrono::milliseconds(75));
+    std::chrono::steady_clock::time_point time3(std::chrono::milliseconds(83));
+    std::chrono::steady_clock::time_point time4(std::chrono::milliseconds(116));
+    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time1)).WillOnce(Return(time2)).WillOnce(Return(time3)).WillOnce(Return(time4)).WillOnce(Return(time4));
+    EXPECT_CALL(clock, sleep(std::chrono::milliseconds(8)));
+    p.run();
+
+    engine->setFps(10);
+    std::chrono::steady_clock::time_point time5(std::chrono::milliseconds(100));
+    std::chrono::steady_clock::time_point time6(std::chrono::milliseconds(115));
+    std::chrono::steady_clock::time_point time7(std::chrono::milliseconds(200));
+    std::chrono::steady_clock::time_point time8(std::chrono::milliseconds(300));
+    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time5)).WillOnce(Return(time6)).WillOnce(Return(time7)).WillOnce(Return(time8)).WillOnce(Return(time8));
+    EXPECT_CALL(clock, sleep(std::chrono::milliseconds(85)));
+    p.run();
 }
 
 TEST(EngineTest, KeyState)
