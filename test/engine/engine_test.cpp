@@ -698,6 +698,22 @@ TEST(EngineTest, CloneLimit)
     ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 2 0 0");
 }*/
 
+// TODO: Uncomment this after fixing #305
+/*TEST(EngineTest, StopAll)
+{
+    Project p("stop_all.sb3");
+    ASSERT_TRUE(p.load());
+    p.run();
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    ASSERT_VAR(stage, "i");
+    ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 11);
+}*/
+
 TEST(EngineTest, NoCrashAfterStop)
 {
     // Regtest for #186
