@@ -673,6 +673,72 @@ TEST(EngineTest, CloneLimit)
     ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 2 0 0");
 }*/
 
+// TODO: Uncomment this after fixing #256 and #257
+/*TEST(EngineTest, BroadcastsProject)
+{
+    // TODO: Set "infinite" FPS (#254)
+    Project p("broadcasts.sb3");
+    ASSERT_TRUE(p.load());
+    p.run();
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    ASSERT_VAR(stage, "test1");
+    ASSERT_EQ(GET_VAR(stage, "test1")->value().toInt(), 4);
+    ASSERT_VAR(stage, "test2");
+    ASSERT_EQ(GET_VAR(stage, "test2")->value().toInt(), 14);
+    ASSERT_VAR(stage, "test3");
+    ASSERT_EQ(GET_VAR(stage, "test3")->value().toInt(), 10);
+    ASSERT_VAR(stage, "test4");
+    ASSERT_EQ(GET_VAR(stage, "test4")->value().toInt(), 10);
+    ASSERT_VAR(stage, "test5");
+    ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 2 0 0");
+}*/
+
+// TODO: Uncomment this after fixing #305
+/*TEST(EngineTest, StopAll)
+{
+    Project p("stop_all.sb3");
+    ASSERT_TRUE(p.load());
+    p.run();
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    ASSERT_VAR(stage, "i");
+    ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 11);
+}*/
+
+// TODO: Uncomment this after fixing #305
+/*TEST(EngineTest, StopOtherScriptsInSprite)
+{
+    Project p("stop_other_scripts_in_sprite.sb3");
+    ASSERT_TRUE(p.load());
+    p.run();
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    ASSERT_VAR(stage, "i");
+    ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 10);
+
+    ASSERT_VAR(stage, "j");
+    ASSERT_EQ(GET_VAR(stage, "j")->value().toInt(), 109);
+
+    ASSERT_VAR(stage, "k");
+    ASSERT_EQ(GET_VAR(stage, "k")->value().toInt(), 10);
+
+    ASSERT_VAR(stage, "l");
+    ASSERT_EQ(GET_VAR(stage, "l")->value().toInt(), 110);
+}*/
+
 TEST(EngineTest, NoCrashAfterStop)
 {
     // Regtest for #186
