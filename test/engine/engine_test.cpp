@@ -714,6 +714,31 @@ TEST(EngineTest, CloneLimit)
     ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 11);
 }*/
 
+// TODO: Uncomment this after fixing #305
+/*TEST(EngineTest, StopOtherScriptsInSprite)
+{
+    Project p("stop_other_scripts_in_sprite.sb3");
+    ASSERT_TRUE(p.load());
+    p.run();
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    ASSERT_VAR(stage, "i");
+    ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 10);
+
+    ASSERT_VAR(stage, "j");
+    ASSERT_EQ(GET_VAR(stage, "j")->value().toInt(), 109);
+
+    ASSERT_VAR(stage, "k");
+    ASSERT_EQ(GET_VAR(stage, "k")->value().toInt(), 10);
+
+    ASSERT_VAR(stage, "l");
+    ASSERT_EQ(GET_VAR(stage, "l")->value().toInt(), 110);
+}*/
+
 TEST(EngineTest, NoCrashAfterStop)
 {
     // Regtest for #186
