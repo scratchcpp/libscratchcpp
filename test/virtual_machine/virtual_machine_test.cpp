@@ -133,6 +133,35 @@ TEST(VirtualMachineTest, MinimalScript)
     ASSERT_EQ(vm.registerCount(), 0);
 }
 
+TEST(VirtualMachineTest, RegCountLimit)
+{
+    static unsigned int bytecode[20482] = { OP_START };
+
+    for (int i = 0; i < 10240; i++) {
+        bytecode[2 * i + 1] = OP_CONST;
+        bytecode[2 * i + 2] = 0;
+    }
+
+    bytecode[20481] = OP_HALT;
+
+    static Value constValues[] = { 1 };
+
+    VirtualMachine vm;
+    vm.setBytecode(bytecode);
+    vm.setConstValues(constValues);
+    vm.run();
+    ASSERT_EQ(vm.registerCount(), 10240);
+
+    for (int i = 1; i < 10240; i++)
+        bytecode[i] = OP_ADD;
+
+    bytecode[10240] = OP_HALT;
+    vm.setBytecode(bytecode);
+    vm.run();
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toInt(), 10240);
+}
+
 TEST(VirtualMachineTest, OP_CONST)
 {
     static unsigned int bytecode[] = { OP_START, OP_CONST, 0, OP_HALT };

@@ -66,6 +66,7 @@ struct VirtualMachinePrivate
         std::vector<List *> listsVector;
 
         Value **regs = nullptr;
+        std::vector<Value *> regsVector;
         size_t regCount = 0;
 
         static IRandomGenerator *rng;
