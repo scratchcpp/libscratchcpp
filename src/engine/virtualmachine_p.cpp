@@ -10,11 +10,16 @@
 #include "virtualmachine_p.h"
 #include "internal/randomgenerator.h"
 
-#define MAX_REG_COUNT 1024
-
 #define DISPATCH() goto *dispatch_table[*++pos]
 #define FREE_REGS(count) regCount -= count
-#define ADD_RET_VALUE(value) *regs[regCount++] = value
+#define ADD_RET_VALUE(value)                                                                                                                                                                           \
+    if (regCount + 1 >= regsVector.size()) {                                                                                                                                                           \
+        regsVector.reserve(regsVector.size() + 1024);                                                                                                                                                  \
+        for (size_t i = 0; i < 1024; i++)                                                                                                                                                              \
+            regsVector.push_back(new Value());                                                                                                                                                         \
+        regs = regsVector.data();                                                                                                                                                                      \
+    }                                                                                                                                                                                                  \
+    *regs[regCount++] = value
 #define REPLACE_RET_VALUE(value, offset) *regs[regCount - offset] = value
 #define GET_NEXT_ARG() constValues[*++pos]
 #define READ_REG(index, count) regs[regCount - count + index]
@@ -103,9 +108,10 @@ VirtualMachinePrivate::VirtualMachinePrivate(VirtualMachine *vm, Target *target,
     engine(engine),
     script(script)
 {
-    regs = new Value *[MAX_REG_COUNT];
-    for (int i = 0; i < MAX_REG_COUNT; i++)
-        regs[i] = new Value();
+    regsVector.reserve(1024);
+    for (int i = 0; i < 1024; i++)
+        regsVector.push_back(new Value());
+    regs = regsVector.data();
     loops.reserve(256);
     callTree.reserve(1024);
 
@@ -115,9 +121,8 @@ VirtualMachinePrivate::VirtualMachinePrivate(VirtualMachine *vm, Target *target,
 
 VirtualMachinePrivate::~VirtualMachinePrivate()
 {
-    for (int i = 0; i < MAX_REG_COUNT; i++)
-        delete regs[i];
-    delete regs;
+    for (int i = 0; i < regsVector.size(); i++)
+        delete regsVector[i];
 }
 
 unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
