@@ -11,6 +11,7 @@ namespace libscratchcpp
 {
 
 class Broadcast;
+class IGraphicsEffect;
 class CostumePrivate;
 
 /*! \brief The Costume class represents a Scratch costume. */
@@ -39,6 +40,8 @@ class LIBSCRATCHCPP_EXPORT Costume : public Asset
         void setMirrorHorizontally(bool mirror);
 
         Rgb **bitmap() const;
+
+        void setGraphicsEffect(IGraphicsEffect *effect, double value);
 
         Broadcast *broadcast();
 
