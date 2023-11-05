@@ -333,8 +333,13 @@ TEST_F(CostumeTest, BitmapWithGraphicsEffects)
     Costume costume("costume1", "a", "test");
 
     GraphicsEffectMock effect1, effect2;
-    costume.setGraphicsEffect(&effect1, 54.12);
-    costume.setGraphicsEffect(&effect2, -89.03);
+    costume.setGraphicsEffectValue(&effect1, 54.12);
+    ASSERT_EQ(costume.graphicsEffectValue(&effect1), 54.12);
+    ASSERT_EQ(costume.graphicsEffectValue(&effect2), 0);
+
+    costume.setGraphicsEffectValue(&effect2, -89.03);
+    ASSERT_EQ(costume.graphicsEffectValue(&effect1), 54.12);
+    ASSERT_EQ(costume.graphicsEffectValue(&effect2), -89.03);
 
     EXPECT_CALL(*m_imageFormat, width()).WillOnce(Return(4));
     EXPECT_CALL(*m_imageFormat, height()).WillOnce(Return(3));

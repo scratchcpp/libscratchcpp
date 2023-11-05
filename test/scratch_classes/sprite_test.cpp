@@ -9,6 +9,7 @@
 #include <enginemock.h>
 #include <imageformatfactorymock.h>
 #include <imageformatmock.h>
+#include <graphicseffectmock.h>
 
 #include "../common.h"
 
@@ -615,4 +616,36 @@ TEST(SpriteTest, BoundingRect)
     ASSERT_EQ(rect.bottom(), -9.5);
 
     ScratchConfiguration::removeImageFormat("test");
+}
+
+TEST(SpriteTest, GraphicsEffects)
+{
+    auto c1 = std::make_shared<Costume>("", "", "");
+    auto c2 = std::make_shared<Costume>("", "", "");
+
+    Sprite sprite;
+    sprite.addCostume(c1);
+    sprite.addCostume(c2);
+    sprite.setCurrentCostume(1);
+
+    GraphicsEffectMock effect1, effect2;
+    sprite.setGraphicsEffectValue(&effect1, 48.21);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 48.21);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect2), 0);
+    ASSERT_EQ(c1->graphicsEffectValue(&effect1), 48.21);
+    ASSERT_EQ(c1->graphicsEffectValue(&effect2), 0);
+
+    sprite.setCurrentCostume(2);
+    ASSERT_EQ(c1->graphicsEffectValue(&effect1), 48.21);
+    ASSERT_EQ(c1->graphicsEffectValue(&effect2), 0);
+
+    sprite.setGraphicsEffectValue(&effect2, -107.08);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 48.21);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect2), -107.08);
+    ASSERT_EQ(c2->graphicsEffectValue(&effect1), 48.21);
+    ASSERT_EQ(c2->graphicsEffectValue(&effect2), -107.08);
+
+    sprite.setCurrentCostume(1);
+    ASSERT_EQ(c1->graphicsEffectValue(&effect1), 48.21);
+    ASSERT_EQ(c1->graphicsEffectValue(&effect2), -107.08);
 }

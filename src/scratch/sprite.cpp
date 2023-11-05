@@ -212,6 +212,9 @@ void Sprite::setCurrentCostume(int newCostume)
     if (costume) {
         costume->setScale(impl->size / 100);
         costume->setMirrorHorizontally(impl->rotationStyle == RotationStyle::LeftRight);
+
+        for (const auto &[effect, value] : impl->graphicsEffects)
+            costume->setGraphicsEffectValue(effect, value);
     }
 
     Target::setCurrentCostume(newCostume);
@@ -307,6 +310,29 @@ Rect Sprite::boundingRect() const
     impl->getBoundingRect(&ret);
 
     return ret;
+}
+
+/*! Returns the value of the given graphics effect. */
+double Sprite::graphicsEffectValue(IGraphicsEffect *effect) const
+{
+    auto it = impl->graphicsEffects.find(effect);
+
+    if (it == impl->graphicsEffects.cend())
+        return 0;
+    else
+        return it->second;
+}
+
+/*! Sets the value of the given graphics effect. */
+void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
+{
+    impl->graphicsEffects[effect] = value;
+
+    // TODO: Make currentCostume() return the costume (not index)
+    auto costume = costumeAt(currentCostume() - 1);
+
+    if (costume)
+        costume->setGraphicsEffectValue(effect, value);
 }
 
 Target *Sprite::dataSource() const

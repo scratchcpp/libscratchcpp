@@ -107,8 +107,19 @@ Rgb **Costume::bitmap() const
     return impl->bitmap;
 }
 
-/*! Sets the value of the given graphics effect. */
-void Costume::setGraphicsEffect(IGraphicsEffect *effect, double value)
+/*! Returns the value of the given graphics effect. */
+double Costume::graphicsEffectValue(IGraphicsEffect *effect) const
+{
+    auto it = impl->graphicsEffects.find(effect);
+
+    if (it == impl->graphicsEffects.cend())
+        return 0;
+    else
+        return it->second;
+}
+
+/*! Sets the value of the given graphics effect (this is automatically set by the sprite). */
+void Costume::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 {
     auto it = impl->graphicsEffects.find(effect);
     bool update = ((it == impl->graphicsEffects.cend()) || (it->second != value));

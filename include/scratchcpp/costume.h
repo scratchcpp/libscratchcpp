@@ -41,7 +41,8 @@ class LIBSCRATCHCPP_EXPORT Costume : public Asset
 
         Rgb **bitmap() const;
 
-        void setGraphicsEffect(IGraphicsEffect *effect, double value);
+        double graphicsEffectValue(IGraphicsEffect *effect) const;
+        void setGraphicsEffectValue(IGraphicsEffect *effect, double value);
 
         Broadcast *broadcast();
 
