@@ -4,11 +4,12 @@
 
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/iimageformat.h>
+#include <unordered_map>
 
 namespace libscratchcpp
 {
 
-class IImageFormat;
+class IGraphicsEffect;
 
 struct CostumePrivate
 {
@@ -30,6 +31,7 @@ struct CostumePrivate
         double oldScale = 1;
         double scale = 1;
         bool mirrorHorizontally = false;
+        std::unordered_map<IGraphicsEffect *, double> graphicsEffects;
         Broadcast broadcast;
 };
 

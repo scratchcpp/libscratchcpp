@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/igraphicseffect.h>
+
 #include "costume_p.h"
 
 using namespace libscratchcpp;
@@ -37,15 +39,15 @@ void CostumePrivate::updateImage()
         oldHeight = scaledHeight;
     }
 
+    double actualScale = scale / bitmapResolution;
+
     for (unsigned int i = 0; i < scaledHeight; i++) {
-        for (unsigned int j = 0; j < scaledWidth; j++) {
-            Rgb color = image->colorAt(mirrorHorizontally ? (scaledWidth - 1 - j) : j, i, scale / bitmapResolution);
-
-            // TODO: Apply graphics effects here
-
-            bitmap[i][j] = color;
-        }
+        for (unsigned int j = 0; j < scaledWidth; j++)
+            bitmap[i][j] = image->colorAt(mirrorHorizontally ? (scaledWidth - 1 - j) : j, i, actualScale);
     }
+
+    for (const auto &[effect, value] : graphicsEffects)
+        effect->apply(bitmap, scaledWidth, scaledHeight, value);
 }
 
 void CostumePrivate::freeImage()

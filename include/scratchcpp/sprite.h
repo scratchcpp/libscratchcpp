@@ -9,6 +9,7 @@ namespace libscratchcpp
 
 class ISpriteHandler;
 class Rect;
+class IGraphicsEffect;
 class SpritePrivate;
 
 /*! \brief The Sprite class represents a Scratch sprite. */
@@ -64,6 +65,9 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
         void setRotationStyle(const char *newRotationStyle);
 
         Rect boundingRect() const;
+
+        double graphicsEffectValue(IGraphicsEffect *effect) const;
+        void setGraphicsEffectValue(IGraphicsEffect *effect, double value);
 
     private:
         Target *dataSource() const override;

@@ -1,5 +1,6 @@
 #include <scratchcpp/scratchconfiguration.h>
 #include <imageformatfactorymock.h>
+#include <graphicseffectmock.h>
 
 #include "../common.h"
 #include "imageformats/stub/imageformatstub.h"
@@ -79,4 +80,28 @@ TEST_F(ScratchConfigurationTest, ImageFormats)
 
     testing::Mock::AllowLeak(m_imageFormatMock1.get());
     testing::Mock::AllowLeak(m_imageFormatMock2.get());
+}
+
+TEST_F(ScratchConfigurationTest, GraphicsEffects)
+{
+    auto effect1 = std::make_shared<GraphicsEffectMock>();
+    auto effect2 = std::make_shared<GraphicsEffectMock>();
+
+    EXPECT_CALL(*effect1, name()).WillOnce(Return("effect1"));
+    EXPECT_CALL(*effect2, name()).WillOnce(Return("effect2"));
+    ScratchConfiguration::registerGraphicsEffect(effect1);
+    ScratchConfiguration::registerGraphicsEffect(effect2);
+    auto format1 = std::make_shared<ImageFormatStub>();
+    auto format2 = std::make_shared<ImageFormatStub>();
+
+    ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("effect1"), effect1.get());
+    ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("effect2"), effect2.get());
+    ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("effect3"), nullptr);
+
+    ScratchConfiguration::removeGraphicsEffect("effect2");
+    ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("effect1"), effect1.get());
+    ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("effect2"), nullptr);
+
+    ScratchConfiguration::removeGraphicsEffect("effect1");
+    ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("effect1"), nullptr);
 }

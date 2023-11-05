@@ -107,6 +107,32 @@ Rgb **Costume::bitmap() const
     return impl->bitmap;
 }
 
+/*! Returns the value of the given graphics effect. */
+double Costume::graphicsEffectValue(IGraphicsEffect *effect) const
+{
+    auto it = impl->graphicsEffects.find(effect);
+
+    if (it == impl->graphicsEffects.cend())
+        return 0;
+    else
+        return it->second;
+}
+
+/*! Sets the value of the given graphics effect (this is automatically set by the sprite). */
+void Costume::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
+{
+    auto it = impl->graphicsEffects.find(effect);
+    bool update = ((it == impl->graphicsEffects.cend()) || (it->second != value));
+
+    if (value == 0)
+        impl->graphicsEffects.erase(effect);
+    else
+        impl->graphicsEffects[effect] = value;
+
+    if (update)
+        impl->updateImage();
+}
+
 /*!
  * Returns the Broadcast linked with this costume.
  * \note This is used by the "switch backdrop to and wait" block.
