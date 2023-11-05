@@ -2,6 +2,7 @@
 
 #include <scratchcpp/scratchconfiguration.h>
 #include <scratchcpp/iimageformatfactory.h>
+#include <scratchcpp/igraphicseffect.h>
 #include <iostream>
 
 #include "scratchconfiguration_p.h"
@@ -48,6 +49,32 @@ std::shared_ptr<IImageFormat> ScratchConfiguration::createImageFormat(const std:
         return std::make_shared<ImageFormatStub>();
     } else
         return it->second->createInstance();
+}
+
+/*! Registers the given graphics effect. */
+void ScratchConfiguration::registerGraphicsEffect(std::shared_ptr<IGraphicsEffect> effect)
+{
+    if (!effect)
+        return;
+
+    impl->graphicsEffects[effect->name()] = effect;
+}
+
+/*! Removes the given graphics effect. */
+void ScratchConfiguration::removeGraphicsEffect(const std::string &name)
+{
+    impl->graphicsEffects.erase(name);
+}
+
+/*! Returns the graphics effect with the given name, or nullptr if it isn't registered. */
+IGraphicsEffect *ScratchConfiguration::getGraphicsEffect(const std::string &name)
+{
+    auto it = impl->graphicsEffects.find(name);
+
+    if (it == impl->graphicsEffects.cend())
+        return nullptr;
+    else
+        return it->second.get();
 }
 
 const std::vector<std::shared_ptr<IExtension>> ScratchConfiguration::getExtensions()

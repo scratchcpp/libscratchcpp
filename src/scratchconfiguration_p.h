@@ -14,6 +14,7 @@ namespace libscratchcpp
 
 class IExtension;
 class IImageFormatFactory;
+class IGraphicsEffect;
 
 struct ScratchConfigurationPrivate
 {
@@ -22,6 +23,7 @@ struct ScratchConfigurationPrivate
 
         std::vector<std::shared_ptr<IExtension>> extensions = { std::make_shared<StandardBlocks>() };
         std::unordered_map<std::string, std::shared_ptr<IImageFormatFactory>> imageFormats;
+        std::unordered_map<std::string, std::shared_ptr<IGraphicsEffect>> graphicsEffects;
 };
 
 } // namespace libscratchcpp
