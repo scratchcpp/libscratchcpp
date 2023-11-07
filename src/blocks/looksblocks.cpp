@@ -28,6 +28,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_hide", &compileHide);
     engine->addCompileFunction(this, "looks_changeeffectby", &compileChangeEffectBy);
     engine->addCompileFunction(this, "looks_seteffectto", &compileSetEffectTo);
+    engine->addCompileFunction(this, "looks_cleargraphiceffects", &compileClearGraphicEffects);
     engine->addCompileFunction(this, "looks_changesizeby", &compileChangeSizeBy);
     engine->addCompileFunction(this, "looks_setsizeto", &compileSetSizeTo);
     engine->addCompileFunction(this, "looks_size", &compileSize);
@@ -236,6 +237,11 @@ void LooksBlocks::compileSetEffectTo(Compiler *compiler)
 
             break;
     }
+}
+
+void LooksBlocks::compileClearGraphicEffects(Compiler *compiler)
+{
+    compiler->addFunctionCall(&clearGraphicEffects);
 }
 
 void LooksBlocks::compileChangeSizeBy(Compiler *compiler)
@@ -592,6 +598,16 @@ unsigned int LooksBlocks::setGhostEffectTo(VirtualMachine *vm)
         sprite->setGraphicsEffectValue(m_ghostEffect, vm->getInput(0, 1)->toDouble());
 
     return 1;
+}
+
+unsigned int LooksBlocks::clearGraphicEffects(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->clearGraphicsEffects();
+
+    return 0;
 }
 
 unsigned int LooksBlocks::changeSizeBy(VirtualMachine *vm)

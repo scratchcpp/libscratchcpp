@@ -108,6 +108,7 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_hide", &LooksBlocks::compileHide));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_changeeffectby", &LooksBlocks::compileChangeEffectBy));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_seteffectto", &LooksBlocks::compileSetEffectTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_cleargraphiceffects", &LooksBlocks::compileClearGraphicEffects));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_changesizeby", &LooksBlocks::compileChangeSizeBy));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_setsizeto", &LooksBlocks::compileSetSizeTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_size", &LooksBlocks::compileSize));
@@ -783,6 +784,43 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 0.01);*/
+}
+
+TEST_F(LooksBlocksTest, ClearGraphicEffects)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "looks_cleargraphiceffects");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::clearGraphicEffects)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    LooksBlocks::compileClearGraphicEffects(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(LooksBlocksTest, ClearGraphicEffectsImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::clearGraphicEffects };
+
+    Sprite sprite;
+    GraphicsEffectMock effect1, effect2;
+    sprite.setGraphicsEffectValue(&effect1, 48.21);
+    sprite.setGraphicsEffectValue(&effect2, -107.08);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect2), 0);
 }
 
 TEST_F(LooksBlocksTest, ChangeSizeBy)
