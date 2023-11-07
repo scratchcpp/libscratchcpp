@@ -69,6 +69,8 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
         double graphicsEffectValue(IGraphicsEffect *effect) const;
         void setGraphicsEffectValue(IGraphicsEffect *effect, double value);
 
+        void clearGraphicsEffects();
+
     private:
         Target *dataSource() const override;
         void setXY(double x, double y);
