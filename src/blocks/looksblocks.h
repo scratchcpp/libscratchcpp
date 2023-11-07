@@ -23,7 +23,8 @@ class LooksBlocks : public IBlockSection
             CHANGE,
             SIZE,
             COSTUME,
-            BACKDROP
+            BACKDROP,
+            VALUE
         };
 
         enum Fields
@@ -52,6 +53,7 @@ class LooksBlocks : public IBlockSection
         static void compileShow(Compiler *compiler);
         static void compileHide(Compiler *compiler);
         static void compileChangeEffectBy(Compiler *compiler);
+        static void compileSetEffectTo(Compiler *compiler);
         static void compileChangeSizeBy(Compiler *compiler);
         static void compileSetSizeTo(Compiler *compiler);
         static void compileSize(Compiler *compiler);
@@ -74,6 +76,15 @@ class LooksBlocks : public IBlockSection
         static unsigned int changeMosaicEffectBy(VirtualMachine *vm);
         static unsigned int changeBrightnessEffectBy(VirtualMachine *vm);
         static unsigned int changeGhostEffectBy(VirtualMachine *vm);
+
+        static unsigned int setEffectTo(VirtualMachine *vm);
+        static unsigned int setColorEffectTo(VirtualMachine *vm);
+        static unsigned int setFisheyeEffectTo(VirtualMachine *vm);
+        static unsigned int setWhirlEffectTo(VirtualMachine *vm);
+        static unsigned int setPixelateEffectTo(VirtualMachine *vm);
+        static unsigned int setMosaicEffectTo(VirtualMachine *vm);
+        static unsigned int setBrightnessEffectTo(VirtualMachine *vm);
+        static unsigned int setGhostEffectTo(VirtualMachine *vm);
 
         static unsigned int changeSizeBy(VirtualMachine *vm);
         static unsigned int setSizeTo(VirtualMachine *vm);
