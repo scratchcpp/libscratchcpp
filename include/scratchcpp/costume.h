@@ -44,6 +44,8 @@ class LIBSCRATCHCPP_EXPORT Costume : public Asset
         double graphicsEffectValue(IGraphicsEffect *effect) const;
         void setGraphicsEffectValue(IGraphicsEffect *effect, double value);
 
+        void clearGraphicsEffects();
+
         Broadcast *broadcast();
 
     protected:
