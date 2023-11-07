@@ -335,6 +335,18 @@ void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
         costume->setGraphicsEffectValue(effect, value);
 }
 
+/*! Sets the value of all graphics effects to 0 (clears them). */
+void Sprite::clearGraphicsEffects()
+{
+    impl->graphicsEffects.clear();
+
+    // TODO: Make currentCostume() return the costume (not index)
+    auto costume = costumeAt(currentCostume() - 1);
+
+    if (costume)
+        costume->clearGraphicsEffects();
+}
+
 Target *Sprite::dataSource() const
 {
     return impl->cloneRoot;

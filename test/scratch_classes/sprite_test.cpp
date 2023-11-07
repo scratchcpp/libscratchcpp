@@ -648,4 +648,10 @@ TEST(SpriteTest, GraphicsEffects)
     sprite.setCurrentCostume(1);
     ASSERT_EQ(c1->graphicsEffectValue(&effect1), 48.21);
     ASSERT_EQ(c1->graphicsEffectValue(&effect2), -107.08);
+
+    sprite.clearGraphicsEffects();
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect2), 0);
+    ASSERT_EQ(c1->graphicsEffectValue(&effect1), 0);
+    ASSERT_EQ(c1->graphicsEffectValue(&effect2), 0);
 }

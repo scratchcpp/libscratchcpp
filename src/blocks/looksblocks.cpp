@@ -7,6 +7,7 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/costume.h>
+#include <scratchcpp/scratchconfiguration.h>
 
 #include "looksblocks.h"
 #include "../engine/internal/randomgenerator.h"
@@ -25,6 +26,9 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     // Blocks
     engine->addCompileFunction(this, "looks_show", &compileShow);
     engine->addCompileFunction(this, "looks_hide", &compileHide);
+    engine->addCompileFunction(this, "looks_changeeffectby", &compileChangeEffectBy);
+    engine->addCompileFunction(this, "looks_seteffectto", &compileSetEffectTo);
+    engine->addCompileFunction(this, "looks_cleargraphiceffects", &compileClearGraphicEffects);
     engine->addCompileFunction(this, "looks_changesizeby", &compileChangeSizeBy);
     engine->addCompileFunction(this, "looks_setsizeto", &compileSetSizeTo);
     engine->addCompileFunction(this, "looks_size", &compileSize);
@@ -41,13 +45,22 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addInput(this, "SIZE", SIZE);
     engine->addInput(this, "COSTUME", COSTUME);
     engine->addInput(this, "BACKDROP", BACKDROP);
+    engine->addInput(this, "VALUE", VALUE);
 
     // Fields
     engine->addField(this, "NUMBER_NAME", NUMBER_NAME);
+    engine->addField(this, "EFFECT", EFFECT);
 
     // Field values
     engine->addFieldValue(this, "number", Number);
     engine->addFieldValue(this, "name", Name);
+    engine->addFieldValue(this, "COLOR", ColorEffect);
+    engine->addFieldValue(this, "FISHEYE", FisheyeEffect);
+    engine->addFieldValue(this, "WHIRL", WhirlEffect);
+    engine->addFieldValue(this, "PIXELATE", PixelateEffect);
+    engine->addFieldValue(this, "MOSAIC", MosaicEffect);
+    engine->addFieldValue(this, "BRIGHTNESS", BrightnessEffect);
+    engine->addFieldValue(this, "GHOST", GhostEffect);
 }
 
 void LooksBlocks::compileShow(Compiler *compiler)
@@ -58,6 +71,177 @@ void LooksBlocks::compileShow(Compiler *compiler)
 void LooksBlocks::compileHide(Compiler *compiler)
 {
     compiler->addFunctionCall(&hide);
+}
+
+void LooksBlocks::compileChangeEffectBy(Compiler *compiler)
+{
+    int option = compiler->field(EFFECT)->specialValueId();
+
+    switch (option) {
+        case ColorEffect:
+            if (!m_colorEffect)
+                m_colorEffect = ScratchConfiguration::getGraphicsEffect("color");
+
+            compiler->addInput(CHANGE);
+            compiler->addFunctionCall(&changeColorEffectBy);
+            break;
+
+        case FisheyeEffect:
+            if (!m_fisheyeEffect)
+                m_fisheyeEffect = ScratchConfiguration::getGraphicsEffect("fisheye");
+
+            compiler->addInput(CHANGE);
+            compiler->addFunctionCall(&changeFisheyeEffectBy);
+            break;
+
+        case WhirlEffect:
+            if (!m_whirlEffect)
+                m_whirlEffect = ScratchConfiguration::getGraphicsEffect("whirl");
+
+            compiler->addInput(CHANGE);
+            compiler->addFunctionCall(&changeWhirlEffectBy);
+            break;
+
+        case PixelateEffect:
+            if (!m_pixelateEffect)
+                m_pixelateEffect = ScratchConfiguration::getGraphicsEffect("pixelate");
+
+            compiler->addInput(CHANGE);
+            compiler->addFunctionCall(&changePixelateEffectBy);
+            break;
+
+        case MosaicEffect:
+            if (!m_mosaicEffect)
+                m_mosaicEffect = ScratchConfiguration::getGraphicsEffect("mosaic");
+
+            compiler->addInput(CHANGE);
+            compiler->addFunctionCall(&changeMosaicEffectBy);
+            break;
+
+        case BrightnessEffect:
+            if (!m_brightnessEffect)
+                m_brightnessEffect = ScratchConfiguration::getGraphicsEffect("brightness");
+
+            compiler->addInput(CHANGE);
+            compiler->addFunctionCall(&changeBrightnessEffectBy);
+            break;
+
+        case GhostEffect:
+            if (!m_ghostEffect)
+                m_ghostEffect = ScratchConfiguration::getGraphicsEffect("ghost");
+
+            compiler->addInput(CHANGE);
+            compiler->addFunctionCall(&changeGhostEffectBy);
+            break;
+
+        default:
+            IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect(compiler->field(EFFECT)->value().toString());
+
+            if (effect) {
+                auto it = std::find(m_customGraphicsEffects.begin(), m_customGraphicsEffects.end(), effect);
+                size_t index;
+
+                if (it == m_customGraphicsEffects.end()) {
+                    index = m_customGraphicsEffects.size();
+                    m_customGraphicsEffects.push_back(effect);
+                } else
+                    index = it - m_customGraphicsEffects.begin();
+
+                compiler->addConstValue(index);
+                compiler->addInput(CHANGE);
+                compiler->addFunctionCall(&changeEffectBy);
+            }
+
+            break;
+    }
+}
+
+void LooksBlocks::compileSetEffectTo(Compiler *compiler)
+{
+    int option = compiler->field(EFFECT)->specialValueId();
+
+    switch (option) {
+        case ColorEffect:
+            if (!m_colorEffect)
+                m_colorEffect = ScratchConfiguration::getGraphicsEffect("color");
+
+            compiler->addInput(CHANGE);
+            compiler->addFunctionCall(&setColorEffectTo);
+            break;
+
+        case FisheyeEffect:
+            if (!m_fisheyeEffect)
+                m_fisheyeEffect = ScratchConfiguration::getGraphicsEffect("fisheye");
+
+            compiler->addInput(CHANGE);
+            compiler->addFunctionCall(&setFisheyeEffectTo);
+            break;
+
+        case WhirlEffect:
+            if (!m_whirlEffect)
+                m_whirlEffect = ScratchConfiguration::getGraphicsEffect("whirl");
+
+            compiler->addInput(CHANGE);
+            compiler->addFunctionCall(&setWhirlEffectTo);
+            break;
+
+        case PixelateEffect:
+            if (!m_pixelateEffect)
+                m_pixelateEffect = ScratchConfiguration::getGraphicsEffect("pixelate");
+
+            compiler->addInput(CHANGE);
+            compiler->addFunctionCall(&setPixelateEffectTo);
+            break;
+
+        case MosaicEffect:
+            if (!m_mosaicEffect)
+                m_mosaicEffect = ScratchConfiguration::getGraphicsEffect("mosaic");
+
+            compiler->addInput(CHANGE);
+            compiler->addFunctionCall(&setMosaicEffectTo);
+            break;
+
+        case BrightnessEffect:
+            if (!m_brightnessEffect)
+                m_brightnessEffect = ScratchConfiguration::getGraphicsEffect("brightness");
+
+            compiler->addInput(CHANGE);
+            compiler->addFunctionCall(&setBrightnessEffectTo);
+            break;
+
+        case GhostEffect:
+            if (!m_ghostEffect)
+                m_ghostEffect = ScratchConfiguration::getGraphicsEffect("ghost");
+
+            compiler->addInput(CHANGE);
+            compiler->addFunctionCall(&setGhostEffectTo);
+            break;
+
+        default:
+            IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect(compiler->field(EFFECT)->value().toString());
+
+            if (effect) {
+                auto it = std::find(m_customGraphicsEffects.begin(), m_customGraphicsEffects.end(), effect);
+                size_t index;
+
+                if (it == m_customGraphicsEffects.end()) {
+                    index = m_customGraphicsEffects.size();
+                    m_customGraphicsEffects.push_back(effect);
+                } else
+                    index = it - m_customGraphicsEffects.begin();
+
+                compiler->addConstValue(index);
+                compiler->addInput(CHANGE);
+                compiler->addFunctionCall(&setEffectTo);
+            }
+
+            break;
+    }
+}
+
+void LooksBlocks::compileClearGraphicEffects(Compiler *compiler)
+{
+    compiler->addFunctionCall(&clearGraphicEffects);
 }
 
 void LooksBlocks::compileChangeSizeBy(Compiler *compiler)
@@ -250,6 +434,178 @@ unsigned int LooksBlocks::hide(VirtualMachine *vm)
 
     if (sprite)
         sprite->setVisible(false);
+
+    return 0;
+}
+
+unsigned int LooksBlocks::changeEffectBy(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite) {
+        IGraphicsEffect *effect = m_customGraphicsEffects[vm->getInput(0, 2)->toLong()];
+        sprite->setGraphicsEffectValue(effect, sprite->graphicsEffectValue(effect) + vm->getInput(1, 2)->toDouble());
+    }
+
+    return 2;
+}
+
+unsigned int LooksBlocks::changeColorEffectBy(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_colorEffect, sprite->graphicsEffectValue(m_colorEffect) + vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::changeFisheyeEffectBy(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_fisheyeEffect, sprite->graphicsEffectValue(m_fisheyeEffect) + vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::changeWhirlEffectBy(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_whirlEffect, sprite->graphicsEffectValue(m_whirlEffect) + vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::changePixelateEffectBy(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_pixelateEffect, sprite->graphicsEffectValue(m_pixelateEffect) + vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::changeMosaicEffectBy(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_mosaicEffect, sprite->graphicsEffectValue(m_mosaicEffect) + vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::changeBrightnessEffectBy(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_brightnessEffect, sprite->graphicsEffectValue(m_brightnessEffect) + vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::changeGhostEffectBy(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_ghostEffect, sprite->graphicsEffectValue(m_ghostEffect) + vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::setEffectTo(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_customGraphicsEffects[vm->getInput(0, 2)->toLong()], vm->getInput(1, 2)->toDouble());
+
+    return 2;
+}
+
+unsigned int LooksBlocks::setColorEffectTo(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_colorEffect, vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::setFisheyeEffectTo(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_fisheyeEffect, vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::setWhirlEffectTo(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_whirlEffect, vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::setPixelateEffectTo(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_pixelateEffect, vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::setMosaicEffectTo(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_mosaicEffect, vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::setBrightnessEffectTo(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_brightnessEffect, vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::setGhostEffectTo(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->setGraphicsEffectValue(m_ghostEffect, vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::clearGraphicEffects(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        sprite->clearGraphicsEffects();
 
     return 0;
 }

@@ -5,8 +5,10 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/costume.h>
+#include <scratchcpp/scratchconfiguration.h>
 #include <enginemock.h>
 #include <randomgeneratormock.h>
+#include <graphicseffectmock.h>
 
 #include "../common.h"
 #include "blocks/looksblocks.h"
@@ -104,6 +106,9 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_show", &LooksBlocks::compileShow));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_hide", &LooksBlocks::compileHide));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_changeeffectby", &LooksBlocks::compileChangeEffectBy));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_seteffectto", &LooksBlocks::compileSetEffectTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_cleargraphiceffects", &LooksBlocks::compileClearGraphicEffects));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_changesizeby", &LooksBlocks::compileChangeSizeBy));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_setsizeto", &LooksBlocks::compileSetSizeTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_size", &LooksBlocks::compileSize));
@@ -120,13 +125,22 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SIZE", LooksBlocks::SIZE));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "COSTUME", LooksBlocks::COSTUME));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "BACKDROP", LooksBlocks::BACKDROP));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VALUE", LooksBlocks::VALUE));
 
     // Fields
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "NUMBER_NAME", LooksBlocks::NUMBER_NAME));
+    EXPECT_CALL(m_engineMock, addField(m_section.get(), "EFFECT", LooksBlocks::EFFECT));
 
     // Field values
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "number", LooksBlocks::Number));
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "name", LooksBlocks::Name));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "COLOR", LooksBlocks::ColorEffect));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "FISHEYE", LooksBlocks::FisheyeEffect));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "WHIRL", LooksBlocks::WhirlEffect));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "PIXELATE", LooksBlocks::PixelateEffect));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "MOSAIC", LooksBlocks::MosaicEffect));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "BRIGHTNESS", LooksBlocks::BrightnessEffect));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "GHOST", LooksBlocks::GhostEffect));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -209,6 +223,604 @@ TEST_F(LooksBlocksTest, HideImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_FALSE(sprite.visible());
+}
+
+TEST_F(LooksBlocksTest, ChangeEffectBy)
+{
+    Compiler compiler(&m_engineMock);
+
+    // change [custom1] effect by 12.5
+    auto block1 = std::make_shared<Block>("a", "looks_changeeffectby");
+    addDropdownField(block1, "EFFECT", LooksBlocks::EFFECT, "custom1", static_cast<LooksBlocks::FieldValues>(-1));
+    addValueInput(block1, "CHANGE", LooksBlocks::CHANGE, 12.5);
+
+    // change [custom2] effect by -78.15
+    auto block2 = std::make_shared<Block>("b", "looks_changeeffectby");
+    addDropdownField(block2, "EFFECT", LooksBlocks::EFFECT, "custom2", static_cast<LooksBlocks::FieldValues>(-1));
+    addValueInput(block2, "CHANGE", LooksBlocks::CHANGE, -78.15);
+
+    // change [color] effect by 154.152
+    auto block3 = std::make_shared<Block>("c", "looks_changeeffectby");
+    addDropdownField(block3, "EFFECT", LooksBlocks::EFFECT, "color", LooksBlocks::ColorEffect);
+    addValueInput(block3, "CHANGE", LooksBlocks::CHANGE, 154.152);
+
+    // change [fisheye] effect by -124.054
+    auto block4 = std::make_shared<Block>("d", "looks_changeeffectby");
+    addDropdownField(block4, "EFFECT", LooksBlocks::EFFECT, "fisheye", LooksBlocks::FisheyeEffect);
+    addValueInput(block4, "CHANGE", LooksBlocks::CHANGE, -124.054);
+
+    // change [whirl] effect by 45.858
+    auto block5 = std::make_shared<Block>("e", "looks_changeeffectby");
+    addDropdownField(block5, "EFFECT", LooksBlocks::EFFECT, "whirl", LooksBlocks::WhirlEffect);
+    addValueInput(block5, "CHANGE", LooksBlocks::CHANGE, 45.858);
+
+    // change [pixelate] effect by -0.15
+    auto block6 = std::make_shared<Block>("f", "looks_changeeffectby");
+    addDropdownField(block6, "EFFECT", LooksBlocks::EFFECT, "pixelate", LooksBlocks::PixelateEffect);
+    addValueInput(block6, "CHANGE", LooksBlocks::CHANGE, -0.15);
+
+    // change [mosaic] effect by 0.84
+    auto block7 = std::make_shared<Block>("g", "looks_changeeffectby");
+    addDropdownField(block7, "EFFECT", LooksBlocks::EFFECT, "mosaic", LooksBlocks::MosaicEffect);
+    addValueInput(block7, "CHANGE", LooksBlocks::CHANGE, 0.84);
+
+    // change [brightness] effect by 40.87
+    auto block8 = std::make_shared<Block>("h", "looks_changeeffectby");
+    addDropdownField(block8, "EFFECT", LooksBlocks::EFFECT, "brightness", LooksBlocks::BrightnessEffect);
+    addValueInput(block8, "CHANGE", LooksBlocks::CHANGE, 40.87);
+
+    // change [ghost] effect by 50.04
+    auto block9 = std::make_shared<Block>("i", "looks_changeeffectby");
+    addDropdownField(block9, "EFFECT", LooksBlocks::EFFECT, "ghost", LooksBlocks::GhostEffect);
+    addValueInput(block9, "CHANGE", LooksBlocks::CHANGE, 50.04);
+
+    auto effect1 = std::make_shared<GraphicsEffectMock>();
+    auto effect2 = std::make_shared<GraphicsEffectMock>();
+    EXPECT_CALL(*effect1, name()).WillOnce(Return("custom1"));
+    ScratchConfiguration::registerGraphicsEffect(effect1);
+    EXPECT_CALL(*effect2, name()).WillOnce(Return("custom2"));
+    ScratchConfiguration::registerGraphicsEffect(effect2);
+
+    compiler.init();
+    LooksBlocks::m_customGraphicsEffects.clear();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::changeEffectBy)).Times(3).WillRepeatedly(Return(0));
+    compiler.setBlock(block1);
+    LooksBlocks::compileChangeEffectBy(&compiler);
+    ASSERT_EQ(LooksBlocks::m_customGraphicsEffects.at(0), effect1.get());
+
+    compiler.setBlock(block1);
+    LooksBlocks::compileChangeEffectBy(&compiler);
+    ASSERT_EQ(LooksBlocks::m_customGraphicsEffects.at(0), effect1.get());
+
+    compiler.setBlock(block2);
+    LooksBlocks::compileChangeEffectBy(&compiler);
+    ASSERT_EQ(LooksBlocks::m_customGraphicsEffects.at(0), effect1.get());
+    ASSERT_EQ(LooksBlocks::m_customGraphicsEffects.at(1), effect2.get());
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::changeColorEffectBy)).WillOnce(Return(1));
+    compiler.setBlock(block3);
+    LooksBlocks::compileChangeEffectBy(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::changeFisheyeEffectBy)).WillOnce(Return(2));
+    compiler.setBlock(block4);
+    LooksBlocks::compileChangeEffectBy(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::changeWhirlEffectBy)).WillOnce(Return(3));
+    compiler.setBlock(block5);
+    LooksBlocks::compileChangeEffectBy(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::changePixelateEffectBy)).WillOnce(Return(4));
+    compiler.setBlock(block6);
+    LooksBlocks::compileChangeEffectBy(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::changeMosaicEffectBy)).WillOnce(Return(5));
+    compiler.setBlock(block7);
+    LooksBlocks::compileChangeEffectBy(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::changeBrightnessEffectBy)).WillOnce(Return(6));
+    compiler.setBlock(block8);
+    LooksBlocks::compileChangeEffectBy(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::changeGhostEffectBy)).WillOnce(Return(7));
+    compiler.setBlock(block9);
+    LooksBlocks::compileChangeEffectBy(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(LooksBlocks::m_customGraphicsEffects.at(0), effect1.get());
+    ASSERT_EQ(LooksBlocks::m_customGraphicsEffects.at(1), effect2.get());
+
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>(
+            { vm::OP_START,
+              vm::OP_CONST,
+              0,
+              vm::OP_CONST,
+              1,
+              vm::OP_EXEC,
+              0,
+              vm::OP_CONST,
+              2,
+              vm::OP_CONST,
+              1,
+              vm::OP_EXEC,
+              0,
+              vm::OP_CONST,
+              3,
+              vm::OP_CONST,
+              4,
+              vm::OP_EXEC,
+              0,
+              vm::OP_CONST,
+              5,
+              vm::OP_EXEC,
+              1,
+              vm::OP_CONST,
+              6,
+              vm::OP_EXEC,
+              2,
+              vm::OP_CONST,
+              7,
+              vm::OP_EXEC,
+              3,
+              vm::OP_CONST,
+              8,
+              vm::OP_EXEC,
+              4,
+              vm::OP_CONST,
+              9,
+              vm::OP_EXEC,
+              5,
+              vm::OP_CONST,
+              10,
+              vm::OP_EXEC,
+              6,
+              vm::OP_CONST,
+              11,
+              vm::OP_EXEC,
+              7,
+              vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 12.5, 0, 1, -78.15, 154.152, -124.054, 45.858, -0.15, 0.84, 40.87, 50.04 }));
+
+    ScratchConfiguration::removeGraphicsEffect("custom1");
+    ScratchConfiguration::removeGraphicsEffect("custom2");
+}
+
+static void initEffects()
+{
+    LooksBlocks::m_colorEffect = ScratchConfiguration::getGraphicsEffect("color");
+    LooksBlocks::m_fisheyeEffect = ScratchConfiguration::getGraphicsEffect("fisheye");
+    LooksBlocks::m_whirlEffect = ScratchConfiguration::getGraphicsEffect("whirl");
+    LooksBlocks::m_pixelateEffect = ScratchConfiguration::getGraphicsEffect("pixelate");
+    LooksBlocks::m_mosaicEffect = ScratchConfiguration::getGraphicsEffect("mosaic");
+    LooksBlocks::m_brightnessEffect = ScratchConfiguration::getGraphicsEffect("brightness");
+    LooksBlocks::m_ghostEffect = ScratchConfiguration::getGraphicsEffect("ghost");
+}
+
+TEST_F(LooksBlocksTest, ChangeEffectByImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 3, vm::OP_HALT };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 4, vm::OP_HALT };
+    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 8, vm::OP_EXEC, 5, vm::OP_HALT };
+    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 9, vm::OP_EXEC, 6, vm::OP_HALT };
+    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_CONST, 10, vm::OP_EXEC, 7, vm::OP_HALT };
+    static BlockFunc functions[] = {
+        &LooksBlocks::changeEffectBy,         &LooksBlocks::changeColorEffectBy,  &LooksBlocks::changeFisheyeEffectBy,    &LooksBlocks::changeWhirlEffectBy,
+        &LooksBlocks::changePixelateEffectBy, &LooksBlocks::changeMosaicEffectBy, &LooksBlocks::changeBrightnessEffectBy, &LooksBlocks::changeGhostEffectBy
+    };
+    static Value constValues[] = { 0, 55.15, 1, -40.54, 1.2, 2.3, -3.4, -4.5, 0.5, -8.54, 0.01 };
+
+    GraphicsEffectMock effect1, effect2;
+
+    Sprite sprite;
+    sprite.setGraphicsEffectValue(&effect1, 12.5);
+    sprite.setGraphicsEffectValue(&effect2, -100.48);
+
+    // custom1
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    LooksBlocks::m_customGraphicsEffects.clear();
+    LooksBlocks::m_customGraphicsEffects.push_back(&effect1);
+    vm.setBytecode(bytecode1);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 67.65);
+
+    // custom2
+    LooksBlocks::m_customGraphicsEffects.push_back(&effect2);
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect2), -141.02);
+
+    // Initialize graphics effects
+    initEffects();
+    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("color"), 12.4);
+    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye"), -8.45);
+    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("whirl"), 50.15);
+    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("pixelate"), -45.21);
+    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("mosaic"), 0.2);
+    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness"), -0.01);
+    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost"), 45.78);
+
+    // TODO: Uncomment commented lines (#283, #284, #285, #286, #287, #288, #289)
+    // color
+    /*vm.reset();
+    vm.setBytecode(bytecode3);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("color")), 13.6);
+
+    // fisheye
+    vm.reset();
+    vm.setBytecode(bytecode4);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye")), -6.15);
+
+    // whirl
+    vm.reset();
+    vm.setBytecode(bytecode5);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("whirl")), 46.75);
+
+    // pixelate
+    vm.reset();
+    vm.setBytecode(bytecode6);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("pixelate")), -49.71);
+
+    // mosaic
+    vm.reset();
+    vm.setBytecode(bytecode7);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("mosaic")), 0.7);
+
+    // brightness
+    vm.reset();
+    vm.setBytecode(bytecode8);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness")), -8.55);
+
+    // ghost
+    vm.reset();
+    vm.setBytecode(bytecode9);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 45.79);*/
+}
+
+TEST_F(LooksBlocksTest, SetEffectTo)
+{
+    Compiler compiler(&m_engineMock);
+
+    // set [custom1] effect to 12.5
+    auto block1 = std::make_shared<Block>("a", "looks_seteffectto");
+    addDropdownField(block1, "EFFECT", LooksBlocks::EFFECT, "custom1", static_cast<LooksBlocks::FieldValues>(-1));
+    addValueInput(block1, "CHANGE", LooksBlocks::CHANGE, 12.5);
+
+    // set [custom2] effect to -78.15
+    auto block2 = std::make_shared<Block>("b", "looks_seteffectto");
+    addDropdownField(block2, "EFFECT", LooksBlocks::EFFECT, "custom2", static_cast<LooksBlocks::FieldValues>(-1));
+    addValueInput(block2, "CHANGE", LooksBlocks::CHANGE, -78.15);
+
+    // set [color] effect to 154.152
+    auto block3 = std::make_shared<Block>("c", "looks_seteffectto");
+    addDropdownField(block3, "EFFECT", LooksBlocks::EFFECT, "color", LooksBlocks::ColorEffect);
+    addValueInput(block3, "CHANGE", LooksBlocks::CHANGE, 154.152);
+
+    // set [fisheye] effect to -124.054
+    auto block4 = std::make_shared<Block>("d", "looks_seteffectto");
+    addDropdownField(block4, "EFFECT", LooksBlocks::EFFECT, "fisheye", LooksBlocks::FisheyeEffect);
+    addValueInput(block4, "CHANGE", LooksBlocks::CHANGE, -124.054);
+
+    // set [whirl] effect to 45.858
+    auto block5 = std::make_shared<Block>("e", "looks_seteffectto");
+    addDropdownField(block5, "EFFECT", LooksBlocks::EFFECT, "whirl", LooksBlocks::WhirlEffect);
+    addValueInput(block5, "CHANGE", LooksBlocks::CHANGE, 45.858);
+
+    // set [pixelate] effect to -0.15
+    auto block6 = std::make_shared<Block>("f", "looks_seteffectto");
+    addDropdownField(block6, "EFFECT", LooksBlocks::EFFECT, "pixelate", LooksBlocks::PixelateEffect);
+    addValueInput(block6, "CHANGE", LooksBlocks::CHANGE, -0.15);
+
+    // set [mosaic] effect to 0.84
+    auto block7 = std::make_shared<Block>("g", "looks_seteffectto");
+    addDropdownField(block7, "EFFECT", LooksBlocks::EFFECT, "mosaic", LooksBlocks::MosaicEffect);
+    addValueInput(block7, "CHANGE", LooksBlocks::CHANGE, 0.84);
+
+    // set [brightness] effect to 40.87
+    auto block8 = std::make_shared<Block>("h", "looks_seteffectto");
+    addDropdownField(block8, "EFFECT", LooksBlocks::EFFECT, "brightness", LooksBlocks::BrightnessEffect);
+    addValueInput(block8, "CHANGE", LooksBlocks::CHANGE, 40.87);
+
+    // set [ghost] effect to 50.04
+    auto block9 = std::make_shared<Block>("i", "looks_seteffectto");
+    addDropdownField(block9, "EFFECT", LooksBlocks::EFFECT, "ghost", LooksBlocks::GhostEffect);
+    addValueInput(block9, "CHANGE", LooksBlocks::CHANGE, 50.04);
+
+    auto effect1 = std::make_shared<GraphicsEffectMock>();
+    auto effect2 = std::make_shared<GraphicsEffectMock>();
+    EXPECT_CALL(*effect1, name()).WillOnce(Return("custom1"));
+    ScratchConfiguration::registerGraphicsEffect(effect1);
+    EXPECT_CALL(*effect2, name()).WillOnce(Return("custom2"));
+    ScratchConfiguration::registerGraphicsEffect(effect2);
+
+    compiler.init();
+    LooksBlocks::m_customGraphicsEffects.clear();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::setEffectTo)).Times(3).WillRepeatedly(Return(0));
+    compiler.setBlock(block1);
+    LooksBlocks::compileSetEffectTo(&compiler);
+    ASSERT_EQ(LooksBlocks::m_customGraphicsEffects.at(0), effect1.get());
+
+    compiler.setBlock(block1);
+    LooksBlocks::compileSetEffectTo(&compiler);
+    ASSERT_EQ(LooksBlocks::m_customGraphicsEffects.at(0), effect1.get());
+
+    compiler.setBlock(block2);
+    LooksBlocks::compileSetEffectTo(&compiler);
+    ASSERT_EQ(LooksBlocks::m_customGraphicsEffects.at(0), effect1.get());
+    ASSERT_EQ(LooksBlocks::m_customGraphicsEffects.at(1), effect2.get());
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::setColorEffectTo)).WillOnce(Return(1));
+    compiler.setBlock(block3);
+    LooksBlocks::compileSetEffectTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::setFisheyeEffectTo)).WillOnce(Return(2));
+    compiler.setBlock(block4);
+    LooksBlocks::compileSetEffectTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::setWhirlEffectTo)).WillOnce(Return(3));
+    compiler.setBlock(block5);
+    LooksBlocks::compileSetEffectTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::setPixelateEffectTo)).WillOnce(Return(4));
+    compiler.setBlock(block6);
+    LooksBlocks::compileSetEffectTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::setMosaicEffectTo)).WillOnce(Return(5));
+    compiler.setBlock(block7);
+    LooksBlocks::compileSetEffectTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::setBrightnessEffectTo)).WillOnce(Return(6));
+    compiler.setBlock(block8);
+    LooksBlocks::compileSetEffectTo(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::setGhostEffectTo)).WillOnce(Return(7));
+    compiler.setBlock(block9);
+    LooksBlocks::compileSetEffectTo(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(LooksBlocks::m_customGraphicsEffects.at(0), effect1.get());
+    ASSERT_EQ(LooksBlocks::m_customGraphicsEffects.at(1), effect2.get());
+
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>(
+            { vm::OP_START,
+              vm::OP_CONST,
+              0,
+              vm::OP_CONST,
+              1,
+              vm::OP_EXEC,
+              0,
+              vm::OP_CONST,
+              2,
+              vm::OP_CONST,
+              1,
+              vm::OP_EXEC,
+              0,
+              vm::OP_CONST,
+              3,
+              vm::OP_CONST,
+              4,
+              vm::OP_EXEC,
+              0,
+              vm::OP_CONST,
+              5,
+              vm::OP_EXEC,
+              1,
+              vm::OP_CONST,
+              6,
+              vm::OP_EXEC,
+              2,
+              vm::OP_CONST,
+              7,
+              vm::OP_EXEC,
+              3,
+              vm::OP_CONST,
+              8,
+              vm::OP_EXEC,
+              4,
+              vm::OP_CONST,
+              9,
+              vm::OP_EXEC,
+              5,
+              vm::OP_CONST,
+              10,
+              vm::OP_EXEC,
+              6,
+              vm::OP_CONST,
+              11,
+              vm::OP_EXEC,
+              7,
+              vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 12.5, 0, 1, -78.15, 154.152, -124.054, 45.858, -0.15, 0.84, 40.87, 50.04 }));
+
+    ScratchConfiguration::removeGraphicsEffect("custom1");
+    ScratchConfiguration::removeGraphicsEffect("custom2");
+}
+
+TEST_F(LooksBlocksTest, SetEffectToImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 3, vm::OP_HALT };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 4, vm::OP_HALT };
+    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 8, vm::OP_EXEC, 5, vm::OP_HALT };
+    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 9, vm::OP_EXEC, 6, vm::OP_HALT };
+    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_CONST, 10, vm::OP_EXEC, 7, vm::OP_HALT };
+    static BlockFunc functions[] = {
+        &LooksBlocks::setEffectTo,         &LooksBlocks::setColorEffectTo,  &LooksBlocks::setFisheyeEffectTo,    &LooksBlocks::setWhirlEffectTo,
+        &LooksBlocks::setPixelateEffectTo, &LooksBlocks::setMosaicEffectTo, &LooksBlocks::setBrightnessEffectTo, &LooksBlocks::setGhostEffectTo
+    };
+    static Value constValues[] = { 0, 55.15, 1, -40.54, 1.2, 2.3, -3.4, -4.5, 0.5, -8.54, 0.01 };
+
+    GraphicsEffectMock effect1, effect2;
+
+    Sprite sprite;
+    sprite.setGraphicsEffectValue(&effect1, 12.5);
+    sprite.setGraphicsEffectValue(&effect2, -100.48);
+
+    // custom1
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    LooksBlocks::m_customGraphicsEffects.clear();
+    LooksBlocks::m_customGraphicsEffects.push_back(&effect1);
+    vm.setBytecode(bytecode1);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 55.15);
+
+    // custom2
+    LooksBlocks::m_customGraphicsEffects.push_back(&effect2);
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect2), -40.54);
+
+    // Initialize graphics effects
+    initEffects();
+    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("color"), 12.4);
+    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye"), -8.45);
+    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("whirl"), 50.15);
+    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("pixelate"), -45.21);
+    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("mosaic"), 0.2);
+    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness"), -0.01);
+    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost"), 45.78);
+
+    // TODO: Uncomment commented lines (#283, #284, #285, #286, #287, #288, #289)
+    // color
+    /*vm.reset();
+    vm.setBytecode(bytecode3);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("color")), 1.2);
+
+    // fisheye
+    vm.reset();
+    vm.setBytecode(bytecode4);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye")), 2.3);
+
+    // whirl
+    vm.reset();
+    vm.setBytecode(bytecode5);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("whirl")), -3.4);
+
+    // pixelate
+    vm.reset();
+    vm.setBytecode(bytecode6);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("pixelate")), -4.5);
+
+    // mosaic
+    vm.reset();
+    vm.setBytecode(bytecode7);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("mosaic")), 0.5);
+
+    // brightness
+    vm.reset();
+    vm.setBytecode(bytecode8);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness")), -8.54);
+
+    // ghost
+    vm.reset();
+    vm.setBytecode(bytecode9);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 0.01);*/
+}
+
+TEST_F(LooksBlocksTest, ClearGraphicEffects)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "looks_cleargraphiceffects");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::clearGraphicEffects)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    LooksBlocks::compileClearGraphicEffects(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(LooksBlocksTest, ClearGraphicEffectsImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::clearGraphicEffects };
+
+    Sprite sprite;
+    GraphicsEffectMock effect1, effect2;
+    sprite.setGraphicsEffectValue(&effect1, 48.21);
+    sprite.setGraphicsEffectValue(&effect2, -107.08);
+
+    VirtualMachine vm(&sprite, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect2), 0);
 }
 
 TEST_F(LooksBlocksTest, ChangeSizeBy)

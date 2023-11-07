@@ -3,6 +3,7 @@
 #pragma once
 
 #include <scratchcpp/iblocksection.h>
+#include <vector>
 
 namespace libscratchcpp
 {
@@ -10,6 +11,7 @@ namespace libscratchcpp
 class Target;
 class Stage;
 class Value;
+class IGraphicsEffect;
 class IRandomGenerator;
 
 /*! \brief The LooksBlocks class contains the implementation of looks blocks. */
@@ -21,18 +23,27 @@ class LooksBlocks : public IBlockSection
             CHANGE,
             SIZE,
             COSTUME,
-            BACKDROP
+            BACKDROP,
+            VALUE
         };
 
         enum Fields
         {
-            NUMBER_NAME
+            NUMBER_NAME,
+            EFFECT
         };
 
         enum FieldValues
         {
             Number,
-            Name
+            Name,
+            ColorEffect,
+            FisheyeEffect,
+            WhirlEffect,
+            PixelateEffect,
+            MosaicEffect,
+            BrightnessEffect,
+            GhostEffect
         };
 
         std::string name() const override;
@@ -41,6 +52,9 @@ class LooksBlocks : public IBlockSection
 
         static void compileShow(Compiler *compiler);
         static void compileHide(Compiler *compiler);
+        static void compileChangeEffectBy(Compiler *compiler);
+        static void compileSetEffectTo(Compiler *compiler);
+        static void compileClearGraphicEffects(Compiler *compiler);
         static void compileChangeSizeBy(Compiler *compiler);
         static void compileSetSizeTo(Compiler *compiler);
         static void compileSize(Compiler *compiler);
@@ -54,6 +68,26 @@ class LooksBlocks : public IBlockSection
 
         static unsigned int show(VirtualMachine *vm);
         static unsigned int hide(VirtualMachine *vm);
+
+        static unsigned int changeEffectBy(VirtualMachine *vm);
+        static unsigned int changeColorEffectBy(VirtualMachine *vm);
+        static unsigned int changeFisheyeEffectBy(VirtualMachine *vm);
+        static unsigned int changeWhirlEffectBy(VirtualMachine *vm);
+        static unsigned int changePixelateEffectBy(VirtualMachine *vm);
+        static unsigned int changeMosaicEffectBy(VirtualMachine *vm);
+        static unsigned int changeBrightnessEffectBy(VirtualMachine *vm);
+        static unsigned int changeGhostEffectBy(VirtualMachine *vm);
+
+        static unsigned int setEffectTo(VirtualMachine *vm);
+        static unsigned int setColorEffectTo(VirtualMachine *vm);
+        static unsigned int setFisheyeEffectTo(VirtualMachine *vm);
+        static unsigned int setWhirlEffectTo(VirtualMachine *vm);
+        static unsigned int setPixelateEffectTo(VirtualMachine *vm);
+        static unsigned int setMosaicEffectTo(VirtualMachine *vm);
+        static unsigned int setBrightnessEffectTo(VirtualMachine *vm);
+        static unsigned int setGhostEffectTo(VirtualMachine *vm);
+
+        static unsigned int clearGraphicEffects(VirtualMachine *vm);
         static unsigned int changeSizeBy(VirtualMachine *vm);
         static unsigned int setSizeTo(VirtualMachine *vm);
         static unsigned int size(VirtualMachine *vm);
@@ -87,6 +121,15 @@ class LooksBlocks : public IBlockSection
         static unsigned int costumeName(VirtualMachine *vm);
         static unsigned int backdropNumber(VirtualMachine *vm);
         static unsigned int backdropName(VirtualMachine *vm);
+
+        static inline std::vector<IGraphicsEffect *> m_customGraphicsEffects;
+        static inline IGraphicsEffect *m_colorEffect = nullptr;
+        static inline IGraphicsEffect *m_fisheyeEffect = nullptr;
+        static inline IGraphicsEffect *m_whirlEffect = nullptr;
+        static inline IGraphicsEffect *m_pixelateEffect = nullptr;
+        static inline IGraphicsEffect *m_mosaicEffect = nullptr;
+        static inline IGraphicsEffect *m_brightnessEffect = nullptr;
+        static inline IGraphicsEffect *m_ghostEffect = nullptr;
 
         static IRandomGenerator *rng;
 };

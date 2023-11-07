@@ -408,6 +408,12 @@ TEST_F(CostumeTest, BitmapWithGraphicsEffects)
     ASSERT_EQ(bitmap[3][3], 4);
     ASSERT_EQ(bitmap[3][4], 4);
     ASSERT_EQ(bitmap[3][5], 8);
+
+    EXPECT_CALL(*m_imageFormat, width()).WillOnce(Return(0));
+    EXPECT_CALL(*m_imageFormat, height()).WillOnce(Return(0));
+    costume.clearGraphicsEffects();
+    ASSERT_EQ(costume.graphicsEffectValue(&effect1), 0);
+    ASSERT_EQ(costume.graphicsEffectValue(&effect2), 0);
 }
 
 TEST_F(CostumeTest, Broadcast)

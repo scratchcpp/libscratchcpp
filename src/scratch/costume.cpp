@@ -133,6 +133,16 @@ void Costume::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
         impl->updateImage();
 }
 
+/*! Clears all graphics effects (this is automatically called by the sprite). */
+void Costume::clearGraphicsEffects()
+{
+    bool update = !impl->graphicsEffects.empty();
+    impl->graphicsEffects.clear();
+
+    if (update)
+        impl->updateImage();
+}
+
 /*!
  * Returns the Broadcast linked with this costume.
  * \note This is used by the "switch backdrop to and wait" block.
