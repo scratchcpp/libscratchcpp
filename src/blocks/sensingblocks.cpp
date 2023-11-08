@@ -475,7 +475,7 @@ unsigned int SensingBlocks::costumeNumberOfSprite(VirtualMachine *vm)
     Sprite *sprite = dynamic_cast<Sprite *>(target);
 
     if (sprite)
-        vm->replaceReturnValue(sprite->currentCostume(), 1);
+        vm->replaceReturnValue(sprite->costumeIndex() + 1, 1);
     else
         vm->replaceReturnValue(0, 1);
 
@@ -488,7 +488,7 @@ unsigned int SensingBlocks::costumeNumberOfSpriteByIndex(VirtualMachine *vm)
     Sprite *sprite = dynamic_cast<Sprite *>(target);
 
     if (sprite)
-        vm->replaceReturnValue(sprite->currentCostume(), 1);
+        vm->replaceReturnValue(sprite->costumeIndex() + 1, 1);
     else
         vm->replaceReturnValue(0, 1);
 
@@ -501,7 +501,7 @@ unsigned int SensingBlocks::costumeNameOfSprite(VirtualMachine *vm)
     Sprite *sprite = dynamic_cast<Sprite *>(target);
 
     if (sprite)
-        vm->replaceReturnValue(sprite->costumeAt(sprite->currentCostume() - 1)->name(), 1);
+        vm->replaceReturnValue(sprite->currentCostume()->name(), 1);
     else
         vm->replaceReturnValue(0, 1);
 
@@ -514,7 +514,7 @@ unsigned int SensingBlocks::costumeNameOfSpriteByIndex(VirtualMachine *vm)
     Sprite *sprite = dynamic_cast<Sprite *>(target);
 
     if (sprite)
-        vm->replaceReturnValue(sprite->costumeAt(sprite->currentCostume() - 1)->name(), 1);
+        vm->replaceReturnValue(sprite->currentCostume()->name(), 1);
     else
         vm->replaceReturnValue(0, 1);
 
@@ -577,7 +577,7 @@ unsigned int SensingBlocks::backdropNumberOfStage(VirtualMachine *vm)
     Stage *stage = dynamic_cast<Stage *>(target);
 
     if (stage)
-        vm->replaceReturnValue(stage->currentCostume(), 1);
+        vm->replaceReturnValue(stage->costumeIndex() + 1, 1);
     else
         vm->replaceReturnValue(0, 1);
 
@@ -590,7 +590,7 @@ unsigned int SensingBlocks::backdropNumberOfStageByIndex(VirtualMachine *vm)
     Stage *stage = dynamic_cast<Stage *>(target);
 
     if (stage)
-        vm->replaceReturnValue(stage->currentCostume(), 1);
+        vm->replaceReturnValue(stage->costumeIndex() + 1, 1);
     else
         vm->replaceReturnValue(0, 1);
 
@@ -603,7 +603,7 @@ unsigned int SensingBlocks::backdropNameOfStage(VirtualMachine *vm)
     Stage *stage = dynamic_cast<Stage *>(target);
 
     if (stage)
-        vm->replaceReturnValue(stage->costumeAt(stage->currentCostume() - 1)->name(), 1);
+        vm->replaceReturnValue(stage->currentCostume()->name(), 1);
     else
         vm->replaceReturnValue(0, 1);
 
@@ -616,7 +616,7 @@ unsigned int SensingBlocks::backdropNameOfStageByIndex(VirtualMachine *vm)
     Stage *stage = dynamic_cast<Stage *>(target);
 
     if (stage)
-        vm->replaceReturnValue(stage->costumeAt(stage->currentCostume() - 1)->name(), 1);
+        vm->replaceReturnValue(stage->currentCostume()->name(), 1);
     else
         vm->replaceReturnValue(0, 1);
 

@@ -653,7 +653,7 @@ void LooksBlocks::setCostumeByIndex(Target *target, long index)
             index = std::fmod(index, costumeCount);
     }
 
-    target->setCurrentCostume(index + 1);
+    target->setCostumeIndex(index);
 }
 
 unsigned int LooksBlocks::switchCostumeToByIndex(VirtualMachine *vm)
@@ -693,7 +693,7 @@ unsigned int LooksBlocks::switchCostumeTo(VirtualMachine *vm)
 unsigned int LooksBlocks::nextCostume(VirtualMachine *vm)
 {
     if (Target *target = vm->target())
-        setCostumeByIndex(target, target->currentCostume());
+        setCostumeByIndex(target, target->costumeIndex() + 1);
 
     return 0;
 }
@@ -701,7 +701,7 @@ unsigned int LooksBlocks::nextCostume(VirtualMachine *vm)
 unsigned int LooksBlocks::previousCostume(VirtualMachine *vm)
 {
     if (Target *target = vm->target())
-        setCostumeByIndex(target, target->currentCostume() - 2);
+        setCostumeByIndex(target, target->costumeIndex() - 1);
 
     return 0;
 }
@@ -710,7 +710,7 @@ void LooksBlocks::startBackdropScripts(VirtualMachine *vm, bool wait)
 {
     if (Stage *stage = vm->engine()->stage()) {
         if (stage->costumes().size() > 0)
-            vm->engine()->broadcastByPtr(stage->costumeAt(stage->currentCostume() - 1)->broadcast(), vm, wait);
+            vm->engine()->broadcastByPtr(stage->currentCostume()->broadcast(), vm, wait);
     }
 }
 
@@ -749,13 +749,13 @@ void LooksBlocks::switchBackdropToImpl(VirtualMachine *vm)
 void LooksBlocks::nextBackdropImpl(VirtualMachine *vm)
 {
     if (Stage *stage = vm->engine()->stage())
-        setCostumeByIndex(stage, stage->currentCostume());
+        setCostumeByIndex(stage, stage->costumeIndex() + 1);
 }
 
 void LooksBlocks::previousBackdropImpl(VirtualMachine *vm)
 {
     if (Stage *stage = vm->engine()->stage())
-        setCostumeByIndex(stage, stage->currentCostume() - 2);
+        setCostumeByIndex(stage, stage->costumeIndex() - 1);
 }
 
 void LooksBlocks::randomBackdropImpl(VirtualMachine *vm)
@@ -767,7 +767,7 @@ void LooksBlocks::randomBackdropImpl(VirtualMachine *vm)
         std::size_t count = stage->costumes().size();
 
         if (count > 0)
-            stage->setCurrentCostume(rng->randint(1, count));
+            stage->setCostumeIndex(rng->randint(0, count - 1));
     }
 }
 
@@ -854,7 +854,7 @@ unsigned int LooksBlocks::randomBackdropAndWait(VirtualMachine *vm)
 unsigned int LooksBlocks::checkBackdropScripts(VirtualMachine *vm)
 {
     if (Stage *stage = vm->engine()->stage()) {
-        if ((stage->costumes().size() > 0) && vm->engine()->broadcastByPtrRunning(stage->costumeAt(stage->currentCostume() - 1)->broadcast(), vm))
+        if ((stage->costumes().size() > 0) && vm->engine()->broadcastByPtrRunning(stage->currentCostume()->broadcast(), vm))
             vm->stop(true, true, true);
     }
 
@@ -864,7 +864,7 @@ unsigned int LooksBlocks::checkBackdropScripts(VirtualMachine *vm)
 unsigned int LooksBlocks::costumeNumber(VirtualMachine *vm)
 {
     if (Target *target = vm->target())
-        vm->addReturnValue(target->currentCostume());
+        vm->addReturnValue(target->costumeIndex() + 1);
     else
         vm->addReturnValue(0);
 
@@ -874,7 +874,7 @@ unsigned int LooksBlocks::costumeNumber(VirtualMachine *vm)
 unsigned int LooksBlocks::costumeName(VirtualMachine *vm)
 {
     if (Target *target = vm->target()) {
-        auto costume = target->costumeAt(target->currentCostume() - 1);
+        auto costume = target->currentCostume();
 
         if (costume)
             vm->addReturnValue(costume->name());
@@ -889,7 +889,7 @@ unsigned int LooksBlocks::costumeName(VirtualMachine *vm)
 unsigned int LooksBlocks::backdropNumber(VirtualMachine *vm)
 {
     if (Stage *stage = vm->engine()->stage())
-        vm->addReturnValue(stage->currentCostume());
+        vm->addReturnValue(stage->costumeIndex() + 1);
     else
         vm->addReturnValue(0);
 
@@ -899,7 +899,7 @@ unsigned int LooksBlocks::backdropNumber(VirtualMachine *vm)
 unsigned int LooksBlocks::backdropName(VirtualMachine *vm)
 {
     if (Stage *stage = vm->engine()->stage()) {
-        auto costume = stage->costumeAt(stage->currentCostume() - 1);
+        auto costume = stage->currentCostume();
 
         if (costume)
             vm->addReturnValue(costume->name());

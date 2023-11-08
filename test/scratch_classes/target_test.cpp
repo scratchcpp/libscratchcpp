@@ -183,34 +183,43 @@ TEST(TargetTest, Blocks)
     ASSERT_EQ(source.greenFlagBlocks(), std::vector<std::shared_ptr<Block>>({ b1, b4 }));
 }
 
-TEST(TargetTest, CurrentCostume)
+TEST(TargetTest, CostumeIndex)
 {
     Target target;
-    ASSERT_EQ(target.currentCostume(), 0);
+    ASSERT_EQ(target.costumeIndex(), -1);
+    ASSERT_EQ(target.currentCostume(), nullptr);
 
-    target.setCurrentCostume(1);
-    ASSERT_EQ(target.currentCostume(), 0);
+    target.setCostumeIndex(0);
+    ASSERT_EQ(target.costumeIndex(), -1);
+    ASSERT_EQ(target.currentCostume(), nullptr);
 
-    target.setCurrentCostume(2);
-    ASSERT_EQ(target.currentCostume(), 0);
-
-    target.addCostume(std::make_shared<Costume>("", "", ""));
-    ASSERT_EQ(target.currentCostume(), 0);
-
-    target.setCurrentCostume(1);
-    ASSERT_EQ(target.currentCostume(), 1);
-
-    target.setCurrentCostume(2);
-    ASSERT_EQ(target.currentCostume(), 1);
+    target.setCostumeIndex(1);
+    ASSERT_EQ(target.costumeIndex(), -1);
+    ASSERT_EQ(target.currentCostume(), nullptr);
 
     target.addCostume(std::make_shared<Costume>("", "", ""));
-    ASSERT_EQ(target.currentCostume(), 1);
+    ASSERT_EQ(target.costumeIndex(), -1);
+    ASSERT_EQ(target.currentCostume(), nullptr);
 
-    target.setCurrentCostume(2);
-    ASSERT_EQ(target.currentCostume(), 2);
+    target.setCostumeIndex(0);
+    ASSERT_EQ(target.costumeIndex(), 0);
+    ASSERT_EQ(target.currentCostume(), target.costumeAt(0));
 
-    target.setCurrentCostume(3);
-    ASSERT_EQ(target.currentCostume(), 2);
+    target.setCostumeIndex(1);
+    ASSERT_EQ(target.costumeIndex(), 0);
+    ASSERT_EQ(target.currentCostume(), target.costumeAt(0));
+
+    target.addCostume(std::make_shared<Costume>("", "", ""));
+    ASSERT_EQ(target.costumeIndex(), 0);
+    ASSERT_EQ(target.currentCostume(), target.costumeAt(0));
+
+    target.setCostumeIndex(1);
+    ASSERT_EQ(target.costumeIndex(), 1);
+    ASSERT_EQ(target.currentCostume(), target.costumeAt(1));
+
+    target.setCostumeIndex(2);
+    ASSERT_EQ(target.costumeIndex(), 1);
+    ASSERT_EQ(target.currentCostume(), target.costumeAt(1));
 }
 
 TEST(TargetTest, Costumes)
