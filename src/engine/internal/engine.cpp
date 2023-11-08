@@ -426,11 +426,32 @@ void Engine::setKeyState(const std::string &name, bool pressed)
 {
     KeyEvent event(name);
     m_keyMap[event.name()] = pressed;
+
+    // Start "when key pressed" scripts
+    if (pressed) {
+        auto it = m_whenKeyPressedScripts.find(event.name());
+
+        if (it != m_whenKeyPressedScripts.cend())
+            startWhenKeyPressedScripts(it->second);
+
+        it = m_whenKeyPressedScripts.find("any");
+
+        if (it != m_whenKeyPressedScripts.cend())
+            startWhenKeyPressedScripts(it->second);
+    }
 }
 
 void Engine::setAnyKeyPressed(bool pressed)
 {
     m_anyKeyPressed = pressed;
+
+    // Start "when key pressed" scripts
+    if (pressed) {
+        auto it = m_whenKeyPressedScripts.find("any");
+
+        if (it != m_whenKeyPressedScripts.cend())
+            startWhenKeyPressedScripts(it->second);
+    }
 }
 
 double Engine::mouseX() const
@@ -947,4 +968,20 @@ void Engine::deleteClones()
 void Engine::updateFrameDuration()
 {
     m_frameDuration = std::chrono::milliseconds(static_cast<long>(1000 / m_fps));
+}
+
+void Engine::startWhenKeyPressedScripts(const std::vector<Script *> &scripts)
+{
+    for (auto script : scripts) {
+        std::shared_ptr<Block> block = nullptr;
+
+        for (const auto &[b, s] : m_scripts) {
+            if (s.get() == script)
+                block = b;
+        }
+
+        assert(block);
+        assert(std::find_if(m_targets.begin(), m_targets.end(), [script](std::shared_ptr<Target> target) { return script->target() == target.get(); }) != m_targets.end());
+        startScript(block, *std::find_if(m_targets.begin(), m_targets.end(), [script](std::shared_ptr<Target> target) { return script->target() == target.get(); }));
+    }
 }
