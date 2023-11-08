@@ -211,6 +211,12 @@ void Target::setCostumeIndex(int newCostumeIndex)
         impl->costumeIndex = newCostumeIndex;
 }
 
+/*! Returns the currently set costume. */
+std::shared_ptr<Costume> Target::currentCostume() const
+{
+    return costumeAt(impl->costumeIndex);
+}
+
 /*! Returns the list of costumes. */
 const std::vector<std::shared_ptr<Costume>> &Target::costumes() const
 {

@@ -710,8 +710,7 @@ void LooksBlocks::startBackdropScripts(VirtualMachine *vm, bool wait)
 {
     if (Stage *stage = vm->engine()->stage()) {
         if (stage->costumes().size() > 0)
-            // TODO: Use currentCostume()
-            vm->engine()->broadcastByPtr(stage->costumeAt(stage->costumeIndex())->broadcast(), vm, wait);
+            vm->engine()->broadcastByPtr(stage->currentCostume()->broadcast(), vm, wait);
     }
 }
 
@@ -855,8 +854,7 @@ unsigned int LooksBlocks::randomBackdropAndWait(VirtualMachine *vm)
 unsigned int LooksBlocks::checkBackdropScripts(VirtualMachine *vm)
 {
     if (Stage *stage = vm->engine()->stage()) {
-        // TODO: Use currentCostume()
-        if ((stage->costumes().size() > 0) && vm->engine()->broadcastByPtrRunning(stage->costumeAt(stage->costumeIndex())->broadcast(), vm))
+        if ((stage->costumes().size() > 0) && vm->engine()->broadcastByPtrRunning(stage->currentCostume()->broadcast(), vm))
             vm->stop(true, true, true);
     }
 
@@ -876,8 +874,7 @@ unsigned int LooksBlocks::costumeNumber(VirtualMachine *vm)
 unsigned int LooksBlocks::costumeName(VirtualMachine *vm)
 {
     if (Target *target = vm->target()) {
-        // TODO: Use currentCostume()
-        auto costume = target->costumeAt(target->costumeIndex());
+        auto costume = target->currentCostume();
 
         if (costume)
             vm->addReturnValue(costume->name());
@@ -902,8 +899,7 @@ unsigned int LooksBlocks::backdropNumber(VirtualMachine *vm)
 unsigned int LooksBlocks::backdropName(VirtualMachine *vm)
 {
     if (Stage *stage = vm->engine()->stage()) {
-        // TODO: Use currentCostume()
-        auto costume = stage->costumeAt(stage->costumeIndex());
+        auto costume = stage->currentCostume();
 
         if (costume)
             vm->addReturnValue(costume->name());

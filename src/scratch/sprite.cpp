@@ -196,8 +196,7 @@ void Sprite::setSize(double newSize)
     if (impl->iface)
         impl->iface->onSizeChanged(impl->size);
 
-    // TODO: Make currentCostume() return the costume (not index)
-    auto costume = costumeAt(costumeIndex());
+    auto costume = currentCostume();
 
     if (costume)
         costume->setScale(newSize / 100);
@@ -275,8 +274,7 @@ std::string Sprite::rotationStyleStr() const
 void Sprite::setRotationStyle(RotationStyle newRotationStyle)
 {
     impl->rotationStyle = newRotationStyle;
-    // TODO: Make currentCostume() return the costume (not index)
-    auto costume = costumeAt(costumeIndex());
+    auto costume = currentCostume();
 
     if (costume)
         costume->setMirrorHorizontally(newRotationStyle == RotationStyle::LeftRight);
@@ -327,8 +325,7 @@ void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 {
     impl->graphicsEffects[effect] = value;
 
-    // TODO: Make currentCostume() return the costume (not index)
-    auto costume = costumeAt(costumeIndex());
+    auto costume = currentCostume();
 
     if (costume)
         costume->setGraphicsEffectValue(effect, value);
@@ -339,8 +336,7 @@ void Sprite::clearGraphicsEffects()
 {
     impl->graphicsEffects.clear();
 
-    // TODO: Make currentCostume() return the costume (not index)
-    auto costume = costumeAt(costumeIndex());
+    auto costume = currentCostume();
 
     if (costume)
         costume->clearGraphicsEffects();

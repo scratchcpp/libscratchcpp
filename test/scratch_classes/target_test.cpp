@@ -187,30 +187,39 @@ TEST(TargetTest, CostumeIndex)
 {
     Target target;
     ASSERT_EQ(target.costumeIndex(), -1);
+    ASSERT_EQ(target.currentCostume(), nullptr);
 
     target.setCostumeIndex(0);
     ASSERT_EQ(target.costumeIndex(), -1);
+    ASSERT_EQ(target.currentCostume(), nullptr);
 
     target.setCostumeIndex(1);
     ASSERT_EQ(target.costumeIndex(), -1);
+    ASSERT_EQ(target.currentCostume(), nullptr);
 
     target.addCostume(std::make_shared<Costume>("", "", ""));
     ASSERT_EQ(target.costumeIndex(), -1);
+    ASSERT_EQ(target.currentCostume(), nullptr);
 
     target.setCostumeIndex(0);
     ASSERT_EQ(target.costumeIndex(), 0);
+    ASSERT_EQ(target.currentCostume(), target.costumeAt(0));
 
     target.setCostumeIndex(1);
     ASSERT_EQ(target.costumeIndex(), 0);
+    ASSERT_EQ(target.currentCostume(), target.costumeAt(0));
 
     target.addCostume(std::make_shared<Costume>("", "", ""));
     ASSERT_EQ(target.costumeIndex(), 0);
+    ASSERT_EQ(target.currentCostume(), target.costumeAt(0));
 
     target.setCostumeIndex(1);
     ASSERT_EQ(target.costumeIndex(), 1);
+    ASSERT_EQ(target.currentCostume(), target.costumeAt(1));
 
     target.setCostumeIndex(2);
     ASSERT_EQ(target.costumeIndex(), 1);
+    ASSERT_EQ(target.currentCostume(), target.costumeAt(1));
 }
 
 TEST(TargetTest, Costumes)
