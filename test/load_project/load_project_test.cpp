@@ -40,7 +40,7 @@ TEST(LoadProjectTest, EmptyProject)
         ASSERT_EQ(stage->blocks().size(), 0);
         ASSERT_EQ(stage->costumes().size(), 1);
         // TODO: Add comments
-        ASSERT_EQ(stage->currentCostume(), 1);
+        ASSERT_EQ(stage->costumeIndex(), 0);
         ASSERT_EQ(stage->sounds().size(), 0);
         ASSERT_EQ(stage->layerOrder(), 0);
         ASSERT_EQ(stage->volume(), 100);
@@ -104,7 +104,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(sprite1->lists().size(), 1);
         ASSERT_EQ(sprite1->blocks().size(), 18);
         ASSERT_EQ(sprite1->costumes().size(), 2);
-        ASSERT_EQ(sprite1->currentCostume(), 2);
+        ASSERT_EQ(sprite1->costumeIndex(), 1);
         ASSERT_EQ(sprite1->sounds().size(), 1);
         ASSERT_TRUE(sprite1->visible());
         ASSERT_EQ(sprite1->x(), 0);

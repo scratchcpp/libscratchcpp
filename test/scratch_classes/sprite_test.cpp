@@ -54,7 +54,7 @@ TEST(SpriteTest, Clone)
 
     sprite->addCostume(std::make_shared<Costume>("", "", ""));
     sprite->addCostume(std::make_shared<Costume>("", "", ""));
-    sprite->setCurrentCostume(2);
+    sprite->setCostumeIndex(1);
     sprite->setLayerOrder(5);
     sprite->setVolume(50);
 
@@ -91,7 +91,7 @@ TEST(SpriteTest, Clone)
         ASSERT_EQ(*clone->listAt(1), std::deque<Value>({ "test" }));
         ASSERT_EQ(clone->listAt(1)->target(), clone);
 
-        ASSERT_EQ(clone->currentCostume(), 2);
+        ASSERT_EQ(clone->costumeIndex(), 1);
         ASSERT_EQ(clone->layerOrder(), 5);
         ASSERT_EQ(clone->volume(), 50);
         ASSERT_EQ(clone->engine(), root->engine());
@@ -237,7 +237,7 @@ TEST(SpriteTest, XY)
     auto costume = std::make_shared<Costume>("costume1", "a", "test");
 
     sprite.addCostume(costume);
-    sprite.setCurrentCostume(1);
+    sprite.setCostumeIndex(0);
 
     static char data[5] = "abcd";
     EXPECT_CALL(*imageFormat, setData(5, data));
@@ -380,7 +380,7 @@ TEST(SpriteTest, Size)
     ASSERT_EQ(sprite.size(), 100);
     sprite.addCostume(c1);
     sprite.addCostume(c2);
-    sprite.setCurrentCostume(1);
+    sprite.setCostumeIndex(0);
 
     ASSERT_EQ(c1->scale(), 1);
 
@@ -388,14 +388,14 @@ TEST(SpriteTest, Size)
     ASSERT_EQ(sprite.size(), 63.724);
     ASSERT_EQ(std::round(c1->scale() * 100000) / 100000, 0.63724);
 
-    sprite.setCurrentCostume(2);
+    sprite.setCostumeIndex(1);
     ASSERT_EQ(std::round(c2->scale() * 100000) / 100000, 0.63724);
 
     sprite.setSize(186.84);
     ASSERT_EQ(sprite.size(), 186.84);
     ASSERT_EQ(std::round(c2->scale() * 10000) / 10000, 1.8684);
 
-    sprite.setCurrentCostume(1);
+    sprite.setCostumeIndex(0);
     ASSERT_EQ(std::round(c1->scale() * 10000) / 10000, 1.8684);
 }
 
@@ -453,7 +453,7 @@ TEST(SpriteTest, RotationStyle)
     ASSERT_EQ(sprite.rotationStyleStr(), "all around");
     sprite.addCostume(c1);
     sprite.addCostume(c2);
-    sprite.setCurrentCostume(1);
+    sprite.setCostumeIndex(0);
 
     ASSERT_EQ(c1->mirrorHorizontally(), false);
 
@@ -477,13 +477,13 @@ TEST(SpriteTest, RotationStyle)
     ASSERT_EQ(sprite.rotationStyleStr(), "all around");
     ASSERT_EQ(c1->mirrorHorizontally(), false);
 
-    sprite.setCurrentCostume(2);
+    sprite.setCostumeIndex(1);
     sprite.setRotationStyle(Sprite::RotationStyle::LeftRight);
     ASSERT_EQ(c2->mirrorHorizontally(), true);
 
-    sprite.setCurrentCostume(1);
+    sprite.setCostumeIndex(0);
     sprite.setRotationStyle(Sprite::RotationStyle::AllAround);
-    sprite.setCurrentCostume(2);
+    sprite.setCostumeIndex(1);
     ASSERT_EQ(c2->mirrorHorizontally(), false);
 
     sprite.setRotationStyle("don't rotate");
@@ -535,7 +535,7 @@ TEST(SpriteTest, BoundingRect)
 
     Sprite sprite;
     sprite.addCostume(costume);
-    sprite.setCurrentCostume(1);
+    sprite.setCostumeIndex(0);
 
     static char data[5] = "abcd";
     EXPECT_CALL(*imageFormat, setData(5, data));
@@ -626,7 +626,7 @@ TEST(SpriteTest, GraphicsEffects)
     Sprite sprite;
     sprite.addCostume(c1);
     sprite.addCostume(c2);
-    sprite.setCurrentCostume(1);
+    sprite.setCostumeIndex(0);
 
     GraphicsEffectMock effect1, effect2;
     sprite.setGraphicsEffectValue(&effect1, 48.21);
@@ -635,7 +635,7 @@ TEST(SpriteTest, GraphicsEffects)
     ASSERT_EQ(c1->graphicsEffectValue(&effect1), 48.21);
     ASSERT_EQ(c1->graphicsEffectValue(&effect2), 0);
 
-    sprite.setCurrentCostume(2);
+    sprite.setCostumeIndex(1);
     ASSERT_EQ(c1->graphicsEffectValue(&effect1), 48.21);
     ASSERT_EQ(c1->graphicsEffectValue(&effect2), 0);
 
@@ -645,7 +645,7 @@ TEST(SpriteTest, GraphicsEffects)
     ASSERT_EQ(c2->graphicsEffectValue(&effect1), 48.21);
     ASSERT_EQ(c2->graphicsEffectValue(&effect2), -107.08);
 
-    sprite.setCurrentCostume(1);
+    sprite.setCostumeIndex(0);
     ASSERT_EQ(c1->graphicsEffectValue(&effect1), 48.21);
     ASSERT_EQ(c1->graphicsEffectValue(&effect2), -107.08);
 

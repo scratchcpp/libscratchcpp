@@ -50,8 +50,8 @@ class LIBSCRATCHCPP_EXPORT Target
         int findBlock(const std::string &id) const;
         std::vector<std::shared_ptr<Block>> greenFlagBlocks() const;
 
-        int currentCostume() const;
-        void setCurrentCostume(int newCostume);
+        int costumeIndex() const;
+        void setCostumeIndex(int newCostumeIndex);
 
         const std::vector<std::shared_ptr<Costume>> &costumes() const;
         int addCostume(std::shared_ptr<Costume> costume);

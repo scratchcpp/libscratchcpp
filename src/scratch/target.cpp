@@ -198,17 +198,17 @@ std::vector<std::shared_ptr<Block>> Target::greenFlagBlocks() const
     return ret;
 }
 
-/*! Returns the ID of the current costume. */
-int Target::currentCostume() const
+/*! Returns the index of the current costume. */
+int Target::costumeIndex() const
 {
-    return impl->currentCostume;
+    return impl->costumeIndex;
 }
 
-/*! Sets the ID of the current costume. */
-void Target::setCurrentCostume(int newCostume)
+/*! Sets the index of the current costume. */
+void Target::setCostumeIndex(int newCostumeIndex)
 {
-    if (newCostume > 0 && newCostume <= costumes().size())
-        impl->currentCostume = newCostume;
+    if (newCostumeIndex >= 0 && newCostumeIndex < costumes().size())
+        impl->costumeIndex = newCostumeIndex;
 }
 
 /*! Returns the list of costumes. */

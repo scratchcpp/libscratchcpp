@@ -76,7 +76,7 @@ std::shared_ptr<Sprite> Sprite::clone()
         for (auto list : l)
             clone->addList(list->clone());
 
-        clone->setCurrentCostume(currentCostume());
+        clone->setCostumeIndex(costumeIndex());
         clone->setLayerOrder(layerOrder());
         clone->setVolume(volume());
         clone->setEngine(engine());
@@ -197,17 +197,16 @@ void Sprite::setSize(double newSize)
         impl->iface->onSizeChanged(impl->size);
 
     // TODO: Make currentCostume() return the costume (not index)
-    auto costume = costumeAt(currentCostume() - 1);
+    auto costume = costumeAt(costumeIndex());
 
     if (costume)
         costume->setScale(newSize / 100);
 }
 
-/*! Overrides Target#setCurrentCostume(). */
-void Sprite::setCurrentCostume(int newCostume)
+/*! Overrides Target#setCostumeIndex(). */
+void Sprite::setCostumeIndex(int newCostumeIndex)
 {
-    // TODO: Make currentCostume() return the costume (not index)
-    auto costume = costumeAt(newCostume - 1);
+    auto costume = costumeAt(newCostumeIndex);
 
     if (costume) {
         costume->setScale(impl->size / 100);
@@ -217,7 +216,7 @@ void Sprite::setCurrentCostume(int newCostume)
             costume->setGraphicsEffectValue(effect, value);
     }
 
-    Target::setCurrentCostume(newCostume);
+    Target::setCostumeIndex(newCostumeIndex);
 }
 
 /*! Returns the direction. */
@@ -277,7 +276,7 @@ void Sprite::setRotationStyle(RotationStyle newRotationStyle)
 {
     impl->rotationStyle = newRotationStyle;
     // TODO: Make currentCostume() return the costume (not index)
-    auto costume = costumeAt(currentCostume() - 1);
+    auto costume = costumeAt(costumeIndex());
 
     if (costume)
         costume->setMirrorHorizontally(newRotationStyle == RotationStyle::LeftRight);
@@ -329,7 +328,7 @@ void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
     impl->graphicsEffects[effect] = value;
 
     // TODO: Make currentCostume() return the costume (not index)
-    auto costume = costumeAt(currentCostume() - 1);
+    auto costume = costumeAt(costumeIndex());
 
     if (costume)
         costume->setGraphicsEffectValue(effect, value);
@@ -341,7 +340,7 @@ void Sprite::clearGraphicsEffects()
     impl->graphicsEffects.clear();
 
     // TODO: Make currentCostume() return the costume (not index)
-    auto costume = costumeAt(currentCostume() - 1);
+    auto costume = costumeAt(costumeIndex());
 
     if (costume)
         costume->clearGraphicsEffects();

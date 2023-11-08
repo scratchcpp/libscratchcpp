@@ -974,7 +974,7 @@ TEST_F(SensingBlocksTest, CostumeNumberOfSprite)
     Sprite sprite;
     sprite.addCostume(std::make_shared<Costume>("costume1", "a", "png"));
     sprite.addCostume(std::make_shared<Costume>("costume2", "b", "svg"));
-    sprite.setCurrentCostume(2);
+    sprite.setCostumeIndex(1);
 
     VirtualMachine vm(nullptr, &m_engineMock, nullptr);
     vm.setFunctions(functions);
@@ -1007,7 +1007,7 @@ TEST_F(SensingBlocksTest, CostumeNameOfSprite)
     Sprite sprite;
     sprite.addCostume(std::make_shared<Costume>("costume1", "a", "png"));
     sprite.addCostume(std::make_shared<Costume>("costume2", "b", "svg"));
-    sprite.setCurrentCostume(2);
+    sprite.setCostumeIndex(1);
 
     VirtualMachine vm(nullptr, &m_engineMock, nullptr);
     vm.setFunctions(functions);
@@ -1124,7 +1124,7 @@ TEST_F(SensingBlocksTest, BackdropNumberOfStage)
     Stage stage;
     stage.addCostume(std::make_shared<Costume>("backdrop1", "a", "png"));
     stage.addCostume(std::make_shared<Costume>("backdrop2", "b", "svg"));
-    stage.setCurrentCostume(2);
+    stage.setCostumeIndex(1);
 
     VirtualMachine vm(nullptr, &m_engineMock, nullptr);
     vm.setFunctions(functions);
@@ -1157,7 +1157,7 @@ TEST_F(SensingBlocksTest, BackdropNameOfStage)
     Stage stage;
     stage.addCostume(std::make_shared<Costume>("backdrop1", "a", "png"));
     stage.addCostume(std::make_shared<Costume>("backdrop2", "b", "svg"));
-    stage.setCurrentCostume(2);
+    stage.setCostumeIndex(1);
 
     VirtualMachine vm(nullptr, &m_engineMock, nullptr);
     vm.setFunctions(functions);

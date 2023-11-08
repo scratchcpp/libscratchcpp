@@ -42,7 +42,7 @@ void SpritePrivate::getBoundingRect(Rect *out) const
     assert(out);
     assert(sprite);
     // TODO: Make currentCostume() return the costume
-    auto costume = sprite->costumeAt(sprite->currentCostume() - 1);
+    auto costume = sprite->costumeAt(sprite->costumeIndex());
 
     if (!costume) {
         out->setLeft(x);

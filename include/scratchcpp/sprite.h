@@ -50,7 +50,7 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
         double size() const;
         void setSize(double newSize);
 
-        void setCurrentCostume(int newCostume);
+        void setCostumeIndex(int newCostumeIndex);
 
         double direction() const;
         void setDirection(double newDirection);

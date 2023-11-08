@@ -216,7 +216,7 @@ bool Scratch3Reader::load()
 
             // currentCostume
             READER_STEP(step, "target -> currentCostume");
-            target->setCurrentCostume(jsonToValue(jsonTarget["currentCostume"]).toInt() + 1);
+            target->setCostumeIndex(jsonToValue(jsonTarget["currentCostume"]).toInt());
 
             // sounds
             READER_STEP(step, "target -> sounds");
