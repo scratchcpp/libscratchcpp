@@ -130,6 +130,7 @@ class Engine : public IEngine
         std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
 
         void updateFrameDuration();
+        void startWhenKeyPressedScripts(const std::vector<Script *> &scripts);
 
         std::unordered_map<std::shared_ptr<IBlockSection>, std::unique_ptr<BlockSectionContainer>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;
