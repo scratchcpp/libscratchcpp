@@ -179,8 +179,9 @@ void Engine::frame()
 
 void Engine::start()
 {
-    if (m_running)
-        finalize();
+    // NOTE: Running scripts should be deleted, but this method will probably be removed anyway
+    /*if (m_running)
+        finalize();*/
 
     deleteClones();
 
