@@ -4,6 +4,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/block.h>
+#include <scratchcpp/iengine.h>
 
 #include "target_p.h"
 
@@ -209,6 +210,11 @@ void Target::setCostumeIndex(int newCostumeIndex)
 {
     if (newCostumeIndex >= 0 && newCostumeIndex < costumes().size())
         impl->costumeIndex = newCostumeIndex;
+
+    if (isStage()) {
+        if (impl->engine)
+            impl->engine->breakFrame();
+    }
 }
 
 /*! Returns the currently set costume. */
