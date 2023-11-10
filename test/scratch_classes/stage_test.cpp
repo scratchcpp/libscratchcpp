@@ -1,4 +1,6 @@
 #include <scratchcpp/stage.h>
+#include <scratchcpp/costume.h>
+#include <enginemock.h>
 
 #include "../common.h"
 
@@ -8,6 +10,25 @@ TEST(StageTest, IsStage)
 {
     Stage stage;
     ASSERT_TRUE(stage.isStage());
+}
+
+TEST(SpriteTest, CostumeIndex)
+{
+    Stage stage;
+    EngineMock engine;
+    stage.setEngine(&engine);
+    EXPECT_CALL(engine, breakFrame()).Times(2);
+
+    auto c1 = std::make_shared<Costume>("", "", "");
+    auto c2 = std::make_shared<Costume>("", "", "");
+    stage.addCostume(c1);
+    stage.addCostume(c2);
+
+    stage.setCostumeIndex(0);
+    ASSERT_EQ(stage.costumeIndex(), 0);
+
+    stage.setCostumeIndex(1);
+    ASSERT_EQ(stage.costumeIndex(), 1);
 }
 
 TEST(StageTest, Tempo)

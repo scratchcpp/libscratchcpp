@@ -29,8 +29,15 @@ TEST(SpriteTest, Visible)
 {
     Sprite sprite;
     ASSERT_TRUE(sprite.visible());
+    EngineMock engine;
+    sprite.setEngine(&engine);
+
     sprite.setVisible(false);
     ASSERT_FALSE(sprite.visible());
+
+    EXPECT_CALL(engine, breakFrame());
+    sprite.setVisible(true);
+    ASSERT_TRUE(sprite.visible());
 }
 
 TEST(SpriteTest, Clone)
@@ -116,6 +123,7 @@ TEST(SpriteTest, Clone)
 
     EngineMock engine;
     sprite->setEngine(&engine);
+    EXPECT_CALL(engine, breakFrame()).Times(2);
 
     Sprite *clone1;
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone1));
@@ -144,6 +152,8 @@ TEST(SpriteTest, Clone)
     ASSERT_EQ(clone2->cloneParent(), clone1);
 
     checkCloneData(clone2);
+
+    sprite->setVisible(true);
 
     Sprite *clone3;
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone3));
@@ -215,6 +225,11 @@ TEST(SpriteTest, XY)
     ASSERT_EQ(sprite.x(), 0);
     ASSERT_EQ(sprite.y(), 0);
 
+    EngineMock engine;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, breakFrame()).Times(18);
+    EXPECT_CALL(engine, spriteFencingEnabled()).Times(4).WillRepeatedly(Return(false));
+
     sprite.setX(-53.25);
     ASSERT_EQ(sprite.x(), -53.25);
 
@@ -260,7 +275,6 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(*imageFormat, colorAt(3, 2, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
     costume->setData(5, data);
 
-    EngineMock engine;
     sprite.setEngine(&engine);
     sprite.setDirection(34.45);
 
@@ -384,6 +398,10 @@ TEST(SpriteTest, Size)
 
     ASSERT_EQ(c1->scale(), 1);
 
+    EngineMock engine;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, breakFrame()).Times(4);
+
     sprite.setSize(63.724);
     ASSERT_EQ(sprite.size(), 63.724);
     ASSERT_EQ(std::round(c1->scale() * 100000) / 100000, 0.63724);
@@ -399,10 +417,33 @@ TEST(SpriteTest, Size)
     ASSERT_EQ(std::round(c1->scale() * 10000) / 10000, 1.8684);
 }
 
+TEST(SpriteTest, CostumeIndex)
+{
+    Sprite sprite;
+    EngineMock engine;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, breakFrame()).Times(2);
+
+    auto c1 = std::make_shared<Costume>("", "", "");
+    auto c2 = std::make_shared<Costume>("", "", "");
+    sprite.addCostume(c1);
+    sprite.addCostume(c2);
+
+    sprite.setCostumeIndex(0);
+    ASSERT_EQ(sprite.costumeIndex(), 0);
+
+    sprite.setCostumeIndex(1);
+    ASSERT_EQ(sprite.costumeIndex(), 1);
+}
+
 TEST(SpriteTest, Direction)
 {
     Sprite sprite;
     ASSERT_EQ(sprite.direction(), 90);
+
+    EngineMock engine;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, breakFrame()).Times(10);
 
     sprite.setDirection(-42.75);
     ASSERT_EQ(sprite.direction(), -42.75);
@@ -457,6 +498,10 @@ TEST(SpriteTest, RotationStyle)
 
     ASSERT_EQ(c1->mirrorHorizontally(), false);
 
+    EngineMock engine;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, breakFrame()).Times(8);
+
     sprite.setRotationStyle(Sprite::RotationStyle::DoNotRotate);
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::DoNotRotate);
     ASSERT_EQ(sprite.rotationStyleStr(), "don't rotate");
@@ -485,6 +530,8 @@ TEST(SpriteTest, RotationStyle)
     sprite.setRotationStyle(Sprite::RotationStyle::AllAround);
     sprite.setCostumeIndex(1);
     ASSERT_EQ(c2->mirrorHorizontally(), false);
+
+    sprite.setVisible(false);
 
     sprite.setRotationStyle("don't rotate");
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::DoNotRotate);
@@ -624,6 +671,11 @@ TEST(SpriteTest, GraphicsEffects)
     auto c2 = std::make_shared<Costume>("", "", "");
 
     Sprite sprite;
+
+    EngineMock engine;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, breakFrame()).Times(6);
+
     sprite.addCostume(c1);
     sprite.addCostume(c2);
     sprite.setCostumeIndex(0);

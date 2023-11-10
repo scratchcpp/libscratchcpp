@@ -79,7 +79,6 @@ std::shared_ptr<Sprite> Sprite::clone()
         clone->setCostumeIndex(costumeIndex());
         clone->setLayerOrder(layerOrder());
         clone->setVolume(volume());
-        clone->setEngine(engine());
 
         clone->impl->visible = impl->visible;
         clone->impl->x = impl->x;
@@ -89,8 +88,13 @@ std::shared_ptr<Sprite> Sprite::clone()
         clone->impl->draggable = impl->draggable;
         clone->impl->rotationStyle = impl->rotationStyle;
 
+        clone->setEngine(engine());
+
         // Call "when I start as clone" scripts
         eng->initClone(clone.get());
+
+        if (impl->visible)
+            eng->breakFrame();
 
         if (impl->iface)
             impl->iface->onCloned(clone.get());
@@ -149,6 +153,14 @@ bool Sprite::visible() const
 void Sprite::setVisible(bool newVisible)
 {
     impl->visible = newVisible;
+
+    if (impl->visible) {
+        IEngine *eng = engine();
+
+        if (eng)
+            eng->breakFrame();
+    }
+
     if (impl->iface)
         impl->iface->onVisibleChanged(impl->visible);
 }
@@ -193,6 +205,14 @@ double Sprite::size() const
 void Sprite::setSize(double newSize)
 {
     impl->size = newSize;
+
+    if (impl->visible) {
+        IEngine *eng = engine();
+
+        if (eng)
+            eng->breakFrame();
+    }
+
     if (impl->iface)
         impl->iface->onSizeChanged(impl->size);
 
@@ -215,6 +235,13 @@ void Sprite::setCostumeIndex(int newCostumeIndex)
             costume->setGraphicsEffectValue(effect, value);
     }
 
+    if (impl->visible) {
+        IEngine *eng = engine();
+
+        if (eng)
+            eng->breakFrame();
+    }
+
     Target::setCostumeIndex(newCostumeIndex);
 }
 
@@ -233,6 +260,13 @@ void Sprite::setDirection(double newDirection)
         impl->direction = std::fmod(newDirection - 180, 360) + 180;
     else
         impl->direction = std::fmod(newDirection + 180, 360) - 180;
+
+    if (impl->visible) {
+        IEngine *eng = engine();
+
+        if (eng)
+            eng->breakFrame();
+    }
 
     if (impl->iface)
         impl->iface->onDirectionChanged(impl->direction);
@@ -278,6 +312,13 @@ void Sprite::setRotationStyle(RotationStyle newRotationStyle)
 
     if (costume)
         costume->setMirrorHorizontally(newRotationStyle == RotationStyle::LeftRight);
+
+    if (impl->visible) {
+        IEngine *eng = engine();
+
+        if (eng)
+            eng->breakFrame();
+    }
 
     if (impl->iface)
         impl->iface->onRotationStyleChanged(impl->rotationStyle);
@@ -329,6 +370,13 @@ void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 
     if (costume)
         costume->setGraphicsEffectValue(effect, value);
+
+    if (impl->visible) {
+        IEngine *eng = engine();
+
+        if (eng)
+            eng->breakFrame();
+    }
 }
 
 /*! Sets the value of all graphics effects to 0 (clears them). */
@@ -340,6 +388,13 @@ void Sprite::clearGraphicsEffects()
 
     if (costume)
         costume->clearGraphicsEffects();
+
+    if (impl->visible) {
+        IEngine *eng = engine();
+
+        if (eng)
+            eng->breakFrame();
+    }
 }
 
 Target *Sprite::dataSource() const
@@ -356,4 +411,11 @@ void Sprite::setXY(double x, double y)
         impl->y = y;
     } else
         impl->getFencedPosition(x, y, &impl->x, &impl->y);
+
+    if (impl->visible) {
+        IEngine *eng = engine();
+
+        if (eng)
+            eng->breakFrame();
+    }
 }

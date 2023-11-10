@@ -44,6 +44,11 @@ void Engine::clear()
     m_targets.clear();
     m_broadcasts.clear();
     m_clones.clear();
+
+    m_running = false;
+    m_breakFrame = false;
+    m_skipFrame = false;
+    m_lockFrame = false;
 }
 
 // Resolves ID references and sets pointers of entities.
@@ -945,6 +950,9 @@ void Engine::finalize()
     m_runningScripts.clear();
     m_scriptsToRemove.clear();
     m_running = false;
+    m_breakFrame = false;
+    m_skipFrame = false;
+    m_lockFrame = false;
 }
 
 void Engine::deleteClones()
