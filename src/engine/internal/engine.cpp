@@ -554,6 +554,11 @@ bool Engine::broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceS
     return false;
 }
 
+void Engine::requestRedraw()
+{
+    m_redrawRequested = true;
+}
+
 void Engine::breakFrame()
 {
     m_breakFrame = true;
@@ -950,6 +955,7 @@ void Engine::finalize()
     m_runningScripts.clear();
     m_scriptsToRemove.clear();
     m_running = false;
+    m_redrawRequested = false;
     m_breakFrame = false;
     m_skipFrame = false;
     m_lockFrame = false;

@@ -159,7 +159,13 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual bool broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript) = 0;
 
         /*!
-         * Call this from a block implementation to force a "screen refresh".
+         * Call this from a block implementation to force a redraw (screen refresh).
+         * \note This has no effect in "run without screen refresh" custom blocks.
+         */
+        virtual void requestRedraw() = 0;
+
+        /*!
+         * Call this from a block implementation to break the execution of the current frame.
          * \note This has no effect in "run without screen refresh" custom blocks.
          */
         virtual void breakFrame() = 0;

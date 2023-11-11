@@ -73,6 +73,8 @@ class Engine : public IEngine
         bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) override;
         bool broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript) override;
 
+        void requestRedraw() override;
+
         void breakFrame() override;
         bool breakingCurrentFrame() override;
 
@@ -161,6 +163,7 @@ class Engine : public IEngine
         bool m_spriteFencingEnabled = true;
 
         bool m_running = false;
+        bool m_redrawRequested = false;
         bool m_breakFrame = false;
         bool m_skipFrame = false;
         bool m_lockFrame = false;
