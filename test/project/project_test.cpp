@@ -112,21 +112,10 @@ TEST_F(ProjectTest, Load)
     testing::Mock::AllowLeak(m_engine.get());
 }
 
-TEST_F(ProjectTest, Frame)
-{
-    ProjectPrivate p("default_project.sb3");
-    p.engine = m_engine;
-    EXPECT_CALL(*m_engine, frame).Times(1);
-    EXPECT_CALL(*m_engine, start).Times(0);
-    EXPECT_CALL(*m_engine, run).Times(0);
-    p.frame();
-}
-
 TEST_F(ProjectTest, Start)
 {
     ProjectPrivate p("default_project.sb3");
     p.engine = m_engine;
-    EXPECT_CALL(*m_engine, frame).Times(0);
     EXPECT_CALL(*m_engine, start).Times(1);
     EXPECT_CALL(*m_engine, run).Times(0);
     p.start();
@@ -136,7 +125,6 @@ TEST_F(ProjectTest, Run)
 {
     ProjectPrivate p("default_project.sb3");
     p.engine = m_engine;
-    EXPECT_CALL(*m_engine, frame).Times(0);
     EXPECT_CALL(*m_engine, start).Times(0);
     EXPECT_CALL(*m_engine, run).Times(1);
     p.run();

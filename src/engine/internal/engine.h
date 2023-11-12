@@ -28,7 +28,6 @@ class Engine : public IEngine
         void resolveIds();
         void compile() override;
 
-        void frame() override;
         void start() override;
         void stop() override;
         void startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target) override;
@@ -39,6 +38,7 @@ class Engine : public IEngine
         void initClone(libscratchcpp::Sprite *clone) override;
         void deinitClone(libscratchcpp::Sprite *clone) override;
         void run() override;
+        void runEventLoop() override;
 
         bool isRunning() const override;
 
@@ -122,6 +122,8 @@ class Engine : public IEngine
         IClock *m_clock = nullptr;
 
     private:
+        void eventLoop(bool untilProjectStops = false);
+        void runScripts(const std::vector<std::shared_ptr<VirtualMachine>> &scripts, std::vector<std::shared_ptr<VirtualMachine>> &globalScripts);
         void finalize();
         void deleteClones();
         std::shared_ptr<Block> getBlock(const std::string &id);
@@ -132,6 +134,7 @@ class Engine : public IEngine
         std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
 
         void updateFrameDuration();
+        void addRunningScript(std::shared_ptr<VirtualMachine> vm);
         void startWhenKeyPressedScripts(const std::vector<Script *> &scripts);
 
         std::unordered_map<std::shared_ptr<IBlockSection>, std::unique_ptr<BlockSectionContainer>> m_sections;
@@ -143,6 +146,7 @@ class Engine : public IEngine
         std::unordered_map<std::string, std::vector<Script *>> m_whenKeyPressedScripts;                                    // key name, "when key pressed" scripts
         std::vector<std::string> m_extensions;
         std::vector<std::shared_ptr<VirtualMachine>> m_runningScripts;
+        std::vector<std::shared_ptr<VirtualMachine>> m_newScripts;
         std::vector<VirtualMachine *> m_scriptsToRemove;
         std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> m_scripts;
         std::vector<BlockFunc> m_functions;
@@ -150,7 +154,7 @@ class Engine : public IEngine
         std::unique_ptr<ITimer> m_defaultTimer;
         ITimer *m_timer = nullptr;
         double m_fps = 30;                              // default FPS
-        std::chrono::milliseconds m_frameDuration;      // will be computed in run()
+        std::chrono::milliseconds m_frameDuration;      // will be computed in eventLoop()
         std::unordered_map<std::string, bool> m_keyMap; // holds key states
         bool m_anyKeyPressed = false;
         double m_mouseX = 0;
