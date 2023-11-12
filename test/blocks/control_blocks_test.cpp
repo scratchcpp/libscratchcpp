@@ -666,7 +666,7 @@ TEST_F(ControlBlocksTest, Stop)
     ControlBlocks::compileStop(&compiler);
     compiler.end();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT, vm::OP_EXEC, 1, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT, vm::OP_HALT, vm::OP_EXEC, 1, vm::OP_HALT }));
     ASSERT_TRUE(compiler.constValues().empty());
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());

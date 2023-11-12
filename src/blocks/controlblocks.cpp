@@ -139,6 +139,7 @@ void ControlBlocks::compileStop(Compiler *compiler)
     switch (option) {
         case StopAll:
             compiler->addFunctionCall(&stopAll);
+            compiler->addInstruction(vm::OP_HALT);
             break;
 
         case StopThisScript:
