@@ -204,21 +204,21 @@ TEST_F(ControlBlocksTest, Forever)
 
     compiler.compile(block1);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_FOREVER_LOOP, vm::OP_NULL, vm::OP_PRINT, vm::OP_LOOP_END, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_FOREVER_LOOP, vm::OP_NULL, vm::OP_PRINT, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_TRUE(compiler.constValues().empty());
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
 
     compiler.compile(block2);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_FOREVER_LOOP, vm::OP_LOOP_END, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_FOREVER_LOOP, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_TRUE(compiler.constValues().empty());
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
 
     compiler.compile(block3);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_FOREVER_LOOP, vm::OP_LOOP_END, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_FOREVER_LOOP, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_TRUE(compiler.constValues().empty());
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
@@ -248,7 +248,7 @@ TEST_F(ControlBlocksTest, Repeat)
 
     compiler.compile(block1);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_REPEAT_LOOP, vm::OP_NULL, vm::OP_PRINT, vm::OP_LOOP_END, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_REPEAT_LOOP, vm::OP_NULL, vm::OP_PRINT, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues().size(), 1);
     ASSERT_EQ(compiler.constValues()[0].toDouble(), 5);
     ASSERT_TRUE(compiler.variables().empty());
@@ -304,7 +304,9 @@ TEST_F(ControlBlocksTest, RepeatUntil)
 
     compiler.compile(block1);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 0, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_NULL, vm::OP_PRINT, vm::OP_LOOP_END, vm::OP_HALT }));
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 0, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_NULL, vm::OP_PRINT, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues().size(), 1);
     ASSERT_EQ(compiler.constValues()[0].toBool(), false);
     ASSERT_TRUE(compiler.variables().empty());
@@ -312,28 +314,28 @@ TEST_F(ControlBlocksTest, RepeatUntil)
 
     compiler.compile(block2);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 1, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_LOOP_END, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 1, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false }));
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
 
     compiler.compile(block3);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 2, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_LOOP_END, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 2, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false }));
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
 
     compiler.compile(block4);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 3, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_LOOP_END, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 3, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false, Value() }));
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
 
     compiler.compile(block5);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_NULL, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_LOOP_END, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_NULL, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false, Value() }));
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
@@ -374,7 +376,8 @@ TEST_F(ControlBlocksTest, While)
 
     ASSERT_EQ(
         compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 0, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_NULL, vm::OP_PRINT, vm::OP_LOOP_END, vm::OP_HALT }));
+        std::vector<unsigned int>(
+            { vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 0, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_NULL, vm::OP_PRINT, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues().size(), 1);
     ASSERT_EQ(compiler.constValues()[0].toBool(), false);
     ASSERT_TRUE(compiler.variables().empty());
@@ -382,28 +385,34 @@ TEST_F(ControlBlocksTest, While)
 
     compiler.compile(block2);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 1, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_LOOP_END, vm::OP_HALT }));
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 1, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false }));
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
 
     compiler.compile(block3);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 2, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_LOOP_END, vm::OP_HALT }));
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 2, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false }));
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
 
     compiler.compile(block4);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 3, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_LOOP_END, vm::OP_HALT }));
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 3, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false, Value() }));
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
 
     compiler.compile(block5);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_NULL, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_LOOP_END, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_NULL, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false, Value() }));
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
@@ -439,7 +448,8 @@ TEST_F(ControlBlocksTest, ForEach)
 
     ASSERT_EQ(
         compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_REPEAT_LOOP, vm::OP_REPEAT_LOOP_INDEX1, vm::OP_SET_VAR, 0, vm::OP_NULL, vm::OP_PRINT, vm::OP_LOOP_END, vm::OP_HALT }));
+        std::vector<unsigned int>(
+            { vm::OP_START, vm::OP_CONST, 0, vm::OP_REPEAT_LOOP, vm::OP_REPEAT_LOOP_INDEX1, vm::OP_SET_VAR, 0, vm::OP_NULL, vm::OP_PRINT, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues().size(), 1);
     ASSERT_EQ(compiler.constValues()[0].toDouble(), 5);
     ASSERT_EQ(compiler.variables().size(), 1);

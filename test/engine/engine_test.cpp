@@ -94,8 +94,17 @@ TEST(EngineTest, FpsProject)
     std::chrono::steady_clock::time_point time2(std::chrono::milliseconds(75));
     std::chrono::steady_clock::time_point time3(std::chrono::milliseconds(83));
     std::chrono::steady_clock::time_point time4(std::chrono::milliseconds(116));
-    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time1)).WillOnce(Return(time2)).WillOnce(Return(time3)).WillOnce(Return(time4)).WillOnce(Return(time4));
-    EXPECT_CALL(clock, sleep(std::chrono::milliseconds(8)));
+    EXPECT_CALL(clock, currentSteadyTime())
+        .WillOnce(Return(time1))
+        .WillOnce(Return(time1))
+        .WillOnce(Return(time2))
+        .WillOnce(Return(time2))
+        .WillOnce(Return(time3))
+        .WillOnce(Return(time3))
+        .WillOnce(Return(time4))
+        .WillOnce(Return(time4));
+    EXPECT_CALL(clock, sleep(std::chrono::milliseconds(33)));
+    EXPECT_CALL(clock, sleep(std::chrono::milliseconds(25)));
     p.run();
 
     engine->setFps(10);
@@ -103,8 +112,17 @@ TEST(EngineTest, FpsProject)
     std::chrono::steady_clock::time_point time6(std::chrono::milliseconds(115));
     std::chrono::steady_clock::time_point time7(std::chrono::milliseconds(200));
     std::chrono::steady_clock::time_point time8(std::chrono::milliseconds(300));
-    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time5)).WillOnce(Return(time6)).WillOnce(Return(time7)).WillOnce(Return(time8)).WillOnce(Return(time8));
-    EXPECT_CALL(clock, sleep(std::chrono::milliseconds(85)));
+    EXPECT_CALL(clock, currentSteadyTime())
+        .WillOnce(Return(time5))
+        .WillOnce(Return(time5))
+        .WillOnce(Return(time6))
+        .WillOnce(Return(time6))
+        .WillOnce(Return(time7))
+        .WillOnce(Return(time7))
+        .WillOnce(Return(time8))
+        .WillOnce(Return(time8));
+    EXPECT_CALL(clock, sleep(std::chrono::milliseconds(100)));
+    EXPECT_CALL(clock, sleep(std::chrono::milliseconds(15)));
     p.run();
 }
 

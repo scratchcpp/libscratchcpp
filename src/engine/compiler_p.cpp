@@ -36,11 +36,10 @@ void CompilerPrivate::substackEnd()
     auto parent = substackTree.back();
     switch (parent.second) {
         case Compiler::SubstackType::Loop:
-            if (!atomic) {
-                if (!warp)
-                    addInstruction(OP_BREAK_ATOMIC);
-                atomic = true;
-            }
+            // Break the frame at the end of the loop so that other scripts can run within the frame
+            // This won't happen in "warp" scripts
+            if (!warp)
+                addInstruction(OP_BREAK_ATOMIC);
             addInstruction(OP_LOOP_END);
             break;
         case Compiler::SubstackType::IfStatement:
