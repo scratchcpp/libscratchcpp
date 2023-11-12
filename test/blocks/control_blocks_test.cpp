@@ -752,8 +752,6 @@ TEST_F(ControlBlocksTest, WaitImpl)
 
     std::chrono::steady_clock::time_point startTime(std::chrono::milliseconds(1000));
     EXPECT_CALL(clock, currentSteadyTime()).Times(2).WillRepeatedly(Return(startTime));
-    EXPECT_CALL(m_engineMock, lockFrame()).Times(1);
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -762,8 +760,6 @@ TEST_F(ControlBlocksTest, WaitImpl)
 
     std::chrono::steady_clock::time_point time1(std::chrono::milliseconds(6450));
     EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time1));
-    EXPECT_CALL(m_engineMock, lockFrame()).Times(1);
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -772,16 +768,12 @@ TEST_F(ControlBlocksTest, WaitImpl)
 
     std::chrono::steady_clock::time_point time2(std::chrono::milliseconds(6500));
     EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time2));
-    EXPECT_CALL(m_engineMock, lockFrame()).Times(1);
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(ControlBlocks::m_timeMap.find(&vm) == ControlBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm.atEnd());
 
-    EXPECT_CALL(m_engineMock, lockFrame()).Times(0);
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -842,19 +834,16 @@ TEST_F(ControlBlocksTest, WaitUntilImpl)
     vm.setConstValues(constValuesBefore);
     vm.setBytecode(bytecode);
 
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_FALSE(vm.atEnd());
 
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_FALSE(vm.atEnd());
 
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.setConstValues(constValuesAfter);
     vm.run();
 

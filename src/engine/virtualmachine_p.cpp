@@ -319,16 +319,12 @@ do_loop_end : {
             pos = l.start;
         else
             loops.pop_back();
-        if (!noBreak && !warp) {
-            engine->breakFrame();
+        if (!noBreak && !warp)
             return pos;
-        }
         DISPATCH();
     } else {
-        if (!noBreak && !warp) {
-            engine->breakFrame();
+        if (!noBreak && !warp)
             return pos - 1;
-        }
         loopStart = run(l.start, false);
         if (!READ_LAST_REG()->toBool())
             pos = loopStart;
@@ -698,8 +694,6 @@ do_exec : {
         procedureArgTree.clear();
         procedureArgs = nullptr;
         nextProcedureArgs = nullptr;
-        if (!noBreak)
-            engine->breakFrame();
         if (goBack) {
             goBack = false;
             pos -= instruction_arg_count[OP_EXEC] + 1;

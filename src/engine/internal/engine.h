@@ -75,12 +75,6 @@ class Engine : public IEngine
 
         void requestRedraw() override;
 
-        void breakFrame() override;
-        bool breakingCurrentFrame() override;
-
-        void skipFrame() override;
-        void lockFrame() override;
-
         ITimer *timer() const override;
         void setTimer(ITimer *timer);
 
@@ -168,9 +162,6 @@ class Engine : public IEngine
 
         bool m_running = false;
         bool m_redrawRequested = false;
-        bool m_breakFrame = false;
-        bool m_skipFrame = false;
-        bool m_lockFrame = false;
 };
 
 } // namespace libscratchcpp

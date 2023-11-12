@@ -60,16 +60,6 @@ TEST(EngineTest, IsRunning)
     engine.start();
     engine.run();
     ASSERT_FALSE(engine.isRunning());
-
-    engine.breakFrame();
-
-    engine.start();
-    ASSERT_TRUE(engine.isRunning());
-    ASSERT_TRUE(engine.breakingCurrentFrame());
-
-    engine.stop();
-    ASSERT_FALSE(engine.isRunning());
-    ASSERT_FALSE(engine.breakingCurrentFrame());
 }
 
 TEST(EngineTest, Fps)
@@ -450,15 +440,6 @@ TEST(EngineTest, SpriteFencingEnabled)
 
     engine.setSpriteFencingEnabled(true);
     ASSERT_TRUE(engine.spriteFencingEnabled());
-}
-
-TEST(EngineTest, BreakFrame)
-{
-    Engine engine;
-    ASSERT_FALSE(engine.breakingCurrentFrame());
-
-    engine.breakFrame();
-    ASSERT_TRUE(engine.breakingCurrentFrame());
 }
 
 TEST(EngineTest, Timer)

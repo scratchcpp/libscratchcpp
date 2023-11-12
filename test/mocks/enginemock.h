@@ -61,12 +61,6 @@ class EngineMock : public IEngine
 
         MOCK_METHOD(void, requestRedraw, (), (override));
 
-        MOCK_METHOD(void, breakFrame, (), (override));
-        MOCK_METHOD(bool, breakingCurrentFrame, (), (override));
-
-        MOCK_METHOD(void, skipFrame, (), (override));
-        MOCK_METHOD(void, lockFrame, (), (override));
-
         MOCK_METHOD(ITimer *, timer, (), (const, override));
 
         MOCK_METHOD(void, registerSection, (std::shared_ptr<IBlockSection>), (override));

@@ -46,9 +46,6 @@ void Engine::clear()
     m_clones.clear();
 
     m_running = false;
-    m_breakFrame = false;
-    m_skipFrame = false;
-    m_lockFrame = false;
 }
 
 // Resolves ID references and sets pointers of entities.
@@ -189,8 +186,6 @@ void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wa
 
 void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait)
 {
-    bool previousSkipFrame = m_skipFrame;
-    skipFrame();
     const std::vector<Script *> &scripts = m_broadcastMap[broadcast];
 
     for (auto script : scripts) {
@@ -325,7 +320,6 @@ void Engine::eventLoop(bool untilProjectStops)
         auto frameStart = m_clock->currentSteadyTime();
         std::chrono::steady_clock::time_point currentTime;
         std::chrono::milliseconds elapsedTime, sleepTime;
-        m_lockFrame = false;
         m_redrawRequested = false;
         bool timeout = false;
         bool stop = false;
@@ -373,7 +367,6 @@ void Engine::runScripts(const std::vector<std::shared_ptr<VirtualMachine>> &scri
     for (int i = 0; i < scripts.size(); i++) {
         auto script = scripts[i];
         assert(script);
-        m_breakFrame = false;
 
         script->run();
         if (script->atEnd() && m_running) {
@@ -579,30 +572,6 @@ bool Engine::broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceS
 void Engine::requestRedraw()
 {
     m_redrawRequested = true;
-}
-
-void Engine::breakFrame()
-{
-    m_breakFrame = true;
-}
-
-bool Engine::breakingCurrentFrame()
-{
-    return m_breakFrame;
-}
-
-void Engine::skipFrame()
-{
-    if (!m_lockFrame) {
-        breakFrame();
-        m_skipFrame = true;
-    }
-}
-
-void Engine::lockFrame()
-{
-    m_skipFrame = false;
-    m_lockFrame = true;
 }
 
 ITimer *Engine::timer() const
@@ -978,9 +947,6 @@ void Engine::finalize()
     m_scriptsToRemove.clear();
     m_running = false;
     m_redrawRequested = false;
-    m_breakFrame = false;
-    m_skipFrame = false;
-    m_lockFrame = false;
 }
 
 void Engine::deleteClones()

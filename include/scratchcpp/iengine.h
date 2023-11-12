@@ -162,25 +162,6 @@ class LIBSCRATCHCPP_EXPORT IEngine
          */
         virtual void requestRedraw() = 0;
 
-        /*!
-         * Call this from a block implementation to break the execution of the current frame.
-         * \note This has no effect in "run without screen refresh" custom blocks.
-         */
-        virtual void breakFrame() = 0;
-
-        /*! Returns true if breakFrame() was called. */
-        virtual bool breakingCurrentFrame() = 0;
-
-        /*!
-         * Call this from a block implementation to skip a frame and run the next frame immediately.\n
-         * The screen will be refreshed according to the frame rate.
-         * \note This also works in "run without screen refresh" custom blocks.
-         */
-        virtual void skipFrame() = 0;
-
-        /*! Call this from a block implementation to ignore calls to skipFrame() until the current frame ends. */
-        virtual void lockFrame() = 0;
-
         /*! Returns the timer of the project. */
         virtual ITimer *timer() const = 0;
 
