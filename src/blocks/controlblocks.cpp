@@ -215,6 +215,8 @@ unsigned int ControlBlocks::startWait(VirtualMachine *vm)
 
     auto currentTime = clock->currentSteadyTime();
     m_timeMap[vm] = { currentTime, vm->getInput(0, 1)->toDouble() * 1000 };
+    vm->engine()->requestRedraw();
+
     return 1;
 }
 
