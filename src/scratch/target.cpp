@@ -213,7 +213,7 @@ void Target::setCostumeIndex(int newCostumeIndex)
 
     if (isStage()) {
         if (impl->engine)
-            impl->engine->breakFrame();
+            impl->engine->requestRedraw();
     }
 }
 

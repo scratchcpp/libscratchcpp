@@ -94,7 +94,7 @@ std::shared_ptr<Sprite> Sprite::clone()
         eng->initClone(clone.get());
 
         if (impl->visible)
-            eng->breakFrame();
+            eng->requestRedraw();
 
         if (impl->iface)
             impl->iface->onCloned(clone.get());
@@ -158,7 +158,7 @@ void Sprite::setVisible(bool newVisible)
         IEngine *eng = engine();
 
         if (eng)
-            eng->breakFrame();
+            eng->requestRedraw();
     }
 
     if (impl->iface)
@@ -210,7 +210,7 @@ void Sprite::setSize(double newSize)
         IEngine *eng = engine();
 
         if (eng)
-            eng->breakFrame();
+            eng->requestRedraw();
     }
 
     if (impl->iface)
@@ -239,7 +239,7 @@ void Sprite::setCostumeIndex(int newCostumeIndex)
         IEngine *eng = engine();
 
         if (eng)
-            eng->breakFrame();
+            eng->requestRedraw();
     }
 
     Target::setCostumeIndex(newCostumeIndex);
@@ -265,7 +265,7 @@ void Sprite::setDirection(double newDirection)
         IEngine *eng = engine();
 
         if (eng)
-            eng->breakFrame();
+            eng->requestRedraw();
     }
 
     if (impl->iface)
@@ -317,7 +317,7 @@ void Sprite::setRotationStyle(RotationStyle newRotationStyle)
         IEngine *eng = engine();
 
         if (eng)
-            eng->breakFrame();
+            eng->requestRedraw();
     }
 
     if (impl->iface)
@@ -375,7 +375,7 @@ void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
         IEngine *eng = engine();
 
         if (eng)
-            eng->breakFrame();
+            eng->requestRedraw();
     }
 }
 
@@ -393,7 +393,7 @@ void Sprite::clearGraphicsEffects()
         IEngine *eng = engine();
 
         if (eng)
-            eng->breakFrame();
+            eng->requestRedraw();
     }
 }
 
@@ -416,6 +416,6 @@ void Sprite::setXY(double x, double y)
         IEngine *eng = engine();
 
         if (eng)
-            eng->breakFrame();
+            eng->requestRedraw();
     }
 }
