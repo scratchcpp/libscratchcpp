@@ -217,13 +217,8 @@ void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, 
                     pair.first = sourceScript;
             }
 
-            if (script == sourceScript->script()) {
-                sourceScript->stop(false, true);
-
-                if (!previousSkipFrame && !wait)
-                    m_skipFrame = false;
-            } else
-                sourceScript->stop(true, true);
+            if (script == sourceScript->script())
+                sourceScript->stop(false, !wait); // source script is the broadcast script
         }
 
         // Start scripts which are not running
