@@ -36,7 +36,6 @@ struct CompilerPrivate
         std::vector<std::string> procedures;
         std::unordered_map<std::string, std::vector<std::string>> procedureArgs;
         BlockPrototype *procedurePrototype = nullptr;
-        bool atomic = true;
         bool warp = false;
 };
 

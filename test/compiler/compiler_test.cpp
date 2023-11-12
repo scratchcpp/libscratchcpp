@@ -430,21 +430,6 @@ TEST_F(CompilerTest, AddFunctionCall)
     ASSERT_EQ(engine.functionIndex(&testFunction2), 1);
 }
 
-TEST_F(CompilerTest, BreakAtomicScript)
-{
-    static const int SUBSTACK = 0;
-
-    INIT_COMPILER(engine, compiler);
-    compiler.addInstruction(vm::OP_START);
-
-    compiler.addInstruction(vm::OP_FOREVER_LOOP);
-    compiler.breakAtomicScript();
-    compiler.moveToSubstack(nullptr, Compiler::SubstackType::Loop);
-
-    compiler.addInstruction(vm::OP_HALT);
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_FOREVER_LOOP, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
-}
-
 TEST_F(CompilerTest, Warp)
 {
     INIT_COMPILER(engine, compiler);

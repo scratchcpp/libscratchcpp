@@ -27,7 +27,6 @@ void Compiler::init()
 
     impl->bytecode.clear();
     impl->procedurePrototype = nullptr;
-    impl->atomic = true;
     impl->warp = false;
 
     // Add start instruction
@@ -233,16 +232,6 @@ void Compiler::moveToSubstack(std::shared_ptr<Block> substack1, std::shared_ptr<
 void Compiler::moveToSubstack(std::shared_ptr<Block> substack, SubstackType type)
 {
     moveToSubstack(substack, nullptr, type);
-}
-
-/*!
- * Adds the vm::OP_BREAK_ATOMIC instruction at the end of the current loop.
- * This can be used for example in motion blocks.
- * \note Nothing will happen if the script is set to run without screen refresh.
- */
-void Compiler::breakAtomicScript()
-{
-    impl->atomic = false;
 }
 
 /*! Makes current script run without screen refresh. */

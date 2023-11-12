@@ -62,7 +62,6 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void addProcedureArg(const std::string &procCode, const std::string &argName);
         void moveToSubstack(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2, SubstackType type);
         void moveToSubstack(std::shared_ptr<Block> substack, SubstackType type);
-        void breakAtomicScript();
         void warp();
 
         Input *input(int id) const;
