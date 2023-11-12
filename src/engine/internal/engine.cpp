@@ -380,26 +380,24 @@ void Engine::runScripts(const std::vector<std::shared_ptr<VirtualMachine>> &scri
         assert(script);
         m_breakFrame = false;
 
-        do {
-            script->run();
-            if (script->atEnd() && m_running) {
-                for (auto &[key, value] : m_runningBroadcastMap) {
-                    size_t index = 0;
+        script->run();
+        if (script->atEnd() && m_running) {
+            for (auto &[key, value] : m_runningBroadcastMap) {
+                size_t index = 0;
 
-                    for (const auto &pair : value) {
-                        if (pair.second == script.get()) {
-                            value.erase(value.begin() + index);
-                            break;
-                        }
-
-                        index++;
+                for (const auto &pair : value) {
+                    if (pair.second == script.get()) {
+                        value.erase(value.begin() + index);
+                        break;
                     }
-                }
 
-                if (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) == m_scriptsToRemove.end())
-                    m_scriptsToRemove.push_back(script.get());
+                    index++;
+                }
             }
-        } while (!script->atEnd() && !m_breakFrame);
+
+            if (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) == m_scriptsToRemove.end())
+                m_scriptsToRemove.push_back(script.get());
+        }
     }
 
     assert(m_running || m_scriptsToRemove.empty());
