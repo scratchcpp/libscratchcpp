@@ -50,7 +50,7 @@ struct VirtualMachinePrivate
         std::vector<std::vector<Value>> procedureArgTree;
         std::vector<Value> *procedureArgs = nullptr;
         std::vector<Value> *nextProcedureArgs = nullptr;
-        bool atomic = true;
+        bool noBreak = true;
         bool warp = false;
         bool stop = false;
         bool savePos = true;

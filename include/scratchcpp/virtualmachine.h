@@ -79,7 +79,7 @@ enum Opcode
     OP_CALL_PROCEDURE, /*! Calls the procedure (custom block) with the index in the argument. */
     OP_ADD_ARG,        /*!< Adds a procedure (custom block) argument with the value from the last register. */
     OP_READ_ARG,       /*!< Reads the procedure (custom block) argument with the index in the argument and stores the value in the last register. */
-    OP_BREAK_ATOMIC,   /*!< Breaks current frame at the end of the loop. */
+    OP_BREAK_FRAME,    /*!< Breaks current frame at the end of the loop. */
     OP_WARP            /*! Runs the script without screen refresh. */
 };
 
@@ -131,7 +131,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         void reset();
         void moveToLastCheckpoint();
 
-        void stop(bool savePos = true, bool breakAtomic = false, bool goBack = false);
+        void stop(bool savePos = true, bool breakFrame = false, bool goBack = false);
 
         bool atEnd() const;
 

@@ -237,7 +237,7 @@ TEST(VirtualMachineTest, IfElse)
 
 TEST(VirtualMachineTest, OP_FOREVER_LOOP)
 {
-    static unsigned int bytecode[] = { OP_START, OP_FOREVER_LOOP, OP_BREAK_ATOMIC, OP_LOOP_END, OP_HALT };
+    static unsigned int bytecode[] = { OP_START, OP_FOREVER_LOOP, OP_BREAK_FRAME, OP_LOOP_END, OP_HALT };
 
     Engine engine;
     VirtualMachine vm(nullptr, &engine, nullptr);
@@ -1455,14 +1455,14 @@ TEST(VirtualMachineTest, RunProcedures)
     ASSERT_EQ(vm.registerCount(), 0);
 }
 
-TEST(VirtualMachineTest, OP_BREAK_ATOMIC)
+TEST(VirtualMachineTest, OP_BREAK_FRAME)
 {
-    static unsigned int bytecode1[] = { OP_START, OP_FOREVER_LOOP, OP_BREAK_ATOMIC, OP_LOOP_END, OP_HALT };
-    static unsigned int bytecode2[] = { OP_START, OP_CONST, 1, OP_REPEAT_LOOP, OP_BREAK_ATOMIC, OP_LOOP_END, OP_HALT };
+    static unsigned int bytecode1[] = { OP_START, OP_FOREVER_LOOP, OP_BREAK_FRAME, OP_LOOP_END, OP_HALT };
+    static unsigned int bytecode2[] = { OP_START, OP_CONST, 1, OP_REPEAT_LOOP, OP_BREAK_FRAME, OP_LOOP_END, OP_HALT };
     static unsigned int bytecode3[] = {
-        OP_START, OP_CONST, 0, OP_SET_VAR, 0, OP_UNTIL_LOOP, OP_READ_VAR, 0, OP_CONST, 1, OP_EQUALS, OP_BEGIN_UNTIL_LOOP, OP_BREAK_ATOMIC, OP_CONST, 2, OP_CHANGE_VAR, 0, OP_LOOP_END, OP_HALT
+        OP_START, OP_CONST, 0, OP_SET_VAR, 0, OP_UNTIL_LOOP, OP_READ_VAR, 0, OP_CONST, 1, OP_EQUALS, OP_BEGIN_UNTIL_LOOP, OP_BREAK_FRAME, OP_CONST, 2, OP_CHANGE_VAR, 0, OP_LOOP_END, OP_HALT
     };
-    static unsigned int bytecode4[] = { OP_START, OP_BREAK_ATOMIC, OP_NULL, OP_EXEC, 0, OP_HALT };
+    static unsigned int bytecode4[] = { OP_START, OP_BREAK_FRAME, OP_NULL, OP_EXEC, 0, OP_HALT };
     static BlockFunc functions[] = { &testFunction3 };
     static Value constValues[] = { 0, 10, 1 };
     Value var;
@@ -1524,11 +1524,11 @@ TEST(VirtualMachineTest, OP_BREAK_ATOMIC)
 
 TEST(VirtualMachineTest, OP_WARP)
 {
-    static unsigned int bytecode1[] = { OP_START, OP_WARP, OP_CONST, 1, OP_REPEAT_LOOP, OP_BREAK_ATOMIC, OP_LOOP_END, OP_HALT };
+    static unsigned int bytecode1[] = { OP_START, OP_WARP, OP_CONST, 1, OP_REPEAT_LOOP, OP_BREAK_FRAME, OP_LOOP_END, OP_HALT };
     static unsigned int bytecode2[] = {
-        OP_START, OP_WARP, OP_CONST, 0, OP_SET_VAR, 0, OP_UNTIL_LOOP, OP_READ_VAR, 0, OP_CONST, 1, OP_EQUALS, OP_BEGIN_UNTIL_LOOP, OP_BREAK_ATOMIC, OP_CONST, 2, OP_CHANGE_VAR, 0, OP_LOOP_END, OP_HALT
+        OP_START, OP_WARP, OP_CONST, 0, OP_SET_VAR, 0, OP_UNTIL_LOOP, OP_READ_VAR, 0, OP_CONST, 1, OP_EQUALS, OP_BEGIN_UNTIL_LOOP, OP_BREAK_FRAME, OP_CONST, 2, OP_CHANGE_VAR, 0, OP_LOOP_END, OP_HALT
     };
-    static unsigned int bytecode3[] = { OP_START, OP_WARP, OP_BREAK_ATOMIC, OP_NULL, OP_EXEC, 0, OP_HALT };
+    static unsigned int bytecode3[] = { OP_START, OP_WARP, OP_BREAK_FRAME, OP_NULL, OP_EXEC, 0, OP_HALT };
     static BlockFunc functions[] = { &testFunction3 };
     static Value constValues[] = { 0, 10, 1 };
     Value var;

@@ -494,7 +494,7 @@ TEST_F(CompilerTest, RepeatLoop)
     ASSERT_EQ(
         compiler.bytecode(),
         std::vector<unsigned int>(
-            { vm::OP_START, vm::OP_CONST, 0, vm::OP_SET_VAR, 0, vm::OP_CONST, 1, vm::OP_REPEAT_LOOP, vm::OP_CONST, 2, vm::OP_CHANGE_VAR, 0, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
+            { vm::OP_START, vm::OP_CONST, 0, vm::OP_SET_VAR, 0, vm::OP_CONST, 1, vm::OP_REPEAT_LOOP, vm::OP_CONST, 2, vm::OP_CHANGE_VAR, 0, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_EQ(compiler.variablePtrs().size(), 1);
     ASSERT_EQ(compiler.variablePtrs()[0]->toString(), "test");
     ASSERT_EQ(compiler.lists().size(), 0);
@@ -523,7 +523,7 @@ TEST_F(CompilerTest, ForeverLoop)
     compiler.compile(engine.targetAt(0)->greenFlagBlocks().at(0));
     ASSERT_EQ(
         compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_SET_VAR, 0, vm::OP_FOREVER_LOOP, vm::OP_CONST, 1, vm::OP_CHANGE_VAR, 0, vm::OP_BREAK_ATOMIC, vm::OP_LOOP_END, vm::OP_HALT }));
+        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_SET_VAR, 0, vm::OP_FOREVER_LOOP, vm::OP_CONST, 1, vm::OP_CHANGE_VAR, 0, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 1 }));
 }
 
@@ -549,7 +549,7 @@ TEST_F(CompilerTest, RepeatUntilLoop)
               1,
               vm::OP_CHANGE_VAR,
               0,
-              vm::OP_BREAK_ATOMIC,
+              vm::OP_BREAK_FRAME,
               vm::OP_LOOP_END,
               vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 1 }));
@@ -578,7 +578,7 @@ TEST_F(CompilerTest, RepeatWhileLoop)
               1,
               vm::OP_CHANGE_VAR,
               0,
-              vm::OP_BREAK_ATOMIC,
+              vm::OP_BREAK_FRAME,
               vm::OP_LOOP_END,
               vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 1 }));
@@ -608,7 +608,7 @@ TEST_F(CompilerTest, RepeatForEachLoop)
               2,
               vm::OP_CHANGE_VAR,
               0,
-              vm::OP_BREAK_ATOMIC,
+              vm::OP_BREAK_FRAME,
               vm::OP_LOOP_END,
               vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 10, 1 }));
@@ -720,7 +720,7 @@ TEST_F(CompilerTest, NestedStatements)
               vm::OP_CHANGE_VAR,
               0,
               vm::OP_ENDIF,
-              vm::OP_BREAK_ATOMIC,
+              vm::OP_BREAK_FRAME,
               vm::OP_LOOP_END,
               vm::OP_ELSE,
               vm::OP_CONST,
@@ -738,7 +738,7 @@ TEST_F(CompilerTest, NestedStatements)
               vm::OP_CHANGE_VAR,
               0,
               vm::OP_ENDIF,
-              vm::OP_BREAK_ATOMIC,
+              vm::OP_BREAK_FRAME,
               vm::OP_LOOP_END,
               vm::OP_ENDIF,
               vm::OP_HALT }));
