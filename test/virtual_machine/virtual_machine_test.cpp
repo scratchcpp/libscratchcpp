@@ -237,7 +237,7 @@ TEST(VirtualMachineTest, IfElse)
 
 TEST(VirtualMachineTest, OP_FOREVER_LOOP)
 {
-    static unsigned int bytecode[] = { OP_START, OP_FOREVER_LOOP, OP_BREAK_ATOMIC, OP_LOOP_END, OP_HALT };
+    static unsigned int bytecode[] = { OP_START, OP_FOREVER_LOOP, OP_BREAK_FRAME, OP_LOOP_END, OP_HALT };
 
     Engine engine;
     VirtualMachine vm(nullptr, &engine, nullptr);
@@ -261,7 +261,6 @@ TEST(VirtualMachineTest, OP_REPEAT_LOOP)
     vm.setBytecode(bytecode);
     vm.setConstValues(constValues);
     testing::internal::CaptureStdout();
-    EXPECT_CALL(engineMock, breakFrame()).Times(0);
     vm.run();
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\ntest\ntest\n");
     ASSERT_EQ(vm.registerCount(), 0);
@@ -310,7 +309,6 @@ TEST(VirtualMachineTest, OP_UNTIL_LOOP)
     vm.setConstValues(constValues);
     vm.setVariables(variables);
     testing::internal::CaptureStdout();
-    EXPECT_CALL(engineMock, breakFrame()).Times(0);
     vm.run();
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "1\n2\n3\n");
     ASSERT_EQ(vm.registerCount(), 0);
@@ -1385,21 +1383,18 @@ TEST(VirtualMachineTest, OP_EXEC)
     vm.setBytecode(bytecode);
     vm.setFunctions(functions);
     vm.setConstValues(constValues);
-    EXPECT_CALL(engineMock, breakFrame()).Times(0);
     testing::internal::CaptureStdout();
     vm.run();
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "it works\nhello world\n");
     ASSERT_FALSE(vm.atEnd());
     ASSERT_EQ(vm.registerCount(), 0);
 
-    EXPECT_CALL(engineMock, breakFrame()).Times(1);
     testing::internal::CaptureStdout();
     vm.run();
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "hello\n");
     ASSERT_FALSE(vm.atEnd());
     ASSERT_EQ(vm.registerCount(), 0);
 
-    EXPECT_CALL(engineMock, breakFrame()).Times(0);
     testing::internal::CaptureStdout();
     vm.run();
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "world\nfunction 5\n");
@@ -1407,7 +1402,6 @@ TEST(VirtualMachineTest, OP_EXEC)
     ASSERT_EQ(vm.registerCount(), 1);
 
     for (int i = 0; i < 100; i++) {
-        EXPECT_CALL(engineMock, breakFrame()).Times(0);
         testing::internal::CaptureStdout();
         vm.run();
         ASSERT_EQ(testing::internal::GetCapturedStdout(), "function 5\n");
@@ -1455,14 +1449,14 @@ TEST(VirtualMachineTest, RunProcedures)
     ASSERT_EQ(vm.registerCount(), 0);
 }
 
-TEST(VirtualMachineTest, OP_BREAK_ATOMIC)
+TEST(VirtualMachineTest, OP_BREAK_FRAME)
 {
-    static unsigned int bytecode1[] = { OP_START, OP_FOREVER_LOOP, OP_BREAK_ATOMIC, OP_LOOP_END, OP_HALT };
-    static unsigned int bytecode2[] = { OP_START, OP_CONST, 1, OP_REPEAT_LOOP, OP_BREAK_ATOMIC, OP_LOOP_END, OP_HALT };
+    static unsigned int bytecode1[] = { OP_START, OP_FOREVER_LOOP, OP_BREAK_FRAME, OP_LOOP_END, OP_HALT };
+    static unsigned int bytecode2[] = { OP_START, OP_CONST, 1, OP_REPEAT_LOOP, OP_BREAK_FRAME, OP_LOOP_END, OP_HALT };
     static unsigned int bytecode3[] = {
-        OP_START, OP_CONST, 0, OP_SET_VAR, 0, OP_UNTIL_LOOP, OP_READ_VAR, 0, OP_CONST, 1, OP_EQUALS, OP_BEGIN_UNTIL_LOOP, OP_BREAK_ATOMIC, OP_CONST, 2, OP_CHANGE_VAR, 0, OP_LOOP_END, OP_HALT
+        OP_START, OP_CONST, 0, OP_SET_VAR, 0, OP_UNTIL_LOOP, OP_READ_VAR, 0, OP_CONST, 1, OP_EQUALS, OP_BEGIN_UNTIL_LOOP, OP_BREAK_FRAME, OP_CONST, 2, OP_CHANGE_VAR, 0, OP_LOOP_END, OP_HALT
     };
-    static unsigned int bytecode4[] = { OP_START, OP_BREAK_ATOMIC, OP_NULL, OP_EXEC, 0, OP_HALT };
+    static unsigned int bytecode4[] = { OP_START, OP_BREAK_FRAME, OP_NULL, OP_EXEC, 0, OP_HALT };
     static BlockFunc functions[] = { &testFunction3 };
     static Value constValues[] = { 0, 10, 1 };
     Value var;
@@ -1476,7 +1470,6 @@ TEST(VirtualMachineTest, OP_BREAK_ATOMIC)
     vm.setVariables(variables);
 
     for (int i = 0; i < 100; i++) {
-        EXPECT_CALL(engineMock, breakFrame()).Times(1);
         vm.run();
         ASSERT_FALSE(vm.atEnd());
     }
@@ -1486,13 +1479,11 @@ TEST(VirtualMachineTest, OP_BREAK_ATOMIC)
     vm.setBytecode(bytecode2);
 
     for (int i = 0; i < 10; i++) {
-        EXPECT_CALL(engineMock, breakFrame()).Times(1);
         vm.run();
         ASSERT_FALSE(vm.atEnd());
         ASSERT_EQ(vm.registerCount(), 0);
     }
 
-    EXPECT_CALL(engineMock, breakFrame()).Times(0);
     vm.run();
     ASSERT_TRUE(vm.atEnd());
     ASSERT_EQ(vm.registerCount(), 0);
@@ -1500,19 +1491,16 @@ TEST(VirtualMachineTest, OP_BREAK_ATOMIC)
     vm.setBytecode(bytecode3);
 
     for (int i = 0; i < 10; i++) {
-        EXPECT_CALL(engineMock, breakFrame()).Times(1);
         vm.run();
         ASSERT_FALSE(vm.atEnd());
         ASSERT_EQ(vm.registerCount(), 0);
     }
 
-    EXPECT_CALL(engineMock, breakFrame()).Times(0);
     vm.run();
     ASSERT_TRUE(vm.atEnd());
     ASSERT_EQ(vm.registerCount(), 0);
 
     vm.setBytecode(bytecode4);
-    EXPECT_CALL(engineMock, breakFrame()).Times(0);
     vm.run();
     ASSERT_FALSE(vm.atEnd());
     ASSERT_EQ(vm.registerCount(), 0);
@@ -1524,11 +1512,11 @@ TEST(VirtualMachineTest, OP_BREAK_ATOMIC)
 
 TEST(VirtualMachineTest, OP_WARP)
 {
-    static unsigned int bytecode1[] = { OP_START, OP_WARP, OP_CONST, 1, OP_REPEAT_LOOP, OP_BREAK_ATOMIC, OP_LOOP_END, OP_HALT };
+    static unsigned int bytecode1[] = { OP_START, OP_WARP, OP_CONST, 1, OP_REPEAT_LOOP, OP_BREAK_FRAME, OP_LOOP_END, OP_HALT };
     static unsigned int bytecode2[] = {
-        OP_START, OP_WARP, OP_CONST, 0, OP_SET_VAR, 0, OP_UNTIL_LOOP, OP_READ_VAR, 0, OP_CONST, 1, OP_EQUALS, OP_BEGIN_UNTIL_LOOP, OP_BREAK_ATOMIC, OP_CONST, 2, OP_CHANGE_VAR, 0, OP_LOOP_END, OP_HALT
+        OP_START, OP_WARP, OP_CONST, 0, OP_SET_VAR, 0, OP_UNTIL_LOOP, OP_READ_VAR, 0, OP_CONST, 1, OP_EQUALS, OP_BEGIN_UNTIL_LOOP, OP_BREAK_FRAME, OP_CONST, 2, OP_CHANGE_VAR, 0, OP_LOOP_END, OP_HALT
     };
-    static unsigned int bytecode3[] = { OP_START, OP_WARP, OP_BREAK_ATOMIC, OP_NULL, OP_EXEC, 0, OP_HALT };
+    static unsigned int bytecode3[] = { OP_START, OP_WARP, OP_BREAK_FRAME, OP_NULL, OP_EXEC, 0, OP_HALT };
     static BlockFunc functions[] = { &testFunction3 };
     static Value constValues[] = { 0, 10, 1 };
     Value var;
@@ -1541,20 +1529,17 @@ TEST(VirtualMachineTest, OP_WARP)
     vm.setConstValues(constValues);
     vm.setVariables(variables);
 
-    EXPECT_CALL(engineMock, breakFrame()).Times(0);
     vm.run();
     ASSERT_TRUE(vm.atEnd());
     ASSERT_EQ(vm.registerCount(), 0);
 
     vm.setBytecode(bytecode2);
 
-    EXPECT_CALL(engineMock, breakFrame()).Times(0);
     vm.run();
     ASSERT_TRUE(vm.atEnd());
     ASSERT_EQ(vm.registerCount(), 0);
 
     vm.setBytecode(bytecode3);
-    EXPECT_CALL(engineMock, breakFrame()).Times(0);
     vm.run();
     ASSERT_TRUE(vm.atEnd());
     ASSERT_EQ(vm.registerCount(), 0);

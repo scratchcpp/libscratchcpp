@@ -43,16 +43,8 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void compile() = 0;
 
         /*!
-         * Runs a single frame.\n
-         * Use this if you want to use a custom event loop
-         * in your project player.
-         * \note Nothing will happen until start() is called.
-         */
-        virtual void frame() = 0;
-
-        /*!
          * Calls all "when green flag clicked" blocks.
-         * \note Nothing will happen until run() or frame() is called.
+         * \note Nothing will happen until the event loop is started.
          */
         virtual void start() = 0;
 
@@ -85,12 +77,18 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void deinitClone(Sprite *clone) = 0;
 
         /*!
-         * Runs the event loop and calls "when green flag clicked" blocks.
+         * Calls and runs "when green flag clicked" blocks.
          * \note This function returns when all scripts finish.\n
-         * If you need to implement something advanced, such as a GUI with the
-         * green flag button, use frame().
+         * If you need an event loop that runs even after the project stops,
+         * use runEventLoop().
          */
         virtual void run() = 0;
+
+        /*!
+         * Runs the event loop. Call start() (from another thread) to start the project.
+         * \note This should be called from another thread in GUI project players to keep the UI responsive.
+         */
+        virtual void runEventLoop() = 0;
 
         /*! Returns true if the project is currently running. */
         virtual bool isRunning() const = 0;
@@ -159,23 +157,10 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual bool broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript) = 0;
 
         /*!
-         * Call this from a block implementation to force a "screen refresh".
+         * Call this from a block implementation to force a redraw (screen refresh).
          * \note This has no effect in "run without screen refresh" custom blocks.
          */
-        virtual void breakFrame() = 0;
-
-        /*! Returns true if breakFrame() was called. */
-        virtual bool breakingCurrentFrame() = 0;
-
-        /*!
-         * Call this from a block implementation to skip a frame and run the next frame immediately.\n
-         * The screen will be refreshed according to the frame rate.
-         * \note This also works in "run without screen refresh" custom blocks.
-         */
-        virtual void skipFrame() = 0;
-
-        /*! Call this from a block implementation to ignore calls to skipFrame() until the current frame ends. */
-        virtual void lockFrame() = 0;
+        virtual void requestRedraw() = 0;
 
         /*! Returns the timer of the project. */
         virtual ITimer *timer() const = 0;

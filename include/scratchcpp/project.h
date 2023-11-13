@@ -25,9 +25,9 @@ class LIBSCRATCHCPP_EXPORT Project
 
         bool load();
 
-        void frame();
         void start();
         void run();
+        void runEventLoop();
 
         const std::string &fileName() const;
         void setFileName(const std::string &newFileName);

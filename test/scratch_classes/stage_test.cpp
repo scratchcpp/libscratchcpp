@@ -17,7 +17,7 @@ TEST(SpriteTest, CostumeIndex)
     Stage stage;
     EngineMock engine;
     stage.setEngine(&engine);
-    EXPECT_CALL(engine, breakFrame()).Times(2);
+    EXPECT_CALL(engine, requestRedraw()).Times(2);
 
     auto c1 = std::make_shared<Costume>("", "", "");
     auto c2 = std::make_shared<Costume>("", "", "");

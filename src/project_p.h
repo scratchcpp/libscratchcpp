@@ -19,9 +19,9 @@ struct ProjectPrivate
 
         bool load();
 
-        void frame();
         void start();
         void run();
+        void runEventLoop();
 
         void setScratchVersion(ScratchVersion version);
 

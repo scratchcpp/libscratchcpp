@@ -139,6 +139,7 @@ void ControlBlocks::compileStop(Compiler *compiler)
     switch (option) {
         case StopAll:
             compiler->addFunctionCall(&stopAll);
+            compiler->addInstruction(vm::OP_HALT);
             break;
 
         case StopThisScript:
@@ -215,6 +216,8 @@ unsigned int ControlBlocks::startWait(VirtualMachine *vm)
 
     auto currentTime = clock->currentSteadyTime();
     m_timeMap[vm] = { currentTime, vm->getInput(0, 1)->toDouble() * 1000 };
+    vm->engine()->requestRedraw();
+
     return 1;
 }
 
@@ -230,8 +233,6 @@ unsigned int ControlBlocks::wait(VirtualMachine *vm)
         vm->stop(true, true, false);
     } else
         vm->stop(true, true, true);
-
-    vm->engine()->lockFrame();
     return 0;
 }
 

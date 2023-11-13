@@ -37,17 +37,6 @@ bool Project::load()
 }
 
 /*!
- * Runs a single frame.\n
- * Use this if you want to use a custom event loop
- * in your project player.
- * \note Nothing will happen until start() is called.
- */
-void Project::frame()
-{
-    impl->frame();
-}
-
-/*!
  * Calls all "when green flag clicked" blocks.
  * \note Nothing will happen until run() or frame() is called.
  */
@@ -57,14 +46,23 @@ void Project::start()
 }
 
 /*!
- * Runs the event loop and calls "when green flag clicked" blocks.
+ * Calls and runs "when green flag clicked" blocks.
  * \note This function returns when all scripts finish.\n
- * If you need to implement something advanced, such as a GUI with the
- * green flag button, use frame().
+ * If you need an event loop that runs even after the project stops,
+ * use runEventLoop().
  */
 void Project::run()
 {
     impl->run();
+}
+
+/*!
+ * Runs the event loop. Call start() (from another thread) to start the project.
+ * \note This should be called from another thread in GUI project players to keep the UI responsive.
+ */
+void Project::runEventLoop()
+{
+    impl->runEventLoop();
 }
 
 /*! Returns the project file name. */

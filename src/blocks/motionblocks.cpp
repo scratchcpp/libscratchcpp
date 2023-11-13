@@ -500,7 +500,6 @@ void MotionBlocks::continueGliding(VirtualMachine *vm)
         }
 
         vm->stop(true, true, true);
-        vm->engine()->lockFrame();
     }
 }
 

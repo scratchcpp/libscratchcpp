@@ -14,7 +14,6 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, clear, (), (override));
         MOCK_METHOD(void, compile, (), (override));
 
-        MOCK_METHOD(void, frame, (), (override));
         MOCK_METHOD(void, start, (), (override));
         MOCK_METHOD(void, stop, (), (override));
         MOCK_METHOD(void, startScript, (std::shared_ptr<Block>, std::shared_ptr<Target>), (override));
@@ -25,6 +24,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, initClone, (Sprite *), (override));
         MOCK_METHOD(void, deinitClone, (Sprite *), (override));
         MOCK_METHOD(void, run, (), (override));
+        MOCK_METHOD(void, runEventLoop, (), (override));
 
         MOCK_METHOD(bool, isRunning, (), (const, override));
 
@@ -59,11 +59,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(bool, broadcastRunning, (unsigned int, VirtualMachine *), (override));
         MOCK_METHOD(bool, broadcastByPtrRunning, (Broadcast *, VirtualMachine *), (override));
 
-        MOCK_METHOD(void, breakFrame, (), (override));
-        MOCK_METHOD(bool, breakingCurrentFrame, (), (override));
-
-        MOCK_METHOD(void, skipFrame, (), (override));
-        MOCK_METHOD(void, lockFrame, (), (override));
+        MOCK_METHOD(void, requestRedraw, (), (override));
 
         MOCK_METHOD(ITimer *, timer, (), (const, override));
 

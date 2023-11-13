@@ -35,7 +35,7 @@ TEST(SpriteTest, Visible)
     sprite.setVisible(false);
     ASSERT_FALSE(sprite.visible());
 
-    EXPECT_CALL(engine, breakFrame());
+    EXPECT_CALL(engine, requestRedraw());
     sprite.setVisible(true);
     ASSERT_TRUE(sprite.visible());
 }
@@ -123,7 +123,7 @@ TEST(SpriteTest, Clone)
 
     EngineMock engine;
     sprite->setEngine(&engine);
-    EXPECT_CALL(engine, breakFrame()).Times(2);
+    EXPECT_CALL(engine, requestRedraw()).Times(2);
 
     Sprite *clone1;
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone1));
@@ -227,7 +227,7 @@ TEST(SpriteTest, XY)
 
     EngineMock engine;
     sprite.setEngine(&engine);
-    EXPECT_CALL(engine, breakFrame()).Times(18);
+    EXPECT_CALL(engine, requestRedraw()).Times(18);
     EXPECT_CALL(engine, spriteFencingEnabled()).Times(4).WillRepeatedly(Return(false));
 
     sprite.setX(-53.25);
@@ -400,7 +400,7 @@ TEST(SpriteTest, Size)
 
     EngineMock engine;
     sprite.setEngine(&engine);
-    EXPECT_CALL(engine, breakFrame()).Times(4);
+    EXPECT_CALL(engine, requestRedraw()).Times(4);
 
     sprite.setSize(63.724);
     ASSERT_EQ(sprite.size(), 63.724);
@@ -422,7 +422,7 @@ TEST(SpriteTest, CostumeIndex)
     Sprite sprite;
     EngineMock engine;
     sprite.setEngine(&engine);
-    EXPECT_CALL(engine, breakFrame()).Times(2);
+    EXPECT_CALL(engine, requestRedraw()).Times(2);
 
     auto c1 = std::make_shared<Costume>("", "", "");
     auto c2 = std::make_shared<Costume>("", "", "");
@@ -443,7 +443,7 @@ TEST(SpriteTest, Direction)
 
     EngineMock engine;
     sprite.setEngine(&engine);
-    EXPECT_CALL(engine, breakFrame()).Times(10);
+    EXPECT_CALL(engine, requestRedraw()).Times(10);
 
     sprite.setDirection(-42.75);
     ASSERT_EQ(sprite.direction(), -42.75);
@@ -500,7 +500,7 @@ TEST(SpriteTest, RotationStyle)
 
     EngineMock engine;
     sprite.setEngine(&engine);
-    EXPECT_CALL(engine, breakFrame()).Times(8);
+    EXPECT_CALL(engine, requestRedraw()).Times(8);
 
     sprite.setRotationStyle(Sprite::RotationStyle::DoNotRotate);
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::DoNotRotate);
@@ -674,7 +674,7 @@ TEST(SpriteTest, GraphicsEffects)
 
     EngineMock engine;
     sprite.setEngine(&engine);
-    EXPECT_CALL(engine, breakFrame()).Times(6);
+    EXPECT_CALL(engine, requestRedraw()).Times(6);
 
     sprite.addCostume(c1);
     sprite.addCostume(c2);

@@ -2023,7 +2023,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(1)->broadcast(), &vm, true));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(true));
-    EXPECT_CALL(m_engineMock, breakFrame());
     vm.setBytecode(bytecode1);
     vm.run();
 
@@ -2033,7 +2032,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(false));
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2043,7 +2041,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(1)->broadcast(), &vm, true));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(true));
-    EXPECT_CALL(m_engineMock, breakFrame());
     vm.setBytecode(bytecode2);
     vm.run();
 
@@ -2053,7 +2050,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(false));
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2075,7 +2071,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(0)->broadcast(), &vm, true));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast(), &vm)).WillOnce(Return(false));
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.setBytecode(bytecode3);
     vm.run();
 
@@ -2087,7 +2082,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(1)->broadcast(), &vm, true));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(false));
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.setBytecode(bytecode4);
     vm.run();
 
@@ -2124,7 +2118,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(3)->broadcast(), &vm, true));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(3)->broadcast(), &vm)).WillOnce(Return(true));
-    EXPECT_CALL(m_engineMock, breakFrame());
     vm.setBytecode(bytecode7);
     vm.run();
 
@@ -2134,7 +2127,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(3)->broadcast(), &vm)).WillOnce(Return(false));
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2173,7 +2165,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(3)->broadcast(), &vm, true));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(3)->broadcast(), &vm)).WillOnce(Return(true));
-    EXPECT_CALL(m_engineMock, breakFrame());
     vm.setBytecode(bytecode8);
     vm.run();
 
@@ -2183,7 +2174,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(3)->broadcast(), &vm)).WillOnce(Return(false));
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2226,7 +2216,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(5)->broadcast(), &vm, true));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(5)->broadcast(), &vm)).WillOnce(Return(true));
-    EXPECT_CALL(m_engineMock, breakFrame());
     vm.setBytecode(bytecode9);
     vm.run();
 
@@ -2236,7 +2225,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(5)->broadcast(), &vm)).WillOnce(Return(false));
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2352,7 +2340,6 @@ TEST_F(LooksBlocksTest, NextBackdropAndWait)
     EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(1)->broadcast(), &vm, true));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(true));
-    EXPECT_CALL(m_engineMock, breakFrame());
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2361,7 +2348,6 @@ TEST_F(LooksBlocksTest, NextBackdropAndWait)
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(false));
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2448,7 +2434,6 @@ TEST_F(LooksBlocksTest, PreviousBackdropAndWait)
     EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(1)->broadcast(), &vm, true));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(true));
-    EXPECT_CALL(m_engineMock, breakFrame());
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2457,7 +2442,6 @@ TEST_F(LooksBlocksTest, PreviousBackdropAndWait)
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(false));
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2551,7 +2535,6 @@ TEST_F(LooksBlocksTest, RandomBackdropAndWait)
     EXPECT_CALL(rng, randint).Times(0);
     EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning).Times(0);
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2564,7 +2547,6 @@ TEST_F(LooksBlocksTest, RandomBackdropAndWait)
     EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtr(stage.costumeAt(1)->broadcast(), &vm, true));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(true));
-    EXPECT_CALL(m_engineMock, breakFrame());
     vm.reset();
     vm.run();
 
@@ -2574,7 +2556,6 @@ TEST_F(LooksBlocksTest, RandomBackdropAndWait)
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast(), &vm)).WillOnce(Return(false));
-    EXPECT_CALL(m_engineMock, breakFrame()).Times(0);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);

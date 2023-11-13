@@ -24,39 +24,5 @@ int main(int argc, char **argv) {
 The \link libscratchcpp::Project::run() run() \endlink method runs an event loop which stops after all scripts finish.
 
 For CLI project players, using \link libscratchcpp::Project::run() run() \endlink is enough. If you are developing
-a GUI project player and need to receive input events such as key presses, you'll need to implement your own event loop
-or use the one provided by the GUI framework.
-
-## GUI example (Qt)
-Qt provides an event loop which can be easily used to run frames with a specific frame rate.
-
-For example, a `Player` class which **inherits from QObject** can use a timer:
-```cpp
-#include <QObject>
-#include <scratchcpp/project.h>
-
-class Player : public QObject {
-    Q_OBJECT
-    public:
-        Player(QObject *parent = nullptr);
-        Player(const Player &) = delete; // Project is not copyable
-
-    protected:
-        void timerEvent(QTimerEvent *event) override;
-
-    private:
-        libscratchcpp::Project m_proj;
-}
-
-Player::Player(QObject *parent) {
-    m_proj.setFileName("/path/to/project.sb3");
-    m_proj.start();
-    int fps = 30;
-    startTimer(1000.0 / fps);
-}
-
-void Player::timerEvent(QTimerEvent *event) {
-    m_proj.frame();
-    event->accept();
-}
-```
+a GUI project player and need to receive input events such as key presses, you'll need to use \link libscratchcpp::Project::runEventLoop() runEventLoop() \endlink
+and run it in another thread (to keep the UI responsive).

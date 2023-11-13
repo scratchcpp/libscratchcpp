@@ -46,9 +46,6 @@ void Engine::clear()
     m_clones.clear();
 
     m_running = false;
-    m_breakFrame = false;
-    m_skipFrame = false;
-    m_lockFrame = false;
 }
 
 // Resolves ID references and sets pointers of entities.
@@ -136,52 +133,6 @@ void Engine::compile()
     }
 }
 
-void Engine::frame()
-{
-    m_lockFrame = false;
-
-    for (int i = 0; i < m_runningScripts.size(); i++) {
-        auto script = m_runningScripts[i];
-        m_breakFrame = false;
-
-        do {
-            script->run();
-            if (script->atEnd() && m_running) {
-                for (auto &[key, value] : m_runningBroadcastMap) {
-                    size_t index = 0;
-
-                    for (const auto &pair : value) {
-                        if (pair.second == script.get()) {
-                            value.erase(value.begin() + index);
-                            break;
-                        }
-
-                        index++;
-                    }
-                }
-
-                if (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) == m_scriptsToRemove.end())
-                    m_scriptsToRemove.push_back(script.get());
-            }
-        } while (!script->atEnd() && !m_breakFrame);
-    }
-
-    assert(m_running || m_scriptsToRemove.empty());
-
-    for (auto script : m_scriptsToRemove) {
-        size_t index = -1;
-        for (size_t i = 0; i < m_runningScripts.size(); i++) {
-            if (m_runningScripts[i].get() == script) {
-                index = i;
-                break;
-            }
-        }
-        assert(index != -1);
-        m_runningScripts.erase(m_runningScripts.begin() + index);
-    }
-    m_scriptsToRemove.clear();
-}
-
 void Engine::start()
 {
     // NOTE: Running scripts should be deleted, but this method will probably be removed anyway
@@ -221,7 +172,7 @@ void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<T
 
     if (topLevelBlock->next()) {
         auto script = m_scripts[topLevelBlock];
-        m_runningScripts.push_back(script->start());
+        addRunningScript(script->start());
     }
 }
 
@@ -235,8 +186,6 @@ void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wa
 
 void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait)
 {
-    bool previousSkipFrame = m_skipFrame;
-    skipFrame();
     const std::vector<Script *> &scripts = m_broadcastMap[broadcast];
 
     for (auto script : scripts) {
@@ -263,13 +212,8 @@ void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, 
                     pair.first = sourceScript;
             }
 
-            if (script == sourceScript->script()) {
-                sourceScript->stop(false, true);
-
-                if (!previousSkipFrame && !wait)
-                    m_skipFrame = false;
-            } else
-                sourceScript->stop(true, true);
+            if (script == sourceScript->script())
+                sourceScript->stop(false, !wait); // source script is the broadcast script
         }
 
         // Start scripts which are not running
@@ -290,7 +234,7 @@ void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, 
 
             if (it == runningBroadcastScripts.end()) {
                 auto vm = script->start(target);
-                m_runningScripts.push_back(vm);
+                addRunningScript(vm);
                 m_runningBroadcastMap[broadcast].push_back({ sourceScript, vm.get() });
             }
         }
@@ -342,7 +286,7 @@ void Engine::initClone(Sprite *clone)
 
         for (auto script : scripts) {
             auto vm = script->start(clone);
-            m_runningScripts.push_back(vm);
+            addRunningScript(vm);
         }
     }
 
@@ -357,35 +301,106 @@ void Engine::deinitClone(Sprite *clone)
 
 void Engine::run()
 {
-    updateFrameDuration();
     start();
+    eventLoop(true);
+    finalize();
+}
+
+void Engine::runEventLoop()
+{
+    eventLoop();
+}
+
+void Engine::eventLoop(bool untilProjectStops)
+{
+    updateFrameDuration();
+    m_newScripts.clear();
 
     while (true) {
-        auto lastFrameTime = m_clock->currentSteadyTime();
-        m_skipFrame = false;
+        auto frameStart = m_clock->currentSteadyTime();
+        std::chrono::steady_clock::time_point currentTime;
+        std::chrono::milliseconds elapsedTime, sleepTime;
+        m_redrawRequested = false;
+        bool timeout = false;
+        bool stop = false;
+        std::vector<std::shared_ptr<VirtualMachine>> scripts = m_runningScripts; // this must be copied
 
-        // Execute the frame
-        frame();
-        if (m_runningScripts.size() <= 0)
+        do {
+            m_scriptsToRemove.clear();
+
+            // Execute new scripts from last frame
+            runScripts(m_newScripts, scripts);
+
+            // Execute all running scripts
+            m_newScripts.clear();
+            runScripts(scripts, scripts);
+
+            // Stop the event loop if the project has finished running (and untilProjectStops is set to true)
+            if (untilProjectStops && m_runningScripts.empty()) {
+                stop = true;
+                break;
+            }
+
+            currentTime = m_clock->currentSteadyTime();
+            elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - frameStart);
+            sleepTime = m_frameDuration - elapsedTime;
+            timeout = sleepTime <= std::chrono::milliseconds::zero();
+        } while (!m_redrawRequested && !timeout && !stop);
+
+        if (stop)
             break;
 
-        // Sleep until the time for the next frame
-        auto currentTime = m_clock->currentSteadyTime();
-        auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastFrameTime);
-        auto sleepTime = m_frameDuration - elapsedTime;
-        bool timeOut = sleepTime <= std::chrono::milliseconds::zero();
+        // Redraw
+        // TODO: Redraw here
 
-        if (!timeOut && !m_skipFrame)
+        // If the timeout hasn't been reached yet (redraw was requested), sleep
+        if (!timeout)
             m_clock->sleep(sleepTime);
-
-        if ((m_skipFrame && timeOut) || !m_skipFrame) {
-            // TODO: Repaint here
-        }
-
-        lastFrameTime = currentTime;
     }
 
     finalize();
+}
+
+void Engine::runScripts(const std::vector<std::shared_ptr<VirtualMachine>> &scripts, std::vector<std::shared_ptr<VirtualMachine>> &globalScripts)
+{
+    // globalScripts is used to remove "scripts to remove" from it so that they're removed from the correct list
+    for (int i = 0; i < scripts.size(); i++) {
+        auto script = scripts[i];
+        assert(script);
+
+        script->run();
+        if (script->atEnd() && m_running) {
+            for (auto &[key, value] : m_runningBroadcastMap) {
+                size_t index = 0;
+
+                for (const auto &pair : value) {
+                    if (pair.second == script.get()) {
+                        value.erase(value.begin() + index);
+                        break;
+                    }
+
+                    index++;
+                }
+            }
+
+            if (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) == m_scriptsToRemove.end())
+                m_scriptsToRemove.push_back(script.get());
+        }
+    }
+
+    assert(m_running || m_scriptsToRemove.empty());
+
+    for (auto script : m_scriptsToRemove) {
+        auto pred = [script](std::shared_ptr<VirtualMachine> vm) { return vm.get() == script; };
+        auto it1 = std::find_if(m_runningScripts.begin(), m_runningScripts.end(), pred);
+        auto it2 = std::find_if(globalScripts.begin(), globalScripts.end(), pred);
+        assert(it1 != m_runningScripts.end());
+        m_runningScripts.erase(it1);
+
+        if (it2 != globalScripts.end())
+            globalScripts.erase(it2);
+    }
+    m_scriptsToRemove.clear();
 }
 
 bool Engine::isRunning() const
@@ -554,28 +569,9 @@ bool Engine::broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceS
     return false;
 }
 
-void Engine::breakFrame()
+void Engine::requestRedraw()
 {
-    m_breakFrame = true;
-}
-
-bool Engine::breakingCurrentFrame()
-{
-    return m_breakFrame;
-}
-
-void Engine::skipFrame()
-{
-    if (!m_lockFrame) {
-        breakFrame();
-        m_skipFrame = true;
-    }
-}
-
-void Engine::lockFrame()
-{
-    m_skipFrame = false;
-    m_lockFrame = true;
+    m_redrawRequested = true;
 }
 
 ITimer *Engine::timer() const
@@ -950,9 +946,7 @@ void Engine::finalize()
     m_runningScripts.clear();
     m_scriptsToRemove.clear();
     m_running = false;
-    m_breakFrame = false;
-    m_skipFrame = false;
-    m_lockFrame = false;
+    m_redrawRequested = false;
 }
 
 void Engine::deleteClones()
@@ -976,6 +970,12 @@ void Engine::deleteClones()
 void Engine::updateFrameDuration()
 {
     m_frameDuration = std::chrono::milliseconds(static_cast<long>(1000 / m_fps));
+}
+
+void Engine::addRunningScript(std::shared_ptr<VirtualMachine> vm)
+{
+    m_runningScripts.push_back(vm);
+    m_newScripts.push_back(vm);
 }
 
 void Engine::startWhenKeyPressedScripts(const std::vector<Script *> &scripts)

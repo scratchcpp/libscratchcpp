@@ -202,11 +202,11 @@ void VirtualMachine::moveToLastCheckpoint()
  * \note If the script is set to run without screen refresh, the VM won't stop.
  * The only parameter which won't be ignored is goBack.
  */
-void VirtualMachine::stop(bool savePos, bool breakAtomic, bool goBack)
+void VirtualMachine::stop(bool savePos, bool breakFrame, bool goBack)
 {
     impl->stop = true;
     impl->savePos = savePos && !impl->warp;
-    impl->atomic = !breakAtomic || impl->warp;
+    impl->noBreak = !breakFrame || impl->warp;
     impl->goBack = goBack;
 }
 

@@ -66,11 +66,6 @@ bool ProjectPrivate::load()
     return true;
 }
 
-void ProjectPrivate::frame()
-{
-    engine->frame();
-}
-
 void ProjectPrivate::start()
 {
     engine->start();
@@ -79,6 +74,11 @@ void ProjectPrivate::start()
 void ProjectPrivate::run()
 {
     engine->run();
+}
+
+void ProjectPrivate::runEventLoop()
+{
+    engine->runEventLoop();
 }
 
 void ProjectPrivate::setScratchVersion(ScratchVersion version)
