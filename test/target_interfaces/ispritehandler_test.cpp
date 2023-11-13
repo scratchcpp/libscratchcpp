@@ -30,6 +30,7 @@ TEST_F(ISpriteHandlerTest, Clone)
     Sprite *cloneArg;
     EXPECT_CALL(m_engine, initClone(_)).WillOnce(SaveArg<0>(&clone));
     EXPECT_CALL(m_handler, onCloned(_)).WillOnce(SaveArg<0>(&cloneArg));
+    EXPECT_CALL(m_engine, requestRedraw());
 
     m_sprite.clone();
     ASSERT_TRUE(clone);
@@ -46,6 +47,7 @@ TEST_F(ISpriteHandlerTest, Visible)
     m_sprite.setVisible(false);
 
     EXPECT_CALL(m_handler, onVisibleChanged(true)).Times(1);
+    EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setVisible(true);
 }
 
@@ -55,10 +57,12 @@ TEST_F(ISpriteHandlerTest, X)
     EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(m_engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(m_engine, stageHeight()).WillOnce(Return(360));
+    EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setX(189.46);
 
     EXPECT_CALL(m_handler, onXChanged(284.61)).Times(1);
     EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(false));
+    EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setX(284.61);
 }
 
@@ -68,31 +72,37 @@ TEST_F(ISpriteHandlerTest, Y)
     EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(m_engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(m_engine, stageHeight()).WillOnce(Return(360));
+    EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setY(-153.7);
 
     EXPECT_CALL(m_handler, onYChanged(207.08)).Times(1);
     EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(false));
+    EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setY(207.08);
 }
 
 TEST_F(ISpriteHandlerTest, Size)
 {
     EXPECT_CALL(m_handler, onSizeChanged(53.8)).Times(1);
+    EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setSize(53.8);
 }
 
 TEST_F(ISpriteHandlerTest, Direction)
 {
     EXPECT_CALL(m_handler, onDirectionChanged(179.715)).Times(1);
+    EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setDirection(179.715);
 }
 
 TEST_F(ISpriteHandlerTest, RotationStyle)
 {
     EXPECT_CALL(m_handler, onRotationStyleChanged(Sprite::RotationStyle::DoNotRotate)).Times(1);
+    EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setRotationStyle(Sprite::RotationStyle::DoNotRotate);
 
     EXPECT_CALL(m_handler, onRotationStyleChanged(Sprite::RotationStyle::LeftRight)).Times(1);
+    EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setRotationStyle(Sprite::RotationStyle::LeftRight);
 }
 

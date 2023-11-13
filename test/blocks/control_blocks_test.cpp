@@ -752,6 +752,7 @@ TEST_F(ControlBlocksTest, WaitImpl)
 
     std::chrono::steady_clock::time_point startTime(std::chrono::milliseconds(1000));
     EXPECT_CALL(clock, currentSteadyTime()).Times(2).WillRepeatedly(Return(startTime));
+    EXPECT_CALL(m_engineMock, requestRedraw());
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -901,8 +902,10 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     vm.setFunctions(functions);
     vm.setConstValues(constValues);
 
+    Sprite *clone1;
     EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
-    EXPECT_CALL(m_engineMock, initClone).Times(1);
+    EXPECT_CALL(m_engineMock, initClone).WillOnce(SaveArg<0>(&clone1));
+    EXPECT_CALL(m_engineMock, requestRedraw());
 
     vm.setBytecode(bytecode1);
     vm.run();
@@ -911,6 +914,7 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     ASSERT_EQ(sprite.allChildren().size(), 1);
 
     EXPECT_CALL(m_engineMock, initClone).Times(1);
+    EXPECT_CALL(m_engineMock, requestRedraw());
 
     vm.setBytecode(bytecode2);
     vm.run();
@@ -919,9 +923,11 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     ASSERT_EQ(sprite.allChildren().size(), 2);
     ASSERT_EQ(sprite.children(), sprite.allChildren());
 
+    Sprite *clone3;
     EXPECT_CALL(m_engineMock, findTarget).WillOnce(Return(4));
     EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
-    EXPECT_CALL(m_engineMock, initClone).Times(1);
+    EXPECT_CALL(m_engineMock, initClone).WillOnce(SaveArg<0>(&clone3));
+    EXPECT_CALL(m_engineMock, requestRedraw());
 
     vm.setBytecode(bytecode3);
     vm.run();
@@ -931,6 +937,7 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     ASSERT_EQ(sprite.children(), sprite.allChildren());
 
     EXPECT_CALL(m_engineMock, initClone).Times(1);
+    EXPECT_CALL(m_engineMock, requestRedraw());
 
     vm.setBytecode(bytecode4);
     vm.run();
@@ -938,6 +945,9 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(sprite.allChildren().size(), 4);
     ASSERT_EQ(sprite.children(), sprite.allChildren());
+
+    EXPECT_CALL(m_engineMock, deinitClone(clone1));
+    EXPECT_CALL(m_engineMock, deinitClone(clone3));
 }
 
 TEST_F(ControlBlocksTest, StartAsClone)
@@ -980,6 +990,7 @@ TEST_F(ControlBlocksTest, DeleteThisCloneImpl)
 
     Sprite *clone;
     EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+    EXPECT_CALL(m_engineMock, requestRedraw());
     sprite.clone();
     ASSERT_TRUE(clone);
 
@@ -987,6 +998,7 @@ TEST_F(ControlBlocksTest, DeleteThisCloneImpl)
     vm.setFunctions(functions);
 
     EXPECT_CALL(m_engineMock, stopTarget(clone, nullptr)).Times(1);
+    EXPECT_CALL(m_engineMock, deinitClone(clone)).Times(2); // TODO: Is there a double-free?
 
     vm.setBytecode(bytecode);
     vm.run();
