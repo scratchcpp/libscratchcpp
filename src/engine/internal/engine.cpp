@@ -36,6 +36,7 @@ Engine::Engine() :
 Engine::~Engine()
 {
     m_clones.clear();
+    m_executableTargets.clear();
 }
 
 void Engine::clear()
@@ -43,6 +44,7 @@ void Engine::clear()
     m_sections.clear();
     m_targets.clear();
     m_broadcasts.clear();
+    removeExecutableClones();
     m_clones.clear();
 
     m_running = false;
@@ -191,9 +193,11 @@ void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, 
     for (auto script : scripts) {
         std::vector<VirtualMachine *> runningBroadcastScripts;
 
-        for (auto vm : m_runningScripts) {
-            if (vm->script() == script) {
-                runningBroadcastScripts.push_back(vm.get());
+        for (const auto &[target, targetScripts] : m_runningScripts) {
+            for (auto vm : targetScripts) {
+                if (vm->script() == script) {
+                    runningBroadcastScripts.push_back(vm.get());
+                }
             }
         }
 
@@ -250,8 +254,10 @@ void Engine::stopScript(VirtualMachine *vm)
 
 void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
 {
+    const auto &targetScripts = m_runningScripts[target];
     std::vector<VirtualMachine *> scripts;
-    for (auto script : m_runningScripts) {
+
+    for (auto script : targetScripts) {
         if ((script->target() == target) && (script.get() != exceptScript))
             scripts.push_back(script.get());
     }
@@ -280,8 +286,10 @@ void Engine::initClone(Sprite *clone)
 
 #ifndef NDEBUG
         // Since we're initializing the clone, it shouldn't have any running scripts
-        for (const auto script : m_runningScripts)
-            assert((script->target() != clone) || (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) != m_scriptsToRemove.end()));
+        for (const auto &[target, targetScripts] : m_runningScripts) {
+            for (const auto script : targetScripts)
+                assert((target != clone) || (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) != m_scriptsToRemove.end()));
+        }
 #endif
 
         for (auto script : scripts) {
@@ -291,12 +299,15 @@ void Engine::initClone(Sprite *clone)
     }
 
     assert(std::find(m_clones.begin(), m_clones.end(), clone) == m_clones.end());
+    assert(std::find(m_executableTargets.begin(), m_executableTargets.end(), clone) == m_executableTargets.end());
     m_clones.push_back(clone);
+    m_executableTargets.push_back(clone); // execution order needs to be updated after this
 }
 
 void Engine::deinitClone(Sprite *clone)
 {
     m_clones.erase(std::remove(m_clones.begin(), m_clones.end(), clone), m_clones.end());
+    m_executableTargets.erase(std::remove(m_executableTargets.begin(), m_executableTargets.end(), clone), m_executableTargets.end());
 }
 
 void Engine::run()
@@ -323,7 +334,8 @@ void Engine::eventLoop(bool untilProjectStops)
         m_redrawRequested = false;
         bool timeout = false;
         bool stop = false;
-        std::vector<std::shared_ptr<VirtualMachine>> scripts = m_runningScripts; // this must be copied
+        // TODO: Avoid copying by passing current size to runScripts()
+        TargetScriptMap scripts = m_runningScripts; // this must be copied (for now)
 
         do {
             m_scriptsToRemove.clear();
@@ -336,9 +348,20 @@ void Engine::eventLoop(bool untilProjectStops)
             runScripts(scripts, scripts);
 
             // Stop the event loop if the project has finished running (and untilProjectStops is set to true)
-            if (untilProjectStops && m_runningScripts.empty()) {
-                stop = true;
-                break;
+            if (untilProjectStops) {
+                bool empty = true;
+
+                for (const auto &pair : m_runningScripts) {
+                    if (!pair.second.empty()) {
+                        empty = false;
+                        break;
+                    }
+                }
+
+                if (empty) {
+                    stop = true;
+                    break;
+                }
             }
 
             currentTime = m_clock->currentSteadyTime();
@@ -361,30 +384,30 @@ void Engine::eventLoop(bool untilProjectStops)
     finalize();
 }
 
-void Engine::runScripts(const std::vector<std::shared_ptr<VirtualMachine>> &scripts, std::vector<std::shared_ptr<VirtualMachine>> &globalScripts)
+void Engine::runScripts(const TargetScriptMap &scriptMap, TargetScriptMap &globalScriptMap)
 {
-    // globalScripts is used to remove "scripts to remove" from it so that they're removed from the correct list
-    for (int i = 0; i < scripts.size(); i++) {
-        auto script = scripts[i];
-        assert(script);
+    // globalScriptMap is used to remove "scripts to remove" from it so that they're removed from the correct list
+    for (int i = m_executableTargets.size() - 1; i >= 0; i--) {
+        auto it = scriptMap.find(m_executableTargets[i]);
 
-        script->run();
-        if (script->atEnd() && m_running) {
-            for (auto &[key, value] : m_runningBroadcastMap) {
-                size_t index = 0;
+        if ((it == scriptMap.cend()) || it->second.empty())
+            continue; // skip the target if it doesn't have any running script
 
-                for (const auto &pair : value) {
-                    if (pair.second == script.get()) {
-                        value.erase(value.begin() + index);
-                        break;
-                    }
+        const auto &scripts = it->second;
 
-                    index++;
-                }
+        for (int i = 0; i < scripts.size(); i++) {
+            auto script = scripts[i];
+            assert(script);
+
+            if (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) != m_scriptsToRemove.end())
+                continue; // skip the script if it is scheduled to be removed
+
+            script->run();
+
+            if (script->atEnd() && m_running) {
+                if (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) == m_scriptsToRemove.end())
+                    m_scriptsToRemove.push_back(script.get());
             }
-
-            if (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) == m_scriptsToRemove.end())
-                m_scriptsToRemove.push_back(script.get());
         }
     }
 
@@ -392,13 +415,48 @@ void Engine::runScripts(const std::vector<std::shared_ptr<VirtualMachine>> &scri
 
     for (auto script : m_scriptsToRemove) {
         auto pred = [script](std::shared_ptr<VirtualMachine> vm) { return vm.get() == script; };
-        auto it1 = std::find_if(m_runningScripts.begin(), m_runningScripts.end(), pred);
-        auto it2 = std::find_if(globalScripts.begin(), globalScripts.end(), pred);
-        assert(it1 != m_runningScripts.end());
-        m_runningScripts.erase(it1);
+#ifndef NDEBUG
+        bool found = false;
+#endif
 
-        if (it2 != globalScripts.end())
-            globalScripts.erase(it2);
+        // Remove from m_runningScripts
+        for (auto &[target, scripts] : m_runningScripts) {
+            auto it = std::find_if(scripts.begin(), scripts.end(), pred);
+
+            if (it != scripts.end()) {
+                scripts.erase(it);
+#ifndef NDEBUG
+                found = true;
+#endif
+                break;
+            }
+        }
+
+        assert(found);
+
+        // Remove from globalScriptMap
+        for (auto &[target, scripts] : globalScriptMap) {
+            auto it = std::find_if(scripts.begin(), scripts.end(), pred);
+
+            if (it != scripts.end()) {
+                scripts.erase(it);
+                break;
+            }
+        }
+
+        // Remove from m_runningBroadcastMap
+        for (auto &[broadcast, pairs] : m_runningBroadcastMap) {
+            size_t index = 0;
+
+            for (const auto &pair : pairs) {
+                if (pair.second == script) {
+                    pairs.erase(pairs.begin() + index);
+                    break;
+                }
+
+                index++;
+            }
+        }
     }
     m_scriptsToRemove.clear();
 }
@@ -751,8 +809,11 @@ const std::vector<std::shared_ptr<Target>> &Engine::targets() const
 void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
 {
     m_targets = newTargets;
+    m_executableTargets.clear();
 
     for (auto target : m_targets) {
+        m_executableTargets.push_back(target.get());
+
         // Set engine in the target
         target->setEngine(this);
         auto blocks = target->blocks();
@@ -763,6 +824,9 @@ void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
             block->setTarget(target.get());
         }
     }
+
+    // Sort the executable targets by layer order
+    std::sort(m_executableTargets.begin(), m_executableTargets.end(), [](Target *t1, Target *t2) { return t1->layerOrder() < t2->layerOrder(); });
 }
 
 Target *Engine::targetAt(int index) const
@@ -951,6 +1015,7 @@ void Engine::finalize()
 
 void Engine::deleteClones()
 {
+    removeExecutableClones();
     m_clones.clear();
 
     for (auto target : m_targets) {
@@ -967,6 +1032,13 @@ void Engine::deleteClones()
     }
 }
 
+void Engine::removeExecutableClones()
+{
+    // Remove clones from the executable targets
+    for (Target *target : m_clones)
+        m_executableTargets.erase(std::remove(m_executableTargets.begin(), m_executableTargets.end(), target), m_executableTargets.end());
+}
+
 void Engine::updateFrameDuration()
 {
     m_frameDuration = std::chrono::milliseconds(static_cast<long>(1000 / m_fps));
@@ -974,8 +1046,24 @@ void Engine::updateFrameDuration()
 
 void Engine::addRunningScript(std::shared_ptr<VirtualMachine> vm)
 {
-    m_runningScripts.push_back(vm);
-    m_newScripts.push_back(vm);
+    Target *target = vm->target();
+    assert(vm->target());
+    auto it1 = m_runningScripts.find(target);
+    auto it2 = m_newScripts.find(target);
+
+    if (it1 == m_runningScripts.cend())
+        m_runningScripts[target] = { vm };
+    else {
+        assert(std::find(it1->second.begin(), it1->second.end(), vm) == it1->second.end());
+        it1->second.push_back(vm);
+    }
+
+    if (it2 == m_newScripts.cend())
+        m_newScripts[target] = { vm };
+    else {
+        assert(std::find(it2->second.begin(), it2->second.end(), vm) == it2->second.end());
+        it2->second.push_back(vm);
+    }
 }
 
 void Engine::startWhenKeyPressedScripts(const std::vector<Script *> &scripts)

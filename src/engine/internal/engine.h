@@ -116,10 +116,13 @@ class Engine : public IEngine
         IClock *m_clock = nullptr;
 
     private:
+        using TargetScriptMap = std::unordered_map<Target *, std::vector<std::shared_ptr<VirtualMachine>>>;
+
         void eventLoop(bool untilProjectStops = false);
-        void runScripts(const std::vector<std::shared_ptr<VirtualMachine>> &scripts, std::vector<std::shared_ptr<VirtualMachine>> &globalScripts);
+        void runScripts(const TargetScriptMap &scriptMap, TargetScriptMap &globalScriptMap);
         void finalize();
         void deleteClones();
+        void removeExecutableClones();
         std::shared_ptr<Block> getBlock(const std::string &id);
         std::shared_ptr<Variable> getVariable(const std::string &id);
         std::shared_ptr<List> getList(const std::string &id);
@@ -139,8 +142,9 @@ class Engine : public IEngine
         std::unordered_map<Target *, std::vector<Script *>> m_cloneInitScriptsMap;                                         // target (no clones), "when I start as a clone" scripts
         std::unordered_map<std::string, std::vector<Script *>> m_whenKeyPressedScripts;                                    // key name, "when key pressed" scripts
         std::vector<std::string> m_extensions;
-        std::vector<std::shared_ptr<VirtualMachine>> m_runningScripts;
-        std::vector<std::shared_ptr<VirtualMachine>> m_newScripts;
+        std::vector<Target *> m_executableTargets; // sorted by layer (reverse order of execution)
+        std::unordered_map<Target *, std::vector<std::shared_ptr<VirtualMachine>>> m_runningScripts;
+        std::unordered_map<Target *, std::vector<std::shared_ptr<VirtualMachine>>> m_newScripts;
         std::vector<VirtualMachine *> m_scriptsToRemove;
         std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> m_scripts;
         std::vector<BlockFunc> m_functions;
