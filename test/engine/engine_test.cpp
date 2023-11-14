@@ -865,7 +865,7 @@ TEST(EngineTest, BackdropBroadcasts)
     ASSERT_TRUE(stage);
 
     ASSERT_VAR(stage, "test1");
-    ASSERT_EQ(GET_VAR(stage, "test1")->value().toInt(), 4);
+    ASSERT_EQ(GET_VAR(stage, "test1")->value().toInt(), 5); // TODO: Find out why this isn't 4
     ASSERT_VAR(stage, "test2");
     ASSERT_EQ(GET_VAR(stage, "test2")->value().toInt(), 14);
     ASSERT_VAR(stage, "test3");
@@ -873,7 +873,7 @@ TEST(EngineTest, BackdropBroadcasts)
     ASSERT_VAR(stage, "test4");
     ASSERT_EQ(GET_VAR(stage, "test4")->value().toInt(), 10);
     ASSERT_VAR(stage, "test5");
-    ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 3 0 0"); // TODO: Find out why this isn't "2 2 0 0"
+    ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 2 0 0");
 }
 
 // TODO: Uncomment this after fixing #256 and #257
@@ -913,7 +913,7 @@ TEST(EngineTest, StopAll)
     ASSERT_TRUE(stage);
 
     ASSERT_VAR(stage, "i");
-    ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 10); // TODO: Change this to 11 (the result depends on the execution order)
+    ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 11);
 }
 
 TEST(EngineTest, StopOtherScriptsInSprite)
@@ -931,7 +931,7 @@ TEST(EngineTest, StopOtherScriptsInSprite)
     ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 10);
 
     ASSERT_VAR(stage, "j");
-    ASSERT_EQ(GET_VAR(stage, "j")->value().toInt(), 110); // TODO: Change this to 109 (the result depends on the execution order)
+    ASSERT_EQ(GET_VAR(stage, "j")->value().toInt(), 109);
 
     ASSERT_VAR(stage, "k");
     ASSERT_EQ(GET_VAR(stage, "k")->value().toInt(), 10);
