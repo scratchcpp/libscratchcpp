@@ -52,7 +52,7 @@ std::shared_ptr<Sprite> Sprite::clone()
 {
     IEngine *eng = engine();
 
-    if (eng) {
+    if (eng && (eng->cloneLimit() == -1 || eng->cloneCount() < eng->cloneLimit())) {
         std::shared_ptr<Sprite> clone = std::make_shared<Sprite>();
 
         if (impl->cloneRoot == nullptr)

@@ -124,8 +124,10 @@ TEST(SpriteTest, Clone)
     EngineMock engine;
     sprite->setEngine(&engine);
     EXPECT_CALL(engine, requestRedraw()).Times(2);
+    EXPECT_CALL(engine, cloneLimit()).Times(6).WillRepeatedly(Return(300)); // clone count limit is tested later
 
     Sprite *clone1;
+    EXPECT_CALL(engine, cloneCount()).WillOnce(Return(0));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone1));
     ASSERT_EQ(sprite->clone().get(), clone1);
     ASSERT_FALSE(sprite->isClone());
@@ -142,6 +144,7 @@ TEST(SpriteTest, Clone)
     sprite->setLayerOrder(3);
 
     Sprite *clone2;
+    EXPECT_CALL(engine, cloneCount()).WillOnce(Return(1));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone2));
     ASSERT_EQ(clone1->clone().get(), clone2);
     ASSERT_TRUE(clone1->isClone());
@@ -156,12 +159,22 @@ TEST(SpriteTest, Clone)
     sprite->setVisible(true);
 
     Sprite *clone3;
+    EXPECT_CALL(engine, cloneCount()).WillOnce(Return(2));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone3));
     ASSERT_EQ(clone1->clone().get(), clone3);
 
     Sprite *clone4;
+    EXPECT_CALL(engine, cloneLimit()).WillOnce(Return(-1));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone4));
     ASSERT_EQ(sprite->clone().get(), clone4);
+
+    EXPECT_CALL(engine, cloneLimit()).Times(2).WillRepeatedly(Return(0));
+    EXPECT_CALL(engine, cloneCount()).WillOnce(Return(0));
+    ASSERT_EQ(sprite->clone(), nullptr);
+
+    EXPECT_CALL(engine, cloneLimit()).Times(2).WillRepeatedly(Return(150));
+    EXPECT_CALL(engine, cloneCount()).WillOnce(Return(150));
+    ASSERT_EQ(sprite->clone(), nullptr);
 
     // children
     const auto &children1 = sprite->children();

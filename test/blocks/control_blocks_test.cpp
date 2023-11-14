@@ -904,6 +904,8 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
 
     Sprite *clone1;
     EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
+    EXPECT_CALL(m_engineMock, cloneLimit()).Times(8).WillRepeatedly(Return(300));
+    EXPECT_CALL(m_engineMock, cloneCount()).Times(4).WillRepeatedly(Return(0));
     EXPECT_CALL(m_engineMock, initClone).WillOnce(SaveArg<0>(&clone1));
     EXPECT_CALL(m_engineMock, requestRedraw());
 
@@ -989,6 +991,8 @@ TEST_F(ControlBlocksTest, DeleteThisCloneImpl)
     sprite.setEngine(&m_engineMock);
 
     Sprite *clone;
+    EXPECT_CALL(m_engineMock, cloneLimit()).Times(2).WillRepeatedly(Return(300));
+    EXPECT_CALL(m_engineMock, cloneCount()).WillOnce(Return(0));
     EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
     EXPECT_CALL(m_engineMock, requestRedraw());
     sprite.clone();

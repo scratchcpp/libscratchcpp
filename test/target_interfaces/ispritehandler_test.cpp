@@ -28,6 +28,8 @@ TEST_F(ISpriteHandlerTest, Clone)
 {
     Sprite *clone;
     Sprite *cloneArg;
+    EXPECT_CALL(m_engine, cloneLimit()).Times(2).WillRepeatedly(Return(300));
+    EXPECT_CALL(m_engine, cloneCount()).WillOnce(Return(0));
     EXPECT_CALL(m_engine, initClone(_)).WillOnce(SaveArg<0>(&clone));
     EXPECT_CALL(m_handler, onCloned(_)).WillOnce(SaveArg<0>(&cloneArg));
     EXPECT_CALL(m_engine, requestRedraw());

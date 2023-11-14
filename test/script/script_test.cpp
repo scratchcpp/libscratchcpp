@@ -112,6 +112,8 @@ TEST_F(ScriptTest, Start)
     root.addVariable(var2);
     root.addList(list2);
 
+    EXPECT_CALL(m_engine, cloneLimit()).Times(2).WillRepeatedly(Return(300));
+    EXPECT_CALL(m_engine, cloneCount()).WillOnce(Return(0));
     EXPECT_CALL(m_engine, initClone).Times(1);
     EXPECT_CALL(m_engine, requestRedraw());
     auto clone = root.clone();
