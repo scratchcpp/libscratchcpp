@@ -53,6 +53,8 @@ class EngineMock : public IEngine
         MOCK_METHOD(int, cloneLimit, (), (const, override));
         MOCK_METHOD(void, setCloneLimit, (int), (override));
 
+        MOCK_METHOD(int, cloneCount, (), (const, override));
+
         MOCK_METHOD(bool, spriteFencingEnabled, (), (const, override));
         MOCK_METHOD(void, setSpriteFencingEnabled, (bool), (override));
 

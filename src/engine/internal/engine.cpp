@@ -592,6 +592,11 @@ void Engine::setCloneLimit(int limit)
     m_cloneLimit = limit < 0 ? -1 : limit;
 }
 
+int Engine::cloneCount() const
+{
+    return m_clones.size();
+}
+
 bool Engine::spriteFencingEnabled() const
 {
     return m_spriteFencingEnabled;

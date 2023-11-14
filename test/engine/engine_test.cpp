@@ -796,6 +796,7 @@ TEST(EngineTest, CloneLimit)
     ASSERT_TRUE(p.load());
     auto engine = p.engine();
     ASSERT_EQ(engine->cloneLimit(), 300);
+    ASSERT_EQ(engine->cloneCount(), 0);
 
     // TODO: Set "infinite" FPS and remove this (#254)
     engine->setFps(100000);
@@ -808,6 +809,7 @@ TEST(EngineTest, CloneLimit)
     ASSERT_EQ(GET_VAR(stage, "count")->value().toInt(), 300);
     ASSERT_VAR(stage, "delete_passed");
     ASSERT_TRUE(GET_VAR(stage, "delete_passed")->value().toBool());
+    ASSERT_EQ(engine->cloneCount(), 300);
 
     engine->setCloneLimit(475);
     ASSERT_EQ(engine->cloneLimit(), 475);
@@ -816,6 +818,7 @@ TEST(EngineTest, CloneLimit)
     ASSERT_EQ(GET_VAR(stage, "count")->value().toInt(), 475);
     ASSERT_VAR(stage, "delete_passed");
     ASSERT_TRUE(GET_VAR(stage, "delete_passed")->value().toBool());
+    ASSERT_EQ(engine->cloneCount(), 475);
 
     engine->setCloneLimit(0);
     ASSERT_EQ(engine->cloneLimit(), 0);
@@ -824,6 +827,7 @@ TEST(EngineTest, CloneLimit)
     ASSERT_EQ(GET_VAR(stage, "count")->value().toInt(), 0);
     ASSERT_VAR(stage, "delete_passed");
     ASSERT_TRUE(GET_VAR(stage, "delete_passed")->value().toBool());
+    ASSERT_EQ(engine->cloneCount(), 0);
 
     engine->setCloneLimit(-1);
     ASSERT_EQ(engine->cloneLimit(), -1);
@@ -832,6 +836,7 @@ TEST(EngineTest, CloneLimit)
     ASSERT_GT(GET_VAR(stage, "count")->value().toInt(), 500);
     ASSERT_VAR(stage, "delete_passed");
     ASSERT_TRUE(GET_VAR(stage, "delete_passed")->value().toBool());
+    ASSERT_GT(engine->cloneCount(), 500);
 
     engine->setCloneLimit(-5);
     ASSERT_EQ(engine->cloneLimit(), -1);
@@ -840,6 +845,10 @@ TEST(EngineTest, CloneLimit)
     ASSERT_GT(GET_VAR(stage, "count")->value().toInt(), 500);
     ASSERT_VAR(stage, "delete_passed");
     ASSERT_TRUE(GET_VAR(stage, "delete_passed")->value().toBool());
+    ASSERT_GT(engine->cloneCount(), 500);
+
+    engine->stop();
+    ASSERT_EQ(engine->cloneCount(), 0);
 }
 
 // TODO: Uncomment this after fixing #256 and #257

@@ -67,6 +67,8 @@ class Engine : public IEngine
         int cloneLimit() const override;
         void setCloneLimit(int limit) override;
 
+        int cloneCount() const override;
+
         bool spriteFencingEnabled() const override;
         void setSpriteFencingEnabled(bool enable) override;
 
