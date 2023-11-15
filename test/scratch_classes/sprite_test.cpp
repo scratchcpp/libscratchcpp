@@ -126,10 +126,12 @@ TEST(SpriteTest, Clone)
     EXPECT_CALL(engine, requestRedraw()).Times(2);
     EXPECT_CALL(engine, cloneLimit()).Times(6).WillRepeatedly(Return(300)); // clone count limit is tested later
 
-    Sprite *clone1;
+    Sprite *clone1, *clone1_2;
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(0));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone1));
+    EXPECT_CALL(engine, moveSpriteBehindOther(_, sprite.get())).WillOnce(SaveArg<0>(&clone1_2));
     ASSERT_EQ(sprite->clone().get(), clone1);
+    ASSERT_EQ(clone1, clone1_2);
     ASSERT_FALSE(sprite->isClone());
     ASSERT_EQ(sprite->cloneRoot(), nullptr);
     ASSERT_EQ(sprite->cloneParent(), nullptr);
@@ -143,10 +145,12 @@ TEST(SpriteTest, Clone)
     // Modify root sprite data to make sure parent is used
     sprite->setLayerOrder(3);
 
-    Sprite *clone2;
+    Sprite *clone2, *clone2_2;
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(1));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone2));
+    EXPECT_CALL(engine, moveSpriteBehindOther(_, clone1)).WillOnce(SaveArg<0>(&clone2_2));
     ASSERT_EQ(clone1->clone().get(), clone2);
+    ASSERT_EQ(clone2, clone2_2);
     ASSERT_TRUE(clone1->isClone());
     ASSERT_EQ(clone1->cloneRoot(), sprite.get());
     ASSERT_EQ(clone1->cloneParent(), sprite.get());
@@ -158,15 +162,19 @@ TEST(SpriteTest, Clone)
 
     sprite->setVisible(true);
 
-    Sprite *clone3;
+    Sprite *clone3, *clone3_2;
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(2));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone3));
+    EXPECT_CALL(engine, moveSpriteBehindOther(_, clone1)).WillOnce(SaveArg<0>(&clone3_2));
     ASSERT_EQ(clone1->clone().get(), clone3);
+    ASSERT_EQ(clone3, clone3_2);
 
-    Sprite *clone4;
+    Sprite *clone4, *clone4_2;
     EXPECT_CALL(engine, cloneLimit()).WillOnce(Return(-1));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone4));
+    EXPECT_CALL(engine, moveSpriteBehindOther(_, sprite.get())).WillOnce(SaveArg<0>(&clone4_2));
     ASSERT_EQ(sprite->clone().get(), clone4);
+    ASSERT_EQ(clone4, clone4_2);
 
     EXPECT_CALL(engine, cloneLimit()).Times(2).WillRepeatedly(Return(0));
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(0));

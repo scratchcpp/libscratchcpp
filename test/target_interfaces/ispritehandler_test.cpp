@@ -27,16 +27,18 @@ class ISpriteHandlerTest : public testing::Test
 TEST_F(ISpriteHandlerTest, Clone)
 {
     Sprite *clone;
-    Sprite *cloneArg;
+    Sprite *cloneParam1, *cloneParam2;
     EXPECT_CALL(m_engine, cloneLimit()).Times(2).WillRepeatedly(Return(300));
     EXPECT_CALL(m_engine, cloneCount()).WillOnce(Return(0));
     EXPECT_CALL(m_engine, initClone(_)).WillOnce(SaveArg<0>(&clone));
-    EXPECT_CALL(m_handler, onCloned(_)).WillOnce(SaveArg<0>(&cloneArg));
+    EXPECT_CALL(m_engine, moveSpriteBehindOther(_, &m_sprite)).WillOnce(SaveArg<0>(&cloneParam1));
+    EXPECT_CALL(m_handler, onCloned(_)).WillOnce(SaveArg<0>(&cloneParam2));
     EXPECT_CALL(m_engine, requestRedraw());
 
     m_sprite.clone();
     ASSERT_TRUE(clone);
-    ASSERT_EQ(cloneArg, clone);
+    ASSERT_EQ(cloneParam1, clone);
+    ASSERT_EQ(cloneParam2, clone);
 
     // Engine is used during deletion, so let's just set it to nullptr (this is tested elsewhere)
     m_sprite.setEngine(nullptr);

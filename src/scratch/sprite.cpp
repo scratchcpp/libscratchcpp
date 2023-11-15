@@ -99,6 +99,9 @@ std::shared_ptr<Sprite> Sprite::clone()
         if (impl->iface)
             impl->iface->onCloned(clone.get());
 
+        // Place the clone behind the original sprite
+        eng->moveSpriteBehindOther(clone.get(), this);
+
         return clone;
     }
 
