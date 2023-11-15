@@ -105,6 +105,12 @@ class Engine : public IEngine
         Target *targetAt(int index) const override;
         int findTarget(const std::string &targetName) const override;
 
+        void moveSpriteToFront(Sprite *sprite) override;
+        void moveSpriteToBack(Sprite *sprite) override;
+        void moveSpriteForwardLayers(Sprite *sprite, int layers) override;
+        void moveSpriteBackwardLayers(Sprite *sprite, int layers) override;
+        void moveSpriteBehindOther(Sprite *sprite, Sprite *other) override;
+
         Stage *stage() const override;
 
         const std::vector<std::string> &extensions() const override;
@@ -131,6 +137,8 @@ class Engine : public IEngine
         std::shared_ptr<Broadcast> getBroadcast(const std::string &id);
         std::shared_ptr<Entity> getEntity(const std::string &id);
         std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
+
+        void updateSpriteLayerOrder();
 
         void updateFrameDuration();
         void addRunningScript(std::shared_ptr<VirtualMachine> vm);

@@ -89,6 +89,12 @@ class EngineMock : public IEngine
         MOCK_METHOD(Target *, targetAt, (int), (const, override));
         MOCK_METHOD(int, findTarget, (const std::string &), (const, override));
 
+        MOCK_METHOD(void, moveSpriteToFront, (Sprite * sprite), (override));
+        MOCK_METHOD(void, moveSpriteToBack, (Sprite * sprite), (override));
+        MOCK_METHOD(void, moveSpriteForwardLayers, (Sprite * sprite, int layers), (override));
+        MOCK_METHOD(void, moveSpriteBackwardLayers, (Sprite * sprite, int layers), (override));
+        MOCK_METHOD(void, moveSpriteBehindOther, (Sprite * sprite, Sprite *other), (override));
+
         MOCK_METHOD(Stage *, stage, (), (const, override));
 
         MOCK_METHOD(std::vector<std::string> &, extensions, (), (const, override));

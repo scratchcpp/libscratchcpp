@@ -853,6 +853,101 @@ int Engine::findTarget(const std::string &targetName) const
     return -1;
 }
 
+void Engine::moveSpriteToFront(Sprite *sprite)
+{
+    if (!sprite || m_executableTargets.size() <= 2)
+        return;
+
+    auto it = std::find(m_executableTargets.begin(), m_executableTargets.end(), sprite);
+
+    if (it != m_executableTargets.end()) {
+        std::rotate(it, it + 1, m_executableTargets.end());
+        updateSpriteLayerOrder();
+    }
+}
+
+void Engine::moveSpriteToBack(Sprite *sprite)
+{
+    if (!sprite || m_executableTargets.size() <= 2)
+        return;
+
+    auto it = std::find(m_executableTargets.begin(), m_executableTargets.end(), sprite);
+
+    if (it != m_executableTargets.end()) {
+        std::rotate(m_executableTargets.begin() + 1, it, it + 1); // stage is always the first
+        updateSpriteLayerOrder();
+    }
+}
+
+void Engine::moveSpriteForwardLayers(Sprite *sprite, int layers)
+{
+    if (!sprite || layers == 0)
+        return;
+
+    auto it = std::find(m_executableTargets.begin(), m_executableTargets.end(), sprite);
+
+    if (it == m_executableTargets.end())
+        return;
+
+    auto target = it + layers;
+
+    if (target <= m_executableTargets.begin()) {
+        moveSpriteToBack(sprite);
+        return;
+    }
+
+    if (target >= m_executableTargets.end()) {
+        moveSpriteToFront(sprite);
+        return;
+    }
+
+    if (layers > 0)
+        std::rotate(it, it + 1, target + 1);
+    else
+        std::rotate(target, it, it + 1);
+
+    updateSpriteLayerOrder();
+}
+
+void Engine::moveSpriteBackwardLayers(Sprite *sprite, int layers)
+{
+    moveSpriteForwardLayers(sprite, -layers);
+}
+
+void Engine::moveSpriteBehindOther(Sprite *sprite, Sprite *other)
+{
+    if (sprite == other)
+        return;
+
+    auto itSprite = std::find(m_executableTargets.begin(), m_executableTargets.end(), sprite);
+    auto itOther = std::find(m_executableTargets.begin(), m_executableTargets.end(), other);
+
+    if ((itSprite == m_executableTargets.end()) || (itOther == m_executableTargets.end()))
+        return;
+
+    auto target = itOther - 1; // behind
+
+    if (target < itSprite)
+        target++;
+
+    if (target <= m_executableTargets.begin()) {
+        moveSpriteToBack(sprite);
+        return;
+    }
+
+    if (target >= m_executableTargets.end()) {
+        moveSpriteToFront(sprite);
+        return;
+    }
+
+    if (target > itSprite)
+        std::rotate(itSprite, itSprite + 1, target + 1);
+    else
+        std::rotate(target, itSprite, itSprite + 1);
+
+    updateSpriteLayerOrder();
+}
+
 Stage *Engine::stage() const
 {
     auto it = std::find_if(m_targets.begin(), m_targets.end(), [](std::shared_ptr<Target> target) { return target && target->isStage(); });
@@ -984,6 +1079,14 @@ std::shared_ptr<IBlockSection> Engine::blockSection(const std::string &opcode) c
     }
 
     return nullptr;
+}
+
+void Engine::updateSpriteLayerOrder()
+{
+    assert(m_executableTargets.empty() || m_executableTargets[0]->isStage());
+
+    for (size_t i = 1; i < m_executableTargets.size(); i++) // i = 1 to skip the stage
+        m_executableTargets[i]->setLayerOrder(i);
 }
 
 BlockSectionContainer *Engine::blockSectionContainer(const std::string &opcode) const
