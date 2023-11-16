@@ -37,6 +37,8 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_switchbackdropto", &compileSwitchBackdropTo);
     engine->addCompileFunction(this, "looks_switchbackdroptoandwait", &compileSwitchBackdropToAndWait);
     engine->addCompileFunction(this, "looks_nextbackdrop", &compileNextBackdrop);
+    engine->addCompileFunction(this, "looks_gotofrontback", &compileGoToFrontBack);
+    engine->addCompileFunction(this, "looks_goforwardbackwardlayers", &compileGoForwardBackwardLayers);
     engine->addCompileFunction(this, "looks_costumenumbername", &compileCostumeNumberName);
     engine->addCompileFunction(this, "looks_backdropnumbername", &compileBackdropNumberName);
 
@@ -50,6 +52,8 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     // Fields
     engine->addField(this, "NUMBER_NAME", NUMBER_NAME);
     engine->addField(this, "EFFECT", EFFECT);
+    engine->addField(this, "FRONT_BACK", FRONT_BACK);
+    engine->addField(this, "FORWARD_BACKWARD", FORWARD_BACKWARD);
 
     // Field values
     engine->addFieldValue(this, "number", Number);
@@ -61,6 +65,10 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addFieldValue(this, "MOSAIC", MosaicEffect);
     engine->addFieldValue(this, "BRIGHTNESS", BrightnessEffect);
     engine->addFieldValue(this, "GHOST", GhostEffect);
+    engine->addFieldValue(this, "front", Front);
+    engine->addFieldValue(this, "back", Back);
+    engine->addFieldValue(this, "forward", Forward);
+    engine->addFieldValue(this, "backward", Backward);
 }
 
 void LooksBlocks::compileShow(Compiler *compiler)
@@ -386,6 +394,38 @@ void LooksBlocks::compileSwitchBackdropToAndWait(Compiler *compiler)
 void LooksBlocks::compileNextBackdrop(Compiler *compiler)
 {
     compiler->addFunctionCall(&nextBackdrop);
+}
+
+void LooksBlocks::compileGoToFrontBack(Compiler *compiler)
+{
+    int option = compiler->field(FRONT_BACK)->specialValueId();
+
+    switch (option) {
+        case Front:
+            compiler->addFunctionCall(&goToFront);
+            break;
+
+        case Back:
+            compiler->addFunctionCall(&goToBack);
+            break;
+    }
+}
+
+void LooksBlocks::compileGoForwardBackwardLayers(Compiler *compiler)
+{
+    int option = compiler->field(FORWARD_BACKWARD)->specialValueId();
+
+    switch (option) {
+        case Forward:
+            compiler->addInput(NUM);
+            compiler->addFunctionCall(&goForwardLayers);
+            break;
+
+        case Backward:
+            compiler->addInput(NUM);
+            compiler->addFunctionCall(&goBackwardLayers);
+            break;
+    }
 }
 
 void LooksBlocks::compileCostumeNumberName(Compiler *compiler)
@@ -859,6 +899,46 @@ unsigned int LooksBlocks::checkBackdropScripts(VirtualMachine *vm)
     }
 
     return 0;
+}
+
+unsigned int LooksBlocks::goToFront(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        vm->engine()->moveSpriteToFront(sprite);
+
+    return 0;
+}
+
+unsigned int LooksBlocks::goToBack(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        vm->engine()->moveSpriteToBack(sprite);
+
+    return 0;
+}
+
+unsigned int LooksBlocks::goForwardLayers(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        vm->engine()->moveSpriteForwardLayers(sprite, vm->getInput(0, 1)->toInt());
+
+    return 1;
+}
+
+unsigned int LooksBlocks::goBackwardLayers(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        vm->engine()->moveSpriteBackwardLayers(sprite, vm->getInput(0, 1)->toInt());
+
+    return 1;
 }
 
 unsigned int LooksBlocks::costumeNumber(VirtualMachine *vm)

@@ -116,6 +116,36 @@ TEST(EngineTest, FpsProject)
     p.run();
 }
 
+TEST(EngineTest, ExecutionOrder)
+{
+    Project p("execution_order.sb3");
+    ASSERT_TRUE(p.load());
+
+    p.run();
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    ASSERT_LIST(stage, "order");
+    auto list = GET_LIST(stage, "order");
+    ASSERT_EQ(list->size(), 13);
+
+    ASSERT_EQ((*list)[0].toString(), "Sprite2");
+    ASSERT_EQ((*list)[1].toString(), "Sprite3");
+    ASSERT_EQ((*list)[2].toString(), "Sprite1");
+    ASSERT_EQ((*list)[3].toString(), "Stage");
+    ASSERT_EQ((*list)[4].toString(), "Sprite1 1");
+    ASSERT_EQ((*list)[5].toString(), "Sprite1 2");
+    ASSERT_EQ((*list)[6].toString(), "Sprite1 3");
+    ASSERT_EQ((*list)[7].toString(), "Sprite2 msg");
+    ASSERT_EQ((*list)[8].toString(), "Sprite3 msg");
+    ASSERT_EQ((*list)[9].toString(), "Sprite1 1 msg");
+    ASSERT_EQ((*list)[10].toString(), "Sprite1 2 msg");
+    ASSERT_EQ((*list)[11].toString(), "Sprite1 3 msg");
+}
+
 TEST(EngineTest, KeyState)
 {
     Engine engine;
