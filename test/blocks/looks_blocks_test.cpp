@@ -117,6 +117,7 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_switchbackdropto", &LooksBlocks::compileSwitchBackdropTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_switchbackdroptoandwait", &LooksBlocks::compileSwitchBackdropToAndWait));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_nextbackdrop", &LooksBlocks::compileNextBackdrop));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_gotofrontback", &LooksBlocks::compileGoToFrontBack));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_costumenumbername", &LooksBlocks::compileCostumeNumberName));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_backdropnumbername", &LooksBlocks::compileBackdropNumberName));
 
@@ -130,6 +131,7 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     // Fields
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "NUMBER_NAME", LooksBlocks::NUMBER_NAME));
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "EFFECT", LooksBlocks::EFFECT));
+    EXPECT_CALL(m_engineMock, addField(m_section.get(), "FRONT_BACK", LooksBlocks::FRONT_BACK));
 
     // Field values
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "number", LooksBlocks::Number));
@@ -141,6 +143,8 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "MOSAIC", LooksBlocks::MosaicEffect));
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "BRIGHTNESS", LooksBlocks::BrightnessEffect));
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "GHOST", LooksBlocks::GhostEffect));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "front", LooksBlocks::Front));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "back", LooksBlocks::Back));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -2575,6 +2579,59 @@ TEST_F(LooksBlocksTest, RandomBackdropAndWait)
     ASSERT_TRUE(vm.atEnd());
 
     LooksBlocks::rng = RandomGenerator::instance().get();
+}
+
+TEST_F(LooksBlocksTest, GoToFrontBack)
+{
+    Compiler compiler(&m_engineMock);
+
+    // go to [front] layer
+    auto block1 = std::make_shared<Block>("a", "looks_gotofrontback");
+    addDropdownField(block1, "FRONT_BACK", LooksBlocks::FRONT_BACK, "front", LooksBlocks::Front);
+
+    // go to [back] layer
+    auto block2 = std::make_shared<Block>("b", "looks_gotofrontback");
+    addDropdownField(block2, "FRONT_BACK", LooksBlocks::FRONT_BACK, "back", LooksBlocks::Back);
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::goToFront)).WillOnce(Return(0));
+    compiler.setBlock(block1);
+    LooksBlocks::compileGoToFrontBack(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::goToBack)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    LooksBlocks::compileGoToFrontBack(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(LooksBlocksTest, GoToFrontBackImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::goToFront, &LooksBlocks::goToBack };
+
+    Sprite sprite;
+
+    VirtualMachine vm(&sprite, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+
+    EXPECT_CALL(m_engineMock, moveSpriteToFront(&sprite));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    EXPECT_CALL(m_engineMock, moveSpriteToBack(&sprite));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
 }
 
 TEST_F(LooksBlocksTest, CostumeNumberName)

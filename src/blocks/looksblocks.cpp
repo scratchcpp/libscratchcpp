@@ -37,6 +37,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_switchbackdropto", &compileSwitchBackdropTo);
     engine->addCompileFunction(this, "looks_switchbackdroptoandwait", &compileSwitchBackdropToAndWait);
     engine->addCompileFunction(this, "looks_nextbackdrop", &compileNextBackdrop);
+    engine->addCompileFunction(this, "looks_gotofrontback", &compileGoToFrontBack);
     engine->addCompileFunction(this, "looks_costumenumbername", &compileCostumeNumberName);
     engine->addCompileFunction(this, "looks_backdropnumbername", &compileBackdropNumberName);
 
@@ -50,6 +51,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     // Fields
     engine->addField(this, "NUMBER_NAME", NUMBER_NAME);
     engine->addField(this, "EFFECT", EFFECT);
+    engine->addField(this, "FRONT_BACK", FRONT_BACK);
 
     // Field values
     engine->addFieldValue(this, "number", Number);
@@ -61,6 +63,8 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addFieldValue(this, "MOSAIC", MosaicEffect);
     engine->addFieldValue(this, "BRIGHTNESS", BrightnessEffect);
     engine->addFieldValue(this, "GHOST", GhostEffect);
+    engine->addFieldValue(this, "front", Front);
+    engine->addFieldValue(this, "back", Back);
 }
 
 void LooksBlocks::compileShow(Compiler *compiler)
@@ -386,6 +390,21 @@ void LooksBlocks::compileSwitchBackdropToAndWait(Compiler *compiler)
 void LooksBlocks::compileNextBackdrop(Compiler *compiler)
 {
     compiler->addFunctionCall(&nextBackdrop);
+}
+
+void LooksBlocks::compileGoToFrontBack(Compiler *compiler)
+{
+    int option = compiler->field(FRONT_BACK)->specialValueId();
+
+    switch (option) {
+        case Front:
+            compiler->addFunctionCall(&goToFront);
+            break;
+
+        case Back:
+            compiler->addFunctionCall(&goToBack);
+            break;
+    }
 }
 
 void LooksBlocks::compileCostumeNumberName(Compiler *compiler)
@@ -857,6 +876,26 @@ unsigned int LooksBlocks::checkBackdropScripts(VirtualMachine *vm)
         if ((stage->costumes().size() > 0) && vm->engine()->broadcastByPtrRunning(stage->currentCostume()->broadcast(), vm))
             vm->stop(true, true, true);
     }
+
+    return 0;
+}
+
+unsigned int LooksBlocks::goToFront(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        vm->engine()->moveSpriteToFront(sprite);
+
+    return 0;
+}
+
+unsigned int LooksBlocks::goToBack(VirtualMachine *vm)
+{
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+
+    if (sprite)
+        vm->engine()->moveSpriteToBack(sprite);
 
     return 0;
 }
