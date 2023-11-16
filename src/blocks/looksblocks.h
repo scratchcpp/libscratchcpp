@@ -24,14 +24,16 @@ class LooksBlocks : public IBlockSection
             SIZE,
             COSTUME,
             BACKDROP,
-            VALUE
+            VALUE,
+            NUM
         };
 
         enum Fields
         {
             NUMBER_NAME,
             EFFECT,
-            FRONT_BACK
+            FRONT_BACK,
+            FORWARD_BACKWARD
         };
 
         enum FieldValues
@@ -46,7 +48,9 @@ class LooksBlocks : public IBlockSection
             BrightnessEffect,
             GhostEffect,
             Front,
-            Back
+            Back,
+            Forward,
+            Backward
         };
 
         std::string name() const override;
@@ -67,6 +71,7 @@ class LooksBlocks : public IBlockSection
         static void compileSwitchBackdropToAndWait(Compiler *compiler);
         static void compileNextBackdrop(Compiler *compiler);
         static void compileGoToFrontBack(Compiler *compiler);
+        static void compileGoForwardBackwardLayers(Compiler *compiler);
         static void compileCostumeNumberName(Compiler *compiler);
         static void compileBackdropNumberName(Compiler *compiler);
 
@@ -123,6 +128,9 @@ class LooksBlocks : public IBlockSection
 
         static unsigned int goToFront(VirtualMachine *vm);
         static unsigned int goToBack(VirtualMachine *vm);
+
+        static unsigned int goForwardLayers(VirtualMachine *vm);
+        static unsigned int goBackwardLayers(VirtualMachine *vm);
 
         static unsigned int costumeNumber(VirtualMachine *vm);
         static unsigned int costumeName(VirtualMachine *vm);
