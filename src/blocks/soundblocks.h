@@ -11,9 +11,28 @@ namespace libscratchcpp
 class SoundBlocks : public IBlockSection
 {
     public:
+        enum Inputs
+        {
+            VOLUME
+        };
+
+        enum Fields
+        {
+
+        };
+
+        enum FieldValues
+        {
+
+        };
+
         std::string name() const override;
 
         void registerBlocks(IEngine *engine) override;
+
+        static void compileChangeVolumeBy(Compiler *compiler);
+
+        static unsigned int changeVolumeBy(VirtualMachine *vm);
 };
 
 } // namespace libscratchcpp
