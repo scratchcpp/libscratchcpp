@@ -904,7 +904,10 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
 
     Sprite *clone1;
     EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
+    EXPECT_CALL(m_engineMock, cloneLimit()).Times(8).WillRepeatedly(Return(300));
+    EXPECT_CALL(m_engineMock, cloneCount()).Times(4).WillRepeatedly(Return(0));
     EXPECT_CALL(m_engineMock, initClone).WillOnce(SaveArg<0>(&clone1));
+    EXPECT_CALL(m_engineMock, moveSpriteBehindOther(_, &sprite));
     EXPECT_CALL(m_engineMock, requestRedraw());
 
     vm.setBytecode(bytecode1);
@@ -914,6 +917,7 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     ASSERT_EQ(sprite.allChildren().size(), 1);
 
     EXPECT_CALL(m_engineMock, initClone).Times(1);
+    EXPECT_CALL(m_engineMock, moveSpriteBehindOther(_, &sprite));
     EXPECT_CALL(m_engineMock, requestRedraw());
 
     vm.setBytecode(bytecode2);
@@ -927,6 +931,7 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     EXPECT_CALL(m_engineMock, findTarget).WillOnce(Return(4));
     EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
     EXPECT_CALL(m_engineMock, initClone).WillOnce(SaveArg<0>(&clone3));
+    EXPECT_CALL(m_engineMock, moveSpriteBehindOther(_, &sprite));
     EXPECT_CALL(m_engineMock, requestRedraw());
 
     vm.setBytecode(bytecode3);
@@ -937,6 +942,7 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     ASSERT_EQ(sprite.children(), sprite.allChildren());
 
     EXPECT_CALL(m_engineMock, initClone).Times(1);
+    EXPECT_CALL(m_engineMock, moveSpriteBehindOther(_, &sprite));
     EXPECT_CALL(m_engineMock, requestRedraw());
 
     vm.setBytecode(bytecode4);
@@ -989,7 +995,10 @@ TEST_F(ControlBlocksTest, DeleteThisCloneImpl)
     sprite.setEngine(&m_engineMock);
 
     Sprite *clone;
+    EXPECT_CALL(m_engineMock, cloneLimit()).Times(2).WillRepeatedly(Return(300));
+    EXPECT_CALL(m_engineMock, cloneCount()).WillOnce(Return(0));
     EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+    EXPECT_CALL(m_engineMock, moveSpriteBehindOther(_, &sprite));
     EXPECT_CALL(m_engineMock, requestRedraw());
     sprite.clone();
     ASSERT_TRUE(clone);

@@ -144,6 +144,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the maximum number of clones (use -1 or any negative number to disable the limit). */
         virtual void setCloneLimit(int limit) = 0;
 
+        /*! Returns the current number of clones. */
+        virtual int cloneCount() const = 0;
+
         /*! Returns true if sprite fencing is enabled. */
         virtual bool spriteFencingEnabled() const = 0;
 
@@ -243,6 +246,21 @@ class LIBSCRATCHCPP_EXPORT IEngine
          *       Use the "_stage_" reserved name to get the stage, or use the stage() method.
          */
         virtual int findTarget(const std::string &targetName) const = 0;
+
+        /*! Moves the given sprite to the front layer. */
+        virtual void moveSpriteToFront(Sprite *sprite) = 0;
+
+        /*! Moves the given sprite to the back layer. */
+        virtual void moveSpriteToBack(Sprite *sprite) = 0;
+
+        /*! Moves the given sprite forward a number of layers. */
+        virtual void moveSpriteForwardLayers(Sprite *sprite, int layers) = 0;
+
+        /*! Moves the given sprite backward a number of layers. */
+        virtual void moveSpriteBackwardLayers(Sprite *sprite, int layers) = 0;
+
+        /*! Moves the given sprite behind some other sprite. */
+        virtual void moveSpriteBehindOther(Sprite *sprite, Sprite *other) = 0;
 
         /*! Returns the Stage. */
         virtual Stage *stage() const = 0;

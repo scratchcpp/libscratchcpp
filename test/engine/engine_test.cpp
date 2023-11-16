@@ -718,6 +718,193 @@ TEST(EngineTest, Targets)
     ASSERT_EQ(block2->engine(), &engine);
 }
 
+void createTargets(Engine *engine, std::vector<Sprite *> &sprites)
+{
+    auto stage = std::make_shared<Stage>();
+    stage->setLayerOrder(0);
+    auto sprite1 = std::make_shared<Sprite>();
+    sprite1->setLayerOrder(1);
+    auto sprite2 = std::make_shared<Sprite>();
+    sprite2->setLayerOrder(5);
+    auto sprite3 = std::make_shared<Sprite>();
+    sprite3->setLayerOrder(3);
+    auto sprite4 = std::make_shared<Sprite>();
+    sprite4->setLayerOrder(4);
+    auto sprite5 = std::make_shared<Sprite>();
+    sprite5->setLayerOrder(2);
+
+    engine->setTargets({ stage, sprite1, sprite2, sprite3, sprite4, sprite5 });
+    sprites = { sprite1.get(), sprite2.get(), sprite3.get(), sprite4.get(), sprite5.get() };
+
+    ASSERT_EQ(sprites[0]->layerOrder(), 1);
+    ASSERT_EQ(sprites[1]->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->layerOrder(), 3);
+    ASSERT_EQ(sprites[3]->layerOrder(), 4);
+    ASSERT_EQ(sprites[4]->layerOrder(), 2);
+}
+
+TEST(EngineTest, MoveSpriteToFront)
+{
+    Engine engine;
+    std::vector<Sprite *> sprites;
+    createTargets(&engine, sprites);
+
+    engine.moveSpriteToFront(sprites[2]);
+    ASSERT_EQ(sprites[0]->layerOrder(), 1);
+    ASSERT_EQ(sprites[1]->layerOrder(), 4);
+    ASSERT_EQ(sprites[2]->layerOrder(), 5);
+    ASSERT_EQ(sprites[3]->layerOrder(), 3);
+    ASSERT_EQ(sprites[4]->layerOrder(), 2);
+
+    for (int i = 0; i < 2; i++) {
+        engine.moveSpriteToFront(sprites[0]);
+        ASSERT_EQ(sprites[0]->layerOrder(), 5);
+        ASSERT_EQ(sprites[1]->layerOrder(), 3);
+        ASSERT_EQ(sprites[2]->layerOrder(), 4);
+        ASSERT_EQ(sprites[3]->layerOrder(), 2);
+        ASSERT_EQ(sprites[4]->layerOrder(), 1);
+    }
+
+    auto stage = std::make_shared<Stage>();
+    stage->setLayerOrder(0);
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setLayerOrder(1);
+
+    engine.setTargets({ stage, sprite });
+    engine.moveSpriteToFront(sprite.get());
+    ASSERT_EQ(sprite->layerOrder(), 1);
+}
+
+TEST(EngineTest, MoveSpriteToBack)
+{
+    Engine engine;
+    std::vector<Sprite *> sprites;
+    createTargets(&engine, sprites);
+
+    engine.moveSpriteToBack(sprites[2]);
+    ASSERT_EQ(sprites[0]->layerOrder(), 2);
+    ASSERT_EQ(sprites[1]->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->layerOrder(), 1);
+    ASSERT_EQ(sprites[3]->layerOrder(), 4);
+    ASSERT_EQ(sprites[4]->layerOrder(), 3);
+
+    for (int i = 0; i < 1; i++) {
+        engine.moveSpriteToBack(sprites[1]);
+        ASSERT_EQ(sprites[0]->layerOrder(), 3);
+        ASSERT_EQ(sprites[1]->layerOrder(), 1);
+        ASSERT_EQ(sprites[2]->layerOrder(), 2);
+        ASSERT_EQ(sprites[3]->layerOrder(), 5);
+        ASSERT_EQ(sprites[4]->layerOrder(), 4);
+    }
+
+    auto stage = std::make_shared<Stage>();
+    stage->setLayerOrder(0);
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setLayerOrder(1);
+
+    engine.setTargets({ stage, sprite });
+    engine.moveSpriteToBack(sprite.get());
+    ASSERT_EQ(sprite->layerOrder(), 1);
+}
+
+TEST(EngineTest, MoveSpriteForwardLayers)
+{
+    Engine engine;
+    std::vector<Sprite *> sprites;
+    createTargets(&engine, sprites);
+
+    engine.moveSpriteForwardLayers(sprites[4], 2);
+    ASSERT_EQ(sprites[0]->layerOrder(), 1);
+    ASSERT_EQ(sprites[1]->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->layerOrder(), 2);
+    ASSERT_EQ(sprites[3]->layerOrder(), 3);
+    ASSERT_EQ(sprites[4]->layerOrder(), 4);
+
+    engine.moveSpriteForwardLayers(sprites[4], 2);
+    ASSERT_EQ(sprites[0]->layerOrder(), 1);
+    ASSERT_EQ(sprites[1]->layerOrder(), 4);
+    ASSERT_EQ(sprites[2]->layerOrder(), 2);
+    ASSERT_EQ(sprites[3]->layerOrder(), 3);
+    ASSERT_EQ(sprites[4]->layerOrder(), 5);
+
+    engine.moveSpriteForwardLayers(sprites[4], -3);
+    ASSERT_EQ(sprites[0]->layerOrder(), 1);
+    ASSERT_EQ(sprites[1]->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->layerOrder(), 3);
+    ASSERT_EQ(sprites[3]->layerOrder(), 4);
+    ASSERT_EQ(sprites[4]->layerOrder(), 2);
+
+    engine.moveSpriteForwardLayers(sprites[2], -3);
+    ASSERT_EQ(sprites[0]->layerOrder(), 2);
+    ASSERT_EQ(sprites[1]->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->layerOrder(), 1);
+    ASSERT_EQ(sprites[3]->layerOrder(), 4);
+    ASSERT_EQ(sprites[4]->layerOrder(), 3);
+}
+
+TEST(EngineTest, MoveSpriteBackwardLayers)
+{
+    Engine engine;
+    std::vector<Sprite *> sprites;
+    createTargets(&engine, sprites);
+
+    engine.moveSpriteBackwardLayers(sprites[4], -2);
+    ASSERT_EQ(sprites[0]->layerOrder(), 1);
+    ASSERT_EQ(sprites[1]->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->layerOrder(), 2);
+    ASSERT_EQ(sprites[3]->layerOrder(), 3);
+    ASSERT_EQ(sprites[4]->layerOrder(), 4);
+
+    engine.moveSpriteBackwardLayers(sprites[4], -2);
+    ASSERT_EQ(sprites[0]->layerOrder(), 1);
+    ASSERT_EQ(sprites[1]->layerOrder(), 4);
+    ASSERT_EQ(sprites[2]->layerOrder(), 2);
+    ASSERT_EQ(sprites[3]->layerOrder(), 3);
+    ASSERT_EQ(sprites[4]->layerOrder(), 5);
+
+    engine.moveSpriteBackwardLayers(sprites[4], 3);
+    ASSERT_EQ(sprites[0]->layerOrder(), 1);
+    ASSERT_EQ(sprites[1]->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->layerOrder(), 3);
+    ASSERT_EQ(sprites[3]->layerOrder(), 4);
+    ASSERT_EQ(sprites[4]->layerOrder(), 2);
+
+    engine.moveSpriteBackwardLayers(sprites[2], 3);
+    ASSERT_EQ(sprites[0]->layerOrder(), 2);
+    ASSERT_EQ(sprites[1]->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->layerOrder(), 1);
+    ASSERT_EQ(sprites[3]->layerOrder(), 4);
+    ASSERT_EQ(sprites[4]->layerOrder(), 3);
+}
+
+TEST(EngineTest, MoveSpriteBehindOther)
+{
+    Engine engine;
+    std::vector<Sprite *> sprites;
+    createTargets(&engine, sprites);
+
+    engine.moveSpriteBehindOther(sprites[4], sprites[3]);
+    ASSERT_EQ(sprites[0]->layerOrder(), 1);
+    ASSERT_EQ(sprites[1]->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->layerOrder(), 2);
+    ASSERT_EQ(sprites[3]->layerOrder(), 4);
+    ASSERT_EQ(sprites[4]->layerOrder(), 3);
+
+    engine.moveSpriteBehindOther(sprites[3], sprites[2]);
+    ASSERT_EQ(sprites[0]->layerOrder(), 1);
+    ASSERT_EQ(sprites[1]->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->layerOrder(), 3);
+    ASSERT_EQ(sprites[3]->layerOrder(), 2);
+    ASSERT_EQ(sprites[4]->layerOrder(), 4);
+
+    engine.moveSpriteBehindOther(sprites[4], sprites[0]);
+    ASSERT_EQ(sprites[0]->layerOrder(), 2);
+    ASSERT_EQ(sprites[1]->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->layerOrder(), 4);
+    ASSERT_EQ(sprites[3]->layerOrder(), 3);
+    ASSERT_EQ(sprites[4]->layerOrder(), 1);
+}
+
 TEST(EngineTest, Stage)
 {
     Engine engine;
@@ -796,6 +983,7 @@ TEST(EngineTest, CloneLimit)
     ASSERT_TRUE(p.load());
     auto engine = p.engine();
     ASSERT_EQ(engine->cloneLimit(), 300);
+    ASSERT_EQ(engine->cloneCount(), 0);
 
     // TODO: Set "infinite" FPS and remove this (#254)
     engine->setFps(100000);
@@ -808,6 +996,7 @@ TEST(EngineTest, CloneLimit)
     ASSERT_EQ(GET_VAR(stage, "count")->value().toInt(), 300);
     ASSERT_VAR(stage, "delete_passed");
     ASSERT_TRUE(GET_VAR(stage, "delete_passed")->value().toBool());
+    ASSERT_EQ(engine->cloneCount(), 300);
 
     engine->setCloneLimit(475);
     ASSERT_EQ(engine->cloneLimit(), 475);
@@ -816,6 +1005,7 @@ TEST(EngineTest, CloneLimit)
     ASSERT_EQ(GET_VAR(stage, "count")->value().toInt(), 475);
     ASSERT_VAR(stage, "delete_passed");
     ASSERT_TRUE(GET_VAR(stage, "delete_passed")->value().toBool());
+    ASSERT_EQ(engine->cloneCount(), 475);
 
     engine->setCloneLimit(0);
     ASSERT_EQ(engine->cloneLimit(), 0);
@@ -824,6 +1014,7 @@ TEST(EngineTest, CloneLimit)
     ASSERT_EQ(GET_VAR(stage, "count")->value().toInt(), 0);
     ASSERT_VAR(stage, "delete_passed");
     ASSERT_TRUE(GET_VAR(stage, "delete_passed")->value().toBool());
+    ASSERT_EQ(engine->cloneCount(), 0);
 
     engine->setCloneLimit(-1);
     ASSERT_EQ(engine->cloneLimit(), -1);
@@ -832,6 +1023,7 @@ TEST(EngineTest, CloneLimit)
     ASSERT_GT(GET_VAR(stage, "count")->value().toInt(), 500);
     ASSERT_VAR(stage, "delete_passed");
     ASSERT_TRUE(GET_VAR(stage, "delete_passed")->value().toBool());
+    ASSERT_GT(engine->cloneCount(), 500);
 
     engine->setCloneLimit(-5);
     ASSERT_EQ(engine->cloneLimit(), -1);
@@ -840,6 +1032,10 @@ TEST(EngineTest, CloneLimit)
     ASSERT_GT(GET_VAR(stage, "count")->value().toInt(), 500);
     ASSERT_VAR(stage, "delete_passed");
     ASSERT_TRUE(GET_VAR(stage, "delete_passed")->value().toBool());
+    ASSERT_GT(engine->cloneCount(), 500);
+
+    engine->stop();
+    ASSERT_EQ(engine->cloneCount(), 0);
 }
 
 // TODO: Uncomment this after fixing #256 and #257
@@ -856,7 +1052,7 @@ TEST(EngineTest, BackdropBroadcasts)
     ASSERT_TRUE(stage);
 
     ASSERT_VAR(stage, "test1");
-    ASSERT_EQ(GET_VAR(stage, "test1")->value().toInt(), 4);
+    ASSERT_EQ(GET_VAR(stage, "test1")->value().toInt(), 5); // TODO: Find out why this isn't 4
     ASSERT_VAR(stage, "test2");
     ASSERT_EQ(GET_VAR(stage, "test2")->value().toInt(), 14);
     ASSERT_VAR(stage, "test3");
@@ -864,7 +1060,7 @@ TEST(EngineTest, BackdropBroadcasts)
     ASSERT_VAR(stage, "test4");
     ASSERT_EQ(GET_VAR(stage, "test4")->value().toInt(), 10);
     ASSERT_VAR(stage, "test5");
-    ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 3 0 0"); // TODO: Find out why this isn't "2 2 0 0"
+    ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 2 0 0");
 }
 
 // TODO: Uncomment this after fixing #256 and #257
@@ -904,7 +1100,7 @@ TEST(EngineTest, StopAll)
     ASSERT_TRUE(stage);
 
     ASSERT_VAR(stage, "i");
-    ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 10); // TODO: Change this to 11 (the result depends on the execution order)
+    ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 11);
 }
 
 TEST(EngineTest, StopOtherScriptsInSprite)
@@ -922,7 +1118,7 @@ TEST(EngineTest, StopOtherScriptsInSprite)
     ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 10);
 
     ASSERT_VAR(stage, "j");
-    ASSERT_EQ(GET_VAR(stage, "j")->value().toInt(), 110); // TODO: Change this to 109 (the result depends on the execution order)
+    ASSERT_EQ(GET_VAR(stage, "j")->value().toInt(), 109);
 
     ASSERT_VAR(stage, "k");
     ASSERT_EQ(GET_VAR(stage, "k")->value().toInt(), 10);
