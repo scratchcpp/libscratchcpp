@@ -30,7 +30,7 @@ struct TargetPrivate
         std::vector<std::shared_ptr<Costume>> costumes;
         std::vector<std::shared_ptr<Sound>> sounds;
         int layerOrder = 0;
-        int volume = 100;
+        double volume = 100;
 };
 
 } // namespace libscratchcpp
