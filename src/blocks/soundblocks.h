@@ -31,8 +31,10 @@ class SoundBlocks : public IBlockSection
         void registerBlocks(IEngine *engine) override;
 
         static void compileChangeVolumeBy(Compiler *compiler);
+        static void compileSetVolumeTo(Compiler *compiler);
 
         static unsigned int changeVolumeBy(VirtualMachine *vm);
+        static unsigned int setVolumeTo(VirtualMachine *vm);
 };
 
 } // namespace libscratchcpp

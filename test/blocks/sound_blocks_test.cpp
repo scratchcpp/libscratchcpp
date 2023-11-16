@@ -95,6 +95,7 @@ TEST_F(SoundBlocksTest, RegisterBlocks)
 {
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_changevolumeby", &SoundBlocks::compileChangeVolumeBy));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_setvolumeto", &SoundBlocks::compileSetVolumeTo));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VOLUME", SoundBlocks::VOLUME));
@@ -156,4 +157,44 @@ TEST_F(SoundBlocksTest, ChangeVolumeByImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(std::round(target.volume() * 100) / 100, 93.32);
+}
+
+TEST_F(SoundBlocksTest, SetVolumeTo)
+{
+    Compiler compiler(&m_engineMock);
+
+    // set volume to (43.409) %
+    auto block = std::make_shared<Block>("a", "sound_setvolumeto");
+    addValueInput(block, "VOLUME", SoundBlocks::VOLUME, 43.409);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::setVolumeTo)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    SoundBlocks::compileSetVolumeTo(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), 43.409);
+}
+
+TEST_F(SoundBlocksTest, SetVolumeToImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SoundBlocks::setVolumeTo };
+    static Value constValues[] = { 43.409 };
+
+    Target target;
+    target.setVolume(42.4);
+
+    VirtualMachine vm(&target, nullptr, nullptr);
+
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.volume(), 43.409);
 }
