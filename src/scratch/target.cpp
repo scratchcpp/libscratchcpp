@@ -338,15 +338,20 @@ void Target::setLayerOrder(int newLayerOrder)
 }
 
 /*! Returns the volume. */
-int Target::volume() const
+double Target::volume() const
 {
     return impl->volume;
 }
 
 /*! Sets the volume. */
-void Target::setVolume(int newVolume)
+void Target::setVolume(double newVolume)
 {
-    impl->volume = newVolume;
+    if (newVolume >= 100)
+        impl->volume = 100;
+    else if (newVolume <= 0)
+        impl->volume = 0;
+    else
+        impl->volume = newVolume;
 }
 
 /*! Returns the engine. */

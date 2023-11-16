@@ -68,8 +68,8 @@ class LIBSCRATCHCPP_EXPORT Target
         int layerOrder() const;
         void setLayerOrder(int newLayerOrder);
 
-        int volume() const;
-        void setVolume(int newVolume);
+        double volume() const;
+        void setVolume(double newVolume);
 
         IEngine *engine() const;
         void setEngine(IEngine *engine);

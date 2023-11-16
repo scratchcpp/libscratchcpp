@@ -386,8 +386,15 @@ TEST(TargetTest, Volume)
 {
     Target target;
     ASSERT_EQ(target.volume(), 100);
-    target.setVolume(50);
-    ASSERT_EQ(target.volume(), 50);
+
+    target.setVolume(52.08);
+    ASSERT_EQ(target.volume(), 52.08);
+
+    target.setVolume(101.8);
+    ASSERT_EQ(target.volume(), 100);
+
+    target.setVolume(-4.2);
+    ASSERT_EQ(target.volume(), 0);
 }
 
 TEST(TargetTest, Engine)
