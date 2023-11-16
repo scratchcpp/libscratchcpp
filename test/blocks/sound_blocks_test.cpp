@@ -96,6 +96,7 @@ TEST_F(SoundBlocksTest, RegisterBlocks)
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_changevolumeby", &SoundBlocks::compileChangeVolumeBy));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_setvolumeto", &SoundBlocks::compileSetVolumeTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_volume", &SoundBlocks::compileVolume));
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VOLUME", SoundBlocks::VOLUME));
@@ -197,4 +198,39 @@ TEST_F(SoundBlocksTest, SetVolumeToImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(target.volume(), 43.409);
+}
+
+TEST_F(SoundBlocksTest, Volume)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "sound_volume");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::volume)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    SoundBlocks::compileVolume(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(SoundBlocksTest, VolumeImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SoundBlocks::volume };
+
+    Target target;
+    target.setVolume(42.4);
+
+    VirtualMachine vm(&target, nullptr, nullptr);
+
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 42.4);
 }

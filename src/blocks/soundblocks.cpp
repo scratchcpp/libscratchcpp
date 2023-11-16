@@ -18,6 +18,7 @@ void SoundBlocks::registerBlocks(IEngine *engine)
     // Blocks
     engine->addCompileFunction(this, "sound_changevolumeby", &compileChangeVolumeBy);
     engine->addCompileFunction(this, "sound_setvolumeto", &compileSetVolumeTo);
+    engine->addCompileFunction(this, "sound_volume", &compileVolume);
 
     // Inputs
     engine->addInput(this, "VOLUME", VOLUME);
@@ -35,6 +36,11 @@ void SoundBlocks::compileSetVolumeTo(Compiler *compiler)
     compiler->addFunctionCall(&setVolumeTo);
 }
 
+void SoundBlocks::compileVolume(Compiler *compiler)
+{
+    compiler->addFunctionCall(&volume);
+}
+
 unsigned int SoundBlocks::changeVolumeBy(VirtualMachine *vm)
 {
     if (Target *target = vm->target())
@@ -49,4 +55,14 @@ unsigned int SoundBlocks::setVolumeTo(VirtualMachine *vm)
         target->setVolume(vm->getInput(0, 1)->toDouble());
 
     return 1;
+}
+
+unsigned int SoundBlocks::volume(VirtualMachine *vm)
+{
+    if (Target *target = vm->target())
+        vm->addReturnValue(target->volume());
+    else
+        vm->addReturnValue(0);
+
+    return 0;
 }
