@@ -346,7 +346,12 @@ double Target::volume() const
 /*! Sets the volume. */
 void Target::setVolume(double newVolume)
 {
-    impl->volume = newVolume;
+    if (newVolume >= 100)
+        impl->volume = 100;
+    else if (newVolume <= 0)
+        impl->volume = 0;
+    else
+        impl->volume = newVolume;
 }
 
 /*! Returns the engine. */
