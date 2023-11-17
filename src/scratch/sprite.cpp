@@ -216,13 +216,13 @@ void Sprite::setSize(double newSize)
             eng->requestRedraw();
     }
 
-    if (impl->iface)
-        impl->iface->onSizeChanged(impl->size);
-
     auto costume = currentCostume();
 
     if (costume)
         costume->setScale(newSize / 100);
+
+    if (impl->iface)
+        impl->iface->onSizeChanged(impl->size);
 }
 
 /*! Overrides Target#setCostumeIndex(). */
