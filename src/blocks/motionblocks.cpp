@@ -5,6 +5,7 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/rect.h>
 
 #include "motionblocks.h"
 #include "../engine/internal/randomgenerator.h"
@@ -38,6 +39,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_setx", &compileSetX);
     engine->addCompileFunction(this, "motion_changeyby", &compileChangeYBy);
     engine->addCompileFunction(this, "motion_sety", &compileSetY);
+    engine->addCompileFunction(this, "motion_ifonedgebounce", &compileIfOnEdgeBounce);
     engine->addCompileFunction(this, "motion_setrotationstyle", &compileSetRotationStyle);
     engine->addCompileFunction(this, "motion_xposition", &compileXPosition);
     engine->addCompileFunction(this, "motion_yposition", &compileYPosition);
@@ -194,6 +196,11 @@ void MotionBlocks::compileSetY(Compiler *compiler)
 {
     compiler->addInput(Y);
     compiler->addFunctionCall(&setY);
+}
+
+void MotionBlocks::compileIfOnEdgeBounce(Compiler *compiler)
+{
+    compiler->addFunctionCall(&ifOnEdgeBounce);
 }
 
 void MotionBlocks::compileSetRotationStyle(Compiler *compiler)
@@ -626,6 +633,99 @@ unsigned int MotionBlocks::setY(VirtualMachine *vm)
         sprite->setY(vm->getInput(0, 1)->toDouble());
 
     return 1;
+}
+
+unsigned int MotionBlocks::ifOnEdgeBounce(VirtualMachine *vm)
+{
+    // See https://github.com/scratchfoundation/scratch-vm/blob/c37745e97e6d8a77ad1dc31a943ea728dd17ba78/src/blocks/scratch3_motion.js#L186-L240
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    IEngine *engine = vm->engine();
+
+    if (!sprite || !engine)
+        return 0;
+
+    Rect bounds = sprite->boundingRect();
+
+    // Measure distance to edges
+    // Values are zero when the sprite is beyond
+    unsigned int stageWidth = engine->stageWidth();
+    unsigned int stageHeight = engine->stageHeight();
+    double distLeft = std::max(0.0, (stageWidth / 2.0) + bounds.left());
+    double distTop = std::max(0.0, (stageHeight / 2.0) - bounds.top());
+    double distRight = std::max(0.0, (stageWidth / 2.0) - bounds.right());
+    double distBottom = std::max(0.0, (stageHeight / 2.0) + bounds.bottom());
+
+    // Find the nearest edge
+    // 1 - left
+    // 2 - top
+    // 3 - right
+    // 4 - bottom
+    unsigned short nearestEdge = 0;
+    double minDist = std::numeric_limits<double>::infinity();
+
+    if (distLeft < minDist) {
+        minDist = distLeft;
+        nearestEdge = 1;
+    }
+
+    if (distTop < minDist) {
+        minDist = distTop;
+        nearestEdge = 2;
+    }
+
+    if (distRight < minDist) {
+        minDist = distRight;
+        nearestEdge = 3;
+    }
+
+    if (distBottom < minDist) {
+        minDist = distBottom;
+        nearestEdge = 4;
+    }
+
+    if (minDist > 0) {
+        return 0; // Not touching any edge
+    }
+
+    assert(nearestEdge != 0);
+
+    // Point away from the nearest edge
+    double radians = (90 - sprite->direction()) * pi / 180;
+    double dx = std::cos(radians);
+    double dy = -std::sin(radians);
+
+    switch (nearestEdge) {
+        case 1:
+            // Left
+            dx = std::max(0.2, std::abs(dx));
+            break;
+
+        case 2:
+            // Top
+            dy = std::max(0.2, std::abs(dy));
+            break;
+
+        case 3:
+            // Right
+            dx = 0 - std::max(0.2, std::abs(dx));
+            break;
+
+        case 4:
+            // Bottom
+            dy = 0 - std::max(0.2, std::abs(dy));
+            break;
+    }
+
+    double newDirection = (180 / pi) * (std::atan2(dy, dx)) + 90;
+    sprite->setDirection(newDirection);
+
+    // Keep within the stage
+    double fencedX, fencedY;
+    sprite->keepInFence(sprite->x(), sprite->y(), &fencedX, &fencedY);
+    sprite->setX(fencedX);
+    sprite->setY(fencedY);
+
+    return 0;
 }
 
 unsigned int MotionBlocks::setLeftRightRotationStyle(VirtualMachine *vm)
