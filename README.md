@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] Motion blocks
+- [x] Motion blocks
 - [ ] Looks blocks
 - [ ] Sound blocks
 - [ ] Event blocks
