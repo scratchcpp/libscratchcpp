@@ -1192,3 +1192,22 @@ TEST(EngineTest, NoRefreshWhenCallingRunningBroadcast)
     ASSERT_VAR(stage, "passed2");
     ASSERT_TRUE(GET_VAR(stage, "passed2")->value().toBool());
 }
+
+TEST(EngineTest, NoStopWhenCallingRunningBroadcastFromCustomBlock)
+{
+    // Regtest for #257
+    Project p("regtest_projects/277_custom_block_call_running_broadcast_stop.sb3");
+    ASSERT_TRUE(p.load());
+    p.run();
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    ASSERT_VAR(stage, "passed1");
+    ASSERT_TRUE(GET_VAR(stage, "passed1")->value().toBool());
+
+    ASSERT_VAR(stage, "passed2");
+    ASSERT_TRUE(GET_VAR(stage, "passed2")->value().toBool());
+}
