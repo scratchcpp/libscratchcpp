@@ -353,6 +353,54 @@ Rect Sprite::boundingRect() const
     return ret;
 }
 
+/*!
+ * Keeps the desired position within the stage.
+ * \param[in] New desired X position.
+ * \param[in] New desired Y position.
+ * \param[out] Fenced X position.
+ * \param[out] Fenced Y position.
+ */
+void Sprite::keepInFence(double newX, double newY, double *fencedX, double *fencedY) const
+{
+    // See https://github.com/scratchfoundation/scratch-vm/blob/05dcbc176f51da34aeb9165559fc6acba8087ff8/src/sprites/rendered-target.js#L915-L948
+    IEngine *eng = engine();
+
+    if (!(fencedX && fencedY && eng))
+        return;
+
+    double stageWidth = eng->stageWidth();
+    double stageHeight = eng->stageHeight();
+    Rect fence(-stageWidth / 2, stageHeight / 2, stageWidth / 2, -stageHeight / 2);
+    Rect bounds;
+    impl->getBoundingRect(&bounds);
+
+    // Adjust the known bounds to the target position
+    bounds.setLeft(bounds.left() + newX - impl->x);
+    bounds.setRight(bounds.right() + newX - impl->x);
+    bounds.setTop(bounds.top() + newY - impl->y);
+    bounds.setBottom(bounds.bottom() + newY - impl->y);
+
+    // Find how far we need to move the target position
+    double dx = 0;
+    double dy = 0;
+
+    if (bounds.left() < fence.left()) {
+        dx += fence.left() - bounds.left();
+    }
+    if (bounds.right() > fence.right()) {
+        dx += fence.right() - bounds.right();
+    }
+    if (bounds.top() > fence.top()) {
+        dy += fence.top() - bounds.top();
+    }
+    if (bounds.bottom() < fence.bottom()) {
+        dy += fence.bottom() - bounds.bottom();
+    }
+
+    *fencedX = newX + dx;
+    *fencedY = newY + dy;
+}
+
 /*! Returns the value of the given graphics effect. */
 double Sprite::graphicsEffectValue(IGraphicsEffect *effect) const
 {

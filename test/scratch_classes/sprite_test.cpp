@@ -686,6 +686,95 @@ TEST(SpriteTest, BoundingRect)
     ScratchConfiguration::removeImageFormat("test");
 }
 
+TEST(SpriteTest, KeepInFence)
+{
+    auto imageFormatFactory = std::make_shared<ImageFormatFactoryMock>();
+    auto imageFormat = std::make_shared<ImageFormatMock>();
+
+    ScratchConfiguration::registerImageFormat("test", imageFormatFactory);
+    EXPECT_CALL(*imageFormatFactory, createInstance()).WillOnce(Return(imageFormat));
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(0));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(0));
+    auto costume = std::make_shared<Costume>("costume1", "a", "test");
+
+    Sprite sprite;
+    sprite.addCostume(costume);
+    sprite.setCostumeIndex(0);
+
+    static char data[5] = "abcd";
+    EXPECT_CALL(*imageFormat, setData(5, data));
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+
+    EXPECT_CALL(*imageFormat, colorAt(0, 0, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+    EXPECT_CALL(*imageFormat, colorAt(1, 0, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+    EXPECT_CALL(*imageFormat, colorAt(2, 0, 1)).WillOnce(Return(rgba(0, 0, 0, 255)));
+    EXPECT_CALL(*imageFormat, colorAt(3, 0, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+
+    EXPECT_CALL(*imageFormat, colorAt(0, 1, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+    EXPECT_CALL(*imageFormat, colorAt(1, 1, 1)).WillOnce(Return(rgba(0, 0, 0, 255)));
+    EXPECT_CALL(*imageFormat, colorAt(2, 1, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+    EXPECT_CALL(*imageFormat, colorAt(3, 1, 1)).WillOnce(Return(rgba(0, 0, 0, 255)));
+
+    EXPECT_CALL(*imageFormat, colorAt(0, 2, 1)).WillOnce(Return(rgba(0, 0, 0, 255)));
+    EXPECT_CALL(*imageFormat, colorAt(1, 2, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+    EXPECT_CALL(*imageFormat, colorAt(2, 2, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+    EXPECT_CALL(*imageFormat, colorAt(3, 2, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
+    costume->setData(5, data);
+
+    double fencedX = -1, fencedY = -1;
+    EngineMock engine;
+    sprite.setEngine(&engine);
+
+    EXPECT_CALL(engine, requestRedraw());
+    sprite.setDirection(45);
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
+    sprite.keepInFence(0, 0, &fencedX, &fencedY);
+    ASSERT_EQ(fencedX, 0);
+    ASSERT_EQ(fencedY, 0);
+
+    EXPECT_CALL(engine, requestRedraw()).Times(2);
+    EXPECT_CALL(engine, spriteFencingEnabled()).Times(2).WillRepeatedly(Return(false));
+    sprite.setX(100);
+    sprite.setY(60);
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
+    sprite.keepInFence(240, 180, &fencedX, &fencedY);
+    ASSERT_EQ(std::round(fencedX * 100) / 100, 238.94);
+    ASSERT_EQ(std::round(fencedY * 100) / 100, 179.65);
+
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
+    sprite.keepInFence(240, -180, &fencedX, &fencedY);
+    ASSERT_EQ(std::round(fencedX * 100) / 100, 238.94);
+    ASSERT_EQ(std::round(fencedY * 100) / 100, -178.94);
+
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
+    sprite.keepInFence(-240, -180, &fencedX, &fencedY);
+    ASSERT_EQ(std::round(fencedX * 100) / 100, -238.23);
+    ASSERT_EQ(std::round(fencedY * 100) / 100, -178.94);
+
+    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
+    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
+    EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
+    sprite.keepInFence(-240, 180, &fencedX, &fencedY);
+    ASSERT_EQ(std::round(fencedX * 100) / 100, -238.23);
+    ASSERT_EQ(std::round(fencedY * 100) / 100, 179.65);
+
+    ScratchConfiguration::removeImageFormat("test");
+}
+
 TEST(SpriteTest, GraphicsEffects)
 {
     auto c1 = std::make_shared<Costume>("", "", "");
