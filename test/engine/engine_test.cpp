@@ -114,6 +114,23 @@ TEST(EngineTest, FpsProject)
     EXPECT_CALL(clock, sleep(std::chrono::milliseconds(100)));
     EXPECT_CALL(clock, sleep(std::chrono::milliseconds(15)));
     p.run();
+
+    engine->setTurboModeEnabled(true);
+    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time5)).WillOnce(Return(time5)).WillOnce(Return(time6)).WillOnce(Return(time6)).WillOnce(Return(time7)).WillOnce(Return(time8));
+    EXPECT_CALL(clock, sleep).Times(0);
+    p.run();
+}
+
+TEST(EngineTest, TurboModeEnabled)
+{
+    Engine engine;
+    ASSERT_FALSE(engine.turboModeEnabled());
+
+    engine.setTurboModeEnabled(true);
+    ASSERT_TRUE(engine.turboModeEnabled());
+
+    engine.setTurboModeEnabled(false);
+    ASSERT_FALSE(engine.turboModeEnabled());
 }
 
 TEST(EngineTest, ExecutionOrder)

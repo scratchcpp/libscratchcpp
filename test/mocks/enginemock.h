@@ -31,6 +31,9 @@ class EngineMock : public IEngine
         MOCK_METHOD(double, fps, (), (const, override));
         MOCK_METHOD(void, setFps, (double fps), (override));
 
+        MOCK_METHOD(bool, turboModeEnabled, (), (const, override));
+        MOCK_METHOD(void, setTurboModeEnabled, (bool), (override));
+
         MOCK_METHOD(bool, keyPressed, (const std::string &), (const, override));
         MOCK_METHOD(void, setKeyState, (const std::string &, bool), (override));
         MOCK_METHOD(void, setAnyKeyPressed, (bool), (override));

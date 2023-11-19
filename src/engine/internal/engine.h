@@ -45,6 +45,9 @@ class Engine : public IEngine
         double fps() const override;
         void setFps(double fps) override;
 
+        bool turboModeEnabled() const override;
+        void setTurboModeEnabled(bool turboMode) override;
+
         bool keyPressed(const std::string &name) const override;
         void setKeyState(const std::string &name, bool pressed) override;
         void setAnyKeyPressed(bool pressed) override;
@@ -161,8 +164,9 @@ class Engine : public IEngine
 
         std::unique_ptr<ITimer> m_defaultTimer;
         ITimer *m_timer = nullptr;
-        double m_fps = 30;                              // default FPS
-        std::chrono::milliseconds m_frameDuration;      // will be computed in eventLoop()
+        double m_fps = 30;                         // default FPS
+        std::chrono::milliseconds m_frameDuration; // will be computed in eventLoop()
+        bool m_turboModeEnabled = false;
         std::unordered_map<std::string, bool> m_keyMap; // holds key states
         bool m_anyKeyPressed = false;
         double m_mouseX = 0;

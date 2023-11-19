@@ -99,6 +99,12 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the framerate of the project. */
         virtual void setFps(double fps) = 0;
 
+        /*! Returns true if turbo mode is enabled. */
+        virtual bool turboModeEnabled() const = 0;
+
+        /*! Sets whether turbo mode is enabled. */
+        virtual void setTurboModeEnabled(bool turboMode) = 0;
+
         /*! Returns true if the given key is pressed. */
         virtual bool keyPressed(const std::string &name) const = 0;
 
