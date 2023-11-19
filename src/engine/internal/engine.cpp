@@ -368,7 +368,7 @@ void Engine::eventLoop(bool untilProjectStops)
             elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - frameStart);
             sleepTime = m_frameDuration - elapsedTime;
             timeout = sleepTime <= std::chrono::milliseconds::zero();
-        } while (!m_redrawRequested && !timeout && !stop);
+        } while (!((m_redrawRequested && !m_turboModeEnabled) || timeout || stop));
 
         if (stop)
             break;
@@ -475,6 +475,16 @@ void Engine::setFps(double fps)
 {
     m_fps = fps;
     updateFrameDuration();
+}
+
+bool Engine::turboModeEnabled() const
+{
+    return m_turboModeEnabled;
+}
+
+void Engine::setTurboModeEnabled(bool turboMode)
+{
+    m_turboModeEnabled = turboMode;
 }
 
 bool Engine::keyPressed(const std::string &name) const
