@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
 - [x] Timer
 - [ ] API for monitors
 - [ ] Project metadata
-- [ ] Turbo mode
+- [x] Turbo mode
 - [ ] Multithreading (experimental)
 - [x] Custom FPS in the default event loop (`libscratchcpp::Engine::run()`)
 - [ ] Scratch 2.0 to 3.0 converter (help needed)
