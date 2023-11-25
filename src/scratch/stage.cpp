@@ -20,13 +20,23 @@ void Stage::setInterface(IStageHandler *newInterface)
 {
     assert(newInterface);
     impl->iface = newInterface;
-    impl->iface->onStageChanged(this);
+    impl->iface->init(this);
 }
 
 /*! Returns true. */
 bool Stage::isStage() const
 {
     return true;
+}
+
+/*! Overrides Target#setCostumeIndex(). */
+void Stage::setCostumeIndex(int newCostumeIndex)
+{
+    Target::setCostumeIndex(newCostumeIndex);
+    auto costume = costumeAt(newCostumeIndex);
+
+    if (impl->iface)
+        impl->iface->onCostumeChanged(costume.get());
 }
 
 /*! Returns the tempo. */

@@ -1,4 +1,5 @@
 #include <scratchcpp/stage.h>
+#include <scratchcpp/costume.h>
 #include <stagehandlermock.h>
 
 #include "../common.h"
@@ -10,7 +11,7 @@ class IStageHandlerTest : public testing::Test
     public:
         void SetUp() override
         {
-            EXPECT_CALL(m_handler, onStageChanged(&m_stage)).Times(1);
+            EXPECT_CALL(m_handler, init(&m_stage)).Times(1);
             m_stage.setInterface(&m_handler);
         }
 
@@ -33,8 +34,16 @@ TEST_F(IStageHandlerTest, VideoState)
     m_stage.setVideoState(Stage::VideoState::OnFlipped);
 }
 
-TEST_F(IStageHandlerTest, CostumeData)
+TEST_F(IStageHandlerTest, Costume)
 {
-    // TODO: Add test for costume data
-    // EXPECT_CALL(m_handler, onCostumeChanged(...)).Times(1);
+    auto costume1 = std::make_shared<Costume>("", "", "");
+    auto costume2 = std::make_shared<Costume>("", "", "");
+    m_stage.addCostume(costume1);
+    m_stage.addCostume(costume2);
+
+    EXPECT_CALL(m_handler, onCostumeChanged(costume1.get()));
+    m_stage.setCostumeIndex(0);
+
+    EXPECT_CALL(m_handler, onCostumeChanged(costume2.get()));
+    m_stage.setCostumeIndex(1);
 }

@@ -44,7 +44,7 @@ void Sprite::setInterface(ISpriteHandler *newInterface)
 {
     assert(newInterface);
     impl->iface = newInterface;
-    impl->iface->onSpriteChanged(this);
+    impl->iface->init(this);
 }
 
 /*! Creates a clone of the sprite. */
@@ -246,6 +246,9 @@ void Sprite::setCostumeIndex(int newCostumeIndex)
     }
 
     Target::setCostumeIndex(newCostumeIndex);
+
+    if (costume && impl->iface)
+        impl->iface->onCostumeChanged(costume.get());
 }
 
 /*! Returns the direction. */

@@ -1,3 +1,4 @@
+#include <scratchcpp/costume.h>
 #include <spritehandlermock.h>
 #include <enginemock.h>
 
@@ -14,7 +15,7 @@ class ISpriteHandlerTest : public testing::Test
     public:
         void SetUp() override
         {
-            EXPECT_CALL(m_handler, onSpriteChanged(&m_sprite)).Times(1);
+            EXPECT_CALL(m_handler, init(&m_sprite)).Times(1);
             m_sprite.setInterface(&m_handler);
             m_sprite.setEngine(&m_engine);
         }
@@ -110,8 +111,18 @@ TEST_F(ISpriteHandlerTest, RotationStyle)
     m_sprite.setRotationStyle(Sprite::RotationStyle::LeftRight);
 }
 
-TEST_F(ISpriteHandlerTest, CostumeData)
+TEST_F(ISpriteHandlerTest, Costume)
 {
-    // TODO: Add test for costume data
-    // EXPECT_CALL(m_handler, onCostumeChanged(...)).Times(1);
+    auto costume1 = std::make_shared<Costume>("", "", "");
+    auto costume2 = std::make_shared<Costume>("", "", "");
+    m_sprite.addCostume(costume1);
+    m_sprite.addCostume(costume2);
+
+    EXPECT_CALL(m_handler, onCostumeChanged(costume1.get()));
+    EXPECT_CALL(m_engine, requestRedraw());
+    m_sprite.setCostumeIndex(0);
+
+    EXPECT_CALL(m_handler, onCostumeChanged(costume2.get()));
+    EXPECT_CALL(m_engine, requestRedraw());
+    m_sprite.setCostumeIndex(1);
 }
