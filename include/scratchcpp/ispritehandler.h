@@ -14,7 +14,7 @@ class LIBSCRATCHCPP_EXPORT ISpriteHandler
     public:
         virtual ~ISpriteHandler() { }
 
-        virtual void onSpriteChanged(Sprite *sprite) = 0;
+        virtual void init(Sprite *sprite) = 0;
 
         virtual void onCloned(Sprite *clone) = 0;
 

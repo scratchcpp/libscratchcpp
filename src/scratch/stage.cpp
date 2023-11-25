@@ -20,7 +20,7 @@ void Stage::setInterface(IStageHandler *newInterface)
 {
     assert(newInterface);
     impl->iface = newInterface;
-    impl->iface->onStageChanged(this);
+    impl->iface->init(this);
 }
 
 /*! Returns true. */

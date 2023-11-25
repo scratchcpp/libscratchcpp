@@ -44,7 +44,7 @@ void Sprite::setInterface(ISpriteHandler *newInterface)
 {
     assert(newInterface);
     impl->iface = newInterface;
-    impl->iface->onSpriteChanged(this);
+    impl->iface->init(this);
 }
 
 /*! Creates a clone of the sprite. */

@@ -15,7 +15,7 @@ class ISpriteHandlerTest : public testing::Test
     public:
         void SetUp() override
         {
-            EXPECT_CALL(m_handler, onSpriteChanged(&m_sprite)).Times(1);
+            EXPECT_CALL(m_handler, init(&m_sprite)).Times(1);
             m_sprite.setInterface(&m_handler);
             m_sprite.setEngine(&m_engine);
         }

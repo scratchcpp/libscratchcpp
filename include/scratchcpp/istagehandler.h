@@ -14,7 +14,7 @@ class LIBSCRATCHCPP_EXPORT IStageHandler
     public:
         virtual ~IStageHandler() { }
 
-        virtual void onStageChanged(Stage *stage) = 0;
+        virtual void init(Stage *stage) = 0;
 
         virtual void onCostumeChanged(Costume *costume) = 0;
 

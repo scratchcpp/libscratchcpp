@@ -11,7 +11,7 @@ class IStageHandlerTest : public testing::Test
     public:
         void SetUp() override
         {
-            EXPECT_CALL(m_handler, onStageChanged(&m_stage)).Times(1);
+            EXPECT_CALL(m_handler, init(&m_stage)).Times(1);
             m_stage.setInterface(&m_handler);
         }
 
