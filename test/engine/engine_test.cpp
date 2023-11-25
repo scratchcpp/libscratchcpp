@@ -7,6 +7,7 @@
 #include <scratchcpp/list.h>
 #include <timermock.h>
 #include <clockmock.h>
+#include <thread>
 
 #include "../common.h"
 #include "testsection.h"
@@ -66,6 +67,16 @@ TEST(EngineTest, IsRunning)
     engine.start();
     engine.run();
     ASSERT_FALSE(engine.isRunning());
+}
+
+TEST(EngineTest, EventLoop)
+{
+    Engine engine;
+
+    std::thread th([&engine]() { engine.runEventLoop(); });
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    engine.stopEventLoop();
+    th.join(); // should return immediately
 }
 
 TEST(EngineTest, Fps)

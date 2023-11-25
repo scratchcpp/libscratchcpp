@@ -23,8 +23,10 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, stopTarget, (Target *, VirtualMachine *), (override));
         MOCK_METHOD(void, initClone, (Sprite *), (override));
         MOCK_METHOD(void, deinitClone, (Sprite *), (override));
+
         MOCK_METHOD(void, run, (), (override));
         MOCK_METHOD(void, runEventLoop, (), (override));
+        MOCK_METHOD(void, stopEventLoop, (), (override));
 
         MOCK_METHOD(void, setRedrawHandler, (const std::function<void()> &), (override));
 

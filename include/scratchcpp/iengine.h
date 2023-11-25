@@ -91,6 +91,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
          */
         virtual void runEventLoop() = 0;
 
+        /*! Stops the event loop which is running in another thread. */
+        virtual void stopEventLoop() = 0;
+
         /*! Sets the function which is called on every frame. */
         virtual void setRedrawHandler(const std::function<void()> &handler) = 0;
 
