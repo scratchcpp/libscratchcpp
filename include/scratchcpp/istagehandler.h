@@ -16,7 +16,7 @@ class LIBSCRATCHCPP_EXPORT IStageHandler
 
         virtual void onStageChanged(Stage *stage) = 0;
 
-        virtual void onCostumeChanged(const char *data) = 0;
+        virtual void onCostumeChanged(Costume *costume) = 0;
 
         virtual void onTempoChanged(int tempo) = 0;
         virtual void onVideoStateChanged(Stage::VideoState videoState) = 0;

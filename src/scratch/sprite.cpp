@@ -246,6 +246,9 @@ void Sprite::setCostumeIndex(int newCostumeIndex)
     }
 
     Target::setCostumeIndex(newCostumeIndex);
+
+    if (costume && impl->iface)
+        impl->iface->onCostumeChanged(costume.get());
 }
 
 /*! Returns the direction. */

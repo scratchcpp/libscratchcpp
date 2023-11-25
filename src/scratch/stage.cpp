@@ -29,6 +29,16 @@ bool Stage::isStage() const
     return true;
 }
 
+/*! Overrides Target#setCostumeIndex(). */
+void Stage::setCostumeIndex(int newCostumeIndex)
+{
+    Target::setCostumeIndex(newCostumeIndex);
+    auto costume = costumeAt(newCostumeIndex);
+
+    if (impl->iface)
+        impl->iface->onCostumeChanged(costume.get());
+}
+
 /*! Returns the tempo. */
 int Stage::tempo() const
 {

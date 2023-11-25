@@ -31,12 +31,6 @@ void SpritePrivate::removeClone(Sprite *clone)
     }
 }
 
-void SpritePrivate::setCostumeData(const char *data)
-{
-    if (iface)
-        iface->onCostumeChanged(data);
-}
-
 void SpritePrivate::getBoundingRect(Rect *out) const
 {
     assert(out);

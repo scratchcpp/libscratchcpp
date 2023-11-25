@@ -17,7 +17,6 @@ struct SpritePrivate
 
         void removeClone(Sprite *clone);
 
-        void setCostumeData(const char *data);
         void getBoundingRect(Rect *out) const;
         void getFencedPosition(double inX, double inY, double *outX, double *outY) const;
 

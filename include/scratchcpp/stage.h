@@ -29,6 +29,9 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
         void setInterface(IStageHandler *newInterface);
 
         bool isStage() const override;
+
+        void setCostumeIndex(int newCostumeIndex);
+
         int tempo() const;
         void setTempo(int newTempo);
 

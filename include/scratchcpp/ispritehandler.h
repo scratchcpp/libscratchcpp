@@ -18,7 +18,7 @@ class LIBSCRATCHCPP_EXPORT ISpriteHandler
 
         virtual void onCloned(Sprite *clone) = 0;
 
-        virtual void onCostumeChanged(const char *data) = 0;
+        virtual void onCostumeChanged(Costume *costume) = 0;
 
         virtual void onVisibleChanged(bool visible) = 0;
         virtual void onXChanged(double x) = 0;
