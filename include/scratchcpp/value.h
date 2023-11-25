@@ -799,7 +799,14 @@ class LIBSCRATCHCPP_EXPORT Value
                 if (ok)
                     *ok = true;
 
+                // Set locale to C to avoid conversion issues
+                std::string oldLocale = std::setlocale(LC_NUMERIC, nullptr);
+                std::setlocale(LC_NUMERIC, "C");
+
                 double ret = std::stod(*stringPtr);
+
+                // Restore old locale
+                std::setlocale(LC_NUMERIC, oldLocale.c_str());
 
                 if (customStr)
                     delete stringPtr;
