@@ -322,6 +322,13 @@ void Engine::runEventLoop()
     eventLoop();
 }
 
+void Engine::stopEventLoop()
+{
+    m_stopEventLoopMutex.lock();
+    m_stopEventLoop = true;
+    m_stopEventLoopMutex.unlock();
+}
+
 void Engine::setRedrawHandler(const std::function<void()> &handler)
 {
     m_redrawHandler = handler;
@@ -331,6 +338,7 @@ void Engine::eventLoop(bool untilProjectStops)
 {
     updateFrameDuration();
     m_newScripts.clear();
+    m_stopEventLoop = false;
 
     while (true) {
         auto frameStart = m_clock->currentSteadyTime();
@@ -368,6 +376,16 @@ void Engine::eventLoop(bool untilProjectStops)
                     break;
                 }
             }
+
+            // Stop the event loop if stopEventLoop() was called
+            m_stopEventLoopMutex.lock();
+
+            if (m_stopEventLoop) {
+                stop = true;
+                break;
+            }
+
+            m_stopEventLoopMutex.unlock();
 
             currentTime = m_clock->currentSteadyTime();
             elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - frameStart);

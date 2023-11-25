@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <memory>
 #include <chrono>
+#include <mutex>
 
 #include "blocksectioncontainer.h"
 
@@ -37,8 +38,10 @@ class Engine : public IEngine
         void stopTarget(Target *target, VirtualMachine *exceptScript) override;
         void initClone(libscratchcpp::Sprite *clone) override;
         void deinitClone(libscratchcpp::Sprite *clone) override;
+
         void run() override;
         void runEventLoop() override;
+        void stopEventLoop() override;
 
         void setRedrawHandler(const std::function<void()> &handler) override;
 
@@ -183,6 +186,8 @@ class Engine : public IEngine
         bool m_running = false;
         bool m_redrawRequested = false;
         std::function<void()> m_redrawHandler = nullptr;
+        bool m_stopEventLoop = false;
+        std::mutex m_stopEventLoopMutex;
 };
 
 } // namespace libscratchcpp
