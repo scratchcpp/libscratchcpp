@@ -322,6 +322,11 @@ void Engine::runEventLoop()
     eventLoop();
 }
 
+void Engine::setRedrawHandler(const std::function<void()> &handler)
+{
+    m_redrawHandler = handler;
+}
+
 void Engine::eventLoop(bool untilProjectStops)
 {
     updateFrameDuration();
@@ -374,7 +379,8 @@ void Engine::eventLoop(bool untilProjectStops)
             break;
 
         // Redraw
-        // TODO: Redraw here
+        if (m_redrawHandler)
+            m_redrawHandler();
 
         // If the timeout hasn't been reached yet (redraw was requested), sleep
         if (!timeout)
