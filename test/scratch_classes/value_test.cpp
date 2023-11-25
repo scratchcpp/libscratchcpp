@@ -136,6 +136,24 @@ TEST(ValueTest, StdStringConstructor)
     }
 
     {
+        std::string oldLocale = std::setlocale(LC_NUMERIC, nullptr);
+        std::setlocale(LC_NUMERIC, "sk_SK.UTF-8");
+
+        Value v(std::string("532.15"));
+
+        std::setlocale(LC_NUMERIC, oldLocale.c_str());
+
+        ASSERT_EQ(v.toString(), "532.15");
+        ASSERT_EQ(v.type(), Value::Type::Double);
+        ASSERT_FALSE(v.isInfinity());
+        ASSERT_FALSE(v.isNegativeInfinity());
+        ASSERT_FALSE(v.isNaN());
+        ASSERT_TRUE(v.isNumber());
+        ASSERT_FALSE(v.isBool());
+        ASSERT_FALSE(v.isString());
+    }
+
+    {
         Value v(std::string("1 2 3"));
         ASSERT_EQ(v.toString(), "1 2 3");
         ASSERT_EQ(v.type(), Value::Type::String);
