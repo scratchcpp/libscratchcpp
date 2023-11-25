@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <unordered_map>
+#include <functional>
 
 #include "global.h"
 
@@ -89,6 +90,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
          * \note This should be called from another thread in GUI project players to keep the UI responsive.
          */
         virtual void runEventLoop() = 0;
+
+        /*! Sets the function which is called on every frame. */
+        virtual void setRedrawHandler(const std::function<void()> &handler) = 0;
 
         /*! Returns true if the project is currently running. */
         virtual bool isRunning() const = 0;

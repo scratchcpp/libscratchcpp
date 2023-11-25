@@ -40,6 +40,8 @@ class Engine : public IEngine
         void run() override;
         void runEventLoop() override;
 
+        void setRedrawHandler(const std::function<void()> &handler) override;
+
         bool isRunning() const override;
 
         double fps() const override;
@@ -180,6 +182,7 @@ class Engine : public IEngine
 
         bool m_running = false;
         bool m_redrawRequested = false;
+        std::function<void()> m_redrawHandler = nullptr;
 };
 
 } // namespace libscratchcpp

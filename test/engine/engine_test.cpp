@@ -19,6 +19,12 @@ using ::testing::Return;
 
 // NOTE: resolveIds() and compile() are tested in load_project_test
 
+class RedrawMock
+{
+    public:
+        MOCK_METHOD(void, redraw, ());
+};
+
 TEST(EngineTest, Clock)
 {
     Engine engine;
@@ -98,6 +104,9 @@ TEST(EngineTest, FpsProject)
     p.run();
 
     engine->setFps(10);
+    RedrawMock redrawMock;
+    auto handler = std::bind(&RedrawMock::redraw, &redrawMock);
+    engine->setRedrawHandler(std::function<void()>(handler));
     std::chrono::steady_clock::time_point time5(std::chrono::milliseconds(100));
     std::chrono::steady_clock::time_point time6(std::chrono::milliseconds(115));
     std::chrono::steady_clock::time_point time7(std::chrono::milliseconds(200));
@@ -113,6 +122,7 @@ TEST(EngineTest, FpsProject)
         .WillOnce(Return(time8));
     EXPECT_CALL(clock, sleep(std::chrono::milliseconds(100)));
     EXPECT_CALL(clock, sleep(std::chrono::milliseconds(15)));
+    EXPECT_CALL(redrawMock, redraw()).Times(4);
     p.run();
 
     engine->setTurboModeEnabled(true);

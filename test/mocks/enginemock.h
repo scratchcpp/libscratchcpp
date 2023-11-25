@@ -26,6 +26,8 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, run, (), (override));
         MOCK_METHOD(void, runEventLoop, (), (override));
 
+        MOCK_METHOD(void, setRedrawHandler, (const std::function<void()> &), (override));
+
         MOCK_METHOD(bool, isRunning, (), (const, override));
 
         MOCK_METHOD(double, fps, (), (const, override));
