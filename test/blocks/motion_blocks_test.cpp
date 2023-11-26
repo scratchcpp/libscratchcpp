@@ -140,6 +140,11 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
     // Fields
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "STYLE", MotionBlocks::STYLE));
 
+    // Field values
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "left-right", MotionBlocks::LeftRight));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "don't rotate", MotionBlocks::DoNotRotate));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "all around", MotionBlocks::AllAround));
+
     m_section->registerBlocks(&m_engineMock);
 }
 
