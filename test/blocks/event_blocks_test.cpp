@@ -138,21 +138,21 @@ TEST_F(EventBlocksTest, BroadcastImpl)
     static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
     static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT };
     static BlockFunc functions[] = { &EventBlocks::broadcast, &EventBlocks::broadcastByIndex };
-    static Value constValues[] = { "test", 0 };
+    static Value constValues[] = { "test", 2 };
 
     VirtualMachine vm(nullptr, &m_engineMock, nullptr);
     vm.setFunctions(functions);
     vm.setConstValues(constValues);
 
-    EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(0));
-    EXPECT_CALL(m_engineMock, broadcast(0, &vm, false)).Times(1);
+    EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(1));
+    EXPECT_CALL(m_engineMock, broadcast(1, &vm, false)).Times(1);
 
     vm.setBytecode(bytecode1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
 
-    EXPECT_CALL(m_engineMock, broadcast(0, &vm, false)).Times(1);
+    EXPECT_CALL(m_engineMock, broadcast(2, &vm, false)).Times(1);
 
     vm.setBytecode(bytecode2);
     vm.run();
@@ -199,28 +199,62 @@ TEST_F(EventBlocksTest, BroadcastAndWait)
 TEST_F(EventBlocksTest, BroadcastAndWaitImpl)
 {
     static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT };
-    static BlockFunc functions[] = { &EventBlocks::broadcastAndWait, &EventBlocks::broadcastByIndexAndWait };
-    static Value constValues[] = { "test", 0 };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 3, vm::OP_HALT };
+    static BlockFunc functions[] = { &EventBlocks::broadcastAndWait, &EventBlocks::checkBroadcast, &EventBlocks::broadcastByIndexAndWait, &EventBlocks::checkBroadcastByIndex };
+    static Value constValues[] = { "test", 3 };
 
     VirtualMachine vm(nullptr, &m_engineMock, nullptr);
     vm.setFunctions(functions);
     vm.setConstValues(constValues);
 
-    EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(0));
-    EXPECT_CALL(m_engineMock, broadcast(0, &vm, true)).Times(1);
+    EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(1));
+    EXPECT_CALL(m_engineMock, broadcast(1, &vm, true)).Times(1);
 
     vm.setBytecode(bytecode1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
 
-    EXPECT_CALL(m_engineMock, broadcast(0, &vm, true)).Times(1);
+    EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(2));
+    EXPECT_CALL(m_engineMock, broadcastRunning(2, &vm)).WillOnce(Return(true));
 
     vm.setBytecode(bytecode2);
     vm.run();
 
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.atEnd(), false);
+
+    EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(2));
+    EXPECT_CALL(m_engineMock, broadcastRunning(2, &vm)).WillOnce(Return(false));
+
+    vm.run();
+
     ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm.atEnd(), true);
+
+    EXPECT_CALL(m_engineMock, broadcast(3, &vm, true)).Times(1);
+
+    vm.setBytecode(bytecode3);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    EXPECT_CALL(m_engineMock, broadcastRunning(3, &vm)).WillOnce(Return(true));
+
+    vm.setBytecode(bytecode4);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.atEnd(), false);
+
+    EXPECT_CALL(m_engineMock, broadcastRunning(3, &vm)).WillOnce(Return(false));
+
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm.atEnd(), true);
 }
 
 TEST_F(EventBlocksTest, WhenBroadcastReceived)
