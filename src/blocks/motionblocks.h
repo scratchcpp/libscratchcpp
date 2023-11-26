@@ -40,8 +40,8 @@ class MotionBlocks : public IBlockSection
         enum FieldValues
         {
             LeftRight,
-            AllAround,
-            DoNotRotate
+            DoNotRotate,
+            AllAround
         };
 
         std::string name() const override;

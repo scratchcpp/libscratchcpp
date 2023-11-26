@@ -59,6 +59,11 @@ void MotionBlocks::registerBlocks(IEngine *engine)
 
     // Fields
     engine->addField(this, "STYLE", STYLE);
+
+    // Field values
+    engine->addFieldValue(this, "left-right", LeftRight);
+    engine->addFieldValue(this, "don't rotate", DoNotRotate);
+    engine->addFieldValue(this, "all around", AllAround);
 }
 
 void MotionBlocks::compileMoveSteps(Compiler *compiler)
