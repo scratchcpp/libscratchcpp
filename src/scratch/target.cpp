@@ -206,7 +206,7 @@ int Target::costumeIndex() const
 }
 
 /*! Sets the index of the current costume. */
-void Target::setCostumeIndex(int newCostumeIndex)
+virtual void Target::setCostumeIndex(int newCostumeIndex)
 {
     if (newCostumeIndex >= 0 && newCostumeIndex < costumes().size())
         impl->costumeIndex = newCostumeIndex;
