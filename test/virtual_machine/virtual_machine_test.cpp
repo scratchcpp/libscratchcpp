@@ -254,15 +254,32 @@ TEST(VirtualMachineTest, OP_FOREVER_LOOP)
 TEST(VirtualMachineTest, OP_REPEAT_LOOP)
 {
     static unsigned int bytecode[] = { OP_START, OP_CONST, 0, OP_REPEAT_LOOP, OP_CONST, 1, OP_PRINT, OP_LOOP_END, OP_HALT };
-    static Value constValues[] = { 3, "test" };
+    static Value constValues1[] = { 3, "test" };
+    static Value constValues2[] = { 4.5, "test" };
+    static Value constValues3[] = { 4.2, "test" };
 
     EngineMock engineMock;
     VirtualMachine vm(nullptr, &engineMock, nullptr);
     vm.setBytecode(bytecode);
-    vm.setConstValues(constValues);
+    vm.setConstValues(constValues1);
     testing::internal::CaptureStdout();
     vm.run();
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\ntest\ntest\n");
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    // For #317
+    vm.setConstValues(constValues2);
+    testing::internal::CaptureStdout();
+    vm.reset();
+    vm.run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\ntest\ntest\ntest\ntest\n");
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    vm.setConstValues(constValues3);
+    testing::internal::CaptureStdout();
+    vm.reset();
+    vm.run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\ntest\ntest\ntest\n");
     ASSERT_EQ(vm.registerCount(), 0);
 }
 

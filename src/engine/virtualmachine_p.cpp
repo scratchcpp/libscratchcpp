@@ -260,7 +260,7 @@ do_forever_loop:
     DISPATCH();
 
 do_repeat_loop:
-    loopCount = READ_LAST_REG()->toLong();
+    loopCount = std::round(READ_LAST_REG()->toDouble());
     FREE_REGS(1);
     if (loopCount <= 0) {
         loopEnd = pos;
