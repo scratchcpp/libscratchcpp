@@ -4,6 +4,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/block.h>
+#include <scratchcpp/comment.h>
 #include <scratchcpp/iengine.h>
 
 #include "target_p.h"
@@ -197,6 +198,60 @@ std::vector<std::shared_ptr<Block>> Target::greenFlagBlocks() const
     }
 
     return ret;
+}
+
+/*! Returns the list of comments in the code area. */
+const std::vector<std::shared_ptr<Comment>> &Target::comments() const
+{
+    if (Target *source = dataSource())
+        return source->comments();
+
+    return impl->comments;
+}
+
+/*! Adds a comment and returns its index. */
+int Target::addComment(std::shared_ptr<Comment> comment)
+{
+    if (Target *source = dataSource())
+        return source->addComment(comment);
+
+    auto it = std::find(impl->comments.begin(), impl->comments.end(), comment);
+
+    if (it != impl->comments.end())
+        return it - impl->comments.begin();
+
+    impl->comments.push_back(comment);
+    return impl->comments.size() - 1;
+}
+
+/*! Returns the comment at index. */
+std::shared_ptr<Comment> Target::commentAt(int index) const
+{
+    if (Target *source = dataSource())
+        return source->commentAt(index);
+
+    if (index < 0 || index >= impl->comments.size())
+        return nullptr;
+
+    return impl->comments[index];
+}
+
+/*! Returns the index of the comment with the given ID. */
+int Target::findComment(const std::string &id) const
+{
+    if (Target *source = dataSource())
+        return source->findComment(id);
+
+    int i = 0;
+
+    for (auto comment : impl->comments) {
+        if (comment->id() == id)
+            return i;
+
+        i++;
+    }
+
+    return -1;
 }
 
 /*! Returns the index of the current costume. */

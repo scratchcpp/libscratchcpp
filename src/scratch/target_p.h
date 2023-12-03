@@ -15,6 +15,7 @@ class IEngine;
 class Variable;
 class List;
 class Block;
+class Comment;
 
 struct TargetPrivate
 {
@@ -26,6 +27,7 @@ struct TargetPrivate
         std::vector<std::shared_ptr<Variable>> variables;
         std::vector<std::shared_ptr<List>> lists;
         std::vector<std::shared_ptr<Block>> blocks;
+        std::vector<std::shared_ptr<Comment>> comments;
         int costumeIndex = -1;
         std::vector<std::shared_ptr<Costume>> costumes;
         std::vector<std::shared_ptr<Sound>> sounds;
