@@ -11,6 +11,7 @@
 #include <scratchcpp/sound.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/inputvalue.h>
+#include <scratchcpp/comment.h>
 
 #include "../common.h"
 
@@ -39,7 +40,7 @@ TEST(LoadProjectTest, EmptyProject)
         ASSERT_EQ(stage->lists().size(), 0);
         ASSERT_EQ(stage->blocks().size(), 0);
         ASSERT_EQ(stage->costumes().size(), 1);
-        // TODO: Add comments
+        ASSERT_TRUE(stage->comments().empty());
         ASSERT_EQ(stage->costumeIndex(), 0);
         ASSERT_EQ(stage->sounds().size(), 0);
         ASSERT_EQ(stage->layerOrder(), 0);
@@ -82,8 +83,21 @@ TEST(LoadProjectTest, LoadTestProject)
 
         // Stage
         Stage *stage = engine->stage();
+        ASSERT_EQ(stage->comments().size(), 1);
         ASSERT_EQ(stage->variables().size(), 2);
         ASSERT_EQ(stage->lists().size(), 1);
+
+        // Stage: comments
+        auto comment = stage->commentAt(0);
+        ASSERT_EQ(comment->id(), "y");
+        ASSERT_EQ(comment->blockId(), "");
+        ASSERT_EQ(comment->block(), nullptr);
+        ASSERT_EQ(comment->x(), 202.96296296296296);
+        ASSERT_EQ(comment->y(), 293.3333333333335);
+        ASSERT_EQ(comment->width(), 124.4444580078125);
+        ASSERT_EQ(comment->height(), 114.0740966796875);
+        ASSERT_EQ(comment->minimized(), false);
+        ASSERT_EQ(comment->text(), "TEST");
 
         // Stage: variables
         ASSERT_VAR(stage, "var1");
@@ -104,6 +118,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(sprite1->lists().size(), 1);
         ASSERT_EQ(sprite1->blocks().size(), 18);
         ASSERT_EQ(sprite1->costumes().size(), 2);
+        ASSERT_EQ(sprite1->comments().size(), 1);
         ASSERT_EQ(sprite1->costumeIndex(), 1);
         ASSERT_EQ(sprite1->sounds().size(), 1);
         ASSERT_TRUE(sprite1->visible());
@@ -114,6 +129,18 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_FALSE(sprite1->draggable());
         ASSERT_EQ(sprite1->rotationStyleStr(), "all around");
         ASSERT_EQ(sprite1->rotationStyle(), Sprite::RotationStyle::AllAround);
+
+        // Sprite1: comments
+        comment = sprite1->commentAt(0);
+        ASSERT_EQ(comment->id(), "z");
+        ASSERT_EQ(comment->blockId(), "");
+        ASSERT_EQ(comment->block(), nullptr);
+        ASSERT_EQ(comment->x(), 509.6296296296298);
+        ASSERT_EQ(comment->y(), 386.66666666666674);
+        ASSERT_EQ(comment->width(), 171.85186767578125);
+        ASSERT_EQ(comment->height(), 97.77777099609375);
+        ASSERT_EQ(comment->minimized(), false);
+        ASSERT_EQ(comment->text(), "Hello, world!");
 
         // Sprite1: sounds
         auto sound = sprite1->soundAt(0);
@@ -160,6 +187,8 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(GET_FIELD(block, "VARIABLE")->valuePtr(), GET_VAR(stage, "var1"));
         ASSERT_INPUT(block, "VALUE");
         ASSERT_EQ(GET_INPUT(block, "VALUE")->primaryValue()->value().toInt(), 0);
+        ASSERT_TRUE(block->commentId().empty());
+        ASSERT_EQ(block->comment(), nullptr);
         block = block->next();
         ASSERT_TRUE(block);
 
@@ -184,6 +213,8 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(GET_INPUT(block, prototype->argumentIds()[0])->primaryValue()->value().toString(), "test");
         ASSERT_INPUT(block, prototype->argumentIds()[1]);
         ASSERT_TRUE(GET_INPUT(block, prototype->argumentIds()[1])->valueBlock());
+        ASSERT_TRUE(block->commentId().empty());
+        ASSERT_EQ(block->comment(), nullptr);
 
         ASSERT_FALSE(block->next());
 
@@ -234,6 +265,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(sprite2->lists().size(), 1);
         ASSERT_EQ(sprite2->blocks().size(), 5);
         ASSERT_EQ(sprite2->costumes().size(), 3);
+        ASSERT_EQ(sprite2->comments().size(), 2);
         ASSERT_EQ(sprite2->sounds().size(), 1);
         ASSERT_FALSE(sprite2->visible());
         ASSERT_EQ(std::round(sprite2->x()), 143);
@@ -243,6 +275,32 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_TRUE(sprite2->draggable());
         ASSERT_EQ(sprite2->rotationStyleStr(), "don't rotate");
         ASSERT_EQ(sprite2->rotationStyle(), Sprite::RotationStyle::DoNotRotate);
+
+        // Balloon1: comments
+        comment = sprite2->commentAt(0);
+        ASSERT_EQ(comment->id(), "A");
+        ASSERT_EQ(comment->blockId(), "");
+        ASSERT_EQ(comment->block(), nullptr);
+        ASSERT_EQ(comment->x(), 459.25925925925924);
+        ASSERT_EQ(comment->y(), -45.925925925925924);
+        ASSERT_EQ(comment->width(), 200);
+        ASSERT_EQ(comment->height(), 200);
+        ASSERT_EQ(comment->minimized(), true);
+        ASSERT_EQ(comment->text(), "test");
+
+        comment = sprite2->commentAt(1);
+        auto commentBlock = sprite2->blockAt(sprite2->findBlock("e"));
+        ASSERT_EQ(comment->id(), "w");
+        ASSERT_EQ(comment->blockId(), "e");
+        ASSERT_EQ(comment->block(), commentBlock);
+        ASSERT_EQ(comment->x(), 247.3981475830078);
+        ASSERT_EQ(comment->y(), 208);
+        ASSERT_EQ(comment->width(), 189.62969970703125);
+        ASSERT_EQ(comment->height(), 93.33334350585938);
+        ASSERT_EQ(comment->minimized(), false);
+        ASSERT_EQ(comment->text(), "...");
+        ASSERT_EQ(commentBlock->commentId(), "w");
+        ASSERT_EQ(commentBlock->comment(), comment);
 
         // Balloon1: sounds
         sound = sprite2->soundAt(0);

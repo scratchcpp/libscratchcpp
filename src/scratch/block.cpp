@@ -3,6 +3,7 @@
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/comment.h>
 
 #include "block_p.h"
 
@@ -293,6 +294,36 @@ void Block::setShadow(bool newShadow)
 bool Block::topLevel() const
 {
     return (impl->parentId == "" && !impl->parent);
+}
+
+/*! Returns the comment which is attached to this block. */
+std::shared_ptr<Comment> Block::comment() const
+{
+    return impl->comment;
+}
+
+/*! Returns the ID of the comment which is attached to this block. */
+std::string Block::commentId() const
+{
+    return impl->commentId;
+}
+
+/*! Sets the comment which is attached to this block. */
+void Block::setComment(std::shared_ptr<Comment> comment)
+{
+    impl->comment = comment;
+
+    if (comment)
+        impl->commentId = comment->id();
+    else
+        impl->commentId = "";
+}
+
+/*! Sets the ID of the comment which is attached to this block. */
+void Block::setCommentId(const std::string &commentId)
+{
+    impl->commentId = commentId;
+    impl->comment = nullptr;
 }
 
 /*! Sets the Engine. */

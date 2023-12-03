@@ -12,6 +12,7 @@ class IEngine;
 class Target;
 class Input;
 class Field;
+class Comment;
 class InputValue;
 class BlockPrivate;
 
@@ -54,6 +55,11 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
         void setShadow(bool newShadow);
 
         bool topLevel() const;
+
+        std::shared_ptr<Comment> comment() const;
+        std::string commentId() const;
+        void setComment(std::shared_ptr<Comment> comment);
+        void setCommentId(const std::string &commentId);
 
         void setEngine(IEngine *newEngine);
         IEngine *engine() const;

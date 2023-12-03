@@ -48,4 +48,7 @@ target_sources(scratchcpp
     keyevent.cpp
     keyevent_p.cpp
     keyevent_p.h
+    comment.cpp
+    comment_p.cpp
+    comment_p.h
 )

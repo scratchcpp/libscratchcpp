@@ -2,6 +2,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/block.h>
+#include <scratchcpp/comment.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/sound.h>
 #include <enginemock.h>
@@ -181,6 +182,89 @@ TEST(TargetTest, Blocks)
     ASSERT_EQ(source.findBlock("e"), 4);
 
     ASSERT_EQ(source.greenFlagBlocks(), std::vector<std::shared_ptr<Block>>({ b1, b4 }));
+}
+
+TEST(TargetTest, Comments)
+{
+    auto c1 = std::make_shared<Comment>("a");
+    auto c2 = std::make_shared<Comment>("b");
+    auto c3 = std::make_shared<Comment>("c");
+    auto c4 = std::make_shared<Comment>("d");
+
+    TargetMock target;
+    EXPECT_CALL(target, dataSource()).Times(17).WillRepeatedly(Return(nullptr));
+
+    ASSERT_EQ(target.addComment(c1), 0);
+    ASSERT_EQ(target.addComment(c2), 1);
+    ASSERT_EQ(target.addComment(c3), 2);
+    ASSERT_EQ(target.addComment(c4), 3);
+    ASSERT_EQ(target.addComment(c2), 1); // add existing block
+
+    ASSERT_EQ(target.comments(), std::vector<std::shared_ptr<Comment>>({ c1, c2, c3, c4 }));
+    ASSERT_EQ(target.commentAt(0), c1);
+    ASSERT_EQ(target.commentAt(1), c2);
+    ASSERT_EQ(target.commentAt(2), c3);
+    ASSERT_EQ(target.commentAt(3), c4);
+    ASSERT_EQ(target.commentAt(4), nullptr);
+    ASSERT_EQ(target.commentAt(-1), nullptr);
+
+    ASSERT_EQ(target.findComment("e"), -1);
+    ASSERT_EQ(target.findComment("a"), 0);
+    ASSERT_EQ(target.findComment("b"), 1);
+    ASSERT_EQ(target.findComment("c"), 2);
+    ASSERT_EQ(target.findComment("d"), 3);
+
+    // Test with custom data source
+    Target source;
+
+    EXPECT_CALL(target, dataSource()).WillOnce(Return(&source));
+
+    ASSERT_TRUE(target.comments().empty());
+
+    TargetMock target2;
+    EXPECT_CALL(target2, dataSource()).Times(17).WillRepeatedly(Return(&source));
+
+    ASSERT_EQ(target2.addComment(c1), 0);
+    ASSERT_EQ(target2.addComment(c2), 1);
+    ASSERT_EQ(target2.addComment(c3), 2);
+    ASSERT_EQ(target2.addComment(c4), 3);
+    ASSERT_EQ(target2.addComment(c2), 1); // add existing block
+
+    ASSERT_EQ(target2.commentAt(0), c1);
+    ASSERT_EQ(target2.commentAt(1), c2);
+    ASSERT_EQ(target2.commentAt(2), c3);
+    ASSERT_EQ(target2.commentAt(3), c4);
+    ASSERT_EQ(target2.commentAt(4), nullptr);
+    ASSERT_EQ(target2.commentAt(-1), nullptr);
+
+    ASSERT_EQ(target2.findComment("e"), -1);
+    ASSERT_EQ(target2.findComment("a"), 0);
+    ASSERT_EQ(target2.findComment("b"), 1);
+    ASSERT_EQ(target2.findComment("c"), 2);
+    ASSERT_EQ(target2.findComment("d"), 3);
+
+    ASSERT_EQ(target2.comments(), source.comments());
+
+    auto c5 = std::make_shared<Comment>("e");
+    ASSERT_EQ(source.addComment(c5), 4);
+
+    EXPECT_CALL(target2, dataSource()).WillOnce(Return(&source));
+    ASSERT_EQ(target2.comments(), source.comments());
+
+    ASSERT_EQ(source.commentAt(0), c1);
+    ASSERT_EQ(source.commentAt(1), c2);
+    ASSERT_EQ(source.commentAt(2), c3);
+    ASSERT_EQ(source.commentAt(3), c4);
+    ASSERT_EQ(source.commentAt(4), c5);
+    ASSERT_EQ(source.commentAt(5), nullptr);
+    ASSERT_EQ(source.commentAt(-1), nullptr);
+
+    ASSERT_EQ(source.findComment("f"), -1);
+    ASSERT_EQ(source.findComment("a"), 0);
+    ASSERT_EQ(source.findComment("b"), 1);
+    ASSERT_EQ(source.findComment("c"), 2);
+    ASSERT_EQ(source.findComment("d"), 3);
+    ASSERT_EQ(source.findComment("e"), 4);
 }
 
 TEST(TargetTest, CostumeIndex)

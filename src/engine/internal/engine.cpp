@@ -13,6 +13,7 @@
 #include <scratchcpp/block.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/comment.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/keyevent.h>
 #include <cassert>
@@ -84,6 +85,14 @@ void Engine::resolveIds()
 
             block->updateInputMap();
             block->updateFieldMap();
+
+            auto comment = getComment(block->commentId());
+            block->setComment(comment);
+
+            if (comment) {
+                comment->setBlock(block);
+                assert(comment->blockId() == block->id());
+            }
         }
     }
 }
@@ -1074,6 +1083,21 @@ std::shared_ptr<Broadcast> Engine::getBroadcast(const std::string &id)
     int index = findBroadcastById(id);
     if (index != -1)
         return broadcastAt(index);
+
+    return nullptr;
+}
+
+// Returns the comment with the given ID.
+std::shared_ptr<Comment> Engine::getComment(const std::string &id)
+{
+    if (id.empty())
+        return nullptr;
+
+    for (auto target : m_targets) {
+        int index = target->findComment(id);
+        if (index != -1)
+            return target->commentAt(index);
+    }
 
     return nullptr;
 }

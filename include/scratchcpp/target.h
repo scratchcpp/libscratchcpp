@@ -14,6 +14,7 @@ class IEngine;
 class Variable;
 class List;
 class Block;
+class Comment;
 class Costume;
 class Sound;
 class TargetPrivate;
@@ -50,6 +51,11 @@ class LIBSCRATCHCPP_EXPORT Target
         int findBlock(const std::string &id) const;
         std::vector<std::shared_ptr<Block>> greenFlagBlocks() const;
 
+        const std::vector<std::shared_ptr<Comment>> &comments() const;
+        int addComment(std::shared_ptr<Comment> comment);
+        std::shared_ptr<Comment> commentAt(int index) const;
+        int findComment(const std::string &id) const;
+
         int costumeIndex() const;
         void setCostumeIndex(int newCostumeIndex);
 
@@ -75,7 +81,7 @@ class LIBSCRATCHCPP_EXPORT Target
         void setEngine(IEngine *engine);
 
     protected:
-        /*! Override this method to set a custom data source for blocks and assets. */
+        /*! Override this method to set a custom data source for blocks, assets, comments, etc. */
         virtual Target *dataSource() const { return nullptr; }
 
     private:

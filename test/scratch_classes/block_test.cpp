@@ -1,6 +1,7 @@
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/comment.h>
 #include <scratchcpp/target.h>
 #include <scratchcpp/compiler.h>
 #include <enginemock.h>
@@ -191,6 +192,30 @@ TEST_F(BlockTest, TopLevel)
 
     block.setParent(nullptr);
     ASSERT_TRUE(block.topLevel());
+}
+
+TEST_F(BlockTest, Comment)
+{
+    Block block("", "");
+    ASSERT_EQ(block.comment(), nullptr);
+    ASSERT_TRUE(block.commentId().empty());
+
+    block.setCommentId("hello");
+    ASSERT_EQ(block.comment(), nullptr);
+    ASSERT_EQ(block.commentId(), "hello");
+
+    auto comment = std::make_shared<Comment>("abc");
+    block.setComment(comment);
+    ASSERT_EQ(block.comment(), comment);
+    ASSERT_EQ(block.commentId(), "abc");
+
+    block.setCommentId("def");
+    ASSERT_EQ(block.comment(), nullptr);
+    ASSERT_EQ(block.commentId(), "def");
+
+    block.setComment(nullptr);
+    ASSERT_EQ(block.comment(), nullptr);
+    ASSERT_EQ(block.commentId(), "");
 }
 
 TEST_F(BlockTest, Engine)

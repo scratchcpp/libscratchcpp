@@ -203,3 +203,17 @@ target_link_libraries(
 )
 
 gtest_discover_tests(keyevent_test)
+
+# comment_test
+add_executable(
+  comment_test
+  comment_test.cpp
+)
+
+target_link_libraries(
+  comment_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(comment_test)

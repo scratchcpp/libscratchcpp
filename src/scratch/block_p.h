@@ -14,6 +14,7 @@ class IEngine;
 class Target;
 class Input;
 class Field;
+class Comment;
 
 struct BlockPrivate
 {
@@ -31,6 +32,8 @@ struct BlockPrivate
         std::vector<std::shared_ptr<Field>> fields;
         std::unordered_map<int, Field *> fieldMap;
         bool shadow = false;
+        std::string commentId;
+        std::shared_ptr<Comment> comment = nullptr;
         IEngine *engine = nullptr;
         Target *target = nullptr;
         BlockPrototype mutationPrototype;
