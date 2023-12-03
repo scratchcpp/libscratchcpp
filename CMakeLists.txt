@@ -52,6 +52,7 @@ target_sources(scratchcpp
     include/scratchcpp/iimageformatfactory.h
     include/scratchcpp/rect.h
     include/scratchcpp/igraphicseffect.h
+    include/scratchcpp/comment.h
 )
 
 add_library(zip SHARED
