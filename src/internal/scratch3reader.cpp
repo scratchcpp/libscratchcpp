@@ -8,6 +8,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/costume.h>
+#include <scratchcpp/comment.h>
 #include <scratchcpp/sound.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/sprite.h>
@@ -188,10 +189,37 @@ bool Scratch3Reader::load()
                 READER_STEP(step, "target -> block -> shadow");
                 block->setShadow(blockInfo["shadow"]);
 
+                // comment
+                READER_STEP(step, "target -> block -> comment");
+                if (!blockInfo["comment"].is_null())
+                    block->setCommentId(blockInfo["comment"]);
+
                 target->addBlock(block);
             }
 
-            // TODO: Add comments
+            // comments
+            READER_STEP(step, "target -> comments");
+            auto comments = jsonTarget["comments"];
+            for (json::iterator it = comments.begin(); it != comments.end(); ++it) {
+                auto commentInfo = it.value();
+                READER_STEP(step, "target -> comment -> { id, x, y }");
+                auto comment = std::make_shared<Comment>(it.key(), jsonToValue(commentInfo["x"]).toDouble(), jsonToValue(commentInfo["y"]).toDouble());
+                READER_STEP(step, "target -> comment -> blockId");
+
+                if (!commentInfo["blockId"].is_null())
+                    comment->setBlockId(commentInfo["blockId"]);
+
+                READER_STEP(step, "target -> comment -> width");
+                comment->setWidth(jsonToValue(commentInfo["width"]).toDouble());
+                READER_STEP(step, "target -> comment -> height");
+                comment->setHeight(jsonToValue(commentInfo["height"]).toDouble());
+                READER_STEP(step, "target -> comment -> minimized");
+                comment->setMinimized(commentInfo["minimized"]);
+                READER_STEP(step, "target -> comment -> text");
+                comment->setText(commentInfo["text"]);
+
+                target->addComment(comment);
+            }
 
             // costumes
             READER_STEP(step, "target -> costumes");
