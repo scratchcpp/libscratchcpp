@@ -6,4 +6,6 @@ target_sources(scratchcpp
     reader_common.h
     zipreader.cpp
     zipreader.h
+    projecturl.cpp
+    projecturl.h
 )
