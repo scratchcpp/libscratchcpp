@@ -71,6 +71,14 @@ target_link_libraries(scratchcpp PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(scratchcpp PRIVATE utf8cpp)
 target_link_libraries(scratchcpp PRIVATE zip)
 
+if (LIBSCRATCHCPP_NETWORK_SUPPORT)
+    include(FetchContent)
+    FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/libcpr/cpr.git
+	                     GIT_TAG 3b15fa82ea74739b574d705fea44959b58142eb8) # 1.10.5
+    FetchContent_MakeAvailable(cpr)
+    target_link_libraries(scratchcpp PRIVATE cpr::cpr)
+endif()
+
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_LIBRARY)
 
 if (LIBSCRATCHCPP_BUILD_UNIT_TESTS)
