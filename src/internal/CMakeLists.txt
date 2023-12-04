@@ -9,6 +9,7 @@ target_sources(scratchcpp
     projecturl.cpp
     projecturl.h
     idownloader.h
+    idownloaderfactory.h
 )
 
 if (LIBSCRATCHCPP_NETWORK_SUPPORT)
@@ -16,5 +17,7 @@ if (LIBSCRATCHCPP_NETWORK_SUPPORT)
       PRIVATE
         downloader.cpp
 	downloader.h
+	downloaderfactory.cpp
+	downloaderfactory.h
     )
 endif()
