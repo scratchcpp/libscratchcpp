@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(ZIP_SRC thirdparty/zip/src)
 
 option(LIBSCRATCHCPP_BUILD_UNIT_TESTS "Build unit tests" ON)
+option(LIBSCRATCHCPP_NETWORK_SUPPORT "Support for downloading projects" ON)
 
 find_package(nlohmann_json 3.9.1 REQUIRED)
 find_package(utf8cpp REQUIRED)
