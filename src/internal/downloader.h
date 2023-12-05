@@ -19,6 +19,7 @@ class Downloader : public IDownloader
         void cancel() override;
         void wait() override;
 
+        bool isCancelled() const override;
         const std::string &text() const override;
 
     private:

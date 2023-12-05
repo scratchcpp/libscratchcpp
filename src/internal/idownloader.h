@@ -16,6 +16,7 @@ class IDownloader
         virtual void cancel() = 0;
         virtual void wait() = 0;
 
+        virtual bool isCancelled() const = 0;
         virtual const std::string &text() const = 0;
 };
 

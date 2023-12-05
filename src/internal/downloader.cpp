@@ -33,6 +33,14 @@ void Downloader::wait()
     }
 }
 
+bool Downloader::isCancelled() const
+{
+    if (!m_asyncResponse)
+        return false;
+
+    return m_asyncResponse->IsCancelled();
+}
+
 const std::string &Downloader::text() const
 {
     return m_response.text;
