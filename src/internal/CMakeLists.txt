@@ -11,6 +11,9 @@ target_sources(scratchcpp
     idownloader.h
     idownloaderfactory.h
     iprojectdownloader.h
+    iprojectdownloaderfactory.h
+    projectdownloaderfactory.cpp
+    projectdownloaderfactory.h
 )
 
 if (LIBSCRATCHCPP_NETWORK_SUPPORT)

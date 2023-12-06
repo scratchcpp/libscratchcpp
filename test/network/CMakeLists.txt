@@ -43,4 +43,19 @@ if (LIBSCRATCHCPP_NETWORK_SUPPORT)
     )
 
     gtest_discover_tests(projectdownloader_test)
+
+    # projectdownloaderfactory_test
+    add_executable(
+      projectdownloaderfactory_test
+      projectdownloaderfactory_test.cpp
+    )
+
+    target_link_libraries(
+      projectdownloaderfactory_test
+      GTest::gtest_main
+      scratchcpp
+      cpr::cpr
+    )
+
+    gtest_discover_tests(projectdownloaderfactory_test)
 endif()

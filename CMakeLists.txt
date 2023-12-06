@@ -77,6 +77,7 @@ if (LIBSCRATCHCPP_NETWORK_SUPPORT)
 	                     GIT_TAG 3b15fa82ea74739b574d705fea44959b58142eb8) # 1.10.5
     FetchContent_MakeAvailable(cpr)
     target_link_libraries(scratchcpp PRIVATE cpr::cpr)
+    target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_NETWORK_SUPPORT)
 endif()
 
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_LIBRARY)
