@@ -26,4 +26,10 @@ if (LIBSCRATCHCPP_NETWORK_SUPPORT)
 	projectdownloader.cpp
 	projectdownloader.h
     )
+else()
+    target_sources(scratchcpp
+      PRIVATE
+        projectdownloaderstub.cpp
+	projectdownloaderstub.h
+)
 endif()
