@@ -15,16 +15,32 @@ gtest_discover_tests(projecturl_test)
 if (LIBSCRATCHCPP_NETWORK_SUPPORT)
     # downloaderfactory_test
     add_executable(
-	downloaderfactory_test
-	downloaderfactory_test.cpp
+      downloaderfactory_test
+      downloaderfactory_test.cpp
     )
 
     target_link_libraries(
-	downloaderfactory_test
-	GTest::gtest_main
-	scratchcpp
-	cpr::cpr
+      downloaderfactory_test
+      GTest::gtest_main
+      scratchcpp
+      cpr::cpr
     )
 
     gtest_discover_tests(downloaderfactory_test)
+
+    # projectdownloader_test
+    add_executable(
+      projectdownloader_test
+      projectdownloader_test.cpp
+    )
+
+    target_link_libraries(
+      projectdownloader_test
+      GTest::gtest_main
+      GTest::gmock_main
+      scratchcpp
+      scratchcpp_mocks
+    )
+
+    gtest_discover_tests(projectdownloader_test)
 endif()
