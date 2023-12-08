@@ -1,44 +1,32 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <iostream>
+
 #include "downloader.h"
 
 using namespace libscratchcpp;
 
 Downloader::Downloader()
 {
+    m_session.SetTimeout(cpr::Timeout(5000));
 }
 
-void Downloader::startDownload(const std::string &url)
+bool Downloader::download(const std::string &url)
 {
-    if (m_asyncResponse)
-        cancel();
+    m_session.SetUrl(cpr::Url(url));
+    m_response = m_session.Get();
 
-    m_asyncResponse = std::make_unique<cpr::AsyncResponse>(cpr::GetAsync(cpr::Url(url)));
-}
+    if (m_response.status_code != 200) {
+        std::cerr << "download error: " << m_response.error.message << std::endl;
 
-void Downloader::cancel()
-{
-    if (m_asyncResponse) {
-        if (!m_asyncResponse->IsCancelled())
-            (void)(m_asyncResponse->Cancel());
-        m_asyncResponse.reset();
-    }
-}
+        if (m_response.status_code != 0)
+            std::cerr << "code: " << m_response.status_code << std::endl;
 
-void Downloader::wait()
-{
-    if (m_asyncResponse) {
-        m_asyncResponse->wait();
-        m_response = m_asyncResponse->get();
-    }
-}
-
-bool Downloader::isCancelled() const
-{
-    if (!m_asyncResponse)
+        std::cerr << "URL: " << url << std::endl;
         return false;
+    }
 
-    return m_asyncResponse->IsCancelled();
+    return true;
 }
 
 const std::string &Downloader::text() const

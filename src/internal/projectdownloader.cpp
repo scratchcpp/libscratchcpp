@@ -3,6 +3,7 @@
 #include <iostream>
 #include <thread>
 #include <nlohmann/json.hpp>
+#include <cpr/cpr.h>
 
 #include "projectdownloader.h"
 #include "downloaderfactory.h"
@@ -19,6 +20,8 @@ static const std::string ASSET_SUFFIX = "/get";
     m_cancelMutex.lock();                                                                                                                                                                              \
     if (m_cancel) {                                                                                                                                                                                    \
         m_downloadedAssetCount = 0;                                                                                                                                                                    \
+        m_cancelMutex.unlock();                                                                                                                                                                        \
+        std::cout << "Download aborted!" << std::endl;                                                                                                                                                 \
         return false;                                                                                                                                                                                  \
     }                                                                                                                                                                                                  \
     m_cancelMutex.unlock()
@@ -41,16 +44,12 @@ bool ProjectDownloader::downloadJson(const std::string &projectId)
 
     // Get project token
     std::cout << "Fetching project info of " << projectId << std::endl;
-    m_tokenDownloader->startDownload(PROJECT_META_PREFIX + projectId);
-    m_tokenDownloader->wait();
+    bool ret = m_tokenDownloader->download(PROJECT_META_PREFIX + projectId);
 
-    if (m_tokenDownloader->text().empty()) {
+    if (!ret) {
         std::cerr << "Could not fetch project info of " << projectId << std::endl;
         return false;
     }
-
-    if (m_tokenDownloader->isCancelled())
-        return false;
 
     CHECK_CANCEL();
 
@@ -76,16 +75,12 @@ bool ProjectDownloader::downloadJson(const std::string &projectId)
 
     // Download project JSON
     std::cout << "Downloading project JSON of " << projectId << std::endl;
-    m_jsonDownloader->startDownload(PROJECT_JSON_PREFIX + projectId + "?token=" + token);
-    m_jsonDownloader->wait();
+    ret = m_jsonDownloader->download(PROJECT_JSON_PREFIX + projectId + "?token=" + token);
 
-    if (m_jsonDownloader->text().empty()) {
+    if (!ret) {
         std::cerr << "Failed to download project JSON of " << projectId << std::endl;
         return false;
     }
-
-    if (m_jsonDownloader->isCancelled())
-        return false;
 
     CHECK_CANCEL();
 
@@ -100,16 +95,16 @@ bool ProjectDownloader::downloadAssets(const std::vector<std::string> &assetIds)
 
     auto count = assetIds.size();
     unsigned int threadCount = std::thread::hardware_concurrency();
-    unsigned int times; // how many times we should download assets simultaneously (in "groups")
+
+    // Thread count: number of assets / 5, limited to maximum number of threads
+    threadCount = std::max(1u, std::min(threadCount, static_cast<unsigned int>(std::ceil(count / 5.0))));
+
     m_assets.clear();
+    m_assets.reserve(count);
     m_downloadedAssetCount = 0;
 
-    // Calculate number of "groups"
-    if (threadCount == 0) {
-        times = count;
-        threadCount = 1;
-    } else
-        times = std::ceil(count / static_cast<double>(threadCount));
+    for (unsigned int i = 0; i < count; i++)
+        m_assets.push_back(std::string());
 
     std::cout << "Downloading " << count << " asset(s)";
 
@@ -125,33 +120,55 @@ bool ProjectDownloader::downloadAssets(const std::vector<std::string> &assetIds)
         downloaders.push_back(m_downloaderFactory->create());
 
     // Download assets
-    for (unsigned int i = 0; i < times; i++) {
-        unsigned int currentCount = std::min(threadCount, static_cast<unsigned int>(count - i * threadCount));
+    auto f = [this, &downloaders, &assetIds, count, threadCount](unsigned int thread) {
+        auto downloader = downloaders[thread];
+        unsigned int n = std::ceil(count / static_cast<double>(threadCount));
 
-        for (unsigned int j = 0; j < currentCount; j++)
-            downloaders[j]->startDownload(ASSET_PREFIX + assetIds[i * threadCount + j] + ASSET_SUFFIX);
+        for (unsigned int i = 0; i < n; i++) {
+            unsigned int index = thread * n + i;
 
-        for (unsigned int j = 0; j < currentCount; j++) {
-            downloaders[j]->wait();
-            assert(m_assets.size() == i * threadCount + j);
+            if (index < count) {
+                m_cancelMutex.lock();
 
-            if (downloaders[j]->isCancelled())
-                return false;
+                if (m_cancel)
+                    return;
 
-            CHECK_CANCEL();
+                m_cancelMutex.unlock();
 
-            m_assets.push_back(downloaders[j]->text());
-            m_downloadedAssetCount++;
+                bool ret = downloader->download(ASSET_PREFIX + assetIds[index] + ASSET_SUFFIX);
+
+                if (!ret) {
+                    std::cerr << "Failed to download asset: " << assetIds[index] << std::endl;
+                    m_cancelMutex.lock();
+                    m_cancel = true;
+                    m_cancelMutex.unlock();
+                    return;
+                }
+
+                m_assetsMutex.lock();
+                m_assets[index] = downloader->text();
+                m_downloadedAssetCount++;
+                std::cout << "Downloaded assets: " << m_downloadedAssetCount << " of " << count << std::endl;
+                m_assetsMutex.unlock();
+            }
         }
-    }
+    };
+
+    std::vector<std::thread> threads;
+
+    for (unsigned int i = 0; i < threadCount; i++)
+        threads.emplace_back(std::thread(f, i));
+
+    for (unsigned int i = 0; i < threadCount; i++)
+        threads[i].join();
+
+    CHECK_CANCEL();
 
     return true;
 }
 
 void ProjectDownloader::cancel()
 {
-    m_tokenDownloader->cancel();
-    m_jsonDownloader->cancel();
     m_cancelMutex.lock();
     m_cancel = true;
     m_cancelMutex.unlock();

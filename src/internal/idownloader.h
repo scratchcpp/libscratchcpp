@@ -12,11 +12,7 @@ class IDownloader
     public:
         virtual ~IDownloader() { }
 
-        virtual void startDownload(const std::string &url) = 0;
-        virtual void cancel() = 0;
-        virtual void wait() = 0;
-
-        virtual bool isCancelled() const = 0;
+        virtual bool download(const std::string &url) = 0;
         virtual const std::string &text() const = 0;
 };
 

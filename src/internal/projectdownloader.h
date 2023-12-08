@@ -32,6 +32,7 @@ class ProjectDownloader : public IProjectDownloader
         std::shared_ptr<IDownloader> m_tokenDownloader;
         std::shared_ptr<IDownloader> m_jsonDownloader;
         std::vector<std::string> m_assets;
+        std::mutex m_assetsMutex;
         std::atomic<unsigned int> m_downloadedAssetCount = 0;
         bool m_cancel = false;
         std::mutex m_cancelMutex;

@@ -15,15 +15,11 @@ class Downloader : public IDownloader
     public:
         Downloader();
 
-        void startDownload(const std::string &url) override;
-        void cancel() override;
-        void wait() override;
-
-        bool isCancelled() const override;
+        bool download(const std::string &url) override;
         const std::string &text() const override;
 
     private:
-        std::unique_ptr<cpr::AsyncResponse> m_asyncResponse;
+        cpr::Session m_session;
         cpr::Response m_response;
 };
 
