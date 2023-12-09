@@ -149,6 +149,13 @@ bool ProjectDownloader::downloadAssets(const std::vector<std::string> &assetIds)
                 m_assets[index] = downloader->text();
                 m_downloadedAssetCount++;
                 std::cout << "Downloaded assets: " << m_downloadedAssetCount << " of " << count << std::endl;
+
+                m_downloadProgressCallbackMutex.lock();
+
+                if (m_downloadProgressCallback)
+                    m_downloadProgressCallback(m_downloadedAssetCount, count);
+
+                m_downloadProgressCallbackMutex.unlock();
                 m_assetsMutex.unlock();
             }
         }
@@ -173,6 +180,13 @@ void ProjectDownloader::cancel()
     m_cancel = true;
     m_cancelMutex.unlock();
     m_downloadedAssetCount = 0;
+}
+
+void ProjectDownloader::setDownloadProgressCallback(const std::function<void(unsigned int, unsigned int)> &f)
+{
+    m_downloadProgressCallbackMutex.lock();
+    m_downloadProgressCallback = f;
+    m_downloadProgressCallbackMutex.unlock();
 }
 
 const std::string &ProjectDownloader::json() const
