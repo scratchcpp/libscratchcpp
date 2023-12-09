@@ -143,7 +143,7 @@ libscratchcpp::Project p("https://scratch.mit.edu/projects/XXXXXX");
 - [x] Custom FPS in the default event loop (`libscratchcpp::Engine::run()`)
 - [ ] Scratch 2.0 to 3.0 converter (help needed)
 - [ ] Scratch 1.4 and below to 3.0 converter (help needed)
-- [ ] API for comments
+- [x] API for comments
 - [x] API for loading projects from URL
 
 See the [open issues](https://github.com/scratchcpp/libscratchcpp/issues) for a full list of proposed features (and known issues).
