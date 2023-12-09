@@ -22,6 +22,10 @@ void ProjectDownloaderStub::cancel()
 {
 }
 
+void ProjectDownloaderStub::setDownloadProgressCallback(const std::function<void(unsigned int, unsigned int)> &)
+{
+}
+
 const std::string &ProjectDownloaderStub::json() const
 {
     static const std::string empty;

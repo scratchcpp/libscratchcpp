@@ -16,6 +16,8 @@ class ProjectDownloaderStub : public IProjectDownloader
         bool downloadAssets(const std::vector<std::string> &) override;
         void cancel() override;
 
+        virtual void setDownloadProgressCallback(const std::function<void(unsigned int, unsigned int)> &) override;
+
         const std::string &json() const override;
         const std::vector<std::string> &assets() const override;
         unsigned int downloadedAssetCount() const override;
