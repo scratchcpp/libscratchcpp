@@ -235,9 +235,11 @@ bool Scratch3Reader::load()
                 READER_STEP(step, "target -> costume -> rotationCenterY");
                 costume->setRotationCenterY(jsonCostume["rotationCenterY"]);
 
-                void *data;
-                unsigned int size = m_zipReader->readFile(costume->fileName(), &data);
-                costume->setData(size, data);
+                if (m_zipReader && !costume->data()) {
+                    void *data;
+                    unsigned int size = m_zipReader->readFile(costume->fileName(), &data);
+                    costume->setData(size, data);
+                }
 
                 target->addCostume(costume);
             }
@@ -349,6 +351,18 @@ bool Scratch3Reader::load()
     return true;
 }
 
+bool Scratch3Reader::loadData(const std::string &data)
+{
+    try {
+        m_json = json::parse(data);
+    } catch (std::exception &e) {
+        printErr("invalid JSON file", e.what());
+        return false;
+    }
+
+    return load();
+}
+
 bool Scratch3Reader::isValid()
 {
     if (m_json == "")
@@ -391,6 +405,9 @@ std::vector<std::string> Scratch3Reader::extensions()
 
 void Scratch3Reader::read()
 {
+    if (fileName().empty())
+        return;
+
     // Read project.json
     m_zipReader = std::make_unique<ZipReader>(fileName());
     if (m_zipReader->open()) {

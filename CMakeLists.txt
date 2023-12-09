@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(ZIP_SRC thirdparty/zip/src)
 
 option(LIBSCRATCHCPP_BUILD_UNIT_TESTS "Build unit tests" ON)
+option(LIBSCRATCHCPP_NETWORK_SUPPORT "Support for downloading projects" ON)
 
 find_package(nlohmann_json 3.9.1 REQUIRED)
 find_package(utf8cpp REQUIRED)
@@ -69,6 +70,15 @@ include(build/FindGD.cmake)
 target_link_libraries(scratchcpp PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(scratchcpp PRIVATE utf8cpp)
 target_link_libraries(scratchcpp PRIVATE zip)
+
+if (LIBSCRATCHCPP_NETWORK_SUPPORT)
+    include(FetchContent)
+    FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/libcpr/cpr.git
+	                     GIT_TAG 3b15fa82ea74739b574d705fea44959b58142eb8) # 1.10.5
+    FetchContent_MakeAvailable(cpr)
+    target_link_libraries(scratchcpp PRIVATE cpr::cpr)
+    target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_NETWORK_SUPPORT)
+endif()
 
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_LIBRARY)
 

@@ -1,10 +1,14 @@
 #include <scratchcpp/project.h>
 #include <enginemock.h>
+#include <projectdownloaderfactorymock.h>
+#include <projectdownloadermock.h>
 
 #include "project_p.h"
 #include "../common.h"
 
 using namespace libscratchcpp;
+
+using ::testing::Return;
 
 class ProjectTest : public testing::Test
 {
@@ -135,6 +139,10 @@ TEST_F(ProjectTest, FileName)
     Project p;
     p.setFileName("test.sb3");
     ASSERT_EQ(p.fileName(), "test.sb3");
+    ASSERT_EQ(p.scratchVersion(), ScratchVersion::Invalid);
+
+    p.setFileName("default_project.sb3");
+    ASSERT_EQ(p.scratchVersion(), ScratchVersion::Scratch3);
 }
 
 TEST_F(ProjectTest, ScratchVersion)
@@ -142,4 +150,20 @@ TEST_F(ProjectTest, ScratchVersion)
     Project p;
     p.setScratchVersion(ScratchVersion::Scratch3);
     ASSERT_EQ(p.scratchVersion(), ScratchVersion::Scratch3);
+}
+
+TEST(LoadProjectTest, DownloadProgressCallback)
+{
+    ProjectDownloaderFactoryMock factory;
+    auto downloader = std::make_shared<ProjectDownloaderMock>();
+    ProjectPrivate::downloaderFactory = &factory;
+
+    EXPECT_CALL(factory, create()).WillOnce(Return(downloader));
+    ProjectPrivate p;
+    ProjectPrivate::downloaderFactory = nullptr;
+
+    auto lambda = [](unsigned int, unsigned int) {};
+    // TODO: Check the function parameter, if possible (std::function doesn't have operator== for this)
+    EXPECT_CALL(*downloader, setDownloadProgressCallback);
+    p.setDownloadProgressCallback(lambda);
 }

@@ -6,4 +6,30 @@ target_sources(scratchcpp
     reader_common.h
     zipreader.cpp
     zipreader.h
+    projecturl.cpp
+    projecturl.h
+    idownloader.h
+    idownloaderfactory.h
+    iprojectdownloader.h
+    iprojectdownloaderfactory.h
+    projectdownloaderfactory.cpp
+    projectdownloaderfactory.h
 )
+
+if (LIBSCRATCHCPP_NETWORK_SUPPORT)
+    target_sources(scratchcpp
+      PRIVATE
+        downloader.cpp
+	downloader.h
+	downloaderfactory.cpp
+	downloaderfactory.h
+	projectdownloader.cpp
+	projectdownloader.h
+    )
+else()
+    target_sources(scratchcpp
+      PRIVATE
+        projectdownloaderstub.cpp
+	projectdownloaderstub.h
+)
+endif()

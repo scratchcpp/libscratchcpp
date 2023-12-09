@@ -108,6 +108,11 @@ int main(int argc, char **argv) {
 }
 ```
 
+Loading projects from [scratch.mit.edu](https://scratch.mit.edu/) is supported too:
+```cpp
+libscratchcpp::Project p("https://scratch.mit.edu/projects/XXXXXX");
+```
+
 <!-- TODO: Add link to documentation -->
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -139,7 +144,7 @@ int main(int argc, char **argv) {
 - [ ] Scratch 2.0 to 3.0 converter (help needed)
 - [ ] Scratch 1.4 and below to 3.0 converter (help needed)
 - [ ] API for comments
-- [ ] API for loading projects from URL
+- [x] API for loading projects from URL
 
 See the [open issues](https://github.com/scratchcpp/libscratchcpp/issues) for a full list of proposed features (and known issues).
 

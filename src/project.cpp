@@ -65,16 +65,17 @@ void Project::runEventLoop()
     impl->runEventLoop();
 }
 
-/*! Returns the project file name. */
+/*! Returns the project file name or URL. */
 const std::string &Project::fileName() const
 {
     return impl->fileName;
 }
 
-/*! Sets the project file name. */
+/*! Sets the project file name or URL. */
 void Project::setFileName(const std::string &newFileName)
 {
     impl->fileName = newFileName;
+    impl->detectScratchVersion();
 }
 
 /*! Returns the version of Scratch used for the project. */
@@ -96,4 +97,13 @@ void Project::setScratchVersion(const ScratchVersion &version)
 std::shared_ptr<IEngine> Project::engine() const
 {
     return impl->engine;
+}
+
+/*!
+ * Sets the function which will be called when the asset download progress changes.
+ * \note The first parameter is the number of downloaded assets and the latter is the number of all assets to download.
+ */
+void Project::setDownloadProgressCallback(const std::function<void(unsigned int, unsigned int)> &&f)
+{
+    impl->setDownloadProgressCallback(f);
 }

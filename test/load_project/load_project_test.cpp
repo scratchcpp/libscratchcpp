@@ -12,13 +12,19 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/comment.h>
+#include <projectdownloaderfactorymock.h>
+#include <projectdownloadermock.h>
 
+#include "project_p.h"
 #include "../common.h"
 
 using namespace libscratchcpp;
 
 static const std::vector<ScratchVersion> scratchVersions = { ScratchVersion::Scratch3 };
 static const std::vector<std::string> fileExtensions = { ".sb3" };
+
+using ::testing::Return;
+using ::testing::ReturnRef;
 
 TEST(LoadProjectTest, EmptyProject)
 {
@@ -66,6 +72,120 @@ TEST(LoadProjectTest, EmptyProject)
 
         i++;
     }
+}
+
+TEST(LoadProjectTest, DownloadDefaultProject)
+{
+    ProjectDownloaderFactoryMock factory;
+    auto downloader = std::make_shared<ProjectDownloaderMock>();
+    ProjectPrivate::downloaderFactory = &factory;
+
+    EXPECT_CALL(factory, create()).WillOnce(Return(downloader));
+    ProjectPrivate p;
+    p.fileName = "https://scratch.mit.edu/projects/ABCDEFGH"; // NOTE: This is a fake URL
+    ProjectPrivate::downloaderFactory = nullptr;
+
+    std::string data = readFileStr("default_project.json");
+    static const std::vector<std::string> assets = {
+        "cd21514d0531fdffb22204e0ec5ed84a.svg",
+        "83a9787d4cb6f3b7632b4ddfebf74367.wav",
+        "b7853f557e4426412e64bb3da6531a99.svg",
+        "e6ddc55a6ddd9cc9d84fe0b4c21e016f.svg",
+        "83c36d806dc92327b9e7049a565c6bff.wav"
+    };
+    static const std::vector<std::string> assetData = { "a", "b", "c", "d", "e" };
+
+    EXPECT_CALL(*downloader, downloadJson("ABCDEFGH")).WillOnce(Return(true));
+    EXPECT_CALL(*downloader, json()).WillOnce(ReturnRef(data));
+    p.detectScratchVersion();
+    ASSERT_EQ(p.scratchVersion, ScratchVersion::Scratch3);
+
+    EXPECT_CALL(*downloader, downloadJson("ABCDEFGH")).WillOnce(Return(true));
+    EXPECT_CALL(*downloader, json()).WillOnce(ReturnRef(data));
+    EXPECT_CALL(*downloader, downloadAssets(assets)).WillOnce(Return(true));
+    EXPECT_CALL(*downloader, assets()).WillOnce(ReturnRef(assetData));
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine;
+    ASSERT_EQ(engine->targets().size(), 2);
+    ASSERT_EQ(engine->extensions().size(), 0);
+    ASSERT_EQ(engine->broadcasts().size(), 0);
+
+    std::shared_ptr<Stage> stage = std::reinterpret_pointer_cast<Stage>(engine->targets().at(0));
+    ASSERT_EQ(stage->name(), "Stage");
+    ASSERT_EQ(stage->costumes().size(), 1);
+    ASSERT_EQ(stage->sounds().size(), 1);
+
+    auto backdrop = stage->costumeAt(0);
+    ASSERT_EQ(backdrop->name(), "backdrop1");
+    ASSERT_TRUE(backdrop->data());
+    ASSERT_EQ(memcmp(backdrop->data(), "a", backdrop->dataSize()), 0);
+
+    auto sound = stage->soundAt(0);
+    ASSERT_EQ(sound->name(), "pop");
+    ASSERT_TRUE(sound->data());
+    ASSERT_EQ(memcmp(sound->data(), "b", sound->dataSize()), 0);
+
+    std::shared_ptr<Sprite> sprite = std::reinterpret_pointer_cast<Sprite>(engine->targets().at(1));
+    ASSERT_EQ(sprite->name(), "Sprite1");
+    ASSERT_EQ(sprite->costumes().size(), 2);
+    ASSERT_EQ(sprite->sounds().size(), 1);
+
+    auto costume = sprite->costumeAt(1);
+    ASSERT_EQ(costume->name(), "costume2");
+    ASSERT_TRUE(costume->data());
+    ASSERT_EQ(memcmp(costume->data(), "d", costume->dataSize()), 0);
+
+    sound = sprite->soundAt(0);
+    ASSERT_EQ(sound->name(), "Meow");
+    ASSERT_TRUE(sound->data());
+    ASSERT_EQ(memcmp(sound->data(), "e", sound->dataSize()), 0);
+}
+
+TEST(LoadProjectTest, DownloadDefaultProjectFailure)
+{
+    ProjectDownloaderFactoryMock factory;
+    auto downloader = std::make_shared<ProjectDownloaderMock>();
+    ProjectPrivate::downloaderFactory = &factory;
+
+    EXPECT_CALL(factory, create()).WillOnce(Return(downloader));
+    ProjectPrivate p;
+    p.fileName = "https://scratch.mit.edu/projects/ABCDEFGH"; // NOTE: This is a fake URL
+    ProjectPrivate::downloaderFactory = nullptr;
+
+    std::string data = readFileStr("default_project.json");
+    static const std::vector<std::string> assets = {
+        "cd21514d0531fdffb22204e0ec5ed84a.svg",
+        "83a9787d4cb6f3b7632b4ddfebf74367.wav",
+        "b7853f557e4426412e64bb3da6531a99.svg",
+        "e6ddc55a6ddd9cc9d84fe0b4c21e016f.svg",
+        "83c36d806dc92327b9e7049a565c6bff.wav"
+    };
+    static const std::vector<std::string> assetData = { "a", "b", "c", "d", "e" };
+
+    EXPECT_CALL(*downloader, downloadJson("ABCDEFGH")).WillOnce(Return(false));
+    p.detectScratchVersion();
+    ASSERT_EQ(p.scratchVersion, ScratchVersion::Invalid);
+    ASSERT_FALSE(p.load());
+
+    EXPECT_CALL(*downloader, downloadJson("ABCDEFGH")).WillOnce(Return(true));
+    EXPECT_CALL(*downloader, json()).WillOnce(ReturnRef(data));
+    p.detectScratchVersion();
+    ASSERT_EQ(p.scratchVersion, ScratchVersion::Scratch3);
+
+    EXPECT_CALL(*downloader, downloadJson("ABCDEFGH")).WillOnce(Return(false));
+    ASSERT_FALSE(p.load());
+
+    EXPECT_CALL(*downloader, downloadJson("ABCDEFGH")).WillOnce(Return(true));
+    EXPECT_CALL(*downloader, json()).WillOnce(ReturnRef(data));
+    EXPECT_CALL(*downloader, downloadAssets(assets)).WillOnce(Return(false));
+    ASSERT_FALSE(p.load());
+
+    EXPECT_CALL(*downloader, downloadJson("ABCDEFGH")).WillOnce(Return(true));
+    EXPECT_CALL(*downloader, json()).WillOnce(ReturnRef(data));
+    EXPECT_CALL(*downloader, downloadAssets(assets)).WillOnce(Return(true));
+    EXPECT_CALL(*downloader, assets()).WillOnce(ReturnRef(assetData));
+    ASSERT_TRUE(p.load());
 }
 
 TEST(LoadProjectTest, LoadTestProject)
