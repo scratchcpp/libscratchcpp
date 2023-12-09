@@ -3,6 +3,7 @@
 #pragma once
 
 #include <memory>
+#include <functional>
 #include "spimpl.h"
 
 #include "global.h"
@@ -14,7 +15,11 @@ class ProjectPrivate;
 
 class IEngine;
 
-/*! \brief The Project class provides API for reading and running Scratch projects. */
+/*!
+ * \brief The Project class provides API for reading and running Scratch projects.
+ *
+ * \note Loading online projects is supported if the LIBSCRATCHCPP_NETWORK_SUPPORT option is set, just use setFileName("some URL")
+ */
 class LIBSCRATCHCPP_EXPORT Project
 {
     public:
@@ -36,6 +41,8 @@ class LIBSCRATCHCPP_EXPORT Project
         void setScratchVersion(const ScratchVersion &version);
 
         std::shared_ptr<IEngine> engine() const;
+
+        void setDownloadProgressCallback(const std::function<void(unsigned int, unsigned int)> &&f);
 
     private:
         spimpl::unique_impl_ptr<ProjectPrivate> impl;
