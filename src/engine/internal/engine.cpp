@@ -109,7 +109,7 @@ void Engine::compile()
         Compiler compiler(this, target.get());
         auto blocks = target->blocks();
         for (auto block : blocks) {
-            if (block->topLevel()) {
+            if (block->topLevel() && !block->shadow()) {
                 auto section = blockSection(block->opcode());
                 if (section) {
                     auto script = std::make_shared<Script>(target.get(), this);
