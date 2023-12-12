@@ -1602,3 +1602,17 @@ TEST(VirtualMachineTest, Reset)
     vm.reset();
     ASSERT_FALSE(vm.atEnd());
 }
+
+TEST(VirtualMachineTest, NoCrashWhenRepeatingZeroTimes)
+{
+    // Regtest for #362
+    static unsigned int bytecode[] = { OP_START, OP_CONST, 0, OP_REPEAT_LOOP, OP_UNTIL_LOOP, OP_NULL, OP_BEGIN_UNTIL_LOOP, OP_LOOP_END, OP_LOOP_END, OP_HALT };
+    static Value constValues[] = { 0 };
+
+    EngineMock engineMock;
+    VirtualMachine vm(nullptr, &engineMock, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setConstValues(constValues);
+    vm.run();
+    ASSERT_EQ(vm.registerCount(), 0);
+}
