@@ -238,8 +238,15 @@ do_checkpoint:
 
 do_if:
     if (!READ_LAST_REG()->toBool()) {
-        while (*pos != OP_ELSE && *pos != OP_ENDIF)
+        unsigned int ifCounter = 1;
+        while ((*pos != OP_ELSE && *pos != OP_ENDIF) || (ifCounter > 0)) {
             pos += instruction_arg_count[*pos++];
+
+            if (*pos == OP_IF)
+                ifCounter++;
+            else if ((*pos == OP_ELSE) || (*pos == OP_ENDIF))
+                ifCounter--;
+        }
     }
     FREE_REGS(1);
     DISPATCH();
