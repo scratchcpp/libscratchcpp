@@ -117,7 +117,6 @@ void Engine::compile()
 
                     compiler.compile(block);
 
-                    script->setFunctions(m_functions);
                     script->setBytecode(compiler.bytecode());
                     if (block->opcode() == "procedures_definition") {
                         auto b = block->inputAt(block->findInput("custom_block"))->valueBlock();
@@ -135,6 +134,7 @@ void Engine::compile()
 
         for (auto block : blocks) {
             if (m_scripts.count(block) == 1) {
+                m_scripts[block]->setFunctions(m_functions);
                 m_scripts[block]->setProcedures(procedureBytecodes);
                 m_scripts[block]->setConstValues(compiler.constValues());
                 m_scripts[block]->setVariables(compiler.variables());
