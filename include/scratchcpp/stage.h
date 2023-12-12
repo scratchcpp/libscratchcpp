@@ -30,7 +30,7 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
 
         bool isStage() const override;
 
-        void setCostumeIndex(int newCostumeIndex);
+        void setCostumeIndex(int newCostumeIndex) override;
 
         int tempo() const;
         void setTempo(int newTempo);

@@ -57,7 +57,7 @@ class LIBSCRATCHCPP_EXPORT Target
         int findComment(const std::string &id) const;
 
         int costumeIndex() const;
-        void setCostumeIndex(int newCostumeIndex);
+        virtual void setCostumeIndex(int newCostumeIndex);
 
         std::shared_ptr<Costume> currentCostume() const;
 
