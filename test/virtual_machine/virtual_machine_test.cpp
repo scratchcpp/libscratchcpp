@@ -1609,10 +1609,20 @@ TEST(VirtualMachineTest, NoCrashWhenRepeatingZeroTimes)
     static unsigned int bytecode[] = { OP_START, OP_CONST, 0, OP_REPEAT_LOOP, OP_UNTIL_LOOP, OP_NULL, OP_BEGIN_UNTIL_LOOP, OP_LOOP_END, OP_LOOP_END, OP_HALT };
     static Value constValues[] = { 0 };
 
-    EngineMock engineMock;
-    VirtualMachine vm(nullptr, &engineMock, nullptr);
+    VirtualMachine vm(nullptr, nullptr, nullptr);
     vm.setBytecode(bytecode);
     vm.setConstValues(constValues);
+    vm.run();
+    ASSERT_EQ(vm.registerCount(), 0);
+}
+
+TEST(VirtualMachineTest, NoCrashInNestedIfStatementsWithLoop)
+{
+    // Regtest for #364
+    static unsigned int bytecode[] = { OP_START, OP_NULL, OP_IF, OP_NULL, OP_REPEAT_LOOP, OP_NULL, OP_IF, OP_ENDIF, OP_LOOP_END, OP_ENDIF, OP_HALT };
+
+    VirtualMachine vm(nullptr, nullptr, nullptr);
+    vm.setBytecode(bytecode);
     vm.run();
     ASSERT_EQ(vm.registerCount(), 0);
 }
