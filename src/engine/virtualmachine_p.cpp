@@ -264,8 +264,15 @@ do_repeat_loop:
     FREE_REGS(1);
     if (loopCount <= 0) {
         loopEnd = pos;
-        while (*loopEnd != OP_LOOP_END)
+        unsigned int loopCounter = 1;
+        while ((*loopEnd != OP_LOOP_END) || (loopCounter > 0)) {
             loopEnd += instruction_arg_count[*loopEnd++];
+
+            if ((*loopEnd == OP_FOREVER_LOOP) || (*loopEnd == OP_REPEAT_LOOP) || (*loopEnd == OP_UNTIL_LOOP))
+                loopCounter++;
+            else if (*loopEnd == OP_LOOP_END)
+                loopCounter--;
+        }
         pos = loopEnd;
     } else {
         Loop l;
@@ -313,6 +320,7 @@ do_begin_until_loop:
     return pos;
 
 do_loop_end : {
+    assert(!loops.empty());
     Loop &l = loops.back();
     if (l.isRepeatLoop) {
         if ((l.index == -1) || (++l.index < l.max))
