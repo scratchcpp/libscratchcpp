@@ -104,7 +104,7 @@ void SpritePrivate::getFencedPosition(double x, double y, double *outX, double *
     getBoundingRect(&rect);
     double inset = std::floor(std::min(rect.width(), rect.height()) / 2);
 
-    double xRight = sprite->engine()->stageWidth() / 2;
+    double xRight = static_cast<double>(sprite->engine()->stageWidth()) / 2;
     double sx = xRight - std::min(FENCE_WIDTH, inset);
 
     if (rect.right() + dx < -sx) {
@@ -113,7 +113,7 @@ void SpritePrivate::getFencedPosition(double x, double y, double *outX, double *
         x = std::floor(this->x + (sx - rect.left()));
     }
 
-    double yTop = sprite->engine()->stageHeight() / 2;
+    double yTop = static_cast<double>(sprite->engine()->stageHeight()) / 2;
     double sy = yTop - std::min(FENCE_WIDTH, inset);
 
     if (rect.top() + dy < -sy) {
