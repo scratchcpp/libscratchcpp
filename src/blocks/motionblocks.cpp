@@ -653,8 +653,8 @@ unsigned int MotionBlocks::ifOnEdgeBounce(VirtualMachine *vm)
 
     // Measure distance to edges
     // Values are zero when the sprite is beyond
-    unsigned int stageWidth = engine->stageWidth();
-    unsigned int stageHeight = engine->stageHeight();
+    double stageWidth = engine->stageWidth();
+    double stageHeight = engine->stageHeight();
     double distLeft = std::max(0.0, (stageWidth / 2.0) + bounds.left());
     double distTop = std::max(0.0, (stageHeight / 2.0) - bounds.top());
     double distRight = std::max(0.0, (stageWidth / 2.0) - bounds.right());

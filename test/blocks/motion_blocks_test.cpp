@@ -4,12 +4,11 @@
 #include <scratchcpp/field.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/costume.h>
-#include <scratchcpp/scratchconfiguration.h>
+#include <scratchcpp/rect.h>
 #include <enginemock.h>
 #include <randomgeneratormock.h>
 #include <clockmock.h>
-#include <imageformatfactorymock.h>
-#include <imageformatmock.h>
+#include <spritehandlermock.h>
 
 #include "../common.h"
 #include "blocks/motionblocks.h"
@@ -1117,39 +1116,10 @@ TEST_F(MotionBlocksTest, IfOnEdgeBounceImpl)
     static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
     static BlockFunc functions[] = { &MotionBlocks::ifOnEdgeBounce };
 
-    auto imageFormatFactory = std::make_shared<ImageFormatFactoryMock>();
-    auto imageFormat = std::make_shared<ImageFormatMock>();
-
-    ScratchConfiguration::registerImageFormat("test", imageFormatFactory);
-    EXPECT_CALL(*imageFormatFactory, createInstance()).WillOnce(Return(imageFormat));
-    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(0));
-    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(0));
-    auto costume = std::make_shared<Costume>("costume1", "a", "test");
-
     Sprite sprite;
-    sprite.addCostume(costume);
-    sprite.setCostumeIndex(0);
-
-    static char data[5] = "abcd";
-    EXPECT_CALL(*imageFormat, setData(5, data));
-    EXPECT_CALL(*imageFormat, width()).WillOnce(Return(4));
-    EXPECT_CALL(*imageFormat, height()).WillOnce(Return(3));
-
-    EXPECT_CALL(*imageFormat, colorAt(0, 0, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
-    EXPECT_CALL(*imageFormat, colorAt(1, 0, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
-    EXPECT_CALL(*imageFormat, colorAt(2, 0, 1)).WillOnce(Return(rgba(0, 0, 0, 255)));
-    EXPECT_CALL(*imageFormat, colorAt(3, 0, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
-
-    EXPECT_CALL(*imageFormat, colorAt(0, 1, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
-    EXPECT_CALL(*imageFormat, colorAt(1, 1, 1)).WillOnce(Return(rgba(0, 0, 0, 255)));
-    EXPECT_CALL(*imageFormat, colorAt(2, 1, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
-    EXPECT_CALL(*imageFormat, colorAt(3, 1, 1)).WillOnce(Return(rgba(0, 0, 0, 255)));
-
-    EXPECT_CALL(*imageFormat, colorAt(0, 2, 1)).WillOnce(Return(rgba(0, 0, 0, 255)));
-    EXPECT_CALL(*imageFormat, colorAt(1, 2, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
-    EXPECT_CALL(*imageFormat, colorAt(2, 2, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
-    EXPECT_CALL(*imageFormat, colorAt(3, 2, 1)).WillOnce(Return(rgba(0, 0, 0, 0)));
-    costume->setData(5, data);
+    SpriteHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    sprite.setInterface(&handler);
 
     sprite.setEngine(&m_engineMock);
 
@@ -1157,14 +1127,16 @@ TEST_F(MotionBlocksTest, IfOnEdgeBounceImpl)
     vm.setBytecode(bytecode);
     vm.setFunctions(functions);
 
-    EXPECT_CALL(*imageFormat, width()).Times(9).WillRepeatedly(Return(4));
-    EXPECT_CALL(*imageFormat, height()).Times(9).WillRepeatedly(Return(3));
     EXPECT_CALL(m_engineMock, stageWidth()).Times(9).WillRepeatedly(Return(480));
     EXPECT_CALL(m_engineMock, stageHeight()).Times(9).WillRepeatedly(Return(360));
 
     // No edge
     EXPECT_CALL(m_engineMock, requestRedraw()).Times(3);
     EXPECT_CALL(m_engineMock, spriteFencingEnabled()).Times(2).WillRepeatedly(Return(false));
+    EXPECT_CALL(handler, onXChanged);
+    EXPECT_CALL(handler, onYChanged);
+    EXPECT_CALL(handler, onDirectionChanged);
+    EXPECT_CALL(handler, boundingRect()).WillOnce(Return(Rect(80, 80, 120, 40)));
     sprite.setX(100);
     sprite.setY(60);
     sprite.setDirection(-45);
@@ -1178,19 +1150,27 @@ TEST_F(MotionBlocksTest, IfOnEdgeBounceImpl)
     // Left edge
     EXPECT_CALL(m_engineMock, requestRedraw()).Times(5);
     EXPECT_CALL(m_engineMock, spriteFencingEnabled()).Times(4).WillRepeatedly(Return(false));
+    EXPECT_CALL(handler, onXChanged).Times(2);
+    EXPECT_CALL(handler, onYChanged).Times(2);
+    EXPECT_CALL(handler, onDirectionChanged);
+    EXPECT_CALL(handler, boundingRect()).Times(2).WillRepeatedly(Return(Rect(-260, 80, -220, 40)));
     sprite.setX(-240);
     sprite.setY(60);
     vm.reset();
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(std::round(sprite.x() * 100) / 100, -238.23);
+    ASSERT_EQ(std::round(sprite.x() * 100) / 100, -220);
     ASSERT_EQ(sprite.y(), 60);
     ASSERT_EQ(std::round(sprite.direction() * 100) / 100, 45);
 
     // Top edge
     EXPECT_CALL(m_engineMock, requestRedraw()).Times(6);
     EXPECT_CALL(m_engineMock, spriteFencingEnabled()).Times(4).WillRepeatedly(Return(false));
+    EXPECT_CALL(handler, onXChanged).Times(2);
+    EXPECT_CALL(handler, onYChanged).Times(2);
+    EXPECT_CALL(handler, onDirectionChanged).Times(2);
+    EXPECT_CALL(handler, boundingRect()).Times(2).WillRepeatedly(Return(Rect(80, 200, 120, 160)));
     sprite.setX(100);
     sprite.setY(180);
     sprite.setDirection(45);
@@ -1199,25 +1179,33 @@ TEST_F(MotionBlocksTest, IfOnEdgeBounceImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(sprite.x(), 100);
-    ASSERT_EQ(std::round(sprite.y() * 100) / 100, 178.23);
+    ASSERT_EQ(std::round(sprite.y() * 100) / 100, 160);
     ASSERT_EQ(sprite.direction(), 135);
 
     // Right edge
     EXPECT_CALL(m_engineMock, requestRedraw()).Times(5);
     EXPECT_CALL(m_engineMock, spriteFencingEnabled()).Times(4).WillRepeatedly(Return(false));
+    EXPECT_CALL(handler, onXChanged).Times(2);
+    EXPECT_CALL(handler, onYChanged).Times(2);
+    EXPECT_CALL(handler, onDirectionChanged);
+    EXPECT_CALL(handler, boundingRect()).Times(2).WillRepeatedly(Return(Rect(220, 80, 260, 40)));
     sprite.setX(240);
     sprite.setY(60);
     vm.reset();
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(std::round(sprite.x() * 100) / 100, 238.23);
+    ASSERT_EQ(std::round(sprite.x() * 100) / 100, 220);
     ASSERT_EQ(sprite.y(), 60);
     ASSERT_EQ(sprite.direction(), -135);
 
     // Bottom edge
     EXPECT_CALL(m_engineMock, requestRedraw()).Times(5);
     EXPECT_CALL(m_engineMock, spriteFencingEnabled()).Times(4).WillRepeatedly(Return(false));
+    EXPECT_CALL(handler, onXChanged).Times(2);
+    EXPECT_CALL(handler, onYChanged).Times(2);
+    EXPECT_CALL(handler, onDirectionChanged);
+    EXPECT_CALL(handler, boundingRect()).Times(2).WillRepeatedly(Return(Rect(-120, -160, -80, -200)));
     sprite.setX(-100);
     sprite.setY(-180);
     vm.reset();
@@ -1225,10 +1213,8 @@ TEST_F(MotionBlocksTest, IfOnEdgeBounceImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(sprite.x(), -100);
-    ASSERT_EQ(std::round(sprite.y() * 100) / 100, -178.23);
+    ASSERT_EQ(std::round(sprite.y() * 100) / 100, -160);
     ASSERT_EQ(std::round(sprite.direction() * 100) / 100, -45);
-
-    ScratchConfiguration::removeImageFormat("test");
 }
 
 TEST_F(MotionBlocksTest, SetRotationStyle)
