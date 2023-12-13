@@ -31,61 +31,6 @@ void SpritePrivate::removeClone(Sprite *clone)
     }
 }
 
-void SpritePrivate::getBoundingRect(Rect *out) const
-{
-    assert(out);
-    assert(sprite);
-    auto costume = sprite->currentCostume();
-
-    if (!costume) {
-        out->setLeft(x);
-        out->setTop(y);
-        out->setRight(x);
-        out->setBottom(y);
-        return;
-    }
-
-    double cosTheta = std::cos((90 - direction) * pi / 180);
-    double sinTheta = std::sin((90 - direction) * pi / 180);
-    double maxX = 0, maxY = 0, minX = 0, minY = 0;
-    bool firstPixel = true;
-    unsigned int width = costume->width();
-    unsigned int height = costume->height();
-    double rotationCenterX = width / 2.0 + costume->rotationCenterX();
-    double rotationCenterY = height / 2.0 + costume->rotationCenterY();
-    Rgb **bitmap = costume->bitmap();
-
-    for (unsigned int y = 0; y < height; y++) {
-        for (unsigned int x = 0; x < width; x++) {
-            if (bitmap[y][x] != rgba(0, 0, 0, 0)) {
-                double rotatedX = ((x - rotationCenterX) * cosTheta - (y - rotationCenterY) * sinTheta);
-                double rotatedY = ((x - rotationCenterX) * sinTheta + (y - rotationCenterY) * cosTheta);
-
-                if (firstPixel) {
-                    firstPixel = false;
-                    minX = maxX = rotatedX;
-                    minY = maxY = rotatedY;
-                } else {
-                    if (rotatedX < minX)
-                        minX = rotatedX;
-                    else if (rotatedX > maxX)
-                        maxX = rotatedX;
-
-                    if (rotatedY < minY)
-                        minY = rotatedY;
-                    else if (rotatedY > maxY)
-                        maxY = rotatedY;
-                }
-            }
-        }
-    }
-
-    out->setLeft(x + minX);
-    out->setTop(y + maxY);
-    out->setRight(x + maxX);
-    out->setBottom(y + minY);
-}
-
 void SpritePrivate::getFencedPosition(double x, double y, double *outX, double *outY) const
 {
     assert(outX);
@@ -101,7 +46,10 @@ void SpritePrivate::getFencedPosition(double x, double y, double *outX, double *
     double dx = x - this->x;
     double dy = y - this->y;
     Rect rect;
-    getBoundingRect(&rect);
+
+    if (iface)
+        rect = iface->boundingRect();
+
     double inset = std::floor(std::min(rect.width(), rect.height()) / 2);
 
     double xRight = static_cast<double>(sprite->engine()->stageWidth()) / 2;

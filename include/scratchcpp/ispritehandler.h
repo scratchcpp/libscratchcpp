@@ -40,6 +40,12 @@ class LIBSCRATCHCPP_EXPORT ISpriteHandler
 
         /*! Called when the rotation style changes. */
         virtual void onRotationStyleChanged(Sprite::RotationStyle rotationStyle) = 0;
+
+        /*!
+         * Used to get the bounding rectangle of the sprite.
+         * \note The rectangle must be relative to the stage, so make sure to use the sprite's coordinates.
+         */
+        virtual Rect boundingRect() const = 0;
 };
 
 } // namespace libscratchcpp

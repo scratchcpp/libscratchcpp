@@ -1,4 +1,5 @@
 #include <scratchcpp/costume.h>
+#include <scratchcpp/rect.h>
 #include <spritehandlermock.h>
 #include <enginemock.h>
 
@@ -59,6 +60,7 @@ TEST_F(ISpriteHandlerTest, Visible)
 TEST_F(ISpriteHandlerTest, X)
 {
     EXPECT_CALL(m_handler, onXChanged(189.46)).Times(1);
+    EXPECT_CALL(m_handler, boundingRect()).WillOnce(Return(Rect()));
     EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(m_engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(m_engine, stageHeight()).WillOnce(Return(360));
@@ -74,6 +76,7 @@ TEST_F(ISpriteHandlerTest, X)
 TEST_F(ISpriteHandlerTest, Y)
 {
     EXPECT_CALL(m_handler, onYChanged(-153.7)).Times(1);
+    EXPECT_CALL(m_handler, boundingRect()).WillOnce(Return(Rect()));
     EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(m_engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(m_engine, stageHeight()).WillOnce(Return(360));
@@ -125,4 +128,14 @@ TEST_F(ISpriteHandlerTest, Costume)
     EXPECT_CALL(m_handler, onCostumeChanged(costume2.get()));
     EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setCostumeIndex(1);
+}
+
+TEST_F(ISpriteHandlerTest, BoundingRect)
+{
+    EXPECT_CALL(m_handler, boundingRect()).WillOnce(Return(Rect(-44.6, 89.1, 20.5, -0.48)));
+    Rect rect = m_sprite.boundingRect();
+    ASSERT_EQ(rect.left(), -44.6);
+    ASSERT_EQ(rect.top(), 89.1);
+    ASSERT_EQ(rect.right(), 20.5);
+    ASSERT_EQ(rect.bottom(), -0.48);
 }

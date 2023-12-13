@@ -350,10 +350,10 @@ void Sprite::setRotationStyle(const char *newRotationStyle)
 /*! Returns the bounding rectangle of the sprite. */
 Rect Sprite::boundingRect() const
 {
-    Rect ret;
-    impl->getBoundingRect(&ret);
+    if (!impl->iface)
+        return Rect();
 
-    return ret;
+    return impl->iface->boundingRect();
 }
 
 /*!
@@ -374,8 +374,7 @@ void Sprite::keepInFence(double newX, double newY, double *fencedX, double *fenc
     double stageWidth = eng->stageWidth();
     double stageHeight = eng->stageHeight();
     Rect fence(-stageWidth / 2, stageHeight / 2, stageWidth / 2, -stageHeight / 2);
-    Rect bounds;
-    impl->getBoundingRect(&bounds);
+    Rect bounds = boundingRect();
 
     // Adjust the known bounds to the target position
     bounds.setLeft(bounds.left() + newX - impl->x);
