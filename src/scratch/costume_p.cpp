@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include <scratchcpp/igraphicseffect.h>
-
 #include "costume_p.h"
 
 using namespace libscratchcpp;
@@ -45,9 +43,6 @@ void CostumePrivate::updateImage()
         for (unsigned int j = 0; j < scaledWidth; j++)
             bitmap[i][j] = image->colorAt(mirrorHorizontally ? (scaledWidth - 1 - j) : j, i, actualScale);
     }
-
-    for (const auto &[effect, value] : graphicsEffects)
-        effect->apply(bitmap, scaledWidth, scaledHeight, value);
 }
 
 void CostumePrivate::freeImage()

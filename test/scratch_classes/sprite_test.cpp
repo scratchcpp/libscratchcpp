@@ -598,43 +598,22 @@ TEST(SpriteTest, KeepInFence)
 
 TEST(SpriteTest, GraphicsEffects)
 {
-    auto c1 = std::make_shared<Costume>("", "", "");
-    auto c2 = std::make_shared<Costume>("", "", "");
-
     Sprite sprite;
 
     EngineMock engine;
     sprite.setEngine(&engine);
-    EXPECT_CALL(engine, requestRedraw()).Times(6);
-
-    sprite.addCostume(c1);
-    sprite.addCostume(c2);
-    sprite.setCostumeIndex(0);
+    EXPECT_CALL(engine, requestRedraw()).Times(3);
 
     GraphicsEffectMock effect1, effect2;
     sprite.setGraphicsEffectValue(&effect1, 48.21);
     ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 48.21);
     ASSERT_EQ(sprite.graphicsEffectValue(&effect2), 0);
-    ASSERT_EQ(c1->graphicsEffectValue(&effect1), 48.21);
-    ASSERT_EQ(c1->graphicsEffectValue(&effect2), 0);
-
-    sprite.setCostumeIndex(1);
-    ASSERT_EQ(c1->graphicsEffectValue(&effect1), 48.21);
-    ASSERT_EQ(c1->graphicsEffectValue(&effect2), 0);
 
     sprite.setGraphicsEffectValue(&effect2, -107.08);
     ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 48.21);
     ASSERT_EQ(sprite.graphicsEffectValue(&effect2), -107.08);
-    ASSERT_EQ(c2->graphicsEffectValue(&effect1), 48.21);
-    ASSERT_EQ(c2->graphicsEffectValue(&effect2), -107.08);
-
-    sprite.setCostumeIndex(0);
-    ASSERT_EQ(c1->graphicsEffectValue(&effect1), 48.21);
-    ASSERT_EQ(c1->graphicsEffectValue(&effect2), -107.08);
 
     sprite.clearGraphicsEffects();
     ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 0);
     ASSERT_EQ(sprite.graphicsEffectValue(&effect2), 0);
-    ASSERT_EQ(c1->graphicsEffectValue(&effect1), 0);
-    ASSERT_EQ(c1->graphicsEffectValue(&effect2), 0);
 }

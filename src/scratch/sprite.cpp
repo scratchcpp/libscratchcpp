@@ -233,9 +233,6 @@ void Sprite::setCostumeIndex(int newCostumeIndex)
     if (costume) {
         costume->setScale(impl->size / 100);
         costume->setMirrorHorizontally(impl->rotationStyle == RotationStyle::LeftRight);
-
-        for (const auto &[effect, value] : impl->graphicsEffects)
-            costume->setGraphicsEffectValue(effect, value);
     }
 
     if (impl->visible) {
@@ -419,11 +416,6 @@ void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 {
     impl->graphicsEffects[effect] = value;
 
-    auto costume = currentCostume();
-
-    if (costume)
-        costume->setGraphicsEffectValue(effect, value);
-
     if (impl->visible) {
         IEngine *eng = engine();
 
@@ -436,11 +428,6 @@ void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 void Sprite::clearGraphicsEffects()
 {
     impl->graphicsEffects.clear();
-
-    auto costume = currentCostume();
-
-    if (costume)
-        costume->clearGraphicsEffects();
 
     if (impl->visible) {
         IEngine *eng = engine();

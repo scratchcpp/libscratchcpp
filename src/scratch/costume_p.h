@@ -9,8 +9,6 @@
 namespace libscratchcpp
 {
 
-class IGraphicsEffect;
-
 struct CostumePrivate
 {
         CostumePrivate();
@@ -31,7 +29,6 @@ struct CostumePrivate
         double oldScale = 1;
         double scale = 1;
         bool mirrorHorizontally = false;
-        std::unordered_map<IGraphicsEffect *, double> graphicsEffects;
         Broadcast broadcast;
 };
 
