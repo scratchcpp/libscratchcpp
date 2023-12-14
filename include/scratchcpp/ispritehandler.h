@@ -42,6 +42,15 @@ class LIBSCRATCHCPP_EXPORT ISpriteHandler
         virtual void onRotationStyleChanged(Sprite::RotationStyle rotationStyle) = 0;
 
         /*!
+         * Called when the value of the given graphics effect changes.
+         * \note This method isn't called when all effects are cleared, use onGraphicsEffectsCleared() for this.
+         */
+        virtual void onGraphicsEffectChanged(IGraphicsEffect *effect, double value) = 0;
+
+        /*! Called when all graphics effects are cleared. */
+        virtual void onGraphicsEffectsCleared() = 0;
+
+        /*!
          * Used to get the bounding rectangle of the sprite.
          * \note The rectangle must be relative to the stage, so make sure to use the sprite's coordinates.
          */

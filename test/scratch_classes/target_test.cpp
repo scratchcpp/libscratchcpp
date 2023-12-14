@@ -7,6 +7,7 @@
 #include <scratchcpp/sound.h>
 #include <enginemock.h>
 #include <targetmock.h>
+#include <graphicseffectmock.h>
 
 #include "../common.h"
 
@@ -479,6 +480,27 @@ TEST(TargetTest, Volume)
 
     target.setVolume(-4.2);
     ASSERT_EQ(target.volume(), 0);
+}
+
+TEST(TargetTest, GraphicsEffects)
+{
+    Target target;
+
+    EngineMock engine;
+    target.setEngine(&engine);
+
+    GraphicsEffectMock effect1, effect2;
+    target.setGraphicsEffectValue(&effect1, 48.21);
+    ASSERT_EQ(target.graphicsEffectValue(&effect1), 48.21);
+    ASSERT_EQ(target.graphicsEffectValue(&effect2), 0);
+
+    target.setGraphicsEffectValue(&effect2, -107.08);
+    ASSERT_EQ(target.graphicsEffectValue(&effect1), 48.21);
+    ASSERT_EQ(target.graphicsEffectValue(&effect2), -107.08);
+
+    target.clearGraphicsEffects();
+    ASSERT_EQ(target.graphicsEffectValue(&effect1), 0);
+    ASSERT_EQ(target.graphicsEffectValue(&effect2), 0);
 }
 
 TEST(TargetTest, Engine)

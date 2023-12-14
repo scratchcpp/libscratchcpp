@@ -47,6 +47,10 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
         const std::string &textToSpeechLanguage() const;
         void setTextToSpeechLanguage(const std::string &newTextToSpeechLanguage);
 
+        void setGraphicsEffectValue(IGraphicsEffect *effect, double value) override;
+
+        void clearGraphicsEffects() override;
+
     private:
         spimpl::unique_impl_ptr<StagePrivate> impl;
 };

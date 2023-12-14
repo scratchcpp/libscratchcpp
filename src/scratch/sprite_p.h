@@ -31,7 +31,6 @@ struct SpritePrivate
         double direction = 90;
         bool draggable = false;
         Sprite::RotationStyle rotationStyle = Sprite::RotationStyle::AllAround;
-        std::unordered_map<IGraphicsEffect *, double> graphicsEffects;
 };
 
 } // namespace libscratchcpp

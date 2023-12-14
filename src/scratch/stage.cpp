@@ -2,6 +2,7 @@
 
 #include <scratchcpp/stage.h>
 #include <scratchcpp/istagehandler.h>
+#include <scratchcpp/iengine.h>
 #include <cassert>
 
 #include "stage_p.h"
@@ -122,4 +123,30 @@ const std::string &Stage::textToSpeechLanguage() const
 void Stage::setTextToSpeechLanguage(const std::string &newTextToSpeechLanguage)
 {
     impl->textToSpeechLanguage = newTextToSpeechLanguage;
+}
+
+/*! Overrides Target#setGraphicsEffectValue(). */
+void Stage::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
+{
+    Target::setGraphicsEffectValue(effect, value);
+    IEngine *eng = engine();
+
+    if (eng)
+        eng->requestRedraw();
+
+    if (impl->iface)
+        impl->iface->onGraphicsEffectChanged(effect, value);
+}
+
+/*! Overrides Target#clearGraphicsEffects(). */
+void Stage::clearGraphicsEffects()
+{
+    Target::clearGraphicsEffects();
+    IEngine *eng = engine();
+
+    if (eng)
+        eng->requestRedraw();
+
+    if (impl->iface)
+        impl->iface->onGraphicsEffectsCleared();
 }

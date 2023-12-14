@@ -3,7 +3,6 @@
 #include <scratchcpp/broadcast.h>
 #include <imageformatfactorymock.h>
 #include <imageformatmock.h>
-#include <graphicseffectmock.h>
 
 #include "../common.h"
 
@@ -323,97 +322,6 @@ TEST_F(CostumeTest, ScaledBitmap)
     ASSERT_EQ(bitmap[3][3], 9);
     ASSERT_EQ(bitmap[3][4], 1);
     ASSERT_EQ(bitmap[3][5], 1);
-}
-
-TEST_F(CostumeTest, BitmapWithGraphicsEffects)
-{
-    EXPECT_CALL(*m_imageFormatFactory, createInstance()).WillOnce(Return(m_imageFormat));
-    EXPECT_CALL(*m_imageFormat, width()).Times(3).WillRepeatedly(Return(0));
-    EXPECT_CALL(*m_imageFormat, height()).Times(3).WillRepeatedly(Return(0));
-    Costume costume("costume1", "a", "test");
-
-    GraphicsEffectMock effect1, effect2;
-    costume.setGraphicsEffectValue(&effect1, 54.12);
-    ASSERT_EQ(costume.graphicsEffectValue(&effect1), 54.12);
-    ASSERT_EQ(costume.graphicsEffectValue(&effect2), 0);
-
-    costume.setGraphicsEffectValue(&effect2, -89.03);
-    ASSERT_EQ(costume.graphicsEffectValue(&effect1), 54.12);
-    ASSERT_EQ(costume.graphicsEffectValue(&effect2), -89.03);
-
-    EXPECT_CALL(*m_imageFormat, width()).WillOnce(Return(4));
-    EXPECT_CALL(*m_imageFormat, height()).WillOnce(Return(3));
-
-    EXPECT_CALL(*m_imageFormat, colorAt(0, 0, 1.5)).WillOnce(Return(5));
-    EXPECT_CALL(*m_imageFormat, colorAt(1, 0, 1.5)).WillOnce(Return(5));
-    EXPECT_CALL(*m_imageFormat, colorAt(2, 0, 1.5)).WillOnce(Return(3));
-    EXPECT_CALL(*m_imageFormat, colorAt(3, 0, 1.5)).WillOnce(Return(8));
-    EXPECT_CALL(*m_imageFormat, colorAt(4, 0, 1.5)).WillOnce(Return(8));
-    EXPECT_CALL(*m_imageFormat, colorAt(5, 0, 1.5)).WillOnce(Return(1));
-
-    EXPECT_CALL(*m_imageFormat, colorAt(0, 1, 1.5)).WillOnce(Return(5));
-    EXPECT_CALL(*m_imageFormat, colorAt(1, 1, 1.5)).WillOnce(Return(5));
-    EXPECT_CALL(*m_imageFormat, colorAt(2, 1, 1.5)).WillOnce(Return(3));
-    EXPECT_CALL(*m_imageFormat, colorAt(3, 1, 1.5)).WillOnce(Return(8));
-    EXPECT_CALL(*m_imageFormat, colorAt(4, 1, 1.5)).WillOnce(Return(8));
-    EXPECT_CALL(*m_imageFormat, colorAt(5, 1, 1.5)).WillOnce(Return(1));
-
-    EXPECT_CALL(*m_imageFormat, colorAt(0, 2, 1.5)).WillOnce(Return(9));
-    EXPECT_CALL(*m_imageFormat, colorAt(1, 2, 1.5)).WillOnce(Return(9));
-    EXPECT_CALL(*m_imageFormat, colorAt(2, 2, 1.5)).WillOnce(Return(10));
-    EXPECT_CALL(*m_imageFormat, colorAt(3, 2, 1.5)).WillOnce(Return(5));
-    EXPECT_CALL(*m_imageFormat, colorAt(4, 2, 1.5)).WillOnce(Return(5));
-    EXPECT_CALL(*m_imageFormat, colorAt(5, 2, 1.5)).WillOnce(Return(8));
-
-    EXPECT_CALL(*m_imageFormat, colorAt(0, 3, 1.5)).WillOnce(Return(1));
-    EXPECT_CALL(*m_imageFormat, colorAt(1, 3, 1.5)).WillOnce(Return(1));
-    EXPECT_CALL(*m_imageFormat, colorAt(2, 3, 1.5)).WillOnce(Return(9));
-    EXPECT_CALL(*m_imageFormat, colorAt(3, 3, 1.5)).WillOnce(Return(4));
-    EXPECT_CALL(*m_imageFormat, colorAt(4, 3, 1.5)).WillOnce(Return(4));
-    EXPECT_CALL(*m_imageFormat, colorAt(5, 3, 1.5)).WillOnce(Return(8));
-
-    Rgb **bitmapPtr1, **bitmapPtr2;
-    EXPECT_CALL(effect1, apply(_, 6, 4, 54.12)).WillOnce(SaveArg<0>(&bitmapPtr1));
-    EXPECT_CALL(effect2, apply(_, 6, 4, -89.03)).WillOnce(SaveArg<0>(&bitmapPtr2));
-    costume.setScale(1.5);
-
-    auto bitmap = costume.bitmap();
-    ASSERT_TRUE(bitmap);
-    ASSERT_EQ(bitmap, bitmapPtr1);
-    ASSERT_EQ(bitmap, bitmapPtr2);
-    ASSERT_EQ(bitmap[0][0], 5);
-    ASSERT_EQ(bitmap[0][1], 5);
-    ASSERT_EQ(bitmap[0][2], 3);
-    ASSERT_EQ(bitmap[0][3], 8);
-    ASSERT_EQ(bitmap[0][4], 8);
-    ASSERT_EQ(bitmap[0][5], 1);
-
-    ASSERT_EQ(bitmap[1][0], 5);
-    ASSERT_EQ(bitmap[1][1], 5);
-    ASSERT_EQ(bitmap[1][2], 3);
-    ASSERT_EQ(bitmap[1][3], 8);
-    ASSERT_EQ(bitmap[1][4], 8);
-    ASSERT_EQ(bitmap[1][5], 1);
-
-    ASSERT_EQ(bitmap[2][0], 9);
-    ASSERT_EQ(bitmap[2][1], 9);
-    ASSERT_EQ(bitmap[2][2], 10);
-    ASSERT_EQ(bitmap[2][3], 5);
-    ASSERT_EQ(bitmap[2][4], 5);
-    ASSERT_EQ(bitmap[2][5], 8);
-
-    ASSERT_EQ(bitmap[3][0], 1);
-    ASSERT_EQ(bitmap[3][1], 1);
-    ASSERT_EQ(bitmap[3][2], 9);
-    ASSERT_EQ(bitmap[3][3], 4);
-    ASSERT_EQ(bitmap[3][4], 4);
-    ASSERT_EQ(bitmap[3][5], 8);
-
-    EXPECT_CALL(*m_imageFormat, width()).WillOnce(Return(0));
-    EXPECT_CALL(*m_imageFormat, height()).WillOnce(Return(0));
-    costume.clearGraphicsEffects();
-    ASSERT_EQ(costume.graphicsEffectValue(&effect1), 0);
-    ASSERT_EQ(costume.graphicsEffectValue(&effect2), 0);
 }
 
 TEST_F(CostumeTest, Broadcast)

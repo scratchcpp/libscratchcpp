@@ -409,6 +409,29 @@ void Target::setVolume(double newVolume)
         impl->volume = newVolume;
 }
 
+/*! Returns the value of the given graphics effect. */
+double Target::graphicsEffectValue(IGraphicsEffect *effect) const
+{
+    auto it = impl->graphicsEffects.find(effect);
+
+    if (it == impl->graphicsEffects.cend())
+        return 0;
+    else
+        return it->second;
+}
+
+/*! Sets the value of the given graphics effect. */
+void Target::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
+{
+    impl->graphicsEffects[effect] = value;
+}
+
+/*! Sets the value of all graphics effects to 0 (clears them). */
+void Target::clearGraphicsEffects()
+{
+    impl->graphicsEffects.clear();
+}
+
 /*! Returns the engine. */
 IEngine *Target::engine() const
 {

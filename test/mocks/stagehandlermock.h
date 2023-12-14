@@ -15,4 +15,6 @@ class StageHandlerMock : public IStageHandler
         MOCK_METHOD(void, onTempoChanged, (int), (override));
         MOCK_METHOD(void, onVideoStateChanged, (Stage::VideoState), (override));
         MOCK_METHOD(void, onVideoTransparencyChanged, (int), (override));
+        MOCK_METHOD(void, onGraphicsEffectChanged, (IGraphicsEffect *, double), (override));
+        MOCK_METHOD(void, onGraphicsEffectsCleared, (), (override));
 };

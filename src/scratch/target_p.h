@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/sound.h>
 
@@ -16,6 +17,7 @@ class Variable;
 class List;
 class Block;
 class Comment;
+class IGraphicsEffect;
 
 struct TargetPrivate
 {
@@ -33,6 +35,7 @@ struct TargetPrivate
         std::vector<std::shared_ptr<Sound>> sounds;
         int layerOrder = 0;
         double volume = 100;
+        std::unordered_map<IGraphicsEffect *, double> graphicsEffects;
 };
 
 } // namespace libscratchcpp

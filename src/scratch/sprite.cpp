@@ -233,9 +233,6 @@ void Sprite::setCostumeIndex(int newCostumeIndex)
     if (costume) {
         costume->setScale(impl->size / 100);
         costume->setMirrorHorizontally(impl->rotationStyle == RotationStyle::LeftRight);
-
-        for (const auto &[effect, value] : impl->graphicsEffects)
-            costume->setGraphicsEffectValue(effect, value);
     }
 
     if (impl->visible) {
@@ -403,26 +400,10 @@ void Sprite::keepInFence(double newX, double newY, double *fencedX, double *fenc
     *fencedY = newY + dy;
 }
 
-/*! Returns the value of the given graphics effect. */
-double Sprite::graphicsEffectValue(IGraphicsEffect *effect) const
-{
-    auto it = impl->graphicsEffects.find(effect);
-
-    if (it == impl->graphicsEffects.cend())
-        return 0;
-    else
-        return it->second;
-}
-
-/*! Sets the value of the given graphics effect. */
+/*! Overrides Target#setGraphicsEffectValue(). */
 void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 {
-    impl->graphicsEffects[effect] = value;
-
-    auto costume = currentCostume();
-
-    if (costume)
-        costume->setGraphicsEffectValue(effect, value);
+    Target::setGraphicsEffectValue(effect, value);
 
     if (impl->visible) {
         IEngine *eng = engine();
@@ -430,17 +411,15 @@ void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
         if (eng)
             eng->requestRedraw();
     }
+
+    if (impl->iface)
+        impl->iface->onGraphicsEffectChanged(effect, value);
 }
 
-/*! Sets the value of all graphics effects to 0 (clears them). */
+/*! Overrides Target#clearGraphicsEffects(). */
 void Sprite::clearGraphicsEffects()
 {
-    impl->graphicsEffects.clear();
-
-    auto costume = currentCostume();
-
-    if (costume)
-        costume->clearGraphicsEffects();
+    Target::clearGraphicsEffects();
 
     if (impl->visible) {
         IEngine *eng = engine();
@@ -448,6 +427,9 @@ void Sprite::clearGraphicsEffects()
         if (eng)
             eng->requestRedraw();
     }
+
+    if (impl->iface)
+        impl->iface->onGraphicsEffectsCleared();
 }
 
 Target *Sprite::dataSource() const

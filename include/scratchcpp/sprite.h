@@ -67,10 +67,9 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
         Rect boundingRect() const;
         void keepInFence(double newX, double newY, double *fencedX, double *fencedY) const;
 
-        double graphicsEffectValue(IGraphicsEffect *effect) const;
-        void setGraphicsEffectValue(IGraphicsEffect *effect, double value);
+        void setGraphicsEffectValue(IGraphicsEffect *effect, double value) override;
 
-        void clearGraphicsEffects();
+        void clearGraphicsEffects() override;
 
     private:
         Target *dataSource() const override;
