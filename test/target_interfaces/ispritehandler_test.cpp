@@ -2,6 +2,7 @@
 #include <scratchcpp/rect.h>
 #include <spritehandlermock.h>
 #include <enginemock.h>
+#include <graphicseffectmock.h>
 
 #include "../common.h"
 
@@ -128,6 +129,19 @@ TEST_F(ISpriteHandlerTest, Costume)
     EXPECT_CALL(m_handler, onCostumeChanged(costume2.get()));
     EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setCostumeIndex(1);
+}
+
+TEST_F(ISpriteHandlerTest, GraphicsEffects)
+{
+    GraphicsEffectMock effect;
+
+    EXPECT_CALL(m_handler, onGraphicsEffectChanged(&effect, 16.7));
+    EXPECT_CALL(m_engine, requestRedraw());
+    m_sprite.setGraphicsEffectValue(&effect, 16.7);
+
+    EXPECT_CALL(m_handler, onGraphicsEffectsCleared());
+    EXPECT_CALL(m_engine, requestRedraw());
+    m_sprite.clearGraphicsEffects();
 }
 
 TEST_F(ISpriteHandlerTest, BoundingRect)
