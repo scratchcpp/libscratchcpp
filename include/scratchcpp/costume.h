@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "iimageformat.h"
 #include "spimpl.h"
 
 #include "asset.h"
@@ -29,21 +28,7 @@ class LIBSCRATCHCPP_EXPORT Costume : public Asset
         int rotationCenterY() const;
         void setRotationCenterY(int newRotationCenterY);
 
-        unsigned int width() const;
-        unsigned int height() const;
-
-        double scale() const;
-        void setScale(double scale);
-
-        bool mirrorHorizontally() const;
-        void setMirrorHorizontally(bool mirror);
-
-        Rgb **bitmap() const;
-
         Broadcast *broadcast();
-
-    protected:
-        void processData(unsigned int size, void *data) override;
 
     private:
         spimpl::unique_impl_ptr<CostumePrivate> impl;

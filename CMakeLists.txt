@@ -49,8 +49,6 @@ target_sources(scratchcpp
     include/scratchcpp/sprite.h
     include/scratchcpp/itimer.h
     include/scratchcpp/keyevent.h
-    include/scratchcpp/iimageformat.h
-    include/scratchcpp/iimageformatfactory.h
     include/scratchcpp/rect.h
     include/scratchcpp/igraphicseffect.h
     include/scratchcpp/comment.h
@@ -64,8 +62,6 @@ add_library(zip SHARED
 include_directories(thirdparty/zip/src)
 
 include_directories(thirdparty/spimpl)
-
-include(build/FindGD.cmake)
 
 target_link_libraries(scratchcpp PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(scratchcpp PRIVATE utf8cpp)
