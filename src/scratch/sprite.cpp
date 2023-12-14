@@ -216,11 +216,6 @@ void Sprite::setSize(double newSize)
             eng->requestRedraw();
     }
 
-    auto costume = currentCostume();
-
-    if (costume)
-        costume->setScale(newSize / 100);
-
     if (impl->iface)
         impl->iface->onSizeChanged(impl->size);
 }
@@ -228,13 +223,6 @@ void Sprite::setSize(double newSize)
 /*! Overrides Target#setCostumeIndex(). */
 void Sprite::setCostumeIndex(int newCostumeIndex)
 {
-    auto costume = costumeAt(newCostumeIndex);
-
-    if (costume) {
-        costume->setScale(impl->size / 100);
-        costume->setMirrorHorizontally(impl->rotationStyle == RotationStyle::LeftRight);
-    }
-
     if (impl->visible) {
         IEngine *eng = engine();
 
@@ -243,6 +231,7 @@ void Sprite::setCostumeIndex(int newCostumeIndex)
     }
 
     Target::setCostumeIndex(newCostumeIndex);
+    auto costume = costumeAt(newCostumeIndex);
 
     if (costume && impl->iface)
         impl->iface->onCostumeChanged(costume.get());
@@ -311,10 +300,6 @@ std::string Sprite::rotationStyleStr() const
 void Sprite::setRotationStyle(RotationStyle newRotationStyle)
 {
     impl->rotationStyle = newRotationStyle;
-    auto costume = currentCostume();
-
-    if (costume)
-        costume->setMirrorHorizontally(newRotationStyle == RotationStyle::LeftRight);
 
     if (impl->visible) {
         IEngine *eng = engine();

@@ -4,7 +4,7 @@
 
 #include <string>
 
-#include "iimageformat.h"
+#include "global.h"
 
 namespace libscratchcpp
 {

@@ -357,16 +357,8 @@ TEST(SpriteTest, XY)
 
 TEST(SpriteTest, Size)
 {
-    auto c1 = std::make_shared<Costume>("", "", "");
-    auto c2 = std::make_shared<Costume>("", "", "");
-
     Sprite sprite;
     ASSERT_EQ(sprite.size(), 100);
-    sprite.addCostume(c1);
-    sprite.addCostume(c2);
-    sprite.setCostumeIndex(0);
-
-    ASSERT_EQ(c1->scale(), 1);
 
     EngineMock engine;
     sprite.setEngine(&engine);
@@ -374,17 +366,13 @@ TEST(SpriteTest, Size)
 
     sprite.setSize(63.724);
     ASSERT_EQ(sprite.size(), 63.724);
-    ASSERT_EQ(std::round(c1->scale() * 100000) / 100000, 0.63724);
 
     sprite.setCostumeIndex(1);
-    ASSERT_EQ(std::round(c2->scale() * 100000) / 100000, 0.63724);
 
     sprite.setSize(186.84);
     ASSERT_EQ(sprite.size(), 186.84);
-    ASSERT_EQ(std::round(c2->scale() * 10000) / 10000, 1.8684);
 
     sprite.setCostumeIndex(0);
-    ASSERT_EQ(std::round(c1->scale() * 10000) / 10000, 1.8684);
 }
 
 TEST(SpriteTest, CostumeIndex)
@@ -456,17 +444,9 @@ TEST(SpriteTest, Draggable)
 
 TEST(SpriteTest, RotationStyle)
 {
-    auto c1 = std::make_shared<Costume>("", "", "");
-    auto c2 = std::make_shared<Costume>("", "", "");
-
     Sprite sprite;
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::AllAround); // default
     ASSERT_EQ(sprite.rotationStyleStr(), "all around");
-    sprite.addCostume(c1);
-    sprite.addCostume(c2);
-    sprite.setCostumeIndex(0);
-
-    ASSERT_EQ(c1->mirrorHorizontally(), false);
 
     EngineMock engine;
     sprite.setEngine(&engine);
@@ -475,68 +455,55 @@ TEST(SpriteTest, RotationStyle)
     sprite.setRotationStyle(Sprite::RotationStyle::DoNotRotate);
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::DoNotRotate);
     ASSERT_EQ(sprite.rotationStyleStr(), "don't rotate");
-    ASSERT_EQ(c1->mirrorHorizontally(), false);
 
     sprite.setRotationStyle(Sprite::RotationStyle::LeftRight);
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::LeftRight);
     ASSERT_EQ(sprite.rotationStyleStr(), "left-right");
-    ASSERT_EQ(c1->mirrorHorizontally(), true);
 
     sprite.setRotationStyle(Sprite::RotationStyle::AllAround);
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::AllAround);
     ASSERT_EQ(sprite.rotationStyleStr(), "all around");
-    ASSERT_EQ(c1->mirrorHorizontally(), false);
 
     sprite.setRotationStyle("invalid");
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::AllAround); // shouldn't change
     ASSERT_EQ(sprite.rotationStyleStr(), "all around");
-    ASSERT_EQ(c1->mirrorHorizontally(), false);
 
     sprite.setCostumeIndex(1);
     sprite.setRotationStyle(Sprite::RotationStyle::LeftRight);
-    ASSERT_EQ(c2->mirrorHorizontally(), true);
 
     sprite.setCostumeIndex(0);
     sprite.setRotationStyle(Sprite::RotationStyle::AllAround);
     sprite.setCostumeIndex(1);
-    ASSERT_EQ(c2->mirrorHorizontally(), false);
 
     sprite.setVisible(false);
 
     sprite.setRotationStyle("don't rotate");
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::DoNotRotate);
     ASSERT_EQ(sprite.rotationStyleStr(), "don't rotate");
-    ASSERT_EQ(c2->mirrorHorizontally(), false);
 
     sprite.setRotationStyle("left-right");
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::LeftRight);
     ASSERT_EQ(sprite.rotationStyleStr(), "left-right");
-    ASSERT_EQ(c2->mirrorHorizontally(), true);
 
     sprite.setRotationStyle("all around");
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::AllAround);
     ASSERT_EQ(sprite.rotationStyleStr(), "all around");
-    ASSERT_EQ(c2->mirrorHorizontally(), false);
 
     sprite.setRotationStyle(std::string("invalid"));
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::AllAround); // shouldn't change
     ASSERT_EQ(sprite.rotationStyleStr(), "all around");
-    ASSERT_EQ(c2->mirrorHorizontally(), false);
 
     sprite.setRotationStyle(std::string("don't rotate"));
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::DoNotRotate);
     ASSERT_EQ(sprite.rotationStyleStr(), "don't rotate");
-    ASSERT_EQ(c2->mirrorHorizontally(), false);
 
     sprite.setRotationStyle(std::string("left-right"));
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::LeftRight);
     ASSERT_EQ(sprite.rotationStyleStr(), "left-right");
-    ASSERT_EQ(c2->mirrorHorizontally(), true);
 
     sprite.setRotationStyle(std::string("all around"));
     ASSERT_EQ(sprite.rotationStyle(), Sprite::RotationStyle::AllAround);
     ASSERT_EQ(sprite.rotationStyleStr(), "all around");
-    ASSERT_EQ(c2->mirrorHorizontally(), false);
 }
 
 TEST(SpriteTest, KeepInFence)
