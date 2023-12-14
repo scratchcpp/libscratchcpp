@@ -616,4 +616,13 @@ TEST(SpriteTest, GraphicsEffects)
     sprite.clearGraphicsEffects();
     ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 0);
     ASSERT_EQ(sprite.graphicsEffectValue(&effect2), 0);
+
+    sprite.setVisible(false);
+    sprite.setGraphicsEffectValue(&effect2, -107.08);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect2), -107.08);
+
+    sprite.clearGraphicsEffects();
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 0);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect2), 0);
 }

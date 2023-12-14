@@ -17,6 +17,7 @@ class Block;
 class Comment;
 class Costume;
 class Sound;
+class IGraphicsEffect;
 class TargetPrivate;
 
 /*! \brief The Target class is the Stage or a Sprite. */
@@ -76,6 +77,11 @@ class LIBSCRATCHCPP_EXPORT Target
 
         double volume() const;
         void setVolume(double newVolume);
+
+        double graphicsEffectValue(IGraphicsEffect *effect) const;
+        virtual void setGraphicsEffectValue(IGraphicsEffect *effect, double value);
+
+        virtual void clearGraphicsEffects();
 
         IEngine *engine() const;
         void setEngine(IEngine *engine);

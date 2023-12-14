@@ -400,21 +400,10 @@ void Sprite::keepInFence(double newX, double newY, double *fencedX, double *fenc
     *fencedY = newY + dy;
 }
 
-/*! Returns the value of the given graphics effect. */
-double Sprite::graphicsEffectValue(IGraphicsEffect *effect) const
-{
-    auto it = impl->graphicsEffects.find(effect);
-
-    if (it == impl->graphicsEffects.cend())
-        return 0;
-    else
-        return it->second;
-}
-
-/*! Sets the value of the given graphics effect. */
+/*! Overrides Target#setGraphicsEffectValue(). */
 void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 {
-    impl->graphicsEffects[effect] = value;
+    Target::setGraphicsEffectValue(effect, value);
 
     if (impl->visible) {
         IEngine *eng = engine();
@@ -424,10 +413,10 @@ void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
     }
 }
 
-/*! Sets the value of all graphics effects to 0 (clears them). */
+/*! Overrides Target#clearGraphicsEffects(). */
 void Sprite::clearGraphicsEffects()
 {
-    impl->graphicsEffects.clear();
+    Target::clearGraphicsEffects();
 
     if (impl->visible) {
         IEngine *eng = engine();

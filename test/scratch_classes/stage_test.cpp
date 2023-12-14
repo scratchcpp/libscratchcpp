@@ -1,6 +1,7 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/costume.h>
 #include <enginemock.h>
+#include <graphicseffectmock.h>
 
 #include "../common.h"
 
@@ -104,4 +105,26 @@ TEST(StageTest, TextToSpeechLanguage)
     ASSERT_EQ(stage.textToSpeechLanguage(), "");
     stage.setTextToSpeechLanguage("English");
     ASSERT_EQ(stage.textToSpeechLanguage(), "English");
+}
+
+TEST(StageTest, GraphicsEffects)
+{
+    Stage stage;
+
+    EngineMock engine;
+    stage.setEngine(&engine);
+    EXPECT_CALL(engine, requestRedraw()).Times(3);
+
+    GraphicsEffectMock effect1, effect2;
+    stage.setGraphicsEffectValue(&effect1, 48.21);
+    ASSERT_EQ(stage.graphicsEffectValue(&effect1), 48.21);
+    ASSERT_EQ(stage.graphicsEffectValue(&effect2), 0);
+
+    stage.setGraphicsEffectValue(&effect2, -107.08);
+    ASSERT_EQ(stage.graphicsEffectValue(&effect1), 48.21);
+    ASSERT_EQ(stage.graphicsEffectValue(&effect2), -107.08);
+
+    stage.clearGraphicsEffects();
+    ASSERT_EQ(stage.graphicsEffectValue(&effect1), 0);
+    ASSERT_EQ(stage.graphicsEffectValue(&effect2), 0);
 }
