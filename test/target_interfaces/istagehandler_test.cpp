@@ -1,6 +1,8 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/costume.h>
 #include <stagehandlermock.h>
+#include <enginemock.h>
+#include <graphicseffectmock.h>
 
 #include "../common.h"
 
@@ -13,10 +15,12 @@ class IStageHandlerTest : public testing::Test
         {
             EXPECT_CALL(m_handler, init(&m_stage)).Times(1);
             m_stage.setInterface(&m_handler);
+            m_stage.setEngine(&m_engine);
         }
 
         Stage m_stage;
         StageHandlerMock m_handler;
+        EngineMock m_engine;
 };
 
 TEST_F(IStageHandlerTest, Tempo)
@@ -42,8 +46,23 @@ TEST_F(IStageHandlerTest, Costume)
     m_stage.addCostume(costume2);
 
     EXPECT_CALL(m_handler, onCostumeChanged(costume1.get()));
+    EXPECT_CALL(m_engine, requestRedraw());
     m_stage.setCostumeIndex(0);
 
     EXPECT_CALL(m_handler, onCostumeChanged(costume2.get()));
+    EXPECT_CALL(m_engine, requestRedraw());
     m_stage.setCostumeIndex(1);
+}
+
+TEST_F(IStageHandlerTest, GraphicsEffects)
+{
+    GraphicsEffectMock effect;
+
+    EXPECT_CALL(m_handler, onGraphicsEffectChanged(&effect, 16.7));
+    EXPECT_CALL(m_engine, requestRedraw());
+    m_stage.setGraphicsEffectValue(&effect, 16.7);
+
+    EXPECT_CALL(m_handler, onGraphicsEffectsCleared());
+    EXPECT_CALL(m_engine, requestRedraw());
+    m_stage.clearGraphicsEffects();
 }

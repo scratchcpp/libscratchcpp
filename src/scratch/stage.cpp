@@ -133,6 +133,9 @@ void Stage::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 
     if (eng)
         eng->requestRedraw();
+
+    if (impl->iface)
+        impl->iface->onGraphicsEffectChanged(effect, value);
 }
 
 /*! Overrides Target#clearGraphicsEffects(). */
@@ -143,4 +146,7 @@ void Stage::clearGraphicsEffects()
 
     if (eng)
         eng->requestRedraw();
+
+    if (impl->iface)
+        impl->iface->onGraphicsEffectsCleared();
 }
