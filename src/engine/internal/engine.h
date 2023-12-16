@@ -55,6 +55,7 @@ class Engine : public IEngine
 
         bool keyPressed(const std::string &name) const override;
         void setKeyState(const std::string &name, bool pressed) override;
+        void setKeyState(const KeyEvent &event, bool pressed) override;
         void setAnyKeyPressed(bool pressed) override;
 
         double mouseX() const override;

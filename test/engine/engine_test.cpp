@@ -5,6 +5,7 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/keyevent.h>
 #include <timermock.h>
 #include <clockmock.h>
 #include <thread>
@@ -192,6 +193,7 @@ TEST(EngineTest, KeyState)
     ASSERT_FALSE(engine.keyPressed("up arrow"));
     ASSERT_FALSE(engine.keyPressed("any"));
 
+    // Key name
     engine.setKeyState("A", true);
     ASSERT_TRUE(engine.keyPressed("a"));
     ASSERT_FALSE(engine.keyPressed("b"));
@@ -263,6 +265,20 @@ TEST(EngineTest, KeyState)
 
     engine.setAnyKeyPressed(false);
     ASSERT_FALSE(engine.keyPressed("any"));
+
+    // Key object
+    engine.setKeyState(KeyEvent("A"), true);
+    ASSERT_TRUE(engine.keyPressed("a"));
+    ASSERT_FALSE(engine.keyPressed("b"));
+    ASSERT_FALSE(engine.keyPressed("up arrow"));
+    ASSERT_TRUE(engine.keyPressed("any"));
+
+    engine.setKeyState(KeyEvent("up arrow"), true);
+    ASSERT_TRUE(engine.keyPressed("a"));
+    ASSERT_FALSE(engine.keyPressed("b"));
+    ASSERT_TRUE(engine.keyPressed("up arrow"));
+    ASSERT_FALSE(engine.keyPressed("U"));
+    ASSERT_TRUE(engine.keyPressed("any"));
 }
 
 TEST(EngineTest, WhenKeyPressed)
@@ -335,21 +351,43 @@ TEST(EngineTest, WhenKeyPressed)
     ASSERT_VAR(stage, "4_pressed");
     ASSERT_EQ(GET_VAR(stage, "4_pressed")->value().toInt(), 0);
 
+    // right arrow - key object
+    engine->setKeyState(KeyEvent("right arrow"), true);
+    p.run();
+
+    ASSERT_VAR(stage, "right_arrow_pressed");
+    ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 2);
+    engine->setKeyState("right arrow", false);
+    p.run();
+
+    ASSERT_VAR(stage, "space_pressed");
+    ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 1);
+    ASSERT_VAR(stage, "right_arrow_pressed");
+    ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 2);
+    ASSERT_VAR(stage, "any_key_pressed");
+    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 3);
+    ASSERT_VAR(stage, "a_pressed");
+    ASSERT_EQ(GET_VAR(stage, "a_pressed")->value().toInt(), 0);
+    ASSERT_VAR(stage, "x_pressed");
+    ASSERT_EQ(GET_VAR(stage, "x_pressed")->value().toInt(), 0);
+    ASSERT_VAR(stage, "4_pressed");
+    ASSERT_EQ(GET_VAR(stage, "4_pressed")->value().toInt(), 0);
+
     // any key
     engine->setAnyKeyPressed(true);
     p.run();
 
     ASSERT_VAR(stage, "any_key_pressed");
-    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 3);
+    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 4);
     engine->setAnyKeyPressed(false);
     p.run();
 
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 1);
     ASSERT_VAR(stage, "right_arrow_pressed");
-    ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 1);
+    ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 2);
     ASSERT_VAR(stage, "any_key_pressed");
-    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 3);
+    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 4);
     ASSERT_VAR(stage, "a_pressed");
     ASSERT_EQ(GET_VAR(stage, "a_pressed")->value().toInt(), 0);
     ASSERT_VAR(stage, "x_pressed");
@@ -369,9 +407,9 @@ TEST(EngineTest, WhenKeyPressed)
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 1);
     ASSERT_VAR(stage, "right_arrow_pressed");
-    ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 1);
+    ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 2);
     ASSERT_VAR(stage, "any_key_pressed");
-    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 4);
+    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 5);
     ASSERT_VAR(stage, "a_pressed");
     ASSERT_EQ(GET_VAR(stage, "a_pressed")->value().toInt(), 1);
     ASSERT_VAR(stage, "x_pressed");
@@ -391,9 +429,9 @@ TEST(EngineTest, WhenKeyPressed)
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 1);
     ASSERT_VAR(stage, "right_arrow_pressed");
-    ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 1);
+    ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 2);
     ASSERT_VAR(stage, "any_key_pressed");
-    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 5);
+    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 6);
     ASSERT_VAR(stage, "a_pressed");
     ASSERT_EQ(GET_VAR(stage, "a_pressed")->value().toInt(), 1);
     ASSERT_VAR(stage, "x_pressed");
@@ -413,9 +451,9 @@ TEST(EngineTest, WhenKeyPressed)
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 1);
     ASSERT_VAR(stage, "right_arrow_pressed");
-    ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 1);
+    ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 2);
     ASSERT_VAR(stage, "any_key_pressed");
-    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 6);
+    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 7);
     ASSERT_VAR(stage, "a_pressed");
     ASSERT_EQ(GET_VAR(stage, "a_pressed")->value().toInt(), 1);
     ASSERT_VAR(stage, "x_pressed");
@@ -439,9 +477,9 @@ TEST(EngineTest, WhenKeyPressed)
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 2);
     ASSERT_VAR(stage, "right_arrow_pressed");
-    ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 1);
+    ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 2);
     ASSERT_VAR(stage, "any_key_pressed");
-    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 8);
+    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 9);
     ASSERT_VAR(stage, "a_pressed");
     ASSERT_EQ(GET_VAR(stage, "a_pressed")->value().toInt(), 1);
     ASSERT_VAR(stage, "x_pressed");

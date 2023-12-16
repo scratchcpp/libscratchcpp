@@ -22,6 +22,7 @@ class Variable;
 class List;
 class Script;
 class ITimer;
+class KeyEvent;
 
 /*!
  * \brief The IEngine interface provides an API for running Scratch projects.
@@ -115,8 +116,11 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Returns true if the given key is pressed. */
         virtual bool keyPressed(const std::string &name) const = 0;
 
-        /*! Sets the state of the given key. */
+        /*! Sets the state of the key with the given name. */
         virtual void setKeyState(const std::string &name, bool pressed) = 0;
+
+        /*! Sets the state of the given key. */
+        virtual void setKeyState(const KeyEvent &event, bool pressed) = 0;
 
         /*! Sets whether any key is pressed (use this for any key, even for unsupported keys). */
         virtual void setAnyKeyPressed(bool pressed) = 0;
