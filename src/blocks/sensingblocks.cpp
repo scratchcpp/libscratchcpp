@@ -9,6 +9,7 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/costume.h>
+#include <scratchcpp/variable.h>
 #include "sensingblocks.h"
 
 #include "../engine/internal/clock.h"
@@ -141,15 +142,20 @@ void SensingBlocks::compileResetTimer(Compiler *compiler)
 
 void SensingBlocks::compileOf(Compiler *compiler)
 {
-    int option = compiler->field(PROPERTY)->specialValueId();
+    Field *property = compiler->field(PROPERTY);
+    assert(property);
+    int option = property->specialValueId();
     Input *input = compiler->input(OBJECT);
+    assert(input);
     BlockFunc f = nullptr;
 
     if (input->type() != Input::Type::ObscuredShadow) {
         assert(input->pointsToDropdownMenu());
         std::string value = input->selectedMenuItem();
 
-        int index = compiler->engine()->findTarget(value);
+        IEngine *engine = compiler->engine();
+        assert(engine);
+        int index = engine->findTarget(value);
 
         switch (option) {
             case XPosition:
@@ -188,8 +194,18 @@ void SensingBlocks::compileOf(Compiler *compiler)
                 f = &backdropNameOfStageByIndex;
                 break;
 
-            default:
+            default: {
+                // Variable
+                Target *target = engine->targetAt(index);
+                auto varIndex = target->findVariable(property->value().toString());
+
+                if (varIndex == -1)
+                    compiler->addInstruction(vm::OP_NULL);
+                else
+                    compiler->addInstruction(vm::OP_READ_VAR, { compiler->variableIndex(target->variableAt(varIndex)) });
+
                 break;
+            }
         }
 
         if (f)
@@ -233,6 +249,8 @@ void SensingBlocks::compileOf(Compiler *compiler)
                 break;
 
             default:
+                f = &variableOfTarget;
+                compiler->addConstValue(property->value().toString());
                 break;
         }
 
@@ -569,6 +587,23 @@ unsigned int SensingBlocks::volumeOfTargetByIndex(VirtualMachine *vm)
         vm->replaceReturnValue(0, 1);
 
     return 0;
+}
+
+unsigned int SensingBlocks::variableOfTarget(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->engine()->findTarget(vm->getInput(1, 2)->toString()));
+
+    if (target) {
+        auto varIndex = target->findVariable(vm->getInput(0, 2)->toString());
+
+        if (varIndex == -1)
+            vm->replaceReturnValue(0, 2);
+        else
+            vm->replaceReturnValue(target->variableAt(varIndex)->value(), 2);
+    } else
+        vm->replaceReturnValue(0, 2);
+
+    return 1;
 }
 
 unsigned int SensingBlocks::backdropNumberOfStage(VirtualMachine *vm)
