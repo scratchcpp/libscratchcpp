@@ -321,8 +321,17 @@ do_until_loop:
         pos = loopStart;
     } else {
         pos = loopStart;
-        while (*pos != OP_LOOP_END)
+        unsigned int loopCounter = 1;
+        while ((*pos != OP_LOOP_END) || (loopCounter > 0)) {
             pos += instruction_arg_count[*pos++];
+
+            if ((*pos == OP_IF) || (*pos == OP_FOREVER_LOOP) || (*pos == OP_REPEAT_LOOP) || (*pos == OP_UNTIL_LOOP))
+                loopCounter++;
+            else if ((*pos == OP_ENDIF) || (*pos == OP_LOOP_END)) {
+                assert(loopCounter > 0);
+                loopCounter--;
+            }
+        }
     }
     FREE_REGS(1);
     DISPATCH();
