@@ -546,6 +546,11 @@ bool Engine::keyPressed(const std::string &name) const
 void Engine::setKeyState(const std::string &name, bool pressed)
 {
     KeyEvent event(name);
+    setKeyState(event, pressed);
+}
+
+void Engine::setKeyState(const KeyEvent &event, bool pressed)
+{
     m_keyMap[event.name()] = pressed;
 
     // Start "when key pressed" scripts
