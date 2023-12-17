@@ -239,13 +239,15 @@ do_checkpoint:
 do_if:
     if (!READ_LAST_REG()->toBool()) {
         unsigned int ifCounter = 1;
-        while ((*pos != OP_ELSE && *pos != OP_ENDIF) || (ifCounter > 0)) {
+        while (!((*pos == OP_ELSE && ifCounter == 1) || (*pos == OP_ENDIF && ifCounter == 0))) {
             pos += instruction_arg_count[*pos++];
 
-            if (*pos == OP_IF)
+            if ((*pos == OP_IF) || (*pos == OP_FOREVER_LOOP) || (*pos == OP_REPEAT_LOOP) || (*pos == OP_UNTIL_LOOP))
                 ifCounter++;
-            else if ((*pos == OP_ELSE) || (*pos == OP_ENDIF))
+            else if ((*pos == OP_ENDIF) || (*pos == OP_LOOP_END)) {
+                assert(ifCounter > 0);
                 ifCounter--;
+            }
         }
     }
     FREE_REGS(1);
@@ -275,10 +277,12 @@ do_repeat_loop:
         while ((*loopEnd != OP_LOOP_END) || (loopCounter > 0)) {
             loopEnd += instruction_arg_count[*loopEnd++];
 
-            if ((*loopEnd == OP_FOREVER_LOOP) || (*loopEnd == OP_REPEAT_LOOP) || (*loopEnd == OP_UNTIL_LOOP))
+            if ((*loopEnd == OP_IF) || (*loopEnd == OP_FOREVER_LOOP) || (*loopEnd == OP_REPEAT_LOOP) || (*loopEnd == OP_UNTIL_LOOP))
                 loopCounter++;
-            else if (*loopEnd == OP_LOOP_END)
+            else if ((*loopEnd == OP_ENDIF) || (*loopEnd == OP_LOOP_END)) {
+                assert(loopCounter > 0);
                 loopCounter--;
+            }
         }
         pos = loopEnd;
     } else {
