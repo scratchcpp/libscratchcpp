@@ -236,7 +236,7 @@ do_checkpoint:
     checkpoint = pos - 1;
     DISPATCH();
 
-do_if:
+do_if : {
     if (!READ_LAST_REG()->toBool()) {
         unsigned int ifCounter = 1;
         while (!((*pos == OP_ELSE && ifCounter == 1) || (*pos == OP_ENDIF && ifCounter == 0))) {
@@ -252,8 +252,9 @@ do_if:
     }
     FREE_REGS(1);
     DISPATCH();
+}
 
-do_else:
+do_else : {
     unsigned int ifCounter = 1;
     while (!(*pos == OP_ENDIF && ifCounter == 0)) {
         pos += instruction_arg_count[*pos++];
@@ -267,6 +268,7 @@ do_else:
 
         assert(!(*pos == OP_ELSE && ifCounter == 1));
     }
+}
 
 do_endif:
     DISPATCH();
