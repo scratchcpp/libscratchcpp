@@ -1626,3 +1626,36 @@ TEST(VirtualMachineTest, NoCrashInNestedIfStatementsWithLoop)
     vm.run();
     ASSERT_EQ(vm.registerCount(), 0);
 }
+
+TEST(VirtualMachineTest, NoCrashInNestedIfStatementsWithLoopAndIfElse)
+{
+    // Regtest for #378
+    static unsigned int bytecode[] = { OP_START, OP_NULL, OP_IF, OP_NULL, OP_REPEAT_LOOP, OP_NULL, OP_IF, OP_ELSE, OP_ENDIF, OP_LOOP_END, OP_ENDIF, OP_HALT };
+
+    VirtualMachine vm(nullptr, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.run();
+    ASSERT_EQ(vm.registerCount(), 0);
+}
+
+TEST(VirtualMachineTest, NoCrashInNestedLoopsInRepeatUntilLoop)
+{
+    // Regtest for #379
+    static unsigned int bytecode[] = { OP_START, OP_NULL, OP_NOT, OP_IF, OP_ELSE, OP_NULL, OP_REPEAT_LOOP, OP_NULL, OP_IF, OP_ENDIF, OP_LOOP_END, OP_ENDIF, OP_HALT };
+
+    VirtualMachine vm(nullptr, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.run();
+    ASSERT_EQ(vm.registerCount(), 0);
+}
+
+TEST(VirtualMachineTest, NoCrashInNestedLoopsInIfElseStatements)
+{
+    // Regtest for #380
+    static unsigned int bytecode[] = { OP_START, OP_UNTIL_LOOP, OP_NULL, OP_NOT, OP_BEGIN_UNTIL_LOOP, OP_NULL, OP_REPEAT_LOOP, OP_LOOP_END, OP_LOOP_END, OP_HALT };
+
+    VirtualMachine vm(nullptr, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.run();
+    ASSERT_EQ(vm.registerCount(), 0);
+}
