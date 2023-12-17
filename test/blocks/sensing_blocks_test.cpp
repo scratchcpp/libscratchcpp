@@ -5,6 +5,7 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/costume.h>
+#include <scratchcpp/variable.h>
 #include <enginemock.h>
 #include <timermock.h>
 #include <clockmock.h>
@@ -706,10 +707,35 @@ TEST_F(SensingBlocksTest, Of)
     addDropdownField(block20, "PROPERTY", SensingBlocks::PROPERTY, "backdrop name", SensingBlocks::BackdropName);
     addDropdownInput(block20, "OBJECT", SensingBlocks::OBJECT, "", createNullBlock("ad"));
 
+    // [some variable] of (Stage)
+    auto block21 = std::make_shared<Block>("ae", "sensing_of");
+    addDropdownField(block21, "PROPERTY", SensingBlocks::PROPERTY, "some variable", static_cast<SensingBlocks::FieldValues>(-1));
+    addDropdownInput(block21, "OBJECT", SensingBlocks::OBJECT, "_stage_");
+
+    // [some invalid variable] of (Stage)
+    auto block22 = std::make_shared<Block>("af", "sensing_of");
+    addDropdownField(block22, "PROPERTY", SensingBlocks::PROPERTY, "some invalid variable", static_cast<SensingBlocks::FieldValues>(-1));
+    addDropdownInput(block22, "OBJECT", SensingBlocks::OBJECT, "_stage_");
+
+    // [some variable] of (Sprite2)
+    auto block23 = std::make_shared<Block>("ag", "sensing_of");
+    addDropdownField(block23, "PROPERTY", SensingBlocks::PROPERTY, "some variable", static_cast<SensingBlocks::FieldValues>(-1));
+    addDropdownInput(block23, "OBJECT", SensingBlocks::OBJECT, "Sprite2");
+
+    // [some invalid variable] of (Sprite2)
+    auto block24 = std::make_shared<Block>("ah", "sensing_of");
+    addDropdownField(block24, "PROPERTY", SensingBlocks::PROPERTY, "some invalid variable", static_cast<SensingBlocks::FieldValues>(-1));
+    addDropdownInput(block24, "OBJECT", SensingBlocks::OBJECT, "Sprite2");
+
+    // [some variable] of (null block)
+    auto block25 = std::make_shared<Block>("ai", "sensing_of");
+    addDropdownField(block25, "PROPERTY", SensingBlocks::PROPERTY, "some variable", static_cast<SensingBlocks::FieldValues>(-1));
+    addDropdownInput(block25, "OBJECT", SensingBlocks::OBJECT, "", createNullBlock("aj"));
+
     compiler.init();
 
-    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).Times(7).WillRepeatedly(Return(6));
-    EXPECT_CALL(m_engineMock, findTarget("_stage_")).Times(3).WillRepeatedly(Return(0));
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).Times(9).WillRepeatedly(Return(6));
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).Times(5).WillRepeatedly(Return(0));
 
     EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::xPositionOfSpriteByIndex)).WillOnce(Return(0));
     compiler.setBlock(block1);
@@ -791,6 +817,34 @@ TEST_F(SensingBlocksTest, Of)
     compiler.setBlock(block20);
     SensingBlocks::compileOf(&compiler);
 
+    Stage stage;
+    auto v1 = std::make_shared<Variable>("var1", "test");
+    auto v2 = std::make_shared<Variable>("var2", "some variable");
+    stage.addVariable(v1);
+    stage.addVariable(v2);
+    EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(&stage));
+    compiler.setBlock(block21);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(&stage));
+    compiler.setBlock(block22);
+    SensingBlocks::compileOf(&compiler);
+
+    Sprite sprite;
+    auto v3 = std::make_shared<Variable>("var3", "some variable");
+    sprite.addVariable(v3);
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    compiler.setBlock(block23);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    compiler.setBlock(block24);
+    SensingBlocks::compileOf(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::variableOfTarget)).WillOnce(Return(18));
+    compiler.setBlock(block25);
+    SensingBlocks::compileOf(&compiler);
+
     compiler.end();
 
     ASSERT_EQ(
@@ -867,8 +921,20 @@ TEST_F(SensingBlocksTest, Of)
               vm::OP_NULL,
               vm::OP_EXEC,
               17,
+              vm::OP_READ_VAR,
+              0,
+              vm::OP_NULL,
+              vm::OP_READ_VAR,
+              1,
+              vm::OP_NULL,
+              vm::OP_CONST,
+              10,
+              vm::OP_NULL,
+              vm::OP_EXEC,
+              18,
               vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 6, 6, 6, 6, 6, 6, 6, 0, 0, 0 }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, "some variable" }));
+    ASSERT_EQ(compiler.variables(), std::vector<Variable *>({ v2.get(), v3.get() }));
 }
 
 TEST_F(SensingBlocksTest, XPositionOfSprite)
@@ -1112,6 +1178,75 @@ TEST_F(SensingBlocksTest, VolumeOfTarget)
 
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_EQ(vm.getInput(0, 1)->toDouble(), stage.volume());
+}
+
+TEST_F(SensingBlocksTest, VariableOfTarget)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 4, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::variableOfTarget };
+    static Value constValues[] = { "variable", "invalid variable", "Sprite2", "_stage_", "test" };
+
+    Sprite sprite;
+    auto v1 = std::make_shared<Variable>("var1", "variable", 64.13);
+    sprite.addVariable(v1);
+
+    Stage stage;
+    auto v2 = std::make_shared<Variable>("var2", "test", 98);
+    auto v3 = std::make_shared<Variable>("var3", "variable", -0.85);
+    stage.addVariable(v2);
+    stage.addVariable(v3);
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(6));
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), v1->value().toDouble());
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(6));
+    EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 0);
+
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(&stage));
+    vm.reset();
+    vm.setBytecode(bytecode3);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), v3->value().toDouble());
+
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(&stage));
+    vm.reset();
+    vm.setBytecode(bytecode4);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 0);
+
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(-1));
+    EXPECT_CALL(m_engineMock, targetAt(-1)).WillOnce(Return(nullptr));
+    vm.reset();
+    vm.setBytecode(bytecode5);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 0);
 }
 
 TEST_F(SensingBlocksTest, BackdropNumberOfStage)
