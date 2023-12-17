@@ -254,8 +254,19 @@ do_if:
     DISPATCH();
 
 do_else:
-    while (*pos != OP_ENDIF)
+    unsigned int ifCounter = 1;
+    while (!(*pos == OP_ENDIF && ifCounter == 0)) {
         pos += instruction_arg_count[*pos++];
+
+        if ((*pos == OP_IF) || (*pos == OP_FOREVER_LOOP) || (*pos == OP_REPEAT_LOOP) || (*pos == OP_UNTIL_LOOP))
+            ifCounter++;
+        else if ((*pos == OP_ENDIF) || (*pos == OP_LOOP_END)) {
+            assert(ifCounter > 0);
+            ifCounter--;
+        }
+
+        assert(!(*pos == OP_ELSE && ifCounter == 1));
+    }
 
 do_endif:
     DISPATCH();
