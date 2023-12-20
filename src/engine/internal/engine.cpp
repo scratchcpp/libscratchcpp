@@ -152,6 +152,7 @@ void Engine::start()
 
     deleteClones();
 
+    m_eventLoopMutex.lock();
     m_timer->reset();
     m_running = true;
 
@@ -160,6 +161,8 @@ void Engine::start()
         for (auto block : gfBlocks)
             startScript(block, target);
     }
+
+    m_eventLoopMutex.unlock();
 }
 
 void Engine::stop()
@@ -360,6 +363,7 @@ void Engine::eventLoop(bool untilProjectStops)
         TargetScriptMap scripts = m_runningScripts; // this must be copied (for now)
 
         do {
+            m_eventLoopMutex.lock();
             m_scriptsToRemove.clear();
 
             // Execute new scripts from last frame
@@ -376,12 +380,14 @@ void Engine::eventLoop(bool untilProjectStops)
                 for (const auto &pair : m_runningScripts) {
                     if (!pair.second.empty()) {
                         empty = false;
+                        m_eventLoopMutex.unlock();
                         break;
                     }
                 }
 
                 if (empty) {
                     stop = true;
+                    m_eventLoopMutex.unlock();
                     break;
                 }
             }
@@ -391,6 +397,7 @@ void Engine::eventLoop(bool untilProjectStops)
 
             if (m_stopEventLoop) {
                 stop = true;
+                m_eventLoopMutex.unlock();
                 break;
             }
 
@@ -400,6 +407,7 @@ void Engine::eventLoop(bool untilProjectStops)
             elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - frameStart);
             sleepTime = m_frameDuration - elapsedTime;
             timeout = sleepTime <= std::chrono::milliseconds::zero();
+            m_eventLoopMutex.unlock();
         } while (!((m_redrawRequested && !m_turboModeEnabled) || timeout || stop));
 
         if (stop)
@@ -1173,14 +1181,17 @@ BlockSectionContainer *Engine::blockSectionContainer(IBlockSection *section) con
 
 void Engine::finalize()
 {
+    m_eventLoopMutex.lock();
     m_runningScripts.clear();
     m_scriptsToRemove.clear();
     m_running = false;
     m_redrawRequested = false;
+    m_eventLoopMutex.unlock();
 }
 
 void Engine::deleteClones()
 {
+    m_eventLoopMutex.lock();
     removeExecutableClones();
     m_clones.clear();
 
@@ -1196,6 +1207,8 @@ void Engine::deleteClones()
             }
         }
     }
+
+    m_eventLoopMutex.unlock();
 }
 
 void Engine::removeExecutableClones()
