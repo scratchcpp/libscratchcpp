@@ -163,8 +163,8 @@ class Engine : public IEngine
         std::unordered_map<std::string, std::vector<Script *>> m_whenKeyPressedScripts;                                    // key name, "when key pressed" scripts
         std::vector<std::string> m_extensions;
         std::vector<Target *> m_executableTargets; // sorted by layer (reverse order of execution)
-        std::unordered_map<Target *, std::vector<std::shared_ptr<VirtualMachine>>> m_runningScripts;
-        std::unordered_map<Target *, std::vector<std::shared_ptr<VirtualMachine>>> m_newScripts;
+        TargetScriptMap m_runningScripts;
+        TargetScriptMap m_newScripts;
         std::vector<VirtualMachine *> m_scriptsToRemove;
         std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> m_scripts;
         std::vector<BlockFunc> m_functions;
