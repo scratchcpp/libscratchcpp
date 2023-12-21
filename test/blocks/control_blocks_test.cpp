@@ -914,7 +914,7 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.allChildren().size(), 1);
+    ASSERT_EQ(sprite.clones().size(), 1);
 
     EXPECT_CALL(m_engineMock, initClone).Times(1);
     EXPECT_CALL(m_engineMock, moveSpriteBehindOther(_, &sprite));
@@ -924,8 +924,7 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.allChildren().size(), 2);
-    ASSERT_EQ(sprite.children(), sprite.allChildren());
+    ASSERT_EQ(sprite.clones().size(), 2);
 
     Sprite *clone3;
     EXPECT_CALL(m_engineMock, findTarget).WillOnce(Return(4));
@@ -938,8 +937,7 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.allChildren().size(), 3);
-    ASSERT_EQ(sprite.children(), sprite.allChildren());
+    ASSERT_EQ(sprite.clones().size(), 3);
 
     EXPECT_CALL(m_engineMock, initClone).Times(1);
     EXPECT_CALL(m_engineMock, moveSpriteBehindOther(_, &sprite));
@@ -949,8 +947,7 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.allChildren().size(), 4);
-    ASSERT_EQ(sprite.children(), sprite.allChildren());
+    ASSERT_EQ(sprite.clones().size(), 4);
 
     EXPECT_CALL(m_engineMock, deinitClone(clone1));
     EXPECT_CALL(m_engineMock, deinitClone(clone3));
@@ -1013,5 +1010,5 @@ TEST_F(ControlBlocksTest, DeleteThisCloneImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(sprite.children().empty());
+    ASSERT_TRUE(sprite.clones().empty());
 }

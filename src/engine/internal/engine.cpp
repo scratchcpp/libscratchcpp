@@ -239,7 +239,8 @@ void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, 
         if (!root->isStage()) {
             Sprite *sprite = dynamic_cast<Sprite *>(root);
             assert(sprite);
-            auto children = sprite->allChildren();
+            assert(!sprite->isClone());
+            const auto &children = sprite->clones();
 
             for (auto child : children)
                 targets.push_back(child.get());
@@ -283,12 +284,10 @@ void Engine::initClone(Sprite *clone)
     if (!clone || ((m_cloneLimit >= 0) && (m_clones.size() >= m_cloneLimit)))
         return;
 
-    Sprite *source = clone->cloneParent();
-    Target *root = clone->cloneRoot();
-    assert(source);
+    Target *root = clone->cloneSprite();
     assert(root);
 
-    if (!source || !root)
+    if (!root)
         return;
 
     auto it = m_cloneInitScriptsMap.find(root);
@@ -1204,7 +1203,7 @@ void Engine::deleteClones()
         Sprite *sprite = dynamic_cast<Sprite *>(target.get());
 
         if (sprite) {
-            std::vector<std::shared_ptr<Sprite>> clones = sprite->children();
+            std::vector<std::shared_ptr<Sprite>> clones = sprite->clones();
 
             for (auto clone : clones) {
                 assert(clone);

@@ -26,16 +26,11 @@ Sprite::~Sprite()
     if (isClone()) {
         IEngine *eng = engine();
 
-        if (eng) {
+        if (eng)
             eng->deinitClone(this);
 
-            auto children = allChildren();
-            for (auto child : children)
-                eng->deinitClone(child.get());
-        }
-
-        assert(impl->cloneParent);
-        impl->cloneParent->impl->removeClone(this);
+        assert(impl->cloneSprite);
+        impl->cloneSprite->impl->removeClone(this);
     }
 }
 
@@ -55,13 +50,13 @@ std::shared_ptr<Sprite> Sprite::clone()
     if (eng && (eng->cloneLimit() == -1 || eng->cloneCount() < eng->cloneLimit())) {
         std::shared_ptr<Sprite> clone = std::make_shared<Sprite>();
 
-        if (impl->cloneRoot == nullptr)
-            clone->impl->cloneRoot = this;
-        else
-            clone->impl->cloneRoot = impl->cloneRoot;
-
-        clone->impl->cloneParent = this;
-        impl->childClones.push_back(clone);
+        if (impl->cloneSprite == nullptr) {
+            clone->impl->cloneSprite = this;
+            impl->clones.push_back(clone);
+        } else {
+            clone->impl->cloneSprite = impl->cloneSprite;
+            impl->cloneSprite->impl->clones.push_back(clone);
+        }
 
         // Copy data
         clone->setName(name());
@@ -111,39 +106,23 @@ std::shared_ptr<Sprite> Sprite::clone()
 /*! Returns true if this is a clone. */
 bool Sprite::isClone() const
 {
-    return (impl->cloneParent != nullptr);
+    return (impl->cloneSprite != nullptr);
 }
 
 /*! Returns the sprite this clone was created from, or nullptr if this isn't a clone. */
-Sprite *Sprite::cloneRoot() const
+Sprite *Sprite::cloneSprite() const
 {
-    return impl->cloneRoot;
+    return impl->cloneSprite;
 }
 
-/*! Returns the sprite or clone this clone was created from, or nullptr if this isn't a clone. */
-Sprite *Sprite::cloneParent() const
+/*! Returns list of clones of the sprite. */
+const std::vector<std::shared_ptr<Sprite>> &Sprite::clones() const
 {
-    return impl->cloneParent;
-}
-
-/*! Returns list of child clones. */
-const std::vector<std::shared_ptr<Sprite>> &Sprite::children() const
-{
-    return impl->childClones;
-}
-
-/*! Returns list of child clones and their children (recursive). */
-std::vector<std::shared_ptr<Sprite>> Sprite::allChildren() const
-{
-    std::vector<std::shared_ptr<Sprite>> ret;
-
-    for (auto clone : impl->childClones) {
-        ret.push_back(clone);
-        auto children = clone->allChildren();
-        ret.insert(ret.end(), children.begin(), children.end());
-    }
-
-    return ret;
+    if (isClone()) {
+        assert(impl->cloneSprite);
+        return impl->cloneSprite->impl->clones;
+    } else
+        return impl->clones;
 }
 
 /*! Returns true if the sprite is visible. */
@@ -419,7 +398,7 @@ void Sprite::clearGraphicsEffects()
 
 Target *Sprite::dataSource() const
 {
-    return impl->cloneRoot;
+    return impl->cloneSprite;
 }
 
 void Sprite::setXY(double x, double y)

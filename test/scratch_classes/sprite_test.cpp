@@ -73,7 +73,7 @@ TEST(SpriteTest, Clone)
 
     auto checkCloneData = [](Sprite *clone) {
         ASSERT_TRUE(clone);
-        Sprite *root = clone->cloneRoot();
+        Sprite *root = clone->cloneSprite();
 
         ASSERT_EQ(clone->name(), "Sprite1");
         ASSERT_EQ(clone->variables().size(), 2);
@@ -111,13 +111,11 @@ TEST(SpriteTest, Clone)
     };
 
     ASSERT_FALSE(sprite->isClone());
-    ASSERT_EQ(sprite->cloneRoot(), nullptr);
-    ASSERT_EQ(sprite->cloneParent(), nullptr);
+    ASSERT_EQ(sprite->cloneSprite(), nullptr);
 
     ASSERT_EQ(sprite->clone(), nullptr);
     ASSERT_FALSE(sprite->isClone());
-    ASSERT_EQ(sprite->cloneRoot(), nullptr);
-    ASSERT_EQ(sprite->cloneParent(), nullptr);
+    ASSERT_EQ(sprite->cloneSprite(), nullptr);
 
     EngineMock engine;
     sprite->setEngine(&engine);
@@ -131,12 +129,10 @@ TEST(SpriteTest, Clone)
     ASSERT_EQ(sprite->clone().get(), clone1);
     ASSERT_EQ(clone1, clone1_2);
     ASSERT_FALSE(sprite->isClone());
-    ASSERT_EQ(sprite->cloneRoot(), nullptr);
-    ASSERT_EQ(sprite->cloneParent(), nullptr);
+    ASSERT_EQ(sprite->cloneSprite(), nullptr);
 
     ASSERT_TRUE(clone1->isClone());
-    ASSERT_EQ(clone1->cloneRoot(), sprite.get());
-    ASSERT_EQ(clone1->cloneParent(), sprite.get());
+    ASSERT_EQ(clone1->cloneSprite(), sprite.get());
 
     checkCloneData(clone1);
 
@@ -150,11 +146,9 @@ TEST(SpriteTest, Clone)
     ASSERT_EQ(clone1->clone().get(), clone2);
     ASSERT_EQ(clone2, clone2_2);
     ASSERT_TRUE(clone1->isClone());
-    ASSERT_EQ(clone1->cloneRoot(), sprite.get());
-    ASSERT_EQ(clone1->cloneParent(), sprite.get());
+    ASSERT_EQ(clone1->cloneSprite(), sprite.get());
     ASSERT_TRUE(clone2->isClone());
-    ASSERT_EQ(clone2->cloneRoot(), sprite.get());
-    ASSERT_EQ(clone2->cloneParent(), clone1);
+    ASSERT_EQ(clone2->cloneSprite(), sprite.get());
 
     checkCloneData(clone2);
 
@@ -182,58 +176,23 @@ TEST(SpriteTest, Clone)
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(150));
     ASSERT_EQ(sprite->clone(), nullptr);
 
-    // children
-    const auto &children1 = sprite->children();
-    ASSERT_EQ(children1.size(), 2);
-    ASSERT_EQ(children1[0].get(), clone1);
-    ASSERT_EQ(children1[1].get(), clone4);
+    // clones
+    const auto &clones = sprite->clones();
+    ASSERT_EQ(clones.size(), 4);
+    ASSERT_EQ(clones[0].get(), clone1);
+    ASSERT_EQ(clones[1].get(), clone2);
+    ASSERT_EQ(clones[2].get(), clone3);
+    ASSERT_EQ(clones[3].get(), clone4);
 
-    const auto &children2 = clone1->children();
-    ASSERT_EQ(children2.size(), 2);
-    ASSERT_EQ(children2[0].get(), clone2);
-    ASSERT_EQ(children2[1].get(), clone3);
-
-    ASSERT_TRUE(clone2->children().empty());
-
-    ASSERT_TRUE(clone3->children().empty());
-
-    ASSERT_TRUE(clone4->children().empty());
-
-    // allChildren
-    auto allChildren = sprite->allChildren();
-    ASSERT_EQ(allChildren.size(), 4);
-    ASSERT_EQ(allChildren[0].get(), clone1);
-    ASSERT_EQ(allChildren[1].get(), clone2);
-    ASSERT_EQ(allChildren[2].get(), clone3);
-    ASSERT_EQ(allChildren[3].get(), clone4);
-
-    allChildren = clone1->allChildren();
-    ASSERT_EQ(allChildren.size(), 2);
-    ASSERT_EQ(allChildren[0].get(), clone2);
-    ASSERT_EQ(allChildren[1].get(), clone3);
-
-    ASSERT_TRUE(clone2->allChildren().empty());
-
-    ASSERT_TRUE(clone3->allChildren().empty());
-
-    ASSERT_TRUE(clone4->allChildren().empty());
+    ASSERT_EQ(clone1->clones(), clones);
+    ASSERT_EQ(clone2->clones(), clones);
+    ASSERT_EQ(clone3->clones(), clones);
+    ASSERT_EQ(clone4->clones(), clones);
 
     ASSERT_EQ(clone2->costumes(), sprite->costumes());
     auto c2 = std::make_shared<Costume>("costume2", "", "png");
     clone2->addCostume(c2);
     ASSERT_EQ(clone2->costumes(), sprite->costumes());
-
-    EXPECT_CALL(engine, deinitClone(clone2));
-    clone2->~Sprite();
-
-    EXPECT_CALL(engine, deinitClone(clone3));
-    clone3->~Sprite();
-
-    EXPECT_CALL(engine, deinitClone(clone1)).Times(2);
-    clone1->~Sprite();
-
-    EXPECT_CALL(engine, deinitClone(clone4)).Times(2);
-    clone4->~Sprite();
 
     sprite.reset();
 }

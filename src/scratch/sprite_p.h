@@ -21,9 +21,8 @@ struct SpritePrivate
 
         Sprite *sprite = nullptr;
         ISpriteHandler *iface = nullptr;
-        Sprite *cloneRoot = nullptr;
-        Sprite *cloneParent = nullptr;
-        std::vector<std::shared_ptr<Sprite>> childClones;
+        Sprite *cloneSprite = nullptr;
+        std::vector<std::shared_ptr<Sprite>> clones;
         bool visible = true;
         double x = 0;
         double y = 0;

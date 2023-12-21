@@ -63,7 +63,7 @@ std::shared_ptr<VirtualMachine> Script::start(Target *target)
         sprite = dynamic_cast<Sprite *>(target);
 
     if (impl->target && sprite && sprite->isClone() && impl->engine) {
-        Target *root = sprite->cloneRoot();
+        Target *root = sprite->cloneSprite();
 
         if (root != impl->target) {
             std::cout << "warning: a clone tried to start a script of another target (this is a bug in libscratchcpp or in your code!)" << std::endl;
