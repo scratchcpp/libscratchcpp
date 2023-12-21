@@ -315,10 +315,10 @@ void Engine::initClone(std::shared_ptr<Sprite> clone)
     m_executableTargets.push_back(clone.get()); // execution order needs to be updated after this
 }
 
-void Engine::deinitClone(Sprite *clone)
+void Engine::deinitClone(std::shared_ptr<Sprite> clone)
 {
-    m_clones.erase(std::remove(m_clones.begin(), m_clones.end(), clone), m_clones.end());
-    m_executableTargets.erase(std::remove(m_executableTargets.begin(), m_executableTargets.end(), clone), m_executableTargets.end());
+    m_clones.erase(std::remove(m_clones.begin(), m_clones.end(), clone.get()), m_clones.end());
+    m_executableTargets.erase(std::remove(m_executableTargets.begin(), m_executableTargets.end(), clone.get()), m_executableTargets.end());
 }
 
 void Engine::run()

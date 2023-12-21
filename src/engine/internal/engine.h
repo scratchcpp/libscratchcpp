@@ -37,7 +37,7 @@ class Engine : public IEngine
         void stopScript(VirtualMachine *vm) override;
         void stopTarget(Target *target, VirtualMachine *exceptScript) override;
         void initClone(std::shared_ptr<Sprite> clone) override;
-        void deinitClone(libscratchcpp::Sprite *clone) override;
+        void deinitClone(std::shared_ptr<Sprite> clone) override;
 
         void run() override;
         void runEventLoop() override;

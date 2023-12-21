@@ -199,7 +199,7 @@ TEST(SpriteTest, Clone)
     ASSERT_EQ(clone2->costumes(), sprite.costumes());
 
     // Delete
-    EXPECT_CALL(engine, deinitClone(clone1.get()));
+    EXPECT_CALL(engine, deinitClone(clone1));
     clone1->deleteClone();
 
     ASSERT_EQ(clones.size(), 3);
@@ -207,20 +207,20 @@ TEST(SpriteTest, Clone)
     ASSERT_EQ(clones[1], clone3);
     ASSERT_EQ(clones[2], clone4);
 
-    EXPECT_CALL(engine, deinitClone(clone3.get()));
+    EXPECT_CALL(engine, deinitClone(clone3));
     clone3->deleteClone();
 
     ASSERT_EQ(clones.size(), 2);
     ASSERT_EQ(clones[0], clone2);
     ASSERT_EQ(clones[1], clone4);
 
-    EXPECT_CALL(engine, deinitClone(clone2.get()));
+    EXPECT_CALL(engine, deinitClone(clone2));
     clone2->deleteClone();
 
     ASSERT_EQ(clones.size(), 1);
     ASSERT_EQ(clones[0], clone4);
 
-    EXPECT_CALL(engine, deinitClone(clone4.get()));
+    EXPECT_CALL(engine, deinitClone(clone4));
     clone4->deleteClone();
     ASSERT_TRUE(clones.empty());
 }

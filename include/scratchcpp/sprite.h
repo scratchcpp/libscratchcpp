@@ -13,7 +13,9 @@ class IGraphicsEffect;
 class SpritePrivate;
 
 /*! \brief The Sprite class represents a Scratch sprite. */
-class LIBSCRATCHCPP_EXPORT Sprite : public Target
+class LIBSCRATCHCPP_EXPORT Sprite
+    : public Target
+    , public std::enable_shared_from_this<Sprite>
 {
     public:
         enum class RotationStyle

@@ -99,7 +99,7 @@ void Sprite::deleteClone()
         IEngine *eng = engine();
 
         if (eng)
-            eng->deinitClone(this);
+            eng->deinitClone(shared_from_this());
 
         assert(impl->cloneSprite);
         impl->cloneDeleted = true;

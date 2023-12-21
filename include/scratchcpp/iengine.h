@@ -76,7 +76,7 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void initClone(std::shared_ptr<Sprite> clone) = 0;
 
         /*! Automatically called from clones that are being deleted. */
-        virtual void deinitClone(Sprite *clone) = 0;
+        virtual void deinitClone(std::shared_ptr<Sprite> clone) = 0;
 
         /*!
          * Calls and runs "when green flag clicked" blocks.
