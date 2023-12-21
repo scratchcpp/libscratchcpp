@@ -309,15 +309,15 @@ void Engine::initClone(std::shared_ptr<Sprite> clone)
         }
     }
 
-    assert(std::find(m_clones.begin(), m_clones.end(), clone.get()) == m_clones.end());
+    assert(std::find(m_clones.begin(), m_clones.end(), clone) == m_clones.end());
     assert(std::find(m_executableTargets.begin(), m_executableTargets.end(), clone.get()) == m_executableTargets.end());
-    m_clones.push_back(clone.get());
+    m_clones.insert(clone);
     m_executableTargets.push_back(clone.get()); // execution order needs to be updated after this
 }
 
 void Engine::deinitClone(std::shared_ptr<Sprite> clone)
 {
-    m_clones.erase(std::remove(m_clones.begin(), m_clones.end(), clone.get()), m_clones.end());
+    m_clones.erase(clone);
     m_executableTargets.erase(std::remove(m_executableTargets.begin(), m_executableTargets.end(), clone.get()), m_executableTargets.end());
 }
 
@@ -1218,8 +1218,8 @@ void Engine::deleteClones()
 void Engine::removeExecutableClones()
 {
     // Remove clones from the executable targets
-    for (Target *target : m_clones)
-        m_executableTargets.erase(std::remove(m_executableTargets.begin(), m_executableTargets.end(), target), m_executableTargets.end());
+    for (std::shared_ptr<Sprite> clone : m_clones)
+        m_executableTargets.erase(std::remove(m_executableTargets.begin(), m_executableTargets.end(), clone.get()), m_executableTargets.end());
 }
 
 void Engine::updateFrameDuration()
