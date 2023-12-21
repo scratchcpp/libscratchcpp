@@ -288,7 +288,7 @@ unsigned int ControlBlocks::deleteThisClone(VirtualMachine *vm)
 {
     Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
 
-    if (sprite) {
+    if (sprite && sprite->isClone()) {
         vm->engine()->stopTarget(sprite, nullptr);
         sprite->deleteClone();
     }
