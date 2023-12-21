@@ -950,7 +950,10 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     ASSERT_EQ(sprite.clones().size(), 4);
 
     EXPECT_CALL(m_engineMock, deinitClone(clone1));
+    clone1->deleteClone();
+
     EXPECT_CALL(m_engineMock, deinitClone(clone3));
+    clone3->deleteClone();
 }
 
 TEST_F(ControlBlocksTest, StartAsClone)
@@ -1004,7 +1007,7 @@ TEST_F(ControlBlocksTest, DeleteThisCloneImpl)
     vm.setFunctions(functions);
 
     EXPECT_CALL(m_engineMock, stopTarget(clone, nullptr)).Times(1);
-    EXPECT_CALL(m_engineMock, deinitClone(clone)).Times(2); // TODO: Is there a double-free?
+    EXPECT_CALL(m_engineMock, deinitClone(clone));
 
     vm.setBytecode(bytecode);
     vm.run();

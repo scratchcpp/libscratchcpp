@@ -286,11 +286,11 @@ unsigned int ControlBlocks::createCloneOfMyself(VirtualMachine *vm)
 
 unsigned int ControlBlocks::deleteThisClone(VirtualMachine *vm)
 {
-    Target *target = vm->target();
+    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
 
-    if (target) {
-        vm->engine()->stopTarget(target, nullptr);
-        target->~Target();
+    if (sprite) {
+        vm->engine()->stopTarget(sprite, nullptr);
+        sprite->deleteClone();
     }
 
     return 0;

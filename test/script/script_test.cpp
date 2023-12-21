@@ -142,4 +142,5 @@ TEST_F(ScriptTest, Start)
     ASSERT_EQ(vm->lists()[1], clone->listAt(clone->findListById("d")).get());
 
     EXPECT_CALL(m_engine, deinitClone(clone.get()));
+    clone->deleteClone();
 }

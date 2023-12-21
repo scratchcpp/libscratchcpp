@@ -1207,7 +1207,7 @@ void Engine::deleteClones()
 
             for (auto clone : clones) {
                 assert(clone);
-                clone->~Sprite();
+                clone->deleteClone();
             }
         }
     }

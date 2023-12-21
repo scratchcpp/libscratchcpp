@@ -8,6 +8,7 @@
 #include <scratchcpp/costume.h>
 #include <scratchcpp/rect.h>
 #include <cassert>
+#include <iostream>
 
 #include "sprite_p.h"
 
@@ -18,20 +19,6 @@ Sprite::Sprite() :
     Target(),
     impl(spimpl::make_unique_impl<SpritePrivate>(this))
 {
-}
-
-/*! Destroys the Sprite object. */
-Sprite::~Sprite()
-{
-    if (isClone()) {
-        IEngine *eng = engine();
-
-        if (eng)
-            eng->deinitClone(this);
-
-        assert(impl->cloneSprite);
-        impl->cloneSprite->impl->removeClone(this);
-    }
 }
 
 /*! Sets the sprite interface. */
@@ -101,6 +88,23 @@ std::shared_ptr<Sprite> Sprite::clone()
     }
 
     return nullptr;
+}
+
+/*! Deletes this clone (if the sprite is a clone). */
+void Sprite::deleteClone()
+{
+    assert(isClone());
+
+    if (isClone()) {
+        IEngine *eng = engine();
+
+        if (eng)
+            eng->deinitClone(this);
+
+        assert(impl->cloneSprite);
+        impl->cloneDeleted = true;
+        impl->cloneSprite->impl->removeClone(this);
+    }
 }
 
 /*! Returns true if this is a clone. */

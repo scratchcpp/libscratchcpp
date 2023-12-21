@@ -23,6 +23,7 @@ struct SpritePrivate
         ISpriteHandler *iface = nullptr;
         Sprite *cloneSprite = nullptr;
         std::vector<std::shared_ptr<Sprite>> clones;
+        bool cloneDeleted = false;
         bool visible = true;
         double x = 0;
         double y = 0;
