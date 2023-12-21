@@ -13,7 +13,9 @@ class IGraphicsEffect;
 class SpritePrivate;
 
 /*! \brief The Sprite class represents a Scratch sprite. */
-class LIBSCRATCHCPP_EXPORT Sprite : public Target
+class LIBSCRATCHCPP_EXPORT Sprite
+    : public Target
+    , public std::enable_shared_from_this<Sprite>
 {
     public:
         enum class RotationStyle
@@ -25,18 +27,16 @@ class LIBSCRATCHCPP_EXPORT Sprite : public Target
 
         Sprite();
         Sprite(const Sprite &) = delete;
-        ~Sprite();
 
         void setInterface(ISpriteHandler *newInterface);
 
         std::shared_ptr<Sprite> clone();
+        void deleteClone();
 
         bool isClone() const;
 
-        Sprite *cloneRoot() const;
-        Sprite *cloneParent() const;
-        const std::vector<std::shared_ptr<Sprite>> &children() const;
-        std::vector<std::shared_ptr<Sprite>> allChildren() const;
+        Sprite *cloneSprite() const;
+        const std::vector<std::shared_ptr<Sprite>> &clones() const;
 
         bool visible() const;
         void setVisible(bool newVisible);

@@ -29,7 +29,7 @@ class ISpriteHandlerTest : public testing::Test
 
 TEST_F(ISpriteHandlerTest, Clone)
 {
-    Sprite *clone;
+    std::shared_ptr<Sprite> clone;
     Sprite *cloneParam1, *cloneParam2;
     EXPECT_CALL(m_engine, cloneLimit()).Times(2).WillRepeatedly(Return(300));
     EXPECT_CALL(m_engine, cloneCount()).WillOnce(Return(0));
@@ -40,8 +40,8 @@ TEST_F(ISpriteHandlerTest, Clone)
 
     m_sprite.clone();
     ASSERT_TRUE(clone);
-    ASSERT_EQ(cloneParam1, clone);
-    ASSERT_EQ(cloneParam2, clone);
+    ASSERT_EQ(cloneParam1, clone.get());
+    ASSERT_EQ(cloneParam2, clone.get());
 
     // Engine is used during deletion, so let's just set it to nullptr (this is tested elsewhere)
     m_sprite.setEngine(nullptr);

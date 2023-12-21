@@ -73,10 +73,10 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void stopTarget(Target *target, VirtualMachine *exceptScript) = 0;
 
         /*! Calls the "when I start as a clone" blocks of the given sprite. */
-        virtual void initClone(Sprite *clone) = 0;
+        virtual void initClone(std::shared_ptr<Sprite> clone) = 0;
 
         /*! Automatically called from clones that are being deleted. */
-        virtual void deinitClone(Sprite *clone) = 0;
+        virtual void deinitClone(std::shared_ptr<Sprite> clone) = 0;
 
         /*!
          * Calls and runs "when green flag clicked" blocks.

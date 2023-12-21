@@ -9,6 +9,7 @@
 #include <memory>
 #include <chrono>
 #include <mutex>
+#include <set>
 
 #include "blocksectioncontainer.h"
 
@@ -36,8 +37,8 @@ class Engine : public IEngine
         void broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait = false) override;
         void stopScript(VirtualMachine *vm) override;
         void stopTarget(Target *target, VirtualMachine *exceptScript) override;
-        void initClone(libscratchcpp::Sprite *clone) override;
-        void deinitClone(libscratchcpp::Sprite *clone) override;
+        void initClone(std::shared_ptr<Sprite> clone) override;
+        void deinitClone(std::shared_ptr<Sprite> clone) override;
 
         void run() override;
         void runEventLoop() override;
@@ -183,7 +184,7 @@ class Engine : public IEngine
         unsigned int m_stageWidth = 480;
         unsigned int m_stageHeight = 360;
         int m_cloneLimit = 300;
-        std::vector<Sprite *> m_clones;
+        std::set<std::shared_ptr<Sprite>> m_clones;
         bool m_spriteFencingEnabled = true;
 
         bool m_running = false;

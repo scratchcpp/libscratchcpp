@@ -21,9 +21,9 @@ SpritePrivate::SpritePrivate(Sprite *sprite) :
 void SpritePrivate::removeClone(Sprite *clone)
 {
     int index = 0;
-    for (const auto &child : childClones) {
+    for (const auto &child : clones) {
         if (child.get() == clone) {
-            childClones.erase(childClones.begin() + index);
+            clones.erase(clones.begin() + index);
             return;
         }
 

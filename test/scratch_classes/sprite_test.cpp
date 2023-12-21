@@ -40,40 +40,40 @@ TEST(SpriteTest, Visible)
 
 TEST(SpriteTest, Clone)
 {
-    std::unique_ptr<Sprite> sprite = std::make_unique<Sprite>();
-    sprite->setName("Sprite1");
+    Sprite sprite;
+    sprite.setName("Sprite1");
     auto var1 = std::make_shared<Variable>("a", "var1", "hello");
     auto var2 = std::make_shared<Variable>("b", "var2", "world");
-    sprite->addVariable(var1);
-    sprite->addVariable(var2);
+    sprite.addVariable(var1);
+    sprite.addVariable(var2);
     auto c1 = std::make_shared<Costume>("costume1", "", "svg");
-    sprite->addCostume(c1);
+    sprite.addCostume(c1);
 
     auto list1 = std::make_shared<List>("c", "list1");
     list1->push_back("item1");
     list1->push_back("item2");
     auto list2 = std::make_shared<List>("d", "list2");
     list2->push_back("test");
-    sprite->addList(list1);
-    sprite->addList(list2);
+    sprite.addList(list1);
+    sprite.addList(list2);
 
-    sprite->addCostume(std::make_shared<Costume>("", "", ""));
-    sprite->addCostume(std::make_shared<Costume>("", "", ""));
-    sprite->setCostumeIndex(1);
-    sprite->setLayerOrder(5);
-    sprite->setVolume(50);
+    sprite.addCostume(std::make_shared<Costume>("", "", ""));
+    sprite.addCostume(std::make_shared<Costume>("", "", ""));
+    sprite.setCostumeIndex(1);
+    sprite.setLayerOrder(5);
+    sprite.setVolume(50);
 
-    sprite->setVisible(false);
-    sprite->setX(100.25);
-    sprite->setY(-45.43);
-    sprite->setSize(54.121);
-    sprite->setDirection(179.4);
-    sprite->setDraggable(true);
-    sprite->setRotationStyle(Sprite::RotationStyle::DoNotRotate);
+    sprite.setVisible(false);
+    sprite.setX(100.25);
+    sprite.setY(-45.43);
+    sprite.setSize(54.121);
+    sprite.setDirection(179.4);
+    sprite.setDraggable(true);
+    sprite.setRotationStyle(Sprite::RotationStyle::DoNotRotate);
 
     auto checkCloneData = [](Sprite *clone) {
         ASSERT_TRUE(clone);
-        Sprite *root = clone->cloneRoot();
+        Sprite *root = clone->cloneSprite();
 
         ASSERT_EQ(clone->name(), "Sprite1");
         ASSERT_EQ(clone->variables().size(), 2);
@@ -110,132 +110,119 @@ TEST(SpriteTest, Clone)
         ASSERT_EQ(clone->rotationStyle(), Sprite::RotationStyle::DoNotRotate);
     };
 
-    ASSERT_FALSE(sprite->isClone());
-    ASSERT_EQ(sprite->cloneRoot(), nullptr);
-    ASSERT_EQ(sprite->cloneParent(), nullptr);
+    ASSERT_FALSE(sprite.isClone());
+    ASSERT_EQ(sprite.cloneSprite(), nullptr);
 
-    ASSERT_EQ(sprite->clone(), nullptr);
-    ASSERT_FALSE(sprite->isClone());
-    ASSERT_EQ(sprite->cloneRoot(), nullptr);
-    ASSERT_EQ(sprite->cloneParent(), nullptr);
+    ASSERT_EQ(sprite.clone(), nullptr);
+    ASSERT_FALSE(sprite.isClone());
+    ASSERT_EQ(sprite.cloneSprite(), nullptr);
 
     EngineMock engine;
-    sprite->setEngine(&engine);
+    sprite.setEngine(&engine);
     EXPECT_CALL(engine, requestRedraw()).Times(2);
     EXPECT_CALL(engine, cloneLimit()).Times(6).WillRepeatedly(Return(300)); // clone count limit is tested later
 
-    Sprite *clone1, *clone1_2;
+    std::shared_ptr<Sprite> clone1;
+    Sprite *clone1_2;
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(0));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone1));
-    EXPECT_CALL(engine, moveSpriteBehindOther(_, sprite.get())).WillOnce(SaveArg<0>(&clone1_2));
-    ASSERT_EQ(sprite->clone().get(), clone1);
-    ASSERT_EQ(clone1, clone1_2);
-    ASSERT_FALSE(sprite->isClone());
-    ASSERT_EQ(sprite->cloneRoot(), nullptr);
-    ASSERT_EQ(sprite->cloneParent(), nullptr);
+    EXPECT_CALL(engine, moveSpriteBehindOther(_, &sprite)).WillOnce(SaveArg<0>(&clone1_2));
+    ASSERT_EQ(sprite.clone(), clone1);
+    ASSERT_EQ(clone1.get(), clone1_2);
+    ASSERT_FALSE(sprite.isClone());
+    ASSERT_EQ(sprite.cloneSprite(), nullptr);
 
     ASSERT_TRUE(clone1->isClone());
-    ASSERT_EQ(clone1->cloneRoot(), sprite.get());
-    ASSERT_EQ(clone1->cloneParent(), sprite.get());
+    ASSERT_EQ(clone1->cloneSprite(), &sprite);
 
-    checkCloneData(clone1);
+    checkCloneData(clone1.get());
 
     // Modify root sprite data to make sure parent is used
-    sprite->setLayerOrder(3);
+    sprite.setLayerOrder(3);
 
-    Sprite *clone2, *clone2_2;
+    std::shared_ptr<Sprite> clone2;
+    Sprite *clone2_2;
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(1));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone2));
-    EXPECT_CALL(engine, moveSpriteBehindOther(_, clone1)).WillOnce(SaveArg<0>(&clone2_2));
-    ASSERT_EQ(clone1->clone().get(), clone2);
-    ASSERT_EQ(clone2, clone2_2);
+    EXPECT_CALL(engine, moveSpriteBehindOther(_, clone1.get())).WillOnce(SaveArg<0>(&clone2_2));
+    ASSERT_EQ(clone1->clone(), clone2);
+    ASSERT_EQ(clone2.get(), clone2_2);
     ASSERT_TRUE(clone1->isClone());
-    ASSERT_EQ(clone1->cloneRoot(), sprite.get());
-    ASSERT_EQ(clone1->cloneParent(), sprite.get());
+    ASSERT_EQ(clone1->cloneSprite(), &sprite);
     ASSERT_TRUE(clone2->isClone());
-    ASSERT_EQ(clone2->cloneRoot(), sprite.get());
-    ASSERT_EQ(clone2->cloneParent(), clone1);
+    ASSERT_EQ(clone2->cloneSprite(), &sprite);
 
-    checkCloneData(clone2);
+    checkCloneData(clone2.get());
 
-    sprite->setVisible(true);
+    sprite.setVisible(true);
 
-    Sprite *clone3, *clone3_2;
+    std::shared_ptr<Sprite> clone3;
+    Sprite *clone3_2;
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(2));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone3));
-    EXPECT_CALL(engine, moveSpriteBehindOther(_, clone1)).WillOnce(SaveArg<0>(&clone3_2));
-    ASSERT_EQ(clone1->clone().get(), clone3);
-    ASSERT_EQ(clone3, clone3_2);
+    EXPECT_CALL(engine, moveSpriteBehindOther(_, clone1.get())).WillOnce(SaveArg<0>(&clone3_2));
+    ASSERT_EQ(clone1->clone(), clone3);
+    ASSERT_EQ(clone3.get(), clone3_2);
 
-    Sprite *clone4, *clone4_2;
+    std::shared_ptr<Sprite> clone4;
+    Sprite *clone4_2;
     EXPECT_CALL(engine, cloneLimit()).WillOnce(Return(-1));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone4));
-    EXPECT_CALL(engine, moveSpriteBehindOther(_, sprite.get())).WillOnce(SaveArg<0>(&clone4_2));
-    ASSERT_EQ(sprite->clone().get(), clone4);
-    ASSERT_EQ(clone4, clone4_2);
+    EXPECT_CALL(engine, moveSpriteBehindOther(_, &sprite)).WillOnce(SaveArg<0>(&clone4_2));
+    ASSERT_EQ(sprite.clone(), clone4);
+    ASSERT_EQ(clone4.get(), clone4_2);
 
     EXPECT_CALL(engine, cloneLimit()).Times(2).WillRepeatedly(Return(0));
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(0));
-    ASSERT_EQ(sprite->clone(), nullptr);
+    ASSERT_EQ(sprite.clone(), nullptr);
 
     EXPECT_CALL(engine, cloneLimit()).Times(2).WillRepeatedly(Return(150));
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(150));
-    ASSERT_EQ(sprite->clone(), nullptr);
+    ASSERT_EQ(sprite.clone(), nullptr);
 
-    // children
-    const auto &children1 = sprite->children();
-    ASSERT_EQ(children1.size(), 2);
-    ASSERT_EQ(children1[0].get(), clone1);
-    ASSERT_EQ(children1[1].get(), clone4);
+    // clones
+    const auto &clones = sprite.clones();
+    ASSERT_EQ(clones.size(), 4);
+    ASSERT_EQ(clones[0], clone1);
+    ASSERT_EQ(clones[1], clone2);
+    ASSERT_EQ(clones[2], clone3);
+    ASSERT_EQ(clones[3], clone4);
 
-    const auto &children2 = clone1->children();
-    ASSERT_EQ(children2.size(), 2);
-    ASSERT_EQ(children2[0].get(), clone2);
-    ASSERT_EQ(children2[1].get(), clone3);
+    ASSERT_EQ(clone1->clones(), clones);
+    ASSERT_EQ(clone2->clones(), clones);
+    ASSERT_EQ(clone3->clones(), clones);
+    ASSERT_EQ(clone4->clones(), clones);
 
-    ASSERT_TRUE(clone2->children().empty());
-
-    ASSERT_TRUE(clone3->children().empty());
-
-    ASSERT_TRUE(clone4->children().empty());
-
-    // allChildren
-    auto allChildren = sprite->allChildren();
-    ASSERT_EQ(allChildren.size(), 4);
-    ASSERT_EQ(allChildren[0].get(), clone1);
-    ASSERT_EQ(allChildren[1].get(), clone2);
-    ASSERT_EQ(allChildren[2].get(), clone3);
-    ASSERT_EQ(allChildren[3].get(), clone4);
-
-    allChildren = clone1->allChildren();
-    ASSERT_EQ(allChildren.size(), 2);
-    ASSERT_EQ(allChildren[0].get(), clone2);
-    ASSERT_EQ(allChildren[1].get(), clone3);
-
-    ASSERT_TRUE(clone2->allChildren().empty());
-
-    ASSERT_TRUE(clone3->allChildren().empty());
-
-    ASSERT_TRUE(clone4->allChildren().empty());
-
-    ASSERT_EQ(clone2->costumes(), sprite->costumes());
+    ASSERT_EQ(clone2->costumes(), sprite.costumes());
     auto c2 = std::make_shared<Costume>("costume2", "", "png");
     clone2->addCostume(c2);
-    ASSERT_EQ(clone2->costumes(), sprite->costumes());
+    ASSERT_EQ(clone2->costumes(), sprite.costumes());
 
-    EXPECT_CALL(engine, deinitClone(clone2));
-    clone2->~Sprite();
+    // Delete
+    EXPECT_CALL(engine, deinitClone(clone1));
+    clone1->deleteClone();
+
+    ASSERT_EQ(clones.size(), 3);
+    ASSERT_EQ(clones[0], clone2);
+    ASSERT_EQ(clones[1], clone3);
+    ASSERT_EQ(clones[2], clone4);
 
     EXPECT_CALL(engine, deinitClone(clone3));
-    clone3->~Sprite();
+    clone3->deleteClone();
 
-    EXPECT_CALL(engine, deinitClone(clone1)).Times(2);
-    clone1->~Sprite();
+    ASSERT_EQ(clones.size(), 2);
+    ASSERT_EQ(clones[0], clone2);
+    ASSERT_EQ(clones[1], clone4);
 
-    EXPECT_CALL(engine, deinitClone(clone4)).Times(2);
-    clone4->~Sprite();
+    EXPECT_CALL(engine, deinitClone(clone2));
+    clone2->deleteClone();
 
-    sprite.reset();
+    ASSERT_EQ(clones.size(), 1);
+    ASSERT_EQ(clones[0], clone4);
+
+    EXPECT_CALL(engine, deinitClone(clone4));
+    clone4->deleteClone();
+    ASSERT_TRUE(clones.empty());
 }
 
 TEST(SpriteTest, XY)
