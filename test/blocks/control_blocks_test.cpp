@@ -902,7 +902,7 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     vm.setFunctions(functions);
     vm.setConstValues(constValues);
 
-    Sprite *clone1;
+    std::shared_ptr<Sprite> clone1;
     EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
     EXPECT_CALL(m_engineMock, cloneLimit()).Times(8).WillRepeatedly(Return(300));
     EXPECT_CALL(m_engineMock, cloneCount()).Times(4).WillRepeatedly(Return(0));
@@ -926,7 +926,7 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(sprite.clones().size(), 2);
 
-    Sprite *clone3;
+    std::shared_ptr<Sprite> clone3;
     EXPECT_CALL(m_engineMock, findTarget).WillOnce(Return(4));
     EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
     EXPECT_CALL(m_engineMock, initClone).WillOnce(SaveArg<0>(&clone3));
@@ -949,10 +949,10 @@ TEST_F(ControlBlocksTest, CreateCloneOfImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(sprite.clones().size(), 4);
 
-    EXPECT_CALL(m_engineMock, deinitClone(clone1));
+    EXPECT_CALL(m_engineMock, deinitClone(clone1.get()));
     clone1->deleteClone();
 
-    EXPECT_CALL(m_engineMock, deinitClone(clone3));
+    EXPECT_CALL(m_engineMock, deinitClone(clone3.get()));
     clone3->deleteClone();
 }
 
@@ -994,7 +994,7 @@ TEST_F(ControlBlocksTest, DeleteThisCloneImpl)
     Sprite sprite;
     sprite.setEngine(&m_engineMock);
 
-    Sprite *clone;
+    std::shared_ptr<Sprite> clone;
     EXPECT_CALL(m_engineMock, cloneLimit()).Times(2).WillRepeatedly(Return(300));
     EXPECT_CALL(m_engineMock, cloneCount()).WillOnce(Return(0));
     EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
@@ -1003,11 +1003,11 @@ TEST_F(ControlBlocksTest, DeleteThisCloneImpl)
     sprite.clone();
     ASSERT_TRUE(clone);
 
-    VirtualMachine vm(clone, &m_engineMock, nullptr);
+    VirtualMachine vm(clone.get(), &m_engineMock, nullptr);
     vm.setFunctions(functions);
 
-    EXPECT_CALL(m_engineMock, stopTarget(clone, nullptr)).Times(1);
-    EXPECT_CALL(m_engineMock, deinitClone(clone));
+    EXPECT_CALL(m_engineMock, stopTarget(clone.get(), nullptr)).Times(1);
+    EXPECT_CALL(m_engineMock, deinitClone(clone.get()));
 
     vm.setBytecode(bytecode);
     vm.run();

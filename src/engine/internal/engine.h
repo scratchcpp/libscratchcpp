@@ -36,7 +36,7 @@ class Engine : public IEngine
         void broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait = false) override;
         void stopScript(VirtualMachine *vm) override;
         void stopTarget(Target *target, VirtualMachine *exceptScript) override;
-        void initClone(libscratchcpp::Sprite *clone) override;
+        void initClone(std::shared_ptr<Sprite> clone) override;
         void deinitClone(libscratchcpp::Sprite *clone) override;
 
         void run() override;

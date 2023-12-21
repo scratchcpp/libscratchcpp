@@ -73,7 +73,7 @@ std::shared_ptr<Sprite> Sprite::clone()
         clone->setEngine(engine());
 
         // Call "when I start as clone" scripts
-        eng->initClone(clone.get());
+        eng->initClone(clone);
 
         if (impl->visible)
             eng->requestRedraw();

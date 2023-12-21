@@ -279,7 +279,7 @@ void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
         stopScript(script);
 }
 
-void Engine::initClone(Sprite *clone)
+void Engine::initClone(std::shared_ptr<Sprite> clone)
 {
     if (!clone || ((m_cloneLimit >= 0) && (m_clones.size() >= m_cloneLimit)))
         return;
@@ -299,20 +299,20 @@ void Engine::initClone(Sprite *clone)
         // Since we're initializing the clone, it shouldn't have any running scripts
         for (const auto &[target, targetScripts] : m_runningScripts) {
             for (const auto script : targetScripts)
-                assert((target != clone) || (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) != m_scriptsToRemove.end()));
+                assert((target != clone.get()) || (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) != m_scriptsToRemove.end()));
         }
 #endif
 
         for (auto script : scripts) {
-            auto vm = script->start(clone);
+            auto vm = script->start(clone.get());
             addRunningScript(vm);
         }
     }
 
-    assert(std::find(m_clones.begin(), m_clones.end(), clone) == m_clones.end());
-    assert(std::find(m_executableTargets.begin(), m_executableTargets.end(), clone) == m_executableTargets.end());
-    m_clones.push_back(clone);
-    m_executableTargets.push_back(clone); // execution order needs to be updated after this
+    assert(std::find(m_clones.begin(), m_clones.end(), clone.get()) == m_clones.end());
+    assert(std::find(m_executableTargets.begin(), m_executableTargets.end(), clone.get()) == m_executableTargets.end());
+    m_clones.push_back(clone.get());
+    m_executableTargets.push_back(clone.get()); // execution order needs to be updated after this
 }
 
 void Engine::deinitClone(Sprite *clone)

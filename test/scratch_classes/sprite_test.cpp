@@ -122,51 +122,55 @@ TEST(SpriteTest, Clone)
     EXPECT_CALL(engine, requestRedraw()).Times(2);
     EXPECT_CALL(engine, cloneLimit()).Times(6).WillRepeatedly(Return(300)); // clone count limit is tested later
 
-    Sprite *clone1, *clone1_2;
+    std::shared_ptr<Sprite> clone1;
+    Sprite *clone1_2;
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(0));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone1));
     EXPECT_CALL(engine, moveSpriteBehindOther(_, &sprite)).WillOnce(SaveArg<0>(&clone1_2));
-    ASSERT_EQ(sprite.clone().get(), clone1);
-    ASSERT_EQ(clone1, clone1_2);
+    ASSERT_EQ(sprite.clone(), clone1);
+    ASSERT_EQ(clone1.get(), clone1_2);
     ASSERT_FALSE(sprite.isClone());
     ASSERT_EQ(sprite.cloneSprite(), nullptr);
 
     ASSERT_TRUE(clone1->isClone());
     ASSERT_EQ(clone1->cloneSprite(), &sprite);
 
-    checkCloneData(clone1);
+    checkCloneData(clone1.get());
 
     // Modify root sprite data to make sure parent is used
     sprite.setLayerOrder(3);
 
-    Sprite *clone2, *clone2_2;
+    std::shared_ptr<Sprite> clone2;
+    Sprite *clone2_2;
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(1));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone2));
-    EXPECT_CALL(engine, moveSpriteBehindOther(_, clone1)).WillOnce(SaveArg<0>(&clone2_2));
-    ASSERT_EQ(clone1->clone().get(), clone2);
-    ASSERT_EQ(clone2, clone2_2);
+    EXPECT_CALL(engine, moveSpriteBehindOther(_, clone1.get())).WillOnce(SaveArg<0>(&clone2_2));
+    ASSERT_EQ(clone1->clone(), clone2);
+    ASSERT_EQ(clone2.get(), clone2_2);
     ASSERT_TRUE(clone1->isClone());
     ASSERT_EQ(clone1->cloneSprite(), &sprite);
     ASSERT_TRUE(clone2->isClone());
     ASSERT_EQ(clone2->cloneSprite(), &sprite);
 
-    checkCloneData(clone2);
+    checkCloneData(clone2.get());
 
     sprite.setVisible(true);
 
-    Sprite *clone3, *clone3_2;
+    std::shared_ptr<Sprite> clone3;
+    Sprite *clone3_2;
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(2));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone3));
-    EXPECT_CALL(engine, moveSpriteBehindOther(_, clone1)).WillOnce(SaveArg<0>(&clone3_2));
-    ASSERT_EQ(clone1->clone().get(), clone3);
-    ASSERT_EQ(clone3, clone3_2);
+    EXPECT_CALL(engine, moveSpriteBehindOther(_, clone1.get())).WillOnce(SaveArg<0>(&clone3_2));
+    ASSERT_EQ(clone1->clone(), clone3);
+    ASSERT_EQ(clone3.get(), clone3_2);
 
-    Sprite *clone4, *clone4_2;
+    std::shared_ptr<Sprite> clone4;
+    Sprite *clone4_2;
     EXPECT_CALL(engine, cloneLimit()).WillOnce(Return(-1));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone4));
     EXPECT_CALL(engine, moveSpriteBehindOther(_, &sprite)).WillOnce(SaveArg<0>(&clone4_2));
-    ASSERT_EQ(sprite.clone().get(), clone4);
-    ASSERT_EQ(clone4, clone4_2);
+    ASSERT_EQ(sprite.clone(), clone4);
+    ASSERT_EQ(clone4.get(), clone4_2);
 
     EXPECT_CALL(engine, cloneLimit()).Times(2).WillRepeatedly(Return(0));
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(0));
@@ -179,10 +183,10 @@ TEST(SpriteTest, Clone)
     // clones
     const auto &clones = sprite.clones();
     ASSERT_EQ(clones.size(), 4);
-    ASSERT_EQ(clones[0].get(), clone1);
-    ASSERT_EQ(clones[1].get(), clone2);
-    ASSERT_EQ(clones[2].get(), clone3);
-    ASSERT_EQ(clones[3].get(), clone4);
+    ASSERT_EQ(clones[0], clone1);
+    ASSERT_EQ(clones[1], clone2);
+    ASSERT_EQ(clones[2], clone3);
+    ASSERT_EQ(clones[3], clone4);
 
     ASSERT_EQ(clone1->clones(), clones);
     ASSERT_EQ(clone2->clones(), clones);
@@ -195,28 +199,28 @@ TEST(SpriteTest, Clone)
     ASSERT_EQ(clone2->costumes(), sprite.costumes());
 
     // Delete
-    EXPECT_CALL(engine, deinitClone(clone1));
+    EXPECT_CALL(engine, deinitClone(clone1.get()));
     clone1->deleteClone();
 
     ASSERT_EQ(clones.size(), 3);
-    ASSERT_EQ(clones[0].get(), clone2);
-    ASSERT_EQ(clones[1].get(), clone3);
-    ASSERT_EQ(clones[2].get(), clone4);
+    ASSERT_EQ(clones[0], clone2);
+    ASSERT_EQ(clones[1], clone3);
+    ASSERT_EQ(clones[2], clone4);
 
-    EXPECT_CALL(engine, deinitClone(clone3));
+    EXPECT_CALL(engine, deinitClone(clone3.get()));
     clone3->deleteClone();
 
     ASSERT_EQ(clones.size(), 2);
-    ASSERT_EQ(clones[0].get(), clone2);
-    ASSERT_EQ(clones[1].get(), clone4);
+    ASSERT_EQ(clones[0], clone2);
+    ASSERT_EQ(clones[1], clone4);
 
-    EXPECT_CALL(engine, deinitClone(clone2));
+    EXPECT_CALL(engine, deinitClone(clone2.get()));
     clone2->deleteClone();
 
     ASSERT_EQ(clones.size(), 1);
-    ASSERT_EQ(clones[0].get(), clone4);
+    ASSERT_EQ(clones[0], clone4);
 
-    EXPECT_CALL(engine, deinitClone(clone4));
+    EXPECT_CALL(engine, deinitClone(clone4.get()));
     clone4->deleteClone();
     ASSERT_TRUE(clones.empty());
 }
