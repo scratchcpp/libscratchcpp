@@ -1687,3 +1687,31 @@ TEST(VirtualMachineTest, NoCrashInNestedLoopsInIfElseStatements)
     vm.run();
     ASSERT_EQ(vm.registerCount(), 0);
 }
+
+TEST(VirtualMachineTest, NoCrashWhenReadingProcedureArgsAfterStopping)
+{
+    // Regtest for #387
+    static unsigned int bytecode[] = { OP_START, OP_INIT_PROCEDURE, OP_CONST, 0, OP_ADD_ARG, OP_CALL_PROCEDURE, 0, OP_HALT };
+    static unsigned int procedure[] = { OP_START, OP_NULL, OP_EXEC, 0, OP_READ_ARG, 0, OP_PRINT, OP_HALT };
+    static unsigned int *procedures[] = { procedure };
+    static BlockFunc functions[] = { &testFunction3 };
+    static Value constValues[] = { "test" };
+
+    VirtualMachine vm(nullptr, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setProcedures(procedures);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    testing::internal::CaptureStdout();
+    vm.run();
+    ASSERT_TRUE(testing::internal::GetCapturedStdout().empty());
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_FALSE(vm.atEnd());
+
+    testing::internal::CaptureStdout();
+    vm.run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\n");
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
+}

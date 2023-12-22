@@ -731,10 +731,6 @@ do_exec : {
     }
     if (stop) {
         stop = false;
-        callTree.clear();
-        procedureArgTree.clear();
-        procedureArgs = nullptr;
-        nextProcedureArgs = nullptr;
         if (goBack) {
             goBack = false;
             pos -= instruction_arg_count[OP_EXEC] + 1;
