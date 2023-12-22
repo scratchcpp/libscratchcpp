@@ -1466,6 +1466,34 @@ TEST(VirtualMachineTest, RunProcedures)
     ASSERT_EQ(vm.registerCount(), 0);
 }
 
+TEST(VirtualMachineTest, RunUndefinedProcedure)
+{
+    static unsigned int bytecode[] = {
+        OP_START, OP_INIT_PROCEDURE, OP_CONST, 0, OP_ADD_ARG, OP_CONST, 1, OP_ADD_ARG, OP_CALL_PROCEDURE, 0, OP_NULL, OP_EXEC, 0, OP_INIT_PROCEDURE, OP_CALL_PROCEDURE, 1, OP_HALT
+    };
+    static unsigned int procedure2[] = { OP_START, OP_CONST, 2, OP_PRINT, OP_HALT };
+    static unsigned int *procedures[] = { nullptr, procedure2 };
+    static BlockFunc functions[] = { &testFunction3 };
+    static Value constValues[] = { "hello", "world", "test" };
+
+    VirtualMachine vm;
+    vm.setBytecode(bytecode);
+    vm.setProcedures(procedures);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    testing::internal::CaptureStdout();
+    vm.run();
+    ASSERT_TRUE(testing::internal::GetCapturedStdout().empty());
+    ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    testing::internal::CaptureStdout();
+    vm.run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\n");
+    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(vm.registerCount(), 0);
+}
+
 TEST(VirtualMachineTest, OP_BREAK_FRAME)
 {
     static unsigned int bytecode1[] = { OP_START, OP_FOREVER_LOOP, OP_BREAK_FRAME, OP_LOOP_END, OP_HALT };
