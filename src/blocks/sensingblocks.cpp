@@ -157,6 +157,11 @@ void SensingBlocks::compileOf(Compiler *compiler)
         assert(engine);
         int index = engine->findTarget(value);
 
+        if (index == -1) {
+            compiler->addInstruction(vm::OP_NULL);
+            return;
+        }
+
         switch (option) {
             case XPosition:
                 f = &xPositionOfSpriteByIndex;

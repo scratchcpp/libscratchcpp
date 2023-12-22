@@ -732,6 +732,11 @@ TEST_F(SensingBlocksTest, Of)
     addDropdownField(block25, "PROPERTY", SensingBlocks::PROPERTY, "some variable", static_cast<SensingBlocks::FieldValues>(-1));
     addDropdownInput(block25, "OBJECT", SensingBlocks::OBJECT, "", createNullBlock("aj"));
 
+    // [some variable] of (Nonexistent sprite)
+    auto block26 = std::make_shared<Block>("ak", "sensing_of");
+    addDropdownField(block26, "PROPERTY", SensingBlocks::PROPERTY, "some variable", static_cast<SensingBlocks::FieldValues>(-1));
+    addDropdownInput(block26, "OBJECT", SensingBlocks::OBJECT, "Nonexistent sprite");
+
     compiler.init();
 
     EXPECT_CALL(m_engineMock, findTarget("Sprite2")).Times(9).WillRepeatedly(Return(6));
@@ -845,6 +850,10 @@ TEST_F(SensingBlocksTest, Of)
     compiler.setBlock(block25);
     SensingBlocks::compileOf(&compiler);
 
+    EXPECT_CALL(m_engineMock, findTarget("Nonexistent sprite")).WillOnce(Return(-1));
+    compiler.setBlock(block26);
+    SensingBlocks::compileOf(&compiler);
+
     compiler.end();
 
     ASSERT_EQ(
@@ -932,6 +941,7 @@ TEST_F(SensingBlocksTest, Of)
               vm::OP_NULL,
               vm::OP_EXEC,
               18,
+              vm::OP_NULL,
               vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, "some variable" }));
     ASSERT_EQ(compiler.variables(), std::vector<Variable *>({ v2.get(), v3.get() }));
