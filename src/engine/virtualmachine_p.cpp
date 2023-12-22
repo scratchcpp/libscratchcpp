@@ -759,12 +759,19 @@ do_init_procedure:
     nextProcedureArgs = &procedureArgTree.back();
     DISPATCH();
 
-do_call_procedure:
-    callTree.push_back(++pos);
-    procedureArgs = nextProcedureArgs;
-    nextProcedureArgs = nullptr;
-    pos = procedures[*pos];
+do_call_procedure : {
+    unsigned int *procedurePos = procedures[pos[1]];
+
+    if (procedurePos) {
+        callTree.push_back(++pos);
+        procedureArgs = nextProcedureArgs;
+        nextProcedureArgs = nullptr;
+        pos = procedurePos;
+    } else
+        pos++;
+
     DISPATCH();
+}
 
 do_add_arg:
     nextProcedureArgs->push_back(*READ_LAST_REG());
