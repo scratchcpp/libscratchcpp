@@ -56,7 +56,7 @@ void Engine::resolveIds()
 {
     for (auto target : m_targets) {
         std::cout << "Processing target " << target->name() << "..." << std::endl;
-        auto blocks = target->blocks();
+        const auto &blocks = target->blocks();
         for (auto block : blocks) {
             auto container = blockSectionContainer(block->opcode());
             block->setNext(getBlock(block->nextId()));
@@ -64,8 +64,8 @@ void Engine::resolveIds()
             if (container)
                 block->setCompileFunction(container->resolveBlockCompileFunc(block->opcode()));
 
-            auto inputs = block->inputs();
-            for (auto input : inputs) {
+            const auto &inputs = block->inputs();
+            for (const auto &input : inputs) {
                 input->setValueBlock(getBlock(input->valueBlockId()));
                 if (container)
                     input->setInputId(container->resolveInput(input->name()));
@@ -73,7 +73,7 @@ void Engine::resolveIds()
                 input->secondaryValue()->setValuePtr(getEntity(input->primaryValue()->valueId()));
             }
 
-            auto fields = block->fields();
+            const auto &fields = block->fields();
             for (auto field : fields) {
                 field->setValuePtr(getEntity(field->valueId()));
                 if (container) {
@@ -107,7 +107,7 @@ void Engine::compile()
         std::cout << "Compiling scripts in target " << target->name() << "..." << std::endl;
         std::unordered_map<std::string, unsigned int *> procedureBytecodeMap;
         Compiler compiler(this, target.get());
-        auto blocks = target->blocks();
+        const auto &blocks = target->blocks();
         for (auto block : blocks) {
             if (block->topLevel() && !block->shadow()) {
                 auto section = blockSection(block->opcode());
