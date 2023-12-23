@@ -155,7 +155,7 @@ void Block::setParentId(const std::string &id)
 }
 
 /*! Returns the list of inputs. */
-std::vector<std::shared_ptr<Input>> Block::inputs() const
+const std::vector<std::shared_ptr<Input>> &Block::inputs() const
 {
     return impl->inputs;
 }
@@ -217,7 +217,7 @@ void Block::updateInputMap()
 }
 
 /*! Returns the list of fields. */
-std::vector<std::shared_ptr<Field>> Block::fields() const
+const std::vector<std::shared_ptr<Field>> &Block::fields() const
 {
     return impl->fields;
 }
