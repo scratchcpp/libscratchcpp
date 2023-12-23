@@ -39,13 +39,13 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
         void setParent(std::shared_ptr<Block> block);
         void setParentId(const std::string &id);
 
-        std::vector<std::shared_ptr<Input>> inputs() const;
+        const std::vector<std::shared_ptr<Input>> &inputs() const;
         int addInput(std::shared_ptr<Input> input);
         std::shared_ptr<Input> inputAt(int index) const;
         int findInput(const std::string &inputName) const;
         Input *findInputById(int id) const;
 
-        std::vector<std::shared_ptr<Field>> fields() const;
+        const std::vector<std::shared_ptr<Field>> &fields() const;
         int addField(std::shared_ptr<Field> field);
         std::shared_ptr<Field> fieldAt(int index) const;
         int findField(const std::string &fieldName) const;
