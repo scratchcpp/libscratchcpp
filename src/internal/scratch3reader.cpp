@@ -388,17 +388,17 @@ void Scratch3Reader::clear()
     m_extensions.clear();
 }
 
-std::vector<std::shared_ptr<Target>> Scratch3Reader::targets()
+const std::vector<std::shared_ptr<Target>> &Scratch3Reader::targets()
 {
     return m_targets;
 }
 
-std::vector<std::shared_ptr<Broadcast>> Scratch3Reader::broadcasts()
+const std::vector<std::shared_ptr<Broadcast>> &Scratch3Reader::broadcasts()
 {
     return m_broadcasts;
 }
 
-std::vector<std::string> Scratch3Reader::extensions()
+const std::vector<std::string> &Scratch3Reader::extensions()
 {
     return m_extensions;
 }
