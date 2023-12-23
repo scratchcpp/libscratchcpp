@@ -17,9 +17,9 @@ class Scratch3Reader : public IProjectReader
         bool loadData(const std::string &data) override;
         bool isValid() override;
         void clear() override;
-        std::vector<std::shared_ptr<Target>> targets() override;
-        std::vector<std::shared_ptr<Broadcast>> broadcasts() override;
-        std::vector<std::string> extensions() override;
+        const std::vector<std::shared_ptr<Target>> &targets() override;
+        const std::vector<std::shared_ptr<Broadcast>> &broadcasts() override;
+        const std::vector<std::string> &extensions() override;
 
     private:
         void read();
