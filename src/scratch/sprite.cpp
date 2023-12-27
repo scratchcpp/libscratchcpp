@@ -101,6 +101,9 @@ void Sprite::deleteClone()
         if (eng)
             eng->deinitClone(shared_from_this());
 
+        if (impl->iface)
+            impl->iface->deinitClone();
+
         assert(impl->cloneSprite);
         impl->cloneDeleted = true;
         impl->cloneSprite->impl->removeClone(this);

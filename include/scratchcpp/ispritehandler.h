@@ -17,6 +17,9 @@ class LIBSCRATCHCPP_EXPORT ISpriteHandler
         /*! Called when the interface is set on a sprite. */
         virtual void init(Sprite *sprite) = 0;
 
+        /*! Called when the sprite is deinitialized (if it is a clone). */
+        virtual void deinitClone() = 0;
+
         /*! Called when the sprite clones. */
         virtual void onCloned(Sprite *clone) = 0;
 

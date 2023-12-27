@@ -9,6 +9,7 @@ class SpriteHandlerMock : public ISpriteHandler
 {
     public:
         MOCK_METHOD(void, init, (Sprite *), (override));
+        MOCK_METHOD(void, deinitClone, (), (override));
 
         MOCK_METHOD(void, onCloned, (Sprite *), (override));
 
