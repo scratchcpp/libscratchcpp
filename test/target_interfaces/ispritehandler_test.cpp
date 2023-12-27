@@ -43,9 +43,12 @@ TEST_F(ISpriteHandlerTest, Clone)
     ASSERT_EQ(cloneParam1, clone.get());
     ASSERT_EQ(cloneParam2, clone.get());
 
-    // Engine is used during deletion, so let's just set it to nullptr (this is tested elsewhere)
-    m_sprite.setEngine(nullptr);
-    clone->setEngine(nullptr);
+    SpriteHandlerMock cloneHandler;
+    EXPECT_CALL(cloneHandler, init(clone.get()));
+    clone->setInterface(&cloneHandler);
+    EXPECT_CALL(m_engine, deinitClone(clone));
+    EXPECT_CALL(cloneHandler, deinitClone());
+    clone->deleteClone();
 }
 
 TEST_F(ISpriteHandlerTest, Visible)
