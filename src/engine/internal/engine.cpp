@@ -582,6 +582,11 @@ void Engine::setMousePressed(bool pressed)
     m_mousePressed = pressed;
 }
 
+void Engine::clickTarget(Target *target)
+{
+    // TODO: Implement this (#92, #93)
+}
+
 unsigned int Engine::stageWidth() const
 {
     return m_stageWidth;

@@ -143,6 +143,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the pressed state of mouse. */
         virtual void setMousePressed(bool pressed) = 0;
 
+        /*! Call this when a target is clicked. */
+        virtual void clickTarget(Target *target) = 0;
+
         /*! Returns the stage width. */
         virtual unsigned int stageWidth() const = 0;
 

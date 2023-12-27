@@ -68,6 +68,8 @@ class Engine : public IEngine
         bool mousePressed() const override;
         void setMousePressed(bool pressed) override;
 
+        void clickTarget(Target *target) override;
+
         unsigned int stageWidth() const override;
         void setStageWidth(unsigned int width) override;
 
