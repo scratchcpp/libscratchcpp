@@ -159,7 +159,7 @@ void Engine::start()
     for (auto target : m_targets) {
         auto gfBlocks = target->greenFlagBlocks();
         for (auto block : gfBlocks)
-            startScript(block, target);
+            startScript(block, target.get());
     }
 
     m_eventLoopMutex.unlock();
@@ -171,23 +171,27 @@ void Engine::stop()
     deleteClones();
 }
 
-void Engine::startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target)
+VirtualMachine *Engine::startScript(std::shared_ptr<Block> topLevelBlock, Target *target)
 {
     if (!topLevelBlock) {
         std::cout << "warning: starting a script with a null top level block (nothing will happen)" << std::endl;
-        return;
+        return nullptr;
     }
 
     if (!target) {
         std::cout << "error: scripts must be started by a target";
         assert(false);
-        return;
+        return nullptr;
     }
 
     if (topLevelBlock->next()) {
         auto script = m_scripts[topLevelBlock];
-        addRunningScript(script->start());
+        std::shared_ptr<VirtualMachine> vm = script->start(target);
+        addRunningScript(vm);
+        return vm.get();
     }
+
+    return nullptr;
 }
 
 void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait)
@@ -201,61 +205,22 @@ void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wa
 void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait)
 {
     const std::vector<Script *> &scripts = m_broadcastMap[broadcast];
+    auto &runningBroadcasts = m_runningBroadcastMap[broadcast];
 
     for (auto script : scripts) {
-        std::vector<VirtualMachine *> runningBroadcastScripts;
-
-        for (const auto &[target, targetScripts] : m_runningScripts) {
-            for (auto vm : targetScripts) {
-                if (vm->script() == script) {
-                    runningBroadcastScripts.push_back(vm.get());
-                }
-            }
+        for (auto &pair : runningBroadcasts) {
+            if (pair.second->script() == script)
+                pair.first = sourceScript;
         }
 
-        // Reset running scripts
-        for (VirtualMachine *vm : runningBroadcastScripts) {
-            vm->reset();
-
-            // Remove the script from scripts to remove because it's going to run again
-            m_scriptsToRemove.erase(std::remove(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm), m_scriptsToRemove.end());
-            assert(std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm) == m_scriptsToRemove.end());
-
-            auto &scripts = m_runningBroadcastMap[broadcast];
-
-            for (auto &pair : scripts) {
-                if (pair.second->script() == script)
-                    pair.first = sourceScript;
-            }
-
-            if (script == sourceScript->script())
-                sourceScript->stop(false, !wait); // source script is the broadcast script
-        }
-
-        // Start scripts which are not running
-        Target *root = script->target();
-        std::vector<Target *> targets = { root };
-
-        if (!root->isStage()) {
-            Sprite *sprite = dynamic_cast<Sprite *>(root);
-            assert(sprite);
-            assert(!sprite->isClone());
-            const auto &children = sprite->clones();
-
-            for (auto child : children)
-                targets.push_back(child.get());
-        }
-
-        for (Target *target : targets) {
-            auto it = std::find_if(runningBroadcastScripts.begin(), runningBroadcastScripts.end(), [target](VirtualMachine *vm) { return vm->target() == target; });
-
-            if (it == runningBroadcastScripts.end()) {
-                auto vm = script->start(target);
-                addRunningScript(vm);
-                m_runningBroadcastMap[broadcast].push_back({ sourceScript, vm.get() });
-            }
-        }
+        if (script == sourceScript->script())
+            sourceScript->stop(false, !wait); // source script is the broadcast script
     }
+
+    std::vector<VirtualMachine *> startedScripts = startHats(scripts);
+
+    for (VirtualMachine *vm : startedScripts)
+        runningBroadcasts.push_back({ sourceScript, vm });
 }
 
 void Engine::stopScript(VirtualMachine *vm)
@@ -565,12 +530,12 @@ void Engine::setKeyState(const KeyEvent &event, bool pressed)
         auto it = m_whenKeyPressedScripts.find(event.name());
 
         if (it != m_whenKeyPressedScripts.cend())
-            startWhenKeyPressedScripts(it->second);
+            startHats(it->second);
 
         it = m_whenKeyPressedScripts.find("any");
 
         if (it != m_whenKeyPressedScripts.cend())
-            startWhenKeyPressedScripts(it->second);
+            startHats(it->second);
     }
 }
 
@@ -583,7 +548,7 @@ void Engine::setAnyKeyPressed(bool pressed)
         auto it = m_whenKeyPressedScripts.find("any");
 
         if (it != m_whenKeyPressedScripts.cend())
-            startWhenKeyPressedScripts(it->second);
+            startHats(it->second);
     }
 }
 
@@ -1249,18 +1214,66 @@ void Engine::addRunningScript(std::shared_ptr<VirtualMachine> vm)
     }
 }
 
-void Engine::startWhenKeyPressedScripts(const std::vector<Script *> &scripts)
+std::vector<VirtualMachine *> Engine::startHats(const std::vector<Script *> &scripts)
 {
-    for (auto script : scripts) {
-        std::shared_ptr<Block> block = nullptr;
+    std::vector<VirtualMachine *> startedScripts;
 
-        for (const auto &[b, s] : m_scripts) {
-            if (s.get() == script)
-                block = b;
+    for (auto script : scripts) {
+        std::vector<VirtualMachine *> runningScripts;
+
+        for (const auto &[target, targetScripts] : m_runningScripts) {
+            for (auto vm : targetScripts) {
+                if (vm->script() == script) {
+                    runningScripts.push_back(vm.get());
+                }
+            }
         }
 
-        assert(block);
-        assert(std::find_if(m_targets.begin(), m_targets.end(), [script](std::shared_ptr<Target> target) { return script->target() == target.get(); }) != m_targets.end());
-        startScript(block, *std::find_if(m_targets.begin(), m_targets.end(), [script](std::shared_ptr<Target> target) { return script->target() == target.get(); }));
+        // Reset running scripts
+        for (VirtualMachine *vm : runningScripts) {
+            vm->reset();
+
+            // Remove the script from scripts to remove because it's going to run again
+            m_scriptsToRemove.erase(std::remove(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm), m_scriptsToRemove.end());
+            assert(std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm) == m_scriptsToRemove.end());
+        }
+
+        // Start scripts which are not running
+        Target *root = script->target();
+        std::vector<Target *> targets = { root };
+
+        if (!root->isStage()) {
+            Sprite *sprite = dynamic_cast<Sprite *>(root);
+            assert(sprite);
+            assert(!sprite->isClone());
+            const auto &children = sprite->clones();
+
+            for (auto child : children)
+                targets.push_back(child.get());
+        }
+
+        for (Target *target : targets) {
+            std::shared_ptr<Block> block = nullptr;
+
+            if (!runningScripts.empty()) {
+                auto it = std::find_if(runningScripts.begin(), runningScripts.end(), [target, script](VirtualMachine *vm) { return (vm->target() == target) && (vm->script() == script); });
+
+                if (it != runningScripts.end())
+                    continue; // skip the script because it was already running and was reset
+            }
+
+            for (const auto &[b, s] : m_scripts) {
+                if (s.get() == script) {
+                    block = b;
+                    break;
+                }
+            }
+
+            assert(block);
+            assert(std::find_if(m_targets.begin(), m_targets.end(), [script](std::shared_ptr<Target> target) { return script->target() == target.get(); }) != m_targets.end());
+            startedScripts.push_back(startScript(block, target));
+        }
     }
+
+    return startedScripts;
 }

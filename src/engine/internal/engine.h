@@ -32,7 +32,7 @@ class Engine : public IEngine
 
         void start() override;
         void stop() override;
-        void startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target) override;
+        VirtualMachine *startScript(std::shared_ptr<Block> topLevelBlock, Target *target) override;
         void broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait = false) override;
         void broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait = false) override;
         void stopScript(VirtualMachine *vm) override;
@@ -153,7 +153,7 @@ class Engine : public IEngine
 
         void updateFrameDuration();
         void addRunningScript(std::shared_ptr<VirtualMachine> vm);
-        void startWhenKeyPressedScripts(const std::vector<Script *> &scripts);
+        std::vector<VirtualMachine *> startHats(const std::vector<Script *> &scripts);
 
         std::unordered_map<std::shared_ptr<IBlockSection>, std::unique_ptr<BlockSectionContainer>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;

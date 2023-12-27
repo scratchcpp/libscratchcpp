@@ -183,6 +183,7 @@ TEST(EngineTest, ExecutionOrder)
     ASSERT_EQ((*list)[9].toString(), "Sprite1 1 msg");
     ASSERT_EQ((*list)[10].toString(), "Sprite1 2 msg");
     ASSERT_EQ((*list)[11].toString(), "Sprite1 3 msg");
+    ASSERT_EQ((*list)[12].toString(), "Stage msg");
 }
 
 TEST(EngineTest, KeyState)
@@ -479,7 +480,7 @@ TEST(EngineTest, WhenKeyPressed)
     ASSERT_VAR(stage, "right_arrow_pressed");
     ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 2);
     ASSERT_VAR(stage, "any_key_pressed");
-    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 9);
+    ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 8);
     ASSERT_VAR(stage, "a_pressed");
     ASSERT_EQ(GET_VAR(stage, "a_pressed")->value().toInt(), 1);
     ASSERT_VAR(stage, "x_pressed");
@@ -1144,7 +1145,6 @@ TEST(EngineTest, CloneLimit)
     ASSERT_EQ(engine->cloneCount(), 0);
 }
 
-// TODO: Uncomment this after fixing #256 and #257
 TEST(EngineTest, BackdropBroadcasts)
 {
     // TODO: Set "infinite" FPS (#254)
@@ -1169,7 +1169,6 @@ TEST(EngineTest, BackdropBroadcasts)
     ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 2 0 0");
 }
 
-// TODO: Uncomment this after fixing #256 and #257
 TEST(EngineTest, BroadcastsProject)
 {
     // TODO: Set "infinite" FPS (#254)
@@ -1286,4 +1285,34 @@ TEST(EngineTest, NoStopWhenCallingRunningBroadcastFromCustomBlock)
 
     ASSERT_VAR(stage, "passed2");
     ASSERT_TRUE(GET_VAR(stage, "passed2")->value().toBool());
+}
+
+TEST(EngineTest, ResetRunningHats)
+{
+    // Regtest for #395
+    Project p("regtest_projects/395_reset_running_hats.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    engine->setKeyState(KeyEvent(KeyEvent::Type::Space), true);
+    engine->setKeyState(KeyEvent(KeyEvent::Type::Space), false);
+    engine->setKeyState(KeyEvent(KeyEvent::Type::Space), true);
+    engine->setKeyState(KeyEvent(KeyEvent::Type::Space), false);
+    engine->run();
+
+    ASSERT_VAR(stage, "test");
+    ASSERT_EQ(GET_VAR(stage, "test")->value().toInt(), 1);
+
+    engine->run();
+    ASSERT_EQ(GET_VAR(stage, "test")->value().toInt(), 1);
+
+    engine->setKeyState(KeyEvent(KeyEvent::Type::Space), true);
+    engine->setKeyState(KeyEvent(KeyEvent::Type::Space), false);
+    engine->run();
+
+    ASSERT_EQ(GET_VAR(stage, "test")->value().toInt(), 2);
 }
