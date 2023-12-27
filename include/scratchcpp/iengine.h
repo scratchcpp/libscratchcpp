@@ -54,7 +54,7 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void stop() = 0;
 
         /*! Starts a script with the given top level block as the given Target (a sprite or the stage). */
-        virtual void startScript(std::shared_ptr<Block> topLevelBlock, std::shared_ptr<Target> target) = 0;
+        virtual VirtualMachine *startScript(std::shared_ptr<Block> topLevelBlock, Target *) = 0;
 
         /*! Starts the script of the broadcast with the given index. */
         virtual void broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait = false) = 0;
