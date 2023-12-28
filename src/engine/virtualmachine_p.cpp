@@ -10,7 +10,14 @@
 #include "virtualmachine_p.h"
 #include "internal/randomgenerator.h"
 
+#ifdef ENABLE_COMPUTED_GOTO
 #define DISPATCH() goto *dispatch_table[*++pos]
+#define OP(opcode) DO_##opcode
+#else
+#define DISPATCH() break
+#define OP(opcode) case Opcode::OP_##opcode
+#endif
+
 #define FREE_REGS(count) regCount -= count
 #define ADD_RET_VALUE(value)                                                                                                                                                                           \
     if (regCount + 1 >= regsVector.size()) {                                                                                                                                                           \
@@ -127,71 +134,74 @@ VirtualMachinePrivate::~VirtualMachinePrivate()
 
 unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
 {
+#ifdef ENABLE_COMPUTED_GOTO
     static const void *dispatch_table[] = {
         nullptr,
-        &&do_halt,
-        &&do_const,
-        &&do_null,
-        &&do_checkpoint,
-        &&do_if,
-        &&do_else,
-        &&do_endif,
-        &&do_forever_loop,
-        &&do_repeat_loop,
-        &&do_repeat_loop_index,
-        &&do_repeat_loop_index1,
-        &&do_until_loop,
-        &&do_begin_until_loop,
-        &&do_loop_end,
-        &&do_print,
-        &&do_add,
-        &&do_subtract,
-        &&do_multiply,
-        &&do_divide,
-        &&do_mod,
-        &&do_random,
-        &&do_round,
-        &&do_abs,
-        &&do_floor,
-        &&do_ceil,
-        &&do_sqrt,
-        &&do_sin,
-        &&do_cos,
-        &&do_tan,
-        &&do_asin,
-        &&do_acos,
-        &&do_atan,
-        &&do_greater_than,
-        &&do_less_than,
-        &&do_equals,
-        &&do_and,
-        &&do_or,
-        &&do_not,
-        &&do_set_var,
-        &&do_change_var,
-        &&do_read_var,
-        &&do_read_list,
-        &&do_list_append,
-        &&do_list_del,
-        &&do_list_del_all,
-        &&do_list_insert,
-        &&do_list_replace,
-        &&do_list_get_item,
-        &&do_list_index_of,
-        &&do_list_length,
-        &&do_list_contains,
-        &&do_str_concat,
-        &&do_str_at,
-        &&do_str_length,
-        &&do_str_contains,
-        &&do_exec,
-        &&do_init_procedure,
-        &&do_call_procedure,
-        &&do_add_arg,
-        &&do_read_arg,
-        &&do_break_frame,
-        &&do_warp
+        &&DO_HALT,
+        &&DO_CONST,
+        &&DO_NULL,
+        &&DO_CHECKPOINT,
+        &&DO_IF,
+        &&DO_ELSE,
+        &&DO_ENDIF,
+        &&DO_FOREVER_LOOP,
+        &&DO_REPEAT_LOOP,
+        &&DO_REPEAT_LOOP_INDEX,
+        &&DO_REPEAT_LOOP_INDEX1,
+        &&DO_UNTIL_LOOP,
+        &&DO_BEGIN_UNTIL_LOOP,
+        &&DO_LOOP_END,
+        &&DO_PRINT,
+        &&DO_ADD,
+        &&DO_SUBTRACT,
+        &&DO_MULTIPLY,
+        &&DO_DIVIDE,
+        &&DO_MOD,
+        &&DO_RANDOM,
+        &&DO_ROUND,
+        &&DO_ABS,
+        &&DO_FLOOR,
+        &&DO_CEIL,
+        &&DO_SQRT,
+        &&DO_SIN,
+        &&DO_COS,
+        &&DO_TAN,
+        &&DO_ASIN,
+        &&DO_ACOS,
+        &&DO_ATAN,
+        &&DO_GREATER_THAN,
+        &&DO_LESS_THAN,
+        &&DO_EQUALS,
+        &&DO_AND,
+        &&DO_OR,
+        &&DO_NOT,
+        &&DO_SET_VAR,
+        &&DO_CHANGE_VAR,
+        &&DO_READ_VAR,
+        &&DO_READ_LIST,
+        &&DO_LIST_APPEND,
+        &&DO_LIST_DEL,
+        &&DO_LIST_DEL_ALL,
+        &&DO_LIST_INSERT,
+        &&DO_LIST_REPLACE,
+        &&DO_LIST_GET_ITEM,
+        &&DO_LIST_INDEX_OF,
+        &&DO_LIST_LENGTH,
+        &&DO_LIST_CONTAINS,
+        &&DO_STR_CONCAT,
+        &&DO_STR_AT,
+        &&DO_STR_LENGTH,
+        &&DO_STR_CONTAINS,
+        &&DO_EXEC,
+        &&DO_INIT_PROCEDURE,
+        &&DO_CALL_PROCEDURE,
+        &&DO_ADD_ARG,
+        &&DO_READ_ARG,
+        &&DO_BREAK_FRAME,
+        &&DO_WARP
     };
+#endif // ENABLE_COMPUTED_GOTO
+
     assert(pos);
     unsigned int *loopStart;
     unsigned int *loopEnd;
@@ -201,9 +211,14 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
         noBreak = true;
         warp = false;
     }
-    DISPATCH();
 
-do_halt:
+#ifdef ENABLE_COMPUTED_GOTO
+    DISPATCH();
+#else
+    while (true) switch (*++pos) {
+#endif
+
+OP(HALT):
     if (regCount > 0) {
         std::cout << "warning: VM: " << regCount << " registers were leaked by the script; this is most likely a bug in the VM or in the compiler" << std::endl;
     }
@@ -224,19 +239,19 @@ do_halt:
         DISPATCH();
     }
 
-do_const:
+OP(CONST):
     ADD_RET_VALUE(GET_NEXT_ARG());
     DISPATCH();
 
-do_null:
+OP(NULL):
     ADD_RET_VALUE(Value());
     DISPATCH();
 
-do_checkpoint:
+OP(CHECKPOINT):
     checkpoint = pos - 1;
     DISPATCH();
 
-do_if : {
+OP(IF): {
     if (!READ_LAST_REG()->toBool()) {
         unsigned int ifCounter = 1;
         while (!((*pos == OP_ELSE && ifCounter == 1) || (*pos == OP_ENDIF && ifCounter == 0))) {
@@ -254,7 +269,7 @@ do_if : {
     DISPATCH();
 }
 
-do_else : {
+OP(ELSE): {
     unsigned int ifCounter = 1;
     while (!(*pos == OP_ENDIF && ifCounter == 0)) {
         pos += instruction_arg_count[*pos++];
@@ -270,10 +285,10 @@ do_else : {
     }
 }
 
-do_endif:
+OP(ENDIF):
     DISPATCH();
 
-do_forever_loop:
+OP(FOREVER_LOOP):
     Loop l;
     l.isRepeatLoop = true;
     l.start = pos;
@@ -281,7 +296,7 @@ do_forever_loop:
     loops.push_back(l);
     DISPATCH();
 
-do_repeat_loop:
+OP(REPEAT_LOOP):
     loopCount = std::round(READ_LAST_REG()->toDouble());
     FREE_REGS(1);
     if (loopCount <= 0) {
@@ -308,7 +323,7 @@ do_repeat_loop:
     }
     DISPATCH();
 
-do_repeat_loop_index : {
+OP(REPEAT_LOOP_INDEX): {
     assert(!loops.empty());
     Loop &l = loops.back();
     assert(l.isRepeatLoop);
@@ -316,7 +331,7 @@ do_repeat_loop_index : {
     DISPATCH();
 }
 
-do_repeat_loop_index1 : {
+OP(REPEAT_LOOP_INDEX1): {
     assert(!loops.empty());
     Loop &l = loops.back();
     assert(l.isRepeatLoop);
@@ -324,7 +339,7 @@ do_repeat_loop_index1 : {
     DISPATCH();
 }
 
-do_until_loop:
+OP(UNTIL_LOOP):
     loopStart = run(pos, false);
     if (!READ_LAST_REG()->toBool()) {
         Loop l;
@@ -349,10 +364,10 @@ do_until_loop:
     FREE_REGS(1);
     DISPATCH();
 
-do_begin_until_loop:
+OP(BEGIN_UNTIL_LOOP):
     return pos;
 
-do_loop_end : {
+OP(LOOP_END): {
     assert(!loops.empty());
     Loop &l = loops.back();
     if (l.isRepeatLoop) {
@@ -376,37 +391,37 @@ do_loop_end : {
     }
 }
 
-do_print:
+OP(PRINT):
     std::cout << READ_LAST_REG()->toString() << std::endl;
     FREE_REGS(1);
     DISPATCH();
 
-do_add:
+OP(ADD):
     READ_REG(0, 2)->add(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
 
-do_subtract:
+OP(SUBTRACT):
     READ_REG(0, 2)->subtract(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
 
-do_multiply:
+OP(MULTIPLY):
     READ_REG(0, 2)->multiply(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
 
-do_divide:
+OP(DIVIDE):
     READ_REG(0, 2)->divide(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
 
-do_mod:
+OP(MOD):
     READ_REG(0, 2)->mod(*READ_REG(1, 2));
     FREE_REGS(1);
     DISPATCH();
 
-do_random:
+OP(RANDOM):
     if ((READ_REG(0, 2)->type() == Value::Type::Integer) && (READ_REG(1, 2)->type() == Value::Type::Integer))
         REPLACE_RET_VALUE(rng->randint(READ_REG(0, 2)->toInt(), READ_REG(1, 2)->toInt()), 2);
     else
@@ -414,7 +429,7 @@ do_random:
     FREE_REGS(1);
     DISPATCH();
 
-do_round : {
+OP(ROUND): {
     const Value *v = READ_REG(0, 1);
     if (!v->isInfinity() && !v->isNegativeInfinity()) {
         if (v->toDouble() < 0) {
@@ -425,7 +440,7 @@ do_round : {
     DISPATCH();
 }
 
-do_abs : {
+OP(ABS): {
     const Value *v = READ_REG(0, 1);
     if (v->isNegativeInfinity())
         REPLACE_RET_VALUE(Value(Value::SpecialValue::Infinity), 1);
@@ -434,21 +449,21 @@ do_abs : {
     DISPATCH();
 }
 
-do_floor : {
+OP(FLOOR): {
     const Value *v = READ_REG(0, 1);
     if (!v->isInfinity() && !v->isNegativeInfinity())
         REPLACE_RET_VALUE(std::floor(v->toDouble()), 1);
     DISPATCH();
 }
 
-do_ceil : {
+OP(CEIL): {
     const Value *v = READ_REG(0, 1);
     if (!v->isInfinity() && !v->isNegativeInfinity())
         REPLACE_RET_VALUE(std::ceil(v->toDouble()), 1);
     DISPATCH();
 }
 
-do_sqrt : {
+OP(SQRT): {
     const Value &v = *READ_REG(0, 1);
     if (v < 0)
         REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
@@ -457,7 +472,7 @@ do_sqrt : {
     DISPATCH();
 }
 
-do_sin : {
+OP(SIN): {
     const Value *v = READ_REG(0, 1);
     if (v->isInfinity() || v->isNegativeInfinity())
         REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
@@ -466,7 +481,7 @@ do_sin : {
     DISPATCH();
 }
 
-do_cos : {
+OP(COS): {
     const Value *v = READ_REG(0, 1);
     if (v->isInfinity() || v->isNegativeInfinity())
         REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
@@ -475,7 +490,7 @@ do_cos : {
     DISPATCH();
 }
 
-do_tan : {
+OP(TAN): {
     const Value *v = READ_REG(0, 1);
     if (v->isInfinity() || v->isNegativeInfinity())
         REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
@@ -495,7 +510,7 @@ do_tan : {
     DISPATCH();
 }
 
-do_asin : {
+OP(ASIN): {
     const Value &v = *READ_REG(0, 1);
     if (v < -1 || v > 1)
         REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
@@ -504,7 +519,7 @@ do_asin : {
     DISPATCH();
 }
 
-do_acos : {
+OP(ACOS): {
     const Value &v = *READ_REG(0, 1);
     if (v < -1 || v > 1)
         REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
@@ -513,7 +528,7 @@ do_acos : {
     DISPATCH();
 }
 
-do_atan : {
+OP(ATAN): {
     const Value &v = *READ_REG(0, 1);
     if (v.isInfinity())
         REPLACE_RET_VALUE(90, 1);
@@ -524,59 +539,59 @@ do_atan : {
     DISPATCH();
 }
 
-do_greater_than:
+OP(GREATER_THAN):
     REPLACE_RET_VALUE(*READ_REG(0, 2) > *READ_REG(1, 2), 2);
     FREE_REGS(1);
     DISPATCH();
 
-do_less_than:
+OP(LESS_THAN):
     REPLACE_RET_VALUE(*READ_REG(0, 2) < *READ_REG(1, 2), 2);
     FREE_REGS(1);
     DISPATCH();
 
-do_equals:
+OP(EQUALS):
     REPLACE_RET_VALUE(*READ_REG(0, 2) == *READ_REG(1, 2), 2);
     FREE_REGS(1);
     DISPATCH();
 
-do_and:
+OP(AND):
     REPLACE_RET_VALUE(READ_REG(0, 2)->toBool() && READ_REG(1, 2)->toBool(), 2);
     FREE_REGS(1);
     DISPATCH();
 
-do_or:
+OP(OR):
     REPLACE_RET_VALUE(READ_REG(0, 2)->toBool() || READ_REG(1, 2)->toBool(), 2);
     FREE_REGS(1);
     DISPATCH();
 
-do_not:
+OP(NOT):
     REPLACE_RET_VALUE(!READ_LAST_REG()->toBool(), 1);
     DISPATCH();
 
-do_set_var:
+OP(SET_VAR):
     *variables[*++pos] = *READ_LAST_REG();
     FREE_REGS(1);
     DISPATCH();
 
-do_read_var:
+OP(READ_VAR):
     ADD_RET_VALUE(*variables[*++pos]);
     DISPATCH();
 
-do_change_var:
+OP(CHANGE_VAR):
     variables[*++pos]->add(*READ_LAST_REG());
     FREE_REGS(1);
     DISPATCH();
 
-do_read_list:
+OP(READ_LIST):
     ADD_RET_VALUE(lists[*++pos]->toString());
     DISPATCH();
 
-do_list_append:
+OP(LIST_APPEND):
     lists[*++pos]->push_back(*READ_LAST_REG());
     FREE_REGS(1);
     DISPATCH();
 
-do_list_del : {
+OP(LIST_DEL): {
     const Value *indexValue = READ_LAST_REG();
     size_t index;
     List *list = lists[*++pos];
@@ -602,11 +617,11 @@ do_list_del : {
     DISPATCH();
 }
 
-do_list_del_all:
+OP(LIST_DEL_ALL):
     lists[*++pos]->clear();
     DISPATCH();
 
-do_list_insert : {
+OP(LIST_INSERT): {
     const Value *indexValue = READ_REG(1, 2);
     size_t index;
     List *list = lists[*++pos];
@@ -634,7 +649,7 @@ do_list_insert : {
     DISPATCH();
 }
 
-do_list_replace : {
+OP(LIST_REPLACE): {
     const Value *indexValue = READ_REG(0, 2);
     size_t index;
     List *list = lists[*++pos];
@@ -657,7 +672,7 @@ do_list_replace : {
     DISPATCH();
 }
 
-do_list_get_item : {
+OP(LIST_GET_ITEM): {
     const Value *indexValue = READ_LAST_REG();
     size_t index;
     List *list = lists[*++pos];
@@ -682,26 +697,26 @@ do_list_get_item : {
     DISPATCH();
 }
 
-do_list_index_of:
+OP(LIST_INDEX_OF):
     // TODO: Add size_t support to Value and remove the static_cast
     REPLACE_RET_VALUE(static_cast<long>(lists[*++pos]->indexOf(*READ_LAST_REG()) + 1), 1);
     DISPATCH();
 
-do_list_length:
+OP(LIST_LENGTH):
     // TODO: Add size_t support to Value and remove the static_cast
     ADD_RET_VALUE(static_cast<long>(lists[*++pos]->size()));
     DISPATCH();
 
-do_list_contains:
+OP(LIST_CONTAINS):
     REPLACE_RET_VALUE(lists[*++pos]->contains(*READ_LAST_REG()), 1);
     DISPATCH();
 
-do_str_concat:
+OP(STR_CONCAT):
     REPLACE_RET_VALUE(READ_REG(0, 2)->toString() + READ_REG(1, 2)->toString(), 2);
     FREE_REGS(1);
     DISPATCH();
 
-do_str_at : {
+OP(STR_AT): {
     size_t index = READ_REG(1, 2)->toLong() - 1;
     {
         std::u16string str = READ_REG(0, 2)->toUtf16();
@@ -714,16 +729,16 @@ do_str_at : {
     DISPATCH();
 }
 
-do_str_length:
+OP(STR_LENGTH):
     REPLACE_RET_VALUE(static_cast<long>(READ_REG(0, 1)->toUtf16().size()), 1);
     DISPATCH();
 
-do_str_contains:
+OP(STR_CONTAINS):
     REPLACE_RET_VALUE(READ_REG(0, 2)->toUtf16().find(READ_REG(1, 2)->toUtf16()) != std::u16string::npos, 2);
     FREE_REGS(1);
     DISPATCH();
 
-do_exec : {
+OP(EXEC): {
     auto ret = functions[*++pos](vm);
     if (updatePos) {
         pos = this->pos;
@@ -748,14 +763,14 @@ do_exec : {
     DISPATCH();
 }
 
-do_init_procedure:
+OP(INIT_PROCEDURE):
     procedureArgTree.push_back({});
     if (procedureArgTree.size() >= 2)
         procedureArgs = &procedureArgTree[procedureArgTree.size() - 2];
     nextProcedureArgs = &procedureArgTree.back();
     DISPATCH();
 
-do_call_procedure : {
+OP(CALL_PROCEDURE): {
     unsigned int *procedurePos = procedures[pos[1]];
 
     if (procedurePos) {
@@ -769,20 +784,23 @@ do_call_procedure : {
     DISPATCH();
 }
 
-do_add_arg:
+OP(ADD_ARG):
     nextProcedureArgs->push_back(*READ_LAST_REG());
     FREE_REGS(1);
     DISPATCH();
 
-do_read_arg:
+OP(READ_ARG):
     ADD_RET_VALUE(procedureArgs->operator[](*++pos));
     DISPATCH();
 
-do_break_frame:
+OP(BREAK_FRAME):
     noBreak = false;
     DISPATCH();
 
-do_warp:
+OP(WARP):
     warp = true;
     DISPATCH();
+#if !defined(ENABLE_COMPUTED_GOTO)
+    }
+#endif
 }
