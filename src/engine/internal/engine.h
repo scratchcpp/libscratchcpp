@@ -161,9 +161,8 @@ class Engine : public IEngine
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_broadcastMap;
-        std::unordered_map<Broadcast *, std::vector<std::pair<VirtualMachine *, VirtualMachine *>>> m_runningBroadcastMap; // source script, "when received" script
-        std::unordered_map<Target *, std::vector<Script *>> m_cloneInitScriptsMap;                                         // target (no clones), "when I start as a clone" scripts
-        std::unordered_map<std::string, std::vector<Script *>> m_whenKeyPressedScripts;                                    // key name, "when key pressed" scripts
+        std::unordered_map<Target *, std::vector<Script *>> m_cloneInitScriptsMap;      // target (no clones), "when I start as a clone" scripts
+        std::unordered_map<std::string, std::vector<Script *>> m_whenKeyPressedScripts; // key name, "when key pressed" scripts
         std::vector<std::string> m_extensions;
         std::vector<Target *> m_executableTargets; // sorted by layer (reverse order of execution)
         TargetScriptMap m_runningScripts;

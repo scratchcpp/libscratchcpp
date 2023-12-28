@@ -205,22 +205,17 @@ void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wa
 void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait)
 {
     const std::vector<Script *> &scripts = m_broadcastMap[broadcast];
-    auto &runningBroadcasts = m_runningBroadcastMap[broadcast];
 
-    for (auto script : scripts) {
-        for (auto &pair : runningBroadcasts) {
-            if (pair.second->script() == script)
-                pair.first = sourceScript;
+    for (const auto &[target, targetScripts] : m_runningScripts) {
+        for (auto vm : targetScripts) {
+            auto it = std::find_if(scripts.begin(), scripts.end(), [vm](Script *script) { return vm->script() == script; });
+
+            if (it != scripts.end() && *it == sourceScript->script())
+                sourceScript->stop(false, !wait); // source script is the broadcast script
         }
-
-        if (script == sourceScript->script())
-            sourceScript->stop(false, !wait); // source script is the broadcast script
     }
 
-    std::vector<VirtualMachine *> startedScripts = startHats(scripts);
-
-    for (VirtualMachine *vm : startedScripts)
-        runningBroadcasts.push_back({ sourceScript, vm });
+    startHats(scripts);
 }
 
 void Engine::stopScript(VirtualMachine *vm)
@@ -448,20 +443,6 @@ void Engine::runScripts(const TargetScriptMap &scriptMap, TargetScriptMap &globa
                 break;
             }
         }
-
-        // Remove from m_runningBroadcastMap
-        for (auto &[broadcast, pairs] : m_runningBroadcastMap) {
-            size_t index = 0;
-
-            for (const auto &pair : pairs) {
-                if (pair.second == script) {
-                    pairs.erase(pairs.begin() + index);
-                    break;
-                }
-
-                index++;
-            }
-        }
     }
     m_scriptsToRemove.clear();
 }
@@ -642,16 +623,16 @@ bool Engine::broadcastRunning(unsigned int index, VirtualMachine *sourceScript)
 
 bool Engine::broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript)
 {
-    auto it = m_runningBroadcastMap.find(broadcast);
+    assert(m_broadcastMap.find(broadcast) != m_broadcastMap.cend());
+    const auto &scripts = m_broadcastMap[broadcast];
 
-    if (it == m_runningBroadcastMap.cend())
-        return false;
+    for (const auto &[target, targetScripts] : m_runningScripts) {
+        for (auto vm : targetScripts) {
+            auto it = std::find_if(scripts.begin(), scripts.end(), [vm](Script *script) { return vm->script() == script; });
 
-    const auto &scripts = it->second;
-
-    for (const auto &pair : scripts) {
-        if (pair.first == sourceScript)
-            return true;
+            if (it != scripts.end())
+                return true;
+        }
     }
 
     return false;
@@ -790,13 +771,8 @@ void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadc
         std::vector<Script *> &scripts = m_broadcastMap[broadcast];
         // TODO: Do not allow adding existing scripts
         scripts.push_back(m_scripts[whenReceivedBlock].get());
-    } else {
+    } else
         m_broadcastMap[broadcast] = { m_scripts[whenReceivedBlock].get() };
-
-        // Create a vector of running scripts for this broadcast
-        // so we don't need to check if it's there
-        m_runningBroadcastMap[broadcast] = {};
-    }
 }
 
 void Engine::addCloneInitScript(std::shared_ptr<Block> hatBlock)
@@ -1238,7 +1214,7 @@ std::vector<VirtualMachine *> Engine::startHats(const std::vector<Script *> &scr
         for (VirtualMachine *vm : runningScripts) {
             vm->reset();
 
-            // Remove the script from scripts to remove because it's going to run again
+            // Remove the script from scripts to remove and running broadcast map because it's going to run again
             m_scriptsToRemove.erase(std::remove(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm), m_scriptsToRemove.end());
             assert(std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm) == m_scriptsToRemove.end());
         }
