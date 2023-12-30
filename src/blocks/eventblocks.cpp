@@ -21,7 +21,7 @@ std::string EventBlocks::name() const
 void EventBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks
-    engine->addHatBlock(this, "event_whenflagclicked");
+    engine->addCompileFunction(this, "event_whenflagclicked", &compileWhenFlagClicked);
     engine->addCompileFunction(this, "event_broadcast", &compileBroadcast);
     engine->addCompileFunction(this, "event_broadcastandwait", &compileBroadcastAndWait);
     engine->addCompileFunction(this, "event_whenbroadcastreceived", &compileWhenBroadcastReceived);
@@ -35,6 +35,11 @@ void EventBlocks::registerBlocks(IEngine *engine)
     engine->addField(this, "BROADCAST_OPTION", BROADCAST_OPTION);
     engine->addField(this, "BACKDROP", BACKDROP);
     engine->addField(this, "KEY_OPTION", KEY_OPTION);
+}
+
+void EventBlocks::compileWhenFlagClicked(Compiler *compiler)
+{
+    compiler->engine()->addGreenFlagScript(compiler->block());
 }
 
 void EventBlocks::compileBroadcast(Compiler *compiler)

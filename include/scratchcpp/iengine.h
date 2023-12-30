@@ -245,6 +245,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Returns the index of the broadcast with the given ID. */
         virtual int findBroadcastById(const std::string &broadcastId) const = 0;
 
+        /*! Registers the "green flag" script. */
+        virtual void addGreenFlagScript(std::shared_ptr<Block> hatBlock) = 0;
+
         /*! Registers the broadcast script. */
         virtual void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast) = 0;
 

@@ -737,6 +737,11 @@ int Engine::findBroadcastById(const std::string &broadcastId) const
     return -1;
 }
 
+void Engine::addGreenFlagScript(std::shared_ptr<Block> hatBlock)
+{
+    addHatToMap(m_greenFlagHats, m_scripts[hatBlock].get());
+}
+
 void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast)
 {
     assert(!broadcast->isBackdropBroadcast());
@@ -1087,21 +1092,8 @@ std::vector<Script *> Engine::getHats(Target *target, HatType type)
     }
 
     switch (type) {
-        case HatType::GreenFlag: {
-            // TODO: Add a map for green flag hats and return reference
-            std::vector<Script *> out;
-            const auto &blocks = target->blocks();
-
-            for (auto block : blocks) {
-                if (block->opcode() == "event_whenflagclicked") {
-                    assert(block->topLevel());
-                    assert(m_scripts.find(block) != m_scripts.cend());
-                    out.push_back(m_scripts[block].get());
-                }
-            }
-
-            return out;
-        }
+        case HatType::GreenFlag:
+            return m_greenFlagHats[target];
 
         case HatType::BroadcastReceived:
             return m_broadcastHats[target];

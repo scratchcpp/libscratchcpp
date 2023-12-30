@@ -83,7 +83,7 @@ TEST_F(EventBlocksTest, CategoryVisible)
 TEST_F(EventBlocksTest, RegisterBlocks)
 {
     // Blocks
-    EXPECT_CALL(m_engineMock, addHatBlock(m_section.get(), "event_whenflagclicked"));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenflagclicked", &EventBlocks::compileWhenFlagClicked));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_broadcast", &EventBlocks::compileBroadcast));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_broadcastandwait", &EventBlocks::compileBroadcastAndWait));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenbroadcastreceived", &EventBlocks::compileWhenBroadcastReceived));
@@ -99,6 +99,26 @@ TEST_F(EventBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "KEY_OPTION", EventBlocks::KEY_OPTION));
 
     m_section->registerBlocks(&m_engineMock);
+}
+
+TEST_F(EventBlocksTest, WhenFlagClicked)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = createEventBlock("a", "event_whenflagclicked");
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, addGreenFlagScript(block));
+    compiler.setBlock(block);
+    EventBlocks::compileWhenFlagClicked(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
 }
 
 TEST_F(EventBlocksTest, Broadcast)
