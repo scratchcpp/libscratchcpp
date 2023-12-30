@@ -56,11 +56,14 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Starts a script with the given top level block as the given Target (a sprite or the stage). */
         virtual VirtualMachine *startScript(std::shared_ptr<Block> topLevelBlock, Target *) = 0;
 
-        /*! Starts the script of the broadcast with the given index. */
-        virtual void broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait = false) = 0;
+        /*! Starts the scripts of the broadcast with the given index. */
+        virtual void broadcast(unsigned int index) = 0;
 
-        /*! Starts the script of the given broadcast. */
-        virtual void broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait = false) = 0;
+        /*! Starts the scripts of the given broadcast. */
+        virtual void broadcastByPtr(Broadcast *broadcast) = 0;
+
+        /*! Starts the "when backdrop switches to" scripts for the given backdrop broadcast. */
+        virtual void startBackdropScripts(Broadcast *broadcast) = 0;
 
         /*! Stops the given script. */
         virtual void stopScript(VirtualMachine *vm) = 0;
@@ -174,10 +177,10 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void setSpriteFencingEnabled(bool enable) = 0;
 
         /*! Returns true if there are any running script of the broadcast with the given index. */
-        virtual bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) = 0;
+        virtual bool broadcastRunning(unsigned int index) = 0;
 
         /*! Returns true if there are any running script of the given broadcast. */
-        virtual bool broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript) = 0;
+        virtual bool broadcastByPtrRunning(Broadcast *broadcast) = 0;
 
         /*!
          * Call this from a block implementation to force a redraw (screen refresh).
@@ -242,14 +245,20 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Returns the index of the broadcast with the given ID. */
         virtual int findBroadcastById(const std::string &broadcastId) const = 0;
 
+        /*! Registers the "green flag" script. */
+        virtual void addGreenFlagScript(std::shared_ptr<Block> hatBlock) = 0;
+
         /*! Registers the broadcast script. */
-        virtual void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast) = 0;
+        virtual void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, int fieldId, Broadcast *broadcast) = 0;
+
+        /*! Registers the backdrop change script. */
+        virtual void addBackdropChangeScript(std::shared_ptr<Block> hatBlock, int fieldId) = 0;
 
         /* Registers the given "when I start as clone" script. */
         virtual void addCloneInitScript(std::shared_ptr<Block> hatBlock) = 0;
 
         /* Registers the given "when key pressed" script. */
-        virtual void addKeyPressScript(std::shared_ptr<Block> hatBlock, std::string keyName) = 0;
+        virtual void addKeyPressScript(std::shared_ptr<Block> hatBlock, int fieldId) = 0;
 
         /*! Returns the list of targets. */
         virtual const std::vector<std::shared_ptr<Target>> &targets() const = 0;

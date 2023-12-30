@@ -10,6 +10,7 @@
 #include <chrono>
 #include <mutex>
 #include <set>
+#include <variant>
 
 #include "blocksectioncontainer.h"
 
@@ -33,8 +34,9 @@ class Engine : public IEngine
         void start() override;
         void stop() override;
         VirtualMachine *startScript(std::shared_ptr<Block> topLevelBlock, Target *target) override;
-        void broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait = false) override;
-        void broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait = false) override;
+        void broadcast(unsigned int index) override;
+        void broadcastByPtr(Broadcast *broadcast) override;
+        void startBackdropScripts(Broadcast *broadcast) override;
         void stopScript(VirtualMachine *vm) override;
         void stopTarget(Target *target, VirtualMachine *exceptScript) override;
         void initClone(std::shared_ptr<Sprite> clone) override;
@@ -84,8 +86,8 @@ class Engine : public IEngine
         bool spriteFencingEnabled() const override;
         void setSpriteFencingEnabled(bool enable) override;
 
-        bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) override;
-        bool broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript) override;
+        bool broadcastRunning(unsigned int index) override;
+        bool broadcastByPtrRunning(Broadcast *broadcast) override;
 
         void requestRedraw() override;
 
@@ -108,9 +110,11 @@ class Engine : public IEngine
         int findBroadcast(const std::string &broadcastName) const override;
         int findBroadcastById(const std::string &broadcastId) const override;
 
-        void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast) override;
+        void addGreenFlagScript(std::shared_ptr<Block> hatBlock) override;
+        void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, int fieldId, Broadcast *broadcast) override;
+        void addBackdropChangeScript(std::shared_ptr<Block> hatBlock, int fieldId) override;
         void addCloneInitScript(std::shared_ptr<Block> hatBlock) override;
-        void addKeyPressScript(std::shared_ptr<Block> hatBlock, std::string keyName) override;
+        void addKeyPressScript(std::shared_ptr<Block> hatBlock, int fieldId) override;
 
         const std::vector<std::shared_ptr<Target>> &targets() const override;
         void setTargets(const std::vector<std::shared_ptr<Target>> &newTargets) override;
@@ -136,10 +140,26 @@ class Engine : public IEngine
         IClock *m_clock = nullptr;
 
     private:
-        using TargetScriptMap = std::unordered_map<Target *, std::vector<std::shared_ptr<VirtualMachine>>>;
+        enum class HatType
+        {
+            GreenFlag,
+            BroadcastReceived,
+            BackdropChanged,
+            CloneInit,
+            KeyPressed
+        };
 
+        enum class HatField
+        {
+            BroadcastOption,
+            Backdrop,
+            KeyOption
+        };
+
+        void step();
+        std::vector<std::shared_ptr<VirtualMachine>> stepThreads();
+        void stepThread(std::shared_ptr<VirtualMachine> thread);
         void eventLoop(bool untilProjectStops = false);
-        void runScripts(const TargetScriptMap &scriptMap, TargetScriptMap &globalScriptMap);
         void finalize();
         void deleteClones();
         void removeExecutableClones();
@@ -151,27 +171,47 @@ class Engine : public IEngine
         std::shared_ptr<Entity> getEntity(const std::string &id);
         std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
 
+        void addHatToMap(std::unordered_map<Target *, std::vector<Script *>> &map, Script *script);
+        void addHatField(Script *script, HatField field, int fieldId);
+        const std::vector<libscratchcpp::Script *> &getHats(Target *target, HatType type);
+
         void updateSpriteLayerOrder();
 
         void updateFrameDuration();
         void addRunningScript(std::shared_ptr<VirtualMachine> vm);
-        std::vector<VirtualMachine *> startHats(const std::vector<Script *> &scripts);
+
+        std::shared_ptr<VirtualMachine> pushThread(std::shared_ptr<Block> block, Target *target);
+        void stopThread(VirtualMachine *thread);
+        std::shared_ptr<VirtualMachine> restartThread(std::shared_ptr<VirtualMachine> thread);
+
+        template<typename F>
+        void allScriptsByOpcodeDo(HatType hatType, F &&f, Target *optTarget);
+
+        std::vector<std::shared_ptr<VirtualMachine>>
+        startHats(HatType hatType, const std::unordered_map<HatField, std::variant<std::string, const char *, Entity *>> &optMatchFields, Target *optTarget);
+
+        static const std::unordered_map<HatType, bool> m_hatRestartExistingThreads; // used to check whether a hat should restart existing threads
 
         std::unordered_map<std::shared_ptr<IBlockSection>, std::unique_ptr<BlockSectionContainer>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_broadcastMap;
-        std::unordered_map<Broadcast *, std::vector<std::pair<VirtualMachine *, VirtualMachine *>>> m_runningBroadcastMap; // source script, "when received" script
-        std::unordered_map<Target *, std::vector<Script *>> m_cloneInitScriptsMap;                                         // target (no clones), "when I start as a clone" scripts
-        std::unordered_map<std::string, std::vector<Script *>> m_whenKeyPressedScripts;                                    // key name, "when key pressed" scripts
         std::vector<std::string> m_extensions;
         std::vector<Target *> m_executableTargets; // sorted by layer (reverse order of execution)
-        TargetScriptMap m_runningScripts;
-        TargetScriptMap m_newScripts;
-        std::vector<VirtualMachine *> m_scriptsToRemove;
+        std::vector<std::shared_ptr<VirtualMachine>> m_threads;
+        std::vector<std::shared_ptr<VirtualMachine>> m_threadsToStop;
+        std::shared_ptr<VirtualMachine> m_activeThread;
         std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> m_scripts;
         std::vector<BlockFunc> m_functions;
         std::recursive_mutex m_eventLoopMutex;
+
+        std::unordered_map<Target *, std::vector<Script *>> m_greenFlagHats;
+        std::unordered_map<Target *, std::vector<Script *>> m_backdropChangeHats;
+        std::unordered_map<Target *, std::vector<Script *>> m_broadcastHats;
+        std::unordered_map<Target *, std::vector<Script *>> m_cloneInitHats;
+        std::unordered_map<Target *, std::vector<Script *>> m_whenKeyPressedHats;
+
+        std::unordered_map<Script *, std::unordered_map<HatField, int>> m_scriptHatFields; // HatField, field ID from the block implementation
 
         std::unique_ptr<ITimer> m_defaultTimer;
         ITimer *m_timer = nullptr;

@@ -4,8 +4,9 @@
 
 using namespace libscratchcpp;
 
-ScriptPrivate::ScriptPrivate(Target *target, IEngine *engine) :
+ScriptPrivate::ScriptPrivate(Target *target, std::shared_ptr<Block> topBlock, IEngine *engine) :
     target(target),
+    topBlock(topBlock),
     engine(engine)
 {
 }

@@ -5,6 +5,6 @@
 using namespace libscratchcpp;
 
 CostumePrivate::CostumePrivate() :
-    broadcast("", "")
+    broadcast("", "", true)
 {
 }

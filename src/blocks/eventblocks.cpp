@@ -21,7 +21,7 @@ std::string EventBlocks::name() const
 void EventBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks
-    engine->addHatBlock(this, "event_whenflagclicked");
+    engine->addCompileFunction(this, "event_whenflagclicked", &compileWhenFlagClicked);
     engine->addCompileFunction(this, "event_broadcast", &compileBroadcast);
     engine->addCompileFunction(this, "event_broadcastandwait", &compileBroadcastAndWait);
     engine->addCompileFunction(this, "event_whenbroadcastreceived", &compileWhenBroadcastReceived);
@@ -35,6 +35,11 @@ void EventBlocks::registerBlocks(IEngine *engine)
     engine->addField(this, "BROADCAST_OPTION", BROADCAST_OPTION);
     engine->addField(this, "BACKDROP", BACKDROP);
     engine->addField(this, "KEY_OPTION", KEY_OPTION);
+}
+
+void EventBlocks::compileWhenFlagClicked(Compiler *compiler)
+{
+    compiler->engine()->addGreenFlagScript(compiler->block());
 }
 
 void EventBlocks::compileBroadcast(Compiler *compiler)
@@ -72,60 +77,54 @@ void EventBlocks::compileWhenBroadcastReceived(Compiler *compiler)
 {
     auto broadcast = std::static_pointer_cast<Broadcast>(compiler->field(BROADCAST_OPTION)->valuePtr());
 
-    compiler->engine()->addBroadcastScript(compiler->block(), broadcast.get());
+    compiler->engine()->addBroadcastScript(compiler->block(), BROADCAST_OPTION, broadcast.get());
 }
 
 void EventBlocks::compileWhenBackdropSwitchesTo(Compiler *compiler)
 {
-    if (Stage *stage = compiler->engine()->stage()) {
-        std::string backdropName = compiler->field(BACKDROP)->value().toString();
-        int index = stage->findCostume(backdropName);
-
-        if (index != -1)
-            compiler->engine()->addBroadcastScript(compiler->block(), stage->costumeAt(index)->broadcast());
-    }
+    compiler->engine()->addBackdropChangeScript(compiler->block(), BACKDROP);
 }
 
 void EventBlocks::compileWhenKeyPressed(Compiler *compiler)
 {
     // NOTE: Field values don't have to be registered because keys are referenced by their names
-    compiler->engine()->addKeyPressScript(compiler->block(), compiler->field(KEY_OPTION)->value().toString());
+    compiler->engine()->addKeyPressScript(compiler->block(), KEY_OPTION);
 }
 
 unsigned int EventBlocks::broadcast(VirtualMachine *vm)
 {
-    vm->engine()->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()), vm);
+    vm->engine()->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()));
     return 1;
 }
 
 unsigned int EventBlocks::broadcastByIndex(VirtualMachine *vm)
 {
-    vm->engine()->broadcast(vm->getInput(0, 1)->toLong(), vm);
+    vm->engine()->broadcast(vm->getInput(0, 1)->toLong());
     return 1;
 }
 
 unsigned int EventBlocks::broadcastAndWait(VirtualMachine *vm)
 {
-    vm->engine()->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()), vm, true);
+    vm->engine()->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()));
     return 1;
 }
 
 unsigned int EventBlocks::broadcastByIndexAndWait(VirtualMachine *vm)
 {
-    vm->engine()->broadcast(vm->getInput(0, 1)->toLong(), vm, true);
+    vm->engine()->broadcast(vm->getInput(0, 1)->toLong());
     return 1;
 }
 
 unsigned int EventBlocks::checkBroadcast(VirtualMachine *vm)
 {
-    if (vm->engine()->broadcastRunning(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()), vm))
+    if (vm->engine()->broadcastRunning(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString())))
         vm->stop(true, true, true);
     return 1;
 }
 
 unsigned int EventBlocks::checkBroadcastByIndex(VirtualMachine *vm)
 {
-    if (vm->engine()->broadcastRunning(vm->getInput(0, 1)->toLong(), vm))
+    if (vm->engine()->broadcastRunning(vm->getInput(0, 1)->toLong()))
         vm->stop(true, true, true);
     return 1;
 }

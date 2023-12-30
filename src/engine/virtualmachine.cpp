@@ -175,6 +175,13 @@ void VirtualMachine::run()
     impl->running = false;
 }
 
+/*! Stops the execution and sets atEnd to true. */
+void VirtualMachine::kill()
+{
+    reset();
+    impl->atEnd = true;
+}
+
 /*! Jumps back to the initial position. */
 void VirtualMachine::reset()
 {

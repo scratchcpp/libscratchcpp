@@ -12,6 +12,7 @@ namespace libscratchcpp
 {
 
 class Target;
+class Block;
 class IEngine;
 class Value;
 class VirtualMachine;
@@ -23,10 +24,11 @@ class ScriptPrivate;
 class LIBSCRATCHCPP_EXPORT Script
 {
     public:
-        Script(Target *target, IEngine *engine);
+        Script(Target *target, std::shared_ptr<Block> topBlock, IEngine *engine);
         Script(const Script &) = delete;
 
         Target *target() const;
+        std::shared_ptr<Block> topBlock() const;
 
         unsigned int *bytecode() const;
         const std::vector<unsigned int> &bytecodeVector() const;

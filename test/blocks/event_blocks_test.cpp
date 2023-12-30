@@ -83,7 +83,7 @@ TEST_F(EventBlocksTest, CategoryVisible)
 TEST_F(EventBlocksTest, RegisterBlocks)
 {
     // Blocks
-    EXPECT_CALL(m_engineMock, addHatBlock(m_section.get(), "event_whenflagclicked"));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenflagclicked", &EventBlocks::compileWhenFlagClicked));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_broadcast", &EventBlocks::compileBroadcast));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_broadcastandwait", &EventBlocks::compileBroadcastAndWait));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenbroadcastreceived", &EventBlocks::compileWhenBroadcastReceived));
@@ -99,6 +99,26 @@ TEST_F(EventBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "KEY_OPTION", EventBlocks::KEY_OPTION));
 
     m_section->registerBlocks(&m_engineMock);
+}
+
+TEST_F(EventBlocksTest, WhenFlagClicked)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = createEventBlock("a", "event_whenflagclicked");
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, addGreenFlagScript(block));
+    compiler.setBlock(block);
+    EventBlocks::compileWhenFlagClicked(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
 }
 
 TEST_F(EventBlocksTest, Broadcast)
@@ -145,14 +165,14 @@ TEST_F(EventBlocksTest, BroadcastImpl)
     vm.setConstValues(constValues);
 
     EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(1));
-    EXPECT_CALL(m_engineMock, broadcast(1, &vm, false)).Times(1);
+    EXPECT_CALL(m_engineMock, broadcast(1)).Times(1);
 
     vm.setBytecode(bytecode1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
 
-    EXPECT_CALL(m_engineMock, broadcast(2, &vm, false)).Times(1);
+    EXPECT_CALL(m_engineMock, broadcast(2)).Times(1);
 
     vm.setBytecode(bytecode2);
     vm.run();
@@ -210,7 +230,7 @@ TEST_F(EventBlocksTest, BroadcastAndWaitImpl)
     vm.setConstValues(constValues);
 
     EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(1));
-    EXPECT_CALL(m_engineMock, broadcast(1, &vm, true)).Times(1);
+    EXPECT_CALL(m_engineMock, broadcast(1)).Times(1);
 
     vm.setBytecode(bytecode1);
     vm.run();
@@ -218,7 +238,7 @@ TEST_F(EventBlocksTest, BroadcastAndWaitImpl)
     ASSERT_EQ(vm.registerCount(), 0);
 
     EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(2));
-    EXPECT_CALL(m_engineMock, broadcastRunning(2, &vm)).WillOnce(Return(true));
+    EXPECT_CALL(m_engineMock, broadcastRunning(2)).WillOnce(Return(true));
 
     vm.setBytecode(bytecode2);
     vm.run();
@@ -227,21 +247,21 @@ TEST_F(EventBlocksTest, BroadcastAndWaitImpl)
     ASSERT_EQ(vm.atEnd(), false);
 
     EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(2));
-    EXPECT_CALL(m_engineMock, broadcastRunning(2, &vm)).WillOnce(Return(false));
+    EXPECT_CALL(m_engineMock, broadcastRunning(2)).WillOnce(Return(false));
 
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(vm.atEnd(), true);
 
-    EXPECT_CALL(m_engineMock, broadcast(3, &vm, true)).Times(1);
+    EXPECT_CALL(m_engineMock, broadcast(3)).Times(1);
 
     vm.setBytecode(bytecode3);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
 
-    EXPECT_CALL(m_engineMock, broadcastRunning(3, &vm)).WillOnce(Return(true));
+    EXPECT_CALL(m_engineMock, broadcastRunning(3)).WillOnce(Return(true));
 
     vm.setBytecode(bytecode4);
     vm.run();
@@ -249,7 +269,7 @@ TEST_F(EventBlocksTest, BroadcastAndWaitImpl)
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_EQ(vm.atEnd(), false);
 
-    EXPECT_CALL(m_engineMock, broadcastRunning(3, &vm)).WillOnce(Return(false));
+    EXPECT_CALL(m_engineMock, broadcastRunning(3)).WillOnce(Return(false));
 
     vm.run();
 
@@ -265,7 +285,7 @@ TEST_F(EventBlocksTest, WhenBroadcastReceived)
     auto block1 = createEventBlock("a", "event_whenbroadcastreceived");
     addBroadcastField(block1, "BROADCAST_OPTION", EventBlocks::BROADCAST_OPTION, m_broadcast);
 
-    EXPECT_CALL(m_engineMock, addBroadcastScript(block1, m_broadcast.get())).Times(1);
+    EXPECT_CALL(m_engineMock, addBroadcastScript(block1, EventBlocks::BROADCAST_OPTION, m_broadcast.get())).Times(1);
 
     compiler.init();
     compiler.setBlock(block1);
@@ -290,8 +310,7 @@ TEST_F(EventBlocksTest, WhenBackdropSwitchesTo)
     auto backdrop = std::make_shared<Costume>("backdrop2", "a", "svg");
     stage.addCostume(backdrop);
 
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, addBroadcastScript(block1, backdrop->broadcast()));
+    EXPECT_CALL(m_engineMock, addBackdropChangeScript(block1, EventBlocks::BACKDROP));
 
     compiler.init();
     compiler.setBlock(block1);
@@ -318,11 +337,11 @@ TEST_F(EventBlocksTest, WhenKeyPressed)
 
     compiler.init();
 
-    EXPECT_CALL(m_engineMock, addKeyPressScript(block1, "a"));
+    EXPECT_CALL(m_engineMock, addKeyPressScript(block1, EventBlocks::KEY_OPTION));
     compiler.setBlock(block1);
     EventBlocks::compileWhenKeyPressed(&compiler);
 
-    EXPECT_CALL(m_engineMock, addKeyPressScript(block2, "left arrow"));
+    EXPECT_CALL(m_engineMock, addKeyPressScript(block2, EventBlocks::KEY_OPTION));
     compiler.setBlock(block2);
     EventBlocks::compileWhenKeyPressed(&compiler);
 

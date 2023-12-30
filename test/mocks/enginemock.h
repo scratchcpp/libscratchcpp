@@ -17,8 +17,9 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, start, (), (override));
         MOCK_METHOD(void, stop, (), (override));
         MOCK_METHOD(VirtualMachine *, startScript, (std::shared_ptr<Block>, Target *), (override));
-        MOCK_METHOD(void, broadcast, (unsigned int, VirtualMachine *, bool), (override));
-        MOCK_METHOD(void, broadcastByPtr, (Broadcast *, VirtualMachine *, bool), (override));
+        MOCK_METHOD(void, broadcast, (unsigned int), (override));
+        MOCK_METHOD(void, broadcastByPtr, (Broadcast *), (override));
+        MOCK_METHOD(void, startBackdropScripts, (Broadcast *), (override));
         MOCK_METHOD(void, stopScript, (VirtualMachine *), (override));
         MOCK_METHOD(void, stopTarget, (Target *, VirtualMachine *), (override));
         MOCK_METHOD(void, initClone, (std::shared_ptr<Sprite>), (override));
@@ -68,8 +69,8 @@ class EngineMock : public IEngine
         MOCK_METHOD(bool, spriteFencingEnabled, (), (const, override));
         MOCK_METHOD(void, setSpriteFencingEnabled, (bool), (override));
 
-        MOCK_METHOD(bool, broadcastRunning, (unsigned int, VirtualMachine *), (override));
-        MOCK_METHOD(bool, broadcastByPtrRunning, (Broadcast *, VirtualMachine *), (override));
+        MOCK_METHOD(bool, broadcastRunning, (unsigned int), (override));
+        MOCK_METHOD(bool, broadcastByPtrRunning, (Broadcast *), (override));
 
         MOCK_METHOD(void, requestRedraw, (), (override));
 
@@ -90,9 +91,11 @@ class EngineMock : public IEngine
         MOCK_METHOD(int, findBroadcast, (const std::string &), (const, override));
         MOCK_METHOD(int, findBroadcastById, (const std::string &), (const, override));
 
-        MOCK_METHOD(void, addBroadcastScript, (std::shared_ptr<Block>, Broadcast *), (override));
+        MOCK_METHOD(void, addGreenFlagScript, (std::shared_ptr<Block>), (override));
+        MOCK_METHOD(void, addBroadcastScript, (std::shared_ptr<Block>, int, Broadcast *), (override));
+        MOCK_METHOD(void, addBackdropChangeScript, (std::shared_ptr<Block>, int), (override));
         MOCK_METHOD(void, addCloneInitScript, (std::shared_ptr<Block>), (override));
-        MOCK_METHOD(void, addKeyPressScript, (std::shared_ptr<Block>, std::string), (override));
+        MOCK_METHOD(void, addKeyPressScript, (std::shared_ptr<Block>, int), (override));
 
         MOCK_METHOD(const std::vector<std::shared_ptr<Target>> &, targets, (), (const, override));
         MOCK_METHOD(void, setTargets, (const std::vector<std::shared_ptr<Target>> &), (override));

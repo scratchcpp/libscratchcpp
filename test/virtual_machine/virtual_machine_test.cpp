@@ -23,7 +23,7 @@ TEST(VirtualMachineTest, Constructors)
 
     Target target;
     Engine engine;
-    Script script(&target, &engine);
+    Script script(&target, nullptr, &engine);
     VirtualMachine vm2(&target, &engine, &script);
     ASSERT_EQ(vm2.target(), &target);
     ASSERT_EQ(vm2.engine(), &engine);
@@ -1590,7 +1590,7 @@ TEST(VirtualMachineTest, OP_WARP)
     ASSERT_EQ(vm.registerCount(), 0);
 }
 
-TEST(VirtualMachineTest, Reset)
+TEST(VirtualMachineTest, ResetAndKill)
 {
     static unsigned int bytecode1[] = { OP_START, OP_NULL, OP_EXEC, 0, OP_HALT };
     static unsigned int bytecode2[] = { OP_START, OP_NULL, OP_EXEC, 1, OP_HALT };
@@ -1629,6 +1629,14 @@ TEST(VirtualMachineTest, Reset)
 
     vm.reset();
     ASSERT_FALSE(vm.atEnd());
+
+    // kill()
+    vm.run();
+    ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(vm.registerCount(), 1);
+    vm.kill();
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
 }
 
 TEST(VirtualMachineTest, NoCrashWhenRepeatingZeroTimes)

@@ -128,6 +128,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         void replaceReturnValue(const Value &v, unsigned int offset);
 
         void run();
+        void kill();
         void reset();
         void moveToLastCheckpoint();
 

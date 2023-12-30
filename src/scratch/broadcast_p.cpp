@@ -5,8 +5,9 @@
 namespace libscratchcpp
 {
 
-BroadcastPrivate::BroadcastPrivate(const std::string &name) :
-    name(name)
+BroadcastPrivate::BroadcastPrivate(const std::string &name, bool isBackdropBroadcast) :
+    name(name),
+    isBackdropBroadcast(isBackdropBroadcast)
 {
 }
 
