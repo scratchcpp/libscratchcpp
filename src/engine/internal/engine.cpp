@@ -422,8 +422,10 @@ double Engine::fps() const
 
 void Engine::setFps(double fps)
 {
-    m_fps = fps;
-    updateFrameDuration();
+    if (fps > 0) {
+        m_fps = std::min(fps, 250.0);
+        updateFrameDuration();
+    }
 }
 
 bool Engine::turboModeEnabled() const

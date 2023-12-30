@@ -87,6 +87,21 @@ TEST(EngineTest, Fps)
 
     engine.setFps(60.25);
     ASSERT_EQ(engine.fps(), 60.25);
+
+    engine.setFps(0);
+    ASSERT_EQ(engine.fps(), 60.25);
+
+    engine.setFps(-5);
+    ASSERT_EQ(engine.fps(), 60.25);
+
+    engine.setFps(250);
+    ASSERT_EQ(engine.fps(), 250);
+
+    engine.setFps(30);
+    ASSERT_EQ(engine.fps(), 30);
+
+    engine.setFps(300);
+    ASSERT_EQ(engine.fps(), 250);
 }
 
 TEST(EngineTest, FpsProject)
