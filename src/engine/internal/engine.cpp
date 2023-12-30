@@ -204,7 +204,7 @@ void Engine::broadcast(unsigned int index)
 
 void Engine::broadcastByPtr(Broadcast *broadcast)
 {
-    startHats(HatType::BroadcastReceived, { { HatField::BroadcastOption, broadcast->name() } }, nullptr);
+    startHats(HatType::BroadcastReceived, { { HatField::BroadcastOption, broadcast } }, nullptr);
 }
 
 void Engine::startBackdropScripts(Broadcast *broadcast)
@@ -1292,7 +1292,8 @@ void Engine::allScriptsByOpcodeDo(HatType hatType, F &&f, Target *optTarget)
         delete targetsPtr;
 }
 
-std::vector<std::shared_ptr<VirtualMachine>> Engine::startHats(HatType hatType, const std::unordered_map<HatField, std::string> &optMatchFields, Target *optTarget)
+std::vector<std::shared_ptr<VirtualMachine>>
+Engine::startHats(HatType hatType, const std::unordered_map<HatField, std::variant<std::string, const char *, Entity *>> &optMatchFields, Target *optTarget)
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1818-L1889
     std::vector<std::shared_ptr<VirtualMachine>> newThreads;
@@ -1318,9 +1319,21 @@ std::vector<std::shared_ptr<VirtualMachine>> Engine::startHats(HatType hatType, 
                         if (fieldIt != fieldMap.cend()) {
                             assert(topBlock->findFieldById(fieldIt->second));
 
-                            if (topBlock->findFieldById(fieldIt->second)->value().toString() != fieldValue) {
-                                // Field mismatch
-                                return;
+                            if (std::holds_alternative<std::string>(fieldValue)) {
+                                if (topBlock->findFieldById(fieldIt->second)->value().toString() != std::get<std::string>(fieldValue)) {
+                                    // Field mismatch
+                                    return;
+                                }
+                            } else if (std::holds_alternative<const char *>(fieldValue)) {
+                                if (topBlock->findFieldById(fieldIt->second)->value().toString() != std::string(std::get<const char *>(fieldValue))) {
+                                    // Field mismatch
+                                    return;
+                                }
+                            } else {
+                                if (topBlock->findFieldById(fieldIt->second)->valuePtr().get() != std::get<Entity *>(fieldValue)) {
+                                    // Field mismatch
+                                    return;
+                                }
                             }
                         }
                     }

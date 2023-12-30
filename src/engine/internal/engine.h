@@ -10,6 +10,7 @@
 #include <chrono>
 #include <mutex>
 #include <set>
+#include <variant>
 
 #include "blocksectioncontainer.h"
 
@@ -186,7 +187,8 @@ class Engine : public IEngine
         template<typename F>
         void allScriptsByOpcodeDo(HatType hatType, F &&f, Target *optTarget);
 
-        std::vector<std::shared_ptr<VirtualMachine>> startHats(HatType hatType, const std::unordered_map<HatField, std::string> &optMatchFields, Target *optTarget);
+        std::vector<std::shared_ptr<VirtualMachine>>
+        startHats(HatType hatType, const std::unordered_map<HatField, std::variant<std::string, const char *, Entity *>> &optMatchFields, Target *optTarget);
 
         static const std::unordered_map<HatType, bool> m_hatRestartExistingThreads; // used to check whether a hat should restart existing threads
 
