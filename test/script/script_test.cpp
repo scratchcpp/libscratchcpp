@@ -1,4 +1,5 @@
 #include <scratchcpp/script.h>
+#include <scratchcpp/block.h>
 #include <scratchcpp/virtualmachine.h>
 #include <scratchcpp/target.h>
 #include <scratchcpp/sprite.h>
@@ -22,13 +23,15 @@ class ScriptTest : public testing::Test
 
 TEST_F(ScriptTest, Constructors)
 {
-    Script script(&m_target, &m_engine);
+    auto block = std::make_shared<Block>("", "");
+    Script script(&m_target, block, &m_engine);
     ASSERT_EQ(script.target(), &m_target);
+    ASSERT_EQ(script.topBlock(), block);
 }
 
 TEST_F(ScriptTest, Bytecode)
 {
-    Script script(nullptr, nullptr);
+    Script script(nullptr, nullptr, nullptr);
     ASSERT_EQ(script.bytecode(), nullptr);
     ASSERT_TRUE(script.bytecodeVector().empty());
 
@@ -58,7 +61,7 @@ TEST_F(ScriptTest, Start)
     std::shared_ptr<List> list2 = std::make_unique<List>("d", "");
     static std::vector<List *> lists = { list1.get(), list2.get() };
 
-    Script script1(nullptr, nullptr);
+    Script script1(nullptr, nullptr, nullptr);
 
     std::shared_ptr<VirtualMachine> vm = script1.start();
     ASSERT_TRUE(vm);
@@ -71,14 +74,14 @@ TEST_F(ScriptTest, Start)
     ASSERT_EQ(vm->variables(), nullptr);
     ASSERT_EQ(vm->lists(), nullptr);
 
-    Script script2(&m_target, &m_engine);
+    Script script2(&m_target, nullptr, &m_engine);
 
     vm = script2.start();
     ASSERT_TRUE(vm);
     ASSERT_EQ(vm->target(), &m_target);
     ASSERT_EQ(vm->engine(), &m_engine);
 
-    Script script3(&m_target, &m_engine);
+    Script script3(&m_target, nullptr, &m_engine);
     script3.setBytecode(bytecode);
     script3.setProcedures(procedures);
     script3.setFunctions(functions);
@@ -120,7 +123,7 @@ TEST_F(ScriptTest, Start)
     EXPECT_CALL(m_engine, requestRedraw());
     auto clone = root.clone();
 
-    Script script4(&root, &m_engine);
+    Script script4(&root, nullptr, &m_engine);
     script4.setBytecode(bytecode);
     script4.setProcedures(procedures);
     script4.setFunctions(functions);

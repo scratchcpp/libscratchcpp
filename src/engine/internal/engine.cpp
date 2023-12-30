@@ -120,7 +120,7 @@ void Engine::compile()
             if (block->topLevel() && !block->shadow()) {
                 auto section = blockSection(block->opcode());
                 if (section) {
-                    auto script = std::make_shared<Script>(target.get(), this);
+                    auto script = std::make_shared<Script>(target.get(), block, this);
                     m_scripts[block] = script;
 
                     compiler.compile(block);
@@ -581,11 +581,8 @@ bool Engine::broadcastByPtrRunning(Broadcast *broadcast)
 
         for (auto thread : m_threads) {
             if (!thread->atEnd()) {
-                // TODO: Store the top block in Script
                 Script *script = thread->script();
-                auto it = std::find_if(m_scripts.begin(), m_scripts.end(), [script](const std::pair<std::shared_ptr<Block>, std::shared_ptr<Script>> pair) { return pair.second.get() == script; });
-                assert(it != m_scripts.end());
-                auto topBlock = it->first;
+                auto topBlock = script->topBlock();
 
                 const auto &scripts = m_backdropChangeHats[script->target()];
                 auto scriptIt = std::find(scripts.begin(), scripts.end(), script);
@@ -1301,10 +1298,7 @@ std::vector<std::shared_ptr<VirtualMachine>> Engine::startHats(HatType hatType, 
     allScriptsByOpcodeDo(
         hatType,
         [this, hatType, &optMatchFields, &newThreads](Script *script, Target *target) {
-            // TODO: Store the top block in Script
-            auto it = std::find_if(m_scripts.begin(), m_scripts.end(), [script](const std::pair<std::shared_ptr<Block>, std::shared_ptr<Script>> pair) { return pair.second.get() == script; });
-            assert(it != m_scripts.end());
-            auto topBlock = it->first;
+            auto topBlock = script->topBlock();
 
             if (!optMatchFields.empty()) {
                 // Get the field map for this script

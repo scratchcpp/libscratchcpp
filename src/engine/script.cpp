@@ -13,8 +13,8 @@
 using namespace libscratchcpp;
 
 /*! Constructs Script. */
-Script::Script(Target *target, IEngine *engine) :
-    impl(spimpl::make_unique_impl<ScriptPrivate>(target, engine))
+Script::Script(Target *target, std::shared_ptr<Block> topBlock, IEngine *engine) :
+    impl(spimpl::make_unique_impl<ScriptPrivate>(target, topBlock, engine))
 {
 }
 
@@ -22,6 +22,11 @@ Script::Script(Target *target, IEngine *engine) :
 Target *Script::target() const
 {
     return impl->target;
+}
+
+std::shared_ptr<Block> Script::topBlock() const
+{
+    return impl->topBlock;
 }
 
 /*! Returns the bytecode array. */

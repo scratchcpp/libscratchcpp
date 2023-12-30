@@ -23,7 +23,7 @@ TEST(VirtualMachineTest, Constructors)
 
     Target target;
     Engine engine;
-    Script script(&target, &engine);
+    Script script(&target, nullptr, &engine);
     VirtualMachine vm2(&target, &engine, &script);
     ASSERT_EQ(vm2.target(), &target);
     ASSERT_EQ(vm2.engine(), &engine);
