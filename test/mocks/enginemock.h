@@ -93,6 +93,7 @@ class EngineMock : public IEngine
 
         MOCK_METHOD(void, addGreenFlagScript, (std::shared_ptr<Block>), (override));
         MOCK_METHOD(void, addBroadcastScript, (std::shared_ptr<Block>, Broadcast *), (override));
+        MOCK_METHOD(void, addBackdropChangeScript, (std::shared_ptr<Block>), (override));
         MOCK_METHOD(void, addCloneInitScript, (std::shared_ptr<Block>), (override));
         MOCK_METHOD(void, addKeyPressScript, (std::shared_ptr<Block>, std::string), (override));
 

@@ -111,6 +111,7 @@ class Engine : public IEngine
 
         void addGreenFlagScript(std::shared_ptr<Block> hatBlock) override;
         void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast) override;
+        void addBackdropChangeScript(std::shared_ptr<Block> hatBlock) override;
         void addCloneInitScript(std::shared_ptr<Block> hatBlock) override;
         void addKeyPressScript(std::shared_ptr<Block> hatBlock, std::string keyName) override;
 
@@ -163,7 +164,7 @@ class Engine : public IEngine
         std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
 
         void addHatToMap(std::unordered_map<Target *, std::vector<Script *>> &map, Script *script);
-        std::vector<Script *> getHats(Target *target, HatType type);
+        const std::vector<libscratchcpp::Script *> &getHats(Target *target, HatType type);
 
         void updateSpriteLayerOrder();
 
@@ -195,6 +196,7 @@ class Engine : public IEngine
         std::recursive_mutex m_eventLoopMutex;
 
         std::unordered_map<Target *, std::vector<Script *>> m_greenFlagHats;
+        std::unordered_map<Target *, std::vector<Script *>> m_backdropChangeHats;
         std::unordered_map<Target *, std::vector<Script *>> m_broadcastHats;
         std::unordered_map<Target *, std::vector<Script *>> m_cloneInitHats;
         std::unordered_map<Target *, std::vector<Script *>> m_whenKeyPressedHats;

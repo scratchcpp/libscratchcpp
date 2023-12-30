@@ -251,6 +251,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Registers the broadcast script. */
         virtual void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast) = 0;
 
+        /*! Registers the backdrop change script. */
+        virtual void addBackdropChangeScript(std::shared_ptr<Block> hatBlock) = 0;
+
         /* Registers the given "when I start as clone" script. */
         virtual void addCloneInitScript(std::shared_ptr<Block> hatBlock) = 0;
 

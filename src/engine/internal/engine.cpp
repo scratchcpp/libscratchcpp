@@ -588,8 +588,10 @@ bool Engine::broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceS
                 assert(it != m_scripts.end());
                 auto topBlock = it->first;
 
-                // TODO: Add a map for "when backdrop switches to" hats
-                if ((topBlock->opcode() == "event_whenbackdropswitchesto") && (topBlock->findFieldById(EventBlocks::BACKDROP)->value().toString() == broadcast->name()))
+                const auto &scripts = m_backdropChangeHats[script->target()];
+                auto scriptIt = std::find(scripts.begin(), scripts.end(), script);
+
+                if ((scriptIt != scripts.end()) && (topBlock->findFieldById(EventBlocks::BACKDROP)->value().toString() == broadcast->name()))
                     return true;
             }
         }
@@ -758,6 +760,11 @@ void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadc
         m_broadcastMap[broadcast] = { script };
 
     addHatToMap(m_broadcastHats, script);
+}
+
+void Engine::addBackdropChangeScript(std::shared_ptr<Block> hatBlock)
+{
+    addHatToMap(m_backdropChangeHats, m_scripts[hatBlock].get());
 }
 
 void Engine::addCloneInitScript(std::shared_ptr<Block> hatBlock)
@@ -1078,7 +1085,7 @@ void Engine::addHatToMap(std::unordered_map<Target *, std::vector<Script *>> &ma
         map[target] = { script };
 }
 
-std::vector<Script *> Engine::getHats(Target *target, HatType type)
+const std::vector<Script *> &Engine::getHats(Target *target, HatType type)
 {
     assert(target);
 
@@ -1098,21 +1105,8 @@ std::vector<Script *> Engine::getHats(Target *target, HatType type)
         case HatType::BroadcastReceived:
             return m_broadcastHats[target];
 
-        case HatType::BackdropChanged: {
-            // TODO: Add a map for "when backdrop switches to" hats and return reference
-            std::vector<Script *> out;
-            const auto &blocks = target->blocks();
-
-            for (auto block : blocks) {
-                if (block->opcode() == "event_whenbackdropswitchesto") {
-                    assert(block->topLevel());
-                    assert(m_scripts.find(block) != m_scripts.cend());
-                    out.push_back(m_scripts[block].get());
-                }
-            }
-
-            return out;
-        }
+        case HatType::BackdropChanged:
+            return m_backdropChangeHats[target];
 
         case HatType::CloneInit:
             return m_cloneInitHats[target];
@@ -1120,8 +1114,10 @@ std::vector<Script *> Engine::getHats(Target *target, HatType type)
         case HatType::KeyPressed:
             return m_whenKeyPressedHats[target];
 
-        default:
-            return {};
+        default: {
+            static const std::vector<Script *> empty = {};
+            return empty;
+        }
     }
 }
 

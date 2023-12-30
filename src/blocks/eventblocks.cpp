@@ -82,7 +82,7 @@ void EventBlocks::compileWhenBroadcastReceived(Compiler *compiler)
 
 void EventBlocks::compileWhenBackdropSwitchesTo(Compiler *compiler)
 {
-    // TODO: Register this hat in engine
+    compiler->engine()->addBackdropChangeScript(compiler->block());
 }
 
 void EventBlocks::compileWhenKeyPressed(Compiler *compiler)
