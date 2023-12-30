@@ -88,7 +88,7 @@ void EventBlocks::compileWhenBackdropSwitchesTo(Compiler *compiler)
 void EventBlocks::compileWhenKeyPressed(Compiler *compiler)
 {
     // NOTE: Field values don't have to be registered because keys are referenced by their names
-    compiler->engine()->addKeyPressScript(compiler->block(), compiler->field(KEY_OPTION)->value().toString());
+    compiler->engine()->addKeyPressScript(compiler->block());
 }
 
 unsigned int EventBlocks::broadcast(VirtualMachine *vm)

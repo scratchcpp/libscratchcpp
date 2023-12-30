@@ -258,7 +258,7 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void addCloneInitScript(std::shared_ptr<Block> hatBlock) = 0;
 
         /* Registers the given "when key pressed" script. */
-        virtual void addKeyPressScript(std::shared_ptr<Block> hatBlock, std::string keyName) = 0;
+        virtual void addKeyPressScript(std::shared_ptr<Block> hatBlock) = 0;
 
         /*! Returns the list of targets. */
         virtual const std::vector<std::shared_ptr<Target>> &targets() const = 0;

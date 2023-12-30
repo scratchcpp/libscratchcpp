@@ -113,7 +113,7 @@ class Engine : public IEngine
         void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast) override;
         void addBackdropChangeScript(std::shared_ptr<Block> hatBlock) override;
         void addCloneInitScript(std::shared_ptr<Block> hatBlock) override;
-        void addKeyPressScript(std::shared_ptr<Block> hatBlock, std::string keyName) override;
+        void addKeyPressScript(std::shared_ptr<Block> hatBlock) override;
 
         const std::vector<std::shared_ptr<Target>> &targets() const override;
         void setTargets(const std::vector<std::shared_ptr<Target>> &newTargets) override;

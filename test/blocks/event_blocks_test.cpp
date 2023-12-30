@@ -337,11 +337,11 @@ TEST_F(EventBlocksTest, WhenKeyPressed)
 
     compiler.init();
 
-    EXPECT_CALL(m_engineMock, addKeyPressScript(block1, "a"));
+    EXPECT_CALL(m_engineMock, addKeyPressScript(block1));
     compiler.setBlock(block1);
     EventBlocks::compileWhenKeyPressed(&compiler);
 
-    EXPECT_CALL(m_engineMock, addKeyPressScript(block2, "left arrow"));
+    EXPECT_CALL(m_engineMock, addKeyPressScript(block2));
     compiler.setBlock(block2);
     EventBlocks::compileWhenKeyPressed(&compiler);
 

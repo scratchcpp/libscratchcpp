@@ -772,9 +772,8 @@ void Engine::addCloneInitScript(std::shared_ptr<Block> hatBlock)
     addHatToMap(m_cloneInitHats, m_scripts[hatBlock].get());
 }
 
-void Engine::addKeyPressScript(std::shared_ptr<Block> hatBlock, std::string keyName)
+void Engine::addKeyPressScript(std::shared_ptr<Block> hatBlock)
 {
-    std::transform(keyName.begin(), keyName.end(), keyName.begin(), ::tolower);
     addHatToMap(m_whenKeyPressedHats, m_scripts[hatBlock].get());
 }
 
