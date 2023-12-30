@@ -55,5 +55,5 @@ TEST_F(CostumeTest, Broadcast)
     Broadcast *broadcast = costume.broadcast();
     ASSERT_TRUE(broadcast);
     ASSERT_TRUE(broadcast->id().empty());
-    ASSERT_TRUE(broadcast->name().empty());
+    ASSERT_EQ(broadcast->name(), "costume1");
 }

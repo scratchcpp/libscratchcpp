@@ -12,6 +12,7 @@ Costume::Costume(const std::string &name, const std::string &id, const std::stri
     Asset(name, id, format),
     impl(spimpl::make_unique_impl<CostumePrivate>())
 {
+    impl->broadcast.setName(name);
 }
 
 /*! Returns the reciprocal of the costume scaling factor for bitmap costumes. */
