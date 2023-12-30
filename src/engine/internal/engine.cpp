@@ -23,9 +23,18 @@
 #include "blocksectioncontainer.h"
 #include "timer.h"
 #include "clock.h"
-#include "../../blocks/standardblocks.h"
+#include "blocks/standardblocks.h"
+#include "blocks/eventblocks.h"
 
 using namespace libscratchcpp;
+
+const std::unordered_map<Engine::HatType, bool> Engine::m_hatRestartExistingThreads = {
+    { HatType::GreenFlag, true },
+    { HatType::BroadcastReceived, true },
+    { HatType::BackdropChanged, true },
+    { HatType::CloneInit, false },
+    { HatType::KeyPressed, false }
+};
 
 Engine::Engine() :
     m_defaultTimer(std::make_unique<Timer>()),
@@ -156,42 +165,34 @@ void Engine::start()
     m_timer->reset();
     m_running = true;
 
-    for (auto target : m_targets) {
-        auto gfBlocks = target->greenFlagBlocks();
-        for (auto block : gfBlocks)
-            startScript(block, target.get());
-    }
+    // Start "when green flag clicked" scripts
+    startHats(HatType::GreenFlag, {}, nullptr);
 
     m_eventLoopMutex.unlock();
 }
 
 void Engine::stop()
 {
-    finalize();
+    // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L2057-L2081
     deleteClones();
+
+    if (m_activeThread) {
+        stopThread(m_activeThread.get());
+        // NOTE: The project should continue running even after "stop all" is called and the remaining threads should be stepped once.
+        // The remaining threads can even start new threads which will ignore the "stop all" call and will "restart" the project.
+        // This is probably a bug in the Scratch VM, but let's keep it here to keep it compatible.
+        m_threadsToStop = m_threads;
+    } else {
+        // If there isn't any active thread, it means the project was stopped from the outside
+        // In this case all threads should be removed and the project should be considered stopped
+        m_threads.clear();
+        m_running = false;
+    }
 }
 
 VirtualMachine *Engine::startScript(std::shared_ptr<Block> topLevelBlock, Target *target)
 {
-    if (!topLevelBlock) {
-        std::cout << "warning: starting a script with a null top level block (nothing will happen)" << std::endl;
-        return nullptr;
-    }
-
-    if (!target) {
-        std::cout << "error: scripts must be started by a target";
-        assert(false);
-        return nullptr;
-    }
-
-    if (topLevelBlock->next()) {
-        auto script = m_scripts[topLevelBlock];
-        std::shared_ptr<VirtualMachine> vm = script->start(target);
-        addRunningScript(vm);
-        return vm.get();
-    }
-
-    return nullptr;
+    return pushThread(topLevelBlock, target).get();
 }
 
 void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait)
@@ -204,39 +205,30 @@ void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wa
 
 void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait)
 {
-    const std::vector<Script *> &scripts = m_broadcastMap[broadcast];
+    startHats(HatType::BroadcastReceived, { { EventBlocks::Fields::BROADCAST_OPTION, broadcast->name() } }, nullptr);
+}
 
-    for (const auto &[target, targetScripts] : m_runningScripts) {
-        for (auto vm : targetScripts) {
-            auto it = std::find_if(scripts.begin(), scripts.end(), [vm](Script *script) { return vm->script() == script; });
-
-            if (it != scripts.end() && *it == sourceScript->script())
-                sourceScript->stop(false, !wait); // source script is the broadcast script
-        }
-    }
-
-    startHats(scripts);
+void Engine::startBackdropScripts(Broadcast *broadcast)
+{
+    startHats(HatType::BackdropChanged, { { EventBlocks::Fields::BACKDROP, broadcast->name() } }, nullptr);
 }
 
 void Engine::stopScript(VirtualMachine *vm)
 {
-    assert(vm);
-    if (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm) == m_scriptsToRemove.end())
-        m_scriptsToRemove.push_back(vm);
+    stopThread(vm);
 }
 
 void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
 {
-    const auto &targetScripts = m_runningScripts[target];
-    std::vector<VirtualMachine *> scripts;
+    std::vector<VirtualMachine *> threads;
 
-    for (auto script : targetScripts) {
-        if ((script->target() == target) && (script.get() != exceptScript))
-            scripts.push_back(script.get());
+    for (auto thread : m_threads) {
+        if ((thread->target() == target) && (thread.get() != exceptScript))
+            threads.push_back(thread.get());
     }
 
-    for (auto script : scripts)
-        stopScript(script);
+    for (auto thread : threads)
+        stopThread(thread);
 }
 
 void Engine::initClone(std::shared_ptr<Sprite> clone)
@@ -250,24 +242,13 @@ void Engine::initClone(std::shared_ptr<Sprite> clone)
     if (!root)
         return;
 
-    auto it = m_cloneInitScriptsMap.find(root);
-
-    if (it != m_cloneInitScriptsMap.cend()) {
-        const auto &scripts = it->second;
-
 #ifndef NDEBUG
-        // Since we're initializing the clone, it shouldn't have any running scripts
-        for (const auto &[target, targetScripts] : m_runningScripts) {
-            for (const auto script : targetScripts)
-                assert((target != clone.get()) || (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) != m_scriptsToRemove.end()));
-        }
+    // Since we're initializing the clone, it shouldn't have any running scripts
+    for (auto thread : m_threads)
+        assert(thread->target() != clone.get() || thread->atEnd());
 #endif
 
-        for (auto script : scripts) {
-            auto vm = script->start(clone.get());
-            addRunningScript(vm);
-        }
-    }
+    startHats(HatType::CloneInit, {}, clone.get());
 
     assert(std::find(m_clones.begin(), m_clones.end(), clone) == m_clones.end());
     assert(std::find(m_executableTargets.begin(), m_executableTargets.end(), clone.get()) == m_executableTargets.end());
@@ -305,146 +286,129 @@ void Engine::setRedrawHandler(const std::function<void()> &handler)
     m_redrawHandler = handler;
 }
 
+void Engine::step()
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L2087C6-L2155
+
+    // Clean up threads that were told to stop during or since the last step
+    m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(), [](std::shared_ptr<VirtualMachine> thread) { return thread->atEnd(); }), m_threads.end());
+
+    m_redrawRequested = false;
+
+    // Step threads
+    stepThreads();
+
+    // Render
+    if (m_redrawHandler)
+        m_redrawHandler();
+}
+
+std::vector<std::shared_ptr<VirtualMachine>> Engine::stepThreads()
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/develop/src/engine/sequencer.js#L70-L173
+    const double WORK_TIME = 0.75 * m_frameDuration.count(); // 75% of frame duration
+    assert(WORK_TIME > 0);
+    auto stepStart = m_clock->currentSteadyTime();
+
+    size_t numActiveThreads = 1; // greater than zero
+    std::vector<std::shared_ptr<VirtualMachine>> doneThreads;
+
+    auto elapsedTime = [this, &stepStart]() {
+        std::chrono::steady_clock::time_point currentTime = m_clock->currentSteadyTime();
+        std::chrono::milliseconds elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - stepStart);
+        return elapsedTime.count();
+    };
+
+    while (!m_threads.empty() && numActiveThreads > 0 && elapsedTime() < WORK_TIME && (m_turboModeEnabled || !m_redrawRequested)) {
+        numActiveThreads = 0;
+
+        // Attempt to run each thread one time
+        for (int i = 0; i < m_threads.size(); i++) {
+            assert(i >= 0 && i < m_threads.size());
+            m_activeThread = m_threads[i];
+
+            // Check if the thread is done so it is not executed
+            if (m_activeThread->atEnd()) {
+                // Finished with this thread
+                continue;
+            }
+
+            stepThread(m_activeThread);
+
+            if (!m_activeThread->atEnd())
+                numActiveThreads++;
+        }
+
+        // Remove threads in m_threadsToStop
+        for (auto thread : m_threadsToStop)
+            m_threads.erase(std::remove(m_threads.begin(), m_threads.end(), thread), m_threads.end());
+
+        // Remove inactive threads (and add them to doneThreads)
+        m_threads.erase(
+            std::remove_if(
+                m_threads.begin(),
+                m_threads.end(),
+                [&doneThreads](std::shared_ptr<VirtualMachine> thread) {
+                    if (thread->atEnd()) {
+                        doneThreads.push_back(thread);
+                        return true;
+                    } else
+                        return false;
+                }),
+            m_threads.end());
+    }
+
+    if (m_threads.empty())
+        m_running = false;
+
+    m_activeThread = nullptr;
+    return doneThreads;
+}
+
+void Engine::stepThread(std::shared_ptr<VirtualMachine> thread)
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/develop/src/engine/sequencer.js#L179-L276
+    thread->run();
+}
+
 void Engine::eventLoop(bool untilProjectStops)
 {
     updateFrameDuration();
-    m_newScripts.clear();
     m_stopEventLoop = false;
 
     while (true) {
-        auto frameStart = m_clock->currentSteadyTime();
-        std::chrono::steady_clock::time_point currentTime;
-        std::chrono::milliseconds elapsedTime, sleepTime;
-        m_redrawRequested = false;
-        bool timeout = false;
-        bool stop = false;
-        // TODO: Avoid copying by passing current size to runScripts()
-        TargetScriptMap scripts = m_runningScripts; // this must be copied (for now)
+        auto tickStart = m_clock->currentSteadyTime();
+        m_eventLoopMutex.lock();
+        step();
 
-        do {
-            m_eventLoopMutex.lock();
-            m_scriptsToRemove.clear();
-
-            // Execute new scripts from last frame
-            runScripts(m_newScripts, scripts);
-
-            // Execute all running scripts
-            m_newScripts.clear();
-            runScripts(scripts, scripts);
-
-            // Stop the event loop if the project has finished running (and untilProjectStops is set to true)
-            if (untilProjectStops) {
-                bool empty = true;
-
-                for (const auto &pair : m_runningScripts) {
-                    if (!pair.second.empty()) {
-                        empty = false;
-                        m_eventLoopMutex.unlock();
-                        break;
-                    }
-                }
-
-                if (empty) {
-                    stop = true;
-                    m_eventLoopMutex.unlock();
-                    break;
-                }
-            }
-
-            // Stop the event loop if stopEventLoop() was called
-            m_stopEventLoopMutex.lock();
-
-            if (m_stopEventLoop) {
-                stop = true;
-                m_eventLoopMutex.unlock();
-                break;
-            }
-
-            m_stopEventLoopMutex.unlock();
-
-            currentTime = m_clock->currentSteadyTime();
-            elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - frameStart);
-            sleepTime = m_frameDuration - elapsedTime;
-            timeout = sleepTime <= std::chrono::milliseconds::zero();
+        // Stop the event loop if the project has finished running (and untilProjectStops is set to true)
+        if (untilProjectStops && m_threads.empty()) {
             m_eventLoopMutex.unlock();
-        } while (!((m_redrawRequested && !m_turboModeEnabled) || timeout || stop));
-
-        if (stop)
             break;
+        }
 
-        // Redraw
-        if (m_redrawHandler)
-            m_redrawHandler();
+        // Stop the event loop if stopEventLoop() was called
+        m_stopEventLoopMutex.lock();
 
-        // If the timeout hasn't been reached yet (redraw was requested), sleep
-        if (!timeout)
+        if (m_stopEventLoop) {
+            m_stopEventLoopMutex.unlock();
+            m_eventLoopMutex.unlock();
+            break;
+        }
+
+        m_stopEventLoopMutex.unlock();
+
+        std::chrono::steady_clock::time_point currentTime = m_clock->currentSteadyTime();
+        std::chrono::milliseconds elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - tickStart);
+        std::chrono::milliseconds sleepTime = m_frameDuration - elapsedTime;
+        m_eventLoopMutex.unlock();
+
+        // If there's any time left, sleep
+        if (sleepTime > std::chrono::milliseconds::zero())
             m_clock->sleep(sleepTime);
     }
 
     finalize();
-}
-
-void Engine::runScripts(const TargetScriptMap &scriptMap, TargetScriptMap &globalScriptMap)
-{
-    // globalScriptMap is used to remove "scripts to remove" from it so that they're removed from the correct list
-    for (int i = m_executableTargets.size() - 1; i >= 0; i--) {
-        auto it = scriptMap.find(m_executableTargets[i]);
-
-        if ((it == scriptMap.cend()) || it->second.empty())
-            continue; // skip the target if it doesn't have any running script
-
-        const auto &scripts = it->second;
-
-        for (int i = 0; i < scripts.size(); i++) {
-            auto script = scripts[i];
-            assert(script);
-
-            if (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) != m_scriptsToRemove.end())
-                continue; // skip the script if it is scheduled to be removed
-
-            script->run();
-
-            if (script->atEnd() && m_running) {
-                if (std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), script.get()) == m_scriptsToRemove.end())
-                    m_scriptsToRemove.push_back(script.get());
-            }
-        }
-    }
-
-    assert(m_running || m_scriptsToRemove.empty());
-
-    for (auto script : m_scriptsToRemove) {
-        auto pred = [script](std::shared_ptr<VirtualMachine> vm) { return vm.get() == script; };
-#ifndef NDEBUG
-        bool found = false;
-#endif
-
-        // Remove from m_runningScripts
-        for (auto &[target, scripts] : m_runningScripts) {
-            auto it = std::find_if(scripts.begin(), scripts.end(), pred);
-
-            if (it != scripts.end()) {
-                scripts.erase(it);
-#ifndef NDEBUG
-                found = true;
-#endif
-                break;
-            }
-        }
-
-        assert(found);
-
-        // Remove from globalScriptMap
-        for (auto &[target, scripts] : globalScriptMap) {
-            auto it = std::find_if(scripts.begin(), scripts.end(), pred);
-
-            if (it != scripts.end()) {
-                scripts.erase(it);
-                break;
-            }
-        }
-    }
-    m_scriptsToRemove.clear();
 }
 
 bool Engine::isRunning() const
@@ -508,15 +472,8 @@ void Engine::setKeyState(const KeyEvent &event, bool pressed)
 
     // Start "when key pressed" scripts
     if (pressed) {
-        auto it = m_whenKeyPressedScripts.find(event.name());
-
-        if (it != m_whenKeyPressedScripts.cend())
-            startHats(it->second);
-
-        it = m_whenKeyPressedScripts.find("any");
-
-        if (it != m_whenKeyPressedScripts.cend())
-            startHats(it->second);
+        startHats(HatType::KeyPressed, { { EventBlocks::Fields::KEY_OPTION, event.name() } }, nullptr);
+        startHats(HatType::KeyPressed, { { EventBlocks::Fields::KEY_OPTION, "any" } }, nullptr);
     }
 }
 
@@ -525,12 +482,8 @@ void Engine::setAnyKeyPressed(bool pressed)
     m_anyKeyPressed = pressed;
 
     // Start "when key pressed" scripts
-    if (pressed) {
-        auto it = m_whenKeyPressedScripts.find("any");
-
-        if (it != m_whenKeyPressedScripts.cend())
-            startHats(it->second);
-    }
+    if (pressed)
+        startHats(HatType::KeyPressed, { { EventBlocks::Fields::KEY_OPTION, "any" } }, nullptr);
 }
 
 double Engine::mouseX() const
@@ -626,15 +579,31 @@ bool Engine::broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceS
     assert(m_broadcastMap.find(broadcast) != m_broadcastMap.cend());
     const auto &scripts = m_broadcastMap[broadcast];
 
-    for (const auto &[target, targetScripts] : m_runningScripts) {
-        for (auto vm : targetScripts) {
-            auto it = std::find_if(scripts.begin(), scripts.end(), [vm](Script *script) { return vm->script() == script; });
+    for (auto thread : m_threads) {
+        if (!thread->atEnd()) {
+            auto it = std::find_if(scripts.begin(), scripts.end(), [thread](Script *script) { return thread->script() == script; });
 
             if (it != scripts.end())
                 return true;
         }
     }
 
+    // TODO: Check whether the broadcast belongs to a backdrop
+    // maybe using something like broadcast->isBackdropBroadcast()
+    // after adding it to Broadcast
+    for (auto thread : m_threads) {
+        if (!thread->atEnd()) {
+            // TODO: Store the top block in Script
+            Script *script = thread->script();
+            auto it = std::find_if(m_scripts.begin(), m_scripts.end(), [script](const std::pair<std::shared_ptr<Block>, std::shared_ptr<Script>> pair) { return pair.second.get() == script; });
+            assert(it != m_scripts.end());
+            auto topBlock = it->first;
+
+            // TODO: Add a map for "when backdrop switches to" hats
+            if ((topBlock->opcode() == "event_whenbackdropswitchesto") && (topBlock->findFieldById(EventBlocks::BACKDROP)->value().toString() == broadcast->name()))
+                return true;
+        }
+    }
     return false;
 }
 
@@ -767,44 +736,30 @@ int Engine::findBroadcastById(const std::string &broadcastId) const
 
 void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast)
 {
-    if (m_broadcastMap.count(broadcast) == 1) {
-        std::vector<Script *> &scripts = m_broadcastMap[broadcast];
-        // TODO: Do not allow adding existing scripts
-        scripts.push_back(m_scripts[whenReceivedBlock].get());
+    Script *script = m_scripts[whenReceivedBlock].get();
+    auto it = m_broadcastMap.find(broadcast);
+
+    if (it != m_broadcastMap.cend()) {
+        auto &scripts = it->second;
+        auto scriptIt = std::find(scripts.begin(), scripts.end(), script);
+
+        if (scriptIt == scripts.end())
+            scripts.push_back(script);
     } else
-        m_broadcastMap[broadcast] = { m_scripts[whenReceivedBlock].get() };
+        m_broadcastMap[broadcast] = { script };
+
+    addHatToMap(m_broadcastHats, script);
 }
 
 void Engine::addCloneInitScript(std::shared_ptr<Block> hatBlock)
 {
-    Target *target = hatBlock->target();
-    Script *script = m_scripts[hatBlock].get();
-    auto it = m_cloneInitScriptsMap.find(target);
-
-    if (it == m_cloneInitScriptsMap.cend())
-        m_cloneInitScriptsMap[target] = { script };
-    else {
-        auto &scripts = it->second;
-
-        if (std::find(scripts.begin(), scripts.end(), script) == scripts.cend())
-            scripts.push_back(script);
-    }
+    addHatToMap(m_cloneInitHats, m_scripts[hatBlock].get());
 }
 
 void Engine::addKeyPressScript(std::shared_ptr<Block> hatBlock, std::string keyName)
 {
     std::transform(keyName.begin(), keyName.end(), keyName.begin(), ::tolower);
-    Script *script = m_scripts[hatBlock].get();
-    auto it = m_whenKeyPressedScripts.find(keyName);
-
-    if (it == m_whenKeyPressedScripts.cend())
-        m_whenKeyPressedScripts[keyName] = { script };
-    else {
-        auto &scripts = it->second;
-
-        if (std::find(scripts.begin(), scripts.end(), script) == scripts.cend())
-            scripts.push_back(script);
-    }
+    addHatToMap(m_whenKeyPressedHats, m_scripts[hatBlock].get());
 }
 
 const std::vector<std::shared_ptr<Target>> &Engine::targets() const
@@ -1097,6 +1052,83 @@ std::shared_ptr<IBlockSection> Engine::blockSection(const std::string &opcode) c
     return nullptr;
 }
 
+void Engine::addHatToMap(std::unordered_map<Target *, std::vector<Script *>> &map, Script *script)
+{
+    assert(script);
+    assert(script->target());
+    Target *target = script->target();
+    auto it = map.find(target);
+
+    if (it != map.cend()) {
+        auto &scripts = it->second;
+        auto scriptIt = std::find(scripts.begin(), scripts.end(), script);
+
+        if (scriptIt == scripts.end())
+            scripts.push_back(script);
+    } else
+        map[target] = { script };
+}
+
+std::vector<Script *> Engine::getHats(Target *target, HatType type)
+{
+    assert(target);
+
+    // Get root if this is a clone
+    if (!target->isStage()) {
+        Sprite *sprite = dynamic_cast<Sprite *>(target);
+        assert(sprite);
+
+        if (sprite->isClone())
+            target = sprite->cloneSprite();
+    }
+
+    switch (type) {
+        case HatType::GreenFlag: {
+            // TODO: Add a map for green flag hats and return reference
+            std::vector<Script *> out;
+            const auto &blocks = target->blocks();
+
+            for (auto block : blocks) {
+                if (block->opcode() == "event_whenflagclicked") {
+                    assert(block->topLevel());
+                    assert(m_scripts.find(block) != m_scripts.cend());
+                    out.push_back(m_scripts[block].get());
+                }
+            }
+
+            return out;
+        }
+
+        case HatType::BroadcastReceived:
+            return m_broadcastHats[target];
+
+        case HatType::BackdropChanged: {
+            // TODO: Add a map for "when backdrop switches to" hats and return reference
+            std::vector<Script *> out;
+            const auto &blocks = target->blocks();
+
+            for (auto block : blocks) {
+                if (block->opcode() == "event_whenbackdropswitchesto") {
+                    assert(block->topLevel());
+                    assert(m_scripts.find(block) != m_scripts.cend());
+                    out.push_back(m_scripts[block].get());
+                }
+            }
+
+            return out;
+        }
+
+        case HatType::CloneInit:
+            return m_cloneInitHats[target];
+
+        case HatType::KeyPressed:
+            return m_whenKeyPressedHats[target];
+
+        default:
+            return {};
+    }
+}
+
 void Engine::updateSpriteLayerOrder()
 {
     assert(m_executableTargets.empty() || m_executableTargets[0]->isStage());
@@ -1132,8 +1164,7 @@ BlockSectionContainer *Engine::blockSectionContainer(IBlockSection *section) con
 void Engine::finalize()
 {
     m_eventLoopMutex.lock();
-    m_runningScripts.clear();
-    m_scriptsToRemove.clear();
+    m_threads.clear();
     m_running = false;
     m_redrawRequested = false;
     m_eventLoopMutex.unlock();
@@ -1175,86 +1206,128 @@ void Engine::updateFrameDuration()
 
 void Engine::addRunningScript(std::shared_ptr<VirtualMachine> vm)
 {
-    Target *target = vm->target();
-    assert(vm->target());
-    auto it1 = m_runningScripts.find(target);
-    auto it2 = m_newScripts.find(target);
-
-    if (it1 == m_runningScripts.cend())
-        m_runningScripts[target] = { vm };
-    else {
-        assert(std::find(it1->second.begin(), it1->second.end(), vm) == it1->second.end());
-        it1->second.push_back(vm);
-    }
-
-    if (it2 == m_newScripts.cend())
-        m_newScripts[target] = { vm };
-    else {
-        assert(std::find(it2->second.begin(), it2->second.end(), vm) == it2->second.end());
-        it2->second.push_back(vm);
-    }
+    m_threads.push_back(vm);
 }
 
-std::vector<VirtualMachine *> Engine::startHats(const std::vector<Script *> &scripts)
+std::shared_ptr<VirtualMachine> Engine::pushThread(std::shared_ptr<Block> block, Target *target)
 {
-    std::vector<VirtualMachine *> startedScripts;
-
-    for (auto script : scripts) {
-        std::vector<VirtualMachine *> runningScripts;
-
-        for (const auto &[target, targetScripts] : m_runningScripts) {
-            for (auto vm : targetScripts) {
-                if (vm->script() == script) {
-                    runningScripts.push_back(vm.get());
-                }
-            }
-        }
-
-        // Reset running scripts
-        for (VirtualMachine *vm : runningScripts) {
-            vm->reset();
-
-            // Remove the script from scripts to remove and running broadcast map because it's going to run again
-            m_scriptsToRemove.erase(std::remove(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm), m_scriptsToRemove.end());
-            assert(std::find(m_scriptsToRemove.begin(), m_scriptsToRemove.end(), vm) == m_scriptsToRemove.end());
-        }
-
-        // Start scripts which are not running
-        Target *root = script->target();
-        std::vector<Target *> targets = { root };
-
-        if (!root->isStage()) {
-            Sprite *sprite = dynamic_cast<Sprite *>(root);
-            assert(sprite);
-            assert(!sprite->isClone());
-            const auto &children = sprite->clones();
-
-            for (auto child : children)
-                targets.push_back(child.get());
-        }
-
-        for (Target *target : targets) {
-            std::shared_ptr<Block> block = nullptr;
-
-            if (!runningScripts.empty()) {
-                auto it = std::find_if(runningScripts.begin(), runningScripts.end(), [target, script](VirtualMachine *vm) { return (vm->target() == target) && (vm->script() == script); });
-
-                if (it != runningScripts.end())
-                    continue; // skip the script because it was already running and was reset
-            }
-
-            for (const auto &[b, s] : m_scripts) {
-                if (s.get() == script) {
-                    block = b;
-                    break;
-                }
-            }
-
-            assert(block);
-            assert(std::find_if(m_targets.begin(), m_targets.end(), [script](std::shared_ptr<Target> target) { return script->target() == target.get(); }) != m_targets.end());
-            startedScripts.push_back(startScript(block, target));
-        }
+    // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1649-L1661
+    if (!block) {
+        std::cerr << "error: tried to start a script with a null block" << std::endl;
+        assert(false);
+        return nullptr;
     }
 
-    return startedScripts;
+    if (!target) {
+        std::cerr << "error: scripts must be started by a target" << std::endl;
+        assert(false);
+        return nullptr;
+    }
+
+    auto script = m_scripts[block];
+    std::shared_ptr<VirtualMachine> vm = script->start(target);
+    addRunningScript(vm);
+    return vm;
+}
+
+void Engine::stopThread(VirtualMachine *thread)
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1667-L1672
+    assert(thread);
+    thread->kill();
+}
+
+std::shared_ptr<VirtualMachine> Engine::restartThread(std::shared_ptr<VirtualMachine> thread)
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1681C30-L1694
+    std::shared_ptr<VirtualMachine> newThread = thread->script()->start(thread->target());
+    auto it = std::find(m_threads.begin(), m_threads.end(), thread);
+
+    if (it != m_threads.end()) {
+        auto i = it - m_threads.begin();
+        m_threads[i] = newThread;
+        return newThread;
+    }
+
+    addRunningScript(thread);
+    return thread;
+}
+
+template<typename F>
+void Engine::allScriptsByOpcodeDo(HatType hatType, F &&f, Target *optTarget)
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1797-L1809
+    std::vector<Target *> *targetsPtr = &m_executableTargets;
+
+    if (optTarget)
+        targetsPtr = new std::vector<Target *>({ optTarget });
+
+    const std::vector<Target *> targets = *targetsPtr;
+
+    for (int t = targets.size() - 1; t >= 0; t--) {
+        Target *target = targets[t];
+        const auto &scripts = getHats(target, hatType);
+
+        for (size_t j = 0; j < scripts.size(); j++)
+            f(scripts[j], target);
+    }
+
+    if (optTarget)
+        delete targetsPtr;
+}
+
+std::vector<std::shared_ptr<VirtualMachine>> Engine::startHats(HatType hatType, const std::unordered_map<int, std::string> &optMatchFields, Target *optTarget)
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1818-L1889
+    std::vector<std::shared_ptr<VirtualMachine>> newThreads;
+
+    allScriptsByOpcodeDo(
+        hatType,
+        [this, hatType, &optMatchFields, &newThreads](Script *script, Target *target) {
+            // TODO: Store the top block in Script
+            auto it = std::find_if(m_scripts.begin(), m_scripts.end(), [script](const std::pair<std::shared_ptr<Block>, std::shared_ptr<Script>> pair) { return pair.second.get() == script; });
+            assert(it != m_scripts.end());
+            auto topBlock = it->first;
+
+            // Match any requested fields
+            for (const auto &[fieldId, fieldValue] : optMatchFields) {
+                assert(fieldId > -1);
+                assert(topBlock->findFieldById(fieldId));
+
+                if (topBlock->findFieldById(fieldId)->value().toString() != fieldValue) {
+                    // Field mismatch
+                    return;
+                }
+            }
+
+            if (m_hatRestartExistingThreads.at(hatType)) {
+                // Restart existing threads
+                for (auto thread : m_threads) {
+                    if (thread->target() == target && thread->script() == script) {
+                        newThreads.push_back(restartThread(thread));
+                        return;
+                    }
+                }
+            } else {
+                // Give up if any threads with the top block are running
+                for (auto thread : m_threads) {
+                    if (thread->target() == target && thread->script() == script && !thread->atEnd()) {
+                        // Some thread is already running
+                        return;
+                    }
+                }
+            }
+
+            // Start the thread with this top block
+            newThreads.push_back(pushThread(topBlock, target));
+        },
+        optTarget);
+
+    // Run edge-triggered hats (for compatibility with Scratch 2)
+    // TODO: Find out what "edge-triggered" hats are and execute them
+    // Uncommenting this would cause infinite recursion in some cases, so let's keep it commented
+    /*for (auto thread : newThreads)
+        thread->run();*/
+
+    return newThreads;
 }

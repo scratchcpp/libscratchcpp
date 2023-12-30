@@ -35,6 +35,7 @@ class Engine : public IEngine
         VirtualMachine *startScript(std::shared_ptr<Block> topLevelBlock, Target *target) override;
         void broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait = false) override;
         void broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait = false) override;
+        void startBackdropScripts(Broadcast *broadcast) override;
         void stopScript(VirtualMachine *vm) override;
         void stopTarget(Target *target, VirtualMachine *exceptScript) override;
         void initClone(std::shared_ptr<Sprite> clone) override;
@@ -136,10 +137,19 @@ class Engine : public IEngine
         IClock *m_clock = nullptr;
 
     private:
-        using TargetScriptMap = std::unordered_map<Target *, std::vector<std::shared_ptr<VirtualMachine>>>;
+        enum class HatType
+        {
+            GreenFlag,
+            BroadcastReceived,
+            BackdropChanged,
+            CloneInit,
+            KeyPressed
+        };
 
+        void step();
+        std::vector<std::shared_ptr<VirtualMachine>> stepThreads();
+        void stepThread(std::shared_ptr<VirtualMachine> thread);
         void eventLoop(bool untilProjectStops = false);
-        void runScripts(const TargetScriptMap &scriptMap, TargetScriptMap &globalScriptMap);
         void finalize();
         void deleteClones();
         void removeExecutableClones();
@@ -151,26 +161,41 @@ class Engine : public IEngine
         std::shared_ptr<Entity> getEntity(const std::string &id);
         std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
 
+        void addHatToMap(std::unordered_map<Target *, std::vector<Script *>> &map, Script *script);
+        std::vector<Script *> getHats(Target *target, HatType type);
+
         void updateSpriteLayerOrder();
 
         void updateFrameDuration();
         void addRunningScript(std::shared_ptr<VirtualMachine> vm);
-        std::vector<VirtualMachine *> startHats(const std::vector<Script *> &scripts);
+
+        std::shared_ptr<VirtualMachine> pushThread(std::shared_ptr<Block> block, Target *target);
+        void stopThread(VirtualMachine *thread);
+        std::shared_ptr<VirtualMachine> restartThread(std::shared_ptr<VirtualMachine> thread);
+
+        template<typename F>
+        void allScriptsByOpcodeDo(HatType hatType, F &&f, Target *optTarget);
+
+        std::vector<std::shared_ptr<VirtualMachine>> startHats(HatType hatType, const std::unordered_map<int, std::string> &optMatchFields, Target *optTarget);
+
+        static const std::unordered_map<HatType, bool> m_hatRestartExistingThreads; // used to check whether a hat should restart existing threads
 
         std::unordered_map<std::shared_ptr<IBlockSection>, std::unique_ptr<BlockSectionContainer>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_broadcastMap;
-        std::unordered_map<Target *, std::vector<Script *>> m_cloneInitScriptsMap;      // target (no clones), "when I start as a clone" scripts
-        std::unordered_map<std::string, std::vector<Script *>> m_whenKeyPressedScripts; // key name, "when key pressed" scripts
         std::vector<std::string> m_extensions;
         std::vector<Target *> m_executableTargets; // sorted by layer (reverse order of execution)
-        TargetScriptMap m_runningScripts;
-        TargetScriptMap m_newScripts;
-        std::vector<VirtualMachine *> m_scriptsToRemove;
+        std::vector<std::shared_ptr<VirtualMachine>> m_threads;
+        std::vector<std::shared_ptr<VirtualMachine>> m_threadsToStop;
+        std::shared_ptr<VirtualMachine> m_activeThread;
         std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> m_scripts;
         std::vector<BlockFunc> m_functions;
         std::recursive_mutex m_eventLoopMutex;
+
+        std::unordered_map<Target *, std::vector<Script *>> m_broadcastHats;
+        std::unordered_map<Target *, std::vector<Script *>> m_cloneInitHats;
+        std::unordered_map<Target *, std::vector<Script *>> m_whenKeyPressedHats;
 
         std::unique_ptr<ITimer> m_defaultTimer;
         ITimer *m_timer = nullptr;

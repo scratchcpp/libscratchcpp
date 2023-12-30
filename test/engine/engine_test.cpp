@@ -99,47 +99,65 @@ TEST(EngineTest, FpsProject)
     engine->m_clock = &clock;
 
     std::chrono::steady_clock::time_point time1(std::chrono::milliseconds(50));
-    std::chrono::steady_clock::time_point time2(std::chrono::milliseconds(75));
-    std::chrono::steady_clock::time_point time3(std::chrono::milliseconds(83));
-    std::chrono::steady_clock::time_point time4(std::chrono::milliseconds(116));
+    std::chrono::steady_clock::time_point time2(std::chrono::milliseconds(70));
+    std::chrono::steady_clock::time_point time3(std::chrono::milliseconds(75));
+    std::chrono::steady_clock::time_point time4(std::chrono::milliseconds(83));
+    std::chrono::steady_clock::time_point time5(std::chrono::milliseconds(116));
+    std::chrono::steady_clock::time_point time6(std::chrono::milliseconds(156));
     EXPECT_CALL(clock, currentSteadyTime())
-        .WillOnce(Return(time1))
-        .WillOnce(Return(time1))
-        .WillOnce(Return(time2))
-        .WillOnce(Return(time2))
-        .WillOnce(Return(time3))
-        .WillOnce(Return(time3))
-        .WillOnce(Return(time4))
-        .WillOnce(Return(time4));
-    EXPECT_CALL(clock, sleep(std::chrono::milliseconds(33)));
-    EXPECT_CALL(clock, sleep(std::chrono::milliseconds(25)));
+        .WillOnce(Return(time1)) // tick start (frame 1 of 2)
+        .WillOnce(Return(time1)) // step start
+        .WillOnce(Return(time2)) // step loop check
+        .WillOnce(Return(time3)) // step loop check (break)
+        .WillOnce(Return(time3)) // tick end (then sleep 8 ms)
+        .WillOnce(Return(time4)) // tick start (frame 2 of 2)
+        .WillOnce(Return(time4)) // step start
+        .WillOnce(Return(time4)) // step loop check
+        .WillOnce(Return(time5)) // step loop check (break)
+        .WillOnce(Return(time5)) // tick end (without sleeping)
+        .WillOnce(Return(time5)) // tick start
+        .WillOnce(Return(time5)) // step start
+        .WillOnce(Return(time5)) // step loop check
+        ;
+    EXPECT_CALL(clock, sleep(std::chrono::milliseconds(8)));
     p.run();
 
     engine->setFps(10);
     RedrawMock redrawMock;
     auto handler = std::bind(&RedrawMock::redraw, &redrawMock);
     engine->setRedrawHandler(std::function<void()>(handler));
-    std::chrono::steady_clock::time_point time5(std::chrono::milliseconds(100));
-    std::chrono::steady_clock::time_point time6(std::chrono::milliseconds(115));
-    std::chrono::steady_clock::time_point time7(std::chrono::milliseconds(200));
-    std::chrono::steady_clock::time_point time8(std::chrono::milliseconds(300));
+    std::chrono::steady_clock::time_point time7(std::chrono::milliseconds(100));
+    std::chrono::steady_clock::time_point time8(std::chrono::milliseconds(200));
+    std::chrono::steady_clock::time_point time9(std::chrono::milliseconds(300));
     EXPECT_CALL(clock, currentSteadyTime())
-        .WillOnce(Return(time5))
-        .WillOnce(Return(time5))
-        .WillOnce(Return(time6))
-        .WillOnce(Return(time6))
-        .WillOnce(Return(time7))
-        .WillOnce(Return(time7))
-        .WillOnce(Return(time8))
-        .WillOnce(Return(time8));
+        .WillOnce(Return(time7)) // tick start (frame 1 of 2)
+        .WillOnce(Return(time7)) // step start
+        .WillOnce(Return(time7)) // step loop check
+        .WillOnce(Return(time7)) // step loop check (break because of redraw request)
+        .WillOnce(Return(time7)) // tick end (then sleep 100 ms)
+        .WillOnce(Return(time8)) // tick start (frame 2 of 2)
+        .WillOnce(Return(time8)) // step start
+        .WillOnce(Return(time8)) // step loop check
+        .WillOnce(Return(time9)) // step loop check (break)
+        .WillOnce(Return(time9)) // tick end (without sleeping)
+        .WillOnce(Return(time9)) // tick start
+        .WillOnce(Return(time9)) // step start
+        .WillOnce(Return(time9)) // step loop check
+        ;
     EXPECT_CALL(clock, sleep(std::chrono::milliseconds(100)));
-    EXPECT_CALL(clock, sleep(std::chrono::milliseconds(15)));
-    EXPECT_CALL(redrawMock, redraw()).Times(4);
+    EXPECT_CALL(redrawMock, redraw()).Times(3);
     p.run();
 
     engine->setTurboModeEnabled(true);
-    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time5)).WillOnce(Return(time5)).WillOnce(Return(time6)).WillOnce(Return(time6)).WillOnce(Return(time7)).WillOnce(Return(time8));
+    EXPECT_CALL(clock, currentSteadyTime())
+        .WillOnce(Return(time7)) // tick start
+        .WillOnce(Return(time7)) // step start
+        .WillOnce(Return(time7)) // step loop check
+        .WillOnce(Return(time7)) // step loop check
+        .WillOnce(Return(time7)) // step loop check
+        ;
     EXPECT_CALL(clock, sleep).Times(0);
+    EXPECT_CALL(redrawMock, redraw());
     p.run();
 }
 
@@ -1092,8 +1110,7 @@ TEST(EngineTest, CloneLimit)
     ASSERT_EQ(engine->cloneLimit(), 300);
     ASSERT_EQ(engine->cloneCount(), 0);
 
-    // TODO: Set "infinite" FPS and remove this (#254)
-    engine->setFps(100000);
+    engine->setTurboModeEnabled(true);
 
     Stage *stage = engine->stage();
     ASSERT_TRUE(stage);
@@ -1147,18 +1164,18 @@ TEST(EngineTest, CloneLimit)
 
 TEST(EngineTest, BackdropBroadcasts)
 {
-    // TODO: Set "infinite" FPS (#254)
     Project p("backdrop_broadcasts.sb3");
     ASSERT_TRUE(p.load());
     p.run();
 
     auto engine = p.engine();
+    engine->setFps(1000);
 
     Stage *stage = engine->stage();
     ASSERT_TRUE(stage);
 
     ASSERT_VAR(stage, "test1");
-    ASSERT_EQ(GET_VAR(stage, "test1")->value().toInt(), 5); // TODO: Find out why this isn't 4
+    ASSERT_EQ(GET_VAR(stage, "test1")->value().toInt(), 4);
     ASSERT_VAR(stage, "test2");
     ASSERT_EQ(GET_VAR(stage, "test2")->value().toInt(), 14);
     ASSERT_VAR(stage, "test3");
@@ -1171,18 +1188,18 @@ TEST(EngineTest, BackdropBroadcasts)
 
 TEST(EngineTest, BroadcastsProject)
 {
-    // TODO: Set "infinite" FPS (#254)
     Project p("broadcasts.sb3");
     ASSERT_TRUE(p.load());
     p.run();
 
     auto engine = p.engine();
+    engine->setFps(1000);
 
     Stage *stage = engine->stage();
     ASSERT_TRUE(stage);
 
     ASSERT_VAR(stage, "test1");
-    ASSERT_EQ(GET_VAR(stage, "test1")->value().toInt(), 6); // TODO: Find out why this isn't 4 (the only difference between this and backdrops is that backdrop changes request redraw)
+    ASSERT_EQ(GET_VAR(stage, "test1")->value().toInt(), 4);
     ASSERT_VAR(stage, "test2");
     ASSERT_EQ(GET_VAR(stage, "test2")->value().toInt(), 14);
     ASSERT_VAR(stage, "test3");
@@ -1190,7 +1207,7 @@ TEST(EngineTest, BroadcastsProject)
     ASSERT_VAR(stage, "test4");
     ASSERT_EQ(GET_VAR(stage, "test4")->value().toInt(), 10);
     ASSERT_VAR(stage, "test5");
-    ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 1 0 0"); // TODO: Find out why this isn't "2 2 0 0"
+    ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 2 0 0");
 }
 
 TEST(EngineTest, StopAll)
@@ -1206,6 +1223,7 @@ TEST(EngineTest, StopAll)
 
     ASSERT_VAR(stage, "i");
     ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 11);
+    ASSERT_FALSE(engine->isRunning());
 }
 
 TEST(EngineTest, StopOtherScriptsInSprite)
@@ -1251,12 +1269,12 @@ TEST(EngineTest, NoCrashOnBroadcastSelfCall)
 TEST(EngineTest, NoRefreshWhenCallingRunningBroadcast)
 {
     // Regtest for #257
-    // TODO: Set "infinite" FPS (#254)
     Project p("regtest_projects/257_double_broadcast_stop.sb3");
     ASSERT_TRUE(p.load());
     p.run();
 
     auto engine = p.engine();
+    engine->setFps(1000);
 
     Stage *stage = engine->stage();
     ASSERT_TRUE(stage);

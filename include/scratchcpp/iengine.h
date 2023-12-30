@@ -62,6 +62,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Starts the script of the given broadcast. */
         virtual void broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait = false) = 0;
 
+        /*! Starts the "when backdrop switches to" scripts for the given backdrop broadcast. */
+        virtual void startBackdropScripts(Broadcast *broadcast) = 0;
+
         /*! Stops the given script. */
         virtual void stopScript(VirtualMachine *vm) = 0;
 

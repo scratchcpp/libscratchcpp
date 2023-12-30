@@ -388,6 +388,7 @@ void LooksBlocks::compileSwitchBackdropToAndWait(Compiler *compiler)
         compiler->addFunctionCall(&switchBackdropToAndWait);
     }
 
+    compiler->addFunctionCall(&backdropNumber);
     compiler->addFunctionCall(&checkBackdropScripts);
 }
 
@@ -750,7 +751,7 @@ void LooksBlocks::startBackdropScripts(VirtualMachine *vm, bool wait)
 {
     if (Stage *stage = vm->engine()->stage()) {
         if (stage->costumes().size() > 0)
-            vm->engine()->broadcastByPtr(stage->currentCostume()->broadcast(), vm, wait);
+            vm->engine()->startBackdropScripts(stage->currentCostume()->broadcast());
     }
 }
 
@@ -894,11 +895,14 @@ unsigned int LooksBlocks::randomBackdropAndWait(VirtualMachine *vm)
 unsigned int LooksBlocks::checkBackdropScripts(VirtualMachine *vm)
 {
     if (Stage *stage = vm->engine()->stage()) {
-        if ((stage->costumes().size() > 0) && vm->engine()->broadcastByPtrRunning(stage->currentCostume()->broadcast(), vm))
+        long index = vm->getInput(0, 1)->toLong() - 1;
+        assert(stage->costumes().size() == 0 || index >= 0);
+
+        if ((stage->costumes().size() > 0) && vm->engine()->broadcastByPtrRunning(stage->costumeAt(index)->broadcast(), vm))
             vm->stop(true, true, true);
     }
 
-    return 0;
+    return 1;
 }
 
 unsigned int LooksBlocks::goToFront(VirtualMachine *vm)
