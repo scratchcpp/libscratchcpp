@@ -7,9 +7,9 @@
 using namespace libscratchcpp;
 
 /*! Constructs Broadcast. */
-Broadcast::Broadcast(const std::string &id, const std::string &name) :
+Broadcast::Broadcast(const std::string &id, const std::string &name, bool isBackdropBroadcast) :
     Entity(id),
-    impl(spimpl::make_unique_impl<BroadcastPrivate>(name))
+    impl(spimpl::make_unique_impl<BroadcastPrivate>(name, isBackdropBroadcast))
 {
 }
 
@@ -23,4 +23,10 @@ const std::string &Broadcast::name() const
 void Broadcast::setName(const std::string &newName)
 {
     impl->name = newName;
+}
+
+/*! Returns true if this broadcast belongs to a backdrop. */
+bool Broadcast::isBackdropBroadcast() const
+{
+    return impl->isBackdropBroadcast;
 }

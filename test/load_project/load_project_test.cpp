@@ -12,6 +12,7 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/comment.h>
+#include <scratchcpp/broadcast.h>
 #include <projectdownloaderfactorymock.h>
 #include <projectdownloadermock.h>
 
@@ -497,6 +498,10 @@ TEST(LoadProjectTest, ProjectTest)
         ASSERT_EQ(engine->targets().size(), 3);
         ASSERT_EQ(engine->extensions().size(), 0);
         ASSERT_EQ(engine->broadcasts().size(), 1);
+
+        auto broadcast = engine->broadcastAt(0);
+        ASSERT_EQ(broadcast->name(), "message1");
+        ASSERT_FALSE(broadcast->isBackdropBroadcast());
 
         i++;
     }
