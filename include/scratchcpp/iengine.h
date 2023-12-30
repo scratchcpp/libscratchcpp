@@ -177,10 +177,10 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void setSpriteFencingEnabled(bool enable) = 0;
 
         /*! Returns true if there are any running script of the broadcast with the given index. */
-        virtual bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) = 0;
+        virtual bool broadcastRunning(unsigned int index) = 0;
 
         /*! Returns true if there are any running script of the given broadcast. */
-        virtual bool broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript) = 0;
+        virtual bool broadcastByPtrRunning(Broadcast *broadcast) = 0;
 
         /*!
          * Call this from a block implementation to force a redraw (screen refresh).

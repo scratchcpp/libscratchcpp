@@ -898,7 +898,7 @@ unsigned int LooksBlocks::checkBackdropScripts(VirtualMachine *vm)
         long index = vm->getInput(0, 1)->toLong() - 1;
         assert(stage->costumes().size() == 0 || index >= 0);
 
-        if ((stage->costumes().size() > 0) && vm->engine()->broadcastByPtrRunning(stage->costumeAt(index)->broadcast(), vm))
+        if ((stage->costumes().size() > 0) && vm->engine()->broadcastByPtrRunning(stage->costumeAt(index)->broadcast()))
             vm->stop(true, true, true);
     }
 

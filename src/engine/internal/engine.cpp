@@ -566,15 +566,15 @@ void Engine::setSpriteFencingEnabled(bool enable)
     m_spriteFencingEnabled = enable;
 }
 
-bool Engine::broadcastRunning(unsigned int index, VirtualMachine *sourceScript)
+bool Engine::broadcastRunning(unsigned int index)
 {
     if (index < 0 || index >= m_broadcasts.size())
         return false;
 
-    return broadcastByPtrRunning(m_broadcasts[index].get(), sourceScript);
+    return broadcastByPtrRunning(m_broadcasts[index].get());
 }
 
-bool Engine::broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript)
+bool Engine::broadcastByPtrRunning(Broadcast *broadcast)
 {
     if (broadcast->isBackdropBroadcast()) {
         // This broadcast belongs to a backdrop

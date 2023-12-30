@@ -85,8 +85,8 @@ class Engine : public IEngine
         bool spriteFencingEnabled() const override;
         void setSpriteFencingEnabled(bool enable) override;
 
-        bool broadcastRunning(unsigned int index, VirtualMachine *sourceScript) override;
-        bool broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript) override;
+        bool broadcastRunning(unsigned int index) override;
+        bool broadcastByPtrRunning(Broadcast *broadcast) override;
 
         void requestRedraw() override;
 

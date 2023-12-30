@@ -117,14 +117,14 @@ unsigned int EventBlocks::broadcastByIndexAndWait(VirtualMachine *vm)
 
 unsigned int EventBlocks::checkBroadcast(VirtualMachine *vm)
 {
-    if (vm->engine()->broadcastRunning(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()), vm))
+    if (vm->engine()->broadcastRunning(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString())))
         vm->stop(true, true, true);
     return 1;
 }
 
 unsigned int EventBlocks::checkBroadcastByIndex(VirtualMachine *vm)
 {
-    if (vm->engine()->broadcastRunning(vm->getInput(0, 1)->toLong(), vm))
+    if (vm->engine()->broadcastRunning(vm->getInput(0, 1)->toLong()))
         vm->stop(true, true, true);
     return 1;
 }
