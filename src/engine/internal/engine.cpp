@@ -1070,7 +1070,9 @@ std::shared_ptr<IBlockSection> Engine::blockSection(const std::string &opcode) c
 
 void Engine::addHatToMap(std::unordered_map<Target *, std::vector<Script *>> &map, Script *script)
 {
-    assert(script);
+    if (!script)
+        return;
+
     assert(script->target());
     Target *target = script->target();
     auto it = map.find(target);
