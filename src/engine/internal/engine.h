@@ -110,10 +110,10 @@ class Engine : public IEngine
         int findBroadcastById(const std::string &broadcastId) const override;
 
         void addGreenFlagScript(std::shared_ptr<Block> hatBlock) override;
-        void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast) override;
-        void addBackdropChangeScript(std::shared_ptr<Block> hatBlock) override;
+        void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, int fieldId, Broadcast *broadcast) override;
+        void addBackdropChangeScript(std::shared_ptr<Block> hatBlock, int fieldId) override;
         void addCloneInitScript(std::shared_ptr<Block> hatBlock) override;
-        void addKeyPressScript(std::shared_ptr<Block> hatBlock) override;
+        void addKeyPressScript(std::shared_ptr<Block> hatBlock, int fieldId) override;
 
         const std::vector<std::shared_ptr<Target>> &targets() const override;
         void setTargets(const std::vector<std::shared_ptr<Target>> &newTargets) override;
@@ -148,6 +148,13 @@ class Engine : public IEngine
             KeyPressed
         };
 
+        enum class HatField
+        {
+            BroadcastOption,
+            Backdrop,
+            KeyOption
+        };
+
         void step();
         std::vector<std::shared_ptr<VirtualMachine>> stepThreads();
         void stepThread(std::shared_ptr<VirtualMachine> thread);
@@ -164,6 +171,7 @@ class Engine : public IEngine
         std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
 
         void addHatToMap(std::unordered_map<Target *, std::vector<Script *>> &map, Script *script);
+        void addHatField(Script *script, HatField field, int fieldId);
         const std::vector<libscratchcpp::Script *> &getHats(Target *target, HatType type);
 
         void updateSpriteLayerOrder();
@@ -178,7 +186,7 @@ class Engine : public IEngine
         template<typename F>
         void allScriptsByOpcodeDo(HatType hatType, F &&f, Target *optTarget);
 
-        std::vector<std::shared_ptr<VirtualMachine>> startHats(HatType hatType, const std::unordered_map<int, std::string> &optMatchFields, Target *optTarget);
+        std::vector<std::shared_ptr<VirtualMachine>> startHats(HatType hatType, const std::unordered_map<HatField, std::string> &optMatchFields, Target *optTarget);
 
         static const std::unordered_map<HatType, bool> m_hatRestartExistingThreads; // used to check whether a hat should restart existing threads
 
@@ -200,6 +208,8 @@ class Engine : public IEngine
         std::unordered_map<Target *, std::vector<Script *>> m_broadcastHats;
         std::unordered_map<Target *, std::vector<Script *>> m_cloneInitHats;
         std::unordered_map<Target *, std::vector<Script *>> m_whenKeyPressedHats;
+
+        std::unordered_map<Script *, std::unordered_map<HatField, int>> m_scriptHatFields; // HatField, field ID from the block implementation
 
         std::unique_ptr<ITimer> m_defaultTimer;
         ITimer *m_timer = nullptr;

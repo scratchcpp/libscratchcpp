@@ -249,16 +249,16 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void addGreenFlagScript(std::shared_ptr<Block> hatBlock) = 0;
 
         /*! Registers the broadcast script. */
-        virtual void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast) = 0;
+        virtual void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, int fieldId, Broadcast *broadcast) = 0;
 
         /*! Registers the backdrop change script. */
-        virtual void addBackdropChangeScript(std::shared_ptr<Block> hatBlock) = 0;
+        virtual void addBackdropChangeScript(std::shared_ptr<Block> hatBlock, int fieldId) = 0;
 
         /* Registers the given "when I start as clone" script. */
         virtual void addCloneInitScript(std::shared_ptr<Block> hatBlock) = 0;
 
         /* Registers the given "when key pressed" script. */
-        virtual void addKeyPressScript(std::shared_ptr<Block> hatBlock) = 0;
+        virtual void addKeyPressScript(std::shared_ptr<Block> hatBlock, int fieldId) = 0;
 
         /*! Returns the list of targets. */
         virtual const std::vector<std::shared_ptr<Target>> &targets() const = 0;

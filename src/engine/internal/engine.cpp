@@ -24,7 +24,6 @@
 #include "timer.h"
 #include "clock.h"
 #include "blocks/standardblocks.h"
-#include "blocks/eventblocks.h"
 
 using namespace libscratchcpp;
 
@@ -205,12 +204,12 @@ void Engine::broadcast(unsigned int index)
 
 void Engine::broadcastByPtr(Broadcast *broadcast)
 {
-    startHats(HatType::BroadcastReceived, { { EventBlocks::Fields::BROADCAST_OPTION, broadcast->name() } }, nullptr);
+    startHats(HatType::BroadcastReceived, { { HatField::BroadcastOption, broadcast->name() } }, nullptr);
 }
 
 void Engine::startBackdropScripts(Broadcast *broadcast)
 {
-    startHats(HatType::BackdropChanged, { { EventBlocks::Fields::BACKDROP, broadcast->name() } }, nullptr);
+    startHats(HatType::BackdropChanged, { { HatField::Backdrop, broadcast->name() } }, nullptr);
 }
 
 void Engine::stopScript(VirtualMachine *vm)
@@ -472,8 +471,8 @@ void Engine::setKeyState(const KeyEvent &event, bool pressed)
 
     // Start "when key pressed" scripts
     if (pressed) {
-        startHats(HatType::KeyPressed, { { EventBlocks::Fields::KEY_OPTION, event.name() } }, nullptr);
-        startHats(HatType::KeyPressed, { { EventBlocks::Fields::KEY_OPTION, "any" } }, nullptr);
+        startHats(HatType::KeyPressed, { { HatField::KeyOption, event.name() } }, nullptr);
+        startHats(HatType::KeyPressed, { { HatField::KeyOption, "any" } }, nullptr);
     }
 }
 
@@ -483,7 +482,7 @@ void Engine::setAnyKeyPressed(bool pressed)
 
     // Start "when key pressed" scripts
     if (pressed)
-        startHats(HatType::KeyPressed, { { EventBlocks::Fields::KEY_OPTION, "any" } }, nullptr);
+        startHats(HatType::KeyPressed, { { HatField::KeyOption, "any" } }, nullptr);
 }
 
 double Engine::mouseX() const
@@ -590,9 +589,17 @@ bool Engine::broadcastByPtrRunning(Broadcast *broadcast)
 
                 const auto &scripts = m_backdropChangeHats[script->target()];
                 auto scriptIt = std::find(scripts.begin(), scripts.end(), script);
+                auto scriptFieldMapIt = m_scriptHatFields.find(script);
 
-                if ((scriptIt != scripts.end()) && (topBlock->findFieldById(EventBlocks::BACKDROP)->value().toString() == broadcast->name()))
-                    return true;
+                if (scriptFieldMapIt != m_scriptHatFields.cend()) {
+                    const auto &fieldMap = scriptFieldMapIt->second;
+                    auto fieldIt = fieldMap.find(HatField::Backdrop);
+                    assert(fieldIt != fieldMap.cend());
+                    assert(topBlock->findFieldById(fieldIt->second));
+
+                    if ((scriptIt != scripts.end()) && (topBlock->findFieldById(fieldIt->second)->value().toString() == broadcast->name()))
+                        return true;
+                }
             }
         }
     } else {
@@ -744,7 +751,7 @@ void Engine::addGreenFlagScript(std::shared_ptr<Block> hatBlock)
     addHatToMap(m_greenFlagHats, m_scripts[hatBlock].get());
 }
 
-void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast)
+void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, int fieldId, Broadcast *broadcast)
 {
     assert(!broadcast->isBackdropBroadcast());
     Script *script = m_scripts[whenReceivedBlock].get();
@@ -760,11 +767,14 @@ void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadc
         m_broadcastMap[broadcast] = { script };
 
     addHatToMap(m_broadcastHats, script);
+    addHatField(script, HatField::BroadcastOption, fieldId);
 }
 
-void Engine::addBackdropChangeScript(std::shared_ptr<Block> hatBlock)
+void Engine::addBackdropChangeScript(std::shared_ptr<Block> hatBlock, int fieldId)
 {
-    addHatToMap(m_backdropChangeHats, m_scripts[hatBlock].get());
+    Script *script = m_scripts[hatBlock].get();
+    addHatToMap(m_backdropChangeHats, script);
+    addHatField(script, HatField::Backdrop, fieldId);
 }
 
 void Engine::addCloneInitScript(std::shared_ptr<Block> hatBlock)
@@ -772,9 +782,11 @@ void Engine::addCloneInitScript(std::shared_ptr<Block> hatBlock)
     addHatToMap(m_cloneInitHats, m_scripts[hatBlock].get());
 }
 
-void Engine::addKeyPressScript(std::shared_ptr<Block> hatBlock)
+void Engine::addKeyPressScript(std::shared_ptr<Block> hatBlock, int fieldId)
 {
-    addHatToMap(m_whenKeyPressedHats, m_scripts[hatBlock].get());
+    Script *script = m_scripts[hatBlock].get();
+    addHatToMap(m_whenKeyPressedHats, script);
+    addHatField(script, HatField::KeyOption, fieldId);
 }
 
 const std::vector<std::shared_ptr<Target>> &Engine::targets() const
@@ -1086,6 +1098,18 @@ void Engine::addHatToMap(std::unordered_map<Target *, std::vector<Script *>> &ma
         map[target] = { script };
 }
 
+void Engine::addHatField(Script *script, HatField field, int fieldId)
+{
+    auto it = m_scriptHatFields.find(script);
+
+    if (it == m_scriptHatFields.cend())
+        m_scriptHatFields[script] = { { field, fieldId } };
+    else {
+        auto &fieldMap = it->second;
+        fieldMap[field] = fieldId;
+    }
+}
+
 const std::vector<Script *> &Engine::getHats(Target *target, HatType type)
 {
     assert(target);
@@ -1269,7 +1293,7 @@ void Engine::allScriptsByOpcodeDo(HatType hatType, F &&f, Target *optTarget)
         delete targetsPtr;
 }
 
-std::vector<std::shared_ptr<VirtualMachine>> Engine::startHats(HatType hatType, const std::unordered_map<int, std::string> &optMatchFields, Target *optTarget)
+std::vector<std::shared_ptr<VirtualMachine>> Engine::startHats(HatType hatType, const std::unordered_map<HatField, std::string> &optMatchFields, Target *optTarget)
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1818-L1889
     std::vector<std::shared_ptr<VirtualMachine>> newThreads;
@@ -1282,14 +1306,28 @@ std::vector<std::shared_ptr<VirtualMachine>> Engine::startHats(HatType hatType, 
             assert(it != m_scripts.end());
             auto topBlock = it->first;
 
-            // Match any requested fields
-            for (const auto &[fieldId, fieldValue] : optMatchFields) {
-                assert(fieldId > -1);
-                assert(topBlock->findFieldById(fieldId));
+            if (!optMatchFields.empty()) {
+                // Get the field map for this script
+                auto fieldMapIt = m_scriptHatFields.find(script);
+                assert(fieldMapIt != m_scriptHatFields.cend());
 
-                if (topBlock->findFieldById(fieldId)->value().toString() != fieldValue) {
-                    // Field mismatch
-                    return;
+                if (fieldMapIt != m_scriptHatFields.cend()) {
+                    const auto &fieldMap = fieldMapIt->second;
+
+                    // Match any requested fields
+                    for (const auto &[fieldId, fieldValue] : optMatchFields) {
+                        auto fieldIt = fieldMap.find(fieldId);
+                        assert(fieldIt != fieldMap.cend());
+
+                        if (fieldIt != fieldMap.cend()) {
+                            assert(topBlock->findFieldById(fieldIt->second));
+
+                            if (topBlock->findFieldById(fieldIt->second)->value().toString() != fieldValue) {
+                                // Field mismatch
+                                return;
+                            }
+                        }
+                    }
                 }
             }
 
