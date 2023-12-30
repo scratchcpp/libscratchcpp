@@ -93,25 +93,25 @@ void EventBlocks::compileWhenKeyPressed(Compiler *compiler)
 
 unsigned int EventBlocks::broadcast(VirtualMachine *vm)
 {
-    vm->engine()->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()), vm);
+    vm->engine()->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()));
     return 1;
 }
 
 unsigned int EventBlocks::broadcastByIndex(VirtualMachine *vm)
 {
-    vm->engine()->broadcast(vm->getInput(0, 1)->toLong(), vm);
+    vm->engine()->broadcast(vm->getInput(0, 1)->toLong());
     return 1;
 }
 
 unsigned int EventBlocks::broadcastAndWait(VirtualMachine *vm)
 {
-    vm->engine()->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()), vm, true);
+    vm->engine()->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()));
     return 1;
 }
 
 unsigned int EventBlocks::broadcastByIndexAndWait(VirtualMachine *vm)
 {
-    vm->engine()->broadcast(vm->getInput(0, 1)->toLong(), vm, true);
+    vm->engine()->broadcast(vm->getInput(0, 1)->toLong());
     return 1;
 }
 

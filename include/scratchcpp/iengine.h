@@ -56,11 +56,11 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Starts a script with the given top level block as the given Target (a sprite or the stage). */
         virtual VirtualMachine *startScript(std::shared_ptr<Block> topLevelBlock, Target *) = 0;
 
-        /*! Starts the script of the broadcast with the given index. */
-        virtual void broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait = false) = 0;
+        /*! Starts the scripts of the broadcast with the given index. */
+        virtual void broadcast(unsigned int index) = 0;
 
-        /*! Starts the script of the given broadcast. */
-        virtual void broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait = false) = 0;
+        /*! Starts the scripts of the given broadcast. */
+        virtual void broadcastByPtr(Broadcast *broadcast) = 0;
 
         /*! Starts the "when backdrop switches to" scripts for the given backdrop broadcast. */
         virtual void startBackdropScripts(Broadcast *broadcast) = 0;

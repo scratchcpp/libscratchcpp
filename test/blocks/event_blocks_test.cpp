@@ -165,14 +165,14 @@ TEST_F(EventBlocksTest, BroadcastImpl)
     vm.setConstValues(constValues);
 
     EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(1));
-    EXPECT_CALL(m_engineMock, broadcast(1, &vm, false)).Times(1);
+    EXPECT_CALL(m_engineMock, broadcast(1)).Times(1);
 
     vm.setBytecode(bytecode1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
 
-    EXPECT_CALL(m_engineMock, broadcast(2, &vm, false)).Times(1);
+    EXPECT_CALL(m_engineMock, broadcast(2)).Times(1);
 
     vm.setBytecode(bytecode2);
     vm.run();
@@ -230,7 +230,7 @@ TEST_F(EventBlocksTest, BroadcastAndWaitImpl)
     vm.setConstValues(constValues);
 
     EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(1));
-    EXPECT_CALL(m_engineMock, broadcast(1, &vm, true)).Times(1);
+    EXPECT_CALL(m_engineMock, broadcast(1)).Times(1);
 
     vm.setBytecode(bytecode1);
     vm.run();
@@ -254,7 +254,7 @@ TEST_F(EventBlocksTest, BroadcastAndWaitImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(vm.atEnd(), true);
 
-    EXPECT_CALL(m_engineMock, broadcast(3, &vm, true)).Times(1);
+    EXPECT_CALL(m_engineMock, broadcast(3)).Times(1);
 
     vm.setBytecode(bytecode3);
     vm.run();

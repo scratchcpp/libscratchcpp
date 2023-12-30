@@ -195,15 +195,15 @@ VirtualMachine *Engine::startScript(std::shared_ptr<Block> topLevelBlock, Target
     return pushThread(topLevelBlock, target).get();
 }
 
-void Engine::broadcast(unsigned int index, VirtualMachine *sourceScript, bool wait)
+void Engine::broadcast(unsigned int index)
 {
     if (index < 0 || index >= m_broadcasts.size())
         return;
 
-    broadcastByPtr(m_broadcasts[index].get(), sourceScript, wait);
+    broadcastByPtr(m_broadcasts[index].get());
 }
 
-void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sourceScript, bool wait)
+void Engine::broadcastByPtr(Broadcast *broadcast)
 {
     startHats(HatType::BroadcastReceived, { { EventBlocks::Fields::BROADCAST_OPTION, broadcast->name() } }, nullptr);
 }
