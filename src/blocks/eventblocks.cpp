@@ -77,13 +77,7 @@ void EventBlocks::compileWhenBroadcastReceived(Compiler *compiler)
 
 void EventBlocks::compileWhenBackdropSwitchesTo(Compiler *compiler)
 {
-    if (Stage *stage = compiler->engine()->stage()) {
-        std::string backdropName = compiler->field(BACKDROP)->value().toString();
-        int index = stage->findCostume(backdropName);
-
-        if (index != -1)
-            compiler->engine()->addBroadcastScript(compiler->block(), stage->costumeAt(index)->broadcast());
-    }
+    // TODO: Register this hat in engine
 }
 
 void EventBlocks::compileWhenKeyPressed(Compiler *compiler)

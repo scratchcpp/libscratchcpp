@@ -576,32 +576,35 @@ bool Engine::broadcastRunning(unsigned int index, VirtualMachine *sourceScript)
 
 bool Engine::broadcastByPtrRunning(Broadcast *broadcast, VirtualMachine *sourceScript)
 {
-    assert(m_broadcastMap.find(broadcast) != m_broadcastMap.cend());
-    const auto &scripts = m_broadcastMap[broadcast];
+    if (broadcast->isBackdropBroadcast()) {
+        // This broadcast belongs to a backdrop
+        assert(m_broadcastMap.find(broadcast) == m_broadcastMap.cend());
 
-    for (auto thread : m_threads) {
-        if (!thread->atEnd()) {
-            auto it = std::find_if(scripts.begin(), scripts.end(), [thread](Script *script) { return thread->script() == script; });
+        for (auto thread : m_threads) {
+            if (!thread->atEnd()) {
+                // TODO: Store the top block in Script
+                Script *script = thread->script();
+                auto it = std::find_if(m_scripts.begin(), m_scripts.end(), [script](const std::pair<std::shared_ptr<Block>, std::shared_ptr<Script>> pair) { return pair.second.get() == script; });
+                assert(it != m_scripts.end());
+                auto topBlock = it->first;
 
-            if (it != scripts.end())
-                return true;
+                // TODO: Add a map for "when backdrop switches to" hats
+                if ((topBlock->opcode() == "event_whenbackdropswitchesto") && (topBlock->findFieldById(EventBlocks::BACKDROP)->value().toString() == broadcast->name()))
+                    return true;
+            }
         }
-    }
+    } else {
+        // This is a regular broadcast
+        assert(m_broadcastMap.find(broadcast) != m_broadcastMap.cend());
+        const auto &scripts = m_broadcastMap[broadcast];
 
-    // TODO: Check whether the broadcast belongs to a backdrop
-    // maybe using something like broadcast->isBackdropBroadcast()
-    // after adding it to Broadcast
-    for (auto thread : m_threads) {
-        if (!thread->atEnd()) {
-            // TODO: Store the top block in Script
-            Script *script = thread->script();
-            auto it = std::find_if(m_scripts.begin(), m_scripts.end(), [script](const std::pair<std::shared_ptr<Block>, std::shared_ptr<Script>> pair) { return pair.second.get() == script; });
-            assert(it != m_scripts.end());
-            auto topBlock = it->first;
+        for (auto thread : m_threads) {
+            if (!thread->atEnd()) {
+                auto it = std::find_if(scripts.begin(), scripts.end(), [thread](Script *script) { return thread->script() == script; });
 
-            // TODO: Add a map for "when backdrop switches to" hats
-            if ((topBlock->opcode() == "event_whenbackdropswitchesto") && (topBlock->findFieldById(EventBlocks::BACKDROP)->value().toString() == broadcast->name()))
-                return true;
+                if (it != scripts.end())
+                    return true;
+            }
         }
     }
     return false;
@@ -736,6 +739,7 @@ int Engine::findBroadcastById(const std::string &broadcastId) const
 
 void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Broadcast *broadcast)
 {
+    assert(!broadcast->isBackdropBroadcast());
     Script *script = m_scripts[whenReceivedBlock].get();
     auto it = m_broadcastMap.find(broadcast);
 

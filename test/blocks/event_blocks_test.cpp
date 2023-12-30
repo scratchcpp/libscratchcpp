@@ -290,9 +290,6 @@ TEST_F(EventBlocksTest, WhenBackdropSwitchesTo)
     auto backdrop = std::make_shared<Costume>("backdrop2", "a", "svg");
     stage.addCostume(backdrop);
 
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, addBroadcastScript(block1, backdrop->broadcast()));
-
     compiler.init();
     compiler.setBlock(block1);
     EventBlocks::compileWhenBackdropSwitchesTo(&compiler);
