@@ -42,6 +42,7 @@ class Engine : public IEngine
         void initClone(std::shared_ptr<Sprite> clone) override;
         void deinitClone(std::shared_ptr<Sprite> clone) override;
 
+        void step() override;
         void run() override;
         void runEventLoop() override;
         void stopEventLoop() override;
@@ -156,7 +157,6 @@ class Engine : public IEngine
             KeyOption
         };
 
-        void step();
         std::vector<std::shared_ptr<VirtualMachine>> stepThreads();
         void stepThread(std::shared_ptr<VirtualMachine> thread);
         void eventLoop(bool untilProjectStops = false);
@@ -216,7 +216,7 @@ class Engine : public IEngine
         std::unique_ptr<ITimer> m_defaultTimer;
         ITimer *m_timer = nullptr;
         double m_fps = 30;                         // default FPS
-        std::chrono::milliseconds m_frameDuration; // will be computed in eventLoop()
+        std::chrono::milliseconds m_frameDuration; // will be computed in step()
         bool m_turboModeEnabled = false;
         std::unordered_map<std::string, bool> m_keyMap; // holds key states
         bool m_anyKeyPressed = false;

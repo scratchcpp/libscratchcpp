@@ -261,6 +261,24 @@ void Engine::deinitClone(std::shared_ptr<Sprite> clone)
     m_executableTargets.erase(std::remove(m_executableTargets.begin(), m_executableTargets.end(), clone.get()), m_executableTargets.end());
 }
 
+void Engine::step()
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L2087C6-L2155
+    updateFrameDuration();
+
+    // Clean up threads that were told to stop during or since the last step
+    m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(), [](std::shared_ptr<VirtualMachine> thread) { return thread->atEnd(); }), m_threads.end());
+
+    m_redrawRequested = false;
+
+    // Step threads
+    stepThreads();
+
+    // Render
+    if (m_redrawHandler)
+        m_redrawHandler();
+}
+
 void Engine::run()
 {
     start();
@@ -283,23 +301,6 @@ void Engine::stopEventLoop()
 void Engine::setRedrawHandler(const std::function<void()> &handler)
 {
     m_redrawHandler = handler;
-}
-
-void Engine::step()
-{
-    // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L2087C6-L2155
-
-    // Clean up threads that were told to stop during or since the last step
-    m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(), [](std::shared_ptr<VirtualMachine> thread) { return thread->atEnd(); }), m_threads.end());
-
-    m_redrawRequested = false;
-
-    // Step threads
-    stepThreads();
-
-    // Render
-    if (m_redrawHandler)
-        m_redrawHandler();
 }
 
 std::vector<std::shared_ptr<VirtualMachine>> Engine::stepThreads()
@@ -372,7 +373,6 @@ void Engine::stepThread(std::shared_ptr<VirtualMachine> thread)
 
 void Engine::eventLoop(bool untilProjectStops)
 {
-    updateFrameDuration();
     m_stopEventLoop = false;
 
     while (true) {
