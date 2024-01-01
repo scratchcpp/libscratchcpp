@@ -128,3 +128,11 @@ TEST(StageTest, GraphicsEffects)
     ASSERT_EQ(stage.graphicsEffectValue(&effect1), 0);
     ASSERT_EQ(stage.graphicsEffectValue(&effect2), 0);
 }
+
+TEST(StageTest, LayerOrder)
+{
+    Stage stage;
+    ASSERT_EQ(stage.layerOrder(), 0);
+    stage.setLayerOrder(2);
+    ASSERT_EQ(stage.layerOrder(), 2);
+}

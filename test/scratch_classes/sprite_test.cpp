@@ -493,6 +493,14 @@ TEST(SpriteTest, RotationStyle)
     ASSERT_EQ(sprite.rotationStyleStr(), "all around");
 }
 
+TEST(SpriteTest, LayerOrder)
+{
+    Sprite sprite;
+    ASSERT_EQ(sprite.layerOrder(), 0);
+    sprite.setLayerOrder(2);
+    ASSERT_EQ(sprite.layerOrder(), 2);
+}
+
 TEST(SpriteTest, KeepInFence)
 {
     Sprite sprite;

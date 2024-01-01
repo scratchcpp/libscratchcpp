@@ -64,6 +64,8 @@ class LIBSCRATCHCPP_EXPORT Sprite
         void setRotationStyle(const std::string &newRotationStyle);
         void setRotationStyle(const char *newRotationStyle);
 
+        void setLayerOrder(int newLayerOrder) override;
+
         Rect boundingRect() const;
         void keepInFence(double newX, double newY, double *fencedX, double *fencedY) const;
 
