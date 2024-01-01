@@ -118,6 +118,12 @@ TEST_F(ISpriteHandlerTest, RotationStyle)
     m_sprite.setRotationStyle(Sprite::RotationStyle::LeftRight);
 }
 
+TEST_F(ISpriteHandlerTest, LayerOrder)
+{
+    EXPECT_CALL(m_handler, onLayerOrderChanged(7)).Times(1);
+    m_sprite.setLayerOrder(7);
+}
+
 TEST_F(ISpriteHandlerTest, Costume)
 {
     auto costume1 = std::make_shared<Costume>("", "", "");

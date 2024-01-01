@@ -315,6 +315,15 @@ void Sprite::setRotationStyle(const char *newRotationStyle)
     setRotationStyle(std::string(newRotationStyle));
 }
 
+/*! Overrides Target#setLayerOrder(). */
+void Sprite::setLayerOrder(int newLayerOrder)
+{
+    Target::setLayerOrder(newLayerOrder);
+
+    if (impl->iface)
+        impl->iface->onLayerOrderChanged(newLayerOrder);
+}
+
 /*! Returns the bounding rectangle of the sprite. */
 Rect Sprite::boundingRect() const
 {

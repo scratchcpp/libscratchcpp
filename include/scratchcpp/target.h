@@ -73,7 +73,7 @@ class LIBSCRATCHCPP_EXPORT Target
         int findSound(const std::string &soundName) const;
 
         int layerOrder() const;
-        void setLayerOrder(int newLayerOrder);
+        virtual void setLayerOrder(int newLayerOrder);
 
         double volume() const;
         void setVolume(double newVolume);

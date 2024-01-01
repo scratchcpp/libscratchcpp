@@ -44,6 +44,9 @@ class LIBSCRATCHCPP_EXPORT ISpriteHandler
         /*! Called when the rotation style changes. */
         virtual void onRotationStyleChanged(Sprite::RotationStyle rotationStyle) = 0;
 
+        /*! Called when the layer order changes. */
+        virtual void onLayerOrderChanged(int layerOrder) = 0;
+
         /*!
          * Called when the value of the given graphics effect changes.
          * \note This method isn't called when all effects are cleared, use onGraphicsEffectsCleared() for this.
