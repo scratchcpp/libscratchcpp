@@ -21,6 +21,7 @@ class SpriteHandlerMock : public ISpriteHandler
         MOCK_METHOD(void, onSizeChanged, (double), (override));
         MOCK_METHOD(void, onDirectionChanged, (double), (override));
         MOCK_METHOD(void, onRotationStyleChanged, (Sprite::RotationStyle), (override));
+        MOCK_METHOD(void, onLayerOrderChanged, (int), (override));
         MOCK_METHOD(void, onGraphicsEffectChanged, (IGraphicsEffect *, double), (override));
         MOCK_METHOD(void, onGraphicsEffectsCleared, (), (override));
 

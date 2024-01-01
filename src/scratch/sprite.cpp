@@ -319,6 +319,9 @@ void Sprite::setRotationStyle(const char *newRotationStyle)
 void Sprite::setLayerOrder(int newLayerOrder)
 {
     Target::setLayerOrder(newLayerOrder);
+
+    if (impl->iface)
+        impl->iface->onLayerOrderChanged(newLayerOrder);
 }
 
 /*! Returns the bounding rectangle of the sprite. */
