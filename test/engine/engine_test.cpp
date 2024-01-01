@@ -70,6 +70,31 @@ TEST(EngineTest, IsRunning)
     ASSERT_FALSE(engine.isRunning());
 }
 
+TEST(EngineTest, Step)
+{
+    Project p("step.sb3");
+    ASSERT_TRUE(p.load());
+
+    p.start();
+
+    auto engine = p.engine();
+    engine->setFps(250);
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    ASSERT_VAR(stage, "test1");
+    auto test1 = GET_VAR(stage, "test1");
+
+    ASSERT_VAR(stage, "test2");
+    auto test2 = GET_VAR(stage, "test2");
+
+    for (int i = 1; i <= 3; i++) {
+        engine->step();
+        ASSERT_EQ(test1->value().toInt(), i);
+        ASSERT_EQ(test2->value().toInt(), i > 1 ? 3 : 1);
+    }
+}
+
 TEST(EngineTest, EventLoop)
 {
     Engine engine;

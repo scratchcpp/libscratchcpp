@@ -81,6 +81,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Automatically called from clones that are being deleted. */
         virtual void deinitClone(std::shared_ptr<Sprite> clone) = 0;
 
+        /*! Steps all currently running threads. Use this to implement a custom event loop. */
+        virtual void step() = 0;
+
         /*!
          * Calls and runs "when green flag clicked" blocks.
          * \note This function returns when all scripts finish.\n
