@@ -50,11 +50,26 @@ Engine::~Engine()
 
 void Engine::clear()
 {
+    stop();
+
     m_sections.clear();
     m_targets.clear();
     m_broadcasts.clear();
-    removeExecutableClones();
-    m_clones.clear();
+    m_extensions.clear();
+    m_broadcastMap.clear();
+    m_executableTargets.clear();
+    m_threads.clear();
+    m_threadsToStop.clear();
+    m_scripts.clear();
+    m_functions.clear();
+
+    m_greenFlagHats.clear();
+    m_backdropChangeHats.clear();
+    m_broadcastHats.clear();
+    m_cloneInitHats.clear();
+    m_whenKeyPressedHats.clear();
+
+    m_scriptHatFields.clear();
 
     m_running = false;
 }
