@@ -258,6 +258,13 @@ bool Scratch3Reader::load()
                 sound->setRate(jsonSound["rate"]);
                 READER_STEP(step, "target -> sound -> sampleCount");
                 sound->setSampleCount(jsonSound["sampleCount"]);
+
+                if (m_zipReader && !sound->data()) {
+                    void *data;
+                    unsigned int size = m_zipReader->readFile(sound->fileName(), &data);
+                    sound->setData(size, data);
+                }
+
                 target->addSound(sound);
             }
 

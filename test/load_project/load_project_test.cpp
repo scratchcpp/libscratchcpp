@@ -264,11 +264,14 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(comment->text(), "Hello, world!");
 
         // Sprite1: sounds
+        auto meowData = readFileStr("Meow.wav");
         auto sound = sprite1->soundAt(0);
         ASSERT_EQ(sound->name(), "Meow");
         ASSERT_FALSE(sound->id().empty());
         ASSERT_EQ(sound->fileName(), sound->id() + ".wav");
         ASSERT_EQ(sound->dataFormat(), "wav");
+        ASSERT_TRUE(sound->data());
+        ASSERT_EQ(memcmp(sound->data(), meowData.c_str(), sound->dataSize()), 0);
 
         // Sprite1: variables
         ASSERT_VAR(sprite1, "var2");
@@ -424,11 +427,14 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(commentBlock->comment(), comment);
 
         // Balloon1: sounds
+        auto popData = readFileStr("Pop.wav");
         sound = sprite2->soundAt(0);
         ASSERT_EQ(sound->name(), "Pop");
         ASSERT_FALSE(sound->id().empty());
         ASSERT_EQ(sound->fileName(), sound->id() + ".wav");
         ASSERT_EQ(sound->dataFormat(), "wav");
+        ASSERT_TRUE(sound->data());
+        ASSERT_EQ(memcmp(sound->data(), popData.c_str(), sound->dataSize()), 0);
 
         // Balloon1: variables
         ASSERT_VAR(sprite2, "var2");
