@@ -54,6 +54,14 @@ bool AudioPlayer::load(unsigned int size, const void *data, unsigned long sample
     return true;
 }
 
+void AudioPlayer::setVolume(float volume)
+{
+    if (!AudioEngine::initialized())
+        return;
+
+    ma_sound_set_volume(m_sound, volume);
+}
+
 void AudioPlayer::start()
 {
     if (!AudioEngine::initialized())

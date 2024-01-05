@@ -13,6 +13,10 @@ bool AudioPlayerStub::load(unsigned int size, const void *data, unsigned long sa
     return true;
 }
 
+void AudioPlayerStub::setVolume(float volume)
+{
+}
+
 void AudioPlayerStub::start()
 {
 }

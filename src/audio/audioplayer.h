@@ -17,6 +17,7 @@ class AudioPlayer : public IAudioPlayer
         ~AudioPlayer();
 
         bool load(unsigned int size, const void *data, unsigned long sampleRate) override;
+        void setVolume(float volume) override;
 
         void start() override;
         void stop() override;
