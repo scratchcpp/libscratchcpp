@@ -39,6 +39,12 @@ void Sound::setSampleCount(int newSampleCount)
     impl->sampleCount = newSampleCount;
 }
 
+/*! Sets the volume percentage of the sound. */
+void Sound::setVolume(double volume)
+{
+    impl->player->setVolume(volume / 100);
+}
+
 /*! Starts the playback of the sound. */
 void Sound::start()
 {

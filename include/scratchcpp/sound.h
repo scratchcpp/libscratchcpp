@@ -25,6 +25,8 @@ class LIBSCRATCHCPP_EXPORT Sound : public Asset
         int sampleCount() const;
         void setSampleCount(int newSampleCount);
 
+        virtual void setVolume(double volume);
+
         virtual void start();
         virtual void stop();
 

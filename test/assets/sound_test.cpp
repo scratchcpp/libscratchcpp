@@ -64,6 +64,14 @@ TEST_F(SoundTest, ProcessData)
     sound.setData(3, dataPtr);
 }
 
+TEST_F(SoundTest, SetVolume)
+{
+    Sound sound("sound1", "a", "wav");
+
+    EXPECT_CALL(*m_player, setVolume(0.5604));
+    sound.setVolume(56.04);
+}
+
 TEST_F(SoundTest, Start)
 {
     Sound sound("sound1", "a", "wav");
