@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/sound.h>
+#include <iostream>
 
 #include "sound_p.h"
+#include "audio/audioplayerfactory.h"
 
 using namespace libscratchcpp;
 
@@ -35,4 +37,34 @@ int Sound::sampleCount() const
 void Sound::setSampleCount(int newSampleCount)
 {
     impl->sampleCount = newSampleCount;
+}
+
+/*! Sets the volume percentage of the sound. */
+void Sound::setVolume(double volume)
+{
+    impl->player->setVolume(volume / 100);
+}
+
+/*! Starts the playback of the sound. */
+void Sound::start()
+{
+    impl->player->start();
+}
+
+/*! Stops the playback of the sound. */
+void Sound::stop()
+{
+    impl->player->stop();
+}
+
+/*! Returns true if the sound is being played. */
+bool Sound::isPlaying()
+{
+    return impl->player->isPlaying();
+}
+
+void Sound::processData(unsigned int size, void *data)
+{
+    if (!impl->player->load(size, data, impl->rate))
+        std::cerr << "Failed to load sound " << name() << std::endl;
 }

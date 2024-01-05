@@ -66,6 +66,7 @@ include_directories(thirdparty/spimpl)
 target_link_libraries(scratchcpp PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(scratchcpp PRIVATE utf8cpp)
 target_link_libraries(scratchcpp PRIVATE zip)
+target_link_libraries(scratchcpp PRIVATE scratchcpp-audio)
 
 if (LIBSCRATCHCPP_NETWORK_SUPPORT)
     include(FetchContent)

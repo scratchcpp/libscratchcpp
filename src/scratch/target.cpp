@@ -349,6 +349,11 @@ int Target::addSound(std::shared_ptr<Sound> sound)
     if (it != impl->sounds.end())
         return it - impl->sounds.begin();
 
+    assert(sound);
+
+    if (sound)
+        sound->setVolume(impl->volume);
+
     impl->sounds.push_back(sound);
     return impl->sounds.size() - 1;
 }
@@ -398,7 +403,7 @@ double Target::volume() const
     return impl->volume;
 }
 
-/*! Sets the volume. */
+/*! Sets the volume of all sounds of this target. */
 void Target::setVolume(double newVolume)
 {
     if (newVolume >= 100)
@@ -407,6 +412,11 @@ void Target::setVolume(double newVolume)
         impl->volume = 0;
     else
         impl->volume = newVolume;
+
+    for (auto sound : impl->sounds) {
+        if (sound)
+            sound->setVolume(impl->volume);
+    }
 }
 
 /*! Returns the value of the given graphics effect. */
