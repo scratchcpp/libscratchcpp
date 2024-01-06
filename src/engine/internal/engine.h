@@ -41,6 +41,7 @@ class Engine : public IEngine
         void stopTarget(Target *target, VirtualMachine *exceptScript) override;
         void initClone(std::shared_ptr<Sprite> clone) override;
         void deinitClone(std::shared_ptr<Sprite> clone) override;
+        void stopSounds() override;
 
         void step() override;
         void run() override;
