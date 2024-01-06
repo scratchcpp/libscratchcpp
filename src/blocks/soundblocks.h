@@ -40,6 +40,7 @@ class SoundBlocks : public IBlockSection
         static bool compilePlayCommon(Compiler *compiler, bool untilDone, bool *byIndex = nullptr);
         static void compilePlay(Compiler *compiler);
         static void compilePlayUntilDone(Compiler *compiler);
+        static void compileStopAllSounds(Compiler *compiler);
         static void compileChangeVolumeBy(Compiler *compiler);
         static void compileSetVolumeTo(Compiler *compiler);
         static void compileVolume(Compiler *compiler);
@@ -55,6 +56,8 @@ class SoundBlocks : public IBlockSection
         static unsigned int playByIndexUntilDone(VirtualMachine *vm);
         static unsigned int checkSound(VirtualMachine *vm);
         static unsigned int checkSoundByIndex(VirtualMachine *vm);
+
+        static unsigned int stopAllSounds(VirtualMachine *vm);
 
         static unsigned int changeVolumeBy(VirtualMachine *vm);
         static unsigned int setVolumeTo(VirtualMachine *vm);

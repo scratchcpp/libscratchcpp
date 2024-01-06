@@ -100,6 +100,7 @@ TEST_F(SoundBlocksTest, RegisterBlocks)
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_play", &SoundBlocks::compilePlay));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_playuntildone", &SoundBlocks::compilePlayUntilDone));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_stopallsounds", &SoundBlocks::compileStopAllSounds));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_changevolumeby", &SoundBlocks::compileChangeVolumeBy));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_setvolumeto", &SoundBlocks::compileSetVolumeTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_volume", &SoundBlocks::compileVolume));
@@ -548,6 +549,39 @@ TEST_F(SoundBlocksTest, PlayUntilDoneImpl)
     ASSERT_TRUE(vm2.atEnd());
 
     SoundPrivate::playerFactory = nullptr;
+}
+
+TEST_F(SoundBlocksTest, StopAllSounds)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "sound_stopallsounds");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::stopAllSounds)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    SoundBlocks::compileStopAllSounds(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(SoundBlocksTest, StopAllSoundsImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SoundBlocks::stopAllSounds };
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+
+    EXPECT_CALL(m_engineMock, stopSounds());
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
 }
 
 TEST_F(SoundBlocksTest, ChangeVolumeBy)

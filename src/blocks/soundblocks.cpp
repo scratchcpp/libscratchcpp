@@ -20,6 +20,7 @@ void SoundBlocks::registerBlocks(IEngine *engine)
     // Blocks
     engine->addCompileFunction(this, "sound_play", &compilePlay);
     engine->addCompileFunction(this, "sound_playuntildone", &compilePlayUntilDone);
+    engine->addCompileFunction(this, "sound_stopallsounds", &compileStopAllSounds);
     engine->addCompileFunction(this, "sound_changevolumeby", &compileChangeVolumeBy);
     engine->addCompileFunction(this, "sound_setvolumeto", &compileSetVolumeTo);
     engine->addCompileFunction(this, "sound_volume", &compileVolume);
@@ -90,6 +91,11 @@ void SoundBlocks::compilePlayUntilDone(Compiler *compiler)
 
     if (compilePlayCommon(compiler, true, &byIndex))
         compiler->addFunctionCall(byIndex ? &checkSoundByIndex : &checkSound);
+}
+
+void SoundBlocks::compileStopAllSounds(Compiler *compiler)
+{
+    compiler->addFunctionCall(&stopAllSounds);
 }
 
 void SoundBlocks::compileChangeVolumeBy(Compiler *compiler)
@@ -255,6 +261,13 @@ unsigned int SoundBlocks::checkSoundByIndex(VirtualMachine *vm)
     }
 
     return 1;
+}
+
+unsigned int SoundBlocks::stopAllSounds(VirtualMachine *vm)
+{
+    vm->engine()->stopSounds();
+    m_waitingSounds.clear();
+    return 0;
 }
 
 unsigned int SoundBlocks::changeVolumeBy(VirtualMachine *vm)
