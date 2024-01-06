@@ -51,12 +51,15 @@ bool AudioPlayer::load(unsigned int size, const void *data, unsigned long sample
     }
 
     m_loaded = true;
+    ma_sound_set_volume(m_sound, m_volume);
     return true;
 }
 
 void AudioPlayer::setVolume(float volume)
 {
-    if (!AudioEngine::initialized())
+    m_volume = volume;
+
+    if (!m_loaded)
         return;
 
     ma_sound_set_volume(m_sound, volume);
@@ -64,7 +67,7 @@ void AudioPlayer::setVolume(float volume)
 
 void AudioPlayer::start()
 {
-    if (!AudioEngine::initialized())
+    if (!m_loaded)
         return;
 
     if (isPlaying())
@@ -88,7 +91,7 @@ void AudioPlayer::start()
 
 void AudioPlayer::stop()
 {
-    if (!AudioEngine::initialized())
+    if (!m_loaded)
         return;
 
     ma_result result = ma_sound_stop(m_sound);
@@ -100,7 +103,7 @@ void AudioPlayer::stop()
 
 bool AudioPlayer::isPlaying() const
 {
-    if (!AudioEngine::initialized())
+    if (!m_loaded)
         return false;
 
     return m_started && !m_sound->atEnd;
