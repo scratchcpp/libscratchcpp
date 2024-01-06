@@ -6,8 +6,11 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/keyevent.h>
+#include <scratch/sound_p.h>
 #include <timermock.h>
 #include <clockmock.h>
+#include <audioplayerfactorymock.h>
+#include <audioplayermock.h>
 #include <thread>
 
 #include "../common.h"
@@ -68,6 +71,35 @@ TEST(EngineTest, IsRunning)
     engine.start();
     engine.run();
     ASSERT_FALSE(engine.isRunning());
+}
+
+TEST(EngineTest, StopSounds)
+{
+    AudioPlayerFactoryMock factory;
+    auto player1 = std::make_shared<AudioPlayerMock>();
+    auto player2 = std::make_shared<AudioPlayerMock>();
+    auto player3 = std::make_shared<AudioPlayerMock>();
+    SoundPrivate::playerFactory = &factory;
+    EXPECT_CALL(factory, create()).WillOnce(Return(player1)).WillOnce(Return(player2)).WillOnce(Return(player3));
+    EXPECT_CALL(*player1, load).WillOnce(Return(true));
+    EXPECT_CALL(*player2, load).WillOnce(Return(true));
+    EXPECT_CALL(*player3, load).WillOnce(Return(true));
+    EXPECT_CALL(*player1, setVolume).Times(2);
+    EXPECT_CALL(*player2, setVolume).Times(2);
+    EXPECT_CALL(*player3, setVolume).Times(2);
+    Project p("sounds.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    EXPECT_CALL(*player1, isPlaying()).WillOnce(Return(false));
+    EXPECT_CALL(*player2, isPlaying()).WillOnce(Return(true));
+    EXPECT_CALL(*player3, isPlaying()).WillOnce(Return(true));
+    EXPECT_CALL(*player2, stop());
+    EXPECT_CALL(*player3, stop());
+    engine->stopSounds();
+
+    SoundPrivate::playerFactory = nullptr;
 }
 
 TEST(EngineTest, Step)

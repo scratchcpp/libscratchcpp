@@ -3,7 +3,11 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/target.h>
+#include <scratchcpp/sound.h>
+#include <scratch/sound_p.h>
 #include <enginemock.h>
+#include <audioplayerfactorymock.h>
+#include <audioplayermock.h>
 
 #include "../common.h"
 #include "blocks/soundblocks.h"
@@ -94,14 +98,490 @@ TEST_F(SoundBlocksTest, CategoryVisible)
 TEST_F(SoundBlocksTest, RegisterBlocks)
 {
     // Blocks
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_play", &SoundBlocks::compilePlay));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_playuntildone", &SoundBlocks::compilePlayUntilDone));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_stopallsounds", &SoundBlocks::compileStopAllSounds));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_changevolumeby", &SoundBlocks::compileChangeVolumeBy));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_setvolumeto", &SoundBlocks::compileSetVolumeTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_volume", &SoundBlocks::compileVolume));
 
     // Inputs
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SOUND_MENU", SoundBlocks::SOUND_MENU));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VOLUME", SoundBlocks::VOLUME));
 
     m_section->registerBlocks(&m_engineMock);
+}
+
+TEST_F(SoundBlocksTest, Play)
+{
+    AudioPlayerFactoryMock factory;
+    auto player1 = std::make_shared<AudioPlayerMock>();
+    auto player2 = std::make_shared<AudioPlayerMock>();
+    SoundPrivate::playerFactory = &factory;
+    EXPECT_CALL(factory, create()).WillOnce(Return(player1)).WillOnce(Return(player2));
+    EXPECT_CALL(*player1, setVolume);
+    EXPECT_CALL(*player2, setVolume);
+    Target target;
+    target.addSound(std::make_shared<Sound>("test", "", ""));
+    target.addSound(std::make_shared<Sound>("some sound", "", ""));
+    Compiler compiler(&m_engineMock, &target);
+
+    // start sound (some sound)
+    auto block1 = std::make_shared<Block>("a", "sound_play");
+    addDropdownInput(block1, "SOUND_MENU", SoundBlocks::SOUND_MENU, "some sound");
+
+    // start sound (1)
+    auto block2 = std::make_shared<Block>("b", "sound_play");
+    addDropdownInput(block2, "SOUND_MENU", SoundBlocks::SOUND_MENU, "1");
+
+    // start sound (5)
+    auto block3 = std::make_shared<Block>("c", "sound_play");
+    addDropdownInput(block3, "SOUND_MENU", SoundBlocks::SOUND_MENU, "5");
+
+    // start sound (-3)
+    auto block4 = std::make_shared<Block>("d", "sound_play");
+    addDropdownInput(block4, "SOUND_MENU", SoundBlocks::SOUND_MENU, "-3");
+
+    // start sound (nonexistent sound)
+    auto block5 = std::make_shared<Block>("e", "sound_play");
+    addDropdownInput(block5, "SOUND_MENU", SoundBlocks::SOUND_MENU, "nonexistent sound");
+
+    // start sound (null block)
+    auto block6 = std::make_shared<Block>("f", "sound_play");
+    addDropdownInput(block6, "SOUND_MENU", SoundBlocks::SOUND_MENU, "", createNullBlock("g"));
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::playByIndex)).WillOnce(Return(2));
+    compiler.setBlock(block1);
+    SoundBlocks::compilePlay(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::playByIndex)).WillOnce(Return(2));
+    compiler.setBlock(block2);
+    SoundBlocks::compilePlay(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::playByIndex)).WillOnce(Return(2));
+    compiler.setBlock(block3);
+    SoundBlocks::compilePlay(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::playByIndex)).WillOnce(Return(2));
+    compiler.setBlock(block4);
+    SoundBlocks::compilePlay(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::playByIndex)).Times(0);
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::play)).Times(0);
+    compiler.setBlock(block5);
+    SoundBlocks::compilePlay(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::play)).WillOnce(Return(3));
+    compiler.setBlock(block6);
+    SoundBlocks::compilePlay(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 2, vm::OP_CONST, 1, vm::OP_EXEC, 2, vm::OP_CONST, 2, vm::OP_EXEC, 2, vm::OP_CONST, 3, vm::OP_EXEC, 2,
+                                    vm::OP_NULL,  vm::OP_EXEC,  3, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 1, 0, 4, -4 }));
+
+    SoundPrivate::playerFactory = nullptr;
+}
+
+TEST_F(SoundBlocksTest, PlayImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &SoundBlocks::playByIndex, &SoundBlocks::play };
+    static Value constValues[] = { 2, 5, -1, "test", "nonexistent", "1", "4", "-3" };
+
+    AudioPlayerFactoryMock factory;
+    auto player1 = std::make_shared<AudioPlayerMock>();
+    auto player2 = std::make_shared<AudioPlayerMock>();
+    auto player3 = std::make_shared<AudioPlayerMock>();
+    SoundPrivate::playerFactory = &factory;
+    EXPECT_CALL(factory, create()).WillOnce(Return(player1)).WillOnce(Return(player2)).WillOnce(Return(player3));
+    EXPECT_CALL(*player1, setVolume);
+    EXPECT_CALL(*player2, setVolume);
+    EXPECT_CALL(*player3, setVolume);
+    Target target;
+    target.addSound(std::make_shared<Sound>("some sound", "", ""));
+    target.addSound(std::make_shared<Sound>("test", "", ""));
+    target.addSound(std::make_shared<Sound>("another sound", "", ""));
+
+    VirtualMachine vm(&target, nullptr, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(*player3, start());
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    EXPECT_CALL(*player3, start());
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    EXPECT_CALL(*player3, start());
+    vm.reset();
+    vm.setBytecode(bytecode3);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    EXPECT_CALL(*player2, start());
+    vm.reset();
+    vm.setBytecode(bytecode4);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    vm.reset();
+    vm.setBytecode(bytecode5);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    EXPECT_CALL(*player1, start());
+    vm.reset();
+    vm.setBytecode(bytecode6);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    EXPECT_CALL(*player1, start());
+    vm.reset();
+    vm.setBytecode(bytecode7);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    EXPECT_CALL(*player3, start());
+    vm.reset();
+    vm.setBytecode(bytecode8);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    SoundPrivate::playerFactory = nullptr;
+}
+
+TEST_F(SoundBlocksTest, PlayUntilDone)
+{
+    AudioPlayerFactoryMock factory;
+    auto player1 = std::make_shared<AudioPlayerMock>();
+    auto player2 = std::make_shared<AudioPlayerMock>();
+    SoundPrivate::playerFactory = &factory;
+    EXPECT_CALL(factory, create()).WillOnce(Return(player1)).WillOnce(Return(player2));
+    EXPECT_CALL(*player1, setVolume);
+    EXPECT_CALL(*player2, setVolume);
+    Target target;
+    target.addSound(std::make_shared<Sound>("test", "", ""));
+    target.addSound(std::make_shared<Sound>("some sound", "", ""));
+    Compiler compiler(&m_engineMock, &target);
+
+    // play sound (some sound) until done
+    auto block1 = std::make_shared<Block>("a", "sound_playuntildone");
+    addDropdownInput(block1, "SOUND_MENU", SoundBlocks::SOUND_MENU, "some sound");
+
+    // play sound (1) until done
+    auto block2 = std::make_shared<Block>("b", "sound_playuntildone");
+    addDropdownInput(block2, "SOUND_MENU", SoundBlocks::SOUND_MENU, "1");
+
+    // play sound (5) until done
+    auto block3 = std::make_shared<Block>("c", "sound_playuntildone");
+    addDropdownInput(block3, "SOUND_MENU", SoundBlocks::SOUND_MENU, "5");
+
+    // play sound (-3) until done
+    auto block4 = std::make_shared<Block>("d", "sound_playuntildone");
+    addDropdownInput(block4, "SOUND_MENU", SoundBlocks::SOUND_MENU, "-3");
+
+    // play sound (nonexistent sound) until done
+    auto block5 = std::make_shared<Block>("e", "sound_playuntildone");
+    addDropdownInput(block5, "SOUND_MENU", SoundBlocks::SOUND_MENU, "nonexistent sound");
+
+    // play sound (null block) until done
+    auto block6 = std::make_shared<Block>("f", "sound_playuntildone");
+    addDropdownInput(block6, "SOUND_MENU", SoundBlocks::SOUND_MENU, "", createNullBlock("g"));
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::playByIndexUntilDone)).WillOnce(Return(2));
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::checkSoundByIndex)).WillOnce(Return(3));
+    compiler.setBlock(block1);
+    SoundBlocks::compilePlayUntilDone(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::playByIndexUntilDone)).WillOnce(Return(2));
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::checkSoundByIndex)).WillOnce(Return(3));
+    compiler.setBlock(block2);
+    SoundBlocks::compilePlayUntilDone(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::playByIndexUntilDone)).WillOnce(Return(2));
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::checkSoundByIndex)).WillOnce(Return(3));
+    compiler.setBlock(block3);
+    SoundBlocks::compilePlayUntilDone(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::playByIndexUntilDone)).WillOnce(Return(2));
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::checkSoundByIndex)).WillOnce(Return(3));
+    compiler.setBlock(block4);
+    SoundBlocks::compilePlayUntilDone(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::playByIndexUntilDone)).Times(0);
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::playUntilDone)).Times(0);
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::checkSoundByIndex)).Times(0);
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::checkSound)).Times(0);
+    compiler.setBlock(block5);
+    SoundBlocks::compilePlayUntilDone(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::playUntilDone)).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::checkSound)).WillOnce(Return(5));
+    compiler.setBlock(block6);
+    SoundBlocks::compilePlayUntilDone(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(
+        compiler.bytecode(),
+        std::vector<unsigned int>(
+            { vm::OP_START,
+              vm::OP_CONST,
+              0,
+              vm::OP_EXEC,
+              2,
+              vm::OP_EXEC,
+              3,
+              vm::OP_CONST,
+              1,
+              vm::OP_EXEC,
+              2,
+              vm::OP_EXEC,
+              3,
+              vm::OP_CONST,
+              2,
+              vm::OP_EXEC,
+              2,
+              vm::OP_EXEC,
+              3,
+              vm::OP_CONST,
+              3,
+              vm::OP_EXEC,
+              2,
+              vm::OP_EXEC,
+              3,
+              vm::OP_NULL,
+              vm::OP_EXEC,
+              4,
+              vm::OP_EXEC,
+              5,
+              vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 1, 0, 4, -4 }));
+
+    SoundPrivate::playerFactory = nullptr;
+}
+
+TEST_F(SoundBlocksTest, PlayUntilDoneImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
+    static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
+    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
+    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
+    static BlockFunc functions[] = { &SoundBlocks::playByIndexUntilDone, &SoundBlocks::checkSoundByIndex, &SoundBlocks::playUntilDone, &SoundBlocks::checkSound };
+    static Value constValues[] = { 2, 5, -1, "test", "nonexistent", "1", "4", "-3" };
+
+    AudioPlayerFactoryMock factory;
+    auto player1 = std::make_shared<AudioPlayerMock>();
+    auto player2 = std::make_shared<AudioPlayerMock>();
+    auto player3 = std::make_shared<AudioPlayerMock>();
+    SoundPrivate::playerFactory = &factory;
+    EXPECT_CALL(factory, create()).WillOnce(Return(player1)).WillOnce(Return(player2)).WillOnce(Return(player3));
+    EXPECT_CALL(*player1, setVolume);
+    EXPECT_CALL(*player2, setVolume);
+    EXPECT_CALL(*player3, setVolume);
+    Target target;
+    target.addSound(std::make_shared<Sound>("some sound", "", ""));
+    target.addSound(std::make_shared<Sound>("test", "", ""));
+    target.addSound(std::make_shared<Sound>("another sound", "", ""));
+
+    VirtualMachine vm(&target, nullptr, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    // bytecode1
+    EXPECT_CALL(*player3, start());
+    EXPECT_CALL(*player3, isPlaying()).WillOnce(Return(true));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.atEnd());
+
+    EXPECT_CALL(*player3, isPlaying()).WillOnce(Return(false));
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
+
+    // bytecode2
+    EXPECT_CALL(*player3, start());
+    EXPECT_CALL(*player3, isPlaying()).WillOnce(Return(true));
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.atEnd());
+
+    EXPECT_CALL(*player3, isPlaying()).WillOnce(Return(false));
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
+
+    // bytecode3
+    EXPECT_CALL(*player3, start());
+    EXPECT_CALL(*player3, isPlaying()).WillOnce(Return(false));
+    vm.reset();
+    vm.setBytecode(bytecode3);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
+
+    // bytecode4
+    EXPECT_CALL(*player2, start());
+    EXPECT_CALL(*player2, isPlaying()).WillOnce(Return(true));
+    vm.reset();
+    vm.setBytecode(bytecode4);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.atEnd());
+
+    EXPECT_CALL(*player2, isPlaying()).WillOnce(Return(false));
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
+
+    // bytecode5
+    vm.reset();
+    vm.setBytecode(bytecode5);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
+
+    // bytecode6
+    EXPECT_CALL(*player1, start());
+    EXPECT_CALL(*player1, isPlaying()).WillOnce(Return(true));
+    vm.reset();
+    vm.setBytecode(bytecode6);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.atEnd());
+
+    EXPECT_CALL(*player1, isPlaying()).WillOnce(Return(false));
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
+
+    // bytecode7
+    EXPECT_CALL(*player1, start());
+    EXPECT_CALL(*player1, isPlaying()).WillOnce(Return(true));
+    vm.reset();
+    vm.setBytecode(bytecode7);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.atEnd());
+
+    EXPECT_CALL(*player1, isPlaying()).WillOnce(Return(false));
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
+
+    // bytecode8 + bytecode1
+    VirtualMachine vm2(&target, nullptr, nullptr);
+    vm2.setFunctions(functions);
+    vm2.setConstValues(constValues);
+
+    EXPECT_CALL(*player3, start());
+    EXPECT_CALL(*player3, isPlaying()).WillOnce(Return(true));
+    vm.reset();
+    vm.setBytecode(bytecode8);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.atEnd());
+
+    EXPECT_CALL(*player3, start());
+    EXPECT_CALL(*player3, isPlaying()).WillOnce(Return(true));
+    vm2.setBytecode(bytecode1);
+    vm2.run();
+
+    ASSERT_EQ(vm2.registerCount(), 1);
+    ASSERT_FALSE(vm2.atEnd());
+
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(vm.atEnd());
+
+    EXPECT_CALL(*player3, isPlaying()).WillOnce(Return(false));
+    vm2.run();
+
+    ASSERT_EQ(vm2.registerCount(), 0);
+    ASSERT_TRUE(vm2.atEnd());
+
+    SoundPrivate::playerFactory = nullptr;
+}
+
+TEST_F(SoundBlocksTest, StopAllSounds)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "sound_stopallsounds");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::stopAllSounds)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    SoundBlocks::compileStopAllSounds(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(SoundBlocksTest, StopAllSoundsImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SoundBlocks::stopAllSounds };
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+
+    EXPECT_CALL(m_engineMock, stopSounds());
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
 }
 
 TEST_F(SoundBlocksTest, ChangeVolumeBy)

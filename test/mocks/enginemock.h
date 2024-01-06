@@ -24,6 +24,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, stopTarget, (Target *, VirtualMachine *), (override));
         MOCK_METHOD(void, initClone, (std::shared_ptr<Sprite>), (override));
         MOCK_METHOD(void, deinitClone, (std::shared_ptr<Sprite>), (override));
+        MOCK_METHOD(void, stopSounds, (), (override));
 
         MOCK_METHOD(void, step, (), (override));
         MOCK_METHOD(void, run, (), (override));

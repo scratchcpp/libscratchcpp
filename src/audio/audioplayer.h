@@ -29,6 +29,7 @@ class AudioPlayer : public IAudioPlayer
         ma_sound *m_sound;
         bool m_loaded = false;
         bool m_started = false;
+        float m_volume = 1;
 };
 
 } // namespace libscratchcpp

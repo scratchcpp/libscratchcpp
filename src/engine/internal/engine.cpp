@@ -16,6 +16,7 @@
 #include <scratchcpp/comment.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/keyevent.h>
+#include <scratchcpp/sound.h>
 #include <cassert>
 #include <iostream>
 
@@ -189,6 +190,7 @@ void Engine::stop()
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L2057-L2081
     deleteClones();
+    stopSounds();
 
     if (m_activeThread) {
         stopThread(m_activeThread.get());
@@ -274,6 +276,19 @@ void Engine::deinitClone(std::shared_ptr<Sprite> clone)
 {
     m_clones.erase(clone);
     m_executableTargets.erase(std::remove(m_executableTargets.begin(), m_executableTargets.end(), clone.get()), m_executableTargets.end());
+}
+
+void Engine::stopSounds()
+{
+    // TODO: Loop through clones
+    for (auto target : m_targets) {
+        const auto &sounds = target->sounds();
+
+        for (auto sound : sounds) {
+            if (sound->isPlaying())
+                sound->stop();
+        }
+    }
 }
 
 void Engine::step()
