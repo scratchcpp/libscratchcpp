@@ -19,6 +19,7 @@ void SoundBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks
     engine->addCompileFunction(this, "sound_play", &compilePlay);
+    engine->addCompileFunction(this, "sound_playuntildone", &compilePlayUntilDone);
     engine->addCompileFunction(this, "sound_changevolumeby", &compileChangeVolumeBy);
     engine->addCompileFunction(this, "sound_setvolumeto", &compileSetVolumeTo);
     engine->addCompileFunction(this, "sound_volume", &compileVolume);
@@ -28,13 +29,13 @@ void SoundBlocks::registerBlocks(IEngine *engine)
     engine->addInput(this, "VOLUME", VOLUME);
 }
 
-void SoundBlocks::compilePlay(Compiler *compiler)
+bool SoundBlocks::compilePlayCommon(Compiler *compiler, bool untilDone, bool *byIndex)
 {
     Target *target = compiler->target();
     assert(target);
 
     if (!target)
-        return;
+        return false;
 
     Input *input = compiler->input(SOUND_MENU);
 
@@ -49,16 +50,46 @@ void SoundBlocks::compilePlay(Compiler *compiler)
 
             if (v.type() == Value::Type::Integer) {
                 compiler->addConstValue(v.toLong() - 1);
-                compiler->addFunctionCall(&playByIndex);
+                compiler->addFunctionCall(untilDone ? &playByIndexUntilDone : &playByIndex);
+
+                if (byIndex)
+                    *byIndex = true;
+
+                return true;
             }
         } else {
             compiler->addConstValue(index);
-            compiler->addFunctionCall(&playByIndex);
+            compiler->addFunctionCall(untilDone ? &playByIndexUntilDone : &playByIndex);
+
+            if (byIndex)
+                *byIndex = true;
+
+            return true;
         }
     } else {
         compiler->addInput(input);
-        compiler->addFunctionCall(&play);
+        compiler->addFunctionCall(untilDone ? &playUntilDone : &play);
+
+        if (byIndex)
+            *byIndex = false;
+
+        return true;
     }
+
+    return false;
+}
+
+void SoundBlocks::compilePlay(Compiler *compiler)
+{
+    compilePlayCommon(compiler, false);
+}
+
+void SoundBlocks::compilePlayUntilDone(Compiler *compiler)
+{
+    bool byIndex = false;
+
+    if (compilePlayCommon(compiler, true, &byIndex))
+        compiler->addFunctionCall(byIndex ? &checkSoundByIndex : &checkSound);
 }
 
 void SoundBlocks::compileChangeVolumeBy(Compiler *compiler)
@@ -92,7 +123,7 @@ Sound *SoundBlocks::getSoundByIndex(Target *target, long index)
     return target->soundAt(index).get();
 }
 
-unsigned int SoundBlocks::play(VirtualMachine *vm)
+Sound *SoundBlocks::playCommon(VirtualMachine *vm)
 {
     Target *target = vm->target();
     assert(target);
@@ -101,20 +132,109 @@ unsigned int SoundBlocks::play(VirtualMachine *vm)
     if (target) {
         Sound *sound = target->soundAt(target->findSound(name->toString())).get();
 
-        if (sound)
+        if (sound) {
             sound->start();
+            return sound;
+        }
+
         else if (name->type() == Value::Type::Integer) {
             sound = getSoundByIndex(target, name->toLong() - 1);
 
-            if (sound)
+            if (sound) {
                 sound->start();
+                return sound;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+Sound *SoundBlocks::playByIndexCommon(VirtualMachine *vm)
+{
+    Target *target = vm->target();
+    assert(target);
+
+    if (target) {
+        Sound *sound = getSoundByIndex(target, vm->getInput(0, 1)->toInt());
+
+        if (sound) {
+            sound->start();
+            return sound;
+        }
+    }
+
+    return nullptr;
+}
+
+unsigned int SoundBlocks::play(VirtualMachine *vm)
+{
+    Sound *sound = playCommon(vm);
+
+    if (sound)
+        m_waitingSounds.erase(sound);
+
+    return 1;
+}
+
+unsigned int SoundBlocks::playByIndex(VirtualMachine *vm)
+{
+    Sound *sound = playByIndexCommon(vm);
+
+    if (sound)
+        m_waitingSounds.erase(sound);
+
+    return 1;
+}
+
+unsigned int SoundBlocks::playUntilDone(VirtualMachine *vm)
+{
+    Sound *sound = playCommon(vm);
+
+    if (sound)
+        m_waitingSounds[sound] = vm;
+
+    return 0; // leave the register for checkSound()
+}
+
+unsigned int SoundBlocks::playByIndexUntilDone(VirtualMachine *vm)
+{
+    Sound *sound = playByIndexCommon(vm);
+
+    if (sound)
+        m_waitingSounds[sound] = vm;
+
+    return 0; // leave the register for checkSoundByIndex()
+}
+
+unsigned int SoundBlocks::checkSound(VirtualMachine *vm)
+{
+    Target *target = vm->target();
+    assert(target);
+    const Value *name = vm->getInput(0, 1);
+
+    if (target) {
+        Sound *sound = target->soundAt(target->findSound(name->toString())).get();
+
+        if (!sound && name->type() == Value::Type::Integer)
+            sound = getSoundByIndex(target, name->toLong() - 1);
+
+        if (sound) {
+            auto it = m_waitingSounds.find(sound);
+
+            if (it != m_waitingSounds.cend() && it->second == vm) {
+                if (sound->isPlaying())
+                    vm->stop(true, true, true);
+                else
+                    m_waitingSounds.erase(sound);
+            }
         }
     }
 
     return 1;
 }
 
-unsigned int SoundBlocks::playByIndex(VirtualMachine *vm)
+unsigned int SoundBlocks::checkSoundByIndex(VirtualMachine *vm)
 {
     Target *target = vm->target();
     assert(target);
@@ -122,9 +242,18 @@ unsigned int SoundBlocks::playByIndex(VirtualMachine *vm)
     if (target) {
         auto sound = getSoundByIndex(target, vm->getInput(0, 1)->toInt());
 
-        if (sound)
-            sound->start();
+        if (sound) {
+            auto it = m_waitingSounds.find(sound);
+
+            if (it != m_waitingSounds.cend() && it->second == vm) {
+                if (sound->isPlaying())
+                    vm->stop(true, true, true);
+                else
+                    m_waitingSounds.erase(sound);
+            }
+        }
     }
+
     return 1;
 }
 
