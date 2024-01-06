@@ -67,7 +67,17 @@ void AudioPlayer::start()
     if (!AudioEngine::initialized())
         return;
 
-    ma_result result = ma_sound_start(m_sound);
+    if (isPlaying())
+        stop();
+
+    ma_result result = ma_sound_seek_to_pcm_frame(m_sound, 0);
+
+    if (result != MA_SUCCESS) {
+        std::cerr << "Failed to seek to PCM frame 0." << std::endl;
+        m_started = false;
+    }
+
+    result = ma_sound_start(m_sound);
 
     if (result != MA_SUCCESS) {
         std::cerr << "Failed to start sound." << std::endl;
