@@ -685,8 +685,8 @@ unsigned int LooksBlocks::size(VirtualMachine *vm)
 
 void LooksBlocks::setCostumeByIndex(Target *target, long index)
 {
-    // TODO: Remove this (#248)
-    std::size_t costumeCount = target->costumes().size();
+    long costumeCount = target->costumes().size();
+
     if (index < 0 || index >= costumeCount) {
         if (index < 0)
             index = std::fmod(costumeCount + std::fmod(index, -costumeCount), costumeCount);
