@@ -751,24 +751,22 @@ std::shared_ptr<Broadcast> Engine::broadcastAt(int index) const
 
 int Engine::findBroadcast(const std::string &broadcastName) const
 {
-    int i = 0;
-    for (auto broadcast : m_broadcasts) {
-        if (broadcast->name() == broadcastName)
-            return i;
-        i++;
-    }
-    return -1;
+    auto it = std::find_if(m_broadcasts.begin(), m_broadcasts.end(), [broadcastName](std::shared_ptr<Broadcast> broadcast) { return broadcast->name() == broadcastName; });
+
+    if (it == m_broadcasts.end())
+        return -1;
+    else
+        return it - m_broadcasts.begin();
 }
 
 int Engine::findBroadcastById(const std::string &broadcastId) const
 {
-    int i = 0;
-    for (auto broadcast : m_broadcasts) {
-        if (broadcast->id() == broadcastId)
-            return i;
-        i++;
-    }
-    return -1;
+    auto it = std::find_if(m_broadcasts.begin(), m_broadcasts.end(), [broadcastId](std::shared_ptr<Broadcast> broadcast) { return broadcast->id() == broadcastId; });
+
+    if (it == m_broadcasts.end())
+        return -1;
+    else
+        return it - m_broadcasts.begin();
 }
 
 void Engine::addGreenFlagScript(std::shared_ptr<Block> hatBlock)
@@ -852,13 +850,14 @@ Target *Engine::targetAt(int index) const
 
 int Engine::findTarget(const std::string &targetName) const
 {
-    int i = 0;
-    for (auto target : m_targets) {
-        if ((target->isStage() && targetName == "_stage_") || (!target->isStage() && target->name() == targetName))
-            return i;
-        i++;
-    }
-    return -1;
+    auto it = std::find_if(m_targets.begin(), m_targets.end(), [targetName](std::shared_ptr<Target> target) {
+        return ((target->isStage() && targetName == "_stage_") || (!target->isStage() && target->name() == targetName));
+    });
+
+    if (it == m_targets.end())
+        return -1;
+    else
+        return it - m_targets.begin();
 }
 
 void Engine::moveSpriteToFront(Sprite *sprite)
