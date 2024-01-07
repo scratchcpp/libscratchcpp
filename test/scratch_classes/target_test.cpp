@@ -29,6 +29,24 @@ TEST(TargetTest, Name)
     Target target;
     target.setName("Test");
     ASSERT_EQ(target.name(), "Test");
+
+    target.setName("_mouse_");
+    ASSERT_EQ(target.name(), "Test");
+
+    target.setName("_stage_");
+    ASSERT_EQ(target.name(), "Test");
+
+    target.setName("_edge_");
+    ASSERT_EQ(target.name(), "Test");
+
+    target.setName("_myself_");
+    ASSERT_EQ(target.name(), "Test");
+
+    target.setName("_random_");
+    ASSERT_EQ(target.name(), "Test");
+
+    target.setName("Sprite1");
+    ASSERT_EQ(target.name(), "Sprite1");
 }
 
 TEST(TargetTest, Variables)

@@ -7,9 +7,13 @@
 #include <scratchcpp/comment.h>
 #include <scratchcpp/iengine.h>
 
+#include <unordered_set>
+
 #include "target_p.h"
 
 using namespace libscratchcpp;
+
+static const std::unordered_set<std::string> RESERVED_NAMES = { "_mouse_", "_stage_", "_edge_", "_myself_", "_random_" };
 
 /*! Constructs target. */
 Target::Target() :
@@ -23,10 +27,14 @@ const std::string &Target::name() const
     return impl->name;
 }
 
-/*! Sets the name of the target. */
+/*!
+ * Sets the name of the target.
+ * \note Setting the name to one of the reserved names (_mouse_, _stage_, _edge_, _myself_, _random_) won't do anything.
+ */
 void Target::setName(const std::string &name)
 {
-    impl->name = name;
+    if (RESERVED_NAMES.find(name) == RESERVED_NAMES.cend())
+        impl->name = name;
 }
 
 /*! Returns the list of variables. */
