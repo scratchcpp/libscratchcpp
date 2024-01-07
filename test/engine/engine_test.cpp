@@ -377,8 +377,6 @@ TEST(EngineTest, WhenKeyPressed)
     Project p("when_key_pressed.sb3");
     ASSERT_TRUE(p.load());
 
-    p.run();
-
     auto engine = p.engine();
 
     Stage *stage = engine->stage();
@@ -400,12 +398,12 @@ TEST(EngineTest, WhenKeyPressed)
 
     // space
     engine->setKeyState("space", true);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 1);
     engine->setKeyState("space", false);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 1);
@@ -422,12 +420,12 @@ TEST(EngineTest, WhenKeyPressed)
 
     // right arrow
     engine->setKeyState("right arrow", true);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "right_arrow_pressed");
     ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 1);
     engine->setKeyState("right arrow", false);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 1);
@@ -444,12 +442,12 @@ TEST(EngineTest, WhenKeyPressed)
 
     // right arrow - key object
     engine->setKeyState(KeyEvent("right arrow"), true);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "right_arrow_pressed");
     ASSERT_EQ(GET_VAR(stage, "right_arrow_pressed")->value().toInt(), 2);
     engine->setKeyState("right arrow", false);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 1);
@@ -466,12 +464,12 @@ TEST(EngineTest, WhenKeyPressed)
 
     // any key
     engine->setAnyKeyPressed(true);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "any_key_pressed");
     ASSERT_EQ(GET_VAR(stage, "any_key_pressed")->value().toInt(), 4);
     engine->setAnyKeyPressed(false);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 1);
@@ -488,12 +486,12 @@ TEST(EngineTest, WhenKeyPressed)
 
     // a
     engine->setKeyState("a", true);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "a_pressed");
     ASSERT_EQ(GET_VAR(stage, "a_pressed")->value().toInt(), 1);
     engine->setKeyState("a", false);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 1);
@@ -510,12 +508,12 @@ TEST(EngineTest, WhenKeyPressed)
 
     // x
     engine->setKeyState("x", true);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "x_pressed");
     ASSERT_EQ(GET_VAR(stage, "x_pressed")->value().toInt(), 1);
     engine->setKeyState("x", false);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 1);
@@ -532,12 +530,12 @@ TEST(EngineTest, WhenKeyPressed)
 
     // 4
     engine->setKeyState("4", true);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "4_pressed");
     ASSERT_EQ(GET_VAR(stage, "4_pressed")->value().toInt(), 1);
     engine->setKeyState("4", false);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 1);
@@ -555,7 +553,7 @@ TEST(EngineTest, WhenKeyPressed)
     // multiple
     engine->setKeyState("space", true);
     engine->setKeyState("x", true);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 2);
@@ -563,7 +561,7 @@ TEST(EngineTest, WhenKeyPressed)
     ASSERT_EQ(GET_VAR(stage, "x_pressed")->value().toInt(), 2);
     engine->setKeyState("space", false);
     engine->setKeyState("x", false);
-    p.run();
+    engine->step();
 
     ASSERT_VAR(stage, "space_pressed");
     ASSERT_EQ(GET_VAR(stage, "space_pressed")->value().toInt(), 2);
@@ -1392,17 +1390,42 @@ TEST(EngineTest, ResetRunningHats)
     engine->setKeyState(KeyEvent(KeyEvent::Type::Space), false);
     engine->setKeyState(KeyEvent(KeyEvent::Type::Space), true);
     engine->setKeyState(KeyEvent(KeyEvent::Type::Space), false);
-    engine->run();
+    engine->step();
 
     ASSERT_VAR(stage, "test");
     ASSERT_EQ(GET_VAR(stage, "test")->value().toInt(), 1);
 
-    engine->run();
+    engine->step();
     ASSERT_EQ(GET_VAR(stage, "test")->value().toInt(), 1);
 
     engine->setKeyState(KeyEvent(KeyEvent::Type::Space), true);
     engine->setKeyState(KeyEvent(KeyEvent::Type::Space), false);
-    engine->run();
+    engine->step();
 
     ASSERT_EQ(GET_VAR(stage, "test")->value().toInt(), 2);
+}
+
+TEST(EngineTest, StopBeforeStarting)
+{
+    // Regtest for #394
+    Project p("regtest_projects/394_stop_before_starting.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    engine->broadcast(0);
+    engine->step();
+
+    ASSERT_VAR(stage, "test");
+    ASSERT_FALSE(GET_VAR(stage, "test")->value().toBool());
+
+    GET_VAR(stage, "test")->setValue(true);
+    engine->broadcast(0);
+    engine->start();
+    engine->step();
+    ASSERT_VAR(stage, "test");
+    ASSERT_TRUE(GET_VAR(stage, "test")->value().toBool());
 }
