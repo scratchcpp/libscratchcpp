@@ -186,13 +186,12 @@ std::shared_ptr<Input> Block::inputAt(int index) const
 /*! Returns the index of the input with the given name. */
 int Block::findInput(const std::string &inputName) const
 {
-    int i = 0;
-    for (auto input : impl->inputs) {
-        if (input->name() == inputName)
-            return i;
-        i++;
-    }
-    return -1;
+    auto it = std::find_if(impl->inputs.begin(), impl->inputs.end(), [inputName](std::shared_ptr<Input> input) { return input->name() == inputName; });
+
+    if (it == impl->inputs.end())
+        return -1;
+    else
+        return it - impl->inputs.begin();
 }
 
 /*! Returns the input with the given ID. */
@@ -248,13 +247,12 @@ std::shared_ptr<Field> Block::fieldAt(int index) const
 /*! Returns the index of the field with the given name. */
 int Block::findField(const std::string &fieldName) const
 {
-    int i = 0;
-    for (auto field : impl->fields) {
-        if (field->name() == fieldName)
-            return i;
-        i++;
-    }
-    return -1;
+    auto it = std::find_if(impl->fields.begin(), impl->fields.end(), [fieldName](std::shared_ptr<Field> field) { return field->name() == fieldName; });
+
+    if (it == impl->fields.end())
+        return -1;
+    else
+        return it - impl->fields.begin();
 }
 
 /*! Returns the index of the field with the given ID. */
