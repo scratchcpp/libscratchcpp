@@ -61,25 +61,23 @@ std::shared_ptr<Variable> Target::variableAt(int index) const
 /*! Returns the index of the variable with the given name. */
 int Target::findVariable(const std::string &variableName) const
 {
-    int i = 0;
-    for (auto var : impl->variables) {
-        if (var->name() == variableName)
-            return i;
-        i++;
-    }
-    return -1;
+    auto it = std::find_if(impl->variables.begin(), impl->variables.end(), [variableName](std::shared_ptr<Variable> variable) { return variable->name() == variableName; });
+
+    if (it == impl->variables.end())
+        return -1;
+    else
+        return it - impl->variables.begin();
 }
 
 /*! Returns the index of the variable with the given ID. */
 int Target::findVariableById(const std::string &id) const
 {
-    int i = 0;
-    for (auto var : impl->variables) {
-        if (var->id() == id)
-            return i;
-        i++;
-    }
-    return -1;
+    auto it = std::find_if(impl->variables.begin(), impl->variables.end(), [id](std::shared_ptr<Variable> variable) { return variable->id() == id; });
+
+    if (it == impl->variables.end())
+        return -1;
+    else
+        return it - impl->variables.begin();
 }
 
 /*! Returns the list of Scratch lists. */
@@ -114,25 +112,23 @@ std::shared_ptr<List> Target::listAt(int index) const
 /*! Returns the index of the list with the given name. */
 int Target::findList(const std::string &listName) const
 {
-    int i = 0;
-    for (auto list : impl->lists) {
-        if (list->name() == listName)
-            return i;
-        i++;
-    }
-    return -1;
+    auto it = std::find_if(impl->lists.begin(), impl->lists.end(), [listName](std::shared_ptr<List> list) { return list->name() == listName; });
+
+    if (it == impl->lists.end())
+        return -1;
+    else
+        return it - impl->lists.begin();
 }
 
 /*! Returns the index of the list with the given ID. */
 int Target::findListById(const std::string &id) const
 {
-    int i = 0;
-    for (auto list : impl->lists) {
-        if (list->id() == id)
-            return i;
-        i++;
-    }
-    return -1;
+    auto it = std::find_if(impl->lists.begin(), impl->lists.end(), [id](std::shared_ptr<List> list) { return list->id() == id; });
+
+    if (it == impl->lists.end())
+        return -1;
+    else
+        return it - impl->lists.begin();
 }
 
 /*! Returns the list of blocks. */
@@ -177,13 +173,12 @@ int Target::findBlock(const std::string &id) const
     if (Target *source = dataSource())
         return source->findBlock(id);
 
-    int i = 0;
-    for (auto block : impl->blocks) {
-        if (block->id() == id)
-            return i;
-        i++;
-    }
-    return -1;
+    auto it = std::find_if(impl->blocks.begin(), impl->blocks.end(), [id](std::shared_ptr<Block> block) { return block->id() == id; });
+
+    if (it == impl->blocks.end())
+        return -1;
+    else
+        return it - impl->blocks.begin();
 }
 
 /*! Returns list of all "when green flag clicked" blocks. */
@@ -242,16 +237,12 @@ int Target::findComment(const std::string &id) const
     if (Target *source = dataSource())
         return source->findComment(id);
 
-    int i = 0;
+    auto it = std::find_if(impl->comments.begin(), impl->comments.end(), [id](std::shared_ptr<Comment> comment) { return comment->id() == id; });
 
-    for (auto comment : impl->comments) {
-        if (comment->id() == id)
-            return i;
-
-        i++;
-    }
-
-    return -1;
+    if (it == impl->comments.end())
+        return -1;
+    else
+        return it - impl->comments.begin();
 }
 
 /*! Returns the index of the current costume. */
@@ -320,13 +311,12 @@ int Target::findCostume(const std::string &costumeName) const
     if (Target *source = dataSource())
         return source->findCostume(costumeName);
 
-    int i = 0;
-    for (auto costume : impl->costumes) {
-        if (costume->name() == costumeName)
-            return i;
-        i++;
-    }
-    return -1;
+    auto it = std::find_if(impl->costumes.begin(), impl->costumes.end(), [costumeName](std::shared_ptr<Costume> costume) { return costume->name() == costumeName; });
+
+    if (it == impl->costumes.end())
+        return -1;
+    else
+        return it - impl->costumes.begin();
 }
 
 /*! Returns the list of sounds. */
@@ -376,13 +366,12 @@ int Target::findSound(const std::string &soundName) const
     if (Target *source = dataSource())
         return source->findSound(soundName);
 
-    int i = 0;
-    for (auto sound : impl->sounds) {
-        if (sound->name() == soundName)
-            return i;
-        i++;
-    }
-    return -1;
+    auto it = std::find_if(impl->sounds.begin(), impl->sounds.end(), [soundName](std::shared_ptr<Sound> sound) { return sound->name() == soundName; });
+
+    if (it == impl->sounds.end())
+        return -1;
+    else
+        return it - impl->sounds.begin();
 }
 
 /*! Returns the layer number. */
