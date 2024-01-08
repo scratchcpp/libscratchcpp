@@ -24,7 +24,7 @@ void Block::compile(Compiler *compiler)
 }
 
 /*! Returns the opcode. */
-std::string Block::opcode() const
+const std::string &Block::opcode() const
 {
     return impl->opcode;
 }
@@ -101,7 +101,7 @@ std::shared_ptr<Block> Block::next() const
 }
 
 /*! Returns the ID of the next block. */
-std::string Block::nextId() const
+const std::string &Block::nextId() const
 {
     return impl->nextId;
 }
@@ -131,7 +131,7 @@ std::shared_ptr<Block> Block::parent() const
 }
 
 /*! Returns the ID of the parent block. */
-std::string Block::parentId() const
+const std::string &Block::parentId() const
 {
     return impl->parentId;
 }
@@ -301,7 +301,7 @@ std::shared_ptr<Comment> Block::comment() const
 }
 
 /*! Returns the ID of the comment which is attached to this block. */
-std::string Block::commentId() const
+const std::string &Block::commentId() const
 {
     return impl->commentId;
 }
