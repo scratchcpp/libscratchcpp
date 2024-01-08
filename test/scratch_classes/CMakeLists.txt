@@ -217,3 +217,17 @@ target_link_libraries(
 )
 
 gtest_discover_tests(comment_test)
+
+# monitor_test
+add_executable(
+  monitor_test
+  monitor_test.cpp
+)
+
+target_link_libraries(
+  monitor_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(monitor_test)
