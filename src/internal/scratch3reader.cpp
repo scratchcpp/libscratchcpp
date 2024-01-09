@@ -405,6 +405,11 @@ const std::vector<std::shared_ptr<Broadcast>> &Scratch3Reader::broadcasts()
     return m_broadcasts;
 }
 
+const std::vector<std::shared_ptr<Monitor>> &Scratch3Reader::monitors()
+{
+    return m_monitors;
+}
+
 const std::vector<std::string> &Scratch3Reader::extensions()
 {
     return m_extensions;
