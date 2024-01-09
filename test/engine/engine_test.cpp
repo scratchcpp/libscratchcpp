@@ -6,6 +6,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/keyevent.h>
+#include <scratchcpp/monitor.h>
 #include <scratch/sound_p.h>
 #include <timermock.h>
 #include <clockmock.h>
@@ -1125,6 +1126,19 @@ TEST(EngineTest, Stage)
 
     engine.setTargets({ t1, t3 });
     ASSERT_EQ(engine.stage(), nullptr);
+}
+
+TEST(EngineTest, Monitors)
+{
+    Engine engine;
+    ASSERT_TRUE(engine.monitors().empty());
+
+    auto m1 = std::make_shared<Monitor>("", "");
+    auto m2 = std::make_shared<Monitor>("", "");
+    auto m3 = std::make_shared<Monitor>("", "");
+
+    engine.setMonitors({ m1, m2, m3 });
+    ASSERT_EQ(engine.monitors(), std::vector<std::shared_ptr<Monitor>>({ m1, m2, m3 }));
 }
 
 TEST(EngineTest, Clones)

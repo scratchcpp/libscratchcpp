@@ -23,6 +23,7 @@ class List;
 class Script;
 class ITimer;
 class KeyEvent;
+class Monitor;
 
 /*!
  * \brief The IEngine interface provides an API for running Scratch projects.
@@ -299,6 +300,12 @@ class LIBSCRATCHCPP_EXPORT IEngine
 
         /*! Returns the Stage. */
         virtual Stage *stage() const = 0;
+
+        /*! Returns the list of monitors. */
+        virtual const std::vector<std::shared_ptr<Monitor>> &monitors() const = 0;
+
+        /*! Sets the list of monitors. */
+        virtual void setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors) = 0;
 
         /*! Returns the list of extension names. */
         virtual const std::vector<std::string> &extensions() const = 0;

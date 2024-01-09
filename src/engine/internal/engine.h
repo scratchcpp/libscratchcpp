@@ -131,6 +131,9 @@ class Engine : public IEngine
 
         Stage *stage() const override;
 
+        const std::vector<std::shared_ptr<Monitor>> &monitors() const override;
+        void setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors) override;
+
         const std::vector<std::string> &extensions() const override;
         void setExtensions(const std::vector<std::string> &newExtensions) override;
 
@@ -197,6 +200,7 @@ class Engine : public IEngine
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_broadcastMap;
+        std::vector<std::shared_ptr<Monitor>> m_monitors;
         std::vector<std::string> m_extensions;
         std::vector<Target *> m_executableTargets; // sorted by layer (reverse order of execution)
         std::vector<std::shared_ptr<VirtualMachine>> m_threads;

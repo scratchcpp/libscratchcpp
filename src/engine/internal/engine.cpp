@@ -965,6 +965,16 @@ Stage *Engine::stage() const
         return dynamic_cast<Stage *>((*it).get());
 }
 
+const std::vector<std::shared_ptr<Monitor>> &Engine::monitors() const
+{
+    return m_monitors;
+}
+
+void Engine::setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors)
+{
+    m_monitors = newMonitors;
+}
+
 const std::vector<std::string> &Engine::extensions() const
 {
     return m_extensions;
