@@ -62,6 +62,7 @@ TEST_F(ProjectTest, Load)
     EXPECT_CALL(*m_engine, clear).Times(0);
     EXPECT_CALL(*m_engine, setTargets).Times(0);
     EXPECT_CALL(*m_engine, setBroadcasts).Times(0);
+    EXPECT_CALL(*m_engine, setMonitors).Times(0);
     EXPECT_CALL(*m_engine, setExtensions).Times(0);
     EXPECT_CALL(*m_engine, compile).Times(0);
     ASSERT_FALSE(p1.load());
@@ -72,6 +73,7 @@ TEST_F(ProjectTest, Load)
     EXPECT_CALL(*m_engine, clear).Times(0);
     EXPECT_CALL(*m_engine, setTargets).Times(0);
     EXPECT_CALL(*m_engine, setBroadcasts).Times(0);
+    EXPECT_CALL(*m_engine, setMonitors).Times(0);
     EXPECT_CALL(*m_engine, setExtensions).Times(0);
     EXPECT_CALL(*m_engine, compile).Times(0);
     ASSERT_FALSE(p2.load());
@@ -81,6 +83,7 @@ TEST_F(ProjectTest, Load)
     EXPECT_CALL(*m_engine, clear).Times(1);
     EXPECT_CALL(*m_engine, setTargets).Times(1);
     EXPECT_CALL(*m_engine, setBroadcasts).Times(1);
+    EXPECT_CALL(*m_engine, setMonitors).Times(1);
     EXPECT_CALL(*m_engine, setExtensions).Times(1);
     EXPECT_CALL(*m_engine, compile).Times(1);
     ASSERT_TRUE(p3.load());
@@ -91,6 +94,7 @@ TEST_F(ProjectTest, Load)
     EXPECT_CALL(*m_engine, clear).Times(0);
     EXPECT_CALL(*m_engine, setTargets).Times(0);
     EXPECT_CALL(*m_engine, setBroadcasts).Times(0);
+    EXPECT_CALL(*m_engine, setMonitors).Times(0);
     EXPECT_CALL(*m_engine, setExtensions).Times(0);
     EXPECT_CALL(*m_engine, compile).Times(0);
     ASSERT_FALSE(p4.load());
@@ -100,6 +104,7 @@ TEST_F(ProjectTest, Load)
     EXPECT_CALL(*m_engine, clear).Times(1);
     EXPECT_CALL(*m_engine, setTargets).Times(1);
     EXPECT_CALL(*m_engine, setBroadcasts).Times(1);
+    EXPECT_CALL(*m_engine, setMonitors).Times(1);
     EXPECT_CALL(*m_engine, setExtensions).Times(1);
     EXPECT_CALL(*m_engine, compile).Times(1);
     ASSERT_TRUE(p5.load());
@@ -109,6 +114,7 @@ TEST_F(ProjectTest, Load)
     EXPECT_CALL(*m_engine, clear).Times(0);
     EXPECT_CALL(*m_engine, setTargets).Times(0);
     EXPECT_CALL(*m_engine, setBroadcasts).Times(0);
+    EXPECT_CALL(*m_engine, setMonitors).Times(0);
     EXPECT_CALL(*m_engine, setExtensions).Times(0);
     EXPECT_CALL(*m_engine, compile).Times(0);
     ASSERT_FALSE(p6.load());
