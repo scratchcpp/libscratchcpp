@@ -77,3 +77,135 @@ TEST(RectTest, Height)
     rect.setBottom(-58.162);
     ASSERT_EQ(rect.height(), 35.272);
 }
+
+TEST(RectTest, Intersects)
+{
+    Rect rect1(-50, 25, 150, -75);
+    Rect rect1_ydown(-50, -75, 150, 25);
+    ASSERT_TRUE(rect1.intersects(rect1));
+    ASSERT_TRUE(rect1_ydown.intersects(rect1_ydown));
+
+    // left
+    {
+        Rect rect2(-75, 0, 125, -50);
+        ASSERT_TRUE(rect1.intersects(rect2));
+        ASSERT_TRUE(rect2.intersects(rect1));
+
+        Rect rect2_ydown(rect2.left(), rect2.bottom(), rect2.right(), rect2.top());
+        ASSERT_TRUE(rect1_ydown.intersects(rect2_ydown));
+        ASSERT_TRUE(rect2_ydown.intersects(rect1_ydown));
+    }
+
+    {
+        Rect rect2(-100, 10, -50, -90);
+        ASSERT_TRUE(rect1.intersects(rect2));
+        ASSERT_TRUE(rect2.intersects(rect1));
+
+        Rect rect2_ydown(rect2.left(), rect2.bottom(), rect2.right(), rect2.top());
+        ASSERT_TRUE(rect1_ydown.intersects(rect2_ydown));
+        ASSERT_TRUE(rect2_ydown.intersects(rect1_ydown));
+    }
+
+    {
+        Rect rect2(-150, 10, -100, -90);
+        ASSERT_FALSE(rect1.intersects(rect2));
+        ASSERT_FALSE(rect2.intersects(rect1));
+
+        Rect rect2_ydown(rect2.left(), rect2.bottom(), rect2.right(), rect2.top());
+        ASSERT_FALSE(rect1_ydown.intersects(rect2_ydown));
+        ASSERT_FALSE(rect2_ydown.intersects(rect1_ydown));
+    }
+
+    // top
+    {
+        Rect rect2(-25, 50, 125, 10);
+        ASSERT_TRUE(rect1.intersects(rect2));
+        ASSERT_TRUE(rect2.intersects(rect1));
+
+        Rect rect2_ydown(rect2.left(), rect2.bottom(), rect2.right(), rect2.top());
+        ASSERT_TRUE(rect1_ydown.intersects(rect2_ydown));
+        ASSERT_TRUE(rect2_ydown.intersects(rect1_ydown));
+    }
+
+    {
+        Rect rect2(-100, 50, 200, 25);
+        ASSERT_TRUE(rect1.intersects(rect2));
+        ASSERT_TRUE(rect2.intersects(rect1));
+
+        Rect rect2_ydown(rect2.left(), rect2.bottom(), rect2.right(), rect2.top());
+        ASSERT_TRUE(rect1_ydown.intersects(rect2_ydown));
+        ASSERT_TRUE(rect2_ydown.intersects(rect1_ydown));
+    }
+
+    {
+        Rect rect2(-100, 75, 200, 50);
+        ASSERT_FALSE(rect1.intersects(rect2));
+        ASSERT_FALSE(rect2.intersects(rect1));
+
+        Rect rect2_ydown(rect2.left(), rect2.bottom(), rect2.right(), rect2.top());
+        ASSERT_FALSE(rect1_ydown.intersects(rect2_ydown));
+        ASSERT_FALSE(rect2_ydown.intersects(rect1_ydown));
+    }
+
+    // right
+    {
+        Rect rect2(125, 0, 200, -50);
+        ASSERT_TRUE(rect1.intersects(rect2));
+        ASSERT_TRUE(rect2.intersects(rect1));
+
+        Rect rect2_ydown(rect2.left(), rect2.bottom(), rect2.right(), rect2.top());
+        ASSERT_TRUE(rect1_ydown.intersects(rect2_ydown));
+        ASSERT_TRUE(rect2_ydown.intersects(rect1_ydown));
+    }
+
+    {
+        Rect rect2(150, 10, 200, -90);
+        ASSERT_TRUE(rect1.intersects(rect2));
+        ASSERT_TRUE(rect2.intersects(rect1));
+
+        Rect rect2_ydown(rect2.left(), rect2.bottom(), rect2.right(), rect2.top());
+        ASSERT_TRUE(rect1_ydown.intersects(rect2_ydown));
+        ASSERT_TRUE(rect2_ydown.intersects(rect1_ydown));
+    }
+
+    {
+        Rect rect2(175, 10, 200, -90);
+        ASSERT_FALSE(rect1.intersects(rect2));
+        ASSERT_FALSE(rect2.intersects(rect1));
+
+        Rect rect2_ydown(rect2.left(), rect2.bottom(), rect2.right(), rect2.top());
+        ASSERT_FALSE(rect1_ydown.intersects(rect2_ydown));
+        ASSERT_FALSE(rect2_ydown.intersects(rect1_ydown));
+    }
+
+    // bottom
+    {
+        Rect rect2(-25, -50, 125, -100);
+        ASSERT_TRUE(rect1.intersects(rect2));
+        ASSERT_TRUE(rect2.intersects(rect1));
+
+        Rect rect2_ydown(rect2.left(), rect2.bottom(), rect2.right(), rect2.top());
+        ASSERT_TRUE(rect1_ydown.intersects(rect2_ydown));
+        ASSERT_TRUE(rect2_ydown.intersects(rect1_ydown));
+    }
+
+    {
+        Rect rect2(-100, -75, 200, -100);
+        ASSERT_TRUE(rect1.intersects(rect2));
+        ASSERT_TRUE(rect2.intersects(rect1));
+
+        Rect rect2_ydown(rect2.left(), rect2.bottom(), rect2.right(), rect2.top());
+        ASSERT_TRUE(rect1_ydown.intersects(rect2_ydown));
+        ASSERT_TRUE(rect2_ydown.intersects(rect1_ydown));
+    }
+
+    {
+        Rect rect2(-100, -100, 200, -125);
+        ASSERT_FALSE(rect1.intersects(rect2));
+        ASSERT_FALSE(rect2.intersects(rect1));
+
+        Rect rect2_ydown(rect2.left(), rect2.bottom(), rect2.right(), rect2.top());
+        ASSERT_FALSE(rect1_ydown.intersects(rect2_ydown));
+        ASSERT_FALSE(rect2_ydown.intersects(rect1_ydown));
+    }
+}

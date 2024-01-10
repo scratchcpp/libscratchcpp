@@ -32,6 +32,8 @@ class LIBSCRATCHCPP_EXPORT Rect
         double width() const;
         double height() const;
 
+        bool intersects(const Rect &rect) const;
+
     private:
         spimpl::impl_ptr<RectPrivate> impl;
 };
