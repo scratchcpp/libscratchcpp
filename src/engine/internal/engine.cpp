@@ -123,6 +123,40 @@ void Engine::resolveIds()
             }
         }
     }
+
+    for (auto monitor : m_monitors) {
+        auto block = monitor->block();
+        auto container = blockSectionContainer(block->opcode());
+        const auto &fields = block->fields();
+        Target *target;
+
+        if (monitor->sprite())
+            target = monitor->sprite();
+        else
+            target = stage();
+
+        assert(target);
+
+        for (auto field : fields) {
+            field->setValuePtr(getEntity(field->valueId()));
+
+            if (container) {
+                field->setFieldId(container->resolveField(field->name()));
+
+                if (!field->valuePtr())
+                    field->setSpecialValueId(container->resolveFieldValue(field->value().toString()));
+            }
+
+            // TODO: Move field information out of Engine
+            if (field->name() == "VARIABLE")
+                field->setValuePtr(target->variableAt(target->findVariable(field->value().toString())));
+            else if (field->name() == "LIST")
+                field->setValuePtr(target->listAt(target->findList(field->value().toString())));
+        }
+
+        block->updateInputMap();
+        block->updateFieldMap();
+    }
 }
 
 void Engine::compile()
