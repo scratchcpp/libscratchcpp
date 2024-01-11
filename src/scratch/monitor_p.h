@@ -8,6 +8,7 @@ namespace libscratchcpp
 {
 
 class Block;
+class IRandomGenerator;
 
 struct MonitorPrivate
 {
@@ -24,6 +25,7 @@ struct MonitorPrivate
         double sliderMin = 0;
         double sliderMax = 0;
         bool discrete = false;
+        static IRandomGenerator *rng;
 };
 
 } // namespace libscratchcpp

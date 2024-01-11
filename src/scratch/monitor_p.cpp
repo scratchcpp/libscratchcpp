@@ -6,6 +6,8 @@
 
 using namespace libscratchcpp;
 
+IRandomGenerator *MonitorPrivate::rng = nullptr;
+
 MonitorPrivate::MonitorPrivate(const std::string &opcode) :
     block(std::make_shared<Block>("", opcode))
 {

@@ -3,10 +3,17 @@
 #include <scratchcpp/monitor.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/rect.h>
 
 #include "monitor_p.h"
+#include "engine/internal/randomgenerator.h"
 
 using namespace libscratchcpp;
+
+static const int PADDING = 5;
+static const int SCREEN_WIDTH = 400;
+static const int SCREEN_HEIGHT = 300;
+static const int SCREEN_EDGE_BUFFER = 40;
 
 /*! Constructs Monitor. */
 Monitor::Monitor(const std::string &id, const std::string &opcode) :
@@ -145,4 +152,17 @@ bool Monitor::discrete() const
 void Monitor::setDiscrete(bool discrete)
 {
     impl->discrete = discrete;
+}
+
+/*! Returns the initial position of a monitor. */
+Rect Monitor::getInitialPosition(const std::vector<std::shared_ptr<Monitor>> &other, int monitorWidth, int monitorHeight)
+{
+    // TODO: Implement this like Scratch has: https://github.com/scratchfoundation/scratch-gui/blob/010e27937ecff531f23bfcf3c711cd6e565cc7f9/src/reducers/monitor-layout.js#L161-L243
+    // Place the monitor randomly
+    if (!MonitorPrivate::rng)
+        MonitorPrivate::rng = RandomGenerator::instance().get();
+
+    const double randX = std::ceil(MonitorPrivate::rng->randintDouble(0, SCREEN_WIDTH / 2.0));
+    const double randY = std::ceil(MonitorPrivate::rng->randintDouble(0, SCREEN_HEIGHT - SCREEN_EDGE_BUFFER));
+    return Rect(randX, randY, randX + monitorWidth, randY + monitorHeight);
 }

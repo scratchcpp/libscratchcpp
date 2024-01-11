@@ -4,11 +4,14 @@
 
 #include <scratchcpp/entity.h>
 
+#include <vector>
+
 namespace libscratchcpp
 {
 
 class Block;
 class Sprite;
+class Rect;
 class MonitorPrivate;
 
 /*! \brief The Monitor class represents a stage monitor. */
@@ -59,6 +62,8 @@ class LIBSCRATCHCPP_EXPORT Monitor : public Entity
 
         bool discrete() const;
         void setDiscrete(bool discrete);
+
+        static Rect getInitialPosition(const std::vector<std::shared_ptr<Monitor>> &other, int monitorWidth, int monitorHeight);
 
     private:
         spimpl::unique_impl_ptr<MonitorPrivate> impl;

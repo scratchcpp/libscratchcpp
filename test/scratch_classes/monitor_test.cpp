@@ -1,10 +1,20 @@
 #include <scratchcpp/monitor.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/rect.h>
+#include <scratch/monitor_p.h>
+#include <randomgeneratormock.h>
 
 #include "../common.h"
 
 using namespace libscratchcpp;
+
+using ::testing::Return;
+
+static const int PADDING = 5;
+static const int SCREEN_WIDTH = 400;
+static const int SCREEN_HEIGHT = 300;
+static const int SCREEN_EDGE_BUFFER = 40;
 
 TEST(MonitorTest, Constructors)
 {
@@ -140,4 +150,38 @@ TEST(MonitorTest, Discrete)
 
     monitor.setDiscrete(false);
     ASSERT_FALSE(monitor.discrete());
+}
+
+TEST(MonitorTest, GetInitialPosition)
+{
+    std::vector<std::shared_ptr<Monitor>> monitors;
+    const int width = 100;
+    const int height = 200;
+
+    auto monitor1 = std::make_shared<Monitor>("", "");
+    monitor1->setWidth(PADDING);
+    monitor1->setHeight(height);
+    monitor1->setX(100);
+    monitor1->setY(0);
+    monitors.push_back(monitor1);
+
+    auto monitor2 = std::make_shared<Monitor>("", "");
+    monitor2->setWidth(width);
+    monitor2->setHeight(height + PADDING - 100);
+    monitor2->setX(0);
+    monitor2->setY(100);
+    monitors.push_back(monitor2);
+
+    RandomGeneratorMock rng;
+    MonitorPrivate::rng = &rng;
+
+    EXPECT_CALL(rng, randintDouble(0, SCREEN_WIDTH / 2.0)).WillOnce(Return(SCREEN_WIDTH / 4.5));
+    EXPECT_CALL(rng, randintDouble(0, SCREEN_HEIGHT - SCREEN_EDGE_BUFFER)).WillOnce(Return(SCREEN_HEIGHT - SCREEN_EDGE_BUFFER * 2.3));
+    Rect rect = Monitor::getInitialPosition(monitors, width, height);
+    ASSERT_EQ(rect.left(), std::ceil(SCREEN_WIDTH / 4.5));
+    ASSERT_EQ(rect.top(), std::ceil(SCREEN_HEIGHT - SCREEN_EDGE_BUFFER * 2.3));
+    ASSERT_EQ(rect.width(), width);
+    ASSERT_EQ(rect.height(), height);
+
+    MonitorPrivate::rng = nullptr;
 }
