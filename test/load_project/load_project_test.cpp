@@ -13,6 +13,7 @@
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/comment.h>
 #include <scratchcpp/broadcast.h>
+#include <scratchcpp/monitor.h>
 #include <projectdownloaderfactorymock.h>
 #include <projectdownloadermock.h>
 
@@ -205,7 +206,7 @@ TEST(LoadProjectTest, LoadTestProject)
         // Stage
         Stage *stage = engine->stage();
         ASSERT_EQ(stage->comments().size(), 1);
-        ASSERT_EQ(stage->variables().size(), 2);
+        ASSERT_EQ(stage->variables().size(), 4);
         ASSERT_EQ(stage->lists().size(), 1);
 
         // Stage: comments
@@ -443,6 +444,185 @@ TEST(LoadProjectTest, LoadTestProject)
         // Balloon1: lists
         ASSERT_LIST(sprite2, "list2");
         ASSERT_EQ(GET_LIST(sprite2, "list2")->toString(), "0 4 3 4 1 5 6 9 4 8");
+
+        // Monitors
+        const auto &monitors = engine->monitors();
+        ASSERT_EQ(monitors.size(), 11);
+
+        // list1
+        auto monitor = monitors[0];
+        ASSERT_EQ(monitor->id(), "/oB5:^t}UfL_Moa]OVbD");
+        ASSERT_EQ(monitor->mode(), Monitor::Mode::List);
+        ASSERT_EQ(monitor->opcode(), "data_listcontents");
+        block = monitor->block();
+        ASSERT_EQ(block->fields().size(), 1);
+        auto field = block->fieldAt(0);
+        ASSERT_EQ(field->name(), "LIST");
+        ASSERT_EQ(field->value(), "list1");
+        ASSERT_EQ(field->valuePtr(), GET_LIST(stage, "list1"));
+        ASSERT_EQ(monitor->sprite(), nullptr);
+        ASSERT_EQ(monitor->width(), 167);
+        ASSERT_EQ(monitor->height(), 93);
+        ASSERT_EQ(monitor->x(), 226);
+        ASSERT_EQ(monitor->y(), 34);
+        ASSERT_TRUE(monitor->visible());
+
+        // Sprite1: list2
+        monitor = monitors[1];
+        ASSERT_EQ(monitor->id(), "-!=?$nO,[RI{7!^_:x=?");
+        ASSERT_EQ(monitor->mode(), Monitor::Mode::List);
+        ASSERT_EQ(monitor->opcode(), "data_listcontents");
+        block = monitor->block();
+        ASSERT_EQ(block->fields().size(), 1);
+        field = block->fieldAt(0);
+        ASSERT_EQ(field->name(), "LIST");
+        ASSERT_EQ(field->value(), "list2");
+        ASSERT_EQ(field->valuePtr(), GET_LIST(engine->targetAt(engine->findTarget("Sprite1")), "list2"));
+        ASSERT_EQ(monitor->sprite(), dynamic_cast<Sprite *>(engine->targetAt(engine->findTarget("Sprite1"))));
+        ASSERT_EQ(monitor->width(), 0);
+        ASSERT_EQ(monitor->height(), 0);
+        ASSERT_EQ(monitor->x(), 106);
+        ASSERT_EQ(monitor->y(), 5);
+        ASSERT_TRUE(monitor->visible());
+
+        // Balloon1: list2
+        monitor = monitors[2];
+        ASSERT_EQ(monitor->id(), "$FebBLy/KiSa19@:b-iA");
+        ASSERT_EQ(monitor->mode(), Monitor::Mode::List);
+        ASSERT_EQ(monitor->opcode(), "data_listcontents");
+        block = monitor->block();
+        ASSERT_EQ(block->fields().size(), 1);
+        field = block->fieldAt(0);
+        ASSERT_EQ(field->name(), "LIST");
+        ASSERT_EQ(field->value(), "list2");
+        ASSERT_EQ(field->valuePtr(), GET_LIST(engine->targetAt(engine->findTarget("Balloon1")), "list2"));
+        ASSERT_EQ(monitor->sprite(), dynamic_cast<Sprite *>(engine->targetAt(engine->findTarget("Balloon1"))));
+        ASSERT_EQ(monitor->width(), 0);
+        ASSERT_EQ(monitor->height(), 0);
+        ASSERT_EQ(monitor->x(), 255);
+        ASSERT_EQ(monitor->y(), 5);
+        ASSERT_FALSE(monitor->visible());
+
+        // var1
+        monitor = monitors[3];
+        ASSERT_EQ(monitor->id(), "`jEk@4|i[#Fk?(8x)AV.-my variable");
+        ASSERT_EQ(monitor->mode(), Monitor::Mode::Default);
+        ASSERT_EQ(monitor->opcode(), "data_variable");
+        block = monitor->block();
+        ASSERT_EQ(block->fields().size(), 1);
+        field = block->fieldAt(0);
+        ASSERT_EQ(field->name(), "VARIABLE");
+        ASSERT_EQ(field->value(), "var1");
+        ASSERT_EQ(field->valuePtr(), GET_VAR(stage, "var1"));
+        ASSERT_EQ(monitor->sprite(), nullptr);
+        ASSERT_EQ(monitor->width(), 0);
+        ASSERT_EQ(monitor->height(), 0);
+        ASSERT_EQ(monitor->x(), 5);
+        ASSERT_EQ(monitor->y(), 212);
+        ASSERT_TRUE(monitor->visible());
+
+        // Sprite1: var2
+        monitor = monitors[4];
+        ASSERT_EQ(monitor->id(), "eN~@jd#CfxXM(wA6qcyt");
+        ASSERT_EQ(monitor->mode(), Monitor::Mode::Default);
+        ASSERT_EQ(monitor->opcode(), "data_variable");
+        block = monitor->block();
+        ASSERT_EQ(block->fields().size(), 1);
+        field = block->fieldAt(0);
+        ASSERT_EQ(field->name(), "VARIABLE");
+        ASSERT_EQ(field->value(), "var2");
+        ASSERT_EQ(field->valuePtr(), GET_VAR(engine->targetAt(engine->findTarget("Sprite1")), "var2"));
+        ASSERT_EQ(monitor->sprite(), dynamic_cast<Sprite *>(engine->targetAt(engine->findTarget("Sprite1"))));
+        ASSERT_EQ(monitor->width(), 0);
+        ASSERT_EQ(monitor->height(), 0);
+        ASSERT_EQ(monitor->x(), 5);
+        ASSERT_EQ(monitor->y(), 212);
+        ASSERT_FALSE(monitor->visible());
+
+        // Balloon1: var2
+        monitor = monitors[5];
+        ASSERT_EQ(monitor->id(), "g2][rYmi~u[wE@o$jckr");
+        ASSERT_EQ(monitor->mode(), Monitor::Mode::Large);
+        ASSERT_EQ(monitor->opcode(), "data_variable");
+        block = monitor->block();
+        ASSERT_EQ(block->fields().size(), 1);
+        field = block->fieldAt(0);
+        ASSERT_EQ(field->name(), "VARIABLE");
+        ASSERT_EQ(field->value(), "var2");
+        ASSERT_EQ(field->valuePtr(), GET_VAR(engine->targetAt(engine->findTarget("Balloon1")), "var2"));
+        ASSERT_EQ(monitor->sprite(), dynamic_cast<Sprite *>(engine->targetAt(engine->findTarget("Balloon1"))));
+        ASSERT_EQ(monitor->width(), 0);
+        ASSERT_EQ(monitor->height(), 0);
+        ASSERT_EQ(monitor->x(), 146);
+        ASSERT_EQ(monitor->y(), 267);
+        ASSERT_TRUE(monitor->visible());
+
+        // loudness
+        monitor = monitors[6];
+        ASSERT_EQ(monitor->id(), "loudness");
+        ASSERT_EQ(monitor->mode(), Monitor::Mode::Default);
+        ASSERT_EQ(monitor->opcode(), "sensing_loudness");
+        block = monitor->block();
+        ASSERT_TRUE(block->fields().empty());
+        ASSERT_EQ(monitor->sprite(), nullptr);
+        ASSERT_EQ(monitor->width(), 0);
+        ASSERT_EQ(monitor->height(), 0);
+        ASSERT_EQ(monitor->x(), 5);
+        ASSERT_EQ(monitor->y(), 239);
+        ASSERT_TRUE(monitor->visible());
+
+        // current year
+        monitor = monitors[7];
+        ASSERT_EQ(monitor->id(), "current_year");
+        ASSERT_EQ(monitor->mode(), Monitor::Mode::Default);
+        ASSERT_EQ(monitor->opcode(), "sensing_current");
+        block = monitor->block();
+        ASSERT_EQ(block->fields().size(), 1);
+        field = block->fieldAt(0);
+        ASSERT_EQ(field->name(), "CURRENTMENU");
+        ASSERT_EQ(field->value(), "YEAR");
+        ASSERT_EQ(monitor->sprite(), nullptr);
+        ASSERT_EQ(monitor->width(), 0);
+        ASSERT_EQ(monitor->height(), 0);
+        ASSERT_EQ(monitor->x(), 5);
+        ASSERT_EQ(monitor->y(), 5);
+        ASSERT_TRUE(monitor->visible());
+
+        // var4
+        monitor = monitors[8];
+        ASSERT_EQ(monitor->id(), "k^cUO5^Pcq!9lY|dxlg+");
+        ASSERT_EQ(monitor->mode(), Monitor::Mode::Slider);
+        ASSERT_EQ(monitor->opcode(), "data_variable");
+        block = monitor->block();
+        ASSERT_EQ(block->fields().size(), 1);
+        field = block->fieldAt(0);
+        ASSERT_EQ(field->name(), "VARIABLE");
+        ASSERT_EQ(field->value(), "var4");
+        ASSERT_EQ(field->valuePtr(), GET_VAR(stage, "var4"));
+        ASSERT_EQ(monitor->sprite(), nullptr);
+        ASSERT_EQ(monitor->width(), 0);
+        ASSERT_EQ(monitor->height(), 0);
+        ASSERT_EQ(monitor->x(), 305);
+        ASSERT_EQ(monitor->y(), 234);
+        ASSERT_TRUE(monitor->visible());
+
+        // var5
+        monitor = monitors[9];
+        ASSERT_EQ(monitor->id(), "lWC9K6_lG+vq!)EX}npr");
+        ASSERT_EQ(monitor->mode(), Monitor::Mode::Slider);
+        ASSERT_EQ(monitor->opcode(), "data_variable");
+        block = monitor->block();
+        ASSERT_EQ(block->fields().size(), 1);
+        field = block->fieldAt(0);
+        ASSERT_EQ(field->name(), "VARIABLE");
+        ASSERT_EQ(field->value(), "var5");
+        ASSERT_EQ(field->valuePtr(), GET_VAR(stage, "var5"));
+        ASSERT_EQ(monitor->sprite(), nullptr);
+        ASSERT_EQ(monitor->width(), 0);
+        ASSERT_EQ(monitor->height(), 0);
+        ASSERT_EQ(monitor->x(), 304);
+        ASSERT_EQ(monitor->y(), 280);
+        ASSERT_TRUE(monitor->visible());
 
         i++;
     }
