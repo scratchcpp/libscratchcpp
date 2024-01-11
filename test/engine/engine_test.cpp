@@ -7,6 +7,7 @@
 #include <scratchcpp/list.h>
 #include <scratchcpp/keyevent.h>
 #include <scratchcpp/monitor.h>
+#include <scratchcpp/field.h>
 #include <scratch/sound_p.h>
 #include <timermock.h>
 #include <clockmock.h>
@@ -18,6 +19,10 @@
 #include "testsection.h"
 #include "engine/internal/engine.h"
 #include "engine/internal/clock.h"
+
+// TODO: Remove this
+#include "blocks/variableblocks.h"
+#include "blocks/listblocks.h"
 
 using namespace libscratchcpp;
 
@@ -1139,6 +1144,104 @@ TEST(EngineTest, Monitors)
 
     engine.setMonitors({ m1, m2, m3 });
     ASSERT_EQ(engine.monitors(), std::vector<std::shared_ptr<Monitor>>({ m1, m2, m3 }));
+}
+
+TEST(EngineTest, CreateMissingMonitors)
+{
+    auto var1 = std::make_shared<Variable>("a", "var1");
+    auto var2 = std::make_shared<Variable>("b", "var2");
+    auto var3 = std::make_shared<Variable>("c", "var3");
+    auto var4 = std::make_shared<Variable>("d", "var4");
+    auto var5 = std::make_shared<Variable>("e", "var5");
+    auto list1 = std::make_shared<List>("f", "list1");
+    auto list2 = std::make_shared<List>("g", "list2");
+    auto target1 = std::make_shared<Stage>();
+    auto target2 = std::make_shared<Sprite>();
+    target1->addVariable(var1);
+    target1->addVariable(var2);
+    target1->addList(list1);
+    target2->addVariable(var3);
+    target2->addVariable(var4);
+    target2->addVariable(var5);
+    target2->addList(list2);
+
+    auto m1 = std::make_shared<Monitor>(var1->id(), "data_variable");
+    auto m2 = std::make_shared<Monitor>(var3->id(), "data_variable");
+    auto m3 = std::make_shared<Monitor>(list2->id(), "data_listcontents");
+
+    auto checkVariableMonitor = [](std::shared_ptr<Monitor> monitor, std::shared_ptr<Variable> var) {
+        auto block = monitor->block();
+        ASSERT_EQ(monitor->id(), var->id());
+        ASSERT_EQ(monitor->opcode(), "data_variable");
+        ASSERT_EQ(monitor->mode(), Monitor::Mode::Default);
+        ASSERT_FALSE(monitor->visible());
+        ASSERT_EQ(block->fields().size(), 1);
+
+        auto field = block->fieldAt(0);
+        ASSERT_EQ(field->name(), "VARIABLE");
+        ASSERT_EQ(field->fieldId(), VariableBlocks::VARIABLE);
+        ASSERT_EQ(field->value(), var->name());
+        ASSERT_EQ(field->valuePtr(), var);
+
+        if (var->target()->isStage())
+            ASSERT_EQ(monitor->sprite(), nullptr);
+        else
+            ASSERT_EQ(monitor->sprite(), dynamic_cast<Sprite *>(var->target()));
+    };
+
+    auto checkListMonitor = [](std::shared_ptr<Monitor> monitor, std::shared_ptr<List> list) {
+        auto block = monitor->block();
+        ASSERT_EQ(monitor->id(), list->id());
+        ASSERT_EQ(monitor->opcode(), "data_listcontents");
+        ASSERT_EQ(monitor->mode(), Monitor::Mode::Default);
+        ASSERT_FALSE(monitor->visible());
+        ASSERT_EQ(block->fields().size(), 1);
+
+        auto field = block->fieldAt(0);
+        ASSERT_EQ(field->name(), "LIST");
+        ASSERT_EQ(field->fieldId(), ListBlocks::LIST);
+        ASSERT_EQ(field->value(), list->name());
+        ASSERT_EQ(field->valuePtr(), list);
+
+        if (list->target()->isStage())
+            ASSERT_EQ(monitor->sprite(), nullptr);
+        else
+            ASSERT_EQ(monitor->sprite(), dynamic_cast<Sprite *>(list->target()));
+    };
+
+    // Set monitors after setting targets
+    {
+        Engine engine;
+        engine.setTargets({ target1, target2 });
+        engine.setMonitors({ m1, m2, m3 });
+
+        const auto &monitors = engine.monitors();
+        ASSERT_EQ(monitors.size(), 7);
+        ASSERT_EQ(monitors[0], m1);
+        ASSERT_EQ(monitors[1], m2);
+        ASSERT_EQ(monitors[2], m3);
+        checkVariableMonitor(monitors[3], var2);
+        checkListMonitor(monitors[4], list1);
+        checkVariableMonitor(monitors[5], var4);
+        checkVariableMonitor(monitors[6], var5);
+    }
+
+    // Set monitors before setting targets
+    {
+        Engine engine;
+        engine.setMonitors({ m1, m2, m3 });
+        engine.setTargets({ target1, target2 });
+
+        const auto &monitors = engine.monitors();
+        ASSERT_EQ(monitors.size(), 7);
+        ASSERT_EQ(monitors[0], m1);
+        ASSERT_EQ(monitors[1], m2);
+        ASSERT_EQ(monitors[2], m3);
+        checkVariableMonitor(monitors[3], var2);
+        checkListMonitor(monitors[4], list1);
+        checkVariableMonitor(monitors[5], var4);
+        checkVariableMonitor(monitors[6], var5);
+    }
 }
 
 TEST(EngineTest, Clones)

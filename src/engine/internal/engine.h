@@ -167,6 +167,8 @@ class Engine : public IEngine
         void finalize();
         void deleteClones();
         void removeExecutableClones();
+        void createMissingMonitors();
+        void addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *target);
         std::shared_ptr<Block> getBlock(const std::string &id);
         std::shared_ptr<Variable> getVariable(const std::string &id);
         std::shared_ptr<List> getList(const std::string &id);

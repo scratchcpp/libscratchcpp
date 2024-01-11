@@ -17,6 +17,8 @@
 #include <scratchcpp/costume.h>
 #include <scratchcpp/keyevent.h>
 #include <scratchcpp/sound.h>
+#include <scratchcpp/monitor.h>
+#include <scratchcpp/rect.h>
 #include <cassert>
 #include <iostream>
 
@@ -25,6 +27,8 @@
 #include "timer.h"
 #include "clock.h"
 #include "blocks/standardblocks.h"
+#include "blocks/variableblocks.h"
+#include "blocks/listblocks.h"
 
 using namespace libscratchcpp;
 
@@ -838,6 +842,9 @@ void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
 
     // Sort the executable targets by layer order
     std::sort(m_executableTargets.begin(), m_executableTargets.end(), [](Target *t1, Target *t2) { return t1->layerOrder() < t2->layerOrder(); });
+
+    // Create missing monitors
+    createMissingMonitors();
 }
 
 Target *Engine::targetAt(int index) const
@@ -973,6 +980,9 @@ const std::vector<std::shared_ptr<Monitor>> &Engine::monitors() const
 void Engine::setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors)
 {
     m_monitors = newMonitors;
+
+    // Create missing monitors
+    createMissingMonitors();
 }
 
 const std::vector<std::string> &Engine::extensions() const
@@ -1248,6 +1258,76 @@ void Engine::removeExecutableClones()
     // Remove clones from the executable targets
     for (std::shared_ptr<Sprite> clone : m_clones)
         m_executableTargets.erase(std::remove(m_executableTargets.begin(), m_executableTargets.end(), clone.get()), m_executableTargets.end());
+}
+
+void Engine::createMissingMonitors()
+{
+    // This is called when setting targets and monitors because we never know in which order they're set
+    // If there aren't any targets yet, quit
+    if (m_targets.empty())
+        return;
+
+    for (auto target : m_targets) {
+        // Read all variables
+        const auto &variables = target->variables();
+
+        for (auto variable : variables) {
+            // Find the monitor for this variable
+            auto it = std::find_if(m_monitors.begin(), m_monitors.end(), [variable](std::shared_ptr<Monitor> monitor) {
+                // TODO: Move the opcode out of Engine
+                return monitor->opcode() == "data_variable" && monitor->id() == variable->id();
+            });
+
+            // If it doesn't exist, create it
+            if (it == m_monitors.end()) {
+                auto monitor = std::make_shared<Monitor>(variable->id(), "data_variable");
+                // TODO: Move field information out of Engine
+                auto field = std::make_shared<Field>("VARIABLE", variable->name(), variable);
+                field->setFieldId(VariableBlocks::VARIABLE);
+                monitor->block()->addField(field);
+
+                addVarOrListMonitor(monitor, target.get());
+            }
+        }
+
+        // Read all lists
+        const auto &lists = target->lists();
+
+        for (auto list : lists) {
+            // Find the monitor for this list
+            auto it = std::find_if(m_monitors.begin(), m_monitors.end(), [list](std::shared_ptr<Monitor> monitor) {
+                // TODO: Move the opcode out of Engine
+                return monitor->opcode() == "data_listcontents" && monitor->id() == list->id();
+            });
+
+            // If it doesn't exist, create it
+            if (it == m_monitors.end()) {
+                auto monitor = std::make_shared<Monitor>(list->id(), "data_listcontents");
+                // TODO: Move field information out of Engine
+                auto field = std::make_shared<Field>("LIST", list->name(), list);
+                field->setFieldId(ListBlocks::LIST);
+                monitor->block()->addField(field);
+
+                addVarOrListMonitor(monitor, target.get());
+            }
+        }
+    }
+}
+
+void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *target)
+{
+    if (!target->isStage())
+        monitor->setSprite(dynamic_cast<Sprite *>(target));
+
+    monitor->setVisible(false);
+
+    // Auto-position the monitor
+    // TODO: Get width and height from renderer
+    Rect rect = Monitor::getInitialPosition(m_monitors, monitor->width(), monitor->height());
+    monitor->setX(rect.left());
+    monitor->setY(rect.top());
+
+    m_monitors.push_back(monitor);
 }
 
 void Engine::updateFrameDuration()
