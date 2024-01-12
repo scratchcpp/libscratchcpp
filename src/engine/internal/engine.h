@@ -133,6 +133,7 @@ class Engine : public IEngine
 
         const std::vector<std::shared_ptr<Monitor>> &monitors() const override;
         void setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors) override;
+        void setAddMonitorHandler(const std::function<void(Monitor *)> &handler) override;
 
         const std::vector<std::string> &extensions() const override;
         void setExtensions(const std::vector<std::string> &newExtensions) override;
@@ -241,6 +242,8 @@ class Engine : public IEngine
         std::function<void()> m_redrawHandler = nullptr;
         bool m_stopEventLoop = false;
         std::mutex m_stopEventLoopMutex;
+
+        std::function<void(Monitor *)> m_addMonitorHandler = nullptr;
 };
 
 } // namespace libscratchcpp

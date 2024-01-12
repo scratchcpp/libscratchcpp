@@ -1013,10 +1013,23 @@ const std::vector<std::shared_ptr<Monitor>> &Engine::monitors() const
 
 void Engine::setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors)
 {
-    m_monitors = newMonitors;
+    if (m_addMonitorHandler) {
+        m_monitors.clear();
+
+        for (auto monitor : newMonitors) {
+            m_monitors.push_back(monitor);
+            m_addMonitorHandler(monitor.get());
+        }
+    } else
+        m_monitors = newMonitors;
 
     // Create missing monitors
     createMissingMonitors();
+}
+
+void Engine::setAddMonitorHandler(const std::function<void(Monitor *)> &handler)
+{
+    m_addMonitorHandler = handler;
 }
 
 const std::vector<std::string> &Engine::extensions() const
@@ -1356,12 +1369,14 @@ void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *targe
     monitor->setVisible(false);
 
     // Auto-position the monitor
-    // TODO: Get width and height from renderer
     Rect rect = Monitor::getInitialPosition(m_monitors, monitor->width(), monitor->height());
     monitor->setX(rect.left());
     monitor->setY(rect.top());
 
     m_monitors.push_back(monitor);
+
+    if (m_addMonitorHandler)
+        m_addMonitorHandler(monitor.get());
 }
 
 void Engine::updateFrameDuration()

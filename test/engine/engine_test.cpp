@@ -27,6 +27,8 @@
 using namespace libscratchcpp;
 
 using ::testing::Return;
+using ::testing::SaveArg;
+using ::testing::_;
 
 // NOTE: resolveIds() and compile() are tested in load_project_test
 
@@ -34,6 +36,12 @@ class RedrawMock
 {
     public:
         MOCK_METHOD(void, redraw, ());
+};
+
+class AddMonitorMock
+{
+    public:
+        MOCK_METHOD(void, monitorAdded, (Monitor *));
 };
 
 TEST(EngineTest, Clock)
@@ -1144,6 +1152,16 @@ TEST(EngineTest, Monitors)
 
     engine.setMonitors({ m1, m2, m3 });
     ASSERT_EQ(engine.monitors(), std::vector<std::shared_ptr<Monitor>>({ m1, m2, m3 }));
+
+    AddMonitorMock addMonitorMock;
+    auto handler = std::bind(&AddMonitorMock::monitorAdded, &addMonitorMock, std::placeholders::_1);
+    engine.setAddMonitorHandler(std::function<void(Monitor *)>(handler));
+    engine.setMonitors({});
+
+    EXPECT_CALL(addMonitorMock, monitorAdded(m1.get()));
+    EXPECT_CALL(addMonitorMock, monitorAdded(m2.get()));
+    EXPECT_CALL(addMonitorMock, monitorAdded(m3.get()));
+    engine.setMonitors({ m1, m2, m3 });
 }
 
 TEST(EngineTest, CreateMissingMonitors)
@@ -1241,6 +1259,29 @@ TEST(EngineTest, CreateMissingMonitors)
         checkListMonitor(monitors[4], list1);
         checkVariableMonitor(monitors[5], var4);
         checkVariableMonitor(monitors[6], var5);
+    }
+
+    {
+        Engine engine;
+        AddMonitorMock addMonitorMock;
+        auto handler = std::bind(&AddMonitorMock::monitorAdded, &addMonitorMock, std::placeholders::_1);
+        engine.setAddMonitorHandler(std::function<void(Monitor *)>(handler));
+
+        EXPECT_CALL(addMonitorMock, monitorAdded(m1.get()));
+        EXPECT_CALL(addMonitorMock, monitorAdded(m2.get()));
+        EXPECT_CALL(addMonitorMock, monitorAdded(m3.get()));
+        engine.setMonitors({ m1, m2, m3 });
+
+        Monitor *m4, *m5, *m6, *m7;
+        EXPECT_CALL(addMonitorMock, monitorAdded(_)).WillOnce(SaveArg<0>(&m4)).WillOnce(SaveArg<0>(&m5)).WillOnce(SaveArg<0>(&m6)).WillOnce(SaveArg<0>(&m7));
+        engine.setTargets({ target1, target2 });
+
+        const auto &monitors = engine.monitors();
+        ASSERT_EQ(monitors.size(), 7);
+        ASSERT_EQ(monitors[3].get(), m4);
+        ASSERT_EQ(monitors[4].get(), m5);
+        ASSERT_EQ(monitors[5].get(), m6);
+        ASSERT_EQ(monitors[6].get(), m7);
     }
 }
 

@@ -307,6 +307,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the list of monitors. */
         virtual void setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors) = 0;
 
+        /*! Sets the function which is called when a monitor is added. */
+        virtual void setAddMonitorHandler(const std::function<void(Monitor *)> &handler) = 0;
+
         /*! Returns the list of extension names. */
         virtual const std::vector<std::string> &extensions() const = 0;
 
