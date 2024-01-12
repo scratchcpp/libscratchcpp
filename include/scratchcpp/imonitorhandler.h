@@ -15,6 +15,8 @@ class LIBSCRATCHCPP_EXPORT IMonitorHandler
         virtual ~IMonitorHandler() { }
 
         virtual void init(Monitor *) = 0;
+
+        virtual void onVisibleChanged(bool visible) = 0;
 };
 
 } // namespace libscratchcpp

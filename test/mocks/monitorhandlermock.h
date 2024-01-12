@@ -9,4 +9,6 @@ class MonitorHandlerMock : public IMonitorHandler
 {
     public:
         MOCK_METHOD(void, init, (Monitor *), (override));
+
+        MOCK_METHOD(void, onVisibleChanged, (bool), (override));
 };

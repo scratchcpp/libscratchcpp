@@ -127,6 +127,22 @@ TEST(MonitorTest, Visible)
 
     monitor.setVisible(true);
     ASSERT_TRUE(monitor.visible());
+
+    MonitorHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    monitor.setInterface(&handler);
+
+    EXPECT_CALL(handler, onVisibleChanged(true));
+    monitor.setVisible(true);
+    ASSERT_TRUE(monitor.visible());
+
+    EXPECT_CALL(handler, onVisibleChanged(false));
+    monitor.setVisible(false);
+    ASSERT_FALSE(monitor.visible());
+
+    EXPECT_CALL(handler, onVisibleChanged(false));
+    monitor.setVisible(false);
+    ASSERT_FALSE(monitor.visible());
 }
 
 TEST(MonitorTest, SliderMin)

@@ -126,6 +126,9 @@ bool Monitor::visible() const
 void Monitor::setVisible(bool visible)
 {
     impl->visible = visible;
+
+    if (impl->iface)
+        impl->iface->onVisibleChanged(visible);
 }
 
 /*! Returns the minimum value of the monitor's slider. */
