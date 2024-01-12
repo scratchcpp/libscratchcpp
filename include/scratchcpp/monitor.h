@@ -12,6 +12,7 @@ namespace libscratchcpp
 class IMonitorHandler;
 class Block;
 class Sprite;
+class Value;
 class Rect;
 class MonitorPrivate;
 
@@ -43,6 +44,8 @@ class LIBSCRATCHCPP_EXPORT Monitor : public Entity
         void setSprite(Sprite *sprite);
 
         const std::string &opcode() const;
+
+        void updateValue(const Value &value);
 
         unsigned int width() const;
         void setWidth(unsigned int width);

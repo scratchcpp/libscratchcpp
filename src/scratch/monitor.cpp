@@ -68,6 +68,13 @@ const std::string &Monitor::opcode() const
     return impl->block->opcode();
 }
 
+/*! Updates the monitor's value and notifies its interface about it (if there's any). */
+void Monitor::updateValue(const Value &value)
+{
+    if (impl->iface)
+        impl->iface->onValueChanged(value);
+}
+
 /*! Returns the monitor's width. */
 unsigned int Monitor::width() const
 {

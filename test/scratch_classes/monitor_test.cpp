@@ -78,6 +78,22 @@ TEST(MonitorTest, Sprite)
     ASSERT_EQ(block->target(), nullptr);
 }
 
+TEST(MonitorTest, UpdateValue)
+{
+    Monitor monitor("", "");
+    monitor.updateValue(5);
+
+    MonitorHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    monitor.setInterface(&handler);
+
+    EXPECT_CALL(handler, onValueChanged(Value(6.5)));
+    monitor.updateValue(6.5);
+
+    EXPECT_CALL(handler, onValueChanged(Value("test")));
+    monitor.updateValue("test");
+}
+
 TEST(MonitorTest, Width)
 {
     Monitor monitor("", "");
