@@ -19,6 +19,8 @@ class MonitorPrivate;
 class LIBSCRATCHCPP_EXPORT Monitor : public Entity
 {
     public:
+        friend class Engine;
+
         enum class Mode
         {
             Default,

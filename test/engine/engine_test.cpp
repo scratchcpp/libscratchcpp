@@ -13,6 +13,7 @@
 #include <clockmock.h>
 #include <audioplayerfactorymock.h>
 #include <audioplayermock.h>
+#include <monitorhandlermock.h>
 #include <thread>
 
 #include "../common.h"
@@ -38,10 +39,11 @@ class RedrawMock
         MOCK_METHOD(void, redraw, ());
 };
 
-class AddMonitorMock
+class AddRemoveMonitorMock
 {
     public:
         MOCK_METHOD(void, monitorAdded, (Monitor *));
+        MOCK_METHOD(void, monitorRemoved, (Monitor *, IMonitorHandler *));
 };
 
 TEST(EngineTest, Clock)
@@ -65,11 +67,36 @@ TEST(EngineTest, Clear)
     auto section = std::make_shared<TestSection>();
     engine.registerSection(section);
 
+    auto monitor1 = std::make_shared<Monitor>("", "");
+    auto monitor2 = std::make_shared<Monitor>("", "");
+    auto monitor3 = std::make_shared<Monitor>("", "");
+    auto monitor4 = std::make_shared<Monitor>("", "");
+
+    MonitorHandlerMock iface1, iface3, iface4;
+    EXPECT_CALL(iface1, init);
+    EXPECT_CALL(iface3, init);
+    EXPECT_CALL(iface4, init);
+    monitor1->setInterface(&iface1);
+    monitor3->setInterface(&iface3);
+    monitor4->setInterface(&iface4);
+
     engine.clear();
     ASSERT_TRUE(engine.targets().empty());
     ASSERT_TRUE(engine.broadcasts().empty());
     ASSERT_TRUE(engine.monitors().empty());
     ASSERT_TRUE(engine.registeredSections().empty());
+
+    AddRemoveMonitorMock removeMonitorMock;
+    auto handler = std::bind(&AddRemoveMonitorMock::monitorRemoved, &removeMonitorMock, std::placeholders::_1, std::placeholders::_2);
+    engine.setRemoveMonitorHandler(std::function<void(Monitor *, IMonitorHandler *)>(handler));
+    engine.setMonitors({ monitor1, monitor2, monitor3, monitor4 });
+
+    EXPECT_CALL(removeMonitorMock, monitorRemoved(monitor1.get(), &iface1));
+    EXPECT_CALL(removeMonitorMock, monitorRemoved(monitor2.get(), nullptr));
+    EXPECT_CALL(removeMonitorMock, monitorRemoved(monitor3.get(), &iface3));
+    EXPECT_CALL(removeMonitorMock, monitorRemoved(monitor4.get(), &iface4));
+    engine.clear();
+    ASSERT_TRUE(engine.monitors().empty());
 }
 
 TEST(EngineTest, IsRunning)
@@ -1154,8 +1181,8 @@ TEST(EngineTest, Monitors)
     engine.setMonitors({ m1, m2, m3 });
     ASSERT_EQ(engine.monitors(), std::vector<std::shared_ptr<Monitor>>({ m1, m2, m3 }));
 
-    AddMonitorMock addMonitorMock;
-    auto handler = std::bind(&AddMonitorMock::monitorAdded, &addMonitorMock, std::placeholders::_1);
+    AddRemoveMonitorMock addMonitorMock;
+    auto handler = std::bind(&AddRemoveMonitorMock::monitorAdded, &addMonitorMock, std::placeholders::_1);
     engine.setAddMonitorHandler(std::function<void(Monitor *)>(handler));
     engine.setMonitors({});
 
@@ -1264,8 +1291,8 @@ TEST(EngineTest, CreateMissingMonitors)
 
     {
         Engine engine;
-        AddMonitorMock addMonitorMock;
-        auto handler = std::bind(&AddMonitorMock::monitorAdded, &addMonitorMock, std::placeholders::_1);
+        AddRemoveMonitorMock addMonitorMock;
+        auto handler = std::bind(&AddRemoveMonitorMock::monitorAdded, &addMonitorMock, std::placeholders::_1);
         engine.setAddMonitorHandler(std::function<void(Monitor *)>(handler));
 
         EXPECT_CALL(addMonitorMock, monitorAdded(m1.get()));

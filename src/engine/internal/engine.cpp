@@ -29,6 +29,7 @@
 #include "blocks/standardblocks.h"
 #include "blocks/variableblocks.h"
 #include "blocks/listblocks.h"
+#include "scratch/monitor_p.h"
 
 using namespace libscratchcpp;
 
@@ -56,6 +57,11 @@ Engine::~Engine()
 void Engine::clear()
 {
     stop();
+
+    if (m_removeMonitorHandler) {
+        for (auto monitor : m_monitors)
+            m_removeMonitorHandler(monitor.get(), monitor->impl->iface);
+    }
 
     m_sections.clear();
     m_targets.clear();
@@ -1031,6 +1037,11 @@ void Engine::setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitor
 void Engine::setAddMonitorHandler(const std::function<void(Monitor *)> &handler)
 {
     m_addMonitorHandler = handler;
+}
+
+void Engine::setRemoveMonitorHandler(const std::function<void(Monitor *, IMonitorHandler *)> &handler)
+{
+    m_removeMonitorHandler = handler;
 }
 
 const std::vector<std::string> &Engine::extensions() const

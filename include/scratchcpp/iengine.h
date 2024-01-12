@@ -24,6 +24,7 @@ class Script;
 class ITimer;
 class KeyEvent;
 class Monitor;
+class IMonitorHandler;
 
 /*!
  * \brief The IEngine interface provides an API for running Scratch projects.
@@ -309,6 +310,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
 
         /*! Sets the function which is called when a monitor is added. */
         virtual void setAddMonitorHandler(const std::function<void(Monitor *)> &handler) = 0;
+
+        /*! Sets the function which is called when a monitor is removed. */
+        virtual void setRemoveMonitorHandler(const std::function<void(Monitor *, IMonitorHandler *)> &handler) = 0;
 
         /*! Returns the list of extension names. */
         virtual const std::vector<std::string> &extensions() const = 0;
