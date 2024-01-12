@@ -60,6 +60,7 @@ void Engine::clear()
     m_sections.clear();
     m_targets.clear();
     m_broadcasts.clear();
+    m_monitors.clear();
     m_extensions.clear();
     m_broadcastMap.clear();
     m_executableTargets.clear();

@@ -68,6 +68,7 @@ TEST(EngineTest, Clear)
     engine.clear();
     ASSERT_TRUE(engine.targets().empty());
     ASSERT_TRUE(engine.broadcasts().empty());
+    ASSERT_TRUE(engine.monitors().empty());
     ASSERT_TRUE(engine.registeredSections().empty());
 }
 
