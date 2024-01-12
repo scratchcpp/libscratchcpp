@@ -3,6 +3,7 @@
 #pragma once
 
 #include <scratchcpp/monitor.h>
+#include <scratchcpp/script.h>
 
 namespace libscratchcpp
 {
@@ -17,6 +18,7 @@ struct MonitorPrivate
 
         IMonitorHandler *iface = nullptr;
         Monitor::Mode mode = Monitor::Mode::Default;
+        std::shared_ptr<Script> script;
         std::shared_ptr<Block> block; // Compiler needs shared_ptr
         unsigned int width = 0;
         unsigned int height = 0;

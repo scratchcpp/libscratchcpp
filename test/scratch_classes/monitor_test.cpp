@@ -61,6 +61,16 @@ TEST(MonitorTest, Mode)
     ASSERT_EQ(monitor.mode(), Monitor::Mode::Default);
 }
 
+TEST(MonitorTest, Script)
+{
+    Monitor monitor("", "");
+    ASSERT_EQ(monitor.script(), nullptr);
+
+    auto script = std::make_shared<Script>(nullptr, nullptr, nullptr);
+    monitor.setScript(script);
+    ASSERT_EQ(monitor.script(), script);
+}
+
 TEST(MonitorTest, Sprite)
 {
     Monitor monitor("", "");

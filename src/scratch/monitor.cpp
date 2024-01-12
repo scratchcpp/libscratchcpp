@@ -50,6 +50,18 @@ std::shared_ptr<Block> Monitor::block() const
     return impl->block;
 }
 
+/*! Returns the script which holds information about the monitor's compiled block. */
+std::shared_ptr<Script> Monitor::script() const
+{
+    return impl->script;
+}
+
+/*! Sets the script which holds information about the monitor's compiled block. */
+void Monitor::setScript(std::shared_ptr<Script> script)
+{
+    impl->script = script;
+}
+
 /*! Convenience method which calls block()->target(). */
 Sprite *Monitor::sprite() const
 {

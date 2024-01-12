@@ -11,6 +11,7 @@ namespace libscratchcpp
 
 class IMonitorHandler;
 class Block;
+class Script;
 class Sprite;
 class Value;
 class Rect;
@@ -39,6 +40,9 @@ class LIBSCRATCHCPP_EXPORT Monitor : public Entity
         void setMode(Mode mode);
 
         std::shared_ptr<Block> block() const;
+
+        std::shared_ptr<Script> script() const;
+        void setScript(std::shared_ptr<Script> script);
 
         Sprite *sprite() const;
         void setSprite(Sprite *sprite);
