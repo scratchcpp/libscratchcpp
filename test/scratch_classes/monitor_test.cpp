@@ -3,6 +3,7 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/rect.h>
 #include <scratch/monitor_p.h>
+#include <monitorhandlermock.h>
 #include <randomgeneratormock.h>
 
 #include "../common.h"
@@ -31,6 +32,15 @@ TEST(MonitorTest, Id)
 
     monitor.setId("def");
     ASSERT_EQ(monitor.id(), "def");
+}
+
+TEST(MonitorTest, Interface)
+{
+    Monitor monitor("", "");
+    MonitorHandlerMock iface;
+
+    EXPECT_CALL(iface, init(&monitor));
+    monitor.setInterface(&iface);
 }
 
 TEST(MonitorTest, Mode)

@@ -4,6 +4,7 @@
 #include <scratchcpp/block.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/rect.h>
+#include <scratchcpp/imonitorhandler.h>
 
 #include "monitor_p.h"
 #include "engine/internal/randomgenerator.h"
@@ -20,6 +21,15 @@ Monitor::Monitor(const std::string &id, const std::string &opcode) :
     Entity(id),
     impl(spimpl::make_unique_impl<MonitorPrivate>(opcode))
 {
+}
+
+/*! Sets the monitor interface. */
+void Monitor::setInterface(IMonitorHandler *iface)
+{
+    impl->iface = iface;
+
+    if (iface)
+        iface->init(this);
 }
 
 /*! Returns the monitor's mode. */

@@ -53,6 +53,7 @@ target_sources(scratchcpp
     include/scratchcpp/igraphicseffect.h
     include/scratchcpp/comment.h
     include/scratchcpp/monitor.h
+    include/scratchcpp/imonitorhandler.h
 )
 
 add_library(zip SHARED

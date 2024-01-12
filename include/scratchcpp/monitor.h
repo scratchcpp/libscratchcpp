@@ -9,6 +9,7 @@
 namespace libscratchcpp
 {
 
+class IMonitorHandler;
 class Block;
 class Sprite;
 class Rect;
@@ -28,6 +29,8 @@ class LIBSCRATCHCPP_EXPORT Monitor : public Entity
 
         Monitor(const std::string &id, const std::string &opcode);
         Monitor(const Monitor &) = delete;
+
+        void setInterface(IMonitorHandler *iface);
 
         Mode mode() const;
         void setMode(Mode mode);
