@@ -12,6 +12,7 @@
 #include <scratchcpp/sound.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/monitor.h>
 
 #include "scratch3reader.h"
 #include "reader_common.h"
@@ -341,6 +342,107 @@ bool Scratch3Reader::load()
             m_targets.push_back(target);
         }
 
+        // monitors
+        READER_STEP(step, "monitors");
+        auto monitors = project["monitors"];
+
+        for (auto jsonMonitor : monitors) {
+            READER_STEP(step, "monitor -> opcode");
+            auto monitor = std::make_shared<Monitor>("", jsonMonitor["opcode"]);
+
+            // id
+            READER_STEP(step, "monitor -> id");
+            monitor->setId(jsonMonitor["id"]);
+
+            // mode
+            READER_STEP(step, "monitor -> mode");
+            auto mode = jsonMonitor["mode"];
+
+            if (mode == "default")
+                monitor->setMode(Monitor::Mode::Default);
+            else if (mode == "large")
+                monitor->setMode(Monitor::Mode::Large);
+            else if (mode == "slider")
+                monitor->setMode(Monitor::Mode::Slider);
+            else if (mode == "list")
+                monitor->setMode(Monitor::Mode::List);
+            else {
+                printErr("unknown monitor mode: " + std::string(mode));
+                return false;
+            }
+
+            // params
+            READER_STEP(step, "monitor -> params");
+
+            auto block = monitor->block();
+            auto params = jsonMonitor["params"];
+
+            for (json::iterator it = params.begin(); it != params.end(); ++it) {
+                auto field = std::make_shared<Field>(it.key(), jsonToValue(it.value()));
+                block->addField(field);
+            }
+
+            // spriteName
+            READER_STEP(step, "monitor -> spriteName");
+
+            if (!jsonMonitor["spriteName"].is_null()) {
+                std::string name = jsonMonitor["spriteName"];
+
+                for (auto target : m_targets) {
+                    if (!target->isStage()) {
+                        Sprite *sprite = dynamic_cast<Sprite *>(target.get());
+
+                        if (sprite->name() == name) {
+                            monitor->setSprite(sprite);
+                            break;
+                        }
+                    }
+                }
+
+                assert(monitor->sprite());
+            }
+
+            // width
+            READER_STEP(step, "monitor -> width");
+            monitor->setWidth(jsonMonitor["width"]);
+
+            // height
+            READER_STEP(step, "monitor -> height");
+            monitor->setHeight(jsonMonitor["height"]);
+
+            // x
+            READER_STEP(step, "monitor -> x");
+            monitor->setX(jsonMonitor["x"]);
+
+            // y
+            READER_STEP(step, "monitor -> y");
+            monitor->setY(jsonMonitor["y"]);
+
+            // visible
+            READER_STEP(step, "monitor -> visible");
+            monitor->setVisible(jsonMonitor["visible"]);
+
+            // sliderMin
+            READER_STEP(step, "monitor -> sliderMin");
+
+            if (jsonMonitor.contains("sliderMin"))
+                monitor->setSliderMin(jsonMonitor["sliderMin"]);
+
+            // sliderMax
+            READER_STEP(step, "monitor -> sliderMax");
+
+            if (jsonMonitor.contains("sliderMax"))
+                monitor->setSliderMax(jsonMonitor["sliderMax"]);
+
+            // isDiscrete
+            READER_STEP(step, "monitor -> isDiscrete");
+
+            if (jsonMonitor.contains("isDiscrete"))
+                monitor->setDiscrete(jsonMonitor["isDiscrete"]);
+
+            m_monitors.push_back(monitor);
+        }
+
         // extensions
         READER_STEP(step, "extensions");
         auto extensions = project["extensions"];
@@ -403,6 +505,11 @@ const std::vector<std::shared_ptr<Target>> &Scratch3Reader::targets()
 const std::vector<std::shared_ptr<Broadcast>> &Scratch3Reader::broadcasts()
 {
     return m_broadcasts;
+}
+
+const std::vector<std::shared_ptr<Monitor>> &Scratch3Reader::monitors()
+{
+    return m_monitors;
 }
 
 const std::vector<std::string> &Scratch3Reader::extensions()

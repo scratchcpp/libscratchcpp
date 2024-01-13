@@ -43,6 +43,7 @@ class Engine : public IEngine
         void deinitClone(std::shared_ptr<Sprite> clone) override;
         void stopSounds() override;
 
+        void updateMonitors() override;
         void step() override;
         void run() override;
         void runEventLoop() override;
@@ -131,6 +132,11 @@ class Engine : public IEngine
 
         Stage *stage() const override;
 
+        const std::vector<std::shared_ptr<Monitor>> &monitors() const override;
+        void setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors) override;
+        void setAddMonitorHandler(const std::function<void(Monitor *)> &handler) override;
+        void setRemoveMonitorHandler(const std::function<void(Monitor *, IMonitorHandler *)> &handler) override;
+
         const std::vector<std::string> &extensions() const override;
         void setExtensions(const std::vector<std::string> &newExtensions) override;
 
@@ -164,6 +170,8 @@ class Engine : public IEngine
         void finalize();
         void deleteClones();
         void removeExecutableClones();
+        void createMissingMonitors();
+        void addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *target);
         std::shared_ptr<Block> getBlock(const std::string &id);
         std::shared_ptr<Variable> getVariable(const std::string &id);
         std::shared_ptr<List> getList(const std::string &id);
@@ -197,6 +205,7 @@ class Engine : public IEngine
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_broadcastMap;
+        std::vector<std::shared_ptr<Monitor>> m_monitors;
         std::vector<std::string> m_extensions;
         std::vector<Target *> m_executableTargets; // sorted by layer (reverse order of execution)
         std::vector<std::shared_ptr<VirtualMachine>> m_threads;
@@ -235,6 +244,9 @@ class Engine : public IEngine
         std::function<void()> m_redrawHandler = nullptr;
         bool m_stopEventLoop = false;
         std::mutex m_stopEventLoopMutex;
+
+        std::function<void(Monitor *)> m_addMonitorHandler = nullptr;
+        std::function<void(Monitor *, IMonitorHandler *)> m_removeMonitorHandler = nullptr;
 };
 
 } // namespace libscratchcpp

@@ -17,6 +17,8 @@
 #include <scratchcpp/costume.h>
 #include <scratchcpp/keyevent.h>
 #include <scratchcpp/sound.h>
+#include <scratchcpp/monitor.h>
+#include <scratchcpp/rect.h>
 #include <cassert>
 #include <iostream>
 
@@ -25,6 +27,9 @@
 #include "timer.h"
 #include "clock.h"
 #include "blocks/standardblocks.h"
+#include "blocks/variableblocks.h"
+#include "blocks/listblocks.h"
+#include "scratch/monitor_p.h"
 
 using namespace libscratchcpp;
 
@@ -53,9 +58,15 @@ void Engine::clear()
 {
     stop();
 
+    if (m_removeMonitorHandler) {
+        for (auto monitor : m_monitors)
+            m_removeMonitorHandler(monitor.get(), monitor->impl->iface);
+    }
+
     m_sections.clear();
     m_targets.clear();
     m_broadcasts.clear();
+    m_monitors.clear();
     m_extensions.clear();
     m_broadcastMap.clear();
     m_executableTargets.clear();
@@ -119,6 +130,44 @@ void Engine::resolveIds()
             }
         }
     }
+
+    for (auto monitor : m_monitors) {
+        auto block = monitor->block();
+        auto container = blockSectionContainer(block->opcode());
+
+        if (container)
+            block->setCompileFunction(container->resolveBlockCompileFunc(block->opcode()));
+
+        const auto &fields = block->fields();
+        Target *target;
+
+        if (monitor->sprite())
+            target = monitor->sprite();
+        else
+            target = stage();
+
+        assert(target);
+
+        for (auto field : fields) {
+            field->setValuePtr(getEntity(field->valueId()));
+
+            if (container) {
+                field->setFieldId(container->resolveField(field->name()));
+
+                if (!field->valuePtr())
+                    field->setSpecialValueId(container->resolveFieldValue(field->value().toString()));
+            }
+
+            // TODO: Move field information out of Engine
+            if (field->name() == "VARIABLE")
+                field->setValuePtr(target->variableAt(target->findVariable(field->value().toString())));
+            else if (field->name() == "LIST")
+                field->setValuePtr(target->listAt(target->findList(field->value().toString())));
+        }
+
+        block->updateInputMap();
+        block->updateFieldMap();
+    }
 }
 
 void Engine::compile()
@@ -165,6 +214,43 @@ void Engine::compile()
                 m_scripts[block]->setLists(compiler.lists());
             }
         }
+    }
+
+    // Compile monitor blocks to bytecode
+    std::cout << "Compiling stage monitors..." << std::endl;
+
+    for (auto monitor : m_monitors) {
+        Target *target = monitor->sprite() ? dynamic_cast<Target *>(monitor->sprite()) : stage();
+        Compiler compiler(this, target);
+        auto block = monitor->block();
+        auto section = blockSection(block->opcode());
+
+        if (section) {
+            auto script = std::make_shared<Script>(target, block, this);
+            monitor->setScript(script);
+            compiler.init();
+            compiler.setBlock(block);
+
+            if (block->compileFunction())
+                block->compile(&compiler);
+            else
+                std::cout << "warning: monitor block doesn't have a compile function: " << block->opcode() << std::endl;
+
+            // Workaround for register leak warning spam: pause the script after getting the monitor value
+            compiler.addFunctionCall([](VirtualMachine *vm) -> unsigned int {
+                vm->stop(false, false, false);
+                return 0;
+            });
+
+            compiler.end();
+
+            script->setBytecode(compiler.bytecode());
+            script->setFunctions(m_functions);
+            script->setConstValues(compiler.constValues());
+            script->setVariables(compiler.variables());
+            script->setLists(compiler.lists());
+        } else
+            std::cout << "warning: unsupported monitor block: " << block->opcode() << std::endl;
     }
 }
 
@@ -287,6 +373,22 @@ void Engine::stopSounds()
     }
 }
 
+void Engine::updateMonitors()
+{
+    // Execute the "script" of each visible monitor
+    for (auto monitor : m_monitors) {
+        if (monitor->visible()) {
+            auto script = monitor->script();
+
+            if (script) {
+                auto vm = script->start();
+                vm->run();
+                monitor->updateValue(vm.get());
+            }
+        }
+    }
+}
+
 void Engine::step()
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L2087C6-L2155
@@ -405,6 +507,7 @@ void Engine::eventLoop(bool untilProjectStops)
         auto tickStart = m_clock->currentSteadyTime();
         m_eventLoopMutex.lock();
         step();
+        updateMonitors();
 
         // Stop the event loop if the project has finished running (and untilProjectStops is set to true)
         if (untilProjectStops && m_threads.empty()) {
@@ -838,6 +941,9 @@ void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
 
     // Sort the executable targets by layer order
     std::sort(m_executableTargets.begin(), m_executableTargets.end(), [](Target *t1, Target *t2) { return t1->layerOrder() < t2->layerOrder(); });
+
+    // Create missing monitors
+    createMissingMonitors();
 }
 
 Target *Engine::targetAt(int index) const
@@ -963,6 +1069,37 @@ Stage *Engine::stage() const
         return nullptr;
     else
         return dynamic_cast<Stage *>((*it).get());
+}
+
+const std::vector<std::shared_ptr<Monitor>> &Engine::monitors() const
+{
+    return m_monitors;
+}
+
+void Engine::setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors)
+{
+    if (m_addMonitorHandler) {
+        m_monitors.clear();
+
+        for (auto monitor : newMonitors) {
+            m_monitors.push_back(monitor);
+            m_addMonitorHandler(monitor.get());
+        }
+    } else
+        m_monitors = newMonitors;
+
+    // Create missing monitors
+    createMissingMonitors();
+}
+
+void Engine::setAddMonitorHandler(const std::function<void(Monitor *)> &handler)
+{
+    m_addMonitorHandler = handler;
+}
+
+void Engine::setRemoveMonitorHandler(const std::function<void(Monitor *, IMonitorHandler *)> &handler)
+{
+    m_removeMonitorHandler = handler;
 }
 
 const std::vector<std::string> &Engine::extensions() const
@@ -1238,6 +1375,78 @@ void Engine::removeExecutableClones()
     // Remove clones from the executable targets
     for (std::shared_ptr<Sprite> clone : m_clones)
         m_executableTargets.erase(std::remove(m_executableTargets.begin(), m_executableTargets.end(), clone.get()), m_executableTargets.end());
+}
+
+void Engine::createMissingMonitors()
+{
+    // This is called when setting targets and monitors because we never know in which order they're set
+    // If there aren't any targets yet, quit
+    if (m_targets.empty())
+        return;
+
+    for (auto target : m_targets) {
+        // Read all variables
+        const auto &variables = target->variables();
+
+        for (auto variable : variables) {
+            // Find the monitor for this variable
+            auto it = std::find_if(m_monitors.begin(), m_monitors.end(), [variable](std::shared_ptr<Monitor> monitor) {
+                // TODO: Move the opcode out of Engine
+                return monitor->opcode() == "data_variable" && monitor->id() == variable->id();
+            });
+
+            // If it doesn't exist, create it
+            if (it == m_monitors.end()) {
+                auto monitor = std::make_shared<Monitor>(variable->id(), "data_variable");
+                // TODO: Move field information out of Engine
+                auto field = std::make_shared<Field>("VARIABLE", variable->name(), variable);
+                field->setFieldId(VariableBlocks::VARIABLE);
+                monitor->block()->addField(field);
+
+                addVarOrListMonitor(monitor, target.get());
+            }
+        }
+
+        // Read all lists
+        const auto &lists = target->lists();
+
+        for (auto list : lists) {
+            // Find the monitor for this list
+            auto it = std::find_if(m_monitors.begin(), m_monitors.end(), [list](std::shared_ptr<Monitor> monitor) {
+                // TODO: Move the opcode out of Engine
+                return monitor->opcode() == "data_listcontents" && monitor->id() == list->id();
+            });
+
+            // If it doesn't exist, create it
+            if (it == m_monitors.end()) {
+                auto monitor = std::make_shared<Monitor>(list->id(), "data_listcontents");
+                // TODO: Move field information out of Engine
+                auto field = std::make_shared<Field>("LIST", list->name(), list);
+                field->setFieldId(ListBlocks::LIST);
+                monitor->block()->addField(field);
+
+                addVarOrListMonitor(monitor, target.get());
+            }
+        }
+    }
+}
+
+void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *target)
+{
+    if (!target->isStage())
+        monitor->setSprite(dynamic_cast<Sprite *>(target));
+
+    monitor->setVisible(false);
+
+    // Auto-position the monitor
+    Rect rect = Monitor::getInitialPosition(m_monitors, monitor->width(), monitor->height());
+    monitor->setX(rect.left());
+    monitor->setY(rect.top());
+
+    m_monitors.push_back(monitor);
+
+    if (m_addMonitorHandler)
+        m_addMonitorHandler(monitor.get());
 }
 
 void Engine::updateFrameDuration()

@@ -27,15 +27,15 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
 
         void compile(Compiler *compiler);
 
-        std::string opcode() const;
+        const std::string &opcode() const;
 
         std::shared_ptr<Block> next() const;
-        std::string nextId() const;
+        const std::string &nextId() const;
         void setNext(std::shared_ptr<Block> block);
         void setNextId(const std::string &nextId);
 
         std::shared_ptr<Block> parent() const;
-        std::string parentId() const;
+        const std::string &parentId() const;
         void setParent(std::shared_ptr<Block> block);
         void setParentId(const std::string &id);
 
@@ -57,7 +57,7 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
         bool topLevel() const;
 
         std::shared_ptr<Comment> comment() const;
-        std::string commentId() const;
+        const std::string &commentId() const;
         void setComment(std::shared_ptr<Comment> comment);
         void setCommentId(const std::string &commentId);
 

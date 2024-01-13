@@ -51,4 +51,7 @@ target_sources(scratchcpp
     comment.cpp
     comment_p.cpp
     comment_p.h
+    monitor.cpp
+    monitor_p.cpp
+    monitor_p.h
 )

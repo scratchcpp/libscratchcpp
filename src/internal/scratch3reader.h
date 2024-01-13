@@ -19,6 +19,7 @@ class Scratch3Reader : public IProjectReader
         void clear() override;
         const std::vector<std::shared_ptr<Target>> &targets() override;
         const std::vector<std::shared_ptr<Broadcast>> &broadcasts() override;
+        const std::vector<std::shared_ptr<Monitor>> &monitors() override;
         const std::vector<std::string> &extensions() override;
 
     private:
@@ -27,6 +28,7 @@ class Scratch3Reader : public IProjectReader
         nlohmann::json m_json = "";
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
+        std::vector<std::shared_ptr<Monitor>> m_monitors;
         std::vector<std::string> m_extensions;
 };
 

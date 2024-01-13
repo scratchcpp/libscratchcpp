@@ -17,6 +17,7 @@ namespace libscratchcpp
 
 class Target;
 class Broadcast;
+class Monitor;
 
 class IProjectReader
 {
@@ -32,6 +33,7 @@ class IProjectReader
         virtual void clear() = 0;
         virtual const std::vector<std::shared_ptr<Target>> &targets() = 0;
         virtual const std::vector<std::shared_ptr<Broadcast>> &broadcasts() = 0;
+        virtual const std::vector<std::shared_ptr<Monitor>> &monitors() = 0;
         virtual const std::vector<std::string> &extensions() = 0;
 
     protected:

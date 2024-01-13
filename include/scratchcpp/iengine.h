@@ -23,6 +23,8 @@ class List;
 class Script;
 class ITimer;
 class KeyEvent;
+class Monitor;
+class IMonitorHandler;
 
 /*!
  * \brief The IEngine interface provides an API for running Scratch projects.
@@ -83,6 +85,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
 
         /*! Stops all currently playing sounds. */
         virtual void stopSounds() = 0;
+
+        /*! Updates the values of stage monitors. */
+        virtual void updateMonitors() = 0;
 
         /*! Steps all currently running threads. Use this to implement a custom event loop. */
         virtual void step() = 0;
@@ -299,6 +304,18 @@ class LIBSCRATCHCPP_EXPORT IEngine
 
         /*! Returns the Stage. */
         virtual Stage *stage() const = 0;
+
+        /*! Returns the list of monitors. */
+        virtual const std::vector<std::shared_ptr<Monitor>> &monitors() const = 0;
+
+        /*! Sets the list of monitors. */
+        virtual void setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors) = 0;
+
+        /*! Sets the function which is called when a monitor is added. */
+        virtual void setAddMonitorHandler(const std::function<void(Monitor *)> &handler) = 0;
+
+        /*! Sets the function which is called when a monitor is removed. */
+        virtual void setRemoveMonitorHandler(const std::function<void(Monitor *, IMonitorHandler *)> &handler) = 0;
 
         /*! Returns the list of extension names. */
         virtual const std::vector<std::string> &extensions() const = 0;

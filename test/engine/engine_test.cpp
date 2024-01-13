@@ -6,11 +6,17 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/keyevent.h>
+#include <scratchcpp/monitor.h>
+#include <scratchcpp/field.h>
+#include <scratchcpp/compiler.h>
+#include <scratchcpp/script.h>
+#include <scratchcpp/virtualmachine.h>
 #include <scratch/sound_p.h>
 #include <timermock.h>
 #include <clockmock.h>
 #include <audioplayerfactorymock.h>
 #include <audioplayermock.h>
+#include <monitorhandlermock.h>
 #include <thread>
 
 #include "../common.h"
@@ -18,9 +24,17 @@
 #include "engine/internal/engine.h"
 #include "engine/internal/clock.h"
 
+// TODO: Remove this
+#include "blocks/variableblocks.h"
+#include "blocks/listblocks.h"
+
 using namespace libscratchcpp;
 
 using ::testing::Return;
+using ::testing::SaveArg;
+using ::testing::WithArgs;
+using ::testing::Invoke;
+using ::testing::_;
 
 // NOTE: resolveIds() and compile() are tested in load_project_test
 
@@ -28,6 +42,13 @@ class RedrawMock
 {
     public:
         MOCK_METHOD(void, redraw, ());
+};
+
+class AddRemoveMonitorMock
+{
+    public:
+        MOCK_METHOD(void, monitorAdded, (Monitor *));
+        MOCK_METHOD(void, monitorRemoved, (Monitor *, IMonitorHandler *));
 };
 
 TEST(EngineTest, Clock)
@@ -51,10 +72,89 @@ TEST(EngineTest, Clear)
     auto section = std::make_shared<TestSection>();
     engine.registerSection(section);
 
+    auto monitor1 = std::make_shared<Monitor>("", "");
+    auto monitor2 = std::make_shared<Monitor>("", "");
+    auto monitor3 = std::make_shared<Monitor>("", "");
+    auto monitor4 = std::make_shared<Monitor>("", "");
+
+    MonitorHandlerMock iface1, iface3, iface4;
+    EXPECT_CALL(iface1, init);
+    EXPECT_CALL(iface3, init);
+    EXPECT_CALL(iface4, init);
+    monitor1->setInterface(&iface1);
+    monitor3->setInterface(&iface3);
+    monitor4->setInterface(&iface4);
+
     engine.clear();
     ASSERT_TRUE(engine.targets().empty());
     ASSERT_TRUE(engine.broadcasts().empty());
+    ASSERT_TRUE(engine.monitors().empty());
     ASSERT_TRUE(engine.registeredSections().empty());
+
+    AddRemoveMonitorMock removeMonitorMock;
+    auto handler = std::bind(&AddRemoveMonitorMock::monitorRemoved, &removeMonitorMock, std::placeholders::_1, std::placeholders::_2);
+    engine.setRemoveMonitorHandler(std::function<void(Monitor *, IMonitorHandler *)>(handler));
+    engine.setMonitors({ monitor1, monitor2, monitor3, monitor4 });
+
+    EXPECT_CALL(removeMonitorMock, monitorRemoved(monitor1.get(), &iface1));
+    EXPECT_CALL(removeMonitorMock, monitorRemoved(monitor2.get(), nullptr));
+    EXPECT_CALL(removeMonitorMock, monitorRemoved(monitor3.get(), &iface3));
+    EXPECT_CALL(removeMonitorMock, monitorRemoved(monitor4.get(), &iface4));
+    engine.clear();
+    ASSERT_TRUE(engine.monitors().empty());
+}
+
+TEST(EngineTest, CompileAndExecuteMonitors)
+{
+    Engine engine;
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+    engine.setTargets({ stage, sprite });
+
+    auto m1 = std::make_shared<Monitor>("a", "monitor_test1");
+    auto m2 = std::make_shared<Monitor>("b", "monitor_test2");
+    auto m3 = std::make_shared<Monitor>("c", "monitor_test3");
+    m1->setVisible(false);
+    m2->setSprite(sprite.get());
+    engine.setMonitors({ m1, m2 });
+
+    auto section = std::make_shared<TestSection>();
+    engine.registerSection(section);
+    engine.addCompileFunction(section.get(), m1->opcode(), [](Compiler *compiler) { compiler->addConstValue(5.4); });
+    engine.addCompileFunction(section.get(), m2->opcode(), [](Compiler *compiler) { compiler->addConstValue("test"); });
+
+    // Compile the monitor blocks
+    engine.compile();
+    auto script1 = m1->script();
+    auto script2 = m2->script();
+    auto script3 = m3->script();
+    ASSERT_TRUE(script1 && script2 && !script3);
+
+    ASSERT_EQ(script1->bytecodeVector(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(script1->target(), stage.get());
+    ASSERT_EQ(script1->topBlock(), m1->block());
+
+    ASSERT_EQ(script2->bytecodeVector(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(script2->target(), sprite.get());
+    ASSERT_EQ(script2->topBlock(), m2->block());
+
+    // Execute the monitor blocks
+    MonitorHandlerMock iface1, iface2, iface3;
+    EXPECT_CALL(iface1, init);
+    EXPECT_CALL(iface2, init);
+    EXPECT_CALL(iface3, init);
+    m1->setInterface(&iface1);
+    m2->setInterface(&iface2);
+    m3->setInterface(&iface3);
+
+    EXPECT_CALL(iface1, onValueChanged).Times(0);
+    EXPECT_CALL(iface2, onValueChanged(_)).WillOnce(WithArgs<0>(Invoke([](const VirtualMachine *vm) {
+        ASSERT_EQ(vm->registerCount(), 1);
+        ASSERT_EQ(vm->getInput(0, 1)->toString(), "test");
+        ASSERT_FALSE(vm->atEnd()); // the script shouldn't end because that would spam the console with leak warnings
+    })));
+    EXPECT_CALL(iface3, onValueChanged).Times(0);
+    engine.updateMonitors();
 }
 
 TEST(EngineTest, IsRunning)
@@ -1125,6 +1225,150 @@ TEST(EngineTest, Stage)
 
     engine.setTargets({ t1, t3 });
     ASSERT_EQ(engine.stage(), nullptr);
+}
+
+TEST(EngineTest, Monitors)
+{
+    Engine engine;
+    ASSERT_TRUE(engine.monitors().empty());
+
+    auto m1 = std::make_shared<Monitor>("", "");
+    auto m2 = std::make_shared<Monitor>("", "");
+    auto m3 = std::make_shared<Monitor>("", "");
+
+    engine.setMonitors({ m1, m2, m3 });
+    ASSERT_EQ(engine.monitors(), std::vector<std::shared_ptr<Monitor>>({ m1, m2, m3 }));
+
+    AddRemoveMonitorMock addMonitorMock;
+    auto handler = std::bind(&AddRemoveMonitorMock::monitorAdded, &addMonitorMock, std::placeholders::_1);
+    engine.setAddMonitorHandler(std::function<void(Monitor *)>(handler));
+    engine.setMonitors({});
+
+    EXPECT_CALL(addMonitorMock, monitorAdded(m1.get()));
+    EXPECT_CALL(addMonitorMock, monitorAdded(m2.get()));
+    EXPECT_CALL(addMonitorMock, monitorAdded(m3.get()));
+    engine.setMonitors({ m1, m2, m3 });
+}
+
+TEST(EngineTest, CreateMissingMonitors)
+{
+    auto var1 = std::make_shared<Variable>("a", "var1");
+    auto var2 = std::make_shared<Variable>("b", "var2");
+    auto var3 = std::make_shared<Variable>("c", "var3");
+    auto var4 = std::make_shared<Variable>("d", "var4");
+    auto var5 = std::make_shared<Variable>("e", "var5");
+    auto list1 = std::make_shared<List>("f", "list1");
+    auto list2 = std::make_shared<List>("g", "list2");
+    auto target1 = std::make_shared<Stage>();
+    auto target2 = std::make_shared<Sprite>();
+    target1->addVariable(var1);
+    target1->addVariable(var2);
+    target1->addList(list1);
+    target2->addVariable(var3);
+    target2->addVariable(var4);
+    target2->addVariable(var5);
+    target2->addList(list2);
+
+    auto m1 = std::make_shared<Monitor>(var1->id(), "data_variable");
+    auto m2 = std::make_shared<Monitor>(var3->id(), "data_variable");
+    auto m3 = std::make_shared<Monitor>(list2->id(), "data_listcontents");
+
+    auto checkVariableMonitor = [](std::shared_ptr<Monitor> monitor, std::shared_ptr<Variable> var) {
+        auto block = monitor->block();
+        ASSERT_EQ(monitor->id(), var->id());
+        ASSERT_EQ(monitor->opcode(), "data_variable");
+        ASSERT_EQ(monitor->mode(), Monitor::Mode::Default);
+        ASSERT_FALSE(monitor->visible());
+        ASSERT_EQ(block->fields().size(), 1);
+
+        auto field = block->fieldAt(0);
+        ASSERT_EQ(field->name(), "VARIABLE");
+        ASSERT_EQ(field->fieldId(), VariableBlocks::VARIABLE);
+        ASSERT_EQ(field->value(), var->name());
+        ASSERT_EQ(field->valuePtr(), var);
+
+        if (var->target()->isStage())
+            ASSERT_EQ(monitor->sprite(), nullptr);
+        else
+            ASSERT_EQ(monitor->sprite(), dynamic_cast<Sprite *>(var->target()));
+    };
+
+    auto checkListMonitor = [](std::shared_ptr<Monitor> monitor, std::shared_ptr<List> list) {
+        auto block = monitor->block();
+        ASSERT_EQ(monitor->id(), list->id());
+        ASSERT_EQ(monitor->opcode(), "data_listcontents");
+        ASSERT_EQ(monitor->mode(), Monitor::Mode::Default);
+        ASSERT_FALSE(monitor->visible());
+        ASSERT_EQ(block->fields().size(), 1);
+
+        auto field = block->fieldAt(0);
+        ASSERT_EQ(field->name(), "LIST");
+        ASSERT_EQ(field->fieldId(), ListBlocks::LIST);
+        ASSERT_EQ(field->value(), list->name());
+        ASSERT_EQ(field->valuePtr(), list);
+
+        if (list->target()->isStage())
+            ASSERT_EQ(monitor->sprite(), nullptr);
+        else
+            ASSERT_EQ(monitor->sprite(), dynamic_cast<Sprite *>(list->target()));
+    };
+
+    // Set monitors after setting targets
+    {
+        Engine engine;
+        engine.setTargets({ target1, target2 });
+        engine.setMonitors({ m1, m2, m3 });
+
+        const auto &monitors = engine.monitors();
+        ASSERT_EQ(monitors.size(), 7);
+        ASSERT_EQ(monitors[0], m1);
+        ASSERT_EQ(monitors[1], m2);
+        ASSERT_EQ(monitors[2], m3);
+        checkVariableMonitor(monitors[3], var2);
+        checkListMonitor(monitors[4], list1);
+        checkVariableMonitor(monitors[5], var4);
+        checkVariableMonitor(monitors[6], var5);
+    }
+
+    // Set monitors before setting targets
+    {
+        Engine engine;
+        engine.setMonitors({ m1, m2, m3 });
+        engine.setTargets({ target1, target2 });
+
+        const auto &monitors = engine.monitors();
+        ASSERT_EQ(monitors.size(), 7);
+        ASSERT_EQ(monitors[0], m1);
+        ASSERT_EQ(monitors[1], m2);
+        ASSERT_EQ(monitors[2], m3);
+        checkVariableMonitor(monitors[3], var2);
+        checkListMonitor(monitors[4], list1);
+        checkVariableMonitor(monitors[5], var4);
+        checkVariableMonitor(monitors[6], var5);
+    }
+
+    {
+        Engine engine;
+        AddRemoveMonitorMock addMonitorMock;
+        auto handler = std::bind(&AddRemoveMonitorMock::monitorAdded, &addMonitorMock, std::placeholders::_1);
+        engine.setAddMonitorHandler(std::function<void(Monitor *)>(handler));
+
+        EXPECT_CALL(addMonitorMock, monitorAdded(m1.get()));
+        EXPECT_CALL(addMonitorMock, monitorAdded(m2.get()));
+        EXPECT_CALL(addMonitorMock, monitorAdded(m3.get()));
+        engine.setMonitors({ m1, m2, m3 });
+
+        Monitor *m4, *m5, *m6, *m7;
+        EXPECT_CALL(addMonitorMock, monitorAdded(_)).WillOnce(SaveArg<0>(&m4)).WillOnce(SaveArg<0>(&m5)).WillOnce(SaveArg<0>(&m6)).WillOnce(SaveArg<0>(&m7));
+        engine.setTargets({ target1, target2 });
+
+        const auto &monitors = engine.monitors();
+        ASSERT_EQ(monitors.size(), 7);
+        ASSERT_EQ(monitors[3].get(), m4);
+        ASSERT_EQ(monitors[4].get(), m5);
+        ASSERT_EQ(monitors[5].get(), m6);
+        ASSERT_EQ(monitors[6].get(), m7);
+    }
 }
 
 TEST(EngineTest, Clones)

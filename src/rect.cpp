@@ -77,3 +77,22 @@ double Rect::height() const
 {
     return std::abs(impl->top - impl->bottom);
 }
+
+/*! Returns true if the rectangle intersects the given rectangle. */
+bool Rect::intersects(const Rect &rect) const
+{
+    // Get the sorted coordinates for the current rectangle
+    double x1 = std::min(impl->left, impl->right);
+    double x2 = std::max(impl->left, impl->right);
+    double y1 = std::min(impl->top, impl->bottom);
+    double y2 = std::max(impl->top, impl->bottom);
+
+    // Get the sorted coordinates for the other rectangle
+    double rectX1 = std::min(rect.impl->left, rect.impl->right);
+    double rectX2 = std::max(rect.impl->left, rect.impl->right);
+    double rectY1 = std::min(rect.impl->top, rect.impl->bottom);
+    double rectY2 = std::max(rect.impl->top, rect.impl->bottom);
+
+    // Check if the rectangles intersect
+    return !(x2 < rectX1 || rectX2 < x1 || y2 < rectY1 || rectY2 < y1);
+}

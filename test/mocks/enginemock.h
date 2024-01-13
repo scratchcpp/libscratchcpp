@@ -26,6 +26,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, deinitClone, (std::shared_ptr<Sprite>), (override));
         MOCK_METHOD(void, stopSounds, (), (override));
 
+        MOCK_METHOD(void, updateMonitors, (), (override));
         MOCK_METHOD(void, step, (), (override));
         MOCK_METHOD(void, run, (), (override));
         MOCK_METHOD(void, runEventLoop, (), (override));
@@ -111,6 +112,11 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, moveSpriteBehindOther, (Sprite * sprite, Sprite *other), (override));
 
         MOCK_METHOD(Stage *, stage, (), (const, override));
+
+        MOCK_METHOD(const std::vector<std::shared_ptr<Monitor>> &, monitors, (), (const, override));
+        MOCK_METHOD(void, setMonitors, (const std::vector<std::shared_ptr<Monitor>> &), (override));
+        MOCK_METHOD(void, setAddMonitorHandler, (const std::function<void(Monitor *)> &), (override));
+        MOCK_METHOD(void, setRemoveMonitorHandler, (const std::function<void(Monitor *, IMonitorHandler *)> &), (override));
 
         MOCK_METHOD(std::vector<std::string> &, extensions, (), (const, override));
         MOCK_METHOD(void, setExtensions, (const std::vector<std::string> &), (override));
