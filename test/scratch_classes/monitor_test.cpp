@@ -2,6 +2,7 @@
 #include <scratchcpp/block.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/rect.h>
+#include <scratchcpp/virtualmachine.h>
 #include <scratch/monitor_p.h>
 #include <monitorhandlermock.h>
 #include <randomgeneratormock.h>
@@ -91,17 +92,22 @@ TEST(MonitorTest, Sprite)
 TEST(MonitorTest, UpdateValue)
 {
     Monitor monitor("", "");
-    monitor.updateValue(5);
+    VirtualMachine vm1, vm2;
+    monitor.updateValue(nullptr);
+    monitor.updateValue(&vm1);
 
     MonitorHandlerMock handler;
     EXPECT_CALL(handler, init);
     monitor.setInterface(&handler);
 
-    EXPECT_CALL(handler, onValueChanged(Value(6.5)));
-    monitor.updateValue(6.5);
+    EXPECT_CALL(handler, onValueChanged(&vm1));
+    monitor.updateValue(&vm1);
 
-    EXPECT_CALL(handler, onValueChanged(Value("test")));
-    monitor.updateValue("test");
+    EXPECT_CALL(handler, onValueChanged(nullptr));
+    monitor.updateValue(nullptr);
+
+    EXPECT_CALL(handler, onValueChanged(&vm2));
+    monitor.updateValue(&vm2);
 }
 
 TEST(MonitorTest, Width)

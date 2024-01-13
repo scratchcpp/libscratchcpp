@@ -17,7 +17,7 @@ class LIBSCRATCHCPP_EXPORT IMonitorHandler
 
         virtual void init(Monitor *) = 0;
 
-        virtual void onValueChanged(const Value &value) = 0;
+        virtual void onValueChanged(const VirtualMachine *vm) = 0;
         virtual void onVisibleChanged(bool visible) = 0;
 };
 

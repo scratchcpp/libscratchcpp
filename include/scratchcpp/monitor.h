@@ -49,7 +49,7 @@ class LIBSCRATCHCPP_EXPORT Monitor : public Entity
 
         const std::string &opcode() const;
 
-        void updateValue(const Value &value);
+        void updateValue(const VirtualMachine *vm);
 
         unsigned int width() const;
         void setWidth(unsigned int width);

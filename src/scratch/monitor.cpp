@@ -80,11 +80,14 @@ const std::string &Monitor::opcode() const
     return impl->block->opcode();
 }
 
-/*! Updates the monitor's value and notifies its interface about it (if there's any). */
-void Monitor::updateValue(const Value &value)
+/*!
+ * Notifies the monitor's interface about value change.
+ * The interaface is supposed to read it from the VirtualMachine.
+ */
+void Monitor::updateValue(const VirtualMachine *vm)
 {
     if (impl->iface)
-        impl->iface->onValueChanged(value);
+        impl->iface->onValueChanged(vm);
 }
 
 /*! Returns the monitor's width. */
