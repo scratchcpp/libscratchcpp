@@ -136,7 +136,7 @@ libscratchcpp::Project p("https://scratch.mit.edu/projects/XXXXXX");
 - [x] Lists (monitors are not implemented yet)
 - [x] Clones
 - [x] Timer
-- [ ] API for monitors
+- [x] API for monitors
 - [ ] Project metadata
 - [x] Turbo mode
 - [ ] Multithreading (experimental)
