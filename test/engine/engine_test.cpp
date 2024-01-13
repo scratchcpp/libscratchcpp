@@ -32,6 +32,8 @@ using namespace libscratchcpp;
 
 using ::testing::Return;
 using ::testing::SaveArg;
+using ::testing::WithArgs;
+using ::testing::Invoke;
 using ::testing::_;
 
 // NOTE: resolveIds() and compile() are tested in load_project_test
@@ -102,7 +104,7 @@ TEST(EngineTest, Clear)
     ASSERT_TRUE(engine.monitors().empty());
 }
 
-TEST(EngineTest, CompileMonitors)
+TEST(EngineTest, CompileAndExecuteMonitors)
 {
     Engine engine;
     auto stage = std::make_shared<Stage>();
@@ -111,6 +113,8 @@ TEST(EngineTest, CompileMonitors)
 
     auto m1 = std::make_shared<Monitor>("a", "monitor_test1");
     auto m2 = std::make_shared<Monitor>("b", "monitor_test2");
+    auto m3 = std::make_shared<Monitor>("c", "monitor_test3");
+    m1->setVisible(false);
     m2->setSprite(sprite.get());
     engine.setMonitors({ m1, m2 });
 
@@ -119,18 +123,38 @@ TEST(EngineTest, CompileMonitors)
     engine.addCompileFunction(section.get(), m1->opcode(), [](Compiler *compiler) { compiler->addConstValue(5.4); });
     engine.addCompileFunction(section.get(), m2->opcode(), [](Compiler *compiler) { compiler->addConstValue("test"); });
 
+    // Compile the monitor blocks
     engine.compile();
     auto script1 = m1->script();
     auto script2 = m2->script();
-    ASSERT_TRUE(script1 && script2);
+    auto script3 = m3->script();
+    ASSERT_TRUE(script1 && script2 && !script3);
 
-    ASSERT_EQ(script1->bytecodeVector(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_HALT }));
+    ASSERT_EQ(script1->bytecodeVector(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
     ASSERT_EQ(script1->target(), stage.get());
     ASSERT_EQ(script1->topBlock(), m1->block());
 
-    ASSERT_EQ(script2->bytecodeVector(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_HALT }));
+    ASSERT_EQ(script2->bytecodeVector(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
     ASSERT_EQ(script2->target(), sprite.get());
     ASSERT_EQ(script2->topBlock(), m2->block());
+
+    // Execute the monitor blocks
+    MonitorHandlerMock iface1, iface2, iface3;
+    EXPECT_CALL(iface1, init);
+    EXPECT_CALL(iface2, init);
+    EXPECT_CALL(iface3, init);
+    m1->setInterface(&iface1);
+    m2->setInterface(&iface2);
+    m3->setInterface(&iface3);
+
+    EXPECT_CALL(iface1, onValueChanged).Times(0);
+    EXPECT_CALL(iface2, onValueChanged(_)).WillOnce(WithArgs<0>(Invoke([](const VirtualMachine *vm) {
+        ASSERT_EQ(vm->registerCount(), 1);
+        ASSERT_EQ(vm->getInput(0, 1)->toString(), "test");
+        ASSERT_FALSE(vm->atEnd()); // the script shouldn't end because that would spam the console with leak warnings
+    })));
+    EXPECT_CALL(iface3, onValueChanged).Times(0);
+    engine.updateMonitors();
 }
 
 TEST(EngineTest, IsRunning)

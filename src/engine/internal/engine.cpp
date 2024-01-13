@@ -236,6 +236,12 @@ void Engine::compile()
             else
                 std::cout << "warning: monitor block doesn't have a compile function: " << block->opcode() << std::endl;
 
+            // Workaround for register leak warning spam: pause the script after getting the monitor value
+            compiler.addFunctionCall([](VirtualMachine *vm) -> unsigned int {
+                vm->stop(false, false, false);
+                return 0;
+            });
+
             compiler.end();
 
             script->setBytecode(compiler.bytecode());
@@ -367,6 +373,22 @@ void Engine::stopSounds()
     }
 }
 
+void Engine::updateMonitors()
+{
+    // Execute the "script" of each visible monitor
+    for (auto monitor : m_monitors) {
+        if (monitor->visible()) {
+            auto script = monitor->script();
+
+            if (script) {
+                auto vm = script->start();
+                vm->run();
+                monitor->updateValue(vm.get());
+            }
+        }
+    }
+}
+
 void Engine::step()
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L2087C6-L2155
@@ -485,6 +507,7 @@ void Engine::eventLoop(bool untilProjectStops)
         auto tickStart = m_clock->currentSteadyTime();
         m_eventLoopMutex.lock();
         step();
+        updateMonitors();
 
         // Stop the event loop if the project has finished running (and untilProjectStops is set to true)
         if (untilProjectStops && m_threads.empty()) {

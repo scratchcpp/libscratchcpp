@@ -86,6 +86,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Stops all currently playing sounds. */
         virtual void stopSounds() = 0;
 
+        /*! Updates the values of stage monitors. */
+        virtual void updateMonitors() = 0;
+
         /*! Steps all currently running threads. Use this to implement a custom event loop. */
         virtual void step() = 0;
 

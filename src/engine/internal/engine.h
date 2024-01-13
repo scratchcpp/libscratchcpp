@@ -43,6 +43,7 @@ class Engine : public IEngine
         void deinitClone(std::shared_ptr<Sprite> clone) override;
         void stopSounds() override;
 
+        void updateMonitors() override;
         void step() override;
         void run() override;
         void runEventLoop() override;
