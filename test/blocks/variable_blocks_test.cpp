@@ -37,6 +37,18 @@ class VariableBlocksTest : public testing::Test
             return block;
         }
 
+        // For read variable
+        std::shared_ptr<Block> createVariableBlock(const std::string &id, const std::string &opcode, std::shared_ptr<Variable> variable) const
+        {
+            auto block = std::make_shared<Block>(id, opcode);
+
+            auto variableField = std::make_shared<Field>("VARIABLE", Value(), variable);
+            variableField->setFieldId(VariableBlocks::VARIABLE);
+            block->addField(variableField);
+
+            return block;
+        }
+
         std::unique_ptr<IBlockSection> m_section;
         EngineMock m_engineMock;
         Engine m_engine;
@@ -55,6 +67,7 @@ TEST_F(VariableBlocksTest, CategoryVisible)
 TEST_F(VariableBlocksTest, RegisterBlocks)
 {
     // Blocks
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_variable", &VariableBlocks::compileVariable)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_setvariableto", &VariableBlocks::compileSetVariable)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_changevariableby", &VariableBlocks::compileChangeVariableBy)).Times(1);
 
@@ -65,6 +78,36 @@ TEST_F(VariableBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "VARIABLE", VariableBlocks::VARIABLE));
 
     m_section->registerBlocks(&m_engineMock);
+}
+
+TEST_F(VariableBlocksTest, Variable)
+{
+    Compiler compiler(&m_engine);
+
+    // [var1]
+    auto var1 = std::make_shared<Variable>("b", "var1");
+    auto block1 = createVariableBlock("a", "data_variable", var1);
+
+    // [var2]
+    auto var2 = std::make_shared<Variable>("d", "var2");
+    auto block2 = createVariableBlock("c", "data_variable", var2);
+
+    compiler.init();
+    compiler.setBlock(block1);
+    VariableBlocks::compileVariable(&compiler);
+    compiler.setBlock(block2);
+    VariableBlocks::compileVariable(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_READ_VAR, 0, vm::OP_READ_VAR, 1, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+    ASSERT_EQ(
+        compiler.variables(),
+        std::vector<Variable *>({
+            var1.get(),
+            var2.get(),
+        }));
+    ASSERT_TRUE(compiler.lists().empty());
 }
 
 TEST_F(VariableBlocksTest, SetVariableTo)

@@ -27,6 +27,7 @@ class VariableBlocks : public IBlockSection
 
         void registerBlocks(IEngine *engine) override;
 
+        static void compileVariable(Compiler *compiler);
         static void compileSetVariable(Compiler *compiler);
         static void compileChangeVariableBy(Compiler *compiler);
 };
