@@ -134,6 +134,10 @@ void Engine::resolveIds()
     for (auto monitor : m_monitors) {
         auto block = monitor->block();
         auto container = blockSectionContainer(block->opcode());
+
+        if (container)
+            block->setCompileFunction(container->resolveBlockCompileFunc(block->opcode()));
+
         const auto &fields = block->fields();
         Target *target;
 
@@ -210,6 +214,37 @@ void Engine::compile()
                 m_scripts[block]->setLists(compiler.lists());
             }
         }
+    }
+
+    // Compile monitor blocks to bytecode
+    std::cout << "Compiling stage monitors..." << std::endl;
+
+    for (auto monitor : m_monitors) {
+        Target *target = monitor->sprite() ? dynamic_cast<Target *>(monitor->sprite()) : stage();
+        Compiler compiler(this, target);
+        auto block = monitor->block();
+        auto section = blockSection(block->opcode());
+
+        if (section) {
+            auto script = std::make_shared<Script>(target, block, this);
+            monitor->setScript(script);
+            compiler.init();
+            compiler.setBlock(block);
+
+            if (block->compileFunction())
+                block->compile(&compiler);
+            else
+                std::cout << "warning: monitor block doesn't have a compile function: " << block->opcode() << std::endl;
+
+            compiler.end();
+
+            script->setBytecode(compiler.bytecode());
+            script->setFunctions(m_functions);
+            script->setConstValues(compiler.constValues());
+            script->setVariables(compiler.variables());
+            script->setLists(compiler.lists());
+        } else
+            std::cout << "warning: unsupported monitor block: " << block->opcode() << std::endl;
     }
 }
 

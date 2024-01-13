@@ -8,6 +8,9 @@
 #include <scratchcpp/keyevent.h>
 #include <scratchcpp/monitor.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/compiler.h>
+#include <scratchcpp/script.h>
+#include <scratchcpp/virtualmachine.h>
 #include <scratch/sound_p.h>
 #include <timermock.h>
 #include <clockmock.h>
@@ -97,6 +100,37 @@ TEST(EngineTest, Clear)
     EXPECT_CALL(removeMonitorMock, monitorRemoved(monitor4.get(), &iface4));
     engine.clear();
     ASSERT_TRUE(engine.monitors().empty());
+}
+
+TEST(EngineTest, CompileMonitors)
+{
+    Engine engine;
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+    engine.setTargets({ stage, sprite });
+
+    auto m1 = std::make_shared<Monitor>("a", "monitor_test1");
+    auto m2 = std::make_shared<Monitor>("b", "monitor_test2");
+    m2->setSprite(sprite.get());
+    engine.setMonitors({ m1, m2 });
+
+    auto section = std::make_shared<TestSection>();
+    engine.registerSection(section);
+    engine.addCompileFunction(section.get(), m1->opcode(), [](Compiler *compiler) { compiler->addConstValue(5.4); });
+    engine.addCompileFunction(section.get(), m2->opcode(), [](Compiler *compiler) { compiler->addConstValue("test"); });
+
+    engine.compile();
+    auto script1 = m1->script();
+    auto script2 = m2->script();
+    ASSERT_TRUE(script1 && script2);
+
+    ASSERT_EQ(script1->bytecodeVector(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_HALT }));
+    ASSERT_EQ(script1->target(), stage.get());
+    ASSERT_EQ(script1->topBlock(), m1->block());
+
+    ASSERT_EQ(script2->bytecodeVector(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_HALT }));
+    ASSERT_EQ(script2->target(), sprite.get());
+    ASSERT_EQ(script2->topBlock(), m2->block());
 }
 
 TEST(EngineTest, IsRunning)
