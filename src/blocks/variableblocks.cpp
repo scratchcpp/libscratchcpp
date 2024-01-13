@@ -16,6 +16,7 @@ std::string VariableBlocks::name() const
 void VariableBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks
+    engine->addCompileFunction(this, "data_variable", &compileVariable);
     engine->addCompileFunction(this, "data_setvariableto", &compileSetVariable);
     engine->addCompileFunction(this, "data_changevariableby", &compileChangeVariableBy);
 
@@ -24,6 +25,12 @@ void VariableBlocks::registerBlocks(IEngine *engine)
 
     // Fields
     engine->addField(this, "VARIABLE", VARIABLE);
+}
+
+void VariableBlocks::compileVariable(Compiler *compiler)
+{
+    // NOTE: This block is only used by variable monitors
+    compiler->addInstruction(vm::OP_READ_VAR, { compiler->variableIndex(compiler->field(VARIABLE)->valuePtr()) });
 }
 
 void VariableBlocks::compileSetVariable(Compiler *compiler)

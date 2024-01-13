@@ -94,6 +94,7 @@ TEST_F(ListBlocksTest, CategoryVisible)
 TEST_F(ListBlocksTest, RegisterBlocks)
 {
     // Blocks
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_listcontents", &ListBlocks::compileListContents)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_addtolist", &ListBlocks::compileAddToList)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_deleteoflist", &ListBlocks::compileDeleteFromList)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_deletealloflist", &ListBlocks::compileDeleteAllOfList)).Times(1);
@@ -112,6 +113,36 @@ TEST_F(ListBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "LIST", ListBlocks::LIST));
 
     m_section->registerBlocks(&m_engineMock);
+}
+
+TEST_F(ListBlocksTest, ListContents)
+{
+    Compiler compiler(&m_engine);
+
+    // [list1]
+    auto list1 = std::make_shared<List>("b", "list1");
+    auto block1 = createListBlock("a", "data_listcontents", list1);
+
+    // [list2]
+    auto list2 = std::make_shared<List>("d", "list2");
+    auto block2 = createListBlock("c", "data_listcontents", list2);
+
+    compiler.init();
+    compiler.setBlock(block1);
+    ListBlocks::compileListContents(&compiler);
+    compiler.setBlock(block2);
+    ListBlocks::compileListContents(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 1 }));
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_EQ(
+        compiler.lists(),
+        std::vector<List *>({
+            list1.get(),
+            list2.get(),
+        }));
 }
 
 TEST_F(ListBlocksTest, AddToList)

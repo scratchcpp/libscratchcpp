@@ -29,6 +29,7 @@ class ListBlocks : public IBlockSection
 
         void registerBlocks(IEngine *engine) override;
 
+        static void compileListContents(Compiler *compiler);
         static void compileAddToList(Compiler *compiler);
         static void compileDeleteFromList(Compiler *compiler);
         static void compileDeleteAllOfList(Compiler *compiler);

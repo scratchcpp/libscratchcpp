@@ -21,6 +21,7 @@ bool ListBlocks::categoryVisible() const
 void ListBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks
+    engine->addCompileFunction(this, "data_listcontents", &compileListContents);
     engine->addCompileFunction(this, "data_addtolist", &compileAddToList);
     engine->addCompileFunction(this, "data_deleteoflist", &compileDeleteFromList);
     engine->addCompileFunction(this, "data_deletealloflist", &compileDeleteAllOfList);
@@ -37,6 +38,14 @@ void ListBlocks::registerBlocks(IEngine *engine)
 
     // Fields
     engine->addField(this, "LIST", LIST);
+}
+
+void ListBlocks::compileListContents(Compiler *compiler)
+{
+    // NOTE: This block is only used by list monitors
+    // Instead of returning the actual list contents, let's just return the index of the list
+    // and let the renderer read the list using the index
+    compiler->addConstValue(static_cast<size_t>(compiler->listIndex(compiler->field(LIST)->valuePtr())));
 }
 
 void ListBlocks::compileAddToList(Compiler *compiler)
