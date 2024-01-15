@@ -130,6 +130,9 @@ TEST(EngineTest, CompileAndExecuteMonitors)
 
     engine.addMonitorNameFunction(section.get(), m2->opcode(), [](Block *block) -> const std::string & { return block->opcode(); });
 
+    engine.addMonitorChangeFunction(section.get(), m1->opcode(), [](Block *block, const Value &newValue) { std::cout << "change 1!" << std::endl; });
+    engine.addMonitorChangeFunction(section.get(), m2->opcode(), [](Block *block, const Value &newValue) { std::cout << "change 2!" << std::endl; });
+
     // Compile the monitor blocks
     engine.compile();
     auto script1 = m1->script();
@@ -170,6 +173,17 @@ TEST(EngineTest, CompileAndExecuteMonitors)
     })));
     EXPECT_CALL(iface3, onValueChanged).Times(0);
     engine.updateMonitors();
+
+    // Change the monitor values
+    testing::internal::CaptureStdout();
+    EXPECT_CALL(iface1, onValueChanged);
+    m1->changeValue(0);
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "change 1!\n");
+
+    testing::internal::CaptureStdout();
+    EXPECT_CALL(iface2, onValueChanged);
+    m2->changeValue(0);
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "change 2!\n");
 }
 
 TEST(EngineTest, IsRunning)

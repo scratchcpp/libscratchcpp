@@ -229,10 +229,13 @@ void Engine::compile()
         auto container = blockSectionContainer(block->opcode());
 
         if (container) {
-            MonitorNameFunc f = container->resolveMonitorNameFunc(block->opcode());
+            MonitorNameFunc nameFunc = container->resolveMonitorNameFunc(block->opcode());
 
-            if (f)
-                monitor->impl->name = f(block.get());
+            if (nameFunc)
+                monitor->impl->name = nameFunc(block.get());
+
+            MonitorChangeFunc changeFunc = container->resolveMonitorChangeFunc(block->opcode());
+            monitor->setValueChangeFunction(changeFunc);
         }
 
         if (section) {
@@ -1466,10 +1469,13 @@ void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *targe
     auto container = blockSectionContainer(monitor->opcode());
 
     if (container) {
-        MonitorNameFunc f = container->resolveMonitorNameFunc(monitor->opcode());
+        MonitorNameFunc nameFunc = container->resolveMonitorNameFunc(monitor->opcode());
 
-        if (f)
-            monitor->impl->name = f(monitor->block().get());
+        if (nameFunc)
+            monitor->impl->name = nameFunc(monitor->block().get());
+
+        MonitorChangeFunc changeFunc = container->resolveMonitorChangeFunc(monitor->opcode());
+        monitor->setValueChangeFunction(changeFunc);
     }
 
     // Auto-position the monitor
