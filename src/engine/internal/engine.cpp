@@ -820,6 +820,14 @@ void Engine::addMonitorNameFunction(IBlockSection *section, const std::string &o
         container->addMonitorNameFunction(opcode, f);
 }
 
+void Engine::addMonitorChangeFunction(IBlockSection *section, const std::string &opcode, MonitorChangeFunc f)
+{
+    auto container = blockSectionContainer(section);
+
+    if (container)
+        container->addMonitorChangeFunction(opcode, f);
+}
+
 void Engine::addHatBlock(IBlockSection *section, const std::string &opcode)
 {
     auto container = blockSectionContainer(section);

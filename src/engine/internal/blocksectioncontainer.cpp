@@ -16,6 +16,11 @@ void BlockSectionContainer::addMonitorNameFunction(const std::string &opcode, Mo
     m_monitorNameFunctions[opcode] = f;
 }
 
+void BlockSectionContainer::addMonitorChangeFunction(const std::string &opcode, MonitorChangeFunc f)
+{
+    m_monitorChangeFunctions[opcode] = f;
+}
+
 void BlockSectionContainer::addHatBlock(const std::string &opcode)
 {
     m_compileFunctions[opcode] = &dummyFunction;
@@ -47,6 +52,13 @@ MonitorNameFunc BlockSectionContainer::resolveMonitorNameFunc(const std::string 
 {
     if (m_monitorNameFunctions.count(opcode) == 1)
         return m_monitorNameFunctions.at(opcode);
+    return nullptr;
+}
+
+MonitorChangeFunc BlockSectionContainer::resolveMonitorChangeFunc(const std::string &opcode) const
+{
+    if (m_monitorChangeFunctions.count(opcode) == 1)
+        return m_monitorChangeFunctions.at(opcode);
     return nullptr;
 }
 
