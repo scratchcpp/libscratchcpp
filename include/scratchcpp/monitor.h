@@ -56,6 +56,9 @@ class LIBSCRATCHCPP_EXPORT Monitor : public Entity
 
         void updateValue(const VirtualMachine *vm);
 
+        void setValueChangeFunction(MonitorChangeFunc f);
+        void changeValue(const Value &newValue);
+
         unsigned int width() const;
         void setWidth(unsigned int width);
 
