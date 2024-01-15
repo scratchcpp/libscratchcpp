@@ -32,6 +32,15 @@ void Monitor::setInterface(IMonitorHandler *iface)
         iface->init(this);
 }
 
+/*
+ * Returns the name of this monitor.
+ * \note Add the monitor to a project to initialize this property.
+ */
+const std::string &Monitor::name() const
+{
+    return impl->name;
+}
+
 /*! Returns the monitor's mode. */
 Monitor::Mode Monitor::mode() const
 {
@@ -97,6 +106,32 @@ void Monitor::updateValue(const VirtualMachine *vm)
 {
     if (impl->iface)
         impl->iface->onValueChanged(vm);
+}
+
+/*!
+ * Sets the function which is called to change the monitor's value.
+ * \see changeValue()
+ */
+void Monitor::setValueChangeFunction(MonitorChangeFunc f)
+{
+    impl->changeFunc = f;
+}
+
+/*!
+ * Calls the monitor's value update function. For example a variable
+ * monitor's function sets the value of the monitored variable.
+ * \note This doesn't work with list monitors.
+ */
+void Monitor::changeValue(const Value &newValue)
+{
+    if (impl->changeFunc)
+        impl->changeFunc(impl->block.get(), newValue);
+
+    if (impl->iface) {
+        impl->changeValueVM.reset();
+        impl->changeValueVM.addReturnValue(newValue);
+        impl->iface->onValueChanged(&impl->changeValueVM);
+    }
 }
 
 /*! Returns the monitor's width. */

@@ -64,6 +64,13 @@ class SensingBlocks : public IBlockSection
         static void compileCurrent(Compiler *compiler);
         static void compileDaysSince2000(Compiler *compiler);
 
+        static const std::string &mouseDownMonitorName(Block *block);
+        static const std::string &mouseXMonitorName(Block *block);
+        static const std::string &mouseYMonitorName(Block *block);
+        static const std::string &timerMonitorName(Block *block);
+        static const std::string &currentMonitorName(Block *block);
+        static const std::string &daysSince2000MonitorName(Block *block);
+
         static unsigned int keyPressed(VirtualMachine *vm);
         static unsigned int mouseDown(VirtualMachine *vm);
         static unsigned int mouseX(VirtualMachine *vm);

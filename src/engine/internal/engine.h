@@ -102,6 +102,8 @@ class Engine : public IEngine
         unsigned int functionIndex(BlockFunc f) override;
 
         void addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f) override;
+        void addMonitorNameFunction(IBlockSection *section, const std::string &opcode, MonitorNameFunc f) override;
+        void addMonitorChangeFunction(IBlockSection *section, const std::string &opcode, MonitorChangeFunc f) override;
         void addHatBlock(IBlockSection *section, const std::string &opcode) override;
         void addInput(IBlockSection *section, const std::string &name, int id) override;
         void addField(IBlockSection *section, const std::string &name, int id) override;

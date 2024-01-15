@@ -105,6 +105,9 @@ TEST_F(ListBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_lengthoflist", &ListBlocks::compileLengthOfList)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_listcontainsitem", &ListBlocks::compileListContainsItem)).Times(1);
 
+    // Monitor names
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "data_listcontents", &ListBlocks::listContentsMonitorName));
+
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "ITEM", ListBlocks::ITEM));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "INDEX", ListBlocks::INDEX));
@@ -143,6 +146,20 @@ TEST_F(ListBlocksTest, ListContents)
             list1.get(),
             list2.get(),
         }));
+}
+
+TEST_F(ListBlocksTest, ListContentsMonitorName)
+{
+    // [list1]
+    auto list1 = std::make_shared<List>("b", "list1");
+    auto block1 = createListBlock("a", "data_listcontents", list1);
+
+    // [list2]
+    auto list2 = std::make_shared<List>("d", "list2");
+    auto block2 = createListBlock("c", "data_listcontents", list2);
+
+    ASSERT_EQ(ListBlocks::listContentsMonitorName(block1.get()), "list1");
+    ASSERT_EQ(ListBlocks::listContentsMonitorName(block2.get()), "list2");
 }
 
 TEST_F(ListBlocksTest, AddToList)

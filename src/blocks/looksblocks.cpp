@@ -7,6 +7,7 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/costume.h>
+#include <scratchcpp/block.h>
 #include <scratchcpp/scratchconfiguration.h>
 
 #include "looksblocks.h"
@@ -41,6 +42,11 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_goforwardbackwardlayers", &compileGoForwardBackwardLayers);
     engine->addCompileFunction(this, "looks_costumenumbername", &compileCostumeNumberName);
     engine->addCompileFunction(this, "looks_backdropnumbername", &compileBackdropNumberName);
+
+    // Monitor names
+    engine->addMonitorNameFunction(this, "looks_costumenumbername", &costumeNumberNameMonitorName);
+    engine->addMonitorNameFunction(this, "looks_backdropnumbername", &backdropNumberNameMonitorName);
+    engine->addMonitorNameFunction(this, "looks_size", &sizeMonitorName);
 
     // Inputs
     engine->addInput(this, "CHANGE", CHANGE);
@@ -457,6 +463,56 @@ void LooksBlocks::compileBackdropNumberName(Compiler *compiler)
             compiler->addFunctionCall(&backdropName);
             break;
     }
+}
+
+const std::string &LooksBlocks::costumeNumberNameMonitorName(Block *block)
+{
+    int option = block->findFieldById(NUMBER_NAME)->specialValueId();
+
+    switch (option) {
+        case Number: {
+            static const std::string name = "costume number";
+            return name;
+        }
+
+        case Name: {
+            static const std::string name = "costume name";
+            return name;
+        }
+
+        default: {
+            static const std::string name = "";
+            return name;
+        }
+    }
+}
+
+const std::string &LooksBlocks::backdropNumberNameMonitorName(Block *block)
+{
+    int option = block->findFieldById(NUMBER_NAME)->specialValueId();
+
+    switch (option) {
+        case Number: {
+            static const std::string name = "backdrop number";
+            return name;
+        }
+
+        case Name: {
+            static const std::string name = "backdrop name";
+            return name;
+        }
+
+        default: {
+            static const std::string name = "";
+            return name;
+        }
+    }
+}
+
+const std::string &LooksBlocks::sizeMonitorName(Block *block)
+{
+    static const std::string name = "size";
+    return name;
 }
 
 unsigned int LooksBlocks::show(VirtualMachine *vm)

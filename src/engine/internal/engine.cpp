@@ -226,6 +226,17 @@ void Engine::compile()
         Compiler compiler(this, target);
         auto block = monitor->block();
         auto section = blockSection(block->opcode());
+        auto container = blockSectionContainer(block->opcode());
+
+        if (container) {
+            MonitorNameFunc nameFunc = container->resolveMonitorNameFunc(block->opcode());
+
+            if (nameFunc)
+                monitor->impl->name = nameFunc(block.get());
+
+            MonitorChangeFunc changeFunc = container->resolveMonitorChangeFunc(block->opcode());
+            monitor->setValueChangeFunction(changeFunc);
+        }
 
         if (section) {
             auto script = std::make_shared<Script>(target, block, this);
@@ -802,6 +813,22 @@ void Engine::addCompileFunction(IBlockSection *section, const std::string &opcod
 
     if (container)
         container->addCompileFunction(opcode, f);
+}
+
+void Engine::addMonitorNameFunction(IBlockSection *section, const std::string &opcode, MonitorNameFunc f)
+{
+    auto container = blockSectionContainer(section);
+
+    if (container)
+        container->addMonitorNameFunction(opcode, f);
+}
+
+void Engine::addMonitorChangeFunction(IBlockSection *section, const std::string &opcode, MonitorChangeFunc f)
+{
+    auto container = blockSectionContainer(section);
+
+    if (container)
+        container->addMonitorChangeFunction(opcode, f);
 }
 
 void Engine::addHatBlock(IBlockSection *section, const std::string &opcode)
@@ -1439,6 +1466,17 @@ void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *targe
         monitor->setSprite(dynamic_cast<Sprite *>(target));
 
     monitor->impl->blockSection = blockSection(monitor->opcode());
+    auto container = blockSectionContainer(monitor->opcode());
+
+    if (container) {
+        MonitorNameFunc nameFunc = container->resolveMonitorNameFunc(monitor->opcode());
+
+        if (nameFunc)
+            monitor->impl->name = nameFunc(monitor->block().get());
+
+        MonitorChangeFunc changeFunc = container->resolveMonitorChangeFunc(monitor->opcode());
+        monitor->setValueChangeFunction(changeFunc);
+    }
 
     // Auto-position the monitor
     Rect rect = Monitor::getInitialPosition(m_monitors, monitor->width(), monitor->height());

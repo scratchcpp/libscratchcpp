@@ -185,7 +185,6 @@ void VirtualMachine::kill()
 /*! Jumps back to the initial position. */
 void VirtualMachine::reset()
 {
-    assert(impl->bytecode);
     impl->pos = impl->bytecode;
     impl->atEnd = false;
 

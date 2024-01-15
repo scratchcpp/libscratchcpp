@@ -10,6 +10,7 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/block.h>
 #include "sensingblocks.h"
 
 #include "../engine/internal/clock.h"
@@ -37,6 +38,14 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_of", &compileOf);
     engine->addCompileFunction(this, "sensing_current", &compileCurrent);
     engine->addCompileFunction(this, "sensing_dayssince2000", &compileDaysSince2000);
+
+    // Monitor names
+    engine->addMonitorNameFunction(this, "sensing_mousedown", &mouseDownMonitorName);
+    engine->addMonitorNameFunction(this, "sensing_mousex", &mouseXMonitorName);
+    engine->addMonitorNameFunction(this, "sensing_mousey", &mouseYMonitorName);
+    engine->addMonitorNameFunction(this, "sensing_timer", &timerMonitorName);
+    engine->addMonitorNameFunction(this, "sensing_current", &currentMonitorName);
+    engine->addMonitorNameFunction(this, "sensing_dayssince2000", &daysSince2000MonitorName);
 
     // Inputs
     engine->addInput(this, "DISTANCETOMENU", DISTANCETOMENU);
@@ -308,6 +317,83 @@ void SensingBlocks::compileCurrent(Compiler *compiler)
 void SensingBlocks::compileDaysSince2000(Compiler *compiler)
 {
     compiler->addFunctionCall(&daysSince2000);
+}
+
+const std::string &SensingBlocks::mouseDownMonitorName(Block *block)
+{
+    static const std::string name = "mouse down?";
+    return name;
+}
+
+const std::string &SensingBlocks::mouseXMonitorName(Block *block)
+{
+    static const std::string name = "mouse x";
+    return name;
+}
+
+const std::string &SensingBlocks::mouseYMonitorName(Block *block)
+{
+    static const std::string name = "mouse y";
+    return name;
+}
+
+const std::string &SensingBlocks::timerMonitorName(Block *block)
+{
+    static const std::string name = "timer";
+    return name;
+}
+
+const std::string &SensingBlocks::currentMonitorName(Block *block)
+{
+    int id = block->findFieldById(CURRENTMENU)->specialValueId();
+
+    switch (id) {
+        case YEAR: {
+            static const std::string name = "year";
+            return name;
+        }
+
+        case MONTH: {
+            static const std::string name = "month";
+            return name;
+        }
+
+        case DATE: {
+            static const std::string name = "date";
+            return name;
+        }
+
+        case DAYOFWEEK: {
+            static const std::string name = "day of week";
+            return name;
+        }
+
+        case HOUR: {
+            static const std::string name = "hour";
+            return name;
+        }
+
+        case MINUTE: {
+            static const std::string name = "minute";
+            return name;
+        }
+
+        case SECOND: {
+            static const std::string name = "second";
+            return name;
+        }
+
+        default: {
+            static const std::string name = "";
+            return name;
+        }
+    }
+}
+
+const std::string &SensingBlocks::daysSince2000MonitorName(Block *block)
+{
+    static const std::string name = "days since 2000";
+    return name;
 }
 
 unsigned int SensingBlocks::keyPressed(VirtualMachine *vm)

@@ -122,6 +122,11 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_costumenumbername", &LooksBlocks::compileCostumeNumberName));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_backdropnumbername", &LooksBlocks::compileBackdropNumberName));
 
+    // Monitor names
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "looks_costumenumbername", &LooksBlocks::costumeNumberNameMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "looks_backdropnumbername", &LooksBlocks::backdropNumberNameMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "looks_size", &LooksBlocks::sizeMonitorName));
+
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "CHANGE", LooksBlocks::CHANGE));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SIZE", LooksBlocks::SIZE));
@@ -924,6 +929,11 @@ TEST_F(LooksBlocksTest, Size)
 
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
     ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(LooksBlocksTest, SizeMonitorName)
+{
+    ASSERT_EQ(LooksBlocks::sizeMonitorName(nullptr), "size");
 }
 
 TEST_F(LooksBlocksTest, SizeImpl)
@@ -2767,6 +2777,20 @@ TEST_F(LooksBlocksTest, CostumeNumberName)
     ASSERT_TRUE(compiler.constValues().empty());
 }
 
+TEST_F(LooksBlocksTest, CostumeNumberNameMonitorName)
+{
+    // costume [number]
+    auto block1 = std::make_shared<Block>("a", "looks_costumenumbername");
+    addDropdownField(block1, "NUMBER_NAME", LooksBlocks::NUMBER_NAME, "number", LooksBlocks::Number);
+
+    // costume [name]
+    auto block2 = std::make_shared<Block>("b", "looks_costumenumbername");
+    addDropdownField(block2, "NUMBER_NAME", LooksBlocks::NUMBER_NAME, "name", LooksBlocks::Name);
+
+    ASSERT_EQ(LooksBlocks::costumeNumberNameMonitorName(block1.get()), "costume number");
+    ASSERT_EQ(LooksBlocks::costumeNumberNameMonitorName(block2.get()), "costume name");
+}
+
 TEST_F(LooksBlocksTest, CostumeNumberNameImpl)
 {
     static unsigned int bytecode1[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
@@ -2843,6 +2867,20 @@ TEST_F(LooksBlocksTest, BackdropNumberName)
 
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT }));
     ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(LooksBlocksTest, BackdropNumberNameMonitorName)
+{
+    // backdrop [number]
+    auto block1 = std::make_shared<Block>("a", "looks_backdropnumbername");
+    addDropdownField(block1, "NUMBER_NAME", LooksBlocks::NUMBER_NAME, "number", LooksBlocks::Number);
+
+    // backdrop [name]
+    auto block2 = std::make_shared<Block>("b", "looks_backdropnumbername");
+    addDropdownField(block2, "NUMBER_NAME", LooksBlocks::NUMBER_NAME, "name", LooksBlocks::Name);
+
+    ASSERT_EQ(LooksBlocks::backdropNumberNameMonitorName(block1.get()), "backdrop number");
+    ASSERT_EQ(LooksBlocks::backdropNumberNameMonitorName(block2.get()), "backdrop name");
 }
 
 TEST_F(LooksBlocksTest, BackdropNumberNameImpl)

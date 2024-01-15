@@ -218,6 +218,18 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f) = 0;
 
         /*!
+         * Call this from IBlockSection#registerBlocks() to add a monitor name function to a block section.
+         * \see <a href="blockSections.html">Block sections</a>
+         */
+        virtual void addMonitorNameFunction(IBlockSection *section, const std::string &opcode, MonitorNameFunc f) = 0;
+
+        /*!
+         * Call this from IBlockSection#registerBlocks() to add a monitor value change function to a block section.
+         * \see <a href="blockSections.html">Block sections</a>
+         */
+        virtual void addMonitorChangeFunction(IBlockSection *section, const std::string &opcode, MonitorChangeFunc f) = 0;
+
+        /*!
          * Call this from IBlockSection#registerBlocks() to add a hat block to a block section.
          * \see <a href="blockSections.html">Block sections</a>
          */

@@ -123,6 +123,16 @@ TEST(EngineTest, CompileAndExecuteMonitors)
     engine.addCompileFunction(section.get(), m1->opcode(), [](Compiler *compiler) { compiler->addConstValue(5.4); });
     engine.addCompileFunction(section.get(), m2->opcode(), [](Compiler *compiler) { compiler->addConstValue("test"); });
 
+    engine.addMonitorNameFunction(section.get(), m1->opcode(), [](Block *block) -> const std::string & {
+        static const std::string testStr = "test";
+        return testStr;
+    });
+
+    engine.addMonitorNameFunction(section.get(), m2->opcode(), [](Block *block) -> const std::string & { return block->opcode(); });
+
+    engine.addMonitorChangeFunction(section.get(), m1->opcode(), [](Block *block, const Value &newValue) { std::cout << "change 1!" << std::endl; });
+    engine.addMonitorChangeFunction(section.get(), m2->opcode(), [](Block *block, const Value &newValue) { std::cout << "change 2!" << std::endl; });
+
     // Compile the monitor blocks
     engine.compile();
     auto script1 = m1->script();
@@ -142,6 +152,10 @@ TEST(EngineTest, CompileAndExecuteMonitors)
     ASSERT_EQ(m2->blockSection(), section);
     ASSERT_FALSE(m3->blockSection());
 
+    ASSERT_EQ(m1->name(), "test");
+    ASSERT_EQ(m2->name(), m2->opcode());
+    ASSERT_TRUE(m3->name().empty());
+
     // Execute the monitor blocks
     MonitorHandlerMock iface1, iface2, iface3;
     EXPECT_CALL(iface1, init);
@@ -159,6 +173,17 @@ TEST(EngineTest, CompileAndExecuteMonitors)
     })));
     EXPECT_CALL(iface3, onValueChanged).Times(0);
     engine.updateMonitors();
+
+    // Change the monitor values
+    testing::internal::CaptureStdout();
+    EXPECT_CALL(iface1, onValueChanged);
+    m1->changeValue(0);
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "change 1!\n");
+
+    testing::internal::CaptureStdout();
+    EXPECT_CALL(iface2, onValueChanged);
+    m2->changeValue(0);
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "change 2!\n");
 }
 
 TEST(EngineTest, IsRunning)

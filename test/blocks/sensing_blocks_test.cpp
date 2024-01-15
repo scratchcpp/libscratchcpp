@@ -117,6 +117,14 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_current", &SensingBlocks::compileCurrent));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_dayssince2000", &SensingBlocks::compileDaysSince2000));
 
+    // Monitor names
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_mousedown", &SensingBlocks::mouseDownMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_mousex", &SensingBlocks::mouseXMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_mousey", &SensingBlocks::mouseYMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_timer", &SensingBlocks::timerMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_current", &SensingBlocks::currentMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_dayssince2000", &SensingBlocks::daysSince2000MonitorName));
+
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "KEY_OPTION", SensingBlocks::KEY_OPTION));
@@ -377,6 +385,11 @@ TEST_F(SensingBlocksTest, MouseDown)
     ASSERT_TRUE(compiler.constValues().empty());
 }
 
+TEST_F(SensingBlocksTest, MouseDownMonitorName)
+{
+    ASSERT_EQ(SensingBlocks::mouseDownMonitorName(nullptr), "mouse down?");
+}
+
 TEST_F(SensingBlocksTest, MouseDownImpl)
 {
     static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
@@ -418,6 +431,11 @@ TEST_F(SensingBlocksTest, MouseX)
     ASSERT_TRUE(compiler.constValues().empty());
 }
 
+TEST_F(SensingBlocksTest, MouseXMonitorName)
+{
+    ASSERT_EQ(SensingBlocks::mouseXMonitorName(nullptr), "mouse x");
+}
+
 TEST_F(SensingBlocksTest, MouseXImpl)
 {
     static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
@@ -457,6 +475,11 @@ TEST_F(SensingBlocksTest, MouseY)
 
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
     ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(SensingBlocksTest, MouseYMonitorName)
+{
+    ASSERT_EQ(SensingBlocks::mouseYMonitorName(nullptr), "mouse y");
 }
 
 TEST_F(SensingBlocksTest, MouseYImpl)
@@ -550,6 +573,11 @@ TEST_F(SensingBlocksTest, Timer)
     compiler.end();
 
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+}
+
+TEST_F(SensingBlocksTest, TimerMonitorName)
+{
+    ASSERT_EQ(SensingBlocks::timerMonitorName(nullptr), "timer");
 }
 
 TEST_F(SensingBlocksTest, TimerImpl)
@@ -1386,6 +1414,38 @@ TEST_F(SensingBlocksTest, Current)
         std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_EXEC, 4, vm::OP_EXEC, 5, vm::OP_EXEC, 6, vm::OP_HALT }));
 }
 
+TEST_F(SensingBlocksTest, CurrentMonitorName)
+{
+    // current [year]
+    auto block1 = createSensingCurrentBlock("a", "YEAR", SensingBlocks::YEAR);
+
+    // current [month]
+    auto block2 = createSensingCurrentBlock("b", "MONTH", SensingBlocks::MONTH);
+
+    // current [date]
+    auto block3 = createSensingCurrentBlock("c", "DATE", SensingBlocks::DATE);
+
+    // current [day of week]
+    auto block4 = createSensingCurrentBlock("d", "DAYOFWEEK", SensingBlocks::DAYOFWEEK);
+
+    // current [hour]
+    auto block5 = createSensingCurrentBlock("e", "HOUR", SensingBlocks::HOUR);
+
+    // current [minute]
+    auto block6 = createSensingCurrentBlock("f", "MINUTE", SensingBlocks::MINUTE);
+
+    // current [second]
+    auto block7 = createSensingCurrentBlock("g", "SECOND", SensingBlocks::SECOND);
+
+    ASSERT_EQ(SensingBlocks::currentMonitorName(block1.get()), "year");
+    ASSERT_EQ(SensingBlocks::currentMonitorName(block2.get()), "month");
+    ASSERT_EQ(SensingBlocks::currentMonitorName(block3.get()), "date");
+    ASSERT_EQ(SensingBlocks::currentMonitorName(block4.get()), "day of week");
+    ASSERT_EQ(SensingBlocks::currentMonitorName(block5.get()), "hour");
+    ASSERT_EQ(SensingBlocks::currentMonitorName(block6.get()), "minute");
+    ASSERT_EQ(SensingBlocks::currentMonitorName(block7.get()), "second");
+}
+
 TEST_F(SensingBlocksTest, CurrentYear)
 {
     static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
@@ -1519,6 +1579,11 @@ TEST_F(SensingBlocksTest, DaysSince2000)
     compiler.end();
 
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+}
+
+TEST_F(SensingBlocksTest, DaysSince2000MonitorName)
+{
+    ASSERT_EQ(SensingBlocks::daysSince2000MonitorName(nullptr), "days since 2000");
 }
 
 TEST_F(SensingBlocksTest, DaysSince2000Impl)

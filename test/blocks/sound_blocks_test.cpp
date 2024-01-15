@@ -105,6 +105,9 @@ TEST_F(SoundBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_setvolumeto", &SoundBlocks::compileSetVolumeTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_volume", &SoundBlocks::compileVolume));
 
+    // Monitor names
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sound_volume", &SoundBlocks::volumeMonitorName));
+
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SOUND_MENU", SoundBlocks::SOUND_MENU));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VOLUME", SoundBlocks::VOLUME));
@@ -695,6 +698,11 @@ TEST_F(SoundBlocksTest, Volume)
 
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
     ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(SoundBlocksTest, VolumeMonitorName)
+{
+    ASSERT_EQ(SoundBlocks::volumeMonitorName(nullptr), "volume");
 }
 
 TEST_F(SoundBlocksTest, VolumeImpl)

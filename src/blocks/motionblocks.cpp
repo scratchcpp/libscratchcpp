@@ -45,6 +45,11 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_yposition", &compileYPosition);
     engine->addCompileFunction(this, "motion_direction", &compileDirection);
 
+    // Monitor names
+    engine->addMonitorNameFunction(this, "motion_xposition", &xPositionMonitorName);
+    engine->addMonitorNameFunction(this, "motion_yposition", &yPositionMonitorName);
+    engine->addMonitorNameFunction(this, "motion_direction", &directionMonitorName);
+
     // Inputs
     engine->addInput(this, "STEPS", STEPS);
     engine->addInput(this, "DEGREES", DEGREES);
@@ -243,6 +248,24 @@ void MotionBlocks::compileYPosition(Compiler *compiler)
 void MotionBlocks::compileDirection(Compiler *compiler)
 {
     compiler->addFunctionCall(&direction);
+}
+
+const std::string &MotionBlocks::xPositionMonitorName(Block *block)
+{
+    static const std::string name = "x position";
+    return name;
+}
+
+const std::string &MotionBlocks::yPositionMonitorName(Block *block)
+{
+    static const std::string name = "y position";
+    return name;
+}
+
+const std::string &MotionBlocks::directionMonitorName(Block *block)
+{
+    static const std::string name = "direction";
+    return name;
 }
 
 unsigned int MotionBlocks::moveSteps(VirtualMachine *vm)

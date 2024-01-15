@@ -124,6 +124,11 @@ TEST_F(MotionBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_yposition", &MotionBlocks::compileYPosition));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_direction", &MotionBlocks::compileDirection));
 
+    // Monitor names
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "motion_xposition", &MotionBlocks::xPositionMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "motion_yposition", &MotionBlocks::yPositionMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "motion_direction", &MotionBlocks::directionMonitorName));
+
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "STEPS", MotionBlocks::STEPS));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DEGREES", MotionBlocks::DEGREES));
@@ -1301,6 +1306,11 @@ TEST_F(MotionBlocksTest, XPosition)
     ASSERT_TRUE(compiler.constValues().empty());
 }
 
+TEST_F(MotionBlocksTest, XPositionMonitorName)
+{
+    ASSERT_EQ(MotionBlocks::xPositionMonitorName(nullptr), "x position");
+}
+
 TEST_F(MotionBlocksTest, XPositionImpl)
 {
     static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
@@ -1335,6 +1345,11 @@ TEST_F(MotionBlocksTest, YPosition)
     ASSERT_TRUE(compiler.constValues().empty());
 }
 
+TEST_F(MotionBlocksTest, YPositionMonitorName)
+{
+    ASSERT_EQ(MotionBlocks::yPositionMonitorName(nullptr), "y position");
+}
+
 TEST_F(MotionBlocksTest, YPositionImpl)
 {
     static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
@@ -1367,6 +1382,11 @@ TEST_F(MotionBlocksTest, Direction)
 
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
     ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(MotionBlocksTest, DirectionMonitorName)
+{
+    ASSERT_EQ(MotionBlocks::directionMonitorName(nullptr), "direction");
 }
 
 TEST_F(MotionBlocksTest, DirectionImpl)

@@ -25,6 +25,9 @@ void SoundBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sound_setvolumeto", &compileSetVolumeTo);
     engine->addCompileFunction(this, "sound_volume", &compileVolume);
 
+    // Monitor names
+    engine->addMonitorNameFunction(this, "sound_volume", &volumeMonitorName);
+
     // Inputs
     engine->addInput(this, "SOUND_MENU", SOUND_MENU);
     engine->addInput(this, "VOLUME", VOLUME);
@@ -113,6 +116,12 @@ void SoundBlocks::compileSetVolumeTo(Compiler *compiler)
 void SoundBlocks::compileVolume(Compiler *compiler)
 {
     compiler->addFunctionCall(&volume);
+}
+
+const std::string &SoundBlocks::volumeMonitorName(Block *block)
+{
+    static const std::string name = "volume";
+    return name;
 }
 
 Sound *SoundBlocks::getSoundByIndex(Target *target, long index)

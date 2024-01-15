@@ -75,6 +75,10 @@ class LooksBlocks : public IBlockSection
         static void compileCostumeNumberName(Compiler *compiler);
         static void compileBackdropNumberName(Compiler *compiler);
 
+        static const std::string &costumeNumberNameMonitorName(Block *block);
+        static const std::string &backdropNumberNameMonitorName(Block *block);
+        static const std::string &sizeMonitorName(Block *block);
+
         static unsigned int show(VirtualMachine *vm);
         static unsigned int hide(VirtualMachine *vm);
 
