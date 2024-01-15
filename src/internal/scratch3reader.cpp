@@ -399,7 +399,8 @@ bool Scratch3Reader::load()
                     }
                 }
 
-                assert(monitor->sprite());
+                if (!monitor->sprite())
+                    continue;
             }
 
             // width
