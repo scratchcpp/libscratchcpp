@@ -123,6 +123,13 @@ TEST(EngineTest, CompileAndExecuteMonitors)
     engine.addCompileFunction(section.get(), m1->opcode(), [](Compiler *compiler) { compiler->addConstValue(5.4); });
     engine.addCompileFunction(section.get(), m2->opcode(), [](Compiler *compiler) { compiler->addConstValue("test"); });
 
+    engine.addMonitorNameFunction(section.get(), m1->opcode(), [](Block *block) -> const std::string & {
+        static const std::string testStr = "test";
+        return testStr;
+    });
+
+    engine.addMonitorNameFunction(section.get(), m2->opcode(), [](Block *block) -> const std::string & { return block->opcode(); });
+
     // Compile the monitor blocks
     engine.compile();
     auto script1 = m1->script();
@@ -141,6 +148,10 @@ TEST(EngineTest, CompileAndExecuteMonitors)
     ASSERT_EQ(m1->blockSection(), section);
     ASSERT_EQ(m2->blockSection(), section);
     ASSERT_FALSE(m3->blockSection());
+
+    ASSERT_EQ(m1->name(), "test");
+    ASSERT_EQ(m2->name(), m2->opcode());
+    ASSERT_TRUE(m3->name().empty());
 
     // Execute the monitor blocks
     MonitorHandlerMock iface1, iface2, iface3;

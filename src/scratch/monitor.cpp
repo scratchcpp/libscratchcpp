@@ -32,6 +32,15 @@ void Monitor::setInterface(IMonitorHandler *iface)
         iface->init(this);
 }
 
+/*
+ * Returns the name of this monitor.
+ * \note Add the monitor to a project to initialize this property.
+ */
+const std::string &Monitor::name() const
+{
+    return impl->name;
+}
+
 /*! Returns the monitor's mode. */
 Monitor::Mode Monitor::mode() const
 {

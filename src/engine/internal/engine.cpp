@@ -226,6 +226,14 @@ void Engine::compile()
         Compiler compiler(this, target);
         auto block = monitor->block();
         auto section = blockSection(block->opcode());
+        auto container = blockSectionContainer(block->opcode());
+
+        if (container) {
+            MonitorNameFunc f = container->resolveMonitorNameFunc(block->opcode());
+
+            if (f)
+                monitor->impl->name = f(block.get());
+        }
 
         if (section) {
             auto script = std::make_shared<Script>(target, block, this);
@@ -802,6 +810,14 @@ void Engine::addCompileFunction(IBlockSection *section, const std::string &opcod
 
     if (container)
         container->addCompileFunction(opcode, f);
+}
+
+void Engine::addMonitorNameFunction(IBlockSection *section, const std::string &opcode, MonitorNameFunc f)
+{
+    auto container = blockSectionContainer(section);
+
+    if (container)
+        container->addMonitorNameFunction(opcode, f);
 }
 
 void Engine::addHatBlock(IBlockSection *section, const std::string &opcode)
@@ -1439,6 +1455,14 @@ void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *targe
         monitor->setSprite(dynamic_cast<Sprite *>(target));
 
     monitor->impl->blockSection = blockSection(monitor->opcode());
+    auto container = blockSectionContainer(monitor->opcode());
+
+    if (container) {
+        MonitorNameFunc f = container->resolveMonitorNameFunc(monitor->opcode());
+
+        if (f)
+            monitor->impl->name = f(monitor->block().get());
+    }
 
     // Auto-position the monitor
     Rect rect = Monitor::getInitialPosition(m_monitors, monitor->width(), monitor->height());

@@ -17,6 +17,7 @@ struct MonitorPrivate
         MonitorPrivate(const MonitorPrivate &) = delete;
 
         IMonitorHandler *iface = nullptr;
+        std::string name;
         Monitor::Mode mode = Monitor::Mode::Default;
         std::shared_ptr<Script> script;
         std::shared_ptr<IBlockSection> blockSection;

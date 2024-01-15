@@ -11,6 +11,11 @@ void BlockSectionContainer::addCompileFunction(const std::string &opcode, BlockC
     m_compileFunctions[opcode] = f;
 }
 
+void BlockSectionContainer::addMonitorNameFunction(const std::string &opcode, MonitorNameFunc f)
+{
+    m_monitorNameFunctions[opcode] = f;
+}
+
 void BlockSectionContainer::addHatBlock(const std::string &opcode)
 {
     m_compileFunctions[opcode] = &dummyFunction;
@@ -35,6 +40,13 @@ BlockComp BlockSectionContainer::resolveBlockCompileFunc(const std::string &opco
 {
     if (m_compileFunctions.count(opcode) == 1)
         return m_compileFunctions.at(opcode);
+    return nullptr;
+}
+
+MonitorNameFunc BlockSectionContainer::resolveMonitorNameFunc(const std::string &opcode) const
+{
+    if (m_monitorNameFunctions.count(opcode) == 1)
+        return m_monitorNameFunctions.at(opcode);
     return nullptr;
 }
 

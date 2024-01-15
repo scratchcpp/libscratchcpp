@@ -17,6 +17,8 @@
 #define LIBSCRATCHCPP_EXPORT DECL_IMPORT
 #endif
 
+#include <string>
+
 /*! \brief The main namespace of the library. */
 namespace libscratchcpp
 {
@@ -29,6 +31,7 @@ enum class ScratchVersion
 
 class VirtualMachine;
 class Compiler;
+class Block;
 
 /*!
  * \typedef BlockFunc
@@ -43,6 +46,13 @@ using BlockFunc = unsigned int (*)(VirtualMachine *vm);
  * BlockComp is a function pointer for functions which are used to compile blocks to bytecode.
  */
 using BlockComp = void (*)(Compiler *);
+
+/*!
+ * \typedef MonitorNameFunc
+ *
+ * MonitorNameFunc is a function pointer for functions which are used to get monitor names.
+ */
+using MonitorNameFunc = const std::string &(*)(Block *);
 
 } // namespace libscratchcpp
 
