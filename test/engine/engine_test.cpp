@@ -138,6 +138,10 @@ TEST(EngineTest, CompileAndExecuteMonitors)
     ASSERT_EQ(script2->target(), sprite.get());
     ASSERT_EQ(script2->topBlock(), m2->block());
 
+    ASSERT_EQ(m1->blockSection(), section);
+    ASSERT_EQ(m2->blockSection(), section);
+    ASSERT_FALSE(m3->blockSection());
+
     // Execute the monitor blocks
     MonitorHandlerMock iface1, iface2, iface3;
     EXPECT_CALL(iface1, init);

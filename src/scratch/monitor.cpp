@@ -62,6 +62,15 @@ void Monitor::setScript(std::shared_ptr<Script> script)
     impl->script = script;
 }
 
+/*
+ * Returns the block section of this monitor.
+ * \note This will return nullptr by default. Add the monitor to a project to set this property.
+ */
+std::shared_ptr<IBlockSection> Monitor::blockSection() const
+{
+    return impl->blockSection;
+}
+
 /*! Convenience method which calls block()->target(). */
 Sprite *Monitor::sprite() const
 {

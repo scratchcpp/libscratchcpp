@@ -138,6 +138,8 @@ void Engine::resolveIds()
         if (container)
             block->setCompileFunction(container->resolveBlockCompileFunc(block->opcode()));
 
+        monitor->impl->blockSection = blockSection(monitor->opcode());
+
         const auto &fields = block->fields();
         Target *target;
 
@@ -1435,6 +1437,8 @@ void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *targe
 {
     if (!target->isStage())
         monitor->setSprite(dynamic_cast<Sprite *>(target));
+
+    monitor->impl->blockSection = blockSection(monitor->opcode());
 
     // Auto-position the monitor
     Rect rect = Monitor::getInitialPosition(m_monitors, monitor->width(), monitor->height());
