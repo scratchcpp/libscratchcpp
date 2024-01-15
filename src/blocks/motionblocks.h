@@ -67,6 +67,10 @@ class MotionBlocks : public IBlockSection
         static void compileYPosition(Compiler *compiler);
         static void compileDirection(Compiler *compiler);
 
+        static const std::string &xPositionMonitorName(Block *block);
+        static const std::string &yPositionMonitorName(Block *block);
+        static const std::string &directionMonitorName(Block *block);
+
         static unsigned int moveSteps(VirtualMachine *vm);
         static unsigned int turnRight(VirtualMachine *vm);
         static unsigned int turnLeft(VirtualMachine *vm);
