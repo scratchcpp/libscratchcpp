@@ -45,6 +45,8 @@ class SoundBlocks : public IBlockSection
         static void compileSetVolumeTo(Compiler *compiler);
         static void compileVolume(Compiler *compiler);
 
+        static const std::string &volumeMonitorName(Block *block);
+
         static Sound *getSoundByIndex(Target *target, long index);
         static Sound *playCommon(VirtualMachine *vm);
         static Sound *playByIndexCommon(VirtualMachine *vm);
