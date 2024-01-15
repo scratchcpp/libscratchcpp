@@ -30,6 +30,8 @@ class VariableBlocks : public IBlockSection
         static void compileVariable(Compiler *compiler);
         static void compileSetVariable(Compiler *compiler);
         static void compileChangeVariableBy(Compiler *compiler);
+
+        static const std::string &variableMonitorName(Block *block);
 };
 
 } // namespace libscratchcpp
