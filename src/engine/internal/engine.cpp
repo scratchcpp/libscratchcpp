@@ -1436,8 +1436,6 @@ void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *targe
     if (!target->isStage())
         monitor->setSprite(dynamic_cast<Sprite *>(target));
 
-    monitor->setVisible(false);
-
     // Auto-position the monitor
     Rect rect = Monitor::getInitialPosition(m_monitors, monitor->width(), monitor->height());
     monitor->setX(rect.left());
@@ -1447,6 +1445,8 @@ void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *targe
 
     if (m_addMonitorHandler)
         m_addMonitorHandler(monitor.get());
+
+    monitor->setVisible(false);
 }
 
 void Engine::updateFrameDuration()
