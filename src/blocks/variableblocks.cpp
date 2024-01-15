@@ -25,6 +25,9 @@ void VariableBlocks::registerBlocks(IEngine *engine)
     // Monitor names
     engine->addMonitorNameFunction(this, "data_variable", &variableMonitorName);
 
+    // Monitor change functions
+    engine->addMonitorChangeFunction(this, "data_variable", &changeVariableMonitorValue);
+
     // Inputs
     engine->addInput(this, "VALUE", VALUE);
 
@@ -60,4 +63,12 @@ const std::string &VariableBlocks::variableMonitorName(Block *block)
         static const std::string empty = "";
         return empty;
     }
+}
+
+void VariableBlocks::changeVariableMonitorValue(Block *block, const Value &newValue)
+{
+    Variable *var = dynamic_cast<Variable *>(block->findFieldById(VARIABLE)->valuePtr().get());
+
+    if (var)
+        var->setValue(newValue);
 }

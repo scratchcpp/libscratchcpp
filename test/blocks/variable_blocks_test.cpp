@@ -74,6 +74,9 @@ TEST_F(VariableBlocksTest, RegisterBlocks)
     // Monitor names
     EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "data_variable", &VariableBlocks::variableMonitorName));
 
+    // Monitor change functions
+    EXPECT_CALL(m_engineMock, addMonitorChangeFunction(m_section.get(), "data_variable", &VariableBlocks::changeVariableMonitorValue));
+
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VALUE", VariableBlocks::VALUE));
 
@@ -125,6 +128,25 @@ TEST_F(VariableBlocksTest, VariableMonitorName)
 
     ASSERT_EQ(VariableBlocks::variableMonitorName(block1.get()), "var1");
     ASSERT_EQ(VariableBlocks::variableMonitorName(block2.get()), "var2");
+}
+
+TEST_F(VariableBlocksTest, ChangeVariableMonitorValue)
+{
+    // [var1]
+    auto var1 = std::make_shared<Variable>("b", "var1", 2.5);
+    auto block1 = createVariableBlock("a", "data_variable", var1);
+
+    // [var2]
+    auto var2 = std::make_shared<Variable>("d", "var2", "hello");
+    auto block2 = createVariableBlock("c", "data_variable", var2);
+
+    VariableBlocks::changeVariableMonitorValue(block1.get(), "test");
+    ASSERT_EQ(var1->value().toString(), "test");
+    ASSERT_EQ(var2->value().toString(), "hello");
+
+    VariableBlocks::changeVariableMonitorValue(block2.get(), -0.25);
+    ASSERT_EQ(var1->value().toString(), "test");
+    ASSERT_EQ(var2->value().toDouble(), -0.25);
 }
 
 TEST_F(VariableBlocksTest, SetVariableTo)

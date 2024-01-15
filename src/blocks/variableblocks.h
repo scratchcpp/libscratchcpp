@@ -32,6 +32,7 @@ class VariableBlocks : public IBlockSection
         static void compileChangeVariableBy(Compiler *compiler);
 
         static const std::string &variableMonitorName(Block *block);
+        static void changeVariableMonitorValue(Block *block, const Value &newValue);
 };
 
 } // namespace libscratchcpp
