@@ -40,6 +40,8 @@ class ListBlocks : public IBlockSection
         static void compileLengthOfList(Compiler *compiler);
         static void compileListContainsItem(Compiler *compiler);
 
+        static const std::string &listContentsMonitorName(Block *block);
+
     private:
         static int validateIndex(size_t index, size_t listLength);
 };

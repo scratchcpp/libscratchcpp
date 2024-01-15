@@ -3,6 +3,8 @@
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/block.h>
+#include <scratchcpp/list.h>
 
 #include "listblocks.h"
 
@@ -31,6 +33,9 @@ void ListBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "data_itemnumoflist", &compileItemNumberInList);
     engine->addCompileFunction(this, "data_lengthoflist", &compileLengthOfList);
     engine->addCompileFunction(this, "data_listcontainsitem", &compileListContainsItem);
+
+    // Monitor names
+    engine->addMonitorNameFunction(this, "data_listcontents", &listContentsMonitorName);
 
     // Inputs
     engine->addInput(this, "ITEM", ITEM);
@@ -100,4 +105,16 @@ void ListBlocks::compileListContainsItem(Compiler *compiler)
 {
     compiler->addInput(ITEM);
     compiler->addInstruction(vm::OP_LIST_CONTAINS, { compiler->listIndex(compiler->field(LIST)->valuePtr()) });
+}
+
+const std::string &ListBlocks::listContentsMonitorName(Block *block)
+{
+    List *list = dynamic_cast<List *>(block->findFieldById(LIST)->valuePtr().get());
+
+    if (list)
+        return list->name();
+    else {
+        static const std::string empty = "";
+        return empty;
+    }
 }
