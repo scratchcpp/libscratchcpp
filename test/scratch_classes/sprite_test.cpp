@@ -233,7 +233,7 @@ TEST(SpriteTest, XY)
 
     EngineMock engine;
     sprite.setEngine(&engine);
-    EXPECT_CALL(engine, requestRedraw()).Times(17);
+    EXPECT_CALL(engine, requestRedraw()).Times(18);
     EXPECT_CALL(engine, spriteFencingEnabled()).Times(4).WillRepeatedly(Return(false));
 
     sprite.setX(-53.25);
@@ -261,6 +261,7 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onXChanged);
     sprite.setX(319);
     ASSERT_EQ(sprite.x(), 319);
@@ -269,6 +270,7 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onXChanged);
     sprite.setX(75);
     ASSERT_EQ(sprite.x(), 75);
@@ -277,11 +279,13 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onXChanged);
     sprite.setX(400);
     ASSERT_EQ(sprite.x(), 344);
 
     EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(false));
+    EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onXChanged);
     sprite.setX(400);
     ASSERT_EQ(sprite.x(), 400);
@@ -290,11 +294,13 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onXChanged);
     sprite.setX(-400);
     ASSERT_EQ(sprite.x(), 155);
 
     EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(false));
+    EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onXChanged);
     sprite.setX(-400);
     ASSERT_EQ(sprite.x(), -400);
@@ -303,6 +309,7 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onYChanged);
     sprite.setY(150);
     ASSERT_EQ(sprite.y(), 150);
@@ -311,6 +318,7 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onYChanged);
     sprite.setY(-103);
     ASSERT_EQ(sprite.y(), -103);
@@ -319,11 +327,13 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onYChanged);
     sprite.setY(340);
     ASSERT_EQ(sprite.y(), 62);
 
     EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(false));
+    EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onYChanged);
     sprite.setY(340);
     ASSERT_EQ(sprite.y(), 340);
@@ -332,14 +342,24 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
     EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onYChanged);
     sprite.setY(-340);
     ASSERT_EQ(sprite.y(), 86);
 
     EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(false));
+    EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onYChanged);
     sprite.setY(-340);
     ASSERT_EQ(sprite.y(), -340);
+
+    EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(false));
+    EXPECT_CALL(handler, onMoved);
+    EXPECT_CALL(handler, onXChanged);
+    EXPECT_CALL(handler, onYChanged);
+    sprite.setPosition(56, -23);
+    ASSERT_EQ(sprite.x(), 56);
+    ASSERT_EQ(sprite.y(), -23);
 }
 
 TEST(SpriteTest, Size)
@@ -525,6 +545,7 @@ TEST(SpriteTest, KeepInFence)
 
     EXPECT_CALL(engine, requestRedraw()).Times(2);
     EXPECT_CALL(engine, spriteFencingEnabled()).Times(2).WillRepeatedly(Return(false));
+    EXPECT_CALL(handler, onMoved).Times(2);
     EXPECT_CALL(handler, onXChanged);
     EXPECT_CALL(handler, onYChanged);
     sprite.setX(100);

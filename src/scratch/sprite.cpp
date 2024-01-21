@@ -184,6 +184,17 @@ void Sprite::setY(double newY)
         impl->iface->onYChanged(impl->y);
 }
 
+/* Sets the position of the sprite. */
+void Sprite::setPosition(double x, double y)
+{
+    setXY(x, y);
+
+    if (impl->iface) {
+        impl->iface->onXChanged(impl->x);
+        impl->iface->onYChanged(impl->y);
+    }
+}
+
 /*! Returns the size. */
 double Sprite::size() const
 {
@@ -421,6 +432,9 @@ void Sprite::setXY(double x, double y)
 {
     IEngine *eng = engine();
 
+    double oldX = impl->x;
+    double oldY = impl->y;
+
     if (eng && !eng->spriteFencingEnabled()) {
         impl->x = x;
         impl->y = y;
@@ -433,4 +447,7 @@ void Sprite::setXY(double x, double y)
         if (eng)
             eng->requestRedraw();
     }
+
+    if (impl->iface)
+        impl->iface->onMoved(oldX, oldY, impl->x, impl->y);
 }

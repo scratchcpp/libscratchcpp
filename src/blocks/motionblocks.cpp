@@ -275,8 +275,7 @@ unsigned int MotionBlocks::moveSteps(VirtualMachine *vm)
     if (sprite) {
         double dir = sprite->direction();
         double steps = vm->getInput(0, 1)->toDouble();
-        sprite->setX(sprite->x() + std::sin(dir * pi / 180) * steps);
-        sprite->setY(sprite->y() + std::cos(dir * pi / 180) * steps);
+        sprite->setPosition(sprite->x() + std::sin(dir * pi / 180) * steps, sprite->y() + std::cos(dir * pi / 180) * steps);
     }
 
     return 1;
@@ -392,8 +391,7 @@ unsigned int MotionBlocks::goToXY(VirtualMachine *vm)
     Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
 
     if (sprite) {
-        sprite->setX(vm->getInput(0, 2)->toDouble());
-        sprite->setY(vm->getInput(1, 2)->toDouble());
+        sprite->setPosition(vm->getInput(0, 2)->toDouble(), vm->getInput(1, 2)->toDouble());
     }
 
     return 2;
@@ -408,26 +406,22 @@ unsigned int MotionBlocks::goTo(VirtualMachine *vm)
 
     std::string value = vm->getInput(0, 1)->toString();
 
-    if (value == "_mouse_") {
-        sprite->setX(vm->engine()->mouseX());
-        sprite->setY(vm->engine()->mouseY());
-    } else if (value == "_random_") {
+    if (value == "_mouse_")
+        sprite->setPosition(vm->engine()->mouseX(), vm->engine()->mouseY());
+    else if (value == "_random_") {
         const unsigned int stageWidth = vm->engine()->stageWidth();
         const unsigned int stageHeight = vm->engine()->stageHeight();
 
         if (!rng)
             rng = RandomGenerator::instance().get();
 
-        sprite->setX(rng->randint(-static_cast<int>(stageWidth / 2), stageWidth / 2));
-        sprite->setY(rng->randint(-static_cast<int>(stageHeight / 2), stageHeight / 2));
+        sprite->setPosition(rng->randint(-static_cast<int>(stageWidth / 2), stageWidth / 2), rng->randint(-static_cast<int>(stageHeight / 2), stageHeight / 2));
     } else {
         Target *target = vm->engine()->targetAt(vm->engine()->findTarget(value));
         Sprite *targetSprite = dynamic_cast<Sprite *>(target);
 
-        if (targetSprite) {
-            sprite->setX(targetSprite->x());
-            sprite->setY(targetSprite->y());
-        }
+        if (targetSprite)
+            sprite->setPosition(targetSprite->x(), targetSprite->y());
     }
 
     return 1;
@@ -439,10 +433,8 @@ unsigned int MotionBlocks::goToByIndex(VirtualMachine *vm)
     Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
     Sprite *targetSprite = dynamic_cast<Sprite *>(target);
 
-    if (sprite && targetSprite) {
-        sprite->setX(targetSprite->x());
-        sprite->setY(targetSprite->y());
-    }
+    if (sprite && targetSprite)
+        sprite->setPosition(targetSprite->x(), targetSprite->y());
 
     return 1;
 }
@@ -451,10 +443,8 @@ unsigned int MotionBlocks::goToMousePointer(VirtualMachine *vm)
 {
     Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
 
-    if (sprite) {
-        sprite->setX(vm->engine()->mouseX());
-        sprite->setY(vm->engine()->mouseY());
-    }
+    if (sprite)
+        sprite->setPosition(vm->engine()->mouseX(), vm->engine()->mouseY());
 
     return 0;
 }
@@ -470,8 +460,7 @@ unsigned int MotionBlocks::goToRandomPosition(VirtualMachine *vm)
         if (!rng)
             rng = RandomGenerator::instance().get();
 
-        sprite->setX(rng->randint(-static_cast<int>(stageWidth / 2), stageWidth / 2));
-        sprite->setY(rng->randint(-static_cast<int>(stageHeight / 2), stageHeight / 2));
+        sprite->setPosition(rng->randint(-static_cast<int>(stageWidth / 2), stageWidth / 2), rng->randint(-static_cast<int>(stageHeight / 2), stageHeight / 2));
     }
 
     return 0;
@@ -485,10 +474,8 @@ void MotionBlocks::startGlidingToPos(VirtualMachine *vm, double x, double y, dou
         return;
 
     if (secs <= 0) {
-        if (sprite) {
-            sprite->setX(x);
-            sprite->setY(y);
-        }
+        if (sprite)
+            sprite->setPosition(x, y);
 
         return;
     }
@@ -516,10 +503,8 @@ void MotionBlocks::continueGliding(VirtualMachine *vm)
     double y = m_glideMap[vm].second.second;
 
     if (elapsedTime >= maxTime) {
-        if (sprite) {
-            sprite->setX(x);
-            sprite->setY(y);
-        }
+        if (sprite)
+            sprite->setPosition(x, y);
 
         m_timeMap.erase(vm);
         m_glideMap.erase(vm);
@@ -530,8 +515,7 @@ void MotionBlocks::continueGliding(VirtualMachine *vm)
             double factor = elapsedTime / static_cast<double>(maxTime);
             assert(factor >= 0 && factor < 1);
 
-            sprite->setX(startX + (x - startX) * factor);
-            sprite->setY(startY + (y - startY) * factor);
+            sprite->setPosition(startX + (x - startX) * factor, startY + (y - startY) * factor);
         }
 
         vm->stop(true, true, true);
@@ -750,8 +734,7 @@ unsigned int MotionBlocks::ifOnEdgeBounce(VirtualMachine *vm)
     // Keep within the stage
     double fencedX, fencedY;
     sprite->keepInFence(sprite->x(), sprite->y(), &fencedX, &fencedY);
-    sprite->setX(fencedX);
-    sprite->setY(fencedY);
+    sprite->setPosition(fencedX, fencedY);
 
     return 0;
 }

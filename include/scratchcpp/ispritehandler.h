@@ -35,6 +35,9 @@ class LIBSCRATCHCPP_EXPORT ISpriteHandler
         /*! Called when the Y-coordinate changes. */
         virtual void onYChanged(double y) = 0;
 
+        /*! Called when the sprite position changes. */
+        virtual void onMoved(double oldX, double oldY, double newX, double newY) = 0;
+
         /*! Called when the size changes. */
         virtual void onSizeChanged(double size) = 0;
 

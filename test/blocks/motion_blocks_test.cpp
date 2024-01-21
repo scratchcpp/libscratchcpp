@@ -1132,12 +1132,13 @@ TEST_F(MotionBlocksTest, IfOnEdgeBounceImpl)
     vm.setBytecode(bytecode);
     vm.setFunctions(functions);
 
-    EXPECT_CALL(m_engineMock, stageWidth()).Times(9).WillRepeatedly(Return(480));
-    EXPECT_CALL(m_engineMock, stageHeight()).Times(9).WillRepeatedly(Return(360));
+    EXPECT_CALL(m_engineMock, stageWidth()).WillRepeatedly(Return(480));
+    EXPECT_CALL(m_engineMock, stageHeight()).WillRepeatedly(Return(360));
 
     // No edge
     EXPECT_CALL(m_engineMock, requestRedraw()).Times(3);
     EXPECT_CALL(m_engineMock, spriteFencingEnabled()).Times(2).WillRepeatedly(Return(false));
+    EXPECT_CALL(handler, onMoved).Times(2);
     EXPECT_CALL(handler, onXChanged);
     EXPECT_CALL(handler, onYChanged);
     EXPECT_CALL(handler, onDirectionChanged);
@@ -1153,8 +1154,9 @@ TEST_F(MotionBlocksTest, IfOnEdgeBounceImpl)
     ASSERT_EQ(sprite.direction(), -45);
 
     // Left edge
-    EXPECT_CALL(m_engineMock, requestRedraw()).Times(5);
-    EXPECT_CALL(m_engineMock, spriteFencingEnabled()).Times(4).WillRepeatedly(Return(false));
+    EXPECT_CALL(m_engineMock, requestRedraw()).Times(4);
+    EXPECT_CALL(m_engineMock, spriteFencingEnabled()).Times(3).WillRepeatedly(Return(false));
+    EXPECT_CALL(handler, onMoved).Times(3);
     EXPECT_CALL(handler, onXChanged).Times(2);
     EXPECT_CALL(handler, onYChanged).Times(2);
     EXPECT_CALL(handler, onDirectionChanged);
@@ -1170,8 +1172,9 @@ TEST_F(MotionBlocksTest, IfOnEdgeBounceImpl)
     ASSERT_EQ(std::round(sprite.direction() * 100) / 100, 45);
 
     // Top edge
-    EXPECT_CALL(m_engineMock, requestRedraw()).Times(6);
-    EXPECT_CALL(m_engineMock, spriteFencingEnabled()).Times(4).WillRepeatedly(Return(false));
+    EXPECT_CALL(m_engineMock, requestRedraw()).Times(5);
+    EXPECT_CALL(m_engineMock, spriteFencingEnabled()).Times(3).WillRepeatedly(Return(false));
+    EXPECT_CALL(handler, onMoved).Times(3);
     EXPECT_CALL(handler, onXChanged).Times(2);
     EXPECT_CALL(handler, onYChanged).Times(2);
     EXPECT_CALL(handler, onDirectionChanged).Times(2);
@@ -1188,8 +1191,9 @@ TEST_F(MotionBlocksTest, IfOnEdgeBounceImpl)
     ASSERT_EQ(sprite.direction(), 135);
 
     // Right edge
-    EXPECT_CALL(m_engineMock, requestRedraw()).Times(5);
-    EXPECT_CALL(m_engineMock, spriteFencingEnabled()).Times(4).WillRepeatedly(Return(false));
+    EXPECT_CALL(m_engineMock, requestRedraw()).Times(4);
+    EXPECT_CALL(m_engineMock, spriteFencingEnabled()).Times(3).WillRepeatedly(Return(false));
+    EXPECT_CALL(handler, onMoved).Times(3);
     EXPECT_CALL(handler, onXChanged).Times(2);
     EXPECT_CALL(handler, onYChanged).Times(2);
     EXPECT_CALL(handler, onDirectionChanged);
@@ -1205,8 +1209,9 @@ TEST_F(MotionBlocksTest, IfOnEdgeBounceImpl)
     ASSERT_EQ(sprite.direction(), -135);
 
     // Bottom edge
-    EXPECT_CALL(m_engineMock, requestRedraw()).Times(5);
-    EXPECT_CALL(m_engineMock, spriteFencingEnabled()).Times(4).WillRepeatedly(Return(false));
+    EXPECT_CALL(m_engineMock, requestRedraw()).Times(4);
+    EXPECT_CALL(m_engineMock, spriteFencingEnabled()).Times(3).WillRepeatedly(Return(false));
+    EXPECT_CALL(handler, onMoved).Times(3);
     EXPECT_CALL(handler, onXChanged).Times(2);
     EXPECT_CALL(handler, onYChanged).Times(2);
     EXPECT_CALL(handler, onDirectionChanged);
