@@ -2,6 +2,7 @@
 #include <scratchcpp/costume.h>
 #include <enginemock.h>
 #include <graphicseffectmock.h>
+#include <stagehandlermock.h>
 
 #include "../common.h"
 
@@ -11,6 +12,17 @@ TEST(StageTest, IsStage)
 {
     Stage stage;
     ASSERT_TRUE(stage.isStage());
+}
+
+TEST(SpriteTest, Interface)
+{
+    Stage stage;
+    ASSERT_EQ(stage.getInterface(), nullptr);
+
+    StageHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    stage.setInterface(&handler);
+    ASSERT_EQ(stage.getInterface(), &handler);
 }
 
 TEST(SpriteTest, CostumeIndex)

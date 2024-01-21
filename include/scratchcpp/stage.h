@@ -27,6 +27,7 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
         Stage(const Stage &) = delete;
 
         void setInterface(IStageHandler *newInterface);
+        IStageHandler *getInterface() const; // NOTE: This can't be called interface because of... Microsoft... (it wouldn't compile on Windows)
 
         bool isStage() const override;
 

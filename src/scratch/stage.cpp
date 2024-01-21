@@ -24,6 +24,12 @@ void Stage::setInterface(IStageHandler *newInterface)
     impl->iface->init(this);
 }
 
+/*! Returns the stage interface. */
+IStageHandler *Stage::getInterface() const
+{
+    return impl->iface;
+}
+
 /*! Returns true. */
 bool Stage::isStage() const
 {
