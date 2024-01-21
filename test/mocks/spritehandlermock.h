@@ -18,6 +18,7 @@ class SpriteHandlerMock : public ISpriteHandler
         MOCK_METHOD(void, onVisibleChanged, (bool), (override));
         MOCK_METHOD(void, onXChanged, (double), (override));
         MOCK_METHOD(void, onYChanged, (double), (override));
+        MOCK_METHOD(void, onMoved, (double, double, double, double), (override));
         MOCK_METHOD(void, onSizeChanged, (double), (override));
         MOCK_METHOD(void, onDirectionChanged, (double), (override));
         MOCK_METHOD(void, onRotationStyleChanged, (Sprite::RotationStyle), (override));

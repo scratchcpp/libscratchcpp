@@ -63,6 +63,7 @@ TEST_F(ISpriteHandlerTest, Visible)
 
 TEST_F(ISpriteHandlerTest, X)
 {
+    EXPECT_CALL(m_handler, onMoved(0, 0, 189.46, 0));
     EXPECT_CALL(m_handler, onXChanged(189.46)).Times(1);
     EXPECT_CALL(m_handler, boundingRect()).WillOnce(Return(Rect()));
     EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(true));
@@ -71,6 +72,7 @@ TEST_F(ISpriteHandlerTest, X)
     EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setX(189.46);
 
+    EXPECT_CALL(m_handler, onMoved(189.46, 0, 284.61, 0));
     EXPECT_CALL(m_handler, onXChanged(284.61)).Times(1);
     EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(false));
     EXPECT_CALL(m_engine, requestRedraw());
@@ -79,6 +81,7 @@ TEST_F(ISpriteHandlerTest, X)
 
 TEST_F(ISpriteHandlerTest, Y)
 {
+    EXPECT_CALL(m_handler, onMoved(0, 0, 0, -153.7)).Times(1);
     EXPECT_CALL(m_handler, onYChanged(-153.7)).Times(1);
     EXPECT_CALL(m_handler, boundingRect()).WillOnce(Return(Rect()));
     EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(true));
@@ -87,6 +90,7 @@ TEST_F(ISpriteHandlerTest, Y)
     EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setY(-153.7);
 
+    EXPECT_CALL(m_handler, onMoved(0, -153.7, 0, 207.08)).Times(1);
     EXPECT_CALL(m_handler, onYChanged(207.08)).Times(1);
     EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(false));
     EXPECT_CALL(m_engine, requestRedraw());
@@ -95,11 +99,19 @@ TEST_F(ISpriteHandlerTest, Y)
 
 TEST_F(ISpriteHandlerTest, Position)
 {
+    EXPECT_CALL(m_handler, onMoved(0, 0, 284.61, 207.08)).Times(1);
     EXPECT_CALL(m_handler, onXChanged(284.61));
     EXPECT_CALL(m_handler, onYChanged(207.08));
     EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(false));
     EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setPosition(284.61, 207.08);
+
+    EXPECT_CALL(m_handler, onMoved(284.61, 207.08, -45.9, -20.05)).Times(1);
+    EXPECT_CALL(m_handler, onXChanged(-45.9));
+    EXPECT_CALL(m_handler, onYChanged(-20.05));
+    EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(false));
+    EXPECT_CALL(m_engine, requestRedraw());
+    m_sprite.setPosition(-45.9, -20.05);
 }
 
 TEST_F(ISpriteHandlerTest, Size)

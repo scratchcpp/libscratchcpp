@@ -432,6 +432,9 @@ void Sprite::setXY(double x, double y)
 {
     IEngine *eng = engine();
 
+    double oldX = impl->x;
+    double oldY = impl->y;
+
     if (eng && !eng->spriteFencingEnabled()) {
         impl->x = x;
         impl->y = y;
@@ -444,4 +447,7 @@ void Sprite::setXY(double x, double y)
         if (eng)
             eng->requestRedraw();
     }
+
+    if (impl->iface)
+        impl->iface->onMoved(oldX, oldY, impl->x, impl->y);
 }
