@@ -184,6 +184,17 @@ void Sprite::setY(double newY)
         impl->iface->onYChanged(impl->y);
 }
 
+/* Sets the position of the sprite. */
+void Sprite::setPosition(double x, double y)
+{
+    setXY(x, y);
+
+    if (impl->iface) {
+        impl->iface->onXChanged(impl->x);
+        impl->iface->onYChanged(impl->y);
+    }
+}
+
 /*! Returns the size. */
 double Sprite::size() const
 {

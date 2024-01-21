@@ -47,6 +47,8 @@ class LIBSCRATCHCPP_EXPORT Sprite
         double y() const;
         void setY(double newY);
 
+        void setPosition(double x, double y);
+
         double size() const;
         void setSize(double newSize);
 

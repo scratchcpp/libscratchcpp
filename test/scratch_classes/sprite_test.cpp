@@ -233,7 +233,7 @@ TEST(SpriteTest, XY)
 
     EngineMock engine;
     sprite.setEngine(&engine);
-    EXPECT_CALL(engine, requestRedraw()).Times(17);
+    EXPECT_CALL(engine, requestRedraw()).Times(18);
     EXPECT_CALL(engine, spriteFencingEnabled()).Times(4).WillRepeatedly(Return(false));
 
     sprite.setX(-53.25);
@@ -340,6 +340,13 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(handler, onYChanged);
     sprite.setY(-340);
     ASSERT_EQ(sprite.y(), -340);
+
+    EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(false));
+    EXPECT_CALL(handler, onXChanged);
+    EXPECT_CALL(handler, onYChanged);
+    sprite.setPosition(56, -23);
+    ASSERT_EQ(sprite.x(), 56);
+    ASSERT_EQ(sprite.y(), -23);
 }
 
 TEST(SpriteTest, Size)

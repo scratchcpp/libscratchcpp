@@ -93,6 +93,15 @@ TEST_F(ISpriteHandlerTest, Y)
     m_sprite.setY(207.08);
 }
 
+TEST_F(ISpriteHandlerTest, Position)
+{
+    EXPECT_CALL(m_handler, onXChanged(284.61));
+    EXPECT_CALL(m_handler, onYChanged(207.08));
+    EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(false));
+    EXPECT_CALL(m_engine, requestRedraw());
+    m_sprite.setPosition(284.61, 207.08);
+}
+
 TEST_F(ISpriteHandlerTest, Size)
 {
     EXPECT_CALL(m_handler, onSizeChanged(53.8)).Times(1);
