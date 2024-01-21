@@ -23,6 +23,17 @@ TEST(SpriteTest, IsStage)
     ASSERT_FALSE(sprite.isStage());
 }
 
+TEST(SpriteTest, Interface)
+{
+    Sprite sprite;
+    ASSERT_EQ(sprite.getInterface(), nullptr);
+
+    SpriteHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    sprite.setInterface(&handler);
+    ASSERT_EQ(sprite.getInterface(), &handler);
+}
+
 TEST(SpriteTest, Visible)
 {
     Sprite sprite;

@@ -29,6 +29,12 @@ void Sprite::setInterface(ISpriteHandler *newInterface)
     impl->iface->init(this);
 }
 
+/*! Returns the sprite interface. */
+ISpriteHandler *Sprite::getInterface() const
+{
+    return impl->iface;
+}
+
 /*! Creates a clone of the sprite. */
 std::shared_ptr<Sprite> Sprite::clone()
 {

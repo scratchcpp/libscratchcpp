@@ -29,6 +29,7 @@ class LIBSCRATCHCPP_EXPORT Sprite
         Sprite(const Sprite &) = delete;
 
         void setInterface(ISpriteHandler *newInterface);
+        ISpriteHandler *getInterface() const; // NOTE: This can't be called interface because of... Microsoft... (it wouldn't compile on Windows)
 
         std::shared_ptr<Sprite> clone();
         void deleteClone();
