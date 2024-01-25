@@ -1702,3 +1702,27 @@ TEST(EngineTest, StopBeforeStarting)
     ASSERT_VAR(stage, "test");
     ASSERT_TRUE(GET_VAR(stage, "test")->value().toBool());
 }
+
+TEST(EngineTest, NoCrashWhenLoadingUndefinedVariableOrListMonitor)
+{
+    // Regtest for #445
+    Project p("regtest_projects/445_undefined_variable_or_list_monitor_crash.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    // The undefined variable and list should now be defined
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+    ASSERT_VAR(stage, "test");
+    auto var = GET_VAR(stage, "test");
+    ASSERT_EQ(var->id(), "E,r`5qYWCdXa~yj7nDS]");
+    ASSERT_EQ(var->value(), Value());
+
+    Target *sprite = engine->targetAt(engine->findTarget("Sprite1"));
+    ASSERT_TRUE(sprite);
+    ASSERT_LIST(sprite, "test");
+    auto list = GET_LIST(sprite, "test");
+    ASSERT_EQ(list->id(), "7a5rAs|X2_[1APT7@B1V");
+    ASSERT_TRUE(list->empty());
+}
