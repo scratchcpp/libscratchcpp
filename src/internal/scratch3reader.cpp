@@ -404,12 +404,16 @@ bool Scratch3Reader::load()
             }
 
             // width
-            READER_STEP(step, "monitor -> width");
-            monitor->setWidth(jsonMonitor["width"]);
+            if (jsonMonitor.contains("width")) {
+                READER_STEP(step, "monitor -> width");
+                monitor->setWidth(jsonMonitor["width"]);
+            }
 
             // height
-            READER_STEP(step, "monitor -> height");
-            monitor->setHeight(jsonMonitor["height"]);
+            if (jsonMonitor.contains("height")) {
+                READER_STEP(step, "monitor -> height");
+                monitor->setHeight(jsonMonitor["height"]);
+            }
 
             // x
             READER_STEP(step, "monitor -> x");
