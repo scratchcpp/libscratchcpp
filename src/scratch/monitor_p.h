@@ -22,7 +22,7 @@ struct MonitorPrivate
         std::shared_ptr<Script> script;
         std::shared_ptr<IBlockSection> blockSection;
         std::shared_ptr<Block> block; // Compiler needs shared_ptr
-        MonitorChangeFunc changeFunc;
+        MonitorChangeFunc changeFunc = nullptr;
         VirtualMachine changeValueVM;
         unsigned int width = 0;
         unsigned int height = 0;
