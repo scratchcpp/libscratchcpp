@@ -161,10 +161,23 @@ void Engine::resolveIds()
             }
 
             // TODO: Move field information out of Engine
-            if (field->name() == "VARIABLE")
-                field->setValuePtr(target->variableAt(target->findVariable(field->value().toString())));
-            else if (field->name() == "LIST")
-                field->setValuePtr(target->listAt(target->findList(field->value().toString())));
+            if (field->name() == "VARIABLE") {
+                std::string name = field->value().toString();
+                int index = target->findVariable(name);
+
+                if (index == -1)
+                    index = target->addVariable(std::make_shared<Variable>(monitor->id(), name));
+
+                field->setValuePtr(target->variableAt(index));
+            } else if (field->name() == "LIST") {
+                std::string name = field->value().toString();
+                int index = target->findList(name);
+
+                if (index == -1)
+                    index = target->addList(std::make_shared<List>(monitor->id(), name));
+
+                field->setValuePtr(target->listAt(index));
+            }
         }
 
         block->updateInputMap();
