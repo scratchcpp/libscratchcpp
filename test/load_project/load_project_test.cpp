@@ -701,3 +701,11 @@ TEST(LoadProjectTest, ProjectInvalidTest)
     ASSERT_EQ(p.scratchVersion(), ScratchVersion::Invalid);
     ASSERT_FALSE(p.load());
 }
+
+TEST(LoadProjectTest, LoadNullDimensionMonitor)
+{
+    // Regtest for #448
+    std::string name = "regtest_projects/448_null_monitor_dimension.sb3";
+    Project p(name);
+    ASSERT_TRUE(p.load());
+}
