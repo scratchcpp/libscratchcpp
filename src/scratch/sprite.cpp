@@ -328,7 +328,7 @@ void Sprite::setLayerOrder(int newLayerOrder)
 Rect Sprite::boundingRect() const
 {
     if (!impl->iface)
-        return Rect();
+        return Rect(impl->x, impl->y, impl->x, impl->y);
 
     return impl->iface->boundingRect();
 }
