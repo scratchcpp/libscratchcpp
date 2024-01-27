@@ -590,6 +590,18 @@ TEST(SpriteTest, KeepInFence)
     ASSERT_EQ(std::round(fencedY * 100) / 100, 150.9);
 }
 
+TEST(SpriteTest, DefaultBoundingRect)
+{
+    Sprite sprite;
+    sprite.setX(65.5);
+    sprite.setY(-45.01);
+    Rect rect = sprite.boundingRect();
+    ASSERT_EQ(rect.left(), 65.5);
+    ASSERT_EQ(rect.top(), -45.01);
+    ASSERT_EQ(rect.right(), 65.5);
+    ASSERT_EQ(rect.bottom(), -45.01);
+}
+
 TEST(SpriteTest, GraphicsEffects)
 {
     Sprite sprite;
