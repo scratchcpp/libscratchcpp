@@ -709,3 +709,21 @@ TEST(LoadProjectTest, LoadNullDimensionMonitor)
     Project p(name);
     ASSERT_TRUE(p.load());
 }
+
+TEST(LoadProjectTest, LoadDoubleValue)
+{
+    // Regtest for #437
+    std::string oldLocale = std::setlocale(LC_NUMERIC, nullptr);
+    std::setlocale(LC_NUMERIC, "sk_SK.UTF-8");
+
+    std::string name = "regtest_projects/437_load_double_values.sb3";
+    Project p(name);
+    ASSERT_TRUE(p.load());
+
+    auto stage = p.engine()->stage();
+    ASSERT_TRUE(stage);
+    ASSERT_VAR(stage, "test");
+    ASSERT_EQ(GET_VAR(stage, "test")->value().toDouble(), 5.6654);
+
+    std::setlocale(LC_NUMERIC, oldLocale.c_str());
+}
