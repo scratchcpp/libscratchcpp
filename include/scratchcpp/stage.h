@@ -52,6 +52,9 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
 
         void clearGraphicsEffects() override;
 
+        virtual void setBubbleType(Target::BubbleType type) override;
+        virtual void setBubbleText(const std::string &text) override;
+
     private:
         spimpl::unique_impl_ptr<StagePrivate> impl;
 };
