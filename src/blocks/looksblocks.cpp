@@ -537,11 +537,11 @@ unsigned int LooksBlocks::hide(VirtualMachine *vm)
 
 unsigned int LooksBlocks::changeEffectBy(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite) {
+    if (target) {
         IGraphicsEffect *effect = m_customGraphicsEffects[vm->getInput(0, 2)->toLong()];
-        sprite->setGraphicsEffectValue(effect, sprite->graphicsEffectValue(effect) + vm->getInput(1, 2)->toDouble());
+        target->setGraphicsEffectValue(effect, target->graphicsEffectValue(effect) + vm->getInput(1, 2)->toDouble());
     }
 
     return 2;
@@ -549,160 +549,160 @@ unsigned int LooksBlocks::changeEffectBy(VirtualMachine *vm)
 
 unsigned int LooksBlocks::changeColorEffectBy(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_colorEffect, sprite->graphicsEffectValue(m_colorEffect) + vm->getInput(0, 1)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_colorEffect, target->graphicsEffectValue(m_colorEffect) + vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
 
 unsigned int LooksBlocks::changeFisheyeEffectBy(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_fisheyeEffect, sprite->graphicsEffectValue(m_fisheyeEffect) + vm->getInput(0, 1)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_fisheyeEffect, target->graphicsEffectValue(m_fisheyeEffect) + vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
 
 unsigned int LooksBlocks::changeWhirlEffectBy(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_whirlEffect, sprite->graphicsEffectValue(m_whirlEffect) + vm->getInput(0, 1)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_whirlEffect, target->graphicsEffectValue(m_whirlEffect) + vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
 
 unsigned int LooksBlocks::changePixelateEffectBy(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_pixelateEffect, sprite->graphicsEffectValue(m_pixelateEffect) + vm->getInput(0, 1)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_pixelateEffect, target->graphicsEffectValue(m_pixelateEffect) + vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
 
 unsigned int LooksBlocks::changeMosaicEffectBy(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_mosaicEffect, sprite->graphicsEffectValue(m_mosaicEffect) + vm->getInput(0, 1)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_mosaicEffect, target->graphicsEffectValue(m_mosaicEffect) + vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
 
 unsigned int LooksBlocks::changeBrightnessEffectBy(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_brightnessEffect, sprite->graphicsEffectValue(m_brightnessEffect) + vm->getInput(0, 1)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_brightnessEffect, target->graphicsEffectValue(m_brightnessEffect) + vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
 
 unsigned int LooksBlocks::changeGhostEffectBy(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_ghostEffect, sprite->graphicsEffectValue(m_ghostEffect) + vm->getInput(0, 1)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_ghostEffect, target->graphicsEffectValue(m_ghostEffect) + vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
 
 unsigned int LooksBlocks::setEffectTo(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_customGraphicsEffects[vm->getInput(0, 2)->toLong()], vm->getInput(1, 2)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_customGraphicsEffects[vm->getInput(0, 2)->toLong()], vm->getInput(1, 2)->toDouble());
 
     return 2;
 }
 
 unsigned int LooksBlocks::setColorEffectTo(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_colorEffect, vm->getInput(0, 1)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_colorEffect, vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
 
 unsigned int LooksBlocks::setFisheyeEffectTo(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_fisheyeEffect, vm->getInput(0, 1)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_fisheyeEffect, vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
 
 unsigned int LooksBlocks::setWhirlEffectTo(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_whirlEffect, vm->getInput(0, 1)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_whirlEffect, vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
 
 unsigned int LooksBlocks::setPixelateEffectTo(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_pixelateEffect, vm->getInput(0, 1)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_pixelateEffect, vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
 
 unsigned int LooksBlocks::setMosaicEffectTo(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_mosaicEffect, vm->getInput(0, 1)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_mosaicEffect, vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
 
 unsigned int LooksBlocks::setBrightnessEffectTo(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_brightnessEffect, vm->getInput(0, 1)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_brightnessEffect, vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
 
 unsigned int LooksBlocks::setGhostEffectTo(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->setGraphicsEffectValue(m_ghostEffect, vm->getInput(0, 1)->toDouble());
+    if (target)
+        target->setGraphicsEffectValue(m_ghostEffect, vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
 
 unsigned int LooksBlocks::clearGraphicEffects(VirtualMachine *vm)
 {
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
+    Target *target = vm->target();
 
-    if (sprite)
-        sprite->clearGraphicsEffects();
+    if (target)
+        target->clearGraphicsEffects();
 
     return 0;
 }
