@@ -179,7 +179,7 @@ void LooksBlocks::compileSetEffectTo(Compiler *compiler)
             if (!m_colorEffect)
                 m_colorEffect = ScratchConfiguration::getGraphicsEffect("color");
 
-            compiler->addInput(CHANGE);
+            compiler->addInput(VALUE);
             compiler->addFunctionCall(&setColorEffectTo);
             break;
 
@@ -187,7 +187,7 @@ void LooksBlocks::compileSetEffectTo(Compiler *compiler)
             if (!m_fisheyeEffect)
                 m_fisheyeEffect = ScratchConfiguration::getGraphicsEffect("fisheye");
 
-            compiler->addInput(CHANGE);
+            compiler->addInput(VALUE);
             compiler->addFunctionCall(&setFisheyeEffectTo);
             break;
 
@@ -195,7 +195,7 @@ void LooksBlocks::compileSetEffectTo(Compiler *compiler)
             if (!m_whirlEffect)
                 m_whirlEffect = ScratchConfiguration::getGraphicsEffect("whirl");
 
-            compiler->addInput(CHANGE);
+            compiler->addInput(VALUE);
             compiler->addFunctionCall(&setWhirlEffectTo);
             break;
 
@@ -203,7 +203,7 @@ void LooksBlocks::compileSetEffectTo(Compiler *compiler)
             if (!m_pixelateEffect)
                 m_pixelateEffect = ScratchConfiguration::getGraphicsEffect("pixelate");
 
-            compiler->addInput(CHANGE);
+            compiler->addInput(VALUE);
             compiler->addFunctionCall(&setPixelateEffectTo);
             break;
 
@@ -211,7 +211,7 @@ void LooksBlocks::compileSetEffectTo(Compiler *compiler)
             if (!m_mosaicEffect)
                 m_mosaicEffect = ScratchConfiguration::getGraphicsEffect("mosaic");
 
-            compiler->addInput(CHANGE);
+            compiler->addInput(VALUE);
             compiler->addFunctionCall(&setMosaicEffectTo);
             break;
 
@@ -219,7 +219,7 @@ void LooksBlocks::compileSetEffectTo(Compiler *compiler)
             if (!m_brightnessEffect)
                 m_brightnessEffect = ScratchConfiguration::getGraphicsEffect("brightness");
 
-            compiler->addInput(CHANGE);
+            compiler->addInput(VALUE);
             compiler->addFunctionCall(&setBrightnessEffectTo);
             break;
 
@@ -227,7 +227,7 @@ void LooksBlocks::compileSetEffectTo(Compiler *compiler)
             if (!m_ghostEffect)
                 m_ghostEffect = ScratchConfiguration::getGraphicsEffect("ghost");
 
-            compiler->addInput(CHANGE);
+            compiler->addInput(VALUE);
             compiler->addFunctionCall(&setGhostEffectTo);
             break;
 
@@ -245,7 +245,7 @@ void LooksBlocks::compileSetEffectTo(Compiler *compiler)
                     index = it - m_customGraphicsEffects.begin();
 
                 compiler->addConstValue(index);
-                compiler->addInput(CHANGE);
+                compiler->addInput(VALUE);
                 compiler->addFunctionCall(&setEffectTo);
             }
 
