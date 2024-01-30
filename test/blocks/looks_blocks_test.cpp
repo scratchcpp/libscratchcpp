@@ -531,47 +531,47 @@ TEST_F(LooksBlocksTest, SetEffectTo)
     // set [custom1] effect to 12.5
     auto block1 = std::make_shared<Block>("a", "looks_seteffectto");
     addDropdownField(block1, "EFFECT", LooksBlocks::EFFECT, "custom1", static_cast<LooksBlocks::FieldValues>(-1));
-    addValueInput(block1, "CHANGE", LooksBlocks::CHANGE, 12.5);
+    addValueInput(block1, "VALUE", LooksBlocks::VALUE, 12.5);
 
     // set [custom2] effect to -78.15
     auto block2 = std::make_shared<Block>("b", "looks_seteffectto");
     addDropdownField(block2, "EFFECT", LooksBlocks::EFFECT, "custom2", static_cast<LooksBlocks::FieldValues>(-1));
-    addValueInput(block2, "CHANGE", LooksBlocks::CHANGE, -78.15);
+    addValueInput(block2, "VALUE", LooksBlocks::VALUE, -78.15);
 
     // set [color] effect to 154.152
     auto block3 = std::make_shared<Block>("c", "looks_seteffectto");
     addDropdownField(block3, "EFFECT", LooksBlocks::EFFECT, "color", LooksBlocks::ColorEffect);
-    addValueInput(block3, "CHANGE", LooksBlocks::CHANGE, 154.152);
+    addValueInput(block3, "VALUE", LooksBlocks::VALUE, 154.152);
 
     // set [fisheye] effect to -124.054
     auto block4 = std::make_shared<Block>("d", "looks_seteffectto");
     addDropdownField(block4, "EFFECT", LooksBlocks::EFFECT, "fisheye", LooksBlocks::FisheyeEffect);
-    addValueInput(block4, "CHANGE", LooksBlocks::CHANGE, -124.054);
+    addValueInput(block4, "VALUE", LooksBlocks::VALUE, -124.054);
 
     // set [whirl] effect to 45.858
     auto block5 = std::make_shared<Block>("e", "looks_seteffectto");
     addDropdownField(block5, "EFFECT", LooksBlocks::EFFECT, "whirl", LooksBlocks::WhirlEffect);
-    addValueInput(block5, "CHANGE", LooksBlocks::CHANGE, 45.858);
+    addValueInput(block5, "VALUE", LooksBlocks::VALUE, 45.858);
 
     // set [pixelate] effect to -0.15
     auto block6 = std::make_shared<Block>("f", "looks_seteffectto");
     addDropdownField(block6, "EFFECT", LooksBlocks::EFFECT, "pixelate", LooksBlocks::PixelateEffect);
-    addValueInput(block6, "CHANGE", LooksBlocks::CHANGE, -0.15);
+    addValueInput(block6, "VALUE", LooksBlocks::VALUE, -0.15);
 
     // set [mosaic] effect to 0.84
     auto block7 = std::make_shared<Block>("g", "looks_seteffectto");
     addDropdownField(block7, "EFFECT", LooksBlocks::EFFECT, "mosaic", LooksBlocks::MosaicEffect);
-    addValueInput(block7, "CHANGE", LooksBlocks::CHANGE, 0.84);
+    addValueInput(block7, "VALUE", LooksBlocks::VALUE, 0.84);
 
     // set [brightness] effect to 40.87
     auto block8 = std::make_shared<Block>("h", "looks_seteffectto");
     addDropdownField(block8, "EFFECT", LooksBlocks::EFFECT, "brightness", LooksBlocks::BrightnessEffect);
-    addValueInput(block8, "CHANGE", LooksBlocks::CHANGE, 40.87);
+    addValueInput(block8, "VALUE", LooksBlocks::VALUE, 40.87);
 
     // set [ghost] effect to 50.04
     auto block9 = std::make_shared<Block>("i", "looks_seteffectto");
     addDropdownField(block9, "EFFECT", LooksBlocks::EFFECT, "ghost", LooksBlocks::GhostEffect);
-    addValueInput(block9, "CHANGE", LooksBlocks::CHANGE, 50.04);
+    addValueInput(block9, "VALUE", LooksBlocks::VALUE, 50.04);
 
     auto effect1 = std::make_shared<GraphicsEffectMock>();
     auto effect2 = std::make_shared<GraphicsEffectMock>();
