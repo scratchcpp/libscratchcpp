@@ -174,6 +174,22 @@ TEST_F(ISpriteHandlerTest, GraphicsEffects)
     m_sprite.clearGraphicsEffects();
 }
 
+TEST_F(ISpriteHandlerTest, BubbleType)
+{
+    EXPECT_CALL(m_handler, onBubbleTypeChanged(Target::BubbleType::Say));
+    m_sprite.setBubbleType(Target::BubbleType::Say);
+
+    EXPECT_CALL(m_handler, onBubbleTypeChanged(Target::BubbleType::Think));
+    m_sprite.setBubbleType(Target::BubbleType::Think);
+}
+
+TEST_F(ISpriteHandlerTest, BubbleText)
+{
+    EXPECT_CALL(m_handler, onBubbleTextChanged("test"));
+    EXPECT_CALL(m_engine, requestRedraw());
+    m_sprite.setBubbleText("test");
+}
+
 TEST_F(ISpriteHandlerTest, BoundingRect)
 {
     EXPECT_CALL(m_handler, boundingRect()).WillOnce(Return(Rect(-44.6, 89.1, 20.5, -0.48)));

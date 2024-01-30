@@ -632,3 +632,27 @@ TEST(SpriteTest, GraphicsEffects)
     ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 0);
     ASSERT_EQ(sprite.graphicsEffectValue(&effect2), 0);
 }
+
+TEST(SpriteTest, BubbleType)
+{
+    Sprite sprite;
+    ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Say);
+
+    sprite.setBubbleType(Target::BubbleType::Think);
+    ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Think);
+
+    sprite.setBubbleType(Target::BubbleType::Say);
+    ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Say);
+}
+
+TEST(SpriteTest, BubbleText)
+{
+    Sprite sprite;
+    ASSERT_TRUE(sprite.bubbleText().empty());
+
+    sprite.setBubbleText("hello");
+    ASSERT_EQ(sprite.bubbleText(), "hello");
+
+    sprite.setBubbleText("world");
+    ASSERT_EQ(sprite.bubbleText(), "world");
+}
