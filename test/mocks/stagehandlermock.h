@@ -17,4 +17,6 @@ class StageHandlerMock : public IStageHandler
         MOCK_METHOD(void, onVideoTransparencyChanged, (int), (override));
         MOCK_METHOD(void, onGraphicsEffectChanged, (IGraphicsEffect *, double), (override));
         MOCK_METHOD(void, onGraphicsEffectsCleared, (), (override));
+        MOCK_METHOD(void, onBubbleTypeChanged, (Target::BubbleType), (override));
+        MOCK_METHOD(void, onBubbleTextChanged, (const std::string &), (override));
 };

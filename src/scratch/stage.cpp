@@ -156,3 +156,28 @@ void Stage::clearGraphicsEffects()
     if (impl->iface)
         impl->iface->onGraphicsEffectsCleared();
 }
+
+/*! Overrides Target#setBubbleType(). */
+void Stage::setBubbleType(BubbleType type)
+{
+    Target::setBubbleType(type);
+
+    if (impl->iface)
+        impl->iface->onBubbleTypeChanged(type);
+}
+
+/*! Overrides Target#setBubbleText(). */
+void Stage::setBubbleText(const std::string &text)
+{
+    Target::setBubbleText(text);
+
+    if (!text.empty()) {
+        IEngine *eng = engine();
+
+        if (eng)
+            eng->requestRedraw();
+    }
+
+    if (impl->iface)
+        impl->iface->onBubbleTextChanged(text);
+}

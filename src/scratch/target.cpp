@@ -439,6 +439,36 @@ void Target::clearGraphicsEffects()
     impl->graphicsEffects.clear();
 }
 
+/*! Returns the type of the bubble (say or think). */
+Target::BubbleType Target::bubbleType() const
+{
+    return impl->bubbleType;
+}
+
+/*! Sets the type of the bubble (say or think). */
+void Target::setBubbleType(BubbleType type)
+{
+    impl->bubbleType = type;
+}
+
+/*!
+ * Returns the text of the bubble.
+ * \note If the text is an empty string, the bubble is supposed to be hidden.
+ */
+const std::string &Target::bubbleText() const
+{
+    return impl->bubbleText;
+}
+
+/*!
+ * Sets the text of the bubble.
+ * \note If the text is an empty string, the bubble is supposed to be hidden.
+ */
+void Target::setBubbleText(const std::string &text)
+{
+    impl->bubbleText = text;
+}
+
 /*! Returns the engine. */
 IEngine *Target::engine() const
 {

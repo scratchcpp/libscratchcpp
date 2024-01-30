@@ -59,6 +59,12 @@ class LIBSCRATCHCPP_EXPORT ISpriteHandler
         /*! Called when all graphics effects are cleared. */
         virtual void onGraphicsEffectsCleared() = 0;
 
+        /*! Called when the bubble type changes. */
+        virtual void onBubbleTypeChanged(Target::BubbleType type) = 0;
+
+        /*! Called when the bubble text changes. */
+        virtual void onBubbleTextChanged(const std::string &text) = 0;
+
         /*!
          * Used to get the bounding rectangle of the sprite.
          * \note The rectangle must be relative to the stage, so make sure to use the sprite's coordinates.

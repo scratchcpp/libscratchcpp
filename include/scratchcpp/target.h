@@ -24,6 +24,12 @@ class TargetPrivate;
 class LIBSCRATCHCPP_EXPORT Target
 {
     public:
+        enum class BubbleType
+        {
+            Say,
+            Think
+        };
+
         Target();
         Target(const Target &) = delete;
         virtual ~Target() { }
@@ -82,6 +88,12 @@ class LIBSCRATCHCPP_EXPORT Target
         virtual void setGraphicsEffectValue(IGraphicsEffect *effect, double value);
 
         virtual void clearGraphicsEffects();
+
+        BubbleType bubbleType() const;
+        virtual void setBubbleType(BubbleType type);
+
+        const std::string &bubbleText() const;
+        virtual void setBubbleText(const std::string &text);
 
         IEngine *engine() const;
         void setEngine(IEngine *engine);

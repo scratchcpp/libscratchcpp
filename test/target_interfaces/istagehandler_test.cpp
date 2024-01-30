@@ -66,3 +66,19 @@ TEST_F(IStageHandlerTest, GraphicsEffects)
     EXPECT_CALL(m_engine, requestRedraw());
     m_stage.clearGraphicsEffects();
 }
+
+TEST_F(IStageHandlerTest, BubbleType)
+{
+    EXPECT_CALL(m_handler, onBubbleTypeChanged(Target::BubbleType::Say));
+    m_stage.setBubbleType(Target::BubbleType::Say);
+
+    EXPECT_CALL(m_handler, onBubbleTypeChanged(Target::BubbleType::Think));
+    m_stage.setBubbleType(Target::BubbleType::Think);
+}
+
+TEST_F(IStageHandlerTest, BubbleText)
+{
+    EXPECT_CALL(m_handler, onBubbleTextChanged("test"));
+    EXPECT_CALL(m_engine, requestRedraw());
+    m_stage.setBubbleText("test");
+}

@@ -581,6 +581,30 @@ TEST(TargetTest, GraphicsEffects)
     ASSERT_EQ(target.graphicsEffectValue(&effect2), 0);
 }
 
+TEST(TargetTest, BubbleType)
+{
+    Target target;
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
+
+    target.setBubbleType(Target::BubbleType::Think);
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
+
+    target.setBubbleType(Target::BubbleType::Say);
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
+}
+
+TEST(TargetTest, BubbleText)
+{
+    Target target;
+    ASSERT_TRUE(target.bubbleText().empty());
+
+    target.setBubbleText("hello");
+    ASSERT_EQ(target.bubbleText(), "hello");
+
+    target.setBubbleText("world");
+    ASSERT_EQ(target.bubbleText(), "world");
+}
+
 TEST(TargetTest, Engine)
 {
     Target target;

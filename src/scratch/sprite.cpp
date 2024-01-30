@@ -429,6 +429,31 @@ void Sprite::clearGraphicsEffects()
         impl->iface->onGraphicsEffectsCleared();
 }
 
+/*! Overrides Target#setBubbleType(). */
+void Sprite::setBubbleType(BubbleType type)
+{
+    Target::setBubbleType(type);
+
+    if (impl->iface)
+        impl->iface->onBubbleTypeChanged(type);
+}
+
+/*! Overrides Target#setBubbleText(). */
+void Sprite::setBubbleText(const std::string &text)
+{
+    Target::setBubbleText(text);
+
+    if (impl->visible && !text.empty()) {
+        IEngine *eng = engine();
+
+        if (eng)
+            eng->requestRedraw();
+    }
+
+    if (impl->iface)
+        impl->iface->onBubbleTextChanged(text);
+}
+
 Target *Sprite::dataSource() const
 {
     return impl->cloneSprite;

@@ -141,6 +141,30 @@ TEST(StageTest, GraphicsEffects)
     ASSERT_EQ(stage.graphicsEffectValue(&effect2), 0);
 }
 
+TEST(StageTest, BubbleType)
+{
+    Stage stage;
+    ASSERT_EQ(stage.bubbleType(), Target::BubbleType::Say);
+
+    stage.setBubbleType(Target::BubbleType::Think);
+    ASSERT_EQ(stage.bubbleType(), Target::BubbleType::Think);
+
+    stage.setBubbleType(Target::BubbleType::Say);
+    ASSERT_EQ(stage.bubbleType(), Target::BubbleType::Say);
+}
+
+TEST(StageTest, BubbleText)
+{
+    Stage stage;
+    ASSERT_TRUE(stage.bubbleText().empty());
+
+    stage.setBubbleText("hello");
+    ASSERT_EQ(stage.bubbleText(), "hello");
+
+    stage.setBubbleText("world");
+    ASSERT_EQ(stage.bubbleText(), "world");
+}
+
 TEST(StageTest, LayerOrder)
 {
     Stage stage;
