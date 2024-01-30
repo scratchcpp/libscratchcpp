@@ -403,6 +403,36 @@ TEST_F(LooksBlocksTest, ChangeEffectBy)
 
 static void initEffects()
 {
+    // Create and register fake graphics effects
+    auto colorEffect = std::make_shared<GraphicsEffectMock>();
+    auto fisheyeEffect = std::make_shared<GraphicsEffectMock>();
+    auto whirlEffect = std::make_shared<GraphicsEffectMock>();
+    auto pixelateEffect = std::make_shared<GraphicsEffectMock>();
+    auto mosaicEffect = std::make_shared<GraphicsEffectMock>();
+    auto brightnessEffect = std::make_shared<GraphicsEffectMock>();
+    auto ghostEffect = std::make_shared<GraphicsEffectMock>();
+
+    EXPECT_CALL(*colorEffect, name()).WillOnce(Return("color"));
+    ScratchConfiguration::registerGraphicsEffect(colorEffect);
+
+    EXPECT_CALL(*fisheyeEffect, name()).WillOnce(Return("fisheye"));
+    ScratchConfiguration::registerGraphicsEffect(fisheyeEffect);
+
+    EXPECT_CALL(*whirlEffect, name()).WillOnce(Return("whirl"));
+    ScratchConfiguration::registerGraphicsEffect(whirlEffect);
+
+    EXPECT_CALL(*pixelateEffect, name()).WillOnce(Return("pixelate"));
+    ScratchConfiguration::registerGraphicsEffect(pixelateEffect);
+
+    EXPECT_CALL(*mosaicEffect, name()).WillOnce(Return("mosaic"));
+    ScratchConfiguration::registerGraphicsEffect(mosaicEffect);
+
+    EXPECT_CALL(*brightnessEffect, name()).WillOnce(Return("brightness"));
+    ScratchConfiguration::registerGraphicsEffect(brightnessEffect);
+
+    EXPECT_CALL(*ghostEffect, name()).WillOnce(Return("ghost"));
+    ScratchConfiguration::registerGraphicsEffect(ghostEffect);
+
     LooksBlocks::m_colorEffect = ScratchConfiguration::getGraphicsEffect("color");
     LooksBlocks::m_fisheyeEffect = ScratchConfiguration::getGraphicsEffect("fisheye");
     LooksBlocks::m_whirlEffect = ScratchConfiguration::getGraphicsEffect("whirl");
@@ -410,6 +440,17 @@ static void initEffects()
     LooksBlocks::m_mosaicEffect = ScratchConfiguration::getGraphicsEffect("mosaic");
     LooksBlocks::m_brightnessEffect = ScratchConfiguration::getGraphicsEffect("brightness");
     LooksBlocks::m_ghostEffect = ScratchConfiguration::getGraphicsEffect("ghost");
+}
+
+static void removeEffects()
+{
+    ScratchConfiguration::removeGraphicsEffect("color");
+    ScratchConfiguration::removeGraphicsEffect("fisheye");
+    ScratchConfiguration::removeGraphicsEffect("whirl");
+    ScratchConfiguration::removeGraphicsEffect("pixelate");
+    ScratchConfiguration::removeGraphicsEffect("mosaic");
+    ScratchConfiguration::removeGraphicsEffect("brightness");
+    ScratchConfiguration::removeGraphicsEffect("ghost");
 }
 
 TEST_F(LooksBlocksTest, ChangeEffectByImpl)
@@ -466,9 +507,8 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness"), -0.01);
     sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost"), 45.78);
 
-    // TODO: Uncomment commented lines (#283, #284, #285, #286, #287, #288, #289)
     // color
-    /*vm.reset();
+    vm.reset();
     vm.setBytecode(bytecode3);
     vm.run();
 
@@ -481,7 +521,7 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye")), -6.15);
+    ASSERT_EQ(std::round(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye")) * 100) / 100, -6.15);
 
     // whirl
     vm.reset();
@@ -513,7 +553,7 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness")), -8.55);
+    ASSERT_EQ(std::round(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness")) * 100) / 100, -8.55);
 
     // ghost
     vm.reset();
@@ -521,7 +561,9 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 45.79);*/
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 45.79);
+
+    removeEffects();
 }
 
 TEST_F(LooksBlocksTest, SetEffectTo)
@@ -531,47 +573,47 @@ TEST_F(LooksBlocksTest, SetEffectTo)
     // set [custom1] effect to 12.5
     auto block1 = std::make_shared<Block>("a", "looks_seteffectto");
     addDropdownField(block1, "EFFECT", LooksBlocks::EFFECT, "custom1", static_cast<LooksBlocks::FieldValues>(-1));
-    addValueInput(block1, "CHANGE", LooksBlocks::CHANGE, 12.5);
+    addValueInput(block1, "VALUE", LooksBlocks::VALUE, 12.5);
 
     // set [custom2] effect to -78.15
     auto block2 = std::make_shared<Block>("b", "looks_seteffectto");
     addDropdownField(block2, "EFFECT", LooksBlocks::EFFECT, "custom2", static_cast<LooksBlocks::FieldValues>(-1));
-    addValueInput(block2, "CHANGE", LooksBlocks::CHANGE, -78.15);
+    addValueInput(block2, "VALUE", LooksBlocks::VALUE, -78.15);
 
     // set [color] effect to 154.152
     auto block3 = std::make_shared<Block>("c", "looks_seteffectto");
     addDropdownField(block3, "EFFECT", LooksBlocks::EFFECT, "color", LooksBlocks::ColorEffect);
-    addValueInput(block3, "CHANGE", LooksBlocks::CHANGE, 154.152);
+    addValueInput(block3, "VALUE", LooksBlocks::VALUE, 154.152);
 
     // set [fisheye] effect to -124.054
     auto block4 = std::make_shared<Block>("d", "looks_seteffectto");
     addDropdownField(block4, "EFFECT", LooksBlocks::EFFECT, "fisheye", LooksBlocks::FisheyeEffect);
-    addValueInput(block4, "CHANGE", LooksBlocks::CHANGE, -124.054);
+    addValueInput(block4, "VALUE", LooksBlocks::VALUE, -124.054);
 
     // set [whirl] effect to 45.858
     auto block5 = std::make_shared<Block>("e", "looks_seteffectto");
     addDropdownField(block5, "EFFECT", LooksBlocks::EFFECT, "whirl", LooksBlocks::WhirlEffect);
-    addValueInput(block5, "CHANGE", LooksBlocks::CHANGE, 45.858);
+    addValueInput(block5, "VALUE", LooksBlocks::VALUE, 45.858);
 
     // set [pixelate] effect to -0.15
     auto block6 = std::make_shared<Block>("f", "looks_seteffectto");
     addDropdownField(block6, "EFFECT", LooksBlocks::EFFECT, "pixelate", LooksBlocks::PixelateEffect);
-    addValueInput(block6, "CHANGE", LooksBlocks::CHANGE, -0.15);
+    addValueInput(block6, "VALUE", LooksBlocks::VALUE, -0.15);
 
     // set [mosaic] effect to 0.84
     auto block7 = std::make_shared<Block>("g", "looks_seteffectto");
     addDropdownField(block7, "EFFECT", LooksBlocks::EFFECT, "mosaic", LooksBlocks::MosaicEffect);
-    addValueInput(block7, "CHANGE", LooksBlocks::CHANGE, 0.84);
+    addValueInput(block7, "VALUE", LooksBlocks::VALUE, 0.84);
 
     // set [brightness] effect to 40.87
     auto block8 = std::make_shared<Block>("h", "looks_seteffectto");
     addDropdownField(block8, "EFFECT", LooksBlocks::EFFECT, "brightness", LooksBlocks::BrightnessEffect);
-    addValueInput(block8, "CHANGE", LooksBlocks::CHANGE, 40.87);
+    addValueInput(block8, "VALUE", LooksBlocks::VALUE, 40.87);
 
     // set [ghost] effect to 50.04
     auto block9 = std::make_shared<Block>("i", "looks_seteffectto");
     addDropdownField(block9, "EFFECT", LooksBlocks::EFFECT, "ghost", LooksBlocks::GhostEffect);
-    addValueInput(block9, "CHANGE", LooksBlocks::CHANGE, 50.04);
+    addValueInput(block9, "VALUE", LooksBlocks::VALUE, 50.04);
 
     auto effect1 = std::make_shared<GraphicsEffectMock>();
     auto effect2 = std::make_shared<GraphicsEffectMock>();
@@ -741,9 +783,8 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
     sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness"), -0.01);
     sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost"), 45.78);
 
-    // TODO: Uncomment commented lines (#283, #284, #285, #286, #287, #288, #289)
     // color
-    /*vm.reset();
+    vm.reset();
     vm.setBytecode(bytecode3);
     vm.run();
 
@@ -796,7 +837,9 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 0.01);*/
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 0.01);
+
+    removeEffects();
 }
 
 TEST_F(LooksBlocksTest, ClearGraphicEffects)
