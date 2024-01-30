@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/sound.h>
+#include <scratchcpp/target.h>
 
 namespace libscratchcpp
 {
@@ -36,6 +37,8 @@ struct TargetPrivate
         int layerOrder = 0;
         double volume = 100;
         std::unordered_map<IGraphicsEffect *, double> graphicsEffects;
+        Target::BubbleType bubbleType = Target::BubbleType::Say;
+        std::string bubbleText;
 };
 
 } // namespace libscratchcpp
