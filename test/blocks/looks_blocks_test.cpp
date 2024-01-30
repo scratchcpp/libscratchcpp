@@ -472,12 +472,12 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
 
     GraphicsEffectMock effect1, effect2;
 
-    Sprite sprite;
-    sprite.setGraphicsEffectValue(&effect1, 12.5);
-    sprite.setGraphicsEffectValue(&effect2, -100.48);
+    Target target;
+    target.setGraphicsEffectValue(&effect1, 12.5);
+    target.setGraphicsEffectValue(&effect2, -100.48);
 
     // custom1
-    VirtualMachine vm(&sprite, nullptr, nullptr);
+    VirtualMachine vm(&target, nullptr, nullptr);
     LooksBlocks::m_customGraphicsEffects.clear();
     LooksBlocks::m_customGraphicsEffects.push_back(&effect1);
     vm.setBytecode(bytecode1);
@@ -486,7 +486,7 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 67.65);
+    ASSERT_EQ(target.graphicsEffectValue(&effect1), 67.65);
 
     // custom2
     LooksBlocks::m_customGraphicsEffects.push_back(&effect2);
@@ -495,17 +495,17 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(&effect2), -141.02);
+    ASSERT_EQ(target.graphicsEffectValue(&effect2), -141.02);
 
     // Initialize graphics effects
     initEffects();
-    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("color"), 12.4);
-    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye"), -8.45);
-    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("whirl"), 50.15);
-    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("pixelate"), -45.21);
-    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("mosaic"), 0.2);
-    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness"), -0.01);
-    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost"), 45.78);
+    target.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("color"), 12.4);
+    target.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye"), -8.45);
+    target.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("whirl"), 50.15);
+    target.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("pixelate"), -45.21);
+    target.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("mosaic"), 0.2);
+    target.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness"), -0.01);
+    target.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost"), 45.78);
 
     // color
     vm.reset();
@@ -513,7 +513,7 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("color")), 13.6);
+    ASSERT_EQ(target.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("color")), 13.6);
 
     // fisheye
     vm.reset();
@@ -521,7 +521,7 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(std::round(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye")) * 100) / 100, -6.15);
+    ASSERT_EQ(std::round(target.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye")) * 100) / 100, -6.15);
 
     // whirl
     vm.reset();
@@ -529,7 +529,7 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("whirl")), 46.75);
+    ASSERT_EQ(target.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("whirl")), 46.75);
 
     // pixelate
     vm.reset();
@@ -537,7 +537,7 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("pixelate")), -49.71);
+    ASSERT_EQ(target.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("pixelate")), -49.71);
 
     // mosaic
     vm.reset();
@@ -545,7 +545,7 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("mosaic")), 0.7);
+    ASSERT_EQ(target.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("mosaic")), 0.7);
 
     // brightness
     vm.reset();
@@ -553,7 +553,7 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(std::round(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness")) * 100) / 100, -8.55);
+    ASSERT_EQ(std::round(target.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness")) * 100) / 100, -8.55);
 
     // ghost
     vm.reset();
@@ -561,7 +561,7 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 45.79);
+    ASSERT_EQ(target.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 45.79);
 
     removeEffects();
 }
@@ -748,12 +748,12 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
 
     GraphicsEffectMock effect1, effect2;
 
-    Sprite sprite;
-    sprite.setGraphicsEffectValue(&effect1, 12.5);
-    sprite.setGraphicsEffectValue(&effect2, -100.48);
+    Target target;
+    target.setGraphicsEffectValue(&effect1, 12.5);
+    target.setGraphicsEffectValue(&effect2, -100.48);
 
     // custom1
-    VirtualMachine vm(&sprite, nullptr, nullptr);
+    VirtualMachine vm(&target, nullptr, nullptr);
     LooksBlocks::m_customGraphicsEffects.clear();
     LooksBlocks::m_customGraphicsEffects.push_back(&effect1);
     vm.setBytecode(bytecode1);
@@ -762,7 +762,7 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 55.15);
+    ASSERT_EQ(target.graphicsEffectValue(&effect1), 55.15);
 
     // custom2
     LooksBlocks::m_customGraphicsEffects.push_back(&effect2);
@@ -771,17 +771,17 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(&effect2), -40.54);
+    ASSERT_EQ(target.graphicsEffectValue(&effect2), -40.54);
 
     // Initialize graphics effects
     initEffects();
-    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("color"), 12.4);
-    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye"), -8.45);
-    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("whirl"), 50.15);
-    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("pixelate"), -45.21);
-    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("mosaic"), 0.2);
-    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness"), -0.01);
-    sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost"), 45.78);
+    target.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("color"), 12.4);
+    target.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye"), -8.45);
+    target.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("whirl"), 50.15);
+    target.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("pixelate"), -45.21);
+    target.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("mosaic"), 0.2);
+    target.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness"), -0.01);
+    target.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost"), 45.78);
 
     // color
     vm.reset();
@@ -789,7 +789,7 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("color")), 1.2);
+    ASSERT_EQ(target.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("color")), 1.2);
 
     // fisheye
     vm.reset();
@@ -797,7 +797,7 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye")), 2.3);
+    ASSERT_EQ(target.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye")), 2.3);
 
     // whirl
     vm.reset();
@@ -805,7 +805,7 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("whirl")), -3.4);
+    ASSERT_EQ(target.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("whirl")), -3.4);
 
     // pixelate
     vm.reset();
@@ -813,7 +813,7 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("pixelate")), -4.5);
+    ASSERT_EQ(target.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("pixelate")), -4.5);
 
     // mosaic
     vm.reset();
@@ -821,7 +821,7 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("mosaic")), 0.5);
+    ASSERT_EQ(target.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("mosaic")), 0.5);
 
     // brightness
     vm.reset();
@@ -829,7 +829,7 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness")), -8.54);
+    ASSERT_EQ(target.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness")), -8.54);
 
     // ghost
     vm.reset();
@@ -837,7 +837,7 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 0.01);
+    ASSERT_EQ(target.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 0.01);
 
     removeEffects();
 }
@@ -864,19 +864,19 @@ TEST_F(LooksBlocksTest, ClearGraphicEffectsImpl)
     static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
     static BlockFunc functions[] = { &LooksBlocks::clearGraphicEffects };
 
-    Sprite sprite;
+    Target target;
     GraphicsEffectMock effect1, effect2;
-    sprite.setGraphicsEffectValue(&effect1, 48.21);
-    sprite.setGraphicsEffectValue(&effect2, -107.08);
+    target.setGraphicsEffectValue(&effect1, 48.21);
+    target.setGraphicsEffectValue(&effect2, -107.08);
 
-    VirtualMachine vm(&sprite, nullptr, nullptr);
+    VirtualMachine vm(&target, nullptr, nullptr);
     vm.setBytecode(bytecode);
     vm.setFunctions(functions);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(&effect2), 0);
+    ASSERT_EQ(target.graphicsEffectValue(&effect1), 0);
+    ASSERT_EQ(target.graphicsEffectValue(&effect2), 0);
 }
 
 TEST_F(LooksBlocksTest, ChangeSizeBy)
