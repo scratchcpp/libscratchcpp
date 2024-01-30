@@ -403,6 +403,36 @@ TEST_F(LooksBlocksTest, ChangeEffectBy)
 
 static void initEffects()
 {
+    // Create and register fake graphics effects
+    auto colorEffect = std::make_shared<GraphicsEffectMock>();
+    auto fisheyeEffect = std::make_shared<GraphicsEffectMock>();
+    auto whirlEffect = std::make_shared<GraphicsEffectMock>();
+    auto pixelateEffect = std::make_shared<GraphicsEffectMock>();
+    auto mosaicEffect = std::make_shared<GraphicsEffectMock>();
+    auto brightnessEffect = std::make_shared<GraphicsEffectMock>();
+    auto ghostEffect = std::make_shared<GraphicsEffectMock>();
+
+    EXPECT_CALL(*colorEffect, name()).WillOnce(Return("color"));
+    ScratchConfiguration::registerGraphicsEffect(colorEffect);
+
+    EXPECT_CALL(*fisheyeEffect, name()).WillOnce(Return("fisheye"));
+    ScratchConfiguration::registerGraphicsEffect(fisheyeEffect);
+
+    EXPECT_CALL(*whirlEffect, name()).WillOnce(Return("whirl"));
+    ScratchConfiguration::registerGraphicsEffect(whirlEffect);
+
+    EXPECT_CALL(*pixelateEffect, name()).WillOnce(Return("pixelate"));
+    ScratchConfiguration::registerGraphicsEffect(pixelateEffect);
+
+    EXPECT_CALL(*mosaicEffect, name()).WillOnce(Return("mosaic"));
+    ScratchConfiguration::registerGraphicsEffect(mosaicEffect);
+
+    EXPECT_CALL(*brightnessEffect, name()).WillOnce(Return("brightness"));
+    ScratchConfiguration::registerGraphicsEffect(brightnessEffect);
+
+    EXPECT_CALL(*ghostEffect, name()).WillOnce(Return("ghost"));
+    ScratchConfiguration::registerGraphicsEffect(ghostEffect);
+
     LooksBlocks::m_colorEffect = ScratchConfiguration::getGraphicsEffect("color");
     LooksBlocks::m_fisheyeEffect = ScratchConfiguration::getGraphicsEffect("fisheye");
     LooksBlocks::m_whirlEffect = ScratchConfiguration::getGraphicsEffect("whirl");
@@ -410,6 +440,17 @@ static void initEffects()
     LooksBlocks::m_mosaicEffect = ScratchConfiguration::getGraphicsEffect("mosaic");
     LooksBlocks::m_brightnessEffect = ScratchConfiguration::getGraphicsEffect("brightness");
     LooksBlocks::m_ghostEffect = ScratchConfiguration::getGraphicsEffect("ghost");
+}
+
+static void removeEffects()
+{
+    ScratchConfiguration::removeGraphicsEffect("color");
+    ScratchConfiguration::removeGraphicsEffect("fisheye");
+    ScratchConfiguration::removeGraphicsEffect("whirl");
+    ScratchConfiguration::removeGraphicsEffect("pixelate");
+    ScratchConfiguration::removeGraphicsEffect("mosaic");
+    ScratchConfiguration::removeGraphicsEffect("brightness");
+    ScratchConfiguration::removeGraphicsEffect("ghost");
 }
 
 TEST_F(LooksBlocksTest, ChangeEffectByImpl)
@@ -466,9 +507,8 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness"), -0.01);
     sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost"), 45.78);
 
-    // TODO: Uncomment commented lines (#283, #284, #285, #286, #287, #288, #289)
     // color
-    /*vm.reset();
+    vm.reset();
     vm.setBytecode(bytecode3);
     vm.run();
 
@@ -481,7 +521,7 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye")), -6.15);
+    ASSERT_EQ(std::round(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("fisheye")) * 100) / 100, -6.15);
 
     // whirl
     vm.reset();
@@ -513,7 +553,7 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness")), -8.55);
+    ASSERT_EQ(std::round(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness")) * 100) / 100, -8.55);
 
     // ghost
     vm.reset();
@@ -521,7 +561,9 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 45.79);*/
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 45.79);
+
+    removeEffects();
 }
 
 TEST_F(LooksBlocksTest, SetEffectTo)
@@ -741,9 +783,8 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
     sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("brightness"), -0.01);
     sprite.setGraphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost"), 45.78);
 
-    // TODO: Uncomment commented lines (#283, #284, #285, #286, #287, #288, #289)
     // color
-    /*vm.reset();
+    vm.reset();
     vm.setBytecode(bytecode3);
     vm.run();
 
@@ -796,7 +837,9 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 0.01);*/
+    ASSERT_EQ(sprite.graphicsEffectValue(ScratchConfiguration::getGraphicsEffect("ghost")), 0.01);
+
+    removeEffects();
 }
 
 TEST_F(LooksBlocksTest, ClearGraphicEffects)
