@@ -108,6 +108,7 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_sayforsecs", &LooksBlocks::compileSayForSecs));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_say", &LooksBlocks::compileSay));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_thinkforsecs", &LooksBlocks::compileThinkForSecs));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_show", &LooksBlocks::compileShow));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_hide", &LooksBlocks::compileHide));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_changeeffectby", &LooksBlocks::compileChangeEffectBy));
@@ -368,6 +369,166 @@ TEST_F(LooksBlocksTest, SayImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
     ASSERT_EQ(target.bubbleText(), "test");
+}
+
+TEST_F(LooksBlocksTest, ThinkForSecs)
+{
+    Compiler compiler(&m_engineMock);
+
+    // think "Hmm..." for 3.5 seconds
+    auto block = std::make_shared<Block>("a", "looks_thinkforsecs");
+    addValueInput(block, "MESSAGE", LooksBlocks::MESSAGE, "Hmm...");
+    addValueInput(block, "SECS", LooksBlocks::SECS, 3.5);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::startThinkForSecs)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::thinkForSecs)).WillOnce(Return(1));
+
+    compiler.init();
+    compiler.setBlock(block);
+    LooksBlocks::compileThinkForSecs(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "Hmm...", 3.5 }));
+}
+
+TEST_F(LooksBlocksTest, ThinkForSecsImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT };
+    // static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::startThinkForSecs, &LooksBlocks::thinkForSecs /*, &LooksBlocks::think*/ };
+    static Value constValues[] = { "test", 5.5, "hello" };
+
+    Target target;
+    target.setBubbleType(Target::BubbleType::Say);
+    VirtualMachine vm(&target, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.setBytecode(bytecode1);
+
+    ClockMock clock;
+    LooksBlocks::clock = &clock;
+
+    std::chrono::steady_clock::time_point startTime(std::chrono::milliseconds(1000));
+    EXPECT_CALL(clock, currentSteadyTime()).Times(2).WillRepeatedly(Return(startTime));
+    EXPECT_CALL(m_engineMock, requestRedraw());
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) != LooksBlocks::m_timeMap.cend());
+    ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
+    ASSERT_EQ(target.bubbleText(), "test");
+
+    std::chrono::steady_clock::time_point time1(std::chrono::milliseconds(6450));
+    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time1));
+    target.setBubbleType(Target::BubbleType::Say);
+    target.setBubbleText("another");
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) != LooksBlocks::m_timeMap.cend());
+    ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
+    ASSERT_EQ(target.bubbleText(), "another");
+
+    std::chrono::steady_clock::time_point time2(std::chrono::milliseconds(6500));
+    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time2));
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) == LooksBlocks::m_timeMap.cend());
+    ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
+    ASSERT_TRUE(target.bubbleText().empty());
+
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) == LooksBlocks::m_timeMap.cend());
+    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
+    ASSERT_TRUE(target.bubbleText().empty());
+
+    // Run the say block while waiting
+    /*VirtualMachine vm2(&target, &m_engineMock, nullptr);
+    vm2.setFunctions(functions);
+    vm2.setConstValues(constValues);
+    vm2.setBytecode(bytecode2);
+
+    EXPECT_CALL(clock, currentSteadyTime()).Times(2).WillRepeatedly(Return(startTime));
+    EXPECT_CALL(m_engineMock, requestRedraw());
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) != LooksBlocks::m_timeMap.cend());
+    ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
+    ASSERT_EQ(target.bubbleText(), "test");
+
+    vm2.run();
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
+    ASSERT_EQ(target.bubbleText(), "hello");
+
+    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time2));
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) == LooksBlocks::m_timeMap.cend());
+    ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
+    ASSERT_EQ(target.bubbleText(), "hello");
+
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) == LooksBlocks::m_timeMap.cend());
+    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
+    ASSERT_EQ(target.bubbleText(), "hello");
+
+    // Run the say for secs block while waiting
+    vm2.reset();
+    vm2.setBytecode(bytecode3);
+
+    EXPECT_CALL(clock, currentSteadyTime()).Times(2).WillRepeatedly(Return(startTime));
+    EXPECT_CALL(m_engineMock, requestRedraw());
+    vm2.reset();
+    vm2.run();
+
+    ASSERT_EQ(vm2.registerCount(), 0);
+    ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm2) != LooksBlocks::m_timeMap.cend());
+    ASSERT_FALSE(vm2.atEnd());
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
+    ASSERT_EQ(target.bubbleText(), "hello");
+
+    EXPECT_CALL(clock, currentSteadyTime()).Times(2).WillRepeatedly(Return(startTime));
+    EXPECT_CALL(m_engineMock, requestRedraw());
+    vm.reset();
+    vm.run();
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
+    ASSERT_EQ(target.bubbleText(), "test");
+
+    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time2));
+    vm2.run();
+
+    ASSERT_EQ(vm2.registerCount(), 0);
+    ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm2) == LooksBlocks::m_timeMap.cend());
+    ASSERT_FALSE(vm2.atEnd());
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
+    ASSERT_EQ(target.bubbleText(), "test");
+
+    vm2.run();
+
+    ASSERT_EQ(vm2.registerCount(), 0);
+    ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm2) == LooksBlocks::m_timeMap.cend());
+    ASSERT_TRUE(vm2.atEnd());
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
+    ASSERT_EQ(target.bubbleText(), "test");*/
+
+    LooksBlocks::clock = Clock::instance().get();
 }
 
 TEST_F(LooksBlocksTest, Show)
