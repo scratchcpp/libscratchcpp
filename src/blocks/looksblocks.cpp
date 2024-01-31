@@ -12,10 +12,12 @@
 
 #include "looksblocks.h"
 #include "../engine/internal/randomgenerator.h"
+#include "../engine/internal/clock.h"
 
 using namespace libscratchcpp;
 
 IRandomGenerator *LooksBlocks::rng = nullptr;
+IClock *LooksBlocks::clock = nullptr;
 
 std::string LooksBlocks::name() const
 {
@@ -25,6 +27,7 @@ std::string LooksBlocks::name() const
 void LooksBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks
+    engine->addCompileFunction(this, "looks_sayforsecs", &compileSayForSecs);
     engine->addCompileFunction(this, "looks_say", &compileSay);
     engine->addCompileFunction(this, "looks_show", &compileShow);
     engine->addCompileFunction(this, "looks_hide", &compileHide);
@@ -51,6 +54,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
 
     // Inputs
     engine->addInput(this, "MESSAGE", MESSAGE);
+    engine->addInput(this, "SECS", SECS);
     engine->addInput(this, "CHANGE", CHANGE);
     engine->addInput(this, "SIZE", SIZE);
     engine->addInput(this, "COSTUME", COSTUME);
@@ -77,6 +81,14 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addFieldValue(this, "back", Back);
     engine->addFieldValue(this, "forward", Forward);
     engine->addFieldValue(this, "backward", Backward);
+}
+
+void LooksBlocks::compileSayForSecs(Compiler *compiler)
+{
+    compiler->addInput(MESSAGE);
+    compiler->addInput(SECS);
+    compiler->addFunctionCall(&startSayForSecs);
+    compiler->addFunctionCall(&sayForSecs);
 }
 
 void LooksBlocks::compileSay(Compiler *compiler)
@@ -523,15 +535,87 @@ const std::string &LooksBlocks::sizeMonitorName(Block *block)
     return name;
 }
 
-unsigned int LooksBlocks::say(VirtualMachine *vm)
+void LooksBlocks::startWait(VirtualMachine *vm, double secs)
+{
+    if (!clock)
+        clock = Clock::instance().get();
+
+    auto currentTime = clock->currentSteadyTime();
+    m_timeMap[vm] = { currentTime, secs * 1000 };
+    vm->engine()->requestRedraw();
+}
+
+bool LooksBlocks::wait(VirtualMachine *vm)
+{
+    if (!clock)
+        clock = Clock::instance().get();
+
+    auto currentTime = clock->currentSteadyTime();
+    assert(m_timeMap.count(vm) == 1);
+
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - m_timeMap[vm].first).count() >= m_timeMap[vm].second) {
+        m_timeMap.erase(vm);
+        vm->stop(true, true, false);
+        return true;
+    } else {
+        vm->stop(true, true, true);
+        return false;
+    }
+}
+
+void LooksBlocks::showBubble(VirtualMachine *vm, Target::BubbleType type, const std::string &text)
 {
     Target *target = vm->target();
 
     if (target) {
-        target->setBubbleType(Target::BubbleType::Say);
-        target->setBubbleText(vm->getInput(0, 1)->toString());
+        target->setBubbleType(type);
+        target->setBubbleText(text);
+        m_waitingBubbles.erase(target);
+    }
+}
+
+void LooksBlocks::hideBubble(Target *target)
+{
+    if (!target)
+        return;
+
+    target->setBubbleText("");
+    m_waitingBubbles.erase(target);
+}
+
+unsigned int LooksBlocks::startSayForSecs(VirtualMachine *vm)
+{
+    Target *target = vm->target();
+
+    if (target) {
+        showBubble(vm, Target::BubbleType::Say, vm->getInput(0, 2)->toString());
+        m_waitingBubbles[target] = vm;
+        startWait(vm, vm->getInput(1, 2)->toDouble());
     }
 
+    return 2;
+}
+
+unsigned int LooksBlocks::sayForSecs(VirtualMachine *vm)
+{
+    if (wait(vm)) {
+        Target *target = vm->target();
+
+        if (target) {
+            auto it = m_waitingBubbles.find(target);
+
+            // Clear bubble if it hasn't been changed
+            if (it != m_waitingBubbles.cend() && it->second == vm)
+                hideBubble(vm->target());
+        }
+    }
+
+    return 0;
+}
+
+unsigned int LooksBlocks::say(VirtualMachine *vm)
+{
+    showBubble(vm, Target::BubbleType::Say, vm->getInput(0, 1)->toString());
     return 1;
 }
 
