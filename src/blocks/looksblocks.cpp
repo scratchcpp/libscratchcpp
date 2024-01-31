@@ -30,6 +30,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_sayforsecs", &compileSayForSecs);
     engine->addCompileFunction(this, "looks_say", &compileSay);
     engine->addCompileFunction(this, "looks_thinkforsecs", &compileThinkForSecs);
+    engine->addCompileFunction(this, "looks_think", &compileThink);
     engine->addCompileFunction(this, "looks_show", &compileShow);
     engine->addCompileFunction(this, "looks_hide", &compileHide);
     engine->addCompileFunction(this, "looks_changeeffectby", &compileChangeEffectBy);
@@ -104,6 +105,12 @@ void LooksBlocks::compileThinkForSecs(Compiler *compiler)
     compiler->addInput(SECS);
     compiler->addFunctionCall(&startThinkForSecs);
     compiler->addFunctionCall(&thinkForSecs);
+}
+
+void LooksBlocks::compileThink(Compiler *compiler)
+{
+    compiler->addInput(MESSAGE);
+    compiler->addFunctionCall(&think);
 }
 
 void LooksBlocks::compileShow(Compiler *compiler)
@@ -644,6 +651,12 @@ unsigned int LooksBlocks::startThinkForSecs(VirtualMachine *vm)
 unsigned int LooksBlocks::thinkForSecs(VirtualMachine *vm)
 {
     return sayForSecs(vm); // there isn't any difference
+}
+
+unsigned int LooksBlocks::think(VirtualMachine *vm)
+{
+    showBubble(vm, Target::BubbleType::Think, vm->getInput(0, 1)->toString());
+    return 1;
 }
 
 unsigned int LooksBlocks::show(VirtualMachine *vm)

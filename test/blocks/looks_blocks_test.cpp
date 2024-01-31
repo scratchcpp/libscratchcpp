@@ -109,6 +109,7 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_sayforsecs", &LooksBlocks::compileSayForSecs));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_say", &LooksBlocks::compileSay));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_thinkforsecs", &LooksBlocks::compileThinkForSecs));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_think", &LooksBlocks::compileThink));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_show", &LooksBlocks::compileShow));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_hide", &LooksBlocks::compileHide));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_changeeffectby", &LooksBlocks::compileChangeEffectBy));
@@ -395,9 +396,9 @@ TEST_F(LooksBlocksTest, ThinkForSecs)
 TEST_F(LooksBlocksTest, ThinkForSecsImpl)
 {
     static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT };
-    // static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 2, vm::OP_HALT };
     static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT };
-    static BlockFunc functions[] = { &LooksBlocks::startThinkForSecs, &LooksBlocks::thinkForSecs /*, &LooksBlocks::think*/ };
+    static BlockFunc functions[] = { &LooksBlocks::startThinkForSecs, &LooksBlocks::thinkForSecs, &LooksBlocks::think };
     static Value constValues[] = { "test", 5.5, "hello" };
 
     Target target;
@@ -452,7 +453,7 @@ TEST_F(LooksBlocksTest, ThinkForSecsImpl)
     ASSERT_TRUE(target.bubbleText().empty());
 
     // Run the say block while waiting
-    /*VirtualMachine vm2(&target, &m_engineMock, nullptr);
+    VirtualMachine vm2(&target, &m_engineMock, nullptr);
     vm2.setFunctions(functions);
     vm2.setConstValues(constValues);
     vm2.setBytecode(bytecode2);
@@ -526,9 +527,55 @@ TEST_F(LooksBlocksTest, ThinkForSecsImpl)
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm2) == LooksBlocks::m_timeMap.cend());
     ASSERT_TRUE(vm2.atEnd());
     ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_EQ(target.bubbleText(), "test");*/
+    ASSERT_EQ(target.bubbleText(), "test");
 
     LooksBlocks::clock = Clock::instance().get();
+}
+
+TEST_F(LooksBlocksTest, Think)
+{
+    Compiler compiler(&m_engineMock);
+
+    // say "Hmm..."
+    auto block = std::make_shared<Block>("a", "looks_think");
+    addValueInput(block, "MESSAGE", LooksBlocks::MESSAGE, "Hmm...");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::think)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    LooksBlocks::compileThink(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toString(), "Hmm...");
+}
+
+TEST_F(LooksBlocksTest, ThinkImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::think };
+    static Value constValues[] = { "test" };
+
+    Target target;
+    VirtualMachine vm(&target, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
+    ASSERT_EQ(target.bubbleText(), "test");
+
+    target.setBubbleType(Target::BubbleType::Say);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
+    ASSERT_EQ(target.bubbleText(), "test");
 }
 
 TEST_F(LooksBlocksTest, Show)

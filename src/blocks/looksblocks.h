@@ -65,6 +65,7 @@ class LooksBlocks : public IBlockSection
         static void compileSayForSecs(Compiler *compiler);
         static void compileSay(Compiler *compiler);
         static void compileThinkForSecs(Compiler *compiler);
+        static void compileThink(Compiler *compiler);
         static void compileShow(Compiler *compiler);
         static void compileHide(Compiler *compiler);
         static void compileChangeEffectBy(Compiler *compiler);
@@ -98,6 +99,7 @@ class LooksBlocks : public IBlockSection
 
         static unsigned int startThinkForSecs(VirtualMachine *vm);
         static unsigned int thinkForSecs(VirtualMachine *vm);
+        static unsigned int think(VirtualMachine *vm);
 
         static unsigned int show(VirtualMachine *vm);
         static unsigned int hide(VirtualMachine *vm);
