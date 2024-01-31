@@ -25,6 +25,7 @@ std::string LooksBlocks::name() const
 void LooksBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks
+    engine->addCompileFunction(this, "looks_say", &compileSay);
     engine->addCompileFunction(this, "looks_show", &compileShow);
     engine->addCompileFunction(this, "looks_hide", &compileHide);
     engine->addCompileFunction(this, "looks_changeeffectby", &compileChangeEffectBy);
@@ -49,6 +50,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addMonitorNameFunction(this, "looks_size", &sizeMonitorName);
 
     // Inputs
+    engine->addInput(this, "MESSAGE", MESSAGE);
     engine->addInput(this, "CHANGE", CHANGE);
     engine->addInput(this, "SIZE", SIZE);
     engine->addInput(this, "COSTUME", COSTUME);
@@ -75,6 +77,12 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addFieldValue(this, "back", Back);
     engine->addFieldValue(this, "forward", Forward);
     engine->addFieldValue(this, "backward", Backward);
+}
+
+void LooksBlocks::compileSay(Compiler *compiler)
+{
+    compiler->addInput(MESSAGE);
+    compiler->addFunctionCall(&say);
 }
 
 void LooksBlocks::compileShow(Compiler *compiler)
@@ -513,6 +521,18 @@ const std::string &LooksBlocks::sizeMonitorName(Block *block)
 {
     static const std::string name = "size";
     return name;
+}
+
+unsigned int LooksBlocks::say(VirtualMachine *vm)
+{
+    Target *target = vm->target();
+
+    if (target) {
+        target->setBubbleType(Target::BubbleType::Say);
+        target->setBubbleText(vm->getInput(0, 1)->toString());
+    }
+
+    return 1;
 }
 
 unsigned int LooksBlocks::show(VirtualMachine *vm)

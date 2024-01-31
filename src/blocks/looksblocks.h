@@ -20,6 +20,7 @@ class LooksBlocks : public IBlockSection
     public:
         enum Inputs
         {
+            MESSAGE,
             CHANGE,
             SIZE,
             COSTUME,
@@ -57,6 +58,7 @@ class LooksBlocks : public IBlockSection
 
         void registerBlocks(IEngine *engine) override;
 
+        static void compileSay(Compiler *compiler);
         static void compileShow(Compiler *compiler);
         static void compileHide(Compiler *compiler);
         static void compileChangeEffectBy(Compiler *compiler);
@@ -79,6 +81,7 @@ class LooksBlocks : public IBlockSection
         static const std::string &backdropNumberNameMonitorName(Block *block);
         static const std::string &sizeMonitorName(Block *block);
 
+        static unsigned int say(VirtualMachine *vm);
         static unsigned int show(VirtualMachine *vm);
         static unsigned int hide(VirtualMachine *vm);
 

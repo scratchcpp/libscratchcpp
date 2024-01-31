@@ -104,6 +104,7 @@ TEST_F(LooksBlocksTest, CategoryVisible)
 TEST_F(LooksBlocksTest, RegisterBlocks)
 {
     // Blocks
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_say", &LooksBlocks::compileSay));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_show", &LooksBlocks::compileShow));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_hide", &LooksBlocks::compileHide));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_changeeffectby", &LooksBlocks::compileChangeEffectBy));
@@ -128,6 +129,7 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "looks_size", &LooksBlocks::sizeMonitorName));
 
     // Inputs
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "MESSAGE", LooksBlocks::MESSAGE));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "CHANGE", LooksBlocks::CHANGE));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SIZE", LooksBlocks::SIZE));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "COSTUME", LooksBlocks::COSTUME));
@@ -156,6 +158,52 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "backward", LooksBlocks::Backward));
 
     m_section->registerBlocks(&m_engineMock);
+}
+
+TEST_F(LooksBlocksTest, Say)
+{
+    Compiler compiler(&m_engineMock);
+
+    // say "Hello!"
+    auto block = std::make_shared<Block>("a", "looks_say");
+    addValueInput(block, "MESSAGE", LooksBlocks::MESSAGE, "Hello!");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::say)).WillOnce(Return(0));
+
+    compiler.init();
+    compiler.setBlock(block);
+    LooksBlocks::compileSay(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toString(), "Hello!");
+}
+
+TEST_F(LooksBlocksTest, SayImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::say };
+    static Value constValues[] = { "test" };
+
+    Target target;
+    VirtualMachine vm(&target, nullptr, nullptr);
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
+    ASSERT_EQ(target.bubbleText(), "test");
+
+    target.setBubbleType(Target::BubbleType::Think);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
+    ASSERT_EQ(target.bubbleText(), "test");
 }
 
 TEST_F(LooksBlocksTest, Show)
