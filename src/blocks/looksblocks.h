@@ -3,16 +3,19 @@
 #pragma once
 
 #include <scratchcpp/iblocksection.h>
+#include <scratchcpp/target.h>
 #include <vector>
+#include <unordered_map>
+#include <chrono>
 
 namespace libscratchcpp
 {
 
-class Target;
 class Stage;
 class Value;
 class IGraphicsEffect;
 class IRandomGenerator;
+class IClock;
 
 /*! \brief The LooksBlocks class contains the implementation of looks blocks. */
 class LooksBlocks : public IBlockSection
@@ -20,6 +23,8 @@ class LooksBlocks : public IBlockSection
     public:
         enum Inputs
         {
+            MESSAGE,
+            SECS,
             CHANGE,
             SIZE,
             COSTUME,
@@ -57,6 +62,10 @@ class LooksBlocks : public IBlockSection
 
         void registerBlocks(IEngine *engine) override;
 
+        static void compileSayForSecs(Compiler *compiler);
+        static void compileSay(Compiler *compiler);
+        static void compileThinkForSecs(Compiler *compiler);
+        static void compileThink(Compiler *compiler);
         static void compileShow(Compiler *compiler);
         static void compileHide(Compiler *compiler);
         static void compileChangeEffectBy(Compiler *compiler);
@@ -78,6 +87,19 @@ class LooksBlocks : public IBlockSection
         static const std::string &costumeNumberNameMonitorName(Block *block);
         static const std::string &backdropNumberNameMonitorName(Block *block);
         static const std::string &sizeMonitorName(Block *block);
+
+        static void startWait(VirtualMachine *vm, double secs);
+        static bool wait(VirtualMachine *vm);
+        static void showBubble(VirtualMachine *vm, Target::BubbleType type, const std::string &text);
+        static void hideBubble(Target *target);
+
+        static unsigned int startSayForSecs(VirtualMachine *vm);
+        static unsigned int sayForSecs(VirtualMachine *vm);
+        static unsigned int say(VirtualMachine *vm);
+
+        static unsigned int startThinkForSecs(VirtualMachine *vm);
+        static unsigned int thinkForSecs(VirtualMachine *vm);
+        static unsigned int think(VirtualMachine *vm);
 
         static unsigned int show(VirtualMachine *vm);
         static unsigned int hide(VirtualMachine *vm);
@@ -141,6 +163,9 @@ class LooksBlocks : public IBlockSection
         static unsigned int backdropNumber(VirtualMachine *vm);
         static unsigned int backdropName(VirtualMachine *vm);
 
+        static inline std::unordered_map<VirtualMachine *, std::pair<std::chrono::steady_clock::time_point, int>> m_timeMap;
+        static inline std::unordered_map<Target *, VirtualMachine *> m_waitingBubbles;
+
         static inline std::vector<IGraphicsEffect *> m_customGraphicsEffects;
         static inline IGraphicsEffect *m_colorEffect = nullptr;
         static inline IGraphicsEffect *m_fisheyeEffect = nullptr;
@@ -151,6 +176,7 @@ class LooksBlocks : public IBlockSection
         static inline IGraphicsEffect *m_ghostEffect = nullptr;
 
         static IRandomGenerator *rng;
+        static IClock *clock;
 };
 
 } // namespace libscratchcpp
