@@ -123,7 +123,7 @@ libscratchcpp::Project p("https://scratch.mit.edu/projects/XXXXXX");
 ## Roadmap
 
 - [x] Motion blocks
-- [ ] Looks blocks
+- [x] Looks blocks
 - [ ] Sound blocks
 - [ ] Event blocks
 - [x] Control blocks
