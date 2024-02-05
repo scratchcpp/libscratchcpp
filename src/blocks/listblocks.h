@@ -8,6 +8,7 @@ namespace libscratchcpp
 {
 
 class Compiler;
+class List;
 
 /*! \brief The ListBlocks class contains the implementation of list blocks. */
 class ListBlocks : public IBlockSection
@@ -39,6 +40,12 @@ class ListBlocks : public IBlockSection
         static void compileItemNumberInList(Compiler *compiler);
         static void compileLengthOfList(Compiler *compiler);
         static void compileListContainsItem(Compiler *compiler);
+        static void compileShowList(Compiler *compiler);
+
+        static void setListVisible(std::shared_ptr<List> list, bool visible);
+
+        static unsigned int showGlobalList(VirtualMachine *vm);
+        static unsigned int showList(VirtualMachine *vm);
 
         static const std::string &listContentsMonitorName(Block *block);
 

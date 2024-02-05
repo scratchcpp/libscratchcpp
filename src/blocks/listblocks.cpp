@@ -5,6 +5,8 @@
 #include <scratchcpp/field.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/monitor.h>
 
 #include "listblocks.h"
 
@@ -33,6 +35,7 @@ void ListBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "data_itemnumoflist", &compileItemNumberInList);
     engine->addCompileFunction(this, "data_lengthoflist", &compileLengthOfList);
     engine->addCompileFunction(this, "data_listcontainsitem", &compileListContainsItem);
+    engine->addCompileFunction(this, "data_showlist", &compileShowList);
 
     // Monitor names
     engine->addMonitorNameFunction(this, "data_listcontents", &listContentsMonitorName);
@@ -105,6 +108,49 @@ void ListBlocks::compileListContainsItem(Compiler *compiler)
 {
     compiler->addInput(ITEM);
     compiler->addInstruction(vm::OP_LIST_CONTAINS, { compiler->listIndex(compiler->field(LIST)->valuePtr()) });
+}
+
+void ListBlocks::compileShowList(Compiler *compiler)
+{
+    Field *field = compiler->field(LIST);
+    assert(field);
+    List *var = static_cast<List *>(field->valuePtr().get());
+    assert(var);
+
+    compiler->addConstValue(var->id());
+
+    if (var->target() == static_cast<Target *>(compiler->engine()->stage()))
+        compiler->addFunctionCall(&showGlobalList);
+    else
+        compiler->addFunctionCall(&showList);
+}
+
+void ListBlocks::setListVisible(std::shared_ptr<List> list, bool visible)
+{
+    if (list) {
+        assert(list->monitor());
+        list->monitor()->setVisible(visible);
+    }
+}
+
+unsigned int ListBlocks::showGlobalList(VirtualMachine *vm)
+{
+    if (Stage *target = vm->engine()->stage()) {
+        int index = target->findListById(vm->getInput(0, 1)->toString());
+        setListVisible(target->listAt(index), true);
+    }
+
+    return 1;
+}
+
+unsigned int ListBlocks::showList(VirtualMachine *vm)
+{
+    if (Target *target = vm->target()) {
+        int index = target->findListById(vm->getInput(0, 1)->toString());
+        setListVisible(target->listAt(index), true);
+    }
+
+    return 1;
 }
 
 const std::string &ListBlocks::listContentsMonitorName(Block *block)
