@@ -1,5 +1,6 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/target.h>
+#include <scratchcpp/monitor.h>
 
 #include "../common.h"
 
@@ -66,6 +67,16 @@ TEST(VariableTest, Target)
     Target target;
     var.setTarget(&target);
     ASSERT_EQ(var.target(), &target);
+}
+
+TEST(VariableTest, Monitor)
+{
+    Variable var("", "");
+    ASSERT_EQ(var.monitor(), nullptr);
+
+    Monitor monitor("", "");
+    var.setMonitor(&monitor);
+    ASSERT_EQ(var.monitor(), &monitor);
 }
 
 TEST(VariableTest, Clone)
