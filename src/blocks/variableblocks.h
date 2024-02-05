@@ -8,6 +8,7 @@ namespace libscratchcpp
 {
 
 class Compiler;
+class Variable;
 
 /*! \brief The VariableBlocks class contains the implementation of variable blocks. */
 class VariableBlocks : public IBlockSection
@@ -30,6 +31,12 @@ class VariableBlocks : public IBlockSection
         static void compileVariable(Compiler *compiler);
         static void compileSetVariable(Compiler *compiler);
         static void compileChangeVariableBy(Compiler *compiler);
+        static void compileShowVariable(Compiler *compiler);
+
+        static void setVarVisible(std::shared_ptr<Variable> var, bool visible);
+
+        static unsigned int showGlobalVariable(VirtualMachine *vm);
+        static unsigned int showVariable(VirtualMachine *vm);
 
         static const std::string &variableMonitorName(Block *block);
         static void changeVariableMonitorValue(Block *block, const Value &newValue);
