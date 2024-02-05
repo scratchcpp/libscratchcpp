@@ -34,11 +34,8 @@
 using namespace libscratchcpp;
 
 const std::unordered_map<Engine::HatType, bool> Engine::m_hatRestartExistingThreads = {
-    { HatType::GreenFlag, true },
-    { HatType::BroadcastReceived, true },
-    { HatType::BackdropChanged, true },
-    { HatType::CloneInit, false },
-    { HatType::KeyPressed, false }
+    { HatType::GreenFlag, true },  { HatType::BroadcastReceived, true }, { HatType::BackdropChanged, true },
+    { HatType::CloneInit, false }, { HatType::KeyPressed, false },       { HatType::TargetClicked, true }
 };
 
 Engine::Engine() :
@@ -698,7 +695,7 @@ void Engine::setMousePressed(bool pressed)
 
 void Engine::clickTarget(Target *target)
 {
-    // TODO: Implement this (#92, #93)
+    startHats(HatType::TargetClicked, {}, target);
 }
 
 unsigned int Engine::stageWidth() const
@@ -979,6 +976,11 @@ void Engine::addKeyPressScript(std::shared_ptr<Block> hatBlock, int fieldId)
     Script *script = m_scripts[hatBlock].get();
     addHatToMap(m_whenKeyPressedHats, script);
     addHatField(script, HatField::KeyOption, fieldId);
+}
+
+void Engine::addTargetClickScript(std::shared_ptr<Block> hatBlock)
+{
+    addHatToMap(m_whenTargetClickedHats, m_scripts[hatBlock].get());
 }
 
 const std::vector<std::shared_ptr<Target>> &Engine::targets() const
@@ -1365,6 +1367,9 @@ const std::vector<Script *> &Engine::getHats(Target *target, HatType type)
 
         case HatType::KeyPressed:
             return m_whenKeyPressedHats[target];
+
+        case HatType::TargetClicked:
+            return m_whenTargetClickedHats[target];
 
         default: {
             static const std::vector<Script *> empty = {};

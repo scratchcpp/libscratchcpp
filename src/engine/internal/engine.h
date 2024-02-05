@@ -123,6 +123,7 @@ class Engine : public IEngine
         void addBackdropChangeScript(std::shared_ptr<Block> hatBlock, int fieldId) override;
         void addCloneInitScript(std::shared_ptr<Block> hatBlock) override;
         void addKeyPressScript(std::shared_ptr<Block> hatBlock, int fieldId) override;
+        void addTargetClickScript(std::shared_ptr<Block> hatBlock) override;
 
         const std::vector<std::shared_ptr<Target>> &targets() const override;
         void setTargets(const std::vector<std::shared_ptr<Target>> &newTargets) override;
@@ -159,7 +160,8 @@ class Engine : public IEngine
             BroadcastReceived,
             BackdropChanged,
             CloneInit,
-            KeyPressed
+            KeyPressed,
+            TargetClicked
         };
 
         enum class HatField
@@ -225,6 +227,7 @@ class Engine : public IEngine
         std::unordered_map<Target *, std::vector<Script *>> m_broadcastHats;
         std::unordered_map<Target *, std::vector<Script *>> m_cloneInitHats;
         std::unordered_map<Target *, std::vector<Script *>> m_whenKeyPressedHats;
+        std::unordered_map<Target *, std::vector<Script *>> m_whenTargetClickedHats;
 
         std::unordered_map<Script *, std::unordered_map<HatField, int>> m_scriptHatFields; // HatField, field ID from the block implementation
 

@@ -104,6 +104,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, addBackdropChangeScript, (std::shared_ptr<Block>, int), (override));
         MOCK_METHOD(void, addCloneInitScript, (std::shared_ptr<Block>), (override));
         MOCK_METHOD(void, addKeyPressScript, (std::shared_ptr<Block>, int), (override));
+        MOCK_METHOD(void, addTargetClickScript, (std::shared_ptr<Block>), (override));
 
         MOCK_METHOD(const std::vector<std::shared_ptr<Target>> &, targets, (), (const, override));
         MOCK_METHOD(void, setTargets, (const std::vector<std::shared_ptr<Target>> &), (override));
