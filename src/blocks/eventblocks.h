@@ -31,6 +31,7 @@ class EventBlocks : public IBlockSection
         void registerBlocks(IEngine *engine) override;
 
         static void compileWhenFlagClicked(Compiler *compiler);
+        static void compileWhenThisSpriteClicked(Compiler *compiler);
         static void compileBroadcast(Compiler *compiler);
         static void compileBroadcastAndWait(Compiler *compiler);
         static void compileWhenBroadcastReceived(Compiler *compiler);
