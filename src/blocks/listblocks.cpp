@@ -36,6 +36,7 @@ void ListBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "data_lengthoflist", &compileLengthOfList);
     engine->addCompileFunction(this, "data_listcontainsitem", &compileListContainsItem);
     engine->addCompileFunction(this, "data_showlist", &compileShowList);
+    engine->addCompileFunction(this, "data_hidelist", &compileHideList);
 
     // Monitor names
     engine->addMonitorNameFunction(this, "data_listcontents", &listContentsMonitorName);
@@ -125,6 +126,21 @@ void ListBlocks::compileShowList(Compiler *compiler)
         compiler->addFunctionCall(&showList);
 }
 
+void ListBlocks::compileHideList(Compiler *compiler)
+{
+    Field *field = compiler->field(LIST);
+    assert(field);
+    List *var = static_cast<List *>(field->valuePtr().get());
+    assert(var);
+
+    compiler->addConstValue(var->id());
+
+    if (var->target() == static_cast<Target *>(compiler->engine()->stage()))
+        compiler->addFunctionCall(&hideGlobalList);
+    else
+        compiler->addFunctionCall(&hideList);
+}
+
 void ListBlocks::setListVisible(std::shared_ptr<List> list, bool visible)
 {
     if (list) {
@@ -148,6 +164,26 @@ unsigned int ListBlocks::showList(VirtualMachine *vm)
     if (Target *target = vm->target()) {
         int index = target->findListById(vm->getInput(0, 1)->toString());
         setListVisible(target->listAt(index), true);
+    }
+
+    return 1;
+}
+
+unsigned int ListBlocks::hideGlobalList(VirtualMachine *vm)
+{
+    if (Stage *target = vm->engine()->stage()) {
+        int index = target->findListById(vm->getInput(0, 1)->toString());
+        setListVisible(target->listAt(index), false);
+    }
+
+    return 1;
+}
+
+unsigned int ListBlocks::hideList(VirtualMachine *vm)
+{
+    if (Target *target = vm->target()) {
+        int index = target->findListById(vm->getInput(0, 1)->toString());
+        setListVisible(target->listAt(index), false);
     }
 
     return 1;
