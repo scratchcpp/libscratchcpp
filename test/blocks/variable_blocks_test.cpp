@@ -3,6 +3,8 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/monitor.h>
 #include <enginemock.h>
 
 #include "../common.h"
@@ -10,6 +12,8 @@
 #include "engine/internal/engine.h"
 
 using namespace libscratchcpp;
+
+using ::testing::Return;
 
 class VariableBlocksTest : public testing::Test
 {
@@ -70,6 +74,8 @@ TEST_F(VariableBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_variable", &VariableBlocks::compileVariable)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_setvariableto", &VariableBlocks::compileSetVariable)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_changevariableby", &VariableBlocks::compileChangeVariableBy)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_showvariable", &VariableBlocks::compileShowVariable)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_hidevariable", &VariableBlocks::compileHideVariable)).Times(1);
 
     // Monitor names
     EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "data_variable", &VariableBlocks::variableMonitorName));
@@ -207,4 +213,210 @@ TEST_F(VariableBlocksTest, ChangeVariableBy)
             var2.get(),
         }));
     ASSERT_TRUE(compiler.lists().empty());
+}
+
+TEST_F(VariableBlocksTest, ShowVariable)
+{
+    Compiler compiler(&m_engineMock);
+    Stage stage;
+    Target target;
+
+    // show variable [var1]
+    auto var1 = std::make_shared<Variable>("b", "var1");
+    var1->setTarget(&stage);
+    auto block1 = createVariableBlock("a", "data_showvariable", var1);
+
+    // show variable [var2]
+    auto var2 = std::make_shared<Variable>("d", "var2");
+    var2->setTarget(&target);
+    auto block2 = createVariableBlock("c", "data_showvariable", var2);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, functionIndex(&VariableBlocks::showGlobalVariable)).WillOnce(Return(0));
+    compiler.init();
+    compiler.setBlock(block1);
+    VariableBlocks::compileShowVariable(&compiler);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, functionIndex(&VariableBlocks::showVariable)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    VariableBlocks::compileShowVariable(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "b", "d" }));
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
+}
+
+TEST_F(VariableBlocksTest, ShowVariableImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &VariableBlocks::showGlobalVariable, &VariableBlocks::showVariable };
+    static Value constValues[] = { "a", "b", "c", "d" };
+
+    auto var1 = std::make_shared<Variable>("b", "");
+    Monitor monitor1("b", "");
+    monitor1.setVisible(false);
+    var1->setMonitor(&monitor1);
+
+    auto var2 = std::make_shared<Variable>("d", "");
+    Monitor monitor2("d", "");
+    monitor2.setVisible(false);
+    var2->setMonitor(&monitor2);
+
+    Stage stage;
+    stage.addVariable(var1);
+
+    Target target;
+    target.addVariable(var2);
+
+    // Global
+    VirtualMachine vm1(&stage, &m_engineMock, nullptr);
+    vm1.setBytecode(bytecode1);
+    vm1.setFunctions(functions);
+    vm1.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    vm1.run();
+
+    ASSERT_EQ(vm1.registerCount(), 0);
+    ASSERT_FALSE(monitor1.visible());
+    ASSERT_FALSE(monitor2.visible());
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    vm1.reset();
+    vm1.setBytecode(bytecode2);
+    vm1.run();
+
+    ASSERT_EQ(vm1.registerCount(), 0);
+    ASSERT_TRUE(monitor1.visible());
+    ASSERT_FALSE(monitor2.visible());
+
+    monitor1.setVisible(false);
+
+    // Local
+    VirtualMachine vm2(&target, &m_engineMock, nullptr);
+    vm2.setBytecode(bytecode3);
+    vm2.setFunctions(functions);
+    vm2.setConstValues(constValues);
+    vm2.run();
+
+    ASSERT_EQ(vm2.registerCount(), 0);
+    ASSERT_FALSE(monitor1.visible());
+    ASSERT_FALSE(monitor2.visible());
+
+    vm2.reset();
+    vm2.setBytecode(bytecode4);
+    vm2.run();
+
+    ASSERT_EQ(vm2.registerCount(), 0);
+    ASSERT_FALSE(monitor1.visible());
+    ASSERT_TRUE(monitor2.visible());
+}
+
+TEST_F(VariableBlocksTest, HideVariable)
+{
+    Compiler compiler(&m_engineMock);
+    Stage stage;
+    Target target;
+
+    // hide variable [var1]
+    auto var1 = std::make_shared<Variable>("b", "var1");
+    var1->setTarget(&stage);
+    auto block1 = createVariableBlock("a", "data_hidevariable", var1);
+
+    // hide variable [var2]
+    auto var2 = std::make_shared<Variable>("d", "var2");
+    var2->setTarget(&target);
+    auto block2 = createVariableBlock("c", "data_hidevariable", var2);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, functionIndex(&VariableBlocks::hideGlobalVariable)).WillOnce(Return(0));
+    compiler.init();
+    compiler.setBlock(block1);
+    VariableBlocks::compileHideVariable(&compiler);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, functionIndex(&VariableBlocks::hideVariable)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    VariableBlocks::compileHideVariable(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "b", "d" }));
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
+}
+
+TEST_F(VariableBlocksTest, HideVariableImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &VariableBlocks::hideGlobalVariable, &VariableBlocks::hideVariable };
+    static Value constValues[] = { "a", "b", "c", "d" };
+
+    auto var1 = std::make_shared<Variable>("b", "");
+    Monitor monitor1("b", "");
+    monitor1.setVisible(true);
+    var1->setMonitor(&monitor1);
+
+    auto var2 = std::make_shared<Variable>("d", "");
+    Monitor monitor2("d", "");
+    monitor2.setVisible(true);
+    var2->setMonitor(&monitor2);
+
+    Stage stage;
+    stage.addVariable(var1);
+
+    Target target;
+    target.addVariable(var2);
+
+    // Global
+    VirtualMachine vm1(&stage, &m_engineMock, nullptr);
+    vm1.setBytecode(bytecode1);
+    vm1.setFunctions(functions);
+    vm1.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    vm1.run();
+
+    ASSERT_EQ(vm1.registerCount(), 0);
+    ASSERT_TRUE(monitor1.visible());
+    ASSERT_TRUE(monitor2.visible());
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    vm1.reset();
+    vm1.setBytecode(bytecode2);
+    vm1.run();
+
+    ASSERT_EQ(vm1.registerCount(), 0);
+    ASSERT_FALSE(monitor1.visible());
+    ASSERT_TRUE(monitor2.visible());
+
+    monitor1.setVisible(true);
+
+    // Local
+    VirtualMachine vm2(&target, &m_engineMock, nullptr);
+    vm2.setBytecode(bytecode3);
+    vm2.setFunctions(functions);
+    vm2.setConstValues(constValues);
+    vm2.run();
+
+    ASSERT_EQ(vm2.registerCount(), 0);
+    ASSERT_TRUE(monitor1.visible());
+    ASSERT_TRUE(monitor2.visible());
+
+    vm2.reset();
+    vm2.setBytecode(bytecode4);
+    vm2.run();
+
+    ASSERT_EQ(vm2.registerCount(), 0);
+    ASSERT_TRUE(monitor1.visible());
+    ASSERT_FALSE(monitor2.visible());
 }

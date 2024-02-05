@@ -12,6 +12,7 @@ namespace libscratchcpp
 {
 
 class Target;
+class Monitor;
 class ListPrivate;
 
 /*! \brief The List class represents a Scratch list. */
@@ -28,6 +29,9 @@ class LIBSCRATCHCPP_EXPORT List
 
         Target *target() const;
         void setTarget(Target *target);
+
+        Monitor *monitor() const;
+        void setMonitor(Monitor *monitor);
 
         long indexOf(const Value &value) const;
         bool contains(const Value &value) const;

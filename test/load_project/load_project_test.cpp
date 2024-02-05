@@ -460,6 +460,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(field->name(), "LIST");
         ASSERT_EQ(field->value(), "list1");
         ASSERT_EQ(field->valuePtr(), GET_LIST(stage, "list1"));
+        ASSERT_EQ(GET_LIST(stage, "list1")->monitor(), monitor.get());
         ASSERT_EQ(monitor->sprite(), nullptr);
         ASSERT_EQ(monitor->width(), 167);
         ASSERT_EQ(monitor->height(), 93);
@@ -478,6 +479,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(field->name(), "LIST");
         ASSERT_EQ(field->value(), "list2");
         ASSERT_EQ(field->valuePtr(), GET_LIST(engine->targetAt(engine->findTarget("Sprite1")), "list2"));
+        ASSERT_EQ(GET_LIST(engine->targetAt(engine->findTarget("Sprite1")), "list2")->monitor(), monitor.get());
         ASSERT_EQ(monitor->sprite(), dynamic_cast<Sprite *>(engine->targetAt(engine->findTarget("Sprite1"))));
         ASSERT_EQ(monitor->width(), 0);
         ASSERT_EQ(monitor->height(), 0);
@@ -496,6 +498,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(field->name(), "LIST");
         ASSERT_EQ(field->value(), "list2");
         ASSERT_EQ(field->valuePtr(), GET_LIST(engine->targetAt(engine->findTarget("Balloon1")), "list2"));
+        ASSERT_EQ(GET_LIST(engine->targetAt(engine->findTarget("Balloon1")), "list2")->monitor(), monitor.get());
         ASSERT_EQ(monitor->sprite(), dynamic_cast<Sprite *>(engine->targetAt(engine->findTarget("Balloon1"))));
         ASSERT_EQ(monitor->width(), 0);
         ASSERT_EQ(monitor->height(), 0);
@@ -514,6 +517,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(field->name(), "VARIABLE");
         ASSERT_EQ(field->value(), "var1");
         ASSERT_EQ(field->valuePtr(), GET_VAR(stage, "var1"));
+        ASSERT_EQ(GET_VAR(stage, "var1")->monitor(), monitor.get());
         ASSERT_EQ(monitor->sprite(), nullptr);
         ASSERT_EQ(monitor->width(), 0);
         ASSERT_EQ(monitor->height(), 0);
@@ -532,6 +536,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(field->name(), "VARIABLE");
         ASSERT_EQ(field->value(), "var2");
         ASSERT_EQ(field->valuePtr(), GET_VAR(engine->targetAt(engine->findTarget("Sprite1")), "var2"));
+        ASSERT_EQ(GET_VAR(engine->targetAt(engine->findTarget("Sprite1")), "var2")->monitor(), monitor.get());
         ASSERT_EQ(monitor->sprite(), dynamic_cast<Sprite *>(engine->targetAt(engine->findTarget("Sprite1"))));
         ASSERT_EQ(monitor->width(), 0);
         ASSERT_EQ(monitor->height(), 0);
@@ -550,6 +555,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(field->name(), "VARIABLE");
         ASSERT_EQ(field->value(), "var2");
         ASSERT_EQ(field->valuePtr(), GET_VAR(engine->targetAt(engine->findTarget("Balloon1")), "var2"));
+        ASSERT_EQ(GET_VAR(engine->targetAt(engine->findTarget("Balloon1")), "var2")->monitor(), monitor.get());
         ASSERT_EQ(monitor->sprite(), dynamic_cast<Sprite *>(engine->targetAt(engine->findTarget("Balloon1"))));
         ASSERT_EQ(monitor->width(), 0);
         ASSERT_EQ(monitor->height(), 0);
@@ -599,6 +605,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(field->name(), "VARIABLE");
         ASSERT_EQ(field->value(), "var4");
         ASSERT_EQ(field->valuePtr(), GET_VAR(stage, "var4"));
+        ASSERT_EQ(GET_VAR(stage, "var4")->monitor(), monitor.get());
         ASSERT_EQ(monitor->sprite(), nullptr);
         ASSERT_EQ(monitor->width(), 0);
         ASSERT_EQ(monitor->height(), 0);
@@ -617,6 +624,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(field->name(), "VARIABLE");
         ASSERT_EQ(field->value(), "var5");
         ASSERT_EQ(field->valuePtr(), GET_VAR(stage, "var5"));
+        ASSERT_EQ(GET_VAR(stage, "var5")->monitor(), monitor.get());
         ASSERT_EQ(monitor->sprite(), nullptr);
         ASSERT_EQ(monitor->width(), 0);
         ASSERT_EQ(monitor->height(), 0);

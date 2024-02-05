@@ -3,6 +3,8 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/monitor.h>
 #include <enginemock.h>
 
 #include "../common.h"
@@ -10,6 +12,8 @@
 #include "engine/internal/engine.h"
 
 using namespace libscratchcpp;
+
+using ::testing::Return;
 
 class ListBlocksTest : public testing::Test
 {
@@ -104,6 +108,8 @@ TEST_F(ListBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_itemnumoflist", &ListBlocks::compileItemNumberInList)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_lengthoflist", &ListBlocks::compileLengthOfList)).Times(1);
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_listcontainsitem", &ListBlocks::compileListContainsItem)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_showlist", &ListBlocks::compileShowList)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_hidelist", &ListBlocks::compileHideList)).Times(1);
 
     // Monitor names
     EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "data_listcontents", &ListBlocks::listContentsMonitorName));
@@ -434,4 +440,210 @@ TEST_F(ListBlocksTest, ListContainsItem)
             list1.get(),
             list2.get(),
         }));
+}
+
+TEST_F(ListBlocksTest, ShowList)
+{
+    Compiler compiler(&m_engineMock);
+    Stage stage;
+    Target target;
+
+    // show list [list1]
+    auto list1 = std::make_shared<List>("b", "list1");
+    list1->setTarget(&stage);
+    auto block1 = createListBlock("a", "data_showlist", list1);
+
+    // show list [list2]
+    auto list2 = std::make_shared<List>("d", "list2");
+    list2->setTarget(&target);
+    auto block2 = createListBlock("c", "data_showlist", list2);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, functionIndex(&ListBlocks::showGlobalList)).WillOnce(Return(0));
+    compiler.init();
+    compiler.setBlock(block1);
+    ListBlocks::compileShowList(&compiler);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, functionIndex(&ListBlocks::showList)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    ListBlocks::compileShowList(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "b", "d" }));
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
+}
+
+TEST_F(ListBlocksTest, ShowListImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &ListBlocks::showGlobalList, &ListBlocks::showList };
+    static Value constValues[] = { "a", "b", "c", "d" };
+
+    auto list1 = std::make_shared<List>("b", "");
+    Monitor monitor1("b", "");
+    monitor1.setVisible(false);
+    list1->setMonitor(&monitor1);
+
+    auto list2 = std::make_shared<List>("d", "");
+    Monitor monitor2("d", "");
+    monitor2.setVisible(false);
+    list2->setMonitor(&monitor2);
+
+    Stage stage;
+    stage.addList(list1);
+
+    Target target;
+    target.addList(list2);
+
+    // Global
+    VirtualMachine vm1(&stage, &m_engineMock, nullptr);
+    vm1.setBytecode(bytecode1);
+    vm1.setFunctions(functions);
+    vm1.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    vm1.run();
+
+    ASSERT_EQ(vm1.registerCount(), 0);
+    ASSERT_FALSE(monitor1.visible());
+    ASSERT_FALSE(monitor2.visible());
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    vm1.reset();
+    vm1.setBytecode(bytecode2);
+    vm1.run();
+
+    ASSERT_EQ(vm1.registerCount(), 0);
+    ASSERT_TRUE(monitor1.visible());
+    ASSERT_FALSE(monitor2.visible());
+
+    monitor1.setVisible(false);
+
+    // Local
+    VirtualMachine vm2(&target, &m_engineMock, nullptr);
+    vm2.setBytecode(bytecode3);
+    vm2.setFunctions(functions);
+    vm2.setConstValues(constValues);
+    vm2.run();
+
+    ASSERT_EQ(vm2.registerCount(), 0);
+    ASSERT_FALSE(monitor1.visible());
+    ASSERT_FALSE(monitor2.visible());
+
+    vm2.reset();
+    vm2.setBytecode(bytecode4);
+    vm2.run();
+
+    ASSERT_EQ(vm2.registerCount(), 0);
+    ASSERT_FALSE(monitor1.visible());
+    ASSERT_TRUE(monitor2.visible());
+}
+
+TEST_F(ListBlocksTest, HideList)
+{
+    Compiler compiler(&m_engineMock);
+    Stage stage;
+    Target target;
+
+    // hide list [list1]
+    auto list1 = std::make_shared<List>("b", "list1");
+    list1->setTarget(&stage);
+    auto block1 = createListBlock("a", "data_hidelist", list1);
+
+    // hide list [list2]
+    auto list2 = std::make_shared<List>("d", "list2");
+    list2->setTarget(&target);
+    auto block2 = createListBlock("c", "data_hidelist", list2);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, functionIndex(&ListBlocks::hideGlobalList)).WillOnce(Return(0));
+    compiler.init();
+    compiler.setBlock(block1);
+    ListBlocks::compileHideList(&compiler);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, functionIndex(&ListBlocks::hideList)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    ListBlocks::compileHideList(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "b", "d" }));
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
+}
+
+TEST_F(ListBlocksTest, HideListImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &ListBlocks::hideGlobalList, &ListBlocks::hideList };
+    static Value constValues[] = { "a", "b", "c", "d" };
+
+    auto list1 = std::make_shared<List>("b", "");
+    Monitor monitor1("b", "");
+    monitor1.setVisible(true);
+    list1->setMonitor(&monitor1);
+
+    auto list2 = std::make_shared<List>("d", "");
+    Monitor monitor2("d", "");
+    monitor2.setVisible(true);
+    list2->setMonitor(&monitor2);
+
+    Stage stage;
+    stage.addList(list1);
+
+    Target target;
+    target.addList(list2);
+
+    // Global
+    VirtualMachine vm1(&stage, &m_engineMock, nullptr);
+    vm1.setBytecode(bytecode1);
+    vm1.setFunctions(functions);
+    vm1.setConstValues(constValues);
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    vm1.run();
+
+    ASSERT_EQ(vm1.registerCount(), 0);
+    ASSERT_TRUE(monitor1.visible());
+    ASSERT_TRUE(monitor2.visible());
+
+    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    vm1.reset();
+    vm1.setBytecode(bytecode2);
+    vm1.run();
+
+    ASSERT_EQ(vm1.registerCount(), 0);
+    ASSERT_FALSE(monitor1.visible());
+    ASSERT_TRUE(monitor2.visible());
+
+    monitor1.setVisible(true);
+
+    // Local
+    VirtualMachine vm2(&target, &m_engineMock, nullptr);
+    vm2.setBytecode(bytecode3);
+    vm2.setFunctions(functions);
+    vm2.setConstValues(constValues);
+    vm2.run();
+
+    ASSERT_EQ(vm2.registerCount(), 0);
+    ASSERT_TRUE(monitor1.visible());
+    ASSERT_TRUE(monitor2.visible());
+
+    vm2.reset();
+    vm2.setBytecode(bytecode4);
+    vm2.run();
+
+    ASSERT_EQ(vm2.registerCount(), 0);
+    ASSERT_TRUE(monitor1.visible());
+    ASSERT_FALSE(monitor2.visible());
 }

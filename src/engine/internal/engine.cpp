@@ -164,19 +164,31 @@ void Engine::resolveIds()
             if (field->name() == "VARIABLE") {
                 std::string name = field->value().toString();
                 int index = target->findVariable(name);
+                std::shared_ptr<Variable> var;
 
-                if (index == -1)
-                    index = target->addVariable(std::make_shared<Variable>(monitor->id(), name));
+                if (index == -1) {
+                    var = std::make_shared<Variable>(monitor->id(), name);
+                    index = target->addVariable(var);
+                } else
+                    var = target->variableAt(index);
 
                 field->setValuePtr(target->variableAt(index));
+                assert(var);
+                var->setMonitor(monitor.get());
             } else if (field->name() == "LIST") {
                 std::string name = field->value().toString();
                 int index = target->findList(name);
+                std::shared_ptr<List> list;
 
-                if (index == -1)
-                    index = target->addList(std::make_shared<List>(monitor->id(), name));
+                if (index == -1) {
+                    list = std::make_shared<List>(monitor->id(), name);
+                    index = target->addList(list);
+                } else
+                    list = target->listAt(index);
 
                 field->setValuePtr(target->listAt(index));
+                assert(list);
+                list->setMonitor(monitor.get());
             }
         }
 

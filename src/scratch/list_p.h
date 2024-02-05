@@ -8,6 +8,7 @@ namespace libscratchcpp
 {
 
 class Target;
+class Monitor;
 
 struct ListPrivate
 {
@@ -15,6 +16,7 @@ struct ListPrivate
 
         std::string name;
         Target *target = nullptr;
+        Monitor *monitor = nullptr;
 };
 
 } // namespace libscratchcpp

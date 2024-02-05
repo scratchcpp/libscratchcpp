@@ -61,6 +61,18 @@ void Variable::setTarget(Target *target)
     impl->target = target;
 }
 
+/*! Returns the monitor of this variable. */
+Monitor *Variable::monitor() const
+{
+    return impl->monitor;
+}
+
+/*! Sets the monitor of this variable. */
+void Variable::setMonitor(Monitor *monitor)
+{
+    impl->monitor = monitor;
+}
+
 /*! Creates a copy of the variable. */
 std::shared_ptr<Variable> Variable::clone()
 {

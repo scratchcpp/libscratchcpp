@@ -5,6 +5,8 @@
 #include <scratchcpp/field.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/monitor.h>
 
 #include "variableblocks.h"
 
@@ -21,6 +23,8 @@ void VariableBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "data_variable", &compileVariable);
     engine->addCompileFunction(this, "data_setvariableto", &compileSetVariable);
     engine->addCompileFunction(this, "data_changevariableby", &compileChangeVariableBy);
+    engine->addCompileFunction(this, "data_showvariable", &compileShowVariable);
+    engine->addCompileFunction(this, "data_hidevariable", &compileHideVariable);
 
     // Monitor names
     engine->addMonitorNameFunction(this, "data_variable", &variableMonitorName);
@@ -51,6 +55,84 @@ void VariableBlocks::compileChangeVariableBy(Compiler *compiler)
 {
     compiler->addInput(VALUE);
     compiler->addInstruction(vm::OP_CHANGE_VAR, { compiler->variableIndex(compiler->field(VARIABLE)->valuePtr()) });
+}
+
+void VariableBlocks::compileShowVariable(Compiler *compiler)
+{
+    Field *field = compiler->field(VARIABLE);
+    assert(field);
+    Variable *var = static_cast<Variable *>(field->valuePtr().get());
+    assert(var);
+
+    compiler->addConstValue(var->id());
+
+    if (var->target() == static_cast<Target *>(compiler->engine()->stage()))
+        compiler->addFunctionCall(&showGlobalVariable);
+    else
+        compiler->addFunctionCall(&showVariable);
+}
+
+void VariableBlocks::compileHideVariable(Compiler *compiler)
+{
+    Field *field = compiler->field(VARIABLE);
+    assert(field);
+    Variable *var = static_cast<Variable *>(field->valuePtr().get());
+    assert(var);
+
+    compiler->addConstValue(var->id());
+
+    if (var->target() == static_cast<Target *>(compiler->engine()->stage()))
+        compiler->addFunctionCall(&hideGlobalVariable);
+    else
+        compiler->addFunctionCall(&hideVariable);
+}
+
+void VariableBlocks::setVarVisible(std::shared_ptr<Variable> var, bool visible)
+{
+    if (var) {
+        assert(var->monitor());
+        var->monitor()->setVisible(visible);
+    }
+}
+
+unsigned int VariableBlocks::showGlobalVariable(VirtualMachine *vm)
+{
+    if (Stage *target = vm->engine()->stage()) {
+        int index = target->findVariableById(vm->getInput(0, 1)->toString());
+        setVarVisible(target->variableAt(index), true);
+    }
+
+    return 1;
+}
+
+unsigned int VariableBlocks::showVariable(VirtualMachine *vm)
+{
+    if (Target *target = vm->target()) {
+        int index = target->findVariableById(vm->getInput(0, 1)->toString());
+        setVarVisible(target->variableAt(index), true);
+    }
+
+    return 1;
+}
+
+unsigned int VariableBlocks::hideGlobalVariable(VirtualMachine *vm)
+{
+    if (Stage *target = vm->engine()->stage()) {
+        int index = target->findVariableById(vm->getInput(0, 1)->toString());
+        setVarVisible(target->variableAt(index), false);
+    }
+
+    return 1;
+}
+
+unsigned int VariableBlocks::hideVariable(VirtualMachine *vm)
+{
+    if (Target *target = vm->target()) {
+        int index = target->findVariableById(vm->getInput(0, 1)->toString());
+        setVarVisible(target->variableAt(index), false);
+    }
+
+    return 1;
 }
 
 const std::string &VariableBlocks::variableMonitorName(Block *block)

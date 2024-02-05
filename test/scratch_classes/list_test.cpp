@@ -1,5 +1,6 @@
 #include <scratchcpp/list.h>
 #include <scratchcpp/target.h>
+#include <scratchcpp/monitor.h>
 
 #include "../common.h"
 
@@ -27,6 +28,16 @@ TEST(ListTest, Target)
     Target target;
     list.setTarget(&target);
     ASSERT_EQ(list.target(), &target);
+}
+
+TEST(ListTest, Monitor)
+{
+    List list("", "");
+    ASSERT_EQ(list.monitor(), nullptr);
+
+    Monitor monitor("", "");
+    list.setMonitor(&monitor);
+    ASSERT_EQ(list.monitor(), &monitor);
 }
 
 TEST(ListTest, IndexOf)
