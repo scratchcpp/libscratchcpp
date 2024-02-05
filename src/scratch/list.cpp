@@ -38,6 +38,18 @@ void List::setTarget(Target *target)
     impl->target = target;
 }
 
+/*! Returns the monitor of this list. */
+Monitor *List::monitor() const
+{
+    return impl->monitor;
+}
+
+/*! Sets the monitor of this list. */
+void List::setMonitor(Monitor *monitor)
+{
+    impl->monitor = monitor;
+}
+
 /*! Returns the index of the given item. */
 long List::indexOf(const Value &value) const
 {
