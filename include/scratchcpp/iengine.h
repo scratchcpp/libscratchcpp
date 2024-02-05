@@ -139,6 +139,12 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets whether any key is pressed (use this for any key, even for unsupported keys). */
         virtual void setAnyKeyPressed(bool pressed) = 0;
 
+        /*! Starts "when up arrow key pressed" hats. */
+        virtual void mouseWheelUp() = 0;
+
+        /*! Starts "when down arrow key pressed" hats. */
+        virtual void mouseWheelDown() = 0;
+
         /*! Returns the X coordinate of the mouse pointer. */
         virtual double mouseX() const = 0;
 

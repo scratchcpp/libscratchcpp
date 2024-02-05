@@ -64,6 +64,9 @@ class Engine : public IEngine
         void setKeyState(const KeyEvent &event, bool pressed) override;
         void setAnyKeyPressed(bool pressed) override;
 
+        void mouseWheelUp() override;
+        void mouseWheelDown() override;
+
         double mouseX() const override;
         void setMouseX(double x) override;
 
