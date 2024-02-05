@@ -283,6 +283,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /* Registers the given "when key pressed" script. */
         virtual void addKeyPressScript(std::shared_ptr<Block> hatBlock, int fieldId) = 0;
 
+        /* Registers the given "when this sprite/stage clicked" script. */
+        virtual void addTargetClickScript(std::shared_ptr<Block> hatBlock) = 0;
+
         /*! Returns the list of targets. */
         virtual const std::vector<std::shared_ptr<Target>> &targets() const = 0;
 
