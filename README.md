@@ -132,8 +132,8 @@ libscratchcpp::Project p("https://scratch.mit.edu/projects/XXXXXX");
 - [x] Custom blocks
 - [x] Top level reporter blocks
 - [x] Broadcasts
-- [x] Variables (monitors are not implemented yet)
-- [x] Lists (monitors are not implemented yet)
+- [x] Variables
+- [x] Lists
 - [x] Clones
 - [x] Timer
 - [x] API for monitors
