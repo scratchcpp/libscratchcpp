@@ -994,6 +994,87 @@ TEST(EngineTest, Broadcasts)
     ASSERT_EQ(engine.findBroadcastById("c"), 2);
 }
 
+TEST(EngineTest, TargetClickScripts)
+{
+    Project p("target_click_scripts.sb3");
+    ASSERT_TRUE(p.load());
+    p.run();
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    // Initial state
+    ASSERT_VAR(stage, "1");
+    ASSERT_EQ(GET_VAR(stage, "1")->value().toInt(), 0);
+    ASSERT_VAR(stage, "2");
+    ASSERT_EQ(GET_VAR(stage, "2")->value().toInt(), 0);
+    ASSERT_VAR(stage, "stage");
+    ASSERT_EQ(GET_VAR(stage, "stage")->value().toInt(), 0);
+
+    // Sprite1
+    Target *sprite = engine->targetAt(engine->findTarget("Sprite1"));
+    ASSERT_TRUE(sprite);
+    engine->clickTarget(sprite);
+    engine->step();
+    ASSERT_VAR(stage, "1");
+    ASSERT_EQ(GET_VAR(stage, "1")->value().toInt(), 1);
+    ASSERT_VAR(stage, "2");
+    ASSERT_EQ(GET_VAR(stage, "2")->value().toInt(), 0);
+    ASSERT_VAR(stage, "stage");
+    ASSERT_EQ(GET_VAR(stage, "stage")->value().toInt(), 0);
+
+    engine->clickTarget(sprite);
+    engine->step();
+    ASSERT_VAR(stage, "1");
+    ASSERT_EQ(GET_VAR(stage, "1")->value().toInt(), 2);
+    ASSERT_VAR(stage, "2");
+    ASSERT_EQ(GET_VAR(stage, "2")->value().toInt(), 0);
+    ASSERT_VAR(stage, "stage");
+    ASSERT_EQ(GET_VAR(stage, "stage")->value().toInt(), 0);
+
+    // Sprite2
+    sprite = engine->targetAt(engine->findTarget("Sprite2"));
+    ASSERT_TRUE(sprite);
+    engine->clickTarget(sprite);
+    engine->step();
+    ASSERT_VAR(stage, "1");
+    ASSERT_EQ(GET_VAR(stage, "1")->value().toInt(), 2);
+    ASSERT_VAR(stage, "2");
+    ASSERT_EQ(GET_VAR(stage, "2")->value().toInt(), 1);
+    ASSERT_VAR(stage, "stage");
+    ASSERT_EQ(GET_VAR(stage, "stage")->value().toInt(), 0);
+
+    engine->clickTarget(sprite);
+    engine->step();
+    ASSERT_VAR(stage, "1");
+    ASSERT_EQ(GET_VAR(stage, "1")->value().toInt(), 2);
+    ASSERT_VAR(stage, "2");
+    ASSERT_EQ(GET_VAR(stage, "2")->value().toInt(), 2);
+    ASSERT_VAR(stage, "stage");
+    ASSERT_EQ(GET_VAR(stage, "stage")->value().toInt(), 0);
+
+    // Stage
+    engine->clickTarget(stage);
+    engine->step();
+    ASSERT_VAR(stage, "1");
+    ASSERT_EQ(GET_VAR(stage, "1")->value().toInt(), 2);
+    ASSERT_VAR(stage, "2");
+    ASSERT_EQ(GET_VAR(stage, "2")->value().toInt(), 2);
+    ASSERT_VAR(stage, "stage");
+    ASSERT_EQ(GET_VAR(stage, "stage")->value().toInt(), 1);
+
+    engine->clickTarget(stage);
+    engine->step();
+    ASSERT_VAR(stage, "1");
+    ASSERT_EQ(GET_VAR(stage, "1")->value().toInt(), 2);
+    ASSERT_VAR(stage, "2");
+    ASSERT_EQ(GET_VAR(stage, "2")->value().toInt(), 2);
+    ASSERT_VAR(stage, "stage");
+    ASSERT_EQ(GET_VAR(stage, "stage")->value().toInt(), 2);
+}
+
 TEST(EngineTest, Targets)
 {
     Engine engine;
