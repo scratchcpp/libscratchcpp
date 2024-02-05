@@ -47,6 +47,9 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, setKeyState, (const KeyEvent &, bool), (override));
         MOCK_METHOD(void, setAnyKeyPressed, (bool), (override));
 
+        MOCK_METHOD(void, mouseWheelUp, (), (override));
+        MOCK_METHOD(void, mouseWheelDown, (), (override));
+
         MOCK_METHOD(double, mouseX, (), (const, override));
         MOCK_METHOD(void, setMouseX, (double x), (override));
 

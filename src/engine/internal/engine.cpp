@@ -654,6 +654,18 @@ void Engine::setAnyKeyPressed(bool pressed)
         startHats(HatType::KeyPressed, { { HatField::KeyOption, "any" } }, nullptr);
 }
 
+void Engine::mouseWheelUp()
+{
+    // Start "when up arrow pressed" scripts
+    startHats(HatType::KeyPressed, { { HatField::KeyOption, "up arrow" } }, nullptr);
+}
+
+void Engine::mouseWheelDown()
+{
+    // Start "when down arrow pressed" scripts
+    startHats(HatType::KeyPressed, { { HatField::KeyOption, "down arrow" } }, nullptr);
+}
+
 double Engine::mouseX() const
 {
     return m_mouseX;

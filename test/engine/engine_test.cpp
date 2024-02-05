@@ -706,6 +706,67 @@ TEST(EngineTest, WhenKeyPressed)
     ASSERT_EQ(GET_VAR(stage, "4_pressed")->value().toInt(), 1);
 }
 
+TEST(EngineTest, MouseWheel)
+{
+    Project p("mouse_wheel.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    // Initial state
+    ASSERT_VAR(stage, "up");
+    ASSERT_EQ(GET_VAR(stage, "up")->value().toInt(), 0);
+    ASSERT_VAR(stage, "down");
+    ASSERT_EQ(GET_VAR(stage, "down")->value().toInt(), 0);
+    ASSERT_VAR(stage, "any");
+    ASSERT_EQ(GET_VAR(stage, "any")->value().toInt(), 0);
+
+    // Up
+    engine->mouseWheelUp();
+    ASSERT_FALSE(engine->keyPressed("up arrow"));
+    engine->step();
+    ASSERT_VAR(stage, "up");
+    ASSERT_EQ(GET_VAR(stage, "up")->value().toInt(), 1);
+    ASSERT_VAR(stage, "down");
+    ASSERT_EQ(GET_VAR(stage, "down")->value().toInt(), 0);
+    ASSERT_VAR(stage, "any");
+    ASSERT_EQ(GET_VAR(stage, "any")->value().toInt(), 0);
+
+    engine->mouseWheelUp();
+    ASSERT_FALSE(engine->keyPressed("up arrow"));
+    engine->step();
+    ASSERT_VAR(stage, "up");
+    ASSERT_EQ(GET_VAR(stage, "up")->value().toInt(), 2);
+    ASSERT_VAR(stage, "down");
+    ASSERT_EQ(GET_VAR(stage, "down")->value().toInt(), 0);
+    ASSERT_VAR(stage, "any");
+    ASSERT_EQ(GET_VAR(stage, "any")->value().toInt(), 0);
+
+    // Down
+    engine->mouseWheelDown();
+    ASSERT_FALSE(engine->keyPressed("down arrow"));
+    engine->step();
+    ASSERT_VAR(stage, "up");
+    ASSERT_EQ(GET_VAR(stage, "up")->value().toInt(), 2);
+    ASSERT_VAR(stage, "down");
+    ASSERT_EQ(GET_VAR(stage, "down")->value().toInt(), 1);
+    ASSERT_VAR(stage, "any");
+    ASSERT_EQ(GET_VAR(stage, "any")->value().toInt(), 0);
+
+    engine->mouseWheelDown();
+    ASSERT_FALSE(engine->keyPressed("down arrow"));
+    engine->step();
+    ASSERT_VAR(stage, "up");
+    ASSERT_EQ(GET_VAR(stage, "up")->value().toInt(), 2);
+    ASSERT_VAR(stage, "down");
+    ASSERT_EQ(GET_VAR(stage, "down")->value().toInt(), 2);
+    ASSERT_VAR(stage, "any");
+    ASSERT_EQ(GET_VAR(stage, "any")->value().toInt(), 0);
+}
+
 TEST(EngineTest, MouseX)
 {
     Engine engine;
