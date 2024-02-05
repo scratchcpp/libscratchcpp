@@ -23,6 +23,7 @@ void EventBlocks::registerBlocks(IEngine *engine)
     // Blocks
     engine->addCompileFunction(this, "event_whenflagclicked", &compileWhenFlagClicked);
     engine->addCompileFunction(this, "event_whenthisspriteclicked", &compileWhenThisSpriteClicked);
+    engine->addCompileFunction(this, "event_whenstageclicked", &compileWhenStageClicked);
     engine->addCompileFunction(this, "event_broadcast", &compileBroadcast);
     engine->addCompileFunction(this, "event_broadcastandwait", &compileBroadcastAndWait);
     engine->addCompileFunction(this, "event_whenbroadcastreceived", &compileWhenBroadcastReceived);
@@ -44,6 +45,11 @@ void EventBlocks::compileWhenFlagClicked(Compiler *compiler)
 }
 
 void EventBlocks::compileWhenThisSpriteClicked(Compiler *compiler)
+{
+    compiler->engine()->addTargetClickScript(compiler->block());
+}
+
+void EventBlocks::compileWhenStageClicked(Compiler *compiler)
 {
     compiler->engine()->addTargetClickScript(compiler->block());
 }

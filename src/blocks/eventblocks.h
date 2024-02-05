@@ -32,6 +32,7 @@ class EventBlocks : public IBlockSection
 
         static void compileWhenFlagClicked(Compiler *compiler);
         static void compileWhenThisSpriteClicked(Compiler *compiler);
+        static void compileWhenStageClicked(Compiler *compiler);
         static void compileBroadcast(Compiler *compiler);
         static void compileBroadcastAndWait(Compiler *compiler);
         static void compileWhenBroadcastReceived(Compiler *compiler);

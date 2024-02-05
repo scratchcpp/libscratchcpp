@@ -85,6 +85,7 @@ TEST_F(EventBlocksTest, RegisterBlocks)
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenflagclicked", &EventBlocks::compileWhenFlagClicked));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenthisspriteclicked", &EventBlocks::compileWhenThisSpriteClicked));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenstageclicked", &EventBlocks::compileWhenStageClicked));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_broadcast", &EventBlocks::compileBroadcast));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_broadcastandwait", &EventBlocks::compileBroadcastAndWait));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenbroadcastreceived", &EventBlocks::compileWhenBroadcastReceived));
@@ -133,6 +134,26 @@ TEST_F(EventBlocksTest, WhenThisSpriteClicked)
     EXPECT_CALL(m_engineMock, addTargetClickScript(block));
     compiler.setBlock(block);
     EventBlocks::compileWhenThisSpriteClicked(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
+}
+
+TEST_F(EventBlocksTest, WhenStageClicked)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = createEventBlock("a", "event_whenstageclicked");
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, addTargetClickScript(block));
+    compiler.setBlock(block);
+    EventBlocks::compileWhenStageClicked(&compiler);
 
     compiler.end();
 
