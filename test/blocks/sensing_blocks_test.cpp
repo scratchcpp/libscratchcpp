@@ -123,6 +123,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_distanceto", &SensingBlocks::compileDistanceTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_askandwait", &SensingBlocks::compileAskAndWait));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_answer", &SensingBlocks::compileAnswer));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_keypressed", &SensingBlocks::compileKeyPressed));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_mousedown", &SensingBlocks::compileMouseDown));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_mousex", &SensingBlocks::compileMouseX));
@@ -343,12 +344,31 @@ TEST_F(SensingBlocksTest, AskAndWait)
     ASSERT_EQ(compiler.constValues()[0].toString(), "test");
 }
 
-TEST_F(SensingBlocksTest, AskAndWaitImpl)
+TEST_F(SensingBlocksTest, Answer)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "sensing_answer");
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::answer)).WillOnce(Return(0));
+    compiler.setBlock(block);
+    SensingBlocks::compileAnswer(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(SensingBlocksTest, AskAndWaitAndAnswerImpl)
 {
     static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
     static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
     static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
-    static BlockFunc functions[] = { &SensingBlocks::askAndWait };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::askAndWait, &SensingBlocks::answer };
     static Value constValues[] = { "test1", "test2", "test3" };
 
     Sprite sprite;
@@ -415,10 +435,21 @@ TEST_F(SensingBlocksTest, AskAndWaitImpl)
     ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Say);
     ASSERT_EQ(sprite.bubbleText(), "test2");
 
+    vm1.reset();
+    vm1.setBytecode(bytecode4);
+    vm1.run();
+    ASSERT_EQ(vm1.registerCount(), 1);
+    ASSERT_EQ(vm1.getInput(0, 1)->toString(), "hi");
+
     EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(asked));
     EXPECT_CALL(spy, asked("test3"));
     SensingBlocks::onAnswer("hello");
     ASSERT_TRUE(sprite.bubbleText().empty());
+
+    vm1.reset();
+    vm1.run();
+    ASSERT_EQ(vm1.registerCount(), 1);
+    ASSERT_EQ(vm1.getInput(0, 1)->toString(), "hello");
 
     EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(asked));
     EXPECT_CALL(spy, asked("test2"));
@@ -426,8 +457,18 @@ TEST_F(SensingBlocksTest, AskAndWaitImpl)
     ASSERT_TRUE(sprite.bubbleText().empty());
     ASSERT_TRUE(stage.bubbleText().empty());
 
+    vm1.reset();
+    vm1.run();
+    ASSERT_EQ(vm1.registerCount(), 1);
+    ASSERT_EQ(vm1.getInput(0, 1)->toString(), "world");
+
     EXPECT_CALL(m_engineMock, questionAsked).Times(0);
     SensingBlocks::onAnswer("test");
+
+    vm1.reset();
+    vm1.run();
+    ASSERT_EQ(vm1.registerCount(), 1);
+    ASSERT_EQ(vm1.getInput(0, 1)->toString(), "test");
 }
 
 TEST_F(SensingBlocksTest, KeyPressed)

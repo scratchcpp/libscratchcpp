@@ -60,6 +60,7 @@ class SensingBlocks : public IBlockSection
 
         static void compileDistanceTo(Compiler *compiler);
         static void compileAskAndWait(Compiler *compiler);
+        static void compileAnswer(Compiler *compiler);
         static void compileKeyPressed(Compiler *compiler);
         static void compileMouseDown(Compiler *compiler);
         static void compileMouseX(Compiler *compiler);
@@ -92,6 +93,7 @@ class SensingBlocks : public IBlockSection
 
         static void onAnswer(const std::string &answer);
         static unsigned int askAndWait(VirtualMachine *vm);
+        static unsigned int answer(VirtualMachine *vm);
 
         static unsigned int timer(VirtualMachine *vm);
         static unsigned int resetTimer(VirtualMachine *vm);

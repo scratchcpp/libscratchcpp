@@ -29,6 +29,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     // Blocks
     engine->addCompileFunction(this, "sensing_distanceto", &compileDistanceTo);
     engine->addCompileFunction(this, "sensing_askandwait", &compileAskAndWait);
+    engine->addCompileFunction(this, "sensing_answer", &compileAnswer);
     engine->addCompileFunction(this, "sensing_keypressed", &compileKeyPressed);
     engine->addCompileFunction(this, "sensing_mousedown", &compileMouseDown);
     engine->addCompileFunction(this, "sensing_mousex", &compileMouseX);
@@ -108,6 +109,11 @@ void SensingBlocks::compileAskAndWait(Compiler *compiler)
 {
     compiler->addInput(QUESTION);
     compiler->addFunctionCall(&askAndWait);
+}
+
+void SensingBlocks::compileAnswer(Compiler *compiler)
+{
+    compiler->addFunctionCall(&answer);
 }
 
 void SensingBlocks::compileKeyPressed(Compiler *compiler)
@@ -529,6 +535,12 @@ unsigned int SensingBlocks::askAndWait(VirtualMachine *vm)
 
     vm->promise();
     return 1;
+}
+
+unsigned int SensingBlocks::answer(VirtualMachine *vm)
+{
+    vm->addReturnValue(m_answer);
+    return 0;
 }
 
 unsigned int SensingBlocks::timer(VirtualMachine *vm)
