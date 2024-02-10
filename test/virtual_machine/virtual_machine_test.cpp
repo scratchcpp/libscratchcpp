@@ -1639,6 +1639,35 @@ TEST(VirtualMachineTest, ResetAndKill)
     ASSERT_TRUE(vm.atEnd());
 }
 
+unsigned int promiseTest(VirtualMachine *vm)
+{
+    vm->promise();
+    return 1;
+}
+
+TEST(VirtualMachineTest, Promise)
+{
+    static unsigned int bytecode[] = { OP_START, OP_NULL, OP_EXEC, 0, vm::OP_NULL, vm::OP_NULL, vm::OP_NULL, OP_HALT };
+    static BlockFunc functions[] = { &promiseTest };
+
+    VirtualMachine vm;
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+
+    vm.run();
+    ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    vm.run();
+    ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    vm.resolvePromise();
+    vm.run();
+    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(vm.registerCount(), 3);
+}
+
 TEST(VirtualMachineTest, NoCrashWhenRepeatingZeroTimes)
 {
     // Regtest for #362

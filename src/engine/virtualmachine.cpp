@@ -166,6 +166,9 @@ void VirtualMachine::run()
 {
     impl->running = true;
 
+    if (impl->promisePending)
+        return;
+
     unsigned int *ret = impl->run(impl->pos);
     assert(ret);
 
@@ -187,6 +190,7 @@ void VirtualMachine::reset()
 {
     impl->pos = impl->bytecode;
     impl->atEnd = false;
+    impl->promisePending = false;
 
     if (!impl->running) // Registers will be freed when the script stops running
         impl->regCount = 0;
@@ -214,6 +218,22 @@ void VirtualMachine::stop(bool savePos, bool breakFrame, bool goBack)
     impl->savePos = savePos && !impl->warp;
     impl->noBreak = !breakFrame || impl->warp;
     impl->goBack = goBack;
+}
+
+/*!
+ * Use this to pause the execution of the script.
+ * The execution will continue after calling resolvePromise()
+ */
+void VirtualMachine::promise()
+{
+    impl->promisePending = true;
+    stop();
+}
+
+/*! Resolves the promise so that the VM can continue with the execution. */
+void VirtualMachine::resolvePromise()
+{
+    impl->promisePending = false;
 }
 
 /*! Returns true if the VM has reached the vm::OP_HALT instruction. */

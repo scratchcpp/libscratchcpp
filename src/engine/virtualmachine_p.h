@@ -56,6 +56,7 @@ struct VirtualMachinePrivate
         bool savePos = true;
         bool goBack = false;
         bool updatePos = false;
+        bool promisePending = false;
 
         unsigned int **procedures = nullptr;
         BlockFunc *functions = nullptr;

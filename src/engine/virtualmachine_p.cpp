@@ -215,11 +215,13 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
 #ifdef ENABLE_COMPUTED_GOTO
     DISPATCH();
 #else
-    while (true) switch (*++pos) {
+    while (true)
+        switch (*++pos) {
 #endif
 
-OP(HALT):
-    if (regCount > 0) {
+    OP(HALT) :
+        if (regCount > 0)
+    {
         std::cout << "warning: VM: " << regCount << " registers were leaked by the script; this is most likely a bug in the VM or in the compiler" << std::endl;
     }
     if (callTree.empty()) {
@@ -239,22 +241,41 @@ OP(HALT):
         DISPATCH();
     }
 
-OP(CONST):
-    ADD_RET_VALUE(GET_NEXT_ARG());
+    OP(CONST) :
+        ADD_RET_VALUE(GET_NEXT_ARG());
     DISPATCH();
 
-OP(NULL):
-    ADD_RET_VALUE(Value());
+    OP(NULL) :
+        ADD_RET_VALUE(Value());
     DISPATCH();
 
-OP(CHECKPOINT):
-    checkpoint = pos - 1;
+    OP(CHECKPOINT) :
+        checkpoint = pos - 1;
     DISPATCH();
 
-OP(IF): {
-    if (!READ_LAST_REG()->toBool()) {
+    OP(IF) :
+    {
+        if (!READ_LAST_REG()->toBool()) {
+            unsigned int ifCounter = 1;
+            while (!((*pos == OP_ELSE && ifCounter == 1) || (*pos == OP_ENDIF && ifCounter == 0))) {
+                pos += instruction_arg_count[*pos++];
+
+                if ((*pos == OP_IF) || (*pos == OP_FOREVER_LOOP) || (*pos == OP_REPEAT_LOOP) || (*pos == OP_UNTIL_LOOP))
+                    ifCounter++;
+                else if ((*pos == OP_ENDIF) || (*pos == OP_LOOP_END)) {
+                    assert(ifCounter > 0);
+                    ifCounter--;
+                }
+            }
+        }
+        FREE_REGS(1);
+        DISPATCH();
+    }
+
+    OP(ELSE) :
+    {
         unsigned int ifCounter = 1;
-        while (!((*pos == OP_ELSE && ifCounter == 1) || (*pos == OP_ENDIF && ifCounter == 0))) {
+        while (!(*pos == OP_ENDIF && ifCounter == 0)) {
             pos += instruction_arg_count[*pos++];
 
             if ((*pos == OP_IF) || (*pos == OP_FOREVER_LOOP) || (*pos == OP_REPEAT_LOOP) || (*pos == OP_UNTIL_LOOP))
@@ -263,41 +284,24 @@ OP(IF): {
                 assert(ifCounter > 0);
                 ifCounter--;
             }
+
+            assert(!(*pos == OP_ELSE && ifCounter == 1));
         }
     }
-    FREE_REGS(1);
-    DISPATCH();
-}
 
-OP(ELSE): {
-    unsigned int ifCounter = 1;
-    while (!(*pos == OP_ENDIF && ifCounter == 0)) {
-        pos += instruction_arg_count[*pos++];
+    OP(ENDIF) :
+        DISPATCH();
 
-        if ((*pos == OP_IF) || (*pos == OP_FOREVER_LOOP) || (*pos == OP_REPEAT_LOOP) || (*pos == OP_UNTIL_LOOP))
-            ifCounter++;
-        else if ((*pos == OP_ENDIF) || (*pos == OP_LOOP_END)) {
-            assert(ifCounter > 0);
-            ifCounter--;
-        }
-
-        assert(!(*pos == OP_ELSE && ifCounter == 1));
-    }
-}
-
-OP(ENDIF):
-    DISPATCH();
-
-OP(FOREVER_LOOP):
-    Loop l;
+    OP(FOREVER_LOOP) :
+        Loop l;
     l.isRepeatLoop = true;
     l.start = pos;
     l.index = -1;
     loops.push_back(l);
     DISPATCH();
 
-OP(REPEAT_LOOP):
-    loopCount = std::round(READ_LAST_REG()->toDouble());
+    OP(REPEAT_LOOP) :
+        loopCount = std::round(READ_LAST_REG()->toDouble());
     FREE_REGS(1);
     if (loopCount <= 0) {
         loopEnd = pos;
@@ -323,24 +327,26 @@ OP(REPEAT_LOOP):
     }
     DISPATCH();
 
-OP(REPEAT_LOOP_INDEX): {
-    assert(!loops.empty());
-    Loop &l = loops.back();
-    assert(l.isRepeatLoop);
-    ADD_RET_VALUE(static_cast<long>(l.index));
-    DISPATCH();
-}
+    OP(REPEAT_LOOP_INDEX) :
+    {
+        assert(!loops.empty());
+        Loop &l = loops.back();
+        assert(l.isRepeatLoop);
+        ADD_RET_VALUE(static_cast<long>(l.index));
+        DISPATCH();
+    }
 
-OP(REPEAT_LOOP_INDEX1): {
-    assert(!loops.empty());
-    Loop &l = loops.back();
-    assert(l.isRepeatLoop);
-    ADD_RET_VALUE(static_cast<long>(l.index + 1));
-    DISPATCH();
-}
+    OP(REPEAT_LOOP_INDEX1) :
+    {
+        assert(!loops.empty());
+        Loop &l = loops.back();
+        assert(l.isRepeatLoop);
+        ADD_RET_VALUE(static_cast<long>(l.index + 1));
+        DISPATCH();
+    }
 
-OP(UNTIL_LOOP):
-    loopStart = run(pos, false);
+    OP(UNTIL_LOOP) :
+        loopStart = run(pos, false);
     if (!READ_LAST_REG()->toBool()) {
         Loop l;
         l.isRepeatLoop = false;
@@ -364,443 +370,460 @@ OP(UNTIL_LOOP):
     FREE_REGS(1);
     DISPATCH();
 
-OP(BEGIN_UNTIL_LOOP):
-    return pos;
+    OP(BEGIN_UNTIL_LOOP) :
+        return pos;
 
-OP(LOOP_END): {
-    assert(!loops.empty());
-    Loop &l = loops.back();
-    if (l.isRepeatLoop) {
-        if ((l.index == -1) || (++l.index < l.max))
-            pos = l.start;
-        else
-            loops.pop_back();
-        if (!noBreak && !warp)
-            return pos;
-        DISPATCH();
-    } else {
-        if (!noBreak && !warp)
-            return pos - 1;
-        loopStart = run(l.start, false);
-        if (!READ_LAST_REG()->toBool())
-            pos = loopStart;
-        else
-            loops.pop_back();
-        FREE_REGS(1);
-        DISPATCH();
-    }
-}
-
-OP(PRINT):
-    std::cout << READ_LAST_REG()->toString() << std::endl;
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(ADD):
-    READ_REG(0, 2)->add(*READ_REG(1, 2));
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(SUBTRACT):
-    READ_REG(0, 2)->subtract(*READ_REG(1, 2));
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(MULTIPLY):
-    READ_REG(0, 2)->multiply(*READ_REG(1, 2));
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(DIVIDE):
-    READ_REG(0, 2)->divide(*READ_REG(1, 2));
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(MOD):
-    READ_REG(0, 2)->mod(*READ_REG(1, 2));
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(RANDOM):
-    if ((READ_REG(0, 2)->type() == Value::Type::Integer) && (READ_REG(1, 2)->type() == Value::Type::Integer))
-        REPLACE_RET_VALUE(rng->randint(READ_REG(0, 2)->toInt(), READ_REG(1, 2)->toInt()), 2);
-    else
-        REPLACE_RET_VALUE(rng->randintDouble(READ_REG(0, 2)->toDouble(), READ_REG(1, 2)->toDouble()), 2);
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(ROUND): {
-    const Value *v = READ_REG(0, 1);
-    if (!v->isInfinity() && !v->isNegativeInfinity()) {
-        if (v->toDouble() < 0) {
-            REPLACE_RET_VALUE(static_cast<long>(std::floor(v->toDouble() + 0.5)), 1);
-        } else
-            REPLACE_RET_VALUE(static_cast<long>(v->toDouble() + 0.5), 1);
-    }
-    DISPATCH();
-}
-
-OP(ABS): {
-    const Value *v = READ_REG(0, 1);
-    if (v->isNegativeInfinity())
-        REPLACE_RET_VALUE(Value(Value::SpecialValue::Infinity), 1);
-    else if (!v->isInfinity())
-        REPLACE_RET_VALUE(std::abs(v->toDouble()), 1);
-    DISPATCH();
-}
-
-OP(FLOOR): {
-    const Value *v = READ_REG(0, 1);
-    if (!v->isInfinity() && !v->isNegativeInfinity())
-        REPLACE_RET_VALUE(std::floor(v->toDouble()), 1);
-    DISPATCH();
-}
-
-OP(CEIL): {
-    const Value *v = READ_REG(0, 1);
-    if (!v->isInfinity() && !v->isNegativeInfinity())
-        REPLACE_RET_VALUE(std::ceil(v->toDouble()), 1);
-    DISPATCH();
-}
-
-OP(SQRT): {
-    const Value &v = *READ_REG(0, 1);
-    if (v < 0)
-        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
-    else if (!v.isInfinity())
-        REPLACE_RET_VALUE(std::sqrt(v.toDouble()), 1);
-    DISPATCH();
-}
-
-OP(SIN): {
-    const Value *v = READ_REG(0, 1);
-    if (v->isInfinity() || v->isNegativeInfinity())
-        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
-    else
-        REPLACE_RET_VALUE(std::sin(v->toDouble() * pi / 180), 1);
-    DISPATCH();
-}
-
-OP(COS): {
-    const Value *v = READ_REG(0, 1);
-    if (v->isInfinity() || v->isNegativeInfinity())
-        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
-    else
-        REPLACE_RET_VALUE(std::cos(v->toDouble() * pi / 180), 1);
-    DISPATCH();
-}
-
-OP(TAN): {
-    const Value *v = READ_REG(0, 1);
-    if (v->isInfinity() || v->isNegativeInfinity())
-        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
-    else {
-        long mod;
-        if (v->toLong() < 0)
-            mod = (v->toLong() + 360) % 360;
-        else
-            mod = v->toLong() % 360;
-        if (mod == 90)
-            REPLACE_RET_VALUE(Value(Value::SpecialValue::Infinity), 1);
-        else if (mod == 270)
-            REPLACE_RET_VALUE(Value(Value::SpecialValue::NegativeInfinity), 1);
-        else
-            REPLACE_RET_VALUE(std::tan(v->toDouble() * pi / 180), 1);
-    }
-    DISPATCH();
-}
-
-OP(ASIN): {
-    const Value &v = *READ_REG(0, 1);
-    if (v < -1 || v > 1)
-        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
-    else
-        REPLACE_RET_VALUE(std::asin(v.toDouble()) * 180 / pi, 1);
-    DISPATCH();
-}
-
-OP(ACOS): {
-    const Value &v = *READ_REG(0, 1);
-    if (v < -1 || v > 1)
-        REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
-    else
-        REPLACE_RET_VALUE(std::acos(v.toDouble()) * 180 / pi, 1);
-    DISPATCH();
-}
-
-OP(ATAN): {
-    const Value &v = *READ_REG(0, 1);
-    if (v.isInfinity())
-        REPLACE_RET_VALUE(90, 1);
-    else if (v.isNegativeInfinity())
-        REPLACE_RET_VALUE(-90, 1);
-    else
-        REPLACE_RET_VALUE(std::atan(v.toDouble()) * 180 / pi, 1);
-    DISPATCH();
-}
-
-OP(GREATER_THAN):
-    REPLACE_RET_VALUE(*READ_REG(0, 2) > *READ_REG(1, 2), 2);
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(LESS_THAN):
-    REPLACE_RET_VALUE(*READ_REG(0, 2) < *READ_REG(1, 2), 2);
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(EQUALS):
-    REPLACE_RET_VALUE(*READ_REG(0, 2) == *READ_REG(1, 2), 2);
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(AND):
-    REPLACE_RET_VALUE(READ_REG(0, 2)->toBool() && READ_REG(1, 2)->toBool(), 2);
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(OR):
-    REPLACE_RET_VALUE(READ_REG(0, 2)->toBool() || READ_REG(1, 2)->toBool(), 2);
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(NOT):
-    REPLACE_RET_VALUE(!READ_LAST_REG()->toBool(), 1);
-    DISPATCH();
-
-OP(SET_VAR):
-    *variables[*++pos] = *READ_LAST_REG();
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(READ_VAR):
-    ADD_RET_VALUE(*variables[*++pos]);
-    DISPATCH();
-
-OP(CHANGE_VAR):
-    variables[*++pos]->add(*READ_LAST_REG());
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(READ_LIST):
-    ADD_RET_VALUE(lists[*++pos]->toString());
-    DISPATCH();
-
-OP(LIST_APPEND):
-    lists[*++pos]->push_back(*READ_LAST_REG());
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(LIST_DEL): {
-    const Value *indexValue = READ_LAST_REG();
-    size_t index;
-    List *list = lists[*++pos];
-    if (indexValue->isString()) {
-        const std::string &str = indexValue->toString();
-        if (str == "last") {
-            index = list->size();
-        } else if (str == "all") {
-            list->clear();
-            index = 0;
-        } else if (str == "random") {
-            size_t size = list->size();
-            index = size == 0 ? 0 : rng->randint(1, size);
-        } else
-            index = 0;
-    } else {
-        index = indexValue->toLong();
-        FIX_LIST_INDEX(index, list->size());
-    }
-    if (index != 0)
-        list->removeAt(index - 1);
-    FREE_REGS(1);
-    DISPATCH();
-}
-
-OP(LIST_DEL_ALL):
-    lists[*++pos]->clear();
-    DISPATCH();
-
-OP(LIST_INSERT): {
-    const Value *indexValue = READ_REG(1, 2);
-    size_t index;
-    List *list = lists[*++pos];
-    if (indexValue->isString()) {
-        const std::string &str = indexValue->toString();
-        if (str == "last") {
-            list->push_back(*READ_REG(0, 2));
-            index = 0;
-        } else if (str == "random") {
-            size_t size = list->size();
-            index = size == 0 ? 1 : rng->randint(1, size);
-        } else
-            index = 0;
-    } else {
-        index = indexValue->toLong();
-        FIX_LIST_INDEX(index, list->size());
-    }
-    if ((index != 0) || list->empty()) {
-        if (list->empty())
-            list->push_back(*READ_REG(0, 2));
-        else
-            list->insert(index - 1, *READ_REG(0, 2));
-    }
-    FREE_REGS(2);
-    DISPATCH();
-}
-
-OP(LIST_REPLACE): {
-    const Value *indexValue = READ_REG(0, 2);
-    size_t index;
-    List *list = lists[*++pos];
-    if (indexValue->isString()) {
-        std::string str = indexValue->toString();
-        if (str == "last")
-            index = list->size();
-        else if (str == "random") {
-            size_t size = list->size();
-            index = size == 0 ? 0 : rng->randint(1, size);
-        } else
-            index = 0;
-    } else {
-        index = indexValue->toLong();
-        FIX_LIST_INDEX(index, list->size());
-    }
-    if (index != 0)
-        list->operator[](index - 1) = *READ_REG(1, 2);
-    FREE_REGS(2);
-    DISPATCH();
-}
-
-OP(LIST_GET_ITEM): {
-    const Value *indexValue = READ_LAST_REG();
-    size_t index;
-    List *list = lists[*++pos];
-    if (indexValue->isString()) {
-        std::string str = indexValue->toString();
-        if (str == "last")
-            index = list->size();
-        else if (str == "random") {
-            size_t size = list->size();
-            index = size == 0 ? 0 : rng->randint(1, size);
-        } else
-            index = 0;
-    } else {
-        index = indexValue->toLong();
-        FIX_LIST_INDEX(index, list->size());
-    }
-    if (index == 0) {
-        REPLACE_RET_VALUE("", 1);
-    } else {
-        REPLACE_RET_VALUE(list->operator[](index - 1), 1);
-    }
-    DISPATCH();
-}
-
-OP(LIST_INDEX_OF):
-    // TODO: Add size_t support to Value and remove the static_cast
-    REPLACE_RET_VALUE(static_cast<long>(lists[*++pos]->indexOf(*READ_LAST_REG()) + 1), 1);
-    DISPATCH();
-
-OP(LIST_LENGTH):
-    // TODO: Add size_t support to Value and remove the static_cast
-    ADD_RET_VALUE(static_cast<long>(lists[*++pos]->size()));
-    DISPATCH();
-
-OP(LIST_CONTAINS):
-    REPLACE_RET_VALUE(lists[*++pos]->contains(*READ_LAST_REG()), 1);
-    DISPATCH();
-
-OP(STR_CONCAT):
-    REPLACE_RET_VALUE(READ_REG(0, 2)->toString() + READ_REG(1, 2)->toString(), 2);
-    FREE_REGS(1);
-    DISPATCH();
-
-OP(STR_AT): {
-    size_t index = READ_REG(1, 2)->toLong() - 1;
+    OP(LOOP_END) :
     {
-        std::u16string str = READ_REG(0, 2)->toUtf16();
-        if (index < 0 || index >= str.size())
-            REPLACE_RET_VALUE("", 2);
-        else
-            REPLACE_RET_VALUE(utf8::utf16to8(std::u16string({ str[index] })), 2);
-        FREE_REGS(1);
+        assert(!loops.empty());
+        Loop &l = loops.back();
+        if (l.isRepeatLoop) {
+            if ((l.index == -1) || (++l.index < l.max))
+                pos = l.start;
+            else
+                loops.pop_back();
+            if (!noBreak && !warp)
+                return pos;
+            DISPATCH();
+        } else {
+            if (!noBreak && !warp)
+                return pos - 1;
+            loopStart = run(l.start, false);
+            if (!READ_LAST_REG()->toBool())
+                pos = loopStart;
+            else
+                loops.pop_back();
+            FREE_REGS(1);
+            DISPATCH();
+        }
     }
-    DISPATCH();
-}
 
-OP(STR_LENGTH):
-    REPLACE_RET_VALUE(static_cast<long>(READ_REG(0, 1)->toUtf16().size()), 1);
-    DISPATCH();
-
-OP(STR_CONTAINS):
-    REPLACE_RET_VALUE(READ_REG(0, 2)->toUtf16().find(READ_REG(1, 2)->toUtf16()) != std::u16string::npos, 2);
+    OP(PRINT) :
+        std::cout << READ_LAST_REG()->toString() << std::endl;
     FREE_REGS(1);
     DISPATCH();
 
-OP(EXEC): {
-    auto ret = functions[*++pos](vm);
-    if (updatePos) {
-        pos = this->pos;
-        updatePos = false;
-    }
-    if (stop) {
-        stop = false;
-        if (goBack) {
-            goBack = false;
-            pos -= instruction_arg_count[OP_EXEC] + 1;
-            // NOTE: Going back leaks all registers for the next time the same function is called.
-            // This is for example used in the wait block (to call it again with the same time value).
-        } else
-            FREE_REGS(ret);
-
-        if (!warp) // TODO: This should always return if there's a "warp timer" enabled
-            return pos;
-
-        DISPATCH(); // this avoids freeing registers after "stopping" a warp script
-    }
-    FREE_REGS(ret);
+    OP(ADD) :
+        READ_REG(0, 2)->add(*READ_REG(1, 2));
+    FREE_REGS(1);
     DISPATCH();
-}
 
-OP(INIT_PROCEDURE):
-    procedureArgTree.push_back({});
+    OP(SUBTRACT) :
+        READ_REG(0, 2)->subtract(*READ_REG(1, 2));
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(MULTIPLY) :
+        READ_REG(0, 2)->multiply(*READ_REG(1, 2));
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(DIVIDE) :
+        READ_REG(0, 2)->divide(*READ_REG(1, 2));
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(MOD) :
+        READ_REG(0, 2)->mod(*READ_REG(1, 2));
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(RANDOM) :
+        if ((READ_REG(0, 2)->type() == Value::Type::Integer) && (READ_REG(1, 2)->type() == Value::Type::Integer)) REPLACE_RET_VALUE(rng->randint(READ_REG(0, 2)->toInt(), READ_REG(1, 2)->toInt()), 2);
+    else REPLACE_RET_VALUE(rng->randintDouble(READ_REG(0, 2)->toDouble(), READ_REG(1, 2)->toDouble()), 2);
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(ROUND) :
+    {
+        const Value *v = READ_REG(0, 1);
+        if (!v->isInfinity() && !v->isNegativeInfinity()) {
+            if (v->toDouble() < 0) {
+                REPLACE_RET_VALUE(static_cast<long>(std::floor(v->toDouble() + 0.5)), 1);
+            } else
+                REPLACE_RET_VALUE(static_cast<long>(v->toDouble() + 0.5), 1);
+        }
+        DISPATCH();
+    }
+
+    OP(ABS) :
+    {
+        const Value *v = READ_REG(0, 1);
+        if (v->isNegativeInfinity())
+            REPLACE_RET_VALUE(Value(Value::SpecialValue::Infinity), 1);
+        else if (!v->isInfinity())
+            REPLACE_RET_VALUE(std::abs(v->toDouble()), 1);
+        DISPATCH();
+    }
+
+    OP(FLOOR) :
+    {
+        const Value *v = READ_REG(0, 1);
+        if (!v->isInfinity() && !v->isNegativeInfinity())
+            REPLACE_RET_VALUE(std::floor(v->toDouble()), 1);
+        DISPATCH();
+    }
+
+    OP(CEIL) :
+    {
+        const Value *v = READ_REG(0, 1);
+        if (!v->isInfinity() && !v->isNegativeInfinity())
+            REPLACE_RET_VALUE(std::ceil(v->toDouble()), 1);
+        DISPATCH();
+    }
+
+    OP(SQRT) :
+    {
+        const Value &v = *READ_REG(0, 1);
+        if (v < 0)
+            REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+        else if (!v.isInfinity())
+            REPLACE_RET_VALUE(std::sqrt(v.toDouble()), 1);
+        DISPATCH();
+    }
+
+    OP(SIN) :
+    {
+        const Value *v = READ_REG(0, 1);
+        if (v->isInfinity() || v->isNegativeInfinity())
+            REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+        else
+            REPLACE_RET_VALUE(std::sin(v->toDouble() * pi / 180), 1);
+        DISPATCH();
+    }
+
+    OP(COS) :
+    {
+        const Value *v = READ_REG(0, 1);
+        if (v->isInfinity() || v->isNegativeInfinity())
+            REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+        else
+            REPLACE_RET_VALUE(std::cos(v->toDouble() * pi / 180), 1);
+        DISPATCH();
+    }
+
+    OP(TAN) :
+    {
+        const Value *v = READ_REG(0, 1);
+        if (v->isInfinity() || v->isNegativeInfinity())
+            REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+        else {
+            long mod;
+            if (v->toLong() < 0)
+                mod = (v->toLong() + 360) % 360;
+            else
+                mod = v->toLong() % 360;
+            if (mod == 90)
+                REPLACE_RET_VALUE(Value(Value::SpecialValue::Infinity), 1);
+            else if (mod == 270)
+                REPLACE_RET_VALUE(Value(Value::SpecialValue::NegativeInfinity), 1);
+            else
+                REPLACE_RET_VALUE(std::tan(v->toDouble() * pi / 180), 1);
+        }
+        DISPATCH();
+    }
+
+    OP(ASIN) :
+    {
+        const Value &v = *READ_REG(0, 1);
+        if (v < -1 || v > 1)
+            REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+        else
+            REPLACE_RET_VALUE(std::asin(v.toDouble()) * 180 / pi, 1);
+        DISPATCH();
+    }
+
+    OP(ACOS) :
+    {
+        const Value &v = *READ_REG(0, 1);
+        if (v < -1 || v > 1)
+            REPLACE_RET_VALUE(Value(Value::SpecialValue::NaN), 1);
+        else
+            REPLACE_RET_VALUE(std::acos(v.toDouble()) * 180 / pi, 1);
+        DISPATCH();
+    }
+
+    OP(ATAN) :
+    {
+        const Value &v = *READ_REG(0, 1);
+        if (v.isInfinity())
+            REPLACE_RET_VALUE(90, 1);
+        else if (v.isNegativeInfinity())
+            REPLACE_RET_VALUE(-90, 1);
+        else
+            REPLACE_RET_VALUE(std::atan(v.toDouble()) * 180 / pi, 1);
+        DISPATCH();
+    }
+
+    OP(GREATER_THAN) :
+        REPLACE_RET_VALUE(*READ_REG(0, 2) > *READ_REG(1, 2), 2);
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(LESS_THAN) :
+        REPLACE_RET_VALUE(*READ_REG(0, 2) < *READ_REG(1, 2), 2);
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(EQUALS) :
+        REPLACE_RET_VALUE(*READ_REG(0, 2) == *READ_REG(1, 2), 2);
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(AND) :
+        REPLACE_RET_VALUE(READ_REG(0, 2)->toBool() && READ_REG(1, 2)->toBool(), 2);
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(OR) :
+        REPLACE_RET_VALUE(READ_REG(0, 2)->toBool() || READ_REG(1, 2)->toBool(), 2);
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(NOT) :
+        REPLACE_RET_VALUE(!READ_LAST_REG()->toBool(), 1);
+    DISPATCH();
+
+    OP(SET_VAR) :
+        *variables[*++pos] = *READ_LAST_REG();
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(READ_VAR) :
+        ADD_RET_VALUE(*variables[*++pos]);
+    DISPATCH();
+
+    OP(CHANGE_VAR) :
+        variables[*++pos]->add(*READ_LAST_REG());
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(READ_LIST) :
+        ADD_RET_VALUE(lists[*++pos]->toString());
+    DISPATCH();
+
+    OP(LIST_APPEND) :
+        lists[*++pos]->push_back(*READ_LAST_REG());
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(LIST_DEL) :
+    {
+        const Value *indexValue = READ_LAST_REG();
+        size_t index;
+        List *list = lists[*++pos];
+        if (indexValue->isString()) {
+            const std::string &str = indexValue->toString();
+            if (str == "last") {
+                index = list->size();
+            } else if (str == "all") {
+                list->clear();
+                index = 0;
+            } else if (str == "random") {
+                size_t size = list->size();
+                index = size == 0 ? 0 : rng->randint(1, size);
+            } else
+                index = 0;
+        } else {
+            index = indexValue->toLong();
+            FIX_LIST_INDEX(index, list->size());
+        }
+        if (index != 0)
+            list->removeAt(index - 1);
+        FREE_REGS(1);
+        DISPATCH();
+    }
+
+    OP(LIST_DEL_ALL) :
+        lists[*++pos]->clear();
+    DISPATCH();
+
+    OP(LIST_INSERT) :
+    {
+        const Value *indexValue = READ_REG(1, 2);
+        size_t index;
+        List *list = lists[*++pos];
+        if (indexValue->isString()) {
+            const std::string &str = indexValue->toString();
+            if (str == "last") {
+                list->push_back(*READ_REG(0, 2));
+                index = 0;
+            } else if (str == "random") {
+                size_t size = list->size();
+                index = size == 0 ? 1 : rng->randint(1, size);
+            } else
+                index = 0;
+        } else {
+            index = indexValue->toLong();
+            FIX_LIST_INDEX(index, list->size());
+        }
+        if ((index != 0) || list->empty()) {
+            if (list->empty())
+                list->push_back(*READ_REG(0, 2));
+            else
+                list->insert(index - 1, *READ_REG(0, 2));
+        }
+        FREE_REGS(2);
+        DISPATCH();
+    }
+
+    OP(LIST_REPLACE) :
+    {
+        const Value *indexValue = READ_REG(0, 2);
+        size_t index;
+        List *list = lists[*++pos];
+        if (indexValue->isString()) {
+            std::string str = indexValue->toString();
+            if (str == "last")
+                index = list->size();
+            else if (str == "random") {
+                size_t size = list->size();
+                index = size == 0 ? 0 : rng->randint(1, size);
+            } else
+                index = 0;
+        } else {
+            index = indexValue->toLong();
+            FIX_LIST_INDEX(index, list->size());
+        }
+        if (index != 0)
+            list->operator[](index - 1) = *READ_REG(1, 2);
+        FREE_REGS(2);
+        DISPATCH();
+    }
+
+    OP(LIST_GET_ITEM) :
+    {
+        const Value *indexValue = READ_LAST_REG();
+        size_t index;
+        List *list = lists[*++pos];
+        if (indexValue->isString()) {
+            std::string str = indexValue->toString();
+            if (str == "last")
+                index = list->size();
+            else if (str == "random") {
+                size_t size = list->size();
+                index = size == 0 ? 0 : rng->randint(1, size);
+            } else
+                index = 0;
+        } else {
+            index = indexValue->toLong();
+            FIX_LIST_INDEX(index, list->size());
+        }
+        if (index == 0) {
+            REPLACE_RET_VALUE("", 1);
+        } else {
+            REPLACE_RET_VALUE(list->operator[](index - 1), 1);
+        }
+        DISPATCH();
+    }
+
+    OP(LIST_INDEX_OF) :
+        // TODO: Add size_t support to Value and remove the static_cast
+        REPLACE_RET_VALUE(static_cast<long>(lists[*++pos]->indexOf(*READ_LAST_REG()) + 1), 1);
+    DISPATCH();
+
+    OP(LIST_LENGTH) :
+        // TODO: Add size_t support to Value and remove the static_cast
+        ADD_RET_VALUE(static_cast<long>(lists[*++pos]->size()));
+    DISPATCH();
+
+    OP(LIST_CONTAINS) :
+        REPLACE_RET_VALUE(lists[*++pos]->contains(*READ_LAST_REG()), 1);
+    DISPATCH();
+
+    OP(STR_CONCAT) :
+        REPLACE_RET_VALUE(READ_REG(0, 2)->toString() + READ_REG(1, 2)->toString(), 2);
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(STR_AT) :
+    {
+        size_t index = READ_REG(1, 2)->toLong() - 1;
+        {
+            std::u16string str = READ_REG(0, 2)->toUtf16();
+            if (index < 0 || index >= str.size())
+                REPLACE_RET_VALUE("", 2);
+            else
+                REPLACE_RET_VALUE(utf8::utf16to8(std::u16string({ str[index] })), 2);
+            FREE_REGS(1);
+        }
+        DISPATCH();
+    }
+
+    OP(STR_LENGTH) :
+        REPLACE_RET_VALUE(static_cast<long>(READ_REG(0, 1)->toUtf16().size()), 1);
+    DISPATCH();
+
+    OP(STR_CONTAINS) :
+        REPLACE_RET_VALUE(READ_REG(0, 2)->toUtf16().find(READ_REG(1, 2)->toUtf16()) != std::u16string::npos, 2);
+    FREE_REGS(1);
+    DISPATCH();
+
+    OP(EXEC) :
+    {
+        auto ret = functions[*++pos](vm);
+        if (updatePos) {
+            pos = this->pos;
+            updatePos = false;
+        }
+        if (stop) {
+            stop = false;
+            if (goBack) {
+                goBack = false;
+                pos -= instruction_arg_count[OP_EXEC] + 1;
+                // NOTE: Going back leaks all registers for the next time the same function is called.
+                // This is for example used in the wait block (to call it again with the same time value).
+            } else
+                FREE_REGS(ret);
+
+            if (!warp) // TODO: This should always return if there's a "warp timer" enabled
+                return pos;
+
+            DISPATCH(); // this avoids freeing registers after "stopping" a warp script
+        }
+        FREE_REGS(ret);
+        DISPATCH();
+    }
+
+    OP(INIT_PROCEDURE) :
+        procedureArgTree.push_back({});
     if (procedureArgTree.size() >= 2)
         procedureArgs = &procedureArgTree[procedureArgTree.size() - 2];
     nextProcedureArgs = &procedureArgTree.back();
     DISPATCH();
 
-OP(CALL_PROCEDURE): {
-    unsigned int *procedurePos = procedures[pos[1]];
+    OP(CALL_PROCEDURE) :
+    {
+        unsigned int *procedurePos = procedures[pos[1]];
 
-    if (procedurePos) {
-        callTree.push_back(++pos);
-        procedureArgs = nextProcedureArgs;
-        nextProcedureArgs = nullptr;
-        pos = procedurePos;
-    } else
-        pos++;
+        if (procedurePos) {
+            callTree.push_back(++pos);
+            procedureArgs = nextProcedureArgs;
+            nextProcedureArgs = nullptr;
+            pos = procedurePos;
+        } else
+            pos++;
 
-    DISPATCH();
-}
+        DISPATCH();
+    }
 
-OP(ADD_ARG):
-    nextProcedureArgs->push_back(*READ_LAST_REG());
+    OP(ADD_ARG) :
+        nextProcedureArgs->push_back(*READ_LAST_REG());
     FREE_REGS(1);
     DISPATCH();
 
-OP(READ_ARG):
-    ADD_RET_VALUE(procedureArgs->operator[](*++pos));
+    OP(READ_ARG) :
+        ADD_RET_VALUE(procedureArgs->operator[](*++pos));
     DISPATCH();
 
-OP(BREAK_FRAME):
-    noBreak = false;
+    OP(BREAK_FRAME) :
+        noBreak = false;
     DISPATCH();
 
-OP(WARP):
-    warp = true;
+    OP(WARP) :
+        warp = true;
     DISPATCH();
 #if !defined(ENABLE_COMPUTED_GOTO)
-    }
+}
 #endif
 }
