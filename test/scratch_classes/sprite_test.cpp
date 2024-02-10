@@ -636,7 +636,11 @@ TEST(SpriteTest, GraphicsEffects)
 TEST(SpriteTest, BubbleType)
 {
     Sprite sprite;
+    EngineMock engine;
+    sprite.setEngine(&engine);
     ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Say);
+
+    EXPECT_CALL(engine, requestRedraw).Times(0);
 
     sprite.setBubbleType(Target::BubbleType::Think);
     ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Think);
@@ -648,11 +652,22 @@ TEST(SpriteTest, BubbleType)
 TEST(SpriteTest, BubbleText)
 {
     Sprite sprite;
+    EngineMock engine;
+    sprite.setVisible(true);
+    sprite.setEngine(&engine);
     ASSERT_TRUE(sprite.bubbleText().empty());
 
+    EXPECT_CALL(engine, requestRedraw());
     sprite.setBubbleText("hello");
     ASSERT_EQ(sprite.bubbleText(), "hello");
 
+    EXPECT_CALL(engine, requestRedraw());
     sprite.setBubbleText("world");
     ASSERT_EQ(sprite.bubbleText(), "world");
+
+    sprite.setVisible(false);
+
+    EXPECT_CALL(engine, requestRedraw).Times(0);
+    sprite.setBubbleText("test");
+    ASSERT_TRUE(sprite.bubbleText().empty());
 }

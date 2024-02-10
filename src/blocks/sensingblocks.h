@@ -3,10 +3,15 @@
 #pragma once
 
 #include <scratchcpp/iblocksection.h>
+#include <scratchcpp/value.h>
+#include <vector>
+
 #include "../engine/internal/clock.h"
 
 namespace libscratchcpp
 {
+
+class Target;
 
 /*! \brief The SensingBlocks class contains the implementation of sensing blocks. */
 class SensingBlocks : public IBlockSection
@@ -15,6 +20,7 @@ class SensingBlocks : public IBlockSection
         enum Inputs
         {
             DISTANCETOMENU,
+            QUESTION,
             KEY_OPTION,
             OBJECT
         };
@@ -53,6 +59,8 @@ class SensingBlocks : public IBlockSection
         void registerBlocks(IEngine *engine) override;
 
         static void compileDistanceTo(Compiler *compiler);
+        static void compileAskAndWait(Compiler *compiler);
+        static void compileAnswer(Compiler *compiler);
         static void compileKeyPressed(Compiler *compiler);
         static void compileMouseDown(Compiler *compiler);
         static void compileMouseX(Compiler *compiler);
@@ -82,6 +90,10 @@ class SensingBlocks : public IBlockSection
         static unsigned int distanceTo(VirtualMachine *vm);
         static unsigned int distanceToByIndex(VirtualMachine *vm);
         static unsigned int distanceToMousePointer(VirtualMachine *vm);
+
+        static void onAnswer(const std::string &answer);
+        static unsigned int askAndWait(VirtualMachine *vm);
+        static unsigned int answer(VirtualMachine *vm);
 
         static unsigned int timer(VirtualMachine *vm);
         static unsigned int resetTimer(VirtualMachine *vm);
@@ -116,6 +128,29 @@ class SensingBlocks : public IBlockSection
         static unsigned int daysSince2000(VirtualMachine *vm);
 
         static IClock *clock;
+
+    private:
+        struct Question
+        {
+                Question(const std::string &question, VirtualMachine *vm, bool wasVisible, bool wasStage) :
+                    question(question),
+                    vm(vm),
+                    wasVisible(wasVisible),
+                    wasStage(wasStage)
+                {
+                }
+
+                std::string question;
+                VirtualMachine *vm = nullptr;
+                bool wasVisible = false;
+                bool wasStage = false;
+        };
+
+        static void enqueueAsk(const std::string &question, VirtualMachine *vm);
+        static void askNextQuestion();
+
+        static inline std::vector<std::unique_ptr<Question>> m_questionList;
+        static inline Value m_answer;
 };
 
 } // namespace libscratchcpp

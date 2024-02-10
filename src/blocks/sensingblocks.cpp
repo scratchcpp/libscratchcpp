@@ -28,6 +28,8 @@ void SensingBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks
     engine->addCompileFunction(this, "sensing_distanceto", &compileDistanceTo);
+    engine->addCompileFunction(this, "sensing_askandwait", &compileAskAndWait);
+    engine->addCompileFunction(this, "sensing_answer", &compileAnswer);
     engine->addCompileFunction(this, "sensing_keypressed", &compileKeyPressed);
     engine->addCompileFunction(this, "sensing_mousedown", &compileMouseDown);
     engine->addCompileFunction(this, "sensing_mousex", &compileMouseX);
@@ -77,6 +79,9 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addFieldValue(this, "background #", BackdropNumber); // Scratch 1.4 support
     engine->addFieldValue(this, "backdrop #", BackdropNumber);
     engine->addFieldValue(this, "backdrop name", BackdropName);
+
+    // Callbacks
+    engine->setQuestionAnswered(&onAnswer);
 }
 
 void SensingBlocks::compileDistanceTo(Compiler *compiler)
@@ -98,6 +103,17 @@ void SensingBlocks::compileDistanceTo(Compiler *compiler)
         compiler->addInput(input);
         compiler->addFunctionCall(&distanceTo);
     }
+}
+
+void SensingBlocks::compileAskAndWait(Compiler *compiler)
+{
+    compiler->addInput(QUESTION);
+    compiler->addFunctionCall(&askAndWait);
+}
+
+void SensingBlocks::compileAnswer(Compiler *compiler)
+{
+    compiler->addFunctionCall(&answer);
 }
 
 void SensingBlocks::compileKeyPressed(Compiler *compiler)
@@ -488,6 +504,45 @@ unsigned int SensingBlocks::distanceToMousePointer(VirtualMachine *vm)
     return 0;
 }
 
+void SensingBlocks::onAnswer(const std::string &answer)
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/6055823f203a696165084b873e661713806583ec/src/blocks/scratch3_sensing.js#L99-L115
+    m_answer = answer;
+
+    if (!m_questionList.empty()) {
+        Question *question = m_questionList.front().get();
+        VirtualMachine *vm = question->vm;
+        assert(vm);
+        assert(vm->target());
+
+        // If the target was visible when asked, hide the say bubble unless the target was the stage
+        if (question->wasVisible && !question->wasStage)
+            vm->target()->setBubbleText("");
+
+        m_questionList.erase(m_questionList.begin());
+        vm->resolvePromise();
+        askNextQuestion();
+    }
+}
+
+unsigned int SensingBlocks::askAndWait(VirtualMachine *vm)
+{
+    const bool isQuestionAsked = !m_questionList.empty();
+    enqueueAsk(vm->getInput(0, 1)->toString(), vm);
+
+    if (!isQuestionAsked)
+        askNextQuestion();
+
+    vm->promise();
+    return 1;
+}
+
+unsigned int SensingBlocks::answer(VirtualMachine *vm)
+{
+    vm->addReturnValue(m_answer);
+    return 0;
+}
+
 unsigned int SensingBlocks::timer(VirtualMachine *vm)
 {
     vm->addReturnValue(vm->engine()->timer()->value());
@@ -821,4 +876,45 @@ unsigned int SensingBlocks::daysSince2000(VirtualMachine *vm)
     vm->addReturnValue(ms / 86400000.0 - 10957);
 
     return 0;
+}
+
+void SensingBlocks::enqueueAsk(const std::string &question, VirtualMachine *vm)
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/6055823f203a696165084b873e661713806583ec/src/blocks/scratch3_sensing.js#L117-L119
+    assert(vm);
+    Target *target = vm->target();
+    assert(target);
+    bool visible = true;
+    bool isStage = target->isStage();
+
+    if (!isStage) {
+        Sprite *sprite = static_cast<Sprite *>(target);
+        visible = sprite->visible();
+    }
+
+    m_questionList.push_back(std::make_unique<Question>(question, vm, visible, isStage));
+}
+
+void SensingBlocks::askNextQuestion()
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/6055823f203a696165084b873e661713806583ec/src/blocks/scratch3_sensing.js#L121-L133
+    if (m_questionList.empty())
+        return;
+
+    Question *question = m_questionList.front().get();
+    Target *target = question->vm->target();
+    auto ask = question->vm->engine()->questionAsked();
+
+    // If the target is visible, emit a blank question and show
+    // a bubble unless the target was the stage
+    if (question->wasVisible && !question->wasStage) {
+        target->setBubbleType(Target::BubbleType::Say);
+        target->setBubbleText(question->question);
+
+        if (ask)
+            ask("");
+    } else {
+        if (ask)
+            ask(question->question);
+    }
 }

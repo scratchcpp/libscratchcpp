@@ -441,7 +441,7 @@ void Sprite::setBubbleType(BubbleType type)
 /*! Overrides Target#setBubbleText(). */
 void Sprite::setBubbleText(const std::string &text)
 {
-    Target::setBubbleText(text);
+    Target::setBubbleText(impl->visible ? text : "");
 
     if (impl->visible && !text.empty()) {
         IEngine *eng = engine();
@@ -451,7 +451,7 @@ void Sprite::setBubbleText(const std::string &text)
     }
 
     if (impl->iface)
-        impl->iface->onBubbleTextChanged(text);
+        impl->iface->onBubbleTextChanged(impl->visible ? text : "");
 }
 
 Target *Sprite::dataSource() const
