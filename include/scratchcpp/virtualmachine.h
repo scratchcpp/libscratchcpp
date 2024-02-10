@@ -71,16 +71,16 @@ enum Opcode
     OP_LIST_LENGTH,    /*!< Stores the length of the list with the index in the argument, in the last register. */
     OP_LIST_CONTAINS,  /*!< Stores true in the last register if the list with the index in the argument contains the value from the last register. */
     OP_STR_CONCAT,     /*!< Concatenates the strings stored in the last 2 registers and stores the result in the last register, deleting the input registers. */
-    OP_STR_AT,         /*! Stores the character at index in the last register of the string in the second last register, in the last register. */
-    OP_STR_LENGTH,     /*! Stores the length of the string in the last register, in the last register. */
-    OP_STR_CONTAINS,   /*! Stores true in the last register if the string stored in the second last register contains the substring in the last register. */
+    OP_STR_AT,         /*!< Stores the character at index in the last register of the string in the second last register, in the last register. */
+    OP_STR_LENGTH,     /*!< Stores the length of the string in the last register, in the last register. */
+    OP_STR_CONTAINS,   /*!< Stores true in the last register if the string stored in the second last register contains the substring in the last register. */
     OP_EXEC,           /*!< Calls the function with the index in the argument. */
     OP_INIT_PROCEDURE, /*!< Initializes the list of procedure (custom block) arguments. */
     OP_CALL_PROCEDURE, /*! Calls the procedure (custom block) with the index in the argument. */
     OP_ADD_ARG,        /*!< Adds a procedure (custom block) argument with the value from the last register. */
     OP_READ_ARG,       /*!< Reads the procedure (custom block) argument with the index in the argument and stores the value in the last register. */
     OP_BREAK_FRAME,    /*!< Breaks current frame at the end of the loop. */
-    OP_WARP            /*! Runs the script without screen refresh. */
+    OP_WARP            /*!< Runs the script without screen refresh. */
 };
 
 }
