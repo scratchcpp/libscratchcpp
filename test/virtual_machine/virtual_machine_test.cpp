@@ -1466,6 +1466,27 @@ TEST(VirtualMachineTest, RunProcedures)
     ASSERT_EQ(vm.registerCount(), 0);
 }
 
+TEST(VirtualMachineTest, RunNestedWarpProcedures)
+{
+    static unsigned int bytecode[] = { OP_START, OP_INIT_PROCEDURE, OP_CALL_PROCEDURE, 0, OP_HALT };
+    static unsigned int procedure1[] = { OP_START, OP_INIT_PROCEDURE, OP_CALL_PROCEDURE, 1, OP_CONST, 0, OP_REPEAT_LOOP, OP_BREAK_FRAME, OP_LOOP_END, OP_HALT };
+    static unsigned int procedure2[] = { OP_START, OP_WARP, OP_CONST, 0, OP_REPEAT_LOOP, OP_BREAK_FRAME, OP_LOOP_END, OP_HALT };
+    static unsigned int *procedures[] = { procedure1, procedure2 };
+    static Value constValues[] = { 1 };
+
+    VirtualMachine vm;
+    vm.setBytecode(bytecode);
+    vm.setProcedures(procedures);
+    vm.setConstValues(constValues);
+    vm.run();
+    ASSERT_FALSE(vm.atEnd()); // the procedure should still run in warp mode even after running a warp procedure (#470)
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    vm.run();
+    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(vm.registerCount(), 0);
+}
+
 TEST(VirtualMachineTest, RunUndefinedProcedure)
 {
     static unsigned int bytecode[] = {

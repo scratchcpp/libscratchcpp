@@ -46,7 +46,7 @@ struct VirtualMachinePrivate
         bool running = false;
         bool atEnd = false;
         std::vector<Loop> loops;
-        std::vector<unsigned int *> callTree;
+        std::vector<std::pair<unsigned int *, bool>> callTree;
         std::vector<std::vector<Value>> procedureArgTree;
         std::vector<Value> *procedureArgs = nullptr;
         std::vector<Value> *nextProcedureArgs = nullptr;
