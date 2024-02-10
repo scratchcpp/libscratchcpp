@@ -143,6 +143,12 @@ class Engine : public IEngine
         void setAddMonitorHandler(const std::function<void(Monitor *)> &handler) override;
         void setRemoveMonitorHandler(const std::function<void(Monitor *, IMonitorHandler *)> &handler) override;
 
+        const std::function<void(const std::string &)> &questionAsked() const override;
+        void setQuestionAsked(const std::function<void(const std::string &)> &f) override;
+
+        const std::function<void(const std::string &)> &questionAnswered() const override;
+        void setQuestionAnswered(const std::function<void(const std::string &)> &f) override;
+
         const std::vector<std::string> &extensions() const override;
         void setExtensions(const std::vector<std::string> &newExtensions) override;
 
@@ -255,6 +261,8 @@ class Engine : public IEngine
 
         std::function<void(Monitor *)> m_addMonitorHandler = nullptr;
         std::function<void(Monitor *, IMonitorHandler *)> m_removeMonitorHandler = nullptr;
+        std::function<void(const std::string &)> m_questionAsked = nullptr;
+        std::function<void(const std::string &)> m_questionAnswered = nullptr;
 };
 
 } // namespace libscratchcpp

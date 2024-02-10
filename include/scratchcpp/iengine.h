@@ -338,6 +338,18 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the function which is called when a monitor is removed. */
         virtual void setRemoveMonitorHandler(const std::function<void(Monitor *, IMonitorHandler *)> &handler) = 0;
 
+        /*! Returns the function which is called when a question is asked, for example using the 'ask and wait' block. */
+        virtual const std::function<void(const std::string &)> &questionAsked() const = 0;
+
+        /*! Sets the function which is called when a question is asked, for example using the 'ask and wait' block. */
+        virtual void setQuestionAsked(const std::function<void(const std::string &)> &f) = 0;
+
+        /*! Returns the function which should be called when a question is answered. */
+        virtual const std::function<void(const std::string &)> &questionAnswered() const = 0;
+
+        /*! Sets the function which should be called when a question is answered. */
+        virtual void setQuestionAnswered(const std::function<void(const std::string &)> &f) = 0;
+
         /*! Returns the list of extension names. */
         virtual const std::vector<std::string> &extensions() const = 0;
 

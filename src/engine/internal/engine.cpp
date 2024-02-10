@@ -1170,6 +1170,26 @@ void Engine::setRemoveMonitorHandler(const std::function<void(Monitor *, IMonito
     m_removeMonitorHandler = handler;
 }
 
+const std::function<void(const std::string &)> &Engine::questionAsked() const
+{
+    return m_questionAsked;
+}
+
+void Engine::setQuestionAsked(const std::function<void(const std::string &)> &f)
+{
+    m_questionAsked = f;
+}
+
+const std::function<void(const std::string &)> &Engine::questionAnswered() const
+{
+    return m_questionAnswered;
+}
+
+void Engine::setQuestionAnswered(const std::function<void(const std::string &)> &f)
+{
+    m_questionAnswered = f;
+}
+
 const std::vector<std::string> &Engine::extensions() const
 {
     return m_extensions;

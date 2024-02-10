@@ -51,6 +51,14 @@ class AddRemoveMonitorMock
         MOCK_METHOD(void, monitorRemoved, (Monitor *, IMonitorHandler *));
 };
 
+template<typename T, typename... U>
+size_t getAddress(std::function<T(U...)> f)
+{
+    typedef T(fnType)(U...);
+    fnType **fnPointer = f.template target<fnType *>();
+    return (size_t)*fnPointer;
+}
+
 TEST(EngineTest, Clock)
 {
     Engine engine;
@@ -1540,6 +1548,30 @@ TEST(EngineTest, CreateMissingMonitors)
         ASSERT_EQ(monitors[5].get(), m6);
         ASSERT_EQ(monitors[6].get(), m7);
     }
+}
+
+void questionFunction(const std::string &)
+{
+}
+
+TEST(EngineTest, QuestionAsked)
+{
+    Engine engine;
+    ASSERT_EQ(engine.questionAsked(), nullptr);
+
+    static const std::function<void(const std::string &)> f = &questionFunction;
+    engine.setQuestionAsked(&questionFunction);
+    ASSERT_EQ(getAddress(engine.questionAsked()), getAddress(f));
+}
+
+TEST(EngineTest, QuestionAnswered)
+{
+    Engine engine;
+    ASSERT_EQ(engine.questionAnswered(), nullptr);
+
+    static const std::function<void(const std::string &)> f = &questionFunction;
+    engine.setQuestionAnswered(f);
+    ASSERT_EQ(getAddress(engine.questionAnswered()), getAddress(f));
 }
 
 TEST(EngineTest, Clones)
