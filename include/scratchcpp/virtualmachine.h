@@ -133,6 +133,8 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         void moveToLastCheckpoint();
 
         void stop(bool savePos = true, bool breakFrame = false, bool goBack = false);
+        void promise();
+        void resolvePromise();
 
         bool atEnd() const;
 
