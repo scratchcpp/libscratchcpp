@@ -228,10 +228,9 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
         atEnd = true;
         return pos;
     } else {
-        if (callTree.size() == 1)
-            warp = false;
-
-        pos = callTree.back();
+        const auto &oldState = callTree.back();
+        pos = oldState.first;
+        warp = oldState.second;
         callTree.pop_back();
         procedureArgTree.pop_back();
         if (procedureArgTree.empty())
@@ -797,7 +796,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
         unsigned int *procedurePos = procedures[pos[1]];
 
         if (procedurePos) {
-            callTree.push_back(++pos);
+            callTree.push_back({ ++pos, warp });
             procedureArgs = nextProcedureArgs;
             nextProcedureArgs = nullptr;
             pos = procedurePos;
