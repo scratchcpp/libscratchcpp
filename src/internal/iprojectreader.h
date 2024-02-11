@@ -35,6 +35,7 @@ class IProjectReader
         virtual const std::vector<std::shared_ptr<Broadcast>> &broadcasts() = 0;
         virtual const std::vector<std::shared_ptr<Monitor>> &monitors() = 0;
         virtual const std::vector<std::string> &extensions() = 0;
+        virtual const std::string &userAgent() const = 0;
 
     protected:
         virtual void printErr(const std::string &errStr) final { std::cerr << "Failed to read project: " << errStr << std::endl; }

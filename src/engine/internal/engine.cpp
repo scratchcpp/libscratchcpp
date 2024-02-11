@@ -1430,6 +1430,16 @@ BlockSectionContainer *Engine::blockSectionContainer(IBlockSection *section) con
     return nullptr;
 }
 
+const std::string &Engine::userAgent() const
+{
+    return m_userAgent;
+}
+
+void Engine::setUserAgent(const std::string &agent)
+{
+    m_userAgent = agent;
+}
+
 void Engine::finalize()
 {
     m_eventLoopMutex.lock();

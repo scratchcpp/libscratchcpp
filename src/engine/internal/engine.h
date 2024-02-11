@@ -157,6 +157,9 @@ class Engine : public IEngine
         BlockSectionContainer *blockSectionContainer(const std::string &opcode) const;
         BlockSectionContainer *blockSectionContainer(IBlockSection *section) const;
 
+        const std::string &userAgent() const override;
+        void setUserAgent(const std::string &agent) override;
+
         IClock *m_clock = nullptr;
 
     private:
@@ -227,6 +230,7 @@ class Engine : public IEngine
         std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> m_scripts;
         std::vector<BlockFunc> m_functions;
         std::recursive_mutex m_eventLoopMutex;
+        std::string m_userAgent;
 
         std::unordered_map<Target *, std::vector<Script *>> m_greenFlagHats;
         std::unordered_map<Target *, std::vector<Script *>> m_backdropChangeHats;
