@@ -1809,6 +1809,8 @@ TEST(ValueTest, EqualityOperators)
         Value v5 = " 5.25 ";
         Value v6 = "  5.25  ";
         Value v7 = "5.26";
+        Value v8 = 5;
+        Value v9 = "5  ";
 
         ASSERT_TRUE(v1 == v2);
         ASSERT_FALSE(v1 != v2);
@@ -1842,6 +1844,9 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v6 == v7);
         ASSERT_TRUE(v6 != v7);
+
+        ASSERT_TRUE(v8 == v9);
+        ASSERT_FALSE(v8 != v9);
     }
 
     {

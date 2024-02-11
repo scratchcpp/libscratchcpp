@@ -3,10 +3,10 @@
 #pragma once
 
 #include <string>
-#include <variant>
 #include <algorithm>
 #include <limits>
 #include <ctgmath>
+#include <cassert>
 #include <utf8.h>
 
 #include "global.h"
@@ -548,63 +548,75 @@ class LIBSCRATCHCPP_EXPORT Value
             }
         }
 
+        double getNumber(bool *ok = nullptr) const
+        {
+            // Equivalent to JavaScript Number(), *ok == false means NaN
+            if (ok)
+                *ok = true;
+
+            switch (m_type) {
+                case Type::Integer:
+                    return m_intValue;
+
+                case Type::Double:
+                    return m_doubleValue;
+
+                case Type::Bool:
+                    return m_boolValue;
+
+                case Type::String:
+                    return stringToDouble(m_stringValue, ok);
+
+                case Type::Infinity:
+                    return std::numeric_limits<double>::infinity();
+
+                case Type::NegativeInfinity:
+                    return -std::numeric_limits<double>::infinity();
+
+                case Type::NaN:
+                    if (ok)
+                        *ok = false;
+
+                    return 0;
+
+                default:
+                    assert(false); // this should never happen
+                    if (ok)
+                        *ok = false;
+
+                    return 0;
+            }
+        }
+
         void initString(const char *str) { initString(std::string(str)); }
 
         Type m_type;
 
         friend bool operator==(const Value &v1, const Value &v2)
         {
-            if (v1.m_type == v2.m_type) {
-                auto type = v1.m_type;
-                switch (type) {
-                    case Type::Integer:
-                        return v1.toLong() == v2.toLong();
-                    case Type::Double:
-                        return v1.toDouble() == v2.toDouble();
-                    case Type::Bool:
-                        return v1.toBool() == v2.toBool();
-                    case Type::String:
-                        return stringsEqual(v1.toUtf16(), v2.toUtf16());
-                    default:
-                        if ((static_cast<int>(v1.m_type) < 0) && (static_cast<int>(v2.m_type) < 0)) {
-                            return v1.m_type == v2.m_type;
-                        }
-                }
-            } else {
-                if (v1.isString() || v2.isString()) {
-                    if (static_cast<int>(v1.m_type) < 0 || static_cast<int>(v2.m_type) < 0)
-                        return stringsEqual(v1.toUtf16(), v2.toUtf16());
+            // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L121-L150
+            bool ok;
+            double n1 = v1.getNumber(&ok);
+            double n2;
 
-                    long l1, l2;
-                    double d1, d2;
-                    int type1 = checkString(v1.toString(), &l1, &d1);
-                    int type2 = checkString(v2.toString(), &l2, &d2);
+            if (ok)
+                n2 = v2.getNumber(&ok);
 
-                    if (type1 == 1)
-                        d1 = l1;
-
-                    if (type2 == 1)
-                        d2 = l2;
-
-                    if (type1 > 0 && type2 > 0)
-                        return d1 == d2;
-                    else if (type2 > 0)
-                        return v1.toString() == doubleToString(d2);
-                    else if (type1 > 0)
-                        return doubleToString(d1) == v2.toString();
-                    else
-                        return stringsEqual(v1.toUtf16(), v2.toUtf16());
-                } else if (v1.isNumber() || v2.isNumber()) {
-                    if (static_cast<int>(v1.m_type) < 0 || static_cast<int>(v2.m_type) < 0)
-                        return false;
-                    else
-                        return v1.toDouble() == v2.toDouble();
-                } else if (v1.isBool() || v2.isBool())
-                    return ((v1.m_type != Type::NaN && v2.m_type != Type::NaN) && (v1.toBool() == v2.toBool()));
-                else
-                    return false;
+            if (!ok) {
+                // At least one argument can't be converted to a number
+                // Scratch compares strings as case insensitive
+                return stringsEqual(v1.toUtf16(), v2.toUtf16());
             }
-            return false;
+
+            // Handle the special case of Infinity
+            if ((static_cast<int>(v1.m_type) < 0) && (static_cast<int>(v2.m_type) < 0)) {
+                assert(v1.m_type != Type::NaN);
+                assert(v2.m_type != Type::NaN);
+                return v1.m_type == v2.m_type;
+            }
+
+            // Compare as numbers
+            return n1 == n2;
         }
 
         friend bool operator!=(const Value &v1, const Value &v2) { return !(v1 == v2); }
