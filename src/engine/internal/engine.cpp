@@ -135,7 +135,7 @@ void Engine::resolveIds()
         if (container)
             block->setCompileFunction(container->resolveBlockCompileFunc(block->opcode()));
 
-        monitor->impl->blockSection = blockSection(monitor->opcode());
+        monitor->setBlockSection(blockSection(monitor->opcode()));
 
         const auto &fields = block->fields();
         Target *target;
@@ -254,7 +254,7 @@ void Engine::compile()
             MonitorNameFunc nameFunc = container->resolveMonitorNameFunc(block->opcode());
 
             if (nameFunc)
-                monitor->impl->name = nameFunc(block.get());
+                monitor->setName(nameFunc(block.get()));
 
             MonitorChangeFunc changeFunc = container->resolveMonitorChangeFunc(block->opcode());
             monitor->setValueChangeFunction(changeFunc);
@@ -1537,14 +1537,14 @@ void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *targe
     if (!target->isStage())
         monitor->setSprite(dynamic_cast<Sprite *>(target));
 
-    monitor->impl->blockSection = blockSection(monitor->opcode());
+    monitor->setBlockSection(blockSection(monitor->opcode()));
     auto container = blockSectionContainer(monitor->opcode());
 
     if (container) {
         MonitorNameFunc nameFunc = container->resolveMonitorNameFunc(monitor->opcode());
 
         if (nameFunc)
-            monitor->impl->name = nameFunc(monitor->block().get());
+            monitor->setName(nameFunc(monitor->block().get()));
 
         MonitorChangeFunc changeFunc = container->resolveMonitorChangeFunc(monitor->opcode());
         monitor->setValueChangeFunction(changeFunc);
