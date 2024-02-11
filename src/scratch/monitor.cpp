@@ -41,6 +41,12 @@ const std::string &Monitor::name() const
     return impl->name;
 }
 
+/*! Sets the name of this monitor. */
+void Monitor::setName(const std::string &name)
+{
+    impl->name = name;
+}
+
 /*! Returns the monitor's mode. */
 Monitor::Mode Monitor::mode() const
 {

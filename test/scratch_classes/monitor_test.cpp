@@ -47,6 +47,15 @@ TEST(MonitorTest, Interface)
     monitor.setInterface(&iface);
 }
 
+TEST(MonitorTest, Name)
+{
+    Monitor monitor("", "");
+    ASSERT_TRUE(monitor.name().empty());
+
+    monitor.setName("test");
+    ASSERT_EQ(monitor.name(), "test");
+}
+
 TEST(MonitorTest, Mode)
 {
     Monitor monitor("", "");

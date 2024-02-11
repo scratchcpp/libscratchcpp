@@ -38,6 +38,7 @@ class LIBSCRATCHCPP_EXPORT Monitor : public Entity
         void setInterface(IMonitorHandler *iface);
 
         const std::string &name() const;
+        void setName(const std::string &name);
 
         Mode mode() const;
         void setMode(Mode mode);
