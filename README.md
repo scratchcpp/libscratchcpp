@@ -137,7 +137,7 @@ libscratchcpp::Project p("https://scratch.mit.edu/projects/XXXXXX");
 - [x] Clones
 - [x] Timer
 - [x] API for monitors
-- [ ] Project metadata
+- [x] Project metadata
 - [x] Turbo mode
 - [ ] Multithreading (experimental)
 - [x] Custom FPS in the default event loop (`libscratchcpp::Engine::run()`)
