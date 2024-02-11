@@ -1767,6 +1767,15 @@ TEST(EngineTest, StopOtherScriptsInSprite)
     ASSERT_EQ(GET_VAR(stage, "l")->value().toInt(), 110);
 }
 
+TEST(EngineTest, UserAgent)
+{
+    Engine engine;
+    ASSERT_TRUE(engine.userAgent().empty());
+
+    engine.setUserAgent("test");
+    ASSERT_EQ(engine.userAgent(), "test");
+}
+
 TEST(EngineTest, NoCrashAfterStop)
 {
     // Regtest for #186

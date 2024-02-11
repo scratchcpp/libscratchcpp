@@ -358,6 +358,12 @@ class LIBSCRATCHCPP_EXPORT IEngine
 
         /*! Returns the map of scripts (each top level block has a Script object). */
         virtual const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &scripts() const = 0;
+
+        /*! Returns the user agent of the last person to edit the project. */
+        virtual const std::string &userAgent() const = 0;
+
+        /*! Sets the user agent of the last person to edit the project. */
+        virtual void setUserAgent(const std::string &agent) = 0;
 };
 
 } // namespace libscratchcpp

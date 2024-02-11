@@ -134,6 +134,9 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, setExtensions, (const std::vector<std::string> &), (override));
 
         MOCK_METHOD(const ScriptMap &, scripts, (), (const, override));
+
+        MOCK_METHOD(const std::string &, userAgent, (), (const, override));
+        MOCK_METHOD(void, setUserAgent, (const std::string &), (override));
 };
 
 } // namespace libscratchcpp
