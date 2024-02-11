@@ -86,6 +86,12 @@ std::shared_ptr<IBlockSection> Monitor::blockSection() const
     return impl->blockSection;
 }
 
+/*! Sets the block section of this monitor. */
+void Monitor::setBlockSection(std::shared_ptr<IBlockSection> blockSection)
+{
+    impl->blockSection = blockSection;
+}
+
 /*! Convenience method which calls block()->target(). */
 Sprite *Monitor::sprite() const
 {

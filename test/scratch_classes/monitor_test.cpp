@@ -9,6 +9,7 @@
 #include <randomgeneratormock.h>
 
 #include "../common.h"
+#include "testsection.h"
 
 using namespace libscratchcpp;
 
@@ -82,6 +83,16 @@ TEST(MonitorTest, Script)
     auto script = std::make_shared<Script>(nullptr, nullptr, nullptr);
     monitor.setScript(script);
     ASSERT_EQ(monitor.script(), script);
+}
+
+TEST(MonitorTest, BlockSection)
+{
+    Monitor monitor("", "");
+    ASSERT_EQ(monitor.blockSection(), nullptr);
+
+    auto section = std::make_shared<TestSection>();
+    monitor.setBlockSection(section);
+    ASSERT_EQ(monitor.blockSection(), section);
 }
 
 TEST(MonitorTest, Sprite)

@@ -49,6 +49,7 @@ class LIBSCRATCHCPP_EXPORT Monitor : public Entity
         void setScript(std::shared_ptr<Script> script);
 
         std::shared_ptr<IBlockSection> blockSection() const;
+        void setBlockSection(std::shared_ptr<IBlockSection> blockSection);
 
         Sprite *sprite() const;
         void setSprite(Sprite *sprite);
