@@ -129,6 +129,7 @@ bool ProjectPrivate::load()
     engine->setBroadcasts(reader->broadcasts());
     engine->setMonitors(reader->monitors());
     engine->setExtensions(reader->extensions());
+    engine->setUserAgent(reader->userAgent());
     engine->compile();
     return true;
 }

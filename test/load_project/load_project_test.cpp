@@ -72,6 +72,8 @@ TEST(LoadProjectTest, EmptyProject)
                 backdrop->dataSize()),
             0);
 
+        ASSERT_EQ(engine->userAgent(), "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Scratux/1.4.1 Chrome/76.0.3809.146 Electron/6.1.7 Safari/537.36");
+
         i++;
     }
 }
@@ -631,6 +633,9 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(monitor->x(), 304);
         ASSERT_EQ(monitor->y(), 280);
         ASSERT_TRUE(monitor->visible());
+
+        // User agent
+        ASSERT_TRUE(engine->userAgent().empty());
 
         i++;
     }

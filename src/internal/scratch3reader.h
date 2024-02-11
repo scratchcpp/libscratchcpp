@@ -21,6 +21,7 @@ class Scratch3Reader : public IProjectReader
         const std::vector<std::shared_ptr<Broadcast>> &broadcasts() override;
         const std::vector<std::shared_ptr<Monitor>> &monitors() override;
         const std::vector<std::string> &extensions() override;
+        const std::string &userAgent() const override;
 
     private:
         void read();
@@ -30,6 +31,7 @@ class Scratch3Reader : public IProjectReader
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::vector<std::shared_ptr<Monitor>> m_monitors;
         std::vector<std::string> m_extensions;
+        std::string m_userAgent;
 };
 
 } // namespace libscratchcpp

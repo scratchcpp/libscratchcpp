@@ -453,6 +453,13 @@ bool Scratch3Reader::load()
         auto extensions = project["extensions"];
         for (auto extension : extensions)
             m_extensions.push_back(extension);
+
+        // meta
+        READER_STEP(step, "meta");
+        auto meta = project["meta"];
+        READER_STEP(step, "meta -> agent");
+        m_userAgent = meta["agent"];
+
     } catch (std::exception &e) {
         if (strcmp(step, "") == 0)
             printErr("could not parse project JSON file", e.what());
@@ -520,6 +527,11 @@ const std::vector<std::shared_ptr<Monitor>> &Scratch3Reader::monitors()
 const std::vector<std::string> &Scratch3Reader::extensions()
 {
     return m_extensions;
+}
+
+const std::string &Scratch3Reader::userAgent() const
+{
+    return m_userAgent;
 }
 
 void Scratch3Reader::read()
