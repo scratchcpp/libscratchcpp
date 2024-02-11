@@ -41,6 +41,12 @@ const std::string &Monitor::name() const
     return impl->name;
 }
 
+/*! Sets the name of this monitor. */
+void Monitor::setName(const std::string &name)
+{
+    impl->name = name;
+}
+
 /*! Returns the monitor's mode. */
 Monitor::Mode Monitor::mode() const
 {
@@ -78,6 +84,12 @@ void Monitor::setScript(std::shared_ptr<Script> script)
 std::shared_ptr<IBlockSection> Monitor::blockSection() const
 {
     return impl->blockSection;
+}
+
+/*! Sets the block section of this monitor. */
+void Monitor::setBlockSection(std::shared_ptr<IBlockSection> blockSection)
+{
+    impl->blockSection = blockSection;
 }
 
 /*! Convenience method which calls block()->target(). */
