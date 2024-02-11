@@ -145,6 +145,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "QUESTION", SensingBlocks::QUESTION));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "KEY_OPTION", SensingBlocks::KEY_OPTION));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "OBJECT", SensingBlocks::OBJECT));
 

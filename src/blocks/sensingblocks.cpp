@@ -51,6 +51,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
 
     // Inputs
     engine->addInput(this, "DISTANCETOMENU", DISTANCETOMENU);
+    engine->addInput(this, "QUESTION", QUESTION);
     engine->addInput(this, "KEY_OPTION", KEY_OPTION);
     engine->addInput(this, "OBJECT", OBJECT);
 
