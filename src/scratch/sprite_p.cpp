@@ -48,7 +48,9 @@ void SpritePrivate::getFencedPosition(double x, double y, double *outX, double *
     Rect rect;
 
     if (iface)
-        rect = iface->boundingRect();
+        rect = iface->fastBoundingRect();
+    else
+        rect = Rect(this->x, this->y, this->x, this->y);
 
     double inset = std::floor(std::min(rect.width(), rect.height()) / 2);
 

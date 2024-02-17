@@ -65,7 +65,7 @@ TEST_F(ISpriteHandlerTest, X)
 {
     EXPECT_CALL(m_handler, onMoved(0, 0, 189.46, 0));
     EXPECT_CALL(m_handler, onXChanged(189.46)).Times(1);
-    EXPECT_CALL(m_handler, boundingRect()).WillOnce(Return(Rect()));
+    EXPECT_CALL(m_handler, fastBoundingRect()).WillOnce(Return(Rect()));
     EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(m_engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(m_engine, stageHeight()).WillOnce(Return(360));
@@ -83,7 +83,7 @@ TEST_F(ISpriteHandlerTest, Y)
 {
     EXPECT_CALL(m_handler, onMoved(0, 0, 0, -153.7)).Times(1);
     EXPECT_CALL(m_handler, onYChanged(-153.7)).Times(1);
-    EXPECT_CALL(m_handler, boundingRect()).WillOnce(Return(Rect()));
+    EXPECT_CALL(m_handler, fastBoundingRect()).WillOnce(Return(Rect()));
     EXPECT_CALL(m_engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(m_engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(m_engine, stageHeight()).WillOnce(Return(360));
