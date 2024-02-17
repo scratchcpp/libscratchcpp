@@ -199,3 +199,13 @@ TEST_F(ISpriteHandlerTest, BoundingRect)
     ASSERT_EQ(rect.right(), 20.5);
     ASSERT_EQ(rect.bottom(), -0.48);
 }
+
+TEST_F(ISpriteHandlerTest, FastBoundingRect)
+{
+    EXPECT_CALL(m_handler, fastBoundingRect()).WillOnce(Return(Rect(-44.6, 89.1, 20.5, -0.48)));
+    Rect rect = m_sprite.fastBoundingRect();
+    ASSERT_EQ(rect.left(), -44.6);
+    ASSERT_EQ(rect.top(), 89.1);
+    ASSERT_EQ(rect.right(), 20.5);
+    ASSERT_EQ(rect.bottom(), -0.48);
+}

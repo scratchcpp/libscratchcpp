@@ -602,6 +602,18 @@ TEST(SpriteTest, DefaultBoundingRect)
     ASSERT_EQ(rect.bottom(), -45.01);
 }
 
+TEST(SpriteTest, DefaultFastBoundingRect)
+{
+    Sprite sprite;
+    sprite.setX(65.5);
+    sprite.setY(-45.01);
+    Rect rect = sprite.fastBoundingRect();
+    ASSERT_EQ(rect.left(), 65.5);
+    ASSERT_EQ(rect.top(), -45.01);
+    ASSERT_EQ(rect.right(), 65.5);
+    ASSERT_EQ(rect.bottom(), -45.01);
+}
+
 TEST(SpriteTest, GraphicsEffects)
 {
     Sprite sprite;
