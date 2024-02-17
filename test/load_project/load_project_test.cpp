@@ -231,7 +231,8 @@ TEST(LoadProjectTest, LoadTestProject)
 
         // Stage: lists
         ASSERT_LIST(stage, "list1");
-        ASSERT_EQ(GET_LIST(stage, "list1")->toString(), "3 1 4 8 7 6 7 7 2 4");
+        ASSERT_EQ(GET_LIST(stage, "list1")->size(), 10);
+        ASSERT_EQ(GET_LIST(stage, "list1")->toString(), "3148767724");
 
         // Sprite1
         ASSERT_NE(engine->findTarget("Sprite1"), -1);
@@ -282,7 +283,8 @@ TEST(LoadProjectTest, LoadTestProject)
 
         // Sprite1: lists
         ASSERT_LIST(sprite1, "list2");
-        ASSERT_EQ(GET_LIST(sprite1, "list2")->toString(), "9 6 3 8 0 4 4 2 9 7");
+        ASSERT_EQ(GET_LIST(sprite1, "list2")->size(), 10);
+        ASSERT_EQ(GET_LIST(sprite1, "list2")->toString(), "9638044297");
 
         // Sprite1: blocks
         ASSERT_EQ(sprite1->greenFlagBlocks().size(), 1);
@@ -445,7 +447,8 @@ TEST(LoadProjectTest, LoadTestProject)
 
         // Balloon1: lists
         ASSERT_LIST(sprite2, "list2");
-        ASSERT_EQ(GET_LIST(sprite2, "list2")->toString(), "0 4 3 4 1 5 6 9 4 8");
+        ASSERT_EQ(GET_LIST(sprite2, "list2")->size(), 10);
+        ASSERT_EQ(GET_LIST(sprite2, "list2")->toString(), "0434156948");
 
         // Monitors
         const auto &monitors = engine->monitors();
@@ -739,4 +742,20 @@ TEST(LoadProjectTest, LoadDoubleValue)
     ASSERT_EQ(GET_VAR(stage, "test")->value().toDouble(), 5.6654);
 
     std::setlocale(LC_NUMERIC, oldLocale.c_str());
+}
+
+TEST(LoadProjectTest, LoadScientificNotationNumber)
+{
+    // Regtest for #488
+    std::string name = "regtest_projects/488_scientific_notation_conversion.sb3";
+    Project p(name);
+    ASSERT_TRUE(p.load());
+
+    auto stage = p.engine()->stage();
+    ASSERT_TRUE(stage);
+    ASSERT_VAR(stage, "test1");
+    ASSERT_EQ(GET_VAR(stage, "test1")->value().toDouble(), 5000);
+
+    ASSERT_VAR(stage, "test2");
+    ASSERT_EQ(GET_VAR(stage, "test2")->value().toDouble(), 0);
 }
