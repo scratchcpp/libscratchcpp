@@ -351,6 +351,18 @@ Rect Sprite::boundingRect() const
 }
 
 /*!
+ * Returns the less accurate bounding rectangle of the sprite
+ * which is calculated by transforming the costume rectangle.
+ */
+Rect Sprite::fastBoundingRect() const
+{
+    if (!impl->iface)
+        return Rect(impl->x, impl->y, impl->x, impl->y);
+
+    return impl->iface->fastBoundingRect();
+}
+
+/*!
  * Keeps the desired position within the stage.
  * \param[in] New desired X position.
  * \param[in] New desired Y position.

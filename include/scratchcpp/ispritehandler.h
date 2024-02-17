@@ -70,6 +70,13 @@ class LIBSCRATCHCPP_EXPORT ISpriteHandler
          * \note The rectangle must be relative to the stage, so make sure to use the sprite's coordinates.
          */
         virtual Rect boundingRect() const = 0;
+
+        /*!
+         * Used to get a less accurate bounding rectangle of the sprite
+         * which is calculated by transforming the costume rectangle.
+         * \note The rectangle must be relative to the stage, so make sure to use the sprite's coordinates.
+         */
+        virtual Rect fastBoundingRect() const = 0;
 };
 
 } // namespace libscratchcpp

@@ -70,6 +70,7 @@ class LIBSCRATCHCPP_EXPORT Sprite
         void setLayerOrder(int newLayerOrder) override;
 
         Rect boundingRect() const;
+        Rect fastBoundingRect() const;
         void keepInFence(double newX, double newY, double *fencedX, double *fencedY) const;
 
         void setGraphicsEffectValue(IGraphicsEffect *effect, double value) override;

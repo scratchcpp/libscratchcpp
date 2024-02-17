@@ -271,7 +271,7 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
-    EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, fastBoundingRect()).WillOnce(Return(rect));
     EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onXChanged);
     sprite.setX(319);
@@ -280,7 +280,7 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
-    EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, fastBoundingRect()).WillOnce(Return(rect));
     EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onXChanged);
     sprite.setX(75);
@@ -289,7 +289,7 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
-    EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, fastBoundingRect()).WillOnce(Return(rect));
     EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onXChanged);
     sprite.setX(400);
@@ -304,7 +304,7 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
-    EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, fastBoundingRect()).WillOnce(Return(rect));
     EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onXChanged);
     sprite.setX(-400);
@@ -319,7 +319,7 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
-    EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, fastBoundingRect()).WillOnce(Return(rect));
     EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onYChanged);
     sprite.setY(150);
@@ -328,7 +328,7 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
-    EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, fastBoundingRect()).WillOnce(Return(rect));
     EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onYChanged);
     sprite.setY(-103);
@@ -337,7 +337,7 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
-    EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, fastBoundingRect()).WillOnce(Return(rect));
     EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onYChanged);
     sprite.setY(340);
@@ -352,7 +352,7 @@ TEST(SpriteTest, XY)
     EXPECT_CALL(engine, spriteFencingEnabled()).WillOnce(Return(true));
     EXPECT_CALL(engine, stageWidth()).WillOnce(Return(480));
     EXPECT_CALL(engine, stageHeight()).WillOnce(Return(360));
-    EXPECT_CALL(handler, boundingRect()).WillOnce(Return(rect));
+    EXPECT_CALL(handler, fastBoundingRect()).WillOnce(Return(rect));
     EXPECT_CALL(handler, onMoved);
     EXPECT_CALL(handler, onYChanged);
     sprite.setY(-340);
@@ -596,6 +596,18 @@ TEST(SpriteTest, DefaultBoundingRect)
     sprite.setX(65.5);
     sprite.setY(-45.01);
     Rect rect = sprite.boundingRect();
+    ASSERT_EQ(rect.left(), 65.5);
+    ASSERT_EQ(rect.top(), -45.01);
+    ASSERT_EQ(rect.right(), 65.5);
+    ASSERT_EQ(rect.bottom(), -45.01);
+}
+
+TEST(SpriteTest, DefaultFastBoundingRect)
+{
+    Sprite sprite;
+    sprite.setX(65.5);
+    sprite.setY(-45.01);
+    Rect rect = sprite.fastBoundingRect();
     ASSERT_EQ(rect.left(), 65.5);
     ASSERT_EQ(rect.top(), -45.01);
     ASSERT_EQ(rect.right(), 65.5);
