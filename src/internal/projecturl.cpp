@@ -17,7 +17,13 @@ ProjectUrl::ProjectUrl(const std::string &url)
     std::istringstream stream(url);
     std::string str;
 
-     // trim leading whitespaces
+    while (std::getline(stream, str, '/'))
+        parts.push_back(str);
+
+    if (parts.empty())
+        return;
+    
+    // trim leading whitespaces
     str = parts.front();
     str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char ch) {
         return !std::isspace(ch);
@@ -30,13 +36,6 @@ ProjectUrl::ProjectUrl(const std::string &url)
         return !std::isspace(ch);
         }).base(), str.end());
     parts[parts.size() - 1] = str;
-
-    
-    while (std::getline(stream, str, '/'))
-        parts.push_back(str);
-
-    if (parts.empty())
-        return;
 
     // Remove empty parts
     parts.erase(std::remove(parts.begin(), parts.end(), ""), parts.end());
