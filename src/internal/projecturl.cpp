@@ -22,6 +22,20 @@ ProjectUrl::ProjectUrl(const std::string &url)
 
     if (parts.empty())
         return;
+    
+    // trim leading whitespaces
+    str = parts.front();
+    str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }));
+    parts[0] = str;
+
+    // trim trailing whitespaces
+    str = parts.back();
+    str.erase(std::find_if(str.rbegin(), str.rend(), [](int ch){
+        return !std::isspace(ch);
+        }).base(), str.end());
+    parts[parts.size() - 1] = str;
 
     // Remove empty parts
     parts.erase(std::remove(parts.begin(), parts.end(), ""), parts.end());
