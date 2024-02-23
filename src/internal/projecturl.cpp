@@ -61,4 +61,3 @@ const std::string &ProjectUrl::projectId() const
 {
     return m_projectId;
 }
-
