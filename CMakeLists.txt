@@ -16,7 +16,6 @@ if (NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
 	set(LIBSCRATCHCPP_COMPUTED_GOTO OFF CACHE BOOL "" FORCE)
 endif()
 
-find_package(nlohmann_json 3.9.1 REQUIRED)
 find_package(utf8cpp REQUIRED)
 
 add_library(scratchcpp SHARED)
@@ -66,6 +65,8 @@ target_sources(scratchcpp
     include/scratchcpp/imonitorhandler.h
 )
 
+include(FetchContent)
+
 add_library(zip SHARED
 	${ZIP_SRC}/zip.c
 	${ZIP_SRC}/zip.h
@@ -75,13 +76,15 @@ include_directories(thirdparty/zip/src)
 
 include_directories(thirdparty/spimpl)
 
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
 target_link_libraries(scratchcpp PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(scratchcpp PRIVATE utf8cpp)
 target_link_libraries(scratchcpp PRIVATE zip)
 target_link_libraries(scratchcpp PRIVATE scratchcpp-audio)
 
 if (LIBSCRATCHCPP_NETWORK_SUPPORT)
-    include(FetchContent)
     FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/libcpr/cpr.git
 	                     GIT_TAG 3b15fa82ea74739b574d705fea44959b58142eb8) # 1.10.5
     FetchContent_MakeAvailable(cpr)
