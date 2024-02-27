@@ -1773,3 +1773,24 @@ TEST(VirtualMachineTest, NoCrashWhenReadingProcedureArgsAfterStopping)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(vm.atEnd());
 }
+
+unsigned int killTest(VirtualMachine *vm)
+{
+    vm->kill();
+    return 1;
+}
+
+TEST(VirtualMachineTest, StopAfterKilled)
+{
+    // Regtest for #497
+    static unsigned int bytecode[] = { OP_START, OP_NULL, OP_EXEC, 0, OP_NULL, OP_NULL, OP_HALT };
+    static BlockFunc functions[] = { &killTest };
+
+    VirtualMachine vm;
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+
+    vm.run();
+    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(vm.registerCount(), 0);
+}
