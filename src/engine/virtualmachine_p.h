@@ -50,6 +50,7 @@ struct VirtualMachinePrivate
         std::vector<std::vector<Value>> procedureArgTree;
         std::vector<Value> *procedureArgs = nullptr;
         std::vector<Value> *nextProcedureArgs = nullptr;
+        std::vector<unsigned int> loopCountTree;
         bool noBreak = true;
         bool warp = false;
         bool stop = false;
