@@ -121,6 +121,7 @@ VirtualMachinePrivate::VirtualMachinePrivate(VirtualMachine *vm, Target *target,
     regs = regsVector.data();
     loops.reserve(256);
     callTree.reserve(1024);
+    loopCountTree.reserve(1024);
 
     if (!rng)
         rng = RandomGenerator::instance().get();
@@ -233,10 +234,19 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
         warp = oldState.second;
         callTree.pop_back();
         procedureArgTree.pop_back();
+
         if (procedureArgTree.empty())
             procedureArgs = nullptr;
         else
             procedureArgs = &procedureArgTree.back();
+
+        int loopsToRemove = loops.size() - loopCountTree.back();
+        assert(loopsToRemove >= 0);
+        loopCountTree.pop_back();
+
+        for (int i = 0; i < loopsToRemove; i++)
+            loops.pop_back();
+
         DISPATCH();
     }
 
@@ -781,6 +791,14 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
             DISPATCH(); // this avoids freeing registers after "stopping" a warp script
         }
         FREE_REGS(ret);
+
+        if (atEnd) {
+            if (regCount > 0)
+                std::cout << "warning: VM: " << regCount << " registers were leaked by the script; this is most likely a bug in the VM or in the compiler" << std::endl;
+
+            return pos;
+        }
+
         DISPATCH();
     }
 
@@ -799,6 +817,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
             callTree.push_back({ ++pos, warp });
             procedureArgs = nextProcedureArgs;
             nextProcedureArgs = nullptr;
+            loopCountTree.push_back(loops.size());
             pos = procedurePos;
         } else
             pos++;

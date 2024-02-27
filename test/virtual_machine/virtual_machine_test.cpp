@@ -1773,3 +1773,44 @@ TEST(VirtualMachineTest, NoCrashWhenReadingProcedureArgsAfterStopping)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(vm.atEnd());
 }
+
+unsigned int killTest(VirtualMachine *vm)
+{
+    vm->kill();
+    return 1;
+}
+
+TEST(VirtualMachineTest, StopAfterKilled)
+{
+    // Regtest for #497
+    static unsigned int bytecode[] = { OP_START, OP_NULL, OP_EXEC, 0, OP_NULL, OP_NULL, OP_HALT };
+    static BlockFunc functions[] = { &killTest };
+
+    VirtualMachine vm;
+    vm.setBytecode(bytecode);
+    vm.setFunctions(functions);
+
+    vm.run();
+    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(vm.registerCount(), 0);
+}
+
+TEST(VirtualMachineTest, NoCrashAfterCallingProcedureFromLoop)
+{
+    // Regtest for #498
+    static unsigned int bytecode[] = { OP_START, OP_CONST, 0, OP_REPEAT_LOOP, OP_INIT_PROCEDURE, OP_CONST, 1, OP_ADD_ARG, OP_CALL_PROCEDURE, 0, OP_LOOP_END, OP_HALT };
+    static unsigned int procedure[] = { OP_START, OP_WARP, OP_CONST, 0, OP_REPEAT_LOOP, OP_READ_ARG, 0, OP_PRINT, OP_HALT, OP_LOOP_END, OP_HALT };
+    static unsigned int *procedures[] = { procedure };
+    static Value constValues[] = { 2, "test" };
+
+    VirtualMachine vm;
+    vm.setBytecode(bytecode);
+    vm.setProcedures(procedures);
+    vm.setConstValues(constValues);
+
+    ::testing::internal::CaptureStdout();
+    vm.run();
+    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(::testing::internal::GetCapturedStdout(), "test\ntest\n");
+}
