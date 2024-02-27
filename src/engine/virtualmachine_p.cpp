@@ -781,6 +781,14 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
             DISPATCH(); // this avoids freeing registers after "stopping" a warp script
         }
         FREE_REGS(ret);
+
+        if (atEnd) {
+            if (regCount > 0)
+                std::cout << "warning: VM: " << regCount << " registers were leaked by the script; this is most likely a bug in the VM or in the compiler" << std::endl;
+
+            return pos;
+        }
+
         DISPATCH();
     }
 
