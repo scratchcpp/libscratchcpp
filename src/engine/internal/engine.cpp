@@ -695,7 +695,14 @@ void Engine::setMousePressed(bool pressed)
 
 void Engine::clickTarget(Target *target)
 {
-    startHats(HatType::TargetClicked, {}, target);
+    assert(target);
+
+    if (target) {
+        if (!target->isStage() && !static_cast<Sprite *>(target)->visible())
+            return;
+
+        startHats(HatType::TargetClicked, {}, target);
+    }
 }
 
 unsigned int Engine::stageWidth() const
