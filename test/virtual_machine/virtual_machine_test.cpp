@@ -1814,3 +1814,20 @@ TEST(VirtualMachineTest, NoCrashAfterCallingProcedureFromLoop)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(::testing::internal::GetCapturedStdout(), "test\ntest\n");
 }
+
+TEST(VirtualMachineTest, NegativeLoopCount)
+{
+    // Regtest for #503
+    static unsigned int bytecode[] = { OP_START, OP_CONST, 0, OP_REPEAT_LOOP, OP_CONST, 1, OP_PRINT, OP_BREAK_FRAME, OP_LOOP_END, OP_HALT };
+    static Value constValues[] = { -1, "test" };
+
+    VirtualMachine vm;
+    vm.setBytecode(bytecode);
+    vm.setConstValues(constValues);
+
+    ::testing::internal::CaptureStdout();
+    vm.run();
+    ASSERT_TRUE(::testing::internal::GetCapturedStdout().empty());
+    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(vm.registerCount(), 0);
+}
