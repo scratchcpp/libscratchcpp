@@ -206,7 +206,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
     assert(pos);
     unsigned int *loopStart;
     unsigned int *loopEnd;
-    size_t loopCount;
+    long loopCount;
     if (reset) {
         atEnd = false;
         noBreak = true;
