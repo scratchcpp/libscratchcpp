@@ -1124,6 +1124,31 @@ TEST(EngineTest, TargetClickScripts)
     ASSERT_VAR(stage, "stage");
     ASSERT_EQ(GET_VAR(stage, "stage")->value().toInt(), 0);
 
+    // Hidden sprite
+    sprite = engine->targetAt(engine->findTarget("Hidden"));
+    ASSERT_TRUE(sprite);
+    engine->clickTarget(sprite);
+    engine->step();
+    ASSERT_VAR(stage, "1");
+    ASSERT_EQ(GET_VAR(stage, "1")->value().toInt(), 2);
+    ASSERT_VAR(stage, "2");
+    ASSERT_EQ(GET_VAR(stage, "2")->value().toInt(), 2);
+    ASSERT_VAR(stage, "hidden");
+    ASSERT_EQ(GET_VAR(stage, "hidden")->value().toInt(), 0);
+    ASSERT_VAR(stage, "stage");
+    ASSERT_EQ(GET_VAR(stage, "stage")->value().toInt(), 0);
+
+    engine->clickTarget(sprite);
+    engine->step();
+    ASSERT_VAR(stage, "1");
+    ASSERT_EQ(GET_VAR(stage, "1")->value().toInt(), 2);
+    ASSERT_VAR(stage, "2");
+    ASSERT_EQ(GET_VAR(stage, "2")->value().toInt(), 2);
+    ASSERT_VAR(stage, "hidden");
+    ASSERT_EQ(GET_VAR(stage, "hidden")->value().toInt(), 0);
+    ASSERT_VAR(stage, "stage");
+    ASSERT_EQ(GET_VAR(stage, "stage")->value().toInt(), 0);
+
     // Stage
     engine->clickTarget(stage);
     engine->step();
