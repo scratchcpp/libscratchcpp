@@ -40,6 +40,11 @@ class LIBSCRATCHCPP_EXPORT ScratchConfiguration
         static void removeGraphicsEffect(const std::string &name);
         static IGraphicsEffect *getGraphicsEffect(const std::string &name);
 
+        static const std::string &version();
+        static int majorVersion();
+        static int minorVersion();
+        static int patchVersion();
+
     private:
         static const std::vector<std::shared_ptr<IExtension>> getExtensions();
 

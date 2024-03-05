@@ -49,6 +49,31 @@ IGraphicsEffect *ScratchConfiguration::getGraphicsEffect(const std::string &name
         return it->second.get();
 }
 
+/*! Returns the version string of the library. */
+const std::string &ScratchConfiguration::version()
+{
+    static const std::string ret = LIBSCRATCHCPP_VERSION;
+    return ret;
+}
+
+/*! Returns the major version of the library. */
+int ScratchConfiguration::majorVersion()
+{
+    return LIBSCRATCHCPP_VERSION_MAJOR;
+}
+
+/*! Returns the minor version of the library. */
+int ScratchConfiguration::minorVersion()
+{
+    return LIBSCRATCHCPP_VERSION_MINOR;
+}
+
+/*! Returns the patch version of the library. */
+int ScratchConfiguration::patchVersion()
+{
+    return LIBSCRATCHCPP_VERSION_PATCH;
+}
+
 const std::vector<std::shared_ptr<IExtension>> ScratchConfiguration::getExtensions()
 {
     return impl->extensions;
