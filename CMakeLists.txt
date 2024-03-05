@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(libscratchcpp LANGUAGES C CXX)
+project(libscratchcpp VERSION 0.9.0 LANGUAGES C CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 17)
@@ -92,6 +92,10 @@ if (LIBSCRATCHCPP_NETWORK_SUPPORT)
 endif()
 
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_LIBRARY)
+target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION="${PROJECT_VERSION}")
+target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION_MAJOR=${PROJECT_VERSION_MAJOR})
+target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION_MINOR=${PROJECT_VERSION_MINOR})
+target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION_PATCH=${PROJECT_VERSION_PATCH})
 
 if (LIBSCRATCHCPP_BUILD_UNIT_TESTS)
     enable_testing()
