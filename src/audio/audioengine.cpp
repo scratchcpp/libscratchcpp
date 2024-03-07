@@ -10,15 +10,31 @@ AudioEngine AudioEngine::instance;
 
 ma_engine *AudioEngine::engine()
 {
-    return &instance.m_engine;
+    if (!instance.m_initialized)
+        instance.init();
+
+    return instance.m_initialized ? &instance.m_engine : nullptr;
 }
 
 bool AudioEngine::initialized()
 {
+    if (!instance.m_initialized)
+        instance.init();
+
     return instance.m_initialized;
 }
 
 AudioEngine::AudioEngine()
+{
+}
+
+AudioEngine::~AudioEngine()
+{
+    if (m_initialized)
+        ma_engine_uninit(&m_engine);
+}
+
+void AudioEngine::init()
 {
     ma_result result;
     result = ma_engine_init(NULL, &m_engine);
@@ -29,10 +45,4 @@ AudioEngine::AudioEngine()
     }
 
     m_initialized = true;
-}
-
-AudioEngine::~AudioEngine()
-{
-    if (m_initialized)
-        ma_engine_uninit(&m_engine);
 }

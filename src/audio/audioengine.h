@@ -19,6 +19,8 @@ class AudioEngine
         AudioEngine();
         ~AudioEngine();
 
+        void init();
+
         static AudioEngine instance;
         ma_engine m_engine;
         bool m_initialized = false;
