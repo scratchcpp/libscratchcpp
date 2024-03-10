@@ -6,7 +6,7 @@
 #include <scratchcpp/sound.h>
 #include <scratch/sound_p.h>
 #include <enginemock.h>
-#include <audioplayerfactorymock.h>
+#include <audiooutputmock.h>
 #include <audioplayermock.h>
 
 #include "../common.h"
@@ -117,11 +117,11 @@ TEST_F(SoundBlocksTest, RegisterBlocks)
 
 TEST_F(SoundBlocksTest, Play)
 {
-    AudioPlayerFactoryMock factory;
+    AudioOutputMock factory;
     auto player1 = std::make_shared<AudioPlayerMock>();
     auto player2 = std::make_shared<AudioPlayerMock>();
-    SoundPrivate::playerFactory = &factory;
-    EXPECT_CALL(factory, create()).WillOnce(Return(player1)).WillOnce(Return(player2));
+    SoundPrivate::audioOutput = &factory;
+    EXPECT_CALL(factory, createAudioPlayer()).WillOnce(Return(player1)).WillOnce(Return(player2));
     EXPECT_CALL(*player1, setVolume);
     EXPECT_CALL(*player2, setVolume);
     Target target;
@@ -188,7 +188,7 @@ TEST_F(SoundBlocksTest, Play)
                                     vm::OP_NULL,  vm::OP_EXEC,  3, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 1, 0, 4, -4 }));
 
-    SoundPrivate::playerFactory = nullptr;
+    SoundPrivate::audioOutput = nullptr;
 }
 
 TEST_F(SoundBlocksTest, PlayImpl)
@@ -204,12 +204,12 @@ TEST_F(SoundBlocksTest, PlayImpl)
     static BlockFunc functions[] = { &SoundBlocks::playByIndex, &SoundBlocks::play };
     static Value constValues[] = { 2, 5, -1, "test", "nonexistent", "1", "4", "-3" };
 
-    AudioPlayerFactoryMock factory;
+    AudioOutputMock factory;
     auto player1 = std::make_shared<AudioPlayerMock>();
     auto player2 = std::make_shared<AudioPlayerMock>();
     auto player3 = std::make_shared<AudioPlayerMock>();
-    SoundPrivate::playerFactory = &factory;
-    EXPECT_CALL(factory, create()).WillOnce(Return(player1)).WillOnce(Return(player2)).WillOnce(Return(player3));
+    SoundPrivate::audioOutput = &factory;
+    EXPECT_CALL(factory, createAudioPlayer()).WillOnce(Return(player1)).WillOnce(Return(player2)).WillOnce(Return(player3));
     EXPECT_CALL(*player1, setVolume);
     EXPECT_CALL(*player2, setVolume);
     EXPECT_CALL(*player3, setVolume);
@@ -275,16 +275,16 @@ TEST_F(SoundBlocksTest, PlayImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
 
-    SoundPrivate::playerFactory = nullptr;
+    SoundPrivate::audioOutput = nullptr;
 }
 
 TEST_F(SoundBlocksTest, PlayUntilDone)
 {
-    AudioPlayerFactoryMock factory;
+    AudioOutputMock factory;
     auto player1 = std::make_shared<AudioPlayerMock>();
     auto player2 = std::make_shared<AudioPlayerMock>();
-    SoundPrivate::playerFactory = &factory;
-    EXPECT_CALL(factory, create()).WillOnce(Return(player1)).WillOnce(Return(player2));
+    SoundPrivate::audioOutput = &factory;
+    EXPECT_CALL(factory, createAudioPlayer()).WillOnce(Return(player1)).WillOnce(Return(player2));
     EXPECT_CALL(*player1, setVolume);
     EXPECT_CALL(*player2, setVolume);
     Target target;
@@ -388,7 +388,7 @@ TEST_F(SoundBlocksTest, PlayUntilDone)
               vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 1, 0, 4, -4 }));
 
-    SoundPrivate::playerFactory = nullptr;
+    SoundPrivate::audioOutput = nullptr;
 }
 
 TEST_F(SoundBlocksTest, PlayUntilDoneImpl)
@@ -404,12 +404,12 @@ TEST_F(SoundBlocksTest, PlayUntilDoneImpl)
     static BlockFunc functions[] = { &SoundBlocks::playByIndexUntilDone, &SoundBlocks::checkSoundByIndex, &SoundBlocks::playUntilDone, &SoundBlocks::checkSound };
     static Value constValues[] = { 2, 5, -1, "test", "nonexistent", "1", "4", "-3" };
 
-    AudioPlayerFactoryMock factory;
+    AudioOutputMock factory;
     auto player1 = std::make_shared<AudioPlayerMock>();
     auto player2 = std::make_shared<AudioPlayerMock>();
     auto player3 = std::make_shared<AudioPlayerMock>();
-    SoundPrivate::playerFactory = &factory;
-    EXPECT_CALL(factory, create()).WillOnce(Return(player1)).WillOnce(Return(player2)).WillOnce(Return(player3));
+    SoundPrivate::audioOutput = &factory;
+    EXPECT_CALL(factory, createAudioPlayer()).WillOnce(Return(player1)).WillOnce(Return(player2)).WillOnce(Return(player3));
     EXPECT_CALL(*player1, setVolume);
     EXPECT_CALL(*player2, setVolume);
     EXPECT_CALL(*player3, setVolume);
@@ -551,7 +551,7 @@ TEST_F(SoundBlocksTest, PlayUntilDoneImpl)
     ASSERT_EQ(vm2.registerCount(), 0);
     ASSERT_TRUE(vm2.atEnd());
 
-    SoundPrivate::playerFactory = nullptr;
+    SoundPrivate::audioOutput = nullptr;
 }
 
 TEST_F(SoundBlocksTest, StopAllSounds)

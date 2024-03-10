@@ -14,7 +14,7 @@
 #include <scratch/sound_p.h>
 #include <timermock.h>
 #include <clockmock.h>
-#include <audioplayerfactorymock.h>
+#include <audiooutputmock.h>
 #include <audioplayermock.h>
 #include <monitorhandlermock.h>
 #include <thread>
@@ -212,12 +212,12 @@ TEST(EngineTest, IsRunning)
 
 TEST(EngineTest, StopSounds)
 {
-    AudioPlayerFactoryMock factory;
+    AudioOutputMock factory;
     auto player1 = std::make_shared<AudioPlayerMock>();
     auto player2 = std::make_shared<AudioPlayerMock>();
     auto player3 = std::make_shared<AudioPlayerMock>();
-    SoundPrivate::playerFactory = &factory;
-    EXPECT_CALL(factory, create()).WillOnce(Return(player1)).WillOnce(Return(player2)).WillOnce(Return(player3));
+    SoundPrivate::audioOutput = &factory;
+    EXPECT_CALL(factory, createAudioPlayer()).WillOnce(Return(player1)).WillOnce(Return(player2)).WillOnce(Return(player3));
     EXPECT_CALL(*player1, load).WillOnce(Return(true));
     EXPECT_CALL(*player2, load).WillOnce(Return(true));
     EXPECT_CALL(*player3, load).WillOnce(Return(true));
@@ -236,7 +236,7 @@ TEST(EngineTest, StopSounds)
     EXPECT_CALL(*player3, stop());
     engine->stopSounds();
 
-    SoundPrivate::playerFactory = nullptr;
+    SoundPrivate::audioOutput = nullptr;
 }
 
 TEST(EngineTest, Step)

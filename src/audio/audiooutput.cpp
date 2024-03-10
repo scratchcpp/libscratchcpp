@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "audioplayerfactory.h"
+#include "audiooutput.h"
 
 #ifdef LIBSCRATCHCPP_AUDIO_SUPPORT
 #include "internal/audioplayer.h"
@@ -10,18 +10,18 @@
 
 using namespace libscratchcpp;
 
-std::shared_ptr<AudioPlayerFactory> AudioPlayerFactory::m_instance = std::make_shared<AudioPlayerFactory>();
+std::shared_ptr<IAudioOutput> AudioOutput::m_instance = std::make_shared<AudioOutput>();
 
-AudioPlayerFactory::AudioPlayerFactory()
+AudioOutput::AudioOutput()
 {
 }
 
-std::shared_ptr<AudioPlayerFactory> AudioPlayerFactory::instance()
+std::shared_ptr<IAudioOutput> AudioOutput::instance()
 {
     return m_instance;
 }
 
-std::shared_ptr<IAudioPlayer> AudioPlayerFactory::create() const
+std::shared_ptr<IAudioPlayer> AudioOutput::createAudioPlayer() const
 {
 #ifdef LIBSCRATCHCPP_AUDIO_SUPPORT
     return std::make_shared<AudioPlayer>();

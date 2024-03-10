@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "sound_p.h"
-#include "audio/audioplayerfactory.h"
+#include "audio/audiooutput.h"
 
 using namespace libscratchcpp;
 
-IAudioPlayerFactory *SoundPrivate::playerFactory = nullptr;
+IAudioOutput *SoundPrivate::audioOutput = nullptr;
 
 SoundPrivate::SoundPrivate()
 {
-    // NOTE: playerFactory must be initialized in the constructor to avoid static initialization order fiasco
-    if (!playerFactory)
-        playerFactory = AudioPlayerFactory::instance().get();
+    // NOTE: audioOutput must be initialized in the constructor to avoid static initialization order fiasco
+    if (!audioOutput)
+        audioOutput = AudioOutput::instance().get();
 
-    player = playerFactory->create();
+    player = audioOutput->createAudioPlayer();
 }

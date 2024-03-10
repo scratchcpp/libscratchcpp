@@ -9,12 +9,12 @@ namespace libscratchcpp
 
 class IAudioPlayer;
 
-class IAudioPlayerFactory
+class IAudioOutput
 {
     public:
-        virtual ~IAudioPlayerFactory() { }
+        virtual ~IAudioOutput() { }
 
-        virtual std::shared_ptr<IAudioPlayer> create() const = 0;
+        virtual std::shared_ptr<IAudioPlayer> createAudioPlayer() const = 0;
 };
 
 } // namespace libscratchcpp

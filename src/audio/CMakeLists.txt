@@ -16,9 +16,9 @@ endif()
 target_sources(scratchcpp-audio
   PUBLIC
     iaudioplayer.h
-    iaudioplayerfactory.h
-    audioplayerfactory.cpp
-    audioplayerfactory.h
+    iaudiooutput.h
+    audiooutput.cpp
+    audiooutput.h
 )
 
 if (LIBSCRATCHCPP_AUDIO_SUPPORT)
