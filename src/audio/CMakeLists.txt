@@ -19,6 +19,9 @@ target_sources(scratchcpp-audio
     iaudiooutput.h
     audiooutput.cpp
     audiooutput.h
+    iaudioinput.h
+    audioinput.h
+    audioinput.cpp
     iaudioloudness.h
 )
 
