@@ -1,5 +1,5 @@
 #include <audio/audioplayerfactory.h>
-#include <audio/audioplayer.h>
+#include <audio/internal/audioplayer.h>
 
 #include "../common.h"
 

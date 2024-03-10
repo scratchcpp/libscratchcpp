@@ -3,9 +3,9 @@
 #include "audioplayerfactory.h"
 
 #ifdef LIBSCRATCHCPP_AUDIO_SUPPORT
-#include "audioplayer.h"
+#include "internal/audioplayer.h"
 #else
-#include "audioplayerstub.h"
+#include "internal/audioplayerstub.h"
 #endif
 
 using namespace libscratchcpp;

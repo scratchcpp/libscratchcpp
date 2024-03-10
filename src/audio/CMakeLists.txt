@@ -1,7 +1,7 @@
 option(LIBSCRATCHCPP_AUDIO_SUPPORT "Audio support" ON)
 
 add_library(scratchcpp-audio STATIC)
-set(MINIAUDIO_SRC thirdparty/miniaudio)
+set(MINIAUDIO_SRC internal/thirdparty/miniaudio)
 
 if (LIBSCRATCHCPP_AUDIO_SUPPORT)
     add_library(miniaudio STATIC
@@ -24,15 +24,15 @@ target_sources(scratchcpp-audio
 if (LIBSCRATCHCPP_AUDIO_SUPPORT)
     target_sources(scratchcpp-audio
       PUBLIC
-        audioengine.cpp
-	audioengine.h
-	audioplayer.cpp
-	audioplayer.h
+        internal/audioengine.cpp
+        internal/audioengine.h
+        internal/audioplayer.cpp
+        internal/audioplayer.h
     )
 else()
     target_sources(scratchcpp-audio
       PUBLIC
-        audioplayerstub.cpp
-	audioplayerstub.h
+        internal/audioplayerstub.cpp
+        internal/audioplayerstub.h
     )
 endif()
