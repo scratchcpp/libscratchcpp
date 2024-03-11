@@ -68,6 +68,7 @@ class SensingBlocks : public IBlockSection
         static void compileMouseY(Compiler *compiler);
         static void compileSetDragMode(Compiler *compiler);
         static void compileLoudness(Compiler *compiler);
+        static void compileLoud(Compiler *compiler);
         static void compileTimer(Compiler *compiler);
         static void compileResetTimer(Compiler *compiler);
         static void compileOf(Compiler *compiler);
@@ -91,6 +92,7 @@ class SensingBlocks : public IBlockSection
         static unsigned int setNotDraggableMode(VirtualMachine *vm);
 
         static unsigned int loudness(VirtualMachine *vm);
+        static unsigned int loud(VirtualMachine *vm);
 
         static unsigned int distanceTo(VirtualMachine *vm);
         static unsigned int distanceToByIndex(VirtualMachine *vm);

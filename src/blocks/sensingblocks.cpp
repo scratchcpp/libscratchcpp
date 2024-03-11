@@ -39,6 +39,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_mousey", &compileMouseY);
     engine->addCompileFunction(this, "sensing_setdragmode", &compileSetDragMode);
     engine->addCompileFunction(this, "sensing_loudness", &compileLoudness);
+    engine->addCompileFunction(this, "sensing_loud", &compileLoud);
     engine->addCompileFunction(this, "sensing_timer", &compileTimer);
     engine->addCompileFunction(this, "sensing_resettimer", &compileResetTimer);
     engine->addCompileFunction(this, "sensing_of", &compileOf);
@@ -164,6 +165,11 @@ void SensingBlocks::compileSetDragMode(Compiler *compiler)
 void SensingBlocks::compileLoudness(Compiler *compiler)
 {
     compiler->addFunctionCall(&loudness);
+}
+
+void SensingBlocks::compileLoud(Compiler *compiler)
+{
+    compiler->addFunctionCall(&loud);
 }
 
 void SensingBlocks::compileTimer(Compiler *compiler)
@@ -476,6 +482,16 @@ unsigned int SensingBlocks::loudness(VirtualMachine *vm)
 
     auto audioLoudness = audioInput->audioLoudness();
     vm->addReturnValue(audioLoudness->getLoudness());
+    return 0;
+}
+
+unsigned int SensingBlocks::loud(VirtualMachine *vm)
+{
+    if (!audioInput)
+        audioInput = AudioInput::instance().get();
+
+    auto audioLoudness = audioInput->audioLoudness();
+    vm->addReturnValue(audioLoudness->getLoudness() > 10.0);
     return 0;
 }
 
