@@ -4,7 +4,6 @@
 #include <iostream>
 
 #include "sound_p.h"
-#include "audio/audioplayerfactory.h"
 
 using namespace libscratchcpp;
 

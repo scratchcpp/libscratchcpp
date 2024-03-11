@@ -1,15 +1,35 @@
+# audiooutput_test
+add_executable(
+  audiooutput_test
+  audiooutput_test.cpp
+)
+
+target_link_libraries(
+  audiooutput_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(audiooutput_test)
+
 if (LIBSCRATCHCPP_AUDIO_SUPPORT)
-    # audioplayerfactory_test
-    add_executable(
-      audioplayerfactory_test
-      audioplayerfactory_test.cpp
-    )
+    target_compile_definitions(audiooutput_test PRIVATE LIBSCRATCHCPP_AUDIO_SUPPORT)
+endif()
 
-    target_link_libraries(
-      audioplayerfactory_test
-      GTest::gtest_main
-      scratchcpp
-    )
+# audioinput_test
+add_executable(
+  audioinput_test
+  audioinput_test.cpp
+)
 
-    gtest_discover_tests(audioplayerfactory_test)
+target_link_libraries(
+  audioinput_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(audioinput_test)
+
+if (LIBSCRATCHCPP_AUDIO_SUPPORT)
+    target_compile_definitions(audioinput_test PRIVATE LIBSCRATCHCPP_AUDIO_SUPPORT)
 endif()

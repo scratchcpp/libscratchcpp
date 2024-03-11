@@ -1,6 +1,6 @@
 #include <scratchcpp/sound.h>
 #include <scratch/sound_p.h>
-#include <audioplayerfactorymock.h>
+#include <audiooutputmock.h>
 #include <audioplayermock.h>
 
 #include "../common.h"
@@ -15,13 +15,13 @@ class SoundTest : public testing::Test
         void SetUp() override
         {
             m_player = std::make_shared<AudioPlayerMock>();
-            SoundPrivate::playerFactory = &m_playerFactory;
-            EXPECT_CALL(m_playerFactory, create()).WillOnce(Return(m_player));
+            SoundPrivate::audioOutput = &m_playerFactory;
+            EXPECT_CALL(m_playerFactory, createAudioPlayer()).WillOnce(Return(m_player));
         }
 
-        void TearDown() override { SoundPrivate::playerFactory = nullptr; }
+        void TearDown() override { SoundPrivate::audioOutput = nullptr; }
 
-        AudioPlayerFactoryMock m_playerFactory;
+        AudioOutputMock m_playerFactory;
         std::shared_ptr<AudioPlayerMock> m_player;
 };
 
@@ -98,5 +98,5 @@ TEST_F(SoundTest, IsPlaying)
     EXPECT_CALL(*m_player, isPlaying()).WillOnce(Return(false));
     ASSERT_FALSE(sound.isPlaying());
 
-    SoundPrivate::playerFactory = nullptr;
+    SoundPrivate::audioOutput = nullptr;
 }
