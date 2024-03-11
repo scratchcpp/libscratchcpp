@@ -14,10 +14,13 @@
 #include "sensingblocks.h"
 
 #include "../engine/internal/clock.h"
+#include "audio/audioinput.h"
+#include "audio/iaudioloudness.h"
 
 using namespace libscratchcpp;
 
 IClock *SensingBlocks::clock = nullptr;
+IAudioInput *SensingBlocks::audioInput = nullptr;
 
 std::string SensingBlocks::name() const
 {
@@ -35,6 +38,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_mousex", &compileMouseX);
     engine->addCompileFunction(this, "sensing_mousey", &compileMouseY);
     engine->addCompileFunction(this, "sensing_setdragmode", &compileSetDragMode);
+    engine->addCompileFunction(this, "sensing_loudness", &compileLoudness);
     engine->addCompileFunction(this, "sensing_timer", &compileTimer);
     engine->addCompileFunction(this, "sensing_resettimer", &compileResetTimer);
     engine->addCompileFunction(this, "sensing_of", &compileOf);
@@ -45,6 +49,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addMonitorNameFunction(this, "sensing_mousedown", &mouseDownMonitorName);
     engine->addMonitorNameFunction(this, "sensing_mousex", &mouseXMonitorName);
     engine->addMonitorNameFunction(this, "sensing_mousey", &mouseYMonitorName);
+    engine->addMonitorNameFunction(this, "sensing_loudness", &loudnessMonitorName);
     engine->addMonitorNameFunction(this, "sensing_timer", &timerMonitorName);
     engine->addMonitorNameFunction(this, "sensing_current", &currentMonitorName);
     engine->addMonitorNameFunction(this, "sensing_dayssince2000", &daysSince2000MonitorName);
@@ -154,6 +159,11 @@ void SensingBlocks::compileSetDragMode(Compiler *compiler)
         default:
             break;
     }
+}
+
+void SensingBlocks::compileLoudness(Compiler *compiler)
+{
+    compiler->addFunctionCall(&loudness);
 }
 
 void SensingBlocks::compileTimer(Compiler *compiler)
@@ -354,6 +364,12 @@ const std::string &SensingBlocks::mouseYMonitorName(Block *block)
     return name;
 }
 
+const std::string &SensingBlocks::loudnessMonitorName(Block *block)
+{
+    static const std::string name = "loudness";
+    return name;
+}
+
 const std::string &SensingBlocks::timerMonitorName(Block *block)
 {
     static const std::string name = "timer";
@@ -450,6 +466,16 @@ unsigned int SensingBlocks::setNotDraggableMode(VirtualMachine *vm)
     if (Sprite *sprite = dynamic_cast<Sprite *>(vm->target()))
         sprite->setDraggable(false);
 
+    return 0;
+}
+
+unsigned int SensingBlocks::loudness(VirtualMachine *vm)
+{
+    if (!audioInput)
+        audioInput = AudioInput::instance().get();
+
+    auto audioLoudness = audioInput->audioLoudness();
+    vm->addReturnValue(audioLoudness->getLoudness());
     return 0;
 }
 
