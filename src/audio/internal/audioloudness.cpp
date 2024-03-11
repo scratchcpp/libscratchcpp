@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <miniaudio.h>
+#include <atomic>
 #include <cmath>
 #include <iostream>
 
@@ -8,7 +9,7 @@
 
 using namespace libscratchcpp;
 
-static int loudness = -1;
+static std::atomic<int> loudness = -1;
 static float lastValue = 0.0f;
 
 static void data_callback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount)
