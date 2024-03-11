@@ -22,7 +22,7 @@ static void data_callback(ma_device *pDevice, void *pOutput, const void *pInput,
 
     for (ma_uint32 i = 0; i < frameCount; i++) {
         float value = pMicDataArray[i];
-        sum += value * value;
+        sum += std::pow(value, 2) / 20.0f; // TODO: Convert the value properly (it's different than in JS)
     }
 
     float rms = std::sqrt(sum / static_cast<float>(frameCount));
