@@ -34,6 +34,9 @@ class LIBSCRATCHCPP_EXPORT Script
         const std::vector<unsigned int> &bytecodeVector() const;
         void setBytecode(const std::vector<unsigned int> &code);
 
+        void setHatPredicateBytecode(const std::vector<unsigned int> &code);
+        bool runHatPredicate();
+
         void setProcedures(const std::vector<unsigned int *> &procedures);
         void setFunctions(const std::vector<BlockFunc> &functions);
         void setConstValues(const std::vector<Value> &values);
