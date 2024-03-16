@@ -816,3 +816,24 @@ TEST_F(CompilerTest, MultipleTargets)
     ASSERT_EQ(vm->engine(), &engine);
     ASSERT_EQ(vm->script(), script.get());
 }
+
+TEST_F(CompilerTest, EdgeActivatedHatPredicate)
+{
+    auto hat = std::make_shared<Block>("", "");
+    hat->setCompileFunction([](Compiler *) {});
+    hat->setHatPredicateCompileFunction([](Compiler *compiler) { compiler->addConstValue(true); });
+
+    auto block = std::make_shared<Block>("", "");
+    block->setCompileFunction([](Compiler *compiler) {
+        compiler->addConstValue("test");
+        compiler->addInstruction(vm::OP_PRINT);
+    });
+    block->setParent(hat);
+    hat->setNext(block);
+
+    INIT_COMPILER(engine, compiler);
+    compiler.compile(hat);
+    ASSERT_EQ(compiler.hatPredicateBytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 1, vm::OP_PRINT, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ true, "test" }));
+}

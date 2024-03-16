@@ -41,6 +41,26 @@ void Compiler::compile(std::shared_ptr<Block> topLevelBlock)
     init();
 
     impl->block = topLevelBlock;
+
+    // If this is a top-level block, it might be an edge-activated hat block with a predicate compile function
+    if (impl->block->topLevel()) {
+        HatPredicateCompileFunc f = impl->block->hatPredicateCompileFunction();
+
+        if (f) {
+            f(this);
+
+            // Workaround for register leak warning spam: pause the script after getting the reported value
+            addFunctionCall([](VirtualMachine *vm) -> unsigned int {
+                vm->stop(false, false, false);
+                return 0;
+            });
+
+            end(); // finished with the predicate
+            impl->hatPredicateBytecode = impl->bytecode;
+            init(); // now start the real compilation
+        }
+    }
+
     while (impl->block) {
         size_t substacks = impl->substackTree.size();
 
@@ -78,6 +98,12 @@ void Compiler::end()
 const std::vector<unsigned int> &Compiler::bytecode() const
 {
     return impl->bytecode;
+}
+
+/*! Returns the generated hat predicate bytecode (if this is an edge-activated hat). */
+const std::vector<unsigned int> &Compiler::hatPredicateBytecode() const
+{
+    return impl->hatPredicateBytecode;
 }
 
 /*! Returns the Engine. */

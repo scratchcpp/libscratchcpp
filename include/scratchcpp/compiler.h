@@ -42,6 +42,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void end();
 
         const std::vector<unsigned int> &bytecode() const;
+        const std::vector<unsigned int> &hatPredicateBytecode() const;
 
         IEngine *engine() const;
         Target *target() const;
