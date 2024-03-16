@@ -7,6 +7,9 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/costume.h>
 #include <enginemock.h>
+#include <audioinputmock.h>
+#include <audioloudnessmock.h>
+#include <timermock.h>
 
 #include "../common.h"
 #include "blocks/eventblocks.h"
@@ -42,6 +45,14 @@ class EventBlocksTest : public testing::Test
             block->addInput(input);
         }
 
+        void addValueInput(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Inputs id, const Value &value) const
+        {
+            auto input = std::make_shared<Input>(name, Input::Type::Shadow);
+            input->setPrimaryValue(value);
+            input->setInputId(id);
+            block->addInput(input);
+        }
+
         void addObscuredInput(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Inputs id, std::shared_ptr<Block> valueBlock) const
         {
             auto input = std::make_shared<Input>(name, Input::Type::ObscuredShadow);
@@ -50,10 +61,11 @@ class EventBlocksTest : public testing::Test
             block->addInput(input);
         }
 
-        void addValueField(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Fields id, const std::string &value) const
+        void addValueField(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Fields id, const std::string &value, int valueId = -1) const
         {
             auto field = std::make_shared<Field>(name, value);
             field->setFieldId(id);
+            field->setSpecialValueId(valueId);
             block->addField(field);
         }
 
@@ -90,15 +102,25 @@ TEST_F(EventBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_broadcastandwait", &EventBlocks::compileBroadcastAndWait));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenbroadcastreceived", &EventBlocks::compileWhenBroadcastReceived));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenbackdropswitchesto", &EventBlocks::compileWhenBackdropSwitchesTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whengreaterthan", &EventBlocks::compileWhenGreaterThan));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenkeypressed", &EventBlocks::compileWhenKeyPressed));
 
+    // Hat predicates
+    EXPECT_CALL(m_engineMock, addHatPredicateCompileFunction(m_section.get(), "event_whengreaterthan", &EventBlocks::compileWhenGreaterThanPredicate));
+
     // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "BROADCAST_INPUT", EventBlocks::BROADCAST_INPUT)).Times(1);
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "BROADCAST_INPUT", EventBlocks::BROADCAST_INPUT));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VALUE", EventBlocks::VALUE));
 
     // Fields
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "BROADCAST_OPTION", EventBlocks::BROADCAST_OPTION));
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "BACKDROP", EventBlocks::BACKDROP));
+    EXPECT_CALL(m_engineMock, addField(m_section.get(), "WHENGREATERTHANMENU", EventBlocks::WHENGREATERTHANMENU));
     EXPECT_CALL(m_engineMock, addField(m_section.get(), "KEY_OPTION", EventBlocks::KEY_OPTION));
+
+    // Field values
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "LOUDNESS", EventBlocks::Loudness));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "TIMER", EventBlocks::Timer));
 
     m_section->registerBlocks(&m_engineMock);
 }
@@ -357,6 +379,134 @@ TEST_F(EventBlocksTest, WhenBackdropSwitchesTo)
     compiler.init();
     compiler.setBlock(block1);
     EventBlocks::compileWhenBackdropSwitchesTo(&compiler);
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
+}
+
+TEST_F(EventBlocksTest, WhenGreaterThanPredicate)
+{
+    Compiler compiler(&m_engineMock);
+
+    // when [loudness] > (8.9)
+    auto block1 = createEventBlock("a", "event_whengreaterthan");
+    addValueField(block1, "WHENGREATERTHANMENU", EventBlocks::WHENGREATERTHANMENU, "LOUDNESS", EventBlocks::Loudness);
+    addValueInput(block1, "VALUE", EventBlocks::VALUE, 8.9);
+
+    // when [timer] > (10.2)
+    auto block2 = createEventBlock("b", "event_whengreaterthan");
+    addValueField(block2, "WHENGREATERTHANMENU", EventBlocks::WHENGREATERTHANMENU, "TIMER", EventBlocks::Timer);
+    addValueInput(block2, "VALUE", EventBlocks::VALUE, 10.2);
+
+    // when [invalid value] > (0)
+    auto block3 = createEventBlock("c", "event_whengreaterthan");
+    addValueField(block3, "WHENGREATERTHANMENU", EventBlocks::WHENGREATERTHANMENU, "invalid value", -1);
+    addValueInput(block3, "VALUE", EventBlocks::VALUE, 0);
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::whenLoudnessGreaterThanPredicate)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::whenTimerGreaterThanPredicate)).Times(0);
+    compiler.setBlock(block1);
+    EventBlocks::compileWhenGreaterThanPredicate(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::whenLoudnessGreaterThanPredicate)).Times(0);
+    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::whenTimerGreaterThanPredicate)).WillOnce(Return(0));
+    compiler.setBlock(block2);
+    EventBlocks::compileWhenGreaterThanPredicate(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::whenLoudnessGreaterThanPredicate)).Times(0);
+    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::whenTimerGreaterThanPredicate)).Times(0);
+    compiler.setBlock(block3);
+    EventBlocks::compileWhenGreaterThanPredicate(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_NULL, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 8.9, 10.2 }));
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
+}
+
+TEST_F(EventBlocksTest, WhenGreaterThanPredicateImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &EventBlocks::whenLoudnessGreaterThanPredicate, &EventBlocks::whenTimerGreaterThanPredicate };
+    static Value constValues[] = { 22.7, 23, 23.5 };
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    AudioInputMock audioInput;
+    auto audioLoudness = std::make_shared<AudioLoudnessMock>();
+    EventBlocks::audioInput = &audioInput;
+    EXPECT_CALL(audioInput, audioLoudness()).Times(3).WillRepeatedly(Return(audioLoudness));
+    EXPECT_CALL(*audioLoudness, getLoudness()).Times(3).WillRepeatedly(Return(23));
+
+    vm.setBytecode(bytecode1);
+    vm.run();
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    vm.reset();
+    vm.setBytecode(bytecode3);
+    vm.run();
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    EventBlocks::audioInput = nullptr;
+
+    TimerMock timer;
+    EXPECT_CALL(m_engineMock, timer()).Times(3).WillRepeatedly(Return(&timer));
+    EXPECT_CALL(timer, value()).Times(3).WillRepeatedly(Return(23));
+
+    vm.reset();
+    vm.setBytecode(bytecode4);
+    vm.run();
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+
+    vm.reset();
+    vm.setBytecode(bytecode5);
+    vm.run();
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    vm.reset();
+    vm.setBytecode(bytecode6);
+    vm.run();
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+}
+
+TEST_F(EventBlocksTest, WhenGreaterThan)
+{
+    Compiler compiler(&m_engineMock);
+
+    // when [loudness] > (8.9)
+    auto block = createEventBlock("a", "event_whengreaterthan");
+    addValueField(block, "WHENGREATERTHANMENU", EventBlocks::WHENGREATERTHANMENU, "LOUDNESS", EventBlocks::Loudness);
+    addValueInput(block, "VALUE", EventBlocks::VALUE, 8.9);
+
+    EXPECT_CALL(m_engineMock, addWhenGreaterThanScript(block));
+    compiler.init();
+    compiler.setBlock(block);
+    EventBlocks::compileWhenGreaterThan(&compiler);
     compiler.end();
 
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));

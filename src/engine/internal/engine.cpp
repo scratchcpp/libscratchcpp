@@ -34,13 +34,13 @@
 using namespace libscratchcpp;
 
 const std::unordered_map<Engine::HatType, bool> Engine::m_hatRestartExistingThreads = {
-    { HatType::GreenFlag, true },  { HatType::BroadcastReceived, true }, { HatType::BackdropChanged, true },
-    { HatType::CloneInit, false }, { HatType::KeyPressed, false },       { HatType::TargetClicked, true }
+    { HatType::GreenFlag, true },   { HatType::BroadcastReceived, true }, { HatType::BackdropChanged, true }, { HatType::CloneInit, false },
+    { HatType::KeyPressed, false }, { HatType::TargetClicked, true },     { HatType::WhenGreaterThan, false }
 };
 
 const std::unordered_map<Engine::HatType, bool> Engine::m_hatEdgeActivated = {
-    { HatType::GreenFlag, false }, { HatType::BroadcastReceived, false }, { HatType::BackdropChanged, false },
-    { HatType::CloneInit, false }, { HatType::KeyPressed, false },        { HatType::TargetClicked, false }
+    { HatType::GreenFlag, false },  { HatType::BroadcastReceived, false }, { HatType::BackdropChanged, false }, { HatType::CloneInit, false },
+    { HatType::KeyPressed, false }, { HatType::TargetClicked, false },     { HatType::WhenGreaterThan, true }
 };
 
 Engine::Engine() :
@@ -82,6 +82,8 @@ void Engine::clear()
     m_broadcastHats.clear();
     m_cloneInitHats.clear();
     m_whenKeyPressedHats.clear();
+    m_whenTargetClickedHats.clear();
+    m_whenGreaterThanHats.clear();
 
     m_scriptHatFields.clear();
     m_edgeActivatedHatValues.clear();
@@ -1034,6 +1036,12 @@ void Engine::addTargetClickScript(std::shared_ptr<Block> hatBlock)
     addHatToMap(m_whenTargetClickedHats, m_scripts[hatBlock].get());
 }
 
+void Engine::addWhenGreaterThanScript(std::shared_ptr<Block> hatBlock)
+{
+    Script *script = m_scripts[hatBlock].get();
+    addHatToMap(m_whenGreaterThanHats, script);
+}
+
 const std::vector<std::shared_ptr<Target>> &Engine::targets() const
 {
     return m_targets;
@@ -1441,6 +1449,9 @@ const std::vector<Script *> &Engine::getHats(Target *target, HatType type)
 
         case HatType::TargetClicked:
             return m_whenTargetClickedHats[target];
+
+        case HatType::WhenGreaterThan:
+            return m_whenGreaterThanHats[target];
 
         default: {
             static const std::vector<Script *> empty = {};

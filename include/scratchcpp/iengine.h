@@ -299,6 +299,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /* Registers the given "when this sprite/stage clicked" script. */
         virtual void addTargetClickScript(std::shared_ptr<Block> hatBlock) = 0;
 
+        /* Registers the given "when greater than" script. */
+        virtual void addWhenGreaterThanScript(std::shared_ptr<Block> hatBlock) = 0;
+
         /*! Returns the list of targets. */
         virtual const std::vector<std::shared_ptr<Target>> &targets() const = 0;
 
