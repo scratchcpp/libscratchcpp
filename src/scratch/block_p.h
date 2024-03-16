@@ -23,6 +23,7 @@ struct BlockPrivate
 
         std::string opcode;
         BlockComp compileFunction = nullptr;
+        HatPredicateCompileFunc hatPredicateCompileFunction = nullptr;
         std::shared_ptr<Block> next = nullptr;
         std::string nextId;
         std::shared_ptr<Block> parent = nullptr;

@@ -247,6 +247,15 @@ TEST_F(BlockTest, CompileFunction)
     ASSERT_EQ(block.compileFunction(), &compileTest);
 }
 
+TEST_F(BlockTest, HatPredicateCompileFunction)
+{
+    Block block("", "");
+    ASSERT_EQ(block.hatPredicateCompileFunction(), nullptr);
+
+    block.setHatPredicateCompileFunction(&compileTest);
+    ASSERT_EQ(block.hatPredicateCompileFunction(), &compileTest);
+}
+
 TEST_F(BlockTest, Compile)
 {
     Block block("", "");

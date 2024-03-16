@@ -4,6 +4,7 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/comment.h>
+#include <iostream>
 
 #include "block_p.h"
 
@@ -39,6 +40,24 @@ BlockComp Block::compileFunction() const
 void Block::setCompileFunction(BlockComp newCompileFunction)
 {
     impl->compileFunction = newCompileFunction;
+}
+
+/*! Returns the edge-activated hat predicate compile function. \see <a href="blockSections.html">Block sections</a> */
+BlockComp Block::hatPredicateCompileFunction() const
+{
+    return impl->hatPredicateCompileFunction;
+}
+
+/*! Sets the edge-activated hat predicate compile function. \see <a href="blockSections.html">Block sections</a> */
+void Block::setHatPredicateCompileFunction(HatPredicateCompileFunc newHatPredicateCompileFunction)
+{
+    if (newHatPredicateCompileFunction && !topLevel()) {
+        std::cerr << "error: predicate compile functions can be only used on top-level blocks" << std::endl;
+        assert(false);
+        return;
+    }
+
+    impl->hatPredicateCompileFunction = newHatPredicateCompileFunction;
 }
 
 /*! Returns true if the block can have a block following it. */
