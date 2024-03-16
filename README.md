@@ -125,7 +125,7 @@ libscratchcpp::Project p("https://scratch.mit.edu/projects/XXXXXX");
 - [x] Motion blocks
 - [x] Looks blocks
 - [ ] Sound blocks
-- [ ] Event blocks
+- [x] Event blocks
 - [x] Control blocks
 - [ ] Sensing blocks
 - [x] Operator blocks
