@@ -6,6 +6,7 @@
 #include <scratchcpp/list.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/iengine.h>
+#include <scratchcpp/stage.h>
 #include <iostream>
 
 #include "script_p.h"
@@ -46,6 +47,37 @@ void Script::setBytecode(const std::vector<unsigned int> &code)
 {
     impl->bytecodeVector = code;
     impl->bytecode = impl->bytecodeVector.data();
+}
+
+/*! Sets the edge-activated hat predicate bytecode. */
+void Script::setHatPredicateBytecode(const std::vector<unsigned int> &code)
+{
+    impl->hatPredicateBytecodeVector = code;
+
+    if (impl->engine && !code.empty()) {
+        impl->hatPredicateVm = std::make_shared<VirtualMachine>(impl->engine->stage(), impl->engine, this);
+        impl->hatPredicateVm->setBytecode(impl->hatPredicateBytecodeVector.data());
+        impl->hatPredicateVm->setFunctions(impl->functions);
+        impl->hatPredicateVm->setConstValues(impl->constValues);
+    }
+}
+
+/*!
+ * Runs the edge-activated hat predicate and returns the reported value.
+ * \note If there isn't any predicate, nothing will happen and the returned value will be false.
+ */
+bool Script::runHatPredicate()
+{
+    if (impl->hatPredicateVm && impl->hatPredicateVm->bytecode()) {
+        impl->hatPredicateVm->reset();
+        impl->hatPredicateVm->run();
+        assert(impl->hatPredicateVm->registerCount() == 1);
+
+        if (impl->hatPredicateVm->registerCount() == 1)
+            return impl->hatPredicateVm->getInput(0, 1)->toBool();
+    }
+
+    return false;
 }
 
 /*! Starts the script (creates a virtual machine). */
@@ -129,6 +161,9 @@ void Script::setFunctions(const std::vector<BlockFunc> &functions)
 {
     impl->functionsVector = functions;
     impl->functions = impl->functionsVector.data();
+
+    if (impl->hatPredicateVm)
+        impl->hatPredicateVm->setFunctions(impl->functions);
 }
 
 /*! Sets the list of constant values. */
@@ -136,6 +171,9 @@ void Script::setConstValues(const std::vector<Value> &values)
 {
     impl->constValuesVector = values;
     impl->constValues = impl->constValuesVector.data();
+
+    if (impl->hatPredicateVm)
+        impl->hatPredicateVm->setConstValues(impl->constValues);
 }
 
 /*! Sets the list of variables. */

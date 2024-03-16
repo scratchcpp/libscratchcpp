@@ -86,6 +86,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(unsigned int, functionIndex, (BlockFunc), (override));
 
         MOCK_METHOD(void, addCompileFunction, (IBlockSection *, const std::string &, BlockComp), (override));
+        MOCK_METHOD(void, addHatPredicateCompileFunction, (IBlockSection *, const std::string &, HatPredicateCompileFunc), (override));
         MOCK_METHOD(void, addMonitorNameFunction, (IBlockSection *, const std::string &, MonitorNameFunc), (override));
         MOCK_METHOD(void, addMonitorChangeFunction, (IBlockSection *, const std::string &, MonitorChangeFunc), (override));
         MOCK_METHOD(void, addHatBlock, (IBlockSection *, const std::string &), (override));
@@ -105,6 +106,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, addCloneInitScript, (std::shared_ptr<Block>), (override));
         MOCK_METHOD(void, addKeyPressScript, (std::shared_ptr<Block>, int), (override));
         MOCK_METHOD(void, addTargetClickScript, (std::shared_ptr<Block>), (override));
+        MOCK_METHOD(void, addWhenGreaterThanScript, (std::shared_ptr<Block>), (override));
 
         MOCK_METHOD(const std::vector<std::shared_ptr<Target>> &, targets, (), (const, override));
         MOCK_METHOD(void, setTargets, (const std::vector<std::shared_ptr<Target>> &), (override));

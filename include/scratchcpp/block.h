@@ -70,6 +70,9 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
         BlockComp compileFunction() const;
         void setCompileFunction(BlockComp newCompileFunction);
 
+        BlockComp hatPredicateCompileFunction() const;
+        void setHatPredicateCompileFunction(HatPredicateCompileFunc newHatPredicateCompileFunction);
+
         bool mutationHasNext() const;
         void setMutationHasNext(bool newMutationHasNext);
 

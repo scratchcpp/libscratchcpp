@@ -1,8 +1,8 @@
 #include <scratchcpp/script.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/virtualmachine.h>
-#include <scratchcpp/target.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/stage.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <enginemock.h>
@@ -39,6 +39,74 @@ TEST_F(ScriptTest, Bytecode)
     ASSERT_EQ(script.bytecode()[0], vm::OP_START);
     ASSERT_EQ(script.bytecode()[1], vm::OP_HALT);
     ASSERT_EQ(script.bytecodeVector(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
+}
+
+static Target *stageTest = nullptr;
+static IEngine *engineTest = nullptr;
+static Script *scriptTest = nullptr;
+
+TEST_F(ScriptTest, HatPredicate)
+{
+    Script script(&m_target, nullptr, &m_engine);
+    ASSERT_FALSE(script.runHatPredicate());
+
+    Stage stage;
+    EXPECT_CALL(m_engine, stage()).Times(3).WillRepeatedly(Return(&stage));
+
+    BlockFunc f1 = [](VirtualMachine *vm) -> unsigned int {
+        vm->addReturnValue(true);
+        vm->stop(false, false, false);
+        stageTest = vm->target();
+        engineTest = vm->engine();
+        scriptTest = vm->script();
+        return 0;
+    };
+
+    BlockFunc f2 = f1;
+
+    BlockFunc f3 = [](VirtualMachine *vm) -> unsigned int {
+        vm->addReturnValue(false);
+        vm->stop(false, false, false);
+        stageTest = vm->target();
+        engineTest = vm->engine();
+        scriptTest = vm->script();
+        return 0;
+    };
+
+    stageTest = nullptr;
+    engineTest = nullptr;
+    scriptTest = nullptr;
+    script.setFunctions({ f1 });
+    script.setConstValues({ "test" });
+    script.setHatPredicateBytecode({ vm::OP_START, vm::OP_CONST, 0, vm::OP_PRINT, vm::OP_EXEC, 0, vm::OP_HALT });
+    testing::internal::CaptureStdout();
+    ASSERT_TRUE(script.runHatPredicate());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\n");
+    ASSERT_EQ(stageTest, &stage);
+    ASSERT_EQ(engineTest, &m_engine);
+    ASSERT_EQ(scriptTest, &script);
+
+    stageTest = nullptr;
+    engineTest = nullptr;
+    scriptTest = nullptr;
+    script.setHatPredicateBytecode({ vm::OP_START, vm::OP_CONST, 0, vm::OP_PRINT, vm::OP_EXEC, 1, vm::OP_HALT });
+    script.setFunctions({ f1, f2, f3 });
+    script.setConstValues({ 5 });
+    testing::internal::CaptureStdout();
+    ASSERT_TRUE(script.runHatPredicate());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "5\n");
+    ASSERT_EQ(stageTest, &stage);
+    ASSERT_EQ(engineTest, &m_engine);
+    ASSERT_EQ(scriptTest, &script);
+
+    stageTest = nullptr;
+    engineTest = nullptr;
+    scriptTest = nullptr;
+    script.setHatPredicateBytecode({ vm::OP_START, vm::OP_EXEC, 2, vm::OP_HALT });
+    ASSERT_FALSE(script.runHatPredicate());
+    ASSERT_EQ(stageTest, &stage);
+    ASSERT_EQ(engineTest, &m_engine);
+    ASSERT_EQ(scriptTest, &script);
 }
 
 unsigned int testFunction(VirtualMachine *)

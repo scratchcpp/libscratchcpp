@@ -34,8 +34,13 @@
 using namespace libscratchcpp;
 
 const std::unordered_map<Engine::HatType, bool> Engine::m_hatRestartExistingThreads = {
-    { HatType::GreenFlag, true },  { HatType::BroadcastReceived, true }, { HatType::BackdropChanged, true },
-    { HatType::CloneInit, false }, { HatType::KeyPressed, false },       { HatType::TargetClicked, true }
+    { HatType::GreenFlag, true },   { HatType::BroadcastReceived, true }, { HatType::BackdropChanged, true }, { HatType::CloneInit, false },
+    { HatType::KeyPressed, false }, { HatType::TargetClicked, true },     { HatType::WhenGreaterThan, false }
+};
+
+const std::unordered_map<Engine::HatType, bool> Engine::m_hatEdgeActivated = {
+    { HatType::GreenFlag, false },  { HatType::BroadcastReceived, false }, { HatType::BackdropChanged, false }, { HatType::CloneInit, false },
+    { HatType::KeyPressed, false }, { HatType::TargetClicked, false },     { HatType::WhenGreaterThan, true }
 };
 
 Engine::Engine() :
@@ -77,8 +82,11 @@ void Engine::clear()
     m_broadcastHats.clear();
     m_cloneInitHats.clear();
     m_whenKeyPressedHats.clear();
+    m_whenTargetClickedHats.clear();
+    m_whenGreaterThanHats.clear();
 
     m_scriptHatFields.clear();
+    m_edgeActivatedHatValues.clear();
 
     m_running = false;
 }
@@ -93,8 +101,11 @@ void Engine::resolveIds()
             auto container = blockSectionContainer(block->opcode());
             block->setNext(getBlock(block->nextId()));
             block->setParent(getBlock(block->parentId()));
-            if (container)
+
+            if (container) {
                 block->setCompileFunction(container->resolveBlockCompileFunc(block->opcode()));
+                block->setHatPredicateCompileFunction(container->resolveHatPredicateCompileFunc(block->opcode()));
+            }
 
             const auto &inputs = block->inputs();
             for (const auto &input : inputs) {
@@ -215,6 +226,8 @@ void Engine::compile()
                     compiler.compile(block);
 
                     script->setBytecode(compiler.bytecode());
+                    script->setHatPredicateBytecode(compiler.hatPredicateBytecode());
+
                     if (block->opcode() == "procedures_definition") {
                         auto b = block->inputAt(block->findInput("custom_block"))->valueBlock();
                         procedureBytecodeMap[b->mutationPrototype()->procCode()] = script->bytecode();
@@ -295,6 +308,7 @@ void Engine::start()
 
     m_eventLoopMutex.lock();
     m_timer->reset();
+    m_edgeActivatedHatValues.clear();
     m_running = true;
 
     // Start "when green flag clicked" scripts
@@ -431,6 +445,30 @@ void Engine::step()
 
     // Clean up threads that were told to stop during or since the last step
     m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(), [](std::shared_ptr<VirtualMachine> thread) { return thread->atEnd(); }), m_threads.end());
+
+    // Find all edge-activated hats, and add them to threads to be evaluated
+    for (auto const &[hatType, edgeActivated] : m_hatEdgeActivated) {
+        if (edgeActivated) {
+            auto newThreads = startHats(hatType, {}, nullptr);
+
+            // Process edge-triggered hats (must happen here because of Scratch 2 compatibility)
+            // Processing the hats means running their predicates (if they didn't change their return value from false to true, remove the threads)
+            for (auto thread : newThreads) {
+                bool oldValue = false;
+                auto it = m_edgeActivatedHatValues.find(hatType);
+
+                if (it != m_edgeActivatedHatValues.cend())
+                    oldValue = it->second;
+
+                bool newValue = thread->script()->runHatPredicate();
+                bool edgeWasActivated = !oldValue && newValue; // changed from false true
+                m_edgeActivatedHatValues[hatType] = newValue;
+
+                if (!edgeWasActivated)
+                    stopThread(thread.get());
+            }
+        }
+    }
 
     m_redrawRequested = false;
 
@@ -856,6 +894,14 @@ void Engine::addCompileFunction(IBlockSection *section, const std::string &opcod
         container->addCompileFunction(opcode, f);
 }
 
+void Engine::addHatPredicateCompileFunction(IBlockSection *section, const std::string &opcode, HatPredicateCompileFunc f)
+{
+    auto container = blockSectionContainer(section);
+
+    if (container)
+        container->addHatPredicateCompileFunction(opcode, f);
+}
+
 void Engine::addMonitorNameFunction(IBlockSection *section, const std::string &opcode, MonitorNameFunc f)
 {
     auto container = blockSectionContainer(section);
@@ -988,6 +1034,12 @@ void Engine::addKeyPressScript(std::shared_ptr<Block> hatBlock, int fieldId)
 void Engine::addTargetClickScript(std::shared_ptr<Block> hatBlock)
 {
     addHatToMap(m_whenTargetClickedHats, m_scripts[hatBlock].get());
+}
+
+void Engine::addWhenGreaterThanScript(std::shared_ptr<Block> hatBlock)
+{
+    Script *script = m_scripts[hatBlock].get();
+    addHatToMap(m_whenGreaterThanHats, script);
 }
 
 const std::vector<std::shared_ptr<Target>> &Engine::targets() const
@@ -1398,6 +1450,9 @@ const std::vector<Script *> &Engine::getHats(Target *target, HatType type)
         case HatType::TargetClicked:
             return m_whenTargetClickedHats[target];
 
+        case HatType::WhenGreaterThan:
+            return m_whenGreaterThanHats[target];
+
         default: {
             static const std::vector<Script *> empty = {};
             return empty;
@@ -1717,12 +1772,6 @@ Engine::startHats(HatType hatType, const std::unordered_map<HatField, std::varia
             newThreads.push_back(pushThread(topBlock, target));
         },
         optTarget);
-
-    // Run edge-triggered hats (for compatibility with Scratch 2)
-    // TODO: Find out what "edge-triggered" hats are and execute them
-    // Uncommenting this would cause infinite recursion in some cases, so let's keep it commented
-    /*for (auto thread : newThreads)
-        thread->run();*/
 
     return newThreads;
 }

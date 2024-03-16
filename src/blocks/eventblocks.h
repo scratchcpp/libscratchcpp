@@ -9,6 +9,7 @@ namespace libscratchcpp
 
 class Compiler;
 class VirtualMachine;
+class IAudioInput;
 
 /*! \brief The EventBlocks class contains the implementation of event blocks. */
 class EventBlocks : public IBlockSection
@@ -16,14 +17,22 @@ class EventBlocks : public IBlockSection
     public:
         enum Inputs
         {
-            BROADCAST_INPUT
+            BROADCAST_INPUT,
+            VALUE
         };
 
         enum Fields
         {
             BROADCAST_OPTION,
             BACKDROP,
+            WHENGREATERTHANMENU,
             KEY_OPTION
+        };
+
+        enum FieldValues
+        {
+            Loudness,
+            Timer
         };
 
         std::string name() const override;
@@ -37,6 +46,8 @@ class EventBlocks : public IBlockSection
         static void compileBroadcastAndWait(Compiler *compiler);
         static void compileWhenBroadcastReceived(Compiler *compiler);
         static void compileWhenBackdropSwitchesTo(Compiler *compiler);
+        static void compileWhenGreaterThanPredicate(Compiler *compiler);
+        static void compileWhenGreaterThan(Compiler *compiler);
         static void compileWhenKeyPressed(Compiler *compiler);
 
         static unsigned int broadcast(VirtualMachine *vm);
@@ -45,6 +56,11 @@ class EventBlocks : public IBlockSection
         static unsigned int broadcastByIndexAndWait(VirtualMachine *vm);
         static unsigned int checkBroadcast(VirtualMachine *vm);
         static unsigned int checkBroadcastByIndex(VirtualMachine *vm);
+
+        static unsigned int whenLoudnessGreaterThanPredicate(VirtualMachine *vm);
+        static unsigned int whenTimerGreaterThanPredicate(VirtualMachine *vm);
+
+        static IAudioInput *audioInput;
 };
 
 } // namespace libscratchcpp

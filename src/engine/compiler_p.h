@@ -28,6 +28,7 @@ struct CompilerPrivate
         bool initialized = false;
 
         std::vector<unsigned int> bytecode;
+        std::vector<unsigned int> hatPredicateBytecode;
         std::vector<InputValue *> constValues;
         std::vector<std::unique_ptr<InputValue>> customConstValues;
         std::unordered_map<InputValue *, std::pair<bool, std::string>> constValueMenuInfo; // input value, <whether the input points to a dropdown menu, selected menu item>

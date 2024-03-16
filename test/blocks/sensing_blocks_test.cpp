@@ -9,6 +9,8 @@
 #include <enginemock.h>
 #include <timermock.h>
 #include <clockmock.h>
+#include <audioinputmock.h>
+#include <audioloudnessmock.h>
 
 #include "../common.h"
 #include "blocks/sensingblocks.h"
@@ -129,6 +131,8 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_mousex", &SensingBlocks::compileMouseX));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_mousey", &SensingBlocks::compileMouseY));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_setdragmode", &SensingBlocks::compileSetDragMode));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_loudness", &SensingBlocks::compileLoudness));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_loud", &SensingBlocks::compileLoud));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_timer", &SensingBlocks::compileTimer));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_resettimer", &SensingBlocks::compileResetTimer));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_of", &SensingBlocks::compileOf));
@@ -139,6 +143,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_mousedown", &SensingBlocks::mouseDownMonitorName));
     EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_mousex", &SensingBlocks::mouseXMonitorName));
     EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_mousey", &SensingBlocks::mouseYMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_loudness", &SensingBlocks::loudnessMonitorName));
     EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_timer", &SensingBlocks::timerMonitorName));
     EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_current", &SensingBlocks::currentMonitorName));
     EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_dayssince2000", &SensingBlocks::daysSince2000MonitorName));
@@ -739,6 +744,143 @@ TEST_F(SensingBlocksTest, SetDragModeImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_FALSE(sprite.draggable());
+}
+
+TEST_F(SensingBlocksTest, Loudness)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "sensing_loudness");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::loudness)).WillOnce(Return(0));
+    compiler.init();
+
+    compiler.setBlock(block);
+    SensingBlocks::compileLoudness(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(SensingBlocksTest, LoudnessMonitorName)
+{
+    ASSERT_EQ(SensingBlocks::loudnessMonitorName(nullptr), "loudness");
+}
+
+TEST_F(SensingBlocksTest, LoudnessImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::loudness };
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+
+    vm.setBytecode(bytecode);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+
+    AudioInputMock audioInput;
+    auto audioLoudness = std::make_shared<AudioLoudnessMock>();
+    SensingBlocks::audioInput = &audioInput;
+
+    EXPECT_CALL(audioInput, audioLoudness()).WillOnce(Return(audioLoudness));
+    EXPECT_CALL(*audioLoudness, getLoudness()).WillOnce(Return(-1));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), -1);
+
+    EXPECT_CALL(audioInput, audioLoudness()).WillOnce(Return(audioLoudness));
+    EXPECT_CALL(*audioLoudness, getLoudness()).WillOnce(Return(62));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.getInput(0, 1)->toDouble(), 62);
+
+    SensingBlocks::audioInput = nullptr;
+}
+
+TEST_F(SensingBlocksTest, Loud)
+{
+    Compiler compiler(&m_engineMock);
+
+    auto block = std::make_shared<Block>("a", "sensing_loud");
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::loud)).WillOnce(Return(0));
+    compiler.init();
+
+    compiler.setBlock(block);
+    SensingBlocks::compileLoud(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+}
+
+TEST_F(SensingBlocksTest, LoudImpl)
+{
+    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::loud };
+
+    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+
+    vm.setBytecode(bytecode);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+
+    AudioInputMock audioInput;
+    auto audioLoudness = std::make_shared<AudioLoudnessMock>();
+    SensingBlocks::audioInput = &audioInput;
+
+    EXPECT_CALL(audioInput, audioLoudness()).WillOnce(Return(audioLoudness));
+    EXPECT_CALL(*audioLoudness, getLoudness()).WillOnce(Return(-1));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(audioInput, audioLoudness()).WillOnce(Return(audioLoudness));
+    EXPECT_CALL(*audioLoudness, getLoudness()).WillOnce(Return(62));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(audioInput, audioLoudness()).WillOnce(Return(audioLoudness));
+    EXPECT_CALL(*audioLoudness, getLoudness()).WillOnce(Return(9));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(audioInput, audioLoudness()).WillOnce(Return(audioLoudness));
+    EXPECT_CALL(*audioLoudness, getLoudness()).WillOnce(Return(10));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(audioInput, audioLoudness()).WillOnce(Return(audioLoudness));
+    EXPECT_CALL(*audioLoudness, getLoudness()).WillOnce(Return(11));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+
+    SensingBlocks::audioInput = nullptr;
 }
 
 TEST_F(SensingBlocksTest, Timer)

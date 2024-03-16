@@ -62,6 +62,13 @@ using MonitorNameFunc = const std::string &(*)(Block *);
  */
 using MonitorChangeFunc = void (*)(Block *, const Value &newValue);
 
+/*!
+ * \typedef HatPredicateCompileFunc
+ *
+ * HatPredicateCompileFunc is a function pointer for functions which are used to compile edge-activated hat predicates to bytecode.
+ */
+using HatPredicateCompileFunc = void (*)(Compiler *vm);
+
 } // namespace libscratchcpp
 
 #endif // LIBSCRATCHCPP_GLOBAL_H

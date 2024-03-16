@@ -224,6 +224,13 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f) = 0;
 
         /*!
+         * Call this from IBlockSection#registerBlocks() to add a hat block predicate compile function to a block section.
+         * \note This only works with edge-activated hats.
+         * \see <a href="blockSections.html">Block sections</a>
+         */
+        virtual void addHatPredicateCompileFunction(IBlockSection *section, const std::string &opcode, HatPredicateCompileFunc f) = 0;
+
+        /*!
          * Call this from IBlockSection#registerBlocks() to add a monitor name function to a block section.
          * \see <a href="blockSections.html">Block sections</a>
          */
@@ -291,6 +298,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
 
         /* Registers the given "when this sprite/stage clicked" script. */
         virtual void addTargetClickScript(std::shared_ptr<Block> hatBlock) = 0;
+
+        /* Registers the given "when greater than" script. */
+        virtual void addWhenGreaterThanScript(std::shared_ptr<Block> hatBlock) = 0;
 
         /*! Returns the list of targets. */
         virtual const std::vector<std::shared_ptr<Target>> &targets() const = 0;

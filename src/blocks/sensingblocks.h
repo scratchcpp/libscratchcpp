@@ -12,6 +12,7 @@ namespace libscratchcpp
 {
 
 class Target;
+class IAudioInput;
 
 /*! \brief The SensingBlocks class contains the implementation of sensing blocks. */
 class SensingBlocks : public IBlockSection
@@ -66,6 +67,8 @@ class SensingBlocks : public IBlockSection
         static void compileMouseX(Compiler *compiler);
         static void compileMouseY(Compiler *compiler);
         static void compileSetDragMode(Compiler *compiler);
+        static void compileLoudness(Compiler *compiler);
+        static void compileLoud(Compiler *compiler);
         static void compileTimer(Compiler *compiler);
         static void compileResetTimer(Compiler *compiler);
         static void compileOf(Compiler *compiler);
@@ -75,6 +78,7 @@ class SensingBlocks : public IBlockSection
         static const std::string &mouseDownMonitorName(Block *block);
         static const std::string &mouseXMonitorName(Block *block);
         static const std::string &mouseYMonitorName(Block *block);
+        static const std::string &loudnessMonitorName(Block *block);
         static const std::string &timerMonitorName(Block *block);
         static const std::string &currentMonitorName(Block *block);
         static const std::string &daysSince2000MonitorName(Block *block);
@@ -86,6 +90,9 @@ class SensingBlocks : public IBlockSection
 
         static unsigned int setDraggableMode(VirtualMachine *vm);
         static unsigned int setNotDraggableMode(VirtualMachine *vm);
+
+        static unsigned int loudness(VirtualMachine *vm);
+        static unsigned int loud(VirtualMachine *vm);
 
         static unsigned int distanceTo(VirtualMachine *vm);
         static unsigned int distanceToByIndex(VirtualMachine *vm);
@@ -128,6 +135,7 @@ class SensingBlocks : public IBlockSection
         static unsigned int daysSince2000(VirtualMachine *vm);
 
         static IClock *clock;
+        static IAudioInput *audioInput;
 
     private:
         struct Question

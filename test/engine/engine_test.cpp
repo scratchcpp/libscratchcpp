@@ -1792,6 +1792,37 @@ TEST(EngineTest, StopOtherScriptsInSprite)
     ASSERT_EQ(GET_VAR(stage, "l")->value().toInt(), 110);
 }
 
+TEST(EngineTest, EdgeActivatedHats)
+{
+    Project p("when_greater_than.sb3");
+    ASSERT_TRUE(p.load());
+    p.run();
+
+    auto engine = std::static_pointer_cast<Engine>(p.engine());
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    ASSERT_VAR(stage, "test");
+    auto var = GET_VAR(stage, "test");
+    ASSERT_EQ(var->value().toInt(), 0);
+
+    TimerMock timer;
+    engine->setTimer(&timer);
+
+    EXPECT_CALL(timer, value()).WillOnce(Return(5));
+    engine->step();
+    ASSERT_EQ(var->value().toInt(), 0);
+
+    EXPECT_CALL(timer, value()).WillOnce(Return(10));
+    engine->step();
+    ASSERT_EQ(var->value().toInt(), 0);
+
+    EXPECT_CALL(timer, value()).WillOnce(Return(10.2));
+    engine->step();
+    ASSERT_EQ(var->value().toInt(), 1);
+}
+
 TEST(EngineTest, UserAgent)
 {
     Engine engine;
