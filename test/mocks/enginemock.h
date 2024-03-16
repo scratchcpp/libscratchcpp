@@ -86,6 +86,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(unsigned int, functionIndex, (BlockFunc), (override));
 
         MOCK_METHOD(void, addCompileFunction, (IBlockSection *, const std::string &, BlockComp), (override));
+        MOCK_METHOD(void, addHatPredicateCompileFunction, (IBlockSection *, const std::string &, HatPredicateCompileFunc), (override));
         MOCK_METHOD(void, addMonitorNameFunction, (IBlockSection *, const std::string &, MonitorNameFunc), (override));
         MOCK_METHOD(void, addMonitorChangeFunction, (IBlockSection *, const std::string &, MonitorChangeFunc), (override));
         MOCK_METHOD(void, addHatBlock, (IBlockSection *, const std::string &), (override));

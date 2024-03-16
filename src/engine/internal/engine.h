@@ -105,6 +105,7 @@ class Engine : public IEngine
         unsigned int functionIndex(BlockFunc f) override;
 
         void addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f) override;
+        void addHatPredicateCompileFunction(IBlockSection *section, const std::string &opcode, HatPredicateCompileFunc f) override;
         void addMonitorNameFunction(IBlockSection *section, const std::string &opcode, MonitorNameFunc f) override;
         void addMonitorChangeFunction(IBlockSection *section, const std::string &opcode, MonitorChangeFunc f) override;
         void addHatBlock(IBlockSection *section, const std::string &opcode) override;
@@ -216,6 +217,7 @@ class Engine : public IEngine
         startHats(HatType hatType, const std::unordered_map<HatField, std::variant<std::string, const char *, Entity *>> &optMatchFields, Target *optTarget);
 
         static const std::unordered_map<HatType, bool> m_hatRestartExistingThreads; // used to check whether a hat should restart existing threads
+        static const std::unordered_map<HatType, bool> m_hatEdgeActivated;          // used to check whether a hat is edge-activated (runs when a predicate becomes true)
 
         std::unordered_map<std::shared_ptr<IBlockSection>, std::unique_ptr<BlockSectionContainer>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;
@@ -240,6 +242,8 @@ class Engine : public IEngine
         std::unordered_map<Target *, std::vector<Script *>> m_whenTargetClickedHats;
 
         std::unordered_map<Script *, std::unordered_map<HatField, int>> m_scriptHatFields; // HatField, field ID from the block implementation
+
+        std::unordered_map<HatType, bool> m_edgeActivatedHatValues; // edge-activated hats only run after the value changes from false to true
 
         std::unique_ptr<ITimer> m_defaultTimer;
         ITimer *m_timer = nullptr;

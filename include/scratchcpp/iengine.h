@@ -224,6 +224,13 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f) = 0;
 
         /*!
+         * Call this from IBlockSection#registerBlocks() to add a hat block predicate compile function to a block section.
+         * \note This only works with edge-activated hats.
+         * \see <a href="blockSections.html">Block sections</a>
+         */
+        virtual void addHatPredicateCompileFunction(IBlockSection *section, const std::string &opcode, HatPredicateCompileFunc f) = 0;
+
+        /*!
          * Call this from IBlockSection#registerBlocks() to add a monitor name function to a block section.
          * \see <a href="blockSections.html">Block sections</a>
          */
