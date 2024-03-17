@@ -937,6 +937,100 @@ TEST(EngineTest, CompileFunctions)
     ASSERT_EQ(container2->resolveBlockCompileFunc("test2"), &compileTest2);
 }
 
+TEST(EngineTest, HatPredicateCompileFunctions)
+{
+    Engine engine;
+
+    auto section1 = std::make_shared<BlockSectionMock>();
+    EXPECT_CALL(*section1, registerBlocks);
+    engine.registerSection(section1);
+    auto container1 = engine.blockSectionContainer(section1.get());
+
+    auto section2 = std::make_shared<BlockSectionMock>();
+    EXPECT_CALL(*section2, registerBlocks);
+    engine.registerSection(section2);
+    auto container2 = engine.blockSectionContainer(section2.get());
+
+    BlockSectionMock section3;
+
+    engine.addHatPredicateCompileFunction(section1.get(), "test1", &compileTest1);
+    engine.addHatPredicateCompileFunction(section2.get(), "test2", &compileTest2);
+    engine.addHatPredicateCompileFunction(section1.get(), "test1", &compileTest1);
+    engine.addHatPredicateCompileFunction(&section3, "test1", &compileTest1);
+
+    ASSERT_EQ(container1->resolveHatPredicateCompileFunc("test1"), &compileTest1);
+    ASSERT_EQ(container1->resolveHatPredicateCompileFunc("test2"), nullptr);
+    ASSERT_EQ(container2->resolveHatPredicateCompileFunc("test1"), nullptr);
+    ASSERT_EQ(container2->resolveHatPredicateCompileFunc("test2"), &compileTest2);
+}
+
+TEST(EngineTest, MonitorNameFunctions)
+{
+    Engine engine;
+
+    auto section1 = std::make_shared<BlockSectionMock>();
+    EXPECT_CALL(*section1, registerBlocks);
+    engine.registerSection(section1);
+    auto container1 = engine.blockSectionContainer(section1.get());
+
+    auto section2 = std::make_shared<BlockSectionMock>();
+    EXPECT_CALL(*section2, registerBlocks);
+    engine.registerSection(section2);
+    auto container2 = engine.blockSectionContainer(section2.get());
+
+    BlockSectionMock section3;
+
+    MonitorNameFunc f1 = [](Block *) -> const std::string & {
+        static const std::string ret;
+        return ret;
+    };
+
+    MonitorNameFunc f2 = [](Block *) -> const std::string & {
+        static const std::string ret;
+        return ret;
+    };
+
+    engine.addMonitorNameFunction(section1.get(), "test1", f1);
+    engine.addMonitorNameFunction(section2.get(), "test2", f2);
+    engine.addMonitorNameFunction(section1.get(), "test1", f1);
+    engine.addMonitorNameFunction(&section3, "test1", f1);
+
+    ASSERT_EQ(container1->resolveMonitorNameFunc("test1"), f1);
+    ASSERT_EQ(container1->resolveMonitorNameFunc("test2"), nullptr);
+    ASSERT_EQ(container2->resolveMonitorNameFunc("test1"), nullptr);
+    ASSERT_EQ(container2->resolveMonitorNameFunc("test2"), f2);
+}
+
+TEST(EngineTest, MonitorChangeFunctions)
+{
+    Engine engine;
+
+    auto section1 = std::make_shared<BlockSectionMock>();
+    EXPECT_CALL(*section1, registerBlocks);
+    engine.registerSection(section1);
+    auto container1 = engine.blockSectionContainer(section1.get());
+
+    auto section2 = std::make_shared<BlockSectionMock>();
+    EXPECT_CALL(*section2, registerBlocks);
+    engine.registerSection(section2);
+    auto container2 = engine.blockSectionContainer(section2.get());
+
+    BlockSectionMock section3;
+
+    MonitorChangeFunc f1 = [](Block *, const Value &) {};
+    MonitorChangeFunc f2 = [](Block *, const Value &) {};
+
+    engine.addMonitorChangeFunction(section1.get(), "test1", f1);
+    engine.addMonitorChangeFunction(section2.get(), "test2", f2);
+    engine.addMonitorChangeFunction(section1.get(), "test1", f1);
+    engine.addMonitorChangeFunction(&section3, "test1", f1);
+
+    ASSERT_EQ(container1->resolveMonitorChangeFunc("test1"), f1);
+    ASSERT_EQ(container1->resolveMonitorChangeFunc("test2"), nullptr);
+    ASSERT_EQ(container2->resolveMonitorChangeFunc("test1"), nullptr);
+    ASSERT_EQ(container2->resolveMonitorChangeFunc("test2"), f2);
+}
+
 TEST(EngineTest, HatBlocks)
 {
     Engine engine;
@@ -1040,7 +1134,7 @@ TEST(EngineTest, FieldValues)
 
     engine.addFieldValue(section1.get(), "value1", 1);
     engine.addFieldValue(section2.get(), "value2", 2);
-    engine.addFieldValue(section1.get(), "value1", 3); // change ID of existing field
+    engine.addFieldValue(section1.get(), "value1", 3); // change ID of existing field value
     engine.addFieldValue(&section3, "value3", 4);
 
     ASSERT_EQ(container1->resolveFieldValue("value1"), 3);
