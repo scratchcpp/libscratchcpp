@@ -57,7 +57,6 @@ void Script::setHatPredicateBytecode(const std::vector<unsigned int> &code)
     if (impl->engine && !code.empty()) {
         impl->hatPredicateVm = std::make_shared<VirtualMachine>(impl->engine->stage(), impl->engine, this);
         impl->hatPredicateVm->setBytecode(impl->hatPredicateBytecodeVector.data());
-        impl->hatPredicateVm->setFunctions(impl->functions);
         impl->hatPredicateVm->setConstValues(impl->constValues);
     }
 }
@@ -70,6 +69,7 @@ bool Script::runHatPredicate()
 {
     if (impl->hatPredicateVm && impl->hatPredicateVm->bytecode()) {
         impl->hatPredicateVm->reset();
+        impl->hatPredicateVm->setFunctions(getFunctions());
         impl->hatPredicateVm->run();
         assert(impl->hatPredicateVm->registerCount() == 1);
 
@@ -92,14 +92,14 @@ std::shared_ptr<VirtualMachine> Script::start(Target *target)
     auto vm = std::make_shared<VirtualMachine>(target, impl->engine, this);
     vm->setBytecode(impl->bytecode);
     vm->setProcedures(impl->procedures);
-    vm->setFunctions(impl->functions);
+    vm->setFunctions(getFunctions());
     vm->setConstValues(impl->constValues);
 
     Sprite *sprite = nullptr;
     if (target && !target->isStage())
         sprite = dynamic_cast<Sprite *>(target);
 
-    if (impl->target && sprite && sprite->isClone() && impl->engine) {
+    if (impl->target && sprite && sprite->isClone()) {
         Target *root = sprite->cloneSprite();
 
         if (root != impl->target) {
@@ -156,16 +156,6 @@ void Script::setProcedures(const std::vector<unsigned int *> &procedures)
     impl->procedures = impl->proceduresVector.data();
 }
 
-/*! Sets the list of functions. */
-void Script::setFunctions(const std::vector<BlockFunc> &functions)
-{
-    impl->functionsVector = functions;
-    impl->functions = impl->functionsVector.data();
-
-    if (impl->hatPredicateVm)
-        impl->hatPredicateVm->setFunctions(impl->functions);
-}
-
 /*! Sets the list of constant values. */
 void Script::setConstValues(const std::vector<Value> &values)
 {
@@ -190,4 +180,12 @@ void Script::setVariables(const std::vector<Variable *> &variables)
 void Script::setLists(const std::vector<List *> &lists)
 {
     impl->lists = lists;
+}
+
+BlockFunc *Script::getFunctions() const
+{
+    if (impl->engine)
+        return const_cast<BlockFunc *>(impl->engine->blockFunctions().data());
+
+    return nullptr;
 }

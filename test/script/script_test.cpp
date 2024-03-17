@@ -12,6 +12,7 @@
 using namespace libscratchcpp;
 
 using ::testing::Return;
+using ::testing::ReturnRef;
 using ::testing::_;
 
 class ScriptTest : public testing::Test
@@ -73,10 +74,13 @@ TEST_F(ScriptTest, HatPredicate)
         return 0;
     };
 
+    std::vector<BlockFunc> functions1 = { f1 };
+    std::vector<BlockFunc> functions2 = { f1, f2, f3 };
+
+    EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(functions1));
     stageTest = nullptr;
     engineTest = nullptr;
     scriptTest = nullptr;
-    script.setFunctions({ f1 });
     script.setConstValues({ "test" });
     script.setHatPredicateBytecode({ vm::OP_START, vm::OP_CONST, 0, vm::OP_PRINT, vm::OP_EXEC, 0, vm::OP_HALT });
     testing::internal::CaptureStdout();
@@ -86,11 +90,11 @@ TEST_F(ScriptTest, HatPredicate)
     ASSERT_EQ(engineTest, &m_engine);
     ASSERT_EQ(scriptTest, &script);
 
+    EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(functions2));
     stageTest = nullptr;
     engineTest = nullptr;
     scriptTest = nullptr;
     script.setHatPredicateBytecode({ vm::OP_START, vm::OP_CONST, 0, vm::OP_PRINT, vm::OP_EXEC, 1, vm::OP_HALT });
-    script.setFunctions({ f1, f2, f3 });
     script.setConstValues({ 5 });
     testing::internal::CaptureStdout();
     ASSERT_TRUE(script.runHatPredicate());
@@ -99,6 +103,7 @@ TEST_F(ScriptTest, HatPredicate)
     ASSERT_EQ(engineTest, &m_engine);
     ASSERT_EQ(scriptTest, &script);
 
+    EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(functions2));
     stageTest = nullptr;
     engineTest = nullptr;
     scriptTest = nullptr;
@@ -119,6 +124,7 @@ TEST_F(ScriptTest, Start)
     static std::vector<unsigned int> bytecode = { vm::OP_START, vm::OP_HALT };
     static std::vector<unsigned int *> procedures = { bytecode.data() };
     static std::vector<BlockFunc> functions = { &testFunction };
+    static std::vector<BlockFunc> noFunctions;
     static std::vector<Value> constValues = { "test" };
 
     std::shared_ptr<Variable> var1 = std::make_unique<Variable>("a", "", Value());
@@ -144,6 +150,7 @@ TEST_F(ScriptTest, Start)
 
     Script script2(&m_target, nullptr, &m_engine);
 
+    EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(noFunctions));
     vm = script2.start();
     ASSERT_TRUE(vm);
     ASSERT_EQ(vm->target(), &m_target);
@@ -152,11 +159,11 @@ TEST_F(ScriptTest, Start)
     Script script3(&m_target, nullptr, &m_engine);
     script3.setBytecode(bytecode);
     script3.setProcedures(procedures);
-    script3.setFunctions(functions);
     script3.setConstValues(constValues);
     script3.setVariables(variables);
     script3.setLists(lists);
 
+    EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(functions));
     vm = script3.start();
     ASSERT_TRUE(vm);
     ASSERT_EQ(vm->bytecode()[0], bytecode[0]);
@@ -166,6 +173,7 @@ TEST_F(ScriptTest, Start)
     ASSERT_EQ(vm->variables()[0], variables[0]->valuePtr());
     ASSERT_EQ(vm->lists()[0], lists[0]);
 
+    EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(functions));
     Target target;
     target.addVariable(var1);
     target.addList(list1);
@@ -194,11 +202,11 @@ TEST_F(ScriptTest, Start)
     Script script4(&root, nullptr, &m_engine);
     script4.setBytecode(bytecode);
     script4.setProcedures(procedures);
-    script4.setFunctions(functions);
     script4.setConstValues(constValues);
     script4.setVariables(variables);
     script4.setLists(lists);
 
+    EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(functions));
     vm = script4.start(clone.get());
 
     ASSERT_TRUE(vm);
