@@ -887,6 +887,11 @@ unsigned int Engine::functionIndex(BlockFunc f)
     return m_functions.size() - 1;
 }
 
+const std::vector<BlockFunc> &Engine::blockFunctions() const
+{
+    return m_functions;
+}
+
 void Engine::addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f)
 {
     auto container = blockSectionContainer(section);

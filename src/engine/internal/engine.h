@@ -103,6 +103,7 @@ class Engine : public IEngine
         void registerSection(std::shared_ptr<IBlockSection> section) override;
         std::vector<std::shared_ptr<IBlockSection>> registeredSections() const;
         unsigned int functionIndex(BlockFunc f) override;
+        const std::vector<BlockFunc> &blockFunctions() const override;
 
         void addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f) override;
         void addHatPredicateCompileFunction(IBlockSection *section, const std::string &opcode, HatPredicateCompileFunc f) override;

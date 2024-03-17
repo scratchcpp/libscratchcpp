@@ -905,6 +905,8 @@ TEST(EngineTest, Functions)
     ASSERT_EQ(engine.functionIndex(&testFunction2), 1);
     ASSERT_EQ(engine.functionIndex(&testFunction1), 0);
     ASSERT_EQ(engine.functionIndex(&testFunction2), 1);
+
+    ASSERT_EQ(engine.blockFunctions(), std::vector<BlockFunc>({ &testFunction1, &testFunction2 }));
 }
 
 void compileTest1(Compiler *)

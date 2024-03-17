@@ -217,6 +217,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Returns the index of the given block function. */
         virtual unsigned int functionIndex(BlockFunc f) = 0;
 
+        /*! Returns the list of block functions. */
+        virtual const std::vector<BlockFunc> &blockFunctions() const = 0;
+
         /*!
          * Call this from IBlockSection#registerBlocks() to add a compile function to a block section.
          * \see <a href="blockSections.html">Block sections</a>
