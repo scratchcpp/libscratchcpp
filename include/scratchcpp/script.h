@@ -38,7 +38,6 @@ class LIBSCRATCHCPP_EXPORT Script
         bool runHatPredicate();
 
         void setProcedures(const std::vector<unsigned int *> &procedures);
-        void setFunctions(const std::vector<BlockFunc> &functions);
         void setConstValues(const std::vector<Value> &values);
         void setVariables(const std::vector<Variable *> &variables);
         void setLists(const std::vector<List *> &lists);
@@ -47,6 +46,8 @@ class LIBSCRATCHCPP_EXPORT Script
         std::shared_ptr<VirtualMachine> start(Target *target);
 
     private:
+        BlockFunc *getFunctions() const;
+
         spimpl::unique_impl_ptr<ScriptPrivate> impl;
 };
 

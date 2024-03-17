@@ -33,9 +33,6 @@ struct ScriptPrivate
         unsigned int **procedures = nullptr;
         std::vector<unsigned int *> proceduresVector;
 
-        BlockFunc *functions = nullptr;
-        std::vector<BlockFunc> functionsVector;
-
         const Value *constValues = nullptr;
         std::vector<Value> constValuesVector;
 

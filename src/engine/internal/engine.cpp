@@ -244,7 +244,6 @@ void Engine::compile()
 
         for (auto block : blocks) {
             if (m_scripts.count(block) == 1) {
-                m_scripts[block]->setFunctions(m_functions);
                 m_scripts[block]->setProcedures(procedureBytecodes);
                 m_scripts[block]->setConstValues(compiler.constValues());
                 m_scripts[block]->setVariables(compiler.variables());
@@ -293,7 +292,6 @@ void Engine::compile()
             compiler.end();
 
             script->setBytecode(compiler.bytecode());
-            script->setFunctions(m_functions);
             script->setConstValues(compiler.constValues());
             script->setVariables(compiler.variables());
             script->setLists(compiler.lists());
