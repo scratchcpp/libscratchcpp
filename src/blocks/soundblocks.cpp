@@ -33,6 +33,12 @@ void SoundBlocks::registerBlocks(IEngine *engine)
     engine->addInput(this, "VOLUME", VOLUME);
 }
 
+void SoundBlocks::onInit(IEngine *engine)
+{
+    m_waitingSounds.clear();
+    // TODO: Remove stopped threads from m_waitingSounds
+}
+
 bool SoundBlocks::compilePlayCommon(Compiler *compiler, bool untilDone, bool *byIndex)
 {
     Target *target = compiler->target();
