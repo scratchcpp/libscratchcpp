@@ -79,6 +79,7 @@ TEST(EngineTest, Clear)
 
     auto section = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section, registerBlocks);
+    EXPECT_CALL(*section, onInit);
     engine.registerSection(section);
 
     auto monitor1 = std::make_shared<Monitor>("", "");
@@ -129,6 +130,7 @@ TEST(EngineTest, CompileAndExecuteMonitors)
 
     auto section = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section, registerBlocks);
+    EXPECT_CALL(*section, onInit);
     engine.registerSection(section);
     engine.addCompileFunction(section.get(), m1->opcode(), [](Compiler *compiler) { compiler->addConstValue(5.4); });
     engine.addCompileFunction(section.get(), m2->opcode(), [](Compiler *compiler) { compiler->addConstValue("test"); });
@@ -863,14 +865,17 @@ TEST(EngineTest, Sections)
 
     auto section1 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section1, registerBlocks(&engine));
+    EXPECT_CALL(*section1, onInit(&engine));
     engine.registerSection(section1);
 
     auto section2 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section2, registerBlocks(&engine));
+    EXPECT_CALL(*section2, onInit(&engine));
     engine.registerSection(section2);
 
     EXPECT_CALL(*section1, name()).WillOnce(Return("test"));
     EXPECT_CALL(*section1, registerBlocks).Times(0);
+    EXPECT_CALL(*section1, onInit).Times(0);
     engine.registerSection(section1); // register existing section
 
     ASSERT_EQ(engine.registeredSections().size(), 2);
@@ -916,11 +921,13 @@ TEST(EngineTest, CompileFunctions)
 
     auto section1 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section1, registerBlocks);
+    EXPECT_CALL(*section1, onInit);
     engine.registerSection(section1);
     auto container1 = engine.blockSectionContainer(section1.get());
 
     auto section2 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section2, registerBlocks);
+    EXPECT_CALL(*section2, onInit);
     engine.registerSection(section2);
     auto container2 = engine.blockSectionContainer(section2.get());
 
@@ -943,11 +950,13 @@ TEST(EngineTest, HatPredicateCompileFunctions)
 
     auto section1 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section1, registerBlocks);
+    EXPECT_CALL(*section1, onInit);
     engine.registerSection(section1);
     auto container1 = engine.blockSectionContainer(section1.get());
 
     auto section2 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section2, registerBlocks);
+    EXPECT_CALL(*section2, onInit);
     engine.registerSection(section2);
     auto container2 = engine.blockSectionContainer(section2.get());
 
@@ -970,11 +979,13 @@ TEST(EngineTest, MonitorNameFunctions)
 
     auto section1 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section1, registerBlocks);
+    EXPECT_CALL(*section1, onInit);
     engine.registerSection(section1);
     auto container1 = engine.blockSectionContainer(section1.get());
 
     auto section2 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section2, registerBlocks);
+    EXPECT_CALL(*section2, onInit);
     engine.registerSection(section2);
     auto container2 = engine.blockSectionContainer(section2.get());
 
@@ -1007,11 +1018,13 @@ TEST(EngineTest, MonitorChangeFunctions)
 
     auto section1 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section1, registerBlocks);
+    EXPECT_CALL(*section1, onInit);
     engine.registerSection(section1);
     auto container1 = engine.blockSectionContainer(section1.get());
 
     auto section2 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section2, registerBlocks);
+    EXPECT_CALL(*section2, onInit);
     engine.registerSection(section2);
     auto container2 = engine.blockSectionContainer(section2.get());
 
@@ -1037,11 +1050,13 @@ TEST(EngineTest, HatBlocks)
 
     auto section1 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section1, registerBlocks);
+    EXPECT_CALL(*section1, onInit);
     engine.registerSection(section1);
     auto container1 = engine.blockSectionContainer(section1.get());
 
     auto section2 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section2, registerBlocks);
+    EXPECT_CALL(*section2, onInit);
     engine.registerSection(section2);
     auto container2 = engine.blockSectionContainer(section2.get());
 
@@ -1064,11 +1079,13 @@ TEST(EngineTest, Inputs)
 
     auto section1 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section1, registerBlocks);
+    EXPECT_CALL(*section1, onInit);
     engine.registerSection(section1);
     auto container1 = engine.blockSectionContainer(section1.get());
 
     auto section2 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section2, registerBlocks);
+    EXPECT_CALL(*section2, onInit);
     engine.registerSection(section2);
     auto container2 = engine.blockSectionContainer(section2.get());
 
@@ -1093,11 +1110,13 @@ TEST(EngineTest, Fields)
 
     auto section1 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section1, registerBlocks);
+    EXPECT_CALL(*section1, onInit);
     engine.registerSection(section1);
     auto container1 = engine.blockSectionContainer(section1.get());
 
     auto section2 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section2, registerBlocks);
+    EXPECT_CALL(*section2, onInit);
     engine.registerSection(section2);
     auto container2 = engine.blockSectionContainer(section2.get());
 
@@ -1122,11 +1141,13 @@ TEST(EngineTest, FieldValues)
 
     auto section1 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section1, registerBlocks);
+    EXPECT_CALL(*section1, onInit);
     engine.registerSection(section1);
     auto container1 = engine.blockSectionContainer(section1.get());
 
     auto section2 = std::make_shared<BlockSectionMock>();
     EXPECT_CALL(*section2, registerBlocks);
+    EXPECT_CALL(*section2, onInit);
     engine.registerSection(section2);
     auto container2 = engine.blockSectionContainer(section2.get());
 

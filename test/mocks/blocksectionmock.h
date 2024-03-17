@@ -12,4 +12,5 @@ class BlockSectionMock : public IBlockSection
         MOCK_METHOD(bool, categoryVisible, (), (const, override));
 
         MOCK_METHOD(void, registerBlocks, (IEngine *), (override));
+        MOCK_METHOD(void, onInit, (IEngine *), (override));
 };

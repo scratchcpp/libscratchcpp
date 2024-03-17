@@ -36,6 +36,9 @@ class LIBSCRATCHCPP_EXPORT IBlockSection
 
         /*! Override this method to register blocks. */
         virtual void registerBlocks(IEngine *engine) = 0;
+
+        /*! This method is called when a project is loaded. */
+        virtual void onInit(IEngine *engine) { }
 };
 
 } // namespace libscratchcpp
