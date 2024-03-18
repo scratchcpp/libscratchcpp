@@ -766,6 +766,51 @@ class LIBSCRATCHCPP_EXPORT Value
             return (s1.compare(s2) == 0);
         }
 
+        static long hexToDec(const std::string &s)
+        {
+            static const std::string digits = "0123456789abcdef";
+
+            for (char c : s) {
+                if (digits.find(c) == std::string::npos) {
+                    return 0;
+                }
+            }
+
+            std::istringstream stream(s);
+            long ret;
+            stream >> std::hex >> ret;
+            return ret;
+        }
+
+        static long octToDec(const std::string &s)
+        {
+            static const std::string digits = "01234567";
+
+            for (char c : s) {
+                if (digits.find(c) == std::string::npos) {
+                    return 0;
+                }
+            }
+
+            std::istringstream stream(s);
+            long ret;
+            stream >> std::oct >> ret;
+            return ret;
+        }
+
+        static double binToDec(const std::string &s)
+        {
+            static const std::string digits = "01";
+
+            for (char c : s) {
+                if (digits.find(c) == std::string::npos) {
+                    return 0;
+                }
+            }
+
+            return std::stoi(s, 0, 2);
+        }
+
         static double stringToDouble(const std::string &s, bool *ok = nullptr)
         {
             if (ok)
@@ -783,6 +828,19 @@ class LIBSCRATCHCPP_EXPORT Value
                 if (ok)
                     *ok = true;
                 return 0;
+            }
+
+            if (s.size() >= 2 && s[0] == '0') {
+                std::string sub = s.substr(2, s.size() - 2);
+                std::transform(sub.begin(), sub.end(), sub.begin(), ::tolower);
+
+                if (s[1] == 'x' || s[1] == 'X') {
+                    return hexToDec(sub);
+                } else if (s[1] == 'o' || s[1] == 'O') {
+                    return octToDec(sub);
+                } else if (s[1] == 'b' || s[1] == 'B') {
+                    return binToDec(sub);
+                }
             }
 
             static const std::string digits = "0123456789.eE+-";
@@ -848,6 +906,19 @@ class LIBSCRATCHCPP_EXPORT Value
                 if (ok)
                     *ok = true;
                 return 0;
+            }
+
+            if (s.size() >= 2 && s[0] == '0') {
+                std::string sub = s.substr(2, s.size() - 2);
+                std::transform(sub.begin(), sub.end(), sub.begin(), ::tolower);
+
+                if (s[1] == 'x' || s[1] == 'X') {
+                    return hexToDec(sub);
+                } else if (s[1] == 'o' || s[1] == 'O') {
+                    return octToDec(sub);
+                } else if (s[1] == 'b' || s[1] == 'B') {
+                    return binToDec(sub);
+                }
             }
 
             static const std::string digits = "0123456789+-";
