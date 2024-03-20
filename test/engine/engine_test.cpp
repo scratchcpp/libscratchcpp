@@ -14,8 +14,10 @@
 #include <scratch/sound_p.h>
 #include <timermock.h>
 #include <clockmock.h>
+#include <audioinputmock.h>
 #include <audiooutputmock.h>
 #include <audioplayermock.h>
+#include <audioloudnessmock.h>
 #include <monitorhandlermock.h>
 #include <blocksectionmock.h>
 #include <thread>
@@ -27,6 +29,7 @@
 // TODO: Remove this
 #include "blocks/variableblocks.h"
 #include "blocks/listblocks.h"
+#include "blocks/eventblocks.h"
 
 using namespace libscratchcpp;
 
@@ -1936,24 +1939,64 @@ TEST(EngineTest, EdgeActivatedHats)
     Stage *stage = engine->stage();
     ASSERT_TRUE(stage);
 
-    ASSERT_VAR(stage, "test");
-    auto var = GET_VAR(stage, "test");
-    ASSERT_EQ(var->value().toInt(), 0);
+    ASSERT_VAR(stage, "test1");
+    auto var1 = GET_VAR(stage, "test1");
+    ASSERT_VAR(stage, "test2");
+    auto var2 = GET_VAR(stage, "test2");
+
+    ASSERT_EQ(var1->value().toInt(), 0);
+    ASSERT_EQ(var2->value().toInt(), 0);
 
     TimerMock timer;
+    AudioInputMock audioInput;
     engine->setTimer(&timer);
+    EventBlocks::audioInput = &audioInput;
+    auto audioLoudness = std::make_shared<AudioLoudnessMock>();
+    EXPECT_CALL(audioInput, audioLoudness()).WillRepeatedly(Return(audioLoudness));
 
     EXPECT_CALL(timer, value()).WillOnce(Return(5));
+    EXPECT_CALL(*audioLoudness, getLoudness()).WillOnce(Return(1));
     engine->step();
-    ASSERT_EQ(var->value().toInt(), 0);
+    ASSERT_EQ(var1->value().toInt(), 0);
+    ASSERT_EQ(var2->value().toInt(), 0);
 
     EXPECT_CALL(timer, value()).WillOnce(Return(10));
+    EXPECT_CALL(*audioLoudness, getLoudness()).WillOnce(Return(9));
     engine->step();
-    ASSERT_EQ(var->value().toInt(), 0);
+    ASSERT_EQ(var1->value().toInt(), 0);
+    ASSERT_EQ(var2->value().toInt(), 1);
 
     EXPECT_CALL(timer, value()).WillOnce(Return(10.2));
+    EXPECT_CALL(*audioLoudness, getLoudness()).WillOnce(Return(10));
     engine->step();
-    ASSERT_EQ(var->value().toInt(), 1);
+    ASSERT_EQ(var1->value().toInt(), 1);
+    ASSERT_EQ(var2->value().toInt(), 1);
+
+    EXPECT_CALL(timer, value()).WillOnce(Return(15));
+    EXPECT_CALL(*audioLoudness, getLoudness()).WillOnce(Return(2));
+    engine->step();
+    ASSERT_EQ(var1->value().toInt(), 1);
+    ASSERT_EQ(var2->value().toInt(), 1);
+
+    EXPECT_CALL(timer, value()).WillOnce(Return(12));
+    EXPECT_CALL(*audioLoudness, getLoudness()).WillOnce(Return(8));
+    engine->step();
+    ASSERT_EQ(var1->value().toInt(), 1);
+    ASSERT_EQ(var2->value().toInt(), 2);
+
+    EXPECT_CALL(timer, value()).WillOnce(Return(8));
+    EXPECT_CALL(*audioLoudness, getLoudness()).WillOnce(Return(3));
+    engine->step();
+    ASSERT_EQ(var1->value().toInt(), 1);
+    ASSERT_EQ(var2->value().toInt(), 2);
+
+    EXPECT_CALL(timer, value()).WillOnce(Return(11));
+    EXPECT_CALL(*audioLoudness, getLoudness()).WillOnce(Return(15));
+    engine->step();
+    ASSERT_EQ(var1->value().toInt(), 2);
+    ASSERT_EQ(var2->value().toInt(), 3);
+
+    EventBlocks::audioInput = nullptr;
 }
 
 TEST(EngineTest, UserAgent)

@@ -453,14 +453,26 @@ void Engine::step()
             // Processing the hats means running their predicates (if they didn't change their return value from false to true, remove the threads)
             for (auto thread : newThreads) {
                 bool oldValue = false;
+                auto hatBlock = thread->script()->topBlock();
+                assert(hatBlock);
+                assert(hatBlock->fieldAt(0)); // TODO: Edge-activated hats currently support only one field
+                int fieldValueId = hatBlock->fieldAt(0)->specialValueId();
+                assert(fieldValueId != -1);
                 auto it = m_edgeActivatedHatValues.find(hatType);
 
-                if (it != m_edgeActivatedHatValues.cend())
-                    oldValue = it->second;
+                if (it == m_edgeActivatedHatValues.cend()) {
+                    m_edgeActivatedHatValues[hatType] = {};
+                } else {
+                    const std::unordered_map<int, bool> &values = it->second;
+                    auto fieldIt = values.find(fieldValueId);
+
+                    if (fieldIt != values.cend())
+                        oldValue = fieldIt->second;
+                }
 
                 bool newValue = thread->script()->runHatPredicate();
                 bool edgeWasActivated = !oldValue && newValue; // changed from false true
-                m_edgeActivatedHatValues[hatType] = newValue;
+                m_edgeActivatedHatValues[hatType][fieldValueId] = newValue;
 
                 if (!edgeWasActivated)
                     stopThread(thread.get());
