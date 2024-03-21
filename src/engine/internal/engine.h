@@ -49,7 +49,7 @@ class Engine : public IEngine
         void runEventLoop() override;
         void stopEventLoop() override;
 
-        void setRedrawHandler(const std::function<void()> &handler) override;
+        sigslot::signal<> &aboutToRender() override;
 
         bool isRunning() const override;
 
@@ -268,7 +268,7 @@ class Engine : public IEngine
 
         bool m_running = false;
         bool m_redrawRequested = false;
-        std::function<void()> m_redrawHandler = nullptr;
+        sigslot::signal<> m_aboutToRedraw;
         bool m_stopEventLoop = false;
         std::mutex m_stopEventLoopMutex;
 

@@ -341,7 +341,7 @@ TEST(EngineTest, FpsProject)
     engine->setFps(10);
     RedrawMock redrawMock;
     auto handler = std::bind(&RedrawMock::redraw, &redrawMock);
-    engine->setRedrawHandler(std::function<void()>(handler));
+    engine->aboutToRender().connect(handler);
     std::chrono::steady_clock::time_point time7(std::chrono::milliseconds(100));
     std::chrono::steady_clock::time_point time8(std::chrono::milliseconds(200));
     std::chrono::steady_clock::time_point time9(std::chrono::milliseconds(300));

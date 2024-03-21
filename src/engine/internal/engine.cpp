@@ -486,8 +486,7 @@ void Engine::step()
     stepThreads();
 
     // Render
-    if (m_redrawHandler)
-        m_redrawHandler();
+    m_aboutToRedraw();
 }
 
 void Engine::run()
@@ -509,9 +508,9 @@ void Engine::stopEventLoop()
     m_stopEventLoopMutex.unlock();
 }
 
-void Engine::setRedrawHandler(const std::function<void()> &handler)
+sigslot::signal<> &Engine::aboutToRender()
 {
-    m_redrawHandler = handler;
+    return m_aboutToRedraw;
 }
 
 std::vector<std::shared_ptr<VirtualMachine>> Engine::stepThreads()

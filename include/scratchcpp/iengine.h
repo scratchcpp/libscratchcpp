@@ -8,6 +8,7 @@
 #include <functional>
 
 #include "global.h"
+#include "signal.h"
 
 namespace libscratchcpp
 {
@@ -109,8 +110,8 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Stops the event loop which is running in another thread. */
         virtual void stopEventLoop() = 0;
 
-        /*! Sets the function which is called on every frame. */
-        virtual void setRedrawHandler(const std::function<void()> &handler) = 0;
+        /*! Emits when rendering should occur. */
+        virtual sigslot::signal<> &aboutToRender() = 0;
 
         /*! Returns true if the project is currently running. */
         virtual bool isRunning() const = 0;
