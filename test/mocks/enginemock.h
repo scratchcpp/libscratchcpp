@@ -127,11 +127,8 @@ class EngineMock : public IEngine
         MOCK_METHOD(sigslot::signal<Monitor *> &, monitorAdded, (), (override));
         MOCK_METHOD((sigslot::signal<Monitor *, IMonitorHandler *> &), monitorRemoved, (), (override));
 
-        MOCK_METHOD(const std::function<void(const std::string &)> &, questionAsked, (), (const, override));
-        MOCK_METHOD(void, setQuestionAsked, (const std::function<void(const std::string &)> &), (override));
-
-        MOCK_METHOD(const std::function<void(const std::string &)> &, questionAnswered, (), (const, override));
-        MOCK_METHOD(void, setQuestionAnswered, (const std::function<void(const std::string &)> &), (override));
+        MOCK_METHOD(sigslot::signal<const std::string &> &, questionAsked, (), (override));
+        MOCK_METHOD(sigslot::signal<const std::string &> &, questionAnswered, (), (override));
 
         MOCK_METHOD(std::vector<std::string> &, extensions, (), (const, override));
         MOCK_METHOD(void, setExtensions, (const std::vector<std::string> &), (override));

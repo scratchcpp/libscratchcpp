@@ -146,11 +146,8 @@ class Engine : public IEngine
         sigslot::signal<Monitor *> &monitorAdded() override;
         sigslot::signal<Monitor *, IMonitorHandler *> &monitorRemoved() override;
 
-        const std::function<void(const std::string &)> &questionAsked() const override;
-        void setQuestionAsked(const std::function<void(const std::string &)> &f) override;
-
-        const std::function<void(const std::string &)> &questionAnswered() const override;
-        void setQuestionAnswered(const std::function<void(const std::string &)> &f) override;
+        sigslot::signal<const std::string &> &questionAsked() override;
+        sigslot::signal<const std::string &> &questionAnswered() override;
 
         const std::vector<std::string> &extensions() const override;
         void setExtensions(const std::vector<std::string> &newExtensions) override;
@@ -274,8 +271,8 @@ class Engine : public IEngine
 
         sigslot::signal<Monitor *> m_monitorAdded;
         sigslot::signal<Monitor *, IMonitorHandler *> m_monitorRemoved;
-        std::function<void(const std::string &)> m_questionAsked = nullptr;
-        std::function<void(const std::string &)> m_questionAnswered = nullptr;
+        sigslot::signal<const std::string &> m_questionAsked;
+        sigslot::signal<const std::string &> m_questionAnswered;
 };
 
 } // namespace libscratchcpp

@@ -102,14 +102,6 @@ struct QuestionSpy
         MOCK_METHOD(void, asked, (const std::string &), ());
 };
 
-template<typename T, typename... U>
-size_t getAddress(std::function<T(U...)> f)
-{
-    typedef T(fnType)(U...);
-    fnType **fnPointer = f.template target<fnType *>();
-    return (size_t)*fnPointer;
-}
-
 TEST_F(SensingBlocksTest, Name)
 {
     ASSERT_EQ(m_section->name(), "Sensing");
@@ -181,13 +173,13 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "backdrop name", SensingBlocks::BackdropName));
 
     // Callbacks
-    std::function<void(const std::string &)> questionAnsweredRef = &SensingBlocks::onAnswer;
-    std::function<void(const std::string &)> questionAnswered;
-    EXPECT_CALL(m_engineMock, setQuestionAnswered(_)).WillOnce(SaveArg<0>(&questionAnswered));
+    sigslot::signal<const std::string &> questionAnswered;
+    EXPECT_CALL(m_engineMock, questionAnswered()).WillOnce(ReturnRef(questionAnswered));
 
     m_section->registerBlocks(&m_engineMock);
-    ASSERT_TRUE(questionAnswered);
-    ASSERT_EQ(getAddress(questionAnsweredRef), getAddress(questionAnswered));
+
+    ASSERT_EQ(questionAnswered.slot_count(), 1);
+    ASSERT_EQ(questionAnswered.disconnect(&SensingBlocks::onAnswer), 1);
 }
 
 TEST_F(SensingBlocksTest, DistanceTo)
@@ -381,14 +373,16 @@ TEST_F(SensingBlocksTest, AskAndWaitAndAnswerImpl)
     sprite.setBubbleType(Target::BubbleType::Think);
     Stage stage;
     QuestionSpy spy;
-    std::function<void(const std::string &)> asked = std::bind(&QuestionSpy::asked, &spy, std::placeholders::_1);
+    auto asked = std::bind(&QuestionSpy::asked, &spy, std::placeholders::_1);
+    sigslot::signal<const std::string &> askedSignal;
+    askedSignal.connect(asked);
 
     VirtualMachine vm1(&sprite, &m_engineMock, nullptr);
     vm1.setFunctions(functions);
     vm1.setConstValues(constValues);
 
     // Ask 3 questions (2 where the sprite is visible and 1 where it's invisible)
-    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(asked));
+    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
     EXPECT_CALL(spy, asked(""));
     sprite.setVisible(true);
     vm1.setBytecode(bytecode1);
@@ -435,7 +429,7 @@ TEST_F(SensingBlocksTest, AskAndWaitAndAnswerImpl)
     ASSERT_EQ(sprite.bubbleText(), "test1");
 
     // Answer the questions
-    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(asked));
+    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
     EXPECT_CALL(spy, asked(""));
     SensingBlocks::onAnswer("hi");
     ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Say);
@@ -447,7 +441,7 @@ TEST_F(SensingBlocksTest, AskAndWaitAndAnswerImpl)
     ASSERT_EQ(vm1.registerCount(), 1);
     ASSERT_EQ(vm1.getInput(0, 1)->toString(), "hi");
 
-    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(asked));
+    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
     EXPECT_CALL(spy, asked("test3"));
     SensingBlocks::onAnswer("hello");
     ASSERT_TRUE(sprite.bubbleText().empty());
@@ -457,7 +451,7 @@ TEST_F(SensingBlocksTest, AskAndWaitAndAnswerImpl)
     ASSERT_EQ(vm1.registerCount(), 1);
     ASSERT_EQ(vm1.getInput(0, 1)->toString(), "hello");
 
-    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(asked));
+    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
     EXPECT_CALL(spy, asked("test2"));
     SensingBlocks::onAnswer("world");
     ASSERT_TRUE(sprite.bubbleText().empty());

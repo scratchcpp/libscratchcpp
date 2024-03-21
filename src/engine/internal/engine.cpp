@@ -1239,24 +1239,14 @@ sigslot::signal<Monitor *, IMonitorHandler *> &Engine::monitorRemoved()
     return m_monitorRemoved;
 }
 
-const std::function<void(const std::string &)> &Engine::questionAsked() const
+sigslot::signal<const std::string &> &Engine::questionAsked()
 {
     return m_questionAsked;
 }
 
-void Engine::setQuestionAsked(const std::function<void(const std::string &)> &f)
-{
-    m_questionAsked = f;
-}
-
-const std::function<void(const std::string &)> &Engine::questionAnswered() const
+sigslot::signal<const std::string &> &Engine::questionAnswered()
 {
     return m_questionAnswered;
-}
-
-void Engine::setQuestionAnswered(const std::function<void(const std::string &)> &f)
-{
-    m_questionAnswered = f;
 }
 
 const std::vector<std::string> &Engine::extensions() const
