@@ -60,10 +60,8 @@ void Engine::clear()
 {
     stop();
 
-    if (m_removeMonitorHandler) {
-        for (auto monitor : m_monitors)
-            m_removeMonitorHandler(monitor.get(), monitor->impl->iface);
-    }
+    for (auto monitor : m_monitors)
+        m_monitorRemoved(monitor.get(), monitor->impl->iface);
 
     m_sections.clear();
     m_targets.clear();
@@ -1220,28 +1218,25 @@ const std::vector<std::shared_ptr<Monitor>> &Engine::monitors() const
 
 void Engine::setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors)
 {
-    if (m_addMonitorHandler) {
-        m_monitors.clear();
+    m_monitors.clear();
 
-        for (auto monitor : newMonitors) {
-            m_monitors.push_back(monitor);
-            m_addMonitorHandler(monitor.get());
-        }
-    } else
-        m_monitors = newMonitors;
+    for (auto monitor : newMonitors) {
+        m_monitors.push_back(monitor);
+        m_monitorAdded(monitor.get());
+    }
 
     // Create missing monitors
     createMissingMonitors();
 }
 
-void Engine::setAddMonitorHandler(const std::function<void(Monitor *)> &handler)
+sigslot::signal<Monitor *> &Engine::monitorAdded()
 {
-    m_addMonitorHandler = handler;
+    return m_monitorAdded;
 }
 
-void Engine::setRemoveMonitorHandler(const std::function<void(Monitor *, IMonitorHandler *)> &handler)
+sigslot::signal<Monitor *, IMonitorHandler *> &Engine::monitorRemoved()
 {
-    m_removeMonitorHandler = handler;
+    return m_monitorRemoved;
 }
 
 const std::function<void(const std::string &)> &Engine::questionAsked() const
@@ -1633,9 +1628,7 @@ void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *targe
     monitor->setY(rect.top());
 
     m_monitors.push_back(monitor);
-
-    if (m_addMonitorHandler)
-        m_addMonitorHandler(monitor.get());
+    m_monitorAdded(monitor.get());
 
     monitor->setVisible(false);
 }

@@ -143,8 +143,8 @@ class Engine : public IEngine
 
         const std::vector<std::shared_ptr<Monitor>> &monitors() const override;
         void setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors) override;
-        void setAddMonitorHandler(const std::function<void(Monitor *)> &handler) override;
-        void setRemoveMonitorHandler(const std::function<void(Monitor *, IMonitorHandler *)> &handler) override;
+        sigslot::signal<Monitor *> &monitorAdded() override;
+        sigslot::signal<Monitor *, IMonitorHandler *> &monitorRemoved() override;
 
         const std::function<void(const std::string &)> &questionAsked() const override;
         void setQuestionAsked(const std::function<void(const std::string &)> &f) override;
@@ -272,8 +272,8 @@ class Engine : public IEngine
         bool m_stopEventLoop = false;
         std::mutex m_stopEventLoopMutex;
 
-        std::function<void(Monitor *)> m_addMonitorHandler = nullptr;
-        std::function<void(Monitor *, IMonitorHandler *)> m_removeMonitorHandler = nullptr;
+        sigslot::signal<Monitor *> m_monitorAdded;
+        sigslot::signal<Monitor *, IMonitorHandler *> m_monitorRemoved;
         std::function<void(const std::string &)> m_questionAsked = nullptr;
         std::function<void(const std::string &)> m_questionAnswered = nullptr;
 };

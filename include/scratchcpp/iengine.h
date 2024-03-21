@@ -346,11 +346,11 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the list of monitors. */
         virtual void setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors) = 0;
 
-        /*! Sets the function which is called when a monitor is added. */
-        virtual void setAddMonitorHandler(const std::function<void(Monitor *)> &handler) = 0;
+        /*! Emits when a monitor is added. */
+        virtual sigslot::signal<Monitor *> &monitorAdded() = 0;
 
-        /*! Sets the function which is called when a monitor is removed. */
-        virtual void setRemoveMonitorHandler(const std::function<void(Monitor *, IMonitorHandler *)> &handler) = 0;
+        /*! Emits when a monitor is removed. */
+        virtual sigslot::signal<Monitor *, IMonitorHandler *> &monitorRemoved() = 0;
 
         /*! Returns the function which is called when a question is asked, for example using the 'ask and wait' block. */
         virtual const std::function<void(const std::string &)> &questionAsked() const = 0;
