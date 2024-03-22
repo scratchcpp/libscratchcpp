@@ -85,6 +85,20 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addFieldValue(this, "backward", Backward);
 }
 
+void LooksBlocks::onInit(IEngine *engine)
+{
+    engine->threadAboutToStop().connect([](VirtualMachine *vm) {
+        m_timeMap.erase(vm);
+
+        for (auto it = m_waitingBubbles.begin(); it != m_waitingBubbles.end();) {
+            if (it->second == vm)
+                m_waitingBubbles.erase(it);
+            else
+                it++;
+        }
+    });
+}
+
 void LooksBlocks::compileSayForSecs(Compiler *compiler)
 {
     compiler->addInput(MESSAGE);
