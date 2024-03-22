@@ -113,6 +113,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Emits when rendering should occur. */
         virtual sigslot::signal<> &aboutToRender() = 0;
 
+        /*! Emits when a script is about to stop. */
+        virtual sigslot::signal<VirtualMachine *> &threadAboutToStop() = 0;
+
         /*! Returns true if the project is currently running. */
         virtual bool isRunning() const = 0;
 

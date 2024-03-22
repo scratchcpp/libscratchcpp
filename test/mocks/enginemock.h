@@ -33,6 +33,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, stopEventLoop, (), (override));
 
         MOCK_METHOD(sigslot::signal<> &, aboutToRender, (), (override));
+        MOCK_METHOD(sigslot::signal<VirtualMachine *> &, threadAboutToStop, (), (override));
 
         MOCK_METHOD(bool, isRunning, (), (const, override));
 

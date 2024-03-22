@@ -63,6 +63,11 @@ void Engine::clear()
     for (auto monitor : m_monitors)
         m_monitorRemoved(monitor.get(), monitor->impl->iface);
 
+    for (auto thread : m_threads) {
+        if (!thread->atEnd())
+            m_threadAboutToStop(thread.get());
+    }
+
     m_sections.clear();
     m_targets.clear();
     m_broadcasts.clear();
@@ -328,6 +333,11 @@ void Engine::stop()
     } else {
         // If there isn't any active thread, it means the project was stopped from the outside
         // In this case all threads should be removed and the project should be considered stopped
+        for (auto thread : m_threads) {
+            if (!thread->atEnd())
+                m_threadAboutToStop(thread.get());
+        }
+
         m_threads.clear();
         m_running = false;
     }
@@ -511,6 +521,11 @@ sigslot::signal<> &Engine::aboutToRender()
     return m_aboutToRedraw;
 }
 
+sigslot::signal<VirtualMachine *> &Engine::threadAboutToStop()
+{
+    return m_threadAboutToStop;
+}
+
 std::vector<std::shared_ptr<VirtualMachine>> Engine::stepThreads()
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/develop/src/engine/sequencer.js#L70-L173
@@ -548,8 +563,14 @@ std::vector<std::shared_ptr<VirtualMachine>> Engine::stepThreads()
         }
 
         // Remove threads in m_threadsToStop
-        for (auto thread : m_threadsToStop)
+        for (auto thread : m_threadsToStop) {
+            if (!thread->atEnd())
+                m_threadAboutToStop(thread.get());
+
             m_threads.erase(std::remove(m_threads.begin(), m_threads.end(), thread), m_threads.end());
+        }
+
+        m_threadsToStop.clear();
 
         // Remove inactive threads (and add them to doneThreads)
         m_threads.erase(
@@ -1658,6 +1679,10 @@ void Engine::stopThread(VirtualMachine *thread)
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1667-L1672
     assert(thread);
+
+    if (!thread->atEnd())
+        m_threadAboutToStop(thread);
+
     thread->kill();
 }
 
@@ -1668,6 +1693,9 @@ std::shared_ptr<VirtualMachine> Engine::restartThread(std::shared_ptr<VirtualMac
     auto it = std::find(m_threads.begin(), m_threads.end(), thread);
 
     if (it != m_threads.end()) {
+        if (!thread->atEnd())
+            m_threadAboutToStop(thread.get());
+
         auto i = it - m_threads.begin();
         m_threads[i] = newThread;
         return newThread;

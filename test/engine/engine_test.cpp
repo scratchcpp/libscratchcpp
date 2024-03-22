@@ -47,6 +47,12 @@ class RedrawMock
         MOCK_METHOD(void, redraw, ());
 };
 
+class ThreadAboutToStopMock
+{
+    public:
+        MOCK_METHOD(void, threadRemoved, (VirtualMachine *));
+};
+
 class AddRemoveMonitorMock
 {
     public:
@@ -107,6 +113,44 @@ TEST(EngineTest, Clear)
     EXPECT_CALL(removeMonitorMock, monitorRemoved(monitor4.get(), &iface4));
     engine.clear();
     ASSERT_TRUE(engine.monitors().empty());
+}
+
+TEST(EngineTest, ClearThreadAboutToStopSignal)
+{
+    Project p("3_threads.sb3");
+    ASSERT_TRUE(p.load());
+    auto engine = p.engine();
+
+    engine->start();
+    engine->step();
+
+    ThreadAboutToStopMock threadRemovedMock;
+    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(3).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+        ASSERT_TRUE(vm);
+        ASSERT_FALSE(vm->atEnd());
+    })));
+
+    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
+    engine->clear();
+}
+
+TEST(EngineTest, StopThreadAboutToStopSignal)
+{
+    Project p("3_threads.sb3");
+    ASSERT_TRUE(p.load());
+    auto engine = p.engine();
+
+    engine->start();
+    engine->step();
+
+    ThreadAboutToStopMock threadRemovedMock;
+    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(3).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+        ASSERT_TRUE(vm);
+        ASSERT_FALSE(vm->atEnd());
+    })));
+
+    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
+    engine->stop();
 }
 
 TEST(EngineTest, CompileAndExecuteMonitors)
@@ -1840,10 +1884,18 @@ TEST(EngineTest, BroadcastsProject)
 {
     Project p("broadcasts.sb3");
     ASSERT_TRUE(p.load());
-    p.run();
 
     auto engine = p.engine();
+
+    ThreadAboutToStopMock threadRemovedMock;
+    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(21).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+        ASSERT_TRUE(vm);
+        ASSERT_FALSE(vm->atEnd());
+    })));
+
+    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
     engine->setFps(1000);
+    p.run();
 
     Stage *stage = engine->stage();
     ASSERT_TRUE(stage);
@@ -1880,9 +1932,17 @@ TEST(EngineTest, StopAllBypass)
 {
     Project p("stop_all_bypass.sb3");
     ASSERT_TRUE(p.load());
-    p.run();
 
     auto engine = p.engine();
+
+    ThreadAboutToStopMock threadRemovedMock;
+    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(2).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+        ASSERT_TRUE(vm);
+        ASSERT_FALSE(vm->atEnd());
+    })));
+
+    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
+    p.run();
 
     Stage *stage = engine->stage();
     ASSERT_TRUE(stage);
@@ -1900,9 +1960,17 @@ TEST(EngineTest, StopOtherScriptsInSprite)
 {
     Project p("stop_other_scripts_in_sprite.sb3");
     ASSERT_TRUE(p.load());
-    p.run();
 
     auto engine = p.engine();
+
+    ThreadAboutToStopMock threadRemovedMock;
+    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(4).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+        ASSERT_TRUE(vm);
+        ASSERT_FALSE(vm->atEnd());
+    })));
+
+    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
+    p.run();
 
     Stage *stage = engine->stage();
     ASSERT_TRUE(stage);
