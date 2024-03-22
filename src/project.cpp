@@ -100,10 +100,10 @@ std::shared_ptr<IEngine> Project::engine() const
 }
 
 /*!
- * Sets the function which will be called when the asset download progress changes.
+ * Emits when the asset download progress changes.
  * \note The first parameter is the number of downloaded assets and the latter is the number of all assets to download.
  */
-void Project::setDownloadProgressCallback(const std::function<void(unsigned int, unsigned int)> &&f)
+sigslot::signal<unsigned int, unsigned int> &Project::downloadProgressChanged()
 {
-    impl->setDownloadProgressCallback(f);
+    return impl->downloadProgressChanged();
 }

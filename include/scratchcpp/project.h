@@ -7,6 +7,7 @@
 #include "spimpl.h"
 
 #include "global.h"
+#include "signal.h"
 
 namespace libscratchcpp
 {
@@ -42,7 +43,7 @@ class LIBSCRATCHCPP_EXPORT Project
 
         std::shared_ptr<IEngine> engine() const;
 
-        void setDownloadProgressCallback(const std::function<void(unsigned int, unsigned int)> &&f);
+        sigslot::signal<unsigned int, unsigned int> &downloadProgressChanged();
 
     private:
         spimpl::unique_impl_ptr<ProjectPrivate> impl;

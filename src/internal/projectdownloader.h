@@ -23,7 +23,7 @@ class ProjectDownloader : public IProjectDownloader
         bool downloadAssets(const std::vector<std::string> &assetIds) override;
         void cancel() override;
 
-        void setDownloadProgressCallback(const std::function<void(unsigned int, unsigned int)> &f) override;
+        sigslot::signal<unsigned int, unsigned int> &downloadProgressChanged() override;
 
         const std::string &json() const override;
         const std::vector<std::string> &assets() const override;
@@ -38,8 +38,7 @@ class ProjectDownloader : public IProjectDownloader
         std::atomic<unsigned int> m_downloadedAssetCount = 0;
         bool m_cancel = false;
         std::mutex m_cancelMutex;
-        std::function<void(unsigned int, unsigned int)> m_downloadProgressCallback = nullptr;
-        std::mutex m_downloadProgressCallbackMutex;
+        sigslot::signal<unsigned int, unsigned int> m_downloadProgressChanged;
 };
 
 } // namespace libscratchcpp
