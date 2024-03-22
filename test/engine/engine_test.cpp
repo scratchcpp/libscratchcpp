@@ -1876,6 +1876,26 @@ TEST(EngineTest, StopAll)
     ASSERT_FALSE(engine->isRunning());
 }
 
+TEST(EngineTest, StopAllBypass)
+{
+    Project p("stop_all_bypass.sb3");
+    ASSERT_TRUE(p.load());
+    p.run();
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    ASSERT_VAR(stage, "i");
+    ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 1);
+
+    ASSERT_VAR(stage, "j");
+    ASSERT_EQ(GET_VAR(stage, "j")->value().toInt(), 5);
+
+    ASSERT_FALSE(engine->isRunning());
+}
+
 TEST(EngineTest, StopOtherScriptsInSprite)
 {
     Project p("stop_other_scripts_in_sprite.sb3");
