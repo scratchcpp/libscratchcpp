@@ -71,6 +71,14 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addFieldValue(this, "all around", AllAround);
 }
 
+void MotionBlocks::onInit(IEngine *engine)
+{
+    engine->threadAboutToStop().connect([](VirtualMachine *vm) {
+        m_timeMap.erase(vm);
+        m_glideMap.erase(vm);
+    });
+}
+
 void MotionBlocks::compileMoveSteps(Compiler *compiler)
 {
     compiler->addInput(STEPS);

@@ -49,7 +49,8 @@ class Engine : public IEngine
         void runEventLoop() override;
         void stopEventLoop() override;
 
-        void setRedrawHandler(const std::function<void()> &handler) override;
+        sigslot::signal<> &aboutToRender() override;
+        sigslot::signal<VirtualMachine *> &threadAboutToStop() override;
 
         bool isRunning() const override;
 
@@ -143,14 +144,11 @@ class Engine : public IEngine
 
         const std::vector<std::shared_ptr<Monitor>> &monitors() const override;
         void setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors) override;
-        void setAddMonitorHandler(const std::function<void(Monitor *)> &handler) override;
-        void setRemoveMonitorHandler(const std::function<void(Monitor *, IMonitorHandler *)> &handler) override;
+        sigslot::signal<Monitor *> &monitorAdded() override;
+        sigslot::signal<Monitor *, IMonitorHandler *> &monitorRemoved() override;
 
-        const std::function<void(const std::string &)> &questionAsked() const override;
-        void setQuestionAsked(const std::function<void(const std::string &)> &f) override;
-
-        const std::function<void(const std::string &)> &questionAnswered() const override;
-        void setQuestionAnswered(const std::function<void(const std::string &)> &f) override;
+        sigslot::signal<const std::string &> &questionAsked() override;
+        sigslot::signal<const std::string &> &questionAnswered() override;
 
         const std::vector<std::string> &extensions() const override;
         void setExtensions(const std::vector<std::string> &newExtensions) override;
@@ -268,14 +266,15 @@ class Engine : public IEngine
 
         bool m_running = false;
         bool m_redrawRequested = false;
-        std::function<void()> m_redrawHandler = nullptr;
+        sigslot::signal<> m_aboutToRedraw;
+        sigslot::signal<VirtualMachine *> m_threadAboutToStop;
         bool m_stopEventLoop = false;
         std::mutex m_stopEventLoopMutex;
 
-        std::function<void(Monitor *)> m_addMonitorHandler = nullptr;
-        std::function<void(Monitor *, IMonitorHandler *)> m_removeMonitorHandler = nullptr;
-        std::function<void(const std::string &)> m_questionAsked = nullptr;
-        std::function<void(const std::string &)> m_questionAnswered = nullptr;
+        sigslot::signal<Monitor *> m_monitorAdded;
+        sigslot::signal<Monitor *, IMonitorHandler *> m_monitorRemoved;
+        sigslot::signal<const std::string &> m_questionAsked;
+        sigslot::signal<const std::string &> m_questionAnswered;
 };
 
 } // namespace libscratchcpp

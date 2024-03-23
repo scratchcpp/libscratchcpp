@@ -36,7 +36,15 @@ void SoundBlocks::registerBlocks(IEngine *engine)
 void SoundBlocks::onInit(IEngine *engine)
 {
     m_waitingSounds.clear();
-    // TODO: Remove stopped threads from m_waitingSounds
+
+    engine->threadAboutToStop().connect([](VirtualMachine *vm) {
+        for (auto it = m_waitingSounds.begin(); it != m_waitingSounds.end();) {
+            if (it->second == vm)
+                m_waitingSounds.erase(it);
+            else
+                it++;
+        }
+    });
 }
 
 bool SoundBlocks::compilePlayCommon(Compiler *compiler, bool untilDone, bool *byIndex)

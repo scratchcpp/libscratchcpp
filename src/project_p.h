@@ -28,7 +28,7 @@ struct ProjectPrivate
         void detectScratchVersion();
         void setScratchVersion(ScratchVersion version);
 
-        void setDownloadProgressCallback(const std::function<void(unsigned int, unsigned int)> &f);
+        sigslot::signal<unsigned int, unsigned int> &downloadProgressChanged();
 
         ScratchVersion scratchVersion = ScratchVersion::Invalid;
         std::string fileName;

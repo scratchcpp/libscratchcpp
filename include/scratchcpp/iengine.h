@@ -8,6 +8,7 @@
 #include <functional>
 
 #include "global.h"
+#include "signal.h"
 
 namespace libscratchcpp
 {
@@ -109,8 +110,11 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Stops the event loop which is running in another thread. */
         virtual void stopEventLoop() = 0;
 
-        /*! Sets the function which is called on every frame. */
-        virtual void setRedrawHandler(const std::function<void()> &handler) = 0;
+        /*! Emits when rendering should occur. */
+        virtual sigslot::signal<> &aboutToRender() = 0;
+
+        /*! Emits when a script is about to stop. */
+        virtual sigslot::signal<VirtualMachine *> &threadAboutToStop() = 0;
 
         /*! Returns true if the project is currently running. */
         virtual bool isRunning() const = 0;
@@ -345,23 +349,17 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the list of monitors. */
         virtual void setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors) = 0;
 
-        /*! Sets the function which is called when a monitor is added. */
-        virtual void setAddMonitorHandler(const std::function<void(Monitor *)> &handler) = 0;
+        /*! Emits when a monitor is added. */
+        virtual sigslot::signal<Monitor *> &monitorAdded() = 0;
 
-        /*! Sets the function which is called when a monitor is removed. */
-        virtual void setRemoveMonitorHandler(const std::function<void(Monitor *, IMonitorHandler *)> &handler) = 0;
+        /*! Emits when a monitor is removed. */
+        virtual sigslot::signal<Monitor *, IMonitorHandler *> &monitorRemoved() = 0;
 
-        /*! Returns the function which is called when a question is asked, for example using the 'ask and wait' block. */
-        virtual const std::function<void(const std::string &)> &questionAsked() const = 0;
+        /*! Emits when a question is asked, for example using the 'ask and wait' block. */
+        virtual sigslot::signal<const std::string &> &questionAsked() = 0;
 
-        /*! Sets the function which is called when a question is asked, for example using the 'ask and wait' block. */
-        virtual void setQuestionAsked(const std::function<void(const std::string &)> &f) = 0;
-
-        /*! Returns the function which should be called when a question is answered. */
-        virtual const std::function<void(const std::string &)> &questionAnswered() const = 0;
-
-        /*! Sets the function which should be called when a question is answered. */
-        virtual void setQuestionAnswered(const std::function<void(const std::string &)> &f) = 0;
+        /*! Emits when a question is answered. */
+        virtual sigslot::signal<const std::string &> &questionAnswered() = 0;
 
         /*! Returns the list of extension names. */
         virtual const std::vector<std::string> &extensions() const = 0;

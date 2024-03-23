@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <scratchcpp/signal.h>
 
 namespace libscratchcpp
 {
@@ -18,7 +19,7 @@ class IProjectDownloader
         virtual bool downloadAssets(const std::vector<std::string> &assetIds) = 0;
         virtual void cancel() = 0;
 
-        virtual void setDownloadProgressCallback(const std::function<void(unsigned int, unsigned int)> &f) = 0;
+        virtual sigslot::signal<unsigned int, unsigned int> &downloadProgressChanged() = 0;
 
         virtual const std::string &json() const = 0;
         virtual const std::vector<std::string> &assets() const = 0;

@@ -60,9 +60,12 @@ void Engine::clear()
 {
     stop();
 
-    if (m_removeMonitorHandler) {
-        for (auto monitor : m_monitors)
-            m_removeMonitorHandler(monitor.get(), monitor->impl->iface);
+    for (auto monitor : m_monitors)
+        m_monitorRemoved(monitor.get(), monitor->impl->iface);
+
+    for (auto thread : m_threads) {
+        if (!thread->atEnd())
+            m_threadAboutToStop(thread.get());
     }
 
     m_sections.clear();
@@ -330,6 +333,11 @@ void Engine::stop()
     } else {
         // If there isn't any active thread, it means the project was stopped from the outside
         // In this case all threads should be removed and the project should be considered stopped
+        for (auto thread : m_threads) {
+            if (!thread->atEnd())
+                m_threadAboutToStop(thread.get());
+        }
+
         m_threads.clear();
         m_running = false;
     }
@@ -486,8 +494,7 @@ void Engine::step()
     stepThreads();
 
     // Render
-    if (m_redrawHandler)
-        m_redrawHandler();
+    m_aboutToRedraw();
 }
 
 void Engine::run()
@@ -509,9 +516,14 @@ void Engine::stopEventLoop()
     m_stopEventLoopMutex.unlock();
 }
 
-void Engine::setRedrawHandler(const std::function<void()> &handler)
+sigslot::signal<> &Engine::aboutToRender()
 {
-    m_redrawHandler = handler;
+    return m_aboutToRedraw;
+}
+
+sigslot::signal<VirtualMachine *> &Engine::threadAboutToStop()
+{
+    return m_threadAboutToStop;
 }
 
 std::vector<std::shared_ptr<VirtualMachine>> Engine::stepThreads()
@@ -551,8 +563,14 @@ std::vector<std::shared_ptr<VirtualMachine>> Engine::stepThreads()
         }
 
         // Remove threads in m_threadsToStop
-        for (auto thread : m_threadsToStop)
+        for (auto thread : m_threadsToStop) {
+            if (!thread->atEnd())
+                m_threadAboutToStop(thread.get());
+
             m_threads.erase(std::remove(m_threads.begin(), m_threads.end(), thread), m_threads.end());
+        }
+
+        m_threadsToStop.clear();
 
         // Remove inactive threads (and add them to doneThreads)
         m_threads.erase(
@@ -1221,48 +1239,35 @@ const std::vector<std::shared_ptr<Monitor>> &Engine::monitors() const
 
 void Engine::setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors)
 {
-    if (m_addMonitorHandler) {
-        m_monitors.clear();
+    m_monitors.clear();
 
-        for (auto monitor : newMonitors) {
-            m_monitors.push_back(monitor);
-            m_addMonitorHandler(monitor.get());
-        }
-    } else
-        m_monitors = newMonitors;
+    for (auto monitor : newMonitors) {
+        m_monitors.push_back(monitor);
+        m_monitorAdded(monitor.get());
+    }
 
     // Create missing monitors
     createMissingMonitors();
 }
 
-void Engine::setAddMonitorHandler(const std::function<void(Monitor *)> &handler)
+sigslot::signal<Monitor *> &Engine::monitorAdded()
 {
-    m_addMonitorHandler = handler;
+    return m_monitorAdded;
 }
 
-void Engine::setRemoveMonitorHandler(const std::function<void(Monitor *, IMonitorHandler *)> &handler)
+sigslot::signal<Monitor *, IMonitorHandler *> &Engine::monitorRemoved()
 {
-    m_removeMonitorHandler = handler;
+    return m_monitorRemoved;
 }
 
-const std::function<void(const std::string &)> &Engine::questionAsked() const
+sigslot::signal<const std::string &> &Engine::questionAsked()
 {
     return m_questionAsked;
 }
 
-void Engine::setQuestionAsked(const std::function<void(const std::string &)> &f)
-{
-    m_questionAsked = f;
-}
-
-const std::function<void(const std::string &)> &Engine::questionAnswered() const
+sigslot::signal<const std::string &> &Engine::questionAnswered()
 {
     return m_questionAnswered;
-}
-
-void Engine::setQuestionAnswered(const std::function<void(const std::string &)> &f)
-{
-    m_questionAnswered = f;
 }
 
 const std::vector<std::string> &Engine::extensions() const
@@ -1634,9 +1639,7 @@ void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *targe
     monitor->setY(rect.top());
 
     m_monitors.push_back(monitor);
-
-    if (m_addMonitorHandler)
-        m_addMonitorHandler(monitor.get());
+    m_monitorAdded(monitor.get());
 
     monitor->setVisible(false);
 }
@@ -1676,6 +1679,10 @@ void Engine::stopThread(VirtualMachine *thread)
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1667-L1672
     assert(thread);
+
+    if (!thread->atEnd())
+        m_threadAboutToStop(thread);
+
     thread->kill();
 }
 
@@ -1686,6 +1693,9 @@ std::shared_ptr<VirtualMachine> Engine::restartThread(std::shared_ptr<VirtualMac
     auto it = std::find(m_threads.begin(), m_threads.end(), thread);
 
     if (it != m_threads.end()) {
+        if (!thread->atEnd())
+            m_threadAboutToStop(thread.get());
+
         auto i = it - m_threads.begin();
         m_threads[i] = newThread;
         return newThread;

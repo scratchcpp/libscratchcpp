@@ -183,7 +183,7 @@ void ProjectPrivate::setScratchVersion(ScratchVersion version)
         std::cerr << "Unsupported Scratch version: " << static_cast<int>(version) << std::endl;
 }
 
-void ProjectPrivate::setDownloadProgressCallback(const std::function<void(unsigned int, unsigned int)> &f)
+sigslot::signal<unsigned int, unsigned int> &ProjectPrivate::downloadProgressChanged()
 {
-    downloader->setDownloadProgressCallback(f);
+    return downloader->downloadProgressChanged();
 }

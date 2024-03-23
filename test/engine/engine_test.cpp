@@ -47,20 +47,18 @@ class RedrawMock
         MOCK_METHOD(void, redraw, ());
 };
 
+class ThreadAboutToStopMock
+{
+    public:
+        MOCK_METHOD(void, threadRemoved, (VirtualMachine *));
+};
+
 class AddRemoveMonitorMock
 {
     public:
         MOCK_METHOD(void, monitorAdded, (Monitor *));
         MOCK_METHOD(void, monitorRemoved, (Monitor *, IMonitorHandler *));
 };
-
-template<typename T, typename... U>
-size_t getAddress(std::function<T(U...)> f)
-{
-    typedef T(fnType)(U...);
-    fnType **fnPointer = f.template target<fnType *>();
-    return (size_t)*fnPointer;
-}
 
 TEST(EngineTest, Clock)
 {
@@ -106,7 +104,7 @@ TEST(EngineTest, Clear)
 
     AddRemoveMonitorMock removeMonitorMock;
     auto handler = std::bind(&AddRemoveMonitorMock::monitorRemoved, &removeMonitorMock, std::placeholders::_1, std::placeholders::_2);
-    engine.setRemoveMonitorHandler(std::function<void(Monitor *, IMonitorHandler *)>(handler));
+    engine.monitorRemoved().connect(handler);
     engine.setMonitors({ monitor1, monitor2, monitor3, monitor4 });
 
     EXPECT_CALL(removeMonitorMock, monitorRemoved(monitor1.get(), &iface1));
@@ -115,6 +113,44 @@ TEST(EngineTest, Clear)
     EXPECT_CALL(removeMonitorMock, monitorRemoved(monitor4.get(), &iface4));
     engine.clear();
     ASSERT_TRUE(engine.monitors().empty());
+}
+
+TEST(EngineTest, ClearThreadAboutToStopSignal)
+{
+    Project p("3_threads.sb3");
+    ASSERT_TRUE(p.load());
+    auto engine = p.engine();
+
+    engine->start();
+    engine->step();
+
+    ThreadAboutToStopMock threadRemovedMock;
+    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(3).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+        ASSERT_TRUE(vm);
+        ASSERT_FALSE(vm->atEnd());
+    })));
+
+    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
+    engine->clear();
+}
+
+TEST(EngineTest, StopThreadAboutToStopSignal)
+{
+    Project p("3_threads.sb3");
+    ASSERT_TRUE(p.load());
+    auto engine = p.engine();
+
+    engine->start();
+    engine->step();
+
+    ThreadAboutToStopMock threadRemovedMock;
+    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(3).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+        ASSERT_TRUE(vm);
+        ASSERT_FALSE(vm->atEnd());
+    })));
+
+    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
+    engine->stop();
 }
 
 TEST(EngineTest, CompileAndExecuteMonitors)
@@ -341,7 +377,7 @@ TEST(EngineTest, FpsProject)
     engine->setFps(10);
     RedrawMock redrawMock;
     auto handler = std::bind(&RedrawMock::redraw, &redrawMock);
-    engine->setRedrawHandler(std::function<void()>(handler));
+    engine->aboutToRender().connect(handler);
     std::chrono::steady_clock::time_point time7(std::chrono::milliseconds(100));
     std::chrono::steady_clock::time_point time8(std::chrono::milliseconds(200));
     std::chrono::steady_clock::time_point time9(std::chrono::milliseconds(300));
@@ -1581,7 +1617,7 @@ TEST(EngineTest, Monitors)
 
     AddRemoveMonitorMock addMonitorMock;
     auto handler = std::bind(&AddRemoveMonitorMock::monitorAdded, &addMonitorMock, std::placeholders::_1);
-    engine.setAddMonitorHandler(std::function<void(Monitor *)>(handler));
+    engine.monitorAdded().connect(handler);
     engine.setMonitors({});
 
     EXPECT_CALL(addMonitorMock, monitorAdded(m1.get()));
@@ -1691,7 +1727,7 @@ TEST(EngineTest, CreateMissingMonitors)
         Engine engine;
         AddRemoveMonitorMock addMonitorMock;
         auto handler = std::bind(&AddRemoveMonitorMock::monitorAdded, &addMonitorMock, std::placeholders::_1);
-        engine.setAddMonitorHandler(std::function<void(Monitor *)>(handler));
+        engine.monitorAdded().connect(handler);
 
         EXPECT_CALL(addMonitorMock, monitorAdded(m1.get()));
         EXPECT_CALL(addMonitorMock, monitorAdded(m2.get()));
@@ -1713,26 +1749,6 @@ TEST(EngineTest, CreateMissingMonitors)
 
 void questionFunction(const std::string &)
 {
-}
-
-TEST(EngineTest, QuestionAsked)
-{
-    Engine engine;
-    ASSERT_EQ(engine.questionAsked(), nullptr);
-
-    static const std::function<void(const std::string &)> f = &questionFunction;
-    engine.setQuestionAsked(&questionFunction);
-    ASSERT_EQ(getAddress(engine.questionAsked()), getAddress(f));
-}
-
-TEST(EngineTest, QuestionAnswered)
-{
-    Engine engine;
-    ASSERT_EQ(engine.questionAnswered(), nullptr);
-
-    static const std::function<void(const std::string &)> f = &questionFunction;
-    engine.setQuestionAnswered(f);
-    ASSERT_EQ(getAddress(engine.questionAnswered()), getAddress(f));
 }
 
 TEST(EngineTest, Clones)
@@ -1868,10 +1884,18 @@ TEST(EngineTest, BroadcastsProject)
 {
     Project p("broadcasts.sb3");
     ASSERT_TRUE(p.load());
-    p.run();
 
     auto engine = p.engine();
+
+    ThreadAboutToStopMock threadRemovedMock;
+    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(21).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+        ASSERT_TRUE(vm);
+        ASSERT_FALSE(vm->atEnd());
+    })));
+
+    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
     engine->setFps(1000);
+    p.run();
 
     Stage *stage = engine->stage();
     ASSERT_TRUE(stage);
@@ -1904,13 +1928,49 @@ TEST(EngineTest, StopAll)
     ASSERT_FALSE(engine->isRunning());
 }
 
+TEST(EngineTest, StopAllBypass)
+{
+    Project p("stop_all_bypass.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    ThreadAboutToStopMock threadRemovedMock;
+    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(2).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+        ASSERT_TRUE(vm);
+        ASSERT_FALSE(vm->atEnd());
+    })));
+
+    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
+    p.run();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    ASSERT_VAR(stage, "i");
+    ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 1);
+
+    ASSERT_VAR(stage, "j");
+    ASSERT_EQ(GET_VAR(stage, "j")->value().toInt(), 5);
+
+    ASSERT_FALSE(engine->isRunning());
+}
+
 TEST(EngineTest, StopOtherScriptsInSprite)
 {
     Project p("stop_other_scripts_in_sprite.sb3");
     ASSERT_TRUE(p.load());
-    p.run();
 
     auto engine = p.engine();
+
+    ThreadAboutToStopMock threadRemovedMock;
+    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(4).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+        ASSERT_TRUE(vm);
+        ASSERT_FALSE(vm->atEnd());
+    })));
+
+    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
+    p.run();
 
     Stage *stage = engine->stage();
     ASSERT_TRUE(stage);

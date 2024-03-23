@@ -61,6 +61,7 @@ class LooksBlocks : public IBlockSection
         std::string name() const override;
 
         void registerBlocks(IEngine *engine) override;
+        void onInit(IEngine *engine) override;
 
         static void compileSayForSecs(Compiler *compiler);
         static void compileSay(Compiler *compiler);

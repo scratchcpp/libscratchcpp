@@ -9,6 +9,7 @@
 using namespace libscratchcpp;
 
 using ::testing::Return;
+using ::testing::ReturnRef;
 
 class ProjectTest : public testing::Test
 {
@@ -158,7 +159,7 @@ TEST_F(ProjectTest, ScratchVersion)
     ASSERT_EQ(p.scratchVersion(), ScratchVersion::Scratch3);
 }
 
-TEST(LoadProjectTest, DownloadProgressCallback)
+TEST(LoadProjectTest, DownloadProgressChanged)
 {
     ProjectDownloaderFactoryMock factory;
     auto downloader = std::make_shared<ProjectDownloaderMock>();
@@ -168,8 +169,7 @@ TEST(LoadProjectTest, DownloadProgressCallback)
     ProjectPrivate p;
     ProjectPrivate::downloaderFactory = nullptr;
 
-    auto lambda = [](unsigned int, unsigned int) {};
-    // TODO: Check the function parameter, if possible (std::function doesn't have operator== for this)
-    EXPECT_CALL(*downloader, setDownloadProgressCallback);
-    p.setDownloadProgressCallback(lambda);
+    sigslot::signal<unsigned int, unsigned int> signal;
+    EXPECT_CALL(*downloader, downloadProgressChanged).WillOnce(ReturnRef(signal));
+    ASSERT_EQ(&p.downloadProgressChanged(), &signal);
 }

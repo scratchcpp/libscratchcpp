@@ -88,7 +88,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addFieldValue(this, "backdrop name", BackdropName);
 
     // Callbacks
-    engine->setQuestionAnswered(&onAnswer);
+    engine->questionAnswered().connect(&onAnswer);
 }
 
 void SensingBlocks::compileDistanceTo(Compiler *compiler)
@@ -946,7 +946,7 @@ void SensingBlocks::askNextQuestion()
 
     Question *question = m_questionList.front().get();
     Target *target = question->vm->target();
-    auto ask = question->vm->engine()->questionAsked();
+    IEngine *engine = question->vm->engine();
 
     // If the target is visible, emit a blank question and show
     // a bubble unless the target was the stage
@@ -954,10 +954,8 @@ void SensingBlocks::askNextQuestion()
         target->setBubbleType(Target::BubbleType::Say);
         target->setBubbleText(question->question);
 
-        if (ask)
-            ask("");
+        engine->questionAsked()("");
     } else {
-        if (ask)
-            ask(question->question);
+        engine->questionAsked()(question->question);
     }
 }

@@ -47,6 +47,7 @@ class MotionBlocks : public IBlockSection
         std::string name() const override;
 
         void registerBlocks(IEngine *engine) override;
+        void onInit(IEngine *engine) override;
 
         static void compileMoveSteps(Compiler *compiler);
         static void compileTurnRight(Compiler *compiler);
