@@ -7,6 +7,7 @@
 #include <limits>
 #include <ctgmath>
 #include <cassert>
+#include <iomanip>
 #include <utf8.h>
 
 #include "global.h"
@@ -40,7 +41,7 @@ class LIBSCRATCHCPP_EXPORT Value
         Value(float numberValue) :
             m_type(Type::Double)
         {
-            m_doubleValue = numberValue;
+            m_doubleValue = floatToDouble(numberValue);
         }
 
         /*! Constructs a number Value. */
@@ -376,7 +377,7 @@ class LIBSCRATCHCPP_EXPORT Value
                 m_stringValue.~basic_string();
 
             m_type = Type::Double;
-            m_doubleValue = v;
+            m_doubleValue = floatToDouble(v);
             return *this;
         }
 
@@ -943,7 +944,7 @@ class LIBSCRATCHCPP_EXPORT Value
         static std::string doubleToString(double v)
         {
             std::stringstream stream;
-            stream << v;
+            stream << std::setprecision(std::max(16u, digitCount(v))) << v;
             std::string s = stream.str();
             std::size_t index;
 
@@ -960,6 +961,33 @@ class LIBSCRATCHCPP_EXPORT Value
             }
 
             return s;
+        }
+
+        static double floatToDouble(float v)
+        {
+            unsigned int digits = digitCount(v);
+            double f = std::pow(10, digits);
+            return std::round(v * f) / f;
+        }
+
+        template<typename T>
+        static unsigned int digitCount(T v)
+        {
+            const T epsilon = 0.0000001;
+            T intpart;
+            unsigned int i = 1, j = 0;
+
+            if (std::abs(std::modf(v, &intpart)) >= epsilon) {
+                T tmp_intpart;
+
+                while (std::abs(std::modf(v * std::pow(10, i), &tmp_intpart)) >= epsilon)
+                    i++;
+            }
+
+            while (std::abs(intpart / pow(10, j)) >= 1.0)
+                j++;
+
+            return i + j;
         }
 };
 

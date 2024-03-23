@@ -20,7 +20,7 @@ TEST(ValueTest, DefaultConstructor)
 TEST(ValueTest, FloatConstructor)
 {
     Value v(3.14f);
-    ASSERT_EQ(v.toDouble(), 3.14f);
+    ASSERT_EQ(v.toDouble(), 3.14);
     ASSERT_EQ(v.type(), Value::Type::Double);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
@@ -385,7 +385,7 @@ TEST(ValueTest, FloatAssignment)
 {
     Value v;
     v = 3.14f;
-    ASSERT_EQ(v.toDouble(), 3.14f);
+    ASSERT_EQ(v.toDouble(), 3.14);
     ASSERT_EQ(v.type(), Value::Type::Double);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
@@ -930,12 +930,12 @@ TEST(ValueTest, ToDouble)
     v = 2.54;
     ASSERT_EQ(v.toDouble(), 2.54);
     v = 2.54f;
-    ASSERT_EQ(v.toDouble(), 2.54f);
+    ASSERT_EQ(v.toDouble(), 2.54);
 
     v = -2.54;
     ASSERT_EQ(v.toDouble(), -2.54);
     v = -2.54f;
-    ASSERT_EQ(v.toDouble(), -2.54f);
+    ASSERT_EQ(v.toDouble(), -2.54);
 
     v = false;
     ASSERT_EQ(v.toDouble(), 0.0);
@@ -1164,6 +1164,20 @@ TEST(ValueTest, ToString)
     ASSERT_EQ(v.toString(), "-999999999999999999");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
 
+    v = 2.0;
+    ASSERT_EQ(v.toString(), "2");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    v = 2.0f;
+    ASSERT_EQ(v.toString(), "2");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+
+    v = -2.0;
+    ASSERT_EQ(v.toString(), "-2");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    v = -2.0f;
+    ASSERT_EQ(v.toString(), "-2");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+
     v = 2.54;
     ASSERT_EQ(v.toString(), "2.54");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
@@ -1176,6 +1190,29 @@ TEST(ValueTest, ToString)
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
     v = -2.54f;
     ASSERT_EQ(v.toString(), "-2.54");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+
+    v = 2550.625021000115;
+    ASSERT_EQ(v.toString(), "2550.625021000115");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+
+    v = 2550.625021000115f;
+    ASSERT_EQ(v.toString(), "2550.625");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+
+    v = -2550.625021000115;
+    ASSERT_EQ(v.toString(), "-2550.625021000115");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+
+    v = -2550.625021000115f;
+    ASSERT_EQ(v.toString(), "-2550.625");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+
+    v = 0.001;
+    ASSERT_EQ(v.toString(), "0.001");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    v = -0.001;
+    ASSERT_EQ(v.toString(), "-0.001");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
 
     v = false;
@@ -1214,10 +1251,10 @@ TEST(ValueTest, ToString)
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
 
     v = "9432.4e+6";
-    ASSERT_EQ(v.toString(), "9.4324e+9");
+    ASSERT_EQ(v.toString(), "9432400000");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
     v = "-9432.4e+6";
-    ASSERT_EQ(v.toString(), "-9.4324e+9");
+    ASSERT_EQ(v.toString(), "-9432400000");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
 
     v = "false";
