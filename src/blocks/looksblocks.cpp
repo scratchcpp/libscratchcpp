@@ -19,6 +19,18 @@ using namespace libscratchcpp;
 IRandomGenerator *LooksBlocks::rng = nullptr;
 IClock *LooksBlocks::clock = nullptr;
 
+// TODO: Use C++20
+template<typename ContainerT, typename PredicateT>
+void erase_if(ContainerT &items, const PredicateT &predicate)
+{
+    for (auto it = items.begin(); it != items.end();) {
+        if (predicate(*it))
+            it = items.erase(it);
+        else
+            ++it;
+    }
+}
+
 std::string LooksBlocks::name() const
 {
     return "Looks";
@@ -89,13 +101,7 @@ void LooksBlocks::onInit(IEngine *engine)
 {
     engine->threadAboutToStop().connect([](VirtualMachine *vm) {
         m_timeMap.erase(vm);
-
-        for (auto it = m_waitingBubbles.begin(); it != m_waitingBubbles.end();) {
-            if (it->second == vm)
-                m_waitingBubbles.erase(it);
-            else
-                it++;
-        }
+        erase_if(m_waitingBubbles, [vm](const std::pair<Target *, VirtualMachine *> &pair) { return pair.second == vm; });
     });
 }
 

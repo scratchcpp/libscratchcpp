@@ -10,6 +10,18 @@
 
 using namespace libscratchcpp;
 
+// TODO: Use C++20
+template<typename ContainerT, typename PredicateT>
+static void erase_if(ContainerT &items, const PredicateT &predicate)
+{
+    for (auto it = items.begin(); it != items.end();) {
+        if (predicate(*it))
+            it = items.erase(it);
+        else
+            ++it;
+    }
+}
+
 std::string SoundBlocks::name() const
 {
     return "Sound";
@@ -36,15 +48,7 @@ void SoundBlocks::registerBlocks(IEngine *engine)
 void SoundBlocks::onInit(IEngine *engine)
 {
     m_waitingSounds.clear();
-
-    engine->threadAboutToStop().connect([](VirtualMachine *vm) {
-        for (auto it = m_waitingSounds.begin(); it != m_waitingSounds.end();) {
-            if (it->second == vm)
-                m_waitingSounds.erase(it);
-            else
-                it++;
-        }
-    });
+    engine->threadAboutToStop().connect([](VirtualMachine *vm) { erase_if(m_waitingSounds, [vm](const std::pair<Sound *, VirtualMachine *> &pair) { return pair.second == vm; }); });
 }
 
 bool SoundBlocks::compilePlayCommon(Compiler *compiler, bool untilDone, bool *byIndex)
