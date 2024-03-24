@@ -66,7 +66,7 @@ bool SoundBlocks::compilePlayCommon(Compiler *compiler, bool untilDone, bool *by
         if (index == -1) {
             Value v(value);
 
-            if (v.type() == Value::Type::Integer) {
+            if (v.isValidNumber() && !v.isInfinity() && !v.isNegativeInfinity() && !(v.isString() && v.toString().empty())) {
                 compiler->addConstValue(v.toLong() - 1);
                 compiler->addFunctionCall(untilDone ? &playByIndexUntilDone : &playByIndex);
 
@@ -166,7 +166,7 @@ Sound *SoundBlocks::playCommon(VirtualMachine *vm)
             return sound;
         }
 
-        else if (name->type() == Value::Type::Integer) {
+        if (name->isValidNumber() && !name->isInfinity() && !name->isNegativeInfinity() && !(name->isString() && name->toString().empty())) {
             sound = getSoundByIndex(target, name->toLong() - 1);
 
             if (sound) {
@@ -245,7 +245,7 @@ unsigned int SoundBlocks::checkSound(VirtualMachine *vm)
     if (target) {
         Sound *sound = target->soundAt(target->findSound(name->toString())).get();
 
-        if (!sound && name->type() == Value::Type::Integer)
+        if (!sound && name->isValidNumber() && !name->isInfinity() && !name->isNegativeInfinity() && !(name->isString() && name->toString().empty()))
             sound = getSoundByIndex(target, name->toLong() - 1);
 
         if (sound) {

@@ -9,6 +9,7 @@
 #include <cassert>
 #include <iomanip>
 #include <utf8.h>
+#include <iostream>
 
 #include "global.h"
 
@@ -41,14 +42,28 @@ class LIBSCRATCHCPP_EXPORT Value
         Value(float numberValue) :
             m_type(Type::Double)
         {
-            m_doubleValue = floatToDouble(numberValue);
+            if (isInf(numberValue))
+                m_type = Type::Infinity;
+            else if (isNegativeInf(numberValue))
+                m_type = Type::NegativeInfinity;
+            else if (std::isnan(numberValue))
+                m_type = Type::NaN;
+            else
+                m_doubleValue = floatToDouble(numberValue);
         }
 
         /*! Constructs a number Value. */
         Value(double numberValue) :
             m_type(Type::Double)
         {
-            m_doubleValue = numberValue;
+            if (isInf(numberValue))
+                m_type = Type::Infinity;
+            else if (isNegativeInf(numberValue))
+                m_type = Type::NegativeInfinity;
+            else if (std::isnan(numberValue))
+                m_type = Type::NaN;
+            else
+                m_doubleValue = numberValue;
         }
 
         /*! Constructs a number Value. */
@@ -83,8 +98,14 @@ class LIBSCRATCHCPP_EXPORT Value
         Value(const std::string &stringValue) :
             m_type(Type::String)
         {
-            new (&m_stringValue) std::string(stringValue);
-            initString(stringValue);
+            if (stringValue == "Infinity")
+                m_type = Type::Infinity;
+            else if (stringValue == "-Infinity")
+                m_type = Type::NegativeInfinity;
+            else if (stringValue == "NaN")
+                m_type = Type::NaN;
+            else
+                new (&m_stringValue) std::string(stringValue);
         }
 
         /*! Constructs a string Value. */
@@ -140,16 +161,80 @@ class LIBSCRATCHCPP_EXPORT Value
         Type type() const { return m_type; }
 
         /*! Returns true if the value is infinity. */
-        bool isInfinity() const { return m_type == Type::Infinity; }
+        bool isInfinity() const
+        {
+            switch (m_type) {
+                case Type::Infinity:
+                    return true;
+                case Type::Integer:
+                    return isInf(m_intValue);
+                case Type::Double:
+                    return isInf(m_doubleValue);
+                case Type::String:
+                    return m_stringValue == "Infinity";
+                default:
+                    return false;
+            }
+        }
 
         /*! Returns true if the value is negative infinity. */
-        bool isNegativeInfinity() const { return m_type == Type::NegativeInfinity; }
+        bool isNegativeInfinity() const
+        {
+            switch (m_type) {
+                case Type::NegativeInfinity:
+                    return true;
+                case Type::Integer:
+                    return isNegativeInf(-m_intValue);
+                case Type::Double:
+                    return isNegativeInf(-m_doubleValue);
+                case Type::String:
+                    return m_stringValue == "-Infinity";
+                default:
+                    return false;
+            }
+        }
 
         /*! Returns true if the value is NaN (Not a Number). */
-        bool isNaN() const { return m_type == Type::NaN; }
+        bool isNaN() const
+        {
+            switch (m_type) {
+                case Type::NaN:
+                    return true;
+                case Type::Double:
+                    assert(!std::isnan(m_doubleValue));
+                    return std::isnan(m_doubleValue);
+                case Type::String:
+                    return m_stringValue == "NaN";
+                default:
+                    return false;
+            }
+        }
 
         /*! Returns true if the value is a number. */
         bool isNumber() const { return m_type == Type::Integer || m_type == Type::Double; }
+
+        /*! Returns true if the value is a number or can be converted to a number. */
+        bool isValidNumber() const
+        {
+            if (isNaN())
+                return false;
+
+            if (isInfinity() || isNegativeInfinity())
+                return true;
+
+            assert(m_type != Type::Infinity && m_type != Type::NegativeInfinity);
+
+            switch (m_type) {
+                case Type::Integer:
+                case Type::Double:
+                case Type::Bool:
+                    return true;
+                case Type::String:
+                    return m_stringValue.empty() || checkString(m_stringValue) > 0;
+                default:
+                    return false;
+            }
+        }
 
         /*! Returns true if the value is a boolean. */
         bool isBool() const { return m_type == Type::Bool; }
@@ -163,16 +248,9 @@ class LIBSCRATCHCPP_EXPORT Value
         /*! Returns the long representation of the value. */
         long toLong() const
         {
-            if (static_cast<int>(m_type) < 0) {
-                switch (m_type) {
-                    case Type::Infinity:
-                        return std::numeric_limits<long>::infinity();
-                    case Type::NegativeInfinity:
-                        return -std::numeric_limits<long>::infinity();
-                    default:
-                        return 0;
-                }
-            } else {
+            if (static_cast<int>(m_type) < 0)
+                return 0;
+            else {
                 switch (m_type) {
                     case Type::Integer:
                         return m_intValue;
@@ -376,8 +454,17 @@ class LIBSCRATCHCPP_EXPORT Value
             if (m_type == Type::String)
                 m_stringValue.~basic_string();
 
-            m_type = Type::Double;
-            m_doubleValue = floatToDouble(v);
+            if (isInf(v))
+                m_type = Type::Infinity;
+            else if (isNegativeInf(v))
+                m_type = Type::NegativeInfinity;
+            else if (std::isnan(v))
+                m_type = Type::NaN;
+            else {
+                m_type = Type::Double;
+                m_doubleValue = floatToDouble(v);
+            }
+
             return *this;
         }
 
@@ -386,8 +473,16 @@ class LIBSCRATCHCPP_EXPORT Value
             if (m_type == Type::String)
                 m_stringValue.~basic_string();
 
-            m_type = Type::Double;
-            m_doubleValue = v;
+            if (isInf(v))
+                m_type = Type::Infinity;
+            else if (isNegativeInf(v))
+                m_type = Type::NegativeInfinity;
+            else if (std::isnan(v))
+                m_type = Type::NaN;
+            else {
+                m_type = Type::Double;
+                m_doubleValue = v;
+            }
             return *this;
         }
 
@@ -423,29 +518,32 @@ class LIBSCRATCHCPP_EXPORT Value
 
         const Value &operator=(const std::string &v)
         {
-            if (m_type == Type::String)
+            if (v == "Infinity") {
+                if (m_type == Type::String)
+                    m_stringValue.~basic_string();
+
+                m_type = Type::Infinity;
+            } else if (v == "-Infinity") {
+                if (m_type == Type::String)
+                    m_stringValue.~basic_string();
+
+                m_type = Type::NegativeInfinity;
+            } else if (v == "NaN") {
+                if (m_type == Type::String)
+                    m_stringValue.~basic_string();
+
+                m_type = Type::NaN;
+            } else if (m_type == Type::String)
                 m_stringValue = v;
             else {
                 new (&m_stringValue) std::string(v);
                 m_type = Type::String;
             }
 
-            initString(v);
             return *this;
         }
 
-        const Value &operator=(const char *v)
-        {
-            if (m_type == Type::String)
-                m_stringValue = v;
-            else {
-                new (&m_stringValue) std::string(v);
-                m_type = Type::String;
-            }
-
-            initString(v);
-            return *this;
-        }
+        const Value &operator=(const char *v) { return (*this = std::string(v)); }
 
         const Value &operator=(const Value &v)
         {
@@ -496,56 +594,19 @@ class LIBSCRATCHCPP_EXPORT Value
                 std::string m_stringValue;
         };
 
-        // -1 - error
         // 0 - is string
         // 1 - is long
         // 2 - is double
-        static int checkString(const std::string &str, long *longValue, double *doubleValue)
+        static int checkString(const std::string &str)
         {
-            if (!longValue || !doubleValue)
-                return -1;
-
             bool ok;
 
             if ((str.find_first_of('.') == std::string::npos) && (str.find_first_of('e') == std::string::npos) && (str.find_first_of('E') == std::string::npos)) {
-                *longValue = stringToLong(str, &ok);
+                stringToLong(str, &ok);
                 return ok ? 1 : 0;
             } else {
-                *doubleValue = stringToDouble(str, &ok);
+                stringToDouble(str, &ok);
                 return ok ? 2 : 0;
-            }
-        }
-
-        void initString(const std::string &str)
-        {
-            if (str.empty())
-                return;
-            else if (str == "Infinity") {
-                m_type = Type::Infinity;
-                return;
-            } else if (str == "-Infinity") {
-                m_type = Type::NegativeInfinity;
-                return;
-            } else if (str == "NaN") {
-                m_type = Type::NaN;
-                return;
-            }
-
-            long l;
-            double d;
-            int type = checkString(str, &l, &d);
-
-            switch (type) {
-                case 1:
-                    *this = l;
-                    m_type = Type::Integer;
-                    break;
-                case 2:
-                    *this = d;
-                    m_type = Type::Double;
-                    break;
-                default:
-                    break;
             }
         }
 
@@ -588,8 +649,6 @@ class LIBSCRATCHCPP_EXPORT Value
                     return 0;
             }
         }
-
-        void initString(const char *str) { initString(std::string(str)); }
 
         Type m_type;
 
@@ -922,7 +981,7 @@ class LIBSCRATCHCPP_EXPORT Value
                 }
             }
 
-            static const std::string digits = "0123456789+-";
+            static const std::string digits = "0123456789.eE+-";
 
             for (char c : s) {
                 if (digits.find(c) == std::string::npos) {
@@ -944,7 +1003,17 @@ class LIBSCRATCHCPP_EXPORT Value
         static std::string doubleToString(double v)
         {
             std::stringstream stream;
-            stream << std::setprecision(std::max(16u, digitCount(v))) << v;
+
+            if (v != 0) {
+                const int exponent = std::log10(std::abs(v));
+
+                if (exponent > 20)
+                    stream << std::scientific << std::setprecision(digitCount(v / std::pow(10, exponent + 1)) - 1) << v;
+                else
+                    stream << std::setprecision(std::max(16u, digitCount(v))) << v;
+            } else
+                stream << std::setprecision(std::max(16u, digitCount(v))) << v;
+
             std::string s = stream.str();
             std::size_t index;
 
@@ -988,6 +1057,18 @@ class LIBSCRATCHCPP_EXPORT Value
                 j++;
 
             return i + j;
+        }
+
+        template<typename T>
+        static bool isInf(T v)
+        {
+            return v > 0 && std::isinf(v);
+        }
+
+        template<typename T>
+        static bool isNegativeInf(T v)
+        {
+            return v < 0 && std::isinf(v);
         }
 };
 
