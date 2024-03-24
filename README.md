@@ -139,10 +139,9 @@ libscratchcpp::Project p("https://scratch.mit.edu/projects/XXXXXX");
 - [x] API for monitors
 - [x] Project metadata
 - [x] Turbo mode
-- [ ] Multithreading (experimental)
 - [x] Custom FPS in the default event loop (`libscratchcpp::Engine::run()`)
-- [ ] Scratch 2.0 to 3.0 converter (help needed)
-- [ ] Scratch 1.4 and below to 3.0 converter (help needed)
+- [ ] Scratch 2.0 project loader (help needed)
+- [ ] Scratch 1.4 and below project loader (help needed)
 - [x] API for comments
 - [x] API for loading projects from URL
 
