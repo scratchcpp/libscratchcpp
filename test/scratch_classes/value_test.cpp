@@ -14,6 +14,7 @@ TEST(ValueTest, DefaultConstructor)
     ASSERT_FALSE(v.isNaN());
     ASSERT_TRUE(v.isNumber());
     ASSERT_TRUE(v.isValidNumber());
+    ASSERT_TRUE(v.isInt());
     ASSERT_FALSE(v.isBool());
     ASSERT_FALSE(v.isString());
 }
@@ -29,6 +30,7 @@ TEST(ValueTest, FloatConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_TRUE(v.isNumber());
         ASSERT_TRUE(v.isValidNumber());
+        ASSERT_FALSE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_FALSE(v.isString());
     }
@@ -81,6 +83,21 @@ TEST(ValueTest, DoubleConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_TRUE(v.isNumber());
         ASSERT_TRUE(v.isValidNumber());
+        ASSERT_FALSE(v.isInt());
+        ASSERT_FALSE(v.isBool());
+        ASSERT_FALSE(v.isString());
+    }
+
+    {
+        Value v(static_cast<double>(-5.0));
+        ASSERT_EQ(v.toDouble(), -5.0);
+        ASSERT_EQ(v.type(), Value::Type::Double);
+        ASSERT_FALSE(v.isInfinity());
+        ASSERT_FALSE(v.isNegativeInfinity());
+        ASSERT_FALSE(v.isNaN());
+        ASSERT_TRUE(v.isNumber());
+        ASSERT_TRUE(v.isValidNumber());
+        ASSERT_TRUE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_FALSE(v.isString());
     }
@@ -132,6 +149,7 @@ TEST(ValueTest, IntConstructor)
     ASSERT_FALSE(v.isNaN());
     ASSERT_TRUE(v.isNumber());
     ASSERT_TRUE(v.isValidNumber());
+    ASSERT_TRUE(v.isInt());
     ASSERT_FALSE(v.isBool());
     ASSERT_FALSE(v.isString());
 }
@@ -146,6 +164,7 @@ TEST(ValueTest, SizeTConstructor)
     ASSERT_FALSE(v.isNaN());
     ASSERT_TRUE(v.isNumber());
     ASSERT_TRUE(v.isValidNumber());
+    ASSERT_TRUE(v.isInt());
     ASSERT_FALSE(v.isBool());
     ASSERT_FALSE(v.isString());
 }
@@ -160,6 +179,7 @@ TEST(ValueTest, LongConstructor)
     ASSERT_FALSE(v.isNaN());
     ASSERT_TRUE(v.isNumber());
     ASSERT_TRUE(v.isValidNumber());
+    ASSERT_TRUE(v.isInt());
     ASSERT_FALSE(v.isBool());
     ASSERT_FALSE(v.isString());
 }
@@ -175,6 +195,7 @@ TEST(ValueTest, BoolConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
         ASSERT_TRUE(v.isValidNumber());
+        ASSERT_TRUE(v.isInt());
         ASSERT_TRUE(v.isBool());
         ASSERT_FALSE(v.isString());
     }
@@ -188,6 +209,7 @@ TEST(ValueTest, BoolConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
         ASSERT_TRUE(v.isValidNumber());
+        ASSERT_TRUE(v.isInt());
         ASSERT_TRUE(v.isBool());
         ASSERT_FALSE(v.isString());
     }
@@ -204,6 +226,7 @@ TEST(ValueTest, StdStringConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
         ASSERT_FALSE(v.isValidNumber());
+        ASSERT_TRUE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_TRUE(v.isString());
     }
@@ -217,6 +240,7 @@ TEST(ValueTest, StdStringConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
         ASSERT_TRUE(v.isValidNumber());
+        ASSERT_TRUE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_TRUE(v.isString());
     }
@@ -231,6 +255,7 @@ TEST(ValueTest, StdStringConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
         ASSERT_TRUE(v.isValidNumber());
+        ASSERT_FALSE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_TRUE(v.isString());
     }
@@ -244,6 +269,7 @@ TEST(ValueTest, StdStringConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
         ASSERT_FALSE(v.isValidNumber());
+        ASSERT_TRUE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_TRUE(v.isString());
     }
@@ -258,6 +284,7 @@ TEST(ValueTest, StdStringConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
         ASSERT_TRUE(v.isValidNumber());
+        ASSERT_TRUE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_TRUE(v.isString());
     }
@@ -272,6 +299,7 @@ TEST(ValueTest, StdStringConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
         ASSERT_FALSE(v.isValidNumber());
+        ASSERT_TRUE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_TRUE(v.isString());
     }
@@ -324,6 +352,7 @@ TEST(ValueTest, CStringConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
         ASSERT_FALSE(v.isValidNumber());
+        ASSERT_TRUE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_TRUE(v.isString());
     }
@@ -374,6 +403,7 @@ TEST(ValueTest, InfinityConstructor)
     ASSERT_FALSE(v.isNaN());
     ASSERT_FALSE(v.isNumber());
     ASSERT_TRUE(v.isValidNumber());
+    ASSERT_TRUE(v.isInt());
     ASSERT_FALSE(v.isBool());
     ASSERT_FALSE(v.isString());
 }
@@ -387,6 +417,7 @@ TEST(ValueTest, NegativeInfinityConstructor)
     ASSERT_FALSE(v.isNaN());
     ASSERT_FALSE(v.isNumber());
     ASSERT_TRUE(v.isValidNumber());
+    ASSERT_TRUE(v.isInt());
     ASSERT_FALSE(v.isBool());
     ASSERT_FALSE(v.isString());
 }
@@ -400,6 +431,7 @@ TEST(ValueTest, NaNConstructor)
     ASSERT_TRUE(v.isNaN());
     ASSERT_FALSE(v.isNumber());
     ASSERT_FALSE(v.isValidNumber());
+    ASSERT_TRUE(v.isInt());
     ASSERT_FALSE(v.isBool());
     ASSERT_FALSE(v.isString());
 }

@@ -236,6 +236,29 @@ class LIBSCRATCHCPP_EXPORT Value
             }
         }
 
+        /*! Returns true if this value represents a round integer. */
+        bool isInt() const
+        {
+            // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L157-L181
+            switch (m_type) {
+                case Type::Integer:
+                case Type::Bool:
+                case Type::Infinity:
+                case Type::NegativeInfinity:
+                case Type::NaN:
+                    return true;
+                case Type::Double: {
+                    double intpart;
+                    std::modf(m_doubleValue, &intpart);
+                    return m_doubleValue == intpart;
+                }
+                case Type::String:
+                    return m_stringValue.find('.') == std::string::npos;
+            }
+
+            return false;
+        }
+
         /*! Returns true if the value is a boolean. */
         bool isBool() const { return m_type == Type::Bool; }
 
