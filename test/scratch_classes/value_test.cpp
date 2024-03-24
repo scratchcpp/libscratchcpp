@@ -2414,6 +2414,63 @@ TEST(ValueTest, EqualityOperators)
     {
         Value v1 = true;
         Value v2 = false;
+        Value v3 = "00001";
+        Value v4 = "00000";
+
+        ASSERT_TRUE(v1 == v3);
+        ASSERT_FALSE(v1 != v3);
+
+        ASSERT_FALSE(v1 == v4);
+        ASSERT_TRUE(v1 != v4);
+
+        ASSERT_TRUE(v2 == v4);
+        ASSERT_FALSE(v2 != v4);
+
+        ASSERT_FALSE(v2 == v3);
+        ASSERT_TRUE(v2 != v3);
+    }
+
+    {
+        Value v1 = "true";
+        Value v2 = "false";
+        Value v3 = 1;
+        Value v4 = 0;
+
+        ASSERT_FALSE(v1 == v3);
+        ASSERT_TRUE(v1 != v3);
+
+        ASSERT_FALSE(v1 == v4);
+        ASSERT_TRUE(v1 != v4);
+
+        ASSERT_FALSE(v2 == v4);
+        ASSERT_TRUE(v2 != v4);
+
+        ASSERT_FALSE(v2 == v3);
+        ASSERT_TRUE(v2 != v3);
+    }
+
+    {
+        Value v1 = "true";
+        Value v2 = "false";
+        Value v3 = "TRUE";
+        Value v4 = "FALSE";
+
+        ASSERT_TRUE(v1 == v3);
+        ASSERT_FALSE(v1 != v3);
+
+        ASSERT_FALSE(v1 == v4);
+        ASSERT_TRUE(v1 != v4);
+
+        ASSERT_TRUE(v2 == v4);
+        ASSERT_FALSE(v2 != v4);
+
+        ASSERT_FALSE(v2 == v3);
+        ASSERT_TRUE(v2 != v3);
+    }
+
+    {
+        Value v1 = true;
+        Value v2 = false;
         Value v3(Value::SpecialValue::Infinity);
         Value v4(Value::SpecialValue::NegativeInfinity);
         Value v5(Value::SpecialValue::NaN);
