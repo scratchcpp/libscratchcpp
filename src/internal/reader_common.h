@@ -15,8 +15,14 @@ Value jsonToValue(nlohmann::json value)
         return value.get<std::string>();
     else if (value.is_boolean())
         return value.get<bool>();
-    else
+    else if (value.is_number_integer() || value.is_number_unsigned())
+        return value.get<long>();
+    else if (value.is_number_float())
+        return value.get<double>();
+    else {
+        assert(!value.is_number());
         return value.dump();
+    }
 }
 
 } // namespace libscratchcpp

@@ -1469,6 +1469,7 @@ TEST_F(LooksBlocksTest, SwitchCostumeTo)
 
     // Test without any costumes first
     compiler.setBlock(block1);
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeTo)).WillOnce(Return(3));
     LooksBlocks::compileSwitchCostumeTo(&compiler);
 
     target.addCostume(std::make_shared<Costume>("costume1", "c1", "svg"));
@@ -1480,19 +1481,19 @@ TEST_F(LooksBlocksTest, SwitchCostumeTo)
 
     target.addCostume(std::make_shared<Costume>("costume3", "c3", "svg"));
 
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeTo)).WillOnce(Return(3));
     compiler.setBlock(block2);
     LooksBlocks::compileSwitchCostumeTo(&compiler);
 
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeTo)).WillOnce(Return(3));
     compiler.setBlock(block3);
     LooksBlocks::compileSwitchCostumeTo(&compiler);
 
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeTo)).WillOnce(Return(3));
     compiler.setBlock(block4);
     LooksBlocks::compileSwitchCostumeTo(&compiler);
 
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeTo)).WillOnce(Return(3));
     compiler.setBlock(block5);
     LooksBlocks::compileSwitchCostumeTo(&compiler);
 
@@ -1535,7 +1536,7 @@ TEST_F(LooksBlocksTest, SwitchCostumeTo)
               vm::OP_CONST,
               0,
               vm::OP_EXEC,
-              0,
+              3,
               vm::OP_CONST,
               1,
               vm::OP_EXEC,
@@ -1543,36 +1544,40 @@ TEST_F(LooksBlocksTest, SwitchCostumeTo)
               vm::OP_CONST,
               2,
               vm::OP_EXEC,
-              0,
+              3,
               vm::OP_CONST,
               3,
               vm::OP_EXEC,
-              0,
+              3,
               vm::OP_CONST,
               4,
               vm::OP_EXEC,
-              0,
+              3,
               vm::OP_CONST,
               5,
               vm::OP_EXEC,
-              0,
-              vm::OP_EXEC,
-              1,
+              3,
               vm::OP_CONST,
               6,
               vm::OP_EXEC,
               0,
               vm::OP_EXEC,
-              2,
+              1,
               vm::OP_CONST,
               7,
+              vm::OP_EXEC,
+              0,
+              vm::OP_EXEC,
+              2,
+              vm::OP_CONST,
+              8,
               vm::OP_EXEC,
               0,
               vm::OP_NULL,
               vm::OP_EXEC,
               3,
               vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 1, -1, 0, 1, 3, 3, 4, 5 }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "costume2", 1, "0", "1", "2", "4", 3, 4, 5 }));
 }
 
 TEST_F(LooksBlocksTest, SwitchCostumeToImpl)
@@ -1887,6 +1892,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropTo)
 
     // Test without any backdrops first
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropTo)).WillOnce(Return(4));
     compiler.setBlock(block1);
     LooksBlocks::compileSwitchBackdropTo(&compiler);
 
@@ -1901,22 +1907,22 @@ TEST_F(LooksBlocksTest, SwitchBackdropTo)
     stage.addCostume(std::make_shared<Costume>("backdrop3", "b3", "svg"));
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndex)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropTo)).WillOnce(Return(4));
     compiler.setBlock(block2);
     LooksBlocks::compileSwitchBackdropTo(&compiler);
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndex)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropTo)).WillOnce(Return(4));
     compiler.setBlock(block3);
     LooksBlocks::compileSwitchBackdropTo(&compiler);
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndex)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropTo)).WillOnce(Return(4));
     compiler.setBlock(block4);
     LooksBlocks::compileSwitchBackdropTo(&compiler);
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndex)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropTo)).WillOnce(Return(4));
     compiler.setBlock(block5);
     LooksBlocks::compileSwitchBackdropTo(&compiler);
 
@@ -1977,7 +1983,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropTo)
               vm::OP_CONST,
               0,
               vm::OP_EXEC,
-              0,
+              4,
               vm::OP_CONST,
               1,
               vm::OP_EXEC,
@@ -1985,42 +1991,46 @@ TEST_F(LooksBlocksTest, SwitchBackdropTo)
               vm::OP_CONST,
               2,
               vm::OP_EXEC,
-              0,
+              4,
               vm::OP_CONST,
               3,
               vm::OP_EXEC,
-              0,
+              4,
               vm::OP_CONST,
               4,
               vm::OP_EXEC,
-              0,
+              4,
               vm::OP_CONST,
               5,
               vm::OP_EXEC,
-              0,
-              vm::OP_EXEC,
-              1,
+              4,
               vm::OP_CONST,
               6,
               vm::OP_EXEC,
               0,
               vm::OP_EXEC,
-              2,
+              1,
               vm::OP_CONST,
               7,
               vm::OP_EXEC,
               0,
               vm::OP_EXEC,
-              3,
+              2,
               vm::OP_CONST,
               8,
+              vm::OP_EXEC,
+              0,
+              vm::OP_EXEC,
+              3,
+              vm::OP_CONST,
+              9,
               vm::OP_EXEC,
               0,
               vm::OP_NULL,
               vm::OP_EXEC,
               4,
               vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 1, -1, 0, 1, 3, 3, 4, 5, 6 }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "backdrop2", 1, "0", "1", "2", "4", 3, 4, 5, 6 }));
 }
 
 TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
@@ -2294,6 +2304,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWait)
 
     // Test without any backdrops first
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToAndWait)).WillOnce(Return(4));
     EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
     EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
     compiler.setBlock(block1);
@@ -2312,28 +2323,28 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWait)
     stage.addCostume(std::make_shared<Costume>("backdrop3", "b3", "svg"));
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndexAndWait)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToAndWait)).WillOnce(Return(4));
     EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
     EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
     compiler.setBlock(block2);
     LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndexAndWait)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToAndWait)).WillOnce(Return(4));
     EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
     EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
     compiler.setBlock(block3);
     LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndexAndWait)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToAndWait)).WillOnce(Return(4));
     EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
     EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
     compiler.setBlock(block4);
     LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
 
     EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndexAndWait)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToAndWait)).WillOnce(Return(4));
     EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
     EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
     compiler.setBlock(block5);
@@ -2409,14 +2420,10 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWait)
         compiler.bytecode(),
         std::vector<unsigned int>(
             { vm::OP_START,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
               vm::OP_CONST,
               0,
               vm::OP_EXEC,
-              0,
+              4,
               vm::OP_EXEC,
               6,
               vm::OP_EXEC,
@@ -2432,7 +2439,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWait)
               vm::OP_CONST,
               2,
               vm::OP_EXEC,
-              0,
+              4,
               vm::OP_EXEC,
               6,
               vm::OP_EXEC,
@@ -2440,7 +2447,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWait)
               vm::OP_CONST,
               3,
               vm::OP_EXEC,
-              0,
+              4,
               vm::OP_EXEC,
               6,
               vm::OP_EXEC,
@@ -2448,13 +2455,21 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWait)
               vm::OP_CONST,
               4,
               vm::OP_EXEC,
-              0,
+              4,
               vm::OP_EXEC,
               6,
               vm::OP_EXEC,
               5,
               vm::OP_CONST,
               5,
+              vm::OP_EXEC,
+              4,
+              vm::OP_EXEC,
+              6,
+              vm::OP_EXEC,
+              5,
+              vm::OP_CONST,
+              6,
               vm::OP_EXEC,
               0,
               vm::OP_EXEC,
@@ -2463,20 +2478,6 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWait)
               5,
               vm::OP_EXEC,
               1,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_CONST,
-              6,
-              vm::OP_EXEC,
-              0,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_EXEC,
-              2,
               vm::OP_EXEC,
               6,
               vm::OP_EXEC,
@@ -2490,13 +2491,27 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWait)
               vm::OP_EXEC,
               5,
               vm::OP_EXEC,
-              3,
+              2,
               vm::OP_EXEC,
               6,
               vm::OP_EXEC,
               5,
               vm::OP_CONST,
               8,
+              vm::OP_EXEC,
+              0,
+              vm::OP_EXEC,
+              6,
+              vm::OP_EXEC,
+              5,
+              vm::OP_EXEC,
+              3,
+              vm::OP_EXEC,
+              6,
+              vm::OP_EXEC,
+              5,
+              vm::OP_CONST,
+              9,
               vm::OP_EXEC,
               0,
               vm::OP_EXEC,
@@ -2511,7 +2526,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWait)
               vm::OP_EXEC,
               5,
               vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 1, -1, 0, 1, 3, 3, 4, 5, 6 }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "backdrop2", 1, "0", "1", "2", "4", 3, 4, 5, 6 }));
 }
 
 TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)

@@ -350,6 +350,9 @@ void LooksBlocks::compileSwitchCostumeTo(Compiler *compiler)
                 if (v.type() == Value::Type::Integer) {
                     compiler->addConstValue(v.toLong() - 1);
                     compiler->addFunctionCall(&switchCostumeToByIndex);
+                } else {
+                    compiler->addInput(input);
+                    compiler->addFunctionCall(&switchCostumeTo);
                 }
             }
         } else {
@@ -394,6 +397,9 @@ void LooksBlocks::compileSwitchBackdropTo(Compiler *compiler)
                 if (v.type() == Value::Type::Integer) {
                     compiler->addConstValue(v.toLong() - 1);
                     compiler->addFunctionCall(&switchBackdropToByIndex);
+                } else {
+                    compiler->addInput(input);
+                    compiler->addFunctionCall(&switchBackdropTo);
                 }
             }
         } else {
@@ -433,6 +439,9 @@ void LooksBlocks::compileSwitchBackdropToAndWait(Compiler *compiler)
                 if (v.type() == Value::Type::Integer) {
                     compiler->addConstValue(v.toLong() - 1);
                     compiler->addFunctionCall(&switchBackdropToByIndexAndWait);
+                } else {
+                    compiler->addInput(input);
+                    compiler->addFunctionCall(&switchBackdropToAndWait);
                 }
             }
         } else {
@@ -936,7 +945,7 @@ unsigned int LooksBlocks::switchCostumeTo(VirtualMachine *vm)
         else if (nameStr == "previous costume")
             previousCostume(vm);
         else {
-            if (name->type() == Value::Type::Integer)
+            if (name->isValidNumber())
                 setCostumeByIndex(target, name->toLong() - 1);
         }
     } else
@@ -994,7 +1003,7 @@ void LooksBlocks::switchBackdropToImpl(VirtualMachine *vm)
         else if (nameStr == "random backdrop") {
             randomBackdropImpl(vm);
         } else {
-            if (name->type() == Value::Type::Integer)
+            if (name->isValidNumber())
                 setCostumeByIndex(stage, name->toLong() - 1);
         }
     } else

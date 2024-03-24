@@ -74,8 +74,14 @@ std::string List::toString() const
     bool digits = true;
 
     for (const auto &item : *this) {
-        if (item.type() == Value::Type::Integer) {
+        if (item.isValidNumber() && !item.toString().empty()) {
+            double doubleNum = item.toDouble();
             long num = item.toLong();
+
+            if (doubleNum != num) {
+                digits = false;
+                break;
+            }
 
             if (num < 0 || num >= 10) {
                 digits = false;

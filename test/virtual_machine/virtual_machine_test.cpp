@@ -412,7 +412,11 @@ TEST(VirtualMachineTest, OP_RANDOM)
     static unsigned int bytecode2[] = { OP_START, OP_CONST, 1, OP_CONST, 2, OP_RANDOM, OP_HALT };
     static unsigned int bytecode3[] = { OP_START, OP_CONST, 3, OP_CONST, 0, OP_RANDOM, OP_HALT };
     static unsigned int bytecode4[] = { OP_START, OP_CONST, 2, OP_CONST, 3, OP_RANDOM, OP_HALT };
-    static Value constValues[] = { -45, 12, 6.05, -78.686 };
+    static unsigned int bytecode5[] = { OP_START, OP_CONST, 4, OP_CONST, 5, OP_RANDOM, OP_HALT };
+    static unsigned int bytecode6[] = { OP_START, OP_CONST, 5, OP_CONST, 6, OP_RANDOM, OP_HALT };
+    static unsigned int bytecode7[] = { OP_START, OP_CONST, 7, OP_CONST, 4, OP_RANDOM, OP_HALT };
+    static unsigned int bytecode8[] = { OP_START, OP_CONST, 6, OP_CONST, 7, OP_RANDOM, OP_HALT };
+    static Value constValues[] = { -45, 12, 6.05, -78.686, "-45", "12", "6.05", "-78.686" };
 
     VirtualMachinePrivate vm(nullptr, nullptr, nullptr, nullptr);
     vm.constValues = constValues;
@@ -450,6 +454,42 @@ TEST(VirtualMachineTest, OP_RANDOM)
     EXPECT_CALL(rng, randintDouble(6.05, -78.686)).WillOnce(Return(-28.648764));
     vm.bytecode = bytecode4;
     vm.pos = bytecode4;
+    vm.regCount = 0;
+    vm.run(vm.pos);
+
+    ASSERT_EQ(vm.regCount, 1);
+    ASSERT_EQ(vm.regs[vm.regCount - 1]->toDouble(), -28.648764);
+
+    EXPECT_CALL(rng, randint(-45, 12)).WillOnce(Return(-18));
+    vm.bytecode = bytecode5;
+    vm.pos = bytecode5;
+    vm.regCount = 0;
+    vm.run(vm.pos);
+
+    ASSERT_EQ(vm.regCount, 1);
+    ASSERT_EQ(vm.regs[vm.regCount - 1]->toDouble(), -18);
+
+    EXPECT_CALL(rng, randintDouble(12, 6.05)).WillOnce(Return(3.486789));
+    vm.bytecode = bytecode6;
+    vm.pos = bytecode6;
+    vm.regCount = 0;
+    vm.run(vm.pos);
+
+    ASSERT_EQ(vm.regCount, 1);
+    ASSERT_EQ(vm.regs[vm.regCount - 1]->toDouble(), 3.486789);
+
+    EXPECT_CALL(rng, randintDouble(-78.686, -45)).WillOnce(Return(-59.468873));
+    vm.bytecode = bytecode7;
+    vm.pos = bytecode7;
+    vm.regCount = 0;
+    vm.run(vm.pos);
+
+    ASSERT_EQ(vm.regCount, 1);
+    ASSERT_EQ(vm.regs[vm.regCount - 1]->toDouble(), -59.468873);
+
+    EXPECT_CALL(rng, randintDouble(6.05, -78.686)).WillOnce(Return(-28.648764));
+    vm.bytecode = bytecode8;
+    vm.pos = bytecode8;
     vm.regCount = 0;
     vm.run(vm.pos);
 
@@ -955,7 +995,7 @@ TEST(VirtualMachineTest, OP_LIST_DEL)
         0,        OP_CONST, 9,  OP_LIST_DEL, 0, OP_READ_LIST, 0, OP_CONST, 10, OP_LIST_DEL, 0, OP_READ_LIST, 0, OP_CONST, 11, OP_LIST_DEL, 0, OP_READ_LIST,
         0,        OP_CONST, 12, OP_LIST_DEL, 0, OP_READ_LIST, 0, OP_CONST, 13, OP_LIST_DEL, 0, OP_READ_LIST, 0, OP_HALT
     };
-    static Value constValues[] = { 3, 1, 6, 0, 7, -1, 9, Value::SpecialValue::NegativeInfinity, Value::SpecialValue::Infinity, Value::SpecialValue::NaN, "invalid", "last", "random", "all" };
+    static Value constValues[] = { 3, 1, "6", 0, 7, -1, 9, Value::SpecialValue::NegativeInfinity, Value::SpecialValue::Infinity, Value::SpecialValue::NaN, "invalid", "last", "random", "all" };
     List list1("", "list1");
     list1.push_back("a");
     list1.push_back("b");
@@ -1027,7 +1067,7 @@ TEST(VirtualMachineTest, OP_LIST_INSERT)
         0,        OP_CONST,       0,  OP_CONST,       10, OP_LIST_INSERT, 0, OP_READ_LIST,   0, OP_CONST,       0,  OP_CONST,       11, OP_LIST_INSERT, 0, OP_READ_LIST,   0, OP_CONST,
         0,        OP_CONST,       12, OP_LIST_INSERT, 0,  OP_READ_LIST,   0, OP_CONST,       0, OP_CONST,       13, OP_LIST_INSERT, 0,  OP_READ_LIST,   0, OP_HALT
     };
-    static Value constValues[] = { "new item", 3, 1, 10, 0, 12, -1, 14, Value::SpecialValue::NegativeInfinity, Value::SpecialValue::Infinity, Value::SpecialValue::NaN, "last", "random", "invalid" };
+    static Value constValues[] = { "new item", "3", 1, 10, 0, 12, -1, 14, Value::SpecialValue::NegativeInfinity, Value::SpecialValue::Infinity, Value::SpecialValue::NaN, "last", "random", "invalid" };
     List list1("", "list1");
     list1.push_back("a");
     list1.push_back("b");
@@ -1079,7 +1119,7 @@ TEST(VirtualMachineTest, OP_LIST_REPLACE)
         12,       OP_CONST,        14, OP_LIST_REPLACE, 0, OP_READ_LIST,    0, OP_CONST,        13, OP_CONST,        0,  OP_LIST_REPLACE, 0,  OP_READ_LIST,    0, OP_HALT
     };
     static Value constValues[] = {
-        "new item", 3, 1, 8, 0, 9, -1, 12, Value::SpecialValue::NegativeInfinity, Value::SpecialValue::Infinity, Value::SpecialValue::NaN, "last", "random", "invalid", "test"
+        "new item", 3, "1", 8, 0, 9, -1, 12, Value::SpecialValue::NegativeInfinity, Value::SpecialValue::Infinity, Value::SpecialValue::NaN, "last", "random", "invalid", "test"
     };
     List list1("", "list1");
     list1.push_back("a");
@@ -1128,7 +1168,7 @@ TEST(VirtualMachineTest, OP_LIST_GET_ITEM)
         0,        OP_CONST, 5,  OP_LIST_GET_ITEM, 0, OP_CONST, 6,  OP_LIST_GET_ITEM, 0, OP_CONST, 7,  OP_LIST_GET_ITEM, 0, OP_CONST, 8, OP_LIST_GET_ITEM, 0, OP_CONST, 9, OP_LIST_GET_ITEM,
         0,        OP_CONST, 10, OP_LIST_GET_ITEM, 0, OP_CONST, 11, OP_LIST_GET_ITEM, 0, OP_CONST, 12, OP_LIST_GET_ITEM, 0, OP_HALT
     };
-    static Value constValues[] = { 3, 1, 8, 0, 9, -1, 12, Value::SpecialValue::NegativeInfinity, Value::SpecialValue::Infinity, Value::SpecialValue::NaN, "last", "random", "invalid" };
+    static Value constValues[] = { 3, 1, "8", 0, 9, -1, 12, Value::SpecialValue::NegativeInfinity, Value::SpecialValue::Infinity, Value::SpecialValue::NaN, "last", "random", "invalid" };
     List list1("", "list1");
     list1.push_back("a");
     list1.push_back("b");

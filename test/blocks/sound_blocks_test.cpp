@@ -172,7 +172,6 @@ TEST_F(SoundBlocksTest, Play)
     SoundBlocks::compilePlay(&compiler);
 
     EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::playByIndex)).Times(0);
-    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::play)).Times(0);
     compiler.setBlock(block5);
     SoundBlocks::compilePlay(&compiler);
 

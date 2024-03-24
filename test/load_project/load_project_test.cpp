@@ -757,5 +757,5 @@ TEST(LoadProjectTest, LoadScientificNotationNumber)
     ASSERT_EQ(GET_VAR(stage, "test1")->value().toDouble(), 5000);
 
     ASSERT_VAR(stage, "test2");
-    ASSERT_EQ(GET_VAR(stage, "test2")->value().toDouble(), 0);
+    ASSERT_EQ(GET_VAR(stage, "test2")->value().toDouble(), 4e-323);
 }
