@@ -438,7 +438,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
     DISPATCH();
 
     OP(RANDOM) :
-        if ((READ_REG(0, 2)->type() == Value::Type::Integer) && (READ_REG(1, 2)->type() == Value::Type::Integer)) REPLACE_RET_VALUE(rng->randint(READ_REG(0, 2)->toInt(), READ_REG(1, 2)->toInt()), 2);
+        if (READ_REG(0, 2)->isInt() && READ_REG(1, 2)->isInt()) REPLACE_RET_VALUE(rng->randint(READ_REG(0, 2)->toInt(), READ_REG(1, 2)->toInt()), 2);
     else REPLACE_RET_VALUE(rng->randintDouble(READ_REG(0, 2)->toDouble(), READ_REG(1, 2)->toDouble()), 2);
     FREE_REGS(1);
     DISPATCH();
@@ -621,7 +621,10 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
         const Value *indexValue = READ_LAST_REG();
         size_t index;
         List *list = lists[*++pos];
-        if (indexValue->isString()) {
+        if (indexValue->isValidNumber()) {
+            index = indexValue->toLong();
+            FIX_LIST_INDEX(index, list->size());
+        } else {
             const std::string &str = indexValue->toString();
             if (str == "last") {
                 index = list->size();
@@ -633,9 +636,6 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
                 index = size == 0 ? 0 : rng->randint(1, size);
             } else
                 index = 0;
-        } else {
-            index = indexValue->toLong();
-            FIX_LIST_INDEX(index, list->size());
         }
         if (index != 0)
             list->removeAt(index - 1);
@@ -652,7 +652,10 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
         const Value *indexValue = READ_REG(1, 2);
         size_t index;
         List *list = lists[*++pos];
-        if (indexValue->isString()) {
+        if (indexValue->isValidNumber()) {
+            index = indexValue->toLong();
+            FIX_LIST_INDEX(index, list->size());
+        } else {
             const std::string &str = indexValue->toString();
             if (str == "last") {
                 list->push_back(*READ_REG(0, 2));
@@ -662,9 +665,6 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
                 index = size == 0 ? 1 : rng->randint(1, size);
             } else
                 index = 0;
-        } else {
-            index = indexValue->toLong();
-            FIX_LIST_INDEX(index, list->size());
         }
         if ((index != 0) || list->empty()) {
             if (list->empty())
@@ -681,7 +681,10 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
         const Value *indexValue = READ_REG(0, 2);
         size_t index;
         List *list = lists[*++pos];
-        if (indexValue->isString()) {
+        if (indexValue->isValidNumber()) {
+            index = indexValue->toLong();
+            FIX_LIST_INDEX(index, list->size());
+        } else {
             std::string str = indexValue->toString();
             if (str == "last")
                 index = list->size();
@@ -690,9 +693,6 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
                 index = size == 0 ? 0 : rng->randint(1, size);
             } else
                 index = 0;
-        } else {
-            index = indexValue->toLong();
-            FIX_LIST_INDEX(index, list->size());
         }
         if (index != 0)
             list->operator[](index - 1) = *READ_REG(1, 2);
@@ -705,7 +705,10 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
         const Value *indexValue = READ_LAST_REG();
         size_t index;
         List *list = lists[*++pos];
-        if (indexValue->isString()) {
+        if (indexValue->isValidNumber()) {
+            index = indexValue->toLong();
+            FIX_LIST_INDEX(index, list->size());
+        } else {
             std::string str = indexValue->toString();
             if (str == "last")
                 index = list->size();
@@ -714,9 +717,6 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
                 index = size == 0 ? 0 : rng->randint(1, size);
             } else
                 index = 0;
-        } else {
-            index = indexValue->toLong();
-            FIX_LIST_INDEX(index, list->size());
         }
         if (index == 0) {
             REPLACE_RET_VALUE("", 1);
