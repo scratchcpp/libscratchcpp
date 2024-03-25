@@ -606,17 +606,17 @@ TEST(TargetTest, BubbleText)
 
     // longstr.length = 384, should be limited to 330 in bubble text
     std::string longstr =
-        "EY8OUNzAqwgh7NRGk5TzCP3dkAhJy9TX
-        Y9mqKElPjdQpKddYqjyCwUk2hx6YgVZV
-        6BOdmZGxDMs8Hjv8W9G6j4gTxAWdOkzs
-        8Ih80xzEDbvLilWsDwoB6FxH2kVVI4xs
-        IXOETNQ6QMsCKLWc5XjHk2BS9nYvDGpJ
-        uEmp9zIzFGT1kRSrOlU3ZwnN1YtvqFx
-        3hkWVNtJ71dQ0PJHhOVQPUy19V01SPu3
-        KIIS2wdSUVAc4RYMzepSveghzWbdcizy
-        Tm1KKAj4svu9YoL8b9vsolG8gKunvKO7
-        MurRKSeUbECELnJEKV6683xCq7RvmjAu
-        2djZ54apiQc1lTixWns5GoG0SVNuFzHl
+        "EY8OUNzAqwgh7NRGk5TzCP3dkAhJy9TX \
+        Y9mqKElPjdQpKddYqjyCwUk2hx6YgVZV \
+        6BOdmZGxDMs8Hjv8W9G6j4gTxAWdOkzs \
+        8Ih80xzEDbvLilWsDwoB6FxH2kVVI4xs \
+        IXOETNQ6QMsCKLWc5XjHk2BS9nYvDGpJ \
+        uEmp9zIzFGT1kRSrOlU3ZwnN1YtvqFx \
+        3hkWVNtJ71dQ0PJHhOVQPUy19V01SPu3 \
+        KIIS2wdSUVAc4RYMzepSveghzWbdcizy \
+        Tm1KKAj4svu9YoL8b9vsolG8gKunvKO7 \
+        MurRKSeUbECELnJEKV6683xCq7RvmjAu \
+        2djZ54apiQc1lTixWns5GoG0SVNuFzHl \
         q97qUiqiMecjVFM51YVif7c1Stip52Hl";
 
     target.setBubbleText(longstr);
