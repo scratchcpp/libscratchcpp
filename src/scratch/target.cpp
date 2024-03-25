@@ -431,6 +431,22 @@ Rect Target::fastBoundingRect() const
     return Rect();
 }
 
+/*! Returns true if the target is touching the edge. */
+bool Target::touchingEdge() const
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/8dbcc1fc8f8d8c4f1e40629fe8a388149d6dfd1c/src/sprites/rendered-target.js#L772-L785
+    if (impl->engine) {
+        const double stageWidth = impl->engine->stageWidth();
+        const double stageHeight = impl->engine->stageHeight();
+        Rect bounds = boundingRect();
+
+        if ((bounds.left() < -stageWidth / 2) || (bounds.right() > stageWidth / 2) || (bounds.top() > stageHeight / 2) || (bounds.bottom() < -stageHeight / 2))
+            return true;
+    }
+
+    return false;
+}
+
 /*! Returns the value of the given graphics effect. */
 double Target::graphicsEffectValue(IGraphicsEffect *effect) const
 {
