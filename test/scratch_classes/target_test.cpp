@@ -621,7 +621,7 @@ TEST(TargetTest, BubbleText)
 
     target.setBubbleText(longstr);
     ASSERT_EQ(target.bubbleText().length(), 330);
-    ASSERT_EQ(target.bubbleText(), longstr.substr(0, 330))
+    ASSERT_EQ(target.bubbleText(), longstr.substr(0, 330));
 }
 
 TEST(TargetTest, Engine)
