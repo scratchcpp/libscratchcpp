@@ -52,6 +52,9 @@ class LIBSCRATCHCPP_EXPORT IStageHandler
          * which is calculated by transforming the costume rectangle.
          */
         virtual Rect fastBoundingRect() const = 0;
+
+        /*! Used to check whether the stage touches the given point (in Scratch coordinates). */
+        virtual bool touchingPoint(double x, double y) const = 0;
 };
 
 } // namespace libscratchcpp

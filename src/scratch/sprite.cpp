@@ -406,6 +406,15 @@ void Sprite::keepInFence(double newX, double newY, double *fencedX, double *fenc
     *fencedY = newY + dy;
 }
 
+/*! Overrides Target#touchingPoint(). */
+bool Sprite::touchingPoint(double x, double y) const
+{
+    if (!impl->iface)
+        return false;
+
+    return impl->iface->touchingPoint(x, y);
+}
+
 /*! Overrides Target#setGraphicsEffectValue(). */
 void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 {

@@ -149,6 +149,15 @@ Rect Stage::fastBoundingRect() const
     return impl->iface->fastBoundingRect();
 }
 
+/*! Overrides Target#touchingPoint(). */
+bool Stage::touchingPoint(double x, double y) const
+{
+    if (!impl->iface)
+        return false;
+
+    return impl->iface->touchingPoint(x, y);
+}
+
 /*! Overrides Target#setGraphicsEffectValue(). */
 void Stage::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 {

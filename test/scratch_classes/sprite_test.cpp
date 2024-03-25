@@ -614,6 +614,22 @@ TEST(SpriteTest, DefaultFastBoundingRect)
     ASSERT_EQ(rect.bottom(), -45.01);
 }
 
+TEST(SpriteTest, TouchingPoint)
+{
+    Sprite sprite;
+    ASSERT_FALSE(sprite.touchingPoint(0, 0));
+
+    SpriteHandlerMock iface;
+    EXPECT_CALL(iface, init);
+    sprite.setInterface(&iface);
+
+    EXPECT_CALL(iface, touchingPoint(51.4, -74.05)).WillOnce(Return(false));
+    ASSERT_FALSE(sprite.touchingPoint(51.4, -74.05));
+
+    EXPECT_CALL(iface, touchingPoint(-12.46, 120.72)).WillOnce(Return(true));
+    ASSERT_TRUE(sprite.touchingPoint(-12.46, 120.72));
+}
+
 TEST(SpriteTest, GraphicsEffects)
 {
     Sprite sprite;

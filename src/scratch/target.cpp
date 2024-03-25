@@ -431,6 +431,12 @@ Rect Target::fastBoundingRect() const
     return Rect();
 }
 
+/*! Returns true if the Target is touching the given point (in Scratch coordinates). */
+bool Target::touchingPoint(double x, double y) const
+{
+    return false;
+}
+
 /*! Returns true if the target is touching the edge. */
 bool Target::touchingEdge() const
 {

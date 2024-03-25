@@ -582,6 +582,12 @@ TEST(TargetTest, FastBoundingRect)
     ASSERT_EQ(rect.bottom(), 0);
 }
 
+TEST(TargetTest, TouchingPoint)
+{
+    Target target;
+    ASSERT_FALSE(target.touchingPoint(0, 0));
+}
+
 TEST(TargetTest, TouchingEdge)
 {
     Target target;

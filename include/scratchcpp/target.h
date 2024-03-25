@@ -88,6 +88,7 @@ class LIBSCRATCHCPP_EXPORT Target
         virtual Rect boundingRect() const;
         virtual Rect fastBoundingRect() const;
 
+        virtual bool touchingPoint(double x, double y) const;
         bool touchingEdge() const;
 
         double graphicsEffectValue(IGraphicsEffect *effect) const;

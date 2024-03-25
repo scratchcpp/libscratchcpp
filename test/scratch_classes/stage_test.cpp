@@ -8,6 +8,8 @@
 
 using namespace libscratchcpp;
 
+using ::testing::Return;
+
 TEST(StageTest, IsStage)
 {
     Stage stage;
@@ -137,6 +139,22 @@ TEST(StageTest, DefaultFastBoundingRect)
     ASSERT_EQ(rect.top(), 0);
     ASSERT_EQ(rect.right(), 0);
     ASSERT_EQ(rect.bottom(), 0);
+}
+
+TEST(StageTest, TouchingPoint)
+{
+    Stage stage;
+    ASSERT_FALSE(stage.touchingPoint(0, 0));
+
+    StageHandlerMock iface;
+    EXPECT_CALL(iface, init);
+    stage.setInterface(&iface);
+
+    EXPECT_CALL(iface, touchingPoint(51.4, -74.05)).WillOnce(Return(false));
+    ASSERT_FALSE(stage.touchingPoint(51.4, -74.05));
+
+    EXPECT_CALL(iface, touchingPoint(-12.46, 120.72)).WillOnce(Return(true));
+    ASSERT_TRUE(stage.touchingPoint(-12.46, 120.72));
 }
 
 TEST(StageTest, GraphicsEffects)
