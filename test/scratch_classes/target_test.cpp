@@ -617,10 +617,10 @@ TEST(TargetTest, BubbleText)
         Tm1KKAj4svu9YoL8b9vsolG8gKunvKO7
         MurRKSeUbECELnJEKV6683xCq7RvmjAu
         2djZ54apiQc1lTixWns5GoG0SVNuFzHl
-        q97qUiqiMecjVFM51YVif7c1Stip52Hl"
+        q97qUiqiMecjVFM51YVif7c1Stip52Hl";
 
-    target.setBubbleText(longstr)
-    ASSERT_EQ(target.bubbleText().length(), 330)
+    target.setBubbleText(longstr);
+    ASSERT_EQ(target.bubbleText().length(), 330);
 }
 
 TEST(TargetTest, Engine)
