@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/target.h>
+#include <scratchcpp/sprite.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/block.h>
@@ -429,6 +430,28 @@ Rect Target::boundingRect() const
 Rect Target::fastBoundingRect() const
 {
     return Rect();
+}
+
+/*! Returns true if the Target is touching the given Sprite (or its clones). */
+bool Target::touchingSprite(Sprite *sprite) const
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/8dbcc1fc8f8d8c4f1e40629fe8a388149d6dfd1c/src/sprites/rendered-target.js#L792-L805
+    if (!sprite)
+        return false;
+
+    Sprite *firstClone = sprite->isClone() ? sprite->cloneSprite() : sprite;
+    assert(firstClone);
+    std::vector<Sprite *> clones;
+
+    if (true) // TODO: Filter clones that are being dragged, including firstClone
+        clones.push_back(firstClone);
+
+    for (auto clone : firstClone->clones()) {
+        if (true) // TODO: Filter clones that are being dragged
+            clones.push_back(clone.get());
+    }
+
+    return touchingClones(clones);
 }
 
 /*! Returns true if the Target is touching the given point (in Scratch coordinates). */

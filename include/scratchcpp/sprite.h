@@ -83,6 +83,7 @@ class LIBSCRATCHCPP_EXPORT Sprite
 
     private:
         Target *dataSource() const override;
+        bool touchingClones(const std::vector<Sprite *> &clones) const override;
         void setXY(double x, double y);
 
         spimpl::unique_impl_ptr<SpritePrivate> impl;

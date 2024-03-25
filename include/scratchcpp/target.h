@@ -18,6 +18,7 @@ class Block;
 class Comment;
 class Costume;
 class Sound;
+class Sprite;
 class IGraphicsEffect;
 class TargetPrivate;
 
@@ -88,6 +89,7 @@ class LIBSCRATCHCPP_EXPORT Target
         virtual Rect boundingRect() const;
         virtual Rect fastBoundingRect() const;
 
+        bool touchingSprite(Sprite *sprite) const;
         virtual bool touchingPoint(double x, double y) const;
         bool touchingEdge() const;
 
@@ -108,6 +110,9 @@ class LIBSCRATCHCPP_EXPORT Target
     protected:
         /*! Override this method to set a custom data source for blocks, assets, comments, etc. */
         virtual Target *dataSource() const { return nullptr; }
+
+        /*! Override this method to check whether the target touches the given sprite clones. */
+        virtual bool touchingClones(const std::vector<Sprite *> &clones) const { return false; }
 
     private:
         spimpl::unique_impl_ptr<TargetPrivate> impl;

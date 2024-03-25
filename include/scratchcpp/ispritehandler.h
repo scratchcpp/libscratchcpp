@@ -78,6 +78,9 @@ class LIBSCRATCHCPP_EXPORT ISpriteHandler
          */
         virtual Rect fastBoundingRect() const = 0;
 
+        /*! Used to check whether the sprite touches any of the given sprite clones. */
+        virtual bool touchingClones(const std::vector<Sprite *> &clones) const = 0;
+
         /*! Used to check whether the sprite touches the given point (in Scratch coordinates). */
         virtual bool touchingPoint(double x, double y) const = 0;
 };

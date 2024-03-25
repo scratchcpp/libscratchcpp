@@ -1,14 +1,19 @@
 #include <scratchcpp/stage.h>
+#include <scratchcpp/sprite.h>
 #include <scratchcpp/costume.h>
 #include <enginemock.h>
 #include <graphicseffectmock.h>
 #include <stagehandlermock.h>
+#include <targetmock.h>
 
 #include "../common.h"
 
 using namespace libscratchcpp;
 
 using ::testing::Return;
+using ::testing::WithArgs;
+using ::testing::Invoke;
+using ::testing::_;
 
 TEST(StageTest, IsStage)
 {
@@ -139,6 +144,39 @@ TEST(StageTest, DefaultFastBoundingRect)
     ASSERT_EQ(rect.top(), 0);
     ASSERT_EQ(rect.right(), 0);
     ASSERT_EQ(rect.bottom(), 0);
+}
+
+TEST(StageTest, TouchingSprite)
+{
+    Stage stage;
+    Sprite another;
+    EngineMock engine;
+    another.setEngine(&engine);
+    ASSERT_FALSE(stage.touchingSprite(nullptr));
+
+    StageHandlerMock iface;
+    EXPECT_CALL(iface, init);
+    stage.setInterface(&iface);
+
+    EXPECT_CALL(engine, cloneLimit()).WillRepeatedly(Return(-1));
+    EXPECT_CALL(engine, initClone).Times(3);
+    EXPECT_CALL(engine, requestRedraw).Times(3);
+    EXPECT_CALL(engine, moveSpriteBehindOther).Times(3);
+    auto clone1 = another.clone();
+    auto clone2 = another.clone();
+    auto clone3 = another.clone();
+    std::vector<Sprite *> clones = { &another, clone1.get(), clone2.get(), clone3.get() };
+    std::vector<Sprite *> actualClones;
+
+    EXPECT_CALL(iface, touchingClones(_)).WillOnce(WithArgs<0>(Invoke([&clones, &actualClones](const std::vector<Sprite *> &candidates) {
+        actualClones = candidates;
+        return false;
+    })));
+    ASSERT_FALSE(stage.touchingSprite(&another));
+    ASSERT_EQ(clones, actualClones);
+
+    EXPECT_CALL(iface, touchingClones).WillOnce(Return(true));
+    ASSERT_TRUE(stage.touchingSprite(&another));
 }
 
 TEST(StageTest, TouchingPoint)

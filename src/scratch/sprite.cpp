@@ -477,6 +477,14 @@ Target *Sprite::dataSource() const
     return impl->cloneSprite;
 }
 
+bool Sprite::touchingClones(const std::vector<Sprite *> &clones) const
+{
+    if (!impl->iface)
+        return false;
+
+    return impl->iface->touchingClones(clones);
+}
+
 void Sprite::setXY(double x, double y)
 {
     IEngine *eng = engine();

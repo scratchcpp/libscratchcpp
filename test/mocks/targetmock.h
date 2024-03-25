@@ -27,4 +27,6 @@ class TargetMock : public Target
         MOCK_METHOD(Target *, dataSource, (), (const, override));
 
         Target *dataSourceBase() const { return Target::dataSource(); };
+
+        MOCK_METHOD(bool, touchingClones, (const std::vector<Sprite *> &), (const, override));
 };

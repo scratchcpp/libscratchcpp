@@ -61,6 +61,8 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
         virtual void setBubbleText(const std::string &text) override;
 
     private:
+        bool touchingClones(const std::vector<Sprite *> &clones) const override;
+
         spimpl::unique_impl_ptr<StagePrivate> impl;
 };
 

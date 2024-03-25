@@ -208,3 +208,11 @@ void Stage::setBubbleText(const std::string &text)
     if (impl->iface)
         impl->iface->onBubbleTextChanged(text);
 }
+
+bool Stage::touchingClones(const std::vector<Sprite *> &clones) const
+{
+    if (!impl->iface)
+        return false;
+
+    return impl->iface->touchingClones(clones);
+}
