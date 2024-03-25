@@ -131,6 +131,24 @@ void Stage::setTextToSpeechLanguage(const std::string &newTextToSpeechLanguage)
     impl->textToSpeechLanguage = newTextToSpeechLanguage;
 }
 
+/*! Overrides Target#boundingRect(). */
+Rect Stage::boundingRect() const
+{
+    if (!impl->iface)
+        return Rect();
+
+    return impl->iface->boundingRect();
+}
+
+/*! Overrides Target#boundingRect(). */
+Rect Stage::fastBoundingRect() const
+{
+    if (!impl->iface)
+        return Rect();
+
+    return impl->iface->fastBoundingRect();
+}
+
 /*! Overrides Target#setGraphicsEffectValue(). */
 void Stage::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 {

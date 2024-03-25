@@ -560,6 +560,26 @@ TEST(TargetTest, Volume)
     SoundPrivate::audioOutput = nullptr;
 }
 
+TEST(TargetTest, BoundingRect)
+{
+    Target target;
+    Rect rect = target.boundingRect();
+    ASSERT_EQ(rect.left(), 0);
+    ASSERT_EQ(rect.top(), 0);
+    ASSERT_EQ(rect.right(), 0);
+    ASSERT_EQ(rect.bottom(), 0);
+}
+
+TEST(TargetTest, FastBoundingRect)
+{
+    Target target;
+    Rect rect = target.fastBoundingRect();
+    ASSERT_EQ(rect.left(), 0);
+    ASSERT_EQ(rect.top(), 0);
+    ASSERT_EQ(rect.right(), 0);
+    ASSERT_EQ(rect.bottom(), 0);
+}
+
 TEST(TargetTest, GraphicsEffects)
 {
     Target target;

@@ -119,6 +119,26 @@ TEST(StageTest, TextToSpeechLanguage)
     ASSERT_EQ(stage.textToSpeechLanguage(), "English");
 }
 
+TEST(StageTest, DefaultBoundingRect)
+{
+    Stage stage;
+    Rect rect = stage.boundingRect();
+    ASSERT_EQ(rect.left(), 0);
+    ASSERT_EQ(rect.top(), 0);
+    ASSERT_EQ(rect.right(), 0);
+    ASSERT_EQ(rect.bottom(), 0);
+}
+
+TEST(StageTest, DefaultFastBoundingRect)
+{
+    Stage stage;
+    Rect rect = stage.fastBoundingRect();
+    ASSERT_EQ(rect.left(), 0);
+    ASSERT_EQ(rect.top(), 0);
+    ASSERT_EQ(rect.right(), 0);
+    ASSERT_EQ(rect.bottom(), 0);
+}
+
 TEST(StageTest, GraphicsEffects)
 {
     Stage stage;

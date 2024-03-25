@@ -8,6 +8,8 @@
 
 using namespace libscratchcpp;
 
+using ::testing::Return;
+
 class IStageHandlerTest : public testing::Test
 {
     public:
@@ -81,4 +83,24 @@ TEST_F(IStageHandlerTest, BubbleText)
     EXPECT_CALL(m_handler, onBubbleTextChanged("test"));
     EXPECT_CALL(m_engine, requestRedraw());
     m_stage.setBubbleText("test");
+}
+
+TEST_F(IStageHandlerTest, BoundingRect)
+{
+    EXPECT_CALL(m_handler, boundingRect()).WillOnce(Return(Rect(-44.6, 89.1, 20.5, -0.48)));
+    Rect rect = m_stage.boundingRect();
+    ASSERT_EQ(rect.left(), -44.6);
+    ASSERT_EQ(rect.top(), 89.1);
+    ASSERT_EQ(rect.right(), 20.5);
+    ASSERT_EQ(rect.bottom(), -0.48);
+}
+
+TEST_F(IStageHandlerTest, FastBoundingRect)
+{
+    EXPECT_CALL(m_handler, fastBoundingRect()).WillOnce(Return(Rect(-44.6, 89.1, 20.5, -0.48)));
+    Rect rect = m_stage.fastBoundingRect();
+    ASSERT_EQ(rect.left(), -44.6);
+    ASSERT_EQ(rect.top(), 89.1);
+    ASSERT_EQ(rect.right(), 20.5);
+    ASSERT_EQ(rect.bottom(), -0.48);
 }

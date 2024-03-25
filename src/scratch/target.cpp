@@ -416,6 +416,21 @@ void Target::setVolume(double newVolume)
     }
 }
 
+/*! Returns the bounding rectangle of the sprite. */
+Rect Target::boundingRect() const
+{
+    return Rect();
+}
+
+/*!
+ * Returns the less accurate bounding rectangle of the sprite
+ * which is calculated by transforming the costume rectangle.
+ */
+Rect Target::fastBoundingRect() const
+{
+    return Rect();
+}
+
 /*! Returns the value of the given graphics effect. */
 double Target::graphicsEffectValue(IGraphicsEffect *effect) const
 {

@@ -48,6 +48,9 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
         const std::string &textToSpeechLanguage() const;
         void setTextToSpeechLanguage(const std::string &newTextToSpeechLanguage);
 
+        Rect boundingRect() const override;
+        Rect fastBoundingRect() const override;
+
         void setGraphicsEffectValue(IGraphicsEffect *effect, double value) override;
 
         void clearGraphicsEffects() override;

@@ -341,7 +341,7 @@ void Sprite::setLayerOrder(int newLayerOrder)
         impl->iface->onLayerOrderChanged(newLayerOrder);
 }
 
-/*! Returns the bounding rectangle of the sprite. */
+/*! Overrides Target#boundingRect(). */
 Rect Sprite::boundingRect() const
 {
     if (!impl->iface)
@@ -350,10 +350,7 @@ Rect Sprite::boundingRect() const
     return impl->iface->boundingRect();
 }
 
-/*!
- * Returns the less accurate bounding rectangle of the sprite
- * which is calculated by transforming the costume rectangle.
- */
+/*! Overrides Target#fastBoundingRect(). */
 Rect Sprite::fastBoundingRect() const
 {
     if (!impl->iface)

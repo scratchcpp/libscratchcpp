@@ -6,6 +6,7 @@
 
 #include "global.h"
 #include "spimpl.h"
+#include "rect.h"
 
 namespace libscratchcpp
 {
@@ -83,6 +84,9 @@ class LIBSCRATCHCPP_EXPORT Target
 
         double volume() const;
         void setVolume(double newVolume);
+
+        virtual Rect boundingRect() const;
+        virtual Rect fastBoundingRect() const;
 
         double graphicsEffectValue(IGraphicsEffect *effect) const;
         virtual void setGraphicsEffectValue(IGraphicsEffect *effect, double value);
