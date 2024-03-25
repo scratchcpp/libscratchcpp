@@ -21,7 +21,7 @@ TEST(StageTest, IsStage)
     ASSERT_TRUE(stage.isStage());
 }
 
-TEST(SpriteTest, Interface)
+TEST(StageTest, Interface)
 {
     Stage stage;
     ASSERT_EQ(stage.getInterface(), nullptr);
@@ -32,7 +32,7 @@ TEST(SpriteTest, Interface)
     ASSERT_EQ(stage.getInterface(), &handler);
 }
 
-TEST(SpriteTest, CostumeIndex)
+TEST(StageTest, CostumeIndex)
 {
     Stage stage;
     EngineMock engine;
