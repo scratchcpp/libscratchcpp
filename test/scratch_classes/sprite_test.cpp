@@ -649,6 +649,30 @@ TEST(SpriteTest, TouchingSprite)
 
     EXPECT_CALL(iface, touchingClones).WillOnce(Return(true));
     ASSERT_TRUE(sprite.touchingSprite(&another));
+
+    SpriteHandlerMock iface2;
+    EXPECT_CALL(iface2, init);
+    another.setInterface(&iface2);
+    clones.erase(clones.begin()); // the sprite cannot touch itself
+
+    EXPECT_CALL(iface2, touchingClones(_)).WillOnce(WithArgs<0>(Invoke([&clones, &actualClones](const std::vector<Sprite *> &candidates) {
+        actualClones = candidates;
+        return false;
+    })));
+    ASSERT_FALSE(another.touchingSprite(&another));
+    ASSERT_EQ(clones, actualClones);
+    clones.insert(clones.begin(), &another);
+
+    SpriteHandlerMock iface3;
+    EXPECT_CALL(iface3, init);
+    clone2->setInterface(&iface3);
+    clones.erase(clones.begin() + 2); // the clone cannot touch itself, but can touch the sprite (clone root)
+    EXPECT_CALL(iface3, touchingClones(_)).WillOnce(WithArgs<0>(Invoke([&clones, &actualClones](const std::vector<Sprite *> &candidates) {
+        actualClones = candidates;
+        return false;
+    })));
+    ASSERT_FALSE(clone2->touchingSprite(clone2.get()));
+    ASSERT_EQ(clones, actualClones);
 }
 
 TEST(SpriteTest, TouchingPoint)
