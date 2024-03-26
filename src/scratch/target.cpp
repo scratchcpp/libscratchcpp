@@ -466,7 +466,8 @@ const std::string &Target::bubbleText() const
  */
 void Target::setBubbleText(const std::string &text)
 {
-    impl->bubbleText = text;
+    size_t limit = 330;
+    impl->bubbleText = text.substr(0, limit);
 }
 
 /*! Returns the engine. */
