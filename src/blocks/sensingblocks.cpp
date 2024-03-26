@@ -30,6 +30,7 @@ std::string SensingBlocks::name() const
 void SensingBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks
+    engine->addCompileFunction(this, "sensing_touchingobject", &compileTouchingObject);
     engine->addCompileFunction(this, "sensing_distanceto", &compileDistanceTo);
     engine->addCompileFunction(this, "sensing_askandwait", &compileAskAndWait);
     engine->addCompileFunction(this, "sensing_answer", &compileAnswer);
@@ -56,6 +57,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addMonitorNameFunction(this, "sensing_dayssince2000", &daysSince2000MonitorName);
 
     // Inputs
+    engine->addInput(this, "TOUCHINGOBJECTMENU", TOUCHINGOBJECTMENU);
     engine->addInput(this, "DISTANCETOMENU", DISTANCETOMENU);
     engine->addInput(this, "QUESTION", QUESTION);
     engine->addInput(this, "KEY_OPTION", KEY_OPTION);
@@ -89,6 +91,29 @@ void SensingBlocks::registerBlocks(IEngine *engine)
 
     // Callbacks
     engine->questionAnswered().connect(&onAnswer);
+}
+
+void SensingBlocks::compileTouchingObject(Compiler *compiler)
+{
+    Input *input = compiler->input(TOUCHINGOBJECTMENU);
+
+    if (input->type() != Input::Type::ObscuredShadow) {
+        assert(input->pointsToDropdownMenu());
+        std::string value = input->selectedMenuItem();
+
+        if (value == "_mouse_")
+            compiler->addFunctionCall(&touchingMousePointer);
+        else if (value == "_edge_")
+            compiler->addFunctionCall(&touchingEdge);
+        else {
+            int index = compiler->engine()->findTarget(value);
+            compiler->addConstValue(index);
+            compiler->addFunctionCall(&touchingObjectByIndex);
+        }
+    } else {
+        compiler->addInput(input);
+        compiler->addFunctionCall(&touchingObject);
+    }
 }
 
 void SensingBlocks::compileDistanceTo(Compiler *compiler)
@@ -433,6 +458,41 @@ const std::string &SensingBlocks::daysSince2000MonitorName(Block *block)
 {
     static const std::string name = "days since 2000";
     return name;
+}
+
+unsigned int SensingBlocks::touchingObject(VirtualMachine *vm)
+{
+    std::string value = vm->getInput(0, 1)->toString();
+
+    if (value == "_mouse_")
+        vm->replaceReturnValue(vm->target()->touchingPoint(vm->engine()->mouseX(), vm->engine()->mouseY()), 1);
+    else if (value == "_edge_")
+        vm->replaceReturnValue(vm->target()->touchingEdge(), 1);
+    else {
+        Target *target = vm->engine()->targetAt(vm->engine()->findTarget(value));
+        vm->replaceReturnValue(touchingObjectCommon(vm->target(), target), 1);
+    }
+
+    return 0;
+}
+
+unsigned int SensingBlocks::touchingObjectByIndex(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
+    vm->replaceReturnValue(touchingObjectCommon(vm->target(), target), 1);
+    return 0;
+}
+
+unsigned int SensingBlocks::touchingMousePointer(VirtualMachine *vm)
+{
+    vm->addReturnValue(vm->target()->touchingPoint(vm->engine()->mouseX(), vm->engine()->mouseY()));
+    return 0;
+}
+
+unsigned int SensingBlocks::touchingEdge(VirtualMachine *vm)
+{
+    vm->addReturnValue(vm->target()->touchingEdge());
+    return 0;
 }
 
 unsigned int SensingBlocks::keyPressed(VirtualMachine *vm)
@@ -919,6 +979,14 @@ unsigned int SensingBlocks::daysSince2000(VirtualMachine *vm)
     vm->addReturnValue(ms / 86400000.0 - 10957);
 
     return 0;
+}
+
+bool SensingBlocks::touchingObjectCommon(Target *source, Target *target)
+{
+    if (source && target && !target->isStage())
+        return source->touchingSprite(static_cast<Sprite *>(target));
+
+    return false;
 }
 
 void SensingBlocks::enqueueAsk(const std::string &question, VirtualMachine *vm)

@@ -8,6 +8,8 @@
 namespace libscratchcpp
 {
 
+class Sprite;
+
 /*! \brief The IStageHandler class provides a stage interface for Scratch project players. */
 class LIBSCRATCHCPP_EXPORT IStageHandler
 {
@@ -43,6 +45,21 @@ class LIBSCRATCHCPP_EXPORT IStageHandler
 
         /*! Called when the bubble text changes. */
         virtual void onBubbleTextChanged(const std::string &text) = 0;
+
+        /*! Used to get the bounding rectangle of the stage. */
+        virtual Rect boundingRect() const = 0;
+
+        /*!
+         * Used to get a less accurate bounding rectangle of the stage
+         * which is calculated by transforming the costume rectangle.
+         */
+        virtual Rect fastBoundingRect() const = 0;
+
+        /*! Used to check whether the stage touches any of the given sprite clones. */
+        virtual bool touchingClones(const std::vector<Sprite *> &clones) const = 0;
+
+        /*! Used to check whether the stage touches the given point (in Scratch coordinates). */
+        virtual bool touchingPoint(double x, double y) const = 0;
 };
 
 } // namespace libscratchcpp

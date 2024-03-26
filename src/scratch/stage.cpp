@@ -131,6 +131,33 @@ void Stage::setTextToSpeechLanguage(const std::string &newTextToSpeechLanguage)
     impl->textToSpeechLanguage = newTextToSpeechLanguage;
 }
 
+/*! Overrides Target#boundingRect(). */
+Rect Stage::boundingRect() const
+{
+    if (!impl->iface)
+        return Rect();
+
+    return impl->iface->boundingRect();
+}
+
+/*! Overrides Target#boundingRect(). */
+Rect Stage::fastBoundingRect() const
+{
+    if (!impl->iface)
+        return Rect();
+
+    return impl->iface->fastBoundingRect();
+}
+
+/*! Overrides Target#touchingPoint(). */
+bool Stage::touchingPoint(double x, double y) const
+{
+    if (!impl->iface)
+        return false;
+
+    return impl->iface->touchingPoint(x, y);
+}
+
 /*! Overrides Target#setGraphicsEffectValue(). */
 void Stage::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 {
@@ -180,4 +207,12 @@ void Stage::setBubbleText(const std::string &text)
 
     if (impl->iface)
         impl->iface->onBubbleTextChanged(text);
+}
+
+bool Stage::touchingClones(const std::vector<Sprite *> &clones) const
+{
+    if (!impl->iface)
+        return false;
+
+    return impl->iface->touchingClones(clones);
 }

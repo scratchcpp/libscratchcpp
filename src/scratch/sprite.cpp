@@ -341,7 +341,7 @@ void Sprite::setLayerOrder(int newLayerOrder)
         impl->iface->onLayerOrderChanged(newLayerOrder);
 }
 
-/*! Returns the bounding rectangle of the sprite. */
+/*! Overrides Target#boundingRect(). */
 Rect Sprite::boundingRect() const
 {
     if (!impl->iface)
@@ -350,10 +350,7 @@ Rect Sprite::boundingRect() const
     return impl->iface->boundingRect();
 }
 
-/*!
- * Returns the less accurate bounding rectangle of the sprite
- * which is calculated by transforming the costume rectangle.
- */
+/*! Overrides Target#fastBoundingRect(). */
 Rect Sprite::fastBoundingRect() const
 {
     if (!impl->iface)
@@ -407,6 +404,15 @@ void Sprite::keepInFence(double newX, double newY, double *fencedX, double *fenc
 
     *fencedX = newX + dx;
     *fencedY = newY + dy;
+}
+
+/*! Overrides Target#touchingPoint(). */
+bool Sprite::touchingPoint(double x, double y) const
+{
+    if (!impl->iface)
+        return false;
+
+    return impl->iface->touchingPoint(x, y);
 }
 
 /*! Overrides Target#setGraphicsEffectValue(). */
@@ -469,6 +475,14 @@ void Sprite::setBubbleText(const std::string &text)
 Target *Sprite::dataSource() const
 {
     return impl->cloneSprite;
+}
+
+bool Sprite::touchingClones(const std::vector<Sprite *> &clones) const
+{
+    if (!impl->iface)
+        return false;
+
+    return impl->iface->touchingClones(clones);
 }
 
 void Sprite::setXY(double x, double y)

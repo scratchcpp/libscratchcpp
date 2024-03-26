@@ -1,4 +1,5 @@
 #include <scratchcpp/target.h>
+#include <scratchcpp/sprite.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/block.h>
@@ -8,6 +9,7 @@
 #include <scratch/sound_p.h>
 #include <enginemock.h>
 #include <targetmock.h>
+#include <spritehandlermock.h>
 #include <graphicseffectmock.h>
 #include <audiooutputmock.h>
 #include <audioplayermock.h>
@@ -17,6 +19,9 @@
 using namespace libscratchcpp;
 
 using ::testing::Return;
+using ::testing::WithArgs;
+using ::testing::Invoke;
+using ::testing::_;
 
 TEST(TargetTest, IsStage)
 {
@@ -558,6 +563,110 @@ TEST(TargetTest, Volume)
     target.setVolume(-0.5);
 
     SoundPrivate::audioOutput = nullptr;
+}
+
+TEST(TargetTest, BoundingRect)
+{
+    Target target;
+    Rect rect = target.boundingRect();
+    ASSERT_EQ(rect.left(), 0);
+    ASSERT_EQ(rect.top(), 0);
+    ASSERT_EQ(rect.right(), 0);
+    ASSERT_EQ(rect.bottom(), 0);
+}
+
+TEST(TargetTest, FastBoundingRect)
+{
+    Target target;
+    Rect rect = target.fastBoundingRect();
+    ASSERT_EQ(rect.left(), 0);
+    ASSERT_EQ(rect.top(), 0);
+    ASSERT_EQ(rect.right(), 0);
+    ASSERT_EQ(rect.bottom(), 0);
+}
+
+TEST(TargetTest, TouchingSprite)
+{
+    TargetMock target;
+    Sprite sprite;
+    EngineMock engine;
+    sprite.setEngine(&engine);
+    ASSERT_FALSE(target.touchingSprite(nullptr));
+
+    EXPECT_CALL(engine, cloneLimit()).WillRepeatedly(Return(-1));
+    EXPECT_CALL(engine, initClone).Times(3);
+    EXPECT_CALL(engine, requestRedraw).Times(3);
+    EXPECT_CALL(engine, moveSpriteBehindOther).Times(3);
+    auto clone1 = sprite.clone();
+    auto clone2 = sprite.clone();
+    auto clone3 = sprite.clone();
+    std::vector<Sprite *> clones = { &sprite, clone1.get(), clone2.get(), clone3.get() };
+    std::vector<Sprite *> actualClones;
+
+    EXPECT_CALL(target, touchingClones(_)).WillOnce(WithArgs<0>(Invoke([&clones, &actualClones](const std::vector<Sprite *> &candidates) {
+        actualClones = candidates;
+        return false;
+    })));
+    ASSERT_FALSE(target.touchingSprite(&sprite));
+    ASSERT_EQ(clones, actualClones);
+
+    EXPECT_CALL(target, touchingClones).WillOnce(Return(true));
+    ASSERT_TRUE(target.touchingSprite(&sprite));
+
+    EXPECT_CALL(target, touchingClones(_)).WillOnce(WithArgs<0>(Invoke([&clones, &actualClones](const std::vector<Sprite *> &candidates) {
+        actualClones = candidates;
+        return true;
+    })));
+    ASSERT_TRUE(target.touchingSprite(clone2.get()));
+    ASSERT_EQ(clones, actualClones);
+}
+
+TEST(TargetTest, TouchingPoint)
+{
+    Target target;
+    ASSERT_FALSE(target.touchingPoint(0, 0));
+}
+
+TEST(TargetTest, TouchingEdge)
+{
+    Target target;
+    EngineMock engine;
+    EXPECT_CALL(engine, stageWidth()).WillRepeatedly(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillRepeatedly(Return(360));
+    ASSERT_FALSE(target.touchingEdge());
+    target.setEngine(&engine);
+    ASSERT_FALSE(target.touchingEdge());
+
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    ASSERT_FALSE(sprite.touchingEdge());
+
+    SpriteHandlerMock iface;
+    EXPECT_CALL(iface, init);
+    sprite.setInterface(&iface);
+
+    EXPECT_CALL(iface, boundingRect).WillOnce(Return(Rect(-100, 100, 100, -100)));
+    ASSERT_FALSE(sprite.touchingEdge());
+    EXPECT_CALL(iface, boundingRect).WillOnce(Return(Rect(-240, 100, 100, -100)));
+    ASSERT_FALSE(sprite.touchingEdge());
+    EXPECT_CALL(iface, boundingRect).WillOnce(Return(Rect(-240.1, 100, 100, -100)));
+    ASSERT_TRUE(sprite.touchingEdge());
+    EXPECT_CALL(iface, boundingRect).WillOnce(Return(Rect(-240, 180, 100, -100)));
+    ASSERT_FALSE(sprite.touchingEdge());
+    EXPECT_CALL(iface, boundingRect).WillOnce(Return(Rect(-240, 180.1, 100, -100)));
+    ASSERT_TRUE(sprite.touchingEdge());
+    EXPECT_CALL(iface, boundingRect).WillOnce(Return(Rect(-240, 180, 240, -100)));
+    ASSERT_FALSE(sprite.touchingEdge());
+    EXPECT_CALL(iface, boundingRect).WillOnce(Return(Rect(-240, 180, 240.1, -100)));
+    ASSERT_TRUE(sprite.touchingEdge());
+    EXPECT_CALL(iface, boundingRect).WillOnce(Return(Rect(-240, 180, 240, -180)));
+    ASSERT_FALSE(sprite.touchingEdge());
+    EXPECT_CALL(iface, boundingRect).WillOnce(Return(Rect(-240, 180, 240, -180.1)));
+    ASSERT_TRUE(sprite.touchingEdge());
+    EXPECT_CALL(iface, boundingRect).WillOnce(Return(Rect(-242, 183, 240, -100)));
+    ASSERT_TRUE(sprite.touchingEdge());
+    EXPECT_CALL(iface, boundingRect).WillOnce(Return(Rect(-242, 183, 280, -690)));
+    ASSERT_TRUE(sprite.touchingEdge());
 }
 
 TEST(TargetTest, GraphicsEffects)

@@ -8,7 +8,6 @@ namespace libscratchcpp
 {
 
 class ISpriteHandler;
-class Rect;
 class IGraphicsEffect;
 class SpritePrivate;
 
@@ -69,9 +68,11 @@ class LIBSCRATCHCPP_EXPORT Sprite
 
         void setLayerOrder(int newLayerOrder) override;
 
-        Rect boundingRect() const;
-        Rect fastBoundingRect() const;
+        Rect boundingRect() const override;
+        Rect fastBoundingRect() const override;
         void keepInFence(double newX, double newY, double *fencedX, double *fencedY) const;
+
+        bool touchingPoint(double x, double y) const override;
 
         void setGraphicsEffectValue(IGraphicsEffect *effect, double value) override;
 
@@ -82,6 +83,7 @@ class LIBSCRATCHCPP_EXPORT Sprite
 
     private:
         Target *dataSource() const override;
+        bool touchingClones(const std::vector<Sprite *> &clones) const override;
         void setXY(double x, double y);
 
         spimpl::unique_impl_ptr<SpritePrivate> impl;
