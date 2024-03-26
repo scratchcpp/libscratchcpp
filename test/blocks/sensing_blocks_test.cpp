@@ -11,6 +11,7 @@
 #include <clockmock.h>
 #include <audioinputmock.h>
 #include <audioloudnessmock.h>
+#include <targetmock.h>
 
 #include "../common.h"
 #include "blocks/sensingblocks.h"
@@ -115,6 +116,7 @@ TEST_F(SensingBlocksTest, CategoryVisible)
 TEST_F(SensingBlocksTest, RegisterBlocks)
 {
     // Blocks
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_touchingobject", &SensingBlocks::compileTouchingObject));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_distanceto", &SensingBlocks::compileDistanceTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_askandwait", &SensingBlocks::compileAskAndWait));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_answer", &SensingBlocks::compileAnswer));
@@ -141,6 +143,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_dayssince2000", &SensingBlocks::daysSince2000MonitorName));
 
     // Inputs
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TOUCHINGOBJECTMENU", SensingBlocks::TOUCHINGOBJECTMENU));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "QUESTION", SensingBlocks::QUESTION));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "KEY_OPTION", SensingBlocks::KEY_OPTION));
@@ -180,6 +183,192 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
 
     ASSERT_EQ(questionAnswered.slot_count(), 1);
     ASSERT_EQ(questionAnswered.disconnect(&SensingBlocks::onAnswer), 1);
+}
+
+TEST_F(SensingBlocksTest, TouchingObject)
+{
+    Compiler compiler(&m_engineMock);
+
+    // touching (Sprite2)
+    auto block1 = std::make_shared<Block>("a", "sensing_touchingobject");
+    addDropdownInput(block1, "TOUCHINGOBJECTMENU", SensingBlocks::TOUCHINGOBJECTMENU, "Sprite2");
+
+    // touching (mouse-pointer)
+    auto block2 = std::make_shared<Block>("b", "sensing_touchingobject");
+    addDropdownInput(block2, "TOUCHINGOBJECTMENU", SensingBlocks::TOUCHINGOBJECTMENU, "_mouse_");
+
+    // touching (edge)
+    auto block3 = std::make_shared<Block>("c", "sensing_touchingobject");
+    addDropdownInput(block3, "TOUCHINGOBJECTMENU", SensingBlocks::TOUCHINGOBJECTMENU, "_edge_");
+
+    // touching (null block)
+    auto block4 = std::make_shared<Block>("d", "sensing_distanceto");
+    addDropdownInput(block4, "TOUCHINGOBJECTMENU", SensingBlocks::TOUCHINGOBJECTMENU, "", createNullBlock("e"));
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(5));
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::touchingObjectByIndex)).WillOnce(Return(0));
+    compiler.setBlock(block1);
+    SensingBlocks::compileTouchingObject(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::touchingMousePointer)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    SensingBlocks::compileTouchingObject(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::touchingEdge)).WillOnce(Return(2));
+    compiler.setBlock(block3);
+    SensingBlocks::compileTouchingObject(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::touchingObject)).WillOnce(Return(3));
+    compiler.setBlock(block4);
+    SensingBlocks::compileTouchingObject(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_NULL, vm::OP_EXEC, 3, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toDouble(), 5);
+}
+
+TEST_F(SensingBlocksTest, TouchingObjectImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 1, vm::OP_HALT };
+    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_EXEC, 3, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::touchingObject, &SensingBlocks::touchingObjectByIndex, &SensingBlocks::touchingMousePointer, &SensingBlocks::touchingEdge };
+    static Value constValues[] = { "Sprite2", "_mouse_", "_edge_", "", 1, -1, 2 };
+
+    TargetMock target;
+    target.setEngine(&m_engineMock);
+    Sprite sprite;
+    VirtualMachine vm(&target, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    // touching "Sprite2"
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&sprite));
+    EXPECT_CALL(target, touchingClones).WillOnce(Return(false));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&sprite));
+    EXPECT_CALL(target, touchingClones).WillOnce(Return(true));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+
+    // touching "_mouse_"
+    EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(24.5));
+    EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(-16.04));
+    EXPECT_CALL(target, touchingPoint(24.5, -16.04)).WillOnce(Return(true));
+    vm.setBytecode(bytecode2);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+
+    // touching "_edge_"
+    EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(0));
+    EXPECT_CALL(target, boundingRect()).WillOnce(Return(Rect(-5, 5, 5, -5)));
+    vm.setBytecode(bytecode3);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(10));
+    EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(10));
+    EXPECT_CALL(target, boundingRect()).WillOnce(Return(Rect(-5, 5, 5, -5)));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    // touching ""
+    EXPECT_CALL(m_engineMock, findTarget("")).WillOnce(Return(-1));
+    EXPECT_CALL(m_engineMock, targetAt(-1)).WillOnce(Return(nullptr));
+    vm.setBytecode(bytecode4);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    // touching Sprite2
+    EXPECT_CALL(m_engineMock, targetAt(1)).WillOnce(Return(&sprite));
+    EXPECT_CALL(target, touchingClones).WillOnce(Return(false));
+    vm.setBytecode(bytecode5);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    // touching (invalid)
+    EXPECT_CALL(m_engineMock, targetAt(-1)).WillOnce(Return(nullptr));
+    vm.setBytecode(bytecode6);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(m_engineMock, targetAt(2)).WillOnce(Return(nullptr));
+    vm.setBytecode(bytecode7);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    // touching mouse-pointer
+    EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(168.087));
+    EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(175.908));
+    EXPECT_CALL(target, touchingPoint(168.087, 175.908)).WillOnce(Return(true));
+    vm.setBytecode(bytecode8);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+
+    // touching edge
+    EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(0));
+    EXPECT_CALL(target, boundingRect()).WillOnce(Return(Rect(-5, 5, 5, -5)));
+    vm.setBytecode(bytecode9);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(10));
+    EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(10));
+    EXPECT_CALL(target, boundingRect()).WillOnce(Return(Rect(-5, 5, 5, -5)));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
 }
 
 TEST_F(SensingBlocksTest, DistanceTo)

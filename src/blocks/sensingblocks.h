@@ -20,6 +20,7 @@ class SensingBlocks : public IBlockSection
     public:
         enum Inputs
         {
+            TOUCHINGOBJECTMENU,
             DISTANCETOMENU,
             QUESTION,
             KEY_OPTION,
@@ -59,6 +60,7 @@ class SensingBlocks : public IBlockSection
 
         void registerBlocks(IEngine *engine) override;
 
+        static void compileTouchingObject(Compiler *compiler);
         static void compileDistanceTo(Compiler *compiler);
         static void compileAskAndWait(Compiler *compiler);
         static void compileAnswer(Compiler *compiler);
@@ -82,6 +84,11 @@ class SensingBlocks : public IBlockSection
         static const std::string &timerMonitorName(Block *block);
         static const std::string &currentMonitorName(Block *block);
         static const std::string &daysSince2000MonitorName(Block *block);
+
+        static unsigned int touchingObject(VirtualMachine *vm);
+        static unsigned int touchingObjectByIndex(VirtualMachine *vm);
+        static unsigned int touchingMousePointer(VirtualMachine *vm);
+        static unsigned int touchingEdge(VirtualMachine *vm);
 
         static unsigned int keyPressed(VirtualMachine *vm);
         static unsigned int mouseDown(VirtualMachine *vm);
@@ -153,6 +160,8 @@ class SensingBlocks : public IBlockSection
                 bool wasVisible = false;
                 bool wasStage = false;
         };
+
+        static bool touchingObjectCommon(Target *source, Target *target);
 
         static void enqueueAsk(const std::string &question, VirtualMachine *vm);
         static void askNextQuestion();
