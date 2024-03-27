@@ -673,6 +673,18 @@ TEST(SpriteTest, TouchingSprite)
     })));
     ASSERT_FALSE(clone2->touchingSprite(clone2.get()));
     ASSERT_EQ(clones, actualClones);
+
+    // If the sprite is invisible, it cannot touch anything
+    EXPECT_CALL(iface, onVisibleChanged).Times(2);
+    sprite.setVisible(false);
+    EXPECT_CALL(iface, touchingClones).Times(0);
+    ASSERT_FALSE(sprite.touchingSprite(&another));
+
+    sprite.setVisible(true);
+    EXPECT_CALL(iface3, onVisibleChanged);
+    clone2->setVisible(false);
+    EXPECT_CALL(iface, touchingClones).Times(0);
+    ASSERT_FALSE(clone2->touchingSprite(&another));
 }
 
 TEST(SpriteTest, TouchingPoint)

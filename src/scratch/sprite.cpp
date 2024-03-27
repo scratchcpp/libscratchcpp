@@ -479,7 +479,7 @@ Target *Sprite::dataSource() const
 
 bool Sprite::touchingClones(const std::vector<Sprite *> &clones) const
 {
-    if (!impl->iface)
+    if (!impl->iface || !impl->visible) // If the sprite invisible, it cannot touch anything
         return false;
 
     return impl->iface->touchingClones(clones);

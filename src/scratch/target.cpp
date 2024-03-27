@@ -443,11 +443,11 @@ bool Target::touchingSprite(Sprite *sprite) const
     assert(firstClone);
     std::vector<Sprite *> clones;
 
-    if (firstClone != this) // TODO: Filter clones that are being dragged, including firstClone
+    if (firstClone != this && firstClone->visible()) // TODO: Filter clones that are being dragged, including firstClone
         clones.push_back(firstClone);
 
     for (auto clone : firstClone->clones()) {
-        if (clone.get() != this) // TODO: Filter clones that are being dragged
+        if (clone.get() != this && clone->visible()) // TODO: Filter clones that are being dragged
             clones.push_back(clone.get());
     }
 

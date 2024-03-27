@@ -619,6 +619,39 @@ TEST(TargetTest, TouchingSprite)
     })));
     ASSERT_TRUE(target.touchingSprite(clone2.get()));
     ASSERT_EQ(clones, actualClones);
+
+    // Pass an invisible sprite
+    clone2->setVisible(false);
+    clones.erase(clones.begin() + 2);
+    EXPECT_CALL(target, touchingClones(_)).WillOnce(WithArgs<0>(Invoke([&clones, &actualClones](const std::vector<Sprite *> &candidates) {
+        actualClones = candidates;
+        return true;
+    })));
+    ASSERT_TRUE(target.touchingSprite(clone2.get()));
+    ASSERT_EQ(clones, actualClones);
+
+    EXPECT_CALL(target, touchingClones(_)).WillOnce(WithArgs<0>(Invoke([&clones, &actualClones](const std::vector<Sprite *> &candidates) {
+        actualClones = candidates;
+        return true;
+    })));
+    ASSERT_TRUE(target.touchingSprite(&sprite));
+    ASSERT_EQ(clones, actualClones);
+
+    sprite.setVisible(false);
+    clones.erase(clones.begin());
+    EXPECT_CALL(target, touchingClones(_)).WillOnce(WithArgs<0>(Invoke([&clones, &actualClones](const std::vector<Sprite *> &candidates) {
+        actualClones = candidates;
+        return true;
+    })));
+    ASSERT_TRUE(target.touchingSprite(clone3.get()));
+    ASSERT_EQ(clones, actualClones);
+
+    EXPECT_CALL(target, touchingClones(_)).WillOnce(WithArgs<0>(Invoke([&clones, &actualClones](const std::vector<Sprite *> &candidates) {
+        actualClones = candidates;
+        return true;
+    })));
+    ASSERT_TRUE(target.touchingSprite(&sprite));
+    ASSERT_EQ(clones, actualClones);
 }
 
 TEST(TargetTest, TouchingPoint)
