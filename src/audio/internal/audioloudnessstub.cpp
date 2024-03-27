@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "audioloudness.h"
+#include "audioloudnessstub.h"
 
 using namespace libscratchcpp;
 
-AudioLoudness::AudioLoudness()
+AudioLoudnessStub::AudioLoudnessStub()
 {
 }
 
-int AudioLoudness::getLoudness() const
+int AudioLoudnessStub::getLoudness() const
 {
     return -1;
 }

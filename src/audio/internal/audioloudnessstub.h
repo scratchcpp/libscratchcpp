@@ -7,10 +7,10 @@
 namespace libscratchcpp
 {
 
-class AudioLoudness : public IAudioLoudness
+class AudioLoudnessStub : public IAudioLoudness
 {
     public:
-        AudioLoudness();
+        AudioLoudnessStub();
 
         int getLoudness() const override;
 };

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "iaudioplayer.h"
+#include "../iaudioplayer.h"
 
 namespace libscratchcpp
 {
