@@ -202,7 +202,7 @@ TEST_F(SensingBlocksTest, TouchingObject)
     addDropdownInput(block3, "TOUCHINGOBJECTMENU", SensingBlocks::TOUCHINGOBJECTMENU, "_edge_");
 
     // touching (null block)
-    auto block4 = std::make_shared<Block>("d", "sensing_distanceto");
+    auto block4 = std::make_shared<Block>("d", "sensing_touchingobject");
     addDropdownInput(block4, "TOUCHINGOBJECTMENU", SensingBlocks::TOUCHINGOBJECTMENU, "", createNullBlock("e"));
 
     compiler.init();
