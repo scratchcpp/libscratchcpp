@@ -169,6 +169,9 @@ double Sprite::x() const
 /*! Sets the X position of the sprite. */
 void Sprite::setX(double newX)
 {
+    if (impl->dragging)
+        return;
+
     setXY(newX, impl->y);
 
     if (impl->iface)
@@ -184,6 +187,9 @@ double Sprite::y() const
 /*! Sets the Y position of the sprite. */
 void Sprite::setY(double newY)
 {
+    if (impl->dragging)
+        return;
+
     setXY(impl->x, newY);
 
     if (impl->iface)
@@ -193,6 +199,42 @@ void Sprite::setY(double newY)
 /* Sets the position of the sprite. */
 void Sprite::setPosition(double x, double y)
 {
+    if (impl->dragging)
+        return;
+
+    setXY(x, y);
+
+    if (impl->iface) {
+        impl->iface->onXChanged(impl->x);
+        impl->iface->onYChanged(impl->y);
+    }
+}
+
+/*! Returns true if the sprite is being dragged. */
+bool Sprite::dragging() const
+{
+    return impl->dragging;
+}
+
+/*! Starts dragging. Calls to setX(), setY() and setPosition() will be ignored until stopDragging() is called. */
+void Sprite::startDragging()
+{
+    impl->dragging = true;
+}
+
+/*! Stops dragging. */
+void Sprite::stopDragging()
+{
+    impl->dragging = false;
+}
+
+/*!
+ * Drags the sprite to the given position.
+ * \note If startDragging() wasn't called before calling this method, dragging will be started automatically.
+ */
+void Sprite::dragToPosition(double x, double y)
+{
+    impl->dragging = true;
     setXY(x, y);
 
     if (impl->iface) {
