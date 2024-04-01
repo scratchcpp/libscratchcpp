@@ -21,6 +21,7 @@ class SensingBlocks : public IBlockSection
         enum Inputs
         {
             TOUCHINGOBJECTMENU,
+            COLOR,
             DISTANCETOMENU,
             QUESTION,
             KEY_OPTION,
@@ -61,6 +62,7 @@ class SensingBlocks : public IBlockSection
         void registerBlocks(IEngine *engine) override;
 
         static void compileTouchingObject(Compiler *compiler);
+        static void compileTouchingColor(Compiler *compiler);
         static void compileDistanceTo(Compiler *compiler);
         static void compileAskAndWait(Compiler *compiler);
         static void compileAnswer(Compiler *compiler);
@@ -89,6 +91,8 @@ class SensingBlocks : public IBlockSection
         static unsigned int touchingObjectByIndex(VirtualMachine *vm);
         static unsigned int touchingMousePointer(VirtualMachine *vm);
         static unsigned int touchingEdge(VirtualMachine *vm);
+
+        static unsigned int touchingColor(VirtualMachine *vm);
 
         static unsigned int keyPressed(VirtualMachine *vm);
         static unsigned int mouseDown(VirtualMachine *vm);

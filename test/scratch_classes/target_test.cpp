@@ -702,6 +702,13 @@ TEST(TargetTest, TouchingEdge)
     ASSERT_TRUE(sprite.touchingEdge());
 }
 
+TEST(TargetTest, TouchingColor)
+{
+    Target target;
+    Value v;
+    ASSERT_FALSE(target.touchingColor(v));
+}
+
 TEST(TargetTest, GraphicsEffects)
 {
     Target target;

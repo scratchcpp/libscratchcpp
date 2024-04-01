@@ -158,6 +158,15 @@ bool Stage::touchingPoint(double x, double y) const
     return impl->iface->touchingPoint(x, y);
 }
 
+/*! Overrides Target#touchingColor(). */
+bool Stage::touchingColor(const Value &color) const
+{
+    if (!impl->iface)
+        return false;
+
+    return impl->iface->touchingColor(color);
+}
+
 /*! Overrides Target#setGraphicsEffectValue(). */
 void Stage::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 {

@@ -1,6 +1,7 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/costume.h>
+#include <scratchcpp/value.h>
 #include <enginemock.h>
 #include <graphicseffectmock.h>
 #include <stagehandlermock.h>
@@ -193,6 +194,23 @@ TEST(StageTest, TouchingPoint)
 
     EXPECT_CALL(iface, touchingPoint(-12.46, 120.72)).WillOnce(Return(true));
     ASSERT_TRUE(stage.touchingPoint(-12.46, 120.72));
+}
+
+TEST(SpriteTest, TouchingColor)
+{
+    Stage stage;
+    ASSERT_FALSE(stage.touchingColor(0));
+
+    StageHandlerMock iface;
+    EXPECT_CALL(iface, init);
+    stage.setInterface(&iface);
+
+    Value v1 = 4278228630, v2 = "#FF00FA";
+    EXPECT_CALL(iface, touchingColor(v1)).WillOnce(Return(false));
+    ASSERT_FALSE(stage.touchingColor(v1));
+
+    EXPECT_CALL(iface, touchingColor(v2)).WillOnce(Return(true));
+    ASSERT_TRUE(stage.touchingColor(v2));
 }
 
 TEST(StageTest, GraphicsEffects)

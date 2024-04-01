@@ -54,6 +54,14 @@ class SensingBlocksTest : public testing::Test
             return block;
         }
 
+        void addValueInput(std::shared_ptr<Block> block, const std::string &name, SensingBlocks::Inputs id, const Value &value) const
+        {
+            auto input = std::make_shared<Input>(name, Input::Type::Shadow);
+            input->setPrimaryValue(value);
+            input->setInputId(id);
+            block->addInput(input);
+        }
+
         void addObscuredInput(std::shared_ptr<Block> block, const std::string &name, SensingBlocks::Inputs id, std::shared_ptr<Block> valueBlock) const
         {
             auto input = std::make_shared<Input>(name, Input::Type::ObscuredShadow);
@@ -117,6 +125,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
 {
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_touchingobject", &SensingBlocks::compileTouchingObject));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_touchingcolor", &SensingBlocks::compileTouchingColor));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_distanceto", &SensingBlocks::compileDistanceTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_askandwait", &SensingBlocks::compileAskAndWait));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_answer", &SensingBlocks::compileAnswer));
@@ -144,6 +153,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
 
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TOUCHINGOBJECTMENU", SensingBlocks::TOUCHINGOBJECTMENU));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "COLOR", SensingBlocks::COLOR));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "QUESTION", SensingBlocks::QUESTION));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "KEY_OPTION", SensingBlocks::KEY_OPTION));
@@ -369,6 +379,78 @@ TEST_F(SensingBlocksTest, TouchingObjectImpl)
 
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+}
+
+TEST_F(SensingBlocksTest, TouchingColor)
+{
+    Compiler compiler(&m_engineMock);
+
+    // touching color (#FFFF00)
+    auto block1 = std::make_shared<Block>("a", "sensing_touchingcolor");
+    addValueInput(block1, "COLOR", SensingBlocks::COLOR, "#FFFF00");
+
+    // touching color (null block)
+    auto block2 = std::make_shared<Block>("b", "sensing_touchingcolor");
+    addDropdownInput(block2, "COLOR", SensingBlocks::COLOR, "", createNullBlock("c"));
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::touchingColor)).WillOnce(Return(1));
+    compiler.setBlock(block1);
+    SensingBlocks::compileTouchingColor(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::touchingColor)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    SensingBlocks::compileTouchingColor(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 1, vm::OP_NULL, vm::OP_EXEC, 1, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0].toString(), "#FFFF00");
+}
+
+TEST_F(SensingBlocksTest, TouchingColorImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::touchingColor };
+    static Value constValues[] = { "#FFFF00", 1946195606 };
+
+    TargetMock target;
+    Sprite sprite;
+    VirtualMachine vm(&target, nullptr, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(target, touchingColor(constValues[0])).WillOnce(Return(false));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(target, touchingColor(constValues[0])).WillOnce(Return(true));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(target, touchingColor(constValues[1])).WillOnce(Return(false));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(target, touchingColor(constValues[1])).WillOnce(Return(true));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
 }
 
 TEST_F(SensingBlocksTest, DistanceTo)
