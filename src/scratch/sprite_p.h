@@ -30,6 +30,7 @@ struct SpritePrivate
         double size = 100;
         double direction = 90;
         bool draggable = false;
+        bool dragging = false;
         Sprite::RotationStyle rotationStyle = Sprite::RotationStyle::AllAround;
 };
 

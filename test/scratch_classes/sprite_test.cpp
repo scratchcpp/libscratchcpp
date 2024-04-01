@@ -377,6 +377,59 @@ TEST(SpriteTest, XY)
     ASSERT_EQ(sprite.y(), -23);
 }
 
+TEST(SpriteTest, Dragging)
+{
+    Sprite sprite;
+    SpriteHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    sprite.setInterface(&handler);
+    ASSERT_FALSE(sprite.dragging());
+
+    sprite.startDragging();
+    ASSERT_TRUE(sprite.dragging());
+
+    sprite.setX(10);
+    ASSERT_EQ(sprite.x(), 0);
+    sprite.setY(-56);
+    ASSERT_EQ(sprite.y(), 0);
+    sprite.setPosition(-2.8, 54.1);
+    ASSERT_EQ(sprite.x(), 0);
+    ASSERT_EQ(sprite.y(), 0);
+
+    EXPECT_CALL(handler, onMoved);
+    EXPECT_CALL(handler, onXChanged);
+    EXPECT_CALL(handler, onYChanged);
+    sprite.dragToPosition(34.2, -89.7);
+    ASSERT_EQ(sprite.x(), 34.2);
+    ASSERT_EQ(sprite.y(), -89.7);
+    ASSERT_TRUE(sprite.dragging());
+
+    sprite.stopDragging();
+    ASSERT_FALSE(sprite.dragging());
+
+    EXPECT_CALL(handler, onMoved);
+    EXPECT_CALL(handler, onXChanged);
+    EXPECT_CALL(handler, onYChanged);
+    sprite.setPosition(-2.8, 54.1);
+    ASSERT_EQ(sprite.x(), -2.8);
+    ASSERT_EQ(sprite.y(), 54.1);
+
+    EXPECT_CALL(handler, onMoved);
+    EXPECT_CALL(handler, onXChanged);
+    EXPECT_CALL(handler, onYChanged);
+    sprite.dragToPosition(-34.2, 89.7);
+    ASSERT_EQ(sprite.x(), -34.2);
+    ASSERT_EQ(sprite.y(), 89.7);
+    ASSERT_TRUE(sprite.dragging());
+
+    sprite.setPosition(-2.8, 54.1);
+    ASSERT_EQ(sprite.x(), -34.2);
+    ASSERT_EQ(sprite.y(), 89.7);
+
+    sprite.stopDragging();
+    ASSERT_FALSE(sprite.dragging());
+}
+
 TEST(SpriteTest, Size)
 {
     Sprite sprite;

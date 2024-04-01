@@ -49,6 +49,11 @@ class LIBSCRATCHCPP_EXPORT Sprite
 
         void setPosition(double x, double y);
 
+        bool dragging() const;
+        void startDragging();
+        void stopDragging();
+        void dragToPosition(double x, double y);
+
         double size() const;
         void setSize(double newSize);
 
