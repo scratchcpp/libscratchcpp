@@ -31,6 +31,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks
     engine->addCompileFunction(this, "sensing_touchingobject", &compileTouchingObject);
+    engine->addCompileFunction(this, "sensing_touchingcolor", &compileTouchingColor);
     engine->addCompileFunction(this, "sensing_distanceto", &compileDistanceTo);
     engine->addCompileFunction(this, "sensing_askandwait", &compileAskAndWait);
     engine->addCompileFunction(this, "sensing_answer", &compileAnswer);
@@ -58,6 +59,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
 
     // Inputs
     engine->addInput(this, "TOUCHINGOBJECTMENU", TOUCHINGOBJECTMENU);
+    engine->addInput(this, "COLOR", COLOR);
     engine->addInput(this, "DISTANCETOMENU", DISTANCETOMENU);
     engine->addInput(this, "QUESTION", QUESTION);
     engine->addInput(this, "KEY_OPTION", KEY_OPTION);
@@ -114,6 +116,12 @@ void SensingBlocks::compileTouchingObject(Compiler *compiler)
         compiler->addInput(input);
         compiler->addFunctionCall(&touchingObject);
     }
+}
+
+void SensingBlocks::compileTouchingColor(Compiler *compiler)
+{
+    compiler->addInput(COLOR);
+    compiler->addFunctionCall(&touchingColor);
 }
 
 void SensingBlocks::compileDistanceTo(Compiler *compiler)
@@ -492,6 +500,12 @@ unsigned int SensingBlocks::touchingMousePointer(VirtualMachine *vm)
 unsigned int SensingBlocks::touchingEdge(VirtualMachine *vm)
 {
     vm->addReturnValue(vm->target()->touchingEdge());
+    return 0;
+}
+
+unsigned int SensingBlocks::touchingColor(VirtualMachine *vm)
+{
+    vm->replaceReturnValue(vm->target()->touchingColor(*vm->getInput(0, 1)), 1);
     return 0;
 }
 
