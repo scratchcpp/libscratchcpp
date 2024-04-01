@@ -92,6 +92,7 @@ class LIBSCRATCHCPP_EXPORT Target
         bool touchingSprite(Sprite *sprite) const;
         virtual bool touchingPoint(double x, double y) const;
         bool touchingEdge() const;
+        virtual bool touchingColor(const Value &color) const;
 
         double graphicsEffectValue(IGraphicsEffect *effect) const;
         virtual void setGraphicsEffectValue(IGraphicsEffect *effect, double value);

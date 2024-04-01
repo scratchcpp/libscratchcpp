@@ -476,6 +476,12 @@ bool Target::touchingEdge() const
     return false;
 }
 
+/*! Returns true if the Target is touching the given color (RGB triplet). */
+bool Target::touchingColor(const Value &color) const
+{
+    return false;
+}
+
 /*! Returns the value of the given graphics effect. */
 double Target::graphicsEffectValue(IGraphicsEffect *effect) const
 {

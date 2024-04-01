@@ -18,6 +18,8 @@ class TargetMock : public Target
 
         MOCK_METHOD(bool, touchingPoint, (double, double), (const, override));
 
+        MOCK_METHOD(bool, touchingColor, (const Value &), (const, override));
+
         MOCK_METHOD(void, setGraphicsEffectValue, (IGraphicsEffect *, double), (override));
         MOCK_METHOD(void, clearGraphicsEffects, (), (override));
 

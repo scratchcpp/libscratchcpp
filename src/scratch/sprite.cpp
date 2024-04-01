@@ -415,6 +415,15 @@ bool Sprite::touchingPoint(double x, double y) const
     return impl->iface->touchingPoint(x, y);
 }
 
+/*! Overrides Target#touchingColor(). */
+bool Sprite::touchingColor(const Value &color) const
+{
+    if (!impl->iface)
+        return false;
+
+    return impl->iface->touchingColor(color);
+}
+
 /*! Overrides Target#setGraphicsEffectValue(). */
 void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 {

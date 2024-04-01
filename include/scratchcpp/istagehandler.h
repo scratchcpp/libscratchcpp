@@ -60,6 +60,9 @@ class LIBSCRATCHCPP_EXPORT IStageHandler
 
         /*! Used to check whether the stage touches the given point (in Scratch coordinates). */
         virtual bool touchingPoint(double x, double y) const = 0;
+
+        /*! Used to check whether the stage touches the given color. */
+        virtual bool touchingColor(const Value &color) const = 0;
 };
 
 } // namespace libscratchcpp

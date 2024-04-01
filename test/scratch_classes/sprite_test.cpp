@@ -703,6 +703,23 @@ TEST(SpriteTest, TouchingPoint)
     ASSERT_TRUE(sprite.touchingPoint(-12.46, 120.72));
 }
 
+TEST(SpriteTest, TouchingColor)
+{
+    Sprite sprite;
+    ASSERT_FALSE(sprite.touchingColor(0));
+
+    SpriteHandlerMock iface;
+    EXPECT_CALL(iface, init);
+    sprite.setInterface(&iface);
+
+    Value v1 = 4278228630, v2 = "#FF00FA";
+    EXPECT_CALL(iface, touchingColor(v1)).WillOnce(Return(false));
+    ASSERT_FALSE(sprite.touchingColor(v1));
+
+    EXPECT_CALL(iface, touchingColor(v2)).WillOnce(Return(true));
+    ASSERT_TRUE(sprite.touchingColor(v2));
+}
+
 TEST(SpriteTest, GraphicsEffects)
 {
     Sprite sprite;

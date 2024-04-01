@@ -52,6 +52,7 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
         Rect fastBoundingRect() const override;
 
         bool touchingPoint(double x, double y) const override;
+        bool touchingColor(const Value &color) const override;
 
         void setGraphicsEffectValue(IGraphicsEffect *effect, double value) override;
 

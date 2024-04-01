@@ -25,4 +25,5 @@ class StageHandlerMock : public IStageHandler
 
         MOCK_METHOD(bool, touchingClones, (const std::vector<Sprite *> &), (const, override));
         MOCK_METHOD(bool, touchingPoint, (double, double), (const, override));
+        MOCK_METHOD(bool, touchingColor, (const Value &), (const, override));
 };
