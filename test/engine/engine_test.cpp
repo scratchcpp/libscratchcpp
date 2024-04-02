@@ -2201,3 +2201,44 @@ TEST(EngineTest, NoCrashWhenLoadingUndefinedVariableOrListMonitor)
     ASSERT_EQ(list->id(), "7a5rAs|X2_[1APT7@B1V");
     ASSERT_TRUE(list->empty());
 }
+
+TEST(EngineTest, NoCrashWithUndefinedVariableOrList)
+{
+    // Regtest for #446
+    Project p("regtest_projects/446_undefined_variable_or_list_input_crash.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    // The undefined variable and list should now be defined
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+    ASSERT_VAR(stage, "test var");
+    auto var = GET_VAR(stage, "test var");
+    ASSERT_EQ(var->id(), "J3iHmLt:dwaR}^-fnGmG");
+    ASSERT_EQ(var->value(), Value());
+
+    ASSERT_LIST(stage, "test list");
+    auto list = GET_LIST(stage, "test list");
+    ASSERT_EQ(list->id(), "}l+w#Er5y!:*gh~5!3t%");
+    ASSERT_TRUE(list->empty());
+
+    // Test with fields
+    p.setFileName("regtest_projects/446_undefined_variable_or_list_field_crash.sb3");
+    ASSERT_TRUE(p.load());
+
+    engine = p.engine();
+
+    // The undefined variable and list should now be defined
+    stage = engine->stage();
+    ASSERT_TRUE(stage);
+    ASSERT_VAR(stage, "test var");
+    var = GET_VAR(stage, "test var");
+    ASSERT_EQ(var->id(), "J3iHmLt:dwaR}^-fnGmG");
+    ASSERT_EQ(var->value(), Value());
+
+    ASSERT_LIST(stage, "test list");
+    list = GET_LIST(stage, "test list");
+    ASSERT_EQ(list->id(), "}l+w#Er5y!:*gh~5!3t%");
+    ASSERT_TRUE(list->empty());
+}

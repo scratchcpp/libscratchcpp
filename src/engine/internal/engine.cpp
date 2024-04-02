@@ -113,19 +113,61 @@ void Engine::resolveIds()
             const auto &inputs = block->inputs();
             for (const auto &input : inputs) {
                 input->setValueBlock(getBlock(input->valueBlockId()));
+
                 if (container)
                     input->setInputId(container->resolveInput(input->name()));
-                input->primaryValue()->setValuePtr(getEntity(input->primaryValue()->valueId()));
-                input->secondaryValue()->setValuePtr(getEntity(input->primaryValue()->valueId()));
+
+                InputValue *value = input->primaryValue();
+                std::string id = value->valueId(); // no reference!
+                value->setValuePtr(getEntity(id));
+                assert(input->secondaryValue()->type() != InputValue::Type::Variable && input->secondaryValue()->type() != InputValue::Type::List); // secondary values never have a variable or list
+                input->secondaryValue()->setValuePtr(getEntity(input->secondaryValue()->valueId()));
+
+                // Add missing variables and lists
+                if (!value->valuePtr()) {
+                    if (value->type() == InputValue::Type::Variable) {
+                        assert(!id.empty());
+                        std::cout << "warning: variable " << value->value().toString() << " referenced by an input missing, creating in stage" << std::endl;
+                        auto var = std::make_shared<Variable>(id, value->value().toString());
+                        value->setValuePtr(var);
+                        stage()->addVariable(var);
+                    } else if (value->type() == InputValue::Type::List) {
+                        assert(!id.empty());
+                        std::cout << "warning: list " << value->value().toString() << " referenced by an input missing, creating in stage" << std::endl;
+                        std::shared_ptr<List> list = std::make_shared<List>(id, value->value().toString());
+                        value->setValuePtr(list);
+                        stage()->addList(list);
+                    }
+                }
             }
 
             const auto &fields = block->fields();
             for (auto field : fields) {
-                field->setValuePtr(getEntity(field->valueId()));
+                std::string id = field->valueId(); // no reference!
+                field->setValuePtr(getEntity(id));
+
                 if (container) {
                     field->setFieldId(container->resolveField(field->name()));
+
                     if (!field->valuePtr())
                         field->setSpecialValueId(container->resolveFieldValue(field->value().toString()));
+                }
+
+                // TODO: Move field information out of Engine
+                if (!field->valuePtr()) {
+                    if (field->name() == "VARIABLE") {
+                        assert(!id.empty());
+                        std::cout << "warning: variable " << field->value().toString() << " referenced by a field missing, creating in stage" << std::endl;
+                        auto var = std::make_shared<Variable>(id, field->value().toString());
+                        field->setValuePtr(var);
+                        stage()->addVariable(var);
+                    } else if (field->name() == "LIST") {
+                        assert(!id.empty());
+                        std::cout << "warning: list " << field->value().toString() << " referenced by a field missing, creating in stage" << std::endl;
+                        std::shared_ptr<List> list = std::make_shared<List>(id, field->value().toString());
+                        field->setValuePtr(list);
+                        stage()->addList(list);
+                    }
                 }
             }
 
