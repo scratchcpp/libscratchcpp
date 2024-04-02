@@ -289,7 +289,9 @@ std::shared_ptr<Block> Compiler::inputBlock(int id) const
 /*! Returns the index of the given variable. */
 unsigned int Compiler::variableIndex(std::shared_ptr<Entity> varEntity)
 {
+    assert(varEntity);
     auto var = dynamic_cast<Variable *>(varEntity.get());
+    assert(var);
     auto it = std::find(impl->variables.begin(), impl->variables.end(), var);
     if (it != impl->variables.end())
         return it - impl->variables.begin();

@@ -34,10 +34,12 @@ void InputValue::compile(Compiler *compiler)
             break;
 
         case Type::Variable:
+            assert(impl->valuePtr);
             compiler->addInstruction(vm::OP_READ_VAR, { compiler->variableIndex(impl->valuePtr) });
             break;
 
         case Type::List:
+            assert(impl->valuePtr);
             compiler->addInstruction(vm::OP_READ_LIST, { compiler->listIndex(impl->valuePtr) });
             break;
 
