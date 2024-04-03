@@ -320,23 +320,22 @@ class LIBSCRATCHCPP_EXPORT Value
         /*! Returns the boolean representation of the value. */
         bool toBool() const
         {
-            if (static_cast<int>(m_type) < 0) {
-                return false;
-            } else {
-                switch (m_type) {
-                    case Type::Bool:
-                        return m_boolValue;
-                    case Type::Integer:
-                        return m_intValue == 1 ? true : false;
-                    case Type::Double:
-                        return m_doubleValue == 1 ? true : false;
-                    case Type::String: {
-                        const std::string &str = m_stringValue;
-                        return (stringsEqual(str, "true") || str == "1");
-                    }
-                    default:
-                        return false;
-                }
+            switch (m_type) {
+                case Type::Bool:
+                    return m_boolValue;
+                case Type::Integer:
+                    return m_intValue != 0;
+                case Type::Double:
+                    return m_doubleValue != 0;
+                case Type::String:
+                    return !m_stringValue.empty() && !stringsEqual(m_stringValue, "false") && m_stringValue != "0";
+                case Type::Infinity:
+                case Type::NegativeInfinity:
+                    return true;
+                case Type::NaN:
+                    return false;
+                default:
+                    return false;
             }
         };
 

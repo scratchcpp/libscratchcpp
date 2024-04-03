@@ -1274,19 +1274,19 @@ TEST(ValueTest, ToDouble)
 TEST(ValueTest, ToBool)
 {
     Value v = 2147483647;
-    ASSERT_EQ(v.toBool(), false);
+    ASSERT_EQ(v.toBool(), true);
     v = -2147483647;
-    ASSERT_EQ(v.toBool(), false);
+    ASSERT_EQ(v.toBool(), true);
 
     v = 2.54;
-    ASSERT_EQ(v.toBool(), false);
+    ASSERT_EQ(v.toBool(), true);
     v = 2.54f;
-    ASSERT_EQ(v.toBool(), false);
+    ASSERT_EQ(v.toBool(), true);
 
     v = -2.54;
-    ASSERT_EQ(v.toBool(), false);
+    ASSERT_EQ(v.toBool(), true);
     v = -2.54f;
-    ASSERT_EQ(v.toBool(), false);
+    ASSERT_EQ(v.toBool(), true);
 
     v = false;
     ASSERT_EQ(v.toBool(), false);
@@ -1298,36 +1298,44 @@ TEST(ValueTest, ToBool)
     v = 1;
     ASSERT_EQ(v.toBool(), true);
     v = -1;
-    ASSERT_EQ(v.toBool(), false);
+    ASSERT_EQ(v.toBool(), true);
 
     v = "2147483647";
-    ASSERT_EQ(v.toBool(), false);
+    ASSERT_EQ(v.toBool(), true);
     v = "-2147483647";
-    ASSERT_EQ(v.toBool(), false);
+    ASSERT_EQ(v.toBool(), true);
 
     v = "255.625";
-    ASSERT_EQ(v.toBool(), false);
+    ASSERT_EQ(v.toBool(), true);
     v = "-255.625";
+    ASSERT_EQ(v.toBool(), true);
+
+    v = "0";
     ASSERT_EQ(v.toBool(), false);
 
     v = "false";
     ASSERT_EQ(v.toBool(), false);
     v = "true";
     ASSERT_EQ(v.toBool(), true);
+    v = "FaLsE";
+    ASSERT_EQ(v.toBool(), false);
+    v = "TrUe";
+    ASSERT_EQ(v.toBool(), true);
 
     v = "Infinity";
-    ASSERT_EQ(v.toBool(), false);
+    ASSERT_EQ(v.toBool(), true);
     v = "-Infinity";
-    ASSERT_EQ(v.toBool(), false);
+    ASSERT_EQ(v.toBool(), true);
     v = "NaN";
     ASSERT_EQ(v.toBool(), false);
 
     v = "something";
+    ASSERT_EQ(v.toBool(), true);
+    v = "";
     ASSERT_EQ(v.toBool(), false);
 
-    // TODO: Uncomment this (#517)
     // Hex
-    /*v = "0xafe";
+    v = "0xafe";
     ASSERT_TRUE(v.isString());
     ASSERT_TRUE(v.toBool());
 
@@ -1341,7 +1349,7 @@ TEST(ValueTest, ToBool)
 
     v = "0x0";
     ASSERT_TRUE(v.isString());
-    ASSERT_FALSE(v.toBool());
+    ASSERT_TRUE(v.toBool());
 
     v = "0XBaCD";
     ASSERT_TRUE(v.isString());
@@ -1349,7 +1357,7 @@ TEST(ValueTest, ToBool)
 
     v = "0xAbG";
     ASSERT_TRUE(v.isString());
-    ASSERT_FALSE(v.toBool());
+    ASSERT_TRUE(v.toBool());
 
     // Octal
     v = "0o506";
@@ -1366,7 +1374,7 @@ TEST(ValueTest, ToBool)
 
     v = "0o5783";
     ASSERT_TRUE(v.isString());
-    ASSERT_FALSE(v.toBool());
+    ASSERT_TRUE(v.toBool());
 
     // Binary
     v = "0b101101";
@@ -1383,7 +1391,7 @@ TEST(ValueTest, ToBool)
 
     v = "0b100112001";
     ASSERT_TRUE(v.isString());
-    ASSERT_FALSE(v.toBool());*/
+    ASSERT_TRUE(v.toBool());
 }
 
 TEST(ValueTest, ToString)
