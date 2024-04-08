@@ -13,8 +13,24 @@ bool AudioPlayerStub::load(unsigned int size, const void *data, unsigned long sa
     return true;
 }
 
+bool AudioPlayerStub::loadCopy(IAudioPlayer *player)
+{
+    return true;
+}
+
+float AudioPlayerStub::volume() const
+{
+    return m_volume;
+}
+
 void AudioPlayerStub::setVolume(float volume)
 {
+    m_volume = volume;
+}
+
+bool AudioPlayerStub::isLoaded() const
+{
+    return true;
 }
 
 void AudioPlayerStub::start()

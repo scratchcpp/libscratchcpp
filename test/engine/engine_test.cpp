@@ -261,6 +261,9 @@ TEST(EngineTest, StopSounds)
     auto player3 = std::make_shared<AudioPlayerMock>();
     SoundPrivate::audioOutput = &factory;
     EXPECT_CALL(factory, createAudioPlayer()).WillOnce(Return(player1)).WillOnce(Return(player2)).WillOnce(Return(player3));
+    EXPECT_CALL(*player1, isLoaded).WillOnce(Return(false));
+    EXPECT_CALL(*player2, isLoaded).WillOnce(Return(false));
+    EXPECT_CALL(*player3, isLoaded).WillOnce(Return(false));
     EXPECT_CALL(*player1, load).WillOnce(Return(true));
     EXPECT_CALL(*player2, load).WillOnce(Return(true));
     EXPECT_CALL(*player3, load).WillOnce(Return(true));

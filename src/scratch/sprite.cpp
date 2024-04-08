@@ -6,6 +6,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/costume.h>
+#include <scratchcpp/sound.h>
 #include <scratchcpp/rect.h>
 #include <cassert>
 #include <iostream>
@@ -63,6 +64,11 @@ std::shared_ptr<Sprite> Sprite::clone()
 
         for (auto list : l)
             clone->addList(list->clone());
+
+        const auto &sounds = this->sounds();
+
+        for (auto sound : sounds)
+            clone->addSound(sound->clone());
 
         clone->setCostumeIndex(costumeIndex());
         clone->setLayerOrder(layerOrder());
