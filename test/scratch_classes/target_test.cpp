@@ -422,8 +422,6 @@ TEST(TargetTest, Sounds)
     auto s3 = std::make_shared<Sound>("sound3", "", "mp3");
 
     TargetMock target;
-    EXPECT_CALL(target, dataSource()).Times(14).WillRepeatedly(Return(nullptr));
-
     EXPECT_CALL(*player1, setVolume(1));
     EXPECT_CALL(*player2, setVolume(1));
     EXPECT_CALL(*player3, setVolume(1));
@@ -443,62 +441,6 @@ TEST(TargetTest, Sounds)
     ASSERT_EQ(target.findSound("sound1"), 0);
     ASSERT_EQ(target.findSound("sound2"), 1);
     ASSERT_EQ(target.findSound("sound3"), 2);
-
-    // Test with custom data source
-    Target source;
-
-    EXPECT_CALL(target, dataSource()).WillOnce(Return(&source));
-
-    ASSERT_TRUE(target.sounds().empty());
-
-    TargetMock target2;
-    EXPECT_CALL(target2, dataSource()).Times(15).WillRepeatedly(Return(&source));
-
-    EXPECT_CALL(*player1, setVolume(1));
-    EXPECT_CALL(*player2, setVolume(1));
-    EXPECT_CALL(*player3, setVolume(1));
-    ASSERT_EQ(target2.addSound(s1), 0);
-    ASSERT_EQ(target2.addSound(s2), 1);
-    ASSERT_EQ(target2.addSound(s3), 2);
-    ASSERT_EQ(target2.addSound(s2), 1); // add existing Sound
-
-    ASSERT_EQ(target2.sounds(), std::vector<std::shared_ptr<Sound>>({ s1, s2, s3 }));
-    ASSERT_EQ(target2.soundAt(0), s1);
-    ASSERT_EQ(target2.soundAt(1), s2);
-    ASSERT_EQ(target2.soundAt(2), s3);
-    ASSERT_EQ(target2.soundAt(3), nullptr);
-    ASSERT_EQ(target2.soundAt(-1), nullptr);
-
-    ASSERT_EQ(target2.findSound("invalid"), -1);
-    ASSERT_EQ(target2.findSound("sound1"), 0);
-    ASSERT_EQ(target2.findSound("sound2"), 1);
-    ASSERT_EQ(target2.findSound("sound3"), 2);
-
-    ASSERT_EQ(target2.sounds(), source.sounds());
-
-    auto player4 = std::make_shared<AudioPlayerMock>();
-    EXPECT_CALL(factory, createAudioPlayer()).WillOnce(Return(player4));
-    auto s4 = std::make_shared<Sound>("sound4", "", "wav");
-
-    EXPECT_CALL(*player4, setVolume(1));
-    ASSERT_EQ(source.addSound(s4), 3);
-
-    EXPECT_CALL(target2, dataSource()).WillOnce(Return(&source));
-    ASSERT_EQ(target2.sounds(), source.sounds());
-
-    ASSERT_EQ(source.sounds(), std::vector<std::shared_ptr<Sound>>({ s1, s2, s3, s4 }));
-    ASSERT_EQ(source.soundAt(0), s1);
-    ASSERT_EQ(source.soundAt(1), s2);
-    ASSERT_EQ(source.soundAt(2), s3);
-    ASSERT_EQ(source.soundAt(3), s4);
-    ASSERT_EQ(source.soundAt(4), nullptr);
-    ASSERT_EQ(source.soundAt(-1), nullptr);
-
-    ASSERT_EQ(source.findSound("invalid"), -1);
-    ASSERT_EQ(source.findSound("sound1"), 0);
-    ASSERT_EQ(source.findSound("sound2"), 1);
-    ASSERT_EQ(source.findSound("sound3"), 2);
-    ASSERT_EQ(source.findSound("sound4"), 3);
 
     SoundPrivate::audioOutput = nullptr;
 }

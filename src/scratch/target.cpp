@@ -331,18 +331,12 @@ int Target::findCostume(const std::string &costumeName) const
 /*! Returns the list of sounds. */
 const std::vector<std::shared_ptr<Sound>> &Target::sounds() const
 {
-    if (Target *source = dataSource())
-        return source->sounds();
-
     return impl->sounds;
 }
 
 /*! Adds a sound and returns its index. */
 int Target::addSound(std::shared_ptr<Sound> sound)
 {
-    if (Target *source = dataSource())
-        return source->addSound(sound);
-
     auto it = std::find(impl->sounds.begin(), impl->sounds.end(), sound);
 
     if (it != impl->sounds.end())
@@ -360,9 +354,6 @@ int Target::addSound(std::shared_ptr<Sound> sound)
 /*! Returns the sound at index. */
 std::shared_ptr<Sound> Target::soundAt(int index) const
 {
-    if (Target *source = dataSource())
-        return source->soundAt(index);
-
     if (index < 0 || index >= impl->sounds.size())
         return nullptr;
 
@@ -372,9 +363,6 @@ std::shared_ptr<Sound> Target::soundAt(int index) const
 /*! Returns the index of the sound with the given name. */
 int Target::findSound(const std::string &soundName) const
 {
-    if (Target *source = dataSource())
-        return source->findSound(soundName);
-
     auto it = std::find_if(impl->sounds.begin(), impl->sounds.end(), [soundName](std::shared_ptr<Sound> sound) { return sound->name() == soundName; });
 
     if (it == impl->sounds.end())
