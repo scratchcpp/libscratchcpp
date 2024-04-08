@@ -3,6 +3,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/costume.h>
+#include <scratchcpp/sound.h>
 #include <scratchcpp/rect.h>
 #include <scratchcpp/project.h>
 #include <enginemock.h>
@@ -63,6 +64,12 @@ TEST(SpriteTest, Clone)
     sprite.addVariable(var2);
     auto c1 = std::make_shared<Costume>("costume1", "", "svg");
     sprite.addCostume(c1);
+    auto s1 = std::make_shared<Sound>("sound1", "a", "wav");
+    auto s2 = std::make_shared<Sound>("sound2", "b", "wav");
+    auto s3 = std::make_shared<Sound>("sound3", "c", "wav");
+    sprite.addSound(s1);
+    sprite.addSound(s2);
+    sprite.addSound(s3);
 
     auto list1 = std::make_shared<List>("c", "list1");
     list1->push_back("item1");
@@ -110,6 +117,14 @@ TEST(SpriteTest, Clone)
         ASSERT_EQ(clone->listAt(1)->name(), "list2");
         ASSERT_EQ(*clone->listAt(1), std::deque<Value>({ "test" }));
         ASSERT_EQ(clone->listAt(1)->target(), clone);
+
+        ASSERT_EQ(clone->sounds().size(), 3);
+        ASSERT_EQ(clone->soundAt(0)->id(), "a");
+        ASSERT_EQ(clone->soundAt(0)->name(), "sound1");
+        ASSERT_EQ(clone->soundAt(0)->dataFormat(), "wav");
+        ASSERT_EQ(clone->soundAt(2)->id(), "c");
+        ASSERT_EQ(clone->soundAt(2)->name(), "sound3");
+        ASSERT_EQ(clone->soundAt(2)->dataFormat(), "wav");
 
         ASSERT_EQ(clone->costumeIndex(), 1);
         ASSERT_EQ(clone->layerOrder(), 5);
