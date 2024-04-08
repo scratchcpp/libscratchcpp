@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <iostream>
+#include <cassert>
 
 #include "audioplayer.h"
 #include "audioengine.h"
@@ -26,7 +27,7 @@ AudioPlayer::~AudioPlayer()
 
 bool AudioPlayer::load(unsigned int size, const void *data, unsigned long sampleRate)
 {
-    if (!AudioEngine::initialized())
+    if (!AudioEngine::initialized() || m_loaded)
         return false;
 
     ma_engine *engine = AudioEngine::engine();
@@ -55,6 +56,33 @@ bool AudioPlayer::load(unsigned int size, const void *data, unsigned long sample
     return true;
 }
 
+bool AudioPlayer::loadCopy(IAudioPlayer *player)
+{
+    assert(player && dynamic_cast<AudioPlayer *>(player));
+
+    if (!AudioEngine::initialized() || !player)
+        return false;
+
+    ma_engine *engine = AudioEngine::engine();
+
+    AudioPlayer *playerPtr = static_cast<AudioPlayer *>(player);
+    ma_result initResult = ma_sound_init_from_data_source(engine, playerPtr->m_decoder, MA_SOUND_FLAG_DECODE, NULL, m_sound);
+
+    if (initResult != MA_SUCCESS) {
+        std::cerr << "Failed to init sound copy." << std::endl;
+        return false;
+    }
+
+    m_loaded = true;
+    ma_sound_set_volume(m_sound, m_volume);
+    return true;
+}
+
+float AudioPlayer::volume() const
+{
+    return m_volume;
+}
+
 void AudioPlayer::setVolume(float volume)
 {
     m_volume = volume;
@@ -63,6 +91,11 @@ void AudioPlayer::setVolume(float volume)
         return;
 
     ma_sound_set_volume(m_sound, volume);
+}
+
+bool AudioPlayer::isLoaded() const
+{
+    return m_loaded;
 }
 
 void AudioPlayer::start()
