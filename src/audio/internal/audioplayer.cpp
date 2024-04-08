@@ -60,7 +60,7 @@ bool AudioPlayer::loadCopy(IAudioPlayer *player)
 {
     assert(player && dynamic_cast<AudioPlayer *>(player));
 
-    if (!AudioEngine::initialized() || !player)
+    if (!AudioEngine::initialized() || !player || !player->isLoaded())
         return false;
 
     ma_engine *engine = AudioEngine::engine();
