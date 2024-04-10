@@ -33,6 +33,7 @@ class AudioPlayer : public IAudioPlayer
         ma_decoder *m_decoder = nullptr;
         ma_sound *m_sound;
         bool m_loaded = false;
+        bool m_copy = false;
         bool m_started = false;
         float m_volume = 1;
 };

@@ -18,11 +18,15 @@ AudioPlayer::~AudioPlayer()
 {
     if (m_loaded) {
         ma_sound_uninit(m_sound);
-        ma_decoder_uninit(m_decoder);
+
+        if (!m_copy)
+            ma_decoder_uninit(m_decoder);
     }
 
-    delete m_decoder;
     delete m_sound;
+
+    if (!m_copy)
+        delete m_decoder;
 }
 
 bool AudioPlayer::load(unsigned int size, const void *data, unsigned long sampleRate)
@@ -74,6 +78,7 @@ bool AudioPlayer::loadCopy(IAudioPlayer *player)
     }
 
     m_loaded = true;
+    m_copy = true;
     ma_sound_set_volume(m_sound, m_volume);
     return true;
 }
