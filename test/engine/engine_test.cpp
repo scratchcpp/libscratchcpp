@@ -827,7 +827,10 @@ TEST(EngineTest, MouseX)
     ASSERT_EQ(engine.mouseX(), 0);
 
     engine.setMouseX(-128.038);
-    ASSERT_EQ(engine.mouseX(), -128.038);
+    ASSERT_EQ(engine.mouseX(), -128);
+
+    engine.setMouseX(35.7);
+    ASSERT_EQ(engine.mouseX(), 36);
 }
 
 TEST(EngineTest, MouseY)
@@ -835,8 +838,11 @@ TEST(EngineTest, MouseY)
     Engine engine;
     ASSERT_EQ(engine.mouseY(), 0);
 
-    engine.setMouseY(179.9258);
-    ASSERT_EQ(engine.mouseY(), 179.9258);
+    engine.setMouseY(179.1258);
+    ASSERT_EQ(engine.mouseY(), 179);
+
+    engine.setMouseY(-12.98);
+    ASSERT_EQ(engine.mouseY(), -13);
 }
 
 TEST(EngineTest, MousePressed)
