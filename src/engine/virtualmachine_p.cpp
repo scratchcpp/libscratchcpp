@@ -764,8 +764,14 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
     DISPATCH();
 
     OP(STR_CONTAINS) :
-        REPLACE_RET_VALUE(READ_REG(0, 2)->toUtf16().find(READ_REG(1, 2)->toUtf16()) != std::u16string::npos, 2);
-    FREE_REGS(1);
+    {
+        std::u16string string1 = READ_REG(0, 2)->toUtf16();
+        std::u16string string2 = READ_REG(1, 2)->toUtf16();
+        std::transform(string1.begin(), string1.end(), string1.begin(), ::tolower);
+        std::transform(string2.begin(), string2.end(), string2.begin(), ::tolower);
+        REPLACE_RET_VALUE(string1.find(string2) != std::u16string::npos, 2);
+        FREE_REGS(1);
+    }
     DISPATCH();
 
     OP(EXEC) :

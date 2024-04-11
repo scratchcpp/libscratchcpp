@@ -1359,25 +1359,28 @@ TEST(VirtualMachineTest, OP_STR_LENGTH)
 TEST(VirtualMachineTest, OP_STR_CONTAINS)
 {
     static unsigned int bytecode[] = {
-        OP_START,        OP_CONST, 0, OP_CONST, 1, OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 2, OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 3,
-        OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 4, OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 5, OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 6,
-        OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 7, OP_STR_CONTAINS, OP_CONST, 4, OP_CONST, 4, OP_STR_CONTAINS, OP_HALT
+        OP_START,        OP_CONST, 0, OP_CONST, 1, OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 2, OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 3,  OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 4,
+        OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 5, OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 6, OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 7,  OP_STR_CONTAINS, OP_CONST, 4, OP_CONST, 4,
+        OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 8, OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 9, OP_STR_CONTAINS, OP_CONST, 0, OP_CONST, 10, OP_STR_CONTAINS, OP_HALT
     };
-    static Value constValues[] = { "abcd efg  hijý abcĎĐ", "ĎĐ", "a", "test", "", " ", "  ", "k" };
+    static Value constValues[] = { "abcd efg  hijý abcĎĐ", "ĎĐ", "a", "test", "", " ", "  ", "k", "ab", "aB", "AB" };
 
     VirtualMachine vm;
     vm.setBytecode(bytecode);
     vm.setConstValues(constValues);
     vm.run();
-    ASSERT_EQ(vm.registerCount(), 8);
-    ASSERT_EQ(vm.getInput(0, 8)->toBool(), true);
-    ASSERT_EQ(vm.getInput(1, 8)->toBool(), true);
-    ASSERT_EQ(vm.getInput(2, 8)->toBool(), false);
-    ASSERT_EQ(vm.getInput(3, 8)->toBool(), true);
-    ASSERT_EQ(vm.getInput(4, 8)->toBool(), true);
-    ASSERT_EQ(vm.getInput(5, 8)->toBool(), true);
-    ASSERT_EQ(vm.getInput(6, 8)->toBool(), false);
-    ASSERT_EQ(vm.getInput(7, 8)->toBool(), true);
+    ASSERT_EQ(vm.registerCount(), 11);
+    ASSERT_EQ(vm.getInput(0, 11)->toBool(), true);
+    ASSERT_EQ(vm.getInput(1, 11)->toBool(), true);
+    ASSERT_EQ(vm.getInput(2, 11)->toBool(), false);
+    ASSERT_EQ(vm.getInput(3, 11)->toBool(), true);
+    ASSERT_EQ(vm.getInput(4, 11)->toBool(), true);
+    ASSERT_EQ(vm.getInput(5, 11)->toBool(), true);
+    ASSERT_EQ(vm.getInput(6, 11)->toBool(), false);
+    ASSERT_EQ(vm.getInput(7, 11)->toBool(), true);
+    ASSERT_EQ(vm.getInput(8, 11)->toBool(), true);
+    ASSERT_EQ(vm.getInput(9, 11)->toBool(), true);
+    ASSERT_EQ(vm.getInput(10, 11)->toBool(), true);
 }
 
 unsigned int testFunction1(VirtualMachine *vm)
