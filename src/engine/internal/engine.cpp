@@ -778,7 +778,7 @@ double Engine::mouseX() const
 
 void Engine::setMouseX(double x)
 {
-    m_mouseX = x;
+    m_mouseX = std::round(x);
 }
 
 double Engine::mouseY() const
@@ -788,7 +788,7 @@ double Engine::mouseY() const
 
 void Engine::setMouseY(double y)
 {
-    m_mouseY = y;
+    m_mouseY = std::round(y);
 }
 
 bool Engine::mousePressed() const
