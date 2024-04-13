@@ -459,14 +459,11 @@ void Engine::deinitClone(std::shared_ptr<Sprite> clone)
 
 void Engine::stopSounds()
 {
-    // TODO: Loop through clones
     for (auto target : m_targets) {
         const auto &sounds = target->sounds();
 
-        for (auto sound : sounds) {
-            if (sound->isPlaying())
-                sound->stop();
-        }
+        for (auto sound : sounds)
+            sound->stop();
     }
 }
 

@@ -275,9 +275,7 @@ TEST(EngineTest, StopSounds)
 
     auto engine = p.engine();
 
-    EXPECT_CALL(*player1, isPlaying()).WillOnce(Return(false));
-    EXPECT_CALL(*player2, isPlaying()).WillOnce(Return(true));
-    EXPECT_CALL(*player3, isPlaying()).WillOnce(Return(true));
+    EXPECT_CALL(*player1, stop());
     EXPECT_CALL(*player2, stop());
     EXPECT_CALL(*player3, stop());
     engine->stopSounds();

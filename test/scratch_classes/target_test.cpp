@@ -442,6 +442,10 @@ TEST(TargetTest, Sounds)
     ASSERT_EQ(target.findSound("sound2"), 1);
     ASSERT_EQ(target.findSound("sound3"), 2);
 
+    ASSERT_EQ(s1->target(), &target);
+    ASSERT_EQ(s2->target(), &target);
+    ASSERT_EQ(s3->target(), &target);
+
     SoundPrivate::audioOutput = nullptr;
 }
 
