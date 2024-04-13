@@ -344,8 +344,10 @@ int Target::addSound(std::shared_ptr<Sound> sound)
 
     assert(sound);
 
-    if (sound)
+    if (sound) {
+        sound->setTarget(this);
         sound->setVolume(impl->volume);
+    }
 
     impl->sounds.push_back(sound);
     return impl->sounds.size() - 1;

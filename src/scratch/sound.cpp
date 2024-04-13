@@ -62,6 +62,18 @@ bool Sound::isPlaying()
     return impl->player->isPlaying();
 }
 
+/*! Returns the sprite or stage this variable belongs to. */
+Target *Sound::target() const
+{
+    return impl->target;
+}
+
+/*! Sets the sprite or stage this variable belongs to. */
+void Sound::setTarget(Target *target)
+{
+    impl->target = target;
+}
+
 /*! Returns an independent copy of the sound which is valid for as long as the original sound exists. */
 std::shared_ptr<Sound> Sound::clone() const
 {

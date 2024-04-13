@@ -1,4 +1,5 @@
 #include <scratchcpp/sound.h>
+#include <scratchcpp/target.h>
 #include <scratch/sound_p.h>
 #include <audiooutputmock.h>
 #include <audioplayermock.h>
@@ -104,6 +105,16 @@ TEST_F(SoundTest, IsPlaying)
     ASSERT_FALSE(sound.isPlaying());
 
     SoundPrivate::audioOutput = nullptr;
+}
+
+TEST_F(SoundTest, Target)
+{
+    Sound sound("sound1", "a", "wav");
+    ASSERT_EQ(sound.target(), nullptr);
+
+    Target target;
+    sound.setTarget(&target);
+    ASSERT_EQ(sound.target(), &target);
 }
 
 TEST_F(SoundTest, Clone)
