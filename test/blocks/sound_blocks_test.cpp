@@ -2,12 +2,12 @@
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
-#include <scratchcpp/target.h>
 #include <scratchcpp/sound.h>
 #include <scratch/sound_p.h>
 #include <enginemock.h>
 #include <audiooutputmock.h>
 #include <audioplayermock.h>
+#include <targetmock.h>
 
 #include "../common.h"
 #include "blocks/soundblocks.h"
@@ -212,7 +212,8 @@ TEST_F(SoundBlocksTest, PlayImpl)
     EXPECT_CALL(*player1, setVolume);
     EXPECT_CALL(*player2, setVolume);
     EXPECT_CALL(*player3, setVolume);
-    Target target;
+    TargetMock target;
+    EXPECT_CALL(target, isStage()).WillRepeatedly(Return(true));
     target.addSound(std::make_shared<Sound>("some sound", "", ""));
     target.addSound(std::make_shared<Sound>("test", "", ""));
     target.addSound(std::make_shared<Sound>("another sound", "", ""));
@@ -412,7 +413,8 @@ TEST_F(SoundBlocksTest, PlayUntilDoneImpl)
     EXPECT_CALL(*player1, setVolume);
     EXPECT_CALL(*player2, setVolume);
     EXPECT_CALL(*player3, setVolume);
-    Target target;
+    TargetMock target;
+    EXPECT_CALL(target, isStage()).WillRepeatedly(Return(true));
     target.addSound(std::make_shared<Sound>("some sound", "", ""));
     target.addSound(std::make_shared<Sound>("test", "", ""));
     target.addSound(std::make_shared<Sound>("another sound", "", ""));

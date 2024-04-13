@@ -42,6 +42,8 @@ class LIBSCRATCHCPP_EXPORT Sound : public Asset
         void processData(unsigned int size, void *data) override;
 
     private:
+        void stopCloneSounds();
+
         spimpl::unique_impl_ptr<SoundPrivate> impl;
 };
 

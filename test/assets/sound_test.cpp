@@ -1,8 +1,9 @@
 #include <scratchcpp/sound.h>
-#include <scratchcpp/target.h>
+#include <scratchcpp/sprite.h>
 #include <scratch/sound_p.h>
 #include <audiooutputmock.h>
 #include <audioplayermock.h>
+#include <enginemock.h>
 
 #include "../common.h"
 
@@ -119,16 +120,16 @@ TEST_F(SoundTest, Target)
 
 TEST_F(SoundTest, Clone)
 {
-    Sound sound("sound1", "a", "wav");
-    sound.setRate(44100);
-    sound.setSampleCount(10000);
+    auto sound = std::make_shared<Sound>("sound1", "a", "wav");
+    sound->setRate(44100);
+    sound->setSampleCount(10000);
 
     const char *data = "abc";
     void *dataPtr = const_cast<void *>(static_cast<const void *>(data));
 
     EXPECT_CALL(*m_player, isLoaded()).WillOnce(Return(false));
     EXPECT_CALL(*m_player, load(3, dataPtr, 44100)).WillOnce(Return(true));
-    sound.setData(3, dataPtr);
+    sound->setData(3, dataPtr);
 
     auto clonePlayer = std::make_shared<AudioPlayerMock>();
     EXPECT_CALL(m_playerFactory, createAudioPlayer()).WillOnce(Return(clonePlayer));
@@ -136,11 +137,49 @@ TEST_F(SoundTest, Clone)
     EXPECT_CALL(*m_player, volume()).WillOnce(Return(0.45));
     EXPECT_CALL(*clonePlayer, setVolume(0.45));
     EXPECT_CALL(*clonePlayer, isLoaded()).WillOnce(Return(true));
-    auto clone = sound.clone();
+    auto clone = sound->clone();
     ASSERT_TRUE(clone);
-    ASSERT_EQ(clone->name(), sound.name());
-    ASSERT_EQ(clone->id(), sound.id());
-    ASSERT_EQ(clone->dataFormat(), sound.dataFormat());
-    ASSERT_EQ(clone->rate(), sound.rate());
-    ASSERT_EQ(clone->sampleCount(), sound.sampleCount());
+    ASSERT_EQ(clone->name(), sound->name());
+    ASSERT_EQ(clone->id(), sound->id());
+    ASSERT_EQ(clone->dataFormat(), sound->dataFormat());
+    ASSERT_EQ(clone->rate(), sound->rate());
+    ASSERT_EQ(clone->sampleCount(), sound->sampleCount());
+
+    // Stopping/starting the sound should stop its clones
+    auto anotherPlayer = std::make_shared<AudioPlayerMock>();
+    EXPECT_CALL(m_playerFactory, createAudioPlayer()).WillOnce(Return(anotherPlayer));
+    auto another = std::make_shared<Sound>("another", "c", "mp3");
+    Sprite sprite;
+    EngineMock engine;
+    sprite.setEngine(&engine);
+
+    EXPECT_CALL(engine, cloneLimit()).WillOnce(Return(-1));
+    EXPECT_CALL(engine, initClone);
+    EXPECT_CALL(engine, requestRedraw);
+    EXPECT_CALL(engine, moveSpriteBehindOther);
+    auto spriteClone = sprite.clone();
+
+    EXPECT_CALL(*anotherPlayer, setVolume).Times(2);
+    EXPECT_CALL(*m_player, setVolume);
+    EXPECT_CALL(*clonePlayer, setVolume);
+    sprite.addSound(another);
+    sprite.addSound(sound);
+    spriteClone->addSound(another);
+    spriteClone->addSound(clone);
+
+    EXPECT_CALL(*m_player, stop());
+    EXPECT_CALL(*clonePlayer, stop());
+    sound->stop();
+
+    EXPECT_CALL(*m_player, stop());
+    EXPECT_CALL(*clonePlayer, stop());
+    clone->stop();
+
+    EXPECT_CALL(*m_player, start());
+    EXPECT_CALL(*clonePlayer, stop());
+    sound->start();
+
+    EXPECT_CALL(*m_player, stop());
+    EXPECT_CALL(*clonePlayer, start());
+    clone->start();
 }
