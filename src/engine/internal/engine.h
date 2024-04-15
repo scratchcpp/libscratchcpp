@@ -51,6 +51,7 @@ class Engine : public IEngine
 
         sigslot::signal<> &aboutToRender() override;
         sigslot::signal<VirtualMachine *> &threadAboutToStop() override;
+        sigslot::signal<> &stopped() override;
 
         bool isRunning() const override;
 
@@ -268,6 +269,7 @@ class Engine : public IEngine
         bool m_redrawRequested = false;
         sigslot::signal<> m_aboutToRedraw;
         sigslot::signal<VirtualMachine *> m_threadAboutToStop;
+        sigslot::signal<> m_stopped;
         bool m_stopEventLoop = false;
         std::mutex m_stopEventLoopMutex;
 
