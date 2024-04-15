@@ -1,3 +1,21 @@
+# audioengine_test
+add_executable(
+  audioengine_test
+  audioengine_test.cpp
+)
+
+target_link_libraries(
+  audioengine_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(audioengine_test)
+
+if (LIBSCRATCHCPP_AUDIO_SUPPORT)
+    target_compile_definitions(audioengine_test PRIVATE LIBSCRATCHCPP_AUDIO_SUPPORT)
+endif()
+
 # audiooutput_test
 add_executable(
   audiooutput_test

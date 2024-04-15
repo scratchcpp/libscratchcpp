@@ -15,6 +15,7 @@ endif()
 
 target_sources(scratchcpp-audio
   PUBLIC
+    iaudioengine.h
     iaudioplayer.h
     iaudiooutput.h
     audiooutput.cpp
@@ -38,6 +39,8 @@ if (LIBSCRATCHCPP_AUDIO_SUPPORT)
 else()
     target_sources(scratchcpp-audio
       PUBLIC
+        internal/audioenginestub.cpp
+        internal/audioenginestub.h
         internal/audioplayerstub.cpp
         internal/audioplayerstub.h
         internal/audioloudnessstub.cpp
