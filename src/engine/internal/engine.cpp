@@ -383,6 +383,8 @@ void Engine::stop()
         m_threads.clear();
         m_running = false;
     }
+
+    m_stopped();
 }
 
 VirtualMachine *Engine::startScript(std::shared_ptr<Block> topLevelBlock, Target *target)
@@ -563,6 +565,11 @@ sigslot::signal<> &Engine::aboutToRender()
 sigslot::signal<VirtualMachine *> &Engine::threadAboutToStop()
 {
     return m_threadAboutToStop;
+}
+
+sigslot::signal<> &Engine::stopped()
+{
+    return m_stopped;
 }
 
 std::vector<std::shared_ptr<VirtualMachine>> Engine::stepThreads()

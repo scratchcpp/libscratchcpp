@@ -47,10 +47,11 @@ class RedrawMock
         MOCK_METHOD(void, redraw, ());
 };
 
-class ThreadAboutToStopMock
+class StopMock
 {
     public:
         MOCK_METHOD(void, threadRemoved, (VirtualMachine *));
+        MOCK_METHOD(void, stopped, ());
 };
 
 class AddRemoveMonitorMock
@@ -124,13 +125,13 @@ TEST(EngineTest, ClearThreadAboutToStopSignal)
     engine->start();
     engine->step();
 
-    ThreadAboutToStopMock threadRemovedMock;
-    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(3).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+    StopMock stopMock;
+    EXPECT_CALL(stopMock, threadRemoved(_)).Times(3).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
         ASSERT_TRUE(vm);
         ASSERT_FALSE(vm->atEnd());
     })));
 
-    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
+    engine->threadAboutToStop().connect(&StopMock::threadRemoved, &stopMock);
     engine->clear();
 }
 
@@ -143,14 +144,48 @@ TEST(EngineTest, StopThreadAboutToStopSignal)
     engine->start();
     engine->step();
 
-    ThreadAboutToStopMock threadRemovedMock;
-    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(3).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+    StopMock stopMock;
+    EXPECT_CALL(stopMock, threadRemoved(_)).Times(3).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
         ASSERT_TRUE(vm);
         ASSERT_FALSE(vm->atEnd());
     })));
 
-    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
+    engine->threadAboutToStop().connect(&StopMock::threadRemoved, &stopMock);
     engine->stop();
+}
+
+TEST(EngineTest, StopSignal)
+{
+    StopMock stopMock;
+
+    {
+        Project p("3_threads.sb3");
+        ASSERT_TRUE(p.load());
+        auto engine = p.engine();
+
+        engine->stopped().connect(&StopMock::stopped, &stopMock);
+        EXPECT_CALL(stopMock, stopped());
+        engine->start();
+        engine->step();
+
+        EXPECT_CALL(stopMock, stopped());
+        engine->stop();
+    }
+
+    {
+        Project p("stop_all_bypass.sb3");
+        ASSERT_TRUE(p.load());
+        auto engine = p.engine();
+
+        engine->stopped().connect(&StopMock::stopped, &stopMock);
+        EXPECT_CALL(stopMock, stopped());
+        engine->start();
+        EXPECT_CALL(stopMock, stopped());
+        engine->step();
+
+        EXPECT_CALL(stopMock, stopped());
+        engine->stop();
+    }
 }
 
 TEST(EngineTest, CompileAndExecuteMonitors)
@@ -1894,13 +1929,13 @@ TEST(EngineTest, BroadcastsProject)
 
     auto engine = p.engine();
 
-    ThreadAboutToStopMock threadRemovedMock;
-    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(21).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+    StopMock stopMock;
+    EXPECT_CALL(stopMock, threadRemoved(_)).Times(21).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
         ASSERT_TRUE(vm);
         ASSERT_FALSE(vm->atEnd());
     })));
 
-    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
+    engine->threadAboutToStop().connect(&StopMock::threadRemoved, &stopMock);
     engine->setFps(1000);
     p.run();
 
@@ -1942,13 +1977,13 @@ TEST(EngineTest, StopAllBypass)
 
     auto engine = p.engine();
 
-    ThreadAboutToStopMock threadRemovedMock;
-    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(2).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+    StopMock stopMock;
+    EXPECT_CALL(stopMock, threadRemoved(_)).Times(2).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
         ASSERT_TRUE(vm);
         ASSERT_FALSE(vm->atEnd());
     })));
 
-    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
+    engine->threadAboutToStop().connect(&StopMock::threadRemoved, &stopMock);
     p.run();
 
     Stage *stage = engine->stage();
@@ -1970,13 +2005,13 @@ TEST(EngineTest, StopOtherScriptsInSprite)
 
     auto engine = p.engine();
 
-    ThreadAboutToStopMock threadRemovedMock;
-    EXPECT_CALL(threadRemovedMock, threadRemoved(_)).Times(4).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
+    StopMock stopMock;
+    EXPECT_CALL(stopMock, threadRemoved(_)).Times(4).WillRepeatedly(WithArgs<0>(Invoke([](VirtualMachine *vm) {
         ASSERT_TRUE(vm);
         ASSERT_FALSE(vm->atEnd());
     })));
 
-    engine->threadAboutToStop().connect(&ThreadAboutToStopMock::threadRemoved, &threadRemovedMock);
+    engine->threadAboutToStop().connect(&StopMock::threadRemoved, &stopMock);
     p.run();
 
     Stage *stage = engine->stage();
