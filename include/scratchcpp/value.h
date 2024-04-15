@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <utf8.h>
 #include <iostream>
+#include <clocale>
 
 #include "global.h"
 
