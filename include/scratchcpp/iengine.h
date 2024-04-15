@@ -87,6 +87,12 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Stops all currently playing sounds. */
         virtual void stopSounds() = 0;
 
+        /*! Returns the global volume of all sounds (in %). */
+        virtual double globalVolume() const = 0;
+
+        /*! Sets the global volume of all sounds (in %). */
+        virtual void setGlobalVolume(double volume) = 0;
+
         /*! Updates the values of stage monitors. */
         virtual void updateMonitors() = 0;
 

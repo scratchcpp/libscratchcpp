@@ -14,6 +14,7 @@
 #include <scratch/sound_p.h>
 #include <timermock.h>
 #include <clockmock.h>
+#include <audioenginemock.h>
 #include <audioinputmock.h>
 #include <audiooutputmock.h>
 #include <audioplayermock.h>
@@ -316,6 +317,24 @@ TEST(EngineTest, StopSounds)
     engine->stopSounds();
 
     SoundPrivate::audioOutput = nullptr;
+}
+
+TEST(EngineTest, GlobalVolume)
+{
+    Engine engine;
+    ASSERT_EQ(engine.globalVolume(), 100);
+
+    engine.setGlobalVolume(58.3);
+    ASSERT_EQ(std::round(engine.globalVolume() * 100) / 100, 58.3);
+
+    AudioEngineMock audioEngine;
+    engine.m_audioEngine = &audioEngine;
+
+    EXPECT_CALL(audioEngine, volume()).WillOnce(Return(0.275));
+    ASSERT_EQ(engine.globalVolume(), 27.5);
+
+    EXPECT_CALL(audioEngine, setVolume(0.9236));
+    engine.setGlobalVolume(92.36);
 }
 
 TEST(EngineTest, Step)
