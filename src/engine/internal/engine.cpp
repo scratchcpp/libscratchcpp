@@ -26,6 +26,7 @@
 #include "blocksectioncontainer.h"
 #include "timer.h"
 #include "clock.h"
+#include "audio/iaudioengine.h"
 #include "blocks/standardblocks.h"
 #include "blocks/variableblocks.h"
 #include "blocks/listblocks.h"
@@ -46,7 +47,8 @@ const std::unordered_map<Engine::HatType, bool> Engine::m_hatEdgeActivated = {
 Engine::Engine() :
     m_defaultTimer(std::make_unique<Timer>()),
     m_timer(m_defaultTimer.get()),
-    m_clock(Clock::instance().get())
+    m_clock(Clock::instance().get()),
+    m_audioEngine(IAudioEngine::instance())
 {
 }
 
@@ -467,6 +469,16 @@ void Engine::stopSounds()
         for (auto sound : sounds)
             sound->stop();
     }
+}
+
+double Engine::globalVolume() const
+{
+    return m_audioEngine->volume() * 100;
+}
+
+void Engine::setGlobalVolume(double volume)
+{
+    m_audioEngine->setVolume(volume / 100);
 }
 
 void Engine::updateMonitors()

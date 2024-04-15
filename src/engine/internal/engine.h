@@ -19,6 +19,7 @@ namespace libscratchcpp
 
 class Entity;
 class IClock;
+class IAudioEngine;
 
 class Engine : public IEngine
 {
@@ -41,7 +42,10 @@ class Engine : public IEngine
         void stopTarget(Target *target, VirtualMachine *exceptScript) override;
         void initClone(std::shared_ptr<Sprite> clone) override;
         void deinitClone(std::shared_ptr<Sprite> clone) override;
+
         void stopSounds() override;
+        virtual double globalVolume() const override;
+        virtual void setGlobalVolume(double volume) override;
 
         void updateMonitors() override;
         void step() override;
@@ -163,6 +167,7 @@ class Engine : public IEngine
         void setUserAgent(const std::string &agent) override;
 
         IClock *m_clock = nullptr;
+        IAudioEngine *m_audioEngine = nullptr;
 
     private:
         enum class HatType

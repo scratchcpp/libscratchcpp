@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <miniaudio.h>
 
 #include "audioplayer.h"
 #include "audioengine.h"
