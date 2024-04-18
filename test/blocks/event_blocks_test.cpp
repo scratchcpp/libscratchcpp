@@ -4,12 +4,14 @@
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/broadcast.h>
+#include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/costume.h>
 #include <enginemock.h>
 #include <audioinputmock.h>
 #include <audioloudnessmock.h>
 #include <timermock.h>
+#include <targetmock.h>
 
 #include "../common.h"
 #include "blocks/eventblocks.h"
@@ -35,6 +37,15 @@ class EventBlocksTest : public testing::Test
         // For any event block
         std::shared_ptr<Block> createEventBlock(const std::string &id, const std::string &opcode) const { return std::make_shared<Block>(id, opcode); }
 
+        std::shared_ptr<Block> createNullBlock(const std::string &id)
+        {
+            std::shared_ptr<Block> block = std::make_shared<Block>(id, "");
+            BlockComp func = [](Compiler *compiler) { compiler->addInstruction(vm::OP_NULL); };
+            block->setCompileFunction(func);
+
+            return block;
+        }
+
         void addBroadcastInput(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Inputs id, std::shared_ptr<Broadcast> broadcast) const
         {
             auto input = std::make_shared<Input>(name, Input::Type::Shadow);
@@ -43,6 +54,15 @@ class EventBlocksTest : public testing::Test
             input->primaryValue()->setType(InputValue::Type::Broadcast);
             input->setInputId(id);
             block->addInput(input);
+        }
+
+        std::shared_ptr<Input> addNullInput(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Inputs id) const
+        {
+            auto input = std::make_shared<Input>(name, Input::Type::Shadow);
+            input->setInputId(id);
+            block->addInput(input);
+
+            return input;
         }
 
         void addValueInput(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Inputs id, const Value &value) const
@@ -59,6 +79,26 @@ class EventBlocksTest : public testing::Test
             input->setValueBlock(valueBlock);
             input->setInputId(id);
             block->addInput(input);
+        }
+
+        void addDropdownInput(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Inputs id, const std::string &selectedValue, std::shared_ptr<Block> valueBlock = nullptr) const
+        {
+            if (valueBlock)
+                addObscuredInput(block, name, id, valueBlock);
+            else {
+                auto input = addNullInput(block, name, id);
+                auto menu = std::make_shared<Block>(block->id() + "_menu", block->opcode() + "_menu");
+                input->setValueBlock(menu);
+                addDropdownField(menu, name, static_cast<EventBlocks::Fields>(-1), selectedValue, static_cast<EventBlocks::FieldValues>(-1));
+            }
+        }
+
+        void addDropdownField(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Fields id, const std::string &value, EventBlocks::FieldValues valueId) const
+        {
+            auto field = std::make_shared<Field>(name, value);
+            field->setFieldId(id);
+            field->setSpecialValueId(valueId);
+            block->addField(field);
         }
 
         void addValueField(std::shared_ptr<Block> block, const std::string &name, EventBlocks::Fields id, const std::string &value, int valueId = -1) const
@@ -95,6 +135,7 @@ TEST_F(EventBlocksTest, CategoryVisible)
 TEST_F(EventBlocksTest, RegisterBlocks)
 {
     // Blocks
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whentouchingobject", &EventBlocks::compileWhenTouchingObject));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenflagclicked", &EventBlocks::compileWhenFlagClicked));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenthisspriteclicked", &EventBlocks::compileWhenThisSpriteClicked));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenstageclicked", &EventBlocks::compileWhenStageClicked));
@@ -106,9 +147,11 @@ TEST_F(EventBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenkeypressed", &EventBlocks::compileWhenKeyPressed));
 
     // Hat predicates
+    EXPECT_CALL(m_engineMock, addHatPredicateCompileFunction(m_section.get(), "event_whentouchingobject", &EventBlocks::compileWhenTouchingObjectPredicate));
     EXPECT_CALL(m_engineMock, addHatPredicateCompileFunction(m_section.get(), "event_whengreaterthan", &EventBlocks::compileWhenGreaterThanPredicate));
 
     // Inputs
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TOUCHINGOBJECTMENU", EventBlocks::TOUCHINGOBJECTMENU));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "BROADCAST_INPUT", EventBlocks::BROADCAST_INPUT));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VALUE", EventBlocks::VALUE));
 
@@ -123,6 +166,136 @@ TEST_F(EventBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "TIMER", EventBlocks::Timer));
 
     m_section->registerBlocks(&m_engineMock);
+}
+
+TEST_F(EventBlocksTest, WhenTouchingObjectPredicate)
+{
+    Compiler compiler(&m_engineMock);
+
+    // when touching (Sprite1)
+    auto block1 = createEventBlock("a", "event_whentouchingobject");
+    addDropdownInput(block1, "TOUCHINGOBJECTMENU", EventBlocks::TOUCHINGOBJECTMENU, "Sprite1");
+
+    // when touching (null block)
+    auto block2 = createEventBlock("b", "event_whentouchingobject");
+    addDropdownInput(block2, "TOUCHINGOBJECTMENU", EventBlocks::TOUCHINGOBJECTMENU, "", createNullBlock("e"));
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::whenTouchingObjectPredicate)).WillOnce(Return(0));
+    compiler.setBlock(block1);
+    EventBlocks::compileWhenTouchingObjectPredicate(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::whenTouchingObjectPredicate)).WillOnce(Return(0));
+    compiler.setBlock(block2);
+    EventBlocks::compileWhenTouchingObjectPredicate(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_NULL, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0], "Sprite1");
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
+}
+
+TEST_F(EventBlocksTest, WhenTouchingObjectPredicateImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &EventBlocks::whenTouchingObjectPredicate };
+    static Value constValues[] = { "Sprite2", "_mouse_", "_edge_", "", 1, -1, 2 };
+
+    TargetMock target;
+    target.setEngine(&m_engineMock);
+    Sprite sprite;
+    VirtualMachine vm(&target, &m_engineMock, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    // touching "Sprite2"
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&sprite));
+    EXPECT_CALL(target, touchingClones).WillOnce(Return(false));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&sprite));
+    EXPECT_CALL(target, touchingClones).WillOnce(Return(true));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+
+    // touching "_mouse_"
+    EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(24.5));
+    EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(-16.04));
+    EXPECT_CALL(target, touchingPoint(24.5, -16.04)).WillOnce(Return(true));
+    vm.setBytecode(bytecode2);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+
+    // touching "_edge_"
+    EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(0));
+    EXPECT_CALL(target, boundingRect()).WillOnce(Return(Rect(-5, 5, 5, -5)));
+    vm.setBytecode(bytecode3);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(10));
+    EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(10));
+    EXPECT_CALL(target, boundingRect()).WillOnce(Return(Rect(-5, 5, 5, -5)));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    // touching ""
+    EXPECT_CALL(m_engineMock, findTarget("")).WillOnce(Return(-1));
+    EXPECT_CALL(m_engineMock, targetAt(-1)).WillOnce(Return(nullptr));
+    vm.setBytecode(bytecode4);
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+}
+
+TEST_F(EventBlocksTest, WhenTouchingObject)
+{
+    Compiler compiler(&m_engineMock);
+
+    // when touching (Sprite1)
+    auto block = createEventBlock("a", "event_whentouchingobject");
+    addDropdownInput(block, "TOUCHINGOBJECTMENU", EventBlocks::TOUCHINGOBJECTMENU, "Sprite1");
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, addWhenTouchingObjectScript(block));
+    compiler.setBlock(block);
+    EventBlocks::compileWhenTouchingObject(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
+    ASSERT_TRUE(compiler.constValues().empty());
+    ASSERT_TRUE(compiler.variables().empty());
+    ASSERT_TRUE(compiler.lists().empty());
 }
 
 TEST_F(EventBlocksTest, WhenFlagClicked)

@@ -17,6 +17,7 @@ class EventBlocks : public IBlockSection
     public:
         enum Inputs
         {
+            TOUCHINGOBJECTMENU,
             BROADCAST_INPUT,
             VALUE
         };
@@ -39,6 +40,8 @@ class EventBlocks : public IBlockSection
 
         void registerBlocks(IEngine *engine) override;
 
+        static void compileWhenTouchingObjectPredicate(Compiler *compiler);
+        static void compileWhenTouchingObject(Compiler *compiler);
         static void compileWhenFlagClicked(Compiler *compiler);
         static void compileWhenThisSpriteClicked(Compiler *compiler);
         static void compileWhenStageClicked(Compiler *compiler);
@@ -49,6 +52,8 @@ class EventBlocks : public IBlockSection
         static void compileWhenGreaterThanPredicate(Compiler *compiler);
         static void compileWhenGreaterThan(Compiler *compiler);
         static void compileWhenKeyPressed(Compiler *compiler);
+
+        static unsigned int whenTouchingObjectPredicate(VirtualMachine *vm);
 
         static unsigned int broadcast(VirtualMachine *vm);
         static unsigned int broadcastByIndex(VirtualMachine *vm);

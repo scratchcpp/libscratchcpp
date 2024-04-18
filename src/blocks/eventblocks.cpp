@@ -6,6 +6,7 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/block.h>
@@ -27,6 +28,7 @@ std::string EventBlocks::name() const
 void EventBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks
+    engine->addCompileFunction(this, "event_whentouchingobject", &compileWhenTouchingObject);
     engine->addCompileFunction(this, "event_whenflagclicked", &compileWhenFlagClicked);
     engine->addCompileFunction(this, "event_whenthisspriteclicked", &compileWhenThisSpriteClicked);
     engine->addCompileFunction(this, "event_whenstageclicked", &compileWhenStageClicked);
@@ -38,9 +40,11 @@ void EventBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "event_whenkeypressed", &compileWhenKeyPressed);
 
     // Hat predicates
+    engine->addHatPredicateCompileFunction(this, "event_whentouchingobject", &compileWhenTouchingObjectPredicate);
     engine->addHatPredicateCompileFunction(this, "event_whengreaterthan", &compileWhenGreaterThanPredicate);
 
     // Inputs
+    engine->addInput(this, "TOUCHINGOBJECTMENU", TOUCHINGOBJECTMENU);
     engine->addInput(this, "BROADCAST_INPUT", BROADCAST_INPUT);
     engine->addInput(this, "VALUE", VALUE);
 
@@ -53,6 +57,27 @@ void EventBlocks::registerBlocks(IEngine *engine)
     // Fields values
     engine->addFieldValue(this, "LOUDNESS", Loudness);
     engine->addFieldValue(this, "TIMER", Timer);
+}
+
+void EventBlocks::compileWhenTouchingObjectPredicate(Compiler *compiler)
+{
+    Input *input = compiler->input(TOUCHINGOBJECTMENU);
+
+    if (input->type() != Input::Type::ObscuredShadow) {
+        assert(input->pointsToDropdownMenu());
+        std::string value = input->selectedMenuItem();
+
+        compiler->addConstValue(value);
+        compiler->addFunctionCall(&whenTouchingObjectPredicate);
+    } else {
+        compiler->addInput(input);
+        compiler->addFunctionCall(&whenTouchingObjectPredicate);
+    }
+}
+
+void EventBlocks::compileWhenTouchingObject(Compiler *compiler)
+{
+    compiler->engine()->addWhenTouchingObjectScript(compiler->block());
 }
 
 void EventBlocks::compileWhenFlagClicked(Compiler *compiler)
@@ -149,6 +174,26 @@ void EventBlocks::compileWhenKeyPressed(Compiler *compiler)
 {
     // NOTE: Field values don't have to be registered because keys are referenced by their names
     compiler->engine()->addKeyPressScript(compiler->block(), KEY_OPTION);
+}
+
+unsigned int EventBlocks::whenTouchingObjectPredicate(VirtualMachine *vm)
+{
+    std::string value = vm->getInput(0, 1)->toString();
+
+    if (value == "_mouse_")
+        vm->replaceReturnValue(vm->target()->touchingPoint(vm->engine()->mouseX(), vm->engine()->mouseY()), 1);
+    else if (value == "_edge_")
+        vm->replaceReturnValue(vm->target()->touchingEdge(), 1);
+    else {
+        Target *target = vm->engine()->targetAt(vm->engine()->findTarget(value));
+
+        if (target && !target->isStage())
+            vm->replaceReturnValue(vm->target()->touchingSprite(static_cast<Sprite *>(target)), 1);
+        else
+            vm->replaceReturnValue(false, 1);
+    }
+
+    return 0;
 }
 
 unsigned int EventBlocks::broadcast(VirtualMachine *vm)
