@@ -126,6 +126,7 @@ class Engine : public IEngine
         int findBroadcast(const std::string &broadcastName) const override;
         int findBroadcastById(const std::string &broadcastId) const override;
 
+        void addWhenTouchingObjectScript(std::shared_ptr<Block> hatBlock) override;
         void addGreenFlagScript(std::shared_ptr<Block> hatBlock) override;
         void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, int fieldId, Broadcast *broadcast) override;
         void addBackdropChangeScript(std::shared_ptr<Block> hatBlock, int fieldId) override;
@@ -172,6 +173,7 @@ class Engine : public IEngine
     private:
         enum class HatType
         {
+            WhenTouchingObject,
             GreenFlag,
             BroadcastReceived,
             BackdropChanged,
@@ -242,6 +244,7 @@ class Engine : public IEngine
         std::recursive_mutex m_eventLoopMutex;
         std::string m_userAgent;
 
+        std::unordered_map<Target *, std::vector<Script *>> m_whenTouchingObjectHats;
         std::unordered_map<Target *, std::vector<Script *>> m_greenFlagHats;
         std::unordered_map<Target *, std::vector<Script *>> m_backdropChangeHats;
         std::unordered_map<Target *, std::vector<Script *>> m_broadcastHats;
