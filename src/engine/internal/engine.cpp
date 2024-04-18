@@ -531,7 +531,7 @@ void Engine::step()
                         oldValue = fieldIt->second;
                 }
 
-                bool newValue = thread->script()->runHatPredicate();
+                bool newValue = thread->script()->runHatPredicate(hatBlock->target());
                 bool edgeWasActivated = !oldValue && newValue; // changed from false true
                 m_edgeActivatedHatValues[hatType][fieldValueId] = newValue;
 

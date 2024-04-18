@@ -42,22 +42,20 @@ TEST_F(ScriptTest, Bytecode)
     ASSERT_EQ(script.bytecodeVector(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
 }
 
-static Target *stageTest = nullptr;
+static Target *targetTest = nullptr;
 static IEngine *engineTest = nullptr;
 static Script *scriptTest = nullptr;
 
 TEST_F(ScriptTest, HatPredicate)
 {
     Script script(&m_target, nullptr, &m_engine);
-    ASSERT_FALSE(script.runHatPredicate());
-
-    Stage stage;
-    EXPECT_CALL(m_engine, stage()).Times(3).WillRepeatedly(Return(&stage));
+    Target target;
+    ASSERT_FALSE(script.runHatPredicate(&target));
 
     BlockFunc f1 = [](VirtualMachine *vm) -> unsigned int {
         vm->addReturnValue(true);
         vm->stop(false, false, false);
-        stageTest = vm->target();
+        targetTest = vm->target();
         engineTest = vm->engine();
         scriptTest = vm->script();
         return 0;
@@ -68,7 +66,7 @@ TEST_F(ScriptTest, HatPredicate)
     BlockFunc f3 = [](VirtualMachine *vm) -> unsigned int {
         vm->addReturnValue(false);
         vm->stop(false, false, false);
-        stageTest = vm->target();
+        targetTest = vm->target();
         engineTest = vm->engine();
         scriptTest = vm->script();
         return 0;
@@ -78,38 +76,38 @@ TEST_F(ScriptTest, HatPredicate)
     std::vector<BlockFunc> functions2 = { f1, f2, f3 };
 
     EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(functions1));
-    stageTest = nullptr;
+    targetTest = nullptr;
     engineTest = nullptr;
     scriptTest = nullptr;
     script.setConstValues({ "test" });
     script.setHatPredicateBytecode({ vm::OP_START, vm::OP_CONST, 0, vm::OP_PRINT, vm::OP_EXEC, 0, vm::OP_HALT });
     testing::internal::CaptureStdout();
-    ASSERT_TRUE(script.runHatPredicate());
+    ASSERT_TRUE(script.runHatPredicate(&target));
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\n");
-    ASSERT_EQ(stageTest, &stage);
+    ASSERT_EQ(targetTest, &target);
     ASSERT_EQ(engineTest, &m_engine);
     ASSERT_EQ(scriptTest, &script);
 
     EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(functions2));
-    stageTest = nullptr;
+    targetTest = nullptr;
     engineTest = nullptr;
     scriptTest = nullptr;
     script.setHatPredicateBytecode({ vm::OP_START, vm::OP_CONST, 0, vm::OP_PRINT, vm::OP_EXEC, 1, vm::OP_HALT });
     script.setConstValues({ 5 });
     testing::internal::CaptureStdout();
-    ASSERT_TRUE(script.runHatPredicate());
+    ASSERT_TRUE(script.runHatPredicate(&m_target));
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "5\n");
-    ASSERT_EQ(stageTest, &stage);
+    ASSERT_EQ(targetTest, &m_target);
     ASSERT_EQ(engineTest, &m_engine);
     ASSERT_EQ(scriptTest, &script);
 
     EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(functions2));
-    stageTest = nullptr;
+    targetTest = nullptr;
     engineTest = nullptr;
     scriptTest = nullptr;
     script.setHatPredicateBytecode({ vm::OP_START, vm::OP_EXEC, 2, vm::OP_HALT });
-    ASSERT_FALSE(script.runHatPredicate());
-    ASSERT_EQ(stageTest, &stage);
+    ASSERT_FALSE(script.runHatPredicate(&target));
+    ASSERT_EQ(targetTest, &target);
     ASSERT_EQ(engineTest, &m_engine);
     ASSERT_EQ(scriptTest, &script);
 }
