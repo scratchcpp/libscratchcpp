@@ -516,9 +516,16 @@ void Engine::step()
                 bool oldValue = false;
                 auto hatBlock = thread->script()->topBlock();
                 assert(hatBlock);
-                assert(hatBlock->fieldAt(0)); // TODO: Edge-activated hats currently support only one field
-                int fieldValueId = hatBlock->fieldAt(0)->specialValueId();
-                assert(fieldValueId != -1);
+
+                // TODO: Edge-activated hats currently support only one field
+                // If there isn't any field, -1 is used as the field value ID
+                int fieldValueId = -1;
+
+                if (hatBlock->fieldAt(0)) {
+                    fieldValueId = hatBlock->fieldAt(0)->specialValueId();
+                    assert(fieldValueId != -1);
+                }
+
                 auto it = m_edgeActivatedHatValues.find(hatType);
 
                 if (it == m_edgeActivatedHatValues.cend()) {
