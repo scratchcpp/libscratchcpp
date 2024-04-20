@@ -35,13 +35,13 @@
 using namespace libscratchcpp;
 
 const std::unordered_map<Engine::HatType, bool> Engine::m_hatRestartExistingThreads = {
-    { HatType::GreenFlag, true },   { HatType::BroadcastReceived, true }, { HatType::BackdropChanged, true }, { HatType::CloneInit, false },
-    { HatType::KeyPressed, false }, { HatType::TargetClicked, true },     { HatType::WhenGreaterThan, false }
+    { HatType::WhenTouchingObject, false }, { HatType::GreenFlag, true },   { HatType::BroadcastReceived, true }, { HatType::BackdropChanged, true },
+    { HatType::CloneInit, false },          { HatType::KeyPressed, false }, { HatType::TargetClicked, true },     { HatType::WhenGreaterThan, false }
 };
 
 const std::unordered_map<Engine::HatType, bool> Engine::m_hatEdgeActivated = {
-    { HatType::GreenFlag, false },  { HatType::BroadcastReceived, false }, { HatType::BackdropChanged, false }, { HatType::CloneInit, false },
-    { HatType::KeyPressed, false }, { HatType::TargetClicked, false },     { HatType::WhenGreaterThan, true }
+    { HatType::WhenTouchingObject, true }, { HatType::GreenFlag, false },  { HatType::BroadcastReceived, false }, { HatType::BackdropChanged, false },
+    { HatType::CloneInit, false },         { HatType::KeyPressed, false }, { HatType::TargetClicked, false },     { HatType::WhenGreaterThan, true }
 };
 
 Engine::Engine() :
@@ -82,6 +82,7 @@ void Engine::clear()
     m_scripts.clear();
     m_functions.clear();
 
+    m_whenTouchingObjectHats.clear();
     m_greenFlagHats.clear();
     m_backdropChangeHats.clear();
     m_broadcastHats.clear();
@@ -516,24 +517,24 @@ void Engine::step()
                 bool oldValue = false;
                 auto hatBlock = thread->script()->topBlock();
                 assert(hatBlock);
-                assert(hatBlock->fieldAt(0)); // TODO: Edge-activated hats currently support only one field
-                int fieldValueId = hatBlock->fieldAt(0)->specialValueId();
-                assert(fieldValueId != -1);
-                auto it = m_edgeActivatedHatValues.find(hatType);
+
+                Target *target = hatBlock->target();
+                assert(target);
+                auto it = m_edgeActivatedHatValues.find(hatBlock.get());
 
                 if (it == m_edgeActivatedHatValues.cend()) {
-                    m_edgeActivatedHatValues[hatType] = {};
+                    m_edgeActivatedHatValues[hatBlock.get()] = {};
                 } else {
-                    const std::unordered_map<int, bool> &values = it->second;
-                    auto fieldIt = values.find(fieldValueId);
+                    auto &map = it->second;
+                    auto it = map.find(target);
 
-                    if (fieldIt != values.cend())
-                        oldValue = fieldIt->second;
+                    if (it != map.cend())
+                        oldValue = it->second;
                 }
 
-                bool newValue = thread->script()->runHatPredicate();
+                bool newValue = thread->script()->runHatPredicate(hatBlock->target());
                 bool edgeWasActivated = !oldValue && newValue; // changed from false true
-                m_edgeActivatedHatValues[hatType][fieldValueId] = newValue;
+                m_edgeActivatedHatValues[hatBlock.get()][target] = newValue;
 
                 if (!edgeWasActivated)
                     stopThread(thread.get());
@@ -1080,6 +1081,11 @@ int Engine::findBroadcastById(const std::string &broadcastId) const
         return it - m_broadcasts.begin();
 }
 
+void Engine::addWhenTouchingObjectScript(std::shared_ptr<Block> hatBlock)
+{
+    addHatToMap(m_whenTouchingObjectHats, m_scripts[hatBlock].get());
+}
+
 void Engine::addGreenFlagScript(std::shared_ptr<Block> hatBlock)
 {
     addHatToMap(m_greenFlagHats, m_scripts[hatBlock].get());
@@ -1511,6 +1517,9 @@ const std::vector<Script *> &Engine::getHats(Target *target, HatType type)
     }
 
     switch (type) {
+        case HatType::WhenTouchingObject:
+            return m_whenTouchingObjectHats[target];
+
         case HatType::GreenFlag:
             return m_greenFlagHats[target];
 

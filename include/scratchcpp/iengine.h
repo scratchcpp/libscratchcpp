@@ -297,6 +297,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Returns the index of the broadcast with the given ID. */
         virtual int findBroadcastById(const std::string &broadcastId) const = 0;
 
+        /* Registers the given "when touching object" script. */
+        virtual void addWhenTouchingObjectScript(std::shared_ptr<Block> hatBlock) = 0;
+
         /*! Registers the "green flag" script. */
         virtual void addGreenFlagScript(std::shared_ptr<Block> hatBlock) = 0;
 

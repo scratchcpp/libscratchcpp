@@ -22,9 +22,7 @@ struct ScriptPrivate
 
         unsigned int *bytecode = nullptr;
         std::vector<unsigned int> bytecodeVector;
-
         std::vector<unsigned int> hatPredicateBytecodeVector;
-        std::shared_ptr<VirtualMachine> hatPredicateVm;
 
         Target *target = nullptr;
         std::shared_ptr<Block> topBlock;

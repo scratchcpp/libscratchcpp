@@ -53,29 +53,28 @@ void Script::setBytecode(const std::vector<unsigned int> &code)
 void Script::setHatPredicateBytecode(const std::vector<unsigned int> &code)
 {
     impl->hatPredicateBytecodeVector = code;
-
-    if (impl->engine && !code.empty()) {
-        impl->hatPredicateVm = std::make_shared<VirtualMachine>(impl->engine->stage(), impl->engine, this);
-        impl->hatPredicateVm->setBytecode(impl->hatPredicateBytecodeVector.data());
-        impl->hatPredicateVm->setConstValues(impl->constValues);
-    }
 }
 
 /*!
- * Runs the edge-activated hat predicate and returns the reported value.
+ * Runs the edge-activated hat predicate as the given target and returns the reported value.
  * \note If there isn't any predicate, nothing will happen and the returned value will be false.
  */
-bool Script::runHatPredicate()
+bool Script::runHatPredicate(Target *target)
 {
-    if (impl->hatPredicateVm && impl->hatPredicateVm->bytecode()) {
-        impl->hatPredicateVm->reset();
-        impl->hatPredicateVm->setFunctions(getFunctions());
-        impl->hatPredicateVm->run();
-        assert(impl->hatPredicateVm->registerCount() == 1);
+    if (!target || !impl->engine || impl->hatPredicateBytecodeVector.empty())
+        return false;
 
-        if (impl->hatPredicateVm->registerCount() == 1)
-            return impl->hatPredicateVm->getInput(0, 1)->toBool();
-    }
+    auto vm = std::make_shared<VirtualMachine>(target, impl->engine, this);
+    vm->setBytecode(impl->hatPredicateBytecodeVector.data());
+    vm->setConstValues(impl->constValues);
+    vm->setFunctions(getFunctions());
+    vm->setVariables(impl->variableValues.data());
+    vm->setLists(impl->lists.data());
+    vm->run();
+    assert(vm->registerCount() == 1);
+
+    if (vm->registerCount() == 1)
+        return vm->getInput(0, 1)->toBool();
 
     return false;
 }
@@ -161,9 +160,6 @@ void Script::setConstValues(const std::vector<Value> &values)
 {
     impl->constValuesVector = values;
     impl->constValues = impl->constValuesVector.data();
-
-    if (impl->hatPredicateVm)
-        impl->hatPredicateVm->setConstValues(impl->constValues);
 }
 
 /*! Sets the list of variables. */
