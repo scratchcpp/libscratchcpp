@@ -246,8 +246,7 @@ class Engine : public IEngine
 
         std::unordered_map<Script *, std::unordered_map<HatField, int>> m_scriptHatFields; // HatField, field ID from the block implementation
 
-        std::unordered_map<HatType, std::unordered_map<Target *, std::unordered_map<int, bool>>> m_edgeActivatedHatValues; // (target, field value ID, last value) edge-activated hats only run after
-                                                                                                                           // the value changes from false to true
+        std::unordered_map<Block *, std::unordered_map<Target *, bool>> m_edgeActivatedHatValues; // (block, target, last value) edge-activated hats only run after the value changes from false to true
 
         std::unique_ptr<ITimer> m_defaultTimer;
         ITimer *m_timer = nullptr;
