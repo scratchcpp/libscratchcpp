@@ -58,6 +58,8 @@ void Script::setHatPredicateBytecode(const std::vector<unsigned int> &code)
         impl->hatPredicateVm = std::make_shared<VirtualMachine>(impl->engine->stage(), impl->engine, this);
         impl->hatPredicateVm->setBytecode(impl->hatPredicateBytecodeVector.data());
         impl->hatPredicateVm->setConstValues(impl->constValues);
+        impl->hatPredicateVm->setVariables(impl->variableValues.data());
+        impl->hatPredicateVm->setLists(impl->lists.data());
     }
 }
 
@@ -174,12 +176,18 @@ void Script::setVariables(const std::vector<Variable *> &variables)
 
     for (const auto &var : variables)
         impl->variableValues.push_back(var->valuePtr());
+
+    if (impl->hatPredicateVm)
+        impl->hatPredicateVm->setVariables(impl->variableValues.data());
 }
 
 /*! Sets the list of lists. */
 void Script::setLists(const std::vector<List *> &lists)
 {
     impl->lists = lists;
+
+    if (impl->hatPredicateVm)
+        impl->hatPredicateVm->setLists(impl->lists.data());
 }
 
 BlockFunc *Script::getFunctions() const
