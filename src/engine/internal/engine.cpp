@@ -518,39 +518,23 @@ void Engine::step()
                 auto hatBlock = thread->script()->topBlock();
                 assert(hatBlock);
 
-                // TODO: Edge-activated hats currently support only one field
-                // If there isn't any field, -1 is used as the field value ID
-                int fieldValueId = -1;
-
-                if (hatBlock->fieldAt(0)) {
-                    fieldValueId = hatBlock->fieldAt(0)->specialValueId();
-                    assert(fieldValueId != -1);
-                }
-
                 Target *target = hatBlock->target();
                 assert(target);
-                auto it = m_edgeActivatedHatValues.find(hatType);
+                auto it = m_edgeActivatedHatValues.find(hatBlock.get());
 
                 if (it == m_edgeActivatedHatValues.cend()) {
-                    m_edgeActivatedHatValues[hatType] = { { target, {} } };
+                    m_edgeActivatedHatValues[hatBlock.get()] = {};
                 } else {
                     auto &map = it->second;
                     auto it = map.find(target);
 
-                    if (it == map.cend())
-                        map[target] = {};
-                    else {
-                        const std::unordered_map<int, bool> &values = it->second;
-                        auto fieldIt = values.find(fieldValueId);
-
-                        if (fieldIt != values.cend())
-                            oldValue = fieldIt->second;
-                    }
+                    if (it != map.cend())
+                        oldValue = it->second;
                 }
 
                 bool newValue = thread->script()->runHatPredicate(hatBlock->target());
                 bool edgeWasActivated = !oldValue && newValue; // changed from false true
-                m_edgeActivatedHatValues[hatType][target][fieldValueId] = newValue;
+                m_edgeActivatedHatValues[hatBlock.get()][target] = newValue;
 
                 if (!edgeWasActivated)
                     stopThread(thread.get());
