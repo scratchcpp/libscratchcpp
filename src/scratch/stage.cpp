@@ -46,6 +46,24 @@ void Stage::setCostumeIndex(int newCostumeIndex)
         impl->iface->onCostumeChanged(costume.get());
 }
 
+/*! Overrides Target#currentCostumeWidth(). */
+int Stage::currentCostumeWidth() const
+{
+    if (!impl->iface)
+        return 0;
+
+    return impl->iface->costumeWidth();
+}
+
+/*! Overrides Target#currentCostumeHeight(). */
+int Stage::currentCostumeHeight() const
+{
+    if (!impl->iface)
+        return 0;
+
+    return impl->iface->costumeHeight();
+}
+
 /*! Returns the tempo. */
 int Stage::tempo() const
 {

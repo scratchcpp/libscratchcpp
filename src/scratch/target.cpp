@@ -278,6 +278,18 @@ std::shared_ptr<Costume> Target::currentCostume() const
     return costumeAt(impl->costumeIndex);
 }
 
+/*! Returns the width of the current costume. */
+int Target::currentCostumeWidth() const
+{
+    return 0;
+}
+
+/*! Returns the height of the current costume. */
+int Target::currentCostumeHeight() const
+{
+    return 0;
+}
+
 /*! Returns the list of costumes. */
 const std::vector<std::shared_ptr<Costume>> &Target::costumes() const
 {

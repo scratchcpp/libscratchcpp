@@ -288,6 +288,24 @@ void Sprite::setCostumeIndex(int newCostumeIndex)
         impl->iface->onCostumeChanged(costume.get());
 }
 
+/*! Overrides Target#currentCostumeWidth(). */
+int Sprite::currentCostumeWidth() const
+{
+    if (!impl->iface)
+        return 0;
+
+    return impl->iface->costumeWidth();
+}
+
+/*! Overrides Target#currentCostumeHeight(). */
+int Sprite::currentCostumeHeight() const
+{
+    if (!impl->iface)
+        return 0;
+
+    return impl->iface->costumeHeight();
+}
+
 /*! Returns the direction. */
 double Sprite::direction() const
 {

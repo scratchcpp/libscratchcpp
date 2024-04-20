@@ -46,6 +46,12 @@ class LIBSCRATCHCPP_EXPORT IStageHandler
         /*! Called when the bubble text changes. */
         virtual void onBubbleTextChanged(const std::string &text) = 0;
 
+        /*! Used to get the current costume width. */
+        virtual int costumeWidth() const = 0;
+
+        /*! Used to get the current costume height. */
+        virtual int costumeHeight() const = 0;
+
         /*! Used to get the bounding rectangle of the stage. */
         virtual Rect boundingRect() const = 0;
 

@@ -59,6 +59,9 @@ class LIBSCRATCHCPP_EXPORT Sprite
 
         void setCostumeIndex(int newCostumeIndex) override;
 
+        int currentCostumeWidth() const override;
+        int currentCostumeHeight() const override;
+
         double direction() const;
         void setDirection(double newDirection);
 

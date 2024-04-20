@@ -29,6 +29,9 @@ class SpriteHandlerMock : public ISpriteHandler
         MOCK_METHOD(void, onBubbleTypeChanged, (Target::BubbleType), (override));
         MOCK_METHOD(void, onBubbleTextChanged, (const std::string &), (override));
 
+        MOCK_METHOD(int, costumeWidth, (), (const, override));
+        MOCK_METHOD(int, costumeHeight, (), (const, override));
+
         MOCK_METHOD(Rect, boundingRect, (), (const, override));
         MOCK_METHOD(Rect, fastBoundingRect, (), (const, override));
 

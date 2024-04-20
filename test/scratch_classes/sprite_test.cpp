@@ -662,6 +662,28 @@ TEST(SpriteTest, KeepInFence)
     ASSERT_EQ(std::round(fencedY * 100) / 100, 150.9);
 }
 
+TEST(SpriteTest, CurrentCostumeWidth)
+{
+    Sprite sprite;
+    SpriteHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    sprite.setInterface(&handler);
+
+    EXPECT_CALL(handler, costumeWidth()).WillOnce(Return(46));
+    ASSERT_EQ(sprite.currentCostumeWidth(), 46);
+}
+
+TEST(SpriteTest, CurrentCostumeHeight)
+{
+    Sprite sprite;
+    SpriteHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    sprite.setInterface(&handler);
+
+    EXPECT_CALL(handler, costumeHeight()).WillOnce(Return(24));
+    ASSERT_EQ(sprite.currentCostumeHeight(), 24);
+}
+
 TEST(SpriteTest, DefaultBoundingRect)
 {
     Sprite sprite;
