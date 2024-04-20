@@ -2303,3 +2303,20 @@ TEST(EngineTest, NoCrashWithUndefinedVariableOrList)
     ASSERT_EQ(list->id(), "}l+w#Er5y!:*gh~5!3t%");
     ASSERT_TRUE(list->empty());
 }
+
+TEST(EngineTest, AlwaysStopCloneThreads)
+{
+    // Regtest for #547
+    Project p("regtest_projects/547_stop_clone_threads_in_stop_all.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    engine->run();
+
+    ASSERT_VAR(stage, "test");
+    ASSERT_EQ(GET_VAR(stage, "test")->value().toInt(), 0);
+}

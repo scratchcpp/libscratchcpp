@@ -366,15 +366,33 @@ void Engine::start()
 void Engine::stop()
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L2057-L2081
-    deleteClones();
-    stopSounds();
-
     if (m_activeThread) {
         stopThread(m_activeThread.get());
         // NOTE: The project should continue running even after "stop all" is called and the remaining threads should be stepped once.
         // The remaining threads can even start new threads which will ignore the "stop all" call and will "restart" the project.
         // This is probably a bug in the Scratch VM, but let's keep it here to keep it compatible.
         m_threadsToStop = m_threads;
+
+        // Remove threads owned by clones because clones are going to be deleted (#547)
+        m_threads.erase(
+            std::remove_if(
+                m_threads.begin(),
+                m_threads.end(),
+                [](std::shared_ptr<VirtualMachine> thread) {
+                    assert(thread);
+                    Target *target = thread->target();
+                    assert(target);
+
+                    if (!target->isStage()) {
+                        Sprite *sprite = static_cast<Sprite *>(target);
+
+                        if (sprite->isClone())
+                            return true;
+                    }
+
+                    return false;
+                }),
+            m_threads.end());
     } else {
         // If there isn't any active thread, it means the project was stopped from the outside
         // In this case all threads should be removed and the project should be considered stopped
@@ -387,6 +405,8 @@ void Engine::stop()
         m_running = false;
     }
 
+    deleteClones();
+    stopSounds();
     m_stopped();
 }
 
