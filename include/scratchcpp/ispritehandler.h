@@ -65,6 +65,12 @@ class LIBSCRATCHCPP_EXPORT ISpriteHandler
         /*! Called when the bubble text changes. */
         virtual void onBubbleTextChanged(const std::string &text) = 0;
 
+        /*! Used to get the current costume width. */
+        virtual int costumeWidth() const = 0;
+
+        /*! Used to get the current costume height. */
+        virtual int costumeHeight() const = 0;
+
         /*!
          * Used to get the bounding rectangle of the sprite.
          * \note The rectangle must be relative to the stage, so make sure to use the sprite's coordinates.

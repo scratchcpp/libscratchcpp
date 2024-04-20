@@ -258,13 +258,21 @@ double Sprite::size() const
 /*! Sets the size. */
 void Sprite::setSize(double newSize)
 {
+    IEngine *engine = this->engine();
+
+    if (engine) {
+        const int oldWidth = currentCostumeWidth();
+        const int oldHeight = currentCostumeHeight();
+        const double minScale = std::min(1.0, std::max(5.0 / oldWidth, 5.0 / oldHeight));
+        const double maxScale = std::min((1.5 * engine->stageWidth()) / oldWidth, (1.5 * engine->stageHeight()) / oldHeight);
+        newSize = std::clamp(newSize, minScale * 100, maxScale * 100);
+    }
+
     impl->size = newSize;
 
     if (impl->visible) {
-        IEngine *eng = engine();
-
-        if (eng)
-            eng->requestRedraw();
+        if (engine)
+            engine->requestRedraw();
     }
 
     if (impl->iface)
@@ -286,6 +294,24 @@ void Sprite::setCostumeIndex(int newCostumeIndex)
 
     if (costume && impl->iface)
         impl->iface->onCostumeChanged(costume.get());
+}
+
+/*! Overrides Target#currentCostumeWidth(). */
+int Sprite::currentCostumeWidth() const
+{
+    if (!impl->iface)
+        return 0;
+
+    return impl->iface->costumeWidth();
+}
+
+/*! Overrides Target#currentCostumeHeight(). */
+int Sprite::currentCostumeHeight() const
+{
+    if (!impl->iface)
+        return 0;
+
+    return impl->iface->costumeHeight();
 }
 
 /*! Returns the direction. */

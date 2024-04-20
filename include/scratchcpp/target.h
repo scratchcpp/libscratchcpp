@@ -69,6 +69,8 @@ class LIBSCRATCHCPP_EXPORT Target
         virtual void setCostumeIndex(int newCostumeIndex);
 
         std::shared_ptr<Costume> currentCostume() const;
+        virtual int currentCostumeWidth() const;
+        virtual int currentCostumeHeight() const;
 
         const std::vector<std::shared_ptr<Costume>> &costumes() const;
         int addCostume(std::shared_ptr<Costume> costume);

@@ -137,6 +137,28 @@ TEST(StageTest, DefaultBoundingRect)
     ASSERT_EQ(rect.bottom(), 0);
 }
 
+TEST(StageTest, CurrentCostumeWidth)
+{
+    Stage stage;
+    StageHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    stage.setInterface(&handler);
+
+    EXPECT_CALL(handler, costumeWidth()).WillOnce(Return(46));
+    ASSERT_EQ(stage.currentCostumeWidth(), 46);
+}
+
+TEST(StageTest, CurrentCostumeHeight)
+{
+    Stage stage;
+    StageHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    stage.setInterface(&handler);
+
+    EXPECT_CALL(handler, costumeHeight()).WillOnce(Return(24));
+    ASSERT_EQ(stage.currentCostumeHeight(), 24);
+}
+
 TEST(StageTest, DefaultFastBoundingRect)
 {
     Stage stage;

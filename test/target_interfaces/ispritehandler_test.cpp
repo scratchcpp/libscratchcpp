@@ -116,9 +116,21 @@ TEST_F(ISpriteHandlerTest, Position)
 
 TEST_F(ISpriteHandlerTest, Size)
 {
-    EXPECT_CALL(m_handler, onSizeChanged(53.8)).Times(1);
+    EXPECT_CALL(m_handler, onSizeChanged(53.8));
+    EXPECT_CALL(m_handler, costumeWidth()).WillOnce(Return(100));
+    EXPECT_CALL(m_handler, costumeHeight()).WillOnce(Return(100));
+    EXPECT_CALL(m_engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(m_engine, stageHeight()).WillOnce(Return(360));
     EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.setSize(53.8);
+
+    EXPECT_CALL(m_handler, onSizeChanged(540));
+    EXPECT_CALL(m_handler, costumeWidth()).WillOnce(Return(100));
+    EXPECT_CALL(m_handler, costumeHeight()).WillOnce(Return(100));
+    EXPECT_CALL(m_engine, stageWidth()).WillOnce(Return(480));
+    EXPECT_CALL(m_engine, stageHeight()).WillOnce(Return(360));
+    EXPECT_CALL(m_engine, requestRedraw());
+    m_sprite.setSize(100000);
 }
 
 TEST_F(ISpriteHandlerTest, Direction)

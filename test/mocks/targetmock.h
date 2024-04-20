@@ -11,6 +11,10 @@ class TargetMock : public Target
         MOCK_METHOD(bool, isStage, (), (const, override));
 
         MOCK_METHOD(void, setCostumeIndex, (int), (override));
+
+        MOCK_METHOD(int, currentCostumeWidth, (), (const, override));
+        MOCK_METHOD(int, currentCostumeHeight, (), (const, override));
+
         MOCK_METHOD(void, setLayerOrder, (int), (override));
 
         MOCK_METHOD(Rect, boundingRect, (), (const, override));

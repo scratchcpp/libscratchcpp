@@ -448,21 +448,43 @@ TEST(SpriteTest, Dragging)
 TEST(SpriteTest, Size)
 {
     Sprite sprite;
+    SpriteHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    sprite.setInterface(&handler);
     ASSERT_EQ(sprite.size(), 100);
 
     EngineMock engine;
     sprite.setEngine(&engine);
-    EXPECT_CALL(engine, requestRedraw()).Times(4);
+    EXPECT_CALL(engine, requestRedraw()).WillRepeatedly(Return());
+    EXPECT_CALL(engine, stageWidth()).WillRepeatedly(Return(480));
+    EXPECT_CALL(engine, stageHeight()).WillRepeatedly(Return(360));
+    EXPECT_CALL(handler, onSizeChanged).WillRepeatedly(Return());
 
+    EXPECT_CALL(handler, costumeWidth()).WillRepeatedly(Return(50));
+    EXPECT_CALL(handler, costumeHeight()).WillRepeatedly(Return(30));
     sprite.setSize(63.724);
     ASSERT_EQ(sprite.size(), 63.724);
+    sprite.setSize(0);
+    ASSERT_EQ(std::round(sprite.size() * 100) / 100, 16.67);
+    sprite.setSize(2000);
+    ASSERT_EQ(sprite.size(), 1440);
 
-    sprite.setCostumeIndex(1);
+    EXPECT_CALL(handler, costumeWidth()).WillRepeatedly(Return(30));
+    EXPECT_CALL(handler, costumeHeight()).WillRepeatedly(Return(50));
+    sprite.setSize(0);
+    ASSERT_EQ(std::round(sprite.size() * 100) / 100, 16.67);
+    sprite.setSize(2000);
+    ASSERT_EQ(sprite.size(), 1080);
+
+    EXPECT_CALL(handler, costumeWidth()).WillRepeatedly(Return(88));
+    EXPECT_CALL(handler, costumeHeight()).WillRepeatedly(Return(88));
+    sprite.setSize(0);
+    ASSERT_EQ(std::round(sprite.size() * 100) / 100, 5.68);
+    sprite.setSize(2000);
+    ASSERT_EQ(std::round(sprite.size() * 100) / 100, 613.64);
 
     sprite.setSize(186.84);
     ASSERT_EQ(sprite.size(), 186.84);
-
-    sprite.setCostumeIndex(0);
 }
 
 TEST(SpriteTest, CostumeIndex)
@@ -660,6 +682,28 @@ TEST(SpriteTest, KeepInFence)
     sprite.keepInFence(-400, 340, &fencedX, &fencedY);
     ASSERT_EQ(std::round(fencedX * 100) / 100, -95.4);
     ASSERT_EQ(std::round(fencedY * 100) / 100, 150.9);
+}
+
+TEST(SpriteTest, CurrentCostumeWidth)
+{
+    Sprite sprite;
+    SpriteHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    sprite.setInterface(&handler);
+
+    EXPECT_CALL(handler, costumeWidth()).WillOnce(Return(46));
+    ASSERT_EQ(sprite.currentCostumeWidth(), 46);
+}
+
+TEST(SpriteTest, CurrentCostumeHeight)
+{
+    Sprite sprite;
+    SpriteHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    sprite.setInterface(&handler);
+
+    EXPECT_CALL(handler, costumeHeight()).WillOnce(Return(24));
+    ASSERT_EQ(sprite.currentCostumeHeight(), 24);
 }
 
 TEST(SpriteTest, DefaultBoundingRect)

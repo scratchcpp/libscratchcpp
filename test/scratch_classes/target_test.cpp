@@ -511,6 +511,18 @@ TEST(TargetTest, Volume)
     SoundPrivate::audioOutput = nullptr;
 }
 
+TEST(TargetTest, CurrentCostumeWidth)
+{
+    Target target;
+    ASSERT_EQ(target.currentCostumeWidth(), 0);
+}
+
+TEST(TargetTest, CurrentCostumeHeight)
+{
+    Target target;
+    ASSERT_EQ(target.currentCostumeHeight(), 0);
+}
+
 TEST(TargetTest, BoundingRect)
 {
     Target target;
