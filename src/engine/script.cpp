@@ -68,6 +68,8 @@ bool Script::runHatPredicate(Target *target)
     vm->setBytecode(impl->hatPredicateBytecodeVector.data());
     vm->setConstValues(impl->constValues);
     vm->setFunctions(getFunctions());
+    vm->setVariables(impl->variableValues.data());
+    vm->setLists(impl->lists.data());
     vm->run();
     assert(vm->registerCount() == 1);
 

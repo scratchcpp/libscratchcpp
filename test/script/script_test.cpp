@@ -45,6 +45,8 @@ TEST_F(ScriptTest, Bytecode)
 static Target *targetTest = nullptr;
 static IEngine *engineTest = nullptr;
 static Script *scriptTest = nullptr;
+static Value **variablesTest = nullptr;
+static List **listsTest = nullptr;
 
 TEST_F(ScriptTest, HatPredicate)
 {
@@ -58,6 +60,8 @@ TEST_F(ScriptTest, HatPredicate)
         targetTest = vm->target();
         engineTest = vm->engine();
         scriptTest = vm->script();
+        variablesTest = vm->variables();
+        listsTest = vm->lists();
         return 0;
     };
 
@@ -69,16 +73,28 @@ TEST_F(ScriptTest, HatPredicate)
         targetTest = vm->target();
         engineTest = vm->engine();
         scriptTest = vm->script();
+        variablesTest = vm->variables();
+        listsTest = vm->lists();
         return 0;
     };
 
     std::vector<BlockFunc> functions1 = { f1 };
     std::vector<BlockFunc> functions2 = { f1, f2, f3 };
 
+    Variable var1("", "var1", "a");
+    Variable var2("", "var2", 4);
+    script.setVariables({ &var1, &var2 });
+
+    List list1("", "list1");
+    List list2("", "list2");
+    script.setLists({ &list1, &list2 });
+
     EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(functions1));
     targetTest = nullptr;
     engineTest = nullptr;
     scriptTest = nullptr;
+    variablesTest = nullptr;
+    listsTest = nullptr;
     script.setConstValues({ "test" });
     script.setHatPredicateBytecode({ vm::OP_START, vm::OP_CONST, 0, vm::OP_PRINT, vm::OP_EXEC, 0, vm::OP_HALT });
     testing::internal::CaptureStdout();
@@ -87,11 +103,19 @@ TEST_F(ScriptTest, HatPredicate)
     ASSERT_EQ(targetTest, &target);
     ASSERT_EQ(engineTest, &m_engine);
     ASSERT_EQ(scriptTest, &script);
+    ASSERT_TRUE(variablesTest);
+    ASSERT_EQ(variablesTest[0], var1.valuePtr());
+    ASSERT_EQ(variablesTest[1], var2.valuePtr());
+    ASSERT_TRUE(listsTest);
+    ASSERT_EQ(listsTest[0], &list1);
+    ASSERT_EQ(listsTest[1], &list2);
 
     EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(functions2));
     targetTest = nullptr;
     engineTest = nullptr;
     scriptTest = nullptr;
+    variablesTest = nullptr;
+    listsTest = nullptr;
     script.setHatPredicateBytecode({ vm::OP_START, vm::OP_CONST, 0, vm::OP_PRINT, vm::OP_EXEC, 1, vm::OP_HALT });
     script.setConstValues({ 5 });
     testing::internal::CaptureStdout();
@@ -105,6 +129,8 @@ TEST_F(ScriptTest, HatPredicate)
     targetTest = nullptr;
     engineTest = nullptr;
     scriptTest = nullptr;
+    variablesTest = nullptr;
+    listsTest = nullptr;
     script.setHatPredicateBytecode({ vm::OP_START, vm::OP_EXEC, 2, vm::OP_HALT });
     ASSERT_FALSE(script.runHatPredicate(&target));
     ASSERT_EQ(targetTest, &target);
