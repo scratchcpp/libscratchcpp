@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(libscratchcpp VERSION 0.9.1 LANGUAGES C CXX)
+project(libscratchcpp VERSION 0.9.2 LANGUAGES C CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 17)
