@@ -276,13 +276,16 @@ void SensingBlocks::compileOf(Compiler *compiler)
 
             default: {
                 // Variable
+                f = &variableOfTargetByIndex;
                 Target *target = engine->targetAt(index);
                 auto varIndex = target->findVariable(property->value().toString());
 
                 if (varIndex == -1)
                     compiler->addInstruction(vm::OP_NULL);
-                else
-                    compiler->addInstruction(vm::OP_READ_VAR, { compiler->variableIndex(target->variableAt(varIndex)) });
+                else {
+                    // NOTE: The OP_READ_VAR instruction can't be used for this (see #548)
+                    compiler->addConstValue(varIndex);
+                }
 
                 break;
             }
@@ -863,6 +866,19 @@ unsigned int SensingBlocks::variableOfTarget(VirtualMachine *vm)
             vm->replaceReturnValue(0, 2);
         else
             vm->replaceReturnValue(target->variableAt(varIndex)->value(), 2);
+    } else
+        vm->replaceReturnValue(0, 2);
+
+    return 1;
+}
+
+unsigned int SensingBlocks::variableOfTargetByIndex(VirtualMachine *vm)
+{
+    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
+
+    if (target) {
+        const int varIndex = vm->getInput(0, 2)->toInt();
+        vm->replaceReturnValue(target->variableAt(varIndex)->value(), 2);
     } else
         vm->replaceReturnValue(0, 2);
 

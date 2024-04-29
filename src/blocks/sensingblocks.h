@@ -131,6 +131,7 @@ class SensingBlocks : public IBlockSection
         static unsigned int volumeOfTarget(VirtualMachine *vm);
         static unsigned int volumeOfTargetByIndex(VirtualMachine *vm);
         static unsigned int variableOfTarget(VirtualMachine *vm);
+        static unsigned int variableOfTargetByIndex(VirtualMachine *vm);
         static unsigned int backdropNumberOfStage(VirtualMachine *vm);
         static unsigned int backdropNumberOfStageByIndex(VirtualMachine *vm);
         static unsigned int backdropNameOfStage(VirtualMachine *vm);

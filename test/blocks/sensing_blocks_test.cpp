@@ -1356,8 +1356,8 @@ TEST_F(SensingBlocksTest, Of)
 
     compiler.init();
 
-    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).Times(9).WillRepeatedly(Return(6));
-    EXPECT_CALL(m_engineMock, findTarget("_stage_")).Times(5).WillRepeatedly(Return(0));
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(6));
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(0));
 
     EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::xPositionOfSpriteByIndex)).WillOnce(Return(0));
     compiler.setBlock(block1);
@@ -1444,10 +1444,12 @@ TEST_F(SensingBlocksTest, Of)
     auto v2 = std::make_shared<Variable>("var2", "some variable");
     stage.addVariable(v1);
     stage.addVariable(v2);
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::variableOfTargetByIndex)).WillOnce(Return(19));
     EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(&stage));
     compiler.setBlock(block21);
     SensingBlocks::compileOf(&compiler);
 
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::variableOfTargetByIndex)).WillOnce(Return(19));
     EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(&stage));
     compiler.setBlock(block22);
     SensingBlocks::compileOf(&compiler);
@@ -1455,10 +1457,12 @@ TEST_F(SensingBlocksTest, Of)
     Sprite sprite;
     auto v3 = std::make_shared<Variable>("var3", "some variable");
     sprite.addVariable(v3);
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::variableOfTargetByIndex)).WillOnce(Return(19));
     EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
     compiler.setBlock(block23);
     SensingBlocks::compileOf(&compiler);
 
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::variableOfTargetByIndex)).WillOnce(Return(19));
     EXPECT_CALL(m_engineMock, targetAt(6)).WillOnce(Return(&sprite));
     compiler.setBlock(block24);
     SensingBlocks::compileOf(&compiler);
@@ -1547,21 +1551,37 @@ TEST_F(SensingBlocksTest, Of)
               vm::OP_NULL,
               vm::OP_EXEC,
               17,
-              vm::OP_READ_VAR,
-              0,
-              vm::OP_NULL,
-              vm::OP_READ_VAR,
-              1,
-              vm::OP_NULL,
               vm::OP_CONST,
               10,
+              vm::OP_CONST,
+              11,
+              vm::OP_EXEC,
+              19,
+              vm::OP_NULL,
+              vm::OP_CONST,
+              12,
+              vm::OP_EXEC,
+              19,
+              vm::OP_CONST,
+              13,
+              vm::OP_CONST,
+              14,
+              vm::OP_EXEC,
+              19,
+              vm::OP_NULL,
+              vm::OP_CONST,
+              15,
+              vm::OP_EXEC,
+              19,
+              vm::OP_CONST,
+              16,
               vm::OP_NULL,
               vm::OP_EXEC,
               18,
               vm::OP_NULL,
               vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, "some variable" }));
-    ASSERT_EQ(compiler.variables(), std::vector<Variable *>({ v2.get(), v3.get() }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 1, 0, 0, 0, 6, 6, "some variable" }));
+    ASSERT_TRUE(compiler.variables().empty());
 }
 
 TEST_F(SensingBlocksTest, XPositionOfSprite)
