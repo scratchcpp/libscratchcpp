@@ -65,13 +65,15 @@ bool Sound::isPlaying()
 /*! Returns an independent copy of the sound which is valid for as long as the original sound exists. */
 std::shared_ptr<Sound> Sound::clone() const
 {
+    const Sound *root = impl->cloneRoot ? impl->cloneRoot : this;
     auto sound = std::make_shared<Sound>(name(), id(), dataFormat());
     sound->setRate(rate());
     sound->setSampleCount(sampleCount());
+    sound->impl->cloneRoot = root;
     sound->impl->player->setVolume(impl->player->volume());
 
-    if (impl->player->isLoaded()) {
-        sound->impl->player->loadCopy(impl->player.get());
+    if (root->impl->player->isLoaded()) {
+        sound->impl->player->loadCopy(root->impl->player.get());
         sound->setData(dataSize(), const_cast<void *>(data()));
     }
 

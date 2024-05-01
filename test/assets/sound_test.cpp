@@ -134,13 +134,23 @@ TEST_F(SoundTest, Clone)
     ASSERT_EQ(clone->rate(), sound.rate());
     ASSERT_EQ(clone->sampleCount(), sound.sampleCount());
 
+    auto cloneClonePlayer = std::make_shared<AudioPlayerMock>();
+    EXPECT_CALL(m_playerFactory, createAudioPlayer()).WillOnce(Return(cloneClonePlayer));
+    EXPECT_CALL(*m_player, isLoaded()).WillOnce(Return(true));
+    EXPECT_CALL(*cloneClonePlayer, loadCopy(m_player.get())).WillOnce(Return(true));
+    EXPECT_CALL(*clonePlayer, volume()).WillOnce(Return(0.62));
+    EXPECT_CALL(*cloneClonePlayer, setVolume(0.62));
+    EXPECT_CALL(*cloneClonePlayer, isLoaded()).WillOnce(Return(true));
+    auto cloneClone = clone->clone();
+    ASSERT_TRUE(cloneClone);
+
     auto anotherClonePlayer = std::make_shared<AudioPlayerMock>();
-    EXPECT_CALL(m_playerFactory, createAudioPlayer()).WillOnce(Return(clonePlayer));
+    EXPECT_CALL(m_playerFactory, createAudioPlayer()).WillOnce(Return(anotherClonePlayer));
     EXPECT_CALL(*m_player, isLoaded()).WillOnce(Return(false));
-    EXPECT_CALL(*clonePlayer, loadCopy).Times(0);
-    EXPECT_CALL(*m_player, volume()).WillOnce(Return(0.62));
-    EXPECT_CALL(*clonePlayer, setVolume(0.62));
-    EXPECT_CALL(*clonePlayer, isLoaded()).Times(0);
-    auto anotherClone = sound.clone();
+    EXPECT_CALL(*anotherClonePlayer, loadCopy).Times(0);
+    EXPECT_CALL(*clonePlayer, volume()).WillOnce(Return(0.62));
+    EXPECT_CALL(*anotherClonePlayer, setVolume(0.62));
+    EXPECT_CALL(*anotherClonePlayer, isLoaded()).Times(0);
+    auto anotherClone = clone->clone();
     ASSERT_TRUE(anotherClone);
 }

@@ -10,6 +10,8 @@
 namespace libscratchcpp
 {
 
+class Sound;
+
 struct SoundPrivate
 {
         SoundPrivate();
@@ -19,6 +21,7 @@ struct SoundPrivate
         int sampleCount = 0;
         static IAudioOutput *audioOutput;
         std::shared_ptr<IAudioPlayer> player = nullptr;
+        const Sound *cloneRoot = nullptr;
 };
 
 } // namespace libscratchcpp
