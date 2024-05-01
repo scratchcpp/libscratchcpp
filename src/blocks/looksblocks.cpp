@@ -109,6 +109,7 @@ void LooksBlocks::onInit(IEngine *engine)
 
         for (auto target : targets) {
             target->setBubbleText("");
+            target->clearGraphicsEffects();
         }
     });
 }
