@@ -154,6 +154,7 @@ class Engine : public IEngine
         sigslot::signal<Monitor *, IMonitorHandler *> &monitorRemoved() override;
 
         sigslot::signal<const std::string &> &questionAsked() override;
+        sigslot::signal<> &questionAborted() override;
         sigslot::signal<const std::string &> &questionAnswered() override;
 
         const std::vector<std::string> &extensions() const override;
@@ -284,6 +285,7 @@ class Engine : public IEngine
         sigslot::signal<Monitor *> m_monitorAdded;
         sigslot::signal<Monitor *, IMonitorHandler *> m_monitorRemoved;
         sigslot::signal<const std::string &> m_questionAsked;
+        sigslot::signal<> m_questionAborted;
         sigslot::signal<const std::string &> m_questionAnswered;
 };
 

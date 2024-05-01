@@ -95,6 +95,22 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->questionAnswered().connect(&onAnswer);
 }
 
+void SensingBlocks::onInit(IEngine *engine)
+{
+    engine->threadAboutToStop().connect([engine](VirtualMachine *thread) {
+        if (!m_questionList.empty()) {
+            // Abort the question of this thread if it's currently being displayed
+            if (m_questionList.front()->vm == thread) {
+                thread->target()->setBubbleText("");
+                engine->questionAborted()();
+            }
+
+            m_questionList
+                .erase(std::remove_if(m_questionList.begin(), m_questionList.end(), [thread](const std::unique_ptr<Question> &question) { return question->vm == thread; }), m_questionList.end());
+        }
+    });
+}
+
 void SensingBlocks::compileTouchingObject(Compiler *compiler)
 {
     Input *input = compiler->input(TOUCHINGOBJECTMENU);

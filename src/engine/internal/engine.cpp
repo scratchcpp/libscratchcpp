@@ -1349,6 +1349,11 @@ sigslot::signal<const std::string &> &Engine::questionAsked()
     return m_questionAsked;
 }
 
+sigslot::signal<> &Engine::questionAborted()
+{
+    return m_questionAborted;
+}
+
 sigslot::signal<const std::string &> &Engine::questionAnswered()
 {
     return m_questionAnswered;

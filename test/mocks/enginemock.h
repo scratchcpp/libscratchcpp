@@ -134,6 +134,7 @@ class EngineMock : public IEngine
         MOCK_METHOD((sigslot::signal<Monitor *, IMonitorHandler *> &), monitorRemoved, (), (override));
 
         MOCK_METHOD(sigslot::signal<const std::string &> &, questionAsked, (), (override));
+        MOCK_METHOD(sigslot::signal<> &, questionAborted, (), (override));
         MOCK_METHOD(sigslot::signal<const std::string &> &, questionAnswered, (), (override));
 
         MOCK_METHOD(std::vector<std::string> &, extensions, (), (const, override));

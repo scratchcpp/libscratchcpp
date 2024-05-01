@@ -60,6 +60,7 @@ class SensingBlocks : public IBlockSection
         std::string name() const override;
 
         void registerBlocks(IEngine *engine) override;
+        void onInit(IEngine *engine) override;
 
         static void compileTouchingObject(Compiler *compiler);
         static void compileTouchingColor(Compiler *compiler);
