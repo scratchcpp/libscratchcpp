@@ -68,9 +68,12 @@ std::shared_ptr<Sound> Sound::clone() const
     auto sound = std::make_shared<Sound>(name(), id(), dataFormat());
     sound->setRate(rate());
     sound->setSampleCount(sampleCount());
-    sound->impl->player->loadCopy(impl->player.get());
     sound->impl->player->setVolume(impl->player->volume());
-    sound->setData(dataSize(), const_cast<void *>(data()));
+
+    if (impl->player->isLoaded()) {
+        sound->impl->player->loadCopy(impl->player.get());
+        sound->setData(dataSize(), const_cast<void *>(data()));
+    }
 
     return sound;
 }
