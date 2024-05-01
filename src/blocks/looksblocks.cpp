@@ -103,6 +103,14 @@ void LooksBlocks::onInit(IEngine *engine)
         m_timeMap.erase(vm);
         erase_if(m_waitingBubbles, [vm](const std::pair<Target *, VirtualMachine *> &pair) { return pair.second == vm; });
     });
+
+    engine->stopped().connect([engine]() {
+        const auto &targets = engine->targets();
+
+        for (auto target : targets) {
+            target->setBubbleText("");
+        }
+    });
 }
 
 void LooksBlocks::compileSayForSecs(Compiler *compiler)
