@@ -82,13 +82,15 @@ void Sound::setTarget(Target *target)
 /*! Returns an independent copy of the sound which is valid for as long as the original sound exists. */
 std::shared_ptr<Sound> Sound::clone() const
 {
+    const Sound *root = impl->cloneRoot ? impl->cloneRoot : this;
     auto sound = std::make_shared<Sound>(name(), id(), dataFormat());
     sound->setRate(rate());
     sound->setSampleCount(sampleCount());
+    sound->impl->cloneRoot = root;
     sound->impl->player->setVolume(impl->player->volume());
 
-    if (impl->player->isLoaded()) {
-        sound->impl->player->loadCopy(impl->player.get());
+    if (root->impl->player->isLoaded()) {
+        sound->impl->player->loadCopy(root->impl->player.get());
         sound->setData(dataSize(), const_cast<void *>(data()));
     }
 
@@ -113,10 +115,11 @@ void Sound::stopCloneSounds()
             sprite = sprite->cloneSprite();
 
         // Stop the sound in the sprite (clone root)
-        auto sound = sprite->soundAt(sprite->findSound(name()));
+        const Sound *root = impl->cloneRoot ? impl->cloneRoot : this;
+        assert(root == sprite->soundAt(sprite->findSound(name())).get());
 
-        if (sound && sound.get() != this)
-            sound->impl->player->stop();
+        if (root != this)
+            root->impl->player->stop();
 
         // Stop the sound in clones
         const auto &clones = sprite->clones();
