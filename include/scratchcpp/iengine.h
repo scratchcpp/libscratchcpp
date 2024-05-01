@@ -370,6 +370,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Emits when a question is asked, for example using the 'ask and wait' block. */
         virtual sigslot::signal<const std::string &> &questionAsked() = 0;
 
+        /*! Emits when the current question is aborted. */
+        virtual sigslot::signal<> &questionAborted() = 0;
+
         /*! Emits when a question is answered. */
         virtual sigslot::signal<const std::string &> &questionAnswered() = 0;
 
