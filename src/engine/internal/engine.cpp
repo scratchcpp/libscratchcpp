@@ -415,7 +415,7 @@ VirtualMachine *Engine::startScript(std::shared_ptr<Block> topLevelBlock, Target
     return pushThread(topLevelBlock, target).get();
 }
 
-void Engine::broadcast(unsigned int index)
+void Engine::broadcast(int index)
 {
     if (index < 0 || index >= m_broadcasts.size())
         return;

@@ -35,7 +35,7 @@ class Engine : public IEngine
         void start() override;
         void stop() override;
         VirtualMachine *startScript(std::shared_ptr<Block> topLevelBlock, Target *target) override;
-        void broadcast(unsigned int index) override;
+        void broadcast(int index) override;
         void broadcastByPtr(Broadcast *broadcast) override;
         void startBackdropScripts(Broadcast *broadcast) override;
         void stopScript(VirtualMachine *vm) override;
