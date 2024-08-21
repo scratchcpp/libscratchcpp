@@ -315,7 +315,8 @@ TEST_F(CompilerTest, AddNoShadowInput)
     compiler.addInstruction(vm::OP_PRINT);
 
     Input input2("TEST_INPUT2", Input::Type::NoShadow);
-    EXPECT_DEATH({ compiler.addInput(&input2); }, "(Assertion)([ ]+)(.+)([ ]+)(failed)");
+    input2.setPrimaryValue("test");
+    compiler.addInput(&input2);
 
     Input input3("TEST_INPUT3", Input::Type::NoShadow);
     std::shared_ptr<Block> block2 = std::make_shared<Block>("", "test_block2");
@@ -324,7 +325,9 @@ TEST_F(CompilerTest, AddNoShadowInput)
     compiler.addInstruction(vm::OP_PRINT);
 
     compiler.addInstruction(vm::OP_HALT);
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CHECKPOINT, vm::OP_NULL, vm::OP_PRINT, vm::OP_NULL, vm::OP_PRINT, vm::OP_HALT }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CHECKPOINT, vm::OP_NULL, vm::OP_PRINT, vm::OP_CONST, 0, vm::OP_NULL, vm::OP_PRINT, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues().size(), 1);
+    ASSERT_EQ(compiler.constValues()[0], "test");
 }
 
 TEST_F(CompilerTest, ResolveInput)
