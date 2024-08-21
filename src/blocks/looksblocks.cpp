@@ -349,8 +349,7 @@ void LooksBlocks::compileSwitchCostumeTo(Compiler *compiler)
 
     Input *input = compiler->input(COSTUME);
 
-    if (input->type() != Input::Type::ObscuredShadow) {
-        assert(input->pointsToDropdownMenu());
+    if (input->pointsToDropdownMenu()) {
         std::string value = input->selectedMenuItem();
         int index = target->findCostume(value);
 
@@ -394,8 +393,7 @@ void LooksBlocks::compileSwitchBackdropTo(Compiler *compiler)
 
     Input *input = compiler->input(BACKDROP);
 
-    if (input->type() != Input::Type::ObscuredShadow) {
-        assert(input->pointsToDropdownMenu());
+    if (input->pointsToDropdownMenu()) {
         std::string value = input->selectedMenuItem();
         int index = stage->findCostume(value);
 
@@ -436,8 +434,7 @@ void LooksBlocks::compileSwitchBackdropToAndWait(Compiler *compiler)
 
     Input *input = compiler->input(BACKDROP);
 
-    if (input->type() != Input::Type::ObscuredShadow) {
-        assert(input->pointsToDropdownMenu());
+    if (input->pointsToDropdownMenu()) {
         std::string value = input->selectedMenuItem();
         int index = stage->findCostume(value);
 
