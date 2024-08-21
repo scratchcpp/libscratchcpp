@@ -63,8 +63,7 @@ void EventBlocks::compileWhenTouchingObjectPredicate(Compiler *compiler)
 {
     Input *input = compiler->input(TOUCHINGOBJECTMENU);
 
-    if (input->type() != Input::Type::ObscuredShadow) {
-        assert(input->pointsToDropdownMenu());
+    if (input->pointsToDropdownMenu()) {
         std::string value = input->selectedMenuItem();
 
         compiler->addConstValue(value);
