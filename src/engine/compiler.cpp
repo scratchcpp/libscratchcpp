@@ -174,23 +174,26 @@ void Compiler::addInput(Input *input)
     }
     switch (input->type()) {
         case Input::Type::Shadow:
+        case Input::Type::NoShadow: {
             if (input->pointsToDropdownMenu())
                 addInstruction(OP_CONST, { impl->constIndex(input->primaryValue(), true, input->selectedMenuItem()) });
-            else
-                addInstruction(OP_CONST, { impl->constIndex(input->primaryValue()) });
-            break;
-
-        case Input::Type::NoShadow: {
-            auto previousBlock = impl->block;
-            impl->block = input->valueBlock();
-            assert(impl->block);
-            if (impl->block->compileFunction())
-                impl->block->compile(this);
             else {
-                std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
-                addInstruction(OP_NULL);
+                auto previousBlock = impl->block;
+                impl->block = input->valueBlock();
+
+                if (impl->block) {
+                    if (impl->block->compileFunction())
+                        impl->block->compile(this);
+                    else {
+                        std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
+                        addInstruction(OP_NULL);
+                    }
+                } else
+                    addInstruction(OP_CONST, { impl->constIndex(input->primaryValue()) });
+
+                impl->block = previousBlock;
             }
-            impl->block = previousBlock;
+
             break;
         }
 
