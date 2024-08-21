@@ -291,8 +291,8 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Returns the broadcast at index. */
         virtual std::shared_ptr<Broadcast> broadcastAt(int index) const = 0;
 
-        /*! Returns the index of the broadcast with the given name. */
-        virtual int findBroadcast(const std::string &broadcastName) const = 0;
+        /*! Returns the list of indexes of the broadcasts with the given name (case insensitive). */
+        virtual std::vector<int> findBroadcasts(const std::string &broadcastName) const = 0;
 
         /*! Returns the index of the broadcast with the given ID. */
         virtual int findBroadcastById(const std::string &broadcastId) const = 0;

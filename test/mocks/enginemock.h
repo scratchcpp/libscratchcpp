@@ -103,7 +103,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(const std::vector<std::shared_ptr<Broadcast>> &, broadcasts, (), (const, override));
         MOCK_METHOD(void, setBroadcasts, (const std::vector<std::shared_ptr<Broadcast>> &), (override));
         MOCK_METHOD(std::shared_ptr<Broadcast>, broadcastAt, (int), (const, override));
-        MOCK_METHOD(int, findBroadcast, (const std::string &), (const, override));
+        MOCK_METHOD(std::vector<int>, findBroadcasts, (const std::string &), (const, override));
         MOCK_METHOD(int, findBroadcastById, (const std::string &), (const, override));
 
         MOCK_METHOD(void, addWhenTouchingObjectScript, (std::shared_ptr<Block>), (override));

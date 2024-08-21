@@ -123,7 +123,7 @@ class Engine : public IEngine
         const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const override;
         void setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadcasts) override;
         std::shared_ptr<Broadcast> broadcastAt(int index) const override;
-        int findBroadcast(const std::string &broadcastName) const override;
+        std::vector<int> findBroadcasts(const std::string &broadcastName) const override;
         int findBroadcastById(const std::string &broadcastId) const override;
 
         void addWhenTouchingObjectScript(std::shared_ptr<Block> hatBlock) override;

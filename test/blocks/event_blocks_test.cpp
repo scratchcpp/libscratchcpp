@@ -373,8 +373,8 @@ TEST_F(EventBlocksTest, Broadcast)
     notBlock->setCompileFunction(&OperatorBlocks::compileNot);
     addObscuredInput(block2, "BROADCAST_INPUT", EventBlocks::BROADCAST_INPUT, notBlock);
 
-    EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(0));
-    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::broadcastByIndex)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, findBroadcasts("test")).WillOnce(Return(std::vector<int>({ 0, 3 })));
+    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::broadcastByIndex)).Times(2).WillRepeatedly(Return(0));
     EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::broadcast)).WillOnce(Return(1));
 
     compiler.init();
@@ -384,9 +384,8 @@ TEST_F(EventBlocksTest, Broadcast)
     EventBlocks::compileBroadcast(&compiler);
     compiler.end();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_NULL, vm::OP_NOT, vm::OP_EXEC, 1, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0].toDouble(), 0);
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_NULL, vm::OP_NOT, vm::OP_EXEC, 1, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 3 }));
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
 }
@@ -402,8 +401,9 @@ TEST_F(EventBlocksTest, BroadcastImpl)
     vm.setFunctions(functions);
     vm.setConstValues(constValues);
 
-    EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(1));
-    EXPECT_CALL(m_engineMock, broadcast(1)).Times(1);
+    EXPECT_CALL(m_engineMock, findBroadcasts("test")).WillOnce(Return(std::vector<int>({ 1, 4 })));
+    EXPECT_CALL(m_engineMock, broadcast(1));
+    EXPECT_CALL(m_engineMock, broadcast(4));
 
     vm.setBytecode(bytecode1);
     vm.run();
@@ -432,9 +432,9 @@ TEST_F(EventBlocksTest, BroadcastAndWait)
     notBlock->setCompileFunction(&OperatorBlocks::compileNot);
     addObscuredInput(block2, "BROADCAST_INPUT", EventBlocks::BROADCAST_INPUT, notBlock);
 
-    EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(0));
-    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::broadcastByIndexAndWait)).WillOnce(Return(0));
-    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::checkBroadcastByIndex)).WillOnce(Return(1));
+    EXPECT_CALL(m_engineMock, findBroadcasts("test")).WillOnce(Return(std::vector<int>({ 0, 3 })));
+    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::broadcastByIndexAndWait)).Times(2).WillRepeatedly(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::checkBroadcastByIndex)).Times(2).WillRepeatedly(Return(1));
     EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::broadcastAndWait)).WillOnce(Return(2));
     EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::checkBroadcast)).WillOnce(Return(3));
 
@@ -448,8 +448,9 @@ TEST_F(EventBlocksTest, BroadcastAndWait)
     ASSERT_EQ(
         compiler.bytecode(),
         std::vector<unsigned int>(
-            { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_NULL, vm::OP_NOT, vm::OP_EXEC, 2, vm::OP_NULL, vm::OP_NOT, vm::OP_EXEC, 3, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 0 }));
+            { vm::OP_START, vm::OP_CONST, 0,           vm::OP_EXEC, 0,           vm::OP_CONST, 1,           vm::OP_EXEC, 0,          vm::OP_CONST, 2, vm::OP_EXEC, 1, vm::OP_CONST, 3, vm::OP_EXEC, 1,
+              vm::OP_NULL,  vm::OP_NOT,   vm::OP_EXEC, 2,           vm::OP_NULL, vm::OP_NOT,   vm::OP_EXEC, 3,           vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 3, 0, 3 }));
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
 }
@@ -467,15 +468,16 @@ TEST_F(EventBlocksTest, BroadcastAndWaitImpl)
     vm.setFunctions(functions);
     vm.setConstValues(constValues);
 
-    EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(1));
-    EXPECT_CALL(m_engineMock, broadcast(1)).Times(1);
+    EXPECT_CALL(m_engineMock, findBroadcasts("test")).WillOnce(Return(std::vector<int>({ 1, 4 })));
+    EXPECT_CALL(m_engineMock, broadcast(1));
+    EXPECT_CALL(m_engineMock, broadcast(4));
 
     vm.setBytecode(bytecode1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
 
-    EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(2));
+    EXPECT_CALL(m_engineMock, findBroadcasts("test")).WillOnce(Return(std::vector<int>({ 2, 3 })));
     EXPECT_CALL(m_engineMock, broadcastRunning(2)).WillOnce(Return(true));
 
     vm.setBytecode(bytecode2);
@@ -484,8 +486,18 @@ TEST_F(EventBlocksTest, BroadcastAndWaitImpl)
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_EQ(vm.atEnd(), false);
 
-    EXPECT_CALL(m_engineMock, findBroadcast("test")).WillOnce(Return(2));
+    EXPECT_CALL(m_engineMock, findBroadcasts("test")).WillOnce(Return(std::vector<int>({ 2, 3 })));
+    EXPECT_CALL(m_engineMock, broadcastRunning(2)).WillOnce(Return(true));
+
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_EQ(vm.atEnd(), false);
+
+    EXPECT_CALL(m_engineMock, findBroadcasts("test")).WillOnce(Return(std::vector<int>({ 2, 3 })));
     EXPECT_CALL(m_engineMock, broadcastRunning(2)).WillOnce(Return(false));
+    EXPECT_CALL(m_engineMock, broadcastRunning(3)).WillOnce(Return(false));
 
     vm.run();
 

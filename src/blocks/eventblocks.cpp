@@ -99,8 +99,12 @@ void EventBlocks::compileBroadcast(Compiler *compiler)
     auto input = compiler->input(BROADCAST_INPUT);
 
     if (input->type() != Input::Type::ObscuredShadow) {
-        compiler->addConstValue(compiler->engine()->findBroadcast(input->primaryValue()->value().toString()));
-        compiler->addFunctionCall(&broadcastByIndex);
+        std::vector<int> broadcasts = compiler->engine()->findBroadcasts(input->primaryValue()->value().toString());
+
+        for (int index : broadcasts) {
+            compiler->addConstValue(index);
+            compiler->addFunctionCall(&broadcastByIndex);
+        }
     } else {
         compiler->addInput(input);
         compiler->addFunctionCall(&broadcast);
@@ -112,11 +116,17 @@ void EventBlocks::compileBroadcastAndWait(Compiler *compiler)
     auto input = compiler->input(BROADCAST_INPUT);
 
     if (input->type() != Input::Type::ObscuredShadow) {
-        int index = compiler->engine()->findBroadcast(input->primaryValue()->value().toString());
-        compiler->addConstValue(index);
-        compiler->addFunctionCall(&broadcastByIndexAndWait);
-        compiler->addConstValue(index);
-        compiler->addFunctionCall(&checkBroadcastByIndex);
+        std::vector<int> broadcasts = compiler->engine()->findBroadcasts(input->primaryValue()->value().toString());
+
+        for (int index : broadcasts) {
+            compiler->addConstValue(index);
+            compiler->addFunctionCall(&broadcastByIndexAndWait);
+        }
+
+        for (int index : broadcasts) {
+            compiler->addConstValue(index);
+            compiler->addFunctionCall(&checkBroadcastByIndex);
+        }
     } else {
         compiler->addInput(input);
         compiler->addFunctionCall(&broadcastAndWait);
@@ -197,7 +207,11 @@ unsigned int EventBlocks::whenTouchingObjectPredicate(VirtualMachine *vm)
 
 unsigned int EventBlocks::broadcast(VirtualMachine *vm)
 {
-    vm->engine()->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()));
+    std::vector<int> broadcasts = vm->engine()->findBroadcasts(vm->getInput(0, 1)->toString());
+
+    for (int index : broadcasts)
+        vm->engine()->broadcast(index);
+
     return 1;
 }
 
@@ -209,7 +223,11 @@ unsigned int EventBlocks::broadcastByIndex(VirtualMachine *vm)
 
 unsigned int EventBlocks::broadcastAndWait(VirtualMachine *vm)
 {
-    vm->engine()->broadcast(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString()));
+    std::vector<int> broadcasts = vm->engine()->findBroadcasts(vm->getInput(0, 1)->toString());
+
+    for (int index : broadcasts)
+        vm->engine()->broadcast(index);
+
     return 1;
 }
 
@@ -221,8 +239,20 @@ unsigned int EventBlocks::broadcastByIndexAndWait(VirtualMachine *vm)
 
 unsigned int EventBlocks::checkBroadcast(VirtualMachine *vm)
 {
-    if (vm->engine()->broadcastRunning(vm->engine()->findBroadcast(vm->getInput(0, 1)->toString())))
+    bool running = false;
+
+    std::vector<int> broadcasts = vm->engine()->findBroadcasts(vm->getInput(0, 1)->toString());
+
+    for (int index : broadcasts) {
+        if (vm->engine()->broadcastRunning(index)) {
+            running = true;
+            break;
+        }
+    }
+
+    if (running)
         vm->stop(true, true, true);
+
     return 1;
 }
 
