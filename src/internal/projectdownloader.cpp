@@ -94,10 +94,8 @@ bool ProjectDownloader::downloadAssets(const std::vector<std::string> &assetIds)
     m_cancelMutex.unlock();
 
     auto count = assetIds.size();
-    unsigned int threadCount = std::thread::hardware_concurrency();
-
-    // Thread count: number of assets / 5, limited to maximum number of threads
-    threadCount = std::max(1u, std::min(threadCount, static_cast<unsigned int>(std::ceil(count / 5.0))));
+    // unsigned int threadCount = std::thread::hardware_concurrency();
+    unsigned int threadCount = 20;
 
     m_assets.clear();
     m_assets.reserve(count);
@@ -120,48 +118,92 @@ bool ProjectDownloader::downloadAssets(const std::vector<std::string> &assetIds)
         downloaders.push_back(m_downloaderFactory->create());
 
     // Download assets
-    auto f = [this, &downloaders, &assetIds, count, threadCount](unsigned int thread) {
-        auto downloader = downloaders[thread];
-        unsigned int n = std::ceil(count / static_cast<double>(threadCount));
+    auto f = [this, count](std::shared_ptr<IDownloader> downloader, int index, const std::string &id) {
+        m_cancelMutex.lock();
 
-        for (unsigned int i = 0; i < n; i++) {
-            unsigned int index = thread * n + i;
+        if (m_cancel)
+            return;
 
-            if (index < count) {
-                m_cancelMutex.lock();
+        m_cancelMutex.unlock();
 
-                if (m_cancel)
-                    return;
+        bool ret = downloader->download(ASSET_PREFIX + id + ASSET_SUFFIX);
 
-                m_cancelMutex.unlock();
-
-                bool ret = downloader->download(ASSET_PREFIX + assetIds[index] + ASSET_SUFFIX);
-
-                if (!ret) {
-                    std::cerr << "Failed to download asset: " << assetIds[index] << std::endl;
-                    m_cancelMutex.lock();
-                    m_cancel = true;
-                    m_cancelMutex.unlock();
-                    return;
-                }
-
-                m_assetsMutex.lock();
-                m_assets[index] = downloader->text();
-                m_downloadedAssetCount++;
-                std::cout << "Downloaded assets: " << m_downloadedAssetCount << " of " << count << std::endl;
-                m_downloadProgressChanged(m_downloadedAssetCount, count);
-                m_assetsMutex.unlock();
-            }
+        if (!ret) {
+            std::cerr << "Failed to download asset: " << id << std::endl;
+            m_cancelMutex.lock();
+            m_cancel = true;
+            m_cancelMutex.unlock();
+            return;
         }
+
+        m_assetsMutex.lock();
+        m_assets[index] = downloader->text();
+        m_downloadedAssetCount++;
+        m_downloadProgressChanged(m_downloadedAssetCount, count);
+        m_assetsMutex.unlock();
     };
 
-    std::vector<std::thread> threads;
+    std::unordered_map<int, std::pair<std::thread, std::shared_ptr<IDownloader>>> threads;
+    bool done = false;
+    unsigned int lastCount = 0, i = 0;
 
-    for (unsigned int i = 0; i < threadCount; i++)
-        threads.emplace_back(std::thread(f, i));
+    while (true) {
+        int addCount = threadCount - threads.size();
 
-    for (unsigned int i = 0; i < threadCount; i++)
-        threads[i].join();
+        for (int j = 0; j < addCount; j++) {
+            if (i >= count) {
+                done = true;
+                break;
+            }
+
+            std::shared_ptr<IDownloader> freeDownloader = nullptr;
+
+            for (auto downloader : downloaders) {
+                auto it = std::find_if(threads.begin(), threads.end(), [&downloader](std::pair<const int, std::pair<std::thread, std::shared_ptr<IDownloader>>> &pair) {
+                    return pair.second.second == downloader;
+                });
+
+                if (it == threads.cend()) {
+                    freeDownloader = downloader;
+                    break;
+                }
+            }
+
+            assert(freeDownloader);
+            threads[i] = { std::thread(f, freeDownloader, i, assetIds[i]), freeDownloader };
+            i++;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+
+        m_assetsMutex.lock();
+
+        if (m_downloadedAssetCount != lastCount) {
+            std::cout << "Downloaded assets: " << m_downloadedAssetCount << " of " << count << std::endl;
+            lastCount = m_downloadedAssetCount;
+        }
+
+        std::vector<int> toRemove;
+
+        for (auto &[index, info] : threads) {
+            if (!m_assets[index].empty())
+                toRemove.push_back(index);
+        }
+
+        m_assetsMutex.unlock();
+
+        for (int index : toRemove) {
+            threads[index].first.join();
+            threads.erase(index);
+        }
+
+        if (done) {
+            for (auto &[index, info] : threads)
+                info.first.join();
+
+            break;
+        }
+    }
 
     CHECK_CANCEL();
 
