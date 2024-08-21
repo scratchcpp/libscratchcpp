@@ -1237,6 +1237,8 @@ TEST(EngineTest, Broadcasts)
     ASSERT_EQ(engine.findBroadcast("message1"), 0);
     ASSERT_EQ(engine.findBroadcast("message2"), 1);
     ASSERT_EQ(engine.findBroadcast("Test"), 2);
+    ASSERT_EQ(engine.findBroadcast("MessAge2"), 1);
+    ASSERT_EQ(engine.findBroadcast("tEst"), 2);
 
     ASSERT_EQ(engine.findBroadcastById("d"), -1);
     ASSERT_EQ(engine.findBroadcastById("a"), 0);
