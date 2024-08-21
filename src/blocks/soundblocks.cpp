@@ -61,8 +61,7 @@ bool SoundBlocks::compilePlayCommon(Compiler *compiler, bool untilDone, bool *by
 
     Input *input = compiler->input(SOUND_MENU);
 
-    if (input->type() != Input::Type::ObscuredShadow) {
-        assert(input->pointsToDropdownMenu());
+    if (input->pointsToDropdownMenu()) {
         std::string value = input->selectedMenuItem();
 
         int index = target->findSound(value);

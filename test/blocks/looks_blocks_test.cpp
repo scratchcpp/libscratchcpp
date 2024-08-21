@@ -75,6 +75,7 @@ class LooksBlocksTest : public testing::Test
             else {
                 auto input = addNullInput(block, name, id);
                 auto menu = createLooksBlock(block->id() + "_menu", block->opcode() + "_menu");
+                menu->setShadow(true);
                 input->setValueBlock(menu);
                 addDropdownField(menu, name, static_cast<LooksBlocks::Fields>(-1), selectedValue, static_cast<LooksBlocks::FieldValues>(-1));
             }

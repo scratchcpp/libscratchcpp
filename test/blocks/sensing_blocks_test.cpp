@@ -86,6 +86,7 @@ class SensingBlocksTest : public testing::Test
             else {
                 auto input = addNullInput(block, name, id);
                 auto menu = std::make_shared<Block>(block->id() + "_menu", block->opcode() + "_menu");
+                menu->setShadow(true);
                 input->setValueBlock(menu);
                 addDropdownField(menu, name, static_cast<SensingBlocks::Fields>(-1), selectedValue, static_cast<SensingBlocks::FieldValues>(-1));
             }

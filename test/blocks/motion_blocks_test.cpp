@@ -74,6 +74,7 @@ class MotionBlocksTest : public testing::Test
             else {
                 auto input = addNullInput(block, name, id);
                 auto menu = createMotionBlock(block->id() + "_menu", block->opcode() + "_menu");
+                menu->setShadow(true);
                 input->setValueBlock(menu);
                 addDropdownField(menu, name, static_cast<MotionBlocks::Fields>(-1), selectedValue, static_cast<MotionBlocks::FieldValues>(-1));
             }

@@ -107,8 +107,7 @@ void MotionBlocks::compilePointTowards(Compiler *compiler)
 {
     Input *input = compiler->input(TOWARDS);
 
-    if (input->type() != Input::Type::ObscuredShadow) {
-        assert(input->pointsToDropdownMenu());
+    if (input->pointsToDropdownMenu()) {
         std::string value = input->selectedMenuItem();
 
         if (value == "_mouse_")
@@ -137,8 +136,7 @@ void MotionBlocks::compileGoTo(Compiler *compiler)
 {
     Input *input = compiler->input(TO);
 
-    if (input->type() != Input::Type::ObscuredShadow) {
-        assert(input->pointsToDropdownMenu());
+    if (input->pointsToDropdownMenu()) {
         std::string value = input->selectedMenuItem();
 
         if (value == "_mouse_")
@@ -171,8 +169,7 @@ void MotionBlocks::compileGlideTo(Compiler *compiler)
 
     Input *input = compiler->input(TO);
 
-    if (input->type() != Input::Type::ObscuredShadow) {
-        assert(input->pointsToDropdownMenu());
+    if (input->pointsToDropdownMenu()) {
         std::string value = input->selectedMenuItem();
 
         if (value == "_mouse_")
