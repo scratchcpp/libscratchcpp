@@ -115,8 +115,7 @@ void SensingBlocks::compileTouchingObject(Compiler *compiler)
 {
     Input *input = compiler->input(TOUCHINGOBJECTMENU);
 
-    if (input->type() != Input::Type::ObscuredShadow) {
-        assert(input->pointsToDropdownMenu());
+    if (input->pointsToDropdownMenu()) {
         std::string value = input->selectedMenuItem();
 
         if (value == "_mouse_")
@@ -144,8 +143,7 @@ void SensingBlocks::compileDistanceTo(Compiler *compiler)
 {
     Input *input = compiler->input(DISTANCETOMENU);
 
-    if (input->type() != Input::Type::ObscuredShadow) {
-        assert(input->pointsToDropdownMenu());
+    if (input->pointsToDropdownMenu()) {
         std::string value = input->selectedMenuItem();
 
         if (value == "_mouse_")
@@ -240,8 +238,7 @@ void SensingBlocks::compileOf(Compiler *compiler)
     assert(input);
     BlockFunc f = nullptr;
 
-    if (input->type() != Input::Type::ObscuredShadow) {
-        assert(input->pointsToDropdownMenu());
+    if (input->pointsToDropdownMenu()) {
         std::string value = input->selectedMenuItem();
 
         IEngine *engine = compiler->engine();
