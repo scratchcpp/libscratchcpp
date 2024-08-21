@@ -358,6 +358,7 @@ TEST_F(CompilerTest, ResolveDropdownMenuInput)
     auto block = std::make_shared<Block>("a", "test_block1");
     auto input = std::make_shared<Input>("INPUT1", Input::Type::Shadow);
     auto menu = std::make_shared<Block>("a", "test_menu");
+    menu->setShadow(true);
     auto optionField = std::make_shared<Field>("OPTION", "test");
     input->setInputId(TestBlockSection::INPUT1);
     input->setValueBlock(menu);
