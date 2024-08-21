@@ -175,8 +175,7 @@ void ControlBlocks::compileCreateClone(Compiler *compiler)
 {
     Input *input = compiler->input(CLONE_OPTION);
 
-    if (input->type() != Input::Type::ObscuredShadow) {
-        assert(input->pointsToDropdownMenu());
+    if (input->pointsToDropdownMenu()) {
         std::string spriteName = input->selectedMenuItem();
 
         if (spriteName == "_myself_")

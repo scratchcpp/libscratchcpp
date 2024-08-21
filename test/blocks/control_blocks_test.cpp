@@ -41,6 +41,7 @@ class ControlBlocksTest : public testing::Test
             else {
                 auto input = addNullInput(block, "CLONE_OPTION", ControlBlocks::CLONE_OPTION);
                 auto menu = createControlBlock(id + "_menu", "control_create_clone_of_menu");
+                menu->setShadow(true);
                 input->setValueBlock(menu);
                 addDropdownField(menu, "CLONE_OPTION", static_cast<ControlBlocks::Fields>(-1), spriteName, static_cast<ControlBlocks::FieldValues>(-1));
             }
