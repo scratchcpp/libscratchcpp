@@ -81,6 +81,10 @@ TEST(InputTest, SelectedMenuItem)
 
     auto field1 = std::make_shared<Field>("OPTION1", "");
     block1->addField(field1);
+    ASSERT_FALSE(input1.pointsToDropdownMenu());
+    ASSERT_TRUE(input1.selectedMenuItem().empty());
+
+    block1->setShadow(true);
     ASSERT_TRUE(input1.pointsToDropdownMenu());
     ASSERT_TRUE(input1.selectedMenuItem().empty());
 
@@ -90,6 +94,7 @@ TEST(InputTest, SelectedMenuItem)
     ASSERT_TRUE(input1.selectedMenuItem().empty());
 
     auto block2 = std::make_shared<Block>("def", "");
+    block2->setShadow(true);
     input1.setValueBlock(block2);
 
     field1 = std::make_shared<Field>("OPTION1", "something");
