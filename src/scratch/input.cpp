@@ -98,13 +98,13 @@ void Input::setValueBlockId(const std::string &id)
 
 /*!
  * Returns true if the input points to a dropdown menu.\n
- * (if type() == Type::Shadow and valueBlock() points to a block with a single field which does not point to an entity)
+ * (if valueBlock() points to a shadow block with a single field which does not point to an entity)
  */
 bool Input::pointsToDropdownMenu() const
 {
     auto block = valueBlock();
 
-    if ((impl->type != Type::Shadow) || !block)
+    if (!block || !block->shadow())
         return false;
 
     const auto &fields = block->fields();
