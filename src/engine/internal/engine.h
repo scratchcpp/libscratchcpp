@@ -35,7 +35,7 @@ class Engine : public IEngine
         void start() override;
         void stop() override;
         VirtualMachine *startScript(std::shared_ptr<Block> topLevelBlock, Target *target) override;
-        void broadcast(unsigned int index) override;
+        void broadcast(int index) override;
         void broadcastByPtr(Broadcast *broadcast) override;
         void startBackdropScripts(Broadcast *broadcast) override;
         void stopScript(VirtualMachine *vm) override;
@@ -123,7 +123,7 @@ class Engine : public IEngine
         const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const override;
         void setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadcasts) override;
         std::shared_ptr<Broadcast> broadcastAt(int index) const override;
-        int findBroadcast(const std::string &broadcastName) const override;
+        std::vector<int> findBroadcasts(const std::string &broadcastName) const override;
         int findBroadcastById(const std::string &broadcastId) const override;
 
         void addWhenTouchingObjectScript(std::shared_ptr<Block> hatBlock) override;

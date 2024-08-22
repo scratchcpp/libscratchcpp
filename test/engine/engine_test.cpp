@@ -1276,23 +1276,25 @@ TEST(EngineTest, Broadcasts)
     auto b1 = std::make_shared<Broadcast>("a", "message1");
     auto b2 = std::make_shared<Broadcast>("b", "message2");
     auto b3 = std::make_shared<Broadcast>("c", "Test");
-    engine.setBroadcasts({ b1, b2, b3 });
+    auto b4 = std::make_shared<Broadcast>("d", "TesT");
+    engine.setBroadcasts({ b1, b2, b3, b4 });
 
-    ASSERT_EQ(engine.broadcasts(), std::vector<std::shared_ptr<Broadcast>>({ b1, b2, b3 }));
+    ASSERT_EQ(engine.broadcasts(), std::vector<std::shared_ptr<Broadcast>>({ b1, b2, b3, b4 }));
     ASSERT_EQ(engine.broadcastAt(0), b1);
     ASSERT_EQ(engine.broadcastAt(1), b2);
     ASSERT_EQ(engine.broadcastAt(2), b3);
-    ASSERT_EQ(engine.broadcastAt(3), nullptr);
+    ASSERT_EQ(engine.broadcastAt(3), b4);
+    ASSERT_EQ(engine.broadcastAt(4), nullptr);
     ASSERT_EQ(engine.broadcastAt(-1), nullptr);
 
-    ASSERT_EQ(engine.findBroadcast("invalid"), -1);
-    ASSERT_EQ(engine.findBroadcast("message1"), 0);
-    ASSERT_EQ(engine.findBroadcast("message2"), 1);
-    ASSERT_EQ(engine.findBroadcast("Test"), 2);
-    ASSERT_EQ(engine.findBroadcast("MessAge2"), 1);
-    ASSERT_EQ(engine.findBroadcast("tEst"), 2);
+    ASSERT_TRUE(engine.findBroadcasts("invalid").empty());
+    ASSERT_EQ(engine.findBroadcasts("message1"), std::vector<int>({ 0 }));
+    ASSERT_EQ(engine.findBroadcasts("message2"), std::vector<int>({ 1 }));
+    ASSERT_EQ(engine.findBroadcasts("Test"), std::vector<int>({ 2, 3 }));
+    ASSERT_EQ(engine.findBroadcasts("MessAge2"), std::vector<int>({ 1 }));
+    ASSERT_EQ(engine.findBroadcasts("tEst"), std::vector<int>({ 2, 3 }));
 
-    ASSERT_EQ(engine.findBroadcastById("d"), -1);
+    ASSERT_EQ(engine.findBroadcastById("e"), -1);
     ASSERT_EQ(engine.findBroadcastById("a"), 0);
     ASSERT_EQ(engine.findBroadcastById("b"), 1);
     ASSERT_EQ(engine.findBroadcastById("c"), 2);

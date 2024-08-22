@@ -17,7 +17,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, start, (), (override));
         MOCK_METHOD(void, stop, (), (override));
         MOCK_METHOD(VirtualMachine *, startScript, (std::shared_ptr<Block>, Target *), (override));
-        MOCK_METHOD(void, broadcast, (unsigned int), (override));
+        MOCK_METHOD(void, broadcast, (int), (override));
         MOCK_METHOD(void, broadcastByPtr, (Broadcast *), (override));
         MOCK_METHOD(void, startBackdropScripts, (Broadcast *), (override));
         MOCK_METHOD(void, stopScript, (VirtualMachine *), (override));
@@ -103,7 +103,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(const std::vector<std::shared_ptr<Broadcast>> &, broadcasts, (), (const, override));
         MOCK_METHOD(void, setBroadcasts, (const std::vector<std::shared_ptr<Broadcast>> &), (override));
         MOCK_METHOD(std::shared_ptr<Broadcast>, broadcastAt, (int), (const, override));
-        MOCK_METHOD(int, findBroadcast, (const std::string &), (const, override));
+        MOCK_METHOD(std::vector<int>, findBroadcasts, (const std::string &), (const, override));
         MOCK_METHOD(int, findBroadcastById, (const std::string &), (const, override));
 
         MOCK_METHOD(void, addWhenTouchingObjectScript, (std::shared_ptr<Block>), (override));

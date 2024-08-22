@@ -415,7 +415,7 @@ VirtualMachine *Engine::startScript(std::shared_ptr<Block> topLevelBlock, Target
     return pushThread(topLevelBlock, target).get();
 }
 
-void Engine::broadcast(unsigned int index)
+void Engine::broadcast(int index)
 {
     if (index < 0 || index >= m_broadcasts.size())
         return;
@@ -1081,21 +1081,21 @@ std::shared_ptr<Broadcast> Engine::broadcastAt(int index) const
     return m_broadcasts[index];
 }
 
-int Engine::findBroadcast(const std::string &broadcastName) const
+std::vector<int> Engine::findBroadcasts(const std::string &broadcastName) const
 {
+    std::vector<int> ret;
     std::string lowercaseName = broadcastName;
     std::transform(lowercaseName.begin(), lowercaseName.end(), lowercaseName.begin(), ::tolower);
 
-    auto it = std::find_if(m_broadcasts.begin(), m_broadcasts.end(), [lowercaseName](std::shared_ptr<Broadcast> broadcast) {
-        std::string name = broadcast->name();
+    for (unsigned int i = 0; i < m_broadcasts.size(); i++) {
+        std::string name = m_broadcasts[i]->name();
         std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-        return name == lowercaseName;
-    });
 
-    if (it == m_broadcasts.end())
-        return -1;
-    else
-        return it - m_broadcasts.begin();
+        if (name == lowercaseName)
+            ret.push_back(i);
+    }
+
+    return ret;
 }
 
 int Engine::findBroadcastById(const std::string &broadcastId) const
