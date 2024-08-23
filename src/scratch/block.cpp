@@ -313,6 +313,36 @@ bool Block::topLevel() const
     return (impl->parentId == "" && !impl->parent);
 }
 
+/*! Returns the X-coordinate of the block in the code area (only for top level blocks). */
+int Block::x() const
+{
+    return impl->x;
+}
+
+/*! Sets the X-coordinate of the block in the code area (only for top level blocks). */
+void Block::setX(int x)
+{
+    if (!topLevel())
+        std::cout << "warning: setting X-coordinate of a block which is not a top level block" << std::endl;
+
+    impl->x = x;
+}
+
+/*! Returns the Y-coordinate of the block in the code area (only for top level blocks). */
+int Block::y() const
+{
+    return impl->y;
+}
+
+/*! Sets the Y-coordinate of the block in the code area (only for top level blocks). */
+void Block::setY(int y)
+{
+    if (!topLevel())
+        std::cout << "warning: setting Y-coordinate of a block which is not a top level block" << std::endl;
+
+    impl->y = y;
+}
+
 /*! Returns the comment which is attached to this block. */
 std::shared_ptr<Comment> Block::comment() const
 {
