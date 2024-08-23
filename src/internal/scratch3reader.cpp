@@ -92,6 +92,9 @@ bool Scratch3Reader::load()
                     reporterInfo->setValueId(jsonToValue(blockInfo[2]).toString());
                     reporterInfo->setType(static_cast<InputValue::Type>(blockInfo[0]));
 
+                    block->setX(blockInfo[3]);
+                    block->setY(blockInfo[4]);
+
                     target->addBlock(block);
                     continue;
                 }
@@ -108,6 +111,17 @@ bool Scratch3Reader::load()
                 if (!blockInfo["parent"].is_null())
                     parentId = blockInfo["parent"];
                 block->setParentId(parentId);
+                READER_STEP(step, "target -> block -> parent");
+                if (!blockInfo["parent"].is_null())
+                    parentId = blockInfo["parent"];
+                block->setParentId(parentId);
+
+                if (block->topLevel()) {
+                    READER_STEP(step, "target -> block -> x");
+                    block->setX(blockInfo["x"]);
+                    READER_STEP(step, "target -> block -> y");
+                    block->setY(blockInfo["y"]);
+                }
 
                 // inputs
                 READER_STEP(step, "target -> block -> inputs");

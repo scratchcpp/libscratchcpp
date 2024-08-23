@@ -33,6 +33,8 @@ struct BlockPrivate
         std::vector<std::shared_ptr<Field>> fields;
         std::unordered_map<int, Field *> fieldMap;
         bool shadow = false;
+        int x = 0;
+        int y = 0;
         std::string commentId;
         std::shared_ptr<Comment> comment = nullptr;
         IEngine *engine = nullptr;

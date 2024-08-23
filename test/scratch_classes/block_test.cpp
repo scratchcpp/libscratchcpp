@@ -194,6 +194,24 @@ TEST_F(BlockTest, TopLevel)
     ASSERT_TRUE(block.topLevel());
 }
 
+TEST_F(BlockTest, X)
+{
+    Block block("", "");
+    ASSERT_EQ(block.x(), 0);
+
+    block.setX(12);
+    ASSERT_EQ(block.x(), 12);
+}
+
+TEST_F(BlockTest, Y)
+{
+    Block block("", "");
+    ASSERT_EQ(block.y(), 0);
+
+    block.setY(8);
+    ASSERT_EQ(block.y(), 8);
+}
+
 TEST_F(BlockTest, Comment)
 {
     Block block("", "");

@@ -56,6 +56,12 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
 
         bool topLevel() const;
 
+        int x() const;
+        void setX(int x);
+
+        int y() const;
+        void setY(int y);
+
         std::shared_ptr<Comment> comment() const;
         const std::string &commentId() const;
         void setComment(std::shared_ptr<Comment> comment);

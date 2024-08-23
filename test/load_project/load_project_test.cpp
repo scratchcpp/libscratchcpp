@@ -228,7 +228,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(sprite1->name(), "Sprite1");
         ASSERT_EQ(sprite1->variables().size(), 1);
         ASSERT_EQ(sprite1->lists().size(), 1);
-        ASSERT_EQ(sprite1->blocks().size(), 18);
+        ASSERT_EQ(sprite1->blocks().size(), 19);
         ASSERT_EQ(sprite1->costumes().size(), 2);
         ASSERT_EQ(sprite1->comments().size(), 1);
         ASSERT_EQ(sprite1->costumeIndex(), 1);
@@ -278,6 +278,8 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_TRUE(sprite1->greenFlagBlocks()[0]);
         ASSERT_FALSE(sprite1->greenFlagBlocks()[0]->isTopLevelReporter());
         ASSERT_EQ(sprite1->greenFlagBlocks()[0]->opcode(), "event_whenflagclicked");
+        ASSERT_EQ(sprite1->greenFlagBlocks()[0]->x(), 0);
+        ASSERT_EQ(sprite1->greenFlagBlocks()[0]->y(), 0);
         auto block = sprite1->greenFlagBlocks()[0]->next();
         ASSERT_TRUE(block);
         ASSERT_EQ(block->parent(), sprite1->greenFlagBlocks()[0]);
@@ -343,6 +345,8 @@ TEST(LoadProjectTest, LoadTestProject)
             }
         }
         ASSERT_TRUE(defineBlock);
+        ASSERT_EQ(defineBlock->x(), 0);
+        ASSERT_EQ(defineBlock->y(), 384);
         ASSERT_INPUT(defineBlock, "custom_block");
         auto blockPrototype = GET_INPUT(defineBlock, "custom_block")->valueBlock();
         ASSERT_TRUE(blockPrototype);
@@ -371,6 +375,17 @@ TEST(LoadProjectTest, LoadTestProject)
         argBlock = GET_INPUT(block, "ITEM")->valueBlock();
         ASSERT_TRUE(argBlock);
         ASSERT_EQ(argBlock->opcode(), "argument_reporter_string_number");
+
+        std::shared_ptr<Block> keyPressedBlock = nullptr;
+        for (auto b : blocks) {
+            if (b->opcode() == "event_whenkeypressed") {
+                keyPressedBlock = b;
+                break;
+            }
+        }
+        ASSERT_TRUE(keyPressedBlock);
+        ASSERT_EQ(keyPressedBlock->x(), 488);
+        ASSERT_EQ(keyPressedBlock->y(), 152);
 
         // Balloon1
         ASSERT_NE(engine->findTarget("Balloon1"), -1);
@@ -651,6 +666,8 @@ TEST(LoadProjectTest, LoadTopLevelReporterProject)
         auto block1 = sprite1->blockAt(0);
         ASSERT_TRUE(block1);
         ASSERT_TRUE(block1->isTopLevelReporter());
+        ASSERT_EQ(block1->x(), 335);
+        ASSERT_EQ(block1->y(), 335);
         InputValue *reporterInfo = block1->topLevelReporterInfo();
         ASSERT_TRUE(reporterInfo);
         ASSERT_EQ(reporterInfo->type(), InputValue::Type::Variable);
@@ -661,6 +678,8 @@ TEST(LoadProjectTest, LoadTopLevelReporterProject)
         auto block2 = sprite1->blockAt(1);
         ASSERT_TRUE(block2);
         ASSERT_TRUE(block2->isTopLevelReporter());
+        ASSERT_EQ(block2->x(), 313);
+        ASSERT_EQ(block2->y(), 435);
         reporterInfo = block2->topLevelReporterInfo();
         ASSERT_TRUE(reporterInfo);
         ASSERT_EQ(reporterInfo->type(), InputValue::Type::List);
