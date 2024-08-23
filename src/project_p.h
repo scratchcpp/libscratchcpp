@@ -9,6 +9,7 @@ namespace libscratchcpp
 {
 
 class IEngine;
+class IProjectReader;
 class IProjectDownloaderFactory;
 class IProjectDownloader;
 
@@ -16,21 +17,17 @@ struct ProjectPrivate
 {
         ProjectPrivate();
         ProjectPrivate(const std::string &fileName);
-        ProjectPrivate(const std::string &fileName, ScratchVersion scratchVersion);
         ProjectPrivate(const ProjectPrivate &) = delete;
 
         bool load();
+        bool tryLoad(IProjectReader *reader);
 
         void start();
         void run();
         void runEventLoop();
 
-        void detectScratchVersion();
-        void setScratchVersion(ScratchVersion version);
-
         sigslot::signal<unsigned int, unsigned int> &downloadProgressChanged();
 
-        ScratchVersion scratchVersion = ScratchVersion::Invalid;
         std::string fileName;
         std::shared_ptr<IEngine> engine = nullptr;
 

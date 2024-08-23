@@ -26,7 +26,6 @@ class LIBSCRATCHCPP_EXPORT Project
     public:
         Project();
         Project(const std::string &fileName);
-        Project(const std::string &fileName, ScratchVersion scratchVersion);
         Project(const Project &) = delete;
 
         bool load();
@@ -37,9 +36,6 @@ class LIBSCRATCHCPP_EXPORT Project
 
         const std::string &fileName() const;
         void setFileName(const std::string &newFileName);
-
-        ScratchVersion scratchVersion() const;
-        void setScratchVersion(const ScratchVersion &version);
 
         std::shared_ptr<IEngine> engine() const;
 

@@ -22,7 +22,6 @@
 
 using namespace libscratchcpp;
 
-static const std::vector<ScratchVersion> scratchVersions = { ScratchVersion::Scratch3 };
 static const std::vector<std::string> fileExtensions = { ".sb3" };
 
 using ::testing::Return;
@@ -31,8 +30,8 @@ using ::testing::ReturnRef;
 TEST(LoadProjectTest, EmptyProject)
 {
     int i = 0;
-    for (auto version : scratchVersions) {
-        Project p("empty_project" + fileExtensions[i], version);
+    for (auto ext : fileExtensions) {
+        Project p("empty_project" + ext);
 
         ASSERT_TRUE(p.load());
 
@@ -101,11 +100,6 @@ TEST(LoadProjectTest, DownloadDefaultProject)
 
     EXPECT_CALL(*downloader, downloadJson("ABCDEFGH")).WillOnce(Return(true));
     EXPECT_CALL(*downloader, json()).WillOnce(ReturnRef(data));
-    p.detectScratchVersion();
-    ASSERT_EQ(p.scratchVersion, ScratchVersion::Scratch3);
-
-    EXPECT_CALL(*downloader, downloadJson("ABCDEFGH")).WillOnce(Return(true));
-    EXPECT_CALL(*downloader, json()).WillOnce(ReturnRef(data));
     EXPECT_CALL(*downloader, downloadAssets(assets)).WillOnce(Return(true));
     EXPECT_CALL(*downloader, assets()).WillOnce(ReturnRef(assetData));
     ASSERT_TRUE(p.load());
@@ -168,14 +162,7 @@ TEST(LoadProjectTest, DownloadDefaultProjectFailure)
     static const std::vector<std::string> assetData = { "a", "b", "c", "d", "e" };
 
     EXPECT_CALL(*downloader, downloadJson("ABCDEFGH")).WillOnce(Return(false));
-    p.detectScratchVersion();
-    ASSERT_EQ(p.scratchVersion, ScratchVersion::Invalid);
     ASSERT_FALSE(p.load());
-
-    EXPECT_CALL(*downloader, downloadJson("ABCDEFGH")).WillOnce(Return(true));
-    EXPECT_CALL(*downloader, json()).WillOnce(ReturnRef(data));
-    p.detectScratchVersion();
-    ASSERT_EQ(p.scratchVersion, ScratchVersion::Scratch3);
 
     EXPECT_CALL(*downloader, downloadJson("ABCDEFGH")).WillOnce(Return(false));
     ASSERT_FALSE(p.load());
@@ -195,8 +182,8 @@ TEST(LoadProjectTest, DownloadDefaultProjectFailure)
 TEST(LoadProjectTest, LoadTestProject)
 {
     int i = 0;
-    for (auto version : scratchVersions) {
-        Project p("load_test" + fileExtensions[i], version);
+    for (auto ext : fileExtensions) {
+        Project p("load_test" + ext);
 
         ASSERT_TRUE(p.load());
 
@@ -647,8 +634,8 @@ TEST(LoadProjectTest, LoadTestProject)
 TEST(LoadProjectTest, LoadTopLevelReporterProject)
 {
     int i = 0;
-    for (auto version : scratchVersions) {
-        Project p("top_level_reporter" + fileExtensions[i], version);
+    for (auto ext : fileExtensions) {
+        Project p("top_level_reporter" + ext);
 
         ASSERT_TRUE(p.load());
 
@@ -688,11 +675,10 @@ TEST(LoadProjectTest, LoadTopLevelReporterProject)
 TEST(LoadProjectTest, ProjectTest)
 {
     int i = 0;
-    for (auto version : scratchVersions) {
-        std::string name = "load_test" + fileExtensions[i];
-        Project p(name, version);
+    for (auto ext : fileExtensions) {
+        std::string name = "load_test" + ext;
+        Project p(name);
         ASSERT_EQ(p.fileName(), name);
-        ASSERT_EQ(p.scratchVersion(), version);
         ASSERT_TRUE(p.load());
 
         auto engine = p.engine();
@@ -707,15 +693,6 @@ TEST(LoadProjectTest, ProjectTest)
 
         i++;
     }
-}
-
-TEST(LoadProjectTest, ProjectInvalidTest)
-{
-    std::string name = "load_test.sb3";
-    Project p(name, ScratchVersion::Invalid);
-    ASSERT_EQ(p.fileName(), name);
-    ASSERT_EQ(p.scratchVersion(), ScratchVersion::Invalid);
-    ASSERT_FALSE(p.load());
 }
 
 TEST(LoadProjectTest, LoadNullDimensionMonitor)

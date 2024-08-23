@@ -23,12 +23,6 @@
 namespace libscratchcpp
 {
 
-enum class ScratchVersion
-{
-    Invalid = 0, /*!< An unsupported version. */
-    Scratch3 = 3 /*!< Scratch 3.0 */
-};
-
 class VirtualMachine;
 class Compiler;
 class Block;

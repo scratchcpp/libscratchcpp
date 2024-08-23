@@ -25,33 +25,28 @@ ProjectPrivate::ProjectPrivate() :
 }
 
 ProjectPrivate::ProjectPrivate(const std::string &fileName) :
-    ProjectPrivate()
-{
-    this->fileName = fileName;
-
-    // Auto detect Scratch version
-    detectScratchVersion();
-}
-
-ProjectPrivate::ProjectPrivate(const std::string &fileName, ScratchVersion scratchVersion) :
     fileName(fileName),
     engine(std::make_shared<Engine>())
 {
-    setScratchVersion(scratchVersion);
+    this->fileName = fileName;
 }
 
 bool ProjectPrivate::load()
 {
     std::shared_ptr<IProjectReader> reader;
-    switch (scratchVersion) {
-        case ScratchVersion::Invalid:
-            std::cerr << "Could not read the project because version is set to invalid." << std::endl;
-            return false;
-        case ScratchVersion::Scratch3:
-            reader = std::make_shared<Scratch3Reader>();
-            break;
-    }
 
+    // Scratch 3
+    reader = std::make_shared<Scratch3Reader>();
+
+    if (tryLoad(reader.get()))
+        return true;
+
+    std::cerr << "Unsupported Scratch version." << std::endl;
+    return false;
+}
+
+bool ProjectPrivate::tryLoad(IProjectReader *reader)
+{
     // Load from URL
     ProjectUrl url(fileName);
 
@@ -114,7 +109,6 @@ bool ProjectPrivate::load()
         // Load from file
         reader->setFileName(fileName);
         if (!reader->isValid()) {
-            scratchVersion = ScratchVersion::Invalid;
             std::cerr << "Could not read the project." << std::endl;
             return false;
         }
@@ -147,40 +141,6 @@ void ProjectPrivate::run()
 void ProjectPrivate::runEventLoop()
 {
     engine->runEventLoop();
-}
-
-void ProjectPrivate::detectScratchVersion()
-{
-    ProjectUrl url(fileName);
-
-    scratchVersion = ScratchVersion::Invalid;
-    Scratch3Reader scratch3;
-
-    if (url.isProjectUrl()) {
-        if (!downloader->downloadJson(url.projectId())) {
-            std::cerr << "Failed to download the project file." << std::endl;
-            return;
-        }
-
-        scratch3.loadData(downloader->json());
-    } else
-        scratch3.setFileName(fileName);
-
-    if (scratch3.isValid())
-        scratchVersion = ScratchVersion::Scratch3;
-
-    if (scratchVersion == ScratchVersion::Invalid)
-        std::cerr << "Unable to determine Scratch version." << std::endl;
-}
-
-void ProjectPrivate::setScratchVersion(ScratchVersion version)
-{
-    // TODO: Use this when more versions become supported
-    // if((version >= Version::Scratch3) && (version <= Version::Scratch3))
-    if (version == ScratchVersion::Scratch3)
-        scratchVersion = version;
-    else
-        std::cerr << "Unsupported Scratch version: " << static_cast<int>(version) << std::endl;
 }
 
 sigslot::signal<unsigned int, unsigned int> &ProjectPrivate::downloadProgressChanged()

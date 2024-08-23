@@ -159,7 +159,7 @@ TEST_F(CompilerTest, Lists)
 
 TEST_F(CompilerTest, EmptyProject)
 {
-    ProjectPrivate p("empty_project.sb3", ScratchVersion::Scratch3);
+    ProjectPrivate p("empty_project.sb3");
     ASSERT_TRUE(p.load());
     auto engine = p.engine;
     ASSERT_EQ(engine->targets().size(), 1);
@@ -171,7 +171,7 @@ TEST_F(CompilerTest, EmptyProject)
 
 TEST_F(CompilerTest, ResolveIds)
 {
-    ProjectPrivate p("resolve_id_test.sb3", ScratchVersion::Scratch3);
+    ProjectPrivate p("resolve_id_test.sb3");
     ASSERT_TRUE(p.load());
     auto engine = p.engine;
     ASSERT_EQ(engine->targets().size(), 2);
