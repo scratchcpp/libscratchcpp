@@ -144,6 +144,8 @@ class EngineMock : public IEngine
 
         MOCK_METHOD(const std::string &, userAgent, (), (const, override));
         MOCK_METHOD(void, setUserAgent, (const std::string &), (override));
+
+        MOCK_METHOD(const std::unordered_set<std::string> &, unsupportedBlocks, (), (const, override));
 };
 
 } // namespace libscratchcpp

@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <functional>
 
 #include "global.h"
@@ -390,6 +391,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
 
         /*! Sets the user agent of the last person to edit the project. */
         virtual void setUserAgent(const std::string &agent) = 0;
+
+        /*! Returns the unsupported block opcodes which were found when compiling. */
+        virtual const std::unordered_set<std::string> &unsupportedBlocks() const = 0;
 };
 
 } // namespace libscratchcpp

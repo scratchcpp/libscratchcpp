@@ -168,6 +168,8 @@ class Engine : public IEngine
         const std::string &userAgent() const override;
         void setUserAgent(const std::string &agent) override;
 
+        const std::unordered_set<std::string> &unsupportedBlocks() const override;
+
         IClock *m_clock = nullptr;
         IAudioEngine *m_audioEngine = nullptr;
 
@@ -287,6 +289,8 @@ class Engine : public IEngine
         sigslot::signal<const std::string &> m_questionAsked;
         sigslot::signal<> m_questionAborted;
         sigslot::signal<const std::string &> m_questionAnswered;
+
+        std::unordered_set<std::string> m_unsupportedBlocks;
 };
 
 } // namespace libscratchcpp
