@@ -2133,6 +2133,15 @@ TEST(EngineTest, UserAgent)
     ASSERT_EQ(engine.userAgent(), "test");
 }
 
+TEST(EngineTest, UnsupportedBlocks)
+{
+    Project p("unsupported_blocks.sb3");
+    ASSERT_TRUE(p.load());
+    ASSERT_EQ(
+        p.engine()->unsupportedBlocks(),
+        std::unordered_set<std::string>({ "ev3_motorTurnClockwise", "ev3_motorSetPower", "ev3_getMotorPosition", "ev3_whenButtonPressed", "ev3_getBrightness", "ev3_getDistance" }));
+}
+
 TEST(EngineTest, NoCrashAfterStop)
 {
     // Regtest for #186

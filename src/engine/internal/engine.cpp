@@ -95,6 +95,8 @@ void Engine::clear()
     m_edgeActivatedHatValues.clear();
 
     m_running = false;
+
+    m_unsupportedBlocks.clear();
 }
 
 // Resolves ID references and sets pointers of entities.
@@ -265,7 +267,7 @@ void Engine::compile()
         Compiler compiler(this, target.get());
         const auto &blocks = target->blocks();
         for (auto block : blocks) {
-            if (block->topLevel() && !block->shadow()) {
+            if (block->topLevel() && !block->isTopLevelReporter() && !block->shadow()) {
                 auto section = blockSection(block->opcode());
                 if (section) {
                     auto script = std::make_shared<Script>(target.get(), block, this);
@@ -280,8 +282,10 @@ void Engine::compile()
                         auto b = block->inputAt(block->findInput("custom_block"))->valueBlock();
                         procedureBytecodeMap[b->mutationPrototype()->procCode()] = script->bytecode();
                     }
-                } else
+                } else {
                     std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
+                    m_unsupportedBlocks.insert(block->opcode());
+                }
             }
         }
 
@@ -298,6 +302,11 @@ void Engine::compile()
                 m_scripts[block]->setLists(compiler.lists());
             }
         }
+
+        const auto &unsupportedBlocks = compiler.unsupportedBlocks();
+
+        for (const std::string &opcode : unsupportedBlocks)
+            m_unsupportedBlocks.insert(opcode);
     }
 
     // Compile monitor blocks to bytecode
@@ -343,8 +352,15 @@ void Engine::compile()
             script->setConstValues(compiler.constValues());
             script->setVariables(compiler.variables());
             script->setLists(compiler.lists());
-        } else
+        } else {
             std::cout << "warning: unsupported monitor block: " << block->opcode() << std::endl;
+            m_unsupportedBlocks.insert(block->opcode());
+        }
+
+        const auto &unsupportedBlocks = compiler.unsupportedBlocks();
+
+        for (const std::string &opcode : unsupportedBlocks)
+            m_unsupportedBlocks.insert(opcode);
     }
 }
 
@@ -1620,6 +1636,11 @@ const std::string &Engine::userAgent() const
 void Engine::setUserAgent(const std::string &agent)
 {
     m_userAgent = agent;
+}
+
+const std::unordered_set<std::string> &Engine::unsupportedBlocks() const
+{
+    return m_unsupportedBlocks;
 }
 
 void Engine::finalize()
