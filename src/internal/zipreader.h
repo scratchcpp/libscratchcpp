@@ -20,7 +20,7 @@ class ZipReader
         void close();
 
         size_t readFile(const std::string &fileName, void **buf);
-        std::string readFileToString(const std::string &fileName);
+        void readFileToString(const std::string &fileName, std::string &dst);
 
     private:
         std::string m_fileName;

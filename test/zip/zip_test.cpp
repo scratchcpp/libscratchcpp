@@ -8,7 +8,9 @@ inline std::string readSb3Json(const std::string &fileName)
     ZipReader reader(fileName);
     reader.open();
 
-    return reader.readFileToString("project.json");
+    std::string ret;
+    reader.readFileToString("project.json", ret);
+    return ret;
 }
 
 TEST(ZipTest, NonexistentProject)

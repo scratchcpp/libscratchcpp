@@ -558,7 +558,9 @@ void Scratch3Reader::read()
     if (m_zipReader->open()) {
         // Parse the JSON
         try {
-            m_json = json::parse(m_zipReader->readFileToString("project.json"));
+            std::string jsonStr;
+            m_zipReader->readFileToString("project.json", jsonStr);
+            m_json = json::parse(jsonStr);
         } catch (std::exception &e) {
             printErr("invalid JSON file", e.what());
         }

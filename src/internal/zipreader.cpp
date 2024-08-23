@@ -48,17 +48,14 @@ size_t ZipReader::readFile(const std::string &fileName, void **buf)
     return bufsize;
 }
 
-std::string ZipReader::readFileToString(const std::string &fileName)
+void ZipReader::readFileToString(const std::string &fileName, std::string &dst)
 {
     void *buf = nullptr;
     size_t bufsize = readFile(fileName, &buf);
 
     if (buf) {
-        std::string ret(reinterpret_cast<char *>(buf), bufsize);
+        dst.assign(reinterpret_cast<char *>(buf), bufsize);
         free(buf);
-
-        return ret;
-    }
-
-    return "";
+    } else
+        dst = "";
 }
