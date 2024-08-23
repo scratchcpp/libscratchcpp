@@ -66,8 +66,10 @@ void Compiler::compile(std::shared_ptr<Block> topLevelBlock)
 
         if (impl->block->compileFunction())
             impl->block->compile(this);
-        else
+        else {
             std::cout << "warning: unsupported block: " << impl->block->opcode() << std::endl;
+            impl->unsupportedBlocks.insert(impl->block->opcode());
+        }
 
         if (substacks != impl->substackTree.size())
             continue;
@@ -186,6 +188,7 @@ void Compiler::addInput(Input *input)
                         impl->block->compile(this);
                     else {
                         std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
+                        impl->unsupportedBlocks.insert(impl->block->opcode());
                         addInstruction(OP_NULL);
                     }
                 } else
@@ -205,6 +208,7 @@ void Compiler::addInput(Input *input)
                     impl->block->compile(this);
                 else {
                     std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
+                    impl->unsupportedBlocks.insert(impl->block->opcode());
                     addInstruction(OP_NULL);
                 }
             } else
@@ -354,6 +358,12 @@ BlockPrototype *Compiler::procedurePrototype() const
 void Compiler::setProcedurePrototype(BlockPrototype *prototype)
 {
     impl->procedurePrototype = prototype;
+}
+
+/*! Returns unsupported block opcodes which were found when compiling. */
+const std::unordered_set<std::string> &libscratchcpp::Compiler::unsupportedBlocks() const
+{
+    return impl->unsupportedBlocks;
 }
 
 /*! Returns the list of custom block prototypes. */

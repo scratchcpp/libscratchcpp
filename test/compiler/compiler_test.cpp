@@ -300,6 +300,7 @@ TEST_F(CompilerTest, AddObscuredInput)
 
     compiler.addInstruction(vm::OP_HALT);
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CHECKPOINT, vm::OP_NULL, vm::OP_PRINT, vm::OP_CONST, 0, vm::OP_PRINT, vm::OP_NULL, vm::OP_PRINT, vm::OP_HALT }));
+    ASSERT_EQ(compiler.unsupportedBlocks(), std::unordered_set<std::string>({ "test_block2" }));
 }
 
 TEST_F(CompilerTest, AddNoShadowInput)
@@ -328,6 +329,14 @@ TEST_F(CompilerTest, AddNoShadowInput)
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CHECKPOINT, vm::OP_NULL, vm::OP_PRINT, vm::OP_CONST, 0, vm::OP_NULL, vm::OP_PRINT, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues().size(), 1);
     ASSERT_EQ(compiler.constValues()[0], "test");
+    ASSERT_EQ(compiler.unsupportedBlocks(), std::unordered_set<std::string>({ "test_block2" }));
+
+    Input input4("TEST_INPUT4", Input::Type::NoShadow);
+    std::shared_ptr<Block> block3 = std::make_shared<Block>("", "test_block3");
+    input4.setValueBlock(block3);
+    compiler.addInput(&input4);
+    compiler.addInstruction(vm::OP_PRINT);
+    ASSERT_EQ(compiler.unsupportedBlocks(), std::unordered_set<std::string>({ "test_block2", "test_block3" }));
 }
 
 TEST_F(CompilerTest, ResolveInput)
@@ -840,4 +849,27 @@ TEST_F(CompilerTest, EdgeActivatedHatPredicate)
     ASSERT_EQ(compiler.hatPredicateBytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 1, vm::OP_PRINT, vm::OP_HALT }));
     ASSERT_EQ(compiler.constValues(), std::vector<Value>({ true, "test" }));
+}
+
+TEST_F(CompilerTest, UnsupportedBlocks)
+{
+    auto block1 = std::make_shared<Block>("b1", "block1");
+
+    auto block2 = std::make_shared<Block>("b2", "block2");
+    block2->setParent(block1);
+    block1->setNext(block2);
+
+    auto block3 = std::make_shared<Block>("b3", "block3");
+    block3->setCompileFunction([](Compiler *) {});
+    block3->setParent(block2);
+    block2->setNext(block3);
+
+    auto block4 = std::make_shared<Block>("b4", "block4");
+    block4->setParent(block3);
+    block3->setNext(block4);
+
+    INIT_COMPILER(engine, compiler);
+    compiler.compile(block1);
+
+    ASSERT_EQ(compiler.unsupportedBlocks(), std::unordered_set<std::string>({ "block1", "block2", "block4" }));
 }

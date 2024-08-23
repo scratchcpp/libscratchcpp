@@ -3,6 +3,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <unordered_set>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/inputvalue.h>
 
@@ -38,6 +39,8 @@ struct CompilerPrivate
         std::unordered_map<std::string, std::vector<std::string>> procedureArgs;
         BlockPrototype *procedurePrototype = nullptr;
         bool warp = false;
+
+        std::unordered_set<std::string> unsupportedBlocks;
 };
 
 } // namespace libscratchcpp

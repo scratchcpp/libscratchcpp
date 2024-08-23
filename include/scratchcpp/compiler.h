@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <memory>
+#include <unordered_set>
 
 #include "global.h"
 #include "spimpl.h"
@@ -81,6 +82,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
 
         BlockPrototype *procedurePrototype() const;
         void setProcedurePrototype(BlockPrototype *prototype);
+
+        const std::unordered_set<std::string> &unsupportedBlocks() const;
 
     private:
         spimpl::unique_impl_ptr<CompilerPrivate> impl;
