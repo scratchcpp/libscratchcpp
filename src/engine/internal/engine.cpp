@@ -265,7 +265,7 @@ void Engine::compile()
         Compiler compiler(this, target.get());
         const auto &blocks = target->blocks();
         for (auto block : blocks) {
-            if (block->topLevel() && !block->shadow()) {
+            if (block->topLevel() && !block->isTopLevelReporter() && !block->shadow()) {
                 auto section = blockSection(block->opcode());
                 if (section) {
                     auto script = std::make_shared<Script>(target.get(), block, this);
