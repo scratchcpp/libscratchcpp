@@ -1486,11 +1486,6 @@ std::shared_ptr<Comment> Engine::getComment(const std::string &id)
 // Returns the entity with the given ID. \see IEntity
 std::shared_ptr<Entity> Engine::getEntity(const std::string &id)
 {
-    // Blocks
-    auto block = getBlock(id);
-    if (block)
-        return std::static_pointer_cast<Entity>(block);
-
     // Variables
     auto variable = getVariable(id);
     if (variable)
@@ -1505,6 +1500,11 @@ std::shared_ptr<Entity> Engine::getEntity(const std::string &id)
     auto broadcast = getBroadcast(id);
     if (broadcast)
         return std::static_pointer_cast<Entity>(broadcast);
+
+    // Blocks
+    auto block = getBlock(id);
+    if (block)
+        return std::static_pointer_cast<Entity>(block);
 
     // Comments
     auto comment = getComment(id);
