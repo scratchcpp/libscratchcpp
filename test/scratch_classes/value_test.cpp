@@ -1,4 +1,5 @@
 #include <scratchcpp/value.h>
+#include <utf8.h>
 
 #include "../common.h"
 

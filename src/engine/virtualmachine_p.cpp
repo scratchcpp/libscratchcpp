@@ -6,6 +6,7 @@
 #include <scratchcpp/list.h>
 #include <iostream>
 #include <cassert>
+#include <utf8.h>
 
 #include "virtualmachine_p.h"
 #include "internal/randomgenerator.h"

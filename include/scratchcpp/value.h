@@ -8,7 +8,6 @@
 #include <ctgmath>
 #include <cassert>
 #include <iomanip>
-#include <utf8.h>
 #include <iostream>
 #include <clocale>
 
@@ -370,7 +369,7 @@ class LIBSCRATCHCPP_EXPORT Value
         };
 
         /*! Returns the UTF-16 representation of the value. */
-        std::u16string toUtf16() const { return utf8::utf8to16(toString()); };
+        std::u16string toUtf16() const;
 
         /*! Adds the given value to the value. */
         void add(const Value &v)
