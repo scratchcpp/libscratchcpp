@@ -202,12 +202,12 @@ class Engine : public IEngine
         void removeExecutableClones();
         void createMissingMonitors();
         void addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *target);
-        std::shared_ptr<Block> getBlock(const std::string &id);
-        std::shared_ptr<Variable> getVariable(const std::string &id);
-        std::shared_ptr<List> getList(const std::string &id);
+        std::shared_ptr<Block> getBlock(const std::string &id, Target *target);
+        std::shared_ptr<Variable> getVariable(const std::string &id, Target *target);
+        std::shared_ptr<List> getList(const std::string &id, Target *target);
         std::shared_ptr<Broadcast> getBroadcast(const std::string &id);
-        std::shared_ptr<Comment> getComment(const std::string &id);
-        std::shared_ptr<Entity> getEntity(const std::string &id);
+        std::shared_ptr<Comment> getComment(const std::string &id, Target *target);
+        std::shared_ptr<Entity> getEntity(const std::string &id, Target *target);
         std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
 
         void addHatToMap(std::unordered_map<Target *, std::vector<Script *>> &map, Script *script);
