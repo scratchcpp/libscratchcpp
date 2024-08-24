@@ -107,8 +107,8 @@ void Engine::resolveIds()
         const auto &blocks = target->blocks();
         for (auto block : blocks) {
             auto container = blockSectionContainer(block->opcode());
-            block->setNext(getBlock(block->nextId()));
-            block->setParent(getBlock(block->parentId()));
+            block->setNext(getBlock(block->nextId(), target.get()));
+            block->setParent(getBlock(block->parentId(), target.get()));
 
             if (container) {
                 block->setCompileFunction(container->resolveBlockCompileFunc(block->opcode()));
@@ -117,16 +117,16 @@ void Engine::resolveIds()
 
             const auto &inputs = block->inputs();
             for (const auto &input : inputs) {
-                input->setValueBlock(getBlock(input->valueBlockId()));
+                input->setValueBlock(getBlock(input->valueBlockId(), target.get()));
 
                 if (container)
                     input->setInputId(container->resolveInput(input->name()));
 
                 InputValue *value = input->primaryValue();
                 std::string id = value->valueId(); // no reference!
-                value->setValuePtr(getEntity(id));
+                value->setValuePtr(getEntity(id, target.get()));
                 assert(input->secondaryValue()->type() != InputValue::Type::Variable && input->secondaryValue()->type() != InputValue::Type::List); // secondary values never have a variable or list
-                input->secondaryValue()->setValuePtr(getEntity(input->secondaryValue()->valueId()));
+                input->secondaryValue()->setValuePtr(getEntity(input->secondaryValue()->valueId(), target.get()));
 
                 // Add missing variables and lists
                 if (!value->valuePtr()) {
@@ -149,7 +149,7 @@ void Engine::resolveIds()
             const auto &fields = block->fields();
             for (auto field : fields) {
                 std::string id = field->valueId(); // no reference!
-                field->setValuePtr(getEntity(id));
+                field->setValuePtr(getEntity(id, target.get()));
 
                 if (container) {
                     field->setFieldId(container->resolveField(field->name()));
@@ -179,7 +179,7 @@ void Engine::resolveIds()
             block->updateInputMap();
             block->updateFieldMap();
 
-            auto comment = getComment(block->commentId());
+            auto comment = getComment(block->commentId(), target.get());
             block->setComment(comment);
 
             if (comment) {
@@ -209,7 +209,7 @@ void Engine::resolveIds()
         assert(target);
 
         for (auto field : fields) {
-            field->setValuePtr(getEntity(field->valueId()));
+            field->setValuePtr(getEntity(field->valueId(), target));
 
             if (container) {
                 field->setFieldId(container->resolveField(field->name()));
@@ -1411,15 +1411,25 @@ const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &Engin
 }
 
 // Returns the block with the given ID.
-std::shared_ptr<Block> Engine::getBlock(const std::string &id)
+std::shared_ptr<Block> Engine::getBlock(const std::string &id, Target *target)
 {
     if (id.empty())
         return nullptr;
 
-    for (auto target : m_targets) {
-        int index = target->findBlock(id);
+    int index;
+
+    if (target) {
+        index = target->findBlock(id);
+
         if (index != -1)
             return target->blockAt(index);
+    }
+
+    for (auto t : m_targets) {
+        index = t->findBlock(id);
+
+        if (index != -1)
+            return t->blockAt(index);
     }
 
     return nullptr;
@@ -1469,22 +1479,32 @@ std::shared_ptr<Broadcast> Engine::getBroadcast(const std::string &id)
 }
 
 // Returns the comment with the given ID.
-std::shared_ptr<Comment> Engine::getComment(const std::string &id)
+std::shared_ptr<Comment> Engine::getComment(const std::string &id, Target *target)
 {
     if (id.empty())
         return nullptr;
 
-    for (auto target : m_targets) {
-        int index = target->findComment(id);
+    int index;
+
+    if (target) {
+        index = target->findComment(id);
+
         if (index != -1)
             return target->commentAt(index);
+    }
+
+    for (auto t : m_targets) {
+        index = t->findComment(id);
+
+        if (index != -1)
+            return t->commentAt(index);
     }
 
     return nullptr;
 }
 
 // Returns the entity with the given ID. \see IEntity
-std::shared_ptr<Entity> Engine::getEntity(const std::string &id)
+std::shared_ptr<Entity> Engine::getEntity(const std::string &id, Target *target)
 {
     // Variables
     auto variable = getVariable(id);
@@ -1502,12 +1522,12 @@ std::shared_ptr<Entity> Engine::getEntity(const std::string &id)
         return std::static_pointer_cast<Entity>(broadcast);
 
     // Blocks
-    auto block = getBlock(id);
+    auto block = getBlock(id, target);
     if (block)
         return std::static_pointer_cast<Entity>(block);
 
     // Comments
-    auto comment = getComment(id);
+    auto comment = getComment(id, target);
     if (comment)
         return std::static_pointer_cast<Entity>(comment);
 
