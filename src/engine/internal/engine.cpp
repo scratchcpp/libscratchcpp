@@ -1506,6 +1506,11 @@ std::shared_ptr<Entity> Engine::getEntity(const std::string &id)
     if (broadcast)
         return std::static_pointer_cast<Entity>(broadcast);
 
+    // Comments
+    auto comment = getComment(id);
+    if (comment)
+        return std::static_pointer_cast<Entity>(comment);
+
     return nullptr;
 }
 
