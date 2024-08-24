@@ -203,8 +203,8 @@ class Engine : public IEngine
         void createMissingMonitors();
         void addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *target);
         std::shared_ptr<Block> getBlock(const std::string &id, Target *target);
-        std::shared_ptr<Variable> getVariable(const std::string &id);
-        std::shared_ptr<List> getList(const std::string &id);
+        std::shared_ptr<Variable> getVariable(const std::string &id, Target *target);
+        std::shared_ptr<List> getList(const std::string &id, Target *target);
         std::shared_ptr<Broadcast> getBroadcast(const std::string &id);
         std::shared_ptr<Comment> getComment(const std::string &id, Target *target);
         std::shared_ptr<Entity> getEntity(const std::string &id, Target *target);

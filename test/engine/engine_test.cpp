@@ -2333,3 +2333,20 @@ TEST(EngineTest, AlwaysStopCloneThreads)
     ASSERT_VAR(stage, "test");
     ASSERT_EQ(GET_VAR(stage, "test")->value().toInt(), 0);
 }
+
+TEST(EngineTest, DuplicateVariableOrListIDs)
+{
+    // Regtest for #567
+    Project p("regtest_projects/567_duplicate_variable_list_id.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    engine->run();
+
+    ASSERT_VAR(stage, "passed");
+    ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
+}

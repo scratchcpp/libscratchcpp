@@ -1436,30 +1436,72 @@ std::shared_ptr<Block> Engine::getBlock(const std::string &id, Target *target)
 }
 
 // Returns the variable with the given ID.
-std::shared_ptr<Variable> Engine::getVariable(const std::string &id)
+std::shared_ptr<Variable> Engine::getVariable(const std::string &id, Target *target)
 {
     if (id.empty())
         return nullptr;
 
-    for (auto target : m_targets) {
-        int index = target->findVariableById(id);
+    Stage *stage = this->stage();
+    int index;
+
+    // Check stage
+    index = stage->findVariableById(id);
+
+    if (index != -1)
+        return stage->variableAt(index);
+
+    // Check currently compiled target
+    if (target != stage) {
+        index = target->findVariableById(id);
+
         if (index != -1)
             return target->variableAt(index);
+    }
+
+    // Fall back to checking all the other targets
+    for (auto t : m_targets) {
+        if (t.get() != stage && t.get() != target) {
+            int index = t->findVariableById(id);
+
+            if (index != -1)
+                return t->variableAt(index);
+        }
     }
 
     return nullptr;
 }
 
 // Returns the Scratch list with the given ID.
-std::shared_ptr<List> Engine::getList(const std::string &id)
+std::shared_ptr<List> Engine::getList(const std::string &id, Target *target)
 {
     if (id.empty())
         return nullptr;
 
-    for (auto target : m_targets) {
-        int index = target->findListById(id);
+    Stage *stage = this->stage();
+    int index;
+
+    // Check stage
+    index = stage->findListById(id);
+
+    if (index != -1)
+        return stage->listAt(index);
+
+    // Check currently compiled target
+    if (target != stage) {
+        index = target->findListById(id);
+
         if (index != -1)
             return target->listAt(index);
+    }
+
+    // Fall back to checking all the other targets
+    for (auto t : m_targets) {
+        if (t.get() != stage && t.get() != target) {
+            int index = t->findListById(id);
+
+            if (index != -1)
+                return t->listAt(index);
+        }
     }
 
     return nullptr;
@@ -1507,12 +1549,12 @@ std::shared_ptr<Comment> Engine::getComment(const std::string &id, Target *targe
 std::shared_ptr<Entity> Engine::getEntity(const std::string &id, Target *target)
 {
     // Variables
-    auto variable = getVariable(id);
+    auto variable = getVariable(id, target);
     if (variable)
         return std::static_pointer_cast<Entity>(variable);
 
     // Lists
-    auto list = getList(id);
+    auto list = getList(id, target);
     if (list)
         return std::static_pointer_cast<Entity>(list);
 
