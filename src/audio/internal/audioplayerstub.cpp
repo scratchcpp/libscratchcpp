@@ -38,6 +38,16 @@ void AudioPlayerStub::setPitch(float pitch)
     m_pitch = pitch;
 }
 
+float AudioPlayerStub::pan() const
+{
+    return m_pan;
+}
+
+void AudioPlayerStub::setPan(float pan)
+{
+    m_pan = pan;
+}
+
 bool AudioPlayerStub::isLoaded() const
 {
     return true;

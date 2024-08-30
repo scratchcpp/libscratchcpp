@@ -17,6 +17,9 @@ class AudioPlayerMock : public IAudioPlayer
         MOCK_METHOD(float, pitch, (), (const, override));
         MOCK_METHOD(void, setPitch, (float), (override));
 
+        MOCK_METHOD(float, pan, (), (const, override));
+        MOCK_METHOD(void, setPan, (float), (override));
+
         MOCK_METHOD(bool, isLoaded, (), (const, override));
 
         MOCK_METHOD(void, start, (), (override));

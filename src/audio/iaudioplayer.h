@@ -19,6 +19,9 @@ class IAudioPlayer
         virtual float pitch() const = 0;
         virtual void setPitch(float pitch) = 0;
 
+        virtual float pan() const = 0;
+        virtual void setPan(float pan) = 0;
+
         virtual bool isLoaded() const = 0;
 
         virtual void start() = 0;

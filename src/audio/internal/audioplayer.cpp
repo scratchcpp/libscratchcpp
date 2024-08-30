@@ -59,6 +59,7 @@ bool AudioPlayer::load(unsigned int size, const void *data, unsigned long sample
     m_loaded = true;
     ma_sound_set_volume(m_sound, m_volume);
     ma_sound_set_pitch(m_sound, m_pitch);
+    ma_sound_set_pan(m_sound, m_pan);
     return true;
 }
 
@@ -83,6 +84,7 @@ bool AudioPlayer::loadCopy(IAudioPlayer *player)
     m_copy = true;
     ma_sound_set_volume(m_sound, m_volume);
     ma_sound_set_pitch(m_sound, m_pitch);
+    ma_sound_set_pan(m_sound, m_pan);
     return true;
 }
 
@@ -121,6 +123,22 @@ void AudioPlayer::setPitch(float pitch)
         return;
 
     ma_sound_set_pitch(m_sound, pitch);
+}
+
+float AudioPlayer::pan() const
+{
+    return m_pan;
+}
+
+void AudioPlayer::setPan(float pan)
+{
+    // -1 ... 0 ... 1
+    m_pan = pan;
+
+    if (!m_loaded)
+        return;
+
+    ma_sound_set_pan(m_sound, pan);
 }
 
 bool AudioPlayer::isLoaded() const
