@@ -36,6 +36,7 @@ struct TargetPrivate
         std::vector<std::shared_ptr<Sound>> sounds;
         int layerOrder = 0;
         double volume = 100;
+        std::unordered_map<Sound::Effect, double> soundEffects;
         std::unordered_map<IGraphicsEffect *, double> graphicsEffects;
         Target::BubbleType bubbleType = Target::BubbleType::Say;
         std::string bubbleText;

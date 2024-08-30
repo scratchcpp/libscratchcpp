@@ -17,6 +17,8 @@ class TargetMock : public Target
 
         MOCK_METHOD(void, setLayerOrder, (int), (override));
 
+        MOCK_METHOD(void, setSoundEffect, (Sound::Effect, double), (override));
+
         MOCK_METHOD(Rect, boundingRect, (), (const, override));
         MOCK_METHOD(Rect, fastBoundingRect, (), (const, override));
 

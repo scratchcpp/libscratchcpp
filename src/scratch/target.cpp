@@ -359,6 +359,9 @@ int Target::addSound(std::shared_ptr<Sound> sound)
     if (sound) {
         sound->setTarget(this);
         sound->setVolume(impl->volume);
+
+        for (const auto &[effect, value] : impl->soundEffects)
+            sound->setEffect(effect, value);
     }
 
     impl->sounds.push_back(sound);
@@ -416,6 +419,17 @@ void Target::setVolume(double newVolume)
     for (auto sound : impl->sounds) {
         if (sound)
             sound->setVolume(impl->volume);
+    }
+}
+
+/*! Sets the value of the given sound effect. */
+void Target::setSoundEffect(Sound::Effect effect, double value)
+{
+    impl->soundEffects[effect] = value;
+
+    for (auto sound : impl->sounds) {
+        if (sound)
+            sound->setEffect(effect, value);
     }
 }
 

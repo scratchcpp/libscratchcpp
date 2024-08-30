@@ -13,6 +13,7 @@
 #include <graphicseffectmock.h>
 #include <audiooutputmock.h>
 #include <audioplayermock.h>
+#include <soundmock.h>
 
 #include "../common.h"
 
@@ -509,6 +510,38 @@ TEST(TargetTest, Volume)
     target.setVolume(-0.5);
 
     SoundPrivate::audioOutput = nullptr;
+}
+
+TEST(TargetTest, SetSoundEffect)
+{
+    Target target;
+
+    auto s1 = std::make_shared<SoundMock>();
+    auto s2 = std::make_shared<SoundMock>();
+    auto s3 = std::make_shared<SoundMock>();
+
+    EXPECT_CALL(*s1, setVolume);
+    EXPECT_CALL(*s2, setVolume);
+    EXPECT_CALL(*s3, setVolume);
+    target.addSound(s1);
+    target.addSound(s2);
+    target.addSound(s3);
+
+    EXPECT_CALL(*s1, setEffect(Sound::Effect::Pitch, 12.5));
+    EXPECT_CALL(*s2, setEffect(Sound::Effect::Pitch, 12.5));
+    EXPECT_CALL(*s3, setEffect(Sound::Effect::Pitch, 12.5));
+    target.setSoundEffect(Sound::Effect::Pitch, 12.5);
+
+    EXPECT_CALL(*s1, setEffect(Sound::Effect::Pan, -56.7));
+    EXPECT_CALL(*s2, setEffect(Sound::Effect::Pan, -56.7));
+    EXPECT_CALL(*s3, setEffect(Sound::Effect::Pan, -56.7));
+    target.setSoundEffect(Sound::Effect::Pan, -56.7);
+
+    auto s4 = std::make_shared<SoundMock>();
+    EXPECT_CALL(*s4, setVolume);
+    EXPECT_CALL(*s4, setEffect(Sound::Effect::Pitch, 12.5));
+    EXPECT_CALL(*s4, setEffect(Sound::Effect::Pan, -56.7));
+    target.addSound(s4);
 }
 
 TEST(TargetTest, CurrentCostumeWidth)
