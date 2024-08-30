@@ -37,7 +37,7 @@ class LIBSCRATCHCPP_EXPORT Sound : public Asset
         virtual void start();
         virtual void stop();
 
-        virtual bool isPlaying();
+        virtual bool isPlaying() const;
 
         Target *target() const;
         void setTarget(Target *target);

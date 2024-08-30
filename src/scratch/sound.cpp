@@ -88,7 +88,7 @@ void Sound::stop()
 }
 
 /*! Returns true if the sound is being played. */
-bool Sound::isPlaying()
+bool Sound::isPlaying() const
 {
     return impl->player->isPlaying();
 }
