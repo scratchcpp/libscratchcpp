@@ -79,6 +79,33 @@ TEST_F(SoundTest, SetVolume)
     sound.setVolume(56.04);
 }
 
+TEST_F(SoundTest, SetEffect)
+{
+    Sound sound("sound1", "a", "wav");
+
+    // Pitch
+    EXPECT_CALL(*m_player, setPitch(0.125));
+    sound.setEffect(Sound::Effect::Pitch, -400);
+
+    EXPECT_CALL(*m_player, setPitch(0.125));
+    sound.setEffect(Sound::Effect::Pitch, -360);
+
+    EXPECT_CALL(*m_player, setPitch(0.5));
+    sound.setEffect(Sound::Effect::Pitch, -120);
+
+    EXPECT_CALL(*m_player, setPitch(1));
+    sound.setEffect(Sound::Effect::Pitch, 0);
+
+    EXPECT_CALL(*m_player, setPitch(2));
+    sound.setEffect(Sound::Effect::Pitch, 120);
+
+    EXPECT_CALL(*m_player, setPitch(8));
+    sound.setEffect(Sound::Effect::Pitch, 360);
+
+    EXPECT_CALL(*m_player, setPitch(8));
+    sound.setEffect(Sound::Effect::Pitch, 400);
+}
+
 TEST_F(SoundTest, Start)
 {
     Sound sound("sound1", "a", "wav");
@@ -137,6 +164,8 @@ TEST_F(SoundTest, Clone)
     EXPECT_CALL(*clonePlayer, loadCopy(m_player.get())).WillOnce(Return(true));
     EXPECT_CALL(*m_player, volume()).WillOnce(Return(0.45));
     EXPECT_CALL(*clonePlayer, setVolume(0.45));
+    EXPECT_CALL(*m_player, pitch()).WillOnce(Return(1.25));
+    EXPECT_CALL(*clonePlayer, setPitch(1.25));
     EXPECT_CALL(*clonePlayer, isLoaded()).WillOnce(Return(true));
     auto clone = sound->clone();
     ASSERT_TRUE(clone);
@@ -152,6 +181,8 @@ TEST_F(SoundTest, Clone)
     EXPECT_CALL(*cloneClonePlayer, loadCopy(m_player.get())).WillOnce(Return(true));
     EXPECT_CALL(*clonePlayer, volume()).WillOnce(Return(0.62));
     EXPECT_CALL(*cloneClonePlayer, setVolume(0.62));
+    EXPECT_CALL(*clonePlayer, pitch()).WillOnce(Return(0.5));
+    EXPECT_CALL(*cloneClonePlayer, setPitch(0.5));
     EXPECT_CALL(*cloneClonePlayer, isLoaded()).WillOnce(Return(true));
     auto cloneClone = clone->clone();
     ASSERT_TRUE(cloneClone);
@@ -162,6 +193,8 @@ TEST_F(SoundTest, Clone)
     EXPECT_CALL(*anotherClonePlayer, loadCopy).Times(0);
     EXPECT_CALL(*clonePlayer, volume()).WillOnce(Return(0.62));
     EXPECT_CALL(*anotherClonePlayer, setVolume(0.62));
+    EXPECT_CALL(*clonePlayer, pitch()).WillOnce(Return(2));
+    EXPECT_CALL(*anotherClonePlayer, setPitch(2));
     EXPECT_CALL(*anotherClonePlayer, isLoaded()).Times(0);
     auto anotherClone = clone->clone();
     ASSERT_TRUE(anotherClone);
