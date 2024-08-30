@@ -28,6 +28,16 @@ void AudioPlayerStub::setVolume(float volume)
     m_volume = volume;
 }
 
+float AudioPlayerStub::pitch() const
+{
+    return m_pitch;
+}
+
+void AudioPlayerStub::setPitch(float pitch)
+{
+    m_pitch = pitch;
+}
+
 bool AudioPlayerStub::isLoaded() const
 {
     return true;

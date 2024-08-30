@@ -18,6 +18,9 @@ class AudioPlayerStub : public IAudioPlayer
         float volume() const override;
         void setVolume(float volume) override;
 
+        float pitch() const override;
+        void setPitch(float pitch) override;
+
         bool isLoaded() const override;
 
         void start() override;
@@ -27,6 +30,7 @@ class AudioPlayerStub : public IAudioPlayer
 
     private:
         float m_volume = 1;
+        float m_pitch = 1;
 };
 
 } // namespace libscratchcpp
