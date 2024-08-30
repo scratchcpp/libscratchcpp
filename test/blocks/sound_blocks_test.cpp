@@ -103,6 +103,7 @@ TEST_F(SoundBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_playuntildone", &SoundBlocks::compilePlayUntilDone));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_stopallsounds", &SoundBlocks::compileStopAllSounds));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_seteffectto", &SoundBlocks::compileSetEffectTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_changeeffectby", &SoundBlocks::compileChangeEffectBy));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_changevolumeby", &SoundBlocks::compileChangeVolumeBy));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_setvolumeto", &SoundBlocks::compileSetVolumeTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_volume", &SoundBlocks::compileVolume));
@@ -648,6 +649,65 @@ TEST_F(SoundBlocksTest, SetEffectToImpl)
     ASSERT_EQ(vm.registerCount(), 0);
 
     EXPECT_CALL(target, setSoundEffect(Sound::Effect::Pan, 12.53));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+}
+
+TEST_F(SoundBlocksTest, ChangeEffectBy)
+{
+    Compiler compiler(&m_engineMock);
+
+    // change [pitch] effect by (5.3)
+    auto block1 = std::make_shared<Block>("a", "sound_changeeffectby");
+    addDropdownField(block1, "EFFECT", SoundBlocks::EFFECT, "PITCH", SoundBlocks::PITCH);
+    addValueInput(block1, "VALUE", SoundBlocks::VALUE, 5.3);
+
+    // change [pan] effect by (-79.52)
+    auto block2 = std::make_shared<Block>("b", "sound_changeeffectby");
+    addDropdownField(block2, "EFFECT", SoundBlocks::EFFECT, "PAN", SoundBlocks::PAN);
+    addValueInput(block2, "VALUE", SoundBlocks::VALUE, -79.52);
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::changePitchEffectBy)).WillOnce(Return(0));
+    compiler.setBlock(block1);
+    SoundBlocks::compileChangeEffectBy(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SoundBlocks::changePanEffectBy)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    SoundBlocks::compileChangeEffectBy(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 5.3, -79.52 }));
+}
+
+TEST_F(SoundBlocksTest, ChangeEffectByImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT };
+    static BlockFunc functions[] = { &SoundBlocks::changePitchEffectBy, &SoundBlocks::changePanEffectBy };
+    static Value constValues[] = { -20.7, 12.53 };
+
+    TargetMock target;
+    VirtualMachine vm(&target, nullptr, nullptr);
+
+    vm.setBytecode(bytecode1);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(target, soundEffect(Sound::Effect::Pitch)).WillOnce(Return(56));
+    EXPECT_CALL(target, setSoundEffect(Sound::Effect::Pitch, 35.3));
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+
+    EXPECT_CALL(target, soundEffect(Sound::Effect::Pan)).WillOnce(Return(-2.5));
+    EXPECT_CALL(target, setSoundEffect(Sound::Effect::Pan, 10.03));
     vm.reset();
     vm.setBytecode(bytecode2);
     vm.run();

@@ -35,6 +35,7 @@ void SoundBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sound_playuntildone", &compilePlayUntilDone);
     engine->addCompileFunction(this, "sound_stopallsounds", &compileStopAllSounds);
     engine->addCompileFunction(this, "sound_seteffectto", &compileSetEffectTo);
+    engine->addCompileFunction(this, "sound_changeeffectby", &compileChangeEffectBy);
     engine->addCompileFunction(this, "sound_changevolumeby", &compileChangeVolumeBy);
     engine->addCompileFunction(this, "sound_setvolumeto", &compileSetVolumeTo);
     engine->addCompileFunction(this, "sound_volume", &compileVolume);
@@ -140,6 +141,26 @@ void SoundBlocks::compileSetEffectTo(Compiler *compiler)
 
         case PAN:
             compiler->addFunctionCall(&setPanEffectTo);
+            break;
+
+        default:
+            assert(false);
+            break;
+    }
+}
+
+void SoundBlocks::compileChangeEffectBy(Compiler *compiler)
+{
+    compiler->addInput(VALUE);
+    int option = compiler->field(EFFECT)->specialValueId();
+
+    switch (option) {
+        case PITCH:
+            compiler->addFunctionCall(&changePitchEffectBy);
+            break;
+
+        case PAN:
+            compiler->addFunctionCall(&changePanEffectBy);
             break;
 
         default:
@@ -338,6 +359,22 @@ unsigned int SoundBlocks::setPanEffectTo(VirtualMachine *vm)
 {
     if (Target *target = vm->target())
         target->setSoundEffect(Sound::Effect::Pan, vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int SoundBlocks::changePitchEffectBy(VirtualMachine *vm)
+{
+    if (Target *target = vm->target())
+        target->setSoundEffect(Sound::Effect::Pitch, target->soundEffect(Sound::Effect::Pitch) + vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int SoundBlocks::changePanEffectBy(VirtualMachine *vm)
+{
+    if (Target *target = vm->target())
+        target->setSoundEffect(Sound::Effect::Pan, target->soundEffect(Sound::Effect::Pan) + vm->getInput(0, 1)->toDouble());
 
     return 1;
 }

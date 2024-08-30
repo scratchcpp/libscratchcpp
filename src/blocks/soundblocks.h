@@ -45,6 +45,7 @@ class SoundBlocks : public IBlockSection
         static void compilePlayUntilDone(Compiler *compiler);
         static void compileStopAllSounds(Compiler *compiler);
         static void compileSetEffectTo(Compiler *compiler);
+        static void compileChangeEffectBy(Compiler *compiler);
         static void compileChangeVolumeBy(Compiler *compiler);
         static void compileSetVolumeTo(Compiler *compiler);
         static void compileVolume(Compiler *compiler);
@@ -67,6 +68,8 @@ class SoundBlocks : public IBlockSection
 
         static unsigned int setPitchEffectTo(VirtualMachine *vm);
         static unsigned int setPanEffectTo(VirtualMachine *vm);
+        static unsigned int changePitchEffectBy(VirtualMachine *vm);
+        static unsigned int changePanEffectBy(VirtualMachine *vm);
 
         static unsigned int changeVolumeBy(VirtualMachine *vm);
         static unsigned int setVolumeTo(VirtualMachine *vm);
