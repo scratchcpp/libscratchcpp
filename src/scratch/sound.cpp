@@ -12,7 +12,8 @@
 using namespace libscratchcpp;
 
 static std::unordered_map<Sound::Effect, std::pair<double, double>> EFFECT_RANGE = {
-    { Sound::Effect::Pitch, { -360, 360 } } // -3 to 3 octaves
+    { Sound::Effect::Pitch, { -360, 360 } }, // -3 to 3 octaves
+    { Sound::Effect::Pan, { -100, 100 } }    // // 100% left to 100% right
 };
 
 /*! Constructs Sound. */
@@ -63,10 +64,15 @@ void Sound::setEffect(Effect effect, double value)
     value = std::clamp(value, it->second.first, it->second.second);
 
     switch (effect) {
-        case Effect::Pitch:
+        case Effect::Pitch: {
             // Convert from linear
             const double root = std::pow(2, 1 / 12.0);
             impl->player->setPitch(std::pow(root, value / 10));
+            break;
+        }
+
+        case Effect::Pan:
+            impl->player->setPan(value / 100);
             break;
     }
 }
@@ -115,6 +121,7 @@ std::shared_ptr<Sound> Sound::clone() const
     sound->impl->cloneRoot = root;
     sound->impl->player->setVolume(impl->player->volume());
     sound->impl->player->setPitch(impl->player->pitch());
+    sound->impl->player->setPan(impl->player->pan());
 
     if (root->impl->player->isLoaded()) {
         sound->impl->player->loadCopy(root->impl->player.get());

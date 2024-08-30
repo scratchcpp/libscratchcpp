@@ -18,7 +18,8 @@ class LIBSCRATCHCPP_EXPORT Sound : public Asset
     public:
         enum class Effect
         {
-            Pitch
+            Pitch,
+            Pan
         };
 
         Sound(const std::string &name, const std::string &id, const std::string &format);
