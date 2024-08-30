@@ -89,6 +89,7 @@ class LIBSCRATCHCPP_EXPORT Target
         double volume() const;
         void setVolume(double newVolume);
 
+        virtual double soundEffect(Sound::Effect effect) const;
         virtual void setSoundEffect(Sound::Effect effect, double value);
 
         virtual Rect boundingRect() const;

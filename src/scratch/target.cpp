@@ -422,6 +422,17 @@ void Target::setVolume(double newVolume)
     }
 }
 
+/*! Returns the value of the given sound effect. */
+double Target::soundEffect(Sound::Effect effect) const
+{
+    auto it = impl->soundEffects.find(effect);
+
+    if (it != impl->soundEffects.cend())
+        return it->second;
+
+    return 0;
+}
+
 /*! Sets the value of the given sound effect. */
 void Target::setSoundEffect(Sound::Effect effect, double value)
 {
