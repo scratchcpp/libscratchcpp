@@ -37,6 +37,7 @@ void SoundBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sound_seteffectto", &compileSetEffectTo);
     engine->addCompileFunction(this, "sound_changeeffectby", &compileChangeEffectBy);
     engine->addCompileFunction(this, "sound_changevolumeby", &compileChangeVolumeBy);
+    engine->addCompileFunction(this, "sound_cleareffects", &compileClearEffects);
     engine->addCompileFunction(this, "sound_setvolumeto", &compileSetVolumeTo);
     engine->addCompileFunction(this, "sound_volume", &compileVolume);
 
@@ -167,6 +168,11 @@ void SoundBlocks::compileChangeEffectBy(Compiler *compiler)
             assert(false);
             break;
     }
+}
+
+void SoundBlocks::compileClearEffects(Compiler *compiler)
+{
+    compiler->addFunctionCall(&clearEffects);
 }
 
 void SoundBlocks::compileChangeVolumeBy(Compiler *compiler)
@@ -377,6 +383,14 @@ unsigned int SoundBlocks::changePanEffectBy(VirtualMachine *vm)
         target->setSoundEffect(Sound::Effect::Pan, target->soundEffect(Sound::Effect::Pan) + vm->getInput(0, 1)->toDouble());
 
     return 1;
+}
+
+unsigned int SoundBlocks::clearEffects(VirtualMachine *vm)
+{
+    if (Target *target = vm->target())
+        target->clearSoundEffects();
+
+    return 0;
 }
 
 unsigned int SoundBlocks::changeVolumeBy(VirtualMachine *vm)
