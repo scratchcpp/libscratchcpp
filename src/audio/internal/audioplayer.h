@@ -22,6 +22,12 @@ class AudioPlayer : public IAudioPlayer
         float volume() const override;
         void setVolume(float volume) override;
 
+        float pitch() const override;
+        void setPitch(float pitch) override;
+
+        float pan() const override;
+        void setPan(float pan) override;
+
         bool isLoaded() const override;
 
         void start() override;
@@ -36,6 +42,8 @@ class AudioPlayer : public IAudioPlayer
         bool m_copy = false;
         bool m_started = false;
         float m_volume = 1;
+        float m_pitch = 1;
+        float m_pan = 0;
 };
 
 } // namespace libscratchcpp

@@ -7,6 +7,7 @@
 #include "global.h"
 #include "spimpl.h"
 #include "rect.h"
+#include "sound.h"
 
 namespace libscratchcpp
 {
@@ -87,6 +88,11 @@ class LIBSCRATCHCPP_EXPORT Target
 
         double volume() const;
         void setVolume(double newVolume);
+
+        virtual double soundEffect(Sound::Effect effect) const;
+        virtual void setSoundEffect(Sound::Effect effect, double value);
+
+        virtual void clearSoundEffects();
 
         virtual Rect boundingRect() const;
         virtual Rect fastBoundingRect() const;

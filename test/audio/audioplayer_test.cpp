@@ -12,3 +12,12 @@ TEST(AudioPlayerTest, Volume)
     player.setVolume(0.86f);
     ASSERT_EQ(player.volume(), 0.86f);
 }
+
+TEST(AudioPlayerTest, Pitch)
+{
+    AudioPlayer player;
+    ASSERT_EQ(player.pitch(), 1);
+
+    player.setPitch(1.5f);
+    ASSERT_EQ(player.pitch(), 1.5f);
+}

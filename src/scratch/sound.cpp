@@ -3,10 +3,18 @@
 #include <scratchcpp/sound.h>
 #include <scratchcpp/sprite.h>
 #include <iostream>
+#include <unordered_map>
+#include <algorithm>
+#include <cmath>
 
 #include "sound_p.h"
 
 using namespace libscratchcpp;
+
+static std::unordered_map<Sound::Effect, std::pair<double, double>> EFFECT_RANGE = {
+    { Sound::Effect::Pitch, { -360, 360 } }, // -3 to 3 octaves
+    { Sound::Effect::Pan, { -100, 100 } }    // // 100% left to 100% right
+};
 
 /*! Constructs Sound. */
 Sound::Sound(const std::string &name, const std::string &id, const std::string &format) :
@@ -45,6 +53,30 @@ void Sound::setVolume(double volume)
     impl->player->setVolume(volume / 100);
 }
 
+/*! Sets the value of the given sound effect. */
+void Sound::setEffect(Effect effect, double value)
+{
+    auto it = EFFECT_RANGE.find(effect);
+
+    if (it == EFFECT_RANGE.cend())
+        return;
+
+    value = std::clamp(value, it->second.first, it->second.second);
+
+    switch (effect) {
+        case Effect::Pitch: {
+            // Convert from linear
+            const double root = std::pow(2, 1 / 12.0);
+            impl->player->setPitch(std::pow(root, value / 10));
+            break;
+        }
+
+        case Effect::Pan:
+            impl->player->setPan(value / 100);
+            break;
+    }
+}
+
 /*! Starts the playback of the sound. */
 void Sound::start()
 {
@@ -62,7 +94,7 @@ void Sound::stop()
 }
 
 /*! Returns true if the sound is being played. */
-bool Sound::isPlaying()
+bool Sound::isPlaying() const
 {
     return impl->player->isPlaying();
 }
@@ -88,6 +120,8 @@ std::shared_ptr<Sound> Sound::clone() const
     sound->setSampleCount(sampleCount());
     sound->impl->cloneRoot = root;
     sound->impl->player->setVolume(impl->player->volume());
+    sound->impl->player->setPitch(impl->player->pitch());
+    sound->impl->player->setPan(impl->player->pan());
 
     if (root->impl->player->isLoaded()) {
         sound->impl->player->loadCopy(root->impl->player.get());

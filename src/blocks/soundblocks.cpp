@@ -4,6 +4,7 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/target.h>
 #include <scratchcpp/input.h>
+#include <scratchcpp/field.h>
 #include <scratchcpp/sound.h>
 
 #include "soundblocks.h"
@@ -33,7 +34,10 @@ void SoundBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sound_play", &compilePlay);
     engine->addCompileFunction(this, "sound_playuntildone", &compilePlayUntilDone);
     engine->addCompileFunction(this, "sound_stopallsounds", &compileStopAllSounds);
+    engine->addCompileFunction(this, "sound_seteffectto", &compileSetEffectTo);
+    engine->addCompileFunction(this, "sound_changeeffectby", &compileChangeEffectBy);
     engine->addCompileFunction(this, "sound_changevolumeby", &compileChangeVolumeBy);
+    engine->addCompileFunction(this, "sound_cleareffects", &compileClearEffects);
     engine->addCompileFunction(this, "sound_setvolumeto", &compileSetVolumeTo);
     engine->addCompileFunction(this, "sound_volume", &compileVolume);
 
@@ -42,7 +46,15 @@ void SoundBlocks::registerBlocks(IEngine *engine)
 
     // Inputs
     engine->addInput(this, "SOUND_MENU", SOUND_MENU);
+    engine->addInput(this, "VALUE", VALUE);
     engine->addInput(this, "VOLUME", VOLUME);
+
+    // Fields
+    engine->addField(this, "EFFECT", EFFECT);
+
+    // Field values
+    engine->addFieldValue(this, "PITCH", PITCH);
+    engine->addFieldValue(this, "PAN", PAN);
 }
 
 void SoundBlocks::onInit(IEngine *engine)
@@ -116,6 +128,51 @@ void SoundBlocks::compilePlayUntilDone(Compiler *compiler)
 void SoundBlocks::compileStopAllSounds(Compiler *compiler)
 {
     compiler->addFunctionCall(&stopAllSounds);
+}
+
+void SoundBlocks::compileSetEffectTo(Compiler *compiler)
+{
+    compiler->addInput(VALUE);
+    int option = compiler->field(EFFECT)->specialValueId();
+
+    switch (option) {
+        case PITCH:
+            compiler->addFunctionCall(&setPitchEffectTo);
+            break;
+
+        case PAN:
+            compiler->addFunctionCall(&setPanEffectTo);
+            break;
+
+        default:
+            assert(false);
+            break;
+    }
+}
+
+void SoundBlocks::compileChangeEffectBy(Compiler *compiler)
+{
+    compiler->addInput(VALUE);
+    int option = compiler->field(EFFECT)->specialValueId();
+
+    switch (option) {
+        case PITCH:
+            compiler->addFunctionCall(&changePitchEffectBy);
+            break;
+
+        case PAN:
+            compiler->addFunctionCall(&changePanEffectBy);
+            break;
+
+        default:
+            assert(false);
+            break;
+    }
+}
+
+void SoundBlocks::compileClearEffects(Compiler *compiler)
+{
+    compiler->addFunctionCall(&clearEffects);
 }
 
 void SoundBlocks::compileChangeVolumeBy(Compiler *compiler)
@@ -293,6 +350,46 @@ unsigned int SoundBlocks::stopAllSounds(VirtualMachine *vm)
 {
     vm->engine()->stopSounds();
     m_waitingSounds.clear();
+    return 0;
+}
+
+unsigned int SoundBlocks::setPitchEffectTo(VirtualMachine *vm)
+{
+    if (Target *target = vm->target())
+        target->setSoundEffect(Sound::Effect::Pitch, vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int SoundBlocks::setPanEffectTo(VirtualMachine *vm)
+{
+    if (Target *target = vm->target())
+        target->setSoundEffect(Sound::Effect::Pan, vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int SoundBlocks::changePitchEffectBy(VirtualMachine *vm)
+{
+    if (Target *target = vm->target())
+        target->setSoundEffect(Sound::Effect::Pitch, target->soundEffect(Sound::Effect::Pitch) + vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int SoundBlocks::changePanEffectBy(VirtualMachine *vm)
+{
+    if (Target *target = vm->target())
+        target->setSoundEffect(Sound::Effect::Pan, target->soundEffect(Sound::Effect::Pan) + vm->getInput(0, 1)->toDouble());
+
+    return 1;
+}
+
+unsigned int SoundBlocks::clearEffects(VirtualMachine *vm)
+{
+    if (Target *target = vm->target())
+        target->clearSoundEffects();
+
     return 0;
 }
 

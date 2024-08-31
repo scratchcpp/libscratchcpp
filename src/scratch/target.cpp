@@ -359,6 +359,9 @@ int Target::addSound(std::shared_ptr<Sound> sound)
     if (sound) {
         sound->setTarget(this);
         sound->setVolume(impl->volume);
+
+        for (const auto &[effect, value] : impl->soundEffects)
+            sound->setEffect(effect, value);
     }
 
     impl->sounds.push_back(sound);
@@ -417,6 +420,39 @@ void Target::setVolume(double newVolume)
         if (sound)
             sound->setVolume(impl->volume);
     }
+}
+
+/*! Returns the value of the given sound effect. */
+double Target::soundEffect(Sound::Effect effect) const
+{
+    auto it = impl->soundEffects.find(effect);
+
+    if (it != impl->soundEffects.cend())
+        return it->second;
+
+    return 0;
+}
+
+/*! Sets the value of the given sound effect. */
+void Target::setSoundEffect(Sound::Effect effect, double value)
+{
+    impl->soundEffects[effect] = value;
+
+    for (auto sound : impl->sounds) {
+        if (sound)
+            sound->setEffect(effect, value);
+    }
+}
+
+/*! Sets the value of all sound effects to 0 (clears them). */
+void Target::clearSoundEffects()
+{
+    std::unordered_map<Sound::Effect, double> effects = impl->soundEffects; // must copy!
+
+    for (const auto &[effect, value] : effects)
+        setSoundEffect(effect, 0);
+
+    impl->soundEffects.clear();
 }
 
 /*! Returns the bounding rectangle of the sprite. */

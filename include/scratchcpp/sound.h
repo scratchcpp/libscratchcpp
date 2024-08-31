@@ -16,6 +16,12 @@ class SoundPrivate;
 class LIBSCRATCHCPP_EXPORT Sound : public Asset
 {
     public:
+        enum class Effect
+        {
+            Pitch,
+            Pan
+        };
+
         Sound(const std::string &name, const std::string &id, const std::string &format);
         Sound(const Sound &) = delete;
         virtual ~Sound() { }
@@ -27,11 +33,12 @@ class LIBSCRATCHCPP_EXPORT Sound : public Asset
         void setSampleCount(int newSampleCount);
 
         virtual void setVolume(double volume);
+        virtual void setEffect(Effect effect, double value);
 
         virtual void start();
         virtual void stop();
 
-        virtual bool isPlaying();
+        virtual bool isPlaying() const;
 
         Target *target() const;
         void setTarget(Target *target);

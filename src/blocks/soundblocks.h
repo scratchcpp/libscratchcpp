@@ -20,17 +20,19 @@ class SoundBlocks : public IBlockSection
         enum Inputs
         {
             SOUND_MENU,
+            VALUE,
             VOLUME
         };
 
         enum Fields
         {
-
+            EFFECT
         };
 
         enum FieldValues
         {
-
+            PITCH,
+            PAN
         };
 
         std::string name() const override;
@@ -42,6 +44,9 @@ class SoundBlocks : public IBlockSection
         static void compilePlay(Compiler *compiler);
         static void compilePlayUntilDone(Compiler *compiler);
         static void compileStopAllSounds(Compiler *compiler);
+        static void compileSetEffectTo(Compiler *compiler);
+        static void compileChangeEffectBy(Compiler *compiler);
+        static void compileClearEffects(Compiler *compiler);
         static void compileChangeVolumeBy(Compiler *compiler);
         static void compileSetVolumeTo(Compiler *compiler);
         static void compileVolume(Compiler *compiler);
@@ -61,6 +66,12 @@ class SoundBlocks : public IBlockSection
         static unsigned int checkSoundByIndex(VirtualMachine *vm);
 
         static unsigned int stopAllSounds(VirtualMachine *vm);
+
+        static unsigned int setPitchEffectTo(VirtualMachine *vm);
+        static unsigned int setPanEffectTo(VirtualMachine *vm);
+        static unsigned int changePitchEffectBy(VirtualMachine *vm);
+        static unsigned int changePanEffectBy(VirtualMachine *vm);
+        static unsigned int clearEffects(VirtualMachine *vm);
 
         static unsigned int changeVolumeBy(VirtualMachine *vm);
         static unsigned int setVolumeTo(VirtualMachine *vm);
