@@ -356,7 +356,7 @@ unsigned int SoundBlocks::stopAllSounds(VirtualMachine *vm)
 unsigned int SoundBlocks::setPitchEffectTo(VirtualMachine *vm)
 {
     if (Target *target = vm->target())
-        target->setSoundEffect(Sound::Effect::Pitch, vm->getInput(0, 1)->toDouble());
+        target->setSoundEffectValue(Sound::Effect::Pitch, vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
@@ -364,7 +364,7 @@ unsigned int SoundBlocks::setPitchEffectTo(VirtualMachine *vm)
 unsigned int SoundBlocks::setPanEffectTo(VirtualMachine *vm)
 {
     if (Target *target = vm->target())
-        target->setSoundEffect(Sound::Effect::Pan, vm->getInput(0, 1)->toDouble());
+        target->setSoundEffectValue(Sound::Effect::Pan, vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
@@ -372,7 +372,7 @@ unsigned int SoundBlocks::setPanEffectTo(VirtualMachine *vm)
 unsigned int SoundBlocks::changePitchEffectBy(VirtualMachine *vm)
 {
     if (Target *target = vm->target())
-        target->setSoundEffect(Sound::Effect::Pitch, target->soundEffect(Sound::Effect::Pitch) + vm->getInput(0, 1)->toDouble());
+        target->setSoundEffectValue(Sound::Effect::Pitch, target->soundEffectValue(Sound::Effect::Pitch) + vm->getInput(0, 1)->toDouble());
 
     return 1;
 }
@@ -380,7 +380,7 @@ unsigned int SoundBlocks::changePitchEffectBy(VirtualMachine *vm)
 unsigned int SoundBlocks::changePanEffectBy(VirtualMachine *vm)
 {
     if (Target *target = vm->target())
-        target->setSoundEffect(Sound::Effect::Pan, target->soundEffect(Sound::Effect::Pan) + vm->getInput(0, 1)->toDouble());
+        target->setSoundEffectValue(Sound::Effect::Pan, target->soundEffectValue(Sound::Effect::Pan) + vm->getInput(0, 1)->toDouble());
 
     return 1;
 }

@@ -423,7 +423,7 @@ void Target::setVolume(double newVolume)
 }
 
 /*! Returns the value of the given sound effect. */
-double Target::soundEffect(Sound::Effect effect) const
+double Target::soundEffectValue(Sound::Effect effect) const
 {
     auto it = impl->soundEffects.find(effect);
 
@@ -434,7 +434,7 @@ double Target::soundEffect(Sound::Effect effect) const
 }
 
 /*! Sets the value of the given sound effect. */
-void Target::setSoundEffect(Sound::Effect effect, double value)
+void Target::setSoundEffectValue(Sound::Effect effect, double value)
 {
     impl->soundEffects[effect] = value;
 
@@ -450,7 +450,7 @@ void Target::clearSoundEffects()
     std::unordered_map<Sound::Effect, double> effects = impl->soundEffects; // must copy!
 
     for (const auto &[effect, value] : effects)
-        setSoundEffect(effect, 0);
+        setSoundEffectValue(effect, 0);
 
     impl->soundEffects.clear();
 }

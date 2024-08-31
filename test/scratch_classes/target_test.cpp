@@ -515,8 +515,8 @@ TEST(TargetTest, Volume)
 TEST(TargetTest, SoundEffects)
 {
     Target target;
-    ASSERT_EQ(target.soundEffect(Sound::Effect::Pitch), 0);
-    ASSERT_EQ(target.soundEffect(Sound::Effect::Pan), 0);
+    ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pitch), 0);
+    ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pan), 0);
 
     auto s1 = std::make_shared<SoundMock>();
     auto s2 = std::make_shared<SoundMock>();
@@ -532,16 +532,16 @@ TEST(TargetTest, SoundEffects)
     EXPECT_CALL(*s1, setEffect(Sound::Effect::Pitch, 12.5));
     EXPECT_CALL(*s2, setEffect(Sound::Effect::Pitch, 12.5));
     EXPECT_CALL(*s3, setEffect(Sound::Effect::Pitch, 12.5));
-    target.setSoundEffect(Sound::Effect::Pitch, 12.5);
-    ASSERT_EQ(target.soundEffect(Sound::Effect::Pitch), 12.5);
-    ASSERT_EQ(target.soundEffect(Sound::Effect::Pan), 0);
+    target.setSoundEffectValue(Sound::Effect::Pitch, 12.5);
+    ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pitch), 12.5);
+    ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pan), 0);
 
     EXPECT_CALL(*s1, setEffect(Sound::Effect::Pan, -56.7));
     EXPECT_CALL(*s2, setEffect(Sound::Effect::Pan, -56.7));
     EXPECT_CALL(*s3, setEffect(Sound::Effect::Pan, -56.7));
-    target.setSoundEffect(Sound::Effect::Pan, -56.7);
-    ASSERT_EQ(target.soundEffect(Sound::Effect::Pitch), 12.5);
-    ASSERT_EQ(target.soundEffect(Sound::Effect::Pan), -56.7);
+    target.setSoundEffectValue(Sound::Effect::Pan, -56.7);
+    ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pitch), 12.5);
+    ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pan), -56.7);
 
     auto s4 = std::make_shared<SoundMock>();
     EXPECT_CALL(*s4, setVolume);
@@ -558,8 +558,8 @@ TEST(TargetTest, SoundEffects)
     EXPECT_CALL(*s4, setEffect(Sound::Effect::Pitch, 0));
     EXPECT_CALL(*s4, setEffect(Sound::Effect::Pan, 0));
     target.clearSoundEffects();
-    ASSERT_EQ(target.soundEffect(Sound::Effect::Pitch), 0);
-    ASSERT_EQ(target.soundEffect(Sound::Effect::Pan), 0);
+    ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pitch), 0);
+    ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pan), 0);
 }
 
 TEST(TargetTest, CurrentCostumeWidth)

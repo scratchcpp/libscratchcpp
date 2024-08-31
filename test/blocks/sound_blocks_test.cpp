@@ -644,12 +644,12 @@ TEST_F(SoundBlocksTest, SetEffectToImpl)
     vm.setFunctions(functions);
     vm.setConstValues(constValues);
 
-    EXPECT_CALL(target, setSoundEffect(Sound::Effect::Pitch, -20.7));
+    EXPECT_CALL(target, setSoundEffectValue(Sound::Effect::Pitch, -20.7));
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
 
-    EXPECT_CALL(target, setSoundEffect(Sound::Effect::Pan, 12.53));
+    EXPECT_CALL(target, setSoundEffectValue(Sound::Effect::Pan, 12.53));
     vm.reset();
     vm.setBytecode(bytecode2);
     vm.run();
@@ -701,14 +701,14 @@ TEST_F(SoundBlocksTest, ChangeEffectByImpl)
     vm.setFunctions(functions);
     vm.setConstValues(constValues);
 
-    EXPECT_CALL(target, soundEffect(Sound::Effect::Pitch)).WillOnce(Return(56));
-    EXPECT_CALL(target, setSoundEffect(Sound::Effect::Pitch, 35.3));
+    EXPECT_CALL(target, soundEffectValue(Sound::Effect::Pitch)).WillOnce(Return(56));
+    EXPECT_CALL(target, setSoundEffectValue(Sound::Effect::Pitch, 35.3));
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
 
-    EXPECT_CALL(target, soundEffect(Sound::Effect::Pan)).WillOnce(Return(-2.5));
-    EXPECT_CALL(target, setSoundEffect(Sound::Effect::Pan, 10.03));
+    EXPECT_CALL(target, soundEffectValue(Sound::Effect::Pan)).WillOnce(Return(-2.5));
+    EXPECT_CALL(target, setSoundEffectValue(Sound::Effect::Pan, 10.03));
     vm.reset();
     vm.setBytecode(bytecode2);
     vm.run();
