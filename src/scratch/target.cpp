@@ -444,6 +444,17 @@ void Target::setSoundEffect(Sound::Effect effect, double value)
     }
 }
 
+/*! Sets the value of all sound effects to 0 (clears them). */
+void Target::clearSoundEffects()
+{
+    std::unordered_map<Sound::Effect, double> effects = impl->soundEffects; // must copy!
+
+    for (const auto &[effect, value] : effects)
+        setSoundEffect(effect, 0);
+
+    impl->soundEffects.clear();
+}
+
 /*! Returns the bounding rectangle of the sprite. */
 Rect Target::boundingRect() const
 {

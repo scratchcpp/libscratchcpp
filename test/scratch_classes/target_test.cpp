@@ -512,7 +512,7 @@ TEST(TargetTest, Volume)
     SoundPrivate::audioOutput = nullptr;
 }
 
-TEST(TargetTest, SoundEffect)
+TEST(TargetTest, SoundEffects)
 {
     Target target;
     ASSERT_EQ(target.soundEffect(Sound::Effect::Pitch), 0);
@@ -548,6 +548,18 @@ TEST(TargetTest, SoundEffect)
     EXPECT_CALL(*s4, setEffect(Sound::Effect::Pitch, 12.5));
     EXPECT_CALL(*s4, setEffect(Sound::Effect::Pan, -56.7));
     target.addSound(s4);
+
+    EXPECT_CALL(*s1, setEffect(Sound::Effect::Pitch, 0));
+    EXPECT_CALL(*s1, setEffect(Sound::Effect::Pan, 0));
+    EXPECT_CALL(*s2, setEffect(Sound::Effect::Pitch, 0));
+    EXPECT_CALL(*s2, setEffect(Sound::Effect::Pan, 0));
+    EXPECT_CALL(*s3, setEffect(Sound::Effect::Pitch, 0));
+    EXPECT_CALL(*s3, setEffect(Sound::Effect::Pan, 0));
+    EXPECT_CALL(*s4, setEffect(Sound::Effect::Pitch, 0));
+    EXPECT_CALL(*s4, setEffect(Sound::Effect::Pan, 0));
+    target.clearSoundEffects();
+    ASSERT_EQ(target.soundEffect(Sound::Effect::Pitch), 0);
+    ASSERT_EQ(target.soundEffect(Sound::Effect::Pan), 0);
 }
 
 TEST(TargetTest, CurrentCostumeWidth)

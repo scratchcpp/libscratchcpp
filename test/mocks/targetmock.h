@@ -20,6 +20,8 @@ class TargetMock : public Target
         MOCK_METHOD(double, soundEffect, (Sound::Effect), (const, override));
         MOCK_METHOD(void, setSoundEffect, (Sound::Effect, double), (override));
 
+        MOCK_METHOD(void, clearSoundEffects, (), (override));
+
         MOCK_METHOD(Rect, boundingRect, (), (const, override));
         MOCK_METHOD(Rect, fastBoundingRect, (), (const, override));
 
