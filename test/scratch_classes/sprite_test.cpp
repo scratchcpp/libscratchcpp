@@ -400,6 +400,12 @@ TEST(SpriteTest, Dragging)
     sprite.setInterface(&handler);
     ASSERT_FALSE(sprite.dragging());
 
+    EngineMock engine;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, spriteFencingEnabled).WillRepeatedly(Return(false));
+    EXPECT_CALL(engine, requestRedraw).WillRepeatedly(Return());
+
+    EXPECT_CALL(engine, moveSpriteToFront(&sprite));
     sprite.startDragging();
     ASSERT_TRUE(sprite.dragging());
 

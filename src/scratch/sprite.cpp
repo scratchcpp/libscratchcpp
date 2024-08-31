@@ -226,6 +226,11 @@ bool Sprite::dragging() const
 void Sprite::startDragging()
 {
     impl->dragging = true;
+
+    IEngine *eng = engine();
+
+    if (eng)
+        eng->moveSpriteToFront(this);
 }
 
 /*! Stops dragging. */
