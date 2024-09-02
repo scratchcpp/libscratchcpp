@@ -95,6 +95,7 @@ void Engine::clear()
     m_edgeActivatedHatValues.clear();
 
     m_running = false;
+    m_frameActivity = false;
 
     m_unsupportedBlocks.clear();
 }
@@ -421,6 +422,7 @@ void Engine::stop()
         m_running = false;
     }
 
+    m_frameActivity = false;
     deleteClones();
     stopSounds();
     m_stopped();
@@ -577,6 +579,9 @@ void Engine::step()
             }
         }
     }
+
+    // Check running threads (must be done here)
+    m_frameActivity = !m_threads.empty();
 
     m_redrawRequested = false;
 
@@ -737,7 +742,7 @@ void Engine::eventLoop(bool untilProjectStops)
 
 bool Engine::isRunning() const
 {
-    return m_running;
+    return m_running || m_frameActivity;
 }
 
 double Engine::fps() const

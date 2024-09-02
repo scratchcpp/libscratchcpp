@@ -2018,6 +2018,8 @@ TEST(EngineTest, StopAllBypass)
     ASSERT_VAR(stage, "j");
     ASSERT_EQ(GET_VAR(stage, "j")->value().toInt(), 5);
 
+    ASSERT_TRUE(engine->isRunning());
+    engine->step();
     ASSERT_FALSE(engine->isRunning());
 }
 
