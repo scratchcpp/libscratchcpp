@@ -277,6 +277,7 @@ class Engine : public IEngine
         bool m_spriteFencingEnabled = true;
 
         bool m_running = false;
+        bool m_frameActivity = false;
         bool m_redrawRequested = false;
         sigslot::signal<> m_aboutToRedraw;
         sigslot::signal<VirtualMachine *> m_threadAboutToStop;
