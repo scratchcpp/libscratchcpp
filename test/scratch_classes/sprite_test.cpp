@@ -825,6 +825,7 @@ TEST(SpriteTest, TouchingColor)
 {
     Sprite sprite;
     ASSERT_FALSE(sprite.touchingColor(0));
+    ASSERT_FALSE(sprite.touchingColor(0, 0));
 
     SpriteHandlerMock iface;
     EXPECT_CALL(iface, init);
@@ -836,6 +837,12 @@ TEST(SpriteTest, TouchingColor)
 
     EXPECT_CALL(iface, touchingColor(v2)).WillOnce(Return(true));
     ASSERT_TRUE(sprite.touchingColor(v2));
+
+    EXPECT_CALL(iface, touchingColor(v1, v2)).WillOnce(Return(false));
+    ASSERT_FALSE(sprite.touchingColor(v1, v2));
+
+    EXPECT_CALL(iface, touchingColor(v2, v1)).WillOnce(Return(true));
+    ASSERT_TRUE(sprite.touchingColor(v2, v1));
 }
 
 TEST(SpriteTest, GraphicsEffects)

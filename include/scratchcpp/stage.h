@@ -56,6 +56,7 @@ class LIBSCRATCHCPP_EXPORT Stage : public Target
 
         bool touchingPoint(double x, double y) const override;
         bool touchingColor(const Value &color) const override;
+        bool touchingColor(const Value &color, const Value &mask) const override;
 
         void setGraphicsEffectValue(IGraphicsEffect *effect, double value) override;
 

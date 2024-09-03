@@ -222,6 +222,7 @@ TEST(SpriteTest, TouchingColor)
 {
     Stage stage;
     ASSERT_FALSE(stage.touchingColor(0));
+    ASSERT_FALSE(stage.touchingColor(0, 0));
 
     StageHandlerMock iface;
     EXPECT_CALL(iface, init);
@@ -233,6 +234,12 @@ TEST(SpriteTest, TouchingColor)
 
     EXPECT_CALL(iface, touchingColor(v2)).WillOnce(Return(true));
     ASSERT_TRUE(stage.touchingColor(v2));
+
+    EXPECT_CALL(iface, touchingColor(v1, v2)).WillOnce(Return(false));
+    ASSERT_FALSE(stage.touchingColor(v1, v2));
+
+    EXPECT_CALL(iface, touchingColor(v2, v1)).WillOnce(Return(true));
+    ASSERT_TRUE(stage.touchingColor(v2, v1));
 }
 
 TEST(StageTest, GraphicsEffects)
