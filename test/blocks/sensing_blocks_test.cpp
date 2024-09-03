@@ -127,6 +127,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     // Blocks
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_touchingobject", &SensingBlocks::compileTouchingObject));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_touchingcolor", &SensingBlocks::compileTouchingColor));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_coloristouchingcolor", &SensingBlocks::compileColorIsTouchingColor));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_distanceto", &SensingBlocks::compileDistanceTo));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_askandwait", &SensingBlocks::compileAskAndWait));
     EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_answer", &SensingBlocks::compileAnswer));
@@ -155,6 +156,7 @@ TEST_F(SensingBlocksTest, RegisterBlocks)
     // Inputs
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TOUCHINGOBJECTMENU", SensingBlocks::TOUCHINGOBJECTMENU));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "COLOR", SensingBlocks::COLOR));
+    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "COLOR2", SensingBlocks::COLOR2));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "QUESTION", SensingBlocks::QUESTION));
     EXPECT_CALL(m_engineMock, addInput(m_section.get(), "KEY_OPTION", SensingBlocks::KEY_OPTION));
@@ -447,6 +449,79 @@ TEST_F(SensingBlocksTest, TouchingColorImpl)
     ASSERT_FALSE(vm.getInput(0, 1)->toBool());
 
     EXPECT_CALL(target, touchingColor(constValues[1])).WillOnce(Return(true));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+}
+
+TEST_F(SensingBlocksTest, ColorIsTouchingColor)
+{
+    Compiler compiler(&m_engineMock);
+
+    // color (#FF00FF) is touching color (#FFFF00)
+    auto block1 = std::make_shared<Block>("a", "sensing_coloristouchingcolor");
+    addValueInput(block1, "COLOR", SensingBlocks::COLOR, "#FF00FF");
+    addValueInput(block1, "COLOR2", SensingBlocks::COLOR2, "#FFFF00");
+
+    // color (null block) is touching color (null block)
+    auto block2 = std::make_shared<Block>("b", "sensing_coloristouchingcolor");
+    addDropdownInput(block2, "COLOR", SensingBlocks::COLOR, "", createNullBlock("c"));
+    addDropdownInput(block2, "COLOR2", SensingBlocks::COLOR2, "", createNullBlock("d"));
+
+    compiler.init();
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::colorIsTouchingColor)).WillOnce(Return(1));
+    compiler.setBlock(block1);
+    SensingBlocks::compileColorIsTouchingColor(&compiler);
+
+    EXPECT_CALL(m_engineMock, functionIndex(&SensingBlocks::colorIsTouchingColor)).WillOnce(Return(1));
+    compiler.setBlock(block2);
+    SensingBlocks::compileColorIsTouchingColor(&compiler);
+
+    compiler.end();
+
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_NULL, vm::OP_NULL, vm::OP_EXEC, 1, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "#FFFF00", "#FF00FF" }));
+}
+
+TEST_F(SensingBlocksTest, ColorIsTouchingColorImpl)
+{
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &SensingBlocks::colorIsTouchingColor };
+    static Value constValues[] = { "#FF00FF", "#FFFF00", 1946195606, 238 };
+
+    TargetMock target;
+    Sprite sprite;
+    VirtualMachine vm(&target, nullptr, nullptr);
+    vm.setFunctions(functions);
+    vm.setConstValues(constValues);
+
+    EXPECT_CALL(target, touchingColor(constValues[0], constValues[1])).WillOnce(Return(false));
+    vm.setBytecode(bytecode1);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(target, touchingColor(constValues[0], constValues[1])).WillOnce(Return(true));
+    vm.reset();
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_TRUE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(target, touchingColor(constValues[2], constValues[3])).WillOnce(Return(false));
+    vm.reset();
+    vm.setBytecode(bytecode2);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 1);
+    ASSERT_FALSE(vm.getInput(0, 1)->toBool());
+
+    EXPECT_CALL(target, touchingColor(constValues[2], constValues[3])).WillOnce(Return(true));
     vm.reset();
     vm.run();
 
