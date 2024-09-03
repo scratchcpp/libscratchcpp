@@ -503,6 +503,15 @@ bool Sprite::touchingColor(const Value &color) const
     return impl->iface->touchingColor(color);
 }
 
+/*! Overrides Target#touchingColor(). */
+bool Sprite::touchingColor(const Value &color, const Value &mask) const
+{
+    if (!impl->iface)
+        return false;
+
+    return impl->iface->touchingColor(color, mask);
+}
+
 /*! Overrides Target#setGraphicsEffectValue(). */
 void Sprite::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 {

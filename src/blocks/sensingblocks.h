@@ -22,6 +22,7 @@ class SensingBlocks : public IBlockSection
         {
             TOUCHINGOBJECTMENU,
             COLOR,
+            COLOR2,
             DISTANCETOMENU,
             QUESTION,
             KEY_OPTION,
@@ -64,6 +65,7 @@ class SensingBlocks : public IBlockSection
 
         static void compileTouchingObject(Compiler *compiler);
         static void compileTouchingColor(Compiler *compiler);
+        static void compileColorIsTouchingColor(Compiler *compiler);
         static void compileDistanceTo(Compiler *compiler);
         static void compileAskAndWait(Compiler *compiler);
         static void compileAnswer(Compiler *compiler);
@@ -94,6 +96,8 @@ class SensingBlocks : public IBlockSection
         static unsigned int touchingEdge(VirtualMachine *vm);
 
         static unsigned int touchingColor(VirtualMachine *vm);
+
+        static unsigned int colorIsTouchingColor(VirtualMachine *vm);
 
         static unsigned int keyPressed(VirtualMachine *vm);
         static unsigned int mouseDown(VirtualMachine *vm);

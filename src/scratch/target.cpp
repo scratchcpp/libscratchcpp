@@ -520,6 +520,12 @@ bool Target::touchingColor(const Value &color) const
     return false;
 }
 
+/*! Returns true if the mask part of the Target is touching the given color (RGB triplet). */
+bool Target::touchingColor(const Value &color, const Value &mask) const
+{
+    return false;
+}
+
 /*! Returns the value of the given graphics effect. */
 double Target::graphicsEffectValue(IGraphicsEffect *effect) const
 {
