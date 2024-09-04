@@ -331,6 +331,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Returns the target at index. */
         virtual Target *targetAt(int index) const = 0;
 
+        /*! Gets visible targets sorted by layer order and stores them in the given vector. */
+        virtual void getVisibleTargets(std::vector<Target *> &dst) const = 0;
+
         /*!
          * Returns the index of the target with the given name.
          * \note Using "Stage" will return the index of the sprite with this name, or nullptr if it doesn't exist.

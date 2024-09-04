@@ -1227,6 +1227,33 @@ Target *Engine::targetAt(int index) const
     return m_targets[index].get();
 }
 
+void Engine::getVisibleTargets(std::vector<Target *> &dst) const
+{
+    dst.clear();
+
+    for (auto target : m_targets) {
+        assert(target);
+
+        if (target->isStage())
+            dst.push_back(target.get());
+        else {
+            Sprite *sprite = static_cast<Sprite *>(target.get());
+
+            if (sprite->visible())
+                dst.push_back(target.get());
+
+            const auto &clones = sprite->clones();
+
+            for (auto clone : clones) {
+                if (clone->visible())
+                    dst.push_back(clone.get());
+            }
+        }
+    }
+
+    std::sort(dst.begin(), dst.end(), [](Target *t1, Target *t2) { return t1->layerOrder() > t2->layerOrder(); });
+}
+
 int Engine::findTarget(const std::string &targetName) const
 {
     auto it = std::find_if(m_targets.begin(), m_targets.end(), [targetName](std::shared_ptr<Target> target) {

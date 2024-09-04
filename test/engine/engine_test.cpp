@@ -1411,16 +1411,21 @@ TEST(EngineTest, Targets)
     Engine engine;
     ASSERT_TRUE(engine.targets().empty());
 
-    auto t1 = std::make_shared<Target>();
+    auto t1 = std::make_shared<Sprite>();
     t1->setName("Sprite1");
-    auto t2 = std::make_shared<Target>();
+    t1->setVisible(true);
+    t1->setLayerOrder(3);
+    auto t2 = std::make_shared<Sprite>();
     auto block1 = std::make_shared<Block>("", "");
     auto block2 = std::make_shared<Block>("", "");
     t2->setName("Sprite2");
+    t2->setVisible(false);
+    t2->setLayerOrder(1);
     t2->addBlock(block1);
     t2->addBlock(block2);
     auto t3 = std::make_shared<Stage>();
     t3->setName("Stage");
+    t3->setLayerOrder(0);
     engine.setTargets({ t1, t2, t3 });
 
     ASSERT_EQ(engine.targets(), std::vector<std::shared_ptr<Target>>({ t1, t2, t3 }));
@@ -1436,15 +1441,24 @@ TEST(EngineTest, Targets)
     ASSERT_EQ(engine.findTarget("Stage"), -1);
     ASSERT_EQ(engine.findTarget("_stage_"), 2);
 
-    auto t4 = std::make_shared<Target>();
+    auto t4 = std::make_shared<Sprite>();
     t4->setName("Stage");
+    t4->setVisible(true);
+    t4->setLayerOrder(2);
     engine.setTargets({ t1, t2, t4 });
     ASSERT_EQ(engine.findTarget("Stage"), 2);
     ASSERT_EQ(engine.findTarget("_stage_"), -1);
 
+    std::vector<Target *> visibleTargets;
+    engine.getVisibleTargets(visibleTargets);
+    ASSERT_EQ(visibleTargets, std::vector<Target *>({ t1.get(), t4.get() }));
+
     engine.setTargets({ t1, t2, t3, t4 });
     ASSERT_EQ(engine.findTarget("Stage"), 3);
     ASSERT_EQ(engine.findTarget("_stage_"), 2);
+
+    engine.getVisibleTargets(visibleTargets);
+    ASSERT_EQ(visibleTargets, std::vector<Target *>({ t1.get(), t4.get(), t3.get() }));
 
     ASSERT_EQ(t1->engine(), &engine);
     ASSERT_EQ(t2->engine(), &engine);

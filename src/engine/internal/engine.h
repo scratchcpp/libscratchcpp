@@ -138,6 +138,7 @@ class Engine : public IEngine
         const std::vector<std::shared_ptr<Target>> &targets() const override;
         void setTargets(const std::vector<std::shared_ptr<Target>> &newTargets) override;
         Target *targetAt(int index) const override;
+        void getVisibleTargets(std::vector<Target *> &dst) const override;
         int findTarget(const std::string &targetName) const override;
 
         void moveSpriteToFront(Sprite *sprite) override;

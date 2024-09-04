@@ -118,6 +118,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(const std::vector<std::shared_ptr<Target>> &, targets, (), (const, override));
         MOCK_METHOD(void, setTargets, (const std::vector<std::shared_ptr<Target>> &), (override));
         MOCK_METHOD(Target *, targetAt, (int), (const, override));
+        MOCK_METHOD(void, getVisibleTargets, (std::vector<Target *> &), (const, override));
         MOCK_METHOD(int, findTarget, (const std::string &), (const, override));
 
         MOCK_METHOD(void, moveSpriteToFront, (Sprite * sprite), (override));
