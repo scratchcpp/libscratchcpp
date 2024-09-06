@@ -347,36 +347,8 @@ void LooksBlocks::compileSwitchCostumeTo(Compiler *compiler)
     if (!target)
         return;
 
-    Input *input = compiler->input(COSTUME);
-
-    if (input->pointsToDropdownMenu()) {
-        std::string value = input->selectedMenuItem();
-        int index = target->findCostume(value);
-
-        if (index == -1) {
-            if (value == "next costume")
-                compiler->addFunctionCall(&nextCostume);
-            else if (value == "previous costume")
-                compiler->addFunctionCall(&previousCostume);
-            else {
-                Value v(value);
-
-                if (v.type() == Value::Type::Integer) {
-                    compiler->addConstValue(v.toLong() - 1);
-                    compiler->addFunctionCall(&switchCostumeToByIndex);
-                } else {
-                    compiler->addInput(input);
-                    compiler->addFunctionCall(&switchCostumeTo);
-                }
-            }
-        } else {
-            compiler->addConstValue(index);
-            compiler->addFunctionCall(&switchCostumeToByIndex);
-        }
-    } else {
-        compiler->addInput(input);
-        compiler->addFunctionCall(&switchCostumeTo);
-    }
+    compiler->addInput(COSTUME);
+    compiler->addFunctionCall(&switchCostumeTo);
 }
 
 void LooksBlocks::compileNextCostume(Compiler *compiler)
@@ -386,85 +358,14 @@ void LooksBlocks::compileNextCostume(Compiler *compiler)
 
 void LooksBlocks::compileSwitchBackdropTo(Compiler *compiler)
 {
-    Stage *stage = compiler->engine()->stage();
-
-    if (!stage)
-        return;
-
-    Input *input = compiler->input(BACKDROP);
-
-    if (input->pointsToDropdownMenu()) {
-        std::string value = input->selectedMenuItem();
-        int index = stage->findCostume(value);
-
-        if (index == -1) {
-            if (value == "next backdrop")
-                compiler->addFunctionCall(&nextBackdrop);
-            else if (value == "previous backdrop")
-                compiler->addFunctionCall(&previousBackdrop);
-            else if (value == "random backdrop")
-                compiler->addFunctionCall(&randomBackdrop);
-            else {
-                Value v(value);
-
-                if (v.type() == Value::Type::Integer) {
-                    compiler->addConstValue(v.toLong() - 1);
-                    compiler->addFunctionCall(&switchBackdropToByIndex);
-                } else {
-                    compiler->addInput(input);
-                    compiler->addFunctionCall(&switchBackdropTo);
-                }
-            }
-        } else {
-            compiler->addConstValue(index);
-            compiler->addFunctionCall(&switchBackdropToByIndex);
-        }
-    } else {
-        compiler->addInput(input);
-        compiler->addFunctionCall(&switchBackdropTo);
-    }
+    compiler->addInput(BACKDROP);
+    compiler->addFunctionCall(&switchBackdropTo);
 }
 
 void LooksBlocks::compileSwitchBackdropToAndWait(Compiler *compiler)
 {
-    Stage *stage = compiler->engine()->stage();
-
-    if (!stage)
-        return;
-
-    Input *input = compiler->input(BACKDROP);
-
-    if (input->pointsToDropdownMenu()) {
-        std::string value = input->selectedMenuItem();
-        int index = stage->findCostume(value);
-
-        if (index == -1) {
-            if (value == "next backdrop")
-                compiler->addFunctionCall(&nextBackdropAndWait);
-            else if (value == "previous backdrop")
-                compiler->addFunctionCall(&previousBackdropAndWait);
-            else if (value == "random backdrop")
-                compiler->addFunctionCall(&randomBackdropAndWait);
-            else {
-                Value v(value);
-
-                if (v.type() == Value::Type::Integer) {
-                    compiler->addConstValue(v.toLong() - 1);
-                    compiler->addFunctionCall(&switchBackdropToByIndexAndWait);
-                } else {
-                    compiler->addInput(input);
-                    compiler->addFunctionCall(&switchBackdropToAndWait);
-                }
-            }
-        } else {
-            compiler->addConstValue(index);
-            compiler->addFunctionCall(&switchBackdropToByIndexAndWait);
-        }
-    } else {
-        compiler->addInput(input);
-        compiler->addFunctionCall(&switchBackdropToAndWait);
-    }
-
+    compiler->addInput(BACKDROP);
+    compiler->addFunctionCall(&switchBackdropToAndWait);
     compiler->addFunctionCall(&backdropNumber);
     compiler->addFunctionCall(&checkBackdropScripts);
 }
@@ -932,14 +833,6 @@ void LooksBlocks::setCostumeByIndex(Target *target, long index)
     target->setCostumeIndex(index);
 }
 
-unsigned int LooksBlocks::switchCostumeToByIndex(VirtualMachine *vm)
-{
-    if (Target *target = vm->target())
-        setCostumeByIndex(target, vm->getInput(0, 1)->toLong());
-
-    return 1;
-}
-
 unsigned int LooksBlocks::switchCostumeTo(VirtualMachine *vm)
 {
     Target *target = vm->target();
@@ -988,12 +881,6 @@ void LooksBlocks::startBackdropScripts(VirtualMachine *vm, bool wait)
         if (stage->costumes().size() > 0)
             vm->engine()->startBackdropScripts(stage->currentCostume()->broadcast());
     }
-}
-
-void LooksBlocks::switchBackdropToByIndexImpl(VirtualMachine *vm)
-{
-    if (Stage *stage = vm->engine()->stage())
-        setCostumeByIndex(stage, vm->getInput(0, 1)->toLong());
 }
 
 void LooksBlocks::switchBackdropToImpl(VirtualMachine *vm)
@@ -1047,26 +934,10 @@ void LooksBlocks::randomBackdropImpl(VirtualMachine *vm)
     }
 }
 
-unsigned int LooksBlocks::switchBackdropToByIndex(VirtualMachine *vm)
-{
-    switchBackdropToByIndexImpl(vm);
-    startBackdropScripts(vm, false);
-
-    return 1;
-}
-
 unsigned int LooksBlocks::switchBackdropTo(VirtualMachine *vm)
 {
     switchBackdropToImpl(vm);
     startBackdropScripts(vm, false);
-
-    return 1;
-}
-
-unsigned int LooksBlocks::switchBackdropToByIndexAndWait(VirtualMachine *vm)
-{
-    switchBackdropToByIndexImpl(vm);
-    startBackdropScripts(vm, true);
 
     return 1;
 }
