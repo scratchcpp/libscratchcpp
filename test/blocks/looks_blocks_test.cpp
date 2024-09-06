@@ -1453,11 +1453,19 @@ TEST_F(LooksBlocksTest, SwitchCostumeToImpl)
     static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
     static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
     static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_CONST, 8, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode10[] = { vm::OP_START, vm::OP_CONST, 9, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode11[] = { vm::OP_START, vm::OP_CONST, 10, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode12[] = { vm::OP_START, vm::OP_CONST, 11, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode13[] = { vm::OP_START, vm::OP_CONST, 12, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode14[] = { vm::OP_START, vm::OP_CONST, 13, vm::OP_EXEC, 0, vm::OP_HALT };
     static BlockFunc functions[] = { &LooksBlocks::switchCostumeTo };
-    static Value constValues[] = { "costume2", 0, 1, 2, 3, "next costume", "previous costume" };
+    static Value constValues[] = {
+        "costume2", 0, 1, 2, 3, "2", "3", Value::SpecialValue::NaN, Value::SpecialValue::Infinity, Value::SpecialValue::NegativeInfinity, "", "   ", "next costume", "previous costume"
+    };
 
     Target target;
     target.addCostume(std::make_shared<Costume>("costume1", "c1", "svg"));
@@ -1513,9 +1521,18 @@ TEST_F(LooksBlocksTest, SwitchCostumeToImpl)
 
     target.setCostumeIndex(1);
 
-    // "2"
+    // 2
     target.addCostume(std::make_shared<Costume>("2", "c3", "svg"));
     target.addCostume(std::make_shared<Costume>("test", "c4", "svg"));
+    target.setCostumeIndex(0);
+
+    vm.setBytecode(bytecode4);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.costumeIndex(), 1);
+
+    // "2"
     target.setCostumeIndex(0);
 
     vm.setBytecode(bytecode6);
@@ -1524,8 +1541,62 @@ TEST_F(LooksBlocksTest, SwitchCostumeToImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(target.costumeIndex(), 2);
 
-    // "next costume"
+    // "3"
+    target.setCostumeIndex(0);
+
     vm.setBytecode(bytecode7);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.costumeIndex(), 2);
+
+    // NaN
+    target.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode8);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.costumeIndex(), 0);
+
+    // Infinity
+    target.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode9);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.costumeIndex(), 0);
+
+    // -Infinity
+    target.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode10);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.costumeIndex(), 0);
+
+    // ""
+    target.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode11);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.costumeIndex(), 2);
+
+    // "   "
+    target.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode12);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.costumeIndex(), 2);
+
+    // "next costume"
+    vm.setBytecode(bytecode13);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -1552,7 +1623,7 @@ TEST_F(LooksBlocksTest, SwitchCostumeToImpl)
     ASSERT_EQ(target.costumeIndex(), 4);
 
     // "previous costume"
-    vm.setBytecode(bytecode8);
+    vm.setBytecode(bytecode14);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -1698,11 +1769,19 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
     static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
     static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_CONST, 8, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode10[] = { vm::OP_START, vm::OP_CONST, 9, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode11[] = { vm::OP_START, vm::OP_CONST, 10, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode12[] = { vm::OP_START, vm::OP_CONST, 11, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode13[] = { vm::OP_START, vm::OP_CONST, 12, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode14[] = { vm::OP_START, vm::OP_CONST, 13, vm::OP_EXEC, 0, vm::OP_HALT };
     static BlockFunc functions[] = { &LooksBlocks::switchBackdropTo };
-    static Value constValues[] = { "backdrop2", 0, 1, 2, 3, "next backdrop", "previous backdrop" };
+    static Value constValues[] = {
+        "backdrop2", 0, 1, 2, 3, "2", "3", Value::SpecialValue::NaN, Value::SpecialValue::Infinity, Value::SpecialValue::NegativeInfinity, "", "   ", "next backdrop", "previous backdrop"
+    };
 
     Target target;
 
@@ -1755,31 +1834,88 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     // 2
     EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast()));
+    stage.addCostume(std::make_shared<Costume>("2", "b3", "svg"));
+    stage.addCostume(std::make_shared<Costume>("test", "b4", "svg"));
+    stage.setCostumeIndex(0);
+
     vm.setBytecode(bytecode4);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
-    // 3
+    // "2"
+    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
+    stage.setCostumeIndex(0);
+
+    vm.setBytecode(bytecode6);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 2);
+
+    // "3"
+    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
+    stage.setCostumeIndex(0);
+
+    vm.setBytecode(bytecode7);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 2);
+
+    // NaN
     EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
-    vm.setBytecode(bytecode5);
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode8);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
-    stage.setCostumeIndex(1);
+    // Infinity
+    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
+    stage.setCostumeIndex(2);
 
-    // "2"
-    stage.addCostume(std::make_shared<Costume>("2", "b3", "svg"));
-    stage.addCostume(std::make_shared<Costume>("test", "b4", "svg"));
-    stage.setCostumeIndex(0);
+    vm.setBytecode(bytecode9);
+    vm.run();
 
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 0);
+
+    // -Infinity
+    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode10);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 0);
+
+    // ""
     EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
-    vm.setBytecode(bytecode6);
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode11);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 2);
+
+    // "   "
+    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode12);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -1788,7 +1924,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     // "next backdrop"
     EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast()));
-    vm.setBytecode(bytecode7);
+    vm.setBytecode(bytecode13);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -1823,7 +1959,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     // "previous backdrop"
     EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast()));
-    vm.setBytecode(bytecode8);
+    vm.setBytecode(bytecode14);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -1900,11 +2036,19 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
     static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
     static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
-    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
-    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
-    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_CONST, 8, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode10[] = { vm::OP_START, vm::OP_CONST, 9, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode11[] = { vm::OP_START, vm::OP_CONST, 10, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode12[] = { vm::OP_START, vm::OP_CONST, 11, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode13[] = { vm::OP_START, vm::OP_CONST, 12, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode14[] = { vm::OP_START, vm::OP_CONST, 13, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
     static BlockFunc functions[] = { &LooksBlocks::switchBackdropToAndWait, &LooksBlocks::backdropNumber, &LooksBlocks::checkBackdropScripts };
-    static Value constValues[] = { "backdrop2", 0, 1, 2, 3, "next backdrop", "previous backdrop" };
+    static Value constValues[] = {
+        "backdrop2", 0, 1, 2, 3, "2", "3", Value::SpecialValue::NaN, Value::SpecialValue::Infinity, Value::SpecialValue::NegativeInfinity, "", "   ", "next backdrop", "previous backdrop"
+    };
 
     Target target;
 
@@ -1980,33 +2124,95 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast()));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast())).WillOnce(Return(false));
+    stage.addCostume(std::make_shared<Costume>("2", "b3", "svg"));
+    stage.addCostume(std::make_shared<Costume>("test", "b4", "svg"));
+    stage.setCostumeIndex(0);
+
     vm.setBytecode(bytecode4);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
-    // 3
+    // "2"
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast())).WillOnce(Return(false));
+    stage.setCostumeIndex(0);
+
+    vm.setBytecode(bytecode6);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 2);
+
+    // "3"
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast())).WillOnce(Return(false));
+    stage.setCostumeIndex(0);
+
+    vm.setBytecode(bytecode7);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 2);
+
+    // NaN
     EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast())).WillOnce(Return(false));
-    vm.setBytecode(bytecode5);
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode8);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
-    stage.setCostumeIndex(1);
+    // Infinity
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast())).WillOnce(Return(false));
+    stage.setCostumeIndex(2);
 
-    // "2"
-    stage.addCostume(std::make_shared<Costume>("2", "b3", "svg"));
-    stage.addCostume(std::make_shared<Costume>("test", "b4", "svg"));
-    stage.setCostumeIndex(0);
+    vm.setBytecode(bytecode9);
+    vm.run();
 
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 0);
+
+    // -Infinity
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast())).WillOnce(Return(false));
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode10);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 0);
+
+    // ""
     EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast())).WillOnce(Return(false));
-    vm.setBytecode(bytecode6);
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode11);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 2);
+
+    // "   "
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast())).WillOnce(Return(false));
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode12);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2016,7 +2222,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     EXPECT_CALL(m_engineMock, stage()).Times(5).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast()));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(3)->broadcast())).WillOnce(Return(true));
-    vm.setBytecode(bytecode7);
+    vm.setBytecode(bytecode13);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 1);
@@ -2063,7 +2269,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     EXPECT_CALL(m_engineMock, stage()).Times(5).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast()));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(3)->broadcast())).WillOnce(Return(true));
-    vm.setBytecode(bytecode8);
+    vm.setBytecode(bytecode14);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 1);

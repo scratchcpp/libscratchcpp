@@ -835,26 +835,41 @@ void LooksBlocks::setCostumeByIndex(Target *target, long index)
 
 unsigned int LooksBlocks::switchCostumeTo(VirtualMachine *vm)
 {
+    // https://github.com/scratchfoundation/scratch-vm/blob/8dbcc1fc8f8d8c4f1e40629fe8a388149d6dfd1c/src/blocks/scratch3_looks.js#L389-L413
     Target *target = vm->target();
 
     if (!target)
         return 1;
 
     const Value *name = vm->getInput(0, 1);
-    std::string nameStr = name->toString();
-    int index = target->findCostume(nameStr);
 
-    if (index == -1) {
-        if (nameStr == "next costume")
+    if (!name->isString()) {
+        // Numbers should be treated as costume indices, always
+        if (name->isNaN() || name->isInfinity() || name->isNegativeInfinity())
+            target->setCostumeIndex(0);
+        else
+            setCostumeByIndex(target, name->toLong() - 1);
+    } else {
+        // Strings should be treated as costume names, where possible
+        const int costumeIndex = target->findCostume(name->toString());
+        std::string nameStr = name->toString();
+
+        auto it = std::find_if(nameStr.begin(), nameStr.end(), [](char c) { return !std::isspace(c); });
+        bool isWhiteSpace = (it == nameStr.end());
+
+        if (costumeIndex != -1) {
+            setCostumeByIndex(target, costumeIndex);
+        } else if (nameStr == "next costume") {
             nextCostume(vm);
-        else if (nameStr == "previous costume")
+        } else if (nameStr == "previous costume") {
             previousCostume(vm);
-        else {
-            if (name->isValidNumber())
-                setCostumeByIndex(target, name->toLong() - 1);
+            // Try to cast the string to a number (and treat it as a costume index)
+            // Pure whitespace should not be treated as a number
+            // Note: isNaN will cast the string to a number before checking if it's NaN
+        } else if (!(name->isNaN() || isWhiteSpace)) {
+            target->setCostumeIndex(name->toInt() - 1);
         }
-    } else
-        setCostumeByIndex(target, index);
+    }
 
     return 1;
 }
@@ -885,28 +900,43 @@ void LooksBlocks::startBackdropScripts(VirtualMachine *vm, bool wait)
 
 void LooksBlocks::switchBackdropToImpl(VirtualMachine *vm)
 {
+    // https://github.com/scratchfoundation/scratch-vm/blob/8dbcc1fc8f8d8c4f1e40629fe8a388149d6dfd1c/src/blocks/scratch3_looks.js#L423-L462
     Stage *stage = vm->engine()->stage();
 
     if (!stage)
         return;
 
     const Value *name = vm->getInput(0, 1);
-    std::string nameStr = name->toString();
-    int index = stage->findCostume(nameStr);
 
-    if (index == -1) {
-        if (nameStr == "next backdrop")
+    if (!name->isString()) {
+        // Numbers should be treated as costume indices, always
+        if (name->isNaN() || name->isInfinity() || name->isNegativeInfinity())
+            stage->setCostumeIndex(0);
+        else
+            setCostumeByIndex(stage, name->toLong() - 1);
+    } else {
+        // Strings should be treated as costume names, where possible
+        const int costumeIndex = stage->findCostume(name->toString());
+        std::string nameStr = name->toString();
+
+        auto it = std::find_if(nameStr.begin(), nameStr.end(), [](char c) { return !std::isspace(c); });
+        bool isWhiteSpace = (it == nameStr.end());
+
+        if (costumeIndex != -1) {
+            setCostumeByIndex(stage, costumeIndex);
+        } else if (nameStr == "next backdrop") {
             nextBackdropImpl(vm);
-        else if (nameStr == "previous backdrop")
+        } else if (nameStr == "previous backdrop") {
             previousBackdropImpl(vm);
-        else if (nameStr == "random backdrop") {
+        } else if (nameStr == "random backdrop") {
             randomBackdropImpl(vm);
-        } else {
-            if (name->isValidNumber())
-                setCostumeByIndex(stage, name->toLong() - 1);
+            // Try to cast the string to a number (and treat it as a costume index)
+            // Pure whitespace should not be treated as a number
+            // Note: isNaN will cast the string to a number before checking if it's NaN
+        } else if (!(name->isNaN() || isWhiteSpace)) {
+            stage->setCostumeIndex(name->toInt() - 1);
         }
-    } else
-        setCostumeByIndex(stage, index);
+    }
 }
 
 void LooksBlocks::nextBackdropImpl(VirtualMachine *vm)
