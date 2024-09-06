@@ -548,8 +548,9 @@ void Sprite::setBubbleType(BubbleType type)
 void Sprite::setBubbleText(const std::string &text)
 {
     Target::setBubbleText(impl->visible ? text : "");
+    const std::string &finalText = bubbleText();
 
-    if (impl->visible && !text.empty()) {
+    if (impl->visible && !finalText.empty()) {
         IEngine *eng = engine();
 
         if (eng)
@@ -557,7 +558,7 @@ void Sprite::setBubbleText(const std::string &text)
     }
 
     if (impl->iface)
-        impl->iface->onBubbleTextChanged(impl->visible ? text : "");
+        impl->iface->onBubbleTextChanged(impl->visible ? finalText : "");
 }
 
 Target *Sprite::dataSource() const
