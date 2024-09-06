@@ -233,8 +233,9 @@ void Stage::setBubbleType(BubbleType type)
 void Stage::setBubbleText(const std::string &text)
 {
     Target::setBubbleText(text);
+    const std::string &finalText = bubbleText();
 
-    if (!text.empty()) {
+    if (!finalText.empty()) {
         IEngine *eng = engine();
 
         if (eng)
@@ -242,7 +243,7 @@ void Stage::setBubbleText(const std::string &text)
     }
 
     if (impl->iface)
-        impl->iface->onBubbleTextChanged(text);
+        impl->iface->onBubbleTextChanged(finalText);
 }
 
 bool Stage::touchingClones(const std::vector<Sprite *> &clones) const

@@ -83,6 +83,25 @@ TEST_F(IStageHandlerTest, BubbleText)
     EXPECT_CALL(m_handler, onBubbleTextChanged("test"));
     EXPECT_CALL(m_engine, requestRedraw());
     m_stage.setBubbleText("test");
+
+    // The text should be processed in Target::setBubbleText() (#571)
+    std::string longstr =
+        "EY8OUNzAqwgh7NRGk5TzCP3dkAhJy9TX"
+        "Y9mqKElPjdQpKddYqjyCwUk2hx6YgVZV"
+        "6BOdmZGxDMs8Hjv8W9G6j4gTxAWdOkzs"
+        "8Ih80xzEDbvLilWsDwoB6FxH2kVVI4xs"
+        "IXOETNQ6QMsCKLWc5XjHk2BS9nYvDGpJ"
+        "uEmp9zIzFGT1kRSrOlU3ZwnN1YtvqFx"
+        "3hkWVNtJ71dQ0PJHhOVQPUy19V01SPu3"
+        "KIIS2wdSUVAc4RYMzepSveghzWbdcizy"
+        "Tm1KKAj4svu9YoL8b9vsolG8gKunvKO7"
+        "MurRKSeUbECELnJEKV6683xCq7RvmjAu"
+        "2djZ54apiQc1lTixWns5GoG0SVNuFzHl"
+        "q97qUiqiMecjVFM51YVif7c1Stip52Hl";
+
+    EXPECT_CALL(m_handler, onBubbleTextChanged(longstr.substr(0, 330)));
+    EXPECT_CALL(m_engine, requestRedraw());
+    m_stage.setBubbleText(longstr);
 }
 
 TEST_F(IStageHandlerTest, BoundingRect)
