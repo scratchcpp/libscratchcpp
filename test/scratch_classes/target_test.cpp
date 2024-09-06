@@ -781,6 +781,38 @@ TEST(TargetTest, BubbleText)
     target.setBubbleText(longstr);
     ASSERT_EQ(target.bubbleText().length(), 330);
     ASSERT_EQ(target.bubbleText(), longstr.substr(0, 330));
+
+    // Integers should be left unchanged
+    target.setBubbleText("8");
+    ASSERT_EQ(target.bubbleText(), "8");
+
+    target.setBubbleText("-52");
+    ASSERT_EQ(target.bubbleText(), "-52");
+
+    target.setBubbleText("0");
+    ASSERT_EQ(target.bubbleText(), "0");
+
+    // Non-integers should be rounded to 2 decimal places (no more, no less), unless they're small enough that rounding would display them as 0.00 (#478)
+    target.setBubbleText("8.324");
+    ASSERT_EQ(target.bubbleText(), "8.32");
+
+    target.setBubbleText("-52.576");
+    ASSERT_EQ(target.bubbleText(), "-52.58");
+
+    target.setBubbleText("3.5");
+    ASSERT_EQ(target.bubbleText(), "3.5");
+
+    target.setBubbleText("0.015");
+    ASSERT_EQ(target.bubbleText(), "0.02");
+
+    target.setBubbleText("-0.015");
+    ASSERT_EQ(target.bubbleText(), "-0.02");
+
+    target.setBubbleText("0.005");
+    ASSERT_EQ(target.bubbleText(), "0.005");
+
+    target.setBubbleText("-0.005");
+    ASSERT_EQ(target.bubbleText(), "-0.005");
 }
 
 TEST(TargetTest, Engine)

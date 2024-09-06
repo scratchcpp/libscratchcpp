@@ -576,8 +576,21 @@ const std::string &Target::bubbleText() const
  */
 void Target::setBubbleText(const std::string &text)
 {
+    // https://github.com/scratchfoundation/scratch-vm/blob/7313ce5199f8a3da7850085d0f7f6a3ca2c89bf6/src/blocks/scratch3_looks.js#L251-L257
+    const Value v(text);
+    std::string converted = text;
+
+    // Non-integers should be rounded to 2 decimal places (no more, no less), unless they're small enough that rounding would display them as 0.00.
+    if (v.isValidNumber()) {
+        const double num = v.toDouble();
+
+        if (std::abs(num) >= 0.01 && (v % 1).toDouble() != 0)
+            converted = Value(std::round(num * 100) / 100).toString();
+    }
+
+    // Limit the length of the string
     size_t limit = 330;
-    impl->bubbleText = text.substr(0, limit);
+    impl->bubbleText = converted.substr(0, limit);
 }
 
 /*! Returns the engine. */
