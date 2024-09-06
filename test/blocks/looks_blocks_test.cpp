@@ -1426,159 +1426,24 @@ TEST_F(LooksBlocksTest, SwitchCostumeTo)
     auto block1 = std::make_shared<Block>("a", "looks_switchcostumeto");
     addDropdownInput(block1, "COSTUME", LooksBlocks::COSTUME, "costume2");
 
-    // switch costume to (0)
-    auto block2 = std::make_shared<Block>("b", "looks_switchcostumeto");
-    addDropdownInput(block2, "COSTUME", LooksBlocks::COSTUME, "0");
-
-    // switch costume to (1)
-    auto block3 = std::make_shared<Block>("b", "looks_switchcostumeto");
-    addDropdownInput(block3, "COSTUME", LooksBlocks::COSTUME, "1");
-
-    // switch costume to (2)
-    auto block4 = std::make_shared<Block>("b", "looks_switchcostumeto");
-    addDropdownInput(block4, "COSTUME", LooksBlocks::COSTUME, "2");
-
-    // switch costume to (4)
-    auto block5 = std::make_shared<Block>("b", "looks_switchcostumeto");
-    addDropdownInput(block5, "COSTUME", LooksBlocks::COSTUME, "4");
-
-    // switch costume to (3) - there's a costume with this name
-    auto block6 = std::make_shared<Block>("c", "looks_switchcostumeto");
-    addDropdownInput(block6, "COSTUME", LooksBlocks::COSTUME, "3");
-
-    // switch costume to (next costume)
-    auto block7 = std::make_shared<Block>("d", "looks_switchcostumeto");
-    addDropdownInput(block7, "COSTUME", LooksBlocks::COSTUME, "next costume");
-
-    // switch costume to (next costume) - there's a costume with this name
-    auto block8 = std::make_shared<Block>("d", "looks_switchcostumeto");
-    addDropdownInput(block8, "COSTUME", LooksBlocks::COSTUME, "next costume");
-
-    // switch costume to (previous costume)
-    auto block9 = std::make_shared<Block>("e", "looks_switchcostumeto");
-    addDropdownInput(block9, "COSTUME", LooksBlocks::COSTUME, "previous costume");
-
-    // switch costume to (previous costume) - there's a costume with this name
-    auto block10 = std::make_shared<Block>("f", "looks_switchcostumeto");
-    addDropdownInput(block10, "COSTUME", LooksBlocks::COSTUME, "previous costume");
-
     // switch costume to (null block)
-    auto block11 = std::make_shared<Block>("g", "looks_switchcostumeto");
-    addDropdownInput(block11, "COSTUME", LooksBlocks::COSTUME, "", createNullBlock("h"));
+    auto block2 = std::make_shared<Block>("b", "looks_switchcostumeto");
+    addDropdownInput(block2, "COSTUME", LooksBlocks::COSTUME, "", createNullBlock("c"));
 
     compiler.init();
 
-    // Test without any costumes first
     compiler.setBlock(block1);
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeTo)).WillOnce(Return(3));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeTo)).WillOnce(Return(0));
     LooksBlocks::compileSwitchCostumeTo(&compiler);
 
-    target.addCostume(std::make_shared<Costume>("costume1", "c1", "svg"));
-    target.addCostume(std::make_shared<Costume>("costume2", "c2", "svg"));
-
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
-    compiler.setBlock(block1);
-    LooksBlocks::compileSwitchCostumeTo(&compiler);
-
-    target.addCostume(std::make_shared<Costume>("costume3", "c3", "svg"));
-
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeTo)).WillOnce(Return(3));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeTo)).WillOnce(Return(0));
     compiler.setBlock(block2);
-    LooksBlocks::compileSwitchCostumeTo(&compiler);
-
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeTo)).WillOnce(Return(3));
-    compiler.setBlock(block3);
-    LooksBlocks::compileSwitchCostumeTo(&compiler);
-
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeTo)).WillOnce(Return(3));
-    compiler.setBlock(block4);
-    LooksBlocks::compileSwitchCostumeTo(&compiler);
-
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeTo)).WillOnce(Return(3));
-    compiler.setBlock(block5);
-    LooksBlocks::compileSwitchCostumeTo(&compiler);
-
-    target.addCostume(std::make_shared<Costume>("3", "c4", "svg"));
-
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
-    compiler.setBlock(block6);
-    LooksBlocks::compileSwitchCostumeTo(&compiler);
-
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::nextCostume)).WillOnce(Return(1));
-    compiler.setBlock(block7);
-    LooksBlocks::compileSwitchCostumeTo(&compiler);
-
-    target.addCostume(std::make_shared<Costume>("next costume", "c5", "svg"));
-
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
-    compiler.setBlock(block8);
-    LooksBlocks::compileSwitchCostumeTo(&compiler);
-
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::previousCostume)).WillOnce(Return(2));
-    compiler.setBlock(block9);
-    LooksBlocks::compileSwitchCostumeTo(&compiler);
-
-    target.addCostume(std::make_shared<Costume>("previous costume", "c6", "svg"));
-
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeToByIndex)).WillOnce(Return(0));
-    compiler.setBlock(block10);
-    LooksBlocks::compileSwitchCostumeTo(&compiler);
-
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchCostumeTo)).WillOnce(Return(3));
-    compiler.setBlock(block11);
     LooksBlocks::compileSwitchCostumeTo(&compiler);
 
     compiler.end();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>(
-            { vm::OP_START,
-              vm::OP_CONST,
-              0,
-              vm::OP_EXEC,
-              3,
-              vm::OP_CONST,
-              1,
-              vm::OP_EXEC,
-              0,
-              vm::OP_CONST,
-              2,
-              vm::OP_EXEC,
-              3,
-              vm::OP_CONST,
-              3,
-              vm::OP_EXEC,
-              3,
-              vm::OP_CONST,
-              4,
-              vm::OP_EXEC,
-              3,
-              vm::OP_CONST,
-              5,
-              vm::OP_EXEC,
-              3,
-              vm::OP_CONST,
-              6,
-              vm::OP_EXEC,
-              0,
-              vm::OP_EXEC,
-              1,
-              vm::OP_CONST,
-              7,
-              vm::OP_EXEC,
-              0,
-              vm::OP_EXEC,
-              2,
-              vm::OP_CONST,
-              8,
-              vm::OP_EXEC,
-              0,
-              vm::OP_NULL,
-              vm::OP_EXEC,
-              3,
-              vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "costume2", 1, "0", "1", "2", "4", 3, 4, 5 }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_NULL, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "costume2" }));
 }
 
 TEST_F(LooksBlocksTest, SwitchCostumeToImpl)
@@ -1588,15 +1453,19 @@ TEST_F(LooksBlocksTest, SwitchCostumeToImpl)
     static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
     static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
     static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 1, vm::OP_HALT };
-    static unsigned int bytecode10[] = { vm::OP_START, vm::OP_CONST, 8, vm::OP_EXEC, 1, vm::OP_HALT };
-    static unsigned int bytecode11[] = { vm::OP_START, vm::OP_CONST, 9, vm::OP_EXEC, 1, vm::OP_HALT };
-    static unsigned int bytecode12[] = { vm::OP_START, vm::OP_CONST, 10, vm::OP_EXEC, 1, vm::OP_HALT };
-    static BlockFunc functions[] = { &LooksBlocks::switchCostumeTo, &LooksBlocks::switchCostumeToByIndex };
-    static Value constValues[] = { "costume2", 0, 1, 2, 3, "next costume", "previous costume", -1, 0, 5, 6 };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_CONST, 8, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode10[] = { vm::OP_START, vm::OP_CONST, 9, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode11[] = { vm::OP_START, vm::OP_CONST, 10, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode12[] = { vm::OP_START, vm::OP_CONST, 11, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode13[] = { vm::OP_START, vm::OP_CONST, 12, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode14[] = { vm::OP_START, vm::OP_CONST, 13, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::switchCostumeTo };
+    static Value constValues[] = {
+        "costume2", 0, 1, 2, 3, "2", "3", Value::SpecialValue::NaN, Value::SpecialValue::Infinity, Value::SpecialValue::NegativeInfinity, "", "   ", "next costume", "previous costume"
+    };
 
     Target target;
     target.addCostume(std::make_shared<Costume>("costume1", "c1", "svg"));
@@ -1652,9 +1521,18 @@ TEST_F(LooksBlocksTest, SwitchCostumeToImpl)
 
     target.setCostumeIndex(1);
 
-    // "2"
+    // 2
     target.addCostume(std::make_shared<Costume>("2", "c3", "svg"));
     target.addCostume(std::make_shared<Costume>("test", "c4", "svg"));
+    target.setCostumeIndex(0);
+
+    vm.setBytecode(bytecode4);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.costumeIndex(), 1);
+
+    // "2"
     target.setCostumeIndex(0);
 
     vm.setBytecode(bytecode6);
@@ -1663,8 +1541,62 @@ TEST_F(LooksBlocksTest, SwitchCostumeToImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(target.costumeIndex(), 2);
 
-    // "next costume"
+    // "3"
+    target.setCostumeIndex(0);
+
     vm.setBytecode(bytecode7);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.costumeIndex(), 2);
+
+    // NaN
+    target.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode8);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.costumeIndex(), 0);
+
+    // Infinity
+    target.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode9);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.costumeIndex(), 0);
+
+    // -Infinity
+    target.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode10);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.costumeIndex(), 0);
+
+    // ""
+    target.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode11);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.costumeIndex(), 2);
+
+    // "   "
+    target.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode12);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(target.costumeIndex(), 2);
+
+    // "next costume"
+    vm.setBytecode(bytecode13);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -1691,7 +1623,7 @@ TEST_F(LooksBlocksTest, SwitchCostumeToImpl)
     ASSERT_EQ(target.costumeIndex(), 4);
 
     // "previous costume"
-    vm.setBytecode(bytecode8);
+    vm.setBytecode(bytecode14);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -1718,36 +1650,6 @@ TEST_F(LooksBlocksTest, SwitchCostumeToImpl)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(target.costumeIndex(), 5);
-
-    // -1 (index)
-    target.setCostumeIndex(1);
-
-    vm.setBytecode(bytecode9);
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(target.costumeIndex(), 5);
-
-    // 0 (index)
-    vm.setBytecode(bytecode10);
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(target.costumeIndex(), 0);
-
-    // 5 (index)
-    vm.setBytecode(bytecode11);
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(target.costumeIndex(), 5);
-
-    // 6 (index)
-    vm.setBytecode(bytecode12);
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(target.costumeIndex(), 0);
 }
 
 TEST_F(LooksBlocksTest, NextCostume)
@@ -1834,204 +1736,30 @@ TEST_F(LooksBlocksTest, PreviousCostume)
 TEST_F(LooksBlocksTest, SwitchBackdropTo)
 {
     Target target;
-    Stage stage;
     Compiler compiler(&m_engineMock, &target);
 
     // switch backdrop to (backdrop2)
     auto block1 = std::make_shared<Block>("a", "looks_switchbackdropto");
     addDropdownInput(block1, "BACKDROP", LooksBlocks::BACKDROP, "backdrop2");
 
-    // switch backdrop to (0)
-    auto block2 = std::make_shared<Block>("b", "looks_switchbackdropto");
-    addDropdownInput(block2, "BACKDROP", LooksBlocks::BACKDROP, "0");
-
-    // switch backdrop to (1)
-    auto block3 = std::make_shared<Block>("b", "looks_switchbackdropto");
-    addDropdownInput(block3, "BACKDROP", LooksBlocks::BACKDROP, "1");
-
-    // switch backdrop to (2)
-    auto block4 = std::make_shared<Block>("b", "looks_switchbackdropto");
-    addDropdownInput(block4, "BACKDROP", LooksBlocks::BACKDROP, "2");
-
-    // switch backdrop to (4)
-    auto block5 = std::make_shared<Block>("b", "looks_switchbackdropto");
-    addDropdownInput(block5, "BACKDROP", LooksBlocks::BACKDROP, "4");
-
-    // switch backdrop to (3) - there's a backdrop with this name
-    auto block6 = std::make_shared<Block>("c", "looks_switchbackdropto");
-    addDropdownInput(block6, "BACKDROP", LooksBlocks::BACKDROP, "3");
-
-    // switch backdrop to (next backdrop)
-    auto block7 = std::make_shared<Block>("d", "looks_switchbackdropto");
-    addDropdownInput(block7, "BACKDROP", LooksBlocks::BACKDROP, "next backdrop");
-
-    // switch backdrop to (next backdrop) - there's a backdrop with this name
-    auto block8 = std::make_shared<Block>("d", "looks_switchbackdropto");
-    addDropdownInput(block8, "BACKDROP", LooksBlocks::BACKDROP, "next backdrop");
-
-    // switch backdrop to (previous backdrop)
-    auto block9 = std::make_shared<Block>("e", "looks_switchbackdropto");
-    addDropdownInput(block9, "BACKDROP", LooksBlocks::BACKDROP, "previous backdrop");
-
-    // switch backdrop to (previous backdrop) - there's a backdrop with this name
-    auto block10 = std::make_shared<Block>("f", "looks_switchbackdropto");
-    addDropdownInput(block10, "BACKDROP", LooksBlocks::BACKDROP, "previous backdrop");
-
-    // switch backdrop to (random backdrop)
-    auto block11 = std::make_shared<Block>("g", "looks_switchbackdropto");
-    addDropdownInput(block11, "BACKDROP", LooksBlocks::BACKDROP, "random backdrop");
-
-    // switch backdrop to (random backdrop) - there's a backdrop with this name
-    auto block12 = std::make_shared<Block>("h", "looks_switchbackdropto");
-    addDropdownInput(block12, "BACKDROP", LooksBlocks::BACKDROP, "random backdrop");
-
     // switch backdrop to (null block)
-    auto block13 = std::make_shared<Block>("i", "looks_switchbackdropto");
-    addDropdownInput(block13, "BACKDROP", LooksBlocks::BACKDROP, "", createNullBlock("j"));
+    auto block2 = std::make_shared<Block>("b", "looks_switchbackdropto");
+    addDropdownInput(block2, "BACKDROP", LooksBlocks::BACKDROP, "", createNullBlock("c"));
 
     compiler.init();
 
-    // Test without any backdrops first
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropTo)).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropTo)).WillOnce(Return(0));
     compiler.setBlock(block1);
     LooksBlocks::compileSwitchBackdropTo(&compiler);
 
-    stage.addCostume(std::make_shared<Costume>("backdrop1", "b1", "svg"));
-    stage.addCostume(std::make_shared<Costume>("backdrop2", "b2", "svg"));
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndex)).WillOnce(Return(0));
-    compiler.setBlock(block1);
-    LooksBlocks::compileSwitchBackdropTo(&compiler);
-
-    stage.addCostume(std::make_shared<Costume>("backdrop3", "b3", "svg"));
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropTo)).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropTo)).WillOnce(Return(0));
     compiler.setBlock(block2);
-    LooksBlocks::compileSwitchBackdropTo(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropTo)).WillOnce(Return(4));
-    compiler.setBlock(block3);
-    LooksBlocks::compileSwitchBackdropTo(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropTo)).WillOnce(Return(4));
-    compiler.setBlock(block4);
-    LooksBlocks::compileSwitchBackdropTo(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropTo)).WillOnce(Return(4));
-    compiler.setBlock(block5);
-    LooksBlocks::compileSwitchBackdropTo(&compiler);
-
-    stage.addCostume(std::make_shared<Costume>("3", "b4", "svg"));
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndex)).WillOnce(Return(0));
-    compiler.setBlock(block6);
-    LooksBlocks::compileSwitchBackdropTo(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::nextBackdrop)).WillOnce(Return(1));
-    compiler.setBlock(block7);
-    LooksBlocks::compileSwitchBackdropTo(&compiler);
-
-    stage.addCostume(std::make_shared<Costume>("next backdrop", "b5", "svg"));
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndex)).WillOnce(Return(0));
-    compiler.setBlock(block8);
-    LooksBlocks::compileSwitchBackdropTo(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::previousBackdrop)).WillOnce(Return(2));
-    compiler.setBlock(block9);
-    LooksBlocks::compileSwitchBackdropTo(&compiler);
-
-    stage.addCostume(std::make_shared<Costume>("previous backdrop", "b6", "svg"));
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndex)).WillOnce(Return(0));
-    compiler.setBlock(block10);
-    LooksBlocks::compileSwitchBackdropTo(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::randomBackdrop)).WillOnce(Return(3));
-    compiler.setBlock(block11);
-    LooksBlocks::compileSwitchBackdropTo(&compiler);
-
-    stage.addCostume(std::make_shared<Costume>("random backdrop", "b7", "svg"));
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndex)).WillOnce(Return(0));
-    compiler.setBlock(block12);
-    LooksBlocks::compileSwitchBackdropTo(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropTo)).WillOnce(Return(4));
-    compiler.setBlock(block13);
     LooksBlocks::compileSwitchBackdropTo(&compiler);
 
     compiler.end();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>(
-            { vm::OP_START,
-              vm::OP_CONST,
-              0,
-              vm::OP_EXEC,
-              4,
-              vm::OP_CONST,
-              1,
-              vm::OP_EXEC,
-              0,
-              vm::OP_CONST,
-              2,
-              vm::OP_EXEC,
-              4,
-              vm::OP_CONST,
-              3,
-              vm::OP_EXEC,
-              4,
-              vm::OP_CONST,
-              4,
-              vm::OP_EXEC,
-              4,
-              vm::OP_CONST,
-              5,
-              vm::OP_EXEC,
-              4,
-              vm::OP_CONST,
-              6,
-              vm::OP_EXEC,
-              0,
-              vm::OP_EXEC,
-              1,
-              vm::OP_CONST,
-              7,
-              vm::OP_EXEC,
-              0,
-              vm::OP_EXEC,
-              2,
-              vm::OP_CONST,
-              8,
-              vm::OP_EXEC,
-              0,
-              vm::OP_EXEC,
-              3,
-              vm::OP_CONST,
-              9,
-              vm::OP_EXEC,
-              0,
-              vm::OP_NULL,
-              vm::OP_EXEC,
-              4,
-              vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "backdrop2", 1, "0", "1", "2", "4", 3, 4, 5, 6 }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_NULL, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "backdrop2" }));
 }
 
 TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
@@ -2041,15 +1769,21 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_HALT };
     static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
     static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 1, vm::OP_HALT };
-    static unsigned int bytecode10[] = { vm::OP_START, vm::OP_CONST, 8, vm::OP_EXEC, 1, vm::OP_HALT };
-    static unsigned int bytecode11[] = { vm::OP_START, vm::OP_CONST, 9, vm::OP_EXEC, 1, vm::OP_HALT };
-    static unsigned int bytecode12[] = { vm::OP_START, vm::OP_CONST, 10, vm::OP_EXEC, 1, vm::OP_HALT };
-    static BlockFunc functions[] = { &LooksBlocks::switchBackdropTo, &LooksBlocks::switchBackdropToByIndex };
-    static Value constValues[] = { "backdrop2", 0, 1, 2, 3, "next backdrop", "previous backdrop", -1, 0, 5, 6 };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_CONST, 8, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode10[] = { vm::OP_START, vm::OP_CONST, 9, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode11[] = { vm::OP_START, vm::OP_CONST, 10, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode12[] = { vm::OP_START, vm::OP_CONST, 11, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode13[] = { vm::OP_START, vm::OP_CONST, 12, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode14[] = { vm::OP_START, vm::OP_CONST, 13, vm::OP_EXEC, 0, vm::OP_HALT };
+    static unsigned int bytecode15[] = { vm::OP_START, vm::OP_CONST, 14, vm::OP_EXEC, 0, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::switchBackdropTo };
+    static Value constValues[] = {
+        "backdrop2",      0, 1, 2, 3, "2", "3", Value::SpecialValue::NaN, Value::SpecialValue::Infinity, Value::SpecialValue::NegativeInfinity, "", "   ", "next backdrop", "previous backdrop",
+        "random backdrop"
+    };
 
     Target target;
 
@@ -2102,31 +1836,88 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     // 2
     EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast()));
+    stage.addCostume(std::make_shared<Costume>("2", "b3", "svg"));
+    stage.addCostume(std::make_shared<Costume>("test", "b4", "svg"));
+    stage.setCostumeIndex(0);
+
     vm.setBytecode(bytecode4);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
-    // 3
+    // "2"
+    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
+    stage.setCostumeIndex(0);
+
+    vm.setBytecode(bytecode6);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 2);
+
+    // "3"
+    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
+    stage.setCostumeIndex(0);
+
+    vm.setBytecode(bytecode7);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 2);
+
+    // NaN
     EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
-    vm.setBytecode(bytecode5);
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode8);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
-    stage.setCostumeIndex(1);
+    // Infinity
+    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
+    stage.setCostumeIndex(2);
 
-    // "2"
-    stage.addCostume(std::make_shared<Costume>("2", "b3", "svg"));
-    stage.addCostume(std::make_shared<Costume>("test", "b4", "svg"));
-    stage.setCostumeIndex(0);
+    vm.setBytecode(bytecode9);
+    vm.run();
 
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 0);
+
+    // -Infinity
+    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode10);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 0);
+
+    // ""
     EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
-    vm.setBytecode(bytecode6);
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode11);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 2);
+
+    // "   "
+    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode12);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2135,7 +1926,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     // "next backdrop"
     EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast()));
-    vm.setBytecode(bytecode7);
+    vm.setBytecode(bytecode13);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2170,7 +1961,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     // "previous backdrop"
     EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast()));
-    vm.setBytecode(bytecode8);
+    vm.setBytecode(bytecode14);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2204,348 +1995,100 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 5);
 
-    // -1 (index)
-    stage.setCostumeIndex(1);
+    // random backdrop
+    RandomGeneratorMock rng;
+    LooksBlocks::rng = &rng;
 
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast()));
+    EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(3));
+    stage.setCostumeIndex(0);
+    vm.setBytecode(bytecode15);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 3);
+
+    EXPECT_CALL(m_engineMock, stage()).Times(3).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast()));
-    vm.setBytecode(bytecode9);
+    EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(5));
+    vm.reset();
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 5);
 
-    // 0 (index)
+    stage.addCostume(std::make_shared<Costume>("random backdrop", "b7", "svg"));
+
     EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
-    vm.setBytecode(bytecode10);
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(6)->broadcast()));
+    EXPECT_CALL(rng, randint).Times(0);
+    vm.reset();
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(stage.costumeIndex(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 6);
 
-    // 5 (index)
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast()));
-    vm.setBytecode(bytecode11);
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(stage.costumeIndex(), 5);
-
-    // 6 (index)
-    EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
-    vm.setBytecode(bytecode12);
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(stage.costumeIndex(), 0);
+    LooksBlocks::rng = RandomGenerator::instance().get();
 }
 
 TEST_F(LooksBlocksTest, SwitchBackdropToAndWait)
 {
     Target target;
-    Stage stage;
     Compiler compiler(&m_engineMock, &target);
 
     // switch backdrop to (backdrop2) and wait
     auto block1 = std::make_shared<Block>("a", "looks_switchbackdroptoandwait");
     addDropdownInput(block1, "BACKDROP", LooksBlocks::BACKDROP, "backdrop2");
 
-    // switch backdrop to (0) and wait
-    auto block2 = std::make_shared<Block>("b", "looks_switchbackdroptoandwait");
-    addDropdownInput(block2, "BACKDROP", LooksBlocks::BACKDROP, "0");
-
-    // switch backdrop to (1) and wait
-    auto block3 = std::make_shared<Block>("b", "looks_switchbackdroptoandwait");
-    addDropdownInput(block3, "BACKDROP", LooksBlocks::BACKDROP, "1");
-
-    // switch backdrop to (2) and wait
-    auto block4 = std::make_shared<Block>("b", "looks_switchbackdroptoandwait");
-    addDropdownInput(block4, "BACKDROP", LooksBlocks::BACKDROP, "2");
-
-    // switch backdrop to (4) and wait
-    auto block5 = std::make_shared<Block>("b", "looks_switchbackdroptoandwait");
-    addDropdownInput(block5, "BACKDROP", LooksBlocks::BACKDROP, "4");
-
-    // switch backdrop to (3) and wait - there's a backdrop with this name
-    auto block6 = std::make_shared<Block>("c", "looks_switchbackdroptoandwait");
-    addDropdownInput(block6, "BACKDROP", LooksBlocks::BACKDROP, "3");
-
-    // switch backdrop to (next backdrop) and wait
-    auto block7 = std::make_shared<Block>("d", "looks_switchbackdroptoandwait");
-    addDropdownInput(block7, "BACKDROP", LooksBlocks::BACKDROP, "next backdrop");
-
-    // switch backdrop to (next backdrop) and wait - there's a backdrop with this name
-    auto block8 = std::make_shared<Block>("d", "looks_switchbackdroptoandwait");
-    addDropdownInput(block8, "BACKDROP", LooksBlocks::BACKDROP, "next backdrop");
-
-    // switch backdrop to (previous backdrop) and wait
-    auto block9 = std::make_shared<Block>("e", "looks_switchbackdroptoandwait");
-    addDropdownInput(block9, "BACKDROP", LooksBlocks::BACKDROP, "previous backdrop");
-
-    // switch backdrop to (previous backdrop) and wait - there's a backdrop with this name
-    auto block10 = std::make_shared<Block>("f", "looks_switchbackdroptoandwait");
-    addDropdownInput(block10, "BACKDROP", LooksBlocks::BACKDROP, "previous backdrop");
-
-    // switch backdrop to (random backdrop) and wait
-    auto block11 = std::make_shared<Block>("g", "looks_switchbackdroptoandwait");
-    addDropdownInput(block11, "BACKDROP", LooksBlocks::BACKDROP, "random backdrop");
-
-    // switch backdrop to (random backdrop) and wait - there's a backdrop with this name
-    auto block12 = std::make_shared<Block>("h", "looks_switchbackdroptoandwait");
-    addDropdownInput(block12, "BACKDROP", LooksBlocks::BACKDROP, "random backdrop");
-
     // switch backdrop to (null block) and wait
-    auto block13 = std::make_shared<Block>("i", "looks_switchbackdroptoandwait");
-    addDropdownInput(block13, "BACKDROP", LooksBlocks::BACKDROP, "", createNullBlock("j"));
+    auto block2 = std::make_shared<Block>("b", "looks_switchbackdroptoandwait");
+    addDropdownInput(block2, "BACKDROP", LooksBlocks::BACKDROP, "", createNullBlock("c"));
 
     compiler.init();
 
-    // Test without any backdrops first
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToAndWait)).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToAndWait)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(1));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(2));
     compiler.setBlock(block1);
     LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
 
-    stage.addCostume(std::make_shared<Costume>("backdrop1", "b1", "svg"));
-    stage.addCostume(std::make_shared<Costume>("backdrop2", "b2", "svg"));
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndexAndWait)).WillOnce(Return(0));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
-    compiler.setBlock(block1);
-    LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
-
-    stage.addCostume(std::make_shared<Costume>("backdrop3", "b3", "svg"));
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToAndWait)).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToAndWait)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(1));
+    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(2));
     compiler.setBlock(block2);
-    LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToAndWait)).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
-    compiler.setBlock(block3);
-    LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToAndWait)).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
-    compiler.setBlock(block4);
-    LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToAndWait)).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
-    compiler.setBlock(block5);
-    LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
-
-    stage.addCostume(std::make_shared<Costume>("3", "b4", "svg"));
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndexAndWait)).WillOnce(Return(0));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
-    compiler.setBlock(block6);
-    LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::nextBackdropAndWait)).WillOnce(Return(1));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
-    compiler.setBlock(block7);
-    LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
-
-    stage.addCostume(std::make_shared<Costume>("next backdrop", "b5", "svg"));
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndexAndWait)).WillOnce(Return(0));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
-    compiler.setBlock(block8);
-    LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::previousBackdropAndWait)).WillOnce(Return(2));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
-    compiler.setBlock(block9);
-    LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
-
-    stage.addCostume(std::make_shared<Costume>("previous backdrop", "b6", "svg"));
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndexAndWait)).WillOnce(Return(0));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
-    compiler.setBlock(block10);
-    LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::randomBackdropAndWait)).WillOnce(Return(3));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
-    compiler.setBlock(block11);
-    LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
-
-    stage.addCostume(std::make_shared<Costume>("random backdrop", "b7", "svg"));
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToByIndexAndWait)).WillOnce(Return(0));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
-    compiler.setBlock(block12);
-    LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::switchBackdropToAndWait)).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::backdropNumber)).WillOnce(Return(6));
-    EXPECT_CALL(m_engineMock, functionIndex(&LooksBlocks::checkBackdropScripts)).WillOnce(Return(5));
-    compiler.setBlock(block13);
     LooksBlocks::compileSwitchBackdropToAndWait(&compiler);
 
     compiler.end();
 
     ASSERT_EQ(
         compiler.bytecode(),
-        std::vector<unsigned int>(
-            { vm::OP_START,
-              vm::OP_CONST,
-              0,
-              vm::OP_EXEC,
-              4,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_CONST,
-              1,
-              vm::OP_EXEC,
-              0,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_CONST,
-              2,
-              vm::OP_EXEC,
-              4,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_CONST,
-              3,
-              vm::OP_EXEC,
-              4,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_CONST,
-              4,
-              vm::OP_EXEC,
-              4,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_CONST,
-              5,
-              vm::OP_EXEC,
-              4,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_CONST,
-              6,
-              vm::OP_EXEC,
-              0,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_EXEC,
-              1,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_CONST,
-              7,
-              vm::OP_EXEC,
-              0,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_EXEC,
-              2,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_CONST,
-              8,
-              vm::OP_EXEC,
-              0,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_EXEC,
-              3,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_CONST,
-              9,
-              vm::OP_EXEC,
-              0,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_NULL,
-              vm::OP_EXEC,
-              4,
-              vm::OP_EXEC,
-              6,
-              vm::OP_EXEC,
-              5,
-              vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "backdrop2", 1, "0", "1", "2", "4", 3, 4, 5, 6 }));
+        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_NULL, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "backdrop2" }));
 }
 
 TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 {
-    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
-    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
-    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
-    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
-    static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
-    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
-    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
-    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
-    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
-    static unsigned int bytecode10[] = { vm::OP_START, vm::OP_CONST, 8, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
-    static unsigned int bytecode11[] = { vm::OP_START, vm::OP_CONST, 9, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
-    static unsigned int bytecode12[] = { vm::OP_START, vm::OP_CONST, 10, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_EXEC, 3, vm::OP_HALT };
-    static BlockFunc functions[] = { &LooksBlocks::switchBackdropToAndWait, &LooksBlocks::switchBackdropToByIndexAndWait, &LooksBlocks::backdropNumber, &LooksBlocks::checkBackdropScripts };
-    static Value constValues[] = { "backdrop2", 0, 1, 2, 3, "next backdrop", "previous backdrop", -1, 0, 5, 6 };
+    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode5[] = { vm::OP_START, vm::OP_CONST, 4, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode6[] = { vm::OP_START, vm::OP_CONST, 5, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode7[] = { vm::OP_START, vm::OP_CONST, 6, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode8[] = { vm::OP_START, vm::OP_CONST, 7, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode9[] = { vm::OP_START, vm::OP_CONST, 8, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode10[] = { vm::OP_START, vm::OP_CONST, 9, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode11[] = { vm::OP_START, vm::OP_CONST, 10, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode12[] = { vm::OP_START, vm::OP_CONST, 11, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode13[] = { vm::OP_START, vm::OP_CONST, 12, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode14[] = { vm::OP_START, vm::OP_CONST, 13, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static unsigned int bytecode15[] = { vm::OP_START, vm::OP_CONST, 14, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
+    static BlockFunc functions[] = { &LooksBlocks::switchBackdropToAndWait, &LooksBlocks::backdropNumber, &LooksBlocks::checkBackdropScripts };
+    static Value constValues[] = {
+        "backdrop2",      0, 1, 2, 3, "2", "3", Value::SpecialValue::NaN, Value::SpecialValue::Infinity, Value::SpecialValue::NegativeInfinity, "", "   ", "next backdrop", "previous backdrop",
+        "random backdrop"
+    };
 
     Target target;
 
@@ -2621,33 +2164,95 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast()));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast())).WillOnce(Return(false));
+    stage.addCostume(std::make_shared<Costume>("2", "b3", "svg"));
+    stage.addCostume(std::make_shared<Costume>("test", "b4", "svg"));
+    stage.setCostumeIndex(0);
+
     vm.setBytecode(bytecode4);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
-    // 3
+    // "2"
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast())).WillOnce(Return(false));
+    stage.setCostumeIndex(0);
+
+    vm.setBytecode(bytecode6);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 2);
+
+    // "3"
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast())).WillOnce(Return(false));
+    stage.setCostumeIndex(0);
+
+    vm.setBytecode(bytecode7);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 2);
+
+    // NaN
     EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast())).WillOnce(Return(false));
-    vm.setBytecode(bytecode5);
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode8);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
-    stage.setCostumeIndex(1);
+    // Infinity
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast())).WillOnce(Return(false));
+    stage.setCostumeIndex(2);
 
-    // "2"
-    stage.addCostume(std::make_shared<Costume>("2", "b3", "svg"));
-    stage.addCostume(std::make_shared<Costume>("test", "b4", "svg"));
-    stage.setCostumeIndex(0);
+    vm.setBytecode(bytecode9);
+    vm.run();
 
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 0);
+
+    // -Infinity
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast())).WillOnce(Return(false));
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode10);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 0);
+
+    // ""
     EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast())).WillOnce(Return(false));
-    vm.setBytecode(bytecode6);
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode11);
+    vm.run();
+
+    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 2);
+
+    // "   "
+    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast())).WillOnce(Return(false));
+    stage.setCostumeIndex(2);
+
+    vm.setBytecode(bytecode12);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
@@ -2657,7 +2262,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     EXPECT_CALL(m_engineMock, stage()).Times(5).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast()));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(3)->broadcast())).WillOnce(Return(true));
-    vm.setBytecode(bytecode7);
+    vm.setBytecode(bytecode13);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 1);
@@ -2704,7 +2309,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     EXPECT_CALL(m_engineMock, stage()).Times(5).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast()));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(3)->broadcast())).WillOnce(Return(true));
-    vm.setBytecode(bytecode8);
+    vm.setBytecode(bytecode14);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 1);
@@ -2751,56 +2356,44 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 5);
 
-    // -1 (index)
-    stage.setCostumeIndex(1);
+    // random backdrop
+    RandomGeneratorMock rng;
+    LooksBlocks::rng = &rng;
 
-    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast()));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(5)->broadcast())).WillOnce(Return(true));
-    vm.setBytecode(bytecode9);
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 1);
-    ASSERT_EQ(stage.costumeIndex(), 5);
-    ASSERT_FALSE(vm.atEnd());
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(5)->broadcast())).WillOnce(Return(false));
+    EXPECT_CALL(m_engineMock, stage()).Times(5).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast()));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(3)->broadcast())).WillOnce(Return(false));
+    EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(3));
+    stage.setCostumeIndex(0);
+    vm.setBytecode(bytecode15);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(stage.costumeIndex(), 3);
 
-    // 0 (index)
-    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast())).WillOnce(Return(false));
-    vm.setBytecode(bytecode10);
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(stage.costumeIndex(), 0);
-    ASSERT_TRUE(vm.atEnd());
-
-    // 5 (index)
-    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).Times(5).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast()));
     EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(5)->broadcast())).WillOnce(Return(false));
-    vm.setBytecode(bytecode11);
+    EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(5));
+    vm.reset();
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 5);
 
-    // 6 (index)
+    stage.addCostume(std::make_shared<Costume>("random backdrop", "b7", "svg"));
+
     EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast())).WillOnce(Return(false));
-    vm.setBytecode(bytecode12);
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(6)->broadcast()));
+    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(6)->broadcast())).WillOnce(Return(false));
+    EXPECT_CALL(rng, randint).Times(0);
+    vm.reset();
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(stage.costumeIndex(), 0);
+    ASSERT_EQ(stage.costumeIndex(), 6);
+
+    LooksBlocks::rng = RandomGenerator::instance().get();
 }
 
 TEST_F(LooksBlocksTest, NextBackdrop)

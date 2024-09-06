@@ -129,21 +129,17 @@ class LooksBlocks : public IBlockSection
         static unsigned int size(VirtualMachine *vm);
 
         static void setCostumeByIndex(Target *target, long index);
-        static unsigned int switchCostumeToByIndex(VirtualMachine *vm);
         static unsigned int switchCostumeTo(VirtualMachine *vm);
         static unsigned int nextCostume(VirtualMachine *vm);
         static unsigned int previousCostume(VirtualMachine *vm);
 
         static void startBackdropScripts(VirtualMachine *vm, bool wait);
-        static void switchBackdropToByIndexImpl(VirtualMachine *vm);
         static void switchBackdropToImpl(VirtualMachine *vm);
         static void nextBackdropImpl(VirtualMachine *vm);
         static void previousBackdropImpl(VirtualMachine *vm);
         static void randomBackdropImpl(VirtualMachine *vm);
 
-        static unsigned int switchBackdropToByIndex(VirtualMachine *vm);
         static unsigned int switchBackdropTo(VirtualMachine *vm);
-        static unsigned int switchBackdropToByIndexAndWait(VirtualMachine *vm);
         static unsigned int switchBackdropToAndWait(VirtualMachine *vm);
         static unsigned int nextBackdrop(VirtualMachine *vm);
         static unsigned int nextBackdropAndWait(VirtualMachine *vm);
