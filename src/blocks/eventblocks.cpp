@@ -96,19 +96,8 @@ void EventBlocks::compileWhenStageClicked(Compiler *compiler)
 
 void EventBlocks::compileBroadcast(Compiler *compiler)
 {
-    auto input = compiler->input(BROADCAST_INPUT);
-
-    if (input->type() != Input::Type::ObscuredShadow) {
-        std::vector<int> broadcasts = compiler->engine()->findBroadcasts(input->primaryValue()->value().toString());
-
-        for (int index : broadcasts) {
-            compiler->addConstValue(index);
-            compiler->addFunctionCall(&broadcastByIndex);
-        }
-    } else {
-        compiler->addInput(input);
-        compiler->addFunctionCall(&broadcast);
-    }
+    compiler->addInput(BROADCAST_INPUT);
+    compiler->addFunctionCall(&broadcast);
 }
 
 void EventBlocks::compileBroadcastAndWait(Compiler *compiler)
@@ -194,12 +183,6 @@ unsigned int EventBlocks::broadcast(VirtualMachine *vm)
     for (int index : broadcasts)
         vm->engine()->broadcast(index, vm);
 
-    return 1;
-}
-
-unsigned int EventBlocks::broadcastByIndex(VirtualMachine *vm)
-{
-    vm->engine()->broadcast(vm->getInput(0, 1)->toLong(), vm);
     return 1;
 }
 

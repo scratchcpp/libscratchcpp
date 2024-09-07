@@ -373,9 +373,7 @@ TEST_F(EventBlocksTest, Broadcast)
     notBlock->setCompileFunction(&OperatorBlocks::compileNot);
     addObscuredInput(block2, "BROADCAST_INPUT", EventBlocks::BROADCAST_INPUT, notBlock);
 
-    EXPECT_CALL(m_engineMock, findBroadcasts("test")).WillOnce(Return(std::vector<int>({ 0, 3 })));
-    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::broadcastByIndex)).Times(2).WillRepeatedly(Return(0));
-    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::broadcast)).WillOnce(Return(1));
+    EXPECT_CALL(m_engineMock, functionIndex(&EventBlocks::broadcast)).Times(2).WillRepeatedly(Return(0));
 
     compiler.init();
     compiler.setBlock(block1);
@@ -384,8 +382,8 @@ TEST_F(EventBlocksTest, Broadcast)
     EventBlocks::compileBroadcast(&compiler);
     compiler.end();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_NULL, vm::OP_NOT, vm::OP_EXEC, 1, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 3 }));
+    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_NULL, vm::OP_NOT, vm::OP_EXEC, 0, vm::OP_HALT }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "test" }));
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_TRUE(compiler.lists().empty());
 }
@@ -393,8 +391,7 @@ TEST_F(EventBlocksTest, Broadcast)
 TEST_F(EventBlocksTest, BroadcastImpl)
 {
     static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT };
-    static BlockFunc functions[] = { &EventBlocks::broadcast, &EventBlocks::broadcastByIndex };
+    static BlockFunc functions[] = { &EventBlocks::broadcast };
     static Value constValues[] = { "test", 2 };
 
     VirtualMachine vm(nullptr, &m_engineMock, nullptr);
@@ -406,13 +403,6 @@ TEST_F(EventBlocksTest, BroadcastImpl)
     EXPECT_CALL(m_engineMock, broadcast(4, &vm));
 
     vm.setBytecode(bytecode1);
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-
-    EXPECT_CALL(m_engineMock, broadcast(2, &vm)).Times(1);
-
-    vm.setBytecode(bytecode2);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);

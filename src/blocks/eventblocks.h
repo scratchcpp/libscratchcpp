@@ -56,7 +56,6 @@ class EventBlocks : public IBlockSection
         static unsigned int whenTouchingObjectPredicate(VirtualMachine *vm);
 
         static unsigned int broadcast(VirtualMachine *vm);
-        static unsigned int broadcastByIndex(VirtualMachine *vm);
         static unsigned int broadcastAndWait(VirtualMachine *vm);
 
         static unsigned int whenLoudnessGreaterThanPredicate(VirtualMachine *vm);
