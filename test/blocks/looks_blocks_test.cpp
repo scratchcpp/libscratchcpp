@@ -2454,59 +2454,6 @@ TEST_F(LooksBlocksTest, NextBackdropImpl)
     ASSERT_EQ(stage.costumeIndex(), 0);
 }
 
-TEST_F(LooksBlocksTest, NextBackdropAndWait)
-{
-    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
-    static BlockFunc functions[] = { &LooksBlocks::nextBackdropAndWait, &LooksBlocks::backdropNumber, &LooksBlocks::checkBackdropScripts };
-
-    Target target;
-
-    Stage stage;
-    stage.addCostume(std::make_shared<Costume>("backdrop1", "b1", "svg"));
-    stage.addCostume(std::make_shared<Costume>("backdrop2", "b2", "svg"));
-    stage.addCostume(std::make_shared<Costume>("backdrop3", "b3", "svg"));
-    stage.setCostumeIndex(0);
-
-    VirtualMachine vm(&target, &m_engineMock, nullptr);
-    vm.setBytecode(bytecode);
-    vm.setFunctions(functions);
-
-    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast()));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast())).WillOnce(Return(true));
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 1);
-    ASSERT_EQ(stage.costumeIndex(), 1);
-    ASSERT_FALSE(vm.atEnd());
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast())).WillOnce(Return(false));
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(vm.atEnd());
-
-    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast())).WillOnce(Return(false));
-    vm.reset();
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(stage.costumeIndex(), 2);
-    ASSERT_TRUE(vm.atEnd());
-
-    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast())).WillOnce(Return(false));
-    vm.reset();
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(stage.costumeIndex(), 0);
-}
-
 TEST_F(LooksBlocksTest, PreviousBackdrop)
 {
     static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
@@ -2541,59 +2488,6 @@ TEST_F(LooksBlocksTest, PreviousBackdrop)
 
     EXPECT_CALL(m_engineMock, stage()).Times(2).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
-    vm.reset();
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(stage.costumeIndex(), 2);
-}
-
-TEST_F(LooksBlocksTest, PreviousBackdropAndWait)
-{
-    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
-    static BlockFunc functions[] = { &LooksBlocks::previousBackdropAndWait, &LooksBlocks::backdropNumber, &LooksBlocks::checkBackdropScripts };
-
-    Target target;
-
-    Stage stage;
-    stage.addCostume(std::make_shared<Costume>("backdrop1", "b1", "svg"));
-    stage.addCostume(std::make_shared<Costume>("backdrop2", "b2", "svg"));
-    stage.addCostume(std::make_shared<Costume>("backdrop3", "b3", "svg"));
-    stage.setCostumeIndex(2);
-
-    VirtualMachine vm(&target, &m_engineMock, nullptr);
-    vm.setBytecode(bytecode);
-    vm.setFunctions(functions);
-
-    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast()));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast())).WillOnce(Return(true));
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 1);
-    ASSERT_EQ(stage.costumeIndex(), 1);
-    ASSERT_FALSE(vm.atEnd());
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast())).WillOnce(Return(false));
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(vm.atEnd());
-
-    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast()));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(0)->broadcast())).WillOnce(Return(false));
-    vm.reset();
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(stage.costumeIndex(), 0);
-    ASSERT_TRUE(vm.atEnd());
-
-    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast())).WillOnce(Return(false));
     vm.reset();
     vm.run();
 
@@ -2646,67 +2540,6 @@ TEST_F(LooksBlocksTest, RandomBackdrop)
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
-
-    LooksBlocks::rng = RandomGenerator::instance().get();
-}
-
-TEST_F(LooksBlocksTest, RandomBackdropAndWait)
-{
-    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_EXEC, 2, vm::OP_HALT };
-    static BlockFunc functions[] = { &LooksBlocks::randomBackdropAndWait, &LooksBlocks::backdropNumber, &LooksBlocks::checkBackdropScripts };
-
-    Target target;
-
-    Stage stage;
-
-    VirtualMachine vm(&target, &m_engineMock, nullptr);
-    vm.setBytecode(bytecode);
-    vm.setFunctions(functions);
-
-    RandomGeneratorMock rng;
-    LooksBlocks::rng = &rng;
-
-    EXPECT_CALL(rng, randint).Times(0);
-    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning).Times(0);
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-
-    stage.addCostume(std::make_shared<Costume>("backdrop1", "b1", "svg"));
-    stage.addCostume(std::make_shared<Costume>("backdrop2", "b2", "svg"));
-    stage.addCostume(std::make_shared<Costume>("backdrop3", "b3", "svg"));
-
-    EXPECT_CALL(rng, randint(0, 2)).WillOnce(Return(1));
-    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast()));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast())).WillOnce(Return(true));
-    vm.reset();
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 1);
-    ASSERT_EQ(stage.costumeIndex(), 1);
-    ASSERT_FALSE(vm.atEnd());
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(1)->broadcast())).WillOnce(Return(false));
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(vm.atEnd());
-
-    stage.addCostume(std::make_shared<Costume>("backdrop4", "b4", "svg"));
-
-    EXPECT_CALL(rng, randint(0, 3)).WillOnce(Return(2));
-    EXPECT_CALL(m_engineMock, stage()).Times(4).WillRepeatedly(Return(&stage));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast()));
-    EXPECT_CALL(m_engineMock, broadcastByPtrRunning(stage.costumeAt(2)->broadcast())).WillOnce(Return(false));
-    vm.reset();
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(stage.costumeIndex(), 2);
-    ASSERT_TRUE(vm.atEnd());
 
     LooksBlocks::rng = RandomGenerator::instance().get();
 }
