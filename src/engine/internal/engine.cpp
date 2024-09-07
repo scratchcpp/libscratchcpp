@@ -433,22 +433,24 @@ VirtualMachine *Engine::startScript(std::shared_ptr<Block> topLevelBlock, Target
     return pushThread(topLevelBlock, target).get();
 }
 
-void Engine::broadcast(int index)
+void Engine::broadcast(int index, VirtualMachine *sender)
 {
     if (index < 0 || index >= m_broadcasts.size())
         return;
 
-    broadcastByPtr(m_broadcasts[index].get());
+    broadcastByPtr(m_broadcasts[index].get(), sender);
 }
 
-void Engine::broadcastByPtr(Broadcast *broadcast)
+void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sender)
 {
     startHats(HatType::BroadcastReceived, { { HatField::BroadcastOption, broadcast } }, nullptr);
+    addBroadcastPromise(broadcast, sender);
 }
 
-void Engine::startBackdropScripts(Broadcast *broadcast)
+void Engine::startBackdropScripts(Broadcast *broadcast, VirtualMachine *sender)
 {
     startHats(HatType::BackdropChanged, { { HatField::Backdrop, broadcast->name() } }, nullptr);
+    addBroadcastPromise(broadcast, sender);
 }
 
 void Engine::stopScript(VirtualMachine *vm)
@@ -582,6 +584,48 @@ void Engine::step()
 
     // Check running threads (must be done here)
     m_frameActivity = !m_threads.empty();
+
+    // Resolve stopped broadcast scripts
+    std::vector<Broadcast *> resolved;
+
+    for (const auto &[broadcast, senderThread] : m_broadcastSenders) {
+        std::unordered_map<Broadcast *, std::vector<Script *>> *broadcastMap = nullptr;
+
+        if (broadcast->isBackdropBroadcast()) {
+            // This broadcast belongs to a backdrop
+            assert(m_broadcastMap.find(broadcast) == m_broadcastMap.cend());
+            broadcastMap = &m_backdropBroadcastMap;
+        } else {
+            // This is a regular broadcast
+            assert(m_backdropBroadcastMap.find(broadcast) == m_backdropBroadcastMap.cend());
+            broadcastMap = &m_broadcastMap;
+        }
+
+        bool found = false;
+
+        if (broadcastMap->find(broadcast) != broadcastMap->cend()) {
+            const auto &scripts = (*broadcastMap)[broadcast];
+
+            for (auto script : scripts) {
+                if (std::find_if(m_threads.begin(), m_threads.end(), [script](std::shared_ptr<VirtualMachine> thread) { return thread->script() == script; }) != m_threads.end()) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        if (!found) {
+            VirtualMachine *th = senderThread;
+
+            if (std::find_if(m_threads.begin(), m_threads.end(), [th](std::shared_ptr<VirtualMachine> thread) { return thread.get() == th; }) != m_threads.end())
+                th->resolvePromise();
+
+            resolved.push_back(broadcast);
+        }
+    }
+
+    for (Broadcast *broadcast : resolved)
+        m_broadcastSenders.erase(broadcast);
 
     m_redrawRequested = false;
 
@@ -1160,7 +1204,30 @@ void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, int fi
 
 void Engine::addBackdropChangeScript(std::shared_ptr<Block> hatBlock, int fieldId)
 {
+    Stage *stage = this->stage();
+
+    if (!stage)
+        return;
+
+    // TODO: This assumes the first field holds the broadcast pointer, maybe this is not the best way (e. g. if an extension uses this method)
+    assert(hatBlock->fieldAt(0));
+    const std::string &backdropName = hatBlock->fieldAt(0)->value().toString();
+    auto backdrop = stage->costumeAt(stage->findCostume(backdropName));
+    Broadcast *broadcast = backdrop->broadcast();
+    assert(broadcast->isBackdropBroadcast());
+
     Script *script = m_scripts[hatBlock].get();
+    auto it = m_backdropBroadcastMap.find(broadcast);
+
+    if (it != m_backdropBroadcastMap.cend()) {
+        auto &scripts = it->second;
+        auto scriptIt = std::find(scripts.begin(), scripts.end(), script);
+
+        if (scriptIt == scripts.end())
+            scripts.push_back(script);
+    } else
+        m_backdropBroadcastMap[broadcast] = { script };
+
     addHatToMap(m_backdropChangeHats, script);
     addHatField(script, HatField::Backdrop, fieldId);
 }
@@ -1871,6 +1938,20 @@ void Engine::updateFrameDuration()
 void Engine::addRunningScript(std::shared_ptr<VirtualMachine> vm)
 {
     m_threads.push_back(vm);
+}
+
+void Engine::addBroadcastPromise(Broadcast *broadcast, VirtualMachine *sender)
+{
+    assert(broadcast);
+    assert(sender);
+
+    // Resolve broadcast promise if it's already running
+    auto it = m_broadcastSenders.find(broadcast);
+
+    if (it != m_broadcastSenders.cend() && std::find_if(m_threads.begin(), m_threads.end(), [&it](std::shared_ptr<VirtualMachine> thread) { return thread.get() == it->second; }) != m_threads.end())
+        it->second->resolvePromise();
+
+    m_broadcastSenders[broadcast] = sender;
 }
 
 std::shared_ptr<VirtualMachine> Engine::pushThread(std::shared_ptr<Block> block, Target *target)
