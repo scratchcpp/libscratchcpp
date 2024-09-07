@@ -76,7 +76,7 @@ enum Opcode
     OP_STR_CONTAINS,   /*!< Stores true in the last register if the string stored in the second last register contains the substring in the last register. */
     OP_EXEC,           /*!< Calls the function with the index in the argument. */
     OP_INIT_PROCEDURE, /*!< Initializes the list of procedure (custom block) arguments. */
-    OP_CALL_PROCEDURE, /*! Calls the procedure (custom block) with the index in the argument. */
+    OP_CALL_PROCEDURE, /*!< Calls the procedure (custom block) with the index in the argument. */
     OP_ADD_ARG,        /*!< Adds a procedure (custom block) argument with the value from the last register. */
     OP_READ_ARG,       /*!< Reads the procedure (custom block) argument with the index in the argument and stores the value in the last register. */
     OP_BREAK_FRAME,    /*!< Breaks current frame at the end of the loop. */
