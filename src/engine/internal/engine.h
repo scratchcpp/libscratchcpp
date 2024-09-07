@@ -237,6 +237,7 @@ class Engine : public IEngine
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_broadcastMap;
+        std::unordered_map<Broadcast *, std::vector<Script *>> m_backdropBroadcastMap;
         std::vector<std::shared_ptr<Monitor>> m_monitors;
         std::vector<std::string> m_extensions;
         std::vector<Target *> m_executableTargets; // sorted by layer (reverse order of execution)

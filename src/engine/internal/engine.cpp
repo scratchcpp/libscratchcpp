@@ -1160,7 +1160,30 @@ void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, int fi
 
 void Engine::addBackdropChangeScript(std::shared_ptr<Block> hatBlock, int fieldId)
 {
+    Stage *stage = this->stage();
+
+    if (!stage)
+        return;
+
+    // TODO: This assumes the first field holds the broadcast pointer, maybe this is not the best way (e. g. if an extension uses this method)
+    assert(hatBlock->fieldAt(0));
+    const std::string &backdropName = hatBlock->fieldAt(0)->value().toString();
+    auto backdrop = stage->costumeAt(stage->findCostume(backdropName));
+    Broadcast *broadcast = backdrop->broadcast();
+    assert(broadcast->isBackdropBroadcast());
+
     Script *script = m_scripts[hatBlock].get();
+    auto it = m_backdropBroadcastMap.find(broadcast);
+
+    if (it != m_backdropBroadcastMap.cend()) {
+        auto &scripts = it->second;
+        auto scriptIt = std::find(scripts.begin(), scripts.end(), script);
+
+        if (scriptIt == scripts.end())
+            scripts.push_back(script);
+    } else
+        m_backdropBroadcastMap[broadcast] = { script };
+
     addHatToMap(m_backdropChangeHats, script);
     addHatField(script, HatField::Backdrop, fieldId);
 }
