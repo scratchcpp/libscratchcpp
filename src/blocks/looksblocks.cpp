@@ -988,14 +988,6 @@ unsigned int LooksBlocks::nextBackdrop(VirtualMachine *vm)
     return 0;
 }
 
-unsigned int LooksBlocks::nextBackdropAndWait(VirtualMachine *vm)
-{
-    nextBackdropImpl(vm);
-    startBackdropScripts(vm, true);
-
-    return 0;
-}
-
 unsigned int LooksBlocks::previousBackdrop(VirtualMachine *vm)
 {
     previousBackdropImpl(vm);
@@ -1004,26 +996,10 @@ unsigned int LooksBlocks::previousBackdrop(VirtualMachine *vm)
     return 0;
 }
 
-unsigned int LooksBlocks::previousBackdropAndWait(VirtualMachine *vm)
-{
-    previousBackdropImpl(vm);
-    startBackdropScripts(vm, true);
-
-    return 0;
-}
-
 unsigned int LooksBlocks::randomBackdrop(VirtualMachine *vm)
 {
     randomBackdropImpl(vm);
     startBackdropScripts(vm, false);
-
-    return 0;
-}
-
-unsigned int LooksBlocks::randomBackdropAndWait(VirtualMachine *vm)
-{
-    randomBackdropImpl(vm);
-    startBackdropScripts(vm, true);
 
     return 0;
 }
