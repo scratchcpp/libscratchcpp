@@ -2254,14 +2254,15 @@ TEST(EngineTest, StopBeforeStarting)
     Stage *stage = engine->stage();
     ASSERT_TRUE(stage);
 
-    engine->broadcast(0);
+    VirtualMachine fakeThread;
+    engine->broadcast(0, &fakeThread);
     engine->step();
 
     ASSERT_VAR(stage, "test");
     ASSERT_FALSE(GET_VAR(stage, "test")->value().toBool());
 
     GET_VAR(stage, "test")->setValue(true);
-    engine->broadcast(0);
+    engine->broadcast(0, &fakeThread);
     engine->start();
     engine->step();
     ASSERT_VAR(stage, "test");
@@ -2365,4 +2366,23 @@ TEST(EngineTest, DuplicateVariableOrListIDs)
 
     ASSERT_VAR(stage, "passed");
     ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
+}
+
+TEST(EngineTest, BroadcastStopsWaitBlocks)
+{
+    // Regtest for #563
+    Project p("regtest_projects/563_broadcast_stops_wait_blocks.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    engine->run();
+
+    ASSERT_VAR(stage, "broadcast_passed");
+    ASSERT_TRUE(GET_VAR(stage, "broadcast_passed")->value().toBool());
+    ASSERT_VAR(stage, "backdrop_passed");
+    ASSERT_TRUE(GET_VAR(stage, "backdrop_passed")->value().toBool());
 }

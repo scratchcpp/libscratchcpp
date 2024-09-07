@@ -35,9 +35,9 @@ class Engine : public IEngine
         void start() override;
         void stop() override;
         VirtualMachine *startScript(std::shared_ptr<Block> topLevelBlock, Target *target) override;
-        void broadcast(int index) override;
-        void broadcastByPtr(Broadcast *broadcast) override;
-        void startBackdropScripts(Broadcast *broadcast) override;
+        void broadcast(int index, VirtualMachine *sender) override;
+        void broadcastByPtr(Broadcast *broadcast, VirtualMachine *sender) override;
+        void startBackdropScripts(Broadcast *broadcast, VirtualMachine *sender) override;
         void stopScript(VirtualMachine *vm) override;
         void stopTarget(Target *target, VirtualMachine *exceptScript) override;
         void initClone(std::shared_ptr<Sprite> clone) override;
@@ -220,6 +220,8 @@ class Engine : public IEngine
         void updateFrameDuration();
         void addRunningScript(std::shared_ptr<VirtualMachine> vm);
 
+        void addBroadcastPromise(Broadcast *broadcast, VirtualMachine *sender);
+
         std::shared_ptr<VirtualMachine> pushThread(std::shared_ptr<Block> block, Target *target);
         void stopThread(VirtualMachine *thread);
         std::shared_ptr<VirtualMachine> restartThread(std::shared_ptr<VirtualMachine> thread);
@@ -238,6 +240,7 @@ class Engine : public IEngine
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_broadcastMap;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_backdropBroadcastMap;
+        std::unordered_map<Broadcast *, VirtualMachine *> m_broadcastSenders; // used for resolving broadcast promises
         std::vector<std::shared_ptr<Monitor>> m_monitors;
         std::vector<std::string> m_extensions;
         std::vector<Target *> m_executableTargets; // sorted by layer (reverse order of execution)

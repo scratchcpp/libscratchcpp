@@ -61,13 +61,13 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual VirtualMachine *startScript(std::shared_ptr<Block> topLevelBlock, Target *) = 0;
 
         /*! Starts the scripts of the broadcast with the given index. */
-        virtual void broadcast(int index) = 0;
+        virtual void broadcast(int index, VirtualMachine *sender) = 0;
 
         /*! Starts the scripts of the given broadcast. */
-        virtual void broadcastByPtr(Broadcast *broadcast) = 0;
+        virtual void broadcastByPtr(Broadcast *broadcast, VirtualMachine *sender) = 0;
 
         /*! Starts the "when backdrop switches to" scripts for the given backdrop broadcast. */
-        virtual void startBackdropScripts(Broadcast *broadcast) = 0;
+        virtual void startBackdropScripts(Broadcast *broadcast, VirtualMachine *sender) = 0;
 
         /*! Stops the given script. */
         virtual void stopScript(VirtualMachine *vm) = 0;
