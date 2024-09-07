@@ -80,9 +80,6 @@ class EngineMock : public IEngine
         MOCK_METHOD(bool, spriteFencingEnabled, (), (const, override));
         MOCK_METHOD(void, setSpriteFencingEnabled, (bool), (override));
 
-        MOCK_METHOD(bool, broadcastRunning, (unsigned int), (override));
-        MOCK_METHOD(bool, broadcastByPtrRunning, (Broadcast *), (override));
-
         MOCK_METHOD(void, requestRedraw, (), (override));
 
         MOCK_METHOD(ITimer *, timer, (), (const, override));

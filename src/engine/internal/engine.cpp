@@ -960,57 +960,6 @@ void Engine::setSpriteFencingEnabled(bool enable)
     m_spriteFencingEnabled = enable;
 }
 
-bool Engine::broadcastRunning(unsigned int index)
-{
-    if (index < 0 || index >= m_broadcasts.size())
-        return false;
-
-    return broadcastByPtrRunning(m_broadcasts[index].get());
-}
-
-bool Engine::broadcastByPtrRunning(Broadcast *broadcast)
-{
-    if (broadcast->isBackdropBroadcast()) {
-        // This broadcast belongs to a backdrop
-        assert(m_broadcastMap.find(broadcast) == m_broadcastMap.cend());
-
-        for (auto thread : m_threads) {
-            if (!thread->atEnd()) {
-                Script *script = thread->script();
-                auto topBlock = script->topBlock();
-
-                const auto &scripts = m_backdropChangeHats[script->target()];
-                auto scriptIt = std::find(scripts.begin(), scripts.end(), script);
-                auto scriptFieldMapIt = m_scriptHatFields.find(script);
-
-                if (scriptFieldMapIt != m_scriptHatFields.cend()) {
-                    const auto &fieldMap = scriptFieldMapIt->second;
-                    auto fieldIt = fieldMap.find(HatField::Backdrop);
-                    assert(fieldIt != fieldMap.cend());
-                    assert(topBlock->findFieldById(fieldIt->second));
-
-                    if ((scriptIt != scripts.end()) && (topBlock->findFieldById(fieldIt->second)->value().toString() == broadcast->name()))
-                        return true;
-                }
-            }
-        }
-    } else {
-        // This is a regular broadcast
-        assert(m_broadcastMap.find(broadcast) != m_broadcastMap.cend());
-        const auto &scripts = m_broadcastMap[broadcast];
-
-        for (auto thread : m_threads) {
-            if (!thread->atEnd()) {
-                auto it = std::find_if(scripts.begin(), scripts.end(), [thread](Script *script) { return thread->script() == script; });
-
-                if (it != scripts.end())
-                    return true;
-            }
-        }
-    }
-    return false;
-}
-
 void Engine::requestRedraw()
 {
     m_redrawRequested = true;
