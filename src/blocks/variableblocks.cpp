@@ -5,6 +5,7 @@
 #include <scratchcpp/field.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/monitor.h>
 
@@ -108,8 +109,14 @@ unsigned int VariableBlocks::showGlobalVariable(VirtualMachine *vm)
 unsigned int VariableBlocks::showVariable(VirtualMachine *vm)
 {
     if (Target *target = vm->target()) {
-        int index = target->findVariableById(vm->getInput(0, 1)->toString());
-        setVarVisible(target->variableAt(index), true);
+        if (!target->isStage() && static_cast<Sprite *>(target)->isClone()) {
+            Sprite *sprite = static_cast<Sprite *>(target)->cloneSprite(); // use clone root variable
+            int index = sprite->findVariableById(vm->getInput(0, 1)->toString());
+            setVarVisible(sprite->variableAt(index), true);
+        } else {
+            int index = target->findVariableById(vm->getInput(0, 1)->toString());
+            setVarVisible(target->variableAt(index), true);
+        }
     }
 
     return 1;
@@ -128,8 +135,14 @@ unsigned int VariableBlocks::hideGlobalVariable(VirtualMachine *vm)
 unsigned int VariableBlocks::hideVariable(VirtualMachine *vm)
 {
     if (Target *target = vm->target()) {
-        int index = target->findVariableById(vm->getInput(0, 1)->toString());
-        setVarVisible(target->variableAt(index), false);
+        if (!target->isStage() && static_cast<Sprite *>(target)->isClone()) {
+            Sprite *sprite = static_cast<Sprite *>(target)->cloneSprite(); // use clone root variable
+            int index = sprite->findVariableById(vm->getInput(0, 1)->toString());
+            setVarVisible(sprite->variableAt(index), false);
+        } else {
+            int index = target->findVariableById(vm->getInput(0, 1)->toString());
+            setVarVisible(target->variableAt(index), false);
+        }
     }
 
     return 1;

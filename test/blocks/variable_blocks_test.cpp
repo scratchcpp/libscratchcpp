@@ -3,6 +3,7 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/monitor.h>
 #include <enginemock.h>
@@ -271,8 +272,12 @@ TEST_F(VariableBlocksTest, ShowVariableImpl)
     Stage stage;
     stage.addVariable(var1);
 
-    Target target;
-    target.addVariable(var2);
+    Sprite sprite;
+    sprite.addVariable(var2);
+
+    Engine fakeEngine;
+    sprite.setEngine(&fakeEngine);
+    auto clone = sprite.clone();
 
     // Global
     VirtualMachine vm1(&stage, &m_engineMock, nullptr);
@@ -299,7 +304,7 @@ TEST_F(VariableBlocksTest, ShowVariableImpl)
     monitor1.setVisible(false);
 
     // Local
-    VirtualMachine vm2(&target, &m_engineMock, nullptr);
+    VirtualMachine vm2(&sprite, &m_engineMock, nullptr);
     vm2.setBytecode(bytecode3);
     vm2.setFunctions(functions);
     vm2.setConstValues(constValues);
@@ -314,6 +319,26 @@ TEST_F(VariableBlocksTest, ShowVariableImpl)
     vm2.run();
 
     ASSERT_EQ(vm2.registerCount(), 0);
+    ASSERT_FALSE(monitor1.visible());
+    ASSERT_TRUE(monitor2.visible());
+
+    // Local - clone
+    monitor2.setVisible(false);
+    VirtualMachine vm3(clone.get(), &m_engineMock, nullptr);
+    vm3.setBytecode(bytecode3);
+    vm3.setFunctions(functions);
+    vm3.setConstValues(constValues);
+    vm3.run();
+
+    ASSERT_EQ(vm3.registerCount(), 0);
+    ASSERT_FALSE(monitor1.visible());
+    ASSERT_FALSE(monitor2.visible());
+
+    vm3.reset();
+    vm3.setBytecode(bytecode4);
+    vm3.run();
+
+    ASSERT_EQ(vm3.registerCount(), 0);
     ASSERT_FALSE(monitor1.visible());
     ASSERT_TRUE(monitor2.visible());
 }
@@ -374,8 +399,12 @@ TEST_F(VariableBlocksTest, HideVariableImpl)
     Stage stage;
     stage.addVariable(var1);
 
-    Target target;
-    target.addVariable(var2);
+    Sprite sprite;
+    sprite.addVariable(var2);
+
+    Engine fakeEngine;
+    sprite.setEngine(&fakeEngine);
+    auto clone = sprite.clone();
 
     // Global
     VirtualMachine vm1(&stage, &m_engineMock, nullptr);
@@ -402,7 +431,7 @@ TEST_F(VariableBlocksTest, HideVariableImpl)
     monitor1.setVisible(true);
 
     // Local
-    VirtualMachine vm2(&target, &m_engineMock, nullptr);
+    VirtualMachine vm2(&sprite, &m_engineMock, nullptr);
     vm2.setBytecode(bytecode3);
     vm2.setFunctions(functions);
     vm2.setConstValues(constValues);
@@ -417,6 +446,26 @@ TEST_F(VariableBlocksTest, HideVariableImpl)
     vm2.run();
 
     ASSERT_EQ(vm2.registerCount(), 0);
+    ASSERT_TRUE(monitor1.visible());
+    ASSERT_FALSE(monitor2.visible());
+
+    // Local - clone
+    monitor2.setVisible(true);
+    VirtualMachine vm3(clone.get(), &m_engineMock, nullptr);
+    vm3.setBytecode(bytecode3);
+    vm3.setFunctions(functions);
+    vm3.setConstValues(constValues);
+    vm3.run();
+
+    ASSERT_EQ(vm3.registerCount(), 0);
+    ASSERT_TRUE(monitor1.visible());
+    ASSERT_TRUE(monitor2.visible());
+
+    vm3.reset();
+    vm3.setBytecode(bytecode4);
+    vm3.run();
+
+    ASSERT_EQ(vm3.registerCount(), 0);
     ASSERT_TRUE(monitor1.visible());
     ASSERT_FALSE(monitor2.visible());
 }
