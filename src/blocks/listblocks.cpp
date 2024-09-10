@@ -5,6 +5,7 @@
 #include <scratchcpp/field.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/monitor.h>
 
@@ -162,8 +163,14 @@ unsigned int ListBlocks::showGlobalList(VirtualMachine *vm)
 unsigned int ListBlocks::showList(VirtualMachine *vm)
 {
     if (Target *target = vm->target()) {
-        int index = target->findListById(vm->getInput(0, 1)->toString());
-        setListVisible(target->listAt(index), true);
+        if (!target->isStage() && static_cast<Sprite *>(target)->isClone()) {
+            Sprite *sprite = static_cast<Sprite *>(target)->cloneSprite(); // use clone root list
+            int index = sprite->findListById(vm->getInput(0, 1)->toString());
+            setListVisible(sprite->listAt(index), true);
+        } else {
+            int index = target->findListById(vm->getInput(0, 1)->toString());
+            setListVisible(target->listAt(index), true);
+        }
     }
 
     return 1;
@@ -182,8 +189,14 @@ unsigned int ListBlocks::hideGlobalList(VirtualMachine *vm)
 unsigned int ListBlocks::hideList(VirtualMachine *vm)
 {
     if (Target *target = vm->target()) {
-        int index = target->findListById(vm->getInput(0, 1)->toString());
-        setListVisible(target->listAt(index), false);
+        if (!target->isStage() && static_cast<Sprite *>(target)->isClone()) {
+            Sprite *sprite = static_cast<Sprite *>(target)->cloneSprite(); // use clone root list
+            int index = sprite->findListById(vm->getInput(0, 1)->toString());
+            setListVisible(sprite->listAt(index), false);
+        } else {
+            int index = target->findListById(vm->getInput(0, 1)->toString());
+            setListVisible(target->listAt(index), false);
+        }
     }
 
     return 1;
