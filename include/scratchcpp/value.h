@@ -16,6 +16,34 @@
 namespace libscratchcpp
 {
 
+enum class ValueType
+{
+    Integer = 0,
+    Double = 1,
+    Bool = 2,
+    String = 3,
+    Infinity = -1,
+    NegativeInfinity = -2,
+    NaN = -3
+};
+
+extern "C"
+{
+    /*! \brief The ValueData struct holds the data of Value. It's used in compiled Scratch code for better performance. */
+    struct ValueData
+    {
+            union
+            {
+                    long intValue;
+                    double doubleValue;
+                    bool boolValue;
+                    std::string *stringValue;
+            };
+
+            ValueType type;
+    };
+}
+
 /*! \brief The Value class represents a Scratch value. */
 class LIBSCRATCHCPP_EXPORT Value
 {
@@ -27,85 +55,77 @@ class LIBSCRATCHCPP_EXPORT Value
             NaN
         };
 
-        enum class Type
-        {
-            Integer = 0,
-            Double = 1,
-            Bool = 2,
-            String = 3,
-            Infinity = -1,
-            NegativeInfinity = -2,
-            NaN = -3
-        };
-
         /*! Constructs a number Value. */
-        Value(float numberValue) :
-            m_type(Type::Double)
+        Value(float numberValue)
         {
             if (isInf(numberValue))
-                m_type = Type::Infinity;
+                m_data.type = ValueType::Infinity;
             else if (isNegativeInf(numberValue))
-                m_type = Type::NegativeInfinity;
+                m_data.type = ValueType::NegativeInfinity;
             else if (std::isnan(numberValue))
-                m_type = Type::NaN;
-            else
-                m_doubleValue = floatToDouble(numberValue);
+                m_data.type = ValueType::NaN;
+            else {
+                m_data.type = ValueType::Double;
+                m_data.doubleValue = floatToDouble(numberValue);
+            }
         }
 
         /*! Constructs a number Value. */
-        Value(double numberValue) :
-            m_type(Type::Double)
+        Value(double numberValue)
         {
             if (isInf(numberValue))
-                m_type = Type::Infinity;
+                m_data.type = ValueType::Infinity;
             else if (isNegativeInf(numberValue))
-                m_type = Type::NegativeInfinity;
+                m_data.type = ValueType::NegativeInfinity;
             else if (std::isnan(numberValue))
-                m_type = Type::NaN;
-            else
-                m_doubleValue = numberValue;
+                m_data.type = ValueType::NaN;
+            else {
+                m_data.type = ValueType::Double;
+                m_data.doubleValue = numberValue;
+            }
         }
 
         /*! Constructs a number Value. */
-        Value(int numberValue = 0) :
-            m_type(Type::Integer)
+        Value(int numberValue = 0)
         {
-            m_intValue = numberValue;
+            m_data.type = ValueType::Integer;
+            m_data.intValue = numberValue;
         }
 
         /*! Constructs a number Value. */
-        Value(size_t numberValue) :
-            m_type(Type::Integer)
+        Value(size_t numberValue)
         {
-            m_intValue = numberValue;
+            m_data.type = ValueType::Integer;
+            m_data.intValue = numberValue;
         }
 
         /*! Constructs a number Value. */
-        Value(long numberValue) :
-            m_type(Type::Integer)
+        Value(long numberValue)
         {
-            m_intValue = numberValue;
+            m_data.type = ValueType::Integer;
+            m_data.intValue = numberValue;
         }
 
         /*! Constructs a boolean Value. */
-        Value(bool boolValue) :
-            m_type(Type::Bool)
+        Value(bool boolValue)
         {
-            m_boolValue = boolValue;
+            m_data.type = ValueType::Bool;
+            m_data.boolValue = boolValue;
         }
 
         /*! Constructs a string Value. */
-        Value(const std::string &stringValue) :
-            m_type(Type::String)
+        Value(const std::string &stringValue)
         {
             if (stringValue == "Infinity")
-                m_type = Type::Infinity;
+                m_data.type = ValueType::Infinity;
             else if (stringValue == "-Infinity")
-                m_type = Type::NegativeInfinity;
+                m_data.type = ValueType::NegativeInfinity;
             else if (stringValue == "NaN")
-                m_type = Type::NaN;
-            else
-                new (&m_stringValue) std::string(stringValue);
+                m_data.type = ValueType::NaN;
+            else {
+                m_data.type = ValueType::String;
+                m_data.stringValue = new std::string(stringValue);
+            }
         }
 
         /*! Constructs a string Value. */
@@ -118,33 +138,33 @@ class LIBSCRATCHCPP_EXPORT Value
         Value(SpecialValue specialValue)
         {
             if (specialValue == SpecialValue::Infinity)
-                m_type = Type::Infinity;
+                m_data.type = ValueType::Infinity;
             else if (specialValue == SpecialValue::NegativeInfinity)
-                m_type = Type::NegativeInfinity;
+                m_data.type = ValueType::NegativeInfinity;
             else if (specialValue == SpecialValue::NaN)
-                m_type = Type::NaN;
+                m_data.type = ValueType::NaN;
             else {
-                m_type = Type::Integer;
-                m_intValue = 0;
+                m_data.type = ValueType::Integer;
+                m_data.intValue = 0;
             }
         }
 
         Value(const Value &v)
         {
-            m_type = v.m_type;
+            m_data.type = v.m_data.type;
 
-            switch (m_type) {
-                case Type::Integer:
-                    m_intValue = v.m_intValue;
+            switch (m_data.type) {
+                case ValueType::Integer:
+                    m_data.intValue = v.m_data.intValue;
                     break;
-                case Type::Double:
-                    m_doubleValue = v.m_doubleValue;
+                case ValueType::Double:
+                    m_data.doubleValue = v.m_data.doubleValue;
                     break;
-                case Type::Bool:
-                    m_boolValue = v.m_boolValue;
+                case ValueType::Bool:
+                    m_data.boolValue = v.m_data.boolValue;
                     break;
-                case Type::String:
-                    new (&m_stringValue) std::string(v.m_stringValue);
+                case ValueType::String:
+                    m_data.stringValue = new std::string(*v.m_data.stringValue);
                     break;
                 default:
                     break;
@@ -153,25 +173,25 @@ class LIBSCRATCHCPP_EXPORT Value
 
         ~Value()
         {
-            if (m_type == Type::String)
-                m_stringValue.~basic_string();
+            if (m_data.type == ValueType::String)
+                delete m_data.stringValue;
         }
 
         /*! Returns the type of the value. */
-        Type type() const { return m_type; }
+        ValueType type() const { return m_data.type; }
 
         /*! Returns true if the value is infinity. */
         bool isInfinity() const
         {
-            switch (m_type) {
-                case Type::Infinity:
+            switch (m_data.type) {
+                case ValueType::Infinity:
                     return true;
-                case Type::Integer:
-                    return isInf(m_intValue);
-                case Type::Double:
-                    return isInf(m_doubleValue);
-                case Type::String:
-                    return m_stringValue == "Infinity";
+                case ValueType::Integer:
+                    return isInf(m_data.intValue);
+                case ValueType::Double:
+                    return isInf(m_data.doubleValue);
+                case ValueType::String:
+                    return *m_data.stringValue == "Infinity";
                 default:
                     return false;
             }
@@ -180,15 +200,15 @@ class LIBSCRATCHCPP_EXPORT Value
         /*! Returns true if the value is negative infinity. */
         bool isNegativeInfinity() const
         {
-            switch (m_type) {
-                case Type::NegativeInfinity:
+            switch (m_data.type) {
+                case ValueType::NegativeInfinity:
                     return true;
-                case Type::Integer:
-                    return isNegativeInf(-m_intValue);
-                case Type::Double:
-                    return isNegativeInf(-m_doubleValue);
-                case Type::String:
-                    return m_stringValue == "-Infinity";
+                case ValueType::Integer:
+                    return isNegativeInf(-m_data.intValue);
+                case ValueType::Double:
+                    return isNegativeInf(-m_data.doubleValue);
+                case ValueType::String:
+                    return *m_data.stringValue == "-Infinity";
                 default:
                     return false;
             }
@@ -197,21 +217,21 @@ class LIBSCRATCHCPP_EXPORT Value
         /*! Returns true if the value is NaN (Not a Number). */
         bool isNaN() const
         {
-            switch (m_type) {
-                case Type::NaN:
+            switch (m_data.type) {
+                case ValueType::NaN:
                     return true;
-                case Type::Double:
-                    assert(!std::isnan(m_doubleValue));
-                    return std::isnan(m_doubleValue);
-                case Type::String:
-                    return m_stringValue == "NaN";
+                case ValueType::Double:
+                    assert(!std::isnan(m_data.doubleValue));
+                    return std::isnan(m_data.doubleValue);
+                case ValueType::String:
+                    return *m_data.stringValue == "NaN";
                 default:
                     return false;
             }
         }
 
         /*! Returns true if the value is a number. */
-        bool isNumber() const { return m_type == Type::Integer || m_type == Type::Double; }
+        bool isNumber() const { return m_data.type == ValueType::Integer || m_data.type == ValueType::Double; }
 
         /*! Returns true if the value is a number or can be converted to a number. */
         bool isValidNumber() const
@@ -222,15 +242,15 @@ class LIBSCRATCHCPP_EXPORT Value
             if (isInfinity() || isNegativeInfinity())
                 return true;
 
-            assert(m_type != Type::Infinity && m_type != Type::NegativeInfinity);
+            assert(m_data.type != ValueType::Infinity && m_data.type != ValueType::NegativeInfinity);
 
-            switch (m_type) {
-                case Type::Integer:
-                case Type::Double:
-                case Type::Bool:
+            switch (m_data.type) {
+                case ValueType::Integer:
+                case ValueType::Double:
+                case ValueType::Bool:
                     return true;
-                case Type::String:
-                    return m_stringValue.empty() || checkString(m_stringValue) > 0;
+                case ValueType::String:
+                    return m_data.stringValue->empty() || checkString(*m_data.stringValue) > 0;
                 default:
                     return false;
             }
@@ -240,30 +260,30 @@ class LIBSCRATCHCPP_EXPORT Value
         bool isInt() const
         {
             // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L157-L181
-            switch (m_type) {
-                case Type::Integer:
-                case Type::Bool:
-                case Type::Infinity:
-                case Type::NegativeInfinity:
-                case Type::NaN:
+            switch (m_data.type) {
+                case ValueType::Integer:
+                case ValueType::Bool:
+                case ValueType::Infinity:
+                case ValueType::NegativeInfinity:
+                case ValueType::NaN:
                     return true;
-                case Type::Double: {
+                case ValueType::Double: {
                     double intpart;
-                    std::modf(m_doubleValue, &intpart);
-                    return m_doubleValue == intpart;
+                    std::modf(m_data.doubleValue, &intpart);
+                    return m_data.doubleValue == intpart;
                 }
-                case Type::String:
-                    return m_stringValue.find('.') == std::string::npos;
+                case ValueType::String:
+                    return m_data.stringValue->find('.') == std::string::npos;
             }
 
             return false;
         }
 
         /*! Returns true if the value is a boolean. */
-        bool isBool() const { return m_type == Type::Bool; }
+        bool isBool() const { return m_data.type == ValueType::Bool; }
 
         /*! Returns true if the value is a string. */
-        bool isString() const { return m_type == Type::String; }
+        bool isString() const { return m_data.type == ValueType::String; }
 
         /*! Returns the int representation of the value. */
         int toInt() const { return toLong(); }
@@ -271,18 +291,18 @@ class LIBSCRATCHCPP_EXPORT Value
         /*! Returns the long representation of the value. */
         long toLong() const
         {
-            if (static_cast<int>(m_type) < 0)
+            if (static_cast<int>(m_data.type) < 0)
                 return 0;
             else {
-                switch (m_type) {
-                    case Type::Integer:
-                        return m_intValue;
-                    case Type::Double:
-                        return m_doubleValue;
-                    case Type::Bool:
-                        return m_boolValue;
-                    case Type::String:
-                        return stringToLong(m_stringValue);
+                switch (m_data.type) {
+                    case ValueType::Integer:
+                        return m_data.intValue;
+                    case ValueType::Double:
+                        return m_data.doubleValue;
+                    case ValueType::Bool:
+                        return m_data.boolValue;
+                    case ValueType::String:
+                        return stringToLong(*m_data.stringValue);
                     default:
                         return 0;
                 }
@@ -292,25 +312,25 @@ class LIBSCRATCHCPP_EXPORT Value
         /*! Returns the double representation of the value. */
         double toDouble() const
         {
-            if (static_cast<int>(m_type) < 0) {
-                switch (m_type) {
-                    case Type::Infinity:
+            if (static_cast<int>(m_data.type) < 0) {
+                switch (m_data.type) {
+                    case ValueType::Infinity:
                         return std::numeric_limits<double>::infinity();
-                    case Type::NegativeInfinity:
+                    case ValueType::NegativeInfinity:
                         return -std::numeric_limits<double>::infinity();
                     default:
                         return 0;
                 }
             } else {
-                switch (m_type) {
-                    case Type::Double:
-                        return m_doubleValue;
-                    case Type::Integer:
-                        return m_intValue;
-                    case Type::Bool:
-                        return m_boolValue;
-                    case Type::String:
-                        return stringToDouble(m_stringValue);
+                switch (m_data.type) {
+                    case ValueType::Double:
+                        return m_data.doubleValue;
+                    case ValueType::Integer:
+                        return m_data.intValue;
+                    case ValueType::Bool:
+                        return m_data.boolValue;
+                    case ValueType::String:
+                        return stringToDouble(*m_data.stringValue);
                     default:
                         return 0;
                 }
@@ -320,19 +340,19 @@ class LIBSCRATCHCPP_EXPORT Value
         /*! Returns the boolean representation of the value. */
         bool toBool() const
         {
-            switch (m_type) {
-                case Type::Bool:
-                    return m_boolValue;
-                case Type::Integer:
-                    return m_intValue != 0;
-                case Type::Double:
-                    return m_doubleValue != 0;
-                case Type::String:
-                    return !m_stringValue.empty() && !stringsEqual(m_stringValue, "false") && m_stringValue != "0";
-                case Type::Infinity:
-                case Type::NegativeInfinity:
+            switch (m_data.type) {
+                case ValueType::Bool:
+                    return m_data.boolValue;
+                case ValueType::Integer:
+                    return m_data.intValue != 0;
+                case ValueType::Double:
+                    return m_data.doubleValue != 0;
+                case ValueType::String:
+                    return !m_data.stringValue->empty() && !stringsEqual(*m_data.stringValue, "false") && *m_data.stringValue != "0";
+                case ValueType::Infinity:
+                case ValueType::NegativeInfinity:
                     return true;
-                case Type::NaN:
+                case ValueType::NaN:
                     return false;
                 default:
                     return false;
@@ -342,26 +362,26 @@ class LIBSCRATCHCPP_EXPORT Value
         /*! Returns the string representation of the value. */
         std::string toString() const
         {
-            if (static_cast<int>(m_type) < 0) {
-                switch (m_type) {
-                    case Type::Infinity:
+            if (static_cast<int>(m_data.type) < 0) {
+                switch (m_data.type) {
+                    case ValueType::Infinity:
                         return "Infinity";
-                    case Type::NegativeInfinity:
+                    case ValueType::NegativeInfinity:
                         return "-Infinity";
                     default:
                         return "NaN";
                 }
             } else {
-                switch (m_type) {
-                    case Type::String:
-                        return m_stringValue;
-                    case Type::Integer:
-                        return std::to_string(m_intValue);
-                    case Type::Double: {
-                        return doubleToString(m_doubleValue);
+                switch (m_data.type) {
+                    case ValueType::String:
+                        return *m_data.stringValue;
+                    case ValueType::Integer:
+                        return std::to_string(m_data.intValue);
+                    case ValueType::Double: {
+                        return doubleToString(m_data.doubleValue);
                     }
-                    case Type::Bool:
-                        return m_boolValue ? "true" : "false";
+                    case ValueType::Bool:
+                        return m_data.boolValue ? "true" : "false";
                     default:
                         return "";
                 }
@@ -374,18 +394,18 @@ class LIBSCRATCHCPP_EXPORT Value
         /*! Adds the given value to the value. */
         void add(const Value &v)
         {
-            if ((static_cast<int>(m_type) < 0) || (static_cast<int>(v.m_type) < 0)) {
-                if ((m_type == Type::Infinity && v.m_type == Type::NegativeInfinity) || (m_type == Type::NegativeInfinity && v.m_type == Type::Infinity))
-                    m_type = Type::NaN;
-                else if (m_type == Type::Infinity || v.m_type == Type::Infinity)
-                    m_type = Type::Infinity;
-                else if (m_type == Type::NegativeInfinity || v.m_type == Type::NegativeInfinity)
-                    m_type = Type::NegativeInfinity;
+            if ((static_cast<int>(m_data.type) < 0) || (static_cast<int>(v.m_data.type) < 0)) {
+                if ((m_data.type == ValueType::Infinity && v.m_data.type == ValueType::NegativeInfinity) || (m_data.type == ValueType::NegativeInfinity && v.m_data.type == ValueType::Infinity))
+                    m_data.type = ValueType::NaN;
+                else if (m_data.type == ValueType::Infinity || v.m_data.type == ValueType::Infinity)
+                    m_data.type = ValueType::Infinity;
+                else if (m_data.type == ValueType::NegativeInfinity || v.m_data.type == ValueType::NegativeInfinity)
+                    m_data.type = ValueType::NegativeInfinity;
                 return;
             }
 
-            if (m_type == Type::Integer && v.m_type == Type::Integer)
-                m_intValue += v.m_intValue;
+            if (m_data.type == ValueType::Integer && v.m_data.type == ValueType::Integer)
+                m_data.intValue += v.m_data.intValue;
             else
                 *this = toDouble() + v.toDouble();
         }
@@ -393,18 +413,18 @@ class LIBSCRATCHCPP_EXPORT Value
         /*! Subtracts the given value from the value. */
         void subtract(const Value &v)
         {
-            if ((static_cast<int>(m_type) < 0) || (static_cast<int>(v.m_type) < 0)) {
-                if ((m_type == Type::Infinity && v.m_type == Type::Infinity) || (m_type == Type::NegativeInfinity && v.m_type == Type::NegativeInfinity))
-                    m_type = Type::NaN;
-                else if (m_type == Type::Infinity || v.m_type == Type::NegativeInfinity)
-                    m_type = Type::Infinity;
-                else if (m_type == Type::NegativeInfinity || v.m_type == Type::Infinity)
-                    m_type = Type::NegativeInfinity;
+            if ((static_cast<int>(m_data.type) < 0) || (static_cast<int>(v.m_data.type) < 0)) {
+                if ((m_data.type == ValueType::Infinity && v.m_data.type == ValueType::Infinity) || (m_data.type == ValueType::NegativeInfinity && v.m_data.type == ValueType::NegativeInfinity))
+                    m_data.type = ValueType::NaN;
+                else if (m_data.type == ValueType::Infinity || v.m_data.type == ValueType::NegativeInfinity)
+                    m_data.type = ValueType::Infinity;
+                else if (m_data.type == ValueType::NegativeInfinity || v.m_data.type == ValueType::Infinity)
+                    m_data.type = ValueType::NegativeInfinity;
                 return;
             }
 
-            if (m_type == Type::Integer && v.m_type == Type::Integer)
-                m_intValue -= v.m_intValue;
+            if (m_data.type == ValueType::Integer && v.m_data.type == ValueType::Integer)
+                m_data.intValue -= v.m_data.intValue;
             else
                 *this = toDouble() - v.toDouble();
         }
@@ -412,23 +432,26 @@ class LIBSCRATCHCPP_EXPORT Value
         /*! Multiplies the given value with the value. */
         void multiply(const Value &v)
         {
-            Type t1 = m_type, t2 = v.m_type;
-            if ((static_cast<int>(t1) < 0 && t1 != Type::NaN) || (static_cast<int>(t2) < 0 && t2 != Type::NaN)) {
-                if (t1 == Type::Infinity || t1 == Type::NegativeInfinity || t2 == Type::Infinity || t2 == Type::NegativeInfinity) {
-                    bool mode = (t1 == Type::Infinity || t2 == Type::Infinity);
-                    const Value &value = ((t1 == Type::Infinity && (t2 == Type::Infinity || t2 == Type::NegativeInfinity)) || (t2 != Type::Infinity && t2 != Type::NegativeInfinity)) ? v : *this;
+            ValueType t1 = m_data.type, t2 = v.m_data.type;
+            if ((static_cast<int>(t1) < 0 && t1 != ValueType::NaN) || (static_cast<int>(t2) < 0 && t2 != ValueType::NaN)) {
+                if (t1 == ValueType::Infinity || t1 == ValueType::NegativeInfinity || t2 == ValueType::Infinity || t2 == ValueType::NegativeInfinity) {
+                    bool mode = (t1 == ValueType::Infinity || t2 == ValueType::Infinity);
+                    const Value &value =
+                        ((t1 == ValueType::Infinity && (t2 == ValueType::Infinity || t2 == ValueType::NegativeInfinity)) || (t2 != ValueType::Infinity && t2 != ValueType::NegativeInfinity)) ?
+                            v :
+                            *this;
                     if (value > 0)
-                        m_type = mode ? Type::Infinity : Type::NegativeInfinity;
+                        m_data.type = mode ? ValueType::Infinity : ValueType::NegativeInfinity;
                     else if (value < 0)
-                        m_type = mode ? Type::NegativeInfinity : Type::Infinity;
+                        m_data.type = mode ? ValueType::NegativeInfinity : ValueType::Infinity;
                     else
-                        m_type = Type::NaN;
+                        m_data.type = ValueType::NaN;
                     return;
                 }
             }
 
-            if (m_type == Type::Integer && v.m_type == Type::Integer)
-                m_intValue *= v.m_intValue;
+            if (m_data.type == ValueType::Integer && v.m_data.type == ValueType::Integer)
+                m_data.intValue *= v.m_data.intValue;
             else
                 *this = toDouble() * v.toDouble();
         }
@@ -437,19 +460,19 @@ class LIBSCRATCHCPP_EXPORT Value
         void divide(const Value &v)
         {
             if ((toDouble() == 0) && (v.toDouble() == 0)) {
-                m_type = Type::NaN;
+                m_data.type = ValueType::NaN;
                 return;
             } else if (v.toDouble() == 0) {
-                m_type = *this > 0 ? Type::Infinity : Type::NegativeInfinity;
+                m_data.type = *this > 0 ? ValueType::Infinity : ValueType::NegativeInfinity;
                 return;
-            } else if ((m_type == Type::Infinity || m_type == Type::NegativeInfinity) && (v.m_type == Type::Infinity || v.m_type == Type::NegativeInfinity)) {
-                m_type = Type::NaN;
+            } else if ((m_data.type == ValueType::Infinity || m_data.type == ValueType::NegativeInfinity) && (v.m_data.type == ValueType::Infinity || v.m_data.type == ValueType::NegativeInfinity)) {
+                m_data.type = ValueType::NaN;
                 return;
-            } else if (m_type == Type::Infinity || m_type == Type::NegativeInfinity) {
+            } else if (m_data.type == ValueType::Infinity || m_data.type == ValueType::NegativeInfinity) {
                 if (v.toDouble() < 0)
-                    m_type = m_type == Type::Infinity ? Type::NegativeInfinity : Type::Infinity;
+                    m_data.type = m_data.type == ValueType::Infinity ? ValueType::NegativeInfinity : ValueType::Infinity;
                 return;
-            } else if (v.m_type == Type::Infinity || v.m_type == Type::NegativeInfinity) {
+            } else if (v.m_data.type == ValueType::Infinity || v.m_data.type == ValueType::NegativeInfinity) {
                 *this = 0;
                 return;
             }
@@ -459,10 +482,10 @@ class LIBSCRATCHCPP_EXPORT Value
         /*! Replaces the value with modulo of the value and the given value. */
         void mod(const Value &v)
         {
-            if ((v == 0) || (m_type == Type::Infinity || m_type == Type::NegativeInfinity)) {
-                m_type = Type::NaN;
+            if ((v == 0) || (m_data.type == ValueType::Infinity || m_data.type == ValueType::NegativeInfinity)) {
+                m_data.type = ValueType::NaN;
                 return;
-            } else if (v.m_type == Type::Infinity || v.m_type == Type::NegativeInfinity) {
+            } else if (v.m_data.type == ValueType::Infinity || v.m_data.type == ValueType::NegativeInfinity) {
                 return;
             }
             if (*this < 0 || v < 0)
@@ -473,18 +496,18 @@ class LIBSCRATCHCPP_EXPORT Value
 
         const Value &operator=(float v)
         {
-            if (m_type == Type::String)
-                m_stringValue.~basic_string();
+            if (m_data.type == ValueType::String)
+                delete m_data.stringValue;
 
             if (isInf(v))
-                m_type = Type::Infinity;
+                m_data.type = ValueType::Infinity;
             else if (isNegativeInf(v))
-                m_type = Type::NegativeInfinity;
+                m_data.type = ValueType::NegativeInfinity;
             else if (std::isnan(v))
-                m_type = Type::NaN;
+                m_data.type = ValueType::NaN;
             else {
-                m_type = Type::Double;
-                m_doubleValue = floatToDouble(v);
+                m_data.type = ValueType::Double;
+                m_data.doubleValue = floatToDouble(v);
             }
 
             return *this;
@@ -492,74 +515,74 @@ class LIBSCRATCHCPP_EXPORT Value
 
         const Value &operator=(double v)
         {
-            if (m_type == Type::String)
-                m_stringValue.~basic_string();
+            if (m_data.type == ValueType::String)
+                delete m_data.stringValue;
 
             if (isInf(v))
-                m_type = Type::Infinity;
+                m_data.type = ValueType::Infinity;
             else if (isNegativeInf(v))
-                m_type = Type::NegativeInfinity;
+                m_data.type = ValueType::NegativeInfinity;
             else if (std::isnan(v))
-                m_type = Type::NaN;
+                m_data.type = ValueType::NaN;
             else {
-                m_type = Type::Double;
-                m_doubleValue = v;
+                m_data.type = ValueType::Double;
+                m_data.doubleValue = v;
             }
             return *this;
         }
 
         const Value &operator=(int v)
         {
-            if (m_type == Type::String)
-                m_stringValue.~basic_string();
+            if (m_data.type == ValueType::String)
+                delete m_data.stringValue;
 
-            m_type = Type::Integer;
-            m_intValue = v;
+            m_data.type = ValueType::Integer;
+            m_data.intValue = v;
             return *this;
         }
 
         const Value &operator=(long v)
         {
-            if (m_type == Type::String)
-                m_stringValue.~basic_string();
+            if (m_data.type == ValueType::String)
+                delete m_data.stringValue;
 
-            m_type = Type::Integer;
-            m_intValue = v;
+            m_data.type = ValueType::Integer;
+            m_data.intValue = v;
             return *this;
         }
 
         const Value &operator=(bool v)
         {
-            if (m_type == Type::String)
-                m_stringValue.~basic_string();
+            if (m_data.type == ValueType::String)
+                delete m_data.stringValue;
 
-            m_type = Type::Bool;
-            m_boolValue = v;
+            m_data.type = ValueType::Bool;
+            m_data.boolValue = v;
             return *this;
         }
 
         const Value &operator=(const std::string &v)
         {
             if (v == "Infinity") {
-                if (m_type == Type::String)
-                    m_stringValue.~basic_string();
+                if (m_data.type == ValueType::String)
+                    delete m_data.stringValue;
 
-                m_type = Type::Infinity;
+                m_data.type = ValueType::Infinity;
             } else if (v == "-Infinity") {
-                if (m_type == Type::String)
-                    m_stringValue.~basic_string();
+                if (m_data.type == ValueType::String)
+                    delete m_data.stringValue;
 
-                m_type = Type::NegativeInfinity;
+                m_data.type = ValueType::NegativeInfinity;
             } else if (v == "NaN") {
-                if (m_type == Type::String)
-                    m_stringValue.~basic_string();
+                if (m_data.type == ValueType::String)
+                    delete m_data.stringValue;
 
-                m_type = Type::NaN;
-            } else if (m_type == Type::String)
-                m_stringValue = v;
+                m_data.type = ValueType::NaN;
+            } else if (m_data.type == ValueType::String)
+                m_data.stringValue->assign(v);
             else {
-                new (&m_stringValue) std::string(v);
-                m_type = Type::String;
+                m_data.stringValue = new std::string(v);
+                m_data.type = ValueType::String;
             }
 
             return *this;
@@ -569,52 +592,34 @@ class LIBSCRATCHCPP_EXPORT Value
 
         const Value &operator=(const Value &v)
         {
-            switch (v.m_type) {
-                case Type::Integer:
-                    if (m_type == Type::String)
-                        m_stringValue.~basic_string();
-
-                    m_intValue = v.m_intValue;
+            switch (v.m_data.type) {
+                case ValueType::Integer:
+                    m_data.intValue = v.m_data.intValue;
                     break;
 
-                case Type::Double:
-                    if (m_type == Type::String)
-                        m_stringValue.~basic_string();
-
-                    m_doubleValue = v.m_doubleValue;
+                case ValueType::Double:
+                    m_data.doubleValue = v.m_data.doubleValue;
                     break;
 
-                case Type::Bool:
-                    if (m_type == Type::String)
-                        m_stringValue.~basic_string();
-
-                    m_boolValue = v.m_boolValue;
+                case ValueType::Bool:
+                    m_data.boolValue = v.m_data.boolValue;
                     break;
 
-                case Type::String:
-                    if (m_type == Type::String)
-                        m_stringValue = v.m_stringValue;
-                    else
-                        new (&m_stringValue) std::string(v.m_stringValue);
+                case ValueType::String:
+                    m_data.stringValue = new std::string(*v.m_data.stringValue);
                     break;
 
                 default:
                     break;
             }
 
-            m_type = v.m_type;
+            m_data.type = v.m_data.type;
 
             return *this;
         }
 
     private:
-        union
-        {
-                long m_intValue;
-                double m_doubleValue;
-                bool m_boolValue;
-                std::string m_stringValue;
-        };
+        ValueData m_data;
 
         // 0 - is string
         // 1 - is long
@@ -638,26 +643,26 @@ class LIBSCRATCHCPP_EXPORT Value
             if (ok)
                 *ok = true;
 
-            switch (m_type) {
-                case Type::Integer:
-                    return m_intValue;
+            switch (m_data.type) {
+                case ValueType::Integer:
+                    return m_data.intValue;
 
-                case Type::Double:
-                    return m_doubleValue;
+                case ValueType::Double:
+                    return m_data.doubleValue;
 
-                case Type::Bool:
-                    return m_boolValue;
+                case ValueType::Bool:
+                    return m_data.boolValue;
 
-                case Type::String:
-                    return stringToDouble(m_stringValue, ok);
+                case ValueType::String:
+                    return stringToDouble(*m_data.stringValue, ok);
 
-                case Type::Infinity:
+                case ValueType::Infinity:
                     return std::numeric_limits<double>::infinity();
 
-                case Type::NegativeInfinity:
+                case ValueType::NegativeInfinity:
                     return -std::numeric_limits<double>::infinity();
 
-                case Type::NaN:
+                case ValueType::NaN:
                     if (ok)
                         *ok = false;
 
@@ -672,11 +677,14 @@ class LIBSCRATCHCPP_EXPORT Value
             }
         }
 
-        Type m_type;
-
         friend bool operator==(const Value &v1, const Value &v2)
         {
             // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L121-L150
+            if (v1.m_data.type == ValueType::Integer && v2.m_data.type == ValueType::Integer)
+                return v1.m_data.intValue == v2.m_data.intValue;
+            else if (v1.m_data.type == ValueType::Double && v2.m_data.type == ValueType::Double)
+                return v1.m_data.doubleValue == v2.m_data.doubleValue;
+
             bool ok;
             double n1 = v1.getNumber(&ok);
             double n2;
@@ -691,10 +699,10 @@ class LIBSCRATCHCPP_EXPORT Value
             }
 
             // Handle the special case of Infinity
-            if ((static_cast<int>(v1.m_type) < 0) && (static_cast<int>(v2.m_type) < 0)) {
-                assert(v1.m_type != Type::NaN);
-                assert(v2.m_type != Type::NaN);
-                return v1.m_type == v2.m_type;
+            if ((static_cast<int>(v1.m_data.type) < 0) && (static_cast<int>(v2.m_data.type) < 0)) {
+                assert(v1.m_data.type != ValueType::NaN);
+                assert(v2.m_data.type != ValueType::NaN);
+                return v1.m_data.type == v2.m_data.type;
             }
 
             // Compare as numbers
@@ -705,38 +713,38 @@ class LIBSCRATCHCPP_EXPORT Value
 
         friend bool operator>(const Value &v1, const Value &v2)
         {
-            if ((static_cast<int>(v1.m_type) < 0) || (static_cast<int>(v2.m_type) < 0)) {
-                if (v1.m_type == Type::Infinity) {
-                    return v2.m_type != Type::Infinity;
-                } else if (v1.m_type == Type::NegativeInfinity)
+            if ((static_cast<int>(v1.m_data.type) < 0) || (static_cast<int>(v2.m_data.type) < 0)) {
+                if (v1.m_data.type == ValueType::Infinity) {
+                    return v2.m_data.type != ValueType::Infinity;
+                } else if (v1.m_data.type == ValueType::NegativeInfinity)
                     return false;
-                else if (v2.m_type == Type::Infinity)
+                else if (v2.m_data.type == ValueType::Infinity)
                     return false;
-                else if (v2.m_type == Type::NegativeInfinity)
+                else if (v2.m_data.type == ValueType::NegativeInfinity)
                     return true;
             }
 
-            if (v1.m_type == Type::Integer && v2.m_type == Type::Integer)
-                return v1.m_intValue > v2.m_intValue;
+            if (v1.m_data.type == ValueType::Integer && v2.m_data.type == ValueType::Integer)
+                return v1.m_data.intValue > v2.m_data.intValue;
             else
                 return v1.toDouble() > v2.toDouble();
         }
 
         friend bool operator<(const Value &v1, const Value &v2)
         {
-            if ((static_cast<int>(v1.m_type) < 0) || (static_cast<int>(v2.m_type) < 0)) {
-                if (v1.m_type == Type::Infinity) {
+            if ((static_cast<int>(v1.m_data.type) < 0) || (static_cast<int>(v2.m_data.type) < 0)) {
+                if (v1.m_data.type == ValueType::Infinity) {
                     return false;
-                } else if (v1.m_type == Type::NegativeInfinity)
-                    return v2.m_type != Type::NegativeInfinity;
-                else if (v2.m_type == Type::Infinity)
-                    return v1.m_type != Type::Infinity;
-                else if (v2.m_type == Type::NegativeInfinity)
+                } else if (v1.m_data.type == ValueType::NegativeInfinity)
+                    return v2.m_data.type != ValueType::NegativeInfinity;
+                else if (v2.m_data.type == ValueType::Infinity)
+                    return v1.m_data.type != ValueType::Infinity;
+                else if (v2.m_data.type == ValueType::NegativeInfinity)
                     return false;
             }
 
-            if (v1.m_type == Type::Integer && v2.m_type == Type::Integer)
-                return v1.m_intValue < v2.m_intValue;
+            if (v1.m_data.type == ValueType::Integer && v2.m_data.type == ValueType::Integer)
+                return v1.m_data.intValue < v2.m_data.intValue;
             else
                 return v1.toDouble() < v2.toDouble();
         }
@@ -747,45 +755,48 @@ class LIBSCRATCHCPP_EXPORT Value
 
         friend Value operator+(const Value &v1, const Value &v2)
         {
-            if ((static_cast<int>(v1.m_type) < 0) || (static_cast<int>(v2.m_type) < 0)) {
-                if ((v1.m_type == Type::Infinity && v2.m_type == Type::NegativeInfinity) || (v1.m_type == Type::NegativeInfinity && v2.m_type == Type::Infinity))
+            if ((static_cast<int>(v1.m_data.type) < 0) || (static_cast<int>(v2.m_data.type) < 0)) {
+                if ((v1.m_data.type == ValueType::Infinity && v2.m_data.type == ValueType::NegativeInfinity) ||
+                    (v1.m_data.type == ValueType::NegativeInfinity && v2.m_data.type == ValueType::Infinity))
                     return Value(SpecialValue::NaN);
-                else if (v1.m_type == Type::Infinity || v2.m_type == Type::Infinity)
+                else if (v1.m_data.type == ValueType::Infinity || v2.m_data.type == ValueType::Infinity)
                     return Value(SpecialValue::Infinity);
-                else if (v1.m_type == Type::NegativeInfinity || v2.m_type == Type::NegativeInfinity)
+                else if (v1.m_data.type == ValueType::NegativeInfinity || v2.m_data.type == ValueType::NegativeInfinity)
                     return Value(SpecialValue::NegativeInfinity);
             }
 
-            if (v1.m_type == Type::Integer && v2.m_type == Type::Integer)
-                return v1.m_intValue + v2.m_intValue;
+            if (v1.m_data.type == ValueType::Integer && v2.m_data.type == ValueType::Integer)
+                return v1.m_data.intValue + v2.m_data.intValue;
             else
                 return v1.toDouble() + v2.toDouble();
         }
 
         friend Value operator-(const Value &v1, const Value &v2)
         {
-            if ((static_cast<int>(v1.m_type) < 0) || (static_cast<int>(v2.m_type) < 0)) {
-                if ((v1.m_type == Type::Infinity && v2.m_type == Type::Infinity) || (v1.m_type == Type::NegativeInfinity && v2.m_type == Type::NegativeInfinity))
+            if ((static_cast<int>(v1.m_data.type) < 0) || (static_cast<int>(v2.m_data.type) < 0)) {
+                if ((v1.m_data.type == ValueType::Infinity && v2.m_data.type == ValueType::Infinity) ||
+                    (v1.m_data.type == ValueType::NegativeInfinity && v2.m_data.type == ValueType::NegativeInfinity))
                     return Value(SpecialValue::NaN);
-                else if (v1.m_type == Type::Infinity || v2.m_type == Type::NegativeInfinity)
+                else if (v1.m_data.type == ValueType::Infinity || v2.m_data.type == ValueType::NegativeInfinity)
                     return Value(SpecialValue::Infinity);
-                else if (v1.m_type == Type::NegativeInfinity || v2.m_type == Type::Infinity)
+                else if (v1.m_data.type == ValueType::NegativeInfinity || v2.m_data.type == ValueType::Infinity)
                     return Value(SpecialValue::NegativeInfinity);
             }
 
-            if (v1.m_type == Type::Integer && v2.m_type == Type::Integer)
-                return v1.m_intValue - v2.m_intValue;
+            if (v1.m_data.type == ValueType::Integer && v2.m_data.type == ValueType::Integer)
+                return v1.m_data.intValue - v2.m_data.intValue;
             else
                 return v1.toDouble() - v2.toDouble();
         }
 
         friend Value operator*(const Value &v1, const Value &v2)
         {
-            Type t1 = v1.m_type, t2 = v2.m_type;
-            if ((static_cast<int>(t1) < 0 && t1 != Type::NaN) || (static_cast<int>(t2) < 0 && t2 != Type::NaN)) {
-                if (t1 == Type::Infinity || t1 == Type::NegativeInfinity || t2 == Type::Infinity || t2 == Type::NegativeInfinity) {
-                    bool mode = (t1 == Type::Infinity || t2 == Type::Infinity);
-                    const Value &value = ((t1 == Type::Infinity && (t2 == Type::Infinity || t2 == Type::NegativeInfinity)) || (t2 != Type::Infinity && t2 != Type::NegativeInfinity)) ? v2 : v1;
+            ValueType t1 = v1.m_data.type, t2 = v2.m_data.type;
+            if ((static_cast<int>(t1) < 0 && t1 != ValueType::NaN) || (static_cast<int>(t2) < 0 && t2 != ValueType::NaN)) {
+                if (t1 == ValueType::Infinity || t1 == ValueType::NegativeInfinity || t2 == ValueType::Infinity || t2 == ValueType::NegativeInfinity) {
+                    bool mode = (t1 == ValueType::Infinity || t2 == ValueType::Infinity);
+                    const Value &value =
+                        ((t1 == ValueType::Infinity && (t2 == ValueType::Infinity || t2 == ValueType::NegativeInfinity)) || (t2 != ValueType::Infinity && t2 != ValueType::NegativeInfinity)) ? v2 : v1;
                     if (value > 0)
                         return Value(mode ? SpecialValue::Infinity : SpecialValue::NegativeInfinity);
                     else if (value < 0)
@@ -795,8 +806,8 @@ class LIBSCRATCHCPP_EXPORT Value
                 }
             }
 
-            if (v1.m_type == Type::Integer && v2.m_type == Type::Integer)
-                return v1.m_intValue * v2.m_intValue;
+            if (v1.m_data.type == ValueType::Integer && v2.m_data.type == ValueType::Integer)
+                return v1.m_data.intValue * v2.m_data.intValue;
             else
                 return v1.toDouble() * v2.toDouble();
         }
@@ -807,14 +818,15 @@ class LIBSCRATCHCPP_EXPORT Value
                 return Value(SpecialValue::NaN);
             else if (v2.toDouble() == 0)
                 return v1 > 0 ? Value(SpecialValue::Infinity) : Value(SpecialValue::NegativeInfinity);
-            else if ((v1.m_type == Type::Infinity || v1.m_type == Type::NegativeInfinity) && (v2.m_type == Type::Infinity || v2.m_type == Type::NegativeInfinity)) {
+            else if ((v1.m_data.type == ValueType::Infinity || v1.m_data.type == ValueType::NegativeInfinity) &&
+                     (v2.m_data.type == ValueType::Infinity || v2.m_data.type == ValueType::NegativeInfinity)) {
                 return Value(SpecialValue::NaN);
-            } else if (v1.m_type == Type::Infinity || v1.m_type == Type::NegativeInfinity) {
+            } else if (v1.m_data.type == ValueType::Infinity || v1.m_data.type == ValueType::NegativeInfinity) {
                 if (v2.toDouble() < 0)
-                    return v1.m_type == Type::Infinity ? Value(SpecialValue::NegativeInfinity) : Value(SpecialValue::Infinity);
+                    return v1.m_data.type == ValueType::Infinity ? Value(SpecialValue::NegativeInfinity) : Value(SpecialValue::Infinity);
                 else
-                    return v1.m_type == Type::Infinity ? Value(SpecialValue::Infinity) : Value(SpecialValue::NegativeInfinity);
-            } else if (v2.m_type == Type::Infinity || v2.m_type == Type::NegativeInfinity) {
+                    return v1.m_data.type == ValueType::Infinity ? Value(SpecialValue::Infinity) : Value(SpecialValue::NegativeInfinity);
+            } else if (v2.m_data.type == ValueType::Infinity || v2.m_data.type == ValueType::NegativeInfinity) {
                 return 0;
             }
             return v1.toDouble() / v2.toDouble();
@@ -823,9 +835,9 @@ class LIBSCRATCHCPP_EXPORT Value
         friend Value operator%(const Value &v1, const Value &v2)
         {
 
-            if ((v2 == 0) || (v1.m_type == Type::Infinity || v1.m_type == Type::NegativeInfinity))
+            if ((v2 == 0) || (v1.m_data.type == ValueType::Infinity || v1.m_data.type == ValueType::NegativeInfinity))
                 return Value(SpecialValue::NaN);
-            else if (v2.m_type == Type::Infinity || v2.m_type == Type::NegativeInfinity) {
+            else if (v2.m_data.type == ValueType::Infinity || v2.m_data.type == ValueType::NegativeInfinity) {
                 return v1.toDouble();
             }
             if (v1 < 0 || v2 < 0)
