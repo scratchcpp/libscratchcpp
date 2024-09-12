@@ -1161,6 +1161,9 @@ TEST(ValueTest, ToLong)
 
 TEST(ValueTest, ToDouble)
 {
+    std::string oldLocale = std::setlocale(LC_NUMERIC, nullptr);
+    std::setlocale(LC_NUMERIC, "sk_SK.UTF-8");
+
     Value v = 2147483647;
     ASSERT_EQ(v.toDouble(), 2147483647.0);
     v = -2147483647;
@@ -1270,6 +1273,8 @@ TEST(ValueTest, ToDouble)
     v = "0b100112001";
     ASSERT_TRUE(v.isString());
     ASSERT_EQ(v.toDouble(), 0);
+
+    std::setlocale(LC_NUMERIC, oldLocale.c_str());
 }
 
 TEST(ValueTest, ToBool)
