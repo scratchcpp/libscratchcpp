@@ -256,9 +256,9 @@ unsigned int OperatorBlocks::op_ln(VirtualMachine *vm)
 {
     const Value &v = *vm->getInput(0, 1);
     if (v < 0)
-        vm->replaceReturnValue(Value(Value::SpecialValue::NaN), 1);
+        vm->replaceReturnValue(Value(SpecialValue::NaN), 1);
     else if (v == 0 || v.isNaN())
-        vm->replaceReturnValue(Value(Value::SpecialValue::NegativeInfinity), 1);
+        vm->replaceReturnValue(Value(SpecialValue::NegativeInfinity), 1);
     else if (!v.isInfinity())
         vm->replaceReturnValue(std::log(v.toDouble()), 1);
     return 0;
@@ -268,9 +268,9 @@ unsigned int OperatorBlocks::op_log(VirtualMachine *vm)
 {
     const Value &v = *vm->getInput(0, 1);
     if (v < 0)
-        vm->replaceReturnValue(Value(Value::SpecialValue::NaN), 1);
+        vm->replaceReturnValue(Value(SpecialValue::NaN), 1);
     else if (v == 0 || v.isNaN())
-        vm->replaceReturnValue(Value(Value::SpecialValue::NegativeInfinity), 1);
+        vm->replaceReturnValue(Value(SpecialValue::NegativeInfinity), 1);
     else if (!v.isInfinity())
         vm->replaceReturnValue(std::log10(v.toDouble()), 1);
     return 0;

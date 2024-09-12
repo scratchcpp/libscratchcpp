@@ -837,7 +837,7 @@ TEST_F(OperatorBlocksTest, MathOpLn)
         vm::OP_HALT
     };
     static BlockFunc functions[] = { &OperatorBlocks::op_ln };
-    static Value constValues[] = { Value::SpecialValue::NegativeInfinity, -2.5, 0, Value::SpecialValue::NaN, std::exp(1), 50, Value::SpecialValue::Infinity };
+    static Value constValues[] = { SpecialValue::NegativeInfinity, -2.5, 0, SpecialValue::NaN, std::exp(1), 50, SpecialValue::Infinity };
 
     VirtualMachine vm;
     vm.setBytecode(bytecode);
@@ -890,7 +890,7 @@ TEST_F(OperatorBlocksTest, MathOpLog)
         vm::OP_HALT
     };
     static BlockFunc functions[] = { &OperatorBlocks::op_log };
-    static Value constValues[] = { Value::SpecialValue::NegativeInfinity, -2.5, 0, Value::SpecialValue::NaN, 100, 1500, Value::SpecialValue::Infinity };
+    static Value constValues[] = { SpecialValue::NegativeInfinity, -2.5, 0, SpecialValue::NaN, 100, 1500, SpecialValue::Infinity };
 
     VirtualMachine vm;
     vm.setBytecode(bytecode);
@@ -943,7 +943,7 @@ TEST_F(OperatorBlocksTest, MathOpExp)
         vm::OP_HALT
     };
     static BlockFunc functions[] = { &OperatorBlocks::op_eexp };
-    static Value constValues[] = { Value::SpecialValue::NegativeInfinity, -3.25, 0, Value::SpecialValue::NaN, 1, 5, Value::SpecialValue::Infinity };
+    static Value constValues[] = { SpecialValue::NegativeInfinity, -3.25, 0, SpecialValue::NaN, 1, 5, SpecialValue::Infinity };
 
     VirtualMachine vm;
     vm.setBytecode(bytecode);
@@ -996,7 +996,7 @@ TEST_F(OperatorBlocksTest, MathOp10Exp)
         vm::OP_HALT
     };
     static BlockFunc functions[] = { &OperatorBlocks::op_10exp };
-    static Value constValues[] = { Value::SpecialValue::NegativeInfinity, -2, 0, Value::SpecialValue::NaN, 1, 5.5, Value::SpecialValue::Infinity };
+    static Value constValues[] = { SpecialValue::NegativeInfinity, -2, 0, SpecialValue::NaN, 1, 5.5, SpecialValue::Infinity };
 
     VirtualMachine vm;
     vm.setBytecode(bytecode);

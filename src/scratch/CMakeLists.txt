@@ -1,6 +1,7 @@
 target_sources(scratchcpp
   PRIVATE
-    value.cpp
+    value_functions.cpp
+    value_functions_p.h
     target.cpp
     target_p.cpp
     target_p.h

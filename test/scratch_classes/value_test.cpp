@@ -397,7 +397,7 @@ TEST(ValueTest, CStringConstructor)
 
 TEST(ValueTest, InfinityConstructor)
 {
-    Value v(Value::SpecialValue::Infinity);
+    Value v(SpecialValue::Infinity);
     ASSERT_EQ(v.type(), ValueType::Infinity);
     ASSERT_TRUE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
@@ -411,7 +411,7 @@ TEST(ValueTest, InfinityConstructor)
 
 TEST(ValueTest, NegativeInfinityConstructor)
 {
-    Value v(Value::SpecialValue::NegativeInfinity);
+    Value v(SpecialValue::NegativeInfinity);
     ASSERT_EQ(v.type(), ValueType::NegativeInfinity);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_TRUE(v.isNegativeInfinity());
@@ -425,7 +425,7 @@ TEST(ValueTest, NegativeInfinityConstructor)
 
 TEST(ValueTest, NaNConstructor)
 {
-    Value v(Value::SpecialValue::NaN);
+    Value v(SpecialValue::NaN);
     ASSERT_EQ(v.type(), ValueType::NaN);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
@@ -496,7 +496,7 @@ TEST(ValueTest, CopyConstructor)
     }
 
     {
-        Value v1(Value::SpecialValue::NaN);
+        Value v1(SpecialValue::NaN);
         Value v2(v1);
         ASSERT_EQ(v2.toDouble(), 0);
         ASSERT_EQ(v1.type(), v2.type());
@@ -510,7 +510,7 @@ TEST(ValueTest, CopyConstructor)
     }
 
     {
-        Value v1(Value::SpecialValue::Infinity);
+        Value v1(SpecialValue::Infinity);
         Value v2(v1);
         ASSERT_EQ(v1.type(), v2.type());
         ASSERT_TRUE(v2.isInfinity());
@@ -523,7 +523,7 @@ TEST(ValueTest, CopyConstructor)
     }
 
     {
-        Value v1(Value::SpecialValue::NegativeInfinity);
+        Value v1(SpecialValue::NegativeInfinity);
         Value v2(v1);
         ASSERT_EQ(v1.type(), v2.type());
         ASSERT_FALSE(v2.isInfinity());
@@ -808,7 +808,7 @@ TEST(ValueTest, CStringAssignment)
 TEST(ValueTest, InfinityAssignment)
 {
     Value v;
-    v = Value::SpecialValue::Infinity;
+    v = SpecialValue::Infinity;
     ASSERT_EQ(v.type(), ValueType::Infinity);
     ASSERT_TRUE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
@@ -822,7 +822,7 @@ TEST(ValueTest, InfinityAssignment)
 TEST(ValueTest, NegativeInfinityAssignment)
 {
     Value v;
-    v = Value::SpecialValue::NegativeInfinity;
+    v = SpecialValue::NegativeInfinity;
     ASSERT_EQ(v.type(), ValueType::NegativeInfinity);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_TRUE(v.isNegativeInfinity());
@@ -836,7 +836,7 @@ TEST(ValueTest, NegativeInfinityAssignment)
 TEST(ValueTest, NaNAssignment)
 {
     Value v;
-    v = Value::SpecialValue::NaN;
+    v = SpecialValue::NaN;
     ASSERT_EQ(v.type(), ValueType::NaN);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
@@ -910,7 +910,7 @@ TEST(ValueTest, CopyAssignment)
     }
 
     {
-        Value v1(Value::SpecialValue::NaN);
+        Value v1(SpecialValue::NaN);
         Value v2;
         v2 = v1;
         ASSERT_EQ(v2.toDouble(), 0);
@@ -925,7 +925,7 @@ TEST(ValueTest, CopyAssignment)
     }
 
     {
-        Value v1(Value::SpecialValue::Infinity);
+        Value v1(SpecialValue::Infinity);
         Value v2;
         v2 = v1;
         ASSERT_EQ(v1.type(), v2.type());
@@ -939,7 +939,7 @@ TEST(ValueTest, CopyAssignment)
     }
 
     {
-        Value v1(Value::SpecialValue::NegativeInfinity);
+        Value v1(SpecialValue::NegativeInfinity);
         Value v2;
         v2 = v1;
         ASSERT_EQ(v1.type(), v2.type());
@@ -2270,12 +2270,12 @@ TEST(ValueTest, EqualityOperators)
     }
 
     {
-        Value v1(Value::SpecialValue::Infinity);
-        Value v2(Value::SpecialValue::Infinity);
-        Value v3(Value::SpecialValue::NegativeInfinity);
-        Value v4(Value::SpecialValue::NegativeInfinity);
-        Value v5(Value::SpecialValue::NaN);
-        Value v6(Value::SpecialValue::NaN);
+        Value v1(SpecialValue::Infinity);
+        Value v2(SpecialValue::Infinity);
+        Value v3(SpecialValue::NegativeInfinity);
+        Value v4(SpecialValue::NegativeInfinity);
+        Value v5(SpecialValue::NaN);
+        Value v6(SpecialValue::NaN);
 
         ASSERT_TRUE(v1 == v2);
         ASSERT_FALSE(v1 != v2);
@@ -2408,9 +2408,9 @@ TEST(ValueTest, EqualityOperators)
     {
         Value v1 = 5;
         Value v2 = 0;
-        Value v3(Value::SpecialValue::Infinity);
-        Value v4(Value::SpecialValue::NegativeInfinity);
-        Value v5(Value::SpecialValue::NaN);
+        Value v3(SpecialValue::Infinity);
+        Value v4(SpecialValue::NegativeInfinity);
+        Value v5(SpecialValue::NaN);
 
         ASSERT_FALSE(v1 == v3);
         ASSERT_TRUE(v1 != v3);
@@ -2512,9 +2512,9 @@ TEST(ValueTest, EqualityOperators)
     {
         Value v1 = true;
         Value v2 = false;
-        Value v3(Value::SpecialValue::Infinity);
-        Value v4(Value::SpecialValue::NegativeInfinity);
-        Value v5(Value::SpecialValue::NaN);
+        Value v3(SpecialValue::Infinity);
+        Value v4(SpecialValue::NegativeInfinity);
+        Value v5(SpecialValue::NaN);
 
         ASSERT_FALSE(v1 == v3);
         ASSERT_TRUE(v1 != v3);
@@ -2536,9 +2536,9 @@ TEST(ValueTest, EqualityOperators)
         Value v4 = "-infinity";
         Value v5 = "NaN";
         Value v6 = "nan";
-        Value v7(Value::SpecialValue::Infinity);
-        Value v8(Value::SpecialValue::NegativeInfinity);
-        Value v9(Value::SpecialValue::NaN);
+        Value v7(SpecialValue::Infinity);
+        Value v8(SpecialValue::NegativeInfinity);
+        Value v9(SpecialValue::NaN);
 
         // Infinity
         ASSERT_TRUE(v1 == v7);
@@ -2606,9 +2606,9 @@ TEST(ValueTest, EqualityOperators)
         Value v2 = " ";
         Value v3 = "";
         Value v4 = "0";
-        Value v5(Value::SpecialValue::Infinity);
-        Value v6(Value::SpecialValue::NegativeInfinity);
-        Value v7(Value::SpecialValue::NaN);
+        Value v5(SpecialValue::Infinity);
+        Value v6(SpecialValue::NegativeInfinity);
+        Value v7(SpecialValue::NaN);
 
         // Infinity
         ASSERT_FALSE(v1 == v5);
