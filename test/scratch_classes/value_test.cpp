@@ -299,7 +299,7 @@ TEST(ValueTest, StdStringConstructor)
         ASSERT_FALSE(v.isNegativeInfinity());
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
-        ASSERT_FALSE(v.isValidNumber());
+        ASSERT_TRUE(v.isValidNumber());
         ASSERT_TRUE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_TRUE(v.isString());
@@ -1290,6 +1290,18 @@ TEST(ValueTest, ToDouble)
     v = "-0.15";
     ASSERT_EQ(v.toDouble(), -0.15);
 
+    v = "+.15";
+    ASSERT_EQ(v.toDouble(), 0.15);
+    v = ".15";
+    ASSERT_EQ(v.toDouble(), 0.15);
+    v = "-.15";
+    ASSERT_EQ(v.toDouble(), -0.15);
+
+    v = "0+5";
+    ASSERT_EQ(v.toDouble(), 0);
+    v = "0-5";
+    ASSERT_EQ(v.toDouble(), 0);
+
     v = "9432.4e-12";
     ASSERT_EQ(v.toDouble(), 9.4324e-9);
     v = "-9432.4e-12";
@@ -1355,6 +1367,22 @@ TEST(ValueTest, ToDouble)
     ASSERT_TRUE(v.isString());
     ASSERT_EQ(v.toDouble(), 0);
 
+    v = "+0xa";
+    ASSERT_TRUE(v.isString());
+    ASSERT_EQ(v.toDouble(), 0);
+
+    v = "-0xa";
+    ASSERT_TRUE(v.isString());
+    ASSERT_EQ(v.toDouble(), 0);
+
+    v = "0x+a";
+    ASSERT_TRUE(v.isString());
+    ASSERT_EQ(v.toDouble(), 0);
+
+    v = "0x-a";
+    ASSERT_TRUE(v.isString());
+    ASSERT_EQ(v.toDouble(), 0);
+
     // Octal
     v = "0o506";
     ASSERT_TRUE(v.isString());
@@ -1388,6 +1416,22 @@ TEST(ValueTest, ToDouble)
     ASSERT_TRUE(v.isString());
     ASSERT_EQ(v.toDouble(), 0);
 
+    v = "+0o2";
+    ASSERT_TRUE(v.isString());
+    ASSERT_EQ(v.toDouble(), 0);
+
+    v = "-0o2";
+    ASSERT_TRUE(v.isString());
+    ASSERT_EQ(v.toDouble(), 0);
+
+    v = "0o+2";
+    ASSERT_TRUE(v.isString());
+    ASSERT_EQ(v.toDouble(), 0);
+
+    v = "0o-2";
+    ASSERT_TRUE(v.isString());
+    ASSERT_EQ(v.toDouble(), 0);
+
     // Binary
     v = "0b101101";
     ASSERT_TRUE(v.isString());
@@ -1418,6 +1462,22 @@ TEST(ValueTest, ToDouble)
     ASSERT_EQ(v.toDouble(), 0);
 
     v = "0b10011001.1";
+    ASSERT_TRUE(v.isString());
+    ASSERT_EQ(v.toDouble(), 0);
+
+    v = "+0b1";
+    ASSERT_TRUE(v.isString());
+    ASSERT_EQ(v.toDouble(), 0);
+
+    v = "-0b1";
+    ASSERT_TRUE(v.isString());
+    ASSERT_EQ(v.toDouble(), 0);
+
+    v = "0b+1";
+    ASSERT_TRUE(v.isString());
+    ASSERT_EQ(v.toDouble(), 0);
+
+    v = "0b-1";
     ASSERT_TRUE(v.isString());
     ASSERT_EQ(v.toDouble(), 0);
 

@@ -72,12 +72,14 @@ extern "C"
         if (ok)
             *ok = false;
 
-        // Ignore floats
+        // Ignore dots, plus and minus signs
         const char *p = s;
 
-        while (p++ < s + n) {
-            if (*p == '.')
+        while (p < s + n) {
+            if (*p == '.' || *p == '+' || *p == '-')
                 return 0;
+
+            p++;
         }
 
         double result = 0;
@@ -97,6 +99,16 @@ extern "C"
         if (ok)
             *ok = false;
 
+        // Ignore plus and minus signs
+        const char *p = s;
+
+        while (p < s + n) {
+            if (*p == '+' || *p == '-')
+                return 0;
+
+            p++;
+        }
+
         char *err;
         const double ret = std::strtol(s, &err, 8);
 
@@ -114,6 +126,16 @@ extern "C"
     {
         if (ok)
             *ok = false;
+
+        // Ignore plus and minus signs
+        const char *p = s;
+
+        while (p < s + n) {
+            if (*p == '+' || *p == '-')
+                return 0;
+
+            p++;
+        }
 
         char *err;
         const double ret = std::strtol(s, &err, 2);
@@ -164,10 +186,53 @@ extern "C"
             p++;
         }
 
-        if (end - begin <= 0)
-            return 0;
+        if (end - begin <= 0 || end > strEnd) {
+            if (ok)
+                *ok = true;
 
-        if (end - begin > 2 && begin[0] == '0') {
+            return 0;
+        }
+
+        char *copy = nullptr;
+
+        // If there's a leading plus sign, copy the string and replace the plus sign with zero (e. g. '+.15' -> '0.15')
+        // If there's a leading minus sign with a dot, insert zero next to the minus sign (e. g. '-.15' -> '-0.15')
+        if (begin[0] == '+' || (begin[0] == '-' && end - begin > 1 && begin[1] == '.')) {
+            copy = new char[end - begin + 2];
+
+            if (begin[0] == '-') {
+                copy[0] = '-';
+                copy[1] = '0';
+                memcpy(copy + 2, begin + 1, end - begin - 1);
+                copy[end - begin + 1] = '\0';
+                end = copy + (end - begin) + 1;
+            } else {
+                memcpy(copy, begin, end - begin);
+                copy[0] = '0';
+                copy[end - begin] = '\0';
+                end = copy + (end - begin);
+            }
+            begin = copy;
+        } else {
+            // If there's a leading dot, copy the string and insert zero prior to the dot (e. g. '.15' -> '0.15')
+            if (begin[0] == '.') {
+                copy = new char[end - begin + 2];
+                copy[0] = '0';
+                memcpy(copy + 1, begin, end - begin);
+                end = copy + (end - begin) + 1;
+                begin = copy;
+            }
+        }
+
+        if (end - begin <= 0) {
+            if (copy)
+                delete[] copy;
+
+            return 0;
+        }
+
+        // Handle hex, oct and bin (currently ignored if the string was manipulated above)
+        if (!copy && end - begin > 2 && begin[0] == '0') {
             const char prefix = begin[1];
             const char *sub = begin + 2;
 
@@ -181,18 +246,36 @@ extern "C"
         }
 
         // Trim leading zeros
-        while (begin < end && (*begin == '0') && !(begin + 1 < end && begin[1] == '.'))
+        bool trimmed = false;
+
+        while (begin < end && (*begin == '0') && !(begin + 1 < end && begin[1] == '.')) {
+            trimmed = true;
             ++begin;
+        }
 
         if (end - begin <= 0) {
             if (ok)
                 *ok = true;
+
+            if (copy)
+                delete[] copy;
+
+            return 0;
+        }
+
+        // Ignore cases like '0+5' or '0-5'
+        if (trimmed && (begin[0] == '+' || begin[0] == '-')) {
+            if (copy)
+                delete[] copy;
 
             return 0;
         }
 
         double ret = 0;
         auto [ptr, ec] = fast_float::from_chars(begin, end, ret, fast_float::chars_format::json);
+
+        if (copy)
+            delete[] copy;
 
         if (ec == std::errc{} && ptr == end) {
             if (ok)
