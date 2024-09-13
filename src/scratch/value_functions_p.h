@@ -53,6 +53,41 @@ inline bool value_isNegativeInf(T v)
 extern "C"
 {
 
+    inline long value_convert_int_str(const char *str, int n, bool *ok)
+    {
+        if (ok)
+            *ok = false;
+
+        const char *begin = str;
+        const char *end = begin + n;
+
+        bool isNegative = false;
+        long ret = 0;
+
+        if (*str == '-' || *str == '+') {
+            isNegative = (*str == '-');
+            ++str;
+
+            if (str == begin + n)
+                return 0;
+        }
+
+        while (str < end) {
+            if (*str < '0' || *str > '9')
+                return 0;
+
+            ret = ret * 10 + (*str++ - '0');
+        }
+
+        if (ok)
+            *ok = true;
+
+        if (isNegative)
+            return -ret;
+        else
+            return ret;
+    }
+
     inline size_t value_getSize(size_t x)
     {
         if (x == 0)
@@ -197,44 +232,40 @@ extern "C"
         if (ok)
             *ok = false;
 
-        const size_t len = strlen(s);
-
-        if (strlen(s) == 0) {
+        if (!s || *s == '\0') {
             if (ok)
                 *ok = true;
 
             return 0;
         }
 
+        const size_t len = strlen(s);
         const char *begin = s;
-        const char *strEnd = s + len;
-        const char *end = strEnd;
+        const char *end = s + len;
 
         // Trim leading spaces
         while (begin < end && IS_SPACE(*begin))
             ++begin;
 
-        end = begin + 1;
-
         // Trim trailing spaces
-        while (end < strEnd && !IS_SPACE(*(end)))
-            ++end;
+        while (end > begin && IS_SPACE(*(end - 1)))
+            --end;
 
-        // Only whitespace can be after the end
-        const char *p = end;
-
-        while (p < strEnd) {
-            if (!IS_SPACE(*p))
-                return 0;
-
-            p++;
+        if (begin == end) { // All spaces case
+            if (ok)
+                *ok = true;
+            return 0.0;
         }
 
-        if (end - begin <= 0 || end > strEnd) {
+        // Try to convert integer early
+        bool isInt = false;
+        double ret = value_convert_int_str(begin, end - begin, &isInt);
+
+        if (isInt) {
             if (ok)
                 *ok = true;
 
-            return 0;
+            return ret;
         }
 
         char *copy = nullptr;
@@ -315,7 +346,6 @@ extern "C"
             return 0;
         }
 
-        double ret = 0;
         auto [ptr, ec] = fast_float::from_chars(begin, end, ret, fast_float::chars_format::json);
 
         if (copy)
@@ -330,15 +360,15 @@ extern "C"
             return 0;
 
         // Special values
-        if (strcmp(s, "Infinity") == 0) {
+        if (strncmp(s, "Infinity", len) == 0) {
             if (ok)
                 *ok = true;
             return std::numeric_limits<double>::infinity();
-        } else if (strcmp(s, "-Infinity") == 0) {
+        } else if (strncmp(s, "-Infinity", len) == 0) {
             if (ok)
                 *ok = true;
             return -std::numeric_limits<double>::infinity();
-        } else if (strcmp(s, "NaN") == 0) {
+        } else if (strncmp(s, "NaN", len) == 0) {
             if (ok)
                 *ok = true;
             return std::numeric_limits<double>::quiet_NaN();
