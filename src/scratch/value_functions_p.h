@@ -313,7 +313,7 @@ extern "C"
         const char *p = s;
 
         while (p < s + n) {
-            if (*s == '.' || *s == 'e' || *s == 'E')
+            if (*p == '.' || *p == 'e' || *p == 'E')
                 return false;
 
             p++;
