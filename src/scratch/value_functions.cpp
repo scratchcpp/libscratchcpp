@@ -587,7 +587,19 @@ extern "C"
                 return true;
         }
 
-        return value_toDouble(v1) > value_toDouble(v2);
+        double n1, n2;
+
+        if (v1->type == ValueType::String)
+            n1 = value_stringToDouble(*v1->stringValue);
+        else
+            n1 = value_toDouble(v1);
+
+        if (v2->type == ValueType::String)
+            n2 = value_stringToDouble(*v2->stringValue);
+        else
+            n2 = value_toDouble(v2);
+
+        return n1 > n2;
     }
 
     /*! Returns true if the first value is lower than the second value. */
@@ -613,6 +625,19 @@ extern "C"
         }
 
         return value_toDouble(v1) < value_toDouble(v2);
+        double n1, n2;
+
+        if (v1->type == ValueType::String)
+            n1 = value_stringToDouble(*v1->stringValue);
+        else
+            n1 = value_toDouble(v1);
+
+        if (v2->type == ValueType::String)
+            n2 = value_stringToDouble(*v2->stringValue);
+        else
+            n2 = value_toDouble(v2);
+
+        return n1 < n2;
     }
 }
 

@@ -7,7 +7,13 @@
 #include <limits>
 #include <ctgmath>
 #include <iomanip>
+#include <charconv>
 #include <cassert>
+
+#include "thirdparty/fast_float/fast_float.h"
+
+// Faster than std::isspace()
+#define IS_SPACE(x) (x == ' ' || x == '\f' || x == '\n' || x == '\r' || x == '\t' || x == '\v')
 
 namespace libscratchcpp
 {
@@ -61,49 +67,65 @@ extern "C"
         return (s1.compare(s2) == 0);
     }
 
-    inline long value_hexToDec(const std::string &s)
+    inline double value_hexToDec(const char *s, int n, bool *ok)
     {
-        static const std::string digits = "0123456789abcdef";
+        if (ok)
+            *ok = false;
 
-        for (char c : s) {
-            if (digits.find(c) == std::string::npos) {
+        // Ignore floats
+        const char *p = s;
+
+        while (p++ < s + n) {
+            if (*p == '.')
                 return 0;
-            }
         }
 
-        std::istringstream stream(s);
-        long ret;
-        stream >> std::hex >> ret;
-        return ret;
+        double result = 0;
+        auto [ptr, ec] = std::from_chars(s, s + n, result, std::chars_format::hex);
+
+        if (ec == std::errc{} && ptr == s + n) {
+            if (ok)
+                *ok = true;
+
+            return result;
+        } else
+            return 0;
     }
 
-    inline long value_octToDec(const std::string &s)
+    inline long value_octToDec(const char *s, int n, bool *ok)
     {
-        static const std::string digits = "01234567";
+        if (ok)
+            *ok = false;
 
-        for (char c : s) {
-            if (digits.find(c) == std::string::npos) {
-                return 0;
-            }
+        char *err;
+        const double ret = std::strtol(s, &err, 8);
+
+        if (*err != 0 && !std::isspace(*err))
+            return 0;
+        else {
+            if (ok)
+                *ok = true;
+
+            return ret;
         }
-
-        std::istringstream stream(s);
-        long ret;
-        stream >> std::oct >> ret;
-        return ret;
     }
 
-    inline double value_binToDec(const std::string &s)
+    inline double value_binToDec(const char *s, int n, bool *ok)
     {
-        static const std::string digits = "01";
+        if (ok)
+            *ok = false;
 
-        for (char c : s) {
-            if (digits.find(c) == std::string::npos) {
-                return 0;
-            }
+        char *err;
+        const double ret = std::strtol(s, &err, 2);
+
+        if (*err != 0 && !std::isspace(*err))
+            return 0;
+        else {
+            if (ok)
+                *ok = true;
+
+            return ret;
         }
-
-        return std::stoi(s, 0, 2);
     }
 
     inline double value_stringToDouble(const std::string &s, bool *ok = nullptr)
@@ -111,6 +133,76 @@ extern "C"
         if (ok)
             *ok = false;
 
+        if (s.empty()) {
+            if (ok)
+                *ok = true;
+
+            return 0;
+        }
+
+        const char *begin = s.data();
+        const char *strEnd = s.data() + s.size();
+        const char *end = strEnd;
+
+        // Trim leading spaces
+        while (begin < end && IS_SPACE(*begin))
+            ++begin;
+
+        end = begin + 1;
+
+        // Trim trailing spaces
+        while (end < strEnd && !IS_SPACE(*(end)))
+            ++end;
+
+        // Only whitespace can be after the end
+        const char *p = end;
+
+        while (p < strEnd) {
+            if (!IS_SPACE(*p))
+                return 0;
+
+            p++;
+        }
+
+        if (end - begin <= 0)
+            return 0;
+
+        if (end - begin > 2 && begin[0] == '0') {
+            const char prefix = begin[1];
+            const char *sub = begin + 2;
+
+            if (prefix == 'x' || prefix == 'X') {
+                return value_hexToDec(sub, end - begin - 2, ok);
+            } else if (prefix == 'o' || prefix == 'O') {
+                return value_octToDec(sub, end - begin - 2, ok);
+            } else if (prefix == 'b' || prefix == 'B') {
+                return value_binToDec(sub, end - begin - 2, ok);
+            }
+        }
+
+        // Trim leading zeros
+        while (begin < end && (*begin == '0') && !(begin + 1 < end && begin[1] == '.'))
+            ++begin;
+
+        if (end - begin <= 0) {
+            if (ok)
+                *ok = true;
+
+            return 0;
+        }
+
+        double ret = 0;
+        auto [ptr, ec] = fast_float::from_chars(begin, end, ret, fast_float::chars_format::json);
+
+        if (ec == std::errc{} && ptr == end) {
+            if (ok)
+                *ok = true;
+
+            return ret;
+        } else
+            return 0;
+
+        // Special values
         if (s == "Infinity") {
             if (ok)
                 *ok = true;
@@ -122,117 +214,29 @@ extern "C"
         } else if (s == "NaN") {
             if (ok)
                 *ok = true;
-            return 0;
+            return std::numeric_limits<double>::quiet_NaN();
         }
 
-        if (s.size() >= 2 && s[0] == '0') {
-            std::string sub = s.substr(2, s.size() - 2);
-            std::transform(sub.begin(), sub.end(), sub.begin(), ::tolower);
-
-            if (s[1] == 'x' || s[1] == 'X') {
-                return value_hexToDec(sub);
-            } else if (s[1] == 'o' || s[1] == 'O') {
-                return value_octToDec(sub);
-            } else if (s[1] == 'b' || s[1] == 'B') {
-                return value_binToDec(sub);
-            }
-        }
-
-        static const std::string digits = "0123456789.eE+-";
-        const std::string *stringPtr = &s;
-        bool customStr = false;
-
-        if (!s.empty() && ((s[0] == ' ') || (s.back() == ' '))) {
-            std::string *localPtr = new std::string(s);
-            stringPtr = localPtr;
-            customStr = true;
-
-            while (!localPtr->empty() && (localPtr->at(0) == ' '))
-                localPtr->erase(0, 1);
-
-            while (!localPtr->empty() && (localPtr->back() == ' '))
-                localPtr->pop_back();
-        }
-
-        for (char c : *stringPtr) {
-            if (digits.find(c) == std::string::npos) {
-                return 0;
-            }
-        }
-
-        try {
-            if (ok)
-                *ok = true;
-
-            // Set locale to C to avoid conversion issues
-            std::string oldLocale = std::setlocale(LC_NUMERIC, nullptr);
-            std::setlocale(LC_NUMERIC, "C");
-
-            double ret = std::stod(*stringPtr);
-
-            // Restore old locale
-            std::setlocale(LC_NUMERIC, oldLocale.c_str());
-
-            if (customStr)
-                delete stringPtr;
-
-            return ret;
-        } catch (...) {
-            if (ok)
-                *ok = false;
-            return 0;
-        }
+        return 0;
     }
 
     inline long value_stringToLong(const std::string &s, bool *ok = nullptr)
     {
-        if (ok)
-            *ok = false;
+        return value_stringToDouble(s, ok);
+    }
 
-        if (s == "Infinity") {
-            if (ok)
-                *ok = true;
-            return std::numeric_limits<long>::infinity();
-        } else if (s == "-Infinity") {
-            if (ok)
-                *ok = true;
-            return -std::numeric_limits<long>::infinity();
-        } else if (s == "NaN") {
-            if (ok)
-                *ok = true;
-            return 0;
+    inline bool value_stringIsInt(const char *s, int n)
+    {
+        const char *p = s;
+
+        while (p < s + n) {
+            if (*s == '.' || *s == 'e' || *s == 'E')
+                return false;
+
+            p++;
         }
 
-        if (s.size() >= 2 && s[0] == '0') {
-            std::string sub = s.substr(2, s.size() - 2);
-            std::transform(sub.begin(), sub.end(), sub.begin(), ::tolower);
-
-            if (s[1] == 'x' || s[1] == 'X') {
-                return value_hexToDec(sub);
-            } else if (s[1] == 'o' || s[1] == 'O') {
-                return value_octToDec(sub);
-            } else if (s[1] == 'b' || s[1] == 'B') {
-                return value_binToDec(sub);
-            }
-        }
-
-        static const std::string digits = "0123456789.eE+-";
-
-        for (char c : s) {
-            if (digits.find(c) == std::string::npos) {
-                return 0;
-            }
-        }
-
-        try {
-            if (ok)
-                *ok = true;
-            return std::stol(s);
-        } catch (...) {
-            if (ok)
-                *ok = false;
-            return 0;
-        }
+        return true;
     }
 }
 
@@ -281,7 +285,7 @@ extern "C"
     {
         bool ok;
 
-        if ((str.find_first_of('.') == std::string::npos) && (str.find_first_of('e') == std::string::npos) && (str.find_first_of('E') == std::string::npos)) {
+        if (value_stringIsInt(str.c_str(), str.size())) {
             value_stringToLong(str, &ok);
             return ok ? 1 : 0;
         } else {
