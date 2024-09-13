@@ -37,10 +37,11 @@ extern "C"
                     long intValue;
                     double doubleValue;
                     bool boolValue;
-                    std::string *stringValue;
+                    char *stringValue;
             };
 
             ValueType type;
+            size_t stringSize; // allocated size, not length
     };
 }
 

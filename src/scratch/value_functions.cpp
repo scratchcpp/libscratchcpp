@@ -16,8 +16,9 @@ extern "C"
     {
         if (v->type == ValueType::String) {
             assert(v->stringValue);
-            delete v->stringValue;
+            free(v->stringValue);
             v->stringValue = nullptr;
+            v->stringSize = 0;
         }
     }
 
@@ -105,30 +106,27 @@ extern "C"
     /*! Assigns string to the given value. */
     void value_assign_string(ValueData *v, const std::string &stringValue)
     {
-        if (stringValue == "Infinity") {
-            value_free(v);
-            v->type = ValueType::Infinity;
-        } else if (stringValue == "-Infinity") {
-            value_free(v);
-            v->type = ValueType::NegativeInfinity;
-        } else if (stringValue == "NaN") {
-            value_free(v);
-            v->type = ValueType::NaN;
-        } else {
-            if (v->type == ValueType::String)
-                v->stringValue->assign(stringValue);
-            else {
-                value_free(v);
-                v->type = ValueType::String;
-                v->stringValue = new std::string(stringValue);
-            }
-        }
+        value_assign_cstring(v, stringValue.c_str());
     }
 
     /*! Assigns C string to the given value. */
     void value_assign_cstring(ValueData *v, const char *stringValue)
     {
-        value_assign_string(v, std::string(stringValue));
+        if (strcmp(stringValue, "Infinity") == 0) {
+            value_free(v);
+            v->type = ValueType::Infinity;
+        } else if (strcmp(stringValue, "-Infinity") == 0) {
+            value_free(v);
+            v->type = ValueType::NegativeInfinity;
+        } else if (strcmp(stringValue, "NaN") == 0) {
+            value_free(v);
+            v->type = ValueType::NaN;
+        } else if (v->type == ValueType::String) {
+            value_replaceStr(v, stringValue);
+        } else {
+            value_free(v);
+            value_initStr(v, stringValue);
+        }
     }
 
     /*! Assigns special value to the given value. */
@@ -162,10 +160,10 @@ extern "C"
             v->boolValue = another->boolValue;
         } else if (another->type == ValueType::String) {
             if (v->type == ValueType::String)
-                v->stringValue->assign(*another->stringValue);
+                value_replaceStr(v, another->stringValue);
             else {
                 value_free(v);
-                v->stringValue = new std::string(*another->stringValue);
+                value_initStr(v, another->stringValue);
             }
         }
 
@@ -185,7 +183,7 @@ extern "C"
             case ValueType::Double:
                 return value_isInf(v->doubleValue);
             case ValueType::String:
-                return *v->stringValue == "Infinity";
+                return strcmp(v->stringValue, "Infinity") == 0;
             default:
                 return false;
         }
@@ -202,7 +200,7 @@ extern "C"
             case ValueType::Double:
                 return value_isNegativeInf(-v->doubleValue);
             case ValueType::String:
-                return *v->stringValue == "-Infinity";
+                return strcmp(v->stringValue, "-Infinity") == 0;
             default:
                 return false;
         }
@@ -218,7 +216,7 @@ extern "C"
                 assert(!std::isnan(v->doubleValue));
                 return std::isnan(v->doubleValue);
             case ValueType::String:
-                return *v->stringValue == "NaN";
+                return strcmp(v->stringValue, "NaN") == 0;
             default:
                 return false;
         }
@@ -247,7 +245,7 @@ extern "C"
             case ValueType::Bool:
                 return true;
             case ValueType::String:
-                return v->stringValue->empty() || value_checkString(*v->stringValue) > 0;
+                return strlen(v->stringValue) == 0 || value_checkString(v->stringValue) > 0;
             default:
                 return false;
         }
@@ -270,7 +268,7 @@ extern "C"
                 return v->doubleValue == intpart;
             }
             case ValueType::String:
-                return value_checkString(*v->stringValue) == 1;
+                return value_checkString(v->stringValue) == 1;
         }
 
         return false;
@@ -300,7 +298,7 @@ extern "C"
         else if (v->type == ValueType::Bool)
             return v->boolValue;
         else if (v->type == ValueType::String)
-            return value_stringToLong(*v->stringValue);
+            return value_stringToLong(v->stringValue);
         else
             return 0;
     }
@@ -315,7 +313,7 @@ extern "C"
         else if (v->type == ValueType::Bool)
             return v->boolValue;
         else if (v->type == ValueType::String)
-            return value_stringToLong(*v->stringValue);
+            return value_stringToLong(v->stringValue);
         else
             return 0;
     }
@@ -330,7 +328,7 @@ extern "C"
         else if (v->type == ValueType::Bool)
             return v->boolValue;
         else if (v->type == ValueType::String)
-            return value_stringToDouble(*v->stringValue);
+            return value_stringToDouble(v->stringValue);
         else if (v->type == ValueType::Infinity)
             return std::numeric_limits<double>::infinity();
         else if (v->type == ValueType::NegativeInfinity)
@@ -349,7 +347,7 @@ extern "C"
         } else if (v->type == ValueType::Double) {
             return v->doubleValue != 0;
         } else if (v->type == ValueType::String) {
-            return !v->stringValue->empty() && !value_stringsEqual(*v->stringValue, "false") && *v->stringValue != "0";
+            return strlen(v->stringValue) != 0 && !value_stringsEqual(v->stringValue, "false") && strcmp(v->stringValue, "0") != 0;
         } else if (v->type == ValueType::Infinity || v->type == ValueType::NegativeInfinity) {
             return true;
         } else if (v->type == ValueType::NaN) {
@@ -363,7 +361,7 @@ extern "C"
     void value_toString(const libscratchcpp::ValueData *v, std::string *dst)
     {
         if (v->type == ValueType::String)
-            dst->assign(*v->stringValue);
+            dst->assign(v->stringValue);
         else if (v->type == ValueType::Integer)
             dst->assign(std::to_string(v->intValue));
         else if (v->type == ValueType::Double)
@@ -590,12 +588,12 @@ extern "C"
         double n1, n2;
 
         if (v1->type == ValueType::String)
-            n1 = value_stringToDouble(*v1->stringValue);
+            n1 = value_stringToDouble(v1->stringValue);
         else
             n1 = value_toDouble(v1);
 
         if (v2->type == ValueType::String)
-            n2 = value_stringToDouble(*v2->stringValue);
+            n2 = value_stringToDouble(v2->stringValue);
         else
             n2 = value_toDouble(v2);
 
@@ -628,12 +626,12 @@ extern "C"
         double n1, n2;
 
         if (v1->type == ValueType::String)
-            n1 = value_stringToDouble(*v1->stringValue);
+            n1 = value_stringToDouble(v1->stringValue);
         else
             n1 = value_toDouble(v1);
 
         if (v2->type == ValueType::String)
-            n2 = value_stringToDouble(*v2->stringValue);
+            n2 = value_stringToDouble(v2->stringValue);
         else
             n2 = value_toDouble(v2);
 

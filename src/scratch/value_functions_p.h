@@ -53,6 +53,46 @@ inline bool value_isNegativeInf(T v)
 extern "C"
 {
 
+    inline size_t value_getSize(size_t x)
+    {
+        if (x == 0)
+            return 0;
+
+        size_t ret = 1;
+
+        while (ret < x)
+            ret *= 2;
+
+        return ret;
+    }
+
+    inline void value_initStr(ValueData *v, const char *s)
+    {
+        const size_t len = strlen(s);
+        v->stringSize = value_getSize(len + 1);
+        v->type = ValueType::String;
+        v->stringValue = (char *)malloc((v->stringSize * sizeof(char)));
+        memcpy(v->stringValue, s, len);
+        v->stringValue[len] = '\0';
+    }
+
+    inline void value_replaceStr(ValueData *v, const char *s)
+    {
+        const size_t len = strlen(s);
+        const size_t size = value_getSize(len + 1);
+
+        if (size == 0)
+            return;
+
+        if (size > v->stringSize || v->stringSize / size > 3) {
+            v->stringSize = size;
+            v->stringValue = (char *)realloc(v->stringValue, v->stringSize * sizeof(char));
+        }
+
+        memcpy(v->stringValue, s, len);
+        v->stringValue[len] = '\0';
+    }
+
     inline bool value_u16StringsEqual(std::u16string s1, std::u16string s2)
     {
         std::transform(s1.begin(), s1.end(), s1.begin(), ::tolower);
@@ -60,11 +100,13 @@ extern "C"
         return (s1.compare(s2) == 0);
     }
 
-    inline bool value_stringsEqual(std::string s1, std::string s2)
+    inline bool value_stringsEqual(const char *s1, const char *s2)
     {
-        std::transform(s1.begin(), s1.end(), s1.begin(), ::tolower);
-        std::transform(s2.begin(), s2.end(), s2.begin(), ::tolower);
-        return (s1.compare(s2) == 0);
+        std::string str1(s1);
+        std::string str2(s2);
+        std::transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
+        std::transform(str2.begin(), str2.end(), str2.begin(), ::tolower);
+        return (str1.compare(str2) == 0);
     }
 
     inline double value_hexToDec(const char *s, int n, bool *ok)
@@ -150,20 +192,22 @@ extern "C"
         }
     }
 
-    inline double value_stringToDouble(const std::string &s, bool *ok = nullptr)
+    inline double value_stringToDouble(const char *s, bool *ok = nullptr)
     {
         if (ok)
             *ok = false;
 
-        if (s.empty()) {
+        const size_t len = strlen(s);
+
+        if (strlen(s) == 0) {
             if (ok)
                 *ok = true;
 
             return 0;
         }
 
-        const char *begin = s.data();
-        const char *strEnd = s.data() + s.size();
+        const char *begin = s;
+        const char *strEnd = s + len;
         const char *end = strEnd;
 
         // Trim leading spaces
@@ -286,15 +330,15 @@ extern "C"
             return 0;
 
         // Special values
-        if (s == "Infinity") {
+        if (strcmp(s, "Infinity") == 0) {
             if (ok)
                 *ok = true;
             return std::numeric_limits<double>::infinity();
-        } else if (s == "-Infinity") {
+        } else if (strcmp(s, "-Infinity") == 0) {
             if (ok)
                 *ok = true;
             return -std::numeric_limits<double>::infinity();
-        } else if (s == "NaN") {
+        } else if (strcmp(s, "NaN") == 0) {
             if (ok)
                 *ok = true;
             return std::numeric_limits<double>::quiet_NaN();
@@ -303,7 +347,7 @@ extern "C"
         return 0;
     }
 
-    inline long value_stringToLong(const std::string &s, bool *ok = nullptr)
+    inline long value_stringToLong(const char *s, bool *ok = nullptr)
     {
         return value_stringToDouble(s, ok);
     }
@@ -364,11 +408,11 @@ extern "C"
         return std::round(v * f) / f;
     }
 
-    inline int value_checkString(const std::string &str)
+    inline int value_checkString(const char *str)
     {
         bool ok;
 
-        if (value_stringIsInt(str.c_str(), str.size())) {
+        if (value_stringIsInt(str, strlen(str))) {
             value_stringToLong(str, &ok);
             return ok ? 1 : 0;
         } else {
@@ -386,7 +430,7 @@ extern "C"
         // Since functions calling this already prioritize int, double and bool,
         // we can optimize by prioritizing the other types here.
         if (v->type == ValueType::String)
-            return value_stringToDouble(*v->stringValue, ok);
+            return value_stringToDouble(v->stringValue, ok);
         else if (v->type == ValueType::Infinity)
             return std::numeric_limits<double>::infinity();
         else if (v->type == ValueType::NegativeInfinity)
