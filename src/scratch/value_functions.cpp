@@ -270,7 +270,7 @@ extern "C"
                 return v->doubleValue == intpart;
             }
             case ValueType::String:
-                return v->stringValue->find('.') == std::string::npos;
+                return value_checkString(*v->stringValue) == 1;
         }
 
         return false;

@@ -227,7 +227,7 @@ TEST(ValueTest, StdStringConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
         ASSERT_FALSE(v.isValidNumber());
-        ASSERT_TRUE(v.isInt());
+        ASSERT_FALSE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_TRUE(v.isString());
     }
@@ -270,7 +270,7 @@ TEST(ValueTest, StdStringConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
         ASSERT_FALSE(v.isValidNumber());
-        ASSERT_TRUE(v.isInt());
+        ASSERT_FALSE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_TRUE(v.isString());
     }
@@ -353,7 +353,7 @@ TEST(ValueTest, CStringConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
         ASSERT_FALSE(v.isValidNumber());
-        ASSERT_TRUE(v.isInt());
+        ASSERT_FALSE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_TRUE(v.isString());
     }
