@@ -1297,6 +1297,13 @@ TEST(ValueTest, ToDouble)
     v = "-.15";
     ASSERT_EQ(v.toDouble(), -0.15);
 
+    v = "1.";
+    ASSERT_EQ(v.toDouble(), 1);
+    v = "+1.";
+    ASSERT_EQ(v.toDouble(), 1);
+    v = "-1.";
+    ASSERT_EQ(v.toDouble(), -1);
+
     v = "0+5";
     ASSERT_EQ(v.toDouble(), 0);
     v = "0-5";

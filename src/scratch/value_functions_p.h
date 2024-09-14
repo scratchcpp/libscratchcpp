@@ -320,6 +320,26 @@ extern "C"
             }
         }
 
+        // If there's a trailing dot, copy the string and append zero next to it (e. g. '1.' -> '1.0')
+        if (end[-1] == '.') {
+            if (copy) {
+                char *tmpCopy = new char[end - begin + 2];
+                memcpy(tmpCopy, begin, end - begin);
+                delete[] copy;
+                copy = tmpCopy;
+                end = copy + (end - begin) + 1;
+                begin = copy;
+            } else {
+                copy = new char[end - begin + 2];
+                memcpy(copy, begin, end - begin);
+                end = copy + (end - begin) + 1;
+                begin = copy;
+            }
+
+            copy[end - begin - 1] = '0';
+            copy[end - begin] = '\0';
+        }
+
         // Trim leading zeros
         bool trimmed = false;
 
