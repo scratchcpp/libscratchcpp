@@ -3,7 +3,7 @@
 #pragma once
 
 #include <string>
-#include <deque>
+#include <scratchcpp/veque.h>
 
 #include "value.h"
 #include "entity.h"
@@ -17,7 +17,7 @@ class ListPrivate;
 
 /*! \brief The List class represents a Scratch list. */
 class LIBSCRATCHCPP_EXPORT List
-    : public std::deque<Value>
+    : public veque::veque<Value>
     , public Entity
 {
     public:
@@ -40,7 +40,7 @@ class LIBSCRATCHCPP_EXPORT List
         void removeAt(int index) { erase(begin() + index); }
 
         /*! Inserts an item at index. */
-        void insert(int index, const Value &value) { std::deque<Value>::insert(begin() + index, value); }
+        void insert(int index, const Value &value) { veque<Value>::insert(begin() + index, value); }
 
         /*! Replaces the item at index. */
         void replace(int index, const Value &value) { at(index) = value; }

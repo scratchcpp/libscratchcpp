@@ -112,10 +112,10 @@ TEST(SpriteTest, Clone)
         ASSERT_NE(clone->lists(), root->lists());
         ASSERT_EQ(clone->listAt(0)->id(), "c");
         ASSERT_EQ(clone->listAt(0)->name(), "list1");
-        ASSERT_EQ(*clone->listAt(0), std::deque<Value>({ "item1", "item2" }));
+        ASSERT_EQ(*clone->listAt(0), veque::veque<Value>({ "item1", "item2" }));
         ASSERT_EQ(clone->listAt(1)->id(), "d");
         ASSERT_EQ(clone->listAt(1)->name(), "list2");
-        ASSERT_EQ(*clone->listAt(1), std::deque<Value>({ "test" }));
+        ASSERT_EQ(*clone->listAt(1), veque::veque<Value>({ "test" }));
         ASSERT_EQ(clone->listAt(1)->target(), clone);
 
         ASSERT_EQ(clone->sounds().size(), 3);
