@@ -72,10 +72,10 @@ TEST(SpriteTest, Clone)
     sprite.addSound(s3);
 
     auto list1 = std::make_shared<List>("c", "list1");
-    list1->push_back("item1");
-    list1->push_back("item2");
+    list1->append("item1");
+    list1->append("item2");
     auto list2 = std::make_shared<List>("d", "list2");
-    list2->push_back("test");
+    list2->append("test");
     sprite.addList(list1);
     sprite.addList(list2);
 
@@ -112,10 +112,12 @@ TEST(SpriteTest, Clone)
         ASSERT_NE(clone->lists(), root->lists());
         ASSERT_EQ(clone->listAt(0)->id(), "c");
         ASSERT_EQ(clone->listAt(0)->name(), "list1");
-        ASSERT_EQ(*clone->listAt(0), std::deque<Value>({ "item1", "item2" }));
+        ASSERT_EQ(clone->listAt(0)->size(), 2);
+        ASSERT_EQ(clone->listAt(0)->toString(), "item1 item2");
         ASSERT_EQ(clone->listAt(1)->id(), "d");
         ASSERT_EQ(clone->listAt(1)->name(), "list2");
-        ASSERT_EQ(*clone->listAt(1), std::deque<Value>({ "test" }));
+        ASSERT_EQ(clone->listAt(1)->size(), 1);
+        ASSERT_EQ(clone->listAt(1)->toString(), "test");
         ASSERT_EQ(clone->listAt(1)->target(), clone);
 
         ASSERT_EQ(clone->sounds().size(), 3);

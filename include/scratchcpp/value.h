@@ -84,6 +84,13 @@ class LIBSCRATCHCPP_EXPORT Value
             value_assign_special(&m_data, specialValue);
         }
 
+        /*! Constructs value from ValueData. */
+        Value(const ValueData &v)
+        {
+            value_init(&m_data);
+            value_assign_copy(&m_data, &v);
+        }
+
         Value(const Value &v)
         {
             value_init(&m_data);
@@ -91,6 +98,18 @@ class LIBSCRATCHCPP_EXPORT Value
         }
 
         ~Value() { value_free(&m_data); }
+
+        /*!
+         * Returns a read-only reference to the data.
+         * \note Valid until the Value object is destroyed.
+         */
+        const ValueData &data() const { return m_data; };
+
+        /*!
+         * Returns a read/write reference to the data.
+         * \note Valid until the Value object is destroyed.
+         */
+        ValueData &data() { return m_data; }
 
         /*! Returns the type of the value. */
         ValueType type() const { return m_data.type; }
@@ -201,6 +220,12 @@ class LIBSCRATCHCPP_EXPORT Value
         const Value &operator=(const char *v)
         {
             value_assign_cstring(&m_data, v);
+            return *this;
+        }
+
+        const Value &operator=(const ValueData &v)
+        {
+            value_assign_copy(&m_data, &v);
             return *this;
         }
 

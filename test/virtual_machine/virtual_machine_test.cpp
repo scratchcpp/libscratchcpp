@@ -946,12 +946,12 @@ TEST(VirtualMachineTest, OP_READ_LIST)
 {
     static unsigned int bytecode[] = { OP_START, OP_READ_LIST, 0, OP_READ_LIST, 1, OP_HALT };
     List list1("", "list1");
-    list1.push_back(5.3);
-    list1.push_back("abc");
-    list1.push_back(false);
+    list1.append(5.3);
+    list1.append("abc");
+    list1.append(false);
     List list2("", "list2");
-    list2.push_back("t e s t");
-    list2.push_back(true);
+    list2.append("t e s t");
+    list2.append(true);
     List *lists[] = { &list1, &list2 };
 
     VirtualMachine vm;
@@ -978,10 +978,10 @@ TEST(VirtualMachineTest, OP_LIST_APPEND)
     vm.run();
 
     ASSERT_EQ(list1.size(), 1);
-    ASSERT_EQ(list1[0], 3.52);
+    ASSERT_EQ(Value(list1[0]), 3.52);
 
     ASSERT_EQ(list2.size(), 1);
-    ASSERT_EQ(list2[0], "test");
+    ASSERT_EQ(Value(list2[0]), "test");
 
     ASSERT_EQ(vm.registerCount(), 0);
 }
@@ -997,14 +997,14 @@ TEST(VirtualMachineTest, OP_LIST_DEL)
     };
     static Value constValues[] = { 3, 1, "6", 0, 7, -1, 9, SpecialValue::NegativeInfinity, SpecialValue::Infinity, SpecialValue::NaN, "invalid", "last", "random", "all" };
     List list1("", "list1");
-    list1.push_back("a");
-    list1.push_back("b");
-    list1.push_back("c");
-    list1.push_back("d");
-    list1.push_back("e");
-    list1.push_back("f");
-    list1.push_back("g");
-    list1.push_back("h");
+    list1.append("a");
+    list1.append("b");
+    list1.append("c");
+    list1.append("d");
+    list1.append("e");
+    list1.append("f");
+    list1.append("g");
+    list1.append("h");
     List *lists[] = { &list1 };
 
     RandomGeneratorMock rng;
@@ -1041,11 +1041,11 @@ TEST(VirtualMachineTest, OP_LIST_DEL_ALL)
 {
     static unsigned int bytecode[] = { OP_START, OP_LIST_DEL_ALL, 0, OP_LIST_DEL_ALL, 1, OP_HALT };
     List list1("", "list1");
-    list1.push_back("a");
-    list1.push_back("b");
-    list1.push_back("c");
+    list1.append("a");
+    list1.append("b");
+    list1.append("c");
     List list2("", "list1");
-    list1.push_back("ab c");
+    list1.append("ab c");
     List *lists[] = { &list1, &list2 };
 
     VirtualMachine vm;
@@ -1069,14 +1069,14 @@ TEST(VirtualMachineTest, OP_LIST_INSERT)
     };
     static Value constValues[] = { "new item", "3", 1, 10, 0, 12, -1, 14, SpecialValue::NegativeInfinity, SpecialValue::Infinity, SpecialValue::NaN, "last", "random", "invalid" };
     List list1("", "list1");
-    list1.push_back("a");
-    list1.push_back("b");
-    list1.push_back("c");
-    list1.push_back("d");
-    list1.push_back("e");
-    list1.push_back("f");
-    list1.push_back("g");
-    list1.push_back("h");
+    list1.append("a");
+    list1.append("b");
+    list1.append("c");
+    list1.append("d");
+    list1.append("e");
+    list1.append("f");
+    list1.append("g");
+    list1.append("h");
     List *lists[] = { &list1 };
 
     RandomGeneratorMock rng;
@@ -1120,14 +1120,14 @@ TEST(VirtualMachineTest, OP_LIST_REPLACE)
     };
     static Value constValues[] = { "new item", 3, "1", 8, 0, 9, -1, 12, SpecialValue::NegativeInfinity, SpecialValue::Infinity, SpecialValue::NaN, "last", "random", "invalid", "test" };
     List list1("", "list1");
-    list1.push_back("a");
-    list1.push_back("b");
-    list1.push_back("c");
-    list1.push_back("d");
-    list1.push_back("e");
-    list1.push_back("f");
-    list1.push_back("g");
-    list1.push_back("h");
+    list1.append("a");
+    list1.append("b");
+    list1.append("c");
+    list1.append("d");
+    list1.append("e");
+    list1.append("f");
+    list1.append("g");
+    list1.append("h");
     List *lists[] = { &list1 };
 
     RandomGeneratorMock rng;
@@ -1168,14 +1168,14 @@ TEST(VirtualMachineTest, OP_LIST_GET_ITEM)
     };
     static Value constValues[] = { 3, 1, "8", 0, 9, -1, 12, SpecialValue::NegativeInfinity, SpecialValue::Infinity, SpecialValue::NaN, "last", "random", "invalid" };
     List list1("", "list1");
-    list1.push_back("a");
-    list1.push_back("b");
-    list1.push_back("c");
-    list1.push_back("d");
-    list1.push_back("e");
-    list1.push_back("f");
-    list1.push_back("g");
-    list1.push_back("h");
+    list1.append("a");
+    list1.append("b");
+    list1.append("c");
+    list1.append("d");
+    list1.append("e");
+    list1.append("f");
+    list1.append("g");
+    list1.append("h");
     List *lists[] = { &list1 };
 
     RandomGeneratorMock rng;
@@ -1215,14 +1215,14 @@ TEST(VirtualMachineTest, OP_LIST_INDEX_OF)
     };
     static Value constValues[] = { "c", "A", "e", "", "invalid", SpecialValue::NegativeInfinity, SpecialValue::Infinity, SpecialValue::NaN };
     List list1("", "list1");
-    list1.push_back("a");
-    list1.push_back("b");
-    list1.push_back("c");
-    list1.push_back("d");
-    list1.push_back("e");
-    list1.push_back("");
-    list1.push_back(SpecialValue::Infinity);
-    list1.push_back(8);
+    list1.append("a");
+    list1.append("b");
+    list1.append("c");
+    list1.append("d");
+    list1.append("e");
+    list1.append("");
+    list1.append(SpecialValue::Infinity);
+    list1.append(8);
     List *lists[] = { &list1 };
 
     VirtualMachine vm;
@@ -1245,12 +1245,12 @@ TEST(VirtualMachineTest, OP_LIST_LENGTH)
 {
     static unsigned int bytecode[] = { OP_START, OP_LIST_LENGTH, 0, OP_LIST_LENGTH, 1, OP_HALT };
     List list1("", "list1");
-    list1.push_back("a");
-    list1.push_back("b");
-    list1.push_back("c");
-    list1.push_back("d");
+    list1.append("a");
+    list1.append("b");
+    list1.append("c");
+    list1.append("d");
     List list2("", "list2");
-    list2.push_back("a");
+    list2.append("a");
     List *lists[] = { &list1, &list2 };
 
     VirtualMachine vm;
@@ -1270,14 +1270,14 @@ TEST(VirtualMachineTest, OP_LIST_CONTAINS)
     };
     static Value constValues[] = { "c", "A", "e", "", "invalid", SpecialValue::NegativeInfinity, SpecialValue::Infinity, SpecialValue::NaN };
     List list1("", "list1");
-    list1.push_back("a");
-    list1.push_back("b");
-    list1.push_back("c");
-    list1.push_back("d");
-    list1.push_back("e");
-    list1.push_back("");
-    list1.push_back(SpecialValue::Infinity);
-    list1.push_back(8);
+    list1.append("a");
+    list1.append("b");
+    list1.append("c");
+    list1.append("d");
+    list1.append("e");
+    list1.append("");
+    list1.append(SpecialValue::Infinity);
+    list1.append(8);
     List *lists[] = { &list1 };
 
     VirtualMachine vm;
