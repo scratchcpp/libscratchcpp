@@ -1,4 +1,5 @@
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/thread.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
@@ -394,18 +395,19 @@ TEST_F(EventBlocksTest, BroadcastImpl)
     static BlockFunc functions[] = { &EventBlocks::broadcast };
     static Value constValues[] = { "test", 2 };
 
-    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
-    vm.setFunctions(functions);
-    vm.setConstValues(constValues);
+    Thread thread(nullptr, &m_engineMock, nullptr);
+    VirtualMachine *vm = thread.vm();
+    vm->setFunctions(functions);
+    vm->setConstValues(constValues);
 
     EXPECT_CALL(m_engineMock, findBroadcasts("test")).WillOnce(Return(std::vector<int>({ 1, 4 })));
-    EXPECT_CALL(m_engineMock, broadcast(1, &vm));
-    EXPECT_CALL(m_engineMock, broadcast(4, &vm));
+    EXPECT_CALL(m_engineMock, broadcast(1, &thread));
+    EXPECT_CALL(m_engineMock, broadcast(4, &thread));
 
-    vm.setBytecode(bytecode1);
-    vm.run();
+    vm->setBytecode(bytecode1);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
 }
 
 TEST_F(EventBlocksTest, BroadcastAndWait)
@@ -443,30 +445,31 @@ TEST_F(EventBlocksTest, BroadcastAndWaitImpl)
     static BlockFunc functions[] = { &EventBlocks::broadcastAndWait };
     static Value constValues[] = { "test", 3 };
 
-    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
-    vm.setFunctions(functions);
-    vm.setConstValues(constValues);
+    Thread thread(nullptr, &m_engineMock, nullptr);
+    VirtualMachine *vm = thread.vm();
+    vm->setFunctions(functions);
+    vm->setConstValues(constValues);
 
     EXPECT_CALL(m_engineMock, findBroadcasts("test")).WillOnce(Return(std::vector<int>({ 1, 4 })));
-    EXPECT_CALL(m_engineMock, broadcast(1, &vm));
-    EXPECT_CALL(m_engineMock, broadcast(4, &vm));
+    EXPECT_CALL(m_engineMock, broadcast(1, &thread));
+    EXPECT_CALL(m_engineMock, broadcast(4, &thread));
 
-    vm.setBytecode(bytecode);
-    vm.run();
+    vm->setBytecode(bytecode);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(vm->registerCount(), 0);
+    ASSERT_FALSE(vm->atEnd());
 
-    vm.run();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_FALSE(vm.atEnd());
+    ASSERT_EQ(vm->registerCount(), 0);
+    ASSERT_FALSE(vm->atEnd());
 
-    vm.resolvePromise();
-    vm.run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(vm->registerCount(), 0);
+    ASSERT_TRUE(vm->atEnd());
 }
 
 TEST_F(EventBlocksTest, WhenBroadcastReceived)

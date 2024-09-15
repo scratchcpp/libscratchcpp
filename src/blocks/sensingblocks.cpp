@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/virtualmachine.h>
+#include <scratchcpp/thread.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/itimer.h>
@@ -99,16 +100,17 @@ void SensingBlocks::registerBlocks(IEngine *engine)
 
 void SensingBlocks::onInit(IEngine *engine)
 {
-    engine->threadAboutToStop().connect([engine](VirtualMachine *thread) {
+    engine->threadAboutToStop().connect([engine](Thread *thread) {
         if (!m_questionList.empty()) {
             // Abort the question of this thread if it's currently being displayed
-            if (m_questionList.front()->vm == thread) {
+            if (m_questionList.front()->vm == thread->vm()) {
                 thread->target()->setBubbleText("");
                 engine->questionAborted()();
             }
 
-            m_questionList
-                .erase(std::remove_if(m_questionList.begin(), m_questionList.end(), [thread](const std::unique_ptr<Question> &question) { return question->vm == thread; }), m_questionList.end());
+            m_questionList.erase(
+                std::remove_if(m_questionList.begin(), m_questionList.end(), [thread](const std::unique_ptr<Question> &question) { return question->vm == thread->vm(); }),
+                m_questionList.end());
         }
     });
 }

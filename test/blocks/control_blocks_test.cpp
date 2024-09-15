@@ -1,4 +1,5 @@
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/thread.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
@@ -704,14 +705,15 @@ TEST_F(ControlBlocksTest, StopOtherScriptsInSprite)
     static BlockFunc functions[] = { &ControlBlocks::stopOtherScriptsInSprite };
 
     Target target;
-    VirtualMachine vm(&target, &m_engineMock, nullptr);
-    vm.setFunctions(functions);
-    vm.setBytecode(bytecode);
+    Thread thread(&target, &m_engineMock, nullptr);
+    VirtualMachine *vm = thread.vm();
+    vm->setFunctions(functions);
+    vm->setBytecode(bytecode);
 
-    EXPECT_CALL(m_engineMock, stopTarget(&target, &vm)).Times(1);
-    vm.run();
+    EXPECT_CALL(m_engineMock, stopTarget(&target, &thread)).Times(1);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
 }
 
 TEST_F(ControlBlocksTest, Wait)

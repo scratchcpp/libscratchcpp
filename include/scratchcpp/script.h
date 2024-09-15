@@ -15,7 +15,7 @@ class Target;
 class Block;
 class IEngine;
 class Value;
-class VirtualMachine;
+class Thread;
 class Variable;
 class List;
 class ScriptPrivate;
@@ -42,8 +42,8 @@ class LIBSCRATCHCPP_EXPORT Script
         void setVariables(const std::vector<Variable *> &variables);
         void setLists(const std::vector<List *> &lists);
 
-        std::shared_ptr<VirtualMachine> start();
-        std::shared_ptr<VirtualMachine> start(Target *target);
+        std::shared_ptr<Thread> start();
+        std::shared_ptr<Thread> start(Target *target);
 
     private:
         BlockFunc *getFunctions() const;

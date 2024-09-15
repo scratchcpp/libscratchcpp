@@ -1,4 +1,5 @@
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/thread.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
@@ -1790,218 +1791,219 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     stage.setCostumeIndex(0);
     EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
 
-    VirtualMachine vm(&target, &m_engineMock, nullptr);
-    vm.setFunctions(functions);
-    vm.setConstValues(constValues);
+    Thread thread(&target, &m_engineMock, nullptr);
+    VirtualMachine *vm = thread.vm();
+    vm->setFunctions(functions);
+    vm->setConstValues(constValues);
 
     // "backdrop2"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &vm));
-    vm.setBytecode(bytecode1);
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    vm->setBytecode(bytecode1);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
     // 0
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &vm));
-    vm.setBytecode(bytecode2);
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    vm->setBytecode(bytecode2);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
     stage.setCostumeIndex(0);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
     // 1
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &vm));
-    vm.setBytecode(bytecode3);
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    vm->setBytecode(bytecode3);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
     // 2
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
     stage.addCostume(std::make_shared<Costume>("2", "b3", "svg"));
     stage.addCostume(std::make_shared<Costume>("test", "b4", "svg"));
     stage.setCostumeIndex(0);
 
-    vm.setBytecode(bytecode4);
-    vm.run();
+    vm->setBytecode(bytecode4);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
     // "2"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
     stage.setCostumeIndex(0);
 
-    vm.setBytecode(bytecode6);
-    vm.run();
+    vm->setBytecode(bytecode6);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // "3"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
     stage.setCostumeIndex(0);
 
-    vm.setBytecode(bytecode7);
-    vm.run();
+    vm->setBytecode(bytecode7);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // NaN
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
     stage.setCostumeIndex(2);
 
-    vm.setBytecode(bytecode8);
-    vm.run();
+    vm->setBytecode(bytecode8);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
     // Infinity
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
     stage.setCostumeIndex(2);
 
-    vm.setBytecode(bytecode9);
-    vm.run();
+    vm->setBytecode(bytecode9);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
     // -Infinity
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
     stage.setCostumeIndex(2);
 
-    vm.setBytecode(bytecode10);
-    vm.run();
+    vm->setBytecode(bytecode10);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
     // ""
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
     stage.setCostumeIndex(2);
 
-    vm.setBytecode(bytecode11);
-    vm.run();
+    vm->setBytecode(bytecode11);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // "   "
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
     stage.setCostumeIndex(2);
 
-    vm.setBytecode(bytecode12);
-    vm.run();
+    vm->setBytecode(bytecode12);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // "next backdrop"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &vm));
-    vm.setBytecode(bytecode13);
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread));
+    vm->setBytecode(bytecode13);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 3);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
     stage.addCostume(std::make_shared<Costume>("next backdrop", "b5", "svg"));
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 4);
 
     // "previous backdrop"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &vm));
-    vm.setBytecode(bytecode14);
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread));
+    vm->setBytecode(bytecode14);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 3);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     stage.setCostumeIndex(0);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 4);
 
     stage.addCostume(std::make_shared<Costume>("previous backdrop", "b6", "svg"));
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 5);
 
     // random backdrop
     RandomGeneratorMock rng;
     LooksBlocks::rng = &rng;
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread));
     EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(3));
     stage.setCostumeIndex(0);
-    vm.setBytecode(bytecode15);
-    vm.run();
+    vm->setBytecode(bytecode15);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 3);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &thread));
     EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(5));
-    vm.reset();
-    vm.run();
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 5);
 
     stage.addCostume(std::make_shared<Costume>("random backdrop", "b7", "svg"));
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(6)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(6)->broadcast(), &thread));
     EXPECT_CALL(rng, randint).Times(0);
-    vm.reset();
-    vm.run();
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 6);
 
     LooksBlocks::rng = RandomGenerator::instance().get();
@@ -2066,293 +2068,294 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     stage.setCostumeIndex(0);
     EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
 
-    VirtualMachine vm(&target, &m_engineMock, nullptr);
-    vm.setFunctions(functions);
-    vm.setConstValues(constValues);
+    Thread thread(&target, &m_engineMock, nullptr);
+    VirtualMachine *vm = thread.vm();
+    vm->setFunctions(functions);
+    vm->setConstValues(constValues);
 
     // "backdrop2"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &vm));
-    vm.setBytecode(bytecode1);
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    vm->setBytecode(bytecode1);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
-    ASSERT_FALSE(vm.atEnd());
+    ASSERT_FALSE(vm->atEnd());
 
-    vm.resolvePromise();
-    vm.run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(vm->registerCount(), 0);
+    ASSERT_TRUE(vm->atEnd());
 
     // 0
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &vm));
-    vm.setBytecode(bytecode2);
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    vm->setBytecode(bytecode2);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
-    ASSERT_FALSE(vm.atEnd());
+    ASSERT_FALSE(vm->atEnd());
 
-    vm.resolvePromise();
-    vm.run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(vm->registerCount(), 0);
+    ASSERT_TRUE(vm->atEnd());
 
     stage.setCostumeIndex(0);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
-    ASSERT_TRUE(vm.atEnd());
+    ASSERT_TRUE(vm->atEnd());
 
     // 1
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &vm));
-    vm.setBytecode(bytecode3);
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    vm->setBytecode(bytecode3);
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
-    ASSERT_TRUE(vm.atEnd());
+    ASSERT_TRUE(vm->atEnd());
 
     // 2
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
     stage.addCostume(std::make_shared<Costume>("2", "b3", "svg"));
     stage.addCostume(std::make_shared<Costume>("test", "b4", "svg"));
     stage.setCostumeIndex(0);
 
-    vm.setBytecode(bytecode4);
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    vm->setBytecode(bytecode4);
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
     // "2"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
     stage.setCostumeIndex(0);
 
-    vm.setBytecode(bytecode6);
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    vm->setBytecode(bytecode6);
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // "3"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
     stage.setCostumeIndex(0);
 
-    vm.setBytecode(bytecode7);
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    vm->setBytecode(bytecode7);
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // NaN
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
     stage.setCostumeIndex(2);
 
-    vm.setBytecode(bytecode8);
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    vm->setBytecode(bytecode8);
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
     // Infinity
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
     stage.setCostumeIndex(2);
 
-    vm.setBytecode(bytecode9);
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    vm->setBytecode(bytecode9);
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
     // -Infinity
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
     stage.setCostumeIndex(2);
 
-    vm.setBytecode(bytecode10);
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    vm->setBytecode(bytecode10);
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
     // ""
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
     stage.setCostumeIndex(2);
 
-    vm.setBytecode(bytecode11);
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    vm->setBytecode(bytecode11);
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // "   "
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
     stage.setCostumeIndex(2);
 
-    vm.setBytecode(bytecode12);
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    vm->setBytecode(bytecode12);
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // "next backdrop"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &vm));
-    vm.resolvePromise();
-    vm.setBytecode(bytecode13);
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread));
+    vm->resolvePromise();
+    vm->setBytecode(bytecode13);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 3);
-    ASSERT_FALSE(vm.atEnd());
+    ASSERT_FALSE(vm->atEnd());
 
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(vm->registerCount(), 0);
+    ASSERT_TRUE(vm->atEnd());
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
     stage.addCostume(std::make_shared<Costume>("next backdrop", "b5", "svg"));
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 4);
 
     // "previous backdrop"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &vm));
-    vm.resolvePromise();
-    vm.setBytecode(bytecode14);
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread));
+    vm->resolvePromise();
+    vm->setBytecode(bytecode14);
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 3);
-    ASSERT_FALSE(vm.atEnd());
+    ASSERT_FALSE(vm->atEnd());
 
     stage.setCostumeIndex(2); // checkBackdropScripts() should still check index 3 even after changing the backdrop
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
     stage.setCostumeIndex(3);
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(vm.atEnd());
+    ASSERT_EQ(vm->registerCount(), 0);
+    ASSERT_TRUE(vm->atEnd());
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     stage.setCostumeIndex(0);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 4);
 
     stage.addCostume(std::make_shared<Costume>("previous backdrop", "b6", "svg"));
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 5);
 
     // random backdrop
     RandomGeneratorMock rng;
     LooksBlocks::rng = &rng;
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread));
     EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(3));
     stage.setCostumeIndex(0);
-    vm.resolvePromise();
-    vm.setBytecode(bytecode15);
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    vm->resolvePromise();
+    vm->setBytecode(bytecode15);
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 3);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &thread));
     EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(5));
-    vm.reset();
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    vm->reset();
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 5);
 
     stage.addCostume(std::make_shared<Costume>("random backdrop", "b7", "svg"));
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(6)->broadcast(), &vm));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(6)->broadcast(), &thread));
     EXPECT_CALL(rng, randint).Times(0);
-    vm.reset();
-    vm.run();
-    vm.resolvePromise();
-    vm.run();
+    vm->reset();
+    vm->run();
+    vm->resolvePromise();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 6);
 
     LooksBlocks::rng = RandomGenerator::instance().get();
@@ -2389,28 +2392,29 @@ TEST_F(LooksBlocksTest, NextBackdropImpl)
     stage.setCostumeIndex(0);
     EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
 
-    VirtualMachine vm(&target, &m_engineMock, nullptr);
-    vm.setBytecode(bytecode);
-    vm.setFunctions(functions);
+    Thread thread(&target, &m_engineMock, nullptr);
+    VirtualMachine *vm = thread.vm();
+    vm->setBytecode(bytecode);
+    vm->setFunctions(functions);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &vm));
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 }
 
@@ -2428,28 +2432,29 @@ TEST_F(LooksBlocksTest, PreviousBackdrop)
     stage.setCostumeIndex(2);
     EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
 
-    VirtualMachine vm(&target, &m_engineMock, nullptr);
-    vm.setBytecode(bytecode);
-    vm.setFunctions(functions);
+    Thread thread(&target, &m_engineMock, nullptr);
+    VirtualMachine *vm = thread.vm();
+    vm->setBytecode(bytecode);
+    vm->setFunctions(functions);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &vm));
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
 }
 
@@ -2463,38 +2468,39 @@ TEST_F(LooksBlocksTest, RandomBackdrop)
     Stage stage;
     EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
 
-    VirtualMachine vm(&target, &m_engineMock, nullptr);
-    vm.setBytecode(bytecode);
-    vm.setFunctions(functions);
+    Thread thread(&target, &m_engineMock, nullptr);
+    VirtualMachine *vm = thread.vm();
+    vm->setBytecode(bytecode);
+    vm->setFunctions(functions);
 
     RandomGeneratorMock rng;
     LooksBlocks::rng = &rng;
 
     EXPECT_CALL(rng, randint).Times(0);
-    vm.run();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
 
     stage.addCostume(std::make_shared<Costume>("backdrop1", "b1", "svg"));
     stage.addCostume(std::make_shared<Costume>("backdrop2", "b2", "svg"));
     stage.addCostume(std::make_shared<Costume>("backdrop3", "b3", "svg"));
 
     EXPECT_CALL(rng, randint(0, 2)).WillOnce(Return(1));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
     stage.addCostume(std::make_shared<Costume>("backdrop4", "b4", "svg"));
 
     EXPECT_CALL(rng, randint(0, 3)).WillOnce(Return(2));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &vm));
-    vm.reset();
-    vm.run();
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    vm->reset();
+    vm->run();
 
-    ASSERT_EQ(vm.registerCount(), 0);
+    ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     LooksBlocks::rng = RandomGenerator::instance().get();

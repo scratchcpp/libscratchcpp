@@ -6,6 +6,7 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/sound.h>
+#include <scratchcpp/thread.h>
 
 #include "soundblocks.h"
 
@@ -60,7 +61,7 @@ void SoundBlocks::registerBlocks(IEngine *engine)
 void SoundBlocks::onInit(IEngine *engine)
 {
     m_waitingSounds.clear();
-    engine->threadAboutToStop().connect([](VirtualMachine *vm) { erase_if(m_waitingSounds, [vm](const std::pair<Sound *, VirtualMachine *> &pair) { return pair.second == vm; }); });
+    engine->threadAboutToStop().connect([](Thread *thread) { erase_if(m_waitingSounds, [thread](const std::pair<Sound *, VirtualMachine *> &pair) { return pair.second == thread->vm(); }); });
 }
 
 bool SoundBlocks::compilePlayCommon(Compiler *compiler, bool untilDone, bool *byIndex)

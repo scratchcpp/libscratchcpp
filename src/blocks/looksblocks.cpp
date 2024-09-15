@@ -2,6 +2,7 @@
 
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/thread.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/input.h>
@@ -99,9 +100,9 @@ void LooksBlocks::registerBlocks(IEngine *engine)
 
 void LooksBlocks::onInit(IEngine *engine)
 {
-    engine->threadAboutToStop().connect([](VirtualMachine *vm) {
-        m_timeMap.erase(vm);
-        erase_if(m_waitingBubbles, [vm](const std::pair<Target *, VirtualMachine *> &pair) { return pair.second == vm; });
+    engine->threadAboutToStop().connect([](Thread *thread) {
+        m_timeMap.erase(thread->vm());
+        erase_if(m_waitingBubbles, [thread](const std::pair<Target *, VirtualMachine *> &pair) { return pair.second == thread->vm(); });
     });
 
     engine->stopped().connect([engine]() {
@@ -892,7 +893,7 @@ void LooksBlocks::startBackdropScripts(VirtualMachine *vm, bool wait)
 {
     if (Stage *stage = vm->engine()->stage()) {
         if (stage->costumes().size() > 0)
-            vm->engine()->startBackdropScripts(stage->currentCostume()->broadcast(), vm);
+            vm->engine()->startBackdropScripts(stage->currentCostume()->broadcast(), vm->thread());
     }
 }
 

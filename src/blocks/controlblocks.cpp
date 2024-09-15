@@ -204,7 +204,7 @@ unsigned int ControlBlocks::stopAll(VirtualMachine *vm)
 
 unsigned int ControlBlocks::stopOtherScriptsInSprite(VirtualMachine *vm)
 {
-    vm->engine()->stopTarget(vm->target(), vm);
+    vm->engine()->stopTarget(vm->target(), vm->thread());
     return 0;
 }
 

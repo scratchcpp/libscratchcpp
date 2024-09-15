@@ -2,6 +2,7 @@
 
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/thread.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
@@ -73,9 +74,9 @@ void MotionBlocks::registerBlocks(IEngine *engine)
 
 void MotionBlocks::onInit(IEngine *engine)
 {
-    engine->threadAboutToStop().connect([](VirtualMachine *vm) {
-        m_timeMap.erase(vm);
-        m_glideMap.erase(vm);
+    engine->threadAboutToStop().connect([](Thread *thread) {
+        m_timeMap.erase(thread->vm());
+        m_glideMap.erase(thread->vm());
     });
 }
 
