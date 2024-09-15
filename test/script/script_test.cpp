@@ -1,6 +1,7 @@
 #include <scratchcpp/script.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/virtualmachine.h>
+#include <scratchcpp/thread.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/variable.h>
@@ -161,24 +162,24 @@ TEST_F(ScriptTest, Start)
 
     Script script1(nullptr, nullptr, nullptr);
 
-    std::shared_ptr<VirtualMachine> vm = script1.start();
-    ASSERT_TRUE(vm);
-    ASSERT_EQ(vm->target(), nullptr);
-    ASSERT_EQ(vm->engine(), nullptr);
-    ASSERT_EQ(vm->bytecode(), nullptr);
-    ASSERT_EQ(vm->procedures(), nullptr);
-    ASSERT_EQ(vm->functions(), nullptr);
-    ASSERT_EQ(vm->constValues(), nullptr);
-    ASSERT_EQ(vm->variables(), nullptr);
-    ASSERT_EQ(vm->lists(), nullptr);
+    std::shared_ptr<Thread> thread = script1.start();
+    ASSERT_TRUE(thread);
+    ASSERT_EQ(thread->target(), nullptr);
+    ASSERT_EQ(thread->engine(), nullptr);
+    ASSERT_EQ(thread->vm()->bytecode(), nullptr);
+    ASSERT_EQ(thread->vm()->procedures(), nullptr);
+    ASSERT_EQ(thread->vm()->functions(), nullptr);
+    ASSERT_EQ(thread->vm()->constValues(), nullptr);
+    ASSERT_EQ(thread->vm()->variables(), nullptr);
+    ASSERT_EQ(thread->vm()->lists(), nullptr);
 
     Script script2(&m_target, nullptr, &m_engine);
 
     EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(noFunctions));
-    vm = script2.start();
-    ASSERT_TRUE(vm);
-    ASSERT_EQ(vm->target(), &m_target);
-    ASSERT_EQ(vm->engine(), &m_engine);
+    thread = script2.start();
+    ASSERT_TRUE(thread);
+    ASSERT_EQ(thread->target(), &m_target);
+    ASSERT_EQ(thread->engine(), &m_engine);
 
     Script script3(&m_target, nullptr, &m_engine);
     script3.setBytecode(bytecode);
@@ -188,28 +189,28 @@ TEST_F(ScriptTest, Start)
     script3.setLists(lists);
 
     EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(functions));
-    vm = script3.start();
-    ASSERT_TRUE(vm);
-    ASSERT_EQ(vm->bytecode()[0], bytecode[0]);
-    ASSERT_EQ(vm->procedures()[0], procedures[0]);
-    ASSERT_EQ(vm->functions()[0], functions[0]);
-    ASSERT_EQ(vm->constValues()[0].toString(), constValues[0].toString());
-    ASSERT_EQ(vm->variables()[0], variables[0]->valuePtr());
-    ASSERT_EQ(vm->lists()[0], lists[0]);
+    thread = script3.start();
+    ASSERT_TRUE(thread);
+    ASSERT_EQ(thread->vm()->bytecode()[0], bytecode[0]);
+    ASSERT_EQ(thread->vm()->procedures()[0], procedures[0]);
+    ASSERT_EQ(thread->vm()->functions()[0], functions[0]);
+    ASSERT_EQ(thread->vm()->constValues()[0].toString(), constValues[0].toString());
+    ASSERT_EQ(thread->vm()->variables()[0], variables[0]->valuePtr());
+    ASSERT_EQ(thread->vm()->lists()[0], lists[0]);
 
     EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(functions));
     Target target;
     target.addVariable(var1);
     target.addList(list1);
-    vm = script3.start(&target);
-    ASSERT_TRUE(vm);
-    ASSERT_EQ(vm->target(), &target);
-    ASSERT_EQ(vm->bytecode()[0], bytecode[0]);
-    ASSERT_EQ(vm->procedures()[0], procedures[0]);
-    ASSERT_EQ(vm->functions()[0], functions[0]);
-    ASSERT_EQ(vm->constValues()[0].toString(), constValues[0].toString());
-    ASSERT_EQ(vm->variables()[0], variables[0]->valuePtr());
-    ASSERT_EQ(vm->lists()[0], lists[0]);
+    thread = script3.start(&target);
+    ASSERT_TRUE(thread);
+    ASSERT_EQ(thread->target(), &target);
+    ASSERT_EQ(thread->vm()->bytecode()[0], bytecode[0]);
+    ASSERT_EQ(thread->vm()->procedures()[0], procedures[0]);
+    ASSERT_EQ(thread->vm()->functions()[0], functions[0]);
+    ASSERT_EQ(thread->vm()->constValues()[0].toString(), constValues[0].toString());
+    ASSERT_EQ(thread->vm()->variables()[0], variables[0]->valuePtr());
+    ASSERT_EQ(thread->vm()->lists()[0], lists[0]);
 
     Sprite root;
     root.setEngine(&m_engine);
@@ -231,18 +232,18 @@ TEST_F(ScriptTest, Start)
     script4.setLists(lists);
 
     EXPECT_CALL(m_engine, blockFunctions()).WillOnce(ReturnRef(functions));
-    vm = script4.start(clone.get());
+    thread = script4.start(clone.get());
 
-    ASSERT_TRUE(vm);
-    ASSERT_EQ(vm->target(), clone.get());
-    ASSERT_EQ(vm->bytecode()[0], bytecode[0]);
-    ASSERT_EQ(vm->procedures()[0], procedures[0]);
-    ASSERT_EQ(vm->functions()[0], functions[0]);
-    ASSERT_EQ(vm->constValues()[0].toString(), constValues[0].toString());
-    ASSERT_EQ(vm->variables()[0], variables[0]->valuePtr());
-    ASSERT_EQ(vm->variables()[1], clone->variableAt(clone->findVariableById("b"))->valuePtr());
-    ASSERT_EQ(vm->lists()[0], lists[0]);
-    ASSERT_EQ(vm->lists()[1], clone->listAt(clone->findListById("d")).get());
+    ASSERT_TRUE(thread);
+    ASSERT_EQ(thread->target(), clone.get());
+    ASSERT_EQ(thread->vm()->bytecode()[0], bytecode[0]);
+    ASSERT_EQ(thread->vm()->procedures()[0], procedures[0]);
+    ASSERT_EQ(thread->vm()->functions()[0], functions[0]);
+    ASSERT_EQ(thread->vm()->constValues()[0].toString(), constValues[0].toString());
+    ASSERT_EQ(thread->vm()->variables()[0], variables[0]->valuePtr());
+    ASSERT_EQ(thread->vm()->variables()[1], clone->variableAt(clone->findVariableById("b"))->valuePtr());
+    ASSERT_EQ(thread->vm()->lists()[0], lists[0]);
+    ASSERT_EQ(thread->vm()->lists()[1], clone->listAt(clone->findListById("d")).get());
 
     EXPECT_CALL(m_engine, deinitClone(clone));
     clone->deleteClone();

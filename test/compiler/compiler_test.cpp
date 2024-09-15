@@ -1,5 +1,6 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/script.h>
+#include <scratchcpp/thread.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/field.h>
@@ -816,18 +817,18 @@ TEST_F(CompilerTest, MultipleTargets)
     auto sprite1 = engine.targetAt(engine.findTarget("Sprite1"));
     auto script = scripts.at(sprite1->greenFlagBlocks().at(0));
     ASSERT_EQ(script->bytecodeVector().size(), 33);
-    auto vm = script->start();
-    ASSERT_EQ(vm->target(), sprite1);
-    ASSERT_EQ(vm->engine(), &engine);
-    ASSERT_EQ(vm->script(), script.get());
+    auto thread = script->start();
+    ASSERT_EQ(thread->target(), sprite1);
+    ASSERT_EQ(thread->engine(), &engine);
+    ASSERT_EQ(thread->script(), script.get());
 
     auto sprite2 = engine.targetAt(engine.findTarget("Balloon1"));
     script = scripts.at(sprite2->greenFlagBlocks().at(0));
     ASSERT_EQ(script->bytecodeVector().size(), 6);
-    vm = script->start();
-    ASSERT_EQ(vm->target(), sprite2);
-    ASSERT_EQ(vm->engine(), &engine);
-    ASSERT_EQ(vm->script(), script.get());
+    thread = script->start();
+    ASSERT_EQ(thread->target(), sprite2);
+    ASSERT_EQ(thread->engine(), &engine);
+    ASSERT_EQ(thread->script(), script.get());
 }
 
 TEST_F(CompilerTest, EdgeActivatedHatPredicate)

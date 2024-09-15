@@ -19,6 +19,7 @@
 #include <scratchcpp/sound.h>
 #include <scratchcpp/monitor.h>
 #include <scratchcpp/rect.h>
+#include <scratchcpp/thread.h>
 #include <cassert>
 #include <iostream>
 
@@ -66,7 +67,7 @@ void Engine::clear()
         m_monitorRemoved(monitor.get(), monitor->impl->iface);
 
     for (auto thread : m_threads) {
-        if (!thread->atEnd())
+        if (!thread->isFinished())
             m_threadAboutToStop(thread.get());
     }
 
@@ -395,7 +396,7 @@ void Engine::stop()
             std::remove_if(
                 m_threads.begin(),
                 m_threads.end(),
-                [](std::shared_ptr<VirtualMachine> thread) {
+                [](std::shared_ptr<Thread> thread) {
                     assert(thread);
                     Target *target = thread->target();
                     assert(target);
@@ -414,7 +415,7 @@ void Engine::stop()
         // If there isn't any active thread, it means the project was stopped from the outside
         // In this case all threads should be removed and the project should be considered stopped
         for (auto thread : m_threads) {
-            if (!thread->atEnd())
+            if (!thread->isFinished())
                 m_threadAboutToStop(thread.get());
         }
 
@@ -428,12 +429,12 @@ void Engine::stop()
     m_stopped();
 }
 
-VirtualMachine *Engine::startScript(std::shared_ptr<Block> topLevelBlock, Target *target)
+Thread *Engine::startScript(std::shared_ptr<Block> topLevelBlock, Target *target)
 {
     return pushThread(topLevelBlock, target).get();
 }
 
-void Engine::broadcast(int index, VirtualMachine *sender)
+void Engine::broadcast(int index, Thread *sender)
 {
     if (index < 0 || index >= m_broadcasts.size())
         return;
@@ -441,26 +442,26 @@ void Engine::broadcast(int index, VirtualMachine *sender)
     broadcastByPtr(m_broadcasts[index].get(), sender);
 }
 
-void Engine::broadcastByPtr(Broadcast *broadcast, VirtualMachine *sender)
+void Engine::broadcastByPtr(Broadcast *broadcast, Thread *sender)
 {
     startHats(HatType::BroadcastReceived, { { HatField::BroadcastOption, broadcast } }, nullptr);
     addBroadcastPromise(broadcast, sender);
 }
 
-void Engine::startBackdropScripts(Broadcast *broadcast, VirtualMachine *sender)
+void Engine::startBackdropScripts(Broadcast *broadcast, Thread *sender)
 {
     startHats(HatType::BackdropChanged, { { HatField::Backdrop, broadcast->name() } }, nullptr);
     addBroadcastPromise(broadcast, sender);
 }
 
-void Engine::stopScript(VirtualMachine *vm)
+void Engine::stopScript(Thread *vm)
 {
     stopThread(vm);
 }
 
-void Engine::stopTarget(Target *target, VirtualMachine *exceptScript)
+void Engine::stopTarget(Target *target, Thread *exceptScript)
 {
-    std::vector<VirtualMachine *> threads;
+    std::vector<Thread *> threads;
 
     for (auto thread : m_threads) {
         if ((thread->target() == target) && (thread.get() != exceptScript))
@@ -485,7 +486,7 @@ void Engine::initClone(std::shared_ptr<Sprite> clone)
 #ifndef NDEBUG
     // Since we're initializing the clone, it shouldn't have any running scripts
     for (auto thread : m_threads)
-        assert(thread->target() != clone.get() || thread->atEnd());
+        assert(thread->target() != clone.get() || thread->isFinished());
 #endif
 
     startHats(HatType::CloneInit, {}, clone.get());
@@ -530,9 +531,9 @@ void Engine::updateMonitors()
             auto script = monitor->script();
 
             if (script) {
-                auto vm = script->start();
-                vm->run();
-                monitor->updateValue(vm.get());
+                auto thread = script->start();
+                thread->run();
+                monitor->updateValue(thread->vm());
             }
         }
     }
@@ -544,7 +545,7 @@ void Engine::step()
     updateFrameDuration();
 
     // Clean up threads that were told to stop during or since the last step
-    m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(), [](std::shared_ptr<VirtualMachine> thread) { return thread->atEnd(); }), m_threads.end());
+    m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(), [](std::shared_ptr<Thread> thread) { return thread->isFinished(); }), m_threads.end());
 
     // Find all edge-activated hats, and add them to threads to be evaluated
     for (auto const &[hatType, edgeActivated] : m_hatEdgeActivated) {
@@ -607,7 +608,7 @@ void Engine::step()
             const auto &scripts = (*broadcastMap)[broadcast];
 
             for (auto script : scripts) {
-                if (std::find_if(m_threads.begin(), m_threads.end(), [script](std::shared_ptr<VirtualMachine> thread) { return thread->script() == script; }) != m_threads.end()) {
+                if (std::find_if(m_threads.begin(), m_threads.end(), [script](std::shared_ptr<Thread> thread) { return thread->script() == script; }) != m_threads.end()) {
                     found = true;
                     break;
                 }
@@ -615,9 +616,9 @@ void Engine::step()
         }
 
         if (!found) {
-            VirtualMachine *th = senderThread;
+            Thread *th = senderThread;
 
-            if (std::find_if(m_threads.begin(), m_threads.end(), [th](std::shared_ptr<VirtualMachine> thread) { return thread.get() == th; }) != m_threads.end())
+            if (std::find_if(m_threads.begin(), m_threads.end(), [th](std::shared_ptr<Thread> thread) { return thread.get() == th; }) != m_threads.end())
                 th->resolvePromise();
 
             resolved.push_back(broadcast);
@@ -660,7 +661,7 @@ sigslot::signal<> &Engine::aboutToRender()
     return m_aboutToRedraw;
 }
 
-sigslot::signal<VirtualMachine *> &Engine::threadAboutToStop()
+sigslot::signal<Thread *> &Engine::threadAboutToStop()
 {
     return m_threadAboutToStop;
 }
@@ -670,7 +671,7 @@ sigslot::signal<> &Engine::stopped()
     return m_stopped;
 }
 
-std::vector<std::shared_ptr<VirtualMachine>> Engine::stepThreads()
+std::vector<std::shared_ptr<Thread>> Engine::stepThreads()
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/develop/src/engine/sequencer.js#L70-L173
     const double WORK_TIME = 0.75 * m_frameDuration.count(); // 75% of frame duration
@@ -678,7 +679,7 @@ std::vector<std::shared_ptr<VirtualMachine>> Engine::stepThreads()
     auto stepStart = m_clock->currentSteadyTime();
 
     size_t numActiveThreads = 1; // greater than zero
-    std::vector<std::shared_ptr<VirtualMachine>> doneThreads;
+    std::vector<std::shared_ptr<Thread>> doneThreads;
 
     auto elapsedTime = [this, &stepStart]() {
         std::chrono::steady_clock::time_point currentTime = m_clock->currentSteadyTime();
@@ -695,20 +696,20 @@ std::vector<std::shared_ptr<VirtualMachine>> Engine::stepThreads()
             m_activeThread = m_threads[i];
 
             // Check if the thread is done so it is not executed
-            if (m_activeThread->atEnd()) {
+            if (m_activeThread->isFinished()) {
                 // Finished with this thread
                 continue;
             }
 
             stepThread(m_activeThread);
 
-            if (!m_activeThread->atEnd())
+            if (!m_activeThread->isFinished())
                 numActiveThreads++;
         }
 
         // Remove threads in m_threadsToStop
         for (auto thread : m_threadsToStop) {
-            if (!thread->atEnd())
+            if (!thread->isFinished())
                 m_threadAboutToStop(thread.get());
 
             m_threads.erase(std::remove(m_threads.begin(), m_threads.end(), thread), m_threads.end());
@@ -721,8 +722,8 @@ std::vector<std::shared_ptr<VirtualMachine>> Engine::stepThreads()
             std::remove_if(
                 m_threads.begin(),
                 m_threads.end(),
-                [&doneThreads](std::shared_ptr<VirtualMachine> thread) {
-                    if (thread->atEnd()) {
+                [&doneThreads](std::shared_ptr<Thread> thread) {
+                    if (thread->isFinished()) {
                         doneThreads.push_back(thread);
                         return true;
                     } else
@@ -738,7 +739,7 @@ std::vector<std::shared_ptr<VirtualMachine>> Engine::stepThreads()
     return doneThreads;
 }
 
-void Engine::stepThread(std::shared_ptr<VirtualMachine> thread)
+void Engine::stepThread(std::shared_ptr<Thread> thread)
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/develop/src/engine/sequencer.js#L179-L276
     thread->run();
@@ -1884,12 +1885,12 @@ void Engine::updateFrameDuration()
     m_frameDuration = std::chrono::milliseconds(static_cast<long>(1000 / m_fps));
 }
 
-void Engine::addRunningScript(std::shared_ptr<VirtualMachine> vm)
+void Engine::addRunningScript(std::shared_ptr<Thread> thread)
 {
-    m_threads.push_back(vm);
+    m_threads.push_back(thread);
 }
 
-void Engine::addBroadcastPromise(Broadcast *broadcast, VirtualMachine *sender)
+void Engine::addBroadcastPromise(Broadcast *broadcast, Thread *sender)
 {
     assert(broadcast);
     assert(sender);
@@ -1897,13 +1898,13 @@ void Engine::addBroadcastPromise(Broadcast *broadcast, VirtualMachine *sender)
     // Resolve broadcast promise if it's already running
     auto it = m_broadcastSenders.find(broadcast);
 
-    if (it != m_broadcastSenders.cend() && std::find_if(m_threads.begin(), m_threads.end(), [&it](std::shared_ptr<VirtualMachine> thread) { return thread.get() == it->second; }) != m_threads.end())
+    if (it != m_broadcastSenders.cend() && std::find_if(m_threads.begin(), m_threads.end(), [&it](std::shared_ptr<Thread> thread) { return thread.get() == it->second; }) != m_threads.end())
         it->second->resolvePromise();
 
     m_broadcastSenders[broadcast] = sender;
 }
 
-std::shared_ptr<VirtualMachine> Engine::pushThread(std::shared_ptr<Block> block, Target *target)
+std::shared_ptr<Thread> Engine::pushThread(std::shared_ptr<Block> block, Target *target)
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1649-L1661
     if (!block) {
@@ -1919,30 +1920,30 @@ std::shared_ptr<VirtualMachine> Engine::pushThread(std::shared_ptr<Block> block,
     }
 
     auto script = m_scripts[block];
-    std::shared_ptr<VirtualMachine> vm = script->start(target);
-    addRunningScript(vm);
-    return vm;
+    std::shared_ptr<Thread> thread = script->start(target);
+    addRunningScript(thread);
+    return thread;
 }
 
-void Engine::stopThread(VirtualMachine *thread)
+void Engine::stopThread(Thread *thread)
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1667-L1672
     assert(thread);
 
-    if (!thread->atEnd())
+    if (!thread->isFinished())
         m_threadAboutToStop(thread);
 
     thread->kill();
 }
 
-std::shared_ptr<VirtualMachine> Engine::restartThread(std::shared_ptr<VirtualMachine> thread)
+std::shared_ptr<Thread> Engine::restartThread(std::shared_ptr<Thread> thread)
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1681C30-L1694
-    std::shared_ptr<VirtualMachine> newThread = thread->script()->start(thread->target());
+    std::shared_ptr<Thread> newThread = thread->script()->start(thread->target());
     auto it = std::find(m_threads.begin(), m_threads.end(), thread);
 
     if (it != m_threads.end()) {
-        if (!thread->atEnd())
+        if (!thread->isFinished())
             m_threadAboutToStop(thread.get());
 
         auto i = it - m_threads.begin();
@@ -1977,11 +1978,10 @@ void Engine::allScriptsByOpcodeDo(HatType hatType, F &&f, Target *optTarget)
         delete targetsPtr;
 }
 
-std::vector<std::shared_ptr<VirtualMachine>>
-Engine::startHats(HatType hatType, const std::unordered_map<HatField, std::variant<std::string, const char *, Entity *>> &optMatchFields, Target *optTarget)
+std::vector<std::shared_ptr<Thread>> Engine::startHats(HatType hatType, const std::unordered_map<HatField, std::variant<std::string, const char *, Entity *>> &optMatchFields, Target *optTarget)
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1818-L1889
-    std::vector<std::shared_ptr<VirtualMachine>> newThreads;
+    std::vector<std::shared_ptr<Thread>> newThreads;
 
     allScriptsByOpcodeDo(
         hatType,
@@ -2036,7 +2036,7 @@ Engine::startHats(HatType hatType, const std::unordered_map<HatField, std::varia
             } else {
                 // Give up if any threads with the top block are running
                 for (auto thread : m_threads) {
-                    if (thread->target() == target && thread->script() == script && !thread->atEnd()) {
+                    if (thread->target() == target && thread->script() == script && !thread->isFinished()) {
                         // Some thread is already running
                         return;
                     }

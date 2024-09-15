@@ -23,6 +23,7 @@ class Stage;
 class Variable;
 class List;
 class Script;
+class Thread;
 class ITimer;
 class KeyEvent;
 class Monitor;
@@ -58,26 +59,26 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void stop() = 0;
 
         /*! Starts a script with the given top level block as the given Target (a sprite or the stage). */
-        virtual VirtualMachine *startScript(std::shared_ptr<Block> topLevelBlock, Target *) = 0;
+        virtual Thread *startScript(std::shared_ptr<Block> topLevelBlock, Target *) = 0;
 
         /*! Starts the scripts of the broadcast with the given index. */
-        virtual void broadcast(int index, VirtualMachine *sender) = 0;
+        virtual void broadcast(int index, Thread *sender) = 0;
 
         /*! Starts the scripts of the given broadcast. */
-        virtual void broadcastByPtr(Broadcast *broadcast, VirtualMachine *sender) = 0;
+        virtual void broadcastByPtr(Broadcast *broadcast, Thread *sender) = 0;
 
         /*! Starts the "when backdrop switches to" scripts for the given backdrop broadcast. */
-        virtual void startBackdropScripts(Broadcast *broadcast, VirtualMachine *sender) = 0;
+        virtual void startBackdropScripts(Broadcast *broadcast, Thread *sender) = 0;
 
         /*! Stops the given script. */
-        virtual void stopScript(VirtualMachine *vm) = 0;
+        virtual void stopScript(Thread *vm) = 0;
 
         /*!
          * Stops all scripts in the given target.
          * \param[in] target The Target to stop.
          * \param[in] exceptScript Sets this parameter to stop all scripts except the given script.
          */
-        virtual void stopTarget(Target *target, VirtualMachine *exceptScript) = 0;
+        virtual void stopTarget(Target *target, Thread *exceptScript) = 0;
 
         /*! Calls the "when I start as a clone" blocks of the given sprite. */
         virtual void initClone(std::shared_ptr<Sprite> clone) = 0;
@@ -121,7 +122,7 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual sigslot::signal<> &aboutToRender() = 0;
 
         /*! Emits when a script is about to stop. */
-        virtual sigslot::signal<VirtualMachine *> &threadAboutToStop() = 0;
+        virtual sigslot::signal<Thread *> &threadAboutToStop() = 0;
 
         /*! Emits when the project is stopped by calling stop(). */
         virtual sigslot::signal<> &stopped() = 0;

@@ -13,13 +13,14 @@ class VirtualMachine;
 class Target;
 class IEngine;
 class Script;
+class Thread;
 class Value;
 class List;
 class IRandomGenerator;
 
 struct VirtualMachinePrivate
 {
-        VirtualMachinePrivate(VirtualMachine *vm, Target *target, IEngine *engine, Script *script);
+        VirtualMachinePrivate(VirtualMachine *vm, Target *target, IEngine *engine, Script *script, Thread *thread);
         VirtualMachinePrivate(const VirtualMachinePrivate &) = delete;
         ~VirtualMachinePrivate();
 
@@ -41,6 +42,7 @@ struct VirtualMachinePrivate
         Target *target = nullptr;
         IEngine *engine = nullptr;
         Script *script = nullptr;
+        Thread *thread = nullptr;
         unsigned int *pos = nullptr;
         unsigned int *checkpoint = nullptr;
         bool running = false;

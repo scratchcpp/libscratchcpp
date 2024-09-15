@@ -110,11 +110,12 @@ const unsigned int VirtualMachinePrivate::instruction_arg_count[] = {
     0  // OP_WARP
 };
 
-VirtualMachinePrivate::VirtualMachinePrivate(VirtualMachine *vm, Target *target, IEngine *engine, Script *script) :
+VirtualMachinePrivate::VirtualMachinePrivate(VirtualMachine *vm, Target *target, IEngine *engine, Script *script, Thread *thread) :
     vm(vm),
     target(target),
     engine(engine),
-    script(script)
+    script(script),
+    thread(thread)
 {
     regsVector.reserve(1024);
     for (int i = 0; i < 1024; i++)

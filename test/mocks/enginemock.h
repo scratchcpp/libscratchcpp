@@ -16,12 +16,12 @@ class EngineMock : public IEngine
 
         MOCK_METHOD(void, start, (), (override));
         MOCK_METHOD(void, stop, (), (override));
-        MOCK_METHOD(VirtualMachine *, startScript, (std::shared_ptr<Block>, Target *), (override));
-        MOCK_METHOD(void, broadcast, (int, VirtualMachine *), (override));
-        MOCK_METHOD(void, broadcastByPtr, (Broadcast *, VirtualMachine *), (override));
-        MOCK_METHOD(void, startBackdropScripts, (Broadcast *, VirtualMachine *), (override));
-        MOCK_METHOD(void, stopScript, (VirtualMachine *), (override));
-        MOCK_METHOD(void, stopTarget, (Target *, VirtualMachine *), (override));
+        MOCK_METHOD(Thread *, startScript, (std::shared_ptr<Block>, Target *), (override));
+        MOCK_METHOD(void, broadcast, (int, Thread *), (override));
+        MOCK_METHOD(void, broadcastByPtr, (Broadcast *, Thread *), (override));
+        MOCK_METHOD(void, startBackdropScripts, (Broadcast *, Thread *), (override));
+        MOCK_METHOD(void, stopScript, (Thread *), (override));
+        MOCK_METHOD(void, stopTarget, (Target *, Thread *), (override));
         MOCK_METHOD(void, initClone, (std::shared_ptr<Sprite>), (override));
         MOCK_METHOD(void, deinitClone, (std::shared_ptr<Sprite>), (override));
 
@@ -36,7 +36,7 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, stopEventLoop, (), (override));
 
         MOCK_METHOD(sigslot::signal<> &, aboutToRender, (), (override));
-        MOCK_METHOD(sigslot::signal<VirtualMachine *> &, threadAboutToStop, (), (override));
+        MOCK_METHOD(sigslot::signal<Thread *> &, threadAboutToStop, (), (override));
         MOCK_METHOD(sigslot::signal<> &, stopped, (), (override));
 
         MOCK_METHOD(bool, isRunning, (), (const, override));

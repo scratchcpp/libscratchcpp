@@ -418,7 +418,7 @@ TEST(VirtualMachineTest, OP_RANDOM)
     static unsigned int bytecode8[] = { OP_START, OP_CONST, 6, OP_CONST, 7, OP_RANDOM, OP_HALT };
     static Value constValues[] = { -45, 12, 6.05, -78.686, "-45", "12", "6.05", "-78.686" };
 
-    VirtualMachinePrivate vm(nullptr, nullptr, nullptr, nullptr);
+    VirtualMachinePrivate vm(nullptr, nullptr, nullptr, nullptr, nullptr);
     vm.constValues = constValues;
 
     RandomGeneratorMock rng;

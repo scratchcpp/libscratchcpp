@@ -7,6 +7,7 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/stage.h>
+#include <scratchcpp/thread.h>
 #include <iostream>
 
 #include "script_p.h"
@@ -64,7 +65,8 @@ bool Script::runHatPredicate(Target *target)
     if (!target || !impl->engine || impl->hatPredicateBytecodeVector.empty())
         return false;
 
-    auto vm = std::make_shared<VirtualMachine>(target, impl->engine, this);
+    auto thread = std::make_shared<Thread>(target, impl->engine, this);
+    VirtualMachine *vm = thread->vm();
     vm->setBytecode(impl->hatPredicateBytecodeVector.data());
     vm->setConstValues(impl->constValues);
     vm->setFunctions(getFunctions());
@@ -80,15 +82,16 @@ bool Script::runHatPredicate(Target *target)
 }
 
 /*! Starts the script (creates a virtual machine). */
-std::shared_ptr<VirtualMachine> Script::start()
+std::shared_ptr<Thread> Script::start()
 {
     return start(impl->target);
 }
 
 /*! Starts the script (creates a virtual machine) as the given target (might be a clone). */
-std::shared_ptr<VirtualMachine> Script::start(Target *target)
+std::shared_ptr<Thread> Script::start(Target *target)
 {
-    auto vm = std::make_shared<VirtualMachine>(target, impl->engine, this);
+    auto thread = std::make_shared<Thread>(target, impl->engine, this);
+    VirtualMachine *vm = thread->vm();
     vm->setBytecode(impl->bytecode);
     vm->setProcedures(impl->procedures);
     vm->setFunctions(getFunctions());
@@ -105,7 +108,7 @@ std::shared_ptr<VirtualMachine> Script::start(Target *target)
             std::cout << "warning: a clone tried to start a script of another target (this is a bug in libscratchcpp or in your code!)" << std::endl;
             vm->setVariables(impl->variableValues.data());
             vm->setLists(impl->lists.data());
-            return vm;
+            return thread;
         }
 
         // Use internal variables and lists from the clone
@@ -145,7 +148,7 @@ std::shared_ptr<VirtualMachine> Script::start(Target *target)
         vm->setLists(impl->lists.data());
     }
 
-    return vm;
+    return thread;
 }
 
 /*! Sets the list of procedures (custom blocks). */

@@ -20,6 +20,7 @@ namespace libscratchcpp
 class Entity;
 class IClock;
 class IAudioEngine;
+class Thread;
 
 class Engine : public IEngine
 {
@@ -34,12 +35,12 @@ class Engine : public IEngine
 
         void start() override;
         void stop() override;
-        VirtualMachine *startScript(std::shared_ptr<Block> topLevelBlock, Target *target) override;
-        void broadcast(int index, VirtualMachine *sender) override;
-        void broadcastByPtr(Broadcast *broadcast, VirtualMachine *sender) override;
-        void startBackdropScripts(Broadcast *broadcast, VirtualMachine *sender) override;
-        void stopScript(VirtualMachine *vm) override;
-        void stopTarget(Target *target, VirtualMachine *exceptScript) override;
+        Thread *startScript(std::shared_ptr<Block> topLevelBlock, Target *target) override;
+        void broadcast(int index, Thread *sender) override;
+        void broadcastByPtr(Broadcast *broadcast, Thread *sender) override;
+        void startBackdropScripts(Broadcast *broadcast, Thread *sender) override;
+        void stopScript(Thread *vm) override;
+        void stopTarget(Target *target, Thread *exceptScript) override;
         void initClone(std::shared_ptr<Sprite> clone) override;
         void deinitClone(std::shared_ptr<Sprite> clone) override;
 
@@ -54,7 +55,7 @@ class Engine : public IEngine
         void stopEventLoop() override;
 
         sigslot::signal<> &aboutToRender() override;
-        sigslot::signal<VirtualMachine *> &threadAboutToStop() override;
+        sigslot::signal<Thread *> &threadAboutToStop() override;
         sigslot::signal<> &stopped() override;
 
         bool isRunning() const override;
@@ -192,8 +193,8 @@ class Engine : public IEngine
             WhenGreaterThanMenu
         };
 
-        std::vector<std::shared_ptr<VirtualMachine>> stepThreads();
-        void stepThread(std::shared_ptr<VirtualMachine> thread);
+        std::vector<std::shared_ptr<Thread>> stepThreads();
+        void stepThread(std::shared_ptr<Thread> thread);
         void eventLoop(bool untilProjectStops = false);
         void finalize();
         void deleteClones();
@@ -215,19 +216,18 @@ class Engine : public IEngine
         void updateSpriteLayerOrder();
 
         void updateFrameDuration();
-        void addRunningScript(std::shared_ptr<VirtualMachine> vm);
+        void addRunningScript(std::shared_ptr<Thread> thread);
 
-        void addBroadcastPromise(Broadcast *broadcast, VirtualMachine *sender);
+        void addBroadcastPromise(Broadcast *broadcast, Thread *sender);
 
-        std::shared_ptr<VirtualMachine> pushThread(std::shared_ptr<Block> block, Target *target);
-        void stopThread(VirtualMachine *thread);
-        std::shared_ptr<VirtualMachine> restartThread(std::shared_ptr<VirtualMachine> thread);
+        std::shared_ptr<Thread> pushThread(std::shared_ptr<Block> block, Target *target);
+        void stopThread(Thread *thread);
+        std::shared_ptr<Thread> restartThread(std::shared_ptr<Thread> thread);
 
         template<typename F>
         void allScriptsByOpcodeDo(HatType hatType, F &&f, Target *optTarget);
 
-        std::vector<std::shared_ptr<VirtualMachine>>
-        startHats(HatType hatType, const std::unordered_map<HatField, std::variant<std::string, const char *, Entity *>> &optMatchFields, Target *optTarget);
+        std::vector<std::shared_ptr<Thread>> startHats(HatType hatType, const std::unordered_map<HatField, std::variant<std::string, const char *, Entity *>> &optMatchFields, Target *optTarget);
 
         static const std::unordered_map<HatType, bool> m_hatRestartExistingThreads; // used to check whether a hat should restart existing threads
         static const std::unordered_map<HatType, bool> m_hatEdgeActivated;          // used to check whether a hat is edge-activated (runs when a predicate becomes true)
@@ -237,13 +237,13 @@ class Engine : public IEngine
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_broadcastMap;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_backdropBroadcastMap;
-        std::unordered_map<Broadcast *, VirtualMachine *> m_broadcastSenders; // used for resolving broadcast promises
+        std::unordered_map<Broadcast *, Thread *> m_broadcastSenders; // used for resolving broadcast promises
         std::vector<std::shared_ptr<Monitor>> m_monitors;
         std::vector<std::string> m_extensions;
         std::vector<Target *> m_executableTargets; // sorted by layer (reverse order of execution)
-        std::vector<std::shared_ptr<VirtualMachine>> m_threads;
-        std::vector<std::shared_ptr<VirtualMachine>> m_threadsToStop;
-        std::shared_ptr<VirtualMachine> m_activeThread;
+        std::vector<std::shared_ptr<Thread>> m_threads;
+        std::vector<std::shared_ptr<Thread>> m_threadsToStop;
+        std::shared_ptr<Thread> m_activeThread;
         std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> m_scripts;
         std::vector<BlockFunc> m_functions;
         std::recursive_mutex m_eventLoopMutex;
@@ -282,7 +282,7 @@ class Engine : public IEngine
         bool m_frameActivity = false;
         bool m_redrawRequested = false;
         sigslot::signal<> m_aboutToRedraw;
-        sigslot::signal<VirtualMachine *> m_threadAboutToStop;
+        sigslot::signal<Thread *> m_threadAboutToStop;
         sigslot::signal<> m_stopped;
         bool m_stopEventLoop = false;
         std::mutex m_stopEventLoopMutex;

@@ -9,6 +9,9 @@ target_sources(scratchcpp
     script.cpp
     script_p.cpp
     script_p.h
+    thread.cpp
+    thread_p.cpp
+    thread_p.h
     internal/engine.cpp
     internal/engine.h
     internal/clock.cpp
