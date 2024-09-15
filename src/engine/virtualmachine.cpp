@@ -10,13 +10,13 @@ using namespace vm;
 
 /*! Constructs VirtualMachine. */
 VirtualMachine::VirtualMachine() :
-    VirtualMachine(nullptr, nullptr, nullptr)
+    VirtualMachine(nullptr, nullptr, nullptr, nullptr)
 {
 }
 
 /*! \copydoc VirtualMachine() */
-VirtualMachine::VirtualMachine(Target *target, IEngine *engine, Script *script) :
-    impl(spimpl::make_unique_impl<VirtualMachinePrivate>(this, target, engine, script))
+VirtualMachine::VirtualMachine(Target *target, IEngine *engine, Script *script, Thread *thread) :
+    impl(spimpl::make_unique_impl<VirtualMachinePrivate>(this, target, engine, script, thread))
 {
 }
 
@@ -135,6 +135,12 @@ IEngine *VirtualMachine::engine() const
 Script *VirtualMachine::script() const
 {
     return impl->script;
+}
+
+/*! Returns the Thread this VM belongs to. */
+Thread *VirtualMachine::thread() const
+{
+    return impl->thread;
 }
 
 /*! Returns the register at the given index with the given argument (register) count. */

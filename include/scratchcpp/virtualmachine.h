@@ -88,6 +88,7 @@ enum Opcode
 class Target;
 class IEngine;
 class Script;
+class Thread;
 class List;
 
 /*! \brief The VirtualMachine class is a virtual machine for compiled Scratch scripts. */
@@ -95,7 +96,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
 {
     public:
         VirtualMachine();
-        VirtualMachine(Target *target, IEngine *engine, Script *script);
+        VirtualMachine(Target *target, IEngine *engine, Script *script, Thread *thread = nullptr);
         VirtualMachine(const VirtualMachine &) = delete;
 
         void setProcedures(unsigned int **procedures);
@@ -121,6 +122,7 @@ class LIBSCRATCHCPP_EXPORT VirtualMachine
         Target *target() const;
         IEngine *engine() const;
         Script *script() const;
+        Thread *thread() const;
 
         const Value *getInput(unsigned int index, unsigned int argCount) const;
 
