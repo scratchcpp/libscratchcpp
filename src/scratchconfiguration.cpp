@@ -9,18 +9,16 @@
 
 using namespace libscratchcpp;
 
-std::unique_ptr<ScratchConfigurationPrivate> ScratchConfiguration::impl = std::make_unique<ScratchConfigurationPrivate>();
-
 /*! Registers the given extension. */
 void ScratchConfiguration::registerExtension(std::shared_ptr<IExtension> extension)
 {
-    impl->registerExtension(extension);
+    getImpl()->registerExtension(extension);
 }
 
 /*! Returns the extension with the given name, or nullptr if it isn't registered. */
 IExtension *ScratchConfiguration::getExtension(const std::string &name)
 {
-    return impl->getExtension(name);
+    return getImpl()->getExtension(name);
 }
 
 /*! Registers the given graphics effect. */
@@ -29,21 +27,21 @@ void ScratchConfiguration::registerGraphicsEffect(std::shared_ptr<IGraphicsEffec
     if (!effect)
         return;
 
-    impl->graphicsEffects[effect->name()] = effect;
+    getImpl()->graphicsEffects[effect->name()] = effect;
 }
 
 /*! Removes the given graphics effect. */
 void ScratchConfiguration::removeGraphicsEffect(const std::string &name)
 {
-    impl->graphicsEffects.erase(name);
+    getImpl()->graphicsEffects.erase(name);
 }
 
 /*! Returns the graphics effect with the given name, or nullptr if it isn't registered. */
 IGraphicsEffect *ScratchConfiguration::getGraphicsEffect(const std::string &name)
 {
-    auto it = impl->graphicsEffects.find(name);
+    auto it = getImpl()->graphicsEffects.find(name);
 
-    if (it == impl->graphicsEffects.cend())
+    if (it == getImpl()->graphicsEffects.cend())
         return nullptr;
     else
         return it->second.get();
@@ -76,5 +74,13 @@ int ScratchConfiguration::patchVersion()
 
 const std::vector<std::shared_ptr<IExtension>> ScratchConfiguration::getExtensions()
 {
-    return impl->extensions;
+    return getImpl()->extensions;
+}
+
+std::shared_ptr<ScratchConfigurationPrivate> &ScratchConfiguration::getImpl()
+{
+    if (!impl)
+        impl = std::make_unique<ScratchConfigurationPrivate>();
+
+    return impl;
 }

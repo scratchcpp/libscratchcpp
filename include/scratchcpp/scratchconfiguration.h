@@ -47,8 +47,9 @@ class LIBSCRATCHCPP_EXPORT ScratchConfiguration
 
     private:
         static const std::vector<std::shared_ptr<IExtension>> getExtensions();
+        static std::shared_ptr<ScratchConfigurationPrivate> &getImpl();
 
-        static std::unique_ptr<ScratchConfigurationPrivate> impl;
+        static inline std::shared_ptr<ScratchConfigurationPrivate> impl;
 };
 
 } // namespace libscratchcpp
