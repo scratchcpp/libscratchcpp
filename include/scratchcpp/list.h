@@ -123,7 +123,73 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
             return m_dataPtr->operator[](index);
         }
 
-        std::string toString() const;
+        /*! Joins the list items with spaces or without any separator if there are only digits and stores the result in dst. */
+        inline void toString(std::string &dst) const
+        {
+            dst.clear();
+            veque::veque<std::string> strings;
+            strings.reserve(m_dataPtr->size());
+            bool digits = true;
+
+            for (const auto &item : *m_dataPtr) {
+                strings.push_back(std::string());
+                value_toString(&item, &strings.back());
+
+                if (value_isValidNumber(&item) && !strings.back().empty()) {
+                    double doubleNum = value_toDouble(&item);
+                    long num = value_toLong(&item);
+
+                    if (doubleNum != num) {
+                        digits = false;
+                        break;
+                    }
+
+                    if (num < 0 || num >= 10) {
+                        digits = false;
+                        break;
+                    }
+                } else {
+                    digits = false;
+                    break;
+                }
+            }
+
+            size_t i;
+            std::string s;
+
+            if (digits) {
+                for (i = 0; i < strings.size(); i++)
+                    dst.append(strings[i]);
+
+                for (; i < m_dataPtr->size(); i++) {
+                    value_toString(&m_dataPtr->operator[](i), &s);
+                    dst.append(s);
+                }
+            } else {
+                for (i = 0; i < strings.size(); i++) {
+                    dst.append(strings[i]);
+
+                    if (i + 1 < m_dataPtr->size())
+                        dst.push_back(' ');
+                }
+
+                for (; i < m_dataPtr->size(); i++) {
+                    value_toString(&m_dataPtr->operator[](i), &s);
+                    dst.append(s);
+
+                    if (i + 1 < m_dataPtr->size())
+                        dst.push_back(' ');
+                }
+            }
+        }
+
+        /*! Same as the other method, but returns the result directly. */
+        inline std::string toString() const
+        {
+            std::string ret;
+            toString(ret);
+            return ret;
+        }
 
         std::shared_ptr<List> clone();
 

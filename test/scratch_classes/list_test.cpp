@@ -217,9 +217,14 @@ TEST(ListTest, ArrayIndexOperator)
 TEST(ListTest, ToString)
 {
     List list("", "test list");
+    std::string s;
+    list.toString(s);
+    ASSERT_EQ(s, "");
     ASSERT_EQ(list.toString(), "");
 
     list.append("");
+    list.toString(s);
+    ASSERT_EQ(s, "");
     ASSERT_EQ(list.toString(), "");
 
     list.append("");
@@ -230,6 +235,8 @@ TEST(ListTest, ToString)
     list.append("item1");
     list.append("i t e m 2");
     list.append("item 3");
+    list.toString(s);
+    ASSERT_EQ(s, "item1 i t e m 2 item 3");
     ASSERT_EQ(list.toString(), "item1 i t e m 2 item 3");
 
     list.clear();
@@ -237,29 +244,39 @@ TEST(ListTest, ToString)
     list.append("a ");
     list.append(" b");
     list.append(" c ");
+    list.toString(s);
+    ASSERT_EQ(s, "  a   b  c ");
     ASSERT_EQ(list.toString(), "  a   b  c ");
 
     list.clear();
     list.append("áä");
     list.append("ľ š");
+    list.toString(s);
+    ASSERT_EQ(s, "áä ľ š");
     ASSERT_EQ(list.toString(), "áä ľ š");
 
     list.clear();
     list.append(-2);
     list.append(5);
     list.append(8);
+    list.toString(s);
+    ASSERT_EQ(s, "-2 5 8");
     ASSERT_EQ(list.toString(), "-2 5 8");
 
     list.clear();
     list.append(2);
     list.append(10);
     list.append(8);
+    list.toString(s);
+    ASSERT_EQ(s, "2 10 8");
     ASSERT_EQ(list.toString(), "2 10 8");
 
     list.clear();
     list.append(0);
     list.append(9);
     list.append(8);
+    list.toString(s);
+    ASSERT_EQ(s, "098");
     ASSERT_EQ(list.toString(), "098");
 }
 

@@ -609,7 +609,11 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
     DISPATCH();
 
     OP(READ_LIST) :
-        ADD_RET_VALUE(lists[*++pos]->toString());
+    {
+        std::string s;
+        lists[*++pos]->toString(s);
+        ADD_RET_VALUE(s);
+    }
     DISPATCH();
 
     OP(LIST_APPEND) :
