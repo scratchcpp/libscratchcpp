@@ -64,7 +64,15 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
         inline bool contains(const Value &value) const { return contains(value.data()); }
 
         /*! Clears the list. */
-        inline void clear() { m_size = 0; }
+        inline void clear()
+        {
+            // Keep at least 200,000 items allocated if the list has more
+            constexpr size_t limit = 200000;
+            m_size = 0;
+
+            if (m_dataPtr->size() > limit)
+                reserve(limit);
+        }
 
         /*! Appends an empty item and returns the reference to it. Can be used for custom initialization. */
         inline ValueData &appendEmpty()
