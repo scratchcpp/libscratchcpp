@@ -19,6 +19,7 @@ List::List(const std::string &id, const std::string &name) :
 List::~List()
 {
     clear();
+    reserve(m_size);
 }
 
 /*! Returns the name of the list. */
@@ -61,9 +62,10 @@ void List::setMonitor(Monitor *monitor)
 std::shared_ptr<List> List::clone()
 {
     auto copy = std::make_shared<List>(id(), impl->name);
+    copy->reserve(m_size);
 
-    for (const ValueData &item : *m_dataPtr)
-        copy->append(item);
+    for (size_t i = 0; i < m_size; i++)
+        copy->append(m_dataPtr->operator[](i));
 
     return copy;
 }
