@@ -12,6 +12,13 @@ List::List(const std::string &id, const std::string &name) :
     Entity(id),
     impl(spimpl::make_unique_impl<ListPrivate>(name))
 {
+    m_dataPtr = &impl->data;
+}
+
+/*! Destroys List. */
+List::~List()
+{
+    clear();
 }
 
 /*! Returns the name of the list. */
@@ -50,33 +57,21 @@ void List::setMonitor(Monitor *monitor)
     impl->monitor = monitor;
 }
 
-/*! Returns the index of the given item. */
-long List::indexOf(const Value &value) const
-{
-    auto it = std::find(begin(), end(), value);
-
-    if (it != end())
-        return it - begin();
-    else
-        return -1;
-}
-
-/*! Returns true if the list contains the given item. */
-bool List::contains(const Value &value) const
-{
-    return (indexOf(value) != -1);
-}
-
 /*! Joins the list items with spaces or without any separator if there are only digits. */
 std::string List::toString() const
 {
     std::string ret;
+    veque::veque<std::string> strings;
+    strings.reserve(m_dataPtr->size());
     bool digits = true;
 
-    for (const auto &item : *this) {
-        if (item.isValidNumber() && !item.toString().empty()) {
-            double doubleNum = item.toDouble();
-            long num = item.toLong();
+    for (const auto &item : *m_dataPtr) {
+        strings.push_back(std::string());
+        value_toString(&item, &strings.back());
+
+        if (value_isValidNumber(&item) && !strings.back().empty()) {
+            double doubleNum = value_toDouble(&item);
+            long num = value_toLong(&item);
 
             if (doubleNum != num) {
                 digits = false;
@@ -93,13 +88,30 @@ std::string List::toString() const
         }
     }
 
+    size_t i;
+    std::string s;
+
     if (digits) {
-        for (const auto &item : *this)
-            ret.append(item.toString());
+        for (i = 0; i < strings.size(); i++)
+            ret.append(strings[i]);
+
+        for (; i < m_dataPtr->size(); i++) {
+            value_toString(&m_dataPtr->operator[](i), &s);
+            ret.append(s);
+        }
     } else {
-        for (int i = 0; i < size(); i++) {
-            ret.append(at(i).toString());
-            if (i + 1 < size())
+        for (i = 0; i < strings.size(); i++) {
+            ret.append(strings[i]);
+
+            if (i + 1 < m_dataPtr->size())
+                ret.push_back(' ');
+        }
+
+        for (; i < m_dataPtr->size(); i++) {
+            value_toString(&m_dataPtr->operator[](i), &s);
+            ret.append(s);
+
+            if (i + 1 < m_dataPtr->size())
                 ret.push_back(' ');
         }
     }
@@ -112,8 +124,8 @@ std::shared_ptr<List> List::clone()
 {
     auto copy = std::make_shared<List>(id(), impl->name);
 
-    for (const Value &item : *this)
-        copy->push_back(item);
+    for (const ValueData &item : *m_dataPtr)
+        copy->append(item);
 
     return copy;
 }

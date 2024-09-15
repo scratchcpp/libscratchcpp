@@ -16,13 +16,13 @@ class Monitor;
 class ListPrivate;
 
 /*! \brief The List class represents a Scratch list. */
-class LIBSCRATCHCPP_EXPORT List
-    : public veque::veque<Value>
-    , public Entity
+class LIBSCRATCHCPP_EXPORT List : public Entity
 {
     public:
         List(const std::string &id, const std::string &name);
         List(const List &) = delete;
+
+        ~List();
 
         const std::string &name();
         void setName(const std::string &name);
@@ -33,17 +33,95 @@ class LIBSCRATCHCPP_EXPORT List
         Monitor *monitor() const;
         void setMonitor(Monitor *monitor);
 
-        long indexOf(const Value &value) const;
-        bool contains(const Value &value) const;
+        /*! Returns the list size. */
+        inline size_t size() const { return m_dataPtr->size(); }
+
+        /*! Returns true if the list is empty. */
+        inline bool empty() const { return m_dataPtr->empty(); }
+
+        /*! Returns the index of the given item. */
+        inline size_t indexOf(const ValueData &value) const
+        {
+            for (size_t i = 0; i < m_dataPtr->size(); i++) {
+                if (value_equals(&m_dataPtr->operator[](i), &value))
+                    return i;
+            }
+
+            return -1;
+        }
+
+        /*! Returns the index of the given item. */
+        inline size_t indexOf(const Value &value) const { return indexOf(value.data()); }
+
+        /*! Returns true if the list contains the given item. */
+        inline bool contains(const ValueData &value) const { return (indexOf(value) != -1); }
+
+        /*! Returns true if the list contains the given item. */
+        inline bool contains(const Value &value) const { return contains(value.data()); }
+
+        /*! Clears the list. */
+        inline void clear()
+        {
+            for (ValueData &v : *m_dataPtr)
+                value_free(&v);
+
+            m_dataPtr->clear();
+        }
+
+        /*! Appends an item. */
+        inline void append(const ValueData &value)
+        {
+            m_dataPtr->push_back(ValueData());
+            value_init(&m_dataPtr->back());
+            value_assign_copy(&m_dataPtr->back(), &value);
+        }
+
+        /*! Appends an item. */
+        inline void append(const Value &value) { append(value.data()); }
+
+        /*! Appends an empty item and returns the reference to it. Can be used for custom initialization. */
+        inline ValueData &appendEmpty()
+        {
+            m_dataPtr->push_back(ValueData());
+            value_init(&m_dataPtr->back());
+            return m_dataPtr->back();
+        }
 
         /*! Removes the item at index. */
-        void removeAt(int index) { erase(begin() + index); }
+        inline void removeAt(size_t index)
+        {
+            assert(index >= 0 && index < size());
+            value_free(&m_dataPtr->operator[](index));
+            m_dataPtr->erase(m_dataPtr->begin() + index);
+        }
 
         /*! Inserts an item at index. */
-        void insert(int index, const Value &value) { veque<Value>::insert(begin() + index, value); }
+        inline void insert(size_t index, const ValueData &value)
+        {
+            assert(index >= 0 && index <= size());
+            m_dataPtr->insert(m_dataPtr->begin() + index, ValueData());
+            value_init(&m_dataPtr->operator[](index));
+            value_assign_copy(&m_dataPtr->operator[](index), &value);
+        }
+
+        /*! Inserts an item at index. */
+        inline void insert(size_t index, const Value &value) { insert(index, value.data()); }
 
         /*! Replaces the item at index. */
-        void replace(int index, const Value &value) { at(index) = value; }
+        inline void replace(size_t index, const ValueData &value)
+        {
+            assert(index >= 0 && index < size());
+            value_assign_copy(&m_dataPtr->operator[](index), &value);
+        }
+
+        /*! Replaces the item at index. */
+        inline void replace(size_t index, const Value &value) { replace(index, value.data()); }
+
+        inline ValueData &operator[](size_t index)
+        {
+            assert(index >= 0 && index < size());
+            return m_dataPtr->operator[](index);
+        }
 
         std::string toString() const;
 
@@ -51,6 +129,7 @@ class LIBSCRATCHCPP_EXPORT List
 
     private:
         spimpl::unique_impl_ptr<ListPrivate> impl;
+        veque::veque<ValueData> *m_dataPtr = nullptr; // NOTE: accessing through pointer is faster! (from benchmarks)
 };
 
 } // namespace libscratchcpp

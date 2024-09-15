@@ -496,19 +496,19 @@ TEST(EngineTest, ExecutionOrder)
     auto list = GET_LIST(stage, "order");
     ASSERT_EQ(list->size(), 13);
 
-    ASSERT_EQ((*list)[0].toString(), "Sprite2");
-    ASSERT_EQ((*list)[1].toString(), "Sprite3");
-    ASSERT_EQ((*list)[2].toString(), "Sprite1");
-    ASSERT_EQ((*list)[3].toString(), "Stage");
-    ASSERT_EQ((*list)[4].toString(), "Sprite1 1");
-    ASSERT_EQ((*list)[5].toString(), "Sprite1 2");
-    ASSERT_EQ((*list)[6].toString(), "Sprite1 3");
-    ASSERT_EQ((*list)[7].toString(), "Sprite2 msg");
-    ASSERT_EQ((*list)[8].toString(), "Sprite3 msg");
-    ASSERT_EQ((*list)[9].toString(), "Sprite1 1 msg");
-    ASSERT_EQ((*list)[10].toString(), "Sprite1 2 msg");
-    ASSERT_EQ((*list)[11].toString(), "Sprite1 3 msg");
-    ASSERT_EQ((*list)[12].toString(), "Stage msg");
+    ASSERT_EQ(Value((*list)[0]).toString(), "Sprite2");
+    ASSERT_EQ(Value((*list)[1]).toString(), "Sprite3");
+    ASSERT_EQ(Value((*list)[2]).toString(), "Sprite1");
+    ASSERT_EQ(Value((*list)[3]).toString(), "Stage");
+    ASSERT_EQ(Value((*list)[4]).toString(), "Sprite1 1");
+    ASSERT_EQ(Value((*list)[5]).toString(), "Sprite1 2");
+    ASSERT_EQ(Value((*list)[6]).toString(), "Sprite1 3");
+    ASSERT_EQ(Value((*list)[7]).toString(), "Sprite2 msg");
+    ASSERT_EQ(Value((*list)[8]).toString(), "Sprite3 msg");
+    ASSERT_EQ(Value((*list)[9]).toString(), "Sprite1 1 msg");
+    ASSERT_EQ(Value((*list)[10]).toString(), "Sprite1 2 msg");
+    ASSERT_EQ(Value((*list)[11]).toString(), "Sprite1 3 msg");
+    ASSERT_EQ(Value((*list)[12]).toString(), "Stage msg");
 }
 
 TEST(EngineTest, KeyState)
@@ -1859,9 +1859,9 @@ TEST(EngineTest, Clones)
 
     for (int i = 0; i < list->size(); i++) {
         if (i < 10)
-            ASSERT_EQ((*list)[i].toInt(), 1);
+            ASSERT_EQ(value_toInt(&(*list)[i]), 1);
         else
-            ASSERT_EQ((*list)[i].toInt(), 2);
+            ASSERT_EQ(value_toInt(&(*list)[i]), 2);
     }
 
     ASSERT_LIST(stage, "log2");
@@ -1869,9 +1869,9 @@ TEST(EngineTest, Clones)
 
     for (int i = 0; i < list->size(); i++) {
         if (i < 10)
-            ASSERT_EQ((*list)[i].toInt(), 1);
+            ASSERT_EQ(value_toInt(&(*list)[i]), 1);
         else
-            ASSERT_EQ((*list)[i].toString(), "12");
+            ASSERT_EQ(Value((*list)[i]).toString(), "12");
     }
 }
 

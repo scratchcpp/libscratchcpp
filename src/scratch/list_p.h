@@ -3,6 +3,8 @@
 #pragma once
 
 #include <string>
+#include <scratchcpp/veque.h>
+#include <scratchcpp/valuedata.h>
 
 namespace libscratchcpp
 {
@@ -17,6 +19,7 @@ struct ListPrivate
         std::string name;
         Target *target = nullptr;
         Monitor *monitor = nullptr;
+        veque::veque<ValueData> data;
 };
 
 } // namespace libscratchcpp

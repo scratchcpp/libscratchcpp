@@ -613,7 +613,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
     DISPATCH();
 
     OP(LIST_APPEND) :
-        lists[*++pos]->push_back(*READ_LAST_REG());
+        lists[*++pos]->append(*READ_LAST_REG());
     FREE_REGS(1);
     DISPATCH();
 
@@ -659,7 +659,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
         } else {
             const std::string &str = indexValue->toString();
             if (str == "last") {
-                list->push_back(*READ_REG(0, 2));
+                list->append(*READ_REG(0, 2));
                 index = 0;
             } else if (str == "random") {
                 size_t size = list->size();
@@ -669,7 +669,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
         }
         if ((index != 0) || list->empty()) {
             if (list->empty())
-                list->push_back(*READ_REG(0, 2));
+                list->append(*READ_REG(0, 2));
             else
                 list->insert(index - 1, *READ_REG(0, 2));
         }
@@ -696,7 +696,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
                 index = 0;
         }
         if (index != 0)
-            list->operator[](index - 1) = *READ_REG(1, 2);
+            list->replace(index - 1, *READ_REG(1, 2));
         FREE_REGS(2);
         DISPATCH();
     }
