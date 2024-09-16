@@ -94,7 +94,7 @@ void VariableBlocks::setVarVisible(std::shared_ptr<Variable> var, bool visible, 
         Monitor *monitor = var->monitor();
 
         if (!monitor)
-            monitor = engine->createVariableMonitor(var, "data_variable", "VARIABLE", VARIABLE);
+            monitor = engine->createVariableMonitor(var, "data_variable", "VARIABLE", VARIABLE, &compileVariable);
 
         monitor->setVisible(visible);
     }

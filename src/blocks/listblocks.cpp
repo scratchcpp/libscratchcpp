@@ -148,7 +148,7 @@ void ListBlocks::setListVisible(std::shared_ptr<List> list, bool visible, IEngin
         Monitor *monitor = list->monitor();
 
         if (!monitor)
-            monitor = engine->createListMonitor(list, "data_listcontents", "LIST", LIST);
+            monitor = engine->createListMonitor(list, "data_listcontents", "LIST", LIST, &compileListContents);
 
         monitor->setVisible(visible);
     }

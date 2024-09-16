@@ -312,56 +312,8 @@ void Engine::compile()
     // Compile monitor blocks to bytecode
     std::cout << "Compiling stage monitors..." << std::endl;
 
-    for (auto monitor : m_monitors) {
-        Target *target = monitor->sprite() ? dynamic_cast<Target *>(monitor->sprite()) : stage();
-        Compiler compiler(this, target);
-        auto block = monitor->block();
-        auto section = blockSection(block->opcode());
-        auto container = blockSectionContainer(block->opcode());
-
-        if (container) {
-            MonitorNameFunc nameFunc = container->resolveMonitorNameFunc(block->opcode());
-
-            if (nameFunc)
-                monitor->setName(nameFunc(block.get()));
-
-            MonitorChangeFunc changeFunc = container->resolveMonitorChangeFunc(block->opcode());
-            monitor->setValueChangeFunction(changeFunc);
-        }
-
-        if (section) {
-            auto script = std::make_shared<Script>(target, block, this);
-            monitor->setScript(script);
-            compiler.init();
-            compiler.setBlock(block);
-
-            if (block->compileFunction())
-                block->compile(&compiler);
-            else
-                std::cout << "warning: monitor block doesn't have a compile function: " << block->opcode() << std::endl;
-
-            // Workaround for register leak warning spam: pause the script after getting the monitor value
-            compiler.addFunctionCall([](VirtualMachine *vm) -> unsigned int {
-                vm->stop(false, false, false);
-                return 0;
-            });
-
-            compiler.end();
-
-            script->setBytecode(compiler.bytecode());
-            script->setConstValues(compiler.constValues());
-            script->setVariables(compiler.variables());
-            script->setLists(compiler.lists());
-        } else {
-            std::cout << "warning: unsupported monitor block: " << block->opcode() << std::endl;
-            m_unsupportedBlocks.insert(block->opcode());
-        }
-
-        const auto &unsupportedBlocks = compiler.unsupportedBlocks();
-
-        for (const std::string &opcode : unsupportedBlocks)
-            m_unsupportedBlocks.insert(opcode);
-    }
+    for (auto monitor : m_monitors)
+        compileMonitor(monitor);
 }
 
 void Engine::start()
@@ -1398,7 +1350,7 @@ void Engine::setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitor
     }
 }
 
-Monitor *Engine::createVariableMonitor(std::shared_ptr<Variable> var, const std::string &opcode, const std::string &varFieldName, int varFieldId)
+Monitor *Engine::createVariableMonitor(std::shared_ptr<Variable> var, const std::string &opcode, const std::string &varFieldName, int varFieldId, BlockComp compileFunction)
 {
     if (var->monitor())
         return var->monitor();
@@ -1407,14 +1359,16 @@ Monitor *Engine::createVariableMonitor(std::shared_ptr<Variable> var, const std:
         auto field = std::make_shared<Field>(varFieldName, var->name(), var);
         field->setFieldId(varFieldId);
         monitor->block()->addField(field);
+        monitor->block()->setCompileFunction(compileFunction);
 
         addVarOrListMonitor(monitor, var->target());
         var->setMonitor(monitor.get());
+        compileMonitor(monitor);
         return monitor.get();
     }
 }
 
-Monitor *Engine::createListMonitor(std::shared_ptr<List> list, const std::string &opcode, const std::string &listFieldName, int listFieldId)
+Monitor *Engine::createListMonitor(std::shared_ptr<List> list, const std::string &opcode, const std::string &listFieldName, int listFieldId, BlockComp compileFunction)
 {
     if (list->monitor())
         return list->monitor();
@@ -1423,9 +1377,11 @@ Monitor *Engine::createListMonitor(std::shared_ptr<List> list, const std::string
         auto field = std::make_shared<Field>(listFieldName, list->name(), list);
         field->setFieldId(listFieldId);
         monitor->block()->addField(field);
-        list->setMonitor(monitor.get());
+        monitor->block()->setCompileFunction(compileFunction);
 
         addVarOrListMonitor(monitor, list->target());
+        list->setMonitor(monitor.get());
+        compileMonitor(monitor);
         return monitor.get();
     }
 }
@@ -1781,6 +1737,58 @@ void Engine::setUserAgent(const std::string &agent)
 const std::unordered_set<std::string> &Engine::unsupportedBlocks() const
 {
     return m_unsupportedBlocks;
+}
+
+void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
+{
+    Target *target = monitor->sprite() ? dynamic_cast<Target *>(monitor->sprite()) : stage();
+    Compiler compiler(this, target);
+    auto block = monitor->block();
+    auto section = blockSection(block->opcode());
+    auto container = blockSectionContainer(block->opcode());
+
+    if (container) {
+        MonitorNameFunc nameFunc = container->resolveMonitorNameFunc(block->opcode());
+
+        if (nameFunc)
+            monitor->setName(nameFunc(block.get()));
+
+        MonitorChangeFunc changeFunc = container->resolveMonitorChangeFunc(block->opcode());
+        monitor->setValueChangeFunction(changeFunc);
+    }
+
+    if (section) {
+        auto script = std::make_shared<Script>(target, block, this);
+        monitor->setScript(script);
+        compiler.init();
+        compiler.setBlock(block);
+
+        if (block->compileFunction())
+            block->compile(&compiler);
+        else
+            std::cout << "warning: monitor block doesn't have a compile function: " << block->opcode() << std::endl;
+
+        // Workaround for register leak warning spam: pause the script after getting the monitor value
+        compiler.addFunctionCall([](VirtualMachine *vm) -> unsigned int {
+            vm->stop(false, false, false);
+            return 0;
+        });
+
+        compiler.end();
+
+        script->setBytecode(compiler.bytecode());
+        script->setConstValues(compiler.constValues());
+        script->setVariables(compiler.variables());
+        script->setLists(compiler.lists());
+    } else {
+        std::cout << "warning: unsupported monitor block: " << block->opcode() << std::endl;
+        m_unsupportedBlocks.insert(block->opcode());
+    }
+
+    const auto &unsupportedBlocks = compiler.unsupportedBlocks();
+
+    for (const std::string &opcode : unsupportedBlocks)
+        m_unsupportedBlocks.insert(opcode);
 }
 
 void Engine::finalize()
