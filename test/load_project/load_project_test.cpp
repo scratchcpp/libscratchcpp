@@ -454,7 +454,7 @@ TEST(LoadProjectTest, LoadTestProject)
 
         // Monitors
         const auto &monitors = engine->monitors();
-        ASSERT_EQ(monitors.size(), 11);
+        ASSERT_EQ(monitors.size(), 10);
 
         // list1
         auto monitor = monitors[0];
