@@ -43,7 +43,7 @@ class ListBlocks : public IBlockSection
         static void compileShowList(Compiler *compiler);
         static void compileHideList(Compiler *compiler);
 
-        static void setListVisible(std::shared_ptr<List> list, bool visible);
+        static void setListVisible(std::shared_ptr<List> list, bool visible, IEngine *engine);
 
         static unsigned int showGlobalList(VirtualMachine *vm);
         static unsigned int showList(VirtualMachine *vm);

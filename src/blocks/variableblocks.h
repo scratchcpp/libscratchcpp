@@ -34,7 +34,7 @@ class VariableBlocks : public IBlockSection
         static void compileShowVariable(Compiler *compiler);
         static void compileHideVariable(Compiler *compiler);
 
-        static void setVarVisible(std::shared_ptr<Variable> var, bool visible);
+        static void setVarVisible(std::shared_ptr<Variable> var, bool visible, IEngine *engine);
 
         static unsigned int showGlobalVariable(VirtualMachine *vm);
         static unsigned int showVariable(VirtualMachine *vm);
