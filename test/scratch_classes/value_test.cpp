@@ -285,7 +285,7 @@ TEST(ValueTest, StdStringConstructor)
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
         ASSERT_TRUE(v.isValidNumber());
-        ASSERT_TRUE(v.isInt());
+        ASSERT_FALSE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_TRUE(v.isString());
     }
@@ -299,8 +299,8 @@ TEST(ValueTest, StdStringConstructor)
         ASSERT_FALSE(v.isNegativeInfinity());
         ASSERT_FALSE(v.isNaN());
         ASSERT_FALSE(v.isNumber());
-        ASSERT_TRUE(v.isValidNumber());
-        ASSERT_TRUE(v.isInt());
+        ASSERT_FALSE(v.isValidNumber());
+        ASSERT_FALSE(v.isInt());
         ASSERT_FALSE(v.isBool());
         ASSERT_TRUE(v.isString());
     }
@@ -2534,6 +2534,31 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v3 == v4);
         ASSERT_TRUE(v3 != v4);
+    }
+
+    {
+        Value v1 = " ";
+        Value v2 = "";
+        Value v3 = "0";
+        Value v4 = 0;
+
+        ASSERT_FALSE(v1 == v2);
+        ASSERT_TRUE(v1 != v2);
+
+        ASSERT_FALSE(v1 == v3);
+        ASSERT_TRUE(v1 != v3);
+
+        ASSERT_FALSE(v1 == v4);
+        ASSERT_TRUE(v1 != v4);
+
+        ASSERT_FALSE(v2 == v3);
+        ASSERT_TRUE(v2 != v3);
+
+        ASSERT_FALSE(v2 == v4);
+        ASSERT_TRUE(v2 != v4);
+
+        ASSERT_TRUE(v3 == v4);
+        ASSERT_FALSE(v3 != v4);
     }
 
     {

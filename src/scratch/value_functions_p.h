@@ -232,12 +232,8 @@ extern "C"
         if (ok)
             *ok = false;
 
-        if (!s || *s == '\0') {
-            if (ok)
-                *ok = true;
-
+        if (!s || *s == '\0')
             return 0;
-        }
 
         const size_t len = strlen(s);
         const char *begin = s;
@@ -251,11 +247,8 @@ extern "C"
         while (end > begin && IS_SPACE(*(end - 1)))
             --end;
 
-        if (begin == end) { // All spaces case
-            if (ok)
-                *ok = true;
-            return 0.0;
-        }
+        if (begin == end) // All spaces case
+            return 0;
 
         // Try to convert integer early
         bool isInt = false;
