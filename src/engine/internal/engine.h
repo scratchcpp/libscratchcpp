@@ -36,9 +36,9 @@ class Engine : public IEngine
         void start() override;
         void stop() override;
         Thread *startScript(std::shared_ptr<Block> topLevelBlock, Target *target) override;
-        void broadcast(int index, Thread *sender) override;
-        void broadcastByPtr(Broadcast *broadcast, Thread *sender) override;
-        void startBackdropScripts(Broadcast *broadcast, Thread *sender) override;
+        void broadcast(int index, Thread *sender, bool wait) override;
+        void broadcastByPtr(Broadcast *broadcast, Thread *sender, bool wait) override;
+        void startBackdropScripts(Broadcast *broadcast, Thread *sender, bool wait) override;
         void stopScript(Thread *vm) override;
         void stopTarget(Target *target, Thread *exceptScript) override;
         void initClone(std::shared_ptr<Sprite> clone) override;
@@ -221,7 +221,7 @@ class Engine : public IEngine
         void updateFrameDuration();
         void addRunningScript(std::shared_ptr<Thread> thread);
 
-        void addBroadcastPromise(Broadcast *broadcast, Thread *sender);
+        void addBroadcastPromise(Broadcast *broadcast, Thread *sender, bool wait);
 
         std::shared_ptr<Thread> pushThread(std::shared_ptr<Block> block, Target *target);
         void stopThread(Thread *thread);

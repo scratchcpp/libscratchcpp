@@ -893,7 +893,7 @@ void LooksBlocks::startBackdropScripts(VirtualMachine *vm, bool wait)
 {
     if (Stage *stage = vm->engine()->stage()) {
         if (stage->costumes().size() > 0)
-            vm->engine()->startBackdropScripts(stage->currentCostume()->broadcast(), vm->thread());
+            vm->engine()->startBackdropScripts(stage->currentCostume()->broadcast(), vm->thread(), wait);
     }
 }
 

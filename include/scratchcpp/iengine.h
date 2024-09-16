@@ -62,13 +62,13 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual Thread *startScript(std::shared_ptr<Block> topLevelBlock, Target *) = 0;
 
         /*! Starts the scripts of the broadcast with the given index. */
-        virtual void broadcast(int index, Thread *sender) = 0;
+        virtual void broadcast(int index, Thread *sender, bool wait) = 0;
 
         /*! Starts the scripts of the given broadcast. */
-        virtual void broadcastByPtr(Broadcast *broadcast, Thread *sender) = 0;
+        virtual void broadcastByPtr(Broadcast *broadcast, Thread *sender, bool wait) = 0;
 
         /*! Starts the "when backdrop switches to" scripts for the given backdrop broadcast. */
-        virtual void startBackdropScripts(Broadcast *broadcast, Thread *sender) = 0;
+        virtual void startBackdropScripts(Broadcast *broadcast, Thread *sender, bool wait) = 0;
 
         /*! Stops the given script. */
         virtual void stopScript(Thread *vm) = 0;

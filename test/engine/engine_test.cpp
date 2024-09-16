@@ -2264,14 +2264,14 @@ TEST(EngineTest, StopBeforeStarting)
     ASSERT_TRUE(stage);
 
     Thread fakeThread(nullptr, nullptr, nullptr);
-    engine->broadcast(0, &fakeThread);
+    engine->broadcast(0, &fakeThread, false);
     engine->step();
 
     ASSERT_VAR(stage, "test");
     ASSERT_FALSE(GET_VAR(stage, "test")->value().toBool());
 
     GET_VAR(stage, "test")->setValue(true);
-    engine->broadcast(0, &fakeThread);
+    engine->broadcast(0, &fakeThread, false);
     engine->start();
     engine->step();
     ASSERT_VAR(stage, "test");

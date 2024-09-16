@@ -401,8 +401,8 @@ TEST_F(EventBlocksTest, BroadcastImpl)
     vm->setConstValues(constValues);
 
     EXPECT_CALL(m_engineMock, findBroadcasts("test")).WillOnce(Return(std::vector<int>({ 1, 4 })));
-    EXPECT_CALL(m_engineMock, broadcast(1, &thread));
-    EXPECT_CALL(m_engineMock, broadcast(4, &thread));
+    EXPECT_CALL(m_engineMock, broadcast(1, &thread, false));
+    EXPECT_CALL(m_engineMock, broadcast(4, &thread, false));
 
     vm->setBytecode(bytecode1);
     vm->run();
@@ -451,8 +451,8 @@ TEST_F(EventBlocksTest, BroadcastAndWaitImpl)
     vm->setConstValues(constValues);
 
     EXPECT_CALL(m_engineMock, findBroadcasts("test")).WillOnce(Return(std::vector<int>({ 1, 4 })));
-    EXPECT_CALL(m_engineMock, broadcast(1, &thread));
-    EXPECT_CALL(m_engineMock, broadcast(4, &thread));
+    EXPECT_CALL(m_engineMock, broadcast(1, &thread, true));
+    EXPECT_CALL(m_engineMock, broadcast(4, &thread, true));
 
     vm->setBytecode(bytecode);
     vm->run();

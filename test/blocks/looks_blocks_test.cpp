@@ -1797,7 +1797,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     vm->setConstValues(constValues);
 
     // "backdrop2"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread, false));
     vm->setBytecode(bytecode1);
     vm->run();
 
@@ -1805,7 +1805,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(stage.costumeIndex(), 1);
 
     // 0
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread, false));
     vm->setBytecode(bytecode2);
     vm->run();
 
@@ -1814,7 +1814,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
 
     stage.setCostumeIndex(0);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
 
@@ -1822,7 +1822,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(stage.costumeIndex(), 1);
 
     // 1
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread, false));
     vm->setBytecode(bytecode3);
     vm->run();
 
@@ -1830,7 +1830,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(stage.costumeIndex(), 0);
 
     // 2
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread, false));
     stage.addCostume(std::make_shared<Costume>("2", "b3", "svg"));
     stage.addCostume(std::make_shared<Costume>("test", "b4", "svg"));
     stage.setCostumeIndex(0);
@@ -1842,7 +1842,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(stage.costumeIndex(), 1);
 
     // "2"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread, false));
     stage.setCostumeIndex(0);
 
     vm->setBytecode(bytecode6);
@@ -1852,7 +1852,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // "3"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread, false));
     stage.setCostumeIndex(0);
 
     vm->setBytecode(bytecode7);
@@ -1862,7 +1862,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // NaN
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread, false));
     stage.setCostumeIndex(2);
 
     vm->setBytecode(bytecode8);
@@ -1872,7 +1872,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(stage.costumeIndex(), 0);
 
     // Infinity
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread, false));
     stage.setCostumeIndex(2);
 
     vm->setBytecode(bytecode9);
@@ -1882,7 +1882,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(stage.costumeIndex(), 0);
 
     // -Infinity
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread, false));
     stage.setCostumeIndex(2);
 
     vm->setBytecode(bytecode10);
@@ -1892,7 +1892,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(stage.costumeIndex(), 0);
 
     // ""
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread, false));
     stage.setCostumeIndex(2);
 
     vm->setBytecode(bytecode11);
@@ -1902,7 +1902,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // "   "
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread, false));
     stage.setCostumeIndex(2);
 
     vm->setBytecode(bytecode12);
@@ -1912,21 +1912,21 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // "next backdrop"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread, false));
     vm->setBytecode(bytecode13);
     vm->run();
 
     ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 3);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
 
     ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
 
@@ -1935,7 +1935,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
 
     stage.addCostume(std::make_shared<Costume>("next backdrop", "b5", "svg"));
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
 
@@ -1943,14 +1943,14 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(stage.costumeIndex(), 4);
 
     // "previous backdrop"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread, false));
     vm->setBytecode(bytecode14);
     vm->run();
 
     ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 3);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
 
@@ -1959,7 +1959,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
 
     stage.setCostumeIndex(0);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
 
@@ -1968,7 +1968,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
 
     stage.addCostume(std::make_shared<Costume>("previous backdrop", "b6", "svg"));
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
 
@@ -1979,7 +1979,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     RandomGeneratorMock rng;
     LooksBlocks::rng = &rng;
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread, false));
     EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(3));
     stage.setCostumeIndex(0);
     vm->setBytecode(bytecode15);
@@ -1988,7 +1988,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 3);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &thread, false));
     EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(5));
     vm->reset();
     vm->run();
@@ -1998,7 +1998,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
 
     stage.addCostume(std::make_shared<Costume>("random backdrop", "b7", "svg"));
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(6)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(6)->broadcast(), &thread, false));
     EXPECT_CALL(rng, randint).Times(0);
     vm->reset();
     vm->run();
@@ -2074,7 +2074,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     vm->setConstValues(constValues);
 
     // "backdrop2"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread, true));
     vm->setBytecode(bytecode1);
     vm->run();
 
@@ -2089,7 +2089,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_TRUE(vm->atEnd());
 
     // 0
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread, true));
     vm->setBytecode(bytecode2);
     vm->run();
 
@@ -2105,7 +2105,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 
     stage.setCostumeIndex(0);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread, true));
     vm->reset();
     vm->run();
     vm->resolvePromise();
@@ -2116,7 +2116,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_TRUE(vm->atEnd());
 
     // 1
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread, true));
     vm->setBytecode(bytecode3);
     vm->run();
     vm->resolvePromise();
@@ -2127,7 +2127,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_TRUE(vm->atEnd());
 
     // 2
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread, true));
     stage.addCostume(std::make_shared<Costume>("2", "b3", "svg"));
     stage.addCostume(std::make_shared<Costume>("test", "b4", "svg"));
     stage.setCostumeIndex(0);
@@ -2141,7 +2141,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(stage.costumeIndex(), 1);
 
     // "2"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread, true));
     stage.setCostumeIndex(0);
 
     vm->setBytecode(bytecode6);
@@ -2153,7 +2153,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // "3"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread, true));
     stage.setCostumeIndex(0);
 
     vm->setBytecode(bytecode7);
@@ -2165,7 +2165,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // NaN
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread, true));
     stage.setCostumeIndex(2);
 
     vm->setBytecode(bytecode8);
@@ -2177,7 +2177,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(stage.costumeIndex(), 0);
 
     // Infinity
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread, true));
     stage.setCostumeIndex(2);
 
     vm->setBytecode(bytecode9);
@@ -2189,7 +2189,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(stage.costumeIndex(), 0);
 
     // -Infinity
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread, true));
     stage.setCostumeIndex(2);
 
     vm->setBytecode(bytecode10);
@@ -2201,7 +2201,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(stage.costumeIndex(), 0);
 
     // ""
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread, true));
     stage.setCostumeIndex(2);
 
     vm->setBytecode(bytecode11);
@@ -2213,7 +2213,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // "   "
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread, true));
     stage.setCostumeIndex(2);
 
     vm->setBytecode(bytecode12);
@@ -2225,7 +2225,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(stage.costumeIndex(), 2);
 
     // "next backdrop"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread, true));
     vm->resolvePromise();
     vm->setBytecode(bytecode13);
     vm->run();
@@ -2241,7 +2241,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_TRUE(vm->atEnd());
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread, true));
     vm->reset();
     vm->run();
     vm->resolvePromise();
@@ -2250,7 +2250,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread, true));
     vm->reset();
     vm->run();
     vm->resolvePromise();
@@ -2261,7 +2261,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 
     stage.addCostume(std::make_shared<Costume>("next backdrop", "b5", "svg"));
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &thread, true));
     vm->reset();
     vm->run();
     vm->resolvePromise();
@@ -2271,7 +2271,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(stage.costumeIndex(), 4);
 
     // "previous backdrop"
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread, true));
     vm->resolvePromise();
     vm->setBytecode(bytecode14);
     vm->run();
@@ -2289,7 +2289,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_TRUE(vm->atEnd());
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread, true));
     vm->reset();
     vm->run();
     vm->resolvePromise();
@@ -2300,7 +2300,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 
     stage.setCostumeIndex(0);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(4)->broadcast(), &thread, true));
     vm->reset();
     vm->run();
     vm->resolvePromise();
@@ -2311,7 +2311,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 
     stage.addCostume(std::make_shared<Costume>("previous backdrop", "b6", "svg"));
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &thread, true));
     vm->reset();
     vm->run();
     vm->resolvePromise();
@@ -2324,7 +2324,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     RandomGeneratorMock rng;
     LooksBlocks::rng = &rng;
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread, true));
     EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(3));
     stage.setCostumeIndex(0);
     vm->resolvePromise();
@@ -2336,7 +2336,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 3);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &thread, true));
     EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(5));
     vm->reset();
     vm->run();
@@ -2348,7 +2348,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
 
     stage.addCostume(std::make_shared<Costume>("random backdrop", "b7", "svg"));
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(6)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(6)->broadcast(), &thread, true));
     EXPECT_CALL(rng, randint).Times(0);
     vm->reset();
     vm->run();
@@ -2397,20 +2397,20 @@ TEST_F(LooksBlocksTest, NextBackdropImpl)
     vm->setBytecode(bytecode);
     vm->setFunctions(functions);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread, false));
     vm->run();
 
     ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
 
     ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 2);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
 
@@ -2437,20 +2437,20 @@ TEST_F(LooksBlocksTest, PreviousBackdrop)
     vm->setBytecode(bytecode);
     vm->setFunctions(functions);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread, false));
     vm->run();
 
     ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 1);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(0)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
 
     ASSERT_EQ(vm->registerCount(), 0);
     ASSERT_EQ(stage.costumeIndex(), 0);
 
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
 
@@ -2486,7 +2486,7 @@ TEST_F(LooksBlocksTest, RandomBackdrop)
     stage.addCostume(std::make_shared<Costume>("backdrop3", "b3", "svg"));
 
     EXPECT_CALL(rng, randint(0, 2)).WillOnce(Return(1));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
 
@@ -2496,7 +2496,7 @@ TEST_F(LooksBlocksTest, RandomBackdrop)
     stage.addCostume(std::make_shared<Costume>("backdrop4", "b4", "svg"));
 
     EXPECT_CALL(rng, randint(0, 3)).WillOnce(Return(2));
-    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
 

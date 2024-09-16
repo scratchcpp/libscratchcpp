@@ -181,7 +181,7 @@ unsigned int EventBlocks::broadcast(VirtualMachine *vm)
     std::vector<int> broadcasts = vm->engine()->findBroadcasts(vm->getInput(0, 1)->toString());
 
     for (int index : broadcasts)
-        vm->engine()->broadcast(index, vm->thread());
+        vm->engine()->broadcast(index, vm->thread(), false);
 
     return 1;
 }
@@ -191,7 +191,7 @@ unsigned int EventBlocks::broadcastAndWait(VirtualMachine *vm)
     std::vector<int> broadcasts = vm->engine()->findBroadcasts(vm->getInput(0, 1)->toString());
 
     for (int index : broadcasts)
-        vm->engine()->broadcast(index, vm->thread());
+        vm->engine()->broadcast(index, vm->thread(), true);
 
     vm->promise();
 

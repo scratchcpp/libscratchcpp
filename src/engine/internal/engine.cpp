@@ -384,24 +384,24 @@ Thread *Engine::startScript(std::shared_ptr<Block> topLevelBlock, Target *target
     return pushThread(topLevelBlock, target).get();
 }
 
-void Engine::broadcast(int index, Thread *sender)
+void Engine::broadcast(int index, Thread *sender, bool wait)
 {
     if (index < 0 || index >= m_broadcasts.size())
         return;
 
-    broadcastByPtr(m_broadcasts[index].get(), sender);
+    broadcastByPtr(m_broadcasts[index].get(), sender, wait);
 }
 
-void Engine::broadcastByPtr(Broadcast *broadcast, Thread *sender)
+void Engine::broadcastByPtr(Broadcast *broadcast, Thread *sender, bool wait)
 {
     startHats(HatType::BroadcastReceived, { { HatField::BroadcastOption, broadcast } }, nullptr);
-    addBroadcastPromise(broadcast, sender);
+    addBroadcastPromise(broadcast, sender, wait);
 }
 
-void Engine::startBackdropScripts(Broadcast *broadcast, Thread *sender)
+void Engine::startBackdropScripts(Broadcast *broadcast, Thread *sender, bool wait)
 {
     startHats(HatType::BackdropChanged, { { HatField::Backdrop, broadcast->name() } }, nullptr);
-    addBroadcastPromise(broadcast, sender);
+    addBroadcastPromise(broadcast, sender, wait);
 }
 
 void Engine::stopScript(Thread *vm)
@@ -1868,7 +1868,7 @@ void Engine::addRunningScript(std::shared_ptr<Thread> thread)
     m_threads.push_back(thread);
 }
 
-void Engine::addBroadcastPromise(Broadcast *broadcast, Thread *sender)
+void Engine::addBroadcastPromise(Broadcast *broadcast, Thread *sender, bool wait)
 {
     assert(broadcast);
     assert(sender);
@@ -1879,7 +1879,8 @@ void Engine::addBroadcastPromise(Broadcast *broadcast, Thread *sender)
     if (it != m_broadcastSenders.cend() && std::find_if(m_threads.begin(), m_threads.end(), [&it](std::shared_ptr<Thread> thread) { return thread.get() == it->second; }) != m_threads.end())
         it->second->resolvePromise();
 
-    m_broadcastSenders[broadcast] = sender;
+    if (wait)
+        m_broadcastSenders[broadcast] = sender;
 }
 
 std::shared_ptr<Thread> Engine::pushThread(std::shared_ptr<Block> block, Target *target)

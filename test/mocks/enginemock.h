@@ -17,9 +17,9 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, start, (), (override));
         MOCK_METHOD(void, stop, (), (override));
         MOCK_METHOD(Thread *, startScript, (std::shared_ptr<Block>, Target *), (override));
-        MOCK_METHOD(void, broadcast, (int, Thread *), (override));
-        MOCK_METHOD(void, broadcastByPtr, (Broadcast *, Thread *), (override));
-        MOCK_METHOD(void, startBackdropScripts, (Broadcast *, Thread *), (override));
+        MOCK_METHOD(void, broadcast, (int, Thread *, bool), (override));
+        MOCK_METHOD(void, broadcastByPtr, (Broadcast *, Thread *, bool), (override));
+        MOCK_METHOD(void, startBackdropScripts, (Broadcast *, Thread *, bool), (override));
         MOCK_METHOD(void, stopScript, (Thread *), (override));
         MOCK_METHOD(void, stopTarget, (Target *, Thread *), (override));
         MOCK_METHOD(void, initClone, (std::shared_ptr<Sprite>), (override));
