@@ -149,6 +149,8 @@ class Engine : public IEngine
 
         const std::vector<std::shared_ptr<Monitor>> &monitors() const override;
         void setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors) override;
+        Monitor *createVariableMonitor(std::shared_ptr<Variable> var, const std::string &opcode, const std::string &varFieldName, int varFieldId, BlockComp compileFunction) override;
+        Monitor *createListMonitor(std::shared_ptr<List> list, const std::string &opcode, const std::string &listFieldName, int listFieldId, BlockComp compileFunction) override;
         sigslot::signal<Monitor *> &monitorAdded() override;
         sigslot::signal<Monitor *, IMonitorHandler *> &monitorRemoved() override;
 
@@ -193,13 +195,14 @@ class Engine : public IEngine
             WhenGreaterThanMenu
         };
 
+        void compileMonitor(std::shared_ptr<Monitor> monitor);
+
         std::vector<std::shared_ptr<Thread>> stepThreads();
         void stepThread(std::shared_ptr<Thread> thread);
         void eventLoop(bool untilProjectStops = false);
         void finalize();
         void deleteClones();
         void removeExecutableClones();
-        void createMissingMonitors();
         void addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *target);
         std::shared_ptr<Block> getBlock(const std::string &id, Target *target);
         std::shared_ptr<Variable> getVariable(const std::string &id, Target *target);

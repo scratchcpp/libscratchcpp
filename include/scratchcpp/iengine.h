@@ -360,6 +360,12 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Sets the list of monitors. */
         virtual void setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors) = 0;
 
+        /*! Creates a monitor for the given variable if it's missing and returns it. */
+        virtual Monitor *createVariableMonitor(std::shared_ptr<Variable> var, const std::string &opcode, const std::string &varFieldName, int varFieldId, BlockComp compileFunction) = 0;
+
+        /*! Creates a monitor for the given list if it's missing and returns it. */
+        virtual Monitor *createListMonitor(std::shared_ptr<List> list, const std::string &opcode, const std::string &listFieldName, int listFieldId, BlockComp compileFunction) = 0;
+
         /*! Emits when a monitor is added. */
         virtual sigslot::signal<Monitor *> &monitorAdded() = 0;
 

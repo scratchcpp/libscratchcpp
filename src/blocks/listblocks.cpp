@@ -142,11 +142,15 @@ void ListBlocks::compileHideList(Compiler *compiler)
         compiler->addFunctionCall(&hideList);
 }
 
-void ListBlocks::setListVisible(std::shared_ptr<List> list, bool visible)
+void ListBlocks::setListVisible(std::shared_ptr<List> list, bool visible, IEngine *engine)
 {
     if (list) {
-        assert(list->monitor());
-        list->monitor()->setVisible(visible);
+        Monitor *monitor = list->monitor();
+
+        if (!monitor)
+            monitor = engine->createListMonitor(list, "data_listcontents", "LIST", LIST, &compileListContents);
+
+        monitor->setVisible(visible);
     }
 }
 
@@ -154,7 +158,7 @@ unsigned int ListBlocks::showGlobalList(VirtualMachine *vm)
 {
     if (Stage *target = vm->engine()->stage()) {
         int index = target->findListById(vm->getInput(0, 1)->toString());
-        setListVisible(target->listAt(index), true);
+        setListVisible(target->listAt(index), true, vm->engine());
     }
 
     return 1;
@@ -166,10 +170,10 @@ unsigned int ListBlocks::showList(VirtualMachine *vm)
         if (!target->isStage() && static_cast<Sprite *>(target)->isClone()) {
             Sprite *sprite = static_cast<Sprite *>(target)->cloneSprite(); // use clone root list
             int index = sprite->findListById(vm->getInput(0, 1)->toString());
-            setListVisible(sprite->listAt(index), true);
+            setListVisible(sprite->listAt(index), true, vm->engine());
         } else {
             int index = target->findListById(vm->getInput(0, 1)->toString());
-            setListVisible(target->listAt(index), true);
+            setListVisible(target->listAt(index), true, vm->engine());
         }
     }
 
@@ -180,7 +184,7 @@ unsigned int ListBlocks::hideGlobalList(VirtualMachine *vm)
 {
     if (Stage *target = vm->engine()->stage()) {
         int index = target->findListById(vm->getInput(0, 1)->toString());
-        setListVisible(target->listAt(index), false);
+        setListVisible(target->listAt(index), false, vm->engine());
     }
 
     return 1;
@@ -192,10 +196,10 @@ unsigned int ListBlocks::hideList(VirtualMachine *vm)
         if (!target->isStage() && static_cast<Sprite *>(target)->isClone()) {
             Sprite *sprite = static_cast<Sprite *>(target)->cloneSprite(); // use clone root list
             int index = sprite->findListById(vm->getInput(0, 1)->toString());
-            setListVisible(sprite->listAt(index), false);
+            setListVisible(sprite->listAt(index), false, vm->engine());
         } else {
             int index = target->findListById(vm->getInput(0, 1)->toString());
-            setListVisible(target->listAt(index), false);
+            setListVisible(target->listAt(index), false, vm->engine());
         }
     }
 

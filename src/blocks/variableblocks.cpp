@@ -88,11 +88,15 @@ void VariableBlocks::compileHideVariable(Compiler *compiler)
         compiler->addFunctionCall(&hideVariable);
 }
 
-void VariableBlocks::setVarVisible(std::shared_ptr<Variable> var, bool visible)
+void VariableBlocks::setVarVisible(std::shared_ptr<Variable> var, bool visible, IEngine *engine)
 {
     if (var) {
-        assert(var->monitor());
-        var->monitor()->setVisible(visible);
+        Monitor *monitor = var->monitor();
+
+        if (!monitor)
+            monitor = engine->createVariableMonitor(var, "data_variable", "VARIABLE", VARIABLE, &compileVariable);
+
+        monitor->setVisible(visible);
     }
 }
 
@@ -100,7 +104,7 @@ unsigned int VariableBlocks::showGlobalVariable(VirtualMachine *vm)
 {
     if (Stage *target = vm->engine()->stage()) {
         int index = target->findVariableById(vm->getInput(0, 1)->toString());
-        setVarVisible(target->variableAt(index), true);
+        setVarVisible(target->variableAt(index), true, vm->engine());
     }
 
     return 1;
@@ -112,10 +116,10 @@ unsigned int VariableBlocks::showVariable(VirtualMachine *vm)
         if (!target->isStage() && static_cast<Sprite *>(target)->isClone()) {
             Sprite *sprite = static_cast<Sprite *>(target)->cloneSprite(); // use clone root variable
             int index = sprite->findVariableById(vm->getInput(0, 1)->toString());
-            setVarVisible(sprite->variableAt(index), true);
+            setVarVisible(sprite->variableAt(index), true, vm->engine());
         } else {
             int index = target->findVariableById(vm->getInput(0, 1)->toString());
-            setVarVisible(target->variableAt(index), true);
+            setVarVisible(target->variableAt(index), true, vm->engine());
         }
     }
 
@@ -126,7 +130,7 @@ unsigned int VariableBlocks::hideGlobalVariable(VirtualMachine *vm)
 {
     if (Stage *target = vm->engine()->stage()) {
         int index = target->findVariableById(vm->getInput(0, 1)->toString());
-        setVarVisible(target->variableAt(index), false);
+        setVarVisible(target->variableAt(index), false, vm->engine());
     }
 
     return 1;
@@ -138,10 +142,10 @@ unsigned int VariableBlocks::hideVariable(VirtualMachine *vm)
         if (!target->isStage() && static_cast<Sprite *>(target)->isClone()) {
             Sprite *sprite = static_cast<Sprite *>(target)->cloneSprite(); // use clone root variable
             int index = sprite->findVariableById(vm->getInput(0, 1)->toString());
-            setVarVisible(sprite->variableAt(index), false);
+            setVarVisible(sprite->variableAt(index), false, vm->engine());
         } else {
             int index = target->findVariableById(vm->getInput(0, 1)->toString());
-            setVarVisible(target->variableAt(index), false);
+            setVarVisible(target->variableAt(index), false, vm->engine());
         }
     }
 
