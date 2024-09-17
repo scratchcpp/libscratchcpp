@@ -144,7 +144,7 @@ extern "C"
         return (str1.compare(str2) == 0);
     }
 
-    inline double value_hexToDec(const char *s, int n, bool *ok)
+    inline long value_hexToDec(const char *s, int n, bool *ok)
     {
         if (ok)
             *ok = false;
@@ -159,8 +159,8 @@ extern "C"
             p++;
         }
 
-        double result = 0;
-        auto [ptr, ec] = std::from_chars(s, s + n, result, std::chars_format::hex);
+        long result = 0;
+        auto [ptr, ec] = std::from_chars(s, s + n, result, 16);
 
         if (ec == std::errc{} && ptr == s + n) {
             if (ok)
