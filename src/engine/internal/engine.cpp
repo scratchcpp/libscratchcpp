@@ -1113,6 +1113,10 @@ void Engine::addBackdropChangeScript(std::shared_ptr<Block> hatBlock, int fieldI
     assert(hatBlock->fieldAt(0));
     const std::string &backdropName = hatBlock->fieldAt(0)->value().toString();
     auto backdrop = stage->costumeAt(stage->findCostume(backdropName));
+
+    if (!backdrop)
+        return;
+
     Broadcast *broadcast = backdrop->broadcast();
     assert(broadcast->isBackdropBroadcast());
 
