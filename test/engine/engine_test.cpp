@@ -1742,6 +1742,7 @@ TEST(EngineTest, CreateMissingMonitors)
         ASSERT_EQ(monitor->id(), var->id());
         ASSERT_EQ(monitor->opcode(), "data_variable");
         ASSERT_EQ(monitor->mode(), Monitor::Mode::Default);
+        ASSERT_TRUE(monitor->needsAutoPosition());
         ASSERT_FALSE(monitor->visible());
         ASSERT_EQ(block->fields().size(), 1);
 
@@ -1764,6 +1765,7 @@ TEST(EngineTest, CreateMissingMonitors)
         ASSERT_EQ(monitor->id(), list->id());
         ASSERT_EQ(monitor->opcode(), "data_listcontents");
         ASSERT_EQ(monitor->mode(), Monitor::Mode::Default);
+        ASSERT_TRUE(monitor->needsAutoPosition());
         ASSERT_FALSE(monitor->visible());
         ASSERT_EQ(block->fields().size(), 1);
 

@@ -4,7 +4,6 @@
 #include <scratchcpp/rect.h>
 #include <scratchcpp/virtualmachine.h>
 #include <scratchcpp/script.h>
-#include <scratch/monitor_p.h>
 #include <monitorhandlermock.h>
 #include <randomgeneratormock.h>
 
@@ -20,7 +19,6 @@ using ::testing::_;
 static const int PADDING = 5;
 static const int SCREEN_WIDTH = 400;
 static const int SCREEN_HEIGHT = 300;
-static const int SCREEN_EDGE_BUFFER = 40;
 
 TEST(MonitorTest, Constructors)
 {
@@ -272,36 +270,103 @@ TEST(MonitorTest, Discrete)
     ASSERT_FALSE(monitor.discrete());
 }
 
-TEST(MonitorTest, GetInitialPosition)
+TEST(MonitorTest, AutoPosition_LineUpTopLeft)
 {
-    std::vector<std::shared_ptr<Monitor>> monitors;
+    // https://github.com/scratchfoundation/scratch-gui/blob/875bee35f178411b9149ab766d17b5fb88ddd749/test/unit/reducers/monitor-layout-reducer.test.js#L216-L238
     const int width = 100;
     const int height = 200;
 
-    auto monitor1 = std::make_shared<Monitor>("", "");
-    monitor1->setWidth(PADDING);
-    monitor1->setHeight(height);
-    monitor1->setX(100);
-    monitor1->setY(0);
-    monitors.push_back(monitor1);
+    auto monitor = std::make_shared<Monitor>("", "");
+    monitor->setWidth(width);
+    monitor->setHeight(height);
 
-    auto monitor2 = std::make_shared<Monitor>("", "");
-    monitor2->setWidth(width);
-    monitor2->setHeight(height + PADDING - 100);
-    monitor2->setX(0);
-    monitor2->setY(100);
-    monitors.push_back(monitor2);
+    // Add monitors to right and bottom, but there is a space in the top left
+    std::vector<std::shared_ptr<Monitor>> monitors = { std::make_shared<Monitor>("", ""), std::make_shared<Monitor>("", ""), monitor };
 
-    RandomGeneratorMock rng;
-    MonitorPrivate::rng = &rng;
+    monitors[0]->setX(width + 2 * PADDING);
+    monitors[0]->setY(0);
+    monitors[0]->setWidth(100);
+    monitors[0]->setHeight(height);
 
-    EXPECT_CALL(rng, randintDouble(0, SCREEN_WIDTH / 2.0)).WillOnce(Return(SCREEN_WIDTH / 4.5));
-    EXPECT_CALL(rng, randintDouble(0, SCREEN_HEIGHT - SCREEN_EDGE_BUFFER)).WillOnce(Return(SCREEN_HEIGHT - SCREEN_EDGE_BUFFER * 2.3));
-    Rect rect = Monitor::getInitialPosition(monitors, width, height);
-    ASSERT_EQ(rect.left(), std::ceil(SCREEN_WIDTH / 4.5));
-    ASSERT_EQ(rect.top(), std::ceil(SCREEN_HEIGHT - SCREEN_EDGE_BUFFER * 2.3));
-    ASSERT_EQ(rect.width(), width);
-    ASSERT_EQ(rect.height(), height);
+    monitors[1]->setX(0);
+    monitors[1]->setY(height + 2 * PADDING);
+    monitors[1]->setWidth(width);
+    monitors[1]->setHeight(100);
 
-    MonitorPrivate::rng = nullptr;
+    // Check that the added monitor appears in the space
+    monitor->autoPosition(monitors);
+    ASSERT_EQ(monitor->width(), width);
+    ASSERT_EQ(monitor->height(), height);
+    ASSERT_EQ(monitor->x(), PADDING);
+    ASSERT_EQ(monitor->y(), PADDING);
+    ASSERT_FALSE(monitor->needsAutoPosition());
+}
+
+TEST(MonitorTest, AutoPosition_LineUpLeft)
+{
+    // https://github.com/scratchfoundation/scratch-gui/blob/875bee35f178411b9149ab766d17b5fb88ddd749/test/unit/reducers/monitor-layout-reducer.test.js#L261-L270
+    auto monitor = std::make_shared<Monitor>("", "");
+    monitor->setWidth(20);
+    monitor->setHeight(20);
+
+    const int monitor1EndY = 60;
+
+    // Add a monitor that takes up the upper left corner
+    std::vector<std::shared_ptr<Monitor>> monitors = { std::make_shared<Monitor>("", ""), monitor };
+    monitors[0]->setX(0);
+    monitors[0]->setY(0);
+    monitors[0]->setWidth(100);
+    monitors[0]->setHeight(monitor1EndY);
+
+    // Check that added monitor is under it and lines up left
+    monitor->autoPosition(monitors);
+    ASSERT_EQ(monitor->width(), 20);
+    ASSERT_EQ(monitor->height(), 20);
+    ASSERT_GE(monitor->y(), monitor1EndY + PADDING);
+    ASSERT_FALSE(monitor->needsAutoPosition());
+}
+
+TEST(MonitorTest, LineUpTop)
+{
+    // https://github.com/scratchfoundation/scratch-gui/blob/875bee35f178411b9149ab766d17b5fb88ddd749/test/unit/reducers/monitor-layout-reducer.test.js#L272-L285
+    auto monitor = std::make_shared<Monitor>("", "");
+    monitor->setWidth(20);
+    monitor->setHeight(20);
+
+    const int monitor1EndX = 100;
+
+    // Add a monitor that takes up the whole left side
+    std::vector<std::shared_ptr<Monitor>> monitors = { std::make_shared<Monitor>("", ""), monitor };
+    monitors[0]->setX(0);
+    monitors[0]->setY(0);
+    monitors[0]->setWidth(monitor1EndX);
+    monitors[0]->setHeight(SCREEN_HEIGHT);
+
+    // Check that added monitor is to the right of it and lines up top
+    monitor->autoPosition(monitors);
+    ASSERT_EQ(monitor->width(), 20);
+    ASSERT_EQ(monitor->height(), 20);
+    ASSERT_EQ(monitor->y(), PADDING);
+    ASSERT_GE(monitor->x(), monitor1EndX + PADDING);
+}
+
+TEST(MonitorTest, AutoPosition_NoRoom)
+{
+    // https://github.com/scratchfoundation/scratch-gui/blob/875bee35f178411b9149ab766d17b5fb88ddd749/test/unit/reducers/monitor-layout-reducer.test.js#L287-L302
+    auto monitor = std::make_shared<Monitor>("", "");
+    monitor->setWidth(7);
+    monitor->setHeight(8);
+
+    // Add a monitor that takes up the whole screen
+    std::vector<std::shared_ptr<Monitor>> monitors = { std::make_shared<Monitor>("", ""), monitor };
+    monitors[0]->setX(0);
+    monitors[0]->setY(0);
+    monitors[0]->setWidth(SCREEN_WIDTH);
+    monitors[0]->setHeight(SCREEN_HEIGHT);
+
+    // Check that added monitor exists somewhere (we don't care where)
+    monitor->autoPosition(monitors);
+    ASSERT_EQ(monitor->width(), 7);
+    ASSERT_EQ(monitor->height(), 8);
+    ASSERT_FALSE(monitor->needsAutoPosition());
 }
