@@ -182,6 +182,11 @@ TEST(MonitorTest, X)
     Monitor monitor("", "");
     ASSERT_EQ(monitor.x(), 0);
 
+    MonitorHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    monitor.setInterface(&handler);
+
+    EXPECT_CALL(handler, onXChanged(-78));
     monitor.setX(-78);
     ASSERT_EQ(monitor.x(), -78);
 }
@@ -191,6 +196,11 @@ TEST(MonitorTest, Y)
     Monitor monitor("", "");
     ASSERT_EQ(monitor.y(), 0);
 
+    MonitorHandlerMock handler;
+    EXPECT_CALL(handler, init);
+    monitor.setInterface(&handler);
+
+    EXPECT_CALL(handler, onYChanged(150));
     monitor.setY(150);
     ASSERT_EQ(monitor.y(), 150);
 }

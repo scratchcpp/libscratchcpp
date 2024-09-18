@@ -180,6 +180,9 @@ int Monitor::x() const
 void Monitor::setX(int x)
 {
     impl->x = x;
+
+    if (impl->iface)
+        impl->iface->onXChanged(x);
 }
 
 /*! Returns the monitor's y-coordinate. */
@@ -192,6 +195,9 @@ int Monitor::y() const
 void Monitor::setY(int y)
 {
     impl->y = y;
+
+    if (impl->iface)
+        impl->iface->onYChanged(y);
 }
 
 /*! Returns true if the monitor is visible. */

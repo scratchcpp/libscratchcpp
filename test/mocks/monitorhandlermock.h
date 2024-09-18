@@ -11,5 +11,7 @@ class MonitorHandlerMock : public IMonitorHandler
         MOCK_METHOD(void, init, (Monitor *), (override));
 
         MOCK_METHOD(void, onValueChanged, (const VirtualMachine *), (override));
+        MOCK_METHOD(void, onXChanged, (int), (override));
+        MOCK_METHOD(void, onYChanged, (int), (override));
         MOCK_METHOD(void, onVisibleChanged, (bool), (override));
 };
