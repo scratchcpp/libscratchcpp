@@ -180,6 +180,7 @@ int Monitor::x() const
 void Monitor::setX(int x)
 {
     impl->x = x;
+    impl->needsAutoPosition = false;
 
     if (impl->iface)
         impl->iface->onXChanged(x);
@@ -195,6 +196,7 @@ int Monitor::y() const
 void Monitor::setY(int y)
 {
     impl->y = y;
+    impl->needsAutoPosition = false;
 
     if (impl->iface)
         impl->iface->onYChanged(y);
@@ -249,6 +251,12 @@ bool Monitor::discrete() const
 void Monitor::setDiscrete(bool discrete)
 {
     impl->discrete = discrete;
+}
+
+/*! Returns true if the monitor needs auto positioning. */
+bool Monitor::needsAutoPosition() const
+{
+    return impl->needsAutoPosition;
 }
 
 /*! Returns the initial position of a monitor. */

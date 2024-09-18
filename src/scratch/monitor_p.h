@@ -32,6 +32,7 @@ struct MonitorPrivate
         double sliderMin = 0;
         double sliderMax = 0;
         bool discrete = false;
+        bool needsAutoPosition = true;
         static IRandomGenerator *rng;
 };
 

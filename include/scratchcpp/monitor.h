@@ -86,6 +86,7 @@ class LIBSCRATCHCPP_EXPORT Monitor : public Entity
         void setDiscrete(bool discrete);
 
         static Rect getInitialPosition(const std::vector<std::shared_ptr<Monitor>> &other, int monitorWidth, int monitorHeight);
+        bool needsAutoPosition() const;
 
     private:
         spimpl::unique_impl_ptr<MonitorPrivate> impl;

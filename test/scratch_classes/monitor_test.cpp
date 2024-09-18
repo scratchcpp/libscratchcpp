@@ -29,6 +29,7 @@ TEST(MonitorTest, Constructors)
     ASSERT_EQ(monitor.opcode(), "test");
     ASSERT_TRUE(monitor.block());
     ASSERT_EQ(monitor.block()->opcode(), "test");
+    ASSERT_TRUE(monitor.needsAutoPosition());
 }
 
 TEST(MonitorTest, Id)
@@ -189,6 +190,7 @@ TEST(MonitorTest, X)
     EXPECT_CALL(handler, onXChanged(-78));
     monitor.setX(-78);
     ASSERT_EQ(monitor.x(), -78);
+    ASSERT_FALSE(monitor.needsAutoPosition());
 }
 
 TEST(MonitorTest, Y)
@@ -203,6 +205,7 @@ TEST(MonitorTest, Y)
     EXPECT_CALL(handler, onYChanged(150));
     monitor.setY(150);
     ASSERT_EQ(monitor.y(), 150);
+    ASSERT_FALSE(monitor.needsAutoPosition());
 }
 
 TEST(MonitorTest, Visible)
