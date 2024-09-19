@@ -26,8 +26,8 @@ class MotionBlocksTest : public testing::Test
     public:
         void SetUp() override
         {
-            m_section = std::make_unique<MotionBlocks>();
-            m_section->registerBlocks(&m_engine);
+            m_extension = std::make_unique<MotionBlocks>();
+            m_extension->registerBlocks(&m_engine);
         }
 
         // For any motion block
@@ -88,69 +88,64 @@ class MotionBlocksTest : public testing::Test
             block->addField(field);
         }
 
-        std::unique_ptr<IBlockSection> m_section;
+        std::unique_ptr<IExtension> m_extension;
         EngineMock m_engineMock;
         Engine m_engine;
 };
 
 TEST_F(MotionBlocksTest, Name)
 {
-    ASSERT_EQ(m_section->name(), "Motion");
-}
-
-TEST_F(MotionBlocksTest, CategoryVisible)
-{
-    ASSERT_TRUE(m_section->categoryVisible());
+    ASSERT_EQ(m_extension->name(), "Motion");
 }
 
 TEST_F(MotionBlocksTest, RegisterBlocks)
 {
     // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_movesteps", &MotionBlocks::compileMoveSteps));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_turnright", &MotionBlocks::compileTurnRight));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_turnleft", &MotionBlocks::compileTurnLeft));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_pointindirection", &MotionBlocks::compilePointInDirection));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_pointtowards", &MotionBlocks::compilePointTowards));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_gotoxy", &MotionBlocks::compileGoToXY));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_goto", &MotionBlocks::compileGoTo));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_glidesecstoxy", &MotionBlocks::compileGlideSecsToXY));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_glideto", &MotionBlocks::compileGlideTo));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_changexby", &MotionBlocks::compileChangeXBy));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_setx", &MotionBlocks::compileSetX));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_changeyby", &MotionBlocks::compileChangeYBy));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_sety", &MotionBlocks::compileSetY));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_ifonedgebounce", &MotionBlocks::compileIfOnEdgeBounce));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_setrotationstyle", &MotionBlocks::compileSetRotationStyle));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_xposition", &MotionBlocks::compileXPosition));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_yposition", &MotionBlocks::compileYPosition));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "motion_direction", &MotionBlocks::compileDirection));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_movesteps", &MotionBlocks::compileMoveSteps));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_turnright", &MotionBlocks::compileTurnRight));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_turnleft", &MotionBlocks::compileTurnLeft));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_pointindirection", &MotionBlocks::compilePointInDirection));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_pointtowards", &MotionBlocks::compilePointTowards));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_gotoxy", &MotionBlocks::compileGoToXY));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_goto", &MotionBlocks::compileGoTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_glidesecstoxy", &MotionBlocks::compileGlideSecsToXY));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_glideto", &MotionBlocks::compileGlideTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_changexby", &MotionBlocks::compileChangeXBy));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_setx", &MotionBlocks::compileSetX));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_changeyby", &MotionBlocks::compileChangeYBy));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_sety", &MotionBlocks::compileSetY));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_ifonedgebounce", &MotionBlocks::compileIfOnEdgeBounce));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_setrotationstyle", &MotionBlocks::compileSetRotationStyle));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_xposition", &MotionBlocks::compileXPosition));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_yposition", &MotionBlocks::compileYPosition));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "motion_direction", &MotionBlocks::compileDirection));
 
     // Monitor names
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "motion_xposition", &MotionBlocks::xPositionMonitorName));
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "motion_yposition", &MotionBlocks::yPositionMonitorName));
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "motion_direction", &MotionBlocks::directionMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "motion_xposition", &MotionBlocks::xPositionMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "motion_yposition", &MotionBlocks::yPositionMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "motion_direction", &MotionBlocks::directionMonitorName));
 
     // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "STEPS", MotionBlocks::STEPS));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DEGREES", MotionBlocks::DEGREES));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DIRECTION", MotionBlocks::DIRECTION));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TOWARDS", MotionBlocks::TOWARDS));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "X", MotionBlocks::X));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "Y", MotionBlocks::Y));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TO", MotionBlocks::TO));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SECS", MotionBlocks::SECS));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DX", MotionBlocks::DX));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DY", MotionBlocks::DY));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "STEPS", MotionBlocks::STEPS));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "DEGREES", MotionBlocks::DEGREES));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "DIRECTION", MotionBlocks::DIRECTION));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "TOWARDS", MotionBlocks::TOWARDS));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "X", MotionBlocks::X));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "Y", MotionBlocks::Y));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "TO", MotionBlocks::TO));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "SECS", MotionBlocks::SECS));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "DX", MotionBlocks::DX));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "DY", MotionBlocks::DY));
 
     // Fields
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "STYLE", MotionBlocks::STYLE));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "STYLE", MotionBlocks::STYLE));
 
     // Field values
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "left-right", MotionBlocks::LeftRight));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "don't rotate", MotionBlocks::DoNotRotate));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "all around", MotionBlocks::AllAround));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "left-right", MotionBlocks::LeftRight));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "don't rotate", MotionBlocks::DoNotRotate));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "all around", MotionBlocks::AllAround));
 
-    m_section->registerBlocks(&m_engineMock);
+    m_extension->registerBlocks(&m_engineMock);
 }
 
 TEST_F(MotionBlocksTest, MoveSteps)

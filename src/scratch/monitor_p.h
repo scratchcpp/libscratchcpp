@@ -20,7 +20,7 @@ struct MonitorPrivate
         std::string name;
         Monitor::Mode mode = Monitor::Mode::Default;
         std::shared_ptr<Script> script;
-        std::shared_ptr<IBlockSection> blockSection;
+        IExtension *extension = nullptr;
         std::shared_ptr<Block> block; // Compiler needs shared_ptr
         MonitorChangeFunc changeFunc = nullptr;
         VirtualMachine changeValueVM;

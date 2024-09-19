@@ -15,6 +15,11 @@ void ScratchConfigurationPrivate::registerExtension(std::shared_ptr<IExtension> 
     extensions.push_back(extension);
 }
 
+void ScratchConfigurationPrivate::removeExtension(std::shared_ptr<IExtension> extension)
+{
+    extensions.erase(std::remove(extensions.begin(), extensions.end(), extension), extensions.end());
+}
+
 IExtension *ScratchConfigurationPrivate::getExtension(std::string name)
 {
     for (auto ext : extensions) {

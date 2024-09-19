@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <scratchcpp/iblocksection.h>
+#include <scratchcpp/iextension.h>
 #include <scratchcpp/target.h>
 #include <vector>
 #include <unordered_map>
@@ -17,8 +17,7 @@ class IGraphicsEffect;
 class IRandomGenerator;
 class IClock;
 
-/*! \brief The LooksBlocks class contains the implementation of looks blocks. */
-class LooksBlocks : public IBlockSection
+class LooksBlocks : public IExtension
 {
     public:
         enum Inputs
@@ -59,6 +58,7 @@ class LooksBlocks : public IBlockSection
         };
 
         std::string name() const override;
+        std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
         void onInit(IEngine *engine) override;

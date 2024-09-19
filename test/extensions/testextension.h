@@ -11,9 +11,8 @@ class TestExtension : public IExtension
         std::string name() const override;
         std::string description() const override;
 
-        bool includeByDefault() const override;
-
-        void registerSections(IEngine *engine) override;
+        void registerBlocks(IEngine *engine) override;
+        void onInit(IEngine *engine) override;
 };
 
 } // namespace libscratchcpp

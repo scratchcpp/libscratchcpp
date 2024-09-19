@@ -18,6 +18,11 @@ std::string VariableBlocks::name() const
     return "Variables";
 }
 
+std::string VariableBlocks::description() const
+{
+    return "Variable blocks";
+}
+
 void VariableBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks

@@ -74,7 +74,7 @@ const std::string &Field::valueId() const
 
 /*!
  * Returns the ID that was assigned to the value.
- *  \see IBlockSection::addFieldValue()
+ *  \see IEngine::addFieldValue()
  */
 int Field::specialValueId() const
 {
@@ -83,7 +83,7 @@ int Field::specialValueId() const
 
 /*!
  * Assigns an ID to the value.
- *  \see IBlockSection::addFieldValue()
+ *  \see IEngine::addFieldValue()
  */
 void Field::setSpecialValueId(int newSpecialValueId)
 {

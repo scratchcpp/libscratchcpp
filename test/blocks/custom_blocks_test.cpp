@@ -17,8 +17,8 @@ class CustomBlocksTest : public testing::Test
     public:
         void SetUp() override
         {
-            m_section = std::make_unique<CustomBlocks>();
-            m_section->registerBlocks(&m_engine);
+            m_extension = std::make_unique<CustomBlocks>();
+            m_extension->registerBlocks(&m_engine);
         }
 
         void addPrototypeInput(std::shared_ptr<Block> definitionBlock, std::shared_ptr<Block> prototypeBlock) const
@@ -36,36 +36,31 @@ class CustomBlocksTest : public testing::Test
             block->addInput(input);
         }
 
-        std::unique_ptr<IBlockSection> m_section;
+        std::unique_ptr<IExtension> m_extension;
         EngineMock m_engineMock;
         Engine m_engine;
 };
 
 TEST_F(CustomBlocksTest, Name)
 {
-    ASSERT_EQ(m_section->name(), "Custom blocks");
-}
-
-TEST_F(CustomBlocksTest, CategoryVisible)
-{
-    ASSERT_TRUE(m_section->categoryVisible());
+    ASSERT_EQ(m_extension->name(), "Custom blocks");
 }
 
 TEST_F(CustomBlocksTest, RegisterBlocks)
 {
     // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "procedures_definition", &CustomBlocks::compileDefinition)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "procedures_call", &CustomBlocks::compileCall)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "argument_reporter_boolean", &CustomBlocks::compileArgument)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "argument_reporter_string_number", &CustomBlocks::compileArgument)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "procedures_definition", &CustomBlocks::compileDefinition)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "procedures_call", &CustomBlocks::compileCall)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "argument_reporter_boolean", &CustomBlocks::compileArgument)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "argument_reporter_string_number", &CustomBlocks::compileArgument)).Times(1);
 
     // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "custom_block", CustomBlocks::CUSTOM_BLOCK));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "custom_block", CustomBlocks::CUSTOM_BLOCK));
 
     // Fields
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "VALUE", CustomBlocks::VALUE));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "VALUE", CustomBlocks::VALUE));
 
-    m_section->registerBlocks(&m_engineMock);
+    m_extension->registerBlocks(&m_engineMock);
 }
 
 TEST_F(CustomBlocksTest, CustomBlocks)

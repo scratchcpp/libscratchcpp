@@ -78,18 +78,18 @@ void Monitor::setScript(std::shared_ptr<Script> script)
 }
 
 /*
- * Returns the block section of this monitor.
+ * Returns the extension this monitor belongs to.
  * \note This will return nullptr by default. Add the monitor to a project to set this property.
  */
-std::shared_ptr<IBlockSection> Monitor::blockSection() const
+IExtension *Monitor::extension() const
 {
-    return impl->blockSection;
+    return impl->extension;
 }
 
-/*! Sets the block section of this monitor. */
-void Monitor::setBlockSection(std::shared_ptr<IBlockSection> blockSection)
+/*! Sets the extension this monitor belongs to. */
+void Monitor::setExtension(IExtension *extension)
 {
-    impl->blockSection = blockSection;
+    impl->extension = extension;
 }
 
 /*! Convenience method which calls block()->target(). */

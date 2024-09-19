@@ -27,14 +27,11 @@ class LIBSCRATCHCPP_EXPORT IExtension
         /*! Returns the description of the extension. */
         virtual std::string description() const = 0;
 
-        /*!
-         * Returns true if the extension is hidden from the block palette
-         * and should be available in a Scratch project by default
-         */
-        virtual bool includeByDefault() const { return false; }
+        /*! Override this method to register blocks. */
+        virtual void registerBlocks(IEngine *engine) = 0;
 
-        /*! Registers block sections. \see <a href="blockSections.html">Block sections</a> */
-        virtual void registerSections(IEngine *engine) = 0;
+        /*! This method is called when a project is loaded. */
+        virtual void onInit(IEngine *engine) { }
 };
 
 } // namespace libscratchcpp

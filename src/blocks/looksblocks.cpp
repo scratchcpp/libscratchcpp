@@ -37,6 +37,11 @@ std::string LooksBlocks::name() const
     return "Looks";
 }
 
+std::string LooksBlocks::description() const
+{
+    return name() + " blocks";
+}
+
 void LooksBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks

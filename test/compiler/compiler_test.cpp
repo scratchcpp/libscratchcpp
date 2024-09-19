@@ -9,12 +9,13 @@
 #include <scratchcpp/list.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/scratchconfiguration.h>
 
 #include "project_p.h"
 #include "engine/internal/engine.h"
 #include "internal/scratch3reader.h"
 #include "../common.h"
-#include "testblocksection.h"
+#include "testextension.h"
 
 #define INIT_COMPILER(engineName, compilerName)                                                                                                                                                        \
     Engine engineName;                                                                                                                                                                                 \
@@ -37,9 +38,15 @@ using namespace libscratchcpp;
 class CompilerTest : public testing::Test
 {
     public:
-        void SetUp() override { m_section = std::make_shared<TestBlockSection>(); }
+        void SetUp() override
+        {
+            m_extension = std::make_shared<TestExtension>();
+            ScratchConfiguration::registerExtension(m_extension);
+        }
 
-        std::shared_ptr<IBlockSection> m_section;
+        void TearDown() override { ScratchConfiguration::removeExtension(m_extension); }
+
+        std::shared_ptr<IExtension> m_extension;
 };
 
 TEST_F(CompilerTest, Constructors)
@@ -343,15 +350,14 @@ TEST_F(CompilerTest, AddNoShadowInput)
 TEST_F(CompilerTest, ResolveInput)
 {
     INIT_COMPILER(engine, compiler);
-
-    engine.registerSection(m_section);
+    engine.setExtensions({ "Test" });
 
     auto block = std::make_shared<Block>("a", "test_block1");
     auto input = std::make_shared<Input>("INPUT1", Input::Type::Shadow);
     input->setPrimaryValue("test");
-    input->setInputId(TestBlockSection::INPUT1);
+    input->setInputId(TestExtension::INPUT1);
     block->addInput(input);
-    block->setCompileFunction(&TestBlockSection::compileTestBlock1);
+    block->setCompileFunction(&TestExtension::compileTestBlock1);
 
     compiler.compile(block);
 
@@ -362,19 +368,18 @@ TEST_F(CompilerTest, ResolveInput)
 TEST_F(CompilerTest, ResolveDropdownMenuInput)
 {
     INIT_COMPILER(engine, compiler);
-
-    engine.registerSection(m_section);
+    engine.setExtensions({ "Test" });
 
     auto block = std::make_shared<Block>("a", "test_block1");
     auto input = std::make_shared<Input>("INPUT1", Input::Type::Shadow);
     auto menu = std::make_shared<Block>("a", "test_menu");
     menu->setShadow(true);
     auto optionField = std::make_shared<Field>("OPTION", "test");
-    input->setInputId(TestBlockSection::INPUT1);
+    input->setInputId(TestExtension::INPUT1);
     input->setValueBlock(menu);
     menu->addField(optionField);
     block->addInput(input);
-    block->setCompileFunction(&TestBlockSection::compileTestBlock1);
+    block->setCompileFunction(&TestExtension::compileTestBlock1);
 
     compiler.compile(block);
 
@@ -406,15 +411,14 @@ TEST_F(CompilerTest, AddConstValue)
 TEST_F(CompilerTest, ResolveField)
 {
     INIT_COMPILER(engine, compiler);
-
-    engine.registerSection(m_section);
+    engine.setExtensions({ "Test" });
 
     auto block = std::make_shared<Block>("a", "test_block2");
     auto field = std::make_shared<Field>("FIELD1", "test");
-    field->setFieldId(TestBlockSection::FIELD1);
-    field->setSpecialValueId(TestBlockSection::TestValue);
+    field->setFieldId(TestExtension::FIELD1);
+    field->setSpecialValueId(TestExtension::TestValue);
     block->addField(field);
-    block->setCompileFunction(&TestBlockSection::compileTestBlock2);
+    block->setCompileFunction(&TestExtension::compileTestBlock2);
 
     compiler.compile(block);
 

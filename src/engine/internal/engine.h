@@ -12,8 +12,6 @@
 #include <set>
 #include <variant>
 
-#include "blocksectioncontainer.h"
-
 namespace libscratchcpp
 {
 
@@ -104,19 +102,17 @@ class Engine : public IEngine
         ITimer *timer() const override;
         void setTimer(ITimer *timer);
 
-        void registerSection(std::shared_ptr<IBlockSection> section) override;
-        std::vector<std::shared_ptr<IBlockSection>> registeredSections() const;
         unsigned int functionIndex(BlockFunc f) override;
         const std::vector<BlockFunc> &blockFunctions() const override;
 
-        void addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f) override;
-        void addHatPredicateCompileFunction(IBlockSection *section, const std::string &opcode, HatPredicateCompileFunc f) override;
-        void addMonitorNameFunction(IBlockSection *section, const std::string &opcode, MonitorNameFunc f) override;
-        void addMonitorChangeFunction(IBlockSection *section, const std::string &opcode, MonitorChangeFunc f) override;
-        void addHatBlock(IBlockSection *section, const std::string &opcode) override;
-        void addInput(IBlockSection *section, const std::string &name, int id) override;
-        void addField(IBlockSection *section, const std::string &name, int id) override;
-        void addFieldValue(IBlockSection *section, const std::string &value, int id) override;
+        void addCompileFunction(IExtension *extension, const std::string &opcode, BlockComp f) override;
+        void addHatPredicateCompileFunction(IExtension *extension, const std::string &opcode, HatPredicateCompileFunc f) override;
+        void addMonitorNameFunction(IExtension *extension, const std::string &opcode, MonitorNameFunc f) override;
+        void addMonitorChangeFunction(IExtension *extension, const std::string &opcode, MonitorChangeFunc f) override;
+        void addHatBlock(IExtension *extension, const std::string &opcode) override;
+        void addInput(IExtension *extension, const std::string &name, int id) override;
+        void addField(IExtension *extension, const std::string &name, int id) override;
+        void addFieldValue(IExtension *extension, const std::string &value, int id) override;
 
         const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const override;
         void setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadcasts) override;
@@ -163,9 +159,6 @@ class Engine : public IEngine
 
         const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &scripts() const override;
 
-        BlockSectionContainer *blockSectionContainer(const std::string &opcode) const;
-        BlockSectionContainer *blockSectionContainer(IBlockSection *section) const;
-
         const std::string &userAgent() const override;
         void setUserAgent(const std::string &agent) override;
 
@@ -195,6 +188,16 @@ class Engine : public IEngine
             WhenGreaterThanMenu
         };
 
+        void clearExtensionData();
+        IExtension *blockExtension(const std::string &opcode) const;
+        BlockComp resolveBlockCompileFunc(IExtension *extension, const std::string &opcode) const;
+        HatPredicateCompileFunc resolveHatPredicateCompileFunc(IExtension *extension, const std::string &opcode) const;
+        MonitorNameFunc resolveMonitorNameFunc(IExtension *extension, const std::string &opcode) const;
+        MonitorChangeFunc resolveMonitorChangeFunc(IExtension *extension, const std::string &opcode) const;
+        int resolveInput(IExtension *extension, const std::string &name) const;
+        int resolveField(IExtension *extension, const std::string &name) const;
+        int resolveFieldValue(IExtension *extension, const std::string &value) const;
+
         void compileMonitor(std::shared_ptr<Monitor> monitor);
 
         std::vector<std::shared_ptr<Thread>> stepThreads();
@@ -210,7 +213,6 @@ class Engine : public IEngine
         std::shared_ptr<Broadcast> getBroadcast(const std::string &id);
         std::shared_ptr<Comment> getComment(const std::string &id, Target *target);
         std::shared_ptr<Entity> getEntity(const std::string &id, Target *target);
-        std::shared_ptr<IBlockSection> blockSection(const std::string &opcode) const;
 
         void addHatToMap(std::unordered_map<Target *, std::vector<Script *>> &map, Script *script);
         void addHatField(Script *script, HatField field, int fieldId);
@@ -235,7 +237,6 @@ class Engine : public IEngine
         static const std::unordered_map<HatType, bool> m_hatRestartExistingThreads; // used to check whether a hat should restart existing threads
         static const std::unordered_map<HatType, bool> m_hatEdgeActivated;          // used to check whether a hat is edge-activated (runs when a predicate becomes true)
 
-        std::unordered_map<std::shared_ptr<IBlockSection>, std::unique_ptr<BlockSectionContainer>> m_sections;
         std::vector<std::shared_ptr<Target>> m_targets;
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_broadcastMap;
@@ -251,6 +252,14 @@ class Engine : public IEngine
         std::vector<BlockFunc> m_functions;
         std::recursive_mutex m_eventLoopMutex;
         std::string m_userAgent;
+
+        std::unordered_map<IExtension *, std::unordered_map<std::string, BlockComp>> m_compileFunctions;
+        std::unordered_map<IExtension *, std::unordered_map<std::string, HatPredicateCompileFunc>> m_hatPredicateCompileFunctions;
+        std::unordered_map<IExtension *, std::unordered_map<std::string, MonitorNameFunc>> m_monitorNameFunctions;
+        std::unordered_map<IExtension *, std::unordered_map<std::string, MonitorChangeFunc>> m_monitorChangeFunctions;
+        std::unordered_map<IExtension *, std::unordered_map<std::string, int>> m_inputs;
+        std::unordered_map<IExtension *, std::unordered_map<std::string, int>> m_fields;
+        std::unordered_map<IExtension *, std::unordered_map<std::string, int>> m_fieldValues;
 
         std::unordered_map<Target *, std::vector<Script *>> m_whenTouchingObjectHats;
         std::unordered_map<Target *, std::vector<Script *>> m_greenFlagHats;

@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include <scratchcpp/iblocksection.h>
+#include <scratchcpp/iextension.h>
+#include <memory>
 
 namespace libscratchcpp
 {
@@ -11,7 +12,7 @@ class Compiler;
 class Variable;
 
 /*! \brief The VariableBlocks class contains the implementation of variable blocks. */
-class VariableBlocks : public IBlockSection
+class VariableBlocks : public IExtension
 {
     public:
         enum Inputs
@@ -25,6 +26,7 @@ class VariableBlocks : public IBlockSection
         };
 
         std::string name() const override;
+        std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
 

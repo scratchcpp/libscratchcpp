@@ -30,8 +30,8 @@ class SensingBlocksTest : public testing::Test
     public:
         void SetUp() override
         {
-            m_section = std::make_unique<SensingBlocks>();
-            m_section->registerBlocks(&m_engine);
+            m_extension = std::make_unique<SensingBlocks>();
+            m_extension->registerBlocks(&m_engine);
         }
 
         std::shared_ptr<Block> createSensingCurrentBlock(const std::string &id, const std::string &optionStr, SensingBlocks::FieldValues option)
@@ -100,7 +100,7 @@ class SensingBlocksTest : public testing::Test
             block->addField(field);
         }
 
-        std::unique_ptr<IBlockSection> m_section;
+        std::unique_ptr<IExtension> m_extension;
         EngineMock m_engineMock;
         Engine m_engine;
         TimerMock m_timerMock;
@@ -114,85 +114,80 @@ struct QuestionSpy
 
 TEST_F(SensingBlocksTest, Name)
 {
-    ASSERT_EQ(m_section->name(), "Sensing");
-}
-
-TEST_F(SensingBlocksTest, CategoryVisible)
-{
-    ASSERT_TRUE(m_section->categoryVisible());
+    ASSERT_EQ(m_extension->name(), "Sensing");
 }
 
 TEST_F(SensingBlocksTest, RegisterBlocks)
 {
     // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_touchingobject", &SensingBlocks::compileTouchingObject));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_touchingcolor", &SensingBlocks::compileTouchingColor));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_coloristouchingcolor", &SensingBlocks::compileColorIsTouchingColor));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_distanceto", &SensingBlocks::compileDistanceTo));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_askandwait", &SensingBlocks::compileAskAndWait));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_answer", &SensingBlocks::compileAnswer));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_keypressed", &SensingBlocks::compileKeyPressed));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_mousedown", &SensingBlocks::compileMouseDown));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_mousex", &SensingBlocks::compileMouseX));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_mousey", &SensingBlocks::compileMouseY));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_setdragmode", &SensingBlocks::compileSetDragMode));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_loudness", &SensingBlocks::compileLoudness));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_loud", &SensingBlocks::compileLoud));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_timer", &SensingBlocks::compileTimer));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_resettimer", &SensingBlocks::compileResetTimer));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_of", &SensingBlocks::compileOf));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_current", &SensingBlocks::compileCurrent));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sensing_dayssince2000", &SensingBlocks::compileDaysSince2000));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_touchingobject", &SensingBlocks::compileTouchingObject));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_touchingcolor", &SensingBlocks::compileTouchingColor));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_coloristouchingcolor", &SensingBlocks::compileColorIsTouchingColor));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_distanceto", &SensingBlocks::compileDistanceTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_askandwait", &SensingBlocks::compileAskAndWait));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_answer", &SensingBlocks::compileAnswer));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_keypressed", &SensingBlocks::compileKeyPressed));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_mousedown", &SensingBlocks::compileMouseDown));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_mousex", &SensingBlocks::compileMouseX));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_mousey", &SensingBlocks::compileMouseY));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_setdragmode", &SensingBlocks::compileSetDragMode));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_loudness", &SensingBlocks::compileLoudness));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_loud", &SensingBlocks::compileLoud));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_timer", &SensingBlocks::compileTimer));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_resettimer", &SensingBlocks::compileResetTimer));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_of", &SensingBlocks::compileOf));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_current", &SensingBlocks::compileCurrent));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sensing_dayssince2000", &SensingBlocks::compileDaysSince2000));
 
     // Monitor names
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_mousedown", &SensingBlocks::mouseDownMonitorName));
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_mousex", &SensingBlocks::mouseXMonitorName));
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_mousey", &SensingBlocks::mouseYMonitorName));
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_loudness", &SensingBlocks::loudnessMonitorName));
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_timer", &SensingBlocks::timerMonitorName));
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_current", &SensingBlocks::currentMonitorName));
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sensing_dayssince2000", &SensingBlocks::daysSince2000MonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "sensing_mousedown", &SensingBlocks::mouseDownMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "sensing_mousex", &SensingBlocks::mouseXMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "sensing_mousey", &SensingBlocks::mouseYMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "sensing_loudness", &SensingBlocks::loudnessMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "sensing_timer", &SensingBlocks::timerMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "sensing_current", &SensingBlocks::currentMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "sensing_dayssince2000", &SensingBlocks::daysSince2000MonitorName));
 
     // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TOUCHINGOBJECTMENU", SensingBlocks::TOUCHINGOBJECTMENU));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "COLOR", SensingBlocks::COLOR));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "COLOR2", SensingBlocks::COLOR2));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "QUESTION", SensingBlocks::QUESTION));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "KEY_OPTION", SensingBlocks::KEY_OPTION));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "OBJECT", SensingBlocks::OBJECT));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "TOUCHINGOBJECTMENU", SensingBlocks::TOUCHINGOBJECTMENU));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "COLOR", SensingBlocks::COLOR));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "COLOR2", SensingBlocks::COLOR2));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "DISTANCETOMENU", SensingBlocks::DISTANCETOMENU));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "QUESTION", SensingBlocks::QUESTION));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "KEY_OPTION", SensingBlocks::KEY_OPTION));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "OBJECT", SensingBlocks::OBJECT));
 
     // Fields
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "CURRENTMENU", SensingBlocks::CURRENTMENU));
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "DRAG_MODE", SensingBlocks::DRAG_MODE));
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "PROPERTY", SensingBlocks::PROPERTY));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "CURRENTMENU", SensingBlocks::CURRENTMENU));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "DRAG_MODE", SensingBlocks::DRAG_MODE));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "PROPERTY", SensingBlocks::PROPERTY));
 
     // Field values
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "YEAR", SensingBlocks::YEAR));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "MONTH", SensingBlocks::MONTH));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "DATE", SensingBlocks::DATE));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "DAYOFWEEK", SensingBlocks::DAYOFWEEK));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "HOUR", SensingBlocks::HOUR));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "MINUTE", SensingBlocks::MINUTE));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "SECOND", SensingBlocks::SECOND));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "draggable", SensingBlocks::Draggable));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "not draggable", SensingBlocks::NotDraggable));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "x position", SensingBlocks::XPosition));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "y position", SensingBlocks::YPosition));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "direction", SensingBlocks::Direction));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "costume #", SensingBlocks::CostumeNumber));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "costume name", SensingBlocks::CostumeName));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "size", SensingBlocks::Size));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "volume", SensingBlocks::Volume));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "background #", SensingBlocks::BackdropNumber));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "backdrop #", SensingBlocks::BackdropNumber));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "backdrop name", SensingBlocks::BackdropName));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "YEAR", SensingBlocks::YEAR));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "MONTH", SensingBlocks::MONTH));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "DATE", SensingBlocks::DATE));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "DAYOFWEEK", SensingBlocks::DAYOFWEEK));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "HOUR", SensingBlocks::HOUR));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "MINUTE", SensingBlocks::MINUTE));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "SECOND", SensingBlocks::SECOND));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "draggable", SensingBlocks::Draggable));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "not draggable", SensingBlocks::NotDraggable));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "x position", SensingBlocks::XPosition));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "y position", SensingBlocks::YPosition));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "direction", SensingBlocks::Direction));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "costume #", SensingBlocks::CostumeNumber));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "costume name", SensingBlocks::CostumeName));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "size", SensingBlocks::Size));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "volume", SensingBlocks::Volume));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "background #", SensingBlocks::BackdropNumber));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "backdrop #", SensingBlocks::BackdropNumber));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "backdrop name", SensingBlocks::BackdropName));
 
     // Callbacks
     sigslot::signal<const std::string &> questionAnswered;
     EXPECT_CALL(m_engineMock, questionAnswered()).WillOnce(ReturnRef(questionAnswered));
 
-    m_section->registerBlocks(&m_engineMock);
+    m_extension->registerBlocks(&m_engineMock);
 
     ASSERT_EQ(questionAnswered.slot_count(), 1);
     ASSERT_EQ(questionAnswered.disconnect(&SensingBlocks::onAnswer), 1);

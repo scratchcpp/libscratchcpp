@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <scratchcpp/iblocksection.h>
+#include <scratchcpp/iextension.h>
 #include <unordered_map>
 #include <chrono>
 
@@ -14,7 +14,7 @@ class VirtualMachine;
 class IClock;
 
 /*! \brief The ControlBlocks class contains the implementation of control blocks. */
-class ControlBlocks : public IBlockSection
+class ControlBlocks : public IExtension
 {
     public:
         enum Inputs
@@ -42,6 +42,7 @@ class ControlBlocks : public IBlockSection
         };
 
         std::string name() const override;
+        std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
 

@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include "scratchconfiguration_p.h"
-#include "blocks/standardblocks.h"
 
 using namespace libscratchcpp;
 
@@ -13,6 +12,12 @@ using namespace libscratchcpp;
 void ScratchConfiguration::registerExtension(std::shared_ptr<IExtension> extension)
 {
     getImpl()->registerExtension(extension);
+}
+
+/*! Unregisters the given extension. */
+void ScratchConfiguration::removeExtension(std::shared_ptr<IExtension> extension)
+{
+    getImpl()->removeExtension(extension);
 }
 
 /*! Returns the extension with the given name, or nullptr if it isn't registered. */

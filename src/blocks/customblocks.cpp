@@ -15,6 +15,11 @@ std::string CustomBlocks::name() const
     return "Custom blocks";
 }
 
+std::string CustomBlocks::description() const
+{
+    return name();
+}
+
 void CustomBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks

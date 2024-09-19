@@ -4,16 +4,21 @@
 #include <scratchcpp/field.h>
 #include <gtest/gtest.h>
 
-#include "testblocksection.h"
+#include "testextension.h"
 
 using namespace libscratchcpp;
 
-std::string TestBlockSection::name() const
+std::string TestExtension::name() const
 {
     return "Test";
 }
 
-void TestBlockSection::registerBlocks(IEngine *engine)
+std::string TestExtension::description() const
+{
+    return "";
+}
+
+void TestExtension::registerBlocks(IEngine *engine)
 {
     engine->addInput(this, "INPUT1", INPUT1);
 
@@ -25,7 +30,7 @@ void TestBlockSection::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "test_block2", &compileTestBlock2);
 }
 
-void TestBlockSection::compileTestBlock1(Compiler *compiler)
+void TestExtension::compileTestBlock1(Compiler *compiler)
 {
     compiler->addInput(INPUT1);
     ASSERT_EQ(compiler->inputBlock(INPUT1), compiler->input(INPUT1)->valueBlock());
@@ -33,7 +38,7 @@ void TestBlockSection::compileTestBlock1(Compiler *compiler)
     compiler->addInstruction(vm::OP_PRINT);
 }
 
-void TestBlockSection::compileTestBlock2(Compiler *compiler)
+void TestExtension::compileTestBlock2(Compiler *compiler)
 {
     int id = compiler->field(FIELD1)->specialValueId();
 

@@ -24,5 +24,5 @@ int main(int argc, char **argv) {
 The \link libscratchcpp::Project::run() run() \endlink method runs an event loop which stops after all scripts finish.
 
 For CLI project players, using \link libscratchcpp::Project::run() run() \endlink is enough. If you are developing
-a GUI project player and need to receive input events such as key presses, you'll need to use \link libscratchcpp::Project::runEventLoop() runEventLoop() \endlink
-and run it in another thread (to keep the UI responsive).
+a GUI project player and need to receive input events such as key presses, you'll need to use \link libscratchcpp::IEngine::step() step() \endlink
+for ticks and \link libscratchcpp::Project::start() start() \endlink and \link libscratchcpp::Project::stop() stop() \endlink

@@ -22,8 +22,8 @@ class SoundBlocksTest : public testing::Test
     public:
         void SetUp() override
         {
-            m_section = std::make_unique<SoundBlocks>();
-            m_section->registerBlocks(&m_engine);
+            m_extension = std::make_unique<SoundBlocks>();
+            m_extension->registerBlocks(&m_engine);
         }
 
         std::shared_ptr<Block> createNullBlock(const std::string &id)
@@ -81,50 +81,45 @@ class SoundBlocksTest : public testing::Test
             block->addField(field);
         }
 
-        std::unique_ptr<IBlockSection> m_section;
+        std::unique_ptr<IExtension> m_extension;
         Engine m_engine;
         EngineMock m_engineMock;
 };
 
 TEST_F(SoundBlocksTest, Name)
 {
-    ASSERT_EQ(m_section->name(), "Sound");
-}
-
-TEST_F(SoundBlocksTest, CategoryVisible)
-{
-    ASSERT_TRUE(m_section->categoryVisible());
+    ASSERT_EQ(m_extension->name(), "Sound");
 }
 
 TEST_F(SoundBlocksTest, RegisterBlocks)
 {
     // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_play", &SoundBlocks::compilePlay));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_playuntildone", &SoundBlocks::compilePlayUntilDone));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_stopallsounds", &SoundBlocks::compileStopAllSounds));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_seteffectto", &SoundBlocks::compileSetEffectTo));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_changeeffectby", &SoundBlocks::compileChangeEffectBy));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_changevolumeby", &SoundBlocks::compileChangeVolumeBy));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_cleareffects", &SoundBlocks::compileClearEffects));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_setvolumeto", &SoundBlocks::compileSetVolumeTo));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "sound_volume", &SoundBlocks::compileVolume));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sound_play", &SoundBlocks::compilePlay));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sound_playuntildone", &SoundBlocks::compilePlayUntilDone));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sound_stopallsounds", &SoundBlocks::compileStopAllSounds));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sound_seteffectto", &SoundBlocks::compileSetEffectTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sound_changeeffectby", &SoundBlocks::compileChangeEffectBy));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sound_changevolumeby", &SoundBlocks::compileChangeVolumeBy));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sound_cleareffects", &SoundBlocks::compileClearEffects));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sound_setvolumeto", &SoundBlocks::compileSetVolumeTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "sound_volume", &SoundBlocks::compileVolume));
 
     // Monitor names
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "sound_volume", &SoundBlocks::volumeMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "sound_volume", &SoundBlocks::volumeMonitorName));
 
     // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SOUND_MENU", SoundBlocks::SOUND_MENU));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VALUE", SoundBlocks::VALUE));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VOLUME", SoundBlocks::VOLUME));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "SOUND_MENU", SoundBlocks::SOUND_MENU));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "VALUE", SoundBlocks::VALUE));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "VOLUME", SoundBlocks::VOLUME));
 
     // Fields
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "EFFECT", SoundBlocks::EFFECT));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "EFFECT", SoundBlocks::EFFECT));
 
     // Field values
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "PITCH", SoundBlocks::PITCH));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "PAN", SoundBlocks::PAN));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "PITCH", SoundBlocks::PITCH));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "PAN", SoundBlocks::PAN));
 
-    m_section->registerBlocks(&m_engineMock);
+    m_extension->registerBlocks(&m_engineMock);
 }
 
 TEST_F(SoundBlocksTest, Play)

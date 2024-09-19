@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <scratchcpp/iblocksection.h>
+#include <scratchcpp/iextension.h>
 
 namespace libscratchcpp
 {
@@ -14,7 +14,7 @@ class Sound;
 class Target;
 
 /*! \brief The SoundBlocks class contains the implementation of sound blocks. */
-class SoundBlocks : public IBlockSection
+class SoundBlocks : public IExtension
 {
     public:
         enum Inputs
@@ -36,6 +36,7 @@ class SoundBlocks : public IBlockSection
         };
 
         std::string name() const override;
+        std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
         void onInit(IEngine *engine) override;

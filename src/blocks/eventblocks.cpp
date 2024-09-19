@@ -25,6 +25,11 @@ std::string EventBlocks::name() const
     return "Events";
 }
 
+std::string libscratchcpp::EventBlocks::description() const
+{
+    return "Event blocks";
+}
+
 void EventBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks

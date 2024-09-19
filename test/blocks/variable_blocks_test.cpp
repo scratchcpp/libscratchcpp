@@ -21,8 +21,8 @@ class VariableBlocksTest : public testing::Test
     public:
         void SetUp() override
         {
-            m_section = std::make_unique<VariableBlocks>();
-            m_section->registerBlocks(&m_engine);
+            m_extension = std::make_unique<VariableBlocks>();
+            m_extension->registerBlocks(&m_engine);
         }
 
         // For set variable to and change variable by
@@ -54,43 +54,38 @@ class VariableBlocksTest : public testing::Test
             return block;
         }
 
-        std::unique_ptr<IBlockSection> m_section;
+        std::unique_ptr<IExtension> m_extension;
         EngineMock m_engineMock;
         Engine m_engine;
 };
 
 TEST_F(VariableBlocksTest, Name)
 {
-    ASSERT_EQ(m_section->name(), "Variables");
-}
-
-TEST_F(VariableBlocksTest, CategoryVisible)
-{
-    ASSERT_TRUE(m_section->categoryVisible());
+    ASSERT_EQ(m_extension->name(), "Variables");
 }
 
 TEST_F(VariableBlocksTest, RegisterBlocks)
 {
     // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_variable", &VariableBlocks::compileVariable)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_setvariableto", &VariableBlocks::compileSetVariable)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_changevariableby", &VariableBlocks::compileChangeVariableBy)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_showvariable", &VariableBlocks::compileShowVariable)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_hidevariable", &VariableBlocks::compileHideVariable)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_variable", &VariableBlocks::compileVariable)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_setvariableto", &VariableBlocks::compileSetVariable)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_changevariableby", &VariableBlocks::compileChangeVariableBy)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_showvariable", &VariableBlocks::compileShowVariable)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_hidevariable", &VariableBlocks::compileHideVariable)).Times(1);
 
     // Monitor names
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "data_variable", &VariableBlocks::variableMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "data_variable", &VariableBlocks::variableMonitorName));
 
     // Monitor change functions
-    EXPECT_CALL(m_engineMock, addMonitorChangeFunction(m_section.get(), "data_variable", &VariableBlocks::changeVariableMonitorValue));
+    EXPECT_CALL(m_engineMock, addMonitorChangeFunction(m_extension.get(), "data_variable", &VariableBlocks::changeVariableMonitorValue));
 
     // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VALUE", VariableBlocks::VALUE));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "VALUE", VariableBlocks::VALUE));
 
     // Fields
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "VARIABLE", VariableBlocks::VARIABLE));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "VARIABLE", VariableBlocks::VARIABLE));
 
-    m_section->registerBlocks(&m_engineMock);
+    m_extension->registerBlocks(&m_engineMock);
 }
 
 TEST_F(VariableBlocksTest, Variable)

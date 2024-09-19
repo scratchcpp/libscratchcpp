@@ -24,14 +24,14 @@ TEST_F(IExtensionTest, Description)
     ASSERT_EQ(m_extension->description(), "Test extension");
 }
 
-TEST_F(IExtensionTest, IncludeByDefault)
+TEST_F(IExtensionTest, RegisterBlocks)
 {
-    ASSERT_FALSE(m_extension->includeByDefault());
+    EXPECT_CALL(m_engine, clear);
+    m_extension->registerBlocks(&m_engine);
 }
 
-TEST_F(IExtensionTest, RegisterSections)
+TEST_F(IExtensionTest, OnInit)
 {
-    std::shared_ptr<IBlockSection> section = nullptr;
-    EXPECT_CALL(m_engine, registerSection(section)).Times(1);
-    m_extension->registerSections(&m_engine);
+    EXPECT_CALL(m_engine, clear);
+    m_extension->onInit(&m_engine);
 }

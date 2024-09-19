@@ -222,8 +222,8 @@ gtest_discover_tests(comment_test)
 add_executable(
   monitor_test
   monitor_test.cpp
-  testsection.cpp
-  testsection.h
+  testextension.cpp
+  testextension.h
 )
 
 target_link_libraries(

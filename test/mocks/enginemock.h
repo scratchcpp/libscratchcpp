@@ -84,18 +84,17 @@ class EngineMock : public IEngine
 
         MOCK_METHOD(ITimer *, timer, (), (const, override));
 
-        MOCK_METHOD(void, registerSection, (std::shared_ptr<IBlockSection>), (override));
         MOCK_METHOD(unsigned int, functionIndex, (BlockFunc), (override));
         MOCK_METHOD(const std::vector<BlockFunc> &, blockFunctions, (), (const, override));
 
-        MOCK_METHOD(void, addCompileFunction, (IBlockSection *, const std::string &, BlockComp), (override));
-        MOCK_METHOD(void, addHatPredicateCompileFunction, (IBlockSection *, const std::string &, HatPredicateCompileFunc), (override));
-        MOCK_METHOD(void, addMonitorNameFunction, (IBlockSection *, const std::string &, MonitorNameFunc), (override));
-        MOCK_METHOD(void, addMonitorChangeFunction, (IBlockSection *, const std::string &, MonitorChangeFunc), (override));
-        MOCK_METHOD(void, addHatBlock, (IBlockSection *, const std::string &), (override));
-        MOCK_METHOD(void, addInput, (IBlockSection *, const std::string &, int), (override));
-        MOCK_METHOD(void, addField, (IBlockSection *, const std::string &, int), (override));
-        MOCK_METHOD(void, addFieldValue, (IBlockSection *, const std::string &, int), (override));
+        MOCK_METHOD(void, addCompileFunction, (IExtension *, const std::string &, BlockComp), (override));
+        MOCK_METHOD(void, addHatPredicateCompileFunction, (IExtension *, const std::string &, HatPredicateCompileFunc), (override));
+        MOCK_METHOD(void, addMonitorNameFunction, (IExtension *, const std::string &, MonitorNameFunc), (override));
+        MOCK_METHOD(void, addMonitorChangeFunction, (IExtension *, const std::string &, MonitorChangeFunc), (override));
+        MOCK_METHOD(void, addHatBlock, (IExtension *, const std::string &), (override));
+        MOCK_METHOD(void, addInput, (IExtension *, const std::string &, int), (override));
+        MOCK_METHOD(void, addField, (IExtension *, const std::string &, int), (override));
+        MOCK_METHOD(void, addFieldValue, (IExtension *, const std::string &, int), (override));
 
         MOCK_METHOD(const std::vector<std::shared_ptr<Broadcast>> &, broadcasts, (), (const, override));
         MOCK_METHOD(void, setBroadcasts, (const std::vector<std::shared_ptr<Broadcast>> &), (override));

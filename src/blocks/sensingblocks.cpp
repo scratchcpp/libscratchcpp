@@ -28,6 +28,11 @@ std::string SensingBlocks::name() const
     return "Sensing";
 }
 
+std::string SensingBlocks::description() const
+{
+    return name() + " blocks";
+}
+
 void SensingBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks

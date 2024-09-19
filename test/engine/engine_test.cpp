@@ -12,6 +12,7 @@
 #include <scratchcpp/script.h>
 #include <scratchcpp/virtualmachine.h>
 #include <scratchcpp/thread.h>
+#include <scratchcpp/scratchconfiguration.h>
 #include <scratch/sound_p.h>
 #include <timermock.h>
 #include <clockmock.h>
@@ -21,7 +22,7 @@
 #include <audioplayermock.h>
 #include <audioloudnessmock.h>
 #include <monitorhandlermock.h>
-#include <blocksectionmock.h>
+#include <extensionmock.h>
 #include <thread>
 
 #include "../common.h"
@@ -79,10 +80,12 @@ TEST(EngineTest, Clear)
     auto broadcast2 = std::make_shared<Broadcast>("", "");
     engine.setBroadcasts({ broadcast1, broadcast2 });
 
-    auto section = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section, registerBlocks);
-    EXPECT_CALL(*section, onInit);
-    engine.registerSection(section);
+    auto extension = std::make_shared<ExtensionMock>();
+    EXPECT_CALL(*extension, name()).WillRepeatedly(Return("ClearTest"));
+    EXPECT_CALL(*extension, registerBlocks);
+    EXPECT_CALL(*extension, onInit);
+    ScratchConfiguration::registerExtension(extension);
+    engine.setExtensions({ "ClearTest" });
 
     auto monitor1 = std::make_shared<Monitor>("", "");
     auto monitor2 = std::make_shared<Monitor>("", "");
@@ -101,7 +104,7 @@ TEST(EngineTest, Clear)
     ASSERT_TRUE(engine.targets().empty());
     ASSERT_TRUE(engine.broadcasts().empty());
     ASSERT_TRUE(engine.monitors().empty());
-    ASSERT_TRUE(engine.registeredSections().empty());
+    ASSERT_TRUE(engine.extensions().empty());
 
     AddRemoveMonitorMock removeMonitorMock;
     auto handler = std::bind(&AddRemoveMonitorMock::monitorRemoved, &removeMonitorMock, std::placeholders::_1, std::placeholders::_2);
@@ -114,6 +117,8 @@ TEST(EngineTest, Clear)
     EXPECT_CALL(removeMonitorMock, monitorRemoved(monitor4.get(), &iface4));
     engine.clear();
     ASSERT_TRUE(engine.monitors().empty());
+
+    ScratchConfiguration::removeExtension(extension);
 }
 
 TEST(EngineTest, ClearThreadAboutToStopSignal)
@@ -202,22 +207,24 @@ TEST(EngineTest, CompileAndExecuteMonitors)
     m2->setSprite(sprite.get());
     engine.setMonitors({ m1, m2 });
 
-    auto section = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section, registerBlocks);
-    EXPECT_CALL(*section, onInit);
-    engine.registerSection(section);
-    engine.addCompileFunction(section.get(), m1->opcode(), [](Compiler *compiler) { compiler->addConstValue(5.4); });
-    engine.addCompileFunction(section.get(), m2->opcode(), [](Compiler *compiler) { compiler->addConstValue("test"); });
+    auto extension = std::make_shared<ExtensionMock>();
+    EXPECT_CALL(*extension, name()).WillRepeatedly(Return("MonitorTest"));
+    EXPECT_CALL(*extension, registerBlocks);
+    EXPECT_CALL(*extension, onInit);
+    ScratchConfiguration::registerExtension(extension);
+    engine.setExtensions({ "MonitorTest" });
+    engine.addCompileFunction(extension.get(), m1->opcode(), [](Compiler *compiler) { compiler->addConstValue(5.4); });
+    engine.addCompileFunction(extension.get(), m2->opcode(), [](Compiler *compiler) { compiler->addConstValue("test"); });
 
-    engine.addMonitorNameFunction(section.get(), m1->opcode(), [](Block *block) -> const std::string & {
+    engine.addMonitorNameFunction(extension.get(), m1->opcode(), [](Block *block) -> const std::string & {
         static const std::string testStr = "test";
         return testStr;
     });
 
-    engine.addMonitorNameFunction(section.get(), m2->opcode(), [](Block *block) -> const std::string & { return block->opcode(); });
+    engine.addMonitorNameFunction(extension.get(), m2->opcode(), [](Block *block) -> const std::string & { return block->opcode(); });
 
-    engine.addMonitorChangeFunction(section.get(), m1->opcode(), [](Block *block, const Value &newValue) { std::cout << "change 1!" << std::endl; });
-    engine.addMonitorChangeFunction(section.get(), m2->opcode(), [](Block *block, const Value &newValue) { std::cout << "change 2!" << std::endl; });
+    engine.addMonitorChangeFunction(extension.get(), m1->opcode(), [](Block *block, const Value &newValue) { std::cout << "change 1!" << std::endl; });
+    engine.addMonitorChangeFunction(extension.get(), m2->opcode(), [](Block *block, const Value &newValue) { std::cout << "change 2!" << std::endl; });
 
     // Compile the monitor blocks
     engine.compile();
@@ -234,9 +241,9 @@ TEST(EngineTest, CompileAndExecuteMonitors)
     ASSERT_EQ(script2->target(), sprite.get());
     ASSERT_EQ(script2->topBlock(), m2->block());
 
-    ASSERT_EQ(m1->blockSection(), section);
-    ASSERT_EQ(m2->blockSection(), section);
-    ASSERT_FALSE(m3->blockSection());
+    ASSERT_EQ(m1->extension(), extension.get());
+    ASSERT_EQ(m2->extension(), extension.get());
+    ASSERT_FALSE(m3->extension());
 
     ASSERT_EQ(m1->name(), "test");
     ASSERT_EQ(m2->name(), m2->opcode());
@@ -270,6 +277,8 @@ TEST(EngineTest, CompileAndExecuteMonitors)
     EXPECT_CALL(iface2, onValueChanged);
     m2->changeValue(0);
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "change 2!\n");
+
+    ScratchConfiguration::removeExtension(extension);
 }
 
 TEST(EngineTest, IsRunning)
@@ -958,32 +967,27 @@ TEST(EngineTest, Timer)
     engine.run();
 }
 
-TEST(EngineTest, Sections)
+TEST(EngineTest, Extensions)
 {
     Engine engine;
 
-    auto section1 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section1, registerBlocks(&engine));
-    EXPECT_CALL(*section1, onInit(&engine));
-    engine.registerSection(section1);
+    auto extension1 = std::make_shared<ExtensionMock>();
+    EXPECT_CALL(*extension1, name()).WillRepeatedly(Return("ext1"));
+    EXPECT_CALL(*extension1, registerBlocks(&engine));
+    EXPECT_CALL(*extension1, onInit(&engine));
+    ScratchConfiguration::registerExtension(extension1);
 
-    auto section2 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section2, registerBlocks(&engine));
-    EXPECT_CALL(*section2, onInit(&engine));
-    engine.registerSection(section2);
+    auto extension2 = std::make_shared<ExtensionMock>();
+    EXPECT_CALL(*extension2, name()).WillRepeatedly(Return("ext2"));
+    EXPECT_CALL(*extension2, registerBlocks(&engine));
+    EXPECT_CALL(*extension2, onInit(&engine));
+    ScratchConfiguration::registerExtension(extension2);
 
-    EXPECT_CALL(*section1, name()).WillOnce(Return("test"));
-    EXPECT_CALL(*section1, registerBlocks).Times(0);
-    EXPECT_CALL(*section1, onInit).Times(0);
-    engine.registerSection(section1); // register existing section
+    engine.setExtensions({ "ext1", "ext2" });
+    ASSERT_EQ(engine.extensions(), std::vector<std::string>({ "ext1", "ext2" }));
 
-    ASSERT_EQ(engine.registeredSections().size(), 2);
-    if (engine.registeredSections()[0] == section1)
-        ASSERT_EQ(engine.registeredSections()[1].get(), section2.get());
-    else {
-        ASSERT_EQ(engine.registeredSections()[0].get(), section2.get());
-        ASSERT_EQ(engine.registeredSections()[1].get(), section1.get());
-    }
+    ScratchConfiguration::removeExtension(extension1);
+    ScratchConfiguration::removeExtension(extension2);
 }
 
 unsigned int testFunction1(VirtualMachine *)
@@ -1006,265 +1010,6 @@ TEST(EngineTest, Functions)
     ASSERT_EQ(engine.functionIndex(&testFunction2), 1);
 
     ASSERT_EQ(engine.blockFunctions(), std::vector<BlockFunc>({ &testFunction1, &testFunction2 }));
-}
-
-void compileTest1(Compiler *)
-{
-}
-
-void compileTest2(Compiler *)
-{
-}
-
-TEST(EngineTest, CompileFunctions)
-{
-    Engine engine;
-
-    auto section1 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section1, registerBlocks);
-    EXPECT_CALL(*section1, onInit);
-    engine.registerSection(section1);
-    auto container1 = engine.blockSectionContainer(section1.get());
-
-    auto section2 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section2, registerBlocks);
-    EXPECT_CALL(*section2, onInit);
-    engine.registerSection(section2);
-    auto container2 = engine.blockSectionContainer(section2.get());
-
-    BlockSectionMock section3;
-
-    engine.addCompileFunction(section1.get(), "test1", &compileTest1);
-    engine.addCompileFunction(section2.get(), "test2", &compileTest2);
-    engine.addCompileFunction(section1.get(), "test1", &compileTest1);
-    engine.addCompileFunction(&section3, "test1", &compileTest1);
-
-    ASSERT_EQ(container1->resolveBlockCompileFunc("test1"), &compileTest1);
-    ASSERT_EQ(container1->resolveBlockCompileFunc("test2"), nullptr);
-    ASSERT_EQ(container2->resolveBlockCompileFunc("test1"), nullptr);
-    ASSERT_EQ(container2->resolveBlockCompileFunc("test2"), &compileTest2);
-}
-
-TEST(EngineTest, HatPredicateCompileFunctions)
-{
-    Engine engine;
-
-    auto section1 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section1, registerBlocks);
-    EXPECT_CALL(*section1, onInit);
-    engine.registerSection(section1);
-    auto container1 = engine.blockSectionContainer(section1.get());
-
-    auto section2 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section2, registerBlocks);
-    EXPECT_CALL(*section2, onInit);
-    engine.registerSection(section2);
-    auto container2 = engine.blockSectionContainer(section2.get());
-
-    BlockSectionMock section3;
-
-    engine.addHatPredicateCompileFunction(section1.get(), "test1", &compileTest1);
-    engine.addHatPredicateCompileFunction(section2.get(), "test2", &compileTest2);
-    engine.addHatPredicateCompileFunction(section1.get(), "test1", &compileTest1);
-    engine.addHatPredicateCompileFunction(&section3, "test1", &compileTest1);
-
-    ASSERT_EQ(container1->resolveHatPredicateCompileFunc("test1"), &compileTest1);
-    ASSERT_EQ(container1->resolveHatPredicateCompileFunc("test2"), nullptr);
-    ASSERT_EQ(container2->resolveHatPredicateCompileFunc("test1"), nullptr);
-    ASSERT_EQ(container2->resolveHatPredicateCompileFunc("test2"), &compileTest2);
-}
-
-TEST(EngineTest, MonitorNameFunctions)
-{
-    Engine engine;
-
-    auto section1 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section1, registerBlocks);
-    EXPECT_CALL(*section1, onInit);
-    engine.registerSection(section1);
-    auto container1 = engine.blockSectionContainer(section1.get());
-
-    auto section2 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section2, registerBlocks);
-    EXPECT_CALL(*section2, onInit);
-    engine.registerSection(section2);
-    auto container2 = engine.blockSectionContainer(section2.get());
-
-    BlockSectionMock section3;
-
-    MonitorNameFunc f1 = [](Block *) -> const std::string & {
-        static const std::string ret;
-        return ret;
-    };
-
-    MonitorNameFunc f2 = [](Block *) -> const std::string & {
-        static const std::string ret;
-        return ret;
-    };
-
-    engine.addMonitorNameFunction(section1.get(), "test1", f1);
-    engine.addMonitorNameFunction(section2.get(), "test2", f2);
-    engine.addMonitorNameFunction(section1.get(), "test1", f1);
-    engine.addMonitorNameFunction(&section3, "test1", f1);
-
-    ASSERT_EQ(container1->resolveMonitorNameFunc("test1"), f1);
-    ASSERT_EQ(container1->resolveMonitorNameFunc("test2"), nullptr);
-    ASSERT_EQ(container2->resolveMonitorNameFunc("test1"), nullptr);
-    ASSERT_EQ(container2->resolveMonitorNameFunc("test2"), f2);
-}
-
-TEST(EngineTest, MonitorChangeFunctions)
-{
-    Engine engine;
-
-    auto section1 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section1, registerBlocks);
-    EXPECT_CALL(*section1, onInit);
-    engine.registerSection(section1);
-    auto container1 = engine.blockSectionContainer(section1.get());
-
-    auto section2 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section2, registerBlocks);
-    EXPECT_CALL(*section2, onInit);
-    engine.registerSection(section2);
-    auto container2 = engine.blockSectionContainer(section2.get());
-
-    BlockSectionMock section3;
-
-    MonitorChangeFunc f1 = [](Block *, const Value &) {};
-    MonitorChangeFunc f2 = [](Block *, const Value &) {};
-
-    engine.addMonitorChangeFunction(section1.get(), "test1", f1);
-    engine.addMonitorChangeFunction(section2.get(), "test2", f2);
-    engine.addMonitorChangeFunction(section1.get(), "test1", f1);
-    engine.addMonitorChangeFunction(&section3, "test1", f1);
-
-    ASSERT_EQ(container1->resolveMonitorChangeFunc("test1"), f1);
-    ASSERT_EQ(container1->resolveMonitorChangeFunc("test2"), nullptr);
-    ASSERT_EQ(container2->resolveMonitorChangeFunc("test1"), nullptr);
-    ASSERT_EQ(container2->resolveMonitorChangeFunc("test2"), f2);
-}
-
-TEST(EngineTest, HatBlocks)
-{
-    Engine engine;
-
-    auto section1 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section1, registerBlocks);
-    EXPECT_CALL(*section1, onInit);
-    engine.registerSection(section1);
-    auto container1 = engine.blockSectionContainer(section1.get());
-
-    auto section2 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section2, registerBlocks);
-    EXPECT_CALL(*section2, onInit);
-    engine.registerSection(section2);
-    auto container2 = engine.blockSectionContainer(section2.get());
-
-    BlockSectionMock section3;
-
-    engine.addHatBlock(section1.get(), "test1");
-    engine.addHatBlock(section2.get(), "test2");
-    engine.addHatBlock(section1.get(), "test1");
-    engine.addHatBlock(&section3, "test1");
-
-    ASSERT_NE(container1->resolveBlockCompileFunc("test1"), nullptr);
-    ASSERT_EQ(container1->resolveBlockCompileFunc("test2"), nullptr);
-    ASSERT_EQ(container2->resolveBlockCompileFunc("test1"), nullptr);
-    ASSERT_NE(container2->resolveBlockCompileFunc("test2"), nullptr);
-}
-
-TEST(EngineTest, Inputs)
-{
-    Engine engine;
-
-    auto section1 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section1, registerBlocks);
-    EXPECT_CALL(*section1, onInit);
-    engine.registerSection(section1);
-    auto container1 = engine.blockSectionContainer(section1.get());
-
-    auto section2 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section2, registerBlocks);
-    EXPECT_CALL(*section2, onInit);
-    engine.registerSection(section2);
-    auto container2 = engine.blockSectionContainer(section2.get());
-
-    BlockSectionMock section3;
-
-    engine.addInput(section1.get(), "VALUE1", 1);
-    engine.addInput(section2.get(), "VALUE2", 2);
-    engine.addInput(section1.get(), "VALUE1", 3); // change ID of existing input
-    engine.addInput(&section3, "VALUE3", 4);
-
-    ASSERT_EQ(container1->resolveInput("VALUE1"), 3);
-    ASSERT_EQ(container1->resolveInput("VALUE2"), -1);
-    ASSERT_EQ(container1->resolveInput("VALUE3"), -1);
-    ASSERT_EQ(container2->resolveInput("VALUE1"), -1);
-    ASSERT_EQ(container2->resolveInput("VALUE2"), 2);
-    ASSERT_EQ(container2->resolveInput("VALUE3"), -1);
-}
-
-TEST(EngineTest, Fields)
-{
-    Engine engine;
-
-    auto section1 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section1, registerBlocks);
-    EXPECT_CALL(*section1, onInit);
-    engine.registerSection(section1);
-    auto container1 = engine.blockSectionContainer(section1.get());
-
-    auto section2 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section2, registerBlocks);
-    EXPECT_CALL(*section2, onInit);
-    engine.registerSection(section2);
-    auto container2 = engine.blockSectionContainer(section2.get());
-
-    BlockSectionMock section3;
-
-    engine.addField(section1.get(), "VALUE1", 1);
-    engine.addField(section2.get(), "VALUE2", 2);
-    engine.addField(section1.get(), "VALUE1", 3); // change ID of existing field
-    engine.addField(&section3, "VALUE3", 4);
-
-    ASSERT_EQ(container1->resolveField("VALUE1"), 3);
-    ASSERT_EQ(container1->resolveField("VALUE2"), -1);
-    ASSERT_EQ(container1->resolveField("VALUE3"), -1);
-    ASSERT_EQ(container2->resolveField("VALUE1"), -1);
-    ASSERT_EQ(container2->resolveField("VALUE2"), 2);
-    ASSERT_EQ(container2->resolveField("VALUE3"), -1);
-}
-
-TEST(EngineTest, FieldValues)
-{
-    Engine engine;
-
-    auto section1 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section1, registerBlocks);
-    EXPECT_CALL(*section1, onInit);
-    engine.registerSection(section1);
-    auto container1 = engine.blockSectionContainer(section1.get());
-
-    auto section2 = std::make_shared<BlockSectionMock>();
-    EXPECT_CALL(*section2, registerBlocks);
-    EXPECT_CALL(*section2, onInit);
-    engine.registerSection(section2);
-    auto container2 = engine.blockSectionContainer(section2.get());
-
-    BlockSectionMock section3;
-
-    engine.addFieldValue(section1.get(), "value1", 1);
-    engine.addFieldValue(section2.get(), "value2", 2);
-    engine.addFieldValue(section1.get(), "value1", 3); // change ID of existing field value
-    engine.addFieldValue(&section3, "value3", 4);
-
-    ASSERT_EQ(container1->resolveFieldValue("value1"), 3);
-    ASSERT_EQ(container1->resolveFieldValue("value2"), -1);
-    ASSERT_EQ(container1->resolveFieldValue("value3"), -1);
-    ASSERT_EQ(container2->resolveFieldValue("value1"), -1);
-    ASSERT_EQ(container2->resolveFieldValue("value2"), 2);
-    ASSERT_EQ(container2->resolveFieldValue("value3"), -1);
 }
 
 TEST(EngineTest, Broadcasts)
@@ -2043,8 +1788,6 @@ TEST(EngineTest, StopAllBypass)
     ASSERT_VAR(stage, "j");
     ASSERT_EQ(GET_VAR(stage, "j")->value().toInt(), 5);
 
-    ASSERT_TRUE(engine->isRunning());
-    engine->step();
     ASSERT_FALSE(engine->isRunning());
 }
 

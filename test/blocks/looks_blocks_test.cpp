@@ -28,8 +28,8 @@ class LooksBlocksTest : public testing::Test
     public:
         void SetUp() override
         {
-            m_section = std::make_unique<LooksBlocks>();
-            m_section->registerBlocks(&m_engine);
+            m_extension = std::make_unique<LooksBlocks>();
+            m_extension->registerBlocks(&m_engine);
         }
 
         // For any looks block
@@ -90,82 +90,77 @@ class LooksBlocksTest : public testing::Test
             block->addField(field);
         }
 
-        std::unique_ptr<IBlockSection> m_section;
+        std::unique_ptr<IExtension> m_extension;
         EngineMock m_engineMock;
         Engine m_engine;
 };
 
 TEST_F(LooksBlocksTest, Name)
 {
-    ASSERT_EQ(m_section->name(), "Looks");
-}
-
-TEST_F(LooksBlocksTest, CategoryVisible)
-{
-    ASSERT_TRUE(m_section->categoryVisible());
+    ASSERT_EQ(m_extension->name(), "Looks");
 }
 
 TEST_F(LooksBlocksTest, RegisterBlocks)
 {
     // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_sayforsecs", &LooksBlocks::compileSayForSecs));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_say", &LooksBlocks::compileSay));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_thinkforsecs", &LooksBlocks::compileThinkForSecs));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_think", &LooksBlocks::compileThink));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_show", &LooksBlocks::compileShow));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_hide", &LooksBlocks::compileHide));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_changeeffectby", &LooksBlocks::compileChangeEffectBy));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_seteffectto", &LooksBlocks::compileSetEffectTo));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_cleargraphiceffects", &LooksBlocks::compileClearGraphicEffects));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_changesizeby", &LooksBlocks::compileChangeSizeBy));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_setsizeto", &LooksBlocks::compileSetSizeTo));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_size", &LooksBlocks::compileSize));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_switchcostumeto", &LooksBlocks::compileSwitchCostumeTo));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_nextcostume", &LooksBlocks::compileNextCostume));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_switchbackdropto", &LooksBlocks::compileSwitchBackdropTo));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_switchbackdroptoandwait", &LooksBlocks::compileSwitchBackdropToAndWait));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_nextbackdrop", &LooksBlocks::compileNextBackdrop));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_gotofrontback", &LooksBlocks::compileGoToFrontBack));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_goforwardbackwardlayers", &LooksBlocks::compileGoForwardBackwardLayers));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_costumenumbername", &LooksBlocks::compileCostumeNumberName));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "looks_backdropnumbername", &LooksBlocks::compileBackdropNumberName));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_sayforsecs", &LooksBlocks::compileSayForSecs));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_say", &LooksBlocks::compileSay));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_thinkforsecs", &LooksBlocks::compileThinkForSecs));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_think", &LooksBlocks::compileThink));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_show", &LooksBlocks::compileShow));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_hide", &LooksBlocks::compileHide));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_changeeffectby", &LooksBlocks::compileChangeEffectBy));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_seteffectto", &LooksBlocks::compileSetEffectTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_cleargraphiceffects", &LooksBlocks::compileClearGraphicEffects));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_changesizeby", &LooksBlocks::compileChangeSizeBy));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_setsizeto", &LooksBlocks::compileSetSizeTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_size", &LooksBlocks::compileSize));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_switchcostumeto", &LooksBlocks::compileSwitchCostumeTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_nextcostume", &LooksBlocks::compileNextCostume));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_switchbackdropto", &LooksBlocks::compileSwitchBackdropTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_switchbackdroptoandwait", &LooksBlocks::compileSwitchBackdropToAndWait));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_nextbackdrop", &LooksBlocks::compileNextBackdrop));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_gotofrontback", &LooksBlocks::compileGoToFrontBack));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_goforwardbackwardlayers", &LooksBlocks::compileGoForwardBackwardLayers));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_costumenumbername", &LooksBlocks::compileCostumeNumberName));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "looks_backdropnumbername", &LooksBlocks::compileBackdropNumberName));
 
     // Monitor names
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "looks_costumenumbername", &LooksBlocks::costumeNumberNameMonitorName));
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "looks_backdropnumbername", &LooksBlocks::backdropNumberNameMonitorName));
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "looks_size", &LooksBlocks::sizeMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "looks_costumenumbername", &LooksBlocks::costumeNumberNameMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "looks_backdropnumbername", &LooksBlocks::backdropNumberNameMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "looks_size", &LooksBlocks::sizeMonitorName));
 
     // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "MESSAGE", LooksBlocks::MESSAGE));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SECS", LooksBlocks::SECS));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "CHANGE", LooksBlocks::CHANGE));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SIZE", LooksBlocks::SIZE));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "COSTUME", LooksBlocks::COSTUME));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "BACKDROP", LooksBlocks::BACKDROP));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VALUE", LooksBlocks::VALUE));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "MESSAGE", LooksBlocks::MESSAGE));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "SECS", LooksBlocks::SECS));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "CHANGE", LooksBlocks::CHANGE));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "SIZE", LooksBlocks::SIZE));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "COSTUME", LooksBlocks::COSTUME));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "BACKDROP", LooksBlocks::BACKDROP));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "VALUE", LooksBlocks::VALUE));
 
     // Fields
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "NUMBER_NAME", LooksBlocks::NUMBER_NAME));
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "EFFECT", LooksBlocks::EFFECT));
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "FRONT_BACK", LooksBlocks::FRONT_BACK));
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "FORWARD_BACKWARD", LooksBlocks::FORWARD_BACKWARD));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "NUMBER_NAME", LooksBlocks::NUMBER_NAME));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "EFFECT", LooksBlocks::EFFECT));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "FRONT_BACK", LooksBlocks::FRONT_BACK));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "FORWARD_BACKWARD", LooksBlocks::FORWARD_BACKWARD));
 
     // Field values
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "number", LooksBlocks::Number));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "name", LooksBlocks::Name));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "COLOR", LooksBlocks::ColorEffect));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "FISHEYE", LooksBlocks::FisheyeEffect));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "WHIRL", LooksBlocks::WhirlEffect));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "PIXELATE", LooksBlocks::PixelateEffect));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "MOSAIC", LooksBlocks::MosaicEffect));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "BRIGHTNESS", LooksBlocks::BrightnessEffect));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "GHOST", LooksBlocks::GhostEffect));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "front", LooksBlocks::Front));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "back", LooksBlocks::Back));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "forward", LooksBlocks::Forward));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "backward", LooksBlocks::Backward));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "number", LooksBlocks::Number));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "name", LooksBlocks::Name));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "COLOR", LooksBlocks::ColorEffect));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "FISHEYE", LooksBlocks::FisheyeEffect));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "WHIRL", LooksBlocks::WhirlEffect));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "PIXELATE", LooksBlocks::PixelateEffect));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "MOSAIC", LooksBlocks::MosaicEffect));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "BRIGHTNESS", LooksBlocks::BrightnessEffect));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "GHOST", LooksBlocks::GhostEffect));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "front", LooksBlocks::Front));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "back", LooksBlocks::Back));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "forward", LooksBlocks::Forward));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "backward", LooksBlocks::Backward));
 
-    m_section->registerBlocks(&m_engineMock);
+    m_extension->registerBlocks(&m_engineMock);
 }
 
 TEST_F(LooksBlocksTest, SayForSecs)
