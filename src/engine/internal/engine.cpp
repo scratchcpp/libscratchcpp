@@ -1382,6 +1382,7 @@ Monitor *Engine::createListMonitor(std::shared_ptr<List> list, const std::string
         field->setFieldId(listFieldId);
         monitor->block()->addField(field);
         monitor->block()->setCompileFunction(compileFunction);
+        monitor->setMode(Monitor::Mode::List);
 
         addVarOrListMonitor(monitor, list->target());
         list->setMonitor(monitor.get());
