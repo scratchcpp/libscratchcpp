@@ -1336,7 +1336,7 @@ Stage *Engine::stage() const
     if (it == m_targets.end())
         return nullptr;
     else
-        return dynamic_cast<Stage *>((*it).get());
+        return static_cast<Stage *>((*it).get());
 }
 
 const std::vector<std::shared_ptr<Monitor>> &Engine::monitors() const
@@ -1658,8 +1658,7 @@ const std::vector<Script *> &Engine::getHats(Target *target, HatType type)
 
     // Get root if this is a clone
     if (!target->isStage()) {
-        Sprite *sprite = dynamic_cast<Sprite *>(target);
-        assert(sprite);
+        Sprite *sprite = static_cast<Sprite *>(target);
 
         if (sprite->isClone())
             target = sprite->cloneSprite();
@@ -1746,7 +1745,7 @@ const std::unordered_set<std::string> &Engine::unsupportedBlocks() const
 
 void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
 {
-    Target *target = monitor->sprite() ? dynamic_cast<Target *>(monitor->sprite()) : stage();
+    Target *target = monitor->sprite() ? static_cast<Target *>(monitor->sprite()) : stage();
     Compiler compiler(this, target);
     auto block = monitor->block();
     auto section = blockSection(block->opcode());
@@ -1812,9 +1811,8 @@ void Engine::deleteClones()
     m_clones.clear();
 
     for (auto target : m_targets) {
-        Sprite *sprite = dynamic_cast<Sprite *>(target.get());
-
-        if (sprite) {
+        if (!target->isStage()) {
+            Sprite *sprite = static_cast<Sprite *>(target.get());
             std::vector<std::shared_ptr<Sprite>> clones = sprite->clones();
 
             for (auto clone : clones) {
@@ -1837,7 +1835,7 @@ void Engine::removeExecutableClones()
 void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *target)
 {
     if (!target->isStage())
-        monitor->setSprite(dynamic_cast<Sprite *>(target));
+        monitor->setSprite(static_cast<Sprite *>(target));
 
     monitor->setBlockSection(blockSection(monitor->opcode()));
     auto container = blockSectionContainer(monitor->opcode());

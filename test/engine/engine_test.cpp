@@ -71,8 +71,8 @@ TEST(EngineTest, Clear)
 {
     Engine engine;
 
-    auto target1 = std::make_shared<Target>();
-    auto target2 = std::make_shared<Target>();
+    auto target1 = std::make_shared<Sprite>();
+    auto target2 = std::make_shared<Sprite>();
     engine.setTargets({ target1, target2 });
 
     auto broadcast1 = std::make_shared<Broadcast>("", "");

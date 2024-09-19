@@ -95,7 +95,12 @@ void Monitor::setBlockSection(std::shared_ptr<IBlockSection> blockSection)
 /*! Convenience method which calls block()->target(). */
 Sprite *Monitor::sprite() const
 {
-    return dynamic_cast<Sprite *>(impl->block->target());
+    Target *target = impl->block->target();
+
+    if (target && !target->isStage())
+        return static_cast<Sprite *>(target);
+
+    return nullptr;
 }
 
 /*! Convenience method which calls block()->setTarget(). */

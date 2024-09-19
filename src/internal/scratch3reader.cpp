@@ -408,7 +408,7 @@ bool Scratch3Reader::load()
 
                 for (auto target : m_targets) {
                     if (!target->isStage()) {
-                        Sprite *sprite = dynamic_cast<Sprite *>(target.get());
+                        Sprite *sprite = static_cast<Sprite *>(target.get());
 
                         if (sprite->name() == name) {
                             monitor->setSprite(sprite);
