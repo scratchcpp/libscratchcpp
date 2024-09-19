@@ -180,6 +180,10 @@ int Monitor::x() const
 void Monitor::setX(int x)
 {
     impl->x = x;
+    impl->needsAutoPosition = false;
+
+    if (impl->iface)
+        impl->iface->onXChanged(x);
 }
 
 /*! Returns the monitor's y-coordinate. */
@@ -192,6 +196,10 @@ int Monitor::y() const
 void Monitor::setY(int y)
 {
     impl->y = y;
+    impl->needsAutoPosition = false;
+
+    if (impl->iface)
+        impl->iface->onYChanged(y);
 }
 
 /*! Returns true if the monitor is visible. */
@@ -245,15 +253,130 @@ void Monitor::setDiscrete(bool discrete)
     impl->discrete = discrete;
 }
 
-/*! Returns the initial position of a monitor. */
-Rect Monitor::getInitialPosition(const std::vector<std::shared_ptr<Monitor>> &other, int monitorWidth, int monitorHeight)
+/*! Returns true if the monitor needs auto positioning. The renderer should call autoPosition() as soon as it knows the monitor size. */
+bool Monitor::needsAutoPosition() const
 {
-    // TODO: Implement this like Scratch has: https://github.com/scratchfoundation/scratch-gui/blob/010e27937ecff531f23bfcf3c711cd6e565cc7f9/src/reducers/monitor-layout.js#L161-L243
-    // Place the monitor randomly
+    return impl->needsAutoPosition;
+}
+
+/*!
+ * Auto-positions the monitor with the other monitors.
+ * \note Call this only when the monitor size is known.
+ */
+void Monitor::autoPosition(const std::vector<std::shared_ptr<Monitor>> &allMonitors)
+{
+    // https://github.com/scratchfoundation/scratch-gui/blob/010e27937ecff531f23bfcf3c711cd6e565cc7f9/src/reducers/monitor-layout.js#L161-L243
+    if (!impl->needsAutoPosition)
+        std::cout << "warning: auto-positioning already positioned monitor (" << impl->name << ")" << std::endl;
+
+    impl->needsAutoPosition = false;
+
+    // Try all starting positions for the new monitor to find one that doesn't intersect others
+    std::vector<int> endXs = { 0 };
+    std::vector<int> endYs = { 0 };
+    int lastX = 0;
+    int lastY = 0;
+    bool haveLastX = false;
+    bool haveLastY = false;
+
+    for (const auto monitor : allMonitors) {
+        if (monitor.get() != this) {
+            int x = monitor->x() + monitor->width();
+            x = std::ceil(x / 50.0) * 50; // Try to choose a sensible "tab width" so more monitors line up
+            endXs.push_back(x);
+            endYs.push_back(std::ceil(monitor->y() + monitor->height()));
+        }
+    }
+
+    std::sort(endXs.begin(), endXs.end());
+    std::sort(endYs.begin(), endYs.end());
+
+    // We'll use plan B if the monitor doesn't fit anywhere (too long or tall)
+    bool planB = false;
+    Rect planBRect;
+
+    for (const int x : endXs) {
+        if (haveLastX && x == lastX)
+            continue;
+
+        lastX = x;
+        haveLastX = true;
+
+        for (const int y : endYs) {
+            if (haveLastY && y == lastY)
+                continue;
+
+            lastY = y;
+            haveLastY = true;
+
+            const Rect monitorRect(x + PADDING, y + PADDING, x + PADDING + impl->width, y + PADDING + impl->height);
+
+            // Intersection testing rect that includes padding
+            const Rect rect(x, y, x + impl->width + 2 * PADDING, y + impl->height + 2 * PADDING);
+
+            bool intersected = false;
+
+            for (const auto monitor : allMonitors) {
+                if (monitor.get() != this) {
+                    const Rect currentRect(monitor->x(), monitor->y(), monitor->x() + monitor->width(), monitor->y() + monitor->height());
+
+                    if (monitorRectsIntersect(currentRect, rect)) {
+                        intersected = true;
+                        break;
+                    }
+                }
+            }
+
+            if (intersected) {
+                continue;
+            }
+
+            // If the rect overlaps the ends of the screen
+            if (rect.right() > SCREEN_WIDTH || rect.bottom() > SCREEN_HEIGHT) {
+                // If rect is not too close to completely off-screen, set it as plan B
+                if (!planB && !(rect.left() + SCREEN_EDGE_BUFFER > SCREEN_WIDTH || rect.top() + SCREEN_EDGE_BUFFER > SCREEN_HEIGHT)) {
+                    planBRect = monitorRect;
+                    planB = true;
+                }
+
+                continue;
+            }
+
+            setX(monitorRect.left());
+            setY(monitorRect.top());
+            return;
+        }
+    }
+
+    // If the monitor is too long to fit anywhere, put it in the leftmost spot available
+    // that intersects the right or bottom edge and isn't too close to the edge.
+    if (planB) {
+        setX(planBRect.left());
+        setY(planBRect.top());
+        return;
+    }
+
+    // If plan B fails and there's nowhere reasonable to put it, plan C is to place the monitor randomly
     if (!MonitorPrivate::rng)
         MonitorPrivate::rng = RandomGenerator::instance().get();
 
-    const double randX = std::ceil(MonitorPrivate::rng->randintDouble(0, SCREEN_WIDTH / 2.0));
-    const double randY = std::ceil(MonitorPrivate::rng->randintDouble(0, SCREEN_HEIGHT - SCREEN_EDGE_BUFFER));
-    return Rect(randX, randY, randX + monitorWidth, randY + monitorHeight);
+    const int randX = std::ceil(MonitorPrivate::rng->randintDouble(0, SCREEN_WIDTH / 2.0));
+    const int randY = std::ceil(MonitorPrivate::rng->randintDouble(0, SCREEN_HEIGHT - SCREEN_EDGE_BUFFER));
+    setX(randX);
+    setY(randY);
+    return;
+}
+
+bool Monitor::monitorRectsIntersect(const Rect &a, const Rect &b)
+{
+    // https://github.com/scratchfoundation/scratch-gui/blob/010e27937ecff531f23bfcf3c711cd6e565cc7f9/src/reducers/monitor-layout.js#L152-L158
+    // If one rectangle is on left side of other
+    if (a.left() >= b.right() || b.left() >= a.right())
+        return false;
+
+    // If one rectangle is above other
+    if (a.top() >= b.bottom() || b.top() >= a.bottom())
+        return false;
+
+    return true;
 }

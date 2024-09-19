@@ -1382,6 +1382,7 @@ Monitor *Engine::createListMonitor(std::shared_ptr<List> list, const std::string
         field->setFieldId(listFieldId);
         monitor->block()->addField(field);
         monitor->block()->setCompileFunction(compileFunction);
+        monitor->setMode(Monitor::Mode::List);
 
         addVarOrListMonitor(monitor, list->target());
         list->setMonitor(monitor.get());
@@ -1850,11 +1851,6 @@ void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *targe
         MonitorChangeFunc changeFunc = container->resolveMonitorChangeFunc(monitor->opcode());
         monitor->setValueChangeFunction(changeFunc);
     }
-
-    // Auto-position the monitor
-    Rect rect = Monitor::getInitialPosition(m_monitors, monitor->width(), monitor->height());
-    monitor->setX(rect.left());
-    monitor->setY(rect.top());
 
     m_monitors.push_back(monitor);
     m_monitorAdded(monitor.get());
