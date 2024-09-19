@@ -36,6 +36,7 @@ target_sources(scratchcpp
     include/scratchcpp/costume.h
     include/scratchcpp/sound.h
     include/scratchcpp/value.h
+    include/scratchcpp/valuedata.h
     include/scratchcpp/entity.h
     include/scratchcpp/variable.h
     include/scratchcpp/list.h
