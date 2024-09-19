@@ -18,9 +18,9 @@ std::string ListBlocks::name() const
     return "Lists";
 }
 
-bool ListBlocks::categoryVisible() const
+std::string ListBlocks::description() const
 {
-    return false;
+    return "List blocks";
 }
 
 void ListBlocks::registerBlocks(IEngine *engine)

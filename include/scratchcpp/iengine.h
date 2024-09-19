@@ -14,7 +14,7 @@
 namespace libscratchcpp
 {
 
-class IBlockSection;
+class IExtension;
 class Broadcast;
 class Block;
 class Target;
@@ -217,12 +217,6 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Returns the timer of the project. */
         virtual ITimer *timer() const = 0;
 
-        /*!
-         * Registers the given block section.
-         * \see <a href="blockSections.html">Block sections</a>
-         */
-        virtual void registerSection(std::shared_ptr<IBlockSection> section) = 0;
-
         /*! Returns the index of the given block function. */
         virtual unsigned int functionIndex(BlockFunc f) = 0;
 
@@ -230,53 +224,53 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual const std::vector<BlockFunc> &blockFunctions() const = 0;
 
         /*!
-         * Call this from IBlockSection#registerBlocks() to add a compile function to a block section.
-         * \see <a href="blockSections.html">Block sections</a>
+         * Call this from IExtension#registerBlocks() to add a compile function to a block section.
+         * \see <a href="extensions.html">Extensions</a>
          */
-        virtual void addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f) = 0;
+        virtual void addCompileFunction(IExtension *extension, const std::string &opcode, BlockComp f) = 0;
 
         /*!
-         * Call this from IBlockSection#registerBlocks() to add a hat block predicate compile function to a block section.
+         * Call this from IExtension#registerBlocks() to add a hat block predicate compile function to a block section.
          * \note This only works with edge-activated hats.
-         * \see <a href="blockSections.html">Block sections</a>
+         * \see <a href="extensions.html">Extensions</a>
          */
-        virtual void addHatPredicateCompileFunction(IBlockSection *section, const std::string &opcode, HatPredicateCompileFunc f) = 0;
+        virtual void addHatPredicateCompileFunction(IExtension *extension, const std::string &opcode, HatPredicateCompileFunc f) = 0;
 
         /*!
-         * Call this from IBlockSection#registerBlocks() to add a monitor name function to a block section.
-         * \see <a href="blockSections.html">Block sections</a>
+         * Call this from IExtension#registerBlocks() to add a monitor name function to a block section.
+         * \see <a href="extensions.html">Extensions</a>
          */
-        virtual void addMonitorNameFunction(IBlockSection *section, const std::string &opcode, MonitorNameFunc f) = 0;
+        virtual void addMonitorNameFunction(IExtension *extension, const std::string &opcode, MonitorNameFunc f) = 0;
 
         /*!
-         * Call this from IBlockSection#registerBlocks() to add a monitor value change function to a block section.
-         * \see <a href="blockSections.html">Block sections</a>
+         * Call this from IExtension#registerBlocks() to add a monitor value change function to a block section.
+         * \see <a href="extensions.html">Extensions</a>
          */
-        virtual void addMonitorChangeFunction(IBlockSection *section, const std::string &opcode, MonitorChangeFunc f) = 0;
+        virtual void addMonitorChangeFunction(IExtension *extension, const std::string &opcode, MonitorChangeFunc f) = 0;
 
         /*!
-         * Call this from IBlockSection#registerBlocks() to add a hat block to a block section.
-         * \see <a href="blockSections.html">Block sections</a>
+         * Call this from IExtension#registerBlocks() to add a hat block to a block section.
+         * \see <a href="extensions.html">Extensions</a>
          */
-        virtual void addHatBlock(IBlockSection *section, const std::string &opcode) = 0;
+        virtual void addHatBlock(IExtension *extension, const std::string &opcode) = 0;
 
         /*!
-         * Call this from IBlockSection#registerBlocks() to add an input to a block section.
-         * \see <a href="blockSections.html">Block sections</a>
+         * Call this from IExtension#registerBlocks() to add an input to a block section.
+         * \see <a href="extensions.html">Extensions</a>
          */
-        virtual void addInput(IBlockSection *section, const std::string &name, int id) = 0;
+        virtual void addInput(IExtension *extension, const std::string &name, int id) = 0;
 
         /*!
-         * Call this from IBlockSection#registerBlocks() to add a field to a block section.
-         * \see <a href="blockSections.html">Block sections</a>
+         * Call this from IExtension#registerBlocks() to add a field to a block section.
+         * \see <a href="extensions.html">Extensions</a>
          */
-        virtual void addField(IBlockSection *section, const std::string &name, int id) = 0;
+        virtual void addField(IExtension *extension, const std::string &name, int id) = 0;
 
         /*!
-         * Call this from IBlockSection#registerBlocks() to add a field value to a block section.
-         * \see <a href="blockSections.html">Block sections</a>
+         * Call this from IExtension#registerBlocks() to add a field value to a block section.
+         * \see <a href="extensions.html">Extensions</a>
          */
-        virtual void addFieldValue(IBlockSection *section, const std::string &value, int id) = 0;
+        virtual void addFieldValue(IExtension *extension, const std::string &value, int id) = 0;
 
         /*! Returns the list of broadcasts. */
         virtual const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const = 0;
@@ -381,11 +375,13 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Emits when a question is answered. */
         virtual sigslot::signal<const std::string &> &questionAnswered() = 0;
 
+#ifndef USE_LLVM
         /*! Returns the list of extension names. */
         virtual const std::vector<std::string> &extensions() const = 0;
 
         /*! Sets the list of extension names. */
         virtual void setExtensions(const std::vector<std::string> &newExtensions) = 0;
+#endif
 
         /*! Returns the map of scripts (each top level block has a Script object). */
         virtual const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &scripts() const = 0;

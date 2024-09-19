@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/scratchconfiguration.h>
-#include <scratchcpp/iblocksection.h>
+#include <scratchcpp/iextension.h>
 #include <scratchcpp/script.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
@@ -24,11 +24,10 @@
 #include <iostream>
 
 #include "engine.h"
-#include "blocksectioncontainer.h"
 #include "timer.h"
 #include "clock.h"
 #include "audio/iaudioengine.h"
-#include "blocks/standardblocks.h"
+#include "blocks/blocks.h"
 #include "scratch/monitor_p.h"
 
 using namespace libscratchcpp;
@@ -69,7 +68,6 @@ void Engine::clear()
             m_threadAboutToStop(thread.get());
     }
 
-    m_sections.clear();
     m_targets.clear();
     m_broadcasts.clear();
     m_monitors.clear();
@@ -106,21 +104,21 @@ void Engine::resolveIds()
         std::cout << "Processing target " << target->name() << "..." << std::endl;
         const auto &blocks = target->blocks();
         for (auto block : blocks) {
-            auto container = blockSectionContainer(block->opcode());
+            IExtension *ext = blockExtension(block->opcode());
             block->setNext(getBlock(block->nextId(), target.get()));
             block->setParent(getBlock(block->parentId(), target.get()));
 
-            if (container) {
-                block->setCompileFunction(container->resolveBlockCompileFunc(block->opcode()));
-                block->setHatPredicateCompileFunction(container->resolveHatPredicateCompileFunc(block->opcode()));
+            if (ext) {
+                block->setCompileFunction(resolveBlockCompileFunc(ext, block->opcode()));
+                block->setHatPredicateCompileFunction(resolveHatPredicateCompileFunc(ext, block->opcode()));
             }
 
             const auto &inputs = block->inputs();
             for (const auto &input : inputs) {
                 input->setValueBlock(getBlock(input->valueBlockId(), target.get()));
 
-                if (container)
-                    input->setInputId(container->resolveInput(input->name()));
+                if (ext)
+                    input->setInputId(resolveInput(ext, input->name()));
 
                 InputValue *value = input->primaryValue();
                 std::string id = value->valueId(); // no reference!
@@ -151,11 +149,11 @@ void Engine::resolveIds()
                 std::string id = field->valueId(); // no reference!
                 field->setValuePtr(getEntity(id, target.get()));
 
-                if (container) {
-                    field->setFieldId(container->resolveField(field->name()));
+                if (ext) {
+                    field->setFieldId(resolveField(ext, field->name()));
 
                     if (!field->valuePtr())
-                        field->setSpecialValueId(container->resolveFieldValue(field->value().toString()));
+                        field->setSpecialValueId(resolveFieldValue(ext, field->value().toString()));
                 }
 
                 // TODO: Move field information out of Engine
@@ -191,12 +189,12 @@ void Engine::resolveIds()
 
     for (auto monitor : m_monitors) {
         auto block = monitor->block();
-        auto container = blockSectionContainer(block->opcode());
+        auto ext = blockExtension(block->opcode());
 
-        if (container)
-            block->setCompileFunction(container->resolveBlockCompileFunc(block->opcode()));
+        if (ext)
+            block->setCompileFunction(resolveBlockCompileFunc(ext, block->opcode()));
 
-        monitor->setBlockSection(blockSection(monitor->opcode()));
+        monitor->setExtension(ext);
 
         const auto &fields = block->fields();
         Target *target;
@@ -211,11 +209,11 @@ void Engine::resolveIds()
         for (auto field : fields) {
             field->setValuePtr(getEntity(field->valueId(), target));
 
-            if (container) {
-                field->setFieldId(container->resolveField(field->name()));
+            if (ext) {
+                field->setFieldId(resolveField(ext, field->name()));
 
                 if (!field->valuePtr())
-                    field->setSpecialValueId(container->resolveFieldValue(field->value().toString()));
+                    field->setSpecialValueId(resolveFieldValue(ext, field->value().toString()));
             }
 
             // TODO: Move field information out of Engine
@@ -268,8 +266,8 @@ void Engine::compile()
         const auto &blocks = target->blocks();
         for (auto block : blocks) {
             if (block->topLevel() && !block->isTopLevelReporter() && !block->shadow()) {
-                auto section = blockSection(block->opcode());
-                if (section) {
+                auto ext = blockExtension(block->opcode());
+                if (ext) {
                     auto script = std::make_shared<Script>(target.get(), block, this);
                     m_scripts[block] = script;
 
@@ -926,30 +924,6 @@ void Engine::setTimer(ITimer *timer)
     m_timer = timer;
 }
 
-void Engine::registerSection(std::shared_ptr<IBlockSection> section)
-{
-    if (section) {
-        if (m_sections.find(section) != m_sections.cend()) {
-            std::cerr << "Warning: block section \"" << section->name() << "\" is already registered" << std::endl;
-            return;
-        }
-
-        m_sections[section] = std::make_unique<BlockSectionContainer>();
-        section->registerBlocks(this);
-        section->onInit(this);
-    }
-}
-
-std::vector<std::shared_ptr<IBlockSection>> Engine::registeredSections() const
-{
-    std::vector<std::shared_ptr<IBlockSection>> ret;
-
-    for (const auto &[key, value] : m_sections)
-        ret.push_back(key);
-
-    return ret;
-}
-
 unsigned int Engine::functionIndex(BlockFunc f)
 {
     auto it = std::find(m_functions.begin(), m_functions.end(), f);
@@ -964,68 +938,68 @@ const std::vector<BlockFunc> &Engine::blockFunctions() const
     return m_functions;
 }
 
-void Engine::addCompileFunction(IBlockSection *section, const std::string &opcode, BlockComp f)
+void Engine::addCompileFunction(IExtension *extension, const std::string &opcode, BlockComp f)
 {
-    auto container = blockSectionContainer(section);
+    if (m_compileFunctions.find(extension) == m_compileFunctions.cend())
+        m_compileFunctions[extension] = {};
 
-    if (container)
-        container->addCompileFunction(opcode, f);
+    m_compileFunctions[extension][opcode] = f;
 }
 
-void Engine::addHatPredicateCompileFunction(IBlockSection *section, const std::string &opcode, HatPredicateCompileFunc f)
+void Engine::addHatPredicateCompileFunction(IExtension *extension, const std::string &opcode, HatPredicateCompileFunc f)
 {
-    auto container = blockSectionContainer(section);
+    if (m_hatPredicateCompileFunctions.find(extension) == m_hatPredicateCompileFunctions.cend())
+        m_hatPredicateCompileFunctions[extension] = {};
 
-    if (container)
-        container->addHatPredicateCompileFunction(opcode, f);
+    m_hatPredicateCompileFunctions[extension][opcode] = f;
 }
 
-void Engine::addMonitorNameFunction(IBlockSection *section, const std::string &opcode, MonitorNameFunc f)
+void Engine::addMonitorNameFunction(IExtension *extension, const std::string &opcode, MonitorNameFunc f)
 {
-    auto container = blockSectionContainer(section);
+    if (m_monitorNameFunctions.find(extension) == m_monitorNameFunctions.cend())
+        m_monitorNameFunctions[extension] = {};
 
-    if (container)
-        container->addMonitorNameFunction(opcode, f);
+    m_monitorNameFunctions[extension][opcode] = f;
 }
 
-void Engine::addMonitorChangeFunction(IBlockSection *section, const std::string &opcode, MonitorChangeFunc f)
+void Engine::addMonitorChangeFunction(IExtension *extension, const std::string &opcode, MonitorChangeFunc f)
 {
-    auto container = blockSectionContainer(section);
+    if (m_monitorChangeFunctions.find(extension) == m_monitorChangeFunctions.cend())
+        m_monitorChangeFunctions[extension] = {};
 
-    if (container)
-        container->addMonitorChangeFunction(opcode, f);
+    m_monitorChangeFunctions[extension][opcode] = f;
 }
 
-void Engine::addHatBlock(IBlockSection *section, const std::string &opcode)
+void Engine::addHatBlock(IExtension *extension, const std::string &opcode)
 {
-    auto container = blockSectionContainer(section);
+    if (m_compileFunctions.find(extension) == m_compileFunctions.cend())
+        m_compileFunctions[extension] = {};
 
-    if (container)
-        container->addHatBlock(opcode);
+    m_compileFunctions[extension][opcode] = [](Compiler *compiler) {};
 }
 
-void Engine::addInput(IBlockSection *section, const std::string &name, int id)
+void Engine::addInput(IExtension *extension, const std::string &name, int id)
 {
-    auto container = blockSectionContainer(section);
+    if (m_inputs.find(extension) == m_inputs.cend())
+        m_inputs[extension] = {};
 
-    if (container)
-        container->addInput(name, id);
+    m_inputs[extension][name] = id;
 }
 
-void Engine::addField(IBlockSection *section, const std::string &name, int id)
+void Engine::addField(IExtension *extension, const std::string &name, int id)
 {
-    auto container = blockSectionContainer(section);
+    if (m_fields.find(extension) == m_fields.cend())
+        m_fields[extension] = {};
 
-    if (container)
-        container->addField(name, id);
+    m_fields[extension][name] = id;
 }
 
-void Engine::addFieldValue(IBlockSection *section, const std::string &value, int id)
+void Engine::addFieldValue(IExtension *extension, const std::string &value, int id)
 {
-    auto container = blockSectionContainer(section);
+    if (m_fieldValues.find(extension) == m_fieldValues.cend())
+        m_fieldValues[extension] = {};
 
-    if (container)
-        container->addFieldValue(value, id);
+    m_fieldValues[extension][value] = id;
 }
 
 const std::vector<std::shared_ptr<Broadcast>> &Engine::broadcasts() const
@@ -1423,18 +1397,22 @@ const std::vector<std::string> &Engine::extensions() const
 
 void Engine::setExtensions(const std::vector<std::string> &newExtensions)
 {
-    m_sections.clear();
+    clearExtensionData();
     m_extensions = newExtensions;
 
-    // Register standard block sections
-    ScratchConfiguration::getExtension<StandardBlocks>()->registerSections(this);
+    // Register blocks of default extensions
+    const auto &defaultExtensions = Blocks::extensions();
 
-    // Register block sections of extensions
+    for (auto ext : defaultExtensions)
+        ext->registerBlocks(this);
+
+    // Register blocks of custom extensions
     for (auto ext : m_extensions) {
         IExtension *ptr = ScratchConfiguration::getExtension(ext);
-        if (ptr)
-            ptr->registerSections(this);
-        else
+        if (ptr) {
+            ptr->registerBlocks(this);
+            ptr->onInit(this);
+        } else
             std::cerr << "Unsupported extension: " << ext << std::endl;
     }
 }
@@ -1610,17 +1588,6 @@ std::shared_ptr<Entity> Engine::getEntity(const std::string &id, Target *target)
     return nullptr;
 }
 
-std::shared_ptr<IBlockSection> Engine::blockSection(const std::string &opcode) const
-{
-    for (const auto &pair : m_sections) {
-        auto block = pair.second->resolveBlockCompileFunc(opcode);
-        if (block)
-            return pair.first;
-    }
-
-    return nullptr;
-}
-
 void Engine::addHatToMap(std::unordered_map<Target *, std::vector<Script *>> &map, Script *script)
 {
     if (!script)
@@ -1704,30 +1671,6 @@ void Engine::updateSpriteLayerOrder()
         m_executableTargets[i]->setLayerOrder(i);
 }
 
-BlockSectionContainer *Engine::blockSectionContainer(const std::string &opcode) const
-{
-    for (const auto &pair : m_sections) {
-        auto block = pair.second->resolveBlockCompileFunc(opcode);
-        if (block)
-            return pair.second.get();
-    }
-
-    return nullptr;
-}
-
-BlockSectionContainer *Engine::blockSectionContainer(IBlockSection *section) const
-{
-    if (!section)
-        return nullptr;
-
-    for (const auto &pair : m_sections) {
-        if (pair.first.get() == section)
-            return pair.second.get();
-    }
-
-    return nullptr;
-}
-
 const std::string &Engine::userAgent() const
 {
     return m_userAgent;
@@ -1743,25 +1686,164 @@ const std::unordered_set<std::string> &Engine::unsupportedBlocks() const
     return m_unsupportedBlocks;
 }
 
+void Engine::clearExtensionData()
+{
+    m_compileFunctions.clear();
+    m_hatPredicateCompileFunctions.clear();
+    m_monitorNameFunctions.clear();
+    m_monitorChangeFunctions.clear();
+    m_inputs.clear();
+    m_fields.clear();
+    m_fieldValues.clear();
+}
+
+IExtension *Engine::blockExtension(const std::string &opcode) const
+{
+    for (const auto &[ext, data] : m_compileFunctions) {
+        auto it = data.find(opcode);
+
+        if (it != data.cend())
+            return ext;
+    }
+
+    return nullptr;
+}
+
+BlockComp Engine::resolveBlockCompileFunc(IExtension *extension, const std::string &opcode) const
+{
+    if (!extension)
+        return nullptr;
+
+    auto it = m_compileFunctions.find(extension);
+
+    if (it != m_compileFunctions.cend()) {
+        auto dataIt = it->second.find(opcode);
+
+        if (dataIt != it->second.cend())
+            return dataIt->second;
+    }
+
+    return nullptr;
+}
+
+HatPredicateCompileFunc Engine::resolveHatPredicateCompileFunc(IExtension *extension, const std::string &opcode) const
+{
+    if (!extension)
+        return nullptr;
+
+    auto it = m_hatPredicateCompileFunctions.find(extension);
+
+    if (it != m_hatPredicateCompileFunctions.cend()) {
+        auto dataIt = it->second.find(opcode);
+
+        if (dataIt != it->second.cend())
+            return dataIt->second;
+    }
+
+    return nullptr;
+}
+
+MonitorNameFunc Engine::resolveMonitorNameFunc(IExtension *extension, const std::string &opcode) const
+{
+    if (!extension)
+        return nullptr;
+
+    auto it = m_monitorNameFunctions.find(extension);
+
+    if (it != m_monitorNameFunctions.cend()) {
+        auto dataIt = it->second.find(opcode);
+
+        if (dataIt != it->second.cend())
+            return dataIt->second;
+    }
+
+    return nullptr;
+}
+
+MonitorChangeFunc Engine::resolveMonitorChangeFunc(IExtension *extension, const std::string &opcode) const
+{
+    if (!extension)
+        return nullptr;
+
+    auto it = m_monitorChangeFunctions.find(extension);
+
+    if (it != m_monitorChangeFunctions.cend()) {
+        auto dataIt = it->second.find(opcode);
+
+        if (dataIt != it->second.cend())
+            return dataIt->second;
+    }
+
+    return nullptr;
+}
+
+int Engine::resolveInput(IExtension *extension, const std::string &name) const
+{
+    if (!extension)
+        return -1;
+
+    auto it = m_inputs.find(extension);
+
+    if (it != m_inputs.cend()) {
+        auto dataIt = it->second.find(name);
+
+        if (dataIt != it->second.cend())
+            return dataIt->second;
+    }
+
+    return -1;
+}
+
+int Engine::resolveField(IExtension *extension, const std::string &name) const
+{
+    if (!extension)
+        return -1;
+
+    auto it = m_fields.find(extension);
+
+    if (it != m_fields.cend()) {
+        auto dataIt = it->second.find(name);
+
+        if (dataIt != it->second.cend())
+            return dataIt->second;
+    }
+
+    return -1;
+}
+
+int Engine::resolveFieldValue(IExtension *extension, const std::string &value) const
+{
+    if (!extension)
+        return -1;
+
+    auto it = m_fieldValues.find(extension);
+
+    if (it != m_fieldValues.cend()) {
+        auto dataIt = it->second.find(value);
+
+        if (dataIt != it->second.cend())
+            return dataIt->second;
+    }
+
+    return -1;
+}
+
 void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
 {
     Target *target = monitor->sprite() ? static_cast<Target *>(monitor->sprite()) : stage();
     Compiler compiler(this, target);
     auto block = monitor->block();
-    auto section = blockSection(block->opcode());
-    auto container = blockSectionContainer(block->opcode());
+    auto ext = blockExtension(block->opcode());
 
-    if (container) {
-        MonitorNameFunc nameFunc = container->resolveMonitorNameFunc(block->opcode());
+    if (ext) {
+        MonitorNameFunc nameFunc = resolveMonitorNameFunc(ext, block->opcode());
 
         if (nameFunc)
             monitor->setName(nameFunc(block.get()));
 
-        MonitorChangeFunc changeFunc = container->resolveMonitorChangeFunc(block->opcode());
+        MonitorChangeFunc changeFunc = resolveMonitorChangeFunc(ext, block->opcode());
         monitor->setValueChangeFunction(changeFunc);
-    }
 
-    if (section) {
         auto script = std::make_shared<Script>(target, block, this);
         monitor->setScript(script);
         compiler.init();
@@ -1837,16 +1919,16 @@ void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *targe
     if (!target->isStage())
         monitor->setSprite(static_cast<Sprite *>(target));
 
-    monitor->setBlockSection(blockSection(monitor->opcode()));
-    auto container = blockSectionContainer(monitor->opcode());
+    IExtension *ext = blockExtension(monitor->opcode());
+    monitor->setExtension(ext);
 
-    if (container) {
-        MonitorNameFunc nameFunc = container->resolveMonitorNameFunc(monitor->opcode());
+    if (ext) {
+        MonitorNameFunc nameFunc = resolveMonitorNameFunc(ext, monitor->opcode());
 
         if (nameFunc)
             monitor->setName(nameFunc(monitor->block().get()));
 
-        MonitorChangeFunc changeFunc = container->resolveMonitorChangeFunc(monitor->opcode());
+        MonitorChangeFunc changeFunc = resolveMonitorChangeFunc(ext, monitor->opcode());
         monitor->setValueChangeFunction(changeFunc);
     }
 

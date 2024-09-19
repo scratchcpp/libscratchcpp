@@ -31,7 +31,6 @@ target_sources(scratchcpp
     include/scratchcpp/scratchconfiguration.h
     include/scratchcpp/iengine.h
     include/scratchcpp/iextension.h
-    include/scratchcpp/iblocksection.h
     include/scratchcpp/thread.h
     include/scratchcpp/asset.h
     include/scratchcpp/costume.h

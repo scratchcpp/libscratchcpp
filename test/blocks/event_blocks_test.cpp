@@ -28,8 +28,8 @@ class EventBlocksTest : public testing::Test
     public:
         void SetUp() override
         {
-            m_section = std::make_unique<EventBlocks>();
-            m_section->registerBlocks(&m_engine);
+            m_extension = std::make_unique<EventBlocks>();
+            m_extension->registerBlocks(&m_engine);
 
             m_broadcast = std::make_shared<Broadcast>("", "test");
             m_engine.setBroadcasts({ m_broadcast });
@@ -118,7 +118,7 @@ class EventBlocksTest : public testing::Test
             block->addField(field);
         }
 
-        std::unique_ptr<IBlockSection> m_section;
+        std::unique_ptr<IExtension> m_extension;
         EngineMock m_engineMock;
         Engine m_engine;
         std::shared_ptr<Broadcast> m_broadcast;
@@ -126,48 +126,43 @@ class EventBlocksTest : public testing::Test
 
 TEST_F(EventBlocksTest, Name)
 {
-    ASSERT_EQ(m_section->name(), "Events");
-}
-
-TEST_F(EventBlocksTest, CategoryVisible)
-{
-    ASSERT_TRUE(m_section->categoryVisible());
+    ASSERT_EQ(m_extension->name(), "Events");
 }
 
 TEST_F(EventBlocksTest, RegisterBlocks)
 {
     // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whentouchingobject", &EventBlocks::compileWhenTouchingObject));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenflagclicked", &EventBlocks::compileWhenFlagClicked));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenthisspriteclicked", &EventBlocks::compileWhenThisSpriteClicked));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenstageclicked", &EventBlocks::compileWhenStageClicked));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_broadcast", &EventBlocks::compileBroadcast));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_broadcastandwait", &EventBlocks::compileBroadcastAndWait));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenbroadcastreceived", &EventBlocks::compileWhenBroadcastReceived));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenbackdropswitchesto", &EventBlocks::compileWhenBackdropSwitchesTo));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whengreaterthan", &EventBlocks::compileWhenGreaterThan));
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "event_whenkeypressed", &EventBlocks::compileWhenKeyPressed));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "event_whentouchingobject", &EventBlocks::compileWhenTouchingObject));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "event_whenflagclicked", &EventBlocks::compileWhenFlagClicked));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "event_whenthisspriteclicked", &EventBlocks::compileWhenThisSpriteClicked));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "event_whenstageclicked", &EventBlocks::compileWhenStageClicked));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "event_broadcast", &EventBlocks::compileBroadcast));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "event_broadcastandwait", &EventBlocks::compileBroadcastAndWait));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "event_whenbroadcastreceived", &EventBlocks::compileWhenBroadcastReceived));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "event_whenbackdropswitchesto", &EventBlocks::compileWhenBackdropSwitchesTo));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "event_whengreaterthan", &EventBlocks::compileWhenGreaterThan));
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "event_whenkeypressed", &EventBlocks::compileWhenKeyPressed));
 
     // Hat predicates
-    EXPECT_CALL(m_engineMock, addHatPredicateCompileFunction(m_section.get(), "event_whentouchingobject", &EventBlocks::compileWhenTouchingObjectPredicate));
-    EXPECT_CALL(m_engineMock, addHatPredicateCompileFunction(m_section.get(), "event_whengreaterthan", &EventBlocks::compileWhenGreaterThanPredicate));
+    EXPECT_CALL(m_engineMock, addHatPredicateCompileFunction(m_extension.get(), "event_whentouchingobject", &EventBlocks::compileWhenTouchingObjectPredicate));
+    EXPECT_CALL(m_engineMock, addHatPredicateCompileFunction(m_extension.get(), "event_whengreaterthan", &EventBlocks::compileWhenGreaterThanPredicate));
 
     // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TOUCHINGOBJECTMENU", EventBlocks::TOUCHINGOBJECTMENU));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "BROADCAST_INPUT", EventBlocks::BROADCAST_INPUT));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VALUE", EventBlocks::VALUE));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "TOUCHINGOBJECTMENU", EventBlocks::TOUCHINGOBJECTMENU));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "BROADCAST_INPUT", EventBlocks::BROADCAST_INPUT));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "VALUE", EventBlocks::VALUE));
 
     // Fields
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "BROADCAST_OPTION", EventBlocks::BROADCAST_OPTION));
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "BACKDROP", EventBlocks::BACKDROP));
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "WHENGREATERTHANMENU", EventBlocks::WHENGREATERTHANMENU));
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "KEY_OPTION", EventBlocks::KEY_OPTION));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "BROADCAST_OPTION", EventBlocks::BROADCAST_OPTION));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "BACKDROP", EventBlocks::BACKDROP));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "WHENGREATERTHANMENU", EventBlocks::WHENGREATERTHANMENU));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "KEY_OPTION", EventBlocks::KEY_OPTION));
 
     // Field values
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "LOUDNESS", EventBlocks::Loudness));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "TIMER", EventBlocks::Timer));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "LOUDNESS", EventBlocks::Loudness));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "TIMER", EventBlocks::Timer));
 
-    m_section->registerBlocks(&m_engineMock);
+    m_extension->registerBlocks(&m_engineMock);
 }
 
 TEST_F(EventBlocksTest, WhenTouchingObjectPredicate)

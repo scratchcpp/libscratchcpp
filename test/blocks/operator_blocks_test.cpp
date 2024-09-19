@@ -17,8 +17,8 @@ class OperatorBlocksTest : public testing::Test
     public:
         void SetUp() override
         {
-            m_section = std::make_unique<OperatorBlocks>();
-            m_section->registerBlocks(&m_engine);
+            m_extension = std::make_unique<OperatorBlocks>();
+            m_extension->registerBlocks(&m_engine);
         }
 
         // For any operator block
@@ -56,77 +56,72 @@ class OperatorBlocksTest : public testing::Test
             block->addField(field);
         }
 
-        std::unique_ptr<IBlockSection> m_section;
+        std::unique_ptr<IExtension> m_extension;
         EngineMock m_engineMock;
         Engine m_engine;
 };
 
 TEST_F(OperatorBlocksTest, Name)
 {
-    ASSERT_EQ(m_section->name(), "Operators");
-}
-
-TEST_F(OperatorBlocksTest, CategoryVisible)
-{
-    ASSERT_TRUE(m_section->categoryVisible());
+    ASSERT_EQ(m_extension->name(), "Operators");
 }
 
 TEST_F(OperatorBlocksTest, RegisterBlocks)
 {
     // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_add", &OperatorBlocks::compileAdd)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_subtract", &OperatorBlocks::compileSubtract)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_multiply", &OperatorBlocks::compileMultiply)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_divide", &OperatorBlocks::compileDivide)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_random", &OperatorBlocks::compilePickRandom)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_lt", &OperatorBlocks::compileLessThan)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_equals", &OperatorBlocks::compileEquals)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_gt", &OperatorBlocks::compileGreaterThan)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_and", &OperatorBlocks::compileAnd)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_or", &OperatorBlocks::compileOr)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_not", &OperatorBlocks::compileNot)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_join", &OperatorBlocks::compileJoin)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_letter_of", &OperatorBlocks::compileLetterOf)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_length", &OperatorBlocks::compileLength)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_contains", &OperatorBlocks::compileContains)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_mod", &OperatorBlocks::compileMod)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_round", &OperatorBlocks::compileRound)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "operator_mathop", &OperatorBlocks::compileMathOp)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_add", &OperatorBlocks::compileAdd)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_subtract", &OperatorBlocks::compileSubtract)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_multiply", &OperatorBlocks::compileMultiply)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_divide", &OperatorBlocks::compileDivide)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_random", &OperatorBlocks::compilePickRandom)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_lt", &OperatorBlocks::compileLessThan)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_equals", &OperatorBlocks::compileEquals)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_gt", &OperatorBlocks::compileGreaterThan)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_and", &OperatorBlocks::compileAnd)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_or", &OperatorBlocks::compileOr)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_not", &OperatorBlocks::compileNot)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_join", &OperatorBlocks::compileJoin)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_letter_of", &OperatorBlocks::compileLetterOf)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_length", &OperatorBlocks::compileLength)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_contains", &OperatorBlocks::compileContains)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_mod", &OperatorBlocks::compileMod)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_round", &OperatorBlocks::compileRound)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_mathop", &OperatorBlocks::compileMathOp)).Times(1);
 
     // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "NUM1", OperatorBlocks::NUM1)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "NUM2", OperatorBlocks::NUM2)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "FROM", OperatorBlocks::FROM)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TO", OperatorBlocks::TO)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "OPERAND1", OperatorBlocks::OPERAND1)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "OPERAND2", OperatorBlocks::OPERAND2)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "OPERAND", OperatorBlocks::OPERAND)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "STRING1", OperatorBlocks::STRING1)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "STRING2", OperatorBlocks::STRING2)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "LETTER", OperatorBlocks::LETTER)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "STRING", OperatorBlocks::STRING)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "NUM", OperatorBlocks::NUM)).Times(1);
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "NUM1", OperatorBlocks::NUM1)).Times(1);
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "NUM2", OperatorBlocks::NUM2)).Times(1);
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "FROM", OperatorBlocks::FROM)).Times(1);
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "TO", OperatorBlocks::TO)).Times(1);
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "OPERAND1", OperatorBlocks::OPERAND1)).Times(1);
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "OPERAND2", OperatorBlocks::OPERAND2)).Times(1);
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "OPERAND", OperatorBlocks::OPERAND)).Times(1);
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "STRING1", OperatorBlocks::STRING1)).Times(1);
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "STRING2", OperatorBlocks::STRING2)).Times(1);
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "LETTER", OperatorBlocks::LETTER)).Times(1);
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "STRING", OperatorBlocks::STRING)).Times(1);
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "NUM", OperatorBlocks::NUM)).Times(1);
 
     // Fields
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "OPERATOR", OperatorBlocks::OPERATOR));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "OPERATOR", OperatorBlocks::OPERATOR));
 
     // Field values
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "abs", OperatorBlocks::Abs)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "floor", OperatorBlocks::Floor)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "ceiling", OperatorBlocks::Ceiling)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "sqrt", OperatorBlocks::Sqrt)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "sin", OperatorBlocks::Sin)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "cos", OperatorBlocks::Cos)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "tan", OperatorBlocks::Tan)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "asin", OperatorBlocks::Asin)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "acos", OperatorBlocks::Acos)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "atan", OperatorBlocks::Atan)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "ln", OperatorBlocks::Ln)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "log", OperatorBlocks::Log)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "e ^", OperatorBlocks::Eexp)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "10 ^", OperatorBlocks::Op_10exp)).Times(1);
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "abs", OperatorBlocks::Abs)).Times(1);
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "floor", OperatorBlocks::Floor)).Times(1);
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "ceiling", OperatorBlocks::Ceiling)).Times(1);
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "sqrt", OperatorBlocks::Sqrt)).Times(1);
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "sin", OperatorBlocks::Sin)).Times(1);
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "cos", OperatorBlocks::Cos)).Times(1);
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "tan", OperatorBlocks::Tan)).Times(1);
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "asin", OperatorBlocks::Asin)).Times(1);
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "acos", OperatorBlocks::Acos)).Times(1);
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "atan", OperatorBlocks::Atan)).Times(1);
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "ln", OperatorBlocks::Ln)).Times(1);
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "log", OperatorBlocks::Log)).Times(1);
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "e ^", OperatorBlocks::Eexp)).Times(1);
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "10 ^", OperatorBlocks::Op_10exp)).Times(1);
 
-    m_section->registerBlocks(&m_engineMock);
+    m_extension->registerBlocks(&m_engineMock);
 }
 
 TEST_F(OperatorBlocksTest, Add)

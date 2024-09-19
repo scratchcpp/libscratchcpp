@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <scratchcpp/iblocksection.h>
+#include <scratchcpp/iextension.h>
 #include <scratchcpp/value.h>
 #include <vector>
 
@@ -15,7 +15,7 @@ class Target;
 class IAudioInput;
 
 /*! \brief The SensingBlocks class contains the implementation of sensing blocks. */
-class SensingBlocks : public IBlockSection
+class SensingBlocks : public IExtension
 {
     public:
         enum Inputs
@@ -59,6 +59,7 @@ class SensingBlocks : public IBlockSection
         };
 
         std::string name() const override;
+        std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
         void onInit(IEngine *engine) override;

@@ -37,6 +37,14 @@ TEST_F(ScratchConfigurationTest, Extensions)
     ASSERT_EQ(ScratchConfiguration::getExtension<Extension1>(), m_extension1.get());
     ASSERT_EQ(ScratchConfiguration::getExtension<Extension2>(), m_extension2.get());
     ASSERT_EQ(ScratchConfiguration::getExtension<Extension3>(), nullptr);
+
+    ScratchConfiguration::removeExtension(m_extension1);
+
+    ASSERT_EQ(ScratchConfiguration::getExtension("ext 1"), nullptr);
+    ASSERT_EQ(ScratchConfiguration::getExtension("ext 2"), m_extension2.get());
+
+    ASSERT_EQ(ScratchConfiguration::getExtension<Extension1>(), nullptr);
+    ASSERT_EQ(ScratchConfiguration::getExtension<Extension2>(), m_extension2.get());
 }
 
 TEST_F(ScratchConfigurationTest, GraphicsEffects)

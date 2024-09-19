@@ -20,6 +20,11 @@ std::string ControlBlocks::name() const
     return "Control";
 }
 
+std::string ControlBlocks::description() const
+{
+    return name() + " blocks";
+}
+
 void ControlBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks

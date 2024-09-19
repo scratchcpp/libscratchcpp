@@ -11,15 +11,9 @@ std::string TestExtension::name() const
 
 std::string TestExtension::description() const
 {
-    return "Test extension";
+    return "";
 }
 
 void TestExtension::registerBlocks(IEngine *engine)
 {
-    engine->clear();
-}
-
-void TestExtension::onInit(IEngine *engine)
-{
-    engine->clear();
 }

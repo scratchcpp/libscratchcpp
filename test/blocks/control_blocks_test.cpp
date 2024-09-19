@@ -25,8 +25,8 @@ class ControlBlocksTest : public testing::Test
     public:
         void SetUp() override
         {
-            m_section = std::make_unique<ControlBlocks>();
-            m_section->registerBlocks(&m_engine);
+            m_extension = std::make_unique<ControlBlocks>();
+            m_extension->registerBlocks(&m_engine);
         }
 
         // For any control block
@@ -132,57 +132,52 @@ class ControlBlocksTest : public testing::Test
             return block;
         }
 
-        std::unique_ptr<IBlockSection> m_section;
+        std::unique_ptr<IExtension> m_extension;
         EngineMock m_engineMock;
         Engine m_engine;
 };
 
 TEST_F(ControlBlocksTest, Name)
 {
-    ASSERT_EQ(m_section->name(), "Control");
-}
-
-TEST_F(ControlBlocksTest, CategoryVisible)
-{
-    ASSERT_TRUE(m_section->categoryVisible());
+    ASSERT_EQ(m_extension->name(), "Control");
 }
 
 TEST_F(ControlBlocksTest, RegisterBlocks)
 {
     // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_forever", &ControlBlocks::compileRepeatForever)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_repeat", &ControlBlocks::compileRepeat)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_repeat_until", &ControlBlocks::compileRepeatUntil)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_while", &ControlBlocks::compileRepeatWhile)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_for_each", &ControlBlocks::compileRepeatForEach)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_if", &ControlBlocks::compileIfStatement)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_if_else", &ControlBlocks::compileIfElseStatement)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_stop", &ControlBlocks::compileStop)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_wait", &ControlBlocks::compileWait)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_wait_until", &ControlBlocks::compileWaitUntil)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_start_as_clone", &ControlBlocks::compileStartAsClone)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_create_clone_of", &ControlBlocks::compileCreateClone)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "control_delete_this_clone", &ControlBlocks::compileDeleteThisClone)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_forever", &ControlBlocks::compileRepeatForever)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_repeat", &ControlBlocks::compileRepeat)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_repeat_until", &ControlBlocks::compileRepeatUntil)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_while", &ControlBlocks::compileRepeatWhile)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_for_each", &ControlBlocks::compileRepeatForEach)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_if", &ControlBlocks::compileIfStatement)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_if_else", &ControlBlocks::compileIfElseStatement)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_stop", &ControlBlocks::compileStop)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_wait", &ControlBlocks::compileWait)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_wait_until", &ControlBlocks::compileWaitUntil)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_start_as_clone", &ControlBlocks::compileStartAsClone)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_create_clone_of", &ControlBlocks::compileCreateClone)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_delete_this_clone", &ControlBlocks::compileDeleteThisClone)).Times(1);
 
     // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SUBSTACK", ControlBlocks::SUBSTACK));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "SUBSTACK2", ControlBlocks::SUBSTACK2));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "TIMES", ControlBlocks::TIMES));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "CONDITION", ControlBlocks::CONDITION));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "DURATION", ControlBlocks::DURATION));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "VALUE", ControlBlocks::VALUE));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "CLONE_OPTION", ControlBlocks::CLONE_OPTION));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "SUBSTACK", ControlBlocks::SUBSTACK));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "SUBSTACK2", ControlBlocks::SUBSTACK2));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "TIMES", ControlBlocks::TIMES));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "CONDITION", ControlBlocks::CONDITION));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "DURATION", ControlBlocks::DURATION));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "VALUE", ControlBlocks::VALUE));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "CLONE_OPTION", ControlBlocks::CLONE_OPTION));
 
     // Fields
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "STOP_OPTION", ControlBlocks::STOP_OPTION));
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "VARIABLE", ControlBlocks::VARIABLE));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "STOP_OPTION", ControlBlocks::STOP_OPTION));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "VARIABLE", ControlBlocks::VARIABLE));
 
     // Field values
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "all", ControlBlocks::StopAll));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "this script", ControlBlocks::StopThisScript));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_section.get(), "other scripts in sprite", ControlBlocks::StopOtherScriptsInSprite));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "all", ControlBlocks::StopAll));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "this script", ControlBlocks::StopThisScript));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "other scripts in sprite", ControlBlocks::StopOtherScriptsInSprite));
 
-    m_section->registerBlocks(&m_engineMock);
+    m_extension->registerBlocks(&m_engineMock);
 }
 
 TEST_F(ControlBlocksTest, Forever)

@@ -24,6 +24,11 @@ std::string MotionBlocks::name() const
     return "Motion";
 }
 
+std::string MotionBlocks::description() const
+{
+    return name() + " blocks";
+}
+
 void MotionBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks

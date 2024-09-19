@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <scratchcpp/iblocksection.h>
+#include <scratchcpp/iextension.h>
 
 namespace libscratchcpp
 {
@@ -12,7 +12,7 @@ class VirtualMachine;
 class IAudioInput;
 
 /*! \brief The EventBlocks class contains the implementation of event blocks. */
-class EventBlocks : public IBlockSection
+class EventBlocks : public IExtension
 {
     public:
         enum Inputs
@@ -37,6 +37,7 @@ class EventBlocks : public IBlockSection
         };
 
         std::string name() const override;
+        std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
 

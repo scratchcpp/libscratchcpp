@@ -21,8 +21,8 @@ class ListBlocksTest : public testing::Test
     public:
         void SetUp() override
         {
-            m_section = std::make_unique<ListBlocks>();
-            m_section->registerBlocks(&m_engine);
+            m_extension = std::make_unique<ListBlocks>();
+            m_extension->registerBlocks(&m_engine);
         }
 
         // For any list block
@@ -81,48 +81,43 @@ class ListBlocksTest : public testing::Test
             return block;
         }
 
-        std::unique_ptr<IBlockSection> m_section;
+        std::unique_ptr<IExtension> m_extension;
         EngineMock m_engineMock;
         Engine m_engine;
 };
 
 TEST_F(ListBlocksTest, Name)
 {
-    ASSERT_EQ(m_section->name(), "Lists");
-}
-
-TEST_F(ListBlocksTest, CategoryVisible)
-{
-    ASSERT_FALSE(m_section->categoryVisible());
+    ASSERT_EQ(m_extension->name(), "Lists");
 }
 
 TEST_F(ListBlocksTest, RegisterBlocks)
 {
     // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_listcontents", &ListBlocks::compileListContents)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_addtolist", &ListBlocks::compileAddToList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_deleteoflist", &ListBlocks::compileDeleteFromList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_deletealloflist", &ListBlocks::compileDeleteAllOfList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_insertatlist", &ListBlocks::compileInsertToList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_replaceitemoflist", &ListBlocks::compileReplaceItemOfList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_itemoflist", &ListBlocks::compileItemOfList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_itemnumoflist", &ListBlocks::compileItemNumberInList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_lengthoflist", &ListBlocks::compileLengthOfList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_listcontainsitem", &ListBlocks::compileListContainsItem)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_showlist", &ListBlocks::compileShowList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_section.get(), "data_hidelist", &ListBlocks::compileHideList)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_listcontents", &ListBlocks::compileListContents)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_addtolist", &ListBlocks::compileAddToList)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_deleteoflist", &ListBlocks::compileDeleteFromList)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_deletealloflist", &ListBlocks::compileDeleteAllOfList)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_insertatlist", &ListBlocks::compileInsertToList)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_replaceitemoflist", &ListBlocks::compileReplaceItemOfList)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_itemoflist", &ListBlocks::compileItemOfList)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_itemnumoflist", &ListBlocks::compileItemNumberInList)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_lengthoflist", &ListBlocks::compileLengthOfList)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_listcontainsitem", &ListBlocks::compileListContainsItem)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_showlist", &ListBlocks::compileShowList)).Times(1);
+    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_hidelist", &ListBlocks::compileHideList)).Times(1);
 
     // Monitor names
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_section.get(), "data_listcontents", &ListBlocks::listContentsMonitorName));
+    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "data_listcontents", &ListBlocks::listContentsMonitorName));
 
     // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "ITEM", ListBlocks::ITEM));
-    EXPECT_CALL(m_engineMock, addInput(m_section.get(), "INDEX", ListBlocks::INDEX));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "ITEM", ListBlocks::ITEM));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "INDEX", ListBlocks::INDEX));
 
     // Fields
-    EXPECT_CALL(m_engineMock, addField(m_section.get(), "LIST", ListBlocks::LIST));
+    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "LIST", ListBlocks::LIST));
 
-    m_section->registerBlocks(&m_engineMock);
+    m_extension->registerBlocks(&m_engineMock);
 }
 
 TEST_F(ListBlocksTest, ListContents)

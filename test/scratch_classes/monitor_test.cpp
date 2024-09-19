@@ -8,7 +8,7 @@
 #include <randomgeneratormock.h>
 
 #include "../common.h"
-#include "testsection.h"
+#include "testextension.h"
 
 using namespace libscratchcpp;
 
@@ -84,14 +84,14 @@ TEST(MonitorTest, Script)
     ASSERT_EQ(monitor.script(), script);
 }
 
-TEST(MonitorTest, BlockSection)
+TEST(MonitorTest, Extension)
 {
     Monitor monitor("", "");
-    ASSERT_EQ(monitor.blockSection(), nullptr);
+    ASSERT_EQ(monitor.extension(), nullptr);
 
-    auto section = std::make_shared<TestSection>();
-    monitor.setBlockSection(section);
-    ASSERT_EQ(monitor.blockSection(), section);
+    auto extension = std::make_shared<TestExtension>();
+    monitor.setExtension(extension.get());
+    ASSERT_EQ(monitor.extension(), extension.get());
 }
 
 TEST(MonitorTest, Sprite)

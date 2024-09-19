@@ -8,9 +8,10 @@ namespace libscratchcpp
 class ExtensionBase : public IExtension
 {
     public:
+        std::string name() const override;
         std::string description() const override;
 
-        void registerSections(IEngine *engine) override;
+        void registerBlocks(IEngine *engine) override;
 };
 
 } // namespace libscratchcpp

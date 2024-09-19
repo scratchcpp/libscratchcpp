@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <chrono>
 
-#include <scratchcpp/iblocksection.h>
+#include <scratchcpp/iextension.h>
 
 namespace libscratchcpp
 {
@@ -14,8 +14,7 @@ class Sprite;
 class IRandomGenerator;
 class IClock;
 
-/*! \brief The MotionBlocks class contains the implementation of motion blocks. */
-class MotionBlocks : public IBlockSection
+class MotionBlocks : public IExtension
 {
     public:
         enum Inputs
@@ -45,6 +44,7 @@ class MotionBlocks : public IBlockSection
         };
 
         std::string name() const override;
+        std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
         void onInit(IEngine *engine) override;

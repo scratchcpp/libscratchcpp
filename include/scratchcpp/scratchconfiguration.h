@@ -21,6 +21,7 @@ class LIBSCRATCHCPP_EXPORT ScratchConfiguration
         ScratchConfiguration() = delete;
 
         static void registerExtension(std::shared_ptr<IExtension> extension);
+        static void removeExtension(std::shared_ptr<IExtension> extension);
         static IExtension *getExtension(const std::string &name);
 
         /*! Finds the extension of class T. Returns nullptr if it isn't registered. */

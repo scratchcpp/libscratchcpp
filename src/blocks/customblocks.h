@@ -2,14 +2,14 @@
 
 #pragma once
 
-#include <scratchcpp/iblocksection.h>
+#include <scratchcpp/iextension.h>
 
 namespace libscratchcpp
 {
 
 class Compiler;
 
-class CustomBlocks : public IBlockSection
+class CustomBlocks : public IExtension
 {
     public:
         enum Inputs
@@ -23,6 +23,7 @@ class CustomBlocks : public IBlockSection
         };
 
         std::string name() const override;
+        std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
 
