@@ -78,6 +78,27 @@ TEST(RectTest, Height)
     ASSERT_EQ(rect.height(), 35.272);
 }
 
+TEST(RectTest, SnapToInt)
+{
+    {
+        Rect rect(20.5, 12.5, 22.5, 8.5);
+        rect.snapToInt();
+        ASSERT_EQ(rect.left(), 20);
+        ASSERT_EQ(rect.top(), 13);
+        ASSERT_EQ(rect.right(), 23);
+        ASSERT_EQ(rect.bottom(), 8);
+    }
+
+    {
+        Rect rect(20.5, 12.2, 22.3, 8.5);
+        rect.snapToInt();
+        ASSERT_EQ(rect.left(), 20);
+        ASSERT_EQ(rect.top(), 13);
+        ASSERT_EQ(rect.right(), 23);
+        ASSERT_EQ(rect.bottom(), 8);
+    }
+}
+
 TEST(RectTest, Intersects)
 {
     Rect rect1(-50, 25, 150, -75);

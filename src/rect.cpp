@@ -78,6 +78,16 @@ double Rect::height() const
     return std::abs(impl->top - impl->bottom);
 }
 
+/*! Push out the rectangle to integer bounds. */
+void Rect::snapToInt()
+{
+    // https://github.com/scratchfoundation/scratch-render/blob/c3ede9c3d54769730c7b023021511e2aba167b1f/src/Rectangle.js#L136-L141
+    impl->left = std::floor(impl->left);
+    impl->right = std::ceil(impl->right);
+    impl->bottom = std::floor(impl->bottom);
+    impl->top = std::ceil(impl->top);
+}
+
 /*! Returns true if the rectangle intersects the given rectangle. */
 bool Rect::intersects(const Rect &rect) const
 {
