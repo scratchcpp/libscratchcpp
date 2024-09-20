@@ -17,6 +17,7 @@ namespace libscratchcpp
 class IExtension;
 class Broadcast;
 class Block;
+class Field;
 class Target;
 class Sprite;
 class Stage;
@@ -294,16 +295,16 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void addGreenFlagScript(std::shared_ptr<Block> hatBlock) = 0;
 
         /*! Registers the broadcast script. */
-        virtual void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, int fieldId, Broadcast *broadcast) = 0;
+        virtual void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Field *field, Broadcast *broadcast) = 0;
 
         /*! Registers the backdrop change script. */
-        virtual void addBackdropChangeScript(std::shared_ptr<Block> hatBlock, int fieldId) = 0;
+        virtual void addBackdropChangeScript(std::shared_ptr<Block> hatBlock, Field *field) = 0;
 
         /* Registers the given "when I start as clone" script. */
         virtual void addCloneInitScript(std::shared_ptr<Block> hatBlock) = 0;
 
         /* Registers the given "when key pressed" script. */
-        virtual void addKeyPressScript(std::shared_ptr<Block> hatBlock, int fieldId) = 0;
+        virtual void addKeyPressScript(std::shared_ptr<Block> hatBlock, Field *field) = 0;
 
         /* Registers the given "when this sprite/stage clicked" script. */
         virtual void addTargetClickScript(std::shared_ptr<Block> hatBlock) = 0;

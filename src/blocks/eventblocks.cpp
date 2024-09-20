@@ -113,14 +113,15 @@ void EventBlocks::compileBroadcastAndWait(Compiler *compiler)
 
 void EventBlocks::compileWhenBroadcastReceived(Compiler *compiler)
 {
-    auto broadcast = std::static_pointer_cast<Broadcast>(compiler->field(BROADCAST_OPTION)->valuePtr());
+    Field *field = compiler->field(BROADCAST_OPTION);
+    auto broadcast = std::static_pointer_cast<Broadcast>(field->valuePtr());
 
-    compiler->engine()->addBroadcastScript(compiler->block(), BROADCAST_OPTION, broadcast.get());
+    compiler->engine()->addBroadcastScript(compiler->block(), field, broadcast.get());
 }
 
 void EventBlocks::compileWhenBackdropSwitchesTo(Compiler *compiler)
 {
-    compiler->engine()->addBackdropChangeScript(compiler->block(), BACKDROP);
+    compiler->engine()->addBackdropChangeScript(compiler->block(), compiler->field(BACKDROP));
 }
 
 void EventBlocks::compileWhenGreaterThanPredicate(Compiler *compiler)
@@ -158,7 +159,7 @@ void EventBlocks::compileWhenGreaterThan(Compiler *compiler)
 void EventBlocks::compileWhenKeyPressed(Compiler *compiler)
 {
     // NOTE: Field values don't have to be registered because keys are referenced by their names
-    compiler->engine()->addKeyPressScript(compiler->block(), KEY_OPTION);
+    compiler->engine()->addKeyPressScript(compiler->block(), compiler->field(KEY_OPTION));
 }
 
 unsigned int EventBlocks::whenTouchingObjectPredicate(VirtualMachine *vm)

@@ -475,7 +475,7 @@ TEST_F(EventBlocksTest, WhenBroadcastReceived)
     auto block1 = createEventBlock("a", "event_whenbroadcastreceived");
     addBroadcastField(block1, "BROADCAST_OPTION", EventBlocks::BROADCAST_OPTION, m_broadcast);
 
-    EXPECT_CALL(m_engineMock, addBroadcastScript(block1, EventBlocks::BROADCAST_OPTION, m_broadcast.get())).Times(1);
+    EXPECT_CALL(m_engineMock, addBroadcastScript(block1, block1->fieldAt(0).get(), m_broadcast.get())).Times(1);
 
     compiler.init();
     compiler.setBlock(block1);
@@ -500,7 +500,7 @@ TEST_F(EventBlocksTest, WhenBackdropSwitchesTo)
     auto backdrop = std::make_shared<Costume>("backdrop2", "a", "svg");
     stage.addCostume(backdrop);
 
-    EXPECT_CALL(m_engineMock, addBackdropChangeScript(block1, EventBlocks::BACKDROP));
+    EXPECT_CALL(m_engineMock, addBackdropChangeScript(block1, block1->fieldAt(0).get()));
 
     compiler.init();
     compiler.setBlock(block1);
@@ -655,11 +655,11 @@ TEST_F(EventBlocksTest, WhenKeyPressed)
 
     compiler.init();
 
-    EXPECT_CALL(m_engineMock, addKeyPressScript(block1, EventBlocks::KEY_OPTION));
+    EXPECT_CALL(m_engineMock, addKeyPressScript(block1, block1->fieldAt(0).get()));
     compiler.setBlock(block1);
     EventBlocks::compileWhenKeyPressed(&compiler);
 
-    EXPECT_CALL(m_engineMock, addKeyPressScript(block2, EventBlocks::KEY_OPTION));
+    EXPECT_CALL(m_engineMock, addKeyPressScript(block2, block2->fieldAt(0).get()));
     compiler.setBlock(block2);
     EventBlocks::compileWhenKeyPressed(&compiler);
 

@@ -1057,7 +1057,7 @@ void Engine::addGreenFlagScript(std::shared_ptr<Block> hatBlock)
     addHatToMap(m_greenFlagHats, m_scripts[hatBlock].get());
 }
 
-void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, int fieldId, Broadcast *broadcast)
+void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Field *field, Broadcast *broadcast)
 {
     assert(!broadcast->isBackdropBroadcast());
     Script *script = m_scripts[whenReceivedBlock].get();
@@ -1073,19 +1073,22 @@ void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, int fi
         m_broadcastMap[broadcast] = { script };
 
     addHatToMap(m_broadcastHats, script);
-    addHatField(script, HatField::BroadcastOption, fieldId);
+    addHatField(script, HatField::BroadcastOption, field);
 }
 
-void Engine::addBackdropChangeScript(std::shared_ptr<Block> hatBlock, int fieldId)
+void Engine::addBackdropChangeScript(std::shared_ptr<Block> hatBlock, Field *field)
 {
     Stage *stage = this->stage();
 
     if (!stage)
         return;
 
-    // TODO: This assumes the first field holds the broadcast pointer, maybe this is not the best way (e. g. if an extension uses this method)
-    assert(hatBlock->fieldAt(0));
-    const std::string &backdropName = hatBlock->fieldAt(0)->value().toString();
+    if (!field) {
+        assert(false);
+        return;
+    }
+
+    const std::string &backdropName = field->value().toString();
     auto backdrop = stage->costumeAt(stage->findCostume(backdropName));
 
     if (!backdrop)
@@ -1107,7 +1110,7 @@ void Engine::addBackdropChangeScript(std::shared_ptr<Block> hatBlock, int fieldI
         m_backdropBroadcastMap[broadcast] = { script };
 
     addHatToMap(m_backdropChangeHats, script);
-    addHatField(script, HatField::Backdrop, fieldId);
+    addHatField(script, HatField::Backdrop, field);
 }
 
 void Engine::addCloneInitScript(std::shared_ptr<Block> hatBlock)
@@ -1115,11 +1118,11 @@ void Engine::addCloneInitScript(std::shared_ptr<Block> hatBlock)
     addHatToMap(m_cloneInitHats, m_scripts[hatBlock].get());
 }
 
-void Engine::addKeyPressScript(std::shared_ptr<Block> hatBlock, int fieldId)
+void Engine::addKeyPressScript(std::shared_ptr<Block> hatBlock, Field *field)
 {
     Script *script = m_scripts[hatBlock].get();
     addHatToMap(m_whenKeyPressedHats, script);
-    addHatField(script, HatField::KeyOption, fieldId);
+    addHatField(script, HatField::KeyOption, field);
 }
 
 void Engine::addTargetClickScript(std::shared_ptr<Block> hatBlock)
@@ -1607,15 +1610,15 @@ void Engine::addHatToMap(std::unordered_map<Target *, std::vector<Script *>> &ma
         map[target] = { script };
 }
 
-void Engine::addHatField(Script *script, HatField field, int fieldId)
+void Engine::addHatField(Script *script, HatField hatField, Field *targetField)
 {
     auto it = m_scriptHatFields.find(script);
 
     if (it == m_scriptHatFields.cend())
-        m_scriptHatFields[script] = { { field, fieldId } };
+        m_scriptHatFields[script] = { { hatField, targetField } };
     else {
         auto &fieldMap = it->second;
-        fieldMap[field] = fieldId;
+        fieldMap[hatField] = targetField;
     }
 }
 
@@ -2045,8 +2048,6 @@ std::vector<std::shared_ptr<Thread>> Engine::startHats(HatType hatType, const st
     allScriptsByOpcodeDo(
         hatType,
         [this, hatType, &optMatchFields, &newThreads](Script *script, Target *target) {
-            auto topBlock = script->topBlock();
-
             if (!optMatchFields.empty()) {
                 // Get the field map for this script
                 auto fieldMapIt = m_scriptHatFields.find(script);
@@ -2061,20 +2062,20 @@ std::vector<std::shared_ptr<Thread>> Engine::startHats(HatType hatType, const st
                         assert(fieldIt != fieldMap.cend());
 
                         if (fieldIt != fieldMap.cend()) {
-                            assert(topBlock->findFieldById(fieldIt->second));
+                            assert(fieldIt->second);
 
                             if (std::holds_alternative<std::string>(fieldValue)) {
-                                if (topBlock->findFieldById(fieldIt->second)->value().toString() != std::get<std::string>(fieldValue)) {
+                                if (fieldIt->second->value().toString() != std::get<std::string>(fieldValue)) {
                                     // Field mismatch
                                     return;
                                 }
                             } else if (std::holds_alternative<const char *>(fieldValue)) {
-                                if (topBlock->findFieldById(fieldIt->second)->value().toString() != std::string(std::get<const char *>(fieldValue))) {
+                                if (fieldIt->second->value().toString() != std::string(std::get<const char *>(fieldValue))) {
                                     // Field mismatch
                                     return;
                                 }
                             } else {
-                                if (topBlock->findFieldById(fieldIt->second)->valuePtr().get() != std::get<Entity *>(fieldValue)) {
+                                if (fieldIt->second->valuePtr().get() != std::get<Entity *>(fieldValue)) {
                                     // Field mismatch
                                     return;
                                 }
@@ -2103,7 +2104,7 @@ std::vector<std::shared_ptr<Thread>> Engine::startHats(HatType hatType, const st
             }
 
             // Start the thread with this top block
-            newThreads.push_back(pushThread(topBlock, target));
+            newThreads.push_back(pushThread(script->topBlock(), target));
         },
         optTarget);
 

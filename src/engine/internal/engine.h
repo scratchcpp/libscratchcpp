@@ -122,10 +122,10 @@ class Engine : public IEngine
 
         void addWhenTouchingObjectScript(std::shared_ptr<Block> hatBlock) override;
         void addGreenFlagScript(std::shared_ptr<Block> hatBlock) override;
-        void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, int fieldId, Broadcast *broadcast) override;
-        void addBackdropChangeScript(std::shared_ptr<Block> hatBlock, int fieldId) override;
+        void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Field *field, Broadcast *broadcast) override;
+        void addBackdropChangeScript(std::shared_ptr<Block> hatBlock, Field *field) override;
         void addCloneInitScript(std::shared_ptr<Block> hatBlock) override;
-        void addKeyPressScript(std::shared_ptr<Block> hatBlock, int fieldId) override;
+        void addKeyPressScript(std::shared_ptr<Block> hatBlock, Field *field) override;
         void addTargetClickScript(std::shared_ptr<Block> hatBlock) override;
         void addWhenGreaterThanScript(std::shared_ptr<Block> hatBlock) override;
 
@@ -215,7 +215,7 @@ class Engine : public IEngine
         std::shared_ptr<Entity> getEntity(const std::string &id, Target *target);
 
         void addHatToMap(std::unordered_map<Target *, std::vector<Script *>> &map, Script *script);
-        void addHatField(Script *script, HatField field, int fieldId);
+        void addHatField(Script *script, HatField hatField, Field *targetField);
         const std::vector<libscratchcpp::Script *> &getHats(Target *target, HatType type);
 
         void updateSpriteLayerOrder();
@@ -270,7 +270,7 @@ class Engine : public IEngine
         std::unordered_map<Target *, std::vector<Script *>> m_whenTargetClickedHats;
         std::unordered_map<Target *, std::vector<Script *>> m_whenGreaterThanHats;
 
-        std::unordered_map<Script *, std::unordered_map<HatField, int>> m_scriptHatFields; // HatField, field ID from the block implementation
+        std::unordered_map<Script *, std::unordered_map<HatField, Field *>> m_scriptHatFields; // HatField, field from the block implementation
 
         std::unordered_map<Block *, std::unordered_map<Target *, bool>> m_edgeActivatedHatValues; // (block, target, last value) edge-activated hats only run after the value changes from false to true
 
