@@ -85,9 +85,6 @@ TEST_F(SoundTest, SetEffect)
 
     // Pitch
     EXPECT_CALL(*m_player, setPitch(0.125));
-    sound.setEffect(Sound::Effect::Pitch, -400);
-
-    EXPECT_CALL(*m_player, setPitch(0.125));
     sound.setEffect(Sound::Effect::Pitch, -360);
 
     EXPECT_CALL(*m_player, setPitch(0.5));
@@ -102,13 +99,7 @@ TEST_F(SoundTest, SetEffect)
     EXPECT_CALL(*m_player, setPitch(8));
     sound.setEffect(Sound::Effect::Pitch, 360);
 
-    EXPECT_CALL(*m_player, setPitch(8));
-    sound.setEffect(Sound::Effect::Pitch, 400);
-
     // Pan
-    EXPECT_CALL(*m_player, setPan(-1));
-    sound.setEffect(Sound::Effect::Pan, -150);
-
     EXPECT_CALL(*m_player, setPan(-1));
     sound.setEffect(Sound::Effect::Pan, -100);
 
@@ -123,9 +114,6 @@ TEST_F(SoundTest, SetEffect)
 
     EXPECT_CALL(*m_player, setPan(1));
     sound.setEffect(Sound::Effect::Pan, 100);
-
-    EXPECT_CALL(*m_player, setPan(1));
-    sound.setEffect(Sound::Effect::Pan, 150);
 }
 
 TEST_F(SoundTest, Start)

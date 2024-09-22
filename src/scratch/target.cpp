@@ -7,6 +7,7 @@
 #include <scratchcpp/block.h>
 #include <scratchcpp/comment.h>
 #include <scratchcpp/iengine.h>
+#include <scratchcpp/igraphicseffect.h>
 
 #include <unordered_set>
 
@@ -15,6 +16,11 @@
 using namespace libscratchcpp;
 
 static const std::unordered_set<std::string> RESERVED_NAMES = { "_mouse_", "_stage_", "_edge_", "_myself_", "_random_" };
+
+static std::unordered_map<Sound::Effect, std::pair<double, double>> SOUND_EFFECT_RANGE = {
+    { Sound::Effect::Pitch, { -360, 360 } }, // -3 to 3 octaves
+    { Sound::Effect::Pan, { -100, 100 } }    // // 100% left to 100% right
+};
 
 /*! Constructs target. */
 Target::Target() :
@@ -436,6 +442,12 @@ double Target::soundEffectValue(Sound::Effect effect) const
 /*! Sets the value of the given sound effect. */
 void Target::setSoundEffectValue(Sound::Effect effect, double value)
 {
+    auto it = SOUND_EFFECT_RANGE.find(effect);
+
+    if (it == SOUND_EFFECT_RANGE.cend())
+        return;
+
+    value = std::clamp(value, it->second.first, it->second.second);
     impl->soundEffects[effect] = value;
 
     for (auto sound : impl->sounds) {
