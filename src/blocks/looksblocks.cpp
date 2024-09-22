@@ -80,6 +80,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addInput(this, "COSTUME", COSTUME);
     engine->addInput(this, "BACKDROP", BACKDROP);
     engine->addInput(this, "VALUE", VALUE);
+    engine->addInput(this, "NUM", NUM);
 
     // Fields
     engine->addField(this, "NUMBER_NAME", NUMBER_NAME);

@@ -140,6 +140,7 @@ TEST_F(LooksBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "COSTUME", LooksBlocks::COSTUME));
     EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "BACKDROP", LooksBlocks::BACKDROP));
     EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "VALUE", LooksBlocks::VALUE));
+    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "NUM", LooksBlocks::NUM));
 
     // Fields
     EXPECT_CALL(m_engineMock, addField(m_extension.get(), "NUMBER_NAME", LooksBlocks::NUMBER_NAME));
