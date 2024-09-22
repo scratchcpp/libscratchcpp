@@ -750,12 +750,19 @@ TEST(TargetTest, GraphicsEffects)
     target.setEngine(&engine);
 
     GraphicsEffectMock effect1, effect2;
+    EXPECT_CALL(effect1, clamp(48.21)).WillOnce(Return(48.21));
     target.setGraphicsEffectValue(&effect1, 48.21);
     ASSERT_EQ(target.graphicsEffectValue(&effect1), 48.21);
     ASSERT_EQ(target.graphicsEffectValue(&effect2), 0);
 
+    EXPECT_CALL(effect2, clamp(-107.08)).WillOnce(Return(-107.08));
     target.setGraphicsEffectValue(&effect2, -107.08);
     ASSERT_EQ(target.graphicsEffectValue(&effect1), 48.21);
+    ASSERT_EQ(target.graphicsEffectValue(&effect2), -107.08);
+
+    EXPECT_CALL(effect1, clamp(300)).WillOnce(Return(101.5));
+    target.setGraphicsEffectValue(&effect1, 300);
+    ASSERT_EQ(target.graphicsEffectValue(&effect1), 101.5);
     ASSERT_EQ(target.graphicsEffectValue(&effect2), -107.08);
 
     target.clearGraphicsEffects();

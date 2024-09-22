@@ -552,7 +552,8 @@ double Target::graphicsEffectValue(IGraphicsEffect *effect) const
 /*! Sets the value of the given graphics effect. */
 void Target::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 {
-    impl->graphicsEffects[effect] = value;
+    assert(effect);
+    impl->graphicsEffects[effect] = effect->clamp(value);
 }
 
 /*! Sets the value of all graphics effects to 0 (clears them). */

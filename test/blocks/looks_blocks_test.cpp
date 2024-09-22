@@ -22,6 +22,8 @@
 using namespace libscratchcpp;
 
 using ::testing::Return;
+using ::testing::ReturnArg;
+using ::testing::_;
 
 class LooksBlocksTest : public testing::Test
 {
@@ -857,6 +859,14 @@ static void initEffects()
     LooksBlocks::m_mosaicEffect = ScratchConfiguration::getGraphicsEffect("mosaic");
     LooksBlocks::m_brightnessEffect = ScratchConfiguration::getGraphicsEffect("brightness");
     LooksBlocks::m_ghostEffect = ScratchConfiguration::getGraphicsEffect("ghost");
+
+    EXPECT_CALL(*colorEffect, clamp(_)).WillRepeatedly(ReturnArg<0>());
+    EXPECT_CALL(*fisheyeEffect, clamp(_)).WillRepeatedly(ReturnArg<0>());
+    EXPECT_CALL(*whirlEffect, clamp(_)).WillRepeatedly(ReturnArg<0>());
+    EXPECT_CALL(*pixelateEffect, clamp(_)).WillRepeatedly(ReturnArg<0>());
+    EXPECT_CALL(*mosaicEffect, clamp(_)).WillRepeatedly(ReturnArg<0>());
+    EXPECT_CALL(*brightnessEffect, clamp(_)).WillRepeatedly(ReturnArg<0>());
+    EXPECT_CALL(*ghostEffect, clamp(_)).WillRepeatedly(ReturnArg<0>());
 }
 
 static void removeEffects()
@@ -888,6 +898,8 @@ TEST_F(LooksBlocksTest, ChangeEffectByImpl)
     static Value constValues[] = { 0, 55.15, 1, -40.54, 1.2, 2.3, -3.4, -4.5, 0.5, -8.54, 0.01 };
 
     GraphicsEffectMock effect1, effect2;
+    EXPECT_CALL(effect1, clamp(_)).WillRepeatedly(ReturnArg<0>());
+    EXPECT_CALL(effect2, clamp(_)).WillRepeatedly(ReturnArg<0>());
 
     Target target;
     target.setGraphicsEffectValue(&effect1, 12.5);
@@ -1164,6 +1176,8 @@ TEST_F(LooksBlocksTest, SetEffectToImpl)
     static Value constValues[] = { 0, 55.15, 1, -40.54, 1.2, 2.3, -3.4, -4.5, 0.5, -8.54, 0.01 };
 
     GraphicsEffectMock effect1, effect2;
+    EXPECT_CALL(effect1, clamp(_)).WillRepeatedly(ReturnArg<0>());
+    EXPECT_CALL(effect2, clamp(_)).WillRepeatedly(ReturnArg<0>());
 
     Target target;
     target.setGraphicsEffectValue(&effect1, 12.5);
@@ -1283,6 +1297,8 @@ TEST_F(LooksBlocksTest, ClearGraphicEffectsImpl)
 
     Target target;
     GraphicsEffectMock effect1, effect2;
+    EXPECT_CALL(effect1, clamp(_)).WillRepeatedly(ReturnArg<0>());
+    EXPECT_CALL(effect2, clamp(_)).WillRepeatedly(ReturnArg<0>());
     target.setGraphicsEffectValue(&effect1, 48.21);
     target.setGraphicsEffectValue(&effect2, -107.08);
 

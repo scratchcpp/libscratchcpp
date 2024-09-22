@@ -248,15 +248,22 @@ TEST(StageTest, GraphicsEffects)
 
     EngineMock engine;
     stage.setEngine(&engine);
-    EXPECT_CALL(engine, requestRedraw()).Times(3);
+    EXPECT_CALL(engine, requestRedraw()).Times(4);
 
     GraphicsEffectMock effect1, effect2;
+    EXPECT_CALL(effect1, clamp(48.21)).WillOnce(Return(48.21));
     stage.setGraphicsEffectValue(&effect1, 48.21);
     ASSERT_EQ(stage.graphicsEffectValue(&effect1), 48.21);
     ASSERT_EQ(stage.graphicsEffectValue(&effect2), 0);
 
+    EXPECT_CALL(effect2, clamp(-107.08)).WillOnce(Return(-107.08));
     stage.setGraphicsEffectValue(&effect2, -107.08);
     ASSERT_EQ(stage.graphicsEffectValue(&effect1), 48.21);
+    ASSERT_EQ(stage.graphicsEffectValue(&effect2), -107.08);
+
+    EXPECT_CALL(effect1, clamp(300)).WillOnce(Return(101.5));
+    stage.setGraphicsEffectValue(&effect1, 300);
+    ASSERT_EQ(stage.graphicsEffectValue(&effect1), 101.5);
     ASSERT_EQ(stage.graphicsEffectValue(&effect2), -107.08);
 
     stage.clearGraphicsEffects();
