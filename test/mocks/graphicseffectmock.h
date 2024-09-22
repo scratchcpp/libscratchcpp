@@ -9,4 +9,6 @@ class GraphicsEffectMock : public IGraphicsEffect
 {
     public:
         MOCK_METHOD(std::string, name, (), (const, override));
+
+        MOCK_METHOD(double, clamp, (double), (const, override));
 };

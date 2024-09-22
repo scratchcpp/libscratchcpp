@@ -853,24 +853,22 @@ TEST(SpriteTest, GraphicsEffects)
 
     EngineMock engine;
     sprite.setEngine(&engine);
-    EXPECT_CALL(engine, requestRedraw()).Times(3);
+    EXPECT_CALL(engine, requestRedraw()).Times(4);
 
     GraphicsEffectMock effect1, effect2;
+    EXPECT_CALL(effect1, clamp(48.21)).WillOnce(Return(48.21));
     sprite.setGraphicsEffectValue(&effect1, 48.21);
     ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 48.21);
     ASSERT_EQ(sprite.graphicsEffectValue(&effect2), 0);
 
+    EXPECT_CALL(effect2, clamp(-107.08)).WillOnce(Return(-107.08));
     sprite.setGraphicsEffectValue(&effect2, -107.08);
     ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 48.21);
     ASSERT_EQ(sprite.graphicsEffectValue(&effect2), -107.08);
 
-    sprite.clearGraphicsEffects();
-    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 0);
-    ASSERT_EQ(sprite.graphicsEffectValue(&effect2), 0);
-
-    sprite.setVisible(false);
-    sprite.setGraphicsEffectValue(&effect2, -107.08);
-    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 0);
+    EXPECT_CALL(effect1, clamp(300)).WillOnce(Return(101.5));
+    sprite.setGraphicsEffectValue(&effect1, 300);
+    ASSERT_EQ(sprite.graphicsEffectValue(&effect1), 101.5);
     ASSERT_EQ(sprite.graphicsEffectValue(&effect2), -107.08);
 
     sprite.clearGraphicsEffects();

@@ -519,13 +519,36 @@ TEST(TargetTest, SoundEffects)
     ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pan), 0);
 
     auto s1 = std::make_shared<SoundMock>();
+    EXPECT_CALL(*s1, setVolume);
+    target.addSound(s1);
+
+    EXPECT_CALL(*s1, setEffect(Sound::Effect::Pitch, -360));
+    target.setSoundEffectValue(Sound::Effect::Pitch, -400);
+    ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pitch), -360);
+
+    EXPECT_CALL(*s1, setEffect(Sound::Effect::Pitch, 360));
+    target.setSoundEffectValue(Sound::Effect::Pitch, 400);
+    ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pitch), 360);
+
+    EXPECT_CALL(*s1, setEffect(Sound::Effect::Pan, -100));
+    target.setSoundEffectValue(Sound::Effect::Pan, -200);
+    ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pan), -100);
+
+    EXPECT_CALL(*s1, setEffect(Sound::Effect::Pan, 100));
+    target.setSoundEffectValue(Sound::Effect::Pan, 200);
+    ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pan), 100);
+
+    EXPECT_CALL(*s1, setEffect(Sound::Effect::Pitch, 0));
+    EXPECT_CALL(*s1, setEffect(Sound::Effect::Pan, 0));
+    target.clearSoundEffects();
+    ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pitch), 0);
+    ASSERT_EQ(target.soundEffectValue(Sound::Effect::Pan), 0);
+
     auto s2 = std::make_shared<SoundMock>();
     auto s3 = std::make_shared<SoundMock>();
 
-    EXPECT_CALL(*s1, setVolume);
     EXPECT_CALL(*s2, setVolume);
     EXPECT_CALL(*s3, setVolume);
-    target.addSound(s1);
     target.addSound(s2);
     target.addSound(s3);
 
@@ -727,12 +750,19 @@ TEST(TargetTest, GraphicsEffects)
     target.setEngine(&engine);
 
     GraphicsEffectMock effect1, effect2;
+    EXPECT_CALL(effect1, clamp(48.21)).WillOnce(Return(48.21));
     target.setGraphicsEffectValue(&effect1, 48.21);
     ASSERT_EQ(target.graphicsEffectValue(&effect1), 48.21);
     ASSERT_EQ(target.graphicsEffectValue(&effect2), 0);
 
+    EXPECT_CALL(effect2, clamp(-107.08)).WillOnce(Return(-107.08));
     target.setGraphicsEffectValue(&effect2, -107.08);
     ASSERT_EQ(target.graphicsEffectValue(&effect1), 48.21);
+    ASSERT_EQ(target.graphicsEffectValue(&effect2), -107.08);
+
+    EXPECT_CALL(effect1, clamp(300)).WillOnce(Return(101.5));
+    target.setGraphicsEffectValue(&effect1, 300);
+    ASSERT_EQ(target.graphicsEffectValue(&effect1), 101.5);
     ASSERT_EQ(target.graphicsEffectValue(&effect2), -107.08);
 
     target.clearGraphicsEffects();

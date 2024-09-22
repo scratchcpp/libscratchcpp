@@ -11,11 +11,6 @@
 
 using namespace libscratchcpp;
 
-static std::unordered_map<Sound::Effect, std::pair<double, double>> EFFECT_RANGE = {
-    { Sound::Effect::Pitch, { -360, 360 } }, // -3 to 3 octaves
-    { Sound::Effect::Pan, { -100, 100 } }    // // 100% left to 100% right
-};
-
 /*! Constructs Sound. */
 Sound::Sound(const std::string &name, const std::string &id, const std::string &format) :
     Asset(name, id, format),
@@ -56,13 +51,6 @@ void Sound::setVolume(double volume)
 /*! Sets the value of the given sound effect. */
 void Sound::setEffect(Effect effect, double value)
 {
-    auto it = EFFECT_RANGE.find(effect);
-
-    if (it == EFFECT_RANGE.cend())
-        return;
-
-    value = std::clamp(value, it->second.first, it->second.second);
-
     switch (effect) {
         case Effect::Pitch: {
             // Convert from linear

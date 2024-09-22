@@ -17,6 +17,9 @@ class LIBSCRATCHCPP_EXPORT IGraphicsEffect
 
         /*! Returns the name of the graphics effect. */
         virtual std::string name() const = 0;
+
+        /*! Returns the clamped value of the graphic effect. */
+        virtual double clamp(double value) const = 0;
 };
 
 } // namespace libscratchcpp
