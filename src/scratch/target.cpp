@@ -24,6 +24,7 @@ static std::unordered_map<Sound::Effect, std::pair<double, double>> SOUND_EFFECT
 
 /*! Constructs target. */
 Target::Target() :
+    Drawable(),
     impl(spimpl::make_unique_impl<TargetPrivate>())
 {
 }
@@ -392,18 +393,6 @@ int Target::findSound(const std::string &soundName) const
         return -1;
     else
         return it - impl->sounds.begin();
-}
-
-/*! Returns the layer number. */
-int Target::layerOrder() const
-{
-    return impl->layerOrder;
-}
-
-/*! Sets the layer number. */
-void Target::setLayerOrder(int newLayerOrder)
-{
-    impl->layerOrder = newLayerOrder;
 }
 
 /*! Returns the volume. */

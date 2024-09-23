@@ -4,8 +4,7 @@
 
 #include <vector>
 
-#include "global.h"
-#include "spimpl.h"
+#include "drawable.h"
 #include "rect.h"
 #include "sound.h"
 
@@ -24,7 +23,7 @@ class IGraphicsEffect;
 class TargetPrivate;
 
 /*! \brief The Target class is the Stage or a Sprite. */
-class LIBSCRATCHCPP_EXPORT Target
+class LIBSCRATCHCPP_EXPORT Target : public Drawable
 {
     public:
         enum class BubbleType
@@ -82,9 +81,6 @@ class LIBSCRATCHCPP_EXPORT Target
         int addSound(std::shared_ptr<Sound> sound);
         std::shared_ptr<Sound> soundAt(int index) const;
         int findSound(const std::string &soundName) const;
-
-        int layerOrder() const;
-        virtual void setLayerOrder(int newLayerOrder);
 
         double volume() const;
         void setVolume(double newVolume);

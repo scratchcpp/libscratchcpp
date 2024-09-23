@@ -450,14 +450,6 @@ TEST(TargetTest, Sounds)
     SoundPrivate::audioOutput = nullptr;
 }
 
-TEST(TargetTest, LayerOrder)
-{
-    Target target;
-    ASSERT_EQ(target.layerOrder(), 0);
-    target.setLayerOrder(2);
-    ASSERT_EQ(target.layerOrder(), 2);
-}
-
 TEST(TargetTest, Volume)
 {
     Target target;
