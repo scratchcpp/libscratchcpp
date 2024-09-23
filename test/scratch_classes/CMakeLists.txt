@@ -88,6 +88,20 @@ target_link_libraries(
 
 gtest_discover_tests(target_test)
 
+# textbubble_test
+add_executable(
+  textbubble_test
+  textbubble_test.cpp
+)
+
+target_link_libraries(
+  textbubble_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(textbubble_test)
+
 # value_test
 add_executable(
   value_test

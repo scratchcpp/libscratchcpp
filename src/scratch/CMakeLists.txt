@@ -44,6 +44,9 @@ target_sources(scratchcpp
     sprite.cpp
     sprite_p.cpp
     sprite_p.h
+    textbubble.cpp
+    textbubble_p.cpp
+    textbubble_p.h
     broadcast.cpp
     broadcast_p.cpp
     broadcast_p.h
