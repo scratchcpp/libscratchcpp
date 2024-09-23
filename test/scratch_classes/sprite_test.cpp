@@ -1,5 +1,6 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
+#include <scratchcpp/textbubble.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/costume.h>
@@ -876,41 +877,30 @@ TEST(SpriteTest, GraphicsEffects)
     ASSERT_EQ(sprite.graphicsEffectValue(&effect2), 0);
 }
 
-TEST(SpriteTest, BubbleType)
+TEST(SpriteTest, BubbleTypeRedraw)
 {
     Sprite sprite;
     EngineMock engine;
     sprite.setEngine(&engine);
-    ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Say);
 
     EXPECT_CALL(engine, requestRedraw).Times(0);
-
-    sprite.setBubbleType(Target::BubbleType::Think);
-    ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Think);
-
-    sprite.setBubbleType(Target::BubbleType::Say);
-    ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Say);
+    sprite.bubble()->setType(TextBubble::Type::Say);
+    sprite.bubble()->setType(TextBubble::Type::Think);
 }
 
-TEST(SpriteTest, BubbleText)
+TEST(SpriteTest, BubbleTextRedraw)
 {
     Sprite sprite;
     EngineMock engine;
-    sprite.setVisible(true);
     sprite.setEngine(&engine);
-    ASSERT_TRUE(sprite.bubbleText().empty());
 
     EXPECT_CALL(engine, requestRedraw());
-    sprite.setBubbleText("hello");
-    ASSERT_EQ(sprite.bubbleText(), "hello");
-
-    EXPECT_CALL(engine, requestRedraw());
-    sprite.setBubbleText("world");
-    ASSERT_EQ(sprite.bubbleText(), "world");
+    sprite.bubble()->setText("hello");
 
     sprite.setVisible(false);
+    EXPECT_CALL(engine, requestRedraw).Times(0);
+    sprite.bubble()->setText("world");
 
     EXPECT_CALL(engine, requestRedraw).Times(0);
-    sprite.setBubbleText("test");
-    ASSERT_TRUE(sprite.bubbleText().empty());
+    sprite.bubble()->setText("");
 }

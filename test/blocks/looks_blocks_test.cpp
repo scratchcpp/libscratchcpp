@@ -196,7 +196,7 @@ TEST_F(LooksBlocksTest, SayForSecsImpl)
     static Value constValues[] = { "test", 5.5, "hello" };
 
     Target target;
-    target.setBubbleType(Target::BubbleType::Think);
+    target.bubble()->setType(TextBubble::Type::Think);
     VirtualMachine vm(&target, &m_engineMock, nullptr);
     vm.setFunctions(functions);
     vm.setConstValues(constValues);
@@ -213,20 +213,20 @@ TEST_F(LooksBlocksTest, SayForSecsImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) != LooksBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(target.bubbleText(), "test");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(target.bubble()->text(), "test");
 
     std::chrono::steady_clock::time_point time1(std::chrono::milliseconds(6450));
     EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time1));
-    target.setBubbleType(Target::BubbleType::Think);
-    target.setBubbleText("another");
+    target.bubble()->setType(TextBubble::Type::Think);
+    target.bubble()->setText("another");
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) != LooksBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_EQ(target.bubbleText(), "another");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(target.bubble()->text(), "another");
 
     std::chrono::steady_clock::time_point time2(std::chrono::milliseconds(6500));
     EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time2));
@@ -235,16 +235,16 @@ TEST_F(LooksBlocksTest, SayForSecsImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) == LooksBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_TRUE(target.bubbleText().empty());
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Think);
+    ASSERT_TRUE(target.bubble()->text().empty());
 
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) == LooksBlocks::m_timeMap.cend());
     ASSERT_TRUE(vm.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_TRUE(target.bubbleText().empty());
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Think);
+    ASSERT_TRUE(target.bubble()->text().empty());
 
     // Run the say block while waiting
     VirtualMachine vm2(&target, &m_engineMock, nullptr);
@@ -260,12 +260,12 @@ TEST_F(LooksBlocksTest, SayForSecsImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) != LooksBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(target.bubbleText(), "test");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(target.bubble()->text(), "test");
 
     vm2.run();
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(target.bubbleText(), "hello");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(target.bubble()->text(), "hello");
 
     EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time2));
     vm.run();
@@ -273,16 +273,16 @@ TEST_F(LooksBlocksTest, SayForSecsImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) == LooksBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(target.bubbleText(), "hello");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(target.bubble()->text(), "hello");
 
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) == LooksBlocks::m_timeMap.cend());
     ASSERT_TRUE(vm.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(target.bubbleText(), "hello");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(target.bubble()->text(), "hello");
 
     // Run the say for secs block while waiting
     vm2.reset();
@@ -296,15 +296,15 @@ TEST_F(LooksBlocksTest, SayForSecsImpl)
     ASSERT_EQ(vm2.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm2) != LooksBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm2.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(target.bubbleText(), "hello");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(target.bubble()->text(), "hello");
 
     EXPECT_CALL(clock, currentSteadyTime()).Times(2).WillRepeatedly(Return(startTime));
     EXPECT_CALL(m_engineMock, requestRedraw());
     vm.reset();
     vm.run();
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(target.bubbleText(), "test");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(target.bubble()->text(), "test");
 
     EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time2));
     vm2.run();
@@ -312,16 +312,16 @@ TEST_F(LooksBlocksTest, SayForSecsImpl)
     ASSERT_EQ(vm2.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm2) == LooksBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm2.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(target.bubbleText(), "test");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(target.bubble()->text(), "test");
 
     vm2.run();
 
     ASSERT_EQ(vm2.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm2) == LooksBlocks::m_timeMap.cend());
     ASSERT_TRUE(vm2.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(target.bubbleText(), "test");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(target.bubble()->text(), "test");
 
     LooksBlocks::clock = Clock::instance().get();
 }
@@ -360,16 +360,16 @@ TEST_F(LooksBlocksTest, SayImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(target.bubbleText(), "test");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(target.bubble()->text(), "test");
 
-    target.setBubbleType(Target::BubbleType::Think);
+    target.bubble()->setType(TextBubble::Type::Think);
     vm.reset();
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(target.bubbleText(), "test");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(target.bubble()->text(), "test");
 }
 
 TEST_F(LooksBlocksTest, ThinkForSecs)
@@ -402,7 +402,7 @@ TEST_F(LooksBlocksTest, ThinkForSecsImpl)
     static Value constValues[] = { "test", 5.5, "hello" };
 
     Target target;
-    target.setBubbleType(Target::BubbleType::Say);
+    target.bubble()->setType(TextBubble::Type::Say);
     VirtualMachine vm(&target, &m_engineMock, nullptr);
     vm.setFunctions(functions);
     vm.setConstValues(constValues);
@@ -419,20 +419,20 @@ TEST_F(LooksBlocksTest, ThinkForSecsImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) != LooksBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_EQ(target.bubbleText(), "test");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(target.bubble()->text(), "test");
 
     std::chrono::steady_clock::time_point time1(std::chrono::milliseconds(6450));
     EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time1));
-    target.setBubbleType(Target::BubbleType::Say);
-    target.setBubbleText("another");
+    target.bubble()->setType(TextBubble::Type::Say);
+    target.bubble()->setText("another");
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) != LooksBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(target.bubbleText(), "another");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(target.bubble()->text(), "another");
 
     std::chrono::steady_clock::time_point time2(std::chrono::milliseconds(6500));
     EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time2));
@@ -441,16 +441,16 @@ TEST_F(LooksBlocksTest, ThinkForSecsImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) == LooksBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
-    ASSERT_TRUE(target.bubbleText().empty());
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_TRUE(target.bubble()->text().empty());
 
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) == LooksBlocks::m_timeMap.cend());
     ASSERT_TRUE(vm.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
-    ASSERT_TRUE(target.bubbleText().empty());
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_TRUE(target.bubble()->text().empty());
 
     // Run the say block while waiting
     VirtualMachine vm2(&target, &m_engineMock, nullptr);
@@ -466,12 +466,12 @@ TEST_F(LooksBlocksTest, ThinkForSecsImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) != LooksBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_EQ(target.bubbleText(), "test");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(target.bubble()->text(), "test");
 
     vm2.run();
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_EQ(target.bubbleText(), "hello");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(target.bubble()->text(), "hello");
 
     EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time2));
     vm.run();
@@ -479,16 +479,16 @@ TEST_F(LooksBlocksTest, ThinkForSecsImpl)
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) == LooksBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_EQ(target.bubbleText(), "hello");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(target.bubble()->text(), "hello");
 
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm) == LooksBlocks::m_timeMap.cend());
     ASSERT_TRUE(vm.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_EQ(target.bubbleText(), "hello");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(target.bubble()->text(), "hello");
 
     // Run the say for secs block while waiting
     vm2.reset();
@@ -502,15 +502,15 @@ TEST_F(LooksBlocksTest, ThinkForSecsImpl)
     ASSERT_EQ(vm2.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm2) != LooksBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm2.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_EQ(target.bubbleText(), "hello");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(target.bubble()->text(), "hello");
 
     EXPECT_CALL(clock, currentSteadyTime()).Times(2).WillRepeatedly(Return(startTime));
     EXPECT_CALL(m_engineMock, requestRedraw());
     vm.reset();
     vm.run();
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_EQ(target.bubbleText(), "test");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(target.bubble()->text(), "test");
 
     EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time2));
     vm2.run();
@@ -518,16 +518,16 @@ TEST_F(LooksBlocksTest, ThinkForSecsImpl)
     ASSERT_EQ(vm2.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm2) == LooksBlocks::m_timeMap.cend());
     ASSERT_FALSE(vm2.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_EQ(target.bubbleText(), "test");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(target.bubble()->text(), "test");
 
     vm2.run();
 
     ASSERT_EQ(vm2.registerCount(), 0);
     ASSERT_TRUE(LooksBlocks::m_timeMap.find(&vm2) == LooksBlocks::m_timeMap.cend());
     ASSERT_TRUE(vm2.atEnd());
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_EQ(target.bubbleText(), "test");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(target.bubble()->text(), "test");
 
     LooksBlocks::clock = Clock::instance().get();
 }
@@ -566,16 +566,16 @@ TEST_F(LooksBlocksTest, ThinkImpl)
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_EQ(target.bubbleText(), "test");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(target.bubble()->text(), "test");
 
-    target.setBubbleType(Target::BubbleType::Say);
+    target.bubble()->setType(TextBubble::Type::Say);
     vm.reset();
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-    ASSERT_EQ(target.bubbleText(), "test");
+    ASSERT_EQ(target.bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(target.bubble()->text(), "test");
 }
 
 TEST_F(LooksBlocksTest, Show)

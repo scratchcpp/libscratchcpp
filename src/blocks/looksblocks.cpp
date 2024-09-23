@@ -115,7 +115,7 @@ void LooksBlocks::onInit(IEngine *engine)
         const auto &targets = engine->targets();
 
         for (auto target : targets) {
-            target->setBubbleText("");
+            target->bubble()->setText("");
             target->clearGraphicsEffects();
         }
     });
@@ -520,13 +520,13 @@ bool LooksBlocks::wait(VirtualMachine *vm)
     }
 }
 
-void LooksBlocks::showBubble(VirtualMachine *vm, Target::BubbleType type, const std::string &text)
+void LooksBlocks::showBubble(VirtualMachine *vm, TextBubble::Type type, const std::string &text)
 {
     Target *target = vm->target();
 
     if (target) {
-        target->setBubbleType(type);
-        target->setBubbleText(text);
+        target->bubble()->setType(type);
+        target->bubble()->setText(text);
         m_waitingBubbles.erase(target);
     }
 }
@@ -536,7 +536,7 @@ void LooksBlocks::hideBubble(Target *target)
     if (!target)
         return;
 
-    target->setBubbleText("");
+    target->bubble()->setText("");
     m_waitingBubbles.erase(target);
 }
 
@@ -545,7 +545,7 @@ unsigned int LooksBlocks::startSayForSecs(VirtualMachine *vm)
     Target *target = vm->target();
 
     if (target) {
-        showBubble(vm, Target::BubbleType::Say, vm->getInput(0, 2)->toString());
+        showBubble(vm, TextBubble::Type::Say, vm->getInput(0, 2)->toString());
         m_waitingBubbles[target] = vm;
         startWait(vm, vm->getInput(1, 2)->toDouble());
     }
@@ -572,7 +572,7 @@ unsigned int LooksBlocks::sayForSecs(VirtualMachine *vm)
 
 unsigned int LooksBlocks::say(VirtualMachine *vm)
 {
-    showBubble(vm, Target::BubbleType::Say, vm->getInput(0, 1)->toString());
+    showBubble(vm, TextBubble::Type::Say, vm->getInput(0, 1)->toString());
     return 1;
 }
 
@@ -581,7 +581,7 @@ unsigned int LooksBlocks::startThinkForSecs(VirtualMachine *vm)
     Target *target = vm->target();
 
     if (target) {
-        showBubble(vm, Target::BubbleType::Think, vm->getInput(0, 2)->toString());
+        showBubble(vm, TextBubble::Type::Think, vm->getInput(0, 2)->toString());
         m_waitingBubbles[target] = vm;
         startWait(vm, vm->getInput(1, 2)->toDouble());
     }
@@ -596,7 +596,7 @@ unsigned int LooksBlocks::thinkForSecs(VirtualMachine *vm)
 
 unsigned int LooksBlocks::think(VirtualMachine *vm)
 {
-    showBubble(vm, Target::BubbleType::Think, vm->getInput(0, 1)->toString());
+    showBubble(vm, TextBubble::Type::Think, vm->getInput(0, 1)->toString());
     return 1;
 }
 

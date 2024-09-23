@@ -88,9 +88,6 @@ class LIBSCRATCHCPP_EXPORT Sprite
 
         void clearGraphicsEffects() override;
 
-        virtual void setBubbleType(Target::BubbleType type) override;
-        virtual void setBubbleText(const std::string &text) override;
-
     private:
         Target *dataSource() const override;
         bool touchingClones(const std::vector<Sprite *> &clones) const override;

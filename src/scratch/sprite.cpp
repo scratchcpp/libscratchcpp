@@ -8,6 +8,7 @@
 #include <scratchcpp/costume.h>
 #include <scratchcpp/sound.h>
 #include <scratchcpp/rect.h>
+#include <scratchcpp/textbubble.h>
 #include <cassert>
 #include <iostream>
 
@@ -20,6 +21,14 @@ Sprite::Sprite() :
     Target(),
     impl(spimpl::make_unique_impl<SpritePrivate>(this))
 {
+    bubble()->textChanged().connect([this](const std::string &text) {
+        if (impl->visible && !text.empty()) {
+            IEngine *eng = engine();
+
+            if (eng)
+                eng->requestRedraw();
+        }
+    });
 }
 
 /*! Sets the sprite interface. */
@@ -542,32 +551,6 @@ void Sprite::clearGraphicsEffects()
 
     if (impl->iface)
         impl->iface->onGraphicsEffectsCleared();
-}
-
-/*! Overrides Target#setBubbleType(). */
-void Sprite::setBubbleType(BubbleType type)
-{
-    Target::setBubbleType(type);
-
-    if (impl->iface)
-        impl->iface->onBubbleTypeChanged(type);
-}
-
-/*! Overrides Target#setBubbleText(). */
-void Sprite::setBubbleText(const std::string &text)
-{
-    Target::setBubbleText(impl->visible ? text : "");
-    const std::string &finalText = bubbleText();
-
-    if (impl->visible && !finalText.empty()) {
-        IEngine *eng = engine();
-
-        if (eng)
-            eng->requestRedraw();
-    }
-
-    if (impl->iface)
-        impl->iface->onBubbleTextChanged(impl->visible ? finalText : "");
 }
 
 Target *Sprite::dataSource() const

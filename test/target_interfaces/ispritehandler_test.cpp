@@ -186,41 +186,6 @@ TEST_F(ISpriteHandlerTest, GraphicsEffects)
     m_sprite.clearGraphicsEffects();
 }
 
-TEST_F(ISpriteHandlerTest, BubbleType)
-{
-    EXPECT_CALL(m_handler, onBubbleTypeChanged(Target::BubbleType::Say));
-    m_sprite.setBubbleType(Target::BubbleType::Say);
-
-    EXPECT_CALL(m_handler, onBubbleTypeChanged(Target::BubbleType::Think));
-    m_sprite.setBubbleType(Target::BubbleType::Think);
-}
-
-TEST_F(ISpriteHandlerTest, BubbleText)
-{
-    EXPECT_CALL(m_handler, onBubbleTextChanged("test"));
-    EXPECT_CALL(m_engine, requestRedraw());
-    m_sprite.setBubbleText("test");
-
-    // The text should be processed in Target::setBubbleText() (#571)
-    std::string longstr =
-        "EY8OUNzAqwgh7NRGk5TzCP3dkAhJy9TX"
-        "Y9mqKElPjdQpKddYqjyCwUk2hx6YgVZV"
-        "6BOdmZGxDMs8Hjv8W9G6j4gTxAWdOkzs"
-        "8Ih80xzEDbvLilWsDwoB6FxH2kVVI4xs"
-        "IXOETNQ6QMsCKLWc5XjHk2BS9nYvDGpJ"
-        "uEmp9zIzFGT1kRSrOlU3ZwnN1YtvqFx"
-        "3hkWVNtJ71dQ0PJHhOVQPUy19V01SPu3"
-        "KIIS2wdSUVAc4RYMzepSveghzWbdcizy"
-        "Tm1KKAj4svu9YoL8b9vsolG8gKunvKO7"
-        "MurRKSeUbECELnJEKV6683xCq7RvmjAu"
-        "2djZ54apiQc1lTixWns5GoG0SVNuFzHl"
-        "q97qUiqiMecjVFM51YVif7c1Stip52Hl";
-
-    EXPECT_CALL(m_handler, onBubbleTextChanged(longstr.substr(0, 330)));
-    EXPECT_CALL(m_engine, requestRedraw());
-    m_sprite.setBubbleText(longstr);
-}
-
 TEST_F(ISpriteHandlerTest, BoundingRect)
 {
     EXPECT_CALL(m_handler, boundingRect()).WillOnce(Return(Rect(-44.6, 89.1, 20.5, -0.48)));

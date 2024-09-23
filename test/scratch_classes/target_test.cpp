@@ -1,5 +1,6 @@
 #include <scratchcpp/target.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/textbubble.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/block.h>
@@ -762,79 +763,26 @@ TEST(TargetTest, GraphicsEffects)
     ASSERT_EQ(target.graphicsEffectValue(&effect2), 0);
 }
 
-TEST(TargetTest, BubbleType)
+TEST(SpriteTest, BubbleTypeRedraw)
 {
     Target target;
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
+    EngineMock engine;
+    target.setEngine(&engine);
 
-    target.setBubbleType(Target::BubbleType::Think);
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Think);
-
-    target.setBubbleType(Target::BubbleType::Say);
-    ASSERT_EQ(target.bubbleType(), Target::BubbleType::Say);
+    EXPECT_CALL(engine, requestRedraw).Times(0);
+    target.bubble()->setType(TextBubble::Type::Say);
+    target.bubble()->setType(TextBubble::Type::Think);
 }
 
-TEST(TargetTest, BubbleText)
+TEST(SpriteTest, BubbleTextRedraw)
 {
     Target target;
-    ASSERT_TRUE(target.bubbleText().empty());
+    EngineMock engine;
+    target.setEngine(&engine);
 
-    target.setBubbleText("hello");
-    ASSERT_EQ(target.bubbleText(), "hello");
-
-    target.setBubbleText("world");
-    ASSERT_EQ(target.bubbleText(), "world");
-
-    // longstr.length = 384, should be limited to 330 in bubble text
-    std::string longstr =
-        "EY8OUNzAqwgh7NRGk5TzCP3dkAhJy9TX"
-        "Y9mqKElPjdQpKddYqjyCwUk2hx6YgVZV"
-        "6BOdmZGxDMs8Hjv8W9G6j4gTxAWdOkzs"
-        "8Ih80xzEDbvLilWsDwoB6FxH2kVVI4xs"
-        "IXOETNQ6QMsCKLWc5XjHk2BS9nYvDGpJ"
-        "uEmp9zIzFGT1kRSrOlU3ZwnN1YtvqFx"
-        "3hkWVNtJ71dQ0PJHhOVQPUy19V01SPu3"
-        "KIIS2wdSUVAc4RYMzepSveghzWbdcizy"
-        "Tm1KKAj4svu9YoL8b9vsolG8gKunvKO7"
-        "MurRKSeUbECELnJEKV6683xCq7RvmjAu"
-        "2djZ54apiQc1lTixWns5GoG0SVNuFzHl"
-        "q97qUiqiMecjVFM51YVif7c1Stip52Hl";
-
-    target.setBubbleText(longstr);
-    ASSERT_EQ(target.bubbleText().length(), 330);
-    ASSERT_EQ(target.bubbleText(), longstr.substr(0, 330));
-
-    // Integers should be left unchanged
-    target.setBubbleText("8");
-    ASSERT_EQ(target.bubbleText(), "8");
-
-    target.setBubbleText("-52");
-    ASSERT_EQ(target.bubbleText(), "-52");
-
-    target.setBubbleText("0");
-    ASSERT_EQ(target.bubbleText(), "0");
-
-    // Non-integers should be rounded to 2 decimal places (no more, no less), unless they're small enough that rounding would display them as 0.00 (#478)
-    target.setBubbleText("8.324");
-    ASSERT_EQ(target.bubbleText(), "8.32");
-
-    target.setBubbleText("-52.576");
-    ASSERT_EQ(target.bubbleText(), "-52.58");
-
-    target.setBubbleText("3.5");
-    ASSERT_EQ(target.bubbleText(), "3.5");
-
-    target.setBubbleText("0.015");
-    ASSERT_EQ(target.bubbleText(), "0.02");
-
-    target.setBubbleText("-0.015");
-    ASSERT_EQ(target.bubbleText(), "-0.02");
-
-    target.setBubbleText("0.005");
-    ASSERT_EQ(target.bubbleText(), "0.005");
-
-    target.setBubbleText("-0.005");
-    ASSERT_EQ(target.bubbleText(), "-0.005");
+    EXPECT_CALL(engine, requestRedraw).Times(0);
+    target.bubble()->setText("hello");
+    target.bubble()->setText("");
 }
 
 TEST(TargetTest, Engine)

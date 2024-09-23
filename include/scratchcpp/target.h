@@ -19,6 +19,7 @@ class Comment;
 class Costume;
 class Sound;
 class Sprite;
+class TextBubble;
 class IGraphicsEffect;
 class TargetPrivate;
 
@@ -26,12 +27,6 @@ class TargetPrivate;
 class LIBSCRATCHCPP_EXPORT Target : public Drawable
 {
     public:
-        enum class BubbleType
-        {
-            Say,
-            Think
-        };
-
         Target();
         Target(const Target &) = delete;
         virtual ~Target() { }
@@ -104,11 +99,8 @@ class LIBSCRATCHCPP_EXPORT Target : public Drawable
 
         virtual void clearGraphicsEffects();
 
-        BubbleType bubbleType() const;
-        virtual void setBubbleType(BubbleType type);
-
-        const std::string &bubbleText() const;
-        virtual void setBubbleText(const std::string &text);
+        TextBubble *bubble();
+        const TextBubble *bubble() const;
 
         IEngine *engine() const;
         void setEngine(IEngine *engine);

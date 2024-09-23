@@ -33,9 +33,6 @@ class TargetMock : public Target
         MOCK_METHOD(void, setGraphicsEffectValue, (IGraphicsEffect *, double), (override));
         MOCK_METHOD(void, clearGraphicsEffects, (), (override));
 
-        MOCK_METHOD(void, setBubbleType, (BubbleType), (override));
-        MOCK_METHOD(void, setBubbleText, (const std::string &), (override));
-
         MOCK_METHOD(Target *, dataSource, (), (const, override));
 
         Target *dataSourceBase() const { return Target::dataSource(); };

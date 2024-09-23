@@ -9,6 +9,7 @@
 #include <scratchcpp/costume.h>
 #include <scratchcpp/sound.h>
 #include <scratchcpp/target.h>
+#include <scratchcpp/textbubble.h>
 
 namespace libscratchcpp
 {
@@ -37,8 +38,7 @@ struct TargetPrivate
         double volume = 100;
         std::unordered_map<Sound::Effect, double> soundEffects;
         std::unordered_map<IGraphicsEffect *, double> graphicsEffects;
-        Target::BubbleType bubbleType = Target::BubbleType::Say;
-        std::string bubbleText;
+        TextBubble bubble;
 };
 
 } // namespace libscratchcpp

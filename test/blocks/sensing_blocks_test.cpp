@@ -4,6 +4,7 @@
 #include <scratchcpp/field.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
+#include <scratchcpp/textbubble.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/variable.h>
 #include <enginemock.h>
@@ -712,7 +713,7 @@ TEST_F(SensingBlocksTest, AskAndWaitAndAnswerImpl)
     static Value constValues[] = { "test1", "test2", "test3" };
 
     Sprite sprite;
-    sprite.setBubbleType(Target::BubbleType::Think);
+    sprite.bubble()->setType(TextBubble::Type::Think);
     Stage stage;
     QuestionSpy spy;
     auto asked = std::bind(&QuestionSpy::asked, &spy, std::placeholders::_1);
@@ -732,8 +733,8 @@ TEST_F(SensingBlocksTest, AskAndWaitAndAnswerImpl)
 
     ASSERT_EQ(vm1.registerCount(), 0);
     ASSERT_FALSE(vm1.atEnd());
-    ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(sprite.bubbleText(), "test1");
+    ASSERT_EQ(sprite.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(sprite.bubble()->text(), "test1");
 
     EXPECT_CALL(m_engineMock, questionAsked).Times(0);
     vm1.reset();
@@ -742,8 +743,8 @@ TEST_F(SensingBlocksTest, AskAndWaitAndAnswerImpl)
 
     ASSERT_EQ(vm1.registerCount(), 0);
     ASSERT_FALSE(vm1.atEnd());
-    ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(sprite.bubbleText(), "test1");
+    ASSERT_EQ(sprite.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(sprite.bubble()->text(), "test1");
 
     EXPECT_CALL(m_engineMock, questionAsked).Times(0);
     sprite.setVisible(false);
@@ -754,8 +755,8 @@ TEST_F(SensingBlocksTest, AskAndWaitAndAnswerImpl)
 
     ASSERT_EQ(vm1.registerCount(), 0);
     ASSERT_FALSE(vm1.atEnd());
-    ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(sprite.bubbleText(), "test1");
+    ASSERT_EQ(sprite.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(sprite.bubble()->text(), "test1");
 
     // Ask a question from the stage
     VirtualMachine vm2(&stage, &m_engineMock, nullptr);
@@ -767,15 +768,15 @@ TEST_F(SensingBlocksTest, AskAndWaitAndAnswerImpl)
     vm2.run();
     ASSERT_EQ(vm2.registerCount(), 0);
     ASSERT_FALSE(vm2.atEnd());
-    ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(sprite.bubbleText(), "test1");
+    ASSERT_EQ(sprite.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(sprite.bubble()->text(), "test1");
 
     // Answer the questions
     EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
     EXPECT_CALL(spy, asked(""));
     SensingBlocks::onAnswer("hi");
-    ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Say);
-    ASSERT_EQ(sprite.bubbleText(), "test2");
+    ASSERT_EQ(sprite.bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(sprite.bubble()->text(), "test2");
 
     vm1.reset();
     vm1.setBytecode(bytecode4);
@@ -786,7 +787,7 @@ TEST_F(SensingBlocksTest, AskAndWaitAndAnswerImpl)
     EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
     EXPECT_CALL(spy, asked("test3"));
     SensingBlocks::onAnswer("hello");
-    ASSERT_TRUE(sprite.bubbleText().empty());
+    ASSERT_TRUE(sprite.bubble()->text().empty());
 
     vm1.reset();
     vm1.run();
@@ -796,8 +797,8 @@ TEST_F(SensingBlocksTest, AskAndWaitAndAnswerImpl)
     EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
     EXPECT_CALL(spy, asked("test2"));
     SensingBlocks::onAnswer("world");
-    ASSERT_TRUE(sprite.bubbleText().empty());
-    ASSERT_TRUE(stage.bubbleText().empty());
+    ASSERT_TRUE(sprite.bubble()->text().empty());
+    ASSERT_TRUE(stage.bubble()->text().empty());
 
     vm1.reset();
     vm1.run();
