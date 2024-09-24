@@ -797,6 +797,18 @@ TEST(SpriteTest, BubbleTextRedraw)
     target.bubble()->setText("");
 }
 
+TEST(TargetTest, Engine)
+{
+    Target target;
+    ASSERT_EQ(target.engine(), nullptr);
+    ASSERT_EQ(target.bubble()->engine(), nullptr);
+
+    EngineMock engine;
+    target.setEngine(&engine);
+    ASSERT_EQ(target.engine(), &engine);
+    ASSERT_EQ(target.bubble()->engine(), &engine);
+}
+
 TEST(TargetTest, DataSource)
 {
     TargetMock target;

@@ -103,6 +103,8 @@ class LIBSCRATCHCPP_EXPORT Target : public Drawable
         TextBubble *bubble();
         const TextBubble *bubble() const;
 
+        void setEngine(IEngine *engine) override final;
+
     protected:
         /*! Override this method to set a custom data source for blocks, assets, comments, etc. */
         virtual Target *dataSource() const { return nullptr; }

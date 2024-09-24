@@ -572,3 +572,10 @@ const TextBubble *Target::bubble() const
 {
     return &impl->bubble;
 }
+
+/*! Overrides Drawable#setEngine(). */
+void Target::setEngine(IEngine *engine)
+{
+    Drawable::setEngine(engine);
+    impl->bubble.setEngine(engine);
+}

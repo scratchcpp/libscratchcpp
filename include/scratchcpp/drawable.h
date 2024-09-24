@@ -29,7 +29,7 @@ class LIBSCRATCHCPP_EXPORT Drawable
         virtual void setLayerOrder(int newLayerOrder);
 
         IEngine *engine() const;
-        void setEngine(IEngine *engine);
+        virtual void setEngine(IEngine *engine);
 
     private:
         spimpl::unique_impl_ptr<DrawablePrivate> impl;
