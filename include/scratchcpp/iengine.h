@@ -377,13 +377,11 @@ class LIBSCRATCHCPP_EXPORT IEngine
         /*! Emits when a question is answered. */
         virtual sigslot::signal<const std::string &> &questionAnswered() = 0;
 
-#ifndef USE_LLVM
         /*! Returns the list of extension names. */
         virtual const std::vector<std::string> &extensions() const = 0;
 
         /*! Sets the list of extension names. */
         virtual void setExtensions(const std::vector<std::string> &newExtensions) = 0;
-#endif
 
         /*! Returns the map of scripts (each top level block has a Script object). */
         virtual const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &scripts() const = 0;
