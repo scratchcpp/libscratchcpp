@@ -444,11 +444,13 @@ void Engine::initClone(std::shared_ptr<Sprite> clone)
     assert(std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), clone.get()) == m_sortedDrawables.end());
     m_clones.insert(clone);
     m_sortedDrawables.push_back(clone.get()); // execution order needs to be updated after this
+    m_sortedDrawables.push_back(clone->bubble());
 }
 
 void Engine::deinitClone(std::shared_ptr<Sprite> clone)
 {
     m_clones.erase(clone);
+    m_sortedDrawables.erase(std::remove(m_sortedDrawables.begin(), m_sortedDrawables.end(), clone->bubble()), m_sortedDrawables.end());
     m_sortedDrawables.erase(std::remove(m_sortedDrawables.begin(), m_sortedDrawables.end(), clone.get()), m_sortedDrawables.end());
 }
 
@@ -1161,8 +1163,14 @@ void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
         }
     }
 
-    // Sort the drawables by layer order
+    // Sort the targets by layer order
     std::sort(m_sortedDrawables.begin(), m_sortedDrawables.end(), [](Drawable *d1, Drawable *d2) { return d1->layerOrder() < d2->layerOrder(); });
+
+    // Add text bubbles (layers are irrelevant until text is displayed)
+    for (auto target : m_targets) {
+        target->bubble()->setLayerOrder(m_sortedDrawables.size());
+        m_sortedDrawables.push_back(target->bubble());
+    }
 }
 
 Target *Engine::targetAt(int index) const
