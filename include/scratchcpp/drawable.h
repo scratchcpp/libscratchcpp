@@ -17,6 +17,12 @@ class LIBSCRATCHCPP_EXPORT Drawable
         Drawable();
         Drawable(const Drawable &) = delete;
 
+        /*! Returns true if this Drawable is a Target. */
+        virtual bool isTarget() const { return false; }
+
+        /*! Returns true if this Drawable is a TextBubble. */
+        virtual bool isTextBubble() const { return false; }
+
         int layerOrder() const;
         virtual void setLayerOrder(int newLayerOrder);
 

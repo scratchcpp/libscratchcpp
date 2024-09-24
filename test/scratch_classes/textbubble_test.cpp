@@ -4,6 +4,18 @@
 
 using namespace libscratchcpp;
 
+TEST(TextBubbleTest, IsTarget)
+{
+    TextBubble bubble;
+    ASSERT_FALSE(bubble.isTarget());
+}
+
+TEST(TextBubbleTest, IsTextBubble)
+{
+    TextBubble bubble;
+    ASSERT_TRUE(bubble.isTextBubble());
+}
+
 TEST(TextBubbleTest, BubbleType)
 {
     TextBubble bubble;

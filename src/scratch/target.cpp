@@ -29,6 +29,12 @@ Target::Target() :
 {
 }
 
+/*! Returns true. */
+bool Target::isTarget() const
+{
+    return true;
+}
+
 /*! Returns the name of the target. */
 const std::string &Target::name() const
 {

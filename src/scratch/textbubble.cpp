@@ -13,6 +13,12 @@ TextBubble::TextBubble() :
 {
 }
 
+/*! Returns true. */
+bool TextBubble::isTextBubble() const
+{
+    return true;
+}
+
 /*! Returns the type of the TextBubble (say or think). */
 TextBubble::Type TextBubble::type() const
 {

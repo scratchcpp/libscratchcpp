@@ -25,6 +25,18 @@ using ::testing::WithArgs;
 using ::testing::Invoke;
 using ::testing::_;
 
+TEST(TargetTest, IsTarget)
+{
+    Target target;
+    ASSERT_TRUE(target.isTarget());
+}
+
+TEST(TargetTest, IsTextBubble)
+{
+    Target target;
+    ASSERT_FALSE(target.isTextBubble());
+}
+
 TEST(TargetTest, IsStage)
 {
     Target target;

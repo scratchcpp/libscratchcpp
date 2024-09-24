@@ -23,6 +23,8 @@ class TextBubble : public Drawable
         TextBubble();
         TextBubble(const TextBubble &) = delete;
 
+        bool isTextBubble() const override final;
+
         Type type() const;
         virtual void setType(Type type);
         sigslot::signal<Type> &typeChanged() const;

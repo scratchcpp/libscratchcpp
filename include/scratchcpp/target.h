@@ -31,6 +31,8 @@ class LIBSCRATCHCPP_EXPORT Target : public Drawable
         Target(const Target &) = delete;
         virtual ~Target() { }
 
+        bool isTarget() const override final;
+
         /*! Returns true if this Target is the stage. */
         virtual bool isStage() const { return false; }
 
