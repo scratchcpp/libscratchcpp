@@ -218,7 +218,7 @@ class Engine : public IEngine
         void addHatField(Script *script, HatField hatField, Field *targetField);
         const std::vector<libscratchcpp::Script *> &getHats(Target *target, HatType type);
 
-        void updateSpriteLayerOrder();
+        void updateDrawableLayerOrder();
 
         void updateFrameDuration();
         void addRunningScript(std::shared_ptr<Thread> thread);
@@ -244,7 +244,7 @@ class Engine : public IEngine
         std::unordered_map<Broadcast *, Thread *> m_broadcastSenders; // used for resolving broadcast promises
         std::vector<std::shared_ptr<Monitor>> m_monitors;
         std::vector<std::string> m_extensions;
-        std::vector<Target *> m_executableTargets; // sorted by layer (reverse order of execution)
+        std::vector<Drawable *> m_sortedDrawables; // sorted by layer (reverse order of execution)
         std::vector<std::shared_ptr<Thread>> m_threads;
         std::vector<std::shared_ptr<Thread>> m_threadsToStop;
         std::shared_ptr<Thread> m_activeThread;

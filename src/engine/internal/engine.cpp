@@ -53,7 +53,7 @@ Engine::Engine() :
 Engine::~Engine()
 {
     m_clones.clear();
-    m_executableTargets.clear();
+    m_sortedDrawables.clear();
 }
 
 void Engine::clear()
@@ -73,7 +73,7 @@ void Engine::clear()
     m_monitors.clear();
     m_extensions.clear();
     m_broadcastMap.clear();
-    m_executableTargets.clear();
+    m_sortedDrawables.clear();
     m_threads.clear();
     m_threadsToStop.clear();
     m_scripts.clear();
@@ -440,15 +440,15 @@ void Engine::initClone(std::shared_ptr<Sprite> clone)
     startHats(HatType::CloneInit, {}, clone.get());
 
     assert(std::find(m_clones.begin(), m_clones.end(), clone) == m_clones.end());
-    assert(std::find(m_executableTargets.begin(), m_executableTargets.end(), clone.get()) == m_executableTargets.end());
+    assert(std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), clone.get()) == m_sortedDrawables.end());
     m_clones.insert(clone);
-    m_executableTargets.push_back(clone.get()); // execution order needs to be updated after this
+    m_sortedDrawables.push_back(clone.get()); // execution order needs to be updated after this
 }
 
 void Engine::deinitClone(std::shared_ptr<Sprite> clone)
 {
     m_clones.erase(clone);
-    m_executableTargets.erase(std::remove(m_executableTargets.begin(), m_executableTargets.end(), clone.get()), m_executableTargets.end());
+    m_sortedDrawables.erase(std::remove(m_sortedDrawables.begin(), m_sortedDrawables.end(), clone.get()), m_sortedDrawables.end());
 }
 
 void Engine::stopSounds()
@@ -1144,10 +1144,10 @@ const std::vector<std::shared_ptr<Target>> &Engine::targets() const
 void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
 {
     m_targets = newTargets;
-    m_executableTargets.clear();
+    m_sortedDrawables.clear();
 
     for (auto target : m_targets) {
-        m_executableTargets.push_back(target.get());
+        m_sortedDrawables.push_back(target.get());
 
         // Set engine in the target
         target->setEngine(this);
@@ -1160,8 +1160,8 @@ void Engine::setTargets(const std::vector<std::shared_ptr<Target>> &newTargets)
         }
     }
 
-    // Sort the executable targets by layer order
-    std::sort(m_executableTargets.begin(), m_executableTargets.end(), [](Target *t1, Target *t2) { return t1->layerOrder() < t2->layerOrder(); });
+    // Sort the drawables by layer order
+    std::sort(m_sortedDrawables.begin(), m_sortedDrawables.end(), [](Drawable *d1, Drawable *d2) { return d1->layerOrder() < d2->layerOrder(); });
 }
 
 Target *Engine::targetAt(int index) const
@@ -1213,27 +1213,27 @@ int Engine::findTarget(const std::string &targetName) const
 
 void Engine::moveSpriteToFront(Sprite *sprite)
 {
-    if (!sprite || m_executableTargets.size() <= 2)
+    if (!sprite || m_sortedDrawables.size() <= 2)
         return;
 
-    auto it = std::find(m_executableTargets.begin(), m_executableTargets.end(), sprite);
+    auto it = std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), sprite);
 
-    if (it != m_executableTargets.end()) {
-        std::rotate(it, it + 1, m_executableTargets.end());
-        updateSpriteLayerOrder();
+    if (it != m_sortedDrawables.end()) {
+        std::rotate(it, it + 1, m_sortedDrawables.end());
+        updateDrawableLayerOrder();
     }
 }
 
 void Engine::moveSpriteToBack(Sprite *sprite)
 {
-    if (!sprite || m_executableTargets.size() <= 2)
+    if (!sprite || m_sortedDrawables.size() <= 2)
         return;
 
-    auto it = std::find(m_executableTargets.begin(), m_executableTargets.end(), sprite);
+    auto it = std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), sprite);
 
-    if (it != m_executableTargets.end()) {
-        std::rotate(m_executableTargets.begin() + 1, it, it + 1); // stage is always the first
-        updateSpriteLayerOrder();
+    if (it != m_sortedDrawables.end()) {
+        std::rotate(m_sortedDrawables.begin() + 1, it, it + 1); // stage is always the first
+        updateDrawableLayerOrder();
     }
 }
 
@@ -1242,19 +1242,19 @@ void Engine::moveSpriteForwardLayers(Sprite *sprite, int layers)
     if (!sprite || layers == 0)
         return;
 
-    auto it = std::find(m_executableTargets.begin(), m_executableTargets.end(), sprite);
+    auto it = std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), sprite);
 
-    if (it == m_executableTargets.end())
+    if (it == m_sortedDrawables.end())
         return;
 
     auto target = it + layers;
 
-    if (target <= m_executableTargets.begin()) {
+    if (target <= m_sortedDrawables.begin()) {
         moveSpriteToBack(sprite);
         return;
     }
 
-    if (target >= m_executableTargets.end()) {
+    if (target >= m_sortedDrawables.end()) {
         moveSpriteToFront(sprite);
         return;
     }
@@ -1264,7 +1264,7 @@ void Engine::moveSpriteForwardLayers(Sprite *sprite, int layers)
     else
         std::rotate(target, it, it + 1);
 
-    updateSpriteLayerOrder();
+    updateDrawableLayerOrder();
 }
 
 void Engine::moveSpriteBackwardLayers(Sprite *sprite, int layers)
@@ -1277,10 +1277,10 @@ void Engine::moveSpriteBehindOther(Sprite *sprite, Sprite *other)
     if (sprite == other)
         return;
 
-    auto itSprite = std::find(m_executableTargets.begin(), m_executableTargets.end(), sprite);
-    auto itOther = std::find(m_executableTargets.begin(), m_executableTargets.end(), other);
+    auto itSprite = std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), sprite);
+    auto itOther = std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), other);
 
-    if ((itSprite == m_executableTargets.end()) || (itOther == m_executableTargets.end()))
+    if ((itSprite == m_sortedDrawables.end()) || (itOther == m_sortedDrawables.end()))
         return;
 
     auto target = itOther - 1; // behind
@@ -1288,12 +1288,12 @@ void Engine::moveSpriteBehindOther(Sprite *sprite, Sprite *other)
     if (target < itSprite)
         target++;
 
-    if (target <= m_executableTargets.begin()) {
+    if (target <= m_sortedDrawables.begin()) {
         moveSpriteToBack(sprite);
         return;
     }
 
-    if (target >= m_executableTargets.end()) {
+    if (target >= m_sortedDrawables.end()) {
         moveSpriteToFront(sprite);
         return;
     }
@@ -1303,7 +1303,7 @@ void Engine::moveSpriteBehindOther(Sprite *sprite, Sprite *other)
     else
         std::rotate(target, itSprite, itSprite + 1);
 
-    updateSpriteLayerOrder();
+    updateDrawableLayerOrder();
 }
 
 Stage *Engine::stage() const
@@ -1666,12 +1666,12 @@ const std::vector<Script *> &Engine::getHats(Target *target, HatType type)
     }
 }
 
-void Engine::updateSpriteLayerOrder()
+void Engine::updateDrawableLayerOrder()
 {
-    assert(m_executableTargets.empty() || m_executableTargets[0]->isStage());
+    assert(m_sortedDrawables.empty() || (m_sortedDrawables[0]->isTarget() && static_cast<Target *>(m_sortedDrawables[0])->isStage()));
 
-    for (size_t i = 1; i < m_executableTargets.size(); i++) // i = 1 to skip the stage
-        m_executableTargets[i]->setLayerOrder(i);
+    for (size_t i = 1; i < m_sortedDrawables.size(); i++) // i = 1 to skip the stage
+        m_sortedDrawables[i]->setLayerOrder(i);
 }
 
 const std::string &Engine::userAgent() const
@@ -1912,9 +1912,9 @@ void Engine::deleteClones()
 
 void Engine::removeExecutableClones()
 {
-    // Remove clones from the executable targets
+    // Remove clones from sorted drawables
     for (std::shared_ptr<Sprite> clone : m_clones)
-        m_executableTargets.erase(std::remove(m_executableTargets.begin(), m_executableTargets.end(), clone.get()), m_executableTargets.end());
+        m_sortedDrawables.erase(std::remove(m_sortedDrawables.begin(), m_sortedDrawables.end(), clone.get()), m_sortedDrawables.end());
 }
 
 void Engine::addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *target)
@@ -2021,23 +2021,27 @@ template<typename F>
 void Engine::allScriptsByOpcodeDo(HatType hatType, F &&f, Target *optTarget)
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1797-L1809
-    std::vector<Target *> *targetsPtr = &m_executableTargets;
+    std::vector<Drawable *> *drawablesPtr = &m_sortedDrawables;
 
     if (optTarget)
-        targetsPtr = new std::vector<Target *>({ optTarget });
+        drawablesPtr = new std::vector<Drawable *>({ optTarget });
 
-    const std::vector<Target *> targets = *targetsPtr;
+    const std::vector<Drawable *> &drawables = *drawablesPtr;
 
-    for (int t = targets.size() - 1; t >= 0; t--) {
-        Target *target = targets[t];
-        const auto &scripts = getHats(target, hatType);
+    for (int t = drawables.size() - 1; t >= 0; t--) {
+        Drawable *drawable = drawables[t];
 
-        for (size_t j = 0; j < scripts.size(); j++)
-            f(scripts[j], target);
+        if (drawable->isTarget()) {
+            Target *target = static_cast<Target *>(drawable);
+            const auto &scripts = getHats(target, hatType);
+
+            for (size_t j = 0; j < scripts.size(); j++)
+                f(scripts[j], target);
+        }
     }
 
     if (optTarget)
-        delete targetsPtr;
+        delete drawablesPtr;
 }
 
 std::vector<std::shared_ptr<Thread>> Engine::startHats(HatType hatType, const std::unordered_map<HatField, std::variant<std::string, const char *, Entity *>> &optMatchFields, Target *optTarget)
