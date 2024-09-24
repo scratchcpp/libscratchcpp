@@ -226,7 +226,7 @@ TEST_F(SoundTest, Clone)
     EXPECT_CALL(engine, cloneLimit()).WillOnce(Return(-1));
     EXPECT_CALL(engine, initClone);
     EXPECT_CALL(engine, requestRedraw);
-    EXPECT_CALL(engine, moveSpriteBehindOther);
+    EXPECT_CALL(engine, moveDrawableBehindOther);
     auto spriteClone = sprite.clone();
 
     EXPECT_CALL(*anotherPlayer, setVolume).Times(2);

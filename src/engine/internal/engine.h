@@ -135,11 +135,11 @@ class Engine : public IEngine
         void getVisibleTargets(std::vector<Target *> &dst) const override;
         int findTarget(const std::string &targetName) const override;
 
-        void moveSpriteToFront(Sprite *sprite) override;
-        void moveSpriteToBack(Sprite *sprite) override;
-        void moveSpriteForwardLayers(Sprite *sprite, int layers) override;
-        void moveSpriteBackwardLayers(Sprite *sprite, int layers) override;
-        void moveSpriteBehindOther(Sprite *sprite, Sprite *other) override;
+        void moveDrawableToFront(Drawable *drawable) override;
+        void moveDrawableToBack(Drawable *drawable) override;
+        void moveDrawableForwardLayers(Drawable *drawable, int layers) override;
+        void moveDrawableBackwardLayers(Drawable *drawable, int layers) override;
+        void moveDrawableBehindOther(Drawable *drawable, Drawable *other) override;
 
         Stage *stage() const override;
 

@@ -185,7 +185,7 @@ TEST(StageTest, TouchingSprite)
     EXPECT_CALL(engine, cloneLimit()).WillRepeatedly(Return(-1));
     EXPECT_CALL(engine, initClone).Times(3);
     EXPECT_CALL(engine, requestRedraw).Times(3);
-    EXPECT_CALL(engine, moveSpriteBehindOther).Times(3);
+    EXPECT_CALL(engine, moveDrawableBehindOther).Times(3);
     auto clone1 = another.clone();
     auto clone2 = another.clone();
     auto clone3 = another.clone();

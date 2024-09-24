@@ -103,7 +103,7 @@ std::shared_ptr<Sprite> Sprite::clone()
             impl->iface->onCloned(clone.get());
 
         // Place the clone behind the original sprite
-        eng->moveSpriteBehindOther(clone.get(), this);
+        eng->moveDrawableBehindOther(clone.get(), this);
 
         return clone;
     }
@@ -239,7 +239,7 @@ void Sprite::startDragging()
     IEngine *eng = engine();
 
     if (eng)
-        eng->moveSpriteToFront(this);
+        eng->moveDrawableToFront(this);
 }
 
 /*! Stops dragging. */

@@ -18,6 +18,7 @@ class IExtension;
 class Broadcast;
 class Block;
 class Field;
+class Drawable;
 class Target;
 class Sprite;
 class Stage;
@@ -332,19 +333,19 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual int findTarget(const std::string &targetName) const = 0;
 
         /*! Moves the given sprite to the front layer. */
-        virtual void moveSpriteToFront(Sprite *sprite) = 0;
+        virtual void moveDrawableToFront(Drawable *drawable) = 0;
 
         /*! Moves the given sprite to the back layer. */
-        virtual void moveSpriteToBack(Sprite *sprite) = 0;
+        virtual void moveDrawableToBack(Drawable *drawable) = 0;
 
         /*! Moves the given sprite forward a number of layers. */
-        virtual void moveSpriteForwardLayers(Sprite *sprite, int layers) = 0;
+        virtual void moveDrawableForwardLayers(Drawable *drawable, int layers) = 0;
 
         /*! Moves the given sprite backward a number of layers. */
-        virtual void moveSpriteBackwardLayers(Sprite *sprite, int layers) = 0;
+        virtual void moveDrawableBackwardLayers(Drawable *drawable, int layers) = 0;
 
         /*! Moves the given sprite behind some other sprite. */
-        virtual void moveSpriteBehindOther(Sprite *sprite, Sprite *other) = 0;
+        virtual void moveDrawableBehindOther(Drawable *drawable, Drawable *other) = 0;
 
         /*! Returns the Stage. */
         virtual Stage *stage() const = 0;

@@ -633,7 +633,7 @@ TEST(TargetTest, TouchingSprite)
     EXPECT_CALL(engine, cloneLimit()).WillRepeatedly(Return(-1));
     EXPECT_CALL(engine, initClone).Times(3);
     EXPECT_CALL(engine, requestRedraw).Times(3);
-    EXPECT_CALL(engine, moveSpriteBehindOther).Times(3);
+    EXPECT_CALL(engine, moveDrawableBehindOther).Times(3);
     auto clone1 = sprite.clone();
     auto clone2 = sprite.clone();
     auto clone3 = sprite.clone();

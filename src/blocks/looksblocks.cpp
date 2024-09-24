@@ -1015,7 +1015,7 @@ unsigned int LooksBlocks::goToFront(VirtualMachine *vm)
     Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
 
     if (sprite)
-        vm->engine()->moveSpriteToFront(sprite);
+        vm->engine()->moveDrawableToFront(sprite);
 
     return 0;
 }
@@ -1025,7 +1025,7 @@ unsigned int LooksBlocks::goToBack(VirtualMachine *vm)
     Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
 
     if (sprite)
-        vm->engine()->moveSpriteToBack(sprite);
+        vm->engine()->moveDrawableToBack(sprite);
 
     return 0;
 }
@@ -1035,7 +1035,7 @@ unsigned int LooksBlocks::goForwardLayers(VirtualMachine *vm)
     Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
 
     if (sprite)
-        vm->engine()->moveSpriteForwardLayers(sprite, vm->getInput(0, 1)->toInt());
+        vm->engine()->moveDrawableForwardLayers(sprite, vm->getInput(0, 1)->toInt());
 
     return 1;
 }
@@ -1045,7 +1045,7 @@ unsigned int LooksBlocks::goBackwardLayers(VirtualMachine *vm)
     Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
 
     if (sprite)
-        vm->engine()->moveSpriteBackwardLayers(sprite, vm->getInput(0, 1)->toInt());
+        vm->engine()->moveDrawableBackwardLayers(sprite, vm->getInput(0, 1)->toInt());
 
     return 1;
 }

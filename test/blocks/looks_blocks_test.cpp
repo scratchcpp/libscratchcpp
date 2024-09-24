@@ -2557,13 +2557,13 @@ TEST_F(LooksBlocksTest, GoToFrontBackImpl)
     VirtualMachine vm(&sprite, &m_engineMock, nullptr);
     vm.setFunctions(functions);
 
-    EXPECT_CALL(m_engineMock, moveSpriteToFront(&sprite));
+    EXPECT_CALL(m_engineMock, moveDrawableToFront(&sprite));
     vm.setBytecode(bytecode1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
 
-    EXPECT_CALL(m_engineMock, moveSpriteToBack(&sprite));
+    EXPECT_CALL(m_engineMock, moveDrawableToBack(&sprite));
     vm.reset();
     vm.setBytecode(bytecode2);
     vm.run();
@@ -2614,13 +2614,13 @@ TEST_F(LooksBlocksTest, GoForwardBackwardLayersImpl)
     vm.setFunctions(functions);
     vm.setConstValues(constValues);
 
-    EXPECT_CALL(m_engineMock, moveSpriteForwardLayers(&sprite, 5));
+    EXPECT_CALL(m_engineMock, moveDrawableForwardLayers(&sprite, 5));
     vm.setBytecode(bytecode1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 0);
 
-    EXPECT_CALL(m_engineMock, moveSpriteBackwardLayers(&sprite, 3));
+    EXPECT_CALL(m_engineMock, moveDrawableBackwardLayers(&sprite, 3));
     vm.reset();
     vm.setBytecode(bytecode2);
     vm.run();

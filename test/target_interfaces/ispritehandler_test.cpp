@@ -30,11 +30,11 @@ class ISpriteHandlerTest : public testing::Test
 TEST_F(ISpriteHandlerTest, Clone)
 {
     std::shared_ptr<Sprite> clone;
-    Sprite *cloneParam1, *cloneParam2;
+    Drawable *cloneParam1, *cloneParam2;
     EXPECT_CALL(m_engine, cloneLimit()).Times(2).WillRepeatedly(Return(300));
     EXPECT_CALL(m_engine, cloneCount()).WillOnce(Return(0));
     EXPECT_CALL(m_engine, initClone(_)).WillOnce(SaveArg<0>(&clone));
-    EXPECT_CALL(m_engine, moveSpriteBehindOther(_, &m_sprite)).WillOnce(SaveArg<0>(&cloneParam1));
+    EXPECT_CALL(m_engine, moveDrawableBehindOther(_, &m_sprite)).WillOnce(SaveArg<0>(&cloneParam1));
     EXPECT_CALL(m_handler, onCloned(_)).WillOnce(SaveArg<0>(&cloneParam2));
     EXPECT_CALL(m_engine, requestRedraw());
 

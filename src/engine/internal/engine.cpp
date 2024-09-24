@@ -5,6 +5,7 @@
 #include <scratchcpp/script.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
+#include <scratchcpp/textbubble.h>
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/input.h>
@@ -1211,12 +1212,18 @@ int Engine::findTarget(const std::string &targetName) const
         return it - m_targets.begin();
 }
 
-void Engine::moveSpriteToFront(Sprite *sprite)
+void Engine::moveDrawableToFront(Drawable *drawable)
 {
-    if (!sprite || m_sortedDrawables.size() <= 2)
+    if (!drawable || m_sortedDrawables.size() <= 2)
         return;
 
-    auto it = std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), sprite);
+    if (drawable->isTarget() && static_cast<Target *>(drawable)->isStage()) {
+        std::cout << "warning: cannot move stage to front" << std::endl;
+        assert(false);
+        return;
+    }
+
+    auto it = std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), drawable);
 
     if (it != m_sortedDrawables.end()) {
         std::rotate(it, it + 1, m_sortedDrawables.end());
@@ -1224,12 +1231,12 @@ void Engine::moveSpriteToFront(Sprite *sprite)
     }
 }
 
-void Engine::moveSpriteToBack(Sprite *sprite)
+void Engine::moveDrawableToBack(Drawable *drawable)
 {
-    if (!sprite || m_sortedDrawables.size() <= 2)
+    if (!drawable || m_sortedDrawables.size() <= 2)
         return;
 
-    auto it = std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), sprite);
+    auto it = std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), drawable);
 
     if (it != m_sortedDrawables.end()) {
         std::rotate(m_sortedDrawables.begin() + 1, it, it + 1); // stage is always the first
@@ -1237,12 +1244,18 @@ void Engine::moveSpriteToBack(Sprite *sprite)
     }
 }
 
-void Engine::moveSpriteForwardLayers(Sprite *sprite, int layers)
+void Engine::moveDrawableForwardLayers(Drawable *drawable, int layers)
 {
-    if (!sprite || layers == 0)
+    if (!drawable || layers == 0)
         return;
 
-    auto it = std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), sprite);
+    if (layers > 0 && drawable->isTarget() && static_cast<Target *>(drawable)->isStage()) {
+        std::cout << "warning: cannot move stage forward" << std::endl;
+        assert(false);
+        return;
+    }
+
+    auto it = std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), drawable);
 
     if (it == m_sortedDrawables.end())
         return;
@@ -1250,12 +1263,12 @@ void Engine::moveSpriteForwardLayers(Sprite *sprite, int layers)
     auto target = it + layers;
 
     if (target <= m_sortedDrawables.begin()) {
-        moveSpriteToBack(sprite);
+        moveDrawableToBack(drawable);
         return;
     }
 
     if (target >= m_sortedDrawables.end()) {
-        moveSpriteToFront(sprite);
+        moveDrawableToFront(drawable);
         return;
     }
 
@@ -1267,17 +1280,23 @@ void Engine::moveSpriteForwardLayers(Sprite *sprite, int layers)
     updateDrawableLayerOrder();
 }
 
-void Engine::moveSpriteBackwardLayers(Sprite *sprite, int layers)
+void Engine::moveDrawableBackwardLayers(Drawable *drawable, int layers)
 {
-    moveSpriteForwardLayers(sprite, -layers);
+    moveDrawableForwardLayers(drawable, -layers);
 }
 
-void Engine::moveSpriteBehindOther(Sprite *sprite, Sprite *other)
+void Engine::moveDrawableBehindOther(Drawable *drawable, Drawable *other)
 {
-    if (sprite == other)
+    if (drawable == other)
         return;
 
-    auto itSprite = std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), sprite);
+    if (drawable->isTarget() && static_cast<Target *>(drawable)->isStage()) {
+        std::cout << "warning: cannot move stage behind drawable" << std::endl;
+        assert(false);
+        return;
+    }
+
+    auto itSprite = std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), drawable);
     auto itOther = std::find(m_sortedDrawables.begin(), m_sortedDrawables.end(), other);
 
     if ((itSprite == m_sortedDrawables.end()) || (itOther == m_sortedDrawables.end()))
@@ -1289,12 +1308,12 @@ void Engine::moveSpriteBehindOther(Sprite *sprite, Sprite *other)
         target++;
 
     if (target <= m_sortedDrawables.begin()) {
-        moveSpriteToBack(sprite);
+        moveDrawableToBack(drawable);
         return;
     }
 
     if (target >= m_sortedDrawables.end()) {
-        moveSpriteToFront(sprite);
+        moveDrawableToFront(drawable);
         return;
     }
 
