@@ -23,3 +23,15 @@ void Drawable::setLayerOrder(int newLayerOrder)
 {
     impl->layerOrder = newLayerOrder;
 }
+
+/*! Returns the engine. */
+IEngine *Drawable::engine() const
+{
+    return impl->engine;
+}
+
+/*! Sets the engine. */
+void Drawable::setEngine(IEngine *engine)
+{
+    impl->engine = engine;
+}

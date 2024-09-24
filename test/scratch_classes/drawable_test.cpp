@@ -1,4 +1,5 @@
 #include <scratchcpp/drawable.h>
+#include <enginemock.h>
 
 #include "../common.h"
 
@@ -22,4 +23,14 @@ TEST(DrawableTest, LayerOrder)
     ASSERT_EQ(drawable.layerOrder(), 0);
     drawable.setLayerOrder(2);
     ASSERT_EQ(drawable.layerOrder(), 2);
+}
+
+TEST(TargetTest, Engine)
+{
+    Drawable drawable;
+    ASSERT_EQ(drawable.engine(), nullptr);
+
+    EngineMock engine;
+    drawable.setEngine(&engine);
+    ASSERT_EQ(drawable.engine(), &engine);
 }

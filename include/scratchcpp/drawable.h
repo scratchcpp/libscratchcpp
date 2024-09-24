@@ -8,6 +8,8 @@
 namespace libscratchcpp
 {
 
+class IEngine;
+
 class DrawablePrivate;
 
 /*! \brief The Drawable class is the base class of rendered elements (stage, sprites, text bubbles). */
@@ -25,6 +27,9 @@ class LIBSCRATCHCPP_EXPORT Drawable
 
         int layerOrder() const;
         virtual void setLayerOrder(int newLayerOrder);
+
+        IEngine *engine() const;
+        void setEngine(IEngine *engine);
 
     private:
         spimpl::unique_impl_ptr<DrawablePrivate> impl;

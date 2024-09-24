@@ -11,7 +11,6 @@
 namespace libscratchcpp
 {
 
-class IEngine;
 class Variable;
 class List;
 class Block;
@@ -103,9 +102,6 @@ class LIBSCRATCHCPP_EXPORT Target : public Drawable
 
         TextBubble *bubble();
         const TextBubble *bubble() const;
-
-        IEngine *engine() const;
-        void setEngine(IEngine *engine);
 
     protected:
         /*! Override this method to set a custom data source for blocks, assets, comments, etc. */

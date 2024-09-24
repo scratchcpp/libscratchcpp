@@ -26,7 +26,6 @@ struct TargetPrivate
         TargetPrivate();
         TargetPrivate(const TargetPrivate &) = delete;
 
-        IEngine *engine = nullptr;
         std::string name;
         std::vector<std::shared_ptr<Variable>> variables;
         std::vector<std::shared_ptr<List>> lists;

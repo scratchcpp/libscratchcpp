@@ -280,8 +280,10 @@ void Target::setCostumeIndex(int newCostumeIndex)
         impl->costumeIndex = newCostumeIndex;
 
     if (isStage()) {
-        if (impl->engine)
-            impl->engine->requestRedraw();
+        IEngine *eng = engine();
+
+        if (eng)
+            eng->requestRedraw();
     }
 }
 
@@ -509,9 +511,11 @@ bool Target::touchingPoint(double x, double y) const
 bool Target::touchingEdge() const
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/8dbcc1fc8f8d8c4f1e40629fe8a388149d6dfd1c/src/sprites/rendered-target.js#L772-L785
-    if (impl->engine) {
-        const double stageWidth = impl->engine->stageWidth();
-        const double stageHeight = impl->engine->stageHeight();
+    IEngine *eng = engine();
+
+    if (eng) {
+        const double stageWidth = eng->stageWidth();
+        const double stageHeight = eng->stageHeight();
         Rect bounds = boundingRect();
 
         if ((bounds.left() < -stageWidth / 2) || (bounds.right() > stageWidth / 2) || (bounds.top() > stageHeight / 2) || (bounds.bottom() < -stageHeight / 2))
@@ -567,16 +571,4 @@ TextBubble *Target::bubble()
 const TextBubble *Target::bubble() const
 {
     return &impl->bubble;
-}
-
-/*! Returns the engine. */
-IEngine *Target::engine() const
-{
-    return impl->engine;
-}
-
-/*! Sets the engine. */
-void Target::setEngine(IEngine *engine)
-{
-    impl->engine = engine;
 }
