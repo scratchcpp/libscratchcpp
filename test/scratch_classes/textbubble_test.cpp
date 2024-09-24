@@ -1,4 +1,5 @@
 #include <scratchcpp/textbubble.h>
+#include <enginemock.h>
 
 #include "../common.h"
 
@@ -36,8 +37,12 @@ TEST(TextBubbleTest, BubbleText)
     bubble.setText("hello");
     ASSERT_EQ(bubble.text(), "hello");
 
+    EngineMock engine;
+    bubble.setEngine(&engine);
+    EXPECT_CALL(engine, moveDrawableToFront(&bubble));
     bubble.setText("world");
     ASSERT_EQ(bubble.text(), "world");
+    bubble.setEngine(nullptr);
 
     // longstr.length = 384, should be limited to 330 in bubble text
     std::string longstr =

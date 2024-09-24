@@ -98,7 +98,9 @@ add_executable(
 
 target_link_libraries(
   textbubble_test
-  GTest::gtest_main
+  GTest::gmock_main
+  scratchcpp
+  scratchcpp_mocks
   scratchcpp
 )
 

@@ -2,6 +2,7 @@
 
 #include <scratchcpp/textbubble.h>
 #include <scratchcpp/value.h>
+#include <scratchcpp/iengine.h>
 
 #include "textbubble_p.h"
 
@@ -70,6 +71,13 @@ void TextBubble::setText(const std::string &text)
     impl->text = converted.substr(0, limit);
 
     impl->textChanged(impl->text);
+
+    if (!impl->text.empty()) {
+        IEngine *eng = engine();
+
+        if (eng)
+            eng->moveDrawableToFront(this);
+    }
 }
 
 /*! Emits when the text changes. */
