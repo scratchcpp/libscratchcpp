@@ -30,11 +30,11 @@ class ISpriteHandlerTest : public testing::Test
 TEST_F(ISpriteHandlerTest, Clone)
 {
     std::shared_ptr<Sprite> clone;
-    Sprite *cloneParam1, *cloneParam2;
+    Drawable *cloneParam1, *cloneParam2;
     EXPECT_CALL(m_engine, cloneLimit()).Times(2).WillRepeatedly(Return(300));
     EXPECT_CALL(m_engine, cloneCount()).WillOnce(Return(0));
     EXPECT_CALL(m_engine, initClone(_)).WillOnce(SaveArg<0>(&clone));
-    EXPECT_CALL(m_engine, moveSpriteBehindOther(_, &m_sprite)).WillOnce(SaveArg<0>(&cloneParam1));
+    EXPECT_CALL(m_engine, moveDrawableBehindOther(_, &m_sprite)).WillOnce(SaveArg<0>(&cloneParam1));
     EXPECT_CALL(m_handler, onCloned(_)).WillOnce(SaveArg<0>(&cloneParam2));
     EXPECT_CALL(m_engine, requestRedraw());
 
@@ -184,41 +184,6 @@ TEST_F(ISpriteHandlerTest, GraphicsEffects)
     EXPECT_CALL(m_handler, onGraphicsEffectsCleared());
     EXPECT_CALL(m_engine, requestRedraw());
     m_sprite.clearGraphicsEffects();
-}
-
-TEST_F(ISpriteHandlerTest, BubbleType)
-{
-    EXPECT_CALL(m_handler, onBubbleTypeChanged(Target::BubbleType::Say));
-    m_sprite.setBubbleType(Target::BubbleType::Say);
-
-    EXPECT_CALL(m_handler, onBubbleTypeChanged(Target::BubbleType::Think));
-    m_sprite.setBubbleType(Target::BubbleType::Think);
-}
-
-TEST_F(ISpriteHandlerTest, BubbleText)
-{
-    EXPECT_CALL(m_handler, onBubbleTextChanged("test"));
-    EXPECT_CALL(m_engine, requestRedraw());
-    m_sprite.setBubbleText("test");
-
-    // The text should be processed in Target::setBubbleText() (#571)
-    std::string longstr =
-        "EY8OUNzAqwgh7NRGk5TzCP3dkAhJy9TX"
-        "Y9mqKElPjdQpKddYqjyCwUk2hx6YgVZV"
-        "6BOdmZGxDMs8Hjv8W9G6j4gTxAWdOkzs"
-        "8Ih80xzEDbvLilWsDwoB6FxH2kVVI4xs"
-        "IXOETNQ6QMsCKLWc5XjHk2BS9nYvDGpJ"
-        "uEmp9zIzFGT1kRSrOlU3ZwnN1YtvqFx"
-        "3hkWVNtJ71dQ0PJHhOVQPUy19V01SPu3"
-        "KIIS2wdSUVAc4RYMzepSveghzWbdcizy"
-        "Tm1KKAj4svu9YoL8b9vsolG8gKunvKO7"
-        "MurRKSeUbECELnJEKV6683xCq7RvmjAu"
-        "2djZ54apiQc1lTixWns5GoG0SVNuFzHl"
-        "q97qUiqiMecjVFM51YVif7c1Stip52Hl";
-
-    EXPECT_CALL(m_handler, onBubbleTextChanged(longstr.substr(0, 330)));
-    EXPECT_CALL(m_engine, requestRedraw());
-    m_sprite.setBubbleText(longstr);
 }
 
 TEST_F(ISpriteHandlerTest, BoundingRect)

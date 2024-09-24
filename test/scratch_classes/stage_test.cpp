@@ -1,5 +1,6 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/textbubble.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/value.h>
 #include <enginemock.h>
@@ -184,7 +185,7 @@ TEST(StageTest, TouchingSprite)
     EXPECT_CALL(engine, cloneLimit()).WillRepeatedly(Return(-1));
     EXPECT_CALL(engine, initClone).Times(3);
     EXPECT_CALL(engine, requestRedraw).Times(3);
-    EXPECT_CALL(engine, moveSpriteBehindOther).Times(3);
+    EXPECT_CALL(engine, moveDrawableBehindOther).Times(3);
     auto clone1 = another.clone();
     auto clone2 = another.clone();
     auto clone3 = another.clone();
@@ -271,28 +272,28 @@ TEST(StageTest, GraphicsEffects)
     ASSERT_EQ(stage.graphicsEffectValue(&effect2), 0);
 }
 
-TEST(StageTest, BubbleType)
+TEST(StageTest, BubbleTypeRedraw)
 {
     Stage stage;
-    ASSERT_EQ(stage.bubbleType(), Target::BubbleType::Say);
+    EngineMock engine;
+    stage.setEngine(&engine);
 
-    stage.setBubbleType(Target::BubbleType::Think);
-    ASSERT_EQ(stage.bubbleType(), Target::BubbleType::Think);
-
-    stage.setBubbleType(Target::BubbleType::Say);
-    ASSERT_EQ(stage.bubbleType(), Target::BubbleType::Say);
+    EXPECT_CALL(engine, requestRedraw).Times(0);
+    stage.bubble()->setType(TextBubble::Type::Say);
+    stage.bubble()->setType(TextBubble::Type::Think);
 }
 
-TEST(StageTest, BubbleText)
+TEST(StageTest, BubbleTextRedraw)
 {
     Stage stage;
-    ASSERT_TRUE(stage.bubbleText().empty());
+    EngineMock engine;
+    stage.setEngine(&engine);
 
-    stage.setBubbleText("hello");
-    ASSERT_EQ(stage.bubbleText(), "hello");
+    EXPECT_CALL(engine, requestRedraw());
+    stage.bubble()->setText("hello");
 
-    stage.setBubbleText("world");
-    ASSERT_EQ(stage.bubbleText(), "world");
+    EXPECT_CALL(engine, requestRedraw).Times(0);
+    stage.bubble()->setText("");
 }
 
 TEST(StageTest, LayerOrder)

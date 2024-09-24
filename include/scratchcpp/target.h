@@ -4,15 +4,13 @@
 
 #include <vector>
 
-#include "global.h"
-#include "spimpl.h"
+#include "drawable.h"
 #include "rect.h"
 #include "sound.h"
 
 namespace libscratchcpp
 {
 
-class IEngine;
 class Variable;
 class List;
 class Block;
@@ -20,22 +18,19 @@ class Comment;
 class Costume;
 class Sound;
 class Sprite;
+class TextBubble;
 class IGraphicsEffect;
 class TargetPrivate;
 
 /*! \brief The Target class is the Stage or a Sprite. */
-class LIBSCRATCHCPP_EXPORT Target
+class LIBSCRATCHCPP_EXPORT Target : public Drawable
 {
     public:
-        enum class BubbleType
-        {
-            Say,
-            Think
-        };
-
         Target();
         Target(const Target &) = delete;
         virtual ~Target() { }
+
+        bool isTarget() const override final;
 
         /*! Returns true if this Target is the stage. */
         virtual bool isStage() const { return false; }
@@ -83,9 +78,6 @@ class LIBSCRATCHCPP_EXPORT Target
         std::shared_ptr<Sound> soundAt(int index) const;
         int findSound(const std::string &soundName) const;
 
-        int layerOrder() const;
-        virtual void setLayerOrder(int newLayerOrder);
-
         double volume() const;
         void setVolume(double newVolume);
 
@@ -108,14 +100,10 @@ class LIBSCRATCHCPP_EXPORT Target
 
         virtual void clearGraphicsEffects();
 
-        BubbleType bubbleType() const;
-        virtual void setBubbleType(BubbleType type);
+        TextBubble *bubble();
+        const TextBubble *bubble() const;
 
-        const std::string &bubbleText() const;
-        virtual void setBubbleText(const std::string &text);
-
-        IEngine *engine() const;
-        void setEngine(IEngine *engine);
+        void setEngine(IEngine *engine) override final;
 
     protected:
         /*! Override this method to set a custom data source for blocks, assets, comments, etc. */

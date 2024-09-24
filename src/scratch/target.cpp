@@ -24,8 +24,15 @@ static std::unordered_map<Sound::Effect, std::pair<double, double>> SOUND_EFFECT
 
 /*! Constructs target. */
 Target::Target() :
+    Drawable(),
     impl(spimpl::make_unique_impl<TargetPrivate>())
 {
+}
+
+/*! Returns true. */
+bool Target::isTarget() const
+{
+    return true;
 }
 
 /*! Returns the name of the target. */
@@ -273,8 +280,10 @@ void Target::setCostumeIndex(int newCostumeIndex)
         impl->costumeIndex = newCostumeIndex;
 
     if (isStage()) {
-        if (impl->engine)
-            impl->engine->requestRedraw();
+        IEngine *eng = engine();
+
+        if (eng)
+            eng->requestRedraw();
     }
 }
 
@@ -394,18 +403,6 @@ int Target::findSound(const std::string &soundName) const
         return it - impl->sounds.begin();
 }
 
-/*! Returns the layer number. */
-int Target::layerOrder() const
-{
-    return impl->layerOrder;
-}
-
-/*! Sets the layer number. */
-void Target::setLayerOrder(int newLayerOrder)
-{
-    impl->layerOrder = newLayerOrder;
-}
-
 /*! Returns the volume. */
 double Target::volume() const
 {
@@ -514,9 +511,11 @@ bool Target::touchingPoint(double x, double y) const
 bool Target::touchingEdge() const
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/8dbcc1fc8f8d8c4f1e40629fe8a388149d6dfd1c/src/sprites/rendered-target.js#L772-L785
-    if (impl->engine) {
-        const double stageWidth = impl->engine->stageWidth();
-        const double stageHeight = impl->engine->stageHeight();
+    IEngine *eng = engine();
+
+    if (eng) {
+        const double stageWidth = eng->stageWidth();
+        const double stageHeight = eng->stageHeight();
         Rect bounds = boundingRect();
 
         if ((bounds.left() < -stageWidth / 2) || (bounds.right() > stageWidth / 2) || (bounds.top() > stageHeight / 2) || (bounds.bottom() < -stageHeight / 2))
@@ -562,58 +561,21 @@ void Target::clearGraphicsEffects()
     impl->graphicsEffects.clear();
 }
 
-/*! Returns the type of the bubble (say or think). */
-Target::BubbleType Target::bubbleType() const
+/*! Returns the Bubble of this Target. */
+TextBubble *Target::bubble()
 {
-    return impl->bubbleType;
+    return &impl->bubble;
 }
 
-/*! Sets the type of the bubble (say or think). */
-void Target::setBubbleType(BubbleType type)
+/*! Returns the Bubble of this Target. */
+const TextBubble *Target::bubble() const
 {
-    impl->bubbleType = type;
+    return &impl->bubble;
 }
 
-/*!
- * Returns the text of the bubble.
- * \note If the text is an empty string, the bubble is supposed to be hidden.
- */
-const std::string &Target::bubbleText() const
-{
-    return impl->bubbleText;
-}
-
-/*!
- * Sets the text of the bubble.
- * \note If the text is an empty string, the bubble is supposed to be hidden.
- */
-void Target::setBubbleText(const std::string &text)
-{
-    // https://github.com/scratchfoundation/scratch-vm/blob/7313ce5199f8a3da7850085d0f7f6a3ca2c89bf6/src/blocks/scratch3_looks.js#L251-L257
-    const Value v(text);
-    std::string converted = text;
-
-    // Non-integers should be rounded to 2 decimal places (no more, no less), unless they're small enough that rounding would display them as 0.00.
-    if (v.isValidNumber()) {
-        const double num = v.toDouble();
-
-        if (std::abs(num) >= 0.01 && (v % 1).toDouble() != 0)
-            converted = Value(std::round(num * 100) / 100).toString();
-    }
-
-    // Limit the length of the string
-    size_t limit = 330;
-    impl->bubbleText = converted.substr(0, limit);
-}
-
-/*! Returns the engine. */
-IEngine *Target::engine() const
-{
-    return impl->engine;
-}
-
-/*! Sets the engine. */
+/*! Overrides Drawable#setEngine(). */
 void Target::setEngine(IEngine *engine)
 {
-    impl->engine = engine;
+    Drawable::setEngine(engine);
+    impl->bubble.setEngine(engine);
 }

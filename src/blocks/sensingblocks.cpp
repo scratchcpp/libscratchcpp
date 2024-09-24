@@ -9,6 +9,7 @@
 #include <scratchcpp/field.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
+#include <scratchcpp/textbubble.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/block.h>
@@ -109,7 +110,7 @@ void SensingBlocks::onInit(IEngine *engine)
         if (!m_questionList.empty()) {
             // Abort the question of this thread if it's currently being displayed
             if (m_questionList.front()->vm == thread->vm()) {
-                thread->target()->setBubbleText("");
+                thread->target()->bubble()->setText("");
                 engine->questionAborted()();
             }
 
@@ -672,7 +673,7 @@ void SensingBlocks::onAnswer(const std::string &answer)
 
         // If the target was visible when asked, hide the say bubble unless the target was the stage
         if (question->wasVisible && !question->wasStage)
-            vm->target()->setBubbleText("");
+            vm->target()->bubble()->setText("");
 
         m_questionList.erase(m_questionList.begin());
         vm->resolvePromise();
@@ -1084,8 +1085,8 @@ void SensingBlocks::askNextQuestion()
     // If the target is visible, emit a blank question and show
     // a bubble unless the target was the stage
     if (question->wasVisible && !question->wasStage) {
-        target->setBubbleType(Target::BubbleType::Say);
-        target->setBubbleText(question->question);
+        target->bubble()->setType(TextBubble::Type::Say);
+        target->bubble()->setText(question->question);
 
         engine->questionAsked()("");
     } else {

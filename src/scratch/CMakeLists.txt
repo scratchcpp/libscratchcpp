@@ -2,6 +2,9 @@ target_sources(scratchcpp
   PRIVATE
     value_functions.cpp
     value_functions_p.h
+    drawable.cpp
+    drawable_p.cpp
+    drawable_p.h
     target.cpp
     target_p.cpp
     target_p.h
@@ -41,6 +44,9 @@ target_sources(scratchcpp
     sprite.cpp
     sprite_p.cpp
     sprite_p.h
+    textbubble.cpp
+    textbubble_p.cpp
+    textbubble_p.h
     broadcast.cpp
     broadcast_p.cpp
     broadcast_p.h

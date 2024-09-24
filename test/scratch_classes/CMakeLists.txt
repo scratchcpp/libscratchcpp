@@ -26,6 +26,22 @@ target_link_libraries(
 
 gtest_discover_tests(list_test)
 
+# drawable_test
+add_executable(
+  drawable_test
+  drawable_test.cpp
+)
+
+target_link_libraries(
+  drawable_test
+  GTest::gtest_main
+  GTest::gmock_main
+  scratchcpp
+  scratchcpp_mocks
+)
+
+gtest_discover_tests(drawable_test)
+
 # sprite_test
 add_executable(
   sprite_test
@@ -73,6 +89,22 @@ target_link_libraries(
 )
 
 gtest_discover_tests(target_test)
+
+# textbubble_test
+add_executable(
+  textbubble_test
+  textbubble_test.cpp
+)
+
+target_link_libraries(
+  textbubble_test
+  GTest::gmock_main
+  scratchcpp
+  scratchcpp_mocks
+  scratchcpp
+)
+
+gtest_discover_tests(textbubble_test)
 
 # value_test
 add_executable(

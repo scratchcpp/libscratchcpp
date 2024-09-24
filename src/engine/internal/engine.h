@@ -135,11 +135,11 @@ class Engine : public IEngine
         void getVisibleTargets(std::vector<Target *> &dst) const override;
         int findTarget(const std::string &targetName) const override;
 
-        void moveSpriteToFront(Sprite *sprite) override;
-        void moveSpriteToBack(Sprite *sprite) override;
-        void moveSpriteForwardLayers(Sprite *sprite, int layers) override;
-        void moveSpriteBackwardLayers(Sprite *sprite, int layers) override;
-        void moveSpriteBehindOther(Sprite *sprite, Sprite *other) override;
+        void moveDrawableToFront(Drawable *drawable) override;
+        void moveDrawableToBack(Drawable *drawable) override;
+        void moveDrawableForwardLayers(Drawable *drawable, int layers) override;
+        void moveDrawableBackwardLayers(Drawable *drawable, int layers) override;
+        void moveDrawableBehindOther(Drawable *drawable, Drawable *other) override;
 
         Stage *stage() const override;
 
@@ -218,7 +218,7 @@ class Engine : public IEngine
         void addHatField(Script *script, HatField hatField, Field *targetField);
         const std::vector<libscratchcpp::Script *> &getHats(Target *target, HatType type);
 
-        void updateSpriteLayerOrder();
+        void updateDrawableLayerOrder();
 
         void updateFrameDuration();
         void addRunningScript(std::shared_ptr<Thread> thread);
@@ -244,7 +244,7 @@ class Engine : public IEngine
         std::unordered_map<Broadcast *, Thread *> m_broadcastSenders; // used for resolving broadcast promises
         std::vector<std::shared_ptr<Monitor>> m_monitors;
         std::vector<std::string> m_extensions;
-        std::vector<Target *> m_executableTargets; // sorted by layer (reverse order of execution)
+        std::vector<Drawable *> m_sortedDrawables; // sorted by layer (reverse order of execution)
         std::vector<std::shared_ptr<Thread>> m_threads;
         std::vector<std::shared_ptr<Thread>> m_threadsToStop;
         std::shared_ptr<Thread> m_activeThread;

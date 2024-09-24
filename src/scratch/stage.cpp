@@ -3,6 +3,7 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/istagehandler.h>
 #include <scratchcpp/iengine.h>
+#include <scratchcpp/textbubble.h>
 #include <cassert>
 
 #include "stage_p.h"
@@ -14,6 +15,14 @@ Stage::Stage() :
     Target(),
     impl(spimpl::make_unique_impl<StagePrivate>())
 {
+    bubble()->textChanged().connect([this](const std::string &text) {
+        if (!text.empty()) {
+            IEngine *eng = engine();
+
+            if (eng)
+                eng->requestRedraw();
+        }
+    });
 }
 
 /*! Sets the stage interface. */
@@ -218,32 +227,6 @@ void Stage::clearGraphicsEffects()
 
     if (impl->iface)
         impl->iface->onGraphicsEffectsCleared();
-}
-
-/*! Overrides Target#setBubbleType(). */
-void Stage::setBubbleType(BubbleType type)
-{
-    Target::setBubbleType(type);
-
-    if (impl->iface)
-        impl->iface->onBubbleTypeChanged(type);
-}
-
-/*! Overrides Target#setBubbleText(). */
-void Stage::setBubbleText(const std::string &text)
-{
-    Target::setBubbleText(text);
-    const std::string &finalText = bubbleText();
-
-    if (!finalText.empty()) {
-        IEngine *eng = engine();
-
-        if (eng)
-            eng->requestRedraw();
-    }
-
-    if (impl->iface)
-        impl->iface->onBubbleTextChanged(finalText);
 }
 
 bool Stage::touchingClones(const std::vector<Sprite *> &clones) const

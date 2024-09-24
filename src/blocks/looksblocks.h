@@ -4,6 +4,7 @@
 
 #include <scratchcpp/iextension.h>
 #include <scratchcpp/target.h>
+#include <scratchcpp/textbubble.h>
 #include <vector>
 #include <unordered_map>
 #include <chrono>
@@ -91,7 +92,7 @@ class LooksBlocks : public IExtension
 
         static void startWait(VirtualMachine *vm, double secs);
         static bool wait(VirtualMachine *vm);
-        static void showBubble(VirtualMachine *vm, Target::BubbleType type, const std::string &text);
+        static void showBubble(VirtualMachine *vm, TextBubble::Type type, const std::string &text);
         static void hideBubble(Target *target);
 
         static unsigned int startSayForSecs(VirtualMachine *vm);

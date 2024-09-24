@@ -1,5 +1,6 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
+#include <scratchcpp/textbubble.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/costume.h>
@@ -155,10 +156,10 @@ TEST(SpriteTest, Clone)
     EXPECT_CALL(engine, cloneLimit()).Times(6).WillRepeatedly(Return(300)); // clone count limit is tested later
 
     std::shared_ptr<Sprite> clone1;
-    Sprite *clone1_2;
+    Drawable *clone1_2;
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(0));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone1));
-    EXPECT_CALL(engine, moveSpriteBehindOther(_, &sprite)).WillOnce(SaveArg<0>(&clone1_2));
+    EXPECT_CALL(engine, moveDrawableBehindOther(_, &sprite)).WillOnce(SaveArg<0>(&clone1_2));
     ASSERT_EQ(sprite.clone(), clone1);
     ASSERT_EQ(clone1.get(), clone1_2);
     ASSERT_FALSE(sprite.isClone());
@@ -173,10 +174,10 @@ TEST(SpriteTest, Clone)
     sprite.setLayerOrder(3);
 
     std::shared_ptr<Sprite> clone2;
-    Sprite *clone2_2;
+    Drawable *clone2_2;
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(1));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone2));
-    EXPECT_CALL(engine, moveSpriteBehindOther(_, clone1.get())).WillOnce(SaveArg<0>(&clone2_2));
+    EXPECT_CALL(engine, moveDrawableBehindOther(_, clone1.get())).WillOnce(SaveArg<0>(&clone2_2));
     ASSERT_EQ(clone1->clone(), clone2);
     ASSERT_EQ(clone2.get(), clone2_2);
     ASSERT_TRUE(clone1->isClone());
@@ -189,18 +190,18 @@ TEST(SpriteTest, Clone)
     sprite.setVisible(true);
 
     std::shared_ptr<Sprite> clone3;
-    Sprite *clone3_2;
+    Drawable *clone3_2;
     EXPECT_CALL(engine, cloneCount()).WillOnce(Return(2));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone3));
-    EXPECT_CALL(engine, moveSpriteBehindOther(_, clone1.get())).WillOnce(SaveArg<0>(&clone3_2));
+    EXPECT_CALL(engine, moveDrawableBehindOther(_, clone1.get())).WillOnce(SaveArg<0>(&clone3_2));
     ASSERT_EQ(clone1->clone(), clone3);
     ASSERT_EQ(clone3.get(), clone3_2);
 
     std::shared_ptr<Sprite> clone4;
-    Sprite *clone4_2;
+    Drawable *clone4_2;
     EXPECT_CALL(engine, cloneLimit()).WillOnce(Return(-1));
     EXPECT_CALL(engine, initClone(_)).WillOnce(SaveArg<0>(&clone4));
-    EXPECT_CALL(engine, moveSpriteBehindOther(_, &sprite)).WillOnce(SaveArg<0>(&clone4_2));
+    EXPECT_CALL(engine, moveDrawableBehindOther(_, &sprite)).WillOnce(SaveArg<0>(&clone4_2));
     ASSERT_EQ(sprite.clone(), clone4);
     ASSERT_EQ(clone4.get(), clone4_2);
 
@@ -407,7 +408,7 @@ TEST(SpriteTest, Dragging)
     EXPECT_CALL(engine, spriteFencingEnabled).WillRepeatedly(Return(false));
     EXPECT_CALL(engine, requestRedraw).WillRepeatedly(Return());
 
-    EXPECT_CALL(engine, moveSpriteToFront(&sprite));
+    EXPECT_CALL(engine, moveDrawableToFront(&sprite));
     sprite.startDragging();
     ASSERT_TRUE(sprite.dragging());
 
@@ -753,7 +754,7 @@ TEST(SpriteTest, TouchingSprite)
     EXPECT_CALL(engine, cloneLimit()).WillRepeatedly(Return(-1));
     EXPECT_CALL(engine, initClone).Times(3);
     EXPECT_CALL(engine, requestRedraw).Times(3);
-    EXPECT_CALL(engine, moveSpriteBehindOther).Times(3);
+    EXPECT_CALL(engine, moveDrawableBehindOther).Times(3);
     auto clone1 = another.clone();
     auto clone2 = another.clone();
     auto clone3 = another.clone();
@@ -876,41 +877,30 @@ TEST(SpriteTest, GraphicsEffects)
     ASSERT_EQ(sprite.graphicsEffectValue(&effect2), 0);
 }
 
-TEST(SpriteTest, BubbleType)
+TEST(SpriteTest, BubbleTypeRedraw)
 {
     Sprite sprite;
     EngineMock engine;
     sprite.setEngine(&engine);
-    ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Say);
 
     EXPECT_CALL(engine, requestRedraw).Times(0);
-
-    sprite.setBubbleType(Target::BubbleType::Think);
-    ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Think);
-
-    sprite.setBubbleType(Target::BubbleType::Say);
-    ASSERT_EQ(sprite.bubbleType(), Target::BubbleType::Say);
+    sprite.bubble()->setType(TextBubble::Type::Say);
+    sprite.bubble()->setType(TextBubble::Type::Think);
 }
 
-TEST(SpriteTest, BubbleText)
+TEST(SpriteTest, BubbleTextRedraw)
 {
     Sprite sprite;
     EngineMock engine;
-    sprite.setVisible(true);
     sprite.setEngine(&engine);
-    ASSERT_TRUE(sprite.bubbleText().empty());
 
     EXPECT_CALL(engine, requestRedraw());
-    sprite.setBubbleText("hello");
-    ASSERT_EQ(sprite.bubbleText(), "hello");
-
-    EXPECT_CALL(engine, requestRedraw());
-    sprite.setBubbleText("world");
-    ASSERT_EQ(sprite.bubbleText(), "world");
+    sprite.bubble()->setText("hello");
 
     sprite.setVisible(false);
+    EXPECT_CALL(engine, requestRedraw).Times(0);
+    sprite.bubble()->setText("world");
 
     EXPECT_CALL(engine, requestRedraw).Times(0);
-    sprite.setBubbleText("test");
-    ASSERT_TRUE(sprite.bubbleText().empty());
+    sprite.bubble()->setText("");
 }

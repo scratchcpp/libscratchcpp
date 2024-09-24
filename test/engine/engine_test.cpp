@@ -3,6 +3,7 @@
 #include <scratchcpp/project.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
+#include <scratchcpp/textbubble.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/keyevent.h>
@@ -1237,27 +1238,49 @@ void createTargets(Engine *engine, std::vector<Sprite *> &sprites)
     ASSERT_EQ(sprites[4]->layerOrder(), 2);
 }
 
-TEST(EngineTest, MoveSpriteToFront)
+TEST(EngineTest, MoveDrawableToFront)
 {
     Engine engine;
     std::vector<Sprite *> sprites;
     createTargets(&engine, sprites);
 
-    engine.moveSpriteToFront(sprites[2]);
+    engine.moveDrawableToFront(sprites[2]);
     ASSERT_EQ(sprites[0]->layerOrder(), 1);
     ASSERT_EQ(sprites[1]->layerOrder(), 4);
-    ASSERT_EQ(sprites[2]->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->layerOrder(), 11);
     ASSERT_EQ(sprites[3]->layerOrder(), 3);
     ASSERT_EQ(sprites[4]->layerOrder(), 2);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 6);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 10);
 
     for (int i = 0; i < 2; i++) {
-        engine.moveSpriteToFront(sprites[0]);
-        ASSERT_EQ(sprites[0]->layerOrder(), 5);
+        engine.moveDrawableToFront(sprites[0]);
+        ASSERT_EQ(sprites[0]->layerOrder(), 11);
         ASSERT_EQ(sprites[1]->layerOrder(), 3);
-        ASSERT_EQ(sprites[2]->layerOrder(), 4);
+        ASSERT_EQ(sprites[2]->layerOrder(), 10);
         ASSERT_EQ(sprites[3]->layerOrder(), 2);
         ASSERT_EQ(sprites[4]->layerOrder(), 1);
+        ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 5);
+        ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 6);
+        ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 7);
+        ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 8);
+        ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 9);
     }
+
+    engine.moveDrawableToFront(sprites[0]->bubble());
+    ASSERT_EQ(sprites[0]->layerOrder(), 10);
+    ASSERT_EQ(sprites[1]->layerOrder(), 3);
+    ASSERT_EQ(sprites[2]->layerOrder(), 9);
+    ASSERT_EQ(sprites[3]->layerOrder(), 2);
+    ASSERT_EQ(sprites[4]->layerOrder(), 1);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 11);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 6);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 8);
 
     auto stage = std::make_shared<Stage>();
     stage->setLayerOrder(0);
@@ -1265,31 +1288,53 @@ TEST(EngineTest, MoveSpriteToFront)
     sprite->setLayerOrder(1);
 
     engine.setTargets({ stage, sprite });
-    engine.moveSpriteToFront(sprite.get());
-    ASSERT_EQ(sprite->layerOrder(), 1);
+    engine.moveDrawableToFront(sprite.get());
+    ASSERT_EQ(sprite->layerOrder(), 3);
 }
 
-TEST(EngineTest, MoveSpriteToBack)
+TEST(EngineTest, MoveDrawableToBack)
 {
     Engine engine;
     std::vector<Sprite *> sprites;
     createTargets(&engine, sprites);
 
-    engine.moveSpriteToBack(sprites[2]);
+    engine.moveDrawableToBack(sprites[2]);
     ASSERT_EQ(sprites[0]->layerOrder(), 2);
     ASSERT_EQ(sprites[1]->layerOrder(), 5);
     ASSERT_EQ(sprites[2]->layerOrder(), 1);
     ASSERT_EQ(sprites[3]->layerOrder(), 4);
     ASSERT_EQ(sprites[4]->layerOrder(), 3);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 10);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
 
     for (int i = 0; i < 1; i++) {
-        engine.moveSpriteToBack(sprites[1]);
+        engine.moveDrawableToBack(sprites[1]);
         ASSERT_EQ(sprites[0]->layerOrder(), 3);
         ASSERT_EQ(sprites[1]->layerOrder(), 1);
         ASSERT_EQ(sprites[2]->layerOrder(), 2);
         ASSERT_EQ(sprites[3]->layerOrder(), 5);
         ASSERT_EQ(sprites[4]->layerOrder(), 4);
+        ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 7);
+        ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 8);
+        ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 9);
+        ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 10);
+        ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
     }
+
+    engine.moveDrawableToBack(sprites[2]->bubble());
+    ASSERT_EQ(sprites[0]->layerOrder(), 4);
+    ASSERT_EQ(sprites[1]->layerOrder(), 2);
+    ASSERT_EQ(sprites[2]->layerOrder(), 3);
+    ASSERT_EQ(sprites[3]->layerOrder(), 6);
+    ASSERT_EQ(sprites[4]->layerOrder(), 5);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 1);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 10);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
 
     auto stage = std::make_shared<Stage>();
     stage->setLayerOrder(0);
@@ -1297,101 +1342,165 @@ TEST(EngineTest, MoveSpriteToBack)
     sprite->setLayerOrder(1);
 
     engine.setTargets({ stage, sprite });
-    engine.moveSpriteToBack(sprite.get());
+    engine.moveDrawableToBack(sprite.get());
     ASSERT_EQ(sprite->layerOrder(), 1);
 }
 
-TEST(EngineTest, MoveSpriteForwardLayers)
+TEST(EngineTest, MoveDrawableForwardLayers)
 {
     Engine engine;
     std::vector<Sprite *> sprites;
     createTargets(&engine, sprites);
 
-    engine.moveSpriteForwardLayers(sprites[4], 2);
+    engine.moveDrawableForwardLayers(sprites[4], 2);
     ASSERT_EQ(sprites[0]->layerOrder(), 1);
     ASSERT_EQ(sprites[1]->layerOrder(), 5);
     ASSERT_EQ(sprites[2]->layerOrder(), 2);
     ASSERT_EQ(sprites[3]->layerOrder(), 3);
     ASSERT_EQ(sprites[4]->layerOrder(), 4);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 10);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
 
-    engine.moveSpriteForwardLayers(sprites[4], 2);
+    engine.moveDrawableForwardLayers(sprites[4], 2);
     ASSERT_EQ(sprites[0]->layerOrder(), 1);
     ASSERT_EQ(sprites[1]->layerOrder(), 4);
     ASSERT_EQ(sprites[2]->layerOrder(), 2);
     ASSERT_EQ(sprites[3]->layerOrder(), 3);
-    ASSERT_EQ(sprites[4]->layerOrder(), 5);
+    ASSERT_EQ(sprites[4]->layerOrder(), 6);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 10);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
 
-    engine.moveSpriteForwardLayers(sprites[4], -3);
+    engine.moveDrawableForwardLayers(sprites[4], -3);
     ASSERT_EQ(sprites[0]->layerOrder(), 1);
     ASSERT_EQ(sprites[1]->layerOrder(), 5);
-    ASSERT_EQ(sprites[2]->layerOrder(), 3);
+    ASSERT_EQ(sprites[2]->layerOrder(), 2);
     ASSERT_EQ(sprites[3]->layerOrder(), 4);
-    ASSERT_EQ(sprites[4]->layerOrder(), 2);
+    ASSERT_EQ(sprites[4]->layerOrder(), 3);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 10);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
 
-    engine.moveSpriteForwardLayers(sprites[2], -3);
+    engine.moveDrawableForwardLayers(sprites[2], -3);
     ASSERT_EQ(sprites[0]->layerOrder(), 2);
     ASSERT_EQ(sprites[1]->layerOrder(), 5);
     ASSERT_EQ(sprites[2]->layerOrder(), 1);
     ASSERT_EQ(sprites[3]->layerOrder(), 4);
     ASSERT_EQ(sprites[4]->layerOrder(), 3);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 10);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
+
+    engine.moveDrawableForwardLayers(sprites[0]->bubble(), 3);
+    ASSERT_EQ(sprites[0]->layerOrder(), 2);
+    ASSERT_EQ(sprites[1]->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->layerOrder(), 1);
+    ASSERT_EQ(sprites[3]->layerOrder(), 4);
+    ASSERT_EQ(sprites[4]->layerOrder(), 3);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 10);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
 }
 
-TEST(EngineTest, MoveSpriteBackwardLayers)
+TEST(EngineTest, MoveDrawableBackwardLayers)
 {
     Engine engine;
     std::vector<Sprite *> sprites;
     createTargets(&engine, sprites);
 
-    engine.moveSpriteBackwardLayers(sprites[4], -2);
+    engine.moveDrawableBackwardLayers(sprites[4], -2);
     ASSERT_EQ(sprites[0]->layerOrder(), 1);
     ASSERT_EQ(sprites[1]->layerOrder(), 5);
     ASSERT_EQ(sprites[2]->layerOrder(), 2);
     ASSERT_EQ(sprites[3]->layerOrder(), 3);
     ASSERT_EQ(sprites[4]->layerOrder(), 4);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 10);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
 
-    engine.moveSpriteBackwardLayers(sprites[4], -2);
+    engine.moveDrawableBackwardLayers(sprites[4], -2);
     ASSERT_EQ(sprites[0]->layerOrder(), 1);
     ASSERT_EQ(sprites[1]->layerOrder(), 4);
     ASSERT_EQ(sprites[2]->layerOrder(), 2);
     ASSERT_EQ(sprites[3]->layerOrder(), 3);
-    ASSERT_EQ(sprites[4]->layerOrder(), 5);
+    ASSERT_EQ(sprites[4]->layerOrder(), 6);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 10);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
 
-    engine.moveSpriteBackwardLayers(sprites[4], 3);
+    engine.moveDrawableBackwardLayers(sprites[4], 3);
     ASSERT_EQ(sprites[0]->layerOrder(), 1);
     ASSERT_EQ(sprites[1]->layerOrder(), 5);
-    ASSERT_EQ(sprites[2]->layerOrder(), 3);
+    ASSERT_EQ(sprites[2]->layerOrder(), 2);
     ASSERT_EQ(sprites[3]->layerOrder(), 4);
-    ASSERT_EQ(sprites[4]->layerOrder(), 2);
+    ASSERT_EQ(sprites[4]->layerOrder(), 3);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 10);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
 
-    engine.moveSpriteBackwardLayers(sprites[2], 3);
+    engine.moveDrawableBackwardLayers(sprites[2], 3);
     ASSERT_EQ(sprites[0]->layerOrder(), 2);
     ASSERT_EQ(sprites[1]->layerOrder(), 5);
     ASSERT_EQ(sprites[2]->layerOrder(), 1);
     ASSERT_EQ(sprites[3]->layerOrder(), 4);
     ASSERT_EQ(sprites[4]->layerOrder(), 3);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 10);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
+
+    engine.moveDrawableBackwardLayers(sprites[0]->bubble(), -3);
+    ASSERT_EQ(sprites[0]->layerOrder(), 2);
+    ASSERT_EQ(sprites[1]->layerOrder(), 5);
+    ASSERT_EQ(sprites[2]->layerOrder(), 1);
+    ASSERT_EQ(sprites[3]->layerOrder(), 4);
+    ASSERT_EQ(sprites[4]->layerOrder(), 3);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 10);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
 }
 
-TEST(EngineTest, MoveSpriteBehindOther)
+TEST(EngineTest, MoveDrawableBehindOther)
 {
     Engine engine;
     std::vector<Sprite *> sprites;
     createTargets(&engine, sprites);
 
-    engine.moveSpriteBehindOther(sprites[4], sprites[3]);
+    engine.moveDrawableBehindOther(sprites[4], sprites[3]);
     ASSERT_EQ(sprites[0]->layerOrder(), 1);
     ASSERT_EQ(sprites[1]->layerOrder(), 5);
     ASSERT_EQ(sprites[2]->layerOrder(), 2);
     ASSERT_EQ(sprites[3]->layerOrder(), 4);
     ASSERT_EQ(sprites[4]->layerOrder(), 3);
 
-    engine.moveSpriteBehindOther(sprites[3], sprites[2]);
+    engine.moveDrawableBehindOther(sprites[3], sprites[2]);
     ASSERT_EQ(sprites[0]->layerOrder(), 1);
     ASSERT_EQ(sprites[1]->layerOrder(), 5);
     ASSERT_EQ(sprites[2]->layerOrder(), 3);
     ASSERT_EQ(sprites[3]->layerOrder(), 2);
     ASSERT_EQ(sprites[4]->layerOrder(), 4);
 
-    engine.moveSpriteBehindOther(sprites[4], sprites[0]);
+    engine.moveDrawableBehindOther(sprites[4], sprites[0]);
     ASSERT_EQ(sprites[0]->layerOrder(), 2);
     ASSERT_EQ(sprites[1]->layerOrder(), 5);
     ASSERT_EQ(sprites[2]->layerOrder(), 4);

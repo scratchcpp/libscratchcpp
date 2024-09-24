@@ -51,9 +51,11 @@ target_sources(scratchcpp
     include/scratchcpp/block.h
     include/scratchcpp/istagehandler.h
     include/scratchcpp/ispritehandler.h
+    include/scratchcpp/drawable.h
     include/scratchcpp/target.h
     include/scratchcpp/stage.h
     include/scratchcpp/sprite.h
+    include/scratchcpp/textbubble.h
     include/scratchcpp/itimer.h
     include/scratchcpp/keyevent.h
     include/scratchcpp/rect.h
