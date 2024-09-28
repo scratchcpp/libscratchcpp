@@ -11,7 +11,7 @@ namespace libscratchcpp
 class TextBubblePrivate;
 
 /*! \brief The TextBubble class represents a text bubble created using say or think block. */
-class TextBubble : public Drawable
+class LIBSCRATCHCPP_EXPORT TextBubble : public Drawable
 {
     public:
         enum class Type
