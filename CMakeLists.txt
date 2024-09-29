@@ -46,7 +46,6 @@ target_sources(scratchcpp
     include/scratchcpp/field.h
     include/scratchcpp/script.h
     include/scratchcpp/broadcast.h
-    include/scratchcpp/compiler.h
     include/scratchcpp/virtualmachine.h
     include/scratchcpp/blockprototype.h
     include/scratchcpp/block.h
@@ -68,6 +67,11 @@ target_sources(scratchcpp
 
 if (LIBSCRATCHCPP_USE_LLVM)
     target_compile_definitions(scratchcpp PUBLIC USE_LLVM)
+else()
+    target_sources(scratchcpp
+      PUBLIC
+        include/scratchcpp/compiler.h
+    )
 endif()
 
 include(FetchContent)

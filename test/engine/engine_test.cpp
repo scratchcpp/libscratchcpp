@@ -9,7 +9,9 @@
 #include <scratchcpp/keyevent.h>
 #include <scratchcpp/monitor.h>
 #include <scratchcpp/field.h>
+#ifndef USE_LLVM
 #include <scratchcpp/compiler.h>
+#endif
 #include <scratchcpp/script.h>
 #include <scratchcpp/virtualmachine.h>
 #include <scratchcpp/thread.h>
@@ -196,7 +198,6 @@ TEST(EngineTest, StopSignal)
         engine->stop();
     }
 }
-#endif
 
 TEST(EngineTest, CompileAndExecuteMonitors)
 {
@@ -285,6 +286,7 @@ TEST(EngineTest, CompileAndExecuteMonitors)
 
     ScratchConfiguration::removeExtension(extension);
 }
+#endif
 
 TEST(EngineTest, IsRunning)
 {
@@ -1572,6 +1574,7 @@ TEST(EngineTest, Monitors)
     engine.setMonitors({ m1, m2, m3 });
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, CreateMissingMonitors)
 {
     static constexpr const char *VARIABLE_OPCODE = "data_variable";
@@ -1704,6 +1707,7 @@ TEST(EngineTest, CreateMissingMonitors)
         ASSERT_EQ(monitors[6].get(), m7);
     }
 }
+#endif // USE_LLVM
 
 void questionFunction(const std::string &)
 {
@@ -2150,7 +2154,6 @@ TEST(EngineTest, StopBeforeStarting)
     ASSERT_VAR(stage, "test");
     ASSERT_TRUE(GET_VAR(stage, "test")->value().toBool());
 }
-#endif
 
 TEST(EngineTest, NoCrashWhenLoadingUndefinedVariableOrListMonitor)
 {
@@ -2216,6 +2219,7 @@ TEST(EngineTest, NoCrashWithUndefinedVariableOrList)
     ASSERT_EQ(list->id(), "}l+w#Er5y!:*gh~5!3t%");
     ASSERT_TRUE(list->empty());
 }
+#endif
 
 TEST(EngineTest, AlwaysStopCloneThreads)
 {

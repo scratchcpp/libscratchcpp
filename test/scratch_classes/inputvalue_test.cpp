@@ -106,6 +106,7 @@ TEST(InputValueTest, ValuePtr)
     ASSERT_EQ(value2.type(), InputValue::Type::Variable);
 }
 
+#ifndef USE_LLVM
 TEST(InputValueTest, Compile)
 {
     EngineMock engine;
@@ -162,3 +163,4 @@ TEST(InputValueTest, Compile)
     ASSERT_EQ(compiler.variables(), std::vector<Variable *>({ variable.get() }));
     ASSERT_EQ(compiler.lists(), std::vector<List *>({ list.get() }));
 }
+#endif // USE_LLVM

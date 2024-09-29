@@ -179,6 +179,7 @@ TEST(LoadProjectTest, DownloadDefaultProjectFailure)
     ASSERT_TRUE(p.load());
 }
 
+#ifndef USE_LLVM
 TEST(LoadProjectTest, LoadTestProject)
 {
     int i = 0;
@@ -645,6 +646,7 @@ TEST(LoadProjectTest, LoadTestProject)
         i++;
     }
 }
+#endif // USE_LLVM
 
 TEST(LoadProjectTest, LoadTopLevelReporterProject)
 {

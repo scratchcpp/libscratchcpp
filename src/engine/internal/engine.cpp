@@ -7,7 +7,9 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/textbubble.h>
 #include <scratchcpp/broadcast.h>
+#ifndef USE_LLVM
 #include <scratchcpp/compiler.h>
+#endif
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/field.h>
@@ -105,6 +107,7 @@ void Engine::clear()
 // Resolves ID references and sets pointers of entities.
 void Engine::resolveIds()
 {
+#ifndef USE_LLVM
     for (auto target : m_targets) {
         std::cout << "Processing target " << target->name() << "..." << std::endl;
         const auto &blocks = target->blocks();
@@ -256,10 +259,12 @@ void Engine::resolveIds()
         block->updateInputMap();
         block->updateFieldMap();
     }
+#endif // USE_LLVM
 }
 
 void Engine::compile()
 {
+#ifndef USE_LLVM
     // Resolve entities by ID
     resolveIds();
 
@@ -317,6 +322,7 @@ void Engine::compile()
 
     for (auto monitor : m_monitors)
         compileMonitor(monitor);
+#endif // USE_LLVM
 }
 
 void Engine::start()
@@ -945,6 +951,7 @@ const std::vector<BlockFunc> &Engine::blockFunctions() const
     return m_functions;
 }
 
+#ifndef USE_LLVM
 void Engine::addCompileFunction(IExtension *extension, const std::string &opcode, BlockComp f)
 {
     if (m_compileFunctions.find(extension) == m_compileFunctions.cend())
@@ -960,6 +967,7 @@ void Engine::addHatPredicateCompileFunction(IExtension *extension, const std::st
 
     m_hatPredicateCompileFunctions[extension][opcode] = f;
 }
+#endif // USE_LLVM
 
 void Engine::addMonitorNameFunction(IExtension *extension, const std::string &opcode, MonitorNameFunc f)
 {
@@ -979,10 +987,12 @@ void Engine::addMonitorChangeFunction(IExtension *extension, const std::string &
 
 void Engine::addHatBlock(IExtension *extension, const std::string &opcode)
 {
+#ifndef USE_LLVM
     if (m_compileFunctions.find(extension) == m_compileFunctions.cend())
         m_compileFunctions[extension] = {};
 
     m_compileFunctions[extension][opcode] = [](Compiler *compiler) {};
+#endif
 }
 
 void Engine::addInput(IExtension *extension, const std::string &name, int id)
@@ -1362,6 +1372,7 @@ void Engine::setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitor
     }
 }
 
+#ifndef USE_LLVM
 Monitor *Engine::createVariableMonitor(std::shared_ptr<Variable> var, const std::string &opcode, const std::string &varFieldName, int varFieldId, BlockComp compileFunction)
 {
     if (var->monitor())
@@ -1398,6 +1409,7 @@ Monitor *Engine::createListMonitor(std::shared_ptr<List> list, const std::string
         return monitor.get();
     }
 }
+#endif // USE_LLVM
 
 sigslot::signal<Monitor *> &Engine::monitorAdded()
 {
@@ -1722,8 +1734,10 @@ const std::unordered_set<std::string> &Engine::unsupportedBlocks() const
 
 void Engine::clearExtensionData()
 {
+#ifndef USE_LLVM
     m_compileFunctions.clear();
     m_hatPredicateCompileFunctions.clear();
+#endif
     m_monitorNameFunctions.clear();
     m_monitorChangeFunctions.clear();
     m_inputs.clear();
@@ -1733,16 +1747,19 @@ void Engine::clearExtensionData()
 
 IExtension *Engine::blockExtension(const std::string &opcode) const
 {
+#ifndef USE_LLVM
     for (const auto &[ext, data] : m_compileFunctions) {
         auto it = data.find(opcode);
 
         if (it != data.cend())
             return ext;
     }
+#endif // USE_LLVM
 
     return nullptr;
 }
 
+#ifndef USE_LLVM
 BlockComp Engine::resolveBlockCompileFunc(IExtension *extension, const std::string &opcode) const
 {
     if (!extension)
@@ -1776,6 +1793,7 @@ HatPredicateCompileFunc Engine::resolveHatPredicateCompileFunc(IExtension *exten
 
     return nullptr;
 }
+#endif // USE_LLVM
 
 MonitorNameFunc Engine::resolveMonitorNameFunc(IExtension *extension, const std::string &opcode) const
 {
@@ -1864,6 +1882,7 @@ int Engine::resolveFieldValue(IExtension *extension, const std::string &value) c
 
 void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
 {
+#ifndef USE_LLVM
     Target *target = monitor->sprite() ? static_cast<Target *>(monitor->sprite()) : stage();
     Compiler compiler(this, target);
     auto block = monitor->block();
@@ -1909,6 +1928,7 @@ void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
 
     for (const std::string &opcode : unsupportedBlocks)
         m_unsupportedBlocks.insert(opcode);
+#endif // USE_LLVM
 }
 
 void Engine::finalize()

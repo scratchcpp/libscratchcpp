@@ -17,12 +17,14 @@ Block::Block(const std::string &id, const std::string &opcode) :
 {
 }
 
+#ifndef USE_LLVM
 /*! Calls the compile function. */
 void Block::compile(Compiler *compiler)
 {
     if (impl->compileFunction)
         return impl->compileFunction(compiler);
 }
+#endif // USE_LLVM
 
 /*! Returns the opcode. */
 const std::string &Block::opcode() const
@@ -30,6 +32,7 @@ const std::string &Block::opcode() const
     return impl->opcode;
 }
 
+#ifndef USE_LLVM
 /*! Returns the compile function. \see <a href="blockSections.html">Block sections</a> */
 BlockComp Block::compileFunction() const
 {
@@ -59,6 +62,7 @@ void Block::setHatPredicateCompileFunction(HatPredicateCompileFunc newHatPredica
 
     impl->hatPredicateCompileFunction = newHatPredicateCompileFunction;
 }
+#endif // USE_LLVM
 
 /*! Returns true if the block can have a block following it. */
 bool Block::mutationHasNext() const

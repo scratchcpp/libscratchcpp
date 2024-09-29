@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/inputvalue.h>
+#ifndef USE_LLVM
 #include <scratchcpp/compiler.h>
+#endif
 #include <scratchcpp/block.h>
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/variable.h>
@@ -25,6 +27,7 @@ InputValue::InputValue(Type type) :
 {
 }
 
+#ifndef USE_LLVM
 /*! Compiles the input value. */
 void InputValue::compile(Compiler *compiler)
 {
@@ -48,6 +51,7 @@ void InputValue::compile(Compiler *compiler)
             break;
     }
 }
+#endif // USE_LLVM
 
 /*! Returns the type of the value. */
 InputValue::Type InputValue::type() const

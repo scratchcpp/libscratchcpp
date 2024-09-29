@@ -3,22 +3,27 @@
 #include <scratchcpp/field.h>
 #include <scratchcpp/comment.h>
 #include <scratchcpp/target.h>
+#ifndef USE_LLVM
 #include <scratchcpp/compiler.h>
+#endif
 #include <enginemock.h>
 
 #include "../common.h"
 
 using namespace libscratchcpp;
 
+#ifndef USE_LLVM
 class BlockTestMock
 {
     public:
         MOCK_METHOD(void, compileTest, (Compiler *), ());
 };
+#endif // USE_LLVM
 
 class BlockTest : public testing::Test
 {
     public:
+#ifndef USE_LLVM
         void SetUp() override { m_mockPtr = &m_mock; }
 
         static void compileTest(Compiler *compiler)
@@ -29,6 +34,7 @@ class BlockTest : public testing::Test
 
         static inline BlockTestMock *m_mockPtr = nullptr;
         BlockTestMock m_mock;
+#endif // USE_LLVM
 };
 
 TEST_F(BlockTest, Constructors)
@@ -256,6 +262,7 @@ TEST_F(BlockTest, Target)
     ASSERT_EQ(block.target(), &target);
 }
 
+#ifndef USE_LLVM
 TEST_F(BlockTest, CompileFunction)
 {
     Block block("", "");
@@ -286,6 +293,7 @@ TEST_F(BlockTest, Compile)
     EXPECT_CALL(m_mock, compileTest(&compiler)).Times(1);
     block.compile(&compiler);
 }
+#endif // USE_LLVM
 
 TEST_F(BlockTest, MutationHasNext)
 {
