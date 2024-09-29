@@ -31,7 +31,9 @@
 #include "engine/internal/clock.h"
 
 // TODO: Remove this
+#ifndef USE_LLVM
 #include "blocks/eventblocks.h"
+#endif
 
 using namespace libscratchcpp;
 
@@ -122,6 +124,7 @@ TEST(EngineTest, Clear)
     ScratchConfiguration::removeExtension(extension);
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, ClearThreadAboutToStopSignal)
 {
     Project p("3_threads.sb3");
@@ -193,6 +196,7 @@ TEST(EngineTest, StopSignal)
         engine->stop();
     }
 }
+#endif
 
 TEST(EngineTest, CompileAndExecuteMonitors)
 {
@@ -346,6 +350,7 @@ TEST(EngineTest, GlobalVolume)
     engine.setGlobalVolume(92.36);
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, Step)
 {
     Project p("step.sb3");
@@ -370,6 +375,7 @@ TEST(EngineTest, Step)
         ASSERT_EQ(test2->value().toInt(), i > 1 ? 3 : 1);
     }
 }
+#endif
 
 TEST(EngineTest, EventLoop)
 {
@@ -405,6 +411,7 @@ TEST(EngineTest, Fps)
     ASSERT_EQ(engine.fps(), 250);
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, FpsProject)
 {
     Project p("2_frames.sb3");
@@ -476,6 +483,7 @@ TEST(EngineTest, FpsProject)
     EXPECT_CALL(redrawMock, redraw());
     p.run();
 }
+#endif
 
 TEST(EngineTest, TurboModeEnabled)
 {
@@ -489,6 +497,7 @@ TEST(EngineTest, TurboModeEnabled)
     ASSERT_FALSE(engine.turboModeEnabled());
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, ExecutionOrder)
 {
     Project p("execution_order.sb3");
@@ -519,6 +528,7 @@ TEST(EngineTest, ExecutionOrder)
     ASSERT_EQ(Value((*list)[11]).toString(), "Sprite1 3 msg");
     ASSERT_EQ(Value((*list)[12]).toString(), "Stage msg");
 }
+#endif
 
 TEST(EngineTest, KeyState)
 {
@@ -616,6 +626,7 @@ TEST(EngineTest, KeyState)
     ASSERT_TRUE(engine.keyPressed("any"));
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, WhenKeyPressed)
 {
     Project p("when_key_pressed.sb3");
@@ -881,6 +892,7 @@ TEST(EngineTest, MouseWheel)
     ASSERT_VAR(stage, "any");
     ASSERT_EQ(GET_VAR(stage, "any")->value().toInt(), 0);
 }
+#endif
 
 TEST(EngineTest, MouseX)
 {
@@ -1045,6 +1057,7 @@ TEST(EngineTest, Broadcasts)
     ASSERT_EQ(engine.findBroadcastById("c"), 2);
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, TargetClickScripts)
 {
     Project p("target_click_scripts.sb3");
@@ -1150,6 +1163,7 @@ TEST(EngineTest, TargetClickScripts)
     ASSERT_VAR(stage, "stage");
     ASSERT_EQ(GET_VAR(stage, "stage")->value().toInt(), 2);
 }
+#endif
 
 TEST(EngineTest, Targets)
 {
@@ -1695,6 +1709,7 @@ void questionFunction(const std::string &)
 {
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, Clones)
 {
     Project p("clones.sb3");
@@ -2002,6 +2017,7 @@ TEST(EngineTest, EdgeActivatedHats)
 
     EventBlocks::audioInput = nullptr;
 }
+#endif
 
 TEST(EngineTest, UserAgent)
 {
@@ -2012,6 +2028,7 @@ TEST(EngineTest, UserAgent)
     ASSERT_EQ(engine.userAgent(), "test");
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, UnsupportedBlocks)
 {
     Project p("unsupported_blocks.sb3");
@@ -2020,6 +2037,7 @@ TEST(EngineTest, UnsupportedBlocks)
         p.engine()->unsupportedBlocks(),
         std::unordered_set<std::string>({ "ev3_motorTurnClockwise", "ev3_motorSetPower", "ev3_getMotorPosition", "ev3_whenButtonPressed", "ev3_getBrightness", "ev3_getDistance" }));
 }
+#endif
 
 TEST(EngineTest, NoCrashAfterStop)
 {
@@ -2037,6 +2055,7 @@ TEST(EngineTest, NoCrashOnBroadcastSelfCall)
     p.run();
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, NoRefreshWhenCallingRunningBroadcast)
 {
     // Regtest for #257
@@ -2131,6 +2150,7 @@ TEST(EngineTest, StopBeforeStarting)
     ASSERT_VAR(stage, "test");
     ASSERT_TRUE(GET_VAR(stage, "test")->value().toBool());
 }
+#endif
 
 TEST(EngineTest, NoCrashWhenLoadingUndefinedVariableOrListMonitor)
 {

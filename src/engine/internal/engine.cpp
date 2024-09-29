@@ -28,7 +28,11 @@
 #include "timer.h"
 #include "clock.h"
 #include "audio/iaudioengine.h"
+#ifdef USE_LLVM
+#include "dev/blocks/blocks.h"
+#else
 #include "blocks/blocks.h"
+#endif
 #include "scratch/monitor_p.h"
 
 using namespace libscratchcpp;

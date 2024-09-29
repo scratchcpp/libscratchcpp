@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(LIBSCRATCHCPP_BUILD_UNIT_TESTS "Build unit tests" ON)
 option(LIBSCRATCHCPP_NETWORK_SUPPORT "Support for downloading projects" ON)
 option(LIBSCRATCHCPP_COMPUTED_GOTO "Support for computed goto" ON)
+option(LIBSCRATCHCPP_USE_LLVM "Compile scripts to LLVM IR (work in progress)" OFF)
 
 if (NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
 	# Computed goto not supported on anything except GCC
@@ -64,6 +65,10 @@ target_sources(scratchcpp
     include/scratchcpp/monitor.h
     include/scratchcpp/imonitorhandler.h
 )
+
+if (LIBSCRATCHCPP_USE_LLVM)
+    target_compile_definitions(scratchcpp PUBLIC USE_LLVM)
+endif()
 
 include(FetchContent)
 set(ZIP_SRC thirdparty/zip/src)
