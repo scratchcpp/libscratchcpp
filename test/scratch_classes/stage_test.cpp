@@ -219,7 +219,7 @@ TEST(StageTest, TouchingPoint)
     ASSERT_TRUE(stage.touchingPoint(-12.46, 120.72));
 }
 
-TEST(SpriteTest, TouchingColor)
+TEST(StageTest, TouchingColor)
 {
     Stage stage;
     ASSERT_FALSE(stage.touchingColor(0));
