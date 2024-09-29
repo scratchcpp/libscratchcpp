@@ -540,6 +540,9 @@ bool Target::touchingColor(const Value &color, const Value &mask) const
 /*! Returns the value of the given graphics effect. */
 double Target::graphicsEffectValue(IGraphicsEffect *effect) const
 {
+    if (!effect)
+        return 0;
+
     auto it = impl->graphicsEffects.find(effect);
 
     if (it == impl->graphicsEffects.cend())
@@ -551,8 +554,8 @@ double Target::graphicsEffectValue(IGraphicsEffect *effect) const
 /*! Sets the value of the given graphics effect. */
 void Target::setGraphicsEffectValue(IGraphicsEffect *effect, double value)
 {
-    assert(effect);
-    impl->graphicsEffects[effect] = effect->clamp(value);
+    if (effect)
+        impl->graphicsEffects[effect] = effect->clamp(value);
 }
 
 /*! Sets the value of all graphics effects to 0 (clears them). */
