@@ -775,7 +775,7 @@ TEST(TargetTest, GraphicsEffects)
     ASSERT_EQ(target.graphicsEffectValue(&effect2), 0);
 }
 
-TEST(SpriteTest, BubbleTypeRedraw)
+TEST(TargetTest, BubbleTypeRedraw)
 {
     Target target;
     EngineMock engine;
@@ -786,7 +786,7 @@ TEST(SpriteTest, BubbleTypeRedraw)
     target.bubble()->setType(TextBubble::Type::Think);
 }
 
-TEST(SpriteTest, BubbleTextRedraw)
+TEST(TaregtTest, BubbleTextRedraw)
 {
     Target target;
     EngineMock engine;
