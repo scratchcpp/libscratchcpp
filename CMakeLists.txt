@@ -67,6 +67,7 @@ target_sources(scratchcpp
 
 if (LIBSCRATCHCPP_USE_LLVM)
     target_compile_definitions(scratchcpp PUBLIC USE_LLVM)
+
 else()
     target_sources(scratchcpp
       PUBLIC
@@ -101,6 +102,12 @@ if (LIBSCRATCHCPP_NETWORK_SUPPORT)
     FetchContent_MakeAvailable(cpr)
     target_link_libraries(scratchcpp PRIVATE cpr::cpr)
     target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_NETWORK_SUPPORT)
+endif()
+
+if (LIBSCRATCHCPP_USE_LLVM)
+    include(build/HunterPackages.cmake)
+    include(build/LLVM.cmake)
+    target_link_libraries(scratchcpp PRIVATE LLVM)
 endif()
 
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_LIBRARY)
