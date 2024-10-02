@@ -105,6 +105,7 @@ std::shared_ptr<Thread> Script::start()
 std::shared_ptr<Thread> Script::start(Target *target)
 {
     auto thread = std::make_shared<Thread>(target, impl->engine, this);
+#ifndef USE_LLVM
     VirtualMachine *vm = thread->vm();
     vm->setBytecode(impl->bytecode);
     vm->setProcedures(impl->procedures);
@@ -161,6 +162,7 @@ std::shared_ptr<Thread> Script::start(Target *target)
         vm->setVariables(impl->variableValues.data());
         vm->setLists(impl->lists.data());
     }
+#endif
 
     return thread;
 }
