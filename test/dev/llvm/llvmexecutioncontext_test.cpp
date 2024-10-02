@@ -1,7 +1,6 @@
 #include <scratchcpp/target.h>
 #include <dev/engine/internal/llvmexecutioncontext.h>
-
-#include "../../common.h"
+#include <gtest/gtest.h>
 
 using namespace libscratchcpp;
 
