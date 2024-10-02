@@ -3,4 +3,6 @@ target_sources(scratchcpp
     executioncontext.cpp
     executioncontext_p.cpp
     executioncontext_p.h
+    internal/llvmexecutioncontext.cpp
+    internal/llvmexecutioncontext.h
 )
