@@ -69,6 +69,7 @@ if (LIBSCRATCHCPP_USE_LLVM)
     target_compile_definitions(scratchcpp PUBLIC USE_LLVM)
     target_sources(scratchcpp
       PUBLIC
+        include/scratchcpp/dev/executablecode.h
         include/scratchcpp/dev/executioncontext.h
     )
 
