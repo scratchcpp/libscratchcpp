@@ -50,6 +50,20 @@ void Script::setBytecode(const std::vector<unsigned int> &code)
     impl->bytecode = impl->bytecodeVector.data();
 }
 
+#ifdef USE_LLVM
+/*! Returns the executable code of the script. */
+ExecutableCode *Script::code() const
+{
+    return impl->code.get();
+}
+
+/*! Sets the executable code of the script. */
+void Script::setCode(std::shared_ptr<ExecutableCode> code)
+{
+    impl->code = code;
+}
+#endif // USE_LLVM
+
 /*! Sets the edge-activated hat predicate bytecode. */
 void Script::setHatPredicateBytecode(const std::vector<unsigned int> &code)
 {

@@ -7,6 +7,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <enginemock.h>
+#include <executablecodemock.h>
 
 #include "../common.h"
 
@@ -31,6 +32,17 @@ TEST_F(ScriptTest, Constructors)
     ASSERT_EQ(script.topBlock(), block);
 }
 
+#ifdef USE_LLVM
+TEST_F(ScriptTest, Code)
+{
+    Script script(nullptr, nullptr, nullptr);
+    ASSERT_EQ(script.code(), nullptr);
+
+    auto code = std::make_shared<ExecutableCodeMock>();
+    script.setCode(code);
+    ASSERT_EQ(script.code(), code.get());
+}
+#else
 TEST_F(ScriptTest, Bytecode)
 {
     Script script(nullptr, nullptr, nullptr);
@@ -248,3 +260,4 @@ TEST_F(ScriptTest, Start)
     EXPECT_CALL(m_engine, deinitClone(clone));
     clone->deleteClone();
 }
+#endif

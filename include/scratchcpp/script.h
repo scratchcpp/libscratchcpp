@@ -14,6 +14,9 @@ namespace libscratchcpp
 class Target;
 class Block;
 class IEngine;
+#ifdef USE_LLVM
+class ExecutableCode;
+#endif
 class Value;
 class Thread;
 class Variable;
@@ -33,6 +36,11 @@ class LIBSCRATCHCPP_EXPORT Script
         unsigned int *bytecode() const;
         const std::vector<unsigned int> &bytecodeVector() const;
         void setBytecode(const std::vector<unsigned int> &code);
+
+#ifdef USE_LLVM
+        ExecutableCode *code() const;
+        void setCode(std::shared_ptr<ExecutableCode> code);
+#endif
 
         void setHatPredicateBytecode(const std::vector<unsigned int> &code);
         bool runHatPredicate(Target *target);
