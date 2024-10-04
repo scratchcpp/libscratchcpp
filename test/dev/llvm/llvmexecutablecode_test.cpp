@@ -121,6 +121,21 @@ TEST_F(LLVMExecutableCodeTest, SingleFunction)
     EXPECT_CALL(m_mock, f).Times(0);
     code.run(ctx.get());
     ASSERT_TRUE(code.isFinished(ctx.get()));
+
+    // Test with another context
+    Target anotherTarget;
+    auto anotherCtx = code.createExecutionContext(&anotherTarget);
+    ASSERT_FALSE(code.isFinished(anotherCtx.get()));
+    ASSERT_TRUE(code.isFinished(ctx.get()));
+
+    EXPECT_CALL(m_mock, f(&anotherTarget));
+    code.run(anotherCtx.get());
+    ASSERT_TRUE(code.isFinished(anotherCtx.get()));
+    ASSERT_TRUE(code.isFinished(ctx.get()));
+
+    code.reset(ctx.get());
+    ASSERT_TRUE(code.isFinished(anotherCtx.get()));
+    ASSERT_FALSE(code.isFinished(ctx.get()));
 }
 
 TEST_F(LLVMExecutableCodeTest, MultipleFunctions)
