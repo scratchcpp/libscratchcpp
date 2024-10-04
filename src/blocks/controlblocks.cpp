@@ -59,6 +59,7 @@ void ControlBlocks::registerBlocks(IEngine *engine)
     engine->addFieldValue(this, "all", StopAll);
     engine->addFieldValue(this, "this script", StopThisScript);
     engine->addFieldValue(this, "other scripts in sprite", StopOtherScriptsInSprite);
+    engine->addFieldValue(this, "other scripts in stage", StopOtherScriptsInSprite);
 }
 
 void ControlBlocks::compileRepeatForever(Compiler *compiler)
