@@ -44,7 +44,7 @@ TEST(RandomGeneratorTest, RandIntDouble)
     }
 }
 
-TEST(RandomGeneratorTest, RandInt)
+TEST(RandomGeneratorTest, RandIntExcept)
 {
     auto rng = RandomGenerator::instance();
     ASSERT_TRUE(rng);
