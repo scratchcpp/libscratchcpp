@@ -964,7 +964,7 @@ void LooksBlocks::randomBackdropImpl(VirtualMachine *vm)
     if (Stage *stage = vm->engine()->stage()) {
         std::size_t count = stage->costumes().size();
 
-        if (count > 0) {
+        if (count > 1) {
             stage->setCostumeIndex(rng->randintExcept(0, count - 1, stage->costumeIndex()));
         }
     }
