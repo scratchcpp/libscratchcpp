@@ -67,21 +67,31 @@ class LLVMExecutableCodeTest : public testing::Test
         TestMock m_mock;
 };
 
-TEST_F(LLVMExecutableCodeTest, NoFunctions)
+TEST_F(LLVMExecutableCodeTest, CreateExecutionContext)
 {
-    LLVMExecutionContext ctx(&m_target);
     std::vector<std::unique_ptr<ValueData>> constValues;
     LLVMExecutableCode code(std::move(m_module), constValues);
-    ASSERT_TRUE(code.isFinished(&ctx));
+    auto ctx = code.createExecutionContext(&m_target);
+    ASSERT_TRUE(ctx);
+    ASSERT_EQ(ctx->target(), &m_target);
+    ASSERT_TRUE(dynamic_cast<LLVMExecutionContext *>(ctx.get()));
+}
 
-    code.run(&ctx);
-    ASSERT_TRUE(code.isFinished(&ctx));
+TEST_F(LLVMExecutableCodeTest, NoFunctions)
+{
+    std::vector<std::unique_ptr<ValueData>> constValues;
+    LLVMExecutableCode code(std::move(m_module), constValues);
+    auto ctx = code.createExecutionContext(&m_target);
+    ASSERT_TRUE(code.isFinished(ctx.get()));
 
-    code.kill(&ctx);
-    ASSERT_TRUE(code.isFinished(&ctx));
+    code.run(ctx.get());
+    ASSERT_TRUE(code.isFinished(ctx.get()));
 
-    code.reset(&ctx);
-    ASSERT_TRUE(code.isFinished(&ctx));
+    code.kill(ctx.get());
+    ASSERT_TRUE(code.isFinished(ctx.get()));
+
+    code.reset(ctx.get());
+    ASSERT_TRUE(code.isFinished(ctx.get()));
 }
 
 TEST_F(LLVMExecutableCodeTest, SingleFunction)
@@ -90,27 +100,27 @@ TEST_F(LLVMExecutableCodeTest, SingleFunction)
     addTestFunction(f);
     endFunction(0);
 
-    LLVMExecutionContext ctx(&m_target);
     std::vector<std::unique_ptr<ValueData>> constValues;
     LLVMExecutableCode code(std::move(m_module), constValues);
-    ASSERT_FALSE(code.isFinished(&ctx));
+    auto ctx = code.createExecutionContext(&m_target);
+    ASSERT_FALSE(code.isFinished(ctx.get()));
 
     EXPECT_CALL(m_mock, f(&m_target));
-    code.run(&ctx);
-    ASSERT_TRUE(code.isFinished(&ctx));
+    code.run(ctx.get());
+    ASSERT_TRUE(code.isFinished(ctx.get()));
 
-    code.kill(&ctx);
-    ASSERT_TRUE(code.isFinished(&ctx));
+    code.kill(ctx.get());
+    ASSERT_TRUE(code.isFinished(ctx.get()));
 
-    code.reset(&ctx);
-    ASSERT_FALSE(code.isFinished(&ctx));
+    code.reset(ctx.get());
+    ASSERT_FALSE(code.isFinished(ctx.get()));
 
-    code.kill(&ctx);
-    ASSERT_TRUE(code.isFinished(&ctx));
+    code.kill(ctx.get());
+    ASSERT_TRUE(code.isFinished(ctx.get()));
 
     EXPECT_CALL(m_mock, f).Times(0);
-    code.run(&ctx);
-    ASSERT_TRUE(code.isFinished(&ctx));
+    code.run(ctx.get());
+    ASSERT_TRUE(code.isFinished(ctx.get()));
 }
 
 TEST_F(LLVMExecutableCodeTest, MultipleFunctions)
@@ -123,18 +133,18 @@ TEST_F(LLVMExecutableCodeTest, MultipleFunctions)
         endFunction(i);
     }
 
-    LLVMExecutionContext ctx(&m_target);
     std::vector<std::unique_ptr<ValueData>> constValues;
     LLVMExecutableCode code(std::move(m_module), constValues);
-    ASSERT_FALSE(code.isFinished(&ctx));
+    auto ctx = code.createExecutionContext(&m_target);
+    ASSERT_FALSE(code.isFinished(ctx.get()));
 
     for (int i = 0; i < count; i++) {
-        ASSERT_FALSE(code.isFinished(&ctx));
+        ASSERT_FALSE(code.isFinished(ctx.get()));
         EXPECT_CALL(m_mock, f(&m_target));
-        code.run(&ctx);
+        code.run(ctx.get());
     }
 
-    ASSERT_TRUE(code.isFinished(&ctx));
+    ASSERT_TRUE(code.isFinished(ctx.get()));
 }
 
 TEST_F(LLVMExecutableCodeTest, ConstValues)
@@ -159,13 +169,13 @@ TEST_F(LLVMExecutableCodeTest, ConstValues)
     addTestPrintFunction(ptr1, ptr2);
     endFunction(0);
 
-    LLVMExecutionContext ctx(&m_target);
     LLVMExecutableCode code(std::move(m_module), constValues);
+    auto ctx = code.createExecutionContext(&m_target);
     ASSERT_TRUE(constValues.empty());
-    ASSERT_FALSE(code.isFinished(&ctx));
+    ASSERT_FALSE(code.isFinished(ctx.get()));
 
     testing::internal::CaptureStdout();
-    code.run(&ctx);
+    code.run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "1 2\n");
-    ASSERT_TRUE(code.isFinished(&ctx));
+    ASSERT_TRUE(code.isFinished(ctx.get()));
 }
