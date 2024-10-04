@@ -20,6 +20,7 @@ class RandomGenerator : public IRandomGenerator
 
         long randint(long start, long end) const override;
         double randintDouble(double start, double end) const override;
+        long randintExcept(long start, long end, long except) const;
 
     private:
         static std::shared_ptr<RandomGenerator> m_instance;
