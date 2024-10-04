@@ -539,6 +539,7 @@ void Engine::step()
 
     // Resolve stopped broadcast scripts
     std::vector<Broadcast *> resolved;
+    std::vector<Thread *> resolvedThreads;
 
     for (const auto &[broadcast, senderThread] : m_broadcastSenders) {
         std::unordered_map<Broadcast *, std::vector<Script *>> *broadcastMap = nullptr;
@@ -566,13 +567,21 @@ void Engine::step()
             }
         }
 
-        if (!found) {
+        if (found) {
+            // If a broadcast with the same name but different case
+            // was considered stopped before, restore the promise.
+            if (std::find(resolvedThreads.begin(), resolvedThreads.end(), senderThread) != resolvedThreads.end()) {
+                senderThread->promise();
+                resolvedThreads.erase(std::remove(resolvedThreads.begin(), resolvedThreads.end(), senderThread), resolvedThreads.end());
+            }
+        } else {
             Thread *th = senderThread;
 
             if (std::find_if(m_threads.begin(), m_threads.end(), [th](std::shared_ptr<Thread> thread) { return thread.get() == th; }) != m_threads.end())
                 th->resolvePromise();
 
             resolved.push_back(broadcast);
+            resolvedThreads.push_back(th);
         }
     }
 

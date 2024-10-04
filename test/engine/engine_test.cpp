@@ -2249,3 +2249,20 @@ TEST(EngineTest, BroadcastStopsWaitBlocks)
     ASSERT_VAR(stage, "backdrop_passed");
     ASSERT_TRUE(GET_VAR(stage, "backdrop_passed")->value().toBool());
 }
+
+TEST(EngineTest, BroadcastAndWaitCaseInsensitive)
+{
+    // Regtest for #578
+    Project p("regtest_projects/578_broadcast_and_wait_case_insensitive.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    engine->run();
+
+    ASSERT_VAR(stage, "passed");
+    ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
+}
