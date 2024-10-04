@@ -10,6 +10,7 @@ target_link_libraries(
   GTest::gtest_main
   GTest::gmock_main
   scratchcpp
+  scratchcpp_mocks
 )
 
 add_executable(
@@ -17,6 +18,7 @@ add_executable(
   main.cpp
   llvmexecutioncontext_test.cpp
   llvmexecutablecode_test.cpp
+  llvmcodebuilder_test.cpp
 )
 
 target_link_libraries(

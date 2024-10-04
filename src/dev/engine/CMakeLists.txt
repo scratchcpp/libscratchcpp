@@ -4,6 +4,8 @@ target_sources(scratchcpp
     executioncontext_p.cpp
     executioncontext_p.h
     internal/icodebuilder.h
+    internal/llvmcodebuilder.cpp
+    internal/llvmcodebuilder.h
     internal/llvmexecutablecode.cpp
     internal/llvmexecutablecode.h
     internal/llvmexecutioncontext.cpp
