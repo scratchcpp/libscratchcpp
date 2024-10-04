@@ -1,4 +1,5 @@
 #include <scratchcpp/target.h>
+#include <scratchcpp/value_functions.h>
 #include <dev/engine/internal/llvmexecutablecode.h>
 #include <dev/engine/internal/llvmexecutioncontext.h>
 #include <llvm/Support/TargetSelect.h>
@@ -52,6 +53,13 @@ class LLVMExecutableCodeTest : public testing::Test
             m_builder->CreateCall(func, { mockPtr, mainFunc->getArg(0) });
         }
 
+        void addTestPrintFunction(llvm::Value *arg1, llvm::Value *arg2)
+        {
+            auto ptrType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+            auto func = m_module->getOrInsertFunction("test_print_function", llvm::FunctionType::get(m_builder->getVoidTy(), { ptrType, ptrType }, false));
+            m_builder->CreateCall(func, { arg1, arg2 });
+        }
+
         llvm::LLVMContext m_ctx;
         std::unique_ptr<llvm::Module> m_module;
         std::unique_ptr<llvm::IRBuilder<>> m_builder;
@@ -62,7 +70,8 @@ class LLVMExecutableCodeTest : public testing::Test
 TEST_F(LLVMExecutableCodeTest, NoFunctions)
 {
     LLVMExecutionContext ctx(&m_target);
-    LLVMExecutableCode code(std::move(m_module));
+    std::vector<std::unique_ptr<ValueData>> constValues;
+    LLVMExecutableCode code(std::move(m_module), constValues);
     ASSERT_TRUE(code.isFinished(&ctx));
 
     code.run(&ctx);
@@ -82,7 +91,8 @@ TEST_F(LLVMExecutableCodeTest, SingleFunction)
     endFunction(0);
 
     LLVMExecutionContext ctx(&m_target);
-    LLVMExecutableCode code(std::move(m_module));
+    std::vector<std::unique_ptr<ValueData>> constValues;
+    LLVMExecutableCode code(std::move(m_module), constValues);
     ASSERT_FALSE(code.isFinished(&ctx));
 
     EXPECT_CALL(m_mock, f(&m_target));
@@ -114,7 +124,8 @@ TEST_F(LLVMExecutableCodeTest, MultipleFunctions)
     }
 
     LLVMExecutionContext ctx(&m_target);
-    LLVMExecutableCode code(std::move(m_module));
+    std::vector<std::unique_ptr<ValueData>> constValues;
+    LLVMExecutableCode code(std::move(m_module), constValues);
     ASSERT_FALSE(code.isFinished(&ctx));
 
     for (int i = 0; i < count; i++) {
@@ -123,5 +134,38 @@ TEST_F(LLVMExecutableCodeTest, MultipleFunctions)
         code.run(&ctx);
     }
 
+    ASSERT_TRUE(code.isFinished(&ctx));
+}
+
+TEST_F(LLVMExecutableCodeTest, ConstValues)
+{
+    beginFunction(0);
+    std::vector<std::unique_ptr<ValueData>> constValues;
+
+    for (int i = 0; i < 2; i++) {
+        std::unique_ptr<ValueData> value = std::make_unique<ValueData>();
+        value_init(value.get());
+        value_assign_int(value.get(), i + 1);
+        constValues.push_back(std::move(value));
+    }
+
+    auto ptrType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Value *intAddress = m_builder->getInt64((uintptr_t)constValues[0].get());
+    llvm::Value *ptr1 = m_builder->CreateIntToPtr(intAddress, ptrType);
+
+    intAddress = m_builder->getInt64((uintptr_t)constValues[1].get());
+    llvm::Value *ptr2 = m_builder->CreateIntToPtr(intAddress, ptrType);
+
+    addTestPrintFunction(ptr1, ptr2);
+    endFunction(0);
+
+    LLVMExecutionContext ctx(&m_target);
+    LLVMExecutableCode code(std::move(m_module), constValues);
+    ASSERT_TRUE(constValues.empty());
+    ASSERT_FALSE(code.isFinished(&ctx));
+
+    testing::internal::CaptureStdout();
+    code.run(&ctx);
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "1 2\n");
     ASSERT_TRUE(code.isFinished(&ctx));
 }

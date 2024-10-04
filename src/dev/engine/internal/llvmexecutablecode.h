@@ -3,6 +3,7 @@
 #pragma once
 
 #include <scratchcpp/dev/executablecode.h>
+#include <scratchcpp/valuedata.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
 
@@ -15,7 +16,8 @@ class LLVMExecutionContext;
 class LLVMExecutableCode : public ExecutableCode
 {
     public:
-        LLVMExecutableCode(std::unique_ptr<llvm::Module> module);
+        LLVMExecutableCode(std::unique_ptr<llvm::Module> module, std::vector<std::unique_ptr<libscratchcpp::ValueData>> &constValues);
+        ~LLVMExecutableCode();
 
         void run(ExecutionContext *context) override;
         void kill(libscratchcpp::ExecutionContext *context) override;
@@ -37,6 +39,7 @@ class LLVMExecutableCode : public ExecutableCode
         llvm::Expected<std::unique_ptr<llvm::orc::LLJIT>> m_jit;
 
         std::vector<FunctionType> m_functions;
+        std::vector<std::unique_ptr<ValueData>> m_constValues;
 };
 
 } // namespace libscratchcpp
