@@ -176,6 +176,7 @@ TEST_F(ControlBlocksTest, RegisterBlocks)
     EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "all", ControlBlocks::StopAll));
     EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "this script", ControlBlocks::StopThisScript));
     EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "other scripts in sprite", ControlBlocks::StopOtherScriptsInSprite));
+    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "other scripts in stage", ControlBlocks::StopOtherScriptsInSprite));
 
     m_extension->registerBlocks(&m_engineMock);
 }
