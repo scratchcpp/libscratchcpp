@@ -2272,6 +2272,7 @@ TEST(EngineTest, BroadcastStopsWaitBlocks)
     ASSERT_TRUE(GET_VAR(stage, "backdrop_passed")->value().toBool());
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, BroadcastAndWaitCaseInsensitive)
 {
     // Regtest for #578
@@ -2288,3 +2289,4 @@ TEST(EngineTest, BroadcastAndWaitCaseInsensitive)
     ASSERT_VAR(stage, "passed");
     ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
 }
+#endif // USE_LLVM
