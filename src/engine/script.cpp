@@ -50,6 +50,20 @@ void Script::setBytecode(const std::vector<unsigned int> &code)
     impl->bytecode = impl->bytecodeVector.data();
 }
 
+#ifdef USE_LLVM
+/*! Returns the executable code of the script. */
+ExecutableCode *Script::code() const
+{
+    return impl->code.get();
+}
+
+/*! Sets the executable code of the script. */
+void Script::setCode(std::shared_ptr<ExecutableCode> code)
+{
+    impl->code = code;
+}
+#endif // USE_LLVM
+
 /*! Sets the edge-activated hat predicate bytecode. */
 void Script::setHatPredicateBytecode(const std::vector<unsigned int> &code)
 {
@@ -91,6 +105,7 @@ std::shared_ptr<Thread> Script::start()
 std::shared_ptr<Thread> Script::start(Target *target)
 {
     auto thread = std::make_shared<Thread>(target, impl->engine, this);
+#ifndef USE_LLVM
     VirtualMachine *vm = thread->vm();
     vm->setBytecode(impl->bytecode);
     vm->setProcedures(impl->procedures);
@@ -147,6 +162,7 @@ std::shared_ptr<Thread> Script::start(Target *target)
         vm->setVariables(impl->variableValues.data());
         vm->setLists(impl->lists.data());
     }
+#endif
 
     return thread;
 }

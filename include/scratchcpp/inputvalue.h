@@ -11,7 +11,6 @@ namespace libscratchcpp
 {
 
 class Block;
-class Compiler;
 class Entity;
 class InputValuePrivate;
 

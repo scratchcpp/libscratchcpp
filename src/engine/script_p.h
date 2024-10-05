@@ -12,6 +12,7 @@ namespace libscratchcpp
 class Target;
 class Block;
 class IEngine;
+class ExecutableCode;
 class Variable;
 class List;
 
@@ -23,6 +24,10 @@ struct ScriptPrivate
         unsigned int *bytecode = nullptr;
         std::vector<unsigned int> bytecodeVector;
         std::vector<unsigned int> hatPredicateBytecodeVector;
+
+#ifdef USE_LLVM
+        std::shared_ptr<ExecutableCode> code;
+#endif
 
         Target *target = nullptr;
         std::shared_ptr<Block> topBlock;

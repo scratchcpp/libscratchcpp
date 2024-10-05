@@ -3,7 +3,11 @@
 #include <scratchcpp/field.h>
 #include <scratchcpp/comment.h>
 #include <scratchcpp/target.h>
+#ifdef USE_LLVM
+#include <scratchcpp/dev/compiler.h>
+#else
 #include <scratchcpp/compiler.h>
+#endif
 #include <enginemock.h>
 
 #include "../common.h"
@@ -278,7 +282,7 @@ TEST_F(BlockTest, Compile)
 {
     Block block("", "");
     EngineMock engine;
-    Compiler compiler(&engine);
+    Compiler compiler(&engine, nullptr);
 
     block.compile(&compiler); // test with null compile function
 

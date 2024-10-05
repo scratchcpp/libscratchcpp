@@ -7,6 +7,11 @@
 namespace libscratchcpp
 {
 
+#ifdef USE_LLVM
+class ExecutableCode;
+class ExecutionContext;
+#endif
+
 struct ThreadPrivate
 {
         ThreadPrivate(Target *target, IEngine *engine, Script *script);
@@ -15,6 +20,10 @@ struct ThreadPrivate
         Target *target = nullptr;
         IEngine *engine = nullptr;
         Script *script = nullptr;
+#ifdef USE_LLVM
+        ExecutableCode *code = nullptr;
+        std::shared_ptr<ExecutionContext> executionContext;
+#endif
 };
 
 } // namespace libscratchcpp

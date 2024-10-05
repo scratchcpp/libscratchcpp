@@ -3,9 +3,6 @@ target_sources(scratchcpp
     virtualmachine.cpp
     virtualmachine_p.cpp
     virtualmachine_p.h
-    compiler.cpp
-    compiler_p.cpp
-    compiler_p.h
     script.cpp
     script_p.cpp
     script_p.h
@@ -23,3 +20,12 @@ target_sources(scratchcpp
     internal/randomgenerator.cpp
     internal/irandomgenerator.h
 )
+
+if(NOT LIBSCRATCHCPP_USE_LLVM)
+    target_sources(scratchcpp
+      PRIVATE
+        compiler.cpp
+        compiler_p.cpp
+        compiler_p.h
+    )
+endif()

@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/inputvalue.h>
+#ifdef USE_LLVM
+#include <scratchcpp/dev/compiler.h>
+#else
 #include <scratchcpp/compiler.h>
+#endif
 #include <scratchcpp/block.h>
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/variable.h>
@@ -33,18 +37,44 @@ void InputValue::compile(Compiler *compiler)
             // TODO: Add support for colors
             break;
 
-        case Type::Variable:
+        case Type::Variable: {
             assert(impl->valuePtr);
-            compiler->addInstruction(vm::OP_READ_VAR, { compiler->variableIndex(impl->valuePtr) });
-            break;
+#ifdef USE_LLVM
+            Variable *var = dynamic_cast<Variable *>(impl->valuePtr.get());
 
-        case Type::List:
-            assert(impl->valuePtr);
-            compiler->addInstruction(vm::OP_READ_LIST, { compiler->listIndex(impl->valuePtr) });
+            if (var)
+                compiler->addVariableValue(var);
+            else
+                compiler->addConstValue(Value());
+#else
+            compiler->addInstruction(vm::OP_READ_VAR, { compiler->variableIndex(impl->valuePtr) });
+#endif
+
             break;
+        }
+
+        case Type::List: {
+            assert(impl->valuePtr);
+#ifdef USE_LLVM
+            List *list = dynamic_cast<List *>(impl->valuePtr.get());
+
+            if (list)
+                compiler->addListContents(list);
+            else
+                compiler->addConstValue(Value());
+#else
+            compiler->addInstruction(vm::OP_READ_LIST, { compiler->listIndex(impl->valuePtr) });
+#endif
+
+            break;
+        }
 
         default:
+#ifdef USE_LLVM
+            compiler->addConstValue(impl->value);
+#else
             compiler->addInstruction(vm::OP_CONST, { compiler->constIndex(this) });
+#endif
             break;
     }
 }

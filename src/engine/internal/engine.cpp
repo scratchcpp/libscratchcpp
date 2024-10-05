@@ -7,7 +7,11 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/textbubble.h>
 #include <scratchcpp/broadcast.h>
+#ifdef USE_LLVM
+#include <scratchcpp/dev/compiler.h>
+#else
 #include <scratchcpp/compiler.h>
+#endif
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/field.h>
@@ -28,7 +32,11 @@
 #include "timer.h"
 #include "clock.h"
 #include "audio/iaudioengine.h"
+#ifdef USE_LLVM
+#include "dev/blocks/blocks.h"
+#else
 #include "blocks/blocks.h"
+#endif
 #include "scratch/monitor_p.h"
 
 using namespace libscratchcpp;
@@ -262,7 +270,9 @@ void Engine::compile()
     // Compile scripts to bytecode
     for (auto target : m_targets) {
         std::cout << "Compiling scripts in target " << target->name() << "..." << std::endl;
+#ifndef USE_LLVM
         std::unordered_map<std::string, unsigned int *> procedureBytecodeMap;
+#endif
         Compiler compiler(this, target.get());
         const auto &blocks = target->blocks();
         for (auto block : blocks) {
@@ -272,6 +282,9 @@ void Engine::compile()
                     auto script = std::make_shared<Script>(target.get(), block, this);
                     m_scripts[block] = script;
 
+#ifdef USE_LLVM
+                    script->setCode(compiler.compile(block));
+#else
                     compiler.compile(block);
 
                     script->setBytecode(compiler.bytecode());
@@ -281,6 +294,7 @@ void Engine::compile()
                         auto b = block->inputAt(block->findInput("custom_block"))->valueBlock();
                         procedureBytecodeMap[b->mutationPrototype()->procCode()] = script->bytecode();
                     }
+#endif // USE_LLVM
                 } else {
                     std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
                     m_unsupportedBlocks.insert(block->opcode());
@@ -288,6 +302,7 @@ void Engine::compile()
             }
         }
 
+#ifndef USE_LLVM
         const std::vector<std::string> &procedures = compiler.procedures();
         std::vector<unsigned int *> procedureBytecodes;
         for (const std::string &code : procedures)
@@ -301,6 +316,7 @@ void Engine::compile()
                 m_scripts[block]->setLists(compiler.lists());
             }
         }
+#endif // USE_LLVM
 
         const auto &unsupportedBlocks = compiler.unsupportedBlocks();
 
@@ -1066,6 +1082,7 @@ void Engine::addWhenTouchingObjectScript(std::shared_ptr<Block> hatBlock)
 
 void Engine::addGreenFlagScript(std::shared_ptr<Block> hatBlock)
 {
+    std::cout << "passed block: " << hatBlock << std::endl;
     addHatToMap(m_greenFlagHats, m_scripts[hatBlock].get());
 }
 
@@ -1869,6 +1886,7 @@ int Engine::resolveFieldValue(IExtension *extension, const std::string &value) c
 
 void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
 {
+#ifndef USE_LLVM
     Target *target = monitor->sprite() ? static_cast<Target *>(monitor->sprite()) : stage();
     Compiler compiler(this, target);
     auto block = monitor->block();
@@ -1914,6 +1932,7 @@ void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
 
     for (const std::string &opcode : unsupportedBlocks)
         m_unsupportedBlocks.insert(opcode);
+#endif // USE_LLVM
 }
 
 void Engine::finalize()
