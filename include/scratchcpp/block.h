@@ -25,9 +25,7 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
         Block(const std::string &id, const std::string &opcode);
         Block(const Block &) = delete;
 
-#ifndef USE_LLVM
         void compile(Compiler *compiler);
-#endif
 
         const std::string &opcode() const;
 
@@ -75,13 +73,11 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
         void setTarget(Target *newTarget);
         Target *target() const;
 
-#ifndef USE_LLVM
         BlockComp compileFunction() const;
         void setCompileFunction(BlockComp newCompileFunction);
 
         BlockComp hatPredicateCompileFunction() const;
         void setHatPredicateCompileFunction(HatPredicateCompileFunc newHatPredicateCompileFunction);
-#endif // USE_LLVM
 
         bool mutationHasNext() const;
         void setMutationHasNext(bool newMutationHasNext);

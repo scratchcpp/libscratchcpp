@@ -22,10 +22,8 @@ struct BlockPrivate
         BlockPrivate(const BlockPrivate &) = delete;
 
         std::string opcode;
-#ifndef USE_LLVM
         BlockComp compileFunction = nullptr;
         HatPredicateCompileFunc hatPredicateCompileFunction = nullptr;
-#endif
         std::shared_ptr<Block> next = nullptr;
         std::string nextId;
         std::shared_ptr<Block> parent = nullptr;

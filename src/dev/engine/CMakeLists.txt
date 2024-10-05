@@ -1,5 +1,8 @@
 target_sources(scratchcpp
   PRIVATE
+    compiler.cpp
+    compiler_p.cpp
+    compiler_p.h
     executioncontext.cpp
     executioncontext_p.cpp
     executioncontext_p.h

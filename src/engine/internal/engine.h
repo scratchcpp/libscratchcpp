@@ -105,10 +105,8 @@ class Engine : public IEngine
         unsigned int functionIndex(BlockFunc f) override;
         const std::vector<BlockFunc> &blockFunctions() const override;
 
-#ifndef USE_LLVM
         void addCompileFunction(IExtension *extension, const std::string &opcode, BlockComp f) override;
         void addHatPredicateCompileFunction(IExtension *extension, const std::string &opcode, HatPredicateCompileFunc f) override;
-#endif
         void addMonitorNameFunction(IExtension *extension, const std::string &opcode, MonitorNameFunc f) override;
         void addMonitorChangeFunction(IExtension *extension, const std::string &opcode, MonitorChangeFunc f) override;
         void addHatBlock(IExtension *extension, const std::string &opcode) override;
@@ -147,10 +145,8 @@ class Engine : public IEngine
 
         const std::vector<std::shared_ptr<Monitor>> &monitors() const override;
         void setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors) override;
-#ifndef USE_LLVM
         Monitor *createVariableMonitor(std::shared_ptr<Variable> var, const std::string &opcode, const std::string &varFieldName, int varFieldId, BlockComp compileFunction) override;
         Monitor *createListMonitor(std::shared_ptr<List> list, const std::string &opcode, const std::string &listFieldName, int listFieldId, BlockComp compileFunction) override;
-#endif
         sigslot::signal<Monitor *> &monitorAdded() override;
         sigslot::signal<Monitor *, IMonitorHandler *> &monitorRemoved() override;
 
@@ -194,10 +190,8 @@ class Engine : public IEngine
 
         void clearExtensionData();
         IExtension *blockExtension(const std::string &opcode) const;
-#ifndef USE_LLVM
         BlockComp resolveBlockCompileFunc(IExtension *extension, const std::string &opcode) const;
         HatPredicateCompileFunc resolveHatPredicateCompileFunc(IExtension *extension, const std::string &opcode) const;
-#endif
         MonitorNameFunc resolveMonitorNameFunc(IExtension *extension, const std::string &opcode) const;
         MonitorChangeFunc resolveMonitorChangeFunc(IExtension *extension, const std::string &opcode) const;
         int resolveInput(IExtension *extension, const std::string &name) const;
@@ -259,10 +253,8 @@ class Engine : public IEngine
         std::recursive_mutex m_eventLoopMutex;
         std::string m_userAgent;
 
-#ifndef USE_LLVM
         std::unordered_map<IExtension *, std::unordered_map<std::string, BlockComp>> m_compileFunctions;
         std::unordered_map<IExtension *, std::unordered_map<std::string, HatPredicateCompileFunc>> m_hatPredicateCompileFunctions;
-#endif
         std::unordered_map<IExtension *, std::unordered_map<std::string, MonitorNameFunc>> m_monitorNameFunctions;
         std::unordered_map<IExtension *, std::unordered_map<std::string, MonitorChangeFunc>> m_monitorChangeFunctions;
         std::unordered_map<IExtension *, std::unordered_map<std::string, int>> m_inputs;

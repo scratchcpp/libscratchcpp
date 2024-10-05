@@ -1574,7 +1574,6 @@ TEST(EngineTest, Monitors)
     engine.setMonitors({ m1, m2, m3 });
 }
 
-#ifndef USE_LLVM
 TEST(EngineTest, CreateMissingMonitors)
 {
     static constexpr const char *VARIABLE_OPCODE = "data_variable";
@@ -1707,7 +1706,6 @@ TEST(EngineTest, CreateMissingMonitors)
         ASSERT_EQ(monitors[6].get(), m7);
     }
 }
-#endif // USE_LLVM
 
 void questionFunction(const std::string &)
 {

@@ -3,13 +3,24 @@
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#ifdef USE_LLVM
+#include <scratchcpp/dev/compiler.h>
+#else
 #include <scratchcpp/compiler.h>
+#endif
 #include <scratchcpp/input.h>
 #include <enginemock.h>
+#include <targetmock.h>
+#include <codebuilderfactorymock.h>
+#include <codebuildermock.h>
 
 #include "../common.h"
+#include "dev/engine/compiler_p.h"
 
 using namespace libscratchcpp;
+
+using ::testing::Return;
+using ::testing::_;
 
 TEST(InputValueTest, Constructors)
 {
@@ -106,7 +117,74 @@ TEST(InputValueTest, ValuePtr)
     ASSERT_EQ(value2.type(), InputValue::Type::Variable);
 }
 
-#ifndef USE_LLVM
+#ifdef USE_LLVM
+TEST(InputValueTest, Compile)
+{
+    EngineMock engine;
+    TargetMock target;
+    CodeBuilderFactoryMock builderFactory;
+    auto builder = std::make_shared<CodeBuilderMock>();
+    CompilerPrivate::builderFactory = &builderFactory;
+    Compiler compiler(&engine, &target);
+
+    auto block = std::make_shared<Block>("", "");
+    EXPECT_CALL(builderFactory, create(_)).WillOnce(Return(builder));
+    EXPECT_CALL(*builder, finalize);
+    compiler.compile(block);
+    CompilerPrivate::builderFactory = nullptr;
+
+    auto input = std::make_shared<Input>("", Input::Type::Shadow);
+    input->setPrimaryValue(5);
+    block->addInput(input);
+
+    InputValue *value = input->primaryValue();
+    EXPECT_CALL(*builder, addConstValue(input->primaryValue()->value()));
+    value->setType(InputValue::Type::Number);
+    value->compile(&compiler);
+
+    EXPECT_CALL(*builder, addConstValue(input->primaryValue()->value()));
+    value->setType(InputValue::Type::PositiveNumber);
+    value->compile(&compiler);
+
+    EXPECT_CALL(*builder, addConstValue(input->primaryValue()->value()));
+    value->setType(InputValue::Type::PositiveInteger);
+    value->compile(&compiler);
+
+    EXPECT_CALL(*builder, addConstValue(input->primaryValue()->value()));
+    value->setType(InputValue::Type::Integer);
+    value->compile(&compiler);
+
+    EXPECT_CALL(*builder, addConstValue(input->primaryValue()->value()));
+    value->setType(InputValue::Type::Angle);
+    value->compile(&compiler);
+
+    // TODO: Add support for colors
+    // TODO: Use a loop from type 4 to 11
+    /*value->setType(InputValue::Type::Color);
+    value->compile(&compiler);*/
+
+    EXPECT_CALL(*builder, addConstValue(input->primaryValue()->value()));
+    value->setType(InputValue::Type::String);
+    value->compile(&compiler);
+
+    EXPECT_CALL(*builder, addConstValue(input->primaryValue()->value()));
+    value->setType(InputValue::Type::Broadcast);
+    value->compile(&compiler);
+
+    auto variable = std::make_shared<Variable>("", "");
+    auto list = std::make_shared<List>("", "");
+
+    EXPECT_CALL(*builder, addVariableValue(variable.get()));
+    value->setType(InputValue::Type::Variable);
+    value->setValuePtr(variable);
+    value->compile(&compiler);
+
+    EXPECT_CALL(*builder, addListContents(list.get()));
+    value->setType(InputValue::Type::List);
+    value->setValuePtr(list);
+    value->compile(&compiler);
+}
+#else
 TEST(InputValueTest, Compile)
 {
     EngineMock engine;
