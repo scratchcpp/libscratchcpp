@@ -32,6 +32,7 @@ extern "C"
     /*! \brief The ValueData struct holds the data of Value. It's used in compiled Scratch code for better performance. */
     struct LIBSCRATCHCPP_EXPORT ValueData
     {
+            // NOTE: Any changes must also be done in the LLVM code builder!
             union
             {
                     long intValue;
