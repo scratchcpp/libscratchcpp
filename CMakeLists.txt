@@ -39,6 +39,7 @@ target_sources(scratchcpp
     include/scratchcpp/sound.h
     include/scratchcpp/value.h
     include/scratchcpp/valuedata.h
+    include/scratchcpp/value_functions.h
     include/scratchcpp/entity.h
     include/scratchcpp/variable.h
     include/scratchcpp/list.h
