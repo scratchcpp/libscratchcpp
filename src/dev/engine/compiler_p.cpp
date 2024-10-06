@@ -19,7 +19,7 @@ CompilerPrivate::CompilerPrivate(IEngine *engine, Target *target) :
 
 void CompilerPrivate::substackEnd()
 {
-    auto parent = substackTree.back();
+    auto &parent = substackTree.back();
 
     switch (parent.second) {
         case SubstackType::Loop:

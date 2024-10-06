@@ -32,6 +32,7 @@ struct CompilerPrivate
 
         std::shared_ptr<Block> block;
         std::vector<std::pair<std::pair<std::shared_ptr<Block>, std::shared_ptr<Block>>, SubstackType>> substackTree;
+        bool substackHit = false;
         bool warp = false;
 
         static inline ICodeBuilderFactory *builderFactory = nullptr;
