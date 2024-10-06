@@ -73,4 +73,9 @@ extern "C"
         std::cout << "3_args " << s1 << " " << s2 << " " << s3 << std::endl;
         value_assign_cstring(ret, "3_args_output");
     }
+
+    void test_equals(Target *target, ValueData *ret, ValueData *a, ValueData *b)
+    {
+        value_assign_bool(ret, value_equals(a, b));
+    }
 }

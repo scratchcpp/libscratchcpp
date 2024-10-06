@@ -8,6 +8,8 @@
 
 using namespace libscratchcpp;
 
+using ::testing::Return;
+
 class LLVMCodeBuilderTest : public testing::Test
 {
     public:
@@ -102,4 +104,173 @@ TEST_F(LLVMCodeBuilderTest, Yield)
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected2);
     ASSERT_TRUE(code->isFinished(ctx.get()));
+}
+
+TEST_F(LLVMCodeBuilderTest, IfStatement)
+{
+    // Without else branch (const condition)
+    m_builder->addConstValue("true");
+    m_builder->beginIfStatement();
+    m_builder->addFunctionCall("test_function_no_args", 0, false);
+    m_builder->endIf();
+
+    m_builder->addConstValue("false");
+    m_builder->beginIfStatement();
+    m_builder->addFunctionCall("test_function_no_args", 0, false);
+    m_builder->endIf();
+
+    // Without else branch (condition returned by function)
+    m_builder->addFunctionCall("test_function_no_args_ret", 0, true);
+    m_builder->addConstValue("no_args_output");
+    m_builder->addFunctionCall("test_equals", 2, true);
+    m_builder->beginIfStatement();
+    m_builder->addConstValue(0);
+    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->endIf();
+
+    m_builder->addFunctionCall("test_function_no_args_ret", 0, true);
+    m_builder->addConstValue("");
+    m_builder->addFunctionCall("test_equals", 2, true);
+    m_builder->beginIfStatement();
+    m_builder->addConstValue(1);
+    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->endIf();
+
+    // With else branch (const condition)
+    m_builder->addConstValue("true");
+    m_builder->beginIfStatement();
+    m_builder->addConstValue(2);
+    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->beginElseBranch();
+    m_builder->addConstValue(3);
+    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->endIf();
+
+    m_builder->addConstValue("false");
+    m_builder->beginIfStatement();
+    m_builder->addConstValue(4);
+    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->beginElseBranch();
+    m_builder->addConstValue(5);
+    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->endIf();
+
+    // With else branch (condition returned by function)
+    m_builder->addFunctionCall("test_function_no_args_ret", 0, true);
+    m_builder->addConstValue("no_args_output");
+    m_builder->addFunctionCall("test_equals", 2, true);
+    m_builder->beginIfStatement();
+    m_builder->addConstValue(6);
+    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->beginElseBranch();
+    m_builder->addConstValue(7);
+    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->endIf();
+
+    m_builder->addFunctionCall("test_function_no_args_ret", 0, true);
+    m_builder->addConstValue("");
+    m_builder->addFunctionCall("test_equals", 2, true);
+    m_builder->beginIfStatement();
+    m_builder->addConstValue(8);
+    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->beginElseBranch();
+    m_builder->addConstValue(9);
+    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->endIf();
+
+    // Nested 1
+    m_builder->addConstValue(true);
+    m_builder->beginIfStatement();
+    {
+        m_builder->addConstValue(false);
+        m_builder->beginIfStatement();
+        {
+            m_builder->addConstValue(0);
+            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+        }
+        m_builder->beginElseBranch();
+        {
+            m_builder->addConstValue(1);
+            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+
+            m_builder->addConstValue(false);
+            m_builder->beginIfStatement();
+            m_builder->beginElseBranch();
+            {
+                m_builder->addConstValue(2);
+                m_builder->addFunctionCall("test_function_1_arg", 1, false);
+            }
+            m_builder->endIf();
+        }
+        m_builder->endIf();
+    }
+    m_builder->beginElseBranch();
+    {
+        m_builder->addConstValue(true);
+        m_builder->beginIfStatement();
+        {
+            m_builder->addConstValue(3);
+            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+        }
+        m_builder->beginElseBranch();
+        {
+            m_builder->addConstValue(4);
+            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+        }
+        m_builder->endIf();
+    }
+    m_builder->endIf();
+
+    // Nested 2
+    m_builder->addConstValue(false);
+    m_builder->beginIfStatement();
+    {
+        m_builder->addConstValue(false);
+        m_builder->beginIfStatement();
+        {
+            m_builder->addConstValue(5);
+            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+        }
+        m_builder->beginElseBranch();
+        {
+            m_builder->addConstValue(6);
+            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+        }
+        m_builder->endIf();
+    }
+    m_builder->beginElseBranch();
+    {
+        m_builder->addConstValue(true);
+        m_builder->beginIfStatement();
+        {
+            m_builder->addConstValue(7);
+            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+        }
+        m_builder->beginElseBranch();
+        m_builder->endIf();
+    }
+    m_builder->endIf();
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&m_target);
+
+    static const std::string expected =
+        "no_args\n"
+        "no_args_ret\n"
+        "1_arg 0\n"
+        "no_args_ret\n"
+        "1_arg 2\n"
+        "1_arg 5\n"
+        "no_args_ret\n"
+        "1_arg 6\n"
+        "no_args_ret\n"
+        "1_arg 9\n"
+        "1_arg 1\n"
+        "1_arg 2\n"
+        "1_arg 7\n";
+
+    EXPECT_CALL(m_target, isStage).WillRepeatedly(Return(false));
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }

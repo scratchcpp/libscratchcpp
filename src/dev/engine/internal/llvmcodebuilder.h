@@ -49,7 +49,10 @@ class LLVMCodeBuilder : public ICodeBuilder
                 enum class Type
                 {
                     FunctionCall,
-                    Yield
+                    Yield,
+                    BeginIf,
+                    BeginElse,
+                    EndIf
                 };
 
                 Step(Type type) :
@@ -64,6 +67,15 @@ class LLVMCodeBuilder : public ICodeBuilder
                 size_t functionReturnRegIndex = 0;
         };
 
+        struct IfStatement
+        {
+                llvm::Value *condition = nullptr;
+                llvm::BasicBlock *beforeIf = nullptr;
+                llvm::BasicBlock *body = nullptr;
+                llvm::BasicBlock *elseBranch = nullptr;
+                llvm::BasicBlock *afterIf = nullptr;
+        };
+
         void initTypes();
         llvm::Function *beginFunction(size_t index);
         void endFunction(llvm::Function *func, size_t index);
@@ -76,6 +88,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_value_assign_bool();
         llvm::FunctionCallee resolve_value_assign_cstring();
         llvm::FunctionCallee resolve_value_assign_special();
+        llvm::FunctionCallee resolve_value_toBool();
 
         std::string m_id;
         llvm::LLVMContext m_ctx;

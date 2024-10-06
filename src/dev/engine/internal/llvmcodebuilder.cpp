@@ -38,6 +38,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 {
     size_t functionIndex = 0;
     llvm::Function *currentFunc = beginFunction(functionIndex);
+    std::vector<IfStatement> ifStatements;
 
     // Execute recorded steps
     for (const Step &step : m_steps) {
@@ -71,6 +72,68 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 endFunction(currentFunc, functionIndex);
                 currentFunc = beginFunction(++functionIndex);
                 break;
+
+            case Step::Type::BeginIf: {
+                IfStatement statement;
+                statement.beforeIf = m_builder.GetInsertBlock();
+                statement.body = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+
+                // Convert last reg to bool
+                assert(step.args.size() == 1);
+                statement.condition = m_builder.CreateCall(resolve_value_toBool(), step.args[0]->value);
+
+                // Switch to body branch
+                m_builder.SetInsertPoint(statement.body);
+
+                ifStatements.push_back(statement);
+                break;
+            }
+
+            case Step::Type::BeginElse: {
+                assert(!ifStatements.empty());
+                IfStatement &statement = ifStatements.back();
+
+                // Jump to the branch after the if statement
+                assert(!statement.afterIf);
+                statement.afterIf = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                m_builder.CreateBr(statement.afterIf);
+
+                // Create else branch
+                assert(!statement.elseBranch);
+                statement.elseBranch = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+
+                // Since there's an else branch, the conditional instruction should jump to it
+                m_builder.SetInsertPoint(statement.beforeIf);
+                m_builder.CreateCondBr(statement.condition, statement.body, statement.elseBranch);
+
+                // Switch to the else branch
+                m_builder.SetInsertPoint(statement.elseBranch);
+                break;
+            }
+
+            case Step::Type::EndIf: {
+                assert(!ifStatements.empty());
+                IfStatement &statement = ifStatements.back();
+
+                // Jump to the branch after the if statement
+                if (!statement.afterIf)
+                    statement.afterIf = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+
+                m_builder.CreateBr(statement.afterIf);
+
+                if (statement.elseBranch) {
+                } else {
+                    // If there wasn't an 'else' branch, create a conditional instruction which skips the if statement if false
+                    m_builder.SetInsertPoint(statement.beforeIf);
+                    m_builder.CreateCondBr(statement.condition, statement.body, statement.afterIf);
+                }
+
+                // Switch to the branch after the if statement
+                m_builder.SetInsertPoint(statement.afterIf);
+
+                ifStatements.pop_back();
+                break;
+            }
         }
     }
 
@@ -140,14 +203,21 @@ void LLVMCodeBuilder::addListContents(List *list)
 
 void LLVMCodeBuilder::beginIfStatement()
 {
+    Step step(Step::Type::BeginIf);
+    assert(!m_tmpRegs.empty());
+    step.args.push_back(m_tmpRegs.back());
+    m_tmpRegs.pop_back();
+    m_steps.push_back(step);
 }
 
 void LLVMCodeBuilder::beginElseBranch()
 {
+    m_steps.push_back(Step(Step::Type::BeginElse));
 }
 
 void LLVMCodeBuilder::endIf()
 {
+    m_steps.push_back(Step(Step::Type::EndIf));
 }
 
 void LLVMCodeBuilder::beginLoop()
@@ -288,4 +358,9 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_cstring()
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_special()
 {
     return resolveFunction("value_assign_special", llvm::FunctionType::get(m_builder.getVoidTy(), { m_valueDataType->getPointerTo(), m_builder.getInt32Ty() }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_value_toBool()
+{
+    return resolveFunction("value_toBool", llvm::FunctionType::get(m_builder.getInt1Ty(), m_valueDataType->getPointerTo(), false));
 }
