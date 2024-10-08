@@ -31,7 +31,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void beginElseBranch() override;
         void endIf() override;
 
-        void beginLoop() override;
+        void beginRepeatLoop() override;
         void endLoop() override;
 
         void yield() override;

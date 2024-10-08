@@ -220,7 +220,7 @@ void LLVMCodeBuilder::endIf()
     m_steps.push_back(Step(Step::Type::EndIf));
 }
 
-void LLVMCodeBuilder::beginLoop()
+void LLVMCodeBuilder::beginRepeatLoop()
 {
 }
 
