@@ -274,3 +274,89 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
+
+TEST_F(LLVMCodeBuilderTest, RepeatLoop)
+{
+    // Const count
+    m_builder->addConstValue("-5");
+    m_builder->beginRepeatLoop();
+    m_builder->addFunctionCall("test_function_no_args", 0, false);
+    m_builder->endLoop();
+
+    m_builder->addConstValue(0);
+    m_builder->beginRepeatLoop();
+    m_builder->addFunctionCall("test_function_no_args", 0, false);
+    m_builder->endLoop();
+
+    m_builder->addConstValue(3);
+    m_builder->beginRepeatLoop();
+    m_builder->addFunctionCall("test_function_no_args", 0, false);
+    m_builder->endLoop();
+
+    m_builder->addConstValue("2");
+    m_builder->beginRepeatLoop();
+    m_builder->addConstValue(0);
+    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->endLoop();
+
+    // Count returned by function
+    m_builder->addConstValue(2);
+    m_builder->addFunctionCall("test_const", 1, true);
+    m_builder->beginRepeatLoop();
+    m_builder->addFunctionCall("test_function_no_args", 0, false);
+    m_builder->endLoop();
+
+    // Nested
+    m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop();
+    {
+        m_builder->addConstValue(2);
+        m_builder->beginRepeatLoop();
+        {
+            m_builder->addConstValue(1);
+            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+        }
+        m_builder->endLoop();
+
+        m_builder->addConstValue(2);
+        m_builder->addFunctionCall("test_function_1_arg", 1, false);
+
+        m_builder->addConstValue(3);
+        m_builder->beginRepeatLoop();
+        {
+            m_builder->addConstValue(3);
+            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+        }
+        m_builder->endLoop();
+    }
+    m_builder->endLoop();
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&m_target);
+
+    static const std::string expected =
+        "no_args\n"
+        "no_args\n"
+        "no_args\n"
+        "1_arg 0\n"
+        "1_arg 0\n"
+        "no_args\n"
+        "no_args\n"
+        "1_arg 1\n"
+        "1_arg 1\n"
+        "1_arg 2\n"
+        "1_arg 3\n"
+        "1_arg 3\n"
+        "1_arg 3\n"
+        "1_arg 1\n"
+        "1_arg 1\n"
+        "1_arg 2\n"
+        "1_arg 3\n"
+        "1_arg 3\n"
+        "1_arg 3\n";
+
+    EXPECT_CALL(m_target, isStage).WillRepeatedly(Return(false));
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}

@@ -39,6 +39,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     size_t functionIndex = 0;
     llvm::Function *currentFunc = beginFunction(functionIndex);
     std::vector<IfStatement> ifStatements;
+    std::vector<Loop> loops;
 
     // Execute recorded steps
     for (const Step &step : m_steps) {
@@ -134,6 +135,77 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 ifStatements.pop_back();
                 break;
             }
+
+            case Step::Type::BeginRepeatLoop: {
+                Loop loop;
+                loop.isRepeatLoop = true;
+
+                // index = 0
+                llvm::Constant *zero = llvm::ConstantInt::get(m_builder.getInt64Ty(), 0, true);
+                loop.index = m_builder.CreateAlloca(m_builder.getInt64Ty());
+                m_builder.CreateStore(zero, loop.index);
+
+                // Create branches
+                llvm::BasicBlock *roundBranch = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                loop.conditionBranch = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+
+                // Convert last reg to double
+                assert(step.args.size() == 1);
+                llvm::Value *count = m_builder.CreateCall(resolve_value_toDouble(), step.args[0]->value);
+
+                // Clamp count if <= 0 (we can skip the loop if count is not positive)
+                llvm::Value *comparison = m_builder.CreateFCmpULE(count, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)));
+                m_builder.CreateCondBr(comparison, loop.afterLoop, roundBranch);
+
+                // Round (Scratch-specific behavior)
+                m_builder.SetInsertPoint(roundBranch);
+                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::round, { count->getType() });
+                count = m_builder.CreateCall(roundFunc, { count });
+                count = m_builder.CreateFPToSI(count, m_builder.getInt64Ty()); // cast to signed integer
+
+                // Jump to condition branch
+                m_builder.CreateBr(loop.conditionBranch);
+
+                // Check index
+                m_builder.SetInsertPoint(loop.conditionBranch);
+
+                llvm::BasicBlock *body = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+
+                if (!loop.afterLoop)
+                    loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+
+                llvm::Value *currentIndex = m_builder.CreateLoad(m_builder.getInt64Ty(), loop.index);
+                comparison = m_builder.CreateICmpULT(currentIndex, count);
+                m_builder.CreateCondBr(comparison, body, loop.afterLoop);
+
+                // Switch to body branch
+                m_builder.SetInsertPoint(body);
+
+                loops.push_back(loop);
+                break;
+            }
+
+            case Step::Type::EndLoop: {
+                assert(!loops.empty());
+                Loop &loop = loops.back();
+
+                if (loop.isRepeatLoop) {
+                    // Increment index
+                    llvm::Value *currentIndex = m_builder.CreateLoad(m_builder.getInt64Ty(), loop.index);
+                    llvm::Value *incremented = m_builder.CreateAdd(currentIndex, llvm::ConstantInt::get(m_builder.getInt64Ty(), 1, true));
+                    m_builder.CreateStore(incremented, loop.index);
+                }
+
+                // Jump to the condition branch
+                m_builder.CreateBr(loop.conditionBranch);
+
+                // Switch to the branch after the loop
+                m_builder.SetInsertPoint(loop.afterLoop);
+
+                loops.pop_back();
+                break;
+            }
         }
     }
 
@@ -222,10 +294,16 @@ void LLVMCodeBuilder::endIf()
 
 void LLVMCodeBuilder::beginRepeatLoop()
 {
+    Step step(Step::Type::BeginRepeatLoop);
+    assert(!m_tmpRegs.empty());
+    step.args.push_back(m_tmpRegs.back());
+    m_tmpRegs.pop_back();
+    m_steps.push_back(step);
 }
 
 void LLVMCodeBuilder::endLoop()
 {
+    m_steps.push_back(Step(Step::Type::EndLoop));
 }
 
 void LLVMCodeBuilder::yield()
@@ -358,6 +436,11 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_cstring()
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_special()
 {
     return resolveFunction("value_assign_special", llvm::FunctionType::get(m_builder.getVoidTy(), { m_valueDataType->getPointerTo(), m_builder.getInt32Ty() }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_value_toDouble()
+{
+    return resolveFunction("value_toDouble", llvm::FunctionType::get(m_builder.getDoubleTy(), m_valueDataType->getPointerTo(), false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_toBool()

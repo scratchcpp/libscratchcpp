@@ -78,4 +78,9 @@ extern "C"
     {
         value_assign_bool(ret, value_equals(a, b));
     }
+
+    void test_const(Target *target, ValueData *ret, ValueData *v)
+    {
+        value_assign_copy(ret, v);
+    }
 }

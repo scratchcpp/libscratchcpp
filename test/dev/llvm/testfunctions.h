@@ -20,6 +20,7 @@ extern "C"
     void test_function_3_args_ret(Target *target, ValueData *ret, const ValueData *arg1, const ValueData *arg2, const ValueData *arg3);
 
     void test_equals(Target *target, ValueData *ret, ValueData *a, ValueData *b);
+    void test_const(Target *target, ValueData *ret, ValueData *v);
 }
 
 } // namespace libscratchcpp

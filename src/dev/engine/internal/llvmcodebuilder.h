@@ -52,7 +52,9 @@ class LLVMCodeBuilder : public ICodeBuilder
                     Yield,
                     BeginIf,
                     BeginElse,
-                    EndIf
+                    EndIf,
+                    BeginRepeatLoop,
+                    EndLoop
                 };
 
                 Step(Type type) :
@@ -76,6 +78,14 @@ class LLVMCodeBuilder : public ICodeBuilder
                 llvm::BasicBlock *afterIf = nullptr;
         };
 
+        struct Loop
+        {
+                bool isRepeatLoop = false;
+                llvm::Value *index = nullptr;
+                llvm::BasicBlock *conditionBranch = nullptr;
+                llvm::BasicBlock *afterLoop = nullptr;
+        };
+
         void initTypes();
         llvm::Function *beginFunction(size_t index);
         void endFunction(llvm::Function *func, size_t index);
@@ -88,6 +98,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_value_assign_bool();
         llvm::FunctionCallee resolve_value_assign_cstring();
         llvm::FunctionCallee resolve_value_assign_special();
+        llvm::FunctionCallee resolve_value_toDouble();
         llvm::FunctionCallee resolve_value_toBool();
 
         std::string m_id;
