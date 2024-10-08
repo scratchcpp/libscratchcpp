@@ -97,6 +97,11 @@ extern "C"
         value_assign_copy(ret, v);
     }
 
+    void test_not(Target *target, ValueData *ret, ValueData *arg)
+    {
+        value_assign_bool(ret, !value_toBool(arg));
+    }
+
     void test_reset_counter(Target *target)
     {
         counter = 0;

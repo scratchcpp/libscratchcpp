@@ -21,6 +21,7 @@ extern "C"
 
     void test_equals(Target *target, ValueData *ret, ValueData *a, ValueData *b);
     void test_lower_than(Target *target, ValueData *ret, ValueData *a, ValueData *b);
+    void test_not(Target *target, ValueData *ret, ValueData *arg);
     void test_const(Target *target, ValueData *ret, ValueData *v);
 
     void test_unreachable(Target *target);

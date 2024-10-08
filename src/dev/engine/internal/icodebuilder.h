@@ -31,6 +31,7 @@ class ICodeBuilder
 
         virtual void beginRepeatLoop() = 0;
         virtual void beginWhileLoop() = 0;
+        virtual void beginRepeatUntilLoop() = 0;
         virtual void beginLoopCondition() = 0;
         virtual void endLoop() = 0;
 

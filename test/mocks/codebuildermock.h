@@ -20,6 +20,7 @@ class CodeBuilderMock : public ICodeBuilder
 
         MOCK_METHOD(void, beginRepeatLoop, (), (override));
         MOCK_METHOD(void, beginWhileLoop, (), (override));
+        MOCK_METHOD(void, beginRepeatUntilLoop, (), (override));
         MOCK_METHOD(void, beginLoopCondition, (), (override));
         MOCK_METHOD(void, endLoop, (), (override));
 
