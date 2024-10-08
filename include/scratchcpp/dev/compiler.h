@@ -41,6 +41,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void moveToIf(std::shared_ptr<Block> substack);
         void moveToIfElse(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2);
         void moveToRepeatLoop(std::shared_ptr<Block> substack);
+        void moveToWhileLoop(std::shared_ptr<Block> substack);
+        void beginLoopCondition();
         void warp();
 
         Input *input(const std::string &name) const;

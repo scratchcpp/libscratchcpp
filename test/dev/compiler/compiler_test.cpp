@@ -479,6 +479,96 @@ TEST_F(CompilerTest, MoveToRepeatLoop)
     compile(compiler, l1);
 }
 
+TEST_F(CompilerTest, MoveToWhileLoop)
+{
+    Compiler compiler(&m_engine, &m_target);
+
+    auto l1 = std::make_shared<Block>("", "loop");
+    l1->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, beginWhileLoop());
+        EXPECT_CALL(*m_builder, endLoop());
+        compiler->moveToWhileLoop(nullptr);
+    });
+
+    auto l2 = std::make_shared<Block>("", "loop");
+    l1->setNext(l2);
+    l2->setParent(l1);
+    l2->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, beginWhileLoop());
+        EXPECT_CALL(*m_builder, addConstValue(Value(2)));
+        EXPECT_CALL(*m_builder, endLoop());
+        compiler->moveToWhileLoop(compiler->input("SUBSTACK")->valueBlock());
+    });
+
+    auto substack = std::make_shared<Block>("", "substack");
+    substack->setParent(l2);
+    substack->setCompileFunction([](Compiler *compiler) { compiler->addConstValue(2); });
+
+    auto input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
+    input->setValueBlock(substack);
+    l2->addInput(input);
+
+    // Nested
+    auto l3 = std::make_shared<Block>("", "loop");
+    l2->setNext(l3);
+    l3->setParent(l2);
+    l3->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, beginWhileLoop()).Times(2);
+        EXPECT_CALL(*m_builder, endLoop()).Times(2);
+        EXPECT_CALL(*m_builder, addConstValue(Value(1)));
+        compiler->moveToWhileLoop(compiler->input("SUBSTACK")->valueBlock());
+    });
+
+    // Begin loop
+    auto loopSubstack = std::make_shared<Block>("", "loop");
+    loopSubstack->setParent(l3);
+    loopSubstack->setCompileFunction([](Compiler *compiler) { compiler->moveToWhileLoop(compiler->input("SUBSTACK")->valueBlock()); });
+
+    substack = std::make_shared<Block>("", "substack");
+    substack->setParent(loopSubstack);
+    substack->setCompileFunction([](Compiler *compiler) { compiler->addConstValue(1); });
+
+    input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
+    input->setValueBlock(substack);
+    loopSubstack->addInput(input);
+
+    // End loop
+    input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
+    input->setValueBlock(loopSubstack);
+    l3->addInput(input);
+
+    // Empty loop body
+    auto l4 = std::make_shared<Block>("", "loop");
+    l3->setNext(l4);
+    l4->setParent(l3);
+    l4->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, beginWhileLoop());
+        EXPECT_CALL(*m_builder, endLoop());
+        compiler->moveToWhileLoop(nullptr);
+    });
+
+    // Code after the loop
+    auto block = std::make_shared<Block>("", "");
+    block->setParent(l4);
+    l4->setNext(block);
+    block->setCompileFunction([](Compiler *compiler) { compiler->addConstValue("after"); });
+
+    EXPECT_CALL(*m_builder, addConstValue(Value("after")));
+    compile(compiler, l1);
+}
+
+TEST_F(CompilerTest, BeginLoopCondition)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("a", "");
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, beginLoopCondition());
+        compiler->beginLoopCondition();
+    });
+
+    compile(compiler, block);
+}
+
 TEST_F(CompilerTest, Input)
 {
     Compiler compiler(&m_engine, &m_target);

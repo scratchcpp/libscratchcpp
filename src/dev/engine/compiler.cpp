@@ -141,6 +141,24 @@ void Compiler::moveToRepeatLoop(std::shared_ptr<Block> substack)
         impl->substackEnd();
 }
 
+/*! Jumps to the given while loop substack. */
+void Compiler::moveToWhileLoop(std::shared_ptr<Block> substack)
+{
+    impl->substackHit = true;
+    impl->substackTree.push_back({ { impl->block, nullptr }, CompilerPrivate::SubstackType::Loop });
+    impl->block = substack;
+    impl->builder->beginWhileLoop();
+
+    if (!impl->block)
+        impl->substackEnd();
+}
+
+/*! Begins a while/until loop condition. */
+void Compiler::beginLoopCondition()
+{
+    impl->builder->beginLoopCondition();
+}
+
 /*! Makes current script run without screen refresh. */
 void Compiler::warp()
 {
