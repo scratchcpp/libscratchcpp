@@ -134,6 +134,12 @@ void Compiler::warp()
 }
 
 /*! Convenience method which returns the field with the given name. */
+Input *Compiler::input(const std::string &name) const
+{
+    return impl->block->inputAt(impl->block->findInput(name)).get();
+}
+
+/*! Convenience method which returns the field with the given name. */
 Field *Compiler::field(const std::string &name) const
 {
     return impl->block->fieldAt(impl->block->findField(name)).get();

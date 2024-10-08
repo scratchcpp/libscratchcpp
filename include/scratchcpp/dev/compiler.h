@@ -43,6 +43,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void moveToLoop(std::shared_ptr<Block> substack);
         void warp();
 
+        Input *input(const std::string &name) const;
         Field *field(const std::string &name) const;
 
         const std::unordered_set<std::string> &unsupportedBlocks() const;
