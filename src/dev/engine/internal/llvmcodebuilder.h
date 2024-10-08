@@ -32,6 +32,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         void endIf() override;
 
         void beginRepeatLoop() override;
+        void beginWhileLoop() override;
+        void beginLoopCondition() override;
         void endLoop() override;
 
         void yield() override;
@@ -54,6 +56,8 @@ class LLVMCodeBuilder : public ICodeBuilder
                     BeginElse,
                     EndIf,
                     BeginRepeatLoop,
+                    BeginWhileLoop,
+                    BeginLoopCondition,
                     EndLoop
                 };
 

@@ -186,6 +186,34 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::BeginWhileLoop: {
+                assert(!loops.empty());
+                Loop &loop = loops.back();
+
+                // Create branches
+                llvm::BasicBlock *body = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+
+                // Convert last reg to bool and add condition
+                assert(step.args.size() == 1);
+                llvm::Value *condition = m_builder.CreateCall(resolve_value_toBool(), step.args[0]->value);
+                m_builder.CreateCondBr(condition, body, loop.afterLoop);
+
+                // Switch to body branch
+                m_builder.SetInsertPoint(body);
+                break;
+            }
+
+            case Step::Type::BeginLoopCondition: {
+                Loop loop;
+                loop.isRepeatLoop = false;
+                loop.conditionBranch = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                m_builder.CreateBr(loop.conditionBranch);
+                m_builder.SetInsertPoint(loop.conditionBranch);
+                loops.push_back(loop);
+                break;
+            }
+
             case Step::Type::EndLoop: {
                 assert(!loops.empty());
                 Loop &loop = loops.back();
@@ -299,6 +327,20 @@ void LLVMCodeBuilder::beginRepeatLoop()
     step.args.push_back(m_tmpRegs.back());
     m_tmpRegs.pop_back();
     m_steps.push_back(step);
+}
+
+void LLVMCodeBuilder::beginWhileLoop()
+{
+    Step step(Step::Type::BeginWhileLoop);
+    assert(!m_tmpRegs.empty());
+    step.args.push_back(m_tmpRegs.back());
+    m_tmpRegs.pop_back();
+    m_steps.push_back(step);
+}
+
+void LLVMCodeBuilder::beginLoopCondition()
+{
+    m_steps.push_back(Step(Step::Type::BeginLoopCondition));
 }
 
 void LLVMCodeBuilder::endLoop()

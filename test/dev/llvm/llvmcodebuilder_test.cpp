@@ -360,3 +360,80 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
+
+TEST_F(LLVMCodeBuilderTest, WhileLoop)
+{
+    // Const condition
+    m_builder->beginLoopCondition();
+    m_builder->addConstValue("false");
+    m_builder->beginWhileLoop();
+    m_builder->addFunctionCall("test_unreachable", 0, false);
+    m_builder->endLoop();
+
+    m_builder->beginLoopCondition();
+    m_builder->addConstValue(false);
+    m_builder->beginWhileLoop();
+    m_builder->addFunctionCall("test_unreachable", 0, false);
+    m_builder->endLoop();
+
+    // Condition returned by function
+    m_builder->addFunctionCall("test_reset_counter", 0, false);
+    m_builder->beginLoopCondition();
+    m_builder->addFunctionCall("test_get_counter", 0, true);
+    m_builder->addConstValue(2);
+    m_builder->addFunctionCall("test_lower_than", 2, true);
+    m_builder->beginWhileLoop();
+    m_builder->addConstValue(0);
+    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addFunctionCall("test_increment_counter", 0, false);
+    m_builder->endLoop();
+
+    // Nested
+    m_builder->addFunctionCall("test_reset_counter", 0, false);
+    m_builder->beginLoopCondition();
+    m_builder->addFunctionCall("test_get_counter", 0, true);
+    m_builder->addConstValue(3);
+    m_builder->addFunctionCall("test_lower_than", 2, true);
+    m_builder->beginWhileLoop();
+    {
+        m_builder->beginLoopCondition();
+        m_builder->addFunctionCall("test_get_counter", 0, true);
+        m_builder->addConstValue(3);
+        m_builder->addFunctionCall("test_lower_than", 2, true);
+        m_builder->beginWhileLoop();
+        {
+            m_builder->addConstValue(1);
+            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+            m_builder->addFunctionCall("test_increment_counter", 0, false);
+        }
+        m_builder->endLoop();
+
+        m_builder->addConstValue(2);
+        m_builder->addFunctionCall("test_function_1_arg", 1, false);
+
+        m_builder->beginLoopCondition();
+        m_builder->addConstValue(false);
+        m_builder->beginWhileLoop();
+        {
+            m_builder->addFunctionCall("test_unreachable", 0, false);
+        }
+        m_builder->endLoop();
+    }
+    m_builder->endLoop();
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&m_target);
+
+    static const std::string expected =
+        "1_arg 0\n"
+        "1_arg 0\n"
+        "1_arg 1\n"
+        "1_arg 1\n"
+        "1_arg 1\n"
+        "1_arg 2\n";
+
+    EXPECT_CALL(m_target, isStage).WillRepeatedly(Return(false));
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
