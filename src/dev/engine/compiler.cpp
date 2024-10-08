@@ -153,6 +153,18 @@ void Compiler::moveToWhileLoop(std::shared_ptr<Block> substack)
         impl->substackEnd();
 }
 
+/*! Jumps to the given until loop substack. */
+void Compiler::moveToRepeatUntilLoop(std::shared_ptr<Block> substack)
+{
+    impl->substackHit = true;
+    impl->substackTree.push_back({ { impl->block, nullptr }, CompilerPrivate::SubstackType::Loop });
+    impl->block = substack;
+    impl->builder->beginRepeatUntilLoop();
+
+    if (!impl->block)
+        impl->substackEnd();
+}
+
 /*! Begins a while/until loop condition. */
 void Compiler::beginLoopCondition()
 {

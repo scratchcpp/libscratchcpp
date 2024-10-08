@@ -42,6 +42,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void moveToIfElse(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2);
         void moveToRepeatLoop(std::shared_ptr<Block> substack);
         void moveToWhileLoop(std::shared_ptr<Block> substack);
+        void moveToRepeatUntilLoop(std::shared_ptr<Block> substack);
         void beginLoopCondition();
         void warp();
 
