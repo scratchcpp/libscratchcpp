@@ -129,12 +129,13 @@ void Compiler::moveToIfElse(std::shared_ptr<Block> substack1, std::shared_ptr<Bl
         impl->substackEnd();
 }
 
-/*! Jumps to the given loop substack. */
-void Compiler::moveToLoop(std::shared_ptr<Block> substack)
+/*! Jumps to the given repeat loop substack. */
+void Compiler::moveToRepeatLoop(std::shared_ptr<Block> substack)
 {
     impl->substackHit = true;
     impl->substackTree.push_back({ { impl->block, nullptr }, CompilerPrivate::SubstackType::Loop });
     impl->block = substack;
+    impl->builder->beginRepeatLoop();
 
     if (!impl->block)
         impl->substackEnd();

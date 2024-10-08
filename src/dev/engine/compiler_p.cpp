@@ -24,8 +24,8 @@ void CompilerPrivate::substackEnd()
     switch (parent.second) {
         case SubstackType::Loop:
             // Yield at loop end if not running without screen refresh
-            if (!warp)
-                builder->yield();
+            /*if (!warp)
+                builder->yield();*/
 
             builder->endLoop();
             break;
