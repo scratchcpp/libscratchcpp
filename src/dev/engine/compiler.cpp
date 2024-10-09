@@ -39,6 +39,8 @@ std::shared_ptr<libscratchcpp::Block> Compiler::block() const
 std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBlock)
 {
     impl->builder = impl->builderFactory->create(startBlock->id());
+    impl->substackTree.clear();
+    impl->substackHit = false;
     impl->warp = false;
     impl->block = startBlock;
 
@@ -52,10 +54,13 @@ std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBl
             impl->unsupportedBlocks.insert(impl->block->opcode());
         }
 
-        if (substacks != impl->substackTree.size())
+        if (impl->substackHit) {
+            impl->substackHit = false;
             continue;
+        }
 
-        impl->block = impl->block->next();
+        if (impl->block)
+            impl->block = impl->block->next();
 
         if (!impl->block && !impl->substackTree.empty())
             impl->substackEnd();
@@ -100,37 +105,82 @@ void Compiler::addInput(const std::string &name)
 /*! Jumps to the given if substack. */
 void Compiler::moveToIf(std::shared_ptr<Block> substack)
 {
+    if (!substack)
+        return; // ignore empty if statements
+
+    impl->substackHit = true;
     impl->substackTree.push_back({ { impl->block, nullptr }, CompilerPrivate::SubstackType::IfStatement });
     impl->block = substack;
-
-    if (!impl->block)
-        impl->substackEnd();
+    impl->builder->beginIfStatement();
 }
 
 /*! Jumps to the given if/else substack. The second substack is used for the else branch. */
 void Compiler::moveToIfElse(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2)
 {
+    if (!substack1 && !substack2)
+        return; // ignore empty if statements
+
+    impl->substackHit = true;
     impl->substackTree.push_back({ { impl->block, substack2 }, CompilerPrivate::SubstackType::IfStatement });
     impl->block = substack1;
+    impl->builder->beginIfStatement();
 
     if (!impl->block)
         impl->substackEnd();
 }
 
-/*! Jumps to the given loop substack. */
-void Compiler::moveToLoop(std::shared_ptr<Block> substack)
+/*! Jumps to the given repeat loop substack. */
+void Compiler::moveToRepeatLoop(std::shared_ptr<Block> substack)
 {
+    impl->substackHit = true;
     impl->substackTree.push_back({ { impl->block, nullptr }, CompilerPrivate::SubstackType::Loop });
     impl->block = substack;
+    impl->builder->beginRepeatLoop();
 
     if (!impl->block)
         impl->substackEnd();
+}
+
+/*! Jumps to the given while loop substack. */
+void Compiler::moveToWhileLoop(std::shared_ptr<Block> substack)
+{
+    impl->substackHit = true;
+    impl->substackTree.push_back({ { impl->block, nullptr }, CompilerPrivate::SubstackType::Loop });
+    impl->block = substack;
+    impl->builder->beginWhileLoop();
+
+    if (!impl->block)
+        impl->substackEnd();
+}
+
+/*! Jumps to the given until loop substack. */
+void Compiler::moveToRepeatUntilLoop(std::shared_ptr<Block> substack)
+{
+    impl->substackHit = true;
+    impl->substackTree.push_back({ { impl->block, nullptr }, CompilerPrivate::SubstackType::Loop });
+    impl->block = substack;
+    impl->builder->beginRepeatUntilLoop();
+
+    if (!impl->block)
+        impl->substackEnd();
+}
+
+/*! Begins a while/until loop condition. */
+void Compiler::beginLoopCondition()
+{
+    impl->builder->beginLoopCondition();
 }
 
 /*! Makes current script run without screen refresh. */
 void Compiler::warp()
 {
     impl->warp = true;
+}
+
+/*! Convenience method which returns the field with the given name. */
+Input *Compiler::input(const std::string &name) const
+{
+    return impl->block->inputAt(impl->block->findInput(name)).get();
 }
 
 /*! Convenience method which returns the field with the given name. */

@@ -31,7 +31,10 @@ class LLVMCodeBuilder : public ICodeBuilder
         void beginElseBranch() override;
         void endIf() override;
 
-        void beginLoop() override;
+        void beginRepeatLoop() override;
+        void beginWhileLoop() override;
+        void beginRepeatUntilLoop() override;
+        void beginLoopCondition() override;
         void endLoop() override;
 
         void yield() override;
@@ -49,7 +52,15 @@ class LLVMCodeBuilder : public ICodeBuilder
                 enum class Type
                 {
                     FunctionCall,
-                    Yield
+                    Yield,
+                    BeginIf,
+                    BeginElse,
+                    EndIf,
+                    BeginRepeatLoop,
+                    BeginWhileLoop,
+                    BeginRepeatUntilLoop,
+                    BeginLoopCondition,
+                    EndLoop
                 };
 
                 Step(Type type) :
@@ -64,6 +75,23 @@ class LLVMCodeBuilder : public ICodeBuilder
                 size_t functionReturnRegIndex = 0;
         };
 
+        struct IfStatement
+        {
+                llvm::Value *condition = nullptr;
+                llvm::BasicBlock *beforeIf = nullptr;
+                llvm::BasicBlock *body = nullptr;
+                llvm::BasicBlock *elseBranch = nullptr;
+                llvm::BasicBlock *afterIf = nullptr;
+        };
+
+        struct Loop
+        {
+                bool isRepeatLoop = false;
+                llvm::Value *index = nullptr;
+                llvm::BasicBlock *conditionBranch = nullptr;
+                llvm::BasicBlock *afterLoop = nullptr;
+        };
+
         void initTypes();
         llvm::Function *beginFunction(size_t index);
         void endFunction(llvm::Function *func, size_t index);
@@ -76,6 +104,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_value_assign_bool();
         llvm::FunctionCallee resolve_value_assign_cstring();
         llvm::FunctionCallee resolve_value_assign_special();
+        llvm::FunctionCallee resolve_value_toDouble();
+        llvm::FunctionCallee resolve_value_toBool();
 
         std::string m_id;
         llvm::LLVMContext m_ctx;

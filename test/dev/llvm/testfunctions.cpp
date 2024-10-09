@@ -7,6 +7,8 @@
 
 using namespace libscratchcpp;
 
+static int counter = 0;
+
 extern "C"
 {
     void test_function(TestMock *mock, Target *target)
@@ -72,5 +74,46 @@ extern "C"
         value_toString(arg3, &s3);
         std::cout << "3_args " << s1 << " " << s2 << " " << s3 << std::endl;
         value_assign_cstring(ret, "3_args_output");
+    }
+
+    void test_equals(Target *target, ValueData *ret, ValueData *a, ValueData *b)
+    {
+        value_assign_bool(ret, value_equals(a, b));
+    }
+
+    void test_unreachable(Target *target)
+    {
+        std::cout << "error: unreachable reached" << std::endl;
+        exit(1);
+    }
+
+    void test_lower_than(Target *target, ValueData *ret, ValueData *a, ValueData *b)
+    {
+        value_assign_bool(ret, value_lower(a, b));
+    }
+
+    void test_const(Target *target, ValueData *ret, ValueData *v)
+    {
+        value_assign_copy(ret, v);
+    }
+
+    void test_not(Target *target, ValueData *ret, ValueData *arg)
+    {
+        value_assign_bool(ret, !value_toBool(arg));
+    }
+
+    void test_reset_counter(Target *target)
+    {
+        counter = 0;
+    }
+
+    void test_increment_counter(Target *target)
+    {
+        counter++;
+    }
+
+    void test_get_counter(Target *target, ValueData *ret)
+    {
+        value_assign_int(ret, counter);
     }
 }

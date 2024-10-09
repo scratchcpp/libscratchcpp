@@ -19,13 +19,13 @@ CompilerPrivate::CompilerPrivate(IEngine *engine, Target *target) :
 
 void CompilerPrivate::substackEnd()
 {
-    auto parent = substackTree.back();
+    auto &parent = substackTree.back();
 
     switch (parent.second) {
         case SubstackType::Loop:
             // Yield at loop end if not running without screen refresh
-            if (!warp)
-                builder->yield();
+            /*if (!warp)
+                builder->yield();*/
 
             builder->endLoop();
             break;

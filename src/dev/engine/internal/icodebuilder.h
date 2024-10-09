@@ -29,7 +29,10 @@ class ICodeBuilder
         virtual void beginElseBranch() = 0;
         virtual void endIf() = 0;
 
-        virtual void beginLoop() = 0;
+        virtual void beginRepeatLoop() = 0;
+        virtual void beginWhileLoop() = 0;
+        virtual void beginRepeatUntilLoop() = 0;
+        virtual void beginLoopCondition() = 0;
         virtual void endLoop() = 0;
 
         virtual void yield() = 0;
