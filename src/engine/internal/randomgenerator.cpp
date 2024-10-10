@@ -41,3 +41,16 @@ double RandomGenerator::randintDouble(double start, double end) const
     std::uniform_real_distribution<double> distribution(start, end);
     return distribution(*m_generator);
 }
+
+long RandomGenerator::randintExcept(long start, long end, long except) const
+{
+    if (start > end) {
+        std::swap(start, end);
+    }
+    std::uniform_int_distribution<long> distribution(start, end);
+    long value = distribution(*m_generator);
+    if (value == except) {
+        return randintExcept(start, end, except);
+    }
+    return value;
+}

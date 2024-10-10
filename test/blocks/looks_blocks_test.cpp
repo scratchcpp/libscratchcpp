@@ -2507,7 +2507,7 @@ TEST_F(LooksBlocksTest, RandomBackdrop)
 
     stage.addCostume(std::make_shared<Costume>("backdrop4", "b4", "svg"));
 
-    EXPECT_CALL(rng, randint(0, 3)).WillOnce(Return(2));
+    EXPECT_CALL(rng, randintExcept(0, 3, 1)).WillOnce(Return(2));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(2)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
