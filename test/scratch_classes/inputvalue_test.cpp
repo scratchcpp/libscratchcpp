@@ -11,8 +11,10 @@
 #include <scratchcpp/input.h>
 #include <enginemock.h>
 #include <targetmock.h>
+#ifdef USE_LLVM
 #include <codebuilderfactorymock.h>
 #include <codebuildermock.h>
+#endif
 
 #include "../common.h"
 #include "dev/engine/compiler_p.h"
