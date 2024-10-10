@@ -18,10 +18,9 @@ enum class LIBSCRATCHCPP_EXPORT SpecialValue
 
 enum class LIBSCRATCHCPP_EXPORT ValueType
 {
-    Integer = 0,
-    Double = 1,
-    Bool = 2,
-    String = 3,
+    Number = 0,
+    Bool = 1,
+    String = 2,
     Infinity = -1,
     NegativeInfinity = -2,
     NaN = -3
@@ -35,8 +34,7 @@ extern "C"
             // NOTE: Any changes must also be done in the LLVM code builder!
             union
             {
-                    long intValue;
-                    double doubleValue;
+                    double numberValue;
                     bool boolValue;
                     char *stringValue;
             };
