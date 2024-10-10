@@ -27,8 +27,8 @@ extern "C"
     /*! Initializes the given value. */
     void value_init(ValueData *v)
     {
-        v->type = ValueType::Integer;
-        v->intValue = 0;
+        v->type = ValueType::Number;
+        v->numberValue = 0;
     }
 
     /* assign */
@@ -45,8 +45,8 @@ extern "C"
         else if (std::isnan(numberValue))
             v->type = ValueType::NaN;
         else {
-            v->type = ValueType::Double;
-            v->doubleValue = value_floatToDouble(numberValue);
+            v->type = ValueType::Number;
+            v->numberValue = value_floatToDouble(numberValue);
         }
     }
 
@@ -62,8 +62,8 @@ extern "C"
         else if (std::isnan(numberValue))
             v->type = ValueType::NaN;
         else {
-            v->type = ValueType::Double;
-            v->doubleValue = numberValue;
+            v->type = ValueType::Number;
+            v->numberValue = numberValue;
         }
     }
 
@@ -72,8 +72,8 @@ extern "C"
     {
         value_free(v);
 
-        v->type = ValueType::Integer;
-        v->intValue = numberValue;
+        v->type = ValueType::Number;
+        v->numberValue = numberValue;
     }
 
     /*! Assigns number of type 'size_t' to the given value. */
@@ -81,8 +81,8 @@ extern "C"
     {
         value_free(v);
 
-        v->type = ValueType::Integer;
-        v->intValue = numberValue;
+        v->type = ValueType::Number;
+        v->numberValue = numberValue;
     }
 
     /*! Assigns number of type 'long' to the given value. */
@@ -90,8 +90,8 @@ extern "C"
     {
         value_free(v);
 
-        v->type = ValueType::Integer;
-        v->intValue = numberValue;
+        v->type = ValueType::Number;
+        v->numberValue = numberValue;
     }
 
     /*! Assigns boolean to the given value. */
@@ -141,20 +141,17 @@ extern "C"
         else if (specialValue == SpecialValue::NaN)
             v->type = ValueType::NaN;
         else {
-            v->type = ValueType::Integer;
-            v->intValue = 0;
+            v->type = ValueType::Number;
+            v->numberValue = 0;
         }
     }
 
     /*! Assigns another value to the given value. */
     void value_assign_copy(ValueData *v, const libscratchcpp::ValueData *another)
     {
-        if (another->type == ValueType::Integer) {
+        if (another->type == ValueType::Number) {
             value_free(v);
-            v->intValue = another->intValue;
-        } else if (another->type == ValueType::Double) {
-            value_free(v);
-            v->doubleValue = another->doubleValue;
+            v->numberValue = another->numberValue;
         } else if (another->type == ValueType::Bool) {
             value_free(v);
             v->boolValue = another->boolValue;
@@ -178,10 +175,8 @@ extern "C"
         switch (v->type) {
             case ValueType::Infinity:
                 return true;
-            case ValueType::Integer:
-                return value_isInf(v->intValue);
-            case ValueType::Double:
-                return value_isInf(v->doubleValue);
+            case ValueType::Number:
+                return value_isInf(v->numberValue);
             case ValueType::String:
                 return strcmp(v->stringValue, "Infinity") == 0;
             default:
@@ -195,10 +190,8 @@ extern "C"
         switch (v->type) {
             case ValueType::NegativeInfinity:
                 return true;
-            case ValueType::Integer:
-                return value_isNegativeInf(-v->intValue);
-            case ValueType::Double:
-                return value_isNegativeInf(-v->doubleValue);
+            case ValueType::Number:
+                return value_isNegativeInf(-v->numberValue);
             case ValueType::String:
                 return strcmp(v->stringValue, "-Infinity") == 0;
             default:
@@ -212,9 +205,9 @@ extern "C"
         switch (v->type) {
             case ValueType::NaN:
                 return true;
-            case ValueType::Double:
-                assert(!std::isnan(v->doubleValue));
-                return std::isnan(v->doubleValue);
+            case ValueType::Number:
+                assert(!std::isnan(v->numberValue));
+                return std::isnan(v->numberValue);
             case ValueType::String:
                 return strcmp(v->stringValue, "NaN") == 0;
             default:
@@ -225,7 +218,7 @@ extern "C"
     /*! Returns true if the given value is a number. */
     bool value_isNumber(const libscratchcpp::ValueData *v)
     {
-        return v->type == ValueType::Integer || v->type == ValueType::Double;
+        return v->type == ValueType::Number;
     }
 
     /*! Returns true if the given value is a number or can be converted to a number. */
@@ -240,8 +233,7 @@ extern "C"
         assert(v->type != ValueType::Infinity && v->type != ValueType::NegativeInfinity);
 
         switch (v->type) {
-            case ValueType::Integer:
-            case ValueType::Double:
+            case ValueType::Number:
             case ValueType::Bool:
                 return true;
             case ValueType::String:
@@ -256,16 +248,15 @@ extern "C"
     {
         // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L157-L181
         switch (v->type) {
-            case ValueType::Integer:
             case ValueType::Bool:
             case ValueType::Infinity:
             case ValueType::NegativeInfinity:
             case ValueType::NaN:
                 return true;
-            case ValueType::Double: {
+            case ValueType::Number: {
                 double intpart;
-                std::modf(v->doubleValue, &intpart);
-                return v->doubleValue == intpart;
+                std::modf(v->numberValue, &intpart);
+                return v->numberValue == intpart;
             }
             case ValueType::String:
                 return value_checkString(v->stringValue) == 1;
@@ -291,10 +282,8 @@ extern "C"
     /*! Returns the long representation of the given value. */
     long value_toLong(const libscratchcpp::ValueData *v)
     {
-        if (v->type == ValueType::Integer)
-            return v->intValue;
-        else if (v->type == ValueType::Double)
-            return v->doubleValue;
+        if (v->type == ValueType::Number)
+            return v->numberValue;
         else if (v->type == ValueType::Bool)
             return v->boolValue;
         else if (v->type == ValueType::String)
@@ -306,10 +295,8 @@ extern "C"
     /*! Returns the int representation of the given value. */
     int value_toInt(const libscratchcpp::ValueData *v)
     {
-        if (v->type == ValueType::Integer)
-            return v->intValue;
-        else if (v->type == ValueType::Double)
-            return v->doubleValue;
+        if (v->type == ValueType::Number)
+            return v->numberValue;
         else if (v->type == ValueType::Bool)
             return v->boolValue;
         else if (v->type == ValueType::String)
@@ -321,10 +308,8 @@ extern "C"
     /*! Returns the double representation of the given value. */
     double value_toDouble(const libscratchcpp::ValueData *v)
     {
-        if (v->type == ValueType::Double)
-            return v->doubleValue;
-        else if (v->type == ValueType::Integer)
-            return v->intValue;
+        if (v->type == ValueType::Number)
+            return v->numberValue;
         else if (v->type == ValueType::Bool)
             return v->boolValue;
         else if (v->type == ValueType::String)
@@ -342,10 +327,8 @@ extern "C"
     {
         if (v->type == ValueType::Bool) {
             return v->boolValue;
-        } else if (v->type == ValueType::Integer) {
-            return v->intValue != 0;
-        } else if (v->type == ValueType::Double) {
-            return v->doubleValue != 0;
+        } else if (v->type == ValueType::Number) {
+            return v->numberValue != 0;
         } else if (v->type == ValueType::String) {
             return strlen(v->stringValue) != 0 && !value_stringsEqual(v->stringValue, "false") && strcmp(v->stringValue, "0") != 0;
         } else if (v->type == ValueType::Infinity || v->type == ValueType::NegativeInfinity) {
@@ -362,10 +345,8 @@ extern "C"
     {
         if (v->type == ValueType::String)
             dst->assign(v->stringValue);
-        else if (v->type == ValueType::Integer)
-            dst->assign(std::to_string(v->intValue));
-        else if (v->type == ValueType::Double)
-            dst->assign(value_doubleToString(v->doubleValue));
+        else if (v->type == ValueType::Number)
+            dst->assign(value_doubleToString(v->numberValue));
         else if (v->type == ValueType::Bool)
             dst->assign(v->boolValue ? "true" : "false");
         else if (v->type == ValueType::Infinity)
@@ -391,11 +372,8 @@ extern "C"
     /*! Adds the given values and writes the result to dst. */
     void value_add(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
     {
-        if (v1->type == ValueType::Integer && v2->type == ValueType::Integer) {
-            value_assign_long(dst, v1->intValue + v2->intValue);
-            return;
-        } else if (v1->type == ValueType::Double && v2->type == ValueType::Double) {
-            value_assign_double(dst, v1->doubleValue + v2->doubleValue);
+        if (v1->type == ValueType::Number && v2->type == ValueType::Number) {
+            value_assign_double(dst, v1->numberValue + v2->numberValue);
             return;
         } else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool) {
             value_assign_long(dst, v1->boolValue + v2->boolValue);
@@ -419,11 +397,8 @@ extern "C"
     /*! Subtracts the given values and writes the result to dst. */
     void value_subtract(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
     {
-        if (v1->type == ValueType::Integer && v2->type == ValueType::Integer) {
-            value_assign_long(dst, v1->intValue - v2->intValue);
-            return;
-        } else if (v1->type == ValueType::Double && v2->type == ValueType::Double) {
-            value_assign_double(dst, v1->doubleValue - v2->doubleValue);
+        if (v1->type == ValueType::Number && v2->type == ValueType::Number) {
+            value_assign_double(dst, v1->numberValue - v2->numberValue);
             return;
         } else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool) {
             value_assign_long(dst, v1->boolValue - v2->boolValue);
@@ -447,10 +422,9 @@ extern "C"
     /*! Multiplies the given values and writes the result to dst. */
     void value_multiply(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
     {
-        if (v1->type == ValueType::Integer && v2->type == ValueType::Integer)
-            value_assign_long(dst, v1->intValue * v2->intValue);
-        else if (v1->type == ValueType::Double && v2->type == ValueType::Double)
-            value_assign_double(dst, v1->doubleValue * v2->doubleValue);
+
+        if (v1->type == ValueType::Number && v2->type == ValueType::Number)
+            value_assign_double(dst, v1->numberValue * v2->numberValue);
         else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
             value_assign_long(dst, v1->boolValue * v2->boolValue);
         else {
@@ -529,10 +503,8 @@ extern "C"
         // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L121-L150
         assert(v1 && v2);
 
-        if (v1->type == ValueType::Integer && v2->type == ValueType::Integer)
-            return v1->intValue == v2->intValue;
-        else if (v1->type == ValueType::Double && v2->type == ValueType::Double)
-            return v1->doubleValue == v2->doubleValue;
+        if (v1->type == ValueType::Number && v2->type == ValueType::Number)
+            return v1->numberValue == v2->numberValue;
         else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
             return v1->boolValue == v2->boolValue;
 
@@ -568,10 +540,8 @@ extern "C"
     {
         assert(v1 && v2);
 
-        if (v1->type == ValueType::Integer && v2->type == ValueType::Integer)
-            return v1->intValue > v2->intValue;
-        else if (v1->type == ValueType::Double && v2->type == ValueType::Double)
-            return v1->doubleValue > v2->doubleValue;
+        if (v1->type == ValueType::Number && v2->type == ValueType::Number)
+            return v1->numberValue > v2->numberValue;
         else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
             return v1->boolValue > v2->boolValue;
         else if ((static_cast<int>(v1->type) < 0) || (static_cast<int>(v2->type) < 0)) {
@@ -605,10 +575,8 @@ extern "C"
     {
         assert(v1 && v2);
 
-        if (v1->type == ValueType::Integer && v2->type == ValueType::Integer)
-            return v1->intValue < v2->intValue;
-        else if (v1->type == ValueType::Double && v2->type == ValueType::Double)
-            return v1->doubleValue < v2->doubleValue;
+        if (v1->type == ValueType::Number && v2->type == ValueType::Number)
+            return v1->numberValue < v2->numberValue;
         else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
             return v1->boolValue < v2->boolValue;
         else if ((static_cast<int>(v1->type) < 0) || (static_cast<int>(v2->type) < 0)) {

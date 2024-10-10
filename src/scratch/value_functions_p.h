@@ -483,10 +483,8 @@ extern "C"
                 *ok = false;
 
             return 0;
-        } else if (v->type == ValueType::Integer)
-            return v->intValue;
-        else if (v->type == ValueType::Double)
-            return v->doubleValue;
+        } else if (v->type == ValueType::Number)
+            return v->numberValue;
         else if (v->type == ValueType::Bool)
             return v->boolValue;
         else {
@@ -500,10 +498,8 @@ extern "C"
 
     bool value_isPositive(const ValueData *v)
     {
-        if (v->type == ValueType::Integer)
-            return v->intValue > 0;
-        else if (v->type == ValueType::Double)
-            return v->doubleValue > 0;
+        if (v->type == ValueType::Number)
+            return v->numberValue > 0;
         else if (v->type == ValueType::Bool)
             return v->boolValue;
         else if (static_cast<int>(v->type) < 0) {
@@ -518,10 +514,8 @@ extern "C"
 
     bool value_isNegative(const ValueData *v)
     {
-        if (v->type == ValueType::Integer)
-            return v->intValue < 0;
-        else if (v->type == ValueType::Double)
-            return v->doubleValue < 0;
+        if (v->type == ValueType::Number)
+            return v->numberValue < 0;
         else if (v->type == ValueType::Bool)
             return false;
         else if (static_cast<int>(v->type) < 0) {
@@ -536,10 +530,8 @@ extern "C"
 
     bool value_isZero(const ValueData *v)
     {
-        if (v->type == ValueType::Integer)
-            return v->intValue == 0;
-        else if (v->type == ValueType::Double)
-            return v->doubleValue == 0;
+        if (v->type == ValueType::Number)
+            return v->numberValue == 0;
         else if (v->type == ValueType::Bool)
             return !v->boolValue;
         else if (static_cast<int>(v->type) < 0)

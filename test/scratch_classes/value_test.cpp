@@ -8,8 +8,8 @@ using namespace libscratchcpp;
 TEST(ValueTest, DefaultConstructor)
 {
     Value v;
-    ASSERT_EQ(v.toInt(), 0);
-    ASSERT_EQ(v.type(), ValueType::Integer);
+    ASSERT_EQ(v.toDouble(), 0);
+    ASSERT_EQ(v.type(), ValueType::Number);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -25,7 +25,7 @@ TEST(ValueTest, FloatConstructor)
     {
         Value v(3.14f);
         ASSERT_EQ(v.toDouble(), 3.14);
-        ASSERT_EQ(v.type(), ValueType::Double);
+        ASSERT_EQ(v.type(), ValueType::Number);
         ASSERT_FALSE(v.isInfinity());
         ASSERT_FALSE(v.isNegativeInfinity());
         ASSERT_FALSE(v.isNaN());
@@ -78,7 +78,7 @@ TEST(ValueTest, DoubleConstructor)
     {
         Value v(static_cast<double>(3.14));
         ASSERT_EQ(v.toDouble(), 3.14);
-        ASSERT_EQ(v.type(), ValueType::Double);
+        ASSERT_EQ(v.type(), ValueType::Number);
         ASSERT_FALSE(v.isInfinity());
         ASSERT_FALSE(v.isNegativeInfinity());
         ASSERT_FALSE(v.isNaN());
@@ -92,7 +92,7 @@ TEST(ValueTest, DoubleConstructor)
     {
         Value v(static_cast<double>(-5.0));
         ASSERT_EQ(v.toDouble(), -5.0);
-        ASSERT_EQ(v.type(), ValueType::Double);
+        ASSERT_EQ(v.type(), ValueType::Number);
         ASSERT_FALSE(v.isInfinity());
         ASSERT_FALSE(v.isNegativeInfinity());
         ASSERT_FALSE(v.isNaN());
@@ -144,7 +144,7 @@ TEST(ValueTest, IntConstructor)
 {
     Value v(static_cast<int>(55));
     ASSERT_EQ(v.toInt(), 55);
-    ASSERT_EQ(v.type(), ValueType::Integer);
+    ASSERT_EQ(v.type(), ValueType::Number);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -159,7 +159,7 @@ TEST(ValueTest, SizeTConstructor)
 {
     Value v(static_cast<size_t>(100));
     ASSERT_EQ(v.toLong(), 100);
-    ASSERT_EQ(v.type(), ValueType::Integer);
+    ASSERT_EQ(v.type(), ValueType::Number);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -172,9 +172,9 @@ TEST(ValueTest, SizeTConstructor)
 
 TEST(ValueTest, LongConstructor)
 {
-    Value v(999999999999999999L);
-    ASSERT_EQ(v.toLong(), 999999999999999999L);
-    ASSERT_EQ(v.type(), ValueType::Integer);
+    Value v(123L);
+    ASSERT_EQ(v.toLong(), 123L);
+    ASSERT_EQ(v.type(), ValueType::Number);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -541,7 +541,7 @@ TEST(ValueTest, FloatAssignment)
     Value v;
     v = 3.14f;
     ASSERT_EQ(v.toDouble(), 3.14);
-    ASSERT_EQ(v.type(), ValueType::Double);
+    ASSERT_EQ(v.type(), ValueType::Number);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -586,7 +586,7 @@ TEST(ValueTest, DoubleAssignment)
     Value v;
     v = static_cast<double>(3.14);
     ASSERT_EQ(v.toDouble(), 3.14);
-    ASSERT_EQ(v.type(), ValueType::Double);
+    ASSERT_EQ(v.type(), ValueType::Number);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -631,7 +631,7 @@ TEST(ValueTest, IntAssignment)
     Value v;
     v = static_cast<int>(55);
     ASSERT_EQ(v.toInt(), 55);
-    ASSERT_EQ(v.type(), ValueType::Integer);
+    ASSERT_EQ(v.type(), ValueType::Number);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -644,9 +644,9 @@ TEST(ValueTest, IntAssignment)
 TEST(ValueTest, LongAssignment)
 {
     Value v;
-    v = 999999999999999999L;
-    ASSERT_EQ(v.toLong(), 999999999999999999L);
-    ASSERT_EQ(v.type(), ValueType::Integer);
+    v = 123L;
+    ASSERT_EQ(v.toLong(), 123L);
+    ASSERT_EQ(v.type(), ValueType::Number);
     ASSERT_FALSE(v.isInfinity());
     ASSERT_FALSE(v.isNegativeInfinity());
     ASSERT_FALSE(v.isNaN());
@@ -1106,10 +1106,10 @@ TEST(ValueTest, ToInt)
 
 TEST(ValueTest, ToLong)
 {
-    Value v = 999999999999999999L;
-    ASSERT_EQ(v.toLong(), 999999999999999999L);
-    v = -999999999999999999L;
-    ASSERT_EQ(v.toLong(), -999999999999999999L);
+    Value v = 123L;
+    ASSERT_EQ(v.toLong(), 123L);
+    v = -123L;
+    ASSERT_EQ(v.toLong(), -123L);
 
     v = 2.54;
     ASSERT_EQ(v.toLong(), 2);
@@ -1671,11 +1671,11 @@ TEST(ValueTest, ToString)
     ASSERT_EQ(v.toString(), "-2147483647");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
 
-    v = 999999999999999999L;
-    ASSERT_EQ(v.toString(), "999999999999999999");
+    v = 512L;
+    ASSERT_EQ(v.toString(), "512");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    v = -999999999999999999L;
-    ASSERT_EQ(v.toString(), "-999999999999999999");
+    v = -512L;
+    ASSERT_EQ(v.toString(), "-512");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
 
     v = 2.0;
@@ -1910,9 +1910,9 @@ TEST(ValueTest, SubtractFunction)
     v.subtract(25);
     ASSERT_EQ(v.toInt(), 25);
 
-    v = 999999999999999999L;
+    v = 256L;
     v.subtract(1);
-    ASSERT_EQ(v.toLong(), 999999999999999998L);
+    ASSERT_EQ(v.toLong(), 255L);
 
     v = -500;
     v.subtract(25);
@@ -2002,9 +2002,9 @@ TEST(ValueTest, MultiplyFunction)
     v.multiply(2);
     ASSERT_EQ(v.toInt(), 100);
 
-    v = 999999999999999999L;
+    v = 128L;
     v.multiply(2);
-    ASSERT_EQ(v.toLong(), 1999999999999999998L);
+    ASSERT_EQ(v.toLong(), 256L);
 
     v = -500;
     v.multiply(25);
