@@ -3,7 +3,6 @@
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
-#include <scratchcpp/value.h>
 
 #include "llvmcodebuilder.h"
 #include "llvmexecutablecode.h"
@@ -28,16 +27,6 @@ LLVMCodeBuilder::LLVMCodeBuilder(const std::string &id) :
     m_constValues.push_back({});
     m_regs.push_back({});
     initTypes();
-}
-
-LLVMCodeBuilder::~LLVMCodeBuilder()
-{
-    for (const auto &values : m_constValues) {
-        for (const auto &v : values) {
-            if (v)
-                value_free(v.get());
-        }
-    }
 }
 
 std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
@@ -291,15 +280,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     std::cout << "==============" << std::endl << std::endl;
 #endif
 
-    std::vector<std::unique_ptr<ValueData>> constValues;
-
-    for (auto &values : m_constValues) {
-        for (auto &v : values)
-            constValues.push_back(std::move(v));
-    }
-
-    m_constValues.clear();
-    return std::make_shared<LLVMExecutableCode>(std::move(m_module), constValues);
+    return std::make_shared<LLVMExecutableCode>(std::move(m_module));
 }
 
 void LLVMCodeBuilder::addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const std::vector<Compiler::StaticType> &argTypes)
@@ -331,16 +312,10 @@ void LLVMCodeBuilder::addFunctionCall(const std::string &functionName, Compiler:
 void LLVMCodeBuilder::addConstValue(const Value &value)
 {
     auto reg = std::make_shared<Register>(TYPE_MAP[value.type()]);
-    reg->isRawValue = false;
     reg->isConstValue = true;
-    reg->constValueIndex = m_constValues[m_currentFunction].size();
+    reg->constValue = value;
     m_regs[m_currentFunction].push_back(reg);
     m_tmpRegs.push_back(reg);
-
-    std::unique_ptr<ValueData> v = std::make_unique<ValueData>();
-    value_init(v.get());
-    value_assign_copy(v.get(), &value.data());
-    m_constValues[m_currentFunction].push_back(std::move(v));
 }
 
 void LLVMCodeBuilder::addVariableValue(Variable *variable)
@@ -448,35 +423,6 @@ llvm::Function *LLVMCodeBuilder::beginFunction(size_t index)
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
     m_builder.SetInsertPoint(entry);
 
-    // Add const value pointers
-    const auto &constValues = m_constValues[index];
-    std::vector<llvm::Value *> constPtrs;
-
-    for (size_t i = 0; i < constValues.size(); i++) {
-        llvm::Value *intAddress = m_builder.getInt64((uintptr_t)constValues[i].get());
-        llvm::Value *ptr = m_builder.CreateIntToPtr(intAddress, m_valueDataType->getPointerTo());
-        constPtrs.push_back(ptr);
-    }
-
-    // Add registers
-    auto &regs = m_regs[index];
-    size_t regIndex = 0;
-
-    for (auto &reg : regs) {
-        if (reg->isConstValue) {
-            // Do not allocate space for existing constant values
-            reg->value = constPtrs[reg->constValueIndex];
-        } else {
-            /*const std::string name = "r" + std::to_string(regIndex);
-
-            llvm::Value *valueData = m_builder.CreateAlloca(m_valueDataType, nullptr, name);
-            m_builder.CreateCall(resolve_value_init(), { valueData });
-
-            reg->value = valueData;
-            regIndex++;*/
-        }
-    }
-
     return func;
 }
 
@@ -509,6 +455,9 @@ void LLVMCodeBuilder::freeHeap()
 
 llvm::Value *LLVMCodeBuilder::castValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType)
 {
+    if (reg->isConstValue)
+        return castConstValue(reg->constValue, targetType);
+
     if (reg->isRawValue)
         return castRawValue(reg, targetType);
 
@@ -648,6 +597,24 @@ llvm::Value *LLVMCodeBuilder::castRawValue(std::shared_ptr<Register> reg, Compil
                     assert(false);
                     return nullptr;
             }
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+}
+
+llvm::Value *LLVMCodeBuilder::castConstValue(const Value &value, Compiler::StaticType targetType)
+{
+    switch (targetType) {
+        case Compiler::StaticType::Number:
+            return llvm::ConstantFP::get(m_ctx, llvm::APFloat(value.toDouble()));
+
+        case Compiler::StaticType::Bool:
+            return m_builder.getInt1(value.toBool());
+
+        case Compiler::StaticType::String:
+            return m_builder.CreateGlobalStringPtr(value.toString());
 
         default:
             assert(false);

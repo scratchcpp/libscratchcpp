@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <scratchcpp/valuedata.h>
+#include <scratchcpp/value.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
@@ -18,7 +18,6 @@ class LLVMCodeBuilder : public ICodeBuilder
 {
     public:
         LLVMCodeBuilder(const std::string &id);
-        ~LLVMCodeBuilder();
 
         std::shared_ptr<ExecutableCode> finalize() override;
 
@@ -51,7 +50,7 @@ class LLVMCodeBuilder : public ICodeBuilder
                 llvm::Value *value = nullptr;
                 bool isRawValue = false;
                 bool isConstValue = false;
-                size_t constValueIndex = 0;
+                Value constValue;
         };
 
         struct Step
@@ -106,6 +105,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void freeHeap();
         llvm::Value *castValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType);
         llvm::Value *castRawValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType);
+        llvm::Value *castConstValue(const Value &value, Compiler::StaticType targetType);
         llvm::Type *getType(Compiler::StaticType type);
 
         llvm::FunctionCallee resolveFunction(const std::string name, llvm::FunctionType *type);
@@ -133,7 +133,7 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         std::vector<Step> m_steps;
         size_t m_currentFunction = 0;
-        std::vector<std::vector<std::unique_ptr<ValueData>>> m_constValues;
+        std::vector<Value> m_constValues;
         std::vector<std::vector<std::shared_ptr<Register>>> m_regs;
         std::vector<std::shared_ptr<Register>> m_tmpRegs;
 

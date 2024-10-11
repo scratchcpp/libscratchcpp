@@ -29,6 +29,10 @@ extern "C"
     void test_reset_counter(Target *target);
     void test_increment_counter(Target *target);
     double test_get_counter(Target *target);
+
+    void test_print_number(Target *target, double v);
+    void test_print_bool(Target *target, bool v);
+    void test_print_string(Target *target, const char *v);
 }
 
 } // namespace libscratchcpp

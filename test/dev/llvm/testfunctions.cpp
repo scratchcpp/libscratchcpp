@@ -107,4 +107,19 @@ extern "C"
     {
         return counter;
     }
+
+    void test_print_number(Target *target, double v)
+    {
+        std::cout << v << std::endl;
+    }
+
+    void test_print_bool(Target *target, bool v)
+    {
+        std::cout << v << std::endl;
+    }
+
+    void test_print_string(Target *target, const char *v)
+    {
+        std::cout << v << std::endl;
+    }
 }
