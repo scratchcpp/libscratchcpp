@@ -550,7 +550,7 @@ llvm::Value *LLVMCodeBuilder::castRawValue(std::shared_ptr<Register> reg, Compil
             switch (reg->type) {
                 case Compiler::StaticType::Bool:
                     // Cast bool to double
-                    return m_builder.CreateSIToFP(reg->value, m_builder.getDoubleTy());
+                    return m_builder.CreateUIToFP(reg->value, m_builder.getDoubleTy());
 
                 case Compiler::StaticType::String: {
                     // Convert string to double
@@ -705,7 +705,7 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_value_doubleToCString()
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_boolToCString()
 {
-    return resolveFunction("value_doubleToCString", llvm::FunctionType::get(llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), m_builder.getInt1Ty(), false));
+    return resolveFunction("value_boolToCString", llvm::FunctionType::get(llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), m_builder.getInt1Ty(), false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_stringToDouble()
