@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <scratchcpp/valuedata.h>
+#include <scratchcpp/value.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
@@ -18,11 +18,10 @@ class LLVMCodeBuilder : public ICodeBuilder
 {
     public:
         LLVMCodeBuilder(const std::string &id);
-        ~LLVMCodeBuilder();
 
         std::shared_ptr<ExecutableCode> finalize() override;
 
-        void addFunctionCall(const std::string &functionName, int argCount, bool returns) override;
+        void addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const std::vector<Compiler::StaticType> &argTypes) override;
         void addConstValue(const Value &value) override;
         void addVariableValue(Variable *variable) override;
         void addListContents(List *list) override;
@@ -42,9 +41,16 @@ class LLVMCodeBuilder : public ICodeBuilder
     private:
         struct Register
         {
+                Register(Compiler::StaticType type) :
+                    type(type)
+                {
+                }
+
+                Compiler::StaticType type = Compiler::StaticType::Void;
                 llvm::Value *value = nullptr;
+                bool isRawValue = false;
                 bool isConstValue = false;
-                size_t constValueIndex = 0;
+                Value constValue;
         };
 
         struct Step
@@ -70,9 +76,9 @@ class LLVMCodeBuilder : public ICodeBuilder
 
                 Type type;
                 std::string functionName;
-                std::vector<std::shared_ptr<Register>> args;
-                bool functionReturns = false;
-                size_t functionReturnRegIndex = 0;
+                std::vector<std::pair<Compiler::StaticType, std::shared_ptr<Register>>> args; // target type, register
+                Compiler::StaticType functionReturnType = Compiler::StaticType::Void;
+                std::shared_ptr<Register> functionReturnReg;
         };
 
         struct IfStatement
@@ -96,6 +102,12 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Function *beginFunction(size_t index);
         void endFunction(llvm::Function *func, size_t index);
 
+        void freeHeap();
+        llvm::Value *castValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType);
+        llvm::Value *castRawValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType);
+        llvm::Value *castConstValue(const Value &value, Compiler::StaticType targetType);
+        llvm::Type *getType(Compiler::StaticType type);
+
         llvm::FunctionCallee resolveFunction(const std::string name, llvm::FunctionType *type);
         llvm::FunctionCallee resolve_value_init();
         llvm::FunctionCallee resolve_value_free();
@@ -106,6 +118,11 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_value_assign_special();
         llvm::FunctionCallee resolve_value_toDouble();
         llvm::FunctionCallee resolve_value_toBool();
+        llvm::FunctionCallee resolve_value_toCString();
+        llvm::FunctionCallee resolve_value_doubleToCString();
+        llvm::FunctionCallee resolve_value_boolToCString();
+        llvm::FunctionCallee resolve_value_stringToDouble();
+        llvm::FunctionCallee resolve_value_stringToBool();
 
         std::string m_id;
         llvm::LLVMContext m_ctx;
@@ -116,9 +133,11 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         std::vector<Step> m_steps;
         size_t m_currentFunction = 0;
-        std::vector<std::vector<std::unique_ptr<ValueData>>> m_constValues;
+        std::vector<Value> m_constValues;
         std::vector<std::vector<std::shared_ptr<Register>>> m_regs;
         std::vector<std::shared_ptr<Register>> m_tmpRegs;
+
+        std::vector<llvm::Value *> m_heap;
 
         std::shared_ptr<ExecutableCode> m_output;
 };

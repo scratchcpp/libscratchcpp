@@ -10,7 +10,7 @@
 
 using namespace libscratchcpp;
 
-LLVMExecutableCode::LLVMExecutableCode(std::unique_ptr<llvm::Module> module, std::vector<std::unique_ptr<ValueData>> &constValues) :
+LLVMExecutableCode::LLVMExecutableCode(std::unique_ptr<llvm::Module> module) :
     m_ctx(std::make_unique<llvm::LLVMContext>()),
     m_jit(llvm::orc::LLJITBuilder().create())
 {
@@ -46,19 +46,6 @@ LLVMExecutableCode::LLVMExecutableCode(std::unique_ptr<llvm::Module> module, std
 
         i++;
     }
-
-    // Move const value pointers (transfer ownership)
-    for (auto &v : constValues)
-        m_constValues.push_back(std::move(v));
-
-    constValues.clear();
-}
-
-LLVMExecutableCode::~LLVMExecutableCode()
-{
-    // Free memory used by const values
-    for (const auto &v : m_constValues)
-        value_free(v.get());
 }
 
 void LLVMExecutableCode::run(ExecutionContext *context)

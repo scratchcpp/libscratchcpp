@@ -36,7 +36,13 @@ extern "C"
     LIBSCRATCHCPP_EXPORT double value_toDouble(const ValueData *v);
     LIBSCRATCHCPP_EXPORT bool value_toBool(const ValueData *v);
     LIBSCRATCHCPP_EXPORT void value_toString(const ValueData *v, std::string *dst);
+    LIBSCRATCHCPP_EXPORT char *value_toCString(const ValueData *v);
     LIBSCRATCHCPP_EXPORT void value_toUtf16(const ValueData *v, std::u16string *dst);
+
+    LIBSCRATCHCPP_EXPORT char *value_doubleToCString(double v);
+    LIBSCRATCHCPP_EXPORT const char *value_boolToCString(bool v);
+    LIBSCRATCHCPP_EXPORT double value_stringToDouble(const char *s);
+    LIBSCRATCHCPP_EXPORT bool value_stringToBool(const char *s);
 
     LIBSCRATCHCPP_EXPORT void value_add(const ValueData *v1, const ValueData *v2, ValueData *dst);
     LIBSCRATCHCPP_EXPORT void value_subtract(const ValueData *v1, const ValueData *v2, ValueData *dst);

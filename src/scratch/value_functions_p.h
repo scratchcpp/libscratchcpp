@@ -227,7 +227,7 @@ extern "C"
         }
     }
 
-    inline double value_stringToDouble(const char *s, bool *ok = nullptr)
+    inline double value_stringToDoubleImpl(const char *s, bool *ok = nullptr)
     {
         if (ok)
             *ok = false;
@@ -392,7 +392,7 @@ extern "C"
 
     inline long value_stringToLong(const char *s, bool *ok = nullptr)
     {
-        return value_stringToDouble(s, ok);
+        return value_stringToDoubleImpl(s, ok);
     }
 
     inline bool value_stringIsInt(const char *s, int n)
@@ -410,7 +410,7 @@ extern "C"
     }
 }
 
-inline std::string value_doubleToString(double v)
+inline void value_doubleToString(double v, std::string *dst)
 {
     std::stringstream stream;
 
@@ -424,22 +424,20 @@ inline std::string value_doubleToString(double v)
     } else
         stream << std::setprecision(std::max(16u, value_digitCount(v))) << v;
 
-    std::string s = stream.str();
+    dst->assign(stream.str());
     std::size_t index;
 
     for (int i = 0; i < 2; i++) {
         if (i == 0)
-            index = s.find("e+");
+            index = dst->find("e+");
         else
-            index = s.find("e-");
+            index = dst->find("e-");
 
         if (index != std::string::npos) {
-            while ((s.size() >= index + 3) && (s[index + 2] == '0'))
-                s.erase(index + 2, 1);
+            while ((dst->size() >= index + 3) && ((*dst)[index + 2] == '0'))
+                dst->erase(index + 2, 1);
         }
     }
-
-    return s;
 }
 
 extern "C"
@@ -459,7 +457,7 @@ extern "C"
             value_stringToLong(str, &ok);
             return ok ? 1 : 0;
         } else {
-            value_stringToDouble(str, &ok);
+            value_stringToDoubleImpl(str, &ok);
             return ok ? 2 : 0;
         }
     }
@@ -473,7 +471,7 @@ extern "C"
         // Since functions calling this already prioritize int, double and bool,
         // we can optimize by prioritizing the other types here.
         if (v->type == ValueType::String)
-            return value_stringToDouble(v->stringValue, ok);
+            return value_stringToDoubleImpl(v->stringValue, ok);
         else if (v->type == ValueType::Infinity)
             return std::numeric_limits<double>::infinity();
         else if (v->type == ValueType::NegativeInfinity)
@@ -483,10 +481,8 @@ extern "C"
                 *ok = false;
 
             return 0;
-        } else if (v->type == ValueType::Integer)
-            return v->intValue;
-        else if (v->type == ValueType::Double)
-            return v->doubleValue;
+        } else if (v->type == ValueType::Number)
+            return v->numberValue;
         else if (v->type == ValueType::Bool)
             return v->boolValue;
         else {
@@ -500,10 +496,8 @@ extern "C"
 
     bool value_isPositive(const ValueData *v)
     {
-        if (v->type == ValueType::Integer)
-            return v->intValue > 0;
-        else if (v->type == ValueType::Double)
-            return v->doubleValue > 0;
+        if (v->type == ValueType::Number)
+            return v->numberValue > 0;
         else if (v->type == ValueType::Bool)
             return v->boolValue;
         else if (static_cast<int>(v->type) < 0) {
@@ -518,10 +512,8 @@ extern "C"
 
     bool value_isNegative(const ValueData *v)
     {
-        if (v->type == ValueType::Integer)
-            return v->intValue < 0;
-        else if (v->type == ValueType::Double)
-            return v->doubleValue < 0;
+        if (v->type == ValueType::Number)
+            return v->numberValue < 0;
         else if (v->type == ValueType::Bool)
             return false;
         else if (static_cast<int>(v->type) < 0) {
@@ -536,10 +528,8 @@ extern "C"
 
     bool value_isZero(const ValueData *v)
     {
-        if (v->type == ValueType::Integer)
-            return v->intValue == 0;
-        else if (v->type == ValueType::Double)
-            return v->doubleValue == 0;
+        if (v->type == ValueType::Number)
+            return v->numberValue == 0;
         else if (v->type == ValueType::Bool)
             return !v->boolValue;
         else if (static_cast<int>(v->type) < 0)

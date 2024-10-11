@@ -40,6 +40,7 @@ class CompilerTest : public testing::Test
         void compile(Compiler &compiler, std::shared_ptr<Block> block)
         {
             ASSERT_EQ(compiler.block(), nullptr);
+            // TODO: Test warp
             EXPECT_CALL(m_builderFactory, create(block->id())).WillOnce(Return(m_builder));
             EXPECT_CALL(*m_builder, finalize()).WillOnce(Return(m_code));
             ASSERT_EQ(compiler.compile(block), m_code);
@@ -69,11 +70,13 @@ TEST_F(CompilerTest, AddFunctionCall)
     m_compareBlock = block;
     block->setCompileFunction([](Compiler *compiler) {
         ASSERT_EQ(compiler->block(), m_compareBlock);
-        EXPECT_CALL(*m_builder, addFunctionCall("test1", 3, false));
-        compiler->addFunctionCall("test1", 3, false);
+        std::vector<Compiler::StaticType> args = { Compiler::StaticType::Number, Compiler::StaticType::Bool };
+        EXPECT_CALL(*m_builder, addFunctionCall("test1", Compiler::StaticType::Void, args));
+        compiler->addFunctionCall("test1", Compiler::StaticType::Void, args);
 
-        EXPECT_CALL(*m_builder, addFunctionCall("test2", 0, true));
-        compiler->addFunctionCall("test2", 0, true);
+        args = { Compiler::StaticType::String };
+        EXPECT_CALL(*m_builder, addFunctionCall("test2", Compiler::StaticType::Bool, args));
+        compiler->addFunctionCall("test2", Compiler::StaticType::Bool, args);
     });
 
     compile(compiler, block);

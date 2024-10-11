@@ -73,9 +73,9 @@ std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBl
  * Adds a call to the given function.\n
  * For example: extern "C" some_block(ValueData *ret, ValueData *arg1, ValueData *arg2) has 2 arguments
  */
-void Compiler::addFunctionCall(const std::string &functionName, int argCount, bool returns)
+void Compiler::addFunctionCall(const std::string &functionName, StaticType returnType, const std::vector<StaticType> &argTypes)
 {
-    impl->builder->addFunctionCall(functionName, argCount, returns);
+    impl->builder->addFunctionCall(functionName, returnType, argTypes);
 }
 
 /*! Adds a constant value to the compiled code. */
