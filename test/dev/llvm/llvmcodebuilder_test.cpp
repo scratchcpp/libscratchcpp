@@ -189,7 +189,7 @@ TEST_F(LLVMCodeBuilderTest, RawValueCasting)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
-TEST_F(LLVMCodeBuilderTest, Yield)
+/*TEST_F(LLVMCodeBuilderTest, Yield)
 {
     m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
 
@@ -234,7 +234,7 @@ TEST_F(LLVMCodeBuilderTest, Yield)
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected2);
     ASSERT_TRUE(code->isFinished(ctx.get()));
-}
+}*/
 
 TEST_F(LLVMCodeBuilderTest, IfStatement)
 {

@@ -30,14 +30,16 @@ class LLVMExecutableCode : public ExecutableCode
         std::shared_ptr<ExecutionContext> createExecutionContext(Target *target) const override;
 
     private:
-        using FunctionType = size_t (*)(Target *);
+        uint64_t lookupFunction(const std::string &name);
+
+        using MainFunctionType = size_t (*)(Target *);
 
         static LLVMExecutionContext *getContext(ExecutionContext *context);
 
         std::unique_ptr<llvm::LLVMContext> m_ctx;
         llvm::Expected<std::unique_ptr<llvm::orc::LLJIT>> m_jit;
 
-        std::vector<FunctionType> m_functions;
+        MainFunctionType m_mainFunction;
 };
 
 } // namespace libscratchcpp

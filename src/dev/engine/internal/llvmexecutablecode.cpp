@@ -31,44 +31,33 @@ LLVMExecutableCode::LLVMExecutableCode(std::unique_ptr<llvm::Module> module) :
     }
 
     // Lookup functions
-    size_t i = 0;
-
-    while (true) {
-        auto func = m_jit->get()->lookup("f" + std::to_string(i));
-
-        if (func)
-            m_functions.push_back((FunctionType)(func->getValue()));
-        else {
-            // Ignore error
-            llvm::consumeError(func.takeError());
-            break;
-        }
-
-        i++;
-    }
+    m_mainFunction = (MainFunctionType)lookupFunction("f");
+    assert(m_mainFunction);
 }
 
 void LLVMExecutableCode::run(ExecutionContext *context)
 {
     LLVMExecutionContext *ctx = getContext(context);
 
-    if (ctx->pos() < m_functions.size())
-        ctx->setPos(m_functions[ctx->pos()](context->target()));
+    if (!ctx->finished) {
+        m_mainFunction(context->target());
+        ctx->finished = true;
+    }
 }
 
 void LLVMExecutableCode::kill(ExecutionContext *context)
 {
-    getContext(context)->setPos(m_functions.size());
+    getContext(context)->finished = true;
 }
 
 void LLVMExecutableCode::reset(ExecutionContext *context)
 {
-    getContext(context)->setPos(0);
+    getContext(context)->finished = false;
 }
 
 bool LLVMExecutableCode::isFinished(ExecutionContext *context) const
 {
-    return getContext(context)->pos() >= m_functions.size();
+    return getContext(context)->finished;
 }
 
 void LLVMExecutableCode::promise()
@@ -82,6 +71,18 @@ void LLVMExecutableCode::resolvePromise()
 std::shared_ptr<ExecutionContext> LLVMExecutableCode::createExecutionContext(Target *target) const
 {
     return std::make_shared<LLVMExecutionContext>(target);
+}
+
+uint64_t LLVMExecutableCode::lookupFunction(const std::string &name)
+{
+    auto func = m_jit->get()->lookup(name);
+
+    if (func)
+        return func->getValue();
+    else {
+        llvm::errs() << "error: failed to lookup LLVM function: " << toString(func.takeError()) << "\n";
+        return 0;
+    }
 }
 
 LLVMExecutionContext *LLVMExecutableCode::getContext(ExecutionContext *context)

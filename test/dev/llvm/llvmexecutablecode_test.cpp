@@ -25,22 +25,18 @@ class LLVMExecutableCodeTest : public testing::Test
             llvm::InitializeNativeTargetAsmParser();
         }
 
-        llvm::Function *beginFunction(size_t index)
+        llvm::Function *beginFunction()
         {
-            // size_t f#(Target *)
-            llvm::FunctionType *funcType = llvm::FunctionType::get(m_builder->getInt64Ty(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), false);
-            llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f" + std::to_string(index), m_module.get());
+            // void f(Target *)
+            llvm::FunctionType *funcType = llvm::FunctionType::get(m_builder->getVoidTy(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), false);
+            llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module.get());
 
             llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
             m_builder->SetInsertPoint(entry);
             return func;
         }
 
-        void endFunction(size_t index)
-        {
-            // Return next function index
-            m_builder->CreateRet(m_builder->getInt64(index + 1));
-        }
+        void endFunction() { m_builder->CreateRetVoid(); }
 
         void addTestFunction(llvm::Function *mainFunc)
         {
@@ -69,6 +65,8 @@ class LLVMExecutableCodeTest : public testing::Test
 
 TEST_F(LLVMExecutableCodeTest, CreateExecutionContext)
 {
+    beginFunction();
+    endFunction();
     LLVMExecutableCode code(std::move(m_module));
     auto ctx = code.createExecutionContext(&m_target);
     ASSERT_TRUE(ctx);
@@ -76,27 +74,11 @@ TEST_F(LLVMExecutableCodeTest, CreateExecutionContext)
     ASSERT_TRUE(dynamic_cast<LLVMExecutionContext *>(ctx.get()));
 }
 
-TEST_F(LLVMExecutableCodeTest, NoFunctions)
+TEST_F(LLVMExecutableCodeTest, MainFunction)
 {
-    LLVMExecutableCode code(std::move(m_module));
-    auto ctx = code.createExecutionContext(&m_target);
-    ASSERT_TRUE(code.isFinished(ctx.get()));
-
-    code.run(ctx.get());
-    ASSERT_TRUE(code.isFinished(ctx.get()));
-
-    code.kill(ctx.get());
-    ASSERT_TRUE(code.isFinished(ctx.get()));
-
-    code.reset(ctx.get());
-    ASSERT_TRUE(code.isFinished(ctx.get()));
-}
-
-TEST_F(LLVMExecutableCodeTest, SingleFunction)
-{
-    auto f = beginFunction(0);
+    auto f = beginFunction();
     addTestFunction(f);
-    endFunction(0);
+    endFunction();
 
     LLVMExecutableCode code(std::move(m_module));
     auto ctx = code.createExecutionContext(&m_target);
@@ -133,27 +115,4 @@ TEST_F(LLVMExecutableCodeTest, SingleFunction)
     code.reset(ctx.get());
     ASSERT_TRUE(code.isFinished(anotherCtx.get()));
     ASSERT_FALSE(code.isFinished(ctx.get()));
-}
-
-TEST_F(LLVMExecutableCodeTest, MultipleFunctions)
-{
-    static const int count = 5;
-
-    for (int i = 0; i < count; i++) {
-        auto f = beginFunction(i);
-        addTestFunction(f);
-        endFunction(i);
-    }
-
-    LLVMExecutableCode code(std::move(m_module));
-    auto ctx = code.createExecutionContext(&m_target);
-    ASSERT_FALSE(code.isFinished(ctx.get()));
-
-    for (int i = 0; i < count; i++) {
-        ASSERT_FALSE(code.isFinished(ctx.get()));
-        EXPECT_CALL(m_mock, f(&m_target));
-        code.run(ctx.get());
-    }
-
-    ASSERT_TRUE(code.isFinished(ctx.get()));
 }

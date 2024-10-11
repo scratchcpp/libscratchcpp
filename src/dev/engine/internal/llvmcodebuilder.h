@@ -99,8 +99,6 @@ class LLVMCodeBuilder : public ICodeBuilder
         };
 
         void initTypes();
-        llvm::Function *beginFunction(size_t index);
-        void endFunction(llvm::Function *func, size_t index);
 
         void freeHeap();
         llvm::Value *castValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType);
