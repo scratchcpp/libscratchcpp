@@ -330,7 +330,7 @@ extern "C"
         } else if (v->type == ValueType::Number) {
             return v->numberValue != 0;
         } else if (v->type == ValueType::String) {
-            return strlen(v->stringValue) != 0 && !value_stringsEqual(v->stringValue, "false") && strcmp(v->stringValue, "0") != 0;
+            return value_stringToBool(v->stringValue);
         } else if (v->type == ValueType::Infinity || v->type == ValueType::NegativeInfinity) {
             return true;
         } else if (v->type == ValueType::NaN) {
@@ -346,7 +346,7 @@ extern "C"
         if (v->type == ValueType::String)
             dst->assign(v->stringValue);
         else if (v->type == ValueType::Number)
-            dst->assign(value_doubleToString(v->numberValue));
+            value_doubleToString(v->numberValue, dst);
         else if (v->type == ValueType::Bool)
             dst->assign(v->boolValue ? "true" : "false");
         else if (v->type == ValueType::Infinity)
@@ -359,12 +359,70 @@ extern "C"
             dst->clear();
     }
 
+    /*!
+     * Returns the string representation of the given value.
+     * \note It is the caller's responsibility to free allocated memory.
+     */
+    char *value_toCString(const ValueData *v)
+    {
+        std::string out;
+        value_toString(v, &out);
+        char *ret = (char *)malloc((out.size() + 1) * sizeof(char));
+        strncpy(ret, out.c_str(), out.size() + 1);
+        return ret;
+    }
+
     /*! Writes the UTF-16 representation of the given value to dst. */
     void value_toUtf16(const libscratchcpp::ValueData *v, std::u16string *dst)
     {
         std::string s;
         value_toString(v, &s);
         dst->assign(utf8::utf8to16(s));
+    }
+
+    /*!
+     * Converts the given number to string.
+     * \note It is the caller's responsibility to free allocated memory.
+     */
+    char *value_doubleToCString(double v)
+    {
+        std::string out;
+        value_doubleToString(v, &out);
+        char *ret = (char *)malloc((out.size() + 1) * sizeof(char));
+        strncpy(ret, out.c_str(), out.size() + 1);
+        return ret;
+    }
+
+    /*!
+     * Converts the given boolean to string.
+     * \note Do not free allocated memory!
+     */
+    const char *value_boolToCString(bool v)
+    {
+        if (v) {
+            static const char *ret = "true";
+            return ret;
+        } else {
+            static const char *ret = "false";
+            return ret;
+        }
+    }
+
+    /*! Converts the given string to double. */
+    double value_stringToDouble(const char *s)
+    {
+        if (strcmp(s, "Infinity") == 0)
+            return std::numeric_limits<double>::infinity();
+        else if (strcmp(s, "-Infinity") == 0)
+            return -std::numeric_limits<double>::infinity();
+
+        return value_stringToDoubleImpl(s);
+    }
+
+    /*! Converts the given string to boolean. */
+    bool value_stringToBool(const char *s)
+    {
+        return strlen(s) != 0 && !value_stringsEqual(s, "false") && strcmp(s, "0") != 0;
     }
 
     /* operations */

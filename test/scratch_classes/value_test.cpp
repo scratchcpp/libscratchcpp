@@ -1664,152 +1664,236 @@ TEST(ValueTest, ToBool)
 
 TEST(ValueTest, ToString)
 {
+    std::vector<char *> cStrings;
     Value v = 2147483647;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "2147483647");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = -2147483647;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-2147483647");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = 512L;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "512");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = -512L;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-512");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = 2.0;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "2");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = 2.0f;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "2");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = -2.0;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-2");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = -2.0f;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-2");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = 2.54;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "2.54");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = 2.54f;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "2.54");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = -2.54;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-2.54");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = -2.54f;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-2.54");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = 2550.625021000115;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "2550.625021000115");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = 2550.625021000115f;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "2550.625");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = -2550.625021000115;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-2550.625021000115");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = -2550.625021000115f;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-2550.625");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = 9.4324e+20;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "943240000000000000000");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = -2.591e-2;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-0.02591");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = 9.4324e+21;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "9.4324e+21");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = -2.591e-13;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-2.591e-13");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = 0.001;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "0.001");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = -0.001;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-0.001");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = false;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "false");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = true;
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "true");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = "2147483647";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "2147483647");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = "-2147483647";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-2147483647");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = "999999999999999999";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "999999999999999999");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = "-999999999999999999";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-999999999999999999");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = "255.625";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "255.625");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = "-255.625";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-255.625");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = "9432.4e-12";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "9432.4e-12");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = "-9432.4e-12";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-9432.4e-12");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = "9432.4e+6";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "9432.4e+6");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = "-9432.4e+6";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-9432.4e+6");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = "false";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "false");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = "true";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "true");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = "Infinity";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_TRUE(v.isInfinity());
     ASSERT_EQ(v.toString(), "Infinity");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = "-Infinity";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_TRUE(v.isNegativeInfinity());
     ASSERT_EQ(v.toString(), "-Infinity");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
     v = "NaN";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_TRUE(v.isNaN());
     ASSERT_EQ(v.toString(), "NaN");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = "something";
+    cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "something");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
+
+    for (char *s : cStrings)
+        free(s);
 }
 
 TEST(ValueTest, AddFunction)
@@ -2941,4 +3025,204 @@ TEST(ValueTest, EqualityOperators)
         ASSERT_FALSE(v4 == v7);
         ASSERT_TRUE(v4 != v7);
     }
+}
+
+TEST(ValueTest, DoubleToCString)
+{
+    char *ret;
+    ret = value_doubleToCString(2.0);
+    ASSERT_EQ(strcmp(ret, "2"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(-2.0);
+    ASSERT_EQ(strcmp(ret, "-2"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(2.54);
+    ASSERT_EQ(strcmp(ret, "2.54"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(-2.54);
+    ASSERT_EQ(strcmp(ret, "-2.54"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(2550.625021000115);
+    ASSERT_EQ(strcmp(ret, "2550.625021000115"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(-2550.625021000115);
+    ASSERT_EQ(strcmp(ret, "-2550.625021000115"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(9.4324e+20);
+    ASSERT_EQ(strcmp(ret, "943240000000000000000"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(-2.591e-2);
+    ASSERT_EQ(strcmp(ret, "-0.02591"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(9.4324e+21);
+    ASSERT_EQ(strcmp(ret, "9.4324e+21"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(-2.591e-13);
+    ASSERT_EQ(strcmp(ret, "-2.591e-13"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(0.001);
+    ASSERT_EQ(strcmp(ret, "0.001"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(-0.001);
+    ASSERT_EQ(strcmp(ret, "-0.001"), 0);
+    free(ret);
+}
+
+TEST(ValueTest, BoolToCString)
+{
+    const char *ret;
+    ret = value_boolToCString(true);
+    ASSERT_EQ(strcmp(ret, "true"), 0);
+
+    ret = value_boolToCString(false);
+    ASSERT_EQ(strcmp(ret, "false"), 0);
+}
+
+TEST(ValueTest, StringToDouble)
+{
+    ASSERT_EQ(value_stringToDouble("2147483647"), 2147483647.0);
+    ASSERT_EQ(value_stringToDouble("-2147483647"), -2147483647.0);
+
+    ASSERT_EQ(value_stringToDouble("255.625"), 255.625);
+    ASSERT_EQ(value_stringToDouble("-255.625"), -255.625);
+
+    ASSERT_EQ(value_stringToDouble("0.15"), 0.15);
+    ASSERT_EQ(value_stringToDouble("-0.15"), -0.15);
+
+    ASSERT_EQ(value_stringToDouble("+.15"), 0.15);
+    ASSERT_EQ(value_stringToDouble(".15"), 0.15);
+    ASSERT_EQ(value_stringToDouble("-.15"), -0.15);
+
+    ASSERT_EQ(value_stringToDouble("1."), 1.0);
+    ASSERT_EQ(value_stringToDouble("+1."), 1.0);
+    ASSERT_EQ(value_stringToDouble("-1."), -1.0);
+
+    ASSERT_EQ(value_stringToDouble("0+5"), 0.0);
+    ASSERT_EQ(value_stringToDouble("0-5"), 0.0);
+
+    ASSERT_EQ(value_stringToDouble("9432.4e-12"), 9.4324e-9);
+    ASSERT_EQ(value_stringToDouble("-9432.4e-12"), -9.4324e-9);
+
+    ASSERT_EQ(value_stringToDouble("9432.4e+6"), 9.4324e+9);
+    ASSERT_EQ(value_stringToDouble("-9432.4e+6"), -9.4324e+9);
+
+    ASSERT_EQ(value_stringToDouble("1 2 3"), 0.0);
+
+    ASSERT_EQ(value_stringToDouble("false"), 0.0);
+    ASSERT_EQ(value_stringToDouble("true"), 0.0);
+
+    ASSERT_TRUE(value_stringToDouble("Infinity") > 0 && std::isinf(value_stringToDouble("Infinity")));
+    ASSERT_TRUE(value_stringToDouble("-Infinity") < 0 && std::isinf(value_stringToDouble("-Infinity")));
+    ASSERT_EQ(value_stringToDouble("NaN"), 0.0);
+
+    ASSERT_EQ(value_stringToDouble("something"), 0.0);
+
+    // Hex
+    ASSERT_EQ(value_stringToDouble("0xafe"), 2814.0);
+    ASSERT_EQ(value_stringToDouble("   0xafe"), 2814.0);
+    ASSERT_EQ(value_stringToDouble("0xafe   "), 2814.0);
+    ASSERT_EQ(value_stringToDouble("   0xafe   "), 2814.0);
+    ASSERT_EQ(value_stringToDouble("0x0afe"), 2814.0);
+    ASSERT_EQ(value_stringToDouble("0xBaCD"), 47821.0);
+    ASSERT_EQ(value_stringToDouble("0XBaCD"), 47821.0);
+    ASSERT_EQ(value_stringToDouble("0xAbG"), 0.0);
+    ASSERT_EQ(value_stringToDouble("0xabf.d"), 0.0);
+    ASSERT_EQ(value_stringToDouble("+0xa"), 0.0);
+    ASSERT_EQ(value_stringToDouble("-0xa"), 0.0);
+    ASSERT_EQ(value_stringToDouble("0x+a"), 0.0);
+    ASSERT_EQ(value_stringToDouble("0x-a"), 0.0);
+
+    // Octal
+    ASSERT_EQ(value_stringToDouble("0o506"), 326.0);
+    ASSERT_EQ(value_stringToDouble("   0o506"), 326.0);
+    ASSERT_EQ(value_stringToDouble("0o506   "), 326.0);
+    ASSERT_EQ(value_stringToDouble("   0o506   "), 326.0);
+    ASSERT_EQ(value_stringToDouble("0o0506"), 326.0);
+    ASSERT_EQ(value_stringToDouble("0O17206"), 7814.0);
+    ASSERT_EQ(value_stringToDouble("0o5783"), 0.0);
+    ASSERT_EQ(value_stringToDouble("0o573.2"), 0.0);
+    ASSERT_EQ(value_stringToDouble("+0o2"), 0.0);
+    ASSERT_EQ(value_stringToDouble("-0o2"), 0.0);
+    ASSERT_EQ(value_stringToDouble("0o+2"), 0.0);
+    ASSERT_EQ(value_stringToDouble("0o-2"), 0.0);
+
+    // Binary
+    ASSERT_EQ(value_stringToDouble("0b101101"), 45.0);
+    ASSERT_EQ(value_stringToDouble("   0b101101"), 45.0);
+    ASSERT_EQ(value_stringToDouble("0b101101   "), 45.0);
+    ASSERT_EQ(value_stringToDouble("   0b101101   "), 45.0);
+    ASSERT_EQ(value_stringToDouble("0b0101101"), 45.0);
+    ASSERT_EQ(value_stringToDouble("0B1110100110"), 934.0);
+    ASSERT_EQ(value_stringToDouble("0b100112001"), 0.0);
+    ASSERT_EQ(value_stringToDouble("0b10011001.1"), 0.0);
+    ASSERT_EQ(value_stringToDouble("+0b1"), 0.0);
+    ASSERT_EQ(value_stringToDouble("-0b1"), 0.0);
+    ASSERT_EQ(value_stringToDouble("0b+1"), 0.0);
+    ASSERT_EQ(value_stringToDouble("0b-1"), 0.0);
+}
+
+TEST(ValueTest, StringToBool)
+{
+    ASSERT_EQ(value_stringToBool("2147483647"), true);
+    ASSERT_EQ(value_stringToBool("-2147483647"), true);
+
+    ASSERT_EQ(value_stringToBool("255.625"), true);
+    ASSERT_EQ(value_stringToBool("-255.625"), true);
+
+    ASSERT_EQ(value_stringToBool("0"), false);
+
+    ASSERT_EQ(value_stringToBool("false"), false);
+    ASSERT_EQ(value_stringToBool("true"), true);
+    ASSERT_EQ(value_stringToBool("FaLsE"), false);
+    ASSERT_EQ(value_stringToBool("TrUe"), true);
+
+    ASSERT_EQ(value_stringToBool("Infinity"), true);
+    ASSERT_EQ(value_stringToBool("-Infinity"), true);
+    ASSERT_EQ(value_stringToBool("NaN"), true);
+
+    ASSERT_EQ(value_stringToBool("something"), true);
+    ASSERT_EQ(value_stringToBool(""), false);
+
+    // Hex
+    ASSERT_TRUE(value_stringToBool("0xafe"));
+    ASSERT_TRUE(value_stringToBool("   0xafe"));
+    ASSERT_TRUE(value_stringToBool("0xafe   "));
+    ASSERT_TRUE(value_stringToBool("   0xafe   "));
+    ASSERT_TRUE(value_stringToBool("0x0afe"));
+    ASSERT_TRUE(value_stringToBool("0xBaCD"));
+    ASSERT_TRUE(value_stringToBool("0x0"));
+    ASSERT_TRUE(value_stringToBool("0XBaCD"));
+    ASSERT_TRUE(value_stringToBool("0xAbG"));
+    ASSERT_TRUE(value_stringToBool("0xabf.d"));
+
+    // Octal
+    ASSERT_TRUE(value_stringToBool("0o506"));
+    ASSERT_TRUE(value_stringToBool("   0o506"));
+    ASSERT_TRUE(value_stringToBool("0o506   "));
+    ASSERT_TRUE(value_stringToBool("   0o506   "));
+    ASSERT_TRUE(value_stringToBool("0o0506"));
+    ASSERT_TRUE(value_stringToBool("0O17206"));
+    ASSERT_TRUE(value_stringToBool("0o5783"));
+    ASSERT_TRUE(value_stringToBool("0o573.2"));
+
+    // Binary
+    ASSERT_TRUE(value_stringToBool("0b101101"));
+    ASSERT_TRUE(value_stringToBool("   0b101101"));
+    ASSERT_TRUE(value_stringToBool("0b101101   "));
+    ASSERT_TRUE(value_stringToBool("   0b101101   "));
+    ASSERT_TRUE(value_stringToBool("0b0101101"));
+    ASSERT_TRUE(value_stringToBool("0B1110100110"));
+    ASSERT_TRUE(value_stringToBool("0b100112001"));
+    ASSERT_TRUE(value_stringToBool("0b10011001.1"));
 }
