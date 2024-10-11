@@ -25,22 +25,22 @@ class LLVMCodeBuilderTest : public testing::Test
 
 TEST_F(LLVMCodeBuilderTest, FunctionCalls)
 {
-    m_builder->addFunctionCall("test_function_no_args", 0, false);
+    m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
 
-    m_builder->addFunctionCall("test_function_no_args_ret", 0, true);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addFunctionCall("test_function_no_args_ret", Compiler::StaticType::String, {});
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
 
-    m_builder->addConstValue(1);
-    m_builder->addFunctionCall("test_function_1_arg_ret", 1, true);
-    m_builder->addConstValue(2);
-    m_builder->addConstValue(3);
-    m_builder->addFunctionCall("test_function_3_args", 3, false);
+    m_builder->addConstValue("1");
+    m_builder->addFunctionCall("test_function_1_arg_ret", Compiler::StaticType::String, { Compiler::StaticType::String });
+    m_builder->addConstValue("2");
+    m_builder->addConstValue("3");
+    m_builder->addFunctionCall("test_function_3_args", Compiler::StaticType::Void, { Compiler::StaticType::String, Compiler::StaticType::String, Compiler::StaticType::String });
 
     m_builder->addConstValue("test");
-    m_builder->addConstValue(4);
-    m_builder->addConstValue(5);
-    m_builder->addFunctionCall("test_function_3_args_ret", 3, true);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addConstValue("4");
+    m_builder->addConstValue("5");
+    m_builder->addFunctionCall("test_function_3_args_ret", Compiler::StaticType::String, { Compiler::StaticType::String, Compiler::StaticType::String, Compiler::StaticType::String });
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
     auto code = m_builder->finalize();
     auto ctx = code->createExecutionContext(&m_target);
 
@@ -61,24 +61,24 @@ TEST_F(LLVMCodeBuilderTest, FunctionCalls)
 
 TEST_F(LLVMCodeBuilderTest, Yield)
 {
-    m_builder->addFunctionCall("test_function_no_args", 0, false);
+    m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
 
-    m_builder->addFunctionCall("test_function_no_args_ret", 0, true);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addFunctionCall("test_function_no_args_ret", Compiler::StaticType::String, {});
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
 
     m_builder->yield();
 
-    m_builder->addConstValue(1);
-    m_builder->addFunctionCall("test_function_1_arg_ret", 1, true);
-    m_builder->addConstValue(2);
+    m_builder->addConstValue("1");
+    m_builder->addFunctionCall("test_function_1_arg_ret", Compiler::StaticType::String, { Compiler::StaticType::String });
+    m_builder->addConstValue("2");
     m_builder->addConstValue(3);
-    m_builder->addFunctionCall("test_function_3_args", 3, false);
+    m_builder->addFunctionCall("test_function_3_args", Compiler::StaticType::Void, { Compiler::StaticType::String, Compiler::StaticType::String, Compiler::StaticType::String });
 
     m_builder->addConstValue("test");
-    m_builder->addConstValue(4);
-    m_builder->addConstValue(5);
-    m_builder->addFunctionCall("test_function_3_args_ret", 3, true);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addConstValue("4");
+    m_builder->addConstValue("5");
+    m_builder->addFunctionCall("test_function_3_args_ret", Compiler::StaticType::String, { Compiler::StaticType::String, Compiler::StaticType::String, Compiler::StaticType::String });
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
     auto code = m_builder->finalize();
     auto ctx = code->createExecutionContext(&m_target);
 
@@ -111,71 +111,71 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
     // Without else branch (const condition)
     m_builder->addConstValue("true");
     m_builder->beginIfStatement();
-    m_builder->addFunctionCall("test_function_no_args", 0, false);
+    m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
     m_builder->endIf();
 
     m_builder->addConstValue("false");
     m_builder->beginIfStatement();
-    m_builder->addFunctionCall("test_function_no_args", 0, false);
+    m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
     m_builder->endIf();
 
     // Without else branch (condition returned by function)
-    m_builder->addFunctionCall("test_function_no_args_ret", 0, true);
+    m_builder->addFunctionCall("test_function_no_args_ret", Compiler::StaticType::String, {});
     m_builder->addConstValue("no_args_output");
-    m_builder->addFunctionCall("test_equals", 2, true);
+    m_builder->addFunctionCall("test_equals", Compiler::StaticType::Bool, { Compiler::StaticType::String, Compiler::StaticType::String });
     m_builder->beginIfStatement();
     m_builder->addConstValue(0);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
     m_builder->endIf();
 
-    m_builder->addFunctionCall("test_function_no_args_ret", 0, true);
+    m_builder->addFunctionCall("test_function_no_args_ret", Compiler::StaticType::String, {});
     m_builder->addConstValue("");
-    m_builder->addFunctionCall("test_equals", 2, true);
+    m_builder->addFunctionCall("test_equals", Compiler::StaticType::Bool, { Compiler::StaticType::String, Compiler::StaticType::String });
     m_builder->beginIfStatement();
     m_builder->addConstValue(1);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
     m_builder->endIf();
 
     // With else branch (const condition)
     m_builder->addConstValue("true");
     m_builder->beginIfStatement();
     m_builder->addConstValue(2);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
     m_builder->beginElseBranch();
     m_builder->addConstValue(3);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
     m_builder->endIf();
 
     m_builder->addConstValue("false");
     m_builder->beginIfStatement();
     m_builder->addConstValue(4);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
     m_builder->beginElseBranch();
     m_builder->addConstValue(5);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
     m_builder->endIf();
 
     // With else branch (condition returned by function)
-    m_builder->addFunctionCall("test_function_no_args_ret", 0, true);
+    m_builder->addFunctionCall("test_function_no_args_ret", Compiler::StaticType::String, {});
     m_builder->addConstValue("no_args_output");
-    m_builder->addFunctionCall("test_equals", 2, true);
+    m_builder->addFunctionCall("test_equals", Compiler::StaticType::Bool, { Compiler::StaticType::String, Compiler::StaticType::String });
     m_builder->beginIfStatement();
     m_builder->addConstValue(6);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
     m_builder->beginElseBranch();
     m_builder->addConstValue(7);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
     m_builder->endIf();
 
-    m_builder->addFunctionCall("test_function_no_args_ret", 0, true);
+    m_builder->addFunctionCall("test_function_no_args_ret", Compiler::StaticType::String, {});
     m_builder->addConstValue("");
-    m_builder->addFunctionCall("test_equals", 2, true);
+    m_builder->addFunctionCall("test_equals", Compiler::StaticType::Bool, { Compiler::StaticType::String, Compiler::StaticType::String });
     m_builder->beginIfStatement();
     m_builder->addConstValue(8);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
     m_builder->beginElseBranch();
     m_builder->addConstValue(9);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
     m_builder->endIf();
 
     // Nested 1
@@ -186,19 +186,19 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
         m_builder->beginIfStatement();
         {
             m_builder->addConstValue(0);
-            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+            m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
         }
         m_builder->beginElseBranch();
         {
             m_builder->addConstValue(1);
-            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+            m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
 
             m_builder->addConstValue(false);
             m_builder->beginIfStatement();
             m_builder->beginElseBranch();
             {
                 m_builder->addConstValue(2);
-                m_builder->addFunctionCall("test_function_1_arg", 1, false);
+                m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
             }
             m_builder->endIf();
         }
@@ -210,12 +210,12 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
         m_builder->beginIfStatement();
         {
             m_builder->addConstValue(3);
-            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+            m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
         }
         m_builder->beginElseBranch();
         {
             m_builder->addConstValue(4);
-            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+            m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
         }
         m_builder->endIf();
     }
@@ -229,12 +229,12 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
         m_builder->beginIfStatement();
         {
             m_builder->addConstValue(5);
-            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+            m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
         }
         m_builder->beginElseBranch();
         {
             m_builder->addConstValue(6);
-            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+            m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
         }
         m_builder->endIf();
     }
@@ -244,7 +244,7 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
         m_builder->beginIfStatement();
         {
             m_builder->addConstValue(7);
-            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+            m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
         }
         m_builder->beginElseBranch();
         m_builder->endIf();
@@ -280,30 +280,30 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     // Const count
     m_builder->addConstValue("-5");
     m_builder->beginRepeatLoop();
-    m_builder->addFunctionCall("test_function_no_args", 0, false);
+    m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
     m_builder->endLoop();
 
     m_builder->addConstValue(0);
     m_builder->beginRepeatLoop();
-    m_builder->addFunctionCall("test_function_no_args", 0, false);
+    m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
     m_builder->endLoop();
 
     m_builder->addConstValue(3);
     m_builder->beginRepeatLoop();
-    m_builder->addFunctionCall("test_function_no_args", 0, false);
+    m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
     m_builder->endLoop();
 
     m_builder->addConstValue("2");
     m_builder->beginRepeatLoop();
     m_builder->addConstValue(0);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
     m_builder->endLoop();
 
     // Count returned by function
     m_builder->addConstValue(2);
-    m_builder->addFunctionCall("test_const", 1, true);
+    m_builder->addFunctionCall("test_const", Compiler::StaticType::Number, { Compiler::StaticType::Number });
     m_builder->beginRepeatLoop();
-    m_builder->addFunctionCall("test_function_no_args", 0, false);
+    m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
     m_builder->endLoop();
 
     // Nested
@@ -314,18 +314,18 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
         m_builder->beginRepeatLoop();
         {
             m_builder->addConstValue(1);
-            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+            m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
         }
         m_builder->endLoop();
 
         m_builder->addConstValue(2);
-        m_builder->addFunctionCall("test_function_1_arg", 1, false);
+        m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
 
         m_builder->addConstValue(3);
         m_builder->beginRepeatLoop();
         {
             m_builder->addConstValue(3);
-            m_builder->addFunctionCall("test_function_1_arg", 1, false);
+            m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
         }
         m_builder->endLoop();
     }
@@ -367,55 +367,55 @@ TEST_F(LLVMCodeBuilderTest, WhileLoop)
     m_builder->beginLoopCondition();
     m_builder->addConstValue("false");
     m_builder->beginWhileLoop();
-    m_builder->addFunctionCall("test_unreachable", 0, false);
+    m_builder->addFunctionCall("test_unreachable", Compiler::StaticType::Void, {});
     m_builder->endLoop();
 
     m_builder->beginLoopCondition();
     m_builder->addConstValue(false);
     m_builder->beginWhileLoop();
-    m_builder->addFunctionCall("test_unreachable", 0, false);
+    m_builder->addFunctionCall("test_unreachable", Compiler::StaticType::Void, {});
     m_builder->endLoop();
 
     // Condition returned by function
-    m_builder->addFunctionCall("test_reset_counter", 0, false);
+    m_builder->addFunctionCall("test_reset_counter", Compiler::StaticType::Void, {});
     m_builder->beginLoopCondition();
-    m_builder->addFunctionCall("test_get_counter", 0, true);
+    m_builder->addFunctionCall("test_get_counter", Compiler::StaticType::Number, {});
     m_builder->addConstValue(2);
-    m_builder->addFunctionCall("test_lower_than", 2, true);
+    m_builder->addFunctionCall("test_lower_than", Compiler::StaticType::Bool, { Compiler::StaticType::Number, Compiler::StaticType::Number });
     m_builder->beginWhileLoop();
     m_builder->addConstValue(0);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
-    m_builder->addFunctionCall("test_increment_counter", 0, false);
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
+    m_builder->addFunctionCall("test_increment_counter", Compiler::StaticType::Void, {});
     m_builder->endLoop();
 
     // Nested
-    m_builder->addFunctionCall("test_reset_counter", 0, false);
+    m_builder->addFunctionCall("test_reset_counter", Compiler::StaticType::Void, {});
     m_builder->beginLoopCondition();
-    m_builder->addFunctionCall("test_get_counter", 0, true);
+    m_builder->addFunctionCall("test_get_counter", Compiler::StaticType::Number, {});
     m_builder->addConstValue(3);
-    m_builder->addFunctionCall("test_lower_than", 2, true);
+    m_builder->addFunctionCall("test_lower_than", Compiler::StaticType::Bool, { Compiler::StaticType::Number, Compiler::StaticType::Number });
     m_builder->beginWhileLoop();
     {
         m_builder->beginLoopCondition();
-        m_builder->addFunctionCall("test_get_counter", 0, true);
+        m_builder->addFunctionCall("test_get_counter", Compiler::StaticType::Number, {});
         m_builder->addConstValue(3);
-        m_builder->addFunctionCall("test_lower_than", 2, true);
+        m_builder->addFunctionCall("test_lower_than", Compiler::StaticType::Bool, { Compiler::StaticType::Number, Compiler::StaticType::Number });
         m_builder->beginWhileLoop();
         {
             m_builder->addConstValue(1);
-            m_builder->addFunctionCall("test_function_1_arg", 1, false);
-            m_builder->addFunctionCall("test_increment_counter", 0, false);
+            m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
+            m_builder->addFunctionCall("test_increment_counter", Compiler::StaticType::Void, {});
         }
         m_builder->endLoop();
 
         m_builder->addConstValue(2);
-        m_builder->addFunctionCall("test_function_1_arg", 1, false);
+        m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
 
         m_builder->beginLoopCondition();
         m_builder->addConstValue(false);
         m_builder->beginWhileLoop();
         {
-            m_builder->addFunctionCall("test_unreachable", 0, false);
+            m_builder->addFunctionCall("test_unreachable", Compiler::StaticType::Void, {});
         }
         m_builder->endLoop();
     }
@@ -444,58 +444,58 @@ TEST_F(LLVMCodeBuilderTest, RepeatUntilLoop)
     m_builder->beginLoopCondition();
     m_builder->addConstValue("true");
     m_builder->beginRepeatUntilLoop();
-    m_builder->addFunctionCall("test_unreachable", 0, false);
+    m_builder->addFunctionCall("test_unreachable", Compiler::StaticType::Void, {});
     m_builder->endLoop();
 
     m_builder->beginLoopCondition();
     m_builder->addConstValue(true);
     m_builder->beginRepeatUntilLoop();
-    m_builder->addFunctionCall("test_unreachable", 0, false);
+    m_builder->addFunctionCall("test_unreachable", Compiler::StaticType::Void, {});
     m_builder->endLoop();
 
     // Condition returned by function
-    m_builder->addFunctionCall("test_reset_counter", 0, false);
+    m_builder->addFunctionCall("test_reset_counter", Compiler::StaticType::Void, {});
     m_builder->beginLoopCondition();
-    m_builder->addFunctionCall("test_get_counter", 0, true);
+    m_builder->addFunctionCall("test_get_counter", Compiler::StaticType::Number, {});
     m_builder->addConstValue(2);
-    m_builder->addFunctionCall("test_lower_than", 2, true);
-    m_builder->addFunctionCall("test_not", 1, true);
+    m_builder->addFunctionCall("test_lower_than", Compiler::StaticType::Bool, { Compiler::StaticType::Number, Compiler::StaticType::Number });
+    m_builder->addFunctionCall("test_not", Compiler::StaticType::Bool, { Compiler::StaticType::Bool });
     m_builder->beginRepeatUntilLoop();
     m_builder->addConstValue(0);
-    m_builder->addFunctionCall("test_function_1_arg", 1, false);
-    m_builder->addFunctionCall("test_increment_counter", 0, false);
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
+    m_builder->addFunctionCall("test_increment_counter", Compiler::StaticType::Void, {});
     m_builder->endLoop();
 
     // Nested
-    m_builder->addFunctionCall("test_reset_counter", 0, false);
+    m_builder->addFunctionCall("test_reset_counter", Compiler::StaticType::Void, {});
     m_builder->beginLoopCondition();
-    m_builder->addFunctionCall("test_get_counter", 0, true);
+    m_builder->addFunctionCall("test_get_counter", Compiler::StaticType::Number, {});
     m_builder->addConstValue(3);
-    m_builder->addFunctionCall("test_lower_than", 2, true);
-    m_builder->addFunctionCall("test_not", 1, true);
+    m_builder->addFunctionCall("test_lower_than", Compiler::StaticType::Bool, { Compiler::StaticType::Number, Compiler::StaticType::Number });
+    m_builder->addFunctionCall("test_not", Compiler::StaticType::Bool, { Compiler::StaticType::Bool });
     m_builder->beginRepeatUntilLoop();
     {
         m_builder->beginLoopCondition();
-        m_builder->addFunctionCall("test_get_counter", 0, true);
+        m_builder->addFunctionCall("test_get_counter", Compiler::StaticType::Number, {});
         m_builder->addConstValue(3);
-        m_builder->addFunctionCall("test_lower_than", 2, true);
-        m_builder->addFunctionCall("test_not", 1, true);
+        m_builder->addFunctionCall("test_lower_than", Compiler::StaticType::Bool, { Compiler::StaticType::Number, Compiler::StaticType::Number });
+        m_builder->addFunctionCall("test_not", Compiler::StaticType::Bool, { Compiler::StaticType::Bool });
         m_builder->beginRepeatUntilLoop();
         {
             m_builder->addConstValue(1);
-            m_builder->addFunctionCall("test_function_1_arg", 1, false);
-            m_builder->addFunctionCall("test_increment_counter", 0, false);
+            m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
+            m_builder->addFunctionCall("test_increment_counter", Compiler::StaticType::Void, {});
         }
         m_builder->endLoop();
 
         m_builder->addConstValue(2);
-        m_builder->addFunctionCall("test_function_1_arg", 1, false);
+        m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
 
         m_builder->beginLoopCondition();
         m_builder->addConstValue(true);
         m_builder->beginRepeatUntilLoop();
         {
-            m_builder->addFunctionCall("test_unreachable", 0, false);
+            m_builder->addFunctionCall("test_unreachable", Compiler::StaticType::Void, {});
         }
         m_builder->endLoop();
     }

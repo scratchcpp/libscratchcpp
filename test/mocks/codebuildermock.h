@@ -9,7 +9,7 @@ class CodeBuilderMock : public ICodeBuilder
 {
     public:
         MOCK_METHOD(std::shared_ptr<ExecutableCode>, finalize, (), (override));
-        MOCK_METHOD(void, addFunctionCall, (const std::string &, int, bool), (override));
+        MOCK_METHOD(void, addFunctionCall, (const std::string &, Compiler::StaticType, const std::vector<Compiler::StaticType> &), (override));
         MOCK_METHOD(void, addConstValue, (const Value &), (override));
         MOCK_METHOD(void, addVariableValue, (Variable *), (override));
         MOCK_METHOD(void, addListContents, (List *), (override));

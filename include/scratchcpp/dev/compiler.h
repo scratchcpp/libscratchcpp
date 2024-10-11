@@ -3,6 +3,7 @@
 #pragma once
 
 #include <unordered_set>
+#include <vector>
 
 #include "../global.h"
 #include "../spimpl.h"
@@ -23,6 +24,14 @@ class CompilerPrivate;
 class LIBSCRATCHCPP_EXPORT Compiler
 {
     public:
+        enum class StaticType
+        {
+            Void,
+            Number,
+            Bool,
+            String
+        };
+
         Compiler(IEngine *engine, Target *target);
         Compiler(const Compiler &) = delete;
 
@@ -32,7 +41,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
 
         std::shared_ptr<ExecutableCode> compile(std::shared_ptr<Block> startBlock);
 
-        void addFunctionCall(const std::string &functionName, int argCount, bool returns);
+        void addFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const std::vector<StaticType> &argTypes = {});
         void addConstValue(const Value &value);
         void addVariableValue(Variable *variable);
         void addListContents(List *list);

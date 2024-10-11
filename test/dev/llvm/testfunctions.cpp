@@ -1,4 +1,4 @@
-#include <scratchcpp/value_functions.h>
+#include <scratchcpp/value.h>
 #include <iostream>
 #include <targetmock.h>
 
@@ -31,54 +31,45 @@ extern "C"
         std::cout << "no_args" << std::endl;
     }
 
-    void test_function_no_args_ret(Target *target, ValueData *ret)
+    char *test_function_no_args_ret(Target *target)
     {
         target->isStage();
         std::cout << "no_args_ret" << std::endl;
-        value_assign_cstring(ret, "no_args_output");
+        Value v("no_args_output");
+        return value_toCString(&v.data());
     }
 
-    void test_function_1_arg(Target *target, const ValueData *arg1)
+    void test_function_1_arg(Target *target, const char *arg1)
     {
         target->isStage();
-        std::string s;
-        value_toString(arg1, &s);
-        std::cout << "1_arg " << s << std::endl;
+        std::cout << "1_arg " << arg1 << std::endl;
     }
 
-    void test_function_1_arg_ret(Target *target, ValueData *ret, const ValueData *arg1)
+    char *test_function_1_arg_ret(Target *target, const char *arg1)
     {
         target->isStage();
-        std::string s;
-        value_toString(arg1, &s);
-        std::cout << "1_arg_ret " << s << std::endl;
-        value_assign_cstring(ret, "1_arg_output");
+        std::cout << "1_arg_ret " << arg1 << std::endl;
+        Value v("1_arg_output");
+        return value_toCString(&v.data());
     }
 
-    void test_function_3_args(Target *target, const ValueData *arg1, const ValueData *arg2, const ValueData *arg3)
+    void test_function_3_args(Target *target, const char *arg1, const char *arg2, const char *arg3)
     {
         target->isStage();
-        std::string s1, s2, s3;
-        value_toString(arg1, &s1);
-        value_toString(arg2, &s2);
-        value_toString(arg3, &s3);
-        std::cout << "3_args " << s1 << " " << s2 << " " << s3 << std::endl;
+        std::cout << "3_args " << arg1 << " " << arg2 << " " << arg3 << std::endl;
     }
 
-    void test_function_3_args_ret(Target *target, ValueData *ret, const ValueData *arg1, const ValueData *arg2, const ValueData *arg3)
+    char *test_function_3_args_ret(Target *target, const char *arg1, const char *arg2, const char *arg3)
     {
         target->isStage();
-        std::string s1, s2, s3;
-        value_toString(arg1, &s1);
-        value_toString(arg2, &s2);
-        value_toString(arg3, &s3);
-        std::cout << "3_args " << s1 << " " << s2 << " " << s3 << std::endl;
-        value_assign_cstring(ret, "3_args_output");
+        std::cout << "3_args " << arg1 << " " << arg2 << " " << arg3 << std::endl;
+        Value v("3_args_output");
+        return value_toCString(&v.data());
     }
 
-    void test_equals(Target *target, ValueData *ret, ValueData *a, ValueData *b)
+    bool test_equals(Target *target, const char *a, const char *b)
     {
-        value_assign_bool(ret, value_equals(a, b));
+        return strcmp(a, b) == 0;
     }
 
     void test_unreachable(Target *target)
@@ -87,19 +78,19 @@ extern "C"
         exit(1);
     }
 
-    void test_lower_than(Target *target, ValueData *ret, ValueData *a, ValueData *b)
+    bool test_lower_than(Target *target, double a, double b)
     {
-        value_assign_bool(ret, value_lower(a, b));
+        return a < b;
     }
 
-    void test_const(Target *target, ValueData *ret, ValueData *v)
+    double test_const(Target *target, double v)
     {
-        value_assign_copy(ret, v);
+        return v;
     }
 
-    void test_not(Target *target, ValueData *ret, ValueData *arg)
+    bool test_not(Target *target, bool arg)
     {
-        value_assign_bool(ret, !value_toBool(arg));
+        return !arg;
     }
 
     void test_reset_counter(Target *target)
@@ -112,8 +103,8 @@ extern "C"
         counter++;
     }
 
-    void test_get_counter(Target *target, ValueData *ret)
+    double test_get_counter(Target *target)
     {
-        value_assign_int(ret, counter);
+        return counter;
     }
 }
