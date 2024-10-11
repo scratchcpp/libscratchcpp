@@ -83,9 +83,20 @@ extern "C"
         return a < b;
     }
 
-    double test_const(Target *target, double v)
+    double test_const_number(Target *target, double v)
     {
         return v;
+    }
+
+    bool test_const_bool(Target *target, bool v)
+    {
+        return v;
+    }
+
+    char *test_const_string(Target *target, const char *v)
+    {
+        Value value(v);
+        return value_toCString(&value.data());
     }
 
     bool test_not(Target *target, bool arg)

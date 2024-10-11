@@ -63,14 +63,20 @@ TEST_F(LLVMCodeBuilderTest, ConstCasting)
 {
     m_builder->addConstValue(5.2);
     m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number });
-    m_builder->addConstValue(-24.156);
+    m_builder->addConstValue("-24.156");
     m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number });
 
     m_builder->addConstValue(true);
     m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool });
 
-    m_builder->addConstValue(false);
+    m_builder->addConstValue(0);
     m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool });
+
+    m_builder->addConstValue("false");
+    m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool });
+
+    m_builder->addConstValue("123");
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
 
     m_builder->addConstValue("hello world");
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
@@ -81,6 +87,99 @@ TEST_F(LLVMCodeBuilderTest, ConstCasting)
     static const std::string expected =
         "5.2\n"
         "-24.156\n"
+        "1\n"
+        "0\n"
+        "0\n"
+        "123\n"
+        "hello world\n";
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, RawValueCasting)
+{
+    // Number -> number
+    m_builder->addConstValue(5.2);
+    m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+    m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number });
+
+    // Number -> bool
+    m_builder->addConstValue(-24.156);
+    m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+    m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool });
+
+    m_builder->addConstValue(0);
+    m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+    m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool });
+
+    // Number -> string
+    m_builder->addConstValue(59.8);
+    m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    // Bool -> number
+    m_builder->addConstValue(true);
+    m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool });
+    m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number });
+
+    m_builder->addConstValue(false);
+    m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool });
+    m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number });
+
+    // Bool -> bool
+    m_builder->addConstValue(true);
+    m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool });
+    m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool });
+
+    m_builder->addConstValue(false);
+    m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool });
+    m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool });
+
+    // Bool -> string
+    m_builder->addConstValue(true);
+    m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool });
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(false);
+    m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool });
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    // String -> number
+    m_builder->addConstValue("5.2");
+    m_builder->addFunctionCall("test_const_string", Compiler::StaticType::String, { Compiler::StaticType::String });
+    m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number });
+
+    // String -> bool
+    m_builder->addConstValue("abc");
+    m_builder->addFunctionCall("test_const_string", Compiler::StaticType::String, { Compiler::StaticType::String });
+    m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool });
+
+    m_builder->addConstValue("false");
+    m_builder->addFunctionCall("test_const_string", Compiler::StaticType::String, { Compiler::StaticType::String });
+    m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool });
+
+    // String -> string
+    m_builder->addConstValue("hello world");
+    m_builder->addFunctionCall("test_const_string", Compiler::StaticType::String, { Compiler::StaticType::String });
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&m_target);
+
+    static const std::string expected =
+        "5.2\n"
+        "1\n"
+        "0\n"
+        "59.8\n"
+        "1\n"
+        "0\n"
+        "1\n"
+        "0\n"
+        "true\n"
+        "false\n"
+        "5.2\n"
         "1\n"
         "0\n"
         "hello world\n";
@@ -332,7 +431,7 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
 
     // Count returned by function
     m_builder->addConstValue(2);
-    m_builder->addFunctionCall("test_const", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+    m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
     m_builder->beginRepeatLoop();
     m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
     m_builder->endLoop();

@@ -22,7 +22,9 @@ extern "C"
     bool test_equals(Target *target, const char *a, const char *b);
     bool test_lower_than(Target *target, double a, double b);
     bool test_not(Target *target, bool arg);
-    double test_const(Target *target, double v);
+    double test_const_number(Target *target, double v);
+    bool test_const_bool(Target *target, bool v);
+    char *test_const_string(Target *target, const char *v);
 
     void test_unreachable(Target *target);
 
