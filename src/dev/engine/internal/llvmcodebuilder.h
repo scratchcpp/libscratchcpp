@@ -17,7 +17,7 @@ class Target;
 class LLVMCodeBuilder : public ICodeBuilder
 {
     public:
-        LLVMCodeBuilder(const std::string &id);
+        LLVMCodeBuilder(const std::string &id, bool warp);
 
         std::shared_ptr<ExecutableCode> finalize() override;
 
@@ -98,9 +98,24 @@ class LLVMCodeBuilder : public ICodeBuilder
                 llvm::BasicBlock *afterLoop = nullptr;
         };
 
+        struct Coroutine
+        {
+                llvm::Value *handle = nullptr;
+                llvm::BasicBlock *suspend = nullptr;
+                llvm::BasicBlock *cleanup = nullptr;
+        };
+
+        struct Procedure
+        {
+                // TODO: Implement procedures
+                bool warp = false;
+        };
+
         void initTypes();
-        llvm::Function *beginFunction(size_t index);
-        void endFunction(llvm::Function *func, size_t index);
+
+        Coroutine initCoroutine(llvm::Function *func);
+        void verifyFunction(llvm::Function *func);
+        void optimize();
 
         void freeHeap();
         llvm::Value *castValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType);
@@ -136,6 +151,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         std::vector<Value> m_constValues;
         std::vector<std::vector<std::shared_ptr<Register>>> m_regs;
         std::vector<std::shared_ptr<Register>> m_tmpRegs;
+        bool m_defaultWarp = false;
+        bool m_warp = false;
 
         std::vector<llvm::Value *> m_heap;
 

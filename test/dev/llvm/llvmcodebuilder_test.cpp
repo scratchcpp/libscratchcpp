@@ -15,9 +15,10 @@ class LLVMCodeBuilderTest : public testing::Test
     public:
         void SetUp() override
         {
-            m_builder = std::make_unique<LLVMCodeBuilder>("test");
             test_function(nullptr, nullptr); // force dependency
         }
+
+        void createBuilder(bool warp) { m_builder = std::make_unique<LLVMCodeBuilder>("test", warp); }
 
         std::unique_ptr<LLVMCodeBuilder> m_builder;
         TargetMock m_target; // NOTE: isStage() is used for call expectations
@@ -25,42 +26,49 @@ class LLVMCodeBuilderTest : public testing::Test
 
 TEST_F(LLVMCodeBuilderTest, FunctionCalls)
 {
-    m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
+    static const std::vector<bool> warpList = { false, true };
 
-    m_builder->addFunctionCall("test_function_no_args_ret", Compiler::StaticType::String, {});
-    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
+    for (bool warp : warpList) {
+        createBuilder(warp);
+        m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
 
-    m_builder->addConstValue("1");
-    m_builder->addFunctionCall("test_function_1_arg_ret", Compiler::StaticType::String, { Compiler::StaticType::String });
-    m_builder->addConstValue("2");
-    m_builder->addConstValue("3");
-    m_builder->addFunctionCall("test_function_3_args", Compiler::StaticType::Void, { Compiler::StaticType::String, Compiler::StaticType::String, Compiler::StaticType::String });
+        m_builder->addFunctionCall("test_function_no_args_ret", Compiler::StaticType::String, {});
+        m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
 
-    m_builder->addConstValue("test");
-    m_builder->addConstValue("4");
-    m_builder->addConstValue("5");
-    m_builder->addFunctionCall("test_function_3_args_ret", Compiler::StaticType::String, { Compiler::StaticType::String, Compiler::StaticType::String, Compiler::StaticType::String });
-    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
-    auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&m_target);
+        m_builder->addConstValue("1");
+        m_builder->addFunctionCall("test_function_1_arg_ret", Compiler::StaticType::String, { Compiler::StaticType::String });
+        m_builder->addConstValue("2");
+        m_builder->addConstValue("3");
+        m_builder->addFunctionCall("test_function_3_args", Compiler::StaticType::Void, { Compiler::StaticType::String, Compiler::StaticType::String, Compiler::StaticType::String });
 
-    static const std::string expected =
-        "no_args\n"
-        "no_args_ret\n"
-        "1_arg no_args_output\n"
-        "1_arg_ret 1\n"
-        "3_args 1_arg_output 2 3\n"
-        "3_args test 4 5\n"
-        "1_arg 3_args_output\n";
+        m_builder->addConstValue("test");
+        m_builder->addConstValue("4");
+        m_builder->addConstValue("5");
+        m_builder->addFunctionCall("test_function_3_args_ret", Compiler::StaticType::String, { Compiler::StaticType::String, Compiler::StaticType::String, Compiler::StaticType::String });
+        m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
 
-    EXPECT_CALL(m_target, isStage()).Times(7);
-    testing::internal::CaptureStdout();
-    code->run(ctx.get());
-    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+        static const std::string expected =
+            "no_args\n"
+            "no_args_ret\n"
+            "1_arg no_args_output\n"
+            "1_arg_ret 1\n"
+            "3_args 1_arg_output 2 3\n"
+            "3_args test 4 5\n"
+            "1_arg 3_args_output\n";
+
+        EXPECT_CALL(m_target, isStage()).Times(7);
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+    }
 }
 
 TEST_F(LLVMCodeBuilderTest, ConstCasting)
 {
+    createBuilder(true);
+
     m_builder->addConstValue(5.2);
     m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number });
     m_builder->addConstValue("-24.156");
@@ -100,6 +108,8 @@ TEST_F(LLVMCodeBuilderTest, ConstCasting)
 
 TEST_F(LLVMCodeBuilderTest, RawValueCasting)
 {
+    createBuilder(true);
+
     // Number -> number
     m_builder->addConstValue(5.2);
     m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
@@ -191,24 +201,31 @@ TEST_F(LLVMCodeBuilderTest, RawValueCasting)
 
 TEST_F(LLVMCodeBuilderTest, Yield)
 {
-    m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
+    auto build = [this]() {
+        m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
 
-    m_builder->addFunctionCall("test_function_no_args_ret", Compiler::StaticType::String, {});
-    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
+        m_builder->addFunctionCall("test_function_no_args_ret", Compiler::StaticType::String, {});
+        m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
 
-    m_builder->yield();
+        m_builder->yield();
 
-    m_builder->addConstValue("1");
-    m_builder->addFunctionCall("test_function_1_arg_ret", Compiler::StaticType::String, { Compiler::StaticType::String });
-    m_builder->addConstValue("2");
-    m_builder->addConstValue(3);
-    m_builder->addFunctionCall("test_function_3_args", Compiler::StaticType::Void, { Compiler::StaticType::String, Compiler::StaticType::String, Compiler::StaticType::String });
+        m_builder->addConstValue("1");
+        m_builder->addFunctionCall("test_function_1_arg_ret", Compiler::StaticType::String, { Compiler::StaticType::String });
+        m_builder->addConstValue("2");
+        m_builder->addConstValue(3);
+        m_builder->addFunctionCall("test_function_3_args", Compiler::StaticType::Void, { Compiler::StaticType::String, Compiler::StaticType::String, Compiler::StaticType::String });
 
-    m_builder->addConstValue("test");
-    m_builder->addConstValue("4");
-    m_builder->addConstValue("5");
-    m_builder->addFunctionCall("test_function_3_args_ret", Compiler::StaticType::String, { Compiler::StaticType::String, Compiler::StaticType::String, Compiler::StaticType::String });
-    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
+        m_builder->addConstValue("test");
+        m_builder->addConstValue("4");
+        m_builder->addConstValue("5");
+        m_builder->addFunctionCall("test_function_3_args_ret", Compiler::StaticType::String, { Compiler::StaticType::String, Compiler::StaticType::String, Compiler::StaticType::String });
+        m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
+    };
+
+    // Without warp
+    createBuilder(false);
+    build();
+
     auto code = m_builder->finalize();
     auto ctx = code->createExecutionContext(&m_target);
 
@@ -234,10 +251,32 @@ TEST_F(LLVMCodeBuilderTest, Yield)
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected2);
     ASSERT_TRUE(code->isFinished(ctx.get()));
+
+    // With warp
+    createBuilder(true);
+    build();
+    code = m_builder->finalize();
+    ctx = code->createExecutionContext(&m_target);
+
+    static const std::string expected =
+        "no_args\n"
+        "no_args_ret\n"
+        "1_arg no_args_output\n"
+        "1_arg_ret 1\n"
+        "3_args 1_arg_output 2 3\n"
+        "3_args test 4 5\n"
+        "1_arg 3_args_output\n";
+
+    EXPECT_CALL(m_target, isStage()).Times(7);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
 TEST_F(LLVMCodeBuilderTest, IfStatement)
 {
+    createBuilder(true);
+
     // Without else branch (const condition)
     m_builder->addConstValue("true");
     m_builder->beginIfStatement();
@@ -405,8 +444,11 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
+// TODO: Write a test for count rounding
 TEST_F(LLVMCodeBuilderTest, RepeatLoop)
 {
+    createBuilder(true);
+
     // Const count
     m_builder->addConstValue("-5");
     m_builder->beginRepeatLoop();
@@ -489,10 +531,39 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+
+    // Yield
+    createBuilder(false);
+
+    m_builder->addConstValue(3);
+    m_builder->beginRepeatLoop();
+    m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
+    m_builder->endLoop();
+
+    code = m_builder->finalize();
+    ctx = code->createExecutionContext(&m_target);
+
+    static const std::string expected1 = "no_args\n";
+
+    EXPECT_CALL(m_target, isStage).WillRepeatedly(Return(false));
+
+    for (int i = 0; i < 3; i++) {
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), expected1);
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+    }
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_TRUE(testing::internal::GetCapturedStdout().empty());
+    ASSERT_TRUE(code->isFinished(ctx.get()));
 }
 
 TEST_F(LLVMCodeBuilderTest, WhileLoop)
 {
+    createBuilder(true);
+
     // Const condition
     m_builder->beginLoopCondition();
     m_builder->addConstValue("false");
@@ -566,10 +637,35 @@ TEST_F(LLVMCodeBuilderTest, WhileLoop)
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+
+    // Yield
+    createBuilder(false);
+
+    m_builder->beginLoopCondition();
+    m_builder->addConstValue(true);
+    m_builder->beginWhileLoop();
+    m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
+    m_builder->endLoop();
+
+    code = m_builder->finalize();
+    ctx = code->createExecutionContext(&m_target);
+
+    static const std::string expected1 = "no_args\n";
+
+    EXPECT_CALL(m_target, isStage).WillRepeatedly(Return(false));
+
+    for (int i = 0; i < 10; i++) {
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), expected1);
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+    }
 }
 
 TEST_F(LLVMCodeBuilderTest, RepeatUntilLoop)
 {
+    createBuilder(true);
+
     // Const condition
     m_builder->beginLoopCondition();
     m_builder->addConstValue("true");
@@ -646,4 +742,27 @@ TEST_F(LLVMCodeBuilderTest, RepeatUntilLoop)
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+
+    // Yield
+    createBuilder(false);
+
+    m_builder->beginLoopCondition();
+    m_builder->addConstValue(false);
+    m_builder->beginRepeatUntilLoop();
+    m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
+    m_builder->endLoop();
+
+    code = m_builder->finalize();
+    ctx = code->createExecutionContext(&m_target);
+
+    static const std::string expected1 = "no_args\n";
+
+    EXPECT_CALL(m_target, isStage).WillRepeatedly(Return(false));
+
+    for (int i = 0; i < 10; i++) {
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), expected1);
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+    }
 }

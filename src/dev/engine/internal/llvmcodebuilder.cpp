@@ -3,6 +3,7 @@
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
+#include <llvm/Passes/PassBuilder.h>
 
 #include "llvmcodebuilder.h"
 #include "llvmexecutablecode.h"
@@ -15,10 +16,12 @@ static std::unordered_map<ValueType, Compiler::StaticType> TYPE_MAP = {
     { ValueType::NegativeInfinity, Compiler::StaticType::Number }, { ValueType::NaN, Compiler::StaticType::Number }
 };
 
-LLVMCodeBuilder::LLVMCodeBuilder(const std::string &id) :
+LLVMCodeBuilder::LLVMCodeBuilder(const std::string &id, bool warp) :
     m_id(id),
     m_module(std::make_unique<llvm::Module>(id, m_ctx)),
-    m_builder(m_ctx)
+    m_builder(m_ctx),
+    m_defaultWarp(warp),
+    m_warp(warp)
 {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
@@ -31,8 +34,21 @@ LLVMCodeBuilder::LLVMCodeBuilder(const std::string &id) :
 
 std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 {
-    size_t functionIndex = 0;
-    llvm::Function *currentFunc = beginFunction(functionIndex);
+    // Create function
+    // void *f(Target *)
+    llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, pointerType, false);
+    llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module.get());
+
+    llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
+    m_builder.SetInsertPoint(entry);
+
+    // Init coroutine
+    Coroutine coro;
+
+    if (!m_warp)
+        coro = initCoroutine(func);
+
     std::vector<IfStatement> ifStatements;
     std::vector<Loop> loops;
     m_heap.clear();
@@ -45,9 +61,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 std::vector<llvm::Value *> args;
 
                 // Add target pointer arg
-                assert(currentFunc->arg_size() == 1);
+                assert(func->arg_size() == 1);
                 types.push_back(llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0));
-                args.push_back(currentFunc->getArg(0));
+                args.push_back(func->getArg(0));
 
                 // Args
                 for (auto &arg : step.args) {
@@ -68,15 +84,23 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             }
 
             case Step::Type::Yield:
-                freeHeap();
-                endFunction(currentFunc, functionIndex);
-                currentFunc = beginFunction(++functionIndex);
+                if (!m_warp) {
+                    freeHeap();
+                    llvm::BasicBlock *resumeBranch = llvm::BasicBlock::Create(m_ctx, "", func);
+                    llvm::Value *noneToken = llvm::ConstantTokenNone::get(m_ctx);
+                    llvm::Value *suspendResult = m_builder.CreateCall(llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_suspend), { noneToken, m_builder.getInt1(false) });
+                    llvm::SwitchInst *sw = m_builder.CreateSwitch(suspendResult, coro.suspend, 2);
+                    sw->addCase(m_builder.getInt8(0), resumeBranch);
+                    sw->addCase(m_builder.getInt8(1), coro.cleanup);
+                    m_builder.SetInsertPoint(resumeBranch);
+                }
+
                 break;
 
             case Step::Type::BeginIf: {
                 IfStatement statement;
                 statement.beforeIf = m_builder.GetInsertBlock();
-                statement.body = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                statement.body = llvm::BasicBlock::Create(m_ctx, "", func);
 
                 // Use last reg
                 assert(step.args.size() == 1);
@@ -98,13 +122,13 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 // Jump to the branch after the if statement
                 assert(!statement.afterIf);
-                statement.afterIf = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                statement.afterIf = llvm::BasicBlock::Create(m_ctx, "", func);
                 freeHeap();
                 m_builder.CreateBr(statement.afterIf);
 
                 // Create else branch
                 assert(!statement.elseBranch);
-                statement.elseBranch = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                statement.elseBranch = llvm::BasicBlock::Create(m_ctx, "", func);
 
                 // Since there's an else branch, the conditional instruction should jump to it
                 m_builder.SetInsertPoint(statement.beforeIf);
@@ -121,7 +145,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 // Jump to the branch after the if statement
                 if (!statement.afterIf)
-                    statement.afterIf = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                    statement.afterIf = llvm::BasicBlock::Create(m_ctx, "", func);
 
                 freeHeap();
                 m_builder.CreateBr(statement.afterIf);
@@ -150,9 +174,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.CreateStore(zero, loop.index);
 
                 // Create branches
-                llvm::BasicBlock *roundBranch = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
-                loop.conditionBranch = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
-                loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                llvm::BasicBlock *roundBranch = llvm::BasicBlock::Create(m_ctx, "", func);
+                loop.conditionBranch = llvm::BasicBlock::Create(m_ctx, "", func);
+                loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", func);
 
                 // Use last reg for count
                 assert(step.args.size() == 1);
@@ -177,10 +201,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // Check index
                 m_builder.SetInsertPoint(loop.conditionBranch);
 
-                llvm::BasicBlock *body = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                llvm::BasicBlock *body = llvm::BasicBlock::Create(m_ctx, "", func);
 
                 if (!loop.afterLoop)
-                    loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                    loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", func);
 
                 llvm::Value *currentIndex = m_builder.CreateLoad(m_builder.getInt64Ty(), loop.index);
                 comparison = m_builder.CreateICmpULT(currentIndex, count);
@@ -198,8 +222,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 Loop &loop = loops.back();
 
                 // Create branches
-                llvm::BasicBlock *body = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
-                loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                llvm::BasicBlock *body = llvm::BasicBlock::Create(m_ctx, "", func);
+                loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", func);
 
                 // Use last reg
                 assert(step.args.size() == 1);
@@ -219,8 +243,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 Loop &loop = loops.back();
 
                 // Create branches
-                llvm::BasicBlock *body = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
-                loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                llvm::BasicBlock *body = llvm::BasicBlock::Create(m_ctx, "", func);
+                loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", func);
 
                 // Use last reg
                 assert(step.args.size() == 1);
@@ -238,7 +262,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             case Step::Type::BeginLoopCondition: {
                 Loop loop;
                 loop.isRepeatLoop = false;
-                loop.conditionBranch = llvm::BasicBlock::Create(m_ctx, "", currentFunc);
+                loop.conditionBranch = llvm::BasicBlock::Create(m_ctx, "", func);
                 freeHeap();
                 m_builder.CreateBr(loop.conditionBranch);
                 m_builder.SetInsertPoint(loop.conditionBranch);
@@ -272,7 +296,58 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
     freeHeap();
 
-    endFunction(currentFunc, functionIndex);
+    // Add final suspend point
+    if (!m_warp) {
+        llvm::BasicBlock *endBranch = llvm::BasicBlock::Create(m_ctx, "end", func);
+        llvm::Value *suspendResult =
+            m_builder.CreateCall(llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_suspend), { llvm::ConstantTokenNone::get(m_ctx), m_builder.getInt1(true) });
+        llvm::SwitchInst *sw = m_builder.CreateSwitch(suspendResult, coro.suspend, 2);
+        sw->addCase(m_builder.getInt8(0), endBranch);
+        sw->addCase(m_builder.getInt8(1), coro.cleanup);
+        m_builder.SetInsertPoint(endBranch);
+    }
+
+    // End and verify the function
+    if (!m_tmpRegs.empty()) {
+        std::cout
+            << "warning: " << m_tmpRegs.size() << " registers were leaked by script '" << m_module->getName().str() << "', function '" << func->getName().str()
+            << "' (if you see this as a regular user, this is a bug and should be reported)" << std::endl;
+    }
+
+    if (m_warp)
+        m_builder.CreateRet(llvm::ConstantPointerNull::get(pointerType));
+    else
+        m_builder.CreateBr(coro.cleanup);
+
+    verifyFunction(func);
+
+    // Create resume function
+    // bool resume(void *)
+    funcType = llvm::FunctionType::get(m_builder.getInt1Ty(), pointerType, false);
+    func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "resume", m_module.get());
+
+    entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
+    m_builder.SetInsertPoint(entry);
+
+    if (m_warp)
+        m_builder.CreateRet(m_builder.getInt1(true));
+    else {
+        llvm::Value *coroHandle = func->getArg(0);
+        m_builder.CreateCall(llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_resume), { coroHandle });
+        llvm::Value *done = m_builder.CreateCall(llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_done), { coroHandle });
+        m_builder.CreateRet(done);
+    }
+
+    verifyFunction(func);
+
+#ifdef PRINT_LLVM_IR
+    std::cout << std::endl << "=== LLVM IR (" << m_module->getName().str() << ") ===" << std::endl;
+    m_module->print(llvm::outs(), nullptr);
+    std::cout << "==============" << std::endl << std::endl;
+#endif
+
+    // Optimize
+    optimize();
 
 #ifdef PRINT_LLVM_IR
     std::cout << std::endl << "=== LLVM IR (" << m_module->getName().str() << ") ===" << std::endl;
@@ -379,6 +454,9 @@ void LLVMCodeBuilder::beginLoopCondition()
 
 void LLVMCodeBuilder::endLoop()
 {
+    if (!m_warp)
+        m_steps.push_back(Step(Step::Type::Yield));
+
     m_steps.push_back(Step(Step::Type::EndLoop));
 }
 
@@ -414,34 +492,80 @@ void LLVMCodeBuilder::initTypes()
     m_valueDataType->setBody({ unionType, valueType, sizeType });
 }
 
-llvm::Function *LLVMCodeBuilder::beginFunction(size_t index)
+LLVMCodeBuilder::Coroutine LLVMCodeBuilder::initCoroutine(llvm::Function *func)
 {
-    // size_t f#(Target *)
-    llvm::FunctionType *funcType = llvm::FunctionType::get(m_builder.getInt64Ty(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), false);
-    llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f" + std::to_string(index), m_module.get());
+    // Set presplitcoroutine attribute
+    func->setPresplitCoroutine();
 
-    llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
+    // Coroutine intrinsics
+    llvm::Function *coroId = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_id);
+    llvm::Function *coroSize = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_size, m_builder.getInt64Ty());
+    llvm::Function *coroBegin = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_begin);
+    llvm::Function *coroEnd = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_end);
+    llvm::Function *coroFree = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_free);
+
+    // Init coroutine
+    Coroutine coro;
+    llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Constant *nullPointer = llvm::ConstantPointerNull::get(pointerType);
+    llvm::Value *coroIdRet = m_builder.CreateCall(coroId, { m_builder.getInt32(8), nullPointer, nullPointer, nullPointer });
+
+    // Allocate memory
+    llvm::Value *coroSizeRet = m_builder.CreateCall(coroSize, std::nullopt, "size");
+    llvm::Function *mallocFunc = llvm::Function::Create(llvm::FunctionType::get(pointerType, { m_builder.getInt64Ty() }, false), llvm::Function::ExternalLinkage, "malloc", m_module.get());
+    llvm::Value *alloc = m_builder.CreateCall(mallocFunc, coroSizeRet, "mem");
+
+    // Begin
+    coro.handle = m_builder.CreateCall(coroBegin, { coroIdRet, alloc });
+    llvm::BasicBlock *entry = m_builder.GetInsertBlock();
+
+    // Create suspend branch
+    coro.suspend = llvm::BasicBlock::Create(m_ctx, "suspend", func);
+    m_builder.SetInsertPoint(coro.suspend);
+    m_builder.CreateCall(coroEnd, { coro.handle, m_builder.getInt1(false), llvm::ConstantTokenNone::get(m_ctx) });
+    m_builder.CreateRet(coro.handle);
+
+    // Create free branch
+    llvm::BasicBlock *freeBranch = llvm::BasicBlock::Create(m_ctx, "free", func);
+    m_builder.SetInsertPoint(freeBranch);
+    m_builder.CreateFree(alloc);
+    m_builder.CreateBr(coro.suspend);
+
+    // Create cleanup branch
+    coro.cleanup = llvm::BasicBlock::Create(m_ctx, "cleanup", func);
+    m_builder.SetInsertPoint(coro.cleanup);
+    llvm::Value *mem = m_builder.CreateCall(coroFree, { coroIdRet, coro.handle });
+    llvm::Value *needFree = m_builder.CreateIsNotNull(mem);
+    m_builder.CreateCondBr(needFree, freeBranch, coro.suspend);
+
     m_builder.SetInsertPoint(entry);
-
-    return func;
+    return coro;
 }
 
-void LLVMCodeBuilder::endFunction(llvm::Function *func, size_t index)
+void LLVMCodeBuilder::verifyFunction(llvm::Function *func)
 {
-    if (!m_tmpRegs.empty()) {
-        std::cout
-            << "warning: " << m_tmpRegs.size() << " registers were leaked by script '" << m_module->getName().str() << "', function '" << func->getName().str()
-            << "' (if you see this as a regular user, this is a bug and should be reported)" << std::endl;
-    }
-
-    // Return next function index
-    m_builder.CreateRet(m_builder.getInt64(index + 1));
-
     if (llvm::verifyFunction(*func, &llvm::errs())) {
         llvm::errs() << "error: LLVM function verficiation failed!\n";
         llvm::errs() << "script hat ID: " << m_id << "\n";
-        llvm::errs() << "function name: " << func->getName().data() << "\n";
     }
+}
+
+void LLVMCodeBuilder::optimize()
+{
+    llvm::PassBuilder passBuilder;
+    llvm::LoopAnalysisManager loopAnalysisManager;
+    llvm::FunctionAnalysisManager functionAnalysisManager;
+    llvm::CGSCCAnalysisManager cGSCCAnalysisManager;
+    llvm::ModuleAnalysisManager moduleAnalysisManager;
+
+    passBuilder.registerModuleAnalyses(moduleAnalysisManager);
+    passBuilder.registerCGSCCAnalyses(cGSCCAnalysisManager);
+    passBuilder.registerFunctionAnalyses(functionAnalysisManager);
+    passBuilder.registerLoopAnalyses(loopAnalysisManager);
+    passBuilder.crossRegisterProxies(loopAnalysisManager, functionAnalysisManager, cGSCCAnalysisManager, moduleAnalysisManager);
+
+    llvm::ModulePassManager modulePassManager = passBuilder.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
+    modulePassManager.run(*m_module, moduleAnalysisManager);
 }
 
 void LLVMCodeBuilder::freeHeap()

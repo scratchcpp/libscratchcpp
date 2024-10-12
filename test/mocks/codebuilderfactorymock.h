@@ -8,5 +8,5 @@ using namespace libscratchcpp;
 class CodeBuilderFactoryMock : public ICodeBuilderFactory
 {
     public:
-        MOCK_METHOD(std::shared_ptr<ICodeBuilder>, create, (const std::string &), (const, override));
+        MOCK_METHOD(std::shared_ptr<ICodeBuilder>, create, (const std::string &, bool), (const, override));
 };

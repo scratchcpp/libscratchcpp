@@ -9,12 +9,22 @@ LLVMExecutionContext::LLVMExecutionContext(Target *target) :
 {
 }
 
-size_t LLVMExecutionContext::pos() const
+void *LLVMExecutionContext::coroutineHandle() const
 {
-    return m_pos;
+    return m_coroutineHandle;
 }
 
-void LLVMExecutionContext::setPos(size_t newPos)
+void LLVMExecutionContext::setCoroutineHandle(void *newCoroutineHandle)
 {
-    m_pos = newPos;
+    m_coroutineHandle = newCoroutineHandle;
+}
+
+bool LLVMExecutionContext::finished() const
+{
+    return m_finished;
+}
+
+void LLVMExecutionContext::setFinished(bool newFinished)
+{
+    m_finished = newFinished;
 }

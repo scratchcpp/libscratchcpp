@@ -12,11 +12,15 @@ class LLVMExecutionContext : public ExecutionContext
     public:
         LLVMExecutionContext(Target *target);
 
-        size_t pos() const;
-        void setPos(size_t newPos);
+        void *coroutineHandle() const;
+        void setCoroutineHandle(void *newCoroutineHandle);
+
+        bool finished() const;
+        void setFinished(bool newFinished);
 
     private:
-        size_t m_pos = 0;
+        void *m_coroutineHandle = nullptr;
+        bool m_finished = false;
 };
 
 } // namespace libscratchcpp
