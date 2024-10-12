@@ -14,7 +14,7 @@ class ICodeBuilderFactory
     public:
         virtual ~ICodeBuilderFactory() { }
 
-        virtual std::shared_ptr<ICodeBuilder> create(const std::string &id) const = 0;
+        virtual std::shared_ptr<ICodeBuilder> create(const std::string &id, bool warp) const = 0;
 };
 
 } // namespace libscratchcpp

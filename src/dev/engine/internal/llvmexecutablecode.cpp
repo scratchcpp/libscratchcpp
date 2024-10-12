@@ -33,31 +33,51 @@ LLVMExecutableCode::LLVMExecutableCode(std::unique_ptr<llvm::Module> module) :
     // Lookup functions
     m_mainFunction = (MainFunctionType)lookupFunction("f");
     assert(m_mainFunction);
+    m_resumeFunction = (ResumeFunctionType)lookupFunction("resume");
+    assert(m_resumeFunction);
 }
 
 void LLVMExecutableCode::run(ExecutionContext *context)
 {
     LLVMExecutionContext *ctx = getContext(context);
 
-    if (!ctx->finished) {
-        m_mainFunction(context->target());
-        ctx->finished = true;
+    if (ctx->finished())
+        return;
+
+    if (ctx->coroutineHandle()) {
+        bool done = m_resumeFunction(ctx->coroutineHandle());
+
+        if (done)
+            ctx->setCoroutineHandle(nullptr);
+
+        ctx->setFinished(done);
+    } else {
+        void *handle = m_mainFunction(context->target());
+
+        if (!handle)
+            ctx->setFinished(true);
+
+        ctx->setCoroutineHandle(handle);
     }
 }
 
 void LLVMExecutableCode::kill(ExecutionContext *context)
 {
-    getContext(context)->finished = true;
+    LLVMExecutionContext *ctx = getContext(context);
+    ctx->setCoroutineHandle(nullptr);
+    ctx->setFinished(true);
 }
 
 void LLVMExecutableCode::reset(ExecutionContext *context)
 {
-    getContext(context)->finished = false;
+    LLVMExecutionContext *ctx = getContext(context);
+    ctx->setCoroutineHandle(nullptr);
+    ctx->setFinished(false);
 }
 
 bool LLVMExecutableCode::isFinished(ExecutionContext *context) const
 {
-    return getContext(context)->finished;
+    return getContext(context)->finished();
 }
 
 void LLVMExecutableCode::promise()

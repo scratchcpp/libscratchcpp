@@ -25,10 +25,13 @@ class LLVMExecutableCodeTest : public testing::Test
             llvm::InitializeNativeTargetAsmParser();
         }
 
-        llvm::Function *beginFunction()
+        inline llvm::Constant *nullPointer() { return llvm::ConstantPointerNull::get(llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0)); }
+
+        llvm::Function *beginMainFunction()
         {
-            // void f(Target *)
-            llvm::FunctionType *funcType = llvm::FunctionType::get(m_builder->getVoidTy(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), false);
+            // void *f(Target *)
+            llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+            llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, pointerType, false);
             llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module.get());
 
             llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
@@ -36,7 +39,18 @@ class LLVMExecutableCodeTest : public testing::Test
             return func;
         }
 
-        void endFunction() { m_builder->CreateRetVoid(); }
+        llvm::Function *beginResumeFunction()
+        {
+            // bool f(void *)
+            llvm::FunctionType *funcType = llvm::FunctionType::get(m_builder->getInt1Ty(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), false);
+            llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "resume", m_module.get());
+
+            llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
+            m_builder->SetInsertPoint(entry);
+            return func;
+        }
+
+        void endFunction(llvm::Value *ret) { m_builder->CreateRet(ret); }
 
         void addTestFunction(llvm::Function *mainFunc)
         {
@@ -65,8 +79,12 @@ class LLVMExecutableCodeTest : public testing::Test
 
 TEST_F(LLVMExecutableCodeTest, CreateExecutionContext)
 {
-    beginFunction();
-    endFunction();
+    beginMainFunction();
+    endFunction(nullPointer());
+
+    beginResumeFunction();
+    endFunction(m_builder->getInt1(true));
+
     LLVMExecutableCode code(std::move(m_module));
     auto ctx = code.createExecutionContext(&m_target);
     ASSERT_TRUE(ctx);
@@ -76,9 +94,12 @@ TEST_F(LLVMExecutableCodeTest, CreateExecutionContext)
 
 TEST_F(LLVMExecutableCodeTest, MainFunction)
 {
-    auto f = beginFunction();
+    auto f = beginMainFunction();
     addTestFunction(f);
-    endFunction();
+    endFunction(nullPointer());
+
+    beginResumeFunction();
+    endFunction(m_builder->getInt1(true));
 
     LLVMExecutableCode code(std::move(m_module));
     auto ctx = code.createExecutionContext(&m_target);

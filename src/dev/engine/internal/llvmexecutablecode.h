@@ -32,7 +32,8 @@ class LLVMExecutableCode : public ExecutableCode
     private:
         uint64_t lookupFunction(const std::string &name);
 
-        using MainFunctionType = size_t (*)(Target *);
+        using MainFunctionType = void *(*)(Target *);
+        using ResumeFunctionType = bool (*)(void *);
 
         static LLVMExecutionContext *getContext(ExecutionContext *context);
 
@@ -40,6 +41,7 @@ class LLVMExecutableCode : public ExecutableCode
         llvm::Expected<std::unique_ptr<llvm::orc::LLJIT>> m_jit;
 
         MainFunctionType m_mainFunction;
+        ResumeFunctionType m_resumeFunction;
 };
 
 } // namespace libscratchcpp
