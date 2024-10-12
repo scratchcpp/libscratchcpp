@@ -20,59 +20,6 @@ TEST(ValueTest, DefaultConstructor)
     ASSERT_FALSE(v.isString());
 }
 
-TEST(ValueTest, FloatConstructor)
-{
-    {
-        Value v(3.14f);
-        ASSERT_EQ(v.toDouble(), 3.14);
-        ASSERT_EQ(v.type(), ValueType::Number);
-        ASSERT_FALSE(v.isInfinity());
-        ASSERT_FALSE(v.isNegativeInfinity());
-        ASSERT_FALSE(v.isNaN());
-        ASSERT_TRUE(v.isNumber());
-        ASSERT_TRUE(v.isValidNumber());
-        ASSERT_FALSE(v.isInt());
-        ASSERT_FALSE(v.isBool());
-        ASSERT_FALSE(v.isString());
-    }
-
-    {
-        Value v(std::numeric_limits<float>::infinity());
-        ASSERT_EQ(v.type(), ValueType::Infinity);
-        ASSERT_TRUE(v.isInfinity());
-        ASSERT_FALSE(v.isNegativeInfinity());
-        ASSERT_FALSE(v.isNaN());
-        ASSERT_FALSE(v.isNumber());
-        ASSERT_TRUE(v.isValidNumber());
-        ASSERT_FALSE(v.isBool());
-        ASSERT_FALSE(v.isString());
-    }
-
-    {
-        Value v(-std::numeric_limits<float>::infinity());
-        ASSERT_EQ(v.type(), ValueType::NegativeInfinity);
-        ASSERT_FALSE(v.isInfinity());
-        ASSERT_TRUE(v.isNegativeInfinity());
-        ASSERT_FALSE(v.isNaN());
-        ASSERT_FALSE(v.isNumber());
-        ASSERT_TRUE(v.isValidNumber());
-        ASSERT_FALSE(v.isBool());
-        ASSERT_FALSE(v.isString());
-    }
-
-    {
-        Value v(std::numeric_limits<float>::quiet_NaN());
-        ASSERT_EQ(v.type(), ValueType::NaN);
-        ASSERT_FALSE(v.isInfinity());
-        ASSERT_FALSE(v.isNegativeInfinity());
-        ASSERT_TRUE(v.isNaN());
-        ASSERT_FALSE(v.isNumber());
-        ASSERT_FALSE(v.isValidNumber());
-        ASSERT_FALSE(v.isBool());
-        ASSERT_FALSE(v.isString());
-    }
-}
-
 TEST(ValueTest, DoubleConstructor)
 {
     {
@@ -138,51 +85,6 @@ TEST(ValueTest, DoubleConstructor)
         ASSERT_FALSE(v.isBool());
         ASSERT_FALSE(v.isString());
     }
-}
-
-TEST(ValueTest, IntConstructor)
-{
-    Value v(static_cast<int>(55));
-    ASSERT_EQ(v.toInt(), 55);
-    ASSERT_EQ(v.type(), ValueType::Number);
-    ASSERT_FALSE(v.isInfinity());
-    ASSERT_FALSE(v.isNegativeInfinity());
-    ASSERT_FALSE(v.isNaN());
-    ASSERT_TRUE(v.isNumber());
-    ASSERT_TRUE(v.isValidNumber());
-    ASSERT_TRUE(v.isInt());
-    ASSERT_FALSE(v.isBool());
-    ASSERT_FALSE(v.isString());
-}
-
-TEST(ValueTest, SizeTConstructor)
-{
-    Value v(static_cast<size_t>(100));
-    ASSERT_EQ(v.toLong(), 100);
-    ASSERT_EQ(v.type(), ValueType::Number);
-    ASSERT_FALSE(v.isInfinity());
-    ASSERT_FALSE(v.isNegativeInfinity());
-    ASSERT_FALSE(v.isNaN());
-    ASSERT_TRUE(v.isNumber());
-    ASSERT_TRUE(v.isValidNumber());
-    ASSERT_TRUE(v.isInt());
-    ASSERT_FALSE(v.isBool());
-    ASSERT_FALSE(v.isString());
-}
-
-TEST(ValueTest, LongConstructor)
-{
-    Value v(123L);
-    ASSERT_EQ(v.toLong(), 123L);
-    ASSERT_EQ(v.type(), ValueType::Number);
-    ASSERT_FALSE(v.isInfinity());
-    ASSERT_FALSE(v.isNegativeInfinity());
-    ASSERT_FALSE(v.isNaN());
-    ASSERT_TRUE(v.isNumber());
-    ASSERT_TRUE(v.isValidNumber());
-    ASSERT_TRUE(v.isInt());
-    ASSERT_FALSE(v.isBool());
-    ASSERT_FALSE(v.isString());
 }
 
 TEST(ValueTest, BoolConstructor)
@@ -536,51 +438,6 @@ TEST(ValueTest, CopyConstructor)
     }
 }
 
-TEST(ValueTest, FloatAssignment)
-{
-    Value v;
-    v = 3.14f;
-    ASSERT_EQ(v.toDouble(), 3.14);
-    ASSERT_EQ(v.type(), ValueType::Number);
-    ASSERT_FALSE(v.isInfinity());
-    ASSERT_FALSE(v.isNegativeInfinity());
-    ASSERT_FALSE(v.isNaN());
-    ASSERT_TRUE(v.isNumber());
-    ASSERT_TRUE(v.isValidNumber());
-    ASSERT_FALSE(v.isBool());
-    ASSERT_FALSE(v.isString());
-
-    v = std::numeric_limits<float>::infinity();
-    ASSERT_EQ(v.type(), ValueType::Infinity);
-    ASSERT_TRUE(v.isInfinity());
-    ASSERT_FALSE(v.isNegativeInfinity());
-    ASSERT_FALSE(v.isNaN());
-    ASSERT_FALSE(v.isNumber());
-    ASSERT_TRUE(v.isValidNumber());
-    ASSERT_FALSE(v.isBool());
-    ASSERT_FALSE(v.isString());
-
-    v = -std::numeric_limits<float>::infinity();
-    ASSERT_EQ(v.type(), ValueType::NegativeInfinity);
-    ASSERT_FALSE(v.isInfinity());
-    ASSERT_TRUE(v.isNegativeInfinity());
-    ASSERT_FALSE(v.isNaN());
-    ASSERT_FALSE(v.isNumber());
-    ASSERT_TRUE(v.isValidNumber());
-    ASSERT_FALSE(v.isBool());
-    ASSERT_FALSE(v.isString());
-
-    v = -std::numeric_limits<float>::quiet_NaN();
-    ASSERT_EQ(v.type(), ValueType::NaN);
-    ASSERT_FALSE(v.isInfinity());
-    ASSERT_FALSE(v.isNegativeInfinity());
-    ASSERT_TRUE(v.isNaN());
-    ASSERT_FALSE(v.isNumber());
-    ASSERT_FALSE(v.isValidNumber());
-    ASSERT_FALSE(v.isBool());
-    ASSERT_FALSE(v.isString());
-}
-
 TEST(ValueTest, DoubleAssignment)
 {
     Value v;
@@ -622,36 +479,6 @@ TEST(ValueTest, DoubleAssignment)
     ASSERT_TRUE(v.isNaN());
     ASSERT_FALSE(v.isNumber());
     ASSERT_FALSE(v.isValidNumber());
-    ASSERT_FALSE(v.isBool());
-    ASSERT_FALSE(v.isString());
-}
-
-TEST(ValueTest, IntAssignment)
-{
-    Value v;
-    v = static_cast<int>(55);
-    ASSERT_EQ(v.toInt(), 55);
-    ASSERT_EQ(v.type(), ValueType::Number);
-    ASSERT_FALSE(v.isInfinity());
-    ASSERT_FALSE(v.isNegativeInfinity());
-    ASSERT_FALSE(v.isNaN());
-    ASSERT_TRUE(v.isNumber());
-    ASSERT_TRUE(v.isValidNumber());
-    ASSERT_FALSE(v.isBool());
-    ASSERT_FALSE(v.isString());
-}
-
-TEST(ValueTest, LongAssignment)
-{
-    Value v;
-    v = 123L;
-    ASSERT_EQ(v.toLong(), 123L);
-    ASSERT_EQ(v.type(), ValueType::Number);
-    ASSERT_FALSE(v.isInfinity());
-    ASSERT_FALSE(v.isNegativeInfinity());
-    ASSERT_FALSE(v.isNaN());
-    ASSERT_TRUE(v.isNumber());
-    ASSERT_TRUE(v.isValidNumber());
     ASSERT_FALSE(v.isBool());
     ASSERT_FALSE(v.isString());
 }
@@ -962,12 +789,8 @@ TEST(ValueTest, ToInt)
 
     v = 2.54;
     ASSERT_EQ(v.toInt(), 2);
-    v = 2.54f;
-    ASSERT_EQ(v.toInt(), 2);
 
     v = -2.54;
-    ASSERT_EQ(v.toInt(), -2);
-    v = -2.54f;
     ASSERT_EQ(v.toInt(), -2);
 
     v = false;
@@ -1113,12 +936,8 @@ TEST(ValueTest, ToLong)
 
     v = 2.54;
     ASSERT_EQ(v.toLong(), 2);
-    v = 2.54f;
-    ASSERT_EQ(v.toLong(), 2);
 
     v = -2.54;
-    ASSERT_EQ(v.toLong(), -2);
-    v = -2.54f;
     ASSERT_EQ(v.toLong(), -2);
 
     v = false;
@@ -1262,12 +1081,8 @@ TEST(ValueTest, ToDouble)
 
     v = 2.54;
     ASSERT_EQ(v.toDouble(), 2.54);
-    v = 2.54f;
-    ASSERT_EQ(v.toDouble(), 2.54);
 
     v = -2.54;
-    ASSERT_EQ(v.toDouble(), -2.54);
-    v = -2.54f;
     ASSERT_EQ(v.toDouble(), -2.54);
 
     v = false;
@@ -1500,12 +1315,8 @@ TEST(ValueTest, ToBool)
 
     v = 2.54;
     ASSERT_EQ(v.toBool(), true);
-    v = 2.54f;
-    ASSERT_EQ(v.toBool(), true);
 
     v = -2.54;
-    ASSERT_EQ(v.toBool(), true);
-    v = -2.54f;
     ASSERT_EQ(v.toBool(), true);
 
     v = false;
@@ -1692,18 +1503,8 @@ TEST(ValueTest, ToString)
     ASSERT_EQ(v.toString(), "2");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
     ASSERT_EQ(std::string(cStrings.back()), v.toString());
-    v = 2.0f;
-    cStrings.push_back(value_toCString(&v.data()));
-    ASSERT_EQ(v.toString(), "2");
-    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = -2.0;
-    cStrings.push_back(value_toCString(&v.data()));
-    ASSERT_EQ(v.toString(), "-2");
-    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::string(cStrings.back()), v.toString());
-    v = -2.0f;
     cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-2");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
@@ -1714,18 +1515,8 @@ TEST(ValueTest, ToString)
     ASSERT_EQ(v.toString(), "2.54");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
     ASSERT_EQ(std::string(cStrings.back()), v.toString());
-    v = 2.54f;
-    cStrings.push_back(value_toCString(&v.data()));
-    ASSERT_EQ(v.toString(), "2.54");
-    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
     v = -2.54;
-    cStrings.push_back(value_toCString(&v.data()));
-    ASSERT_EQ(v.toString(), "-2.54");
-    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::string(cStrings.back()), v.toString());
-    v = -2.54f;
     cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-2.54");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
@@ -1737,21 +1528,9 @@ TEST(ValueTest, ToString)
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
     ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
-    v = 2550.625021000115f;
-    cStrings.push_back(value_toCString(&v.data()));
-    ASSERT_EQ(v.toString(), "2550.625");
-    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::string(cStrings.back()), v.toString());
-
     v = -2550.625021000115;
     cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-2550.625021000115");
-    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::string(cStrings.back()), v.toString());
-
-    v = -2550.625021000115f;
-    cStrings.push_back(value_toCString(&v.data()));
-    ASSERT_EQ(v.toString(), "-2550.625");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
     ASSERT_EQ(std::string(cStrings.back()), v.toString());
 

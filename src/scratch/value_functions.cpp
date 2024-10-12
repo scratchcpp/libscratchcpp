@@ -33,23 +33,6 @@ extern "C"
 
     /* assign */
 
-    /*! Assigns number of type 'float' to the given value. */
-    void value_assign_float(ValueData *v, float numberValue)
-    {
-        value_free(v);
-
-        if (value_isInf(numberValue))
-            v->type = ValueType::Infinity;
-        else if (value_isNegativeInf(numberValue))
-            v->type = ValueType::NegativeInfinity;
-        else if (std::isnan(numberValue))
-            v->type = ValueType::NaN;
-        else {
-            v->type = ValueType::Number;
-            v->numberValue = value_floatToDouble(numberValue);
-        }
-    }
-
     /*! Assigns number of type 'double' to the given value. */
     void value_assign_double(ValueData *v, double numberValue)
     {
@@ -65,33 +48,6 @@ extern "C"
             v->type = ValueType::Number;
             v->numberValue = numberValue;
         }
-    }
-
-    /*! Assigns number of type 'int' to the given value. */
-    void value_assign_int(ValueData *v, int numberValue)
-    {
-        value_free(v);
-
-        v->type = ValueType::Number;
-        v->numberValue = numberValue;
-    }
-
-    /*! Assigns number of type 'size_t' to the given value. */
-    void value_assign_size_t(ValueData *v, size_t numberValue)
-    {
-        value_free(v);
-
-        v->type = ValueType::Number;
-        v->numberValue = numberValue;
-    }
-
-    /*! Assigns number of type 'long' to the given value. */
-    void value_assign_long(ValueData *v, long numberValue)
-    {
-        value_free(v);
-
-        v->type = ValueType::Number;
-        v->numberValue = numberValue;
     }
 
     /*! Assigns boolean to the given value. */
@@ -434,7 +390,7 @@ extern "C"
             value_assign_double(dst, v1->numberValue + v2->numberValue);
             return;
         } else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool) {
-            value_assign_long(dst, v1->boolValue + v2->boolValue);
+            value_assign_double(dst, v1->boolValue + v2->boolValue);
             return;
         } else if ((static_cast<int>(v1->type) < 0) || (static_cast<int>(v2->type) < 0)) {
             if ((v1->type == ValueType::Infinity && v2->type == ValueType::NegativeInfinity) || (v1->type == ValueType::NegativeInfinity && v2->type == ValueType::Infinity)) {
@@ -459,7 +415,7 @@ extern "C"
             value_assign_double(dst, v1->numberValue - v2->numberValue);
             return;
         } else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool) {
-            value_assign_long(dst, v1->boolValue - v2->boolValue);
+            value_assign_double(dst, v1->boolValue - v2->boolValue);
             return;
         } else if ((static_cast<int>(v1->type) < 0) || (static_cast<int>(v2->type) < 0)) {
             if ((v1->type == ValueType::Infinity && v2->type == ValueType::Infinity) || (v1->type == ValueType::NegativeInfinity && v2->type == ValueType::NegativeInfinity)) {
@@ -484,7 +440,7 @@ extern "C"
         if (v1->type == ValueType::Number && v2->type == ValueType::Number)
             value_assign_double(dst, v1->numberValue * v2->numberValue);
         else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
-            value_assign_long(dst, v1->boolValue * v2->boolValue);
+            value_assign_double(dst, v1->boolValue * v2->boolValue);
         else {
             const ValueType t1 = v1->type, t2 = v2->type;
 
@@ -535,7 +491,7 @@ extern "C"
                     value_assign_special(dst, SpecialValue::NegativeInfinity);
             }
         } else if (v2->type == ValueType::Infinity || v2->type == ValueType::NegativeInfinity) {
-            value_assign_long(dst, 0);
+            value_assign_double(dst, 0);
         } else
             value_assign_double(dst, value_toDouble(v1) / value_toDouble(v2));
     }

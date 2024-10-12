@@ -38,20 +38,17 @@ inline unsigned int value_digitCount(T v)
     return i + j;
 }
 
-template<typename T>
-inline bool value_isInf(T v)
-{
-    return v > 0 && std::isinf(v);
-}
-
-template<typename T>
-inline bool value_isNegativeInf(T v)
-{
-    return v < 0 && std::isinf(v);
-}
-
 extern "C"
 {
+    inline bool value_isInf(double v)
+    {
+        return v > 0 && std::isinf(v);
+    }
+
+    inline bool value_isNegativeInf(double v)
+    {
+        return v < 0 && std::isinf(v);
+    }
 
     inline long value_convert_int_str(const char *str, int n, bool *ok)
     {
