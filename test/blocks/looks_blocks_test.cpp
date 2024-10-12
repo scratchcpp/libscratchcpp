@@ -1992,7 +1992,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     LooksBlocks::rng = &rng;
 
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread, false));
-    EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(3));
+    EXPECT_CALL(rng, randintExcept(0, 5, 0)).WillOnce(Return(3));
     stage.setCostumeIndex(0);
     vm->setBytecode(bytecode15);
     vm->run();
@@ -2001,7 +2001,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     ASSERT_EQ(stage.costumeIndex(), 3);
 
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &thread, false));
-    EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(5));
+    EXPECT_CALL(rng, randintExcept(0, 5, 3)).WillOnce(Return(5));
     vm->reset();
     vm->run();
 
@@ -2011,7 +2011,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     stage.addCostume(std::make_shared<Costume>("random backdrop", "b7", "svg"));
 
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(6)->broadcast(), &thread, false));
-    EXPECT_CALL(rng, randint).Times(0);
+    EXPECT_CALL(rng, randintExcept).Times(0);
     vm->reset();
     vm->run();
 
@@ -2337,7 +2337,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     LooksBlocks::rng = &rng;
 
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(3)->broadcast(), &thread, true));
-    EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(3));
+    EXPECT_CALL(rng, randintExcept(0, 5, 0)).WillOnce(Return(3));
     stage.setCostumeIndex(0);
     vm->resolvePromise();
     vm->setBytecode(bytecode15);
@@ -2349,7 +2349,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     ASSERT_EQ(stage.costumeIndex(), 3);
 
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(5)->broadcast(), &thread, true));
-    EXPECT_CALL(rng, randint(0, 5)).WillOnce(Return(5));
+    EXPECT_CALL(rng, randintExcept(0, 5, 3)).WillOnce(Return(5));
     vm->reset();
     vm->run();
     vm->resolvePromise();
@@ -2361,7 +2361,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     stage.addCostume(std::make_shared<Costume>("random backdrop", "b7", "svg"));
 
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(6)->broadcast(), &thread, true));
-    EXPECT_CALL(rng, randint).Times(0);
+    EXPECT_CALL(rng, randintExcept).Times(0);
     vm->reset();
     vm->run();
     vm->resolvePromise();
@@ -2488,7 +2488,7 @@ TEST_F(LooksBlocksTest, RandomBackdrop)
     RandomGeneratorMock rng;
     LooksBlocks::rng = &rng;
 
-    EXPECT_CALL(rng, randint).Times(0);
+    EXPECT_CALL(rng, randintExcept).Times(0);
     vm->run();
 
     ASSERT_EQ(vm->registerCount(), 0);
@@ -2496,8 +2496,9 @@ TEST_F(LooksBlocksTest, RandomBackdrop)
     stage.addCostume(std::make_shared<Costume>("backdrop1", "b1", "svg"));
     stage.addCostume(std::make_shared<Costume>("backdrop2", "b2", "svg"));
     stage.addCostume(std::make_shared<Costume>("backdrop3", "b3", "svg"));
+    stage.setCostumeIndex(0);
 
-    EXPECT_CALL(rng, randint(0, 2)).WillOnce(Return(1));
+    EXPECT_CALL(rng, randintExcept(0, 2, 0)).WillOnce(Return(1));
     EXPECT_CALL(m_engineMock, startBackdropScripts(stage.costumeAt(1)->broadcast(), &thread, false));
     vm->reset();
     vm->run();
