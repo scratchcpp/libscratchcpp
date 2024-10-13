@@ -31,6 +31,14 @@ LLVMCodeBuilder::LLVMCodeBuilder(const std::string &id, bool warp) :
 
 std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 {
+    // Do not create coroutine if there are no yield instructions
+    if (!m_warp) {
+        auto it = std::find_if(m_steps.begin(), m_steps.end(), [](const Step &step) { return step.type == Step::Type::Yield; });
+
+        if (it == m_steps.end())
+            m_warp = true;
+    }
+
     // Create function
     // void *f(Target *)
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
@@ -83,6 +91,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
+                    m_builder.CreateStore(m_builder.getInt1(true), coro.didSuspend);
                     llvm::BasicBlock *resumeBranch = llvm::BasicBlock::Create(m_ctx, "", func);
                     llvm::Value *noneToken = llvm::ConstantTokenNone::get(m_ctx);
                     llvm::Value *suspendResult = m_builder.CreateCall(llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_suspend), { noneToken, m_builder.getInt1(false) });
@@ -296,11 +305,16 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     // Add final suspend point
     if (!m_warp) {
         llvm::BasicBlock *endBranch = llvm::BasicBlock::Create(m_ctx, "end", func);
+        llvm::BasicBlock *finalSuspendBranch = llvm::BasicBlock::Create(m_ctx, "finalSuspend", func);
+        m_builder.CreateCondBr(m_builder.CreateLoad(m_builder.getInt1Ty(), coro.didSuspend), finalSuspendBranch, endBranch);
+
+        m_builder.SetInsertPoint(finalSuspendBranch);
         llvm::Value *suspendResult =
             m_builder.CreateCall(llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_suspend), { llvm::ConstantTokenNone::get(m_ctx), m_builder.getInt1(true) });
         llvm::SwitchInst *sw = m_builder.CreateSwitch(suspendResult, coro.suspend, 2);
-        sw->addCase(m_builder.getInt8(0), endBranch);
+        sw->addCase(m_builder.getInt8(0), endBranch); // unreachable
         sw->addCase(m_builder.getInt8(1), coro.cleanup);
+
         m_builder.SetInsertPoint(endBranch);
     }
 
@@ -314,7 +328,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     if (m_warp)
         m_builder.CreateRet(llvm::ConstantPointerNull::get(pointerType));
     else
-        m_builder.CreateBr(coro.cleanup);
+        m_builder.CreateBr(coro.freeMemRet);
 
     verifyFunction(func);
 
@@ -514,6 +528,8 @@ LLVMCodeBuilder::Coroutine LLVMCodeBuilder::initCoroutine(llvm::Function *func)
 
     // Begin
     coro.handle = m_builder.CreateCall(coroBegin, { coroIdRet, alloc });
+    coro.didSuspend = m_builder.CreateAlloca(m_builder.getInt1Ty(), nullptr, "didSuspend");
+    m_builder.CreateStore(m_builder.getInt1(false), coro.didSuspend);
     llvm::BasicBlock *entry = m_builder.GetInsertBlock();
 
     // Create suspend branch
@@ -522,7 +538,12 @@ LLVMCodeBuilder::Coroutine LLVMCodeBuilder::initCoroutine(llvm::Function *func)
     m_builder.CreateCall(coroEnd, { coro.handle, m_builder.getInt1(false), llvm::ConstantTokenNone::get(m_ctx) });
     m_builder.CreateRet(coro.handle);
 
-    // Create free branch
+    // Create free branches
+    coro.freeMemRet = llvm::BasicBlock::Create(m_ctx, "freeMemRet", func);
+    m_builder.SetInsertPoint(coro.freeMemRet);
+    m_builder.CreateFree(alloc);
+    m_builder.CreateRet(llvm::ConstantPointerNull::get(pointerType));
+
     llvm::BasicBlock *freeBranch = llvm::BasicBlock::Create(m_ctx, "free", func);
     m_builder.SetInsertPoint(freeBranch);
     m_builder.CreateFree(alloc);

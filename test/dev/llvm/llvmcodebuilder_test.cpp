@@ -62,6 +62,7 @@ TEST_F(LLVMCodeBuilderTest, FunctionCalls)
         testing::internal::CaptureStdout();
         code->run(ctx.get());
         ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+        ASSERT_TRUE(code->isFinished(ctx.get()));
     }
 }
 
@@ -557,6 +558,18 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_TRUE(testing::internal::GetCapturedStdout().empty());
+    ASSERT_TRUE(code->isFinished(ctx.get()));
+
+    // No warp no-op loop
+    createBuilder(false);
+
+    m_builder->addConstValue(0); // don't yield
+    m_builder->beginRepeatLoop();
+    m_builder->endLoop();
+
+    code = m_builder->finalize();
+    ctx = code->createExecutionContext(&m_target);
+    code->run(ctx.get());
     ASSERT_TRUE(code->isFinished(ctx.get()));
 }
 

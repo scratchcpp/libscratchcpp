@@ -103,6 +103,8 @@ class LLVMCodeBuilder : public ICodeBuilder
                 llvm::Value *handle = nullptr;
                 llvm::BasicBlock *suspend = nullptr;
                 llvm::BasicBlock *cleanup = nullptr;
+                llvm::BasicBlock *freeMemRet = nullptr;
+                llvm::Value *didSuspend = nullptr;
         };
 
         struct Procedure
