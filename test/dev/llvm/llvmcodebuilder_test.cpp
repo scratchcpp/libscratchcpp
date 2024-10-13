@@ -445,7 +445,6 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
-// TODO: Write a test for count rounding
 TEST_F(LLVMCodeBuilderTest, RepeatLoop)
 {
     createBuilder(true);
@@ -466,9 +465,15 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     m_builder->addFunctionCall("test_function_no_args", Compiler::StaticType::Void, {});
     m_builder->endLoop();
 
-    m_builder->addConstValue("2");
+    m_builder->addConstValue("2.4");
     m_builder->beginRepeatLoop();
     m_builder->addConstValue(0);
+    m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
+    m_builder->endLoop();
+
+    m_builder->addConstValue("2.5");
+    m_builder->beginRepeatLoop();
+    m_builder->addConstValue(1);
     m_builder->addFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String });
     m_builder->endLoop();
 
@@ -513,6 +518,9 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
         "no_args\n"
         "1_arg 0\n"
         "1_arg 0\n"
+        "1_arg 1\n"
+        "1_arg 1\n"
+        "1_arg 1\n"
         "no_args\n"
         "no_args\n"
         "1_arg 1\n"
