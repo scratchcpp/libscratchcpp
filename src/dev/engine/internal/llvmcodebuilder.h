@@ -27,6 +27,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void addListContents(List *list) override;
 
         void createAdd() override;
+        void createSub() override;
         void beginIfStatement() override;
         void beginElseBranch() override;
         void endIf() override;
@@ -60,6 +61,7 @@ class LLVMCodeBuilder : public ICodeBuilder
                 {
                     FunctionCall,
                     Add,
+                    Sub,
                     Yield,
                     BeginIf,
                     BeginElse,

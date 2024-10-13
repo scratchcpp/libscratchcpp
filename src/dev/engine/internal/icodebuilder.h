@@ -25,6 +25,7 @@ class ICodeBuilder
         virtual void addListContents(List *list) = 0;
 
         virtual void createAdd() = 0;
+        virtual void createSub() = 0;
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;
         virtual void endIf() = 0;
