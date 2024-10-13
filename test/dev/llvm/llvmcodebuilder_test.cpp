@@ -340,6 +340,65 @@ TEST_F(LLVMCodeBuilderTest, Multiply)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
+TEST_F(LLVMCodeBuilderTest, Divide)
+{
+    std::string expected;
+
+    auto addOpTest = [this, &expected](Value v1, Value v2, double expectedResult) {
+        m_builder->addConstValue(v1);
+        m_builder->addConstValue(v2);
+        m_builder->createDiv();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v1);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->addConstValue(v2);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->createDiv();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        std::string str = Value(expectedResult).toString() + '\n';
+        expected += str;
+        expected += str;
+    };
+
+    createBuilder(true);
+
+    addOpTest(50, 2, 25);
+    addOpTest(-500, 25, -20);
+    addOpTest("-500", -25, 20);
+    addOpTest("3.5", "2.5", 1.4);
+    addOpTest(true, true, 1);
+    addOpTest("Infinity", "Infinity", std::numeric_limits<double>::quiet_NaN());
+    addOpTest("Infinity", 0, std::numeric_limits<double>::infinity());
+    addOpTest("Infinity", 2, std::numeric_limits<double>::infinity());
+    addOpTest("Infinity", -2, -std::numeric_limits<double>::infinity());
+    addOpTest("Infinity", "-Infinity", std::numeric_limits<double>::quiet_NaN());
+    addOpTest("-Infinity", "Infinity", std::numeric_limits<double>::quiet_NaN());
+    addOpTest("-Infinity", 0, -std::numeric_limits<double>::infinity());
+    addOpTest("-Infinity", 2, -std::numeric_limits<double>::infinity());
+    addOpTest("-Infinity", -2, std::numeric_limits<double>::infinity());
+    addOpTest("-Infinity", "-Infinity", std::numeric_limits<double>::quiet_NaN());
+    addOpTest(0, "Infinity", 0);
+    addOpTest(2, "Infinity", 0);
+    addOpTest(-2, "Infinity", 0);
+    addOpTest(0, "-Infinity", 0);
+    addOpTest(2, "-Infinity", 0);
+    addOpTest(-2, "-Infinity", 0);
+    addOpTest(1, "NaN", std::numeric_limits<double>::infinity());
+    addOpTest("NaN", 1, 0);
+    addOpTest(5, 0, std::numeric_limits<double>::infinity());
+    addOpTest(-5, 0, -std::numeric_limits<double>::infinity());
+    addOpTest(0, 0, std::numeric_limits<double>::quiet_NaN());
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&m_target);
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
 TEST_F(LLVMCodeBuilderTest, Yield)
 {
     auto build = [this]() {

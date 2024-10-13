@@ -29,6 +29,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createAdd() override;
         void createSub() override;
         void createMul() override;
+        void createDiv() override;
+
         void beginIfStatement() override;
         void beginElseBranch() override;
         void endIf() override;
@@ -64,6 +66,7 @@ class LLVMCodeBuilder : public ICodeBuilder
                     Add,
                     Sub,
                     Mul,
+                    Div,
                     Yield,
                     BeginIf,
                     BeginElse,
