@@ -22,38 +22,18 @@ class LIBSCRATCHCPP_EXPORT Value
 {
     public:
         /*! Constructs a number Value. */
-        Value(float numberValue)
-        {
-            value_init(&m_data);
-            value_assign_float(&m_data, numberValue);
-        }
-
-        /*! Constructs a number Value. */
-        Value(double numberValue)
+        Value(double numberValue = 0.0)
         {
             value_init(&m_data);
             value_assign_double(&m_data, numberValue);
         }
 
         /*! Constructs a number Value. */
-        Value(int numberValue = 0)
+        template<typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+        Value(T numberValue)
         {
             value_init(&m_data);
-            value_assign_int(&m_data, numberValue);
-        }
-
-        /*! Constructs a number Value. */
-        Value(size_t numberValue)
-        {
-            value_init(&m_data);
-            value_assign_size_t(&m_data, numberValue);
-        }
-
-        /*! Constructs a number Value. */
-        Value(long numberValue)
-        {
-            value_init(&m_data);
-            value_assign_long(&m_data, numberValue);
+            value_assign_double(&m_data, numberValue);
         }
 
         /*! Constructs a boolean Value. */
@@ -75,13 +55,6 @@ class LIBSCRATCHCPP_EXPORT Value
         {
             value_init(&m_data);
             value_assign_cstring(&m_data, stringValue);
-        }
-
-        /*! Constructs a special Value. */
-        Value(SpecialValue specialValue)
-        {
-            value_init(&m_data);
-            value_assign_special(&m_data, specialValue);
         }
 
         /*! Constructs value from ValueData. */
@@ -181,27 +154,16 @@ class LIBSCRATCHCPP_EXPORT Value
         /*! Replaces the value with modulo of the value and the given value. */
         void mod(const Value &v) { value_mod(&m_data, &v.m_data, &m_data); }
 
-        const Value &operator=(float v)
-        {
-            value_assign_float(&m_data, v);
-            return *this;
-        }
-
         const Value &operator=(double v)
         {
             value_assign_double(&m_data, v);
             return *this;
         }
 
-        const Value &operator=(int v)
+        template<typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+        const Value &operator=(T v)
         {
-            value_assign_int(&m_data, v);
-            return *this;
-        }
-
-        const Value &operator=(long v)
-        {
-            value_assign_long(&m_data, v);
+            value_assign_double(&m_data, v);
             return *this;
         }
 

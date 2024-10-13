@@ -995,7 +995,9 @@ TEST(VirtualMachineTest, OP_LIST_DEL)
         0,        OP_CONST, 9,  OP_LIST_DEL, 0, OP_READ_LIST, 0, OP_CONST, 10, OP_LIST_DEL, 0, OP_READ_LIST, 0, OP_CONST, 11, OP_LIST_DEL, 0, OP_READ_LIST,
         0,        OP_CONST, 12, OP_LIST_DEL, 0, OP_READ_LIST, 0, OP_CONST, 13, OP_LIST_DEL, 0, OP_READ_LIST, 0, OP_HALT
     };
-    static Value constValues[] = { 3, 1, "6", 0, 7, -1, 9, SpecialValue::NegativeInfinity, SpecialValue::Infinity, SpecialValue::NaN, "invalid", "last", "random", "all" };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    static Value constValues[] = { 3, 1, "6", 0, 7, -1, 9, -inf, inf, nan, "invalid", "last", "random", "all" };
     List list1("", "list1");
     list1.append("a");
     list1.append("b");
@@ -1067,7 +1069,9 @@ TEST(VirtualMachineTest, OP_LIST_INSERT)
         0,        OP_CONST,       0,  OP_CONST,       10, OP_LIST_INSERT, 0, OP_READ_LIST,   0, OP_CONST,       0,  OP_CONST,       11, OP_LIST_INSERT, 0, OP_READ_LIST,   0, OP_CONST,
         0,        OP_CONST,       12, OP_LIST_INSERT, 0,  OP_READ_LIST,   0, OP_CONST,       0, OP_CONST,       13, OP_LIST_INSERT, 0,  OP_READ_LIST,   0, OP_HALT
     };
-    static Value constValues[] = { "new item", "3", 1, 10, 0, 12, -1, 14, SpecialValue::NegativeInfinity, SpecialValue::Infinity, SpecialValue::NaN, "last", "random", "invalid" };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    static Value constValues[] = { "new item", "3", 1, 10, 0, 12, -1, 14, -inf, inf, nan, "last", "random", "invalid" };
     List list1("", "list1");
     list1.append("a");
     list1.append("b");
@@ -1118,7 +1122,9 @@ TEST(VirtualMachineTest, OP_LIST_REPLACE)
         0,        OP_CONST,        10, OP_CONST,        0, OP_LIST_REPLACE, 0, OP_READ_LIST,    0,  OP_CONST,        11, OP_CONST,        11, OP_LIST_REPLACE, 0, OP_READ_LIST,    0, OP_CONST,
         12,       OP_CONST,        14, OP_LIST_REPLACE, 0, OP_READ_LIST,    0, OP_CONST,        13, OP_CONST,        0,  OP_LIST_REPLACE, 0,  OP_READ_LIST,    0, OP_HALT
     };
-    static Value constValues[] = { "new item", 3, "1", 8, 0, 9, -1, 12, SpecialValue::NegativeInfinity, SpecialValue::Infinity, SpecialValue::NaN, "last", "random", "invalid", "test" };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    static Value constValues[] = { "new item", 3, "1", 8, 0, 9, -1, 12, -inf, inf, nan, "last", "random", "invalid", "test" };
     List list1("", "list1");
     list1.append("a");
     list1.append("b");
@@ -1166,7 +1172,9 @@ TEST(VirtualMachineTest, OP_LIST_GET_ITEM)
         0,        OP_CONST, 5,  OP_LIST_GET_ITEM, 0, OP_CONST, 6,  OP_LIST_GET_ITEM, 0, OP_CONST, 7,  OP_LIST_GET_ITEM, 0, OP_CONST, 8, OP_LIST_GET_ITEM, 0, OP_CONST, 9, OP_LIST_GET_ITEM,
         0,        OP_CONST, 10, OP_LIST_GET_ITEM, 0, OP_CONST, 11, OP_LIST_GET_ITEM, 0, OP_CONST, 12, OP_LIST_GET_ITEM, 0, OP_HALT
     };
-    static Value constValues[] = { 3, 1, "8", 0, 9, -1, 12, SpecialValue::NegativeInfinity, SpecialValue::Infinity, SpecialValue::NaN, "last", "random", "invalid" };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    static Value constValues[] = { 3, 1, "8", 0, 9, -1, 12, -inf, inf, nan, "last", "random", "invalid" };
     List list1("", "list1");
     list1.append("a");
     list1.append("b");
@@ -1213,7 +1221,9 @@ TEST(VirtualMachineTest, OP_LIST_INDEX_OF)
         OP_START, OP_CONST,         0, OP_LIST_INDEX_OF, 0, OP_CONST,         1, OP_LIST_INDEX_OF, 0, OP_CONST,         2, OP_LIST_INDEX_OF, 0, OP_CONST,         3, OP_LIST_INDEX_OF, 0, OP_CONST,
         4,        OP_LIST_INDEX_OF, 0, OP_CONST,         5, OP_LIST_INDEX_OF, 0, OP_CONST,         6, OP_LIST_INDEX_OF, 0, OP_CONST,         7, OP_LIST_INDEX_OF, 0, OP_HALT
     };
-    static Value constValues[] = { "c", "A", "e", "", "invalid", SpecialValue::NegativeInfinity, SpecialValue::Infinity, SpecialValue::NaN };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    static Value constValues[] = { "c", "A", "e", "", "invalid", -inf, inf, nan };
     List list1("", "list1");
     list1.append("a");
     list1.append("b");
@@ -1221,7 +1231,7 @@ TEST(VirtualMachineTest, OP_LIST_INDEX_OF)
     list1.append("d");
     list1.append("e");
     list1.append("");
-    list1.append(SpecialValue::Infinity);
+    list1.append(inf);
     list1.append(8);
     List *lists[] = { &list1 };
 
@@ -1268,7 +1278,9 @@ TEST(VirtualMachineTest, OP_LIST_CONTAINS)
         OP_START, OP_CONST,         0, OP_LIST_CONTAINS, 0, OP_CONST,         1, OP_LIST_CONTAINS, 0, OP_CONST,         2, OP_LIST_CONTAINS, 0, OP_CONST,         3, OP_LIST_CONTAINS, 0, OP_CONST,
         4,        OP_LIST_CONTAINS, 0, OP_CONST,         5, OP_LIST_CONTAINS, 0, OP_CONST,         6, OP_LIST_CONTAINS, 0, OP_CONST,         7, OP_LIST_CONTAINS, 0, OP_HALT
     };
-    static Value constValues[] = { "c", "A", "e", "", "invalid", SpecialValue::NegativeInfinity, SpecialValue::Infinity, SpecialValue::NaN };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    static Value constValues[] = { "c", "A", "e", "", "invalid", -inf, inf, nan };
     List list1("", "list1");
     list1.append("a");
     list1.append("b");
@@ -1276,7 +1288,7 @@ TEST(VirtualMachineTest, OP_LIST_CONTAINS)
     list1.append("d");
     list1.append("e");
     list1.append("");
-    list1.append(SpecialValue::Infinity);
+    list1.append(inf);
     list1.append(8);
     List *lists[] = { &list1 };
 
@@ -1299,7 +1311,8 @@ TEST(VirtualMachineTest, OP_LIST_CONTAINS)
 TEST(VirtualMachineTest, OP_STR_CONCAT)
 {
     static unsigned int bytecode[] = { OP_START, OP_CONST, 0, OP_CONST, 1, OP_STR_CONCAT, OP_CONST, 2, OP_STR_CONCAT, OP_CONST, 3, OP_STR_CONCAT, OP_HALT };
-    static Value constValues[] = { "abc ", "def", " ghi", SpecialValue::NegativeInfinity };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static Value constValues[] = { "abc ", "def", " ghi", -inf };
 
     VirtualMachine vm;
     vm.setBytecode(bytecode);
@@ -1316,7 +1329,9 @@ TEST(VirtualMachineTest, OP_STR_AT)
         OP_STR_AT, OP_CONST, 0, OP_CONST, 6,  OP_STR_AT, OP_CONST, 0, OP_CONST, 7,  OP_STR_AT, OP_CONST, 0, OP_CONST, 8,  OP_STR_AT, OP_CONST, 0, OP_CONST, 9, OP_STR_AT, OP_CONST, 0, OP_CONST, 10,
         OP_STR_AT, OP_CONST, 0, OP_CONST, 11, OP_STR_AT, OP_CONST, 0, OP_CONST, 12, OP_STR_AT, OP_CONST, 0, OP_CONST, 13, OP_STR_AT, OP_HALT
     };
-    static Value constValues[] = { "abcd efg  hijý", 3, 1, 14, 0, 15, -1, 16, SpecialValue::NegativeInfinity, SpecialValue::Infinity, SpecialValue::NaN, "last", "random", "invalid" };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    static Value constValues[] = { "abcd efg  hijý", 3, 1, 14, 0, 15, -1, 16, -inf, inf, nan, "last", "random", "invalid" };
 
     VirtualMachine vm;
     vm.setBytecode(bytecode);

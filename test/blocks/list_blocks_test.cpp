@@ -418,7 +418,7 @@ TEST_F(ListBlocksTest, ListContainsItem)
 
     // [list2] contains -Infinity
     auto list2 = std::make_shared<List>("d", "list2");
-    auto block2 = createListItemBlock("c", "data_listcontainsitem", list2, SpecialValue::NegativeInfinity);
+    auto block2 = createListItemBlock("c", "data_listcontainsitem", list2, -std::numeric_limits<double>::infinity());
 
     compiler.init();
     compiler.setBlock(block1);
@@ -428,7 +428,7 @@ TEST_F(ListBlocksTest, ListContainsItem)
     compiler.end();
 
     ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_LIST_CONTAINS, 0, vm::OP_CONST, 1, vm::OP_LIST_CONTAINS, 1, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "hello world", Value(SpecialValue::NegativeInfinity) }));
+    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "hello world", -std::numeric_limits<double>::infinity() }));
     ASSERT_TRUE(compiler.variables().empty());
     ASSERT_EQ(
         compiler.lists(),

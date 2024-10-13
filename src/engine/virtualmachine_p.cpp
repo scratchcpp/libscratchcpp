@@ -461,7 +461,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
     {
         const Value *v = READ_REG(0, 1);
         if (v->isNegativeInfinity())
-            REPLACE_RET_VALUE(Value(SpecialValue::Infinity), 1);
+            REPLACE_RET_VALUE(std::numeric_limits<double>::infinity(), 1);
         else if (!v->isInfinity())
             REPLACE_RET_VALUE(std::abs(v->toDouble()), 1);
         DISPATCH();
@@ -487,7 +487,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
     {
         const Value &v = *READ_REG(0, 1);
         if (v < 0)
-            REPLACE_RET_VALUE(Value(SpecialValue::NaN), 1);
+            REPLACE_RET_VALUE(std::numeric_limits<double>::quiet_NaN(), 1);
         else if (!v.isInfinity())
             REPLACE_RET_VALUE(std::sqrt(v.toDouble()), 1);
         DISPATCH();
@@ -497,7 +497,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
     {
         const Value *v = READ_REG(0, 1);
         if (v->isInfinity() || v->isNegativeInfinity())
-            REPLACE_RET_VALUE(Value(SpecialValue::NaN), 1);
+            REPLACE_RET_VALUE(std::numeric_limits<double>::quiet_NaN(), 1);
         else
             REPLACE_RET_VALUE(std::sin(v->toDouble() * pi / 180), 1);
         DISPATCH();
@@ -507,7 +507,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
     {
         const Value *v = READ_REG(0, 1);
         if (v->isInfinity() || v->isNegativeInfinity())
-            REPLACE_RET_VALUE(Value(SpecialValue::NaN), 1);
+            REPLACE_RET_VALUE(std::numeric_limits<double>::quiet_NaN(), 1);
         else
             REPLACE_RET_VALUE(std::cos(v->toDouble() * pi / 180), 1);
         DISPATCH();
@@ -517,7 +517,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
     {
         const Value *v = READ_REG(0, 1);
         if (v->isInfinity() || v->isNegativeInfinity())
-            REPLACE_RET_VALUE(Value(SpecialValue::NaN), 1);
+            REPLACE_RET_VALUE(std::numeric_limits<double>::quiet_NaN(), 1);
         else {
             long mod;
             if (v->toLong() < 0)
@@ -525,9 +525,9 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
             else
                 mod = v->toLong() % 360;
             if (mod == 90)
-                REPLACE_RET_VALUE(Value(SpecialValue::Infinity), 1);
+                REPLACE_RET_VALUE(std::numeric_limits<double>::infinity(), 1);
             else if (mod == 270)
-                REPLACE_RET_VALUE(Value(SpecialValue::NegativeInfinity), 1);
+                REPLACE_RET_VALUE(-std::numeric_limits<double>::infinity(), 1);
             else
                 REPLACE_RET_VALUE(std::tan(v->toDouble() * pi / 180), 1);
         }
@@ -538,7 +538,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
     {
         const Value &v = *READ_REG(0, 1);
         if (v < -1 || v > 1)
-            REPLACE_RET_VALUE(Value(SpecialValue::NaN), 1);
+            REPLACE_RET_VALUE(std::numeric_limits<double>::quiet_NaN(), 1);
         else
             REPLACE_RET_VALUE(std::asin(v.toDouble()) * 180 / pi, 1);
         DISPATCH();
@@ -548,7 +548,7 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
     {
         const Value &v = *READ_REG(0, 1);
         if (v < -1 || v > 1)
-            REPLACE_RET_VALUE(Value(SpecialValue::NaN), 1);
+            REPLACE_RET_VALUE(std::numeric_limits<double>::quiet_NaN(), 1);
         else
             REPLACE_RET_VALUE(std::acos(v.toDouble()) * 180 / pi, 1);
         DISPATCH();

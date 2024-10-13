@@ -33,60 +33,8 @@ extern "C"
 
     /* assign */
 
-    /*! Assigns number of type 'float' to the given value. */
-    void value_assign_float(ValueData *v, float numberValue)
-    {
-        value_free(v);
-
-        if (value_isInf(numberValue))
-            v->type = ValueType::Infinity;
-        else if (value_isNegativeInf(numberValue))
-            v->type = ValueType::NegativeInfinity;
-        else if (std::isnan(numberValue))
-            v->type = ValueType::NaN;
-        else {
-            v->type = ValueType::Number;
-            v->numberValue = value_floatToDouble(numberValue);
-        }
-    }
-
     /*! Assigns number of type 'double' to the given value. */
     void value_assign_double(ValueData *v, double numberValue)
-    {
-        value_free(v);
-
-        if (value_isInf(numberValue))
-            v->type = ValueType::Infinity;
-        else if (value_isNegativeInf(numberValue))
-            v->type = ValueType::NegativeInfinity;
-        else if (std::isnan(numberValue))
-            v->type = ValueType::NaN;
-        else {
-            v->type = ValueType::Number;
-            v->numberValue = numberValue;
-        }
-    }
-
-    /*! Assigns number of type 'int' to the given value. */
-    void value_assign_int(ValueData *v, int numberValue)
-    {
-        value_free(v);
-
-        v->type = ValueType::Number;
-        v->numberValue = numberValue;
-    }
-
-    /*! Assigns number of type 'size_t' to the given value. */
-    void value_assign_size_t(ValueData *v, size_t numberValue)
-    {
-        value_free(v);
-
-        v->type = ValueType::Number;
-        v->numberValue = numberValue;
-    }
-
-    /*! Assigns number of type 'long' to the given value. */
-    void value_assign_long(ValueData *v, long numberValue)
     {
         value_free(v);
 
@@ -112,37 +60,11 @@ extern "C"
     /*! Assigns C string to the given value. */
     void value_assign_cstring(ValueData *v, const char *stringValue)
     {
-        if (strcmp(stringValue, "Infinity") == 0) {
-            value_free(v);
-            v->type = ValueType::Infinity;
-        } else if (strcmp(stringValue, "-Infinity") == 0) {
-            value_free(v);
-            v->type = ValueType::NegativeInfinity;
-        } else if (strcmp(stringValue, "NaN") == 0) {
-            value_free(v);
-            v->type = ValueType::NaN;
-        } else if (v->type == ValueType::String) {
+        if (v->type == ValueType::String) {
             value_replaceStr(v, stringValue);
         } else {
             value_free(v);
             value_initStr(v, stringValue);
-        }
-    }
-
-    /*! Assigns special value to the given value. */
-    void value_assign_special(ValueData *v, SpecialValue specialValue)
-    {
-        value_free(v);
-
-        if (specialValue == SpecialValue::Infinity)
-            v->type = ValueType::Infinity;
-        else if (specialValue == SpecialValue::NegativeInfinity)
-            v->type = ValueType::NegativeInfinity;
-        else if (specialValue == SpecialValue::NaN)
-            v->type = ValueType::NaN;
-        else {
-            v->type = ValueType::Number;
-            v->numberValue = 0;
         }
     }
 
@@ -173,8 +95,6 @@ extern "C"
     bool value_isInfinity(const libscratchcpp::ValueData *v)
     {
         switch (v->type) {
-            case ValueType::Infinity:
-                return true;
             case ValueType::Number:
                 return value_isInf(v->numberValue);
             case ValueType::String:
@@ -188,10 +108,8 @@ extern "C"
     bool value_isNegativeInfinity(const libscratchcpp::ValueData *v)
     {
         switch (v->type) {
-            case ValueType::NegativeInfinity:
-                return true;
             case ValueType::Number:
-                return value_isNegativeInf(-v->numberValue);
+                return value_isNegativeInf(v->numberValue);
             case ValueType::String:
                 return strcmp(v->stringValue, "-Infinity") == 0;
             default:
@@ -203,10 +121,7 @@ extern "C"
     bool value_isNaN(const libscratchcpp::ValueData *v)
     {
         switch (v->type) {
-            case ValueType::NaN:
-                return true;
             case ValueType::Number:
-                assert(!std::isnan(v->numberValue));
                 return std::isnan(v->numberValue);
             case ValueType::String:
                 return strcmp(v->stringValue, "NaN") == 0;
@@ -230,8 +145,6 @@ extern "C"
         if (value_isInfinity(v) || value_isNegativeInfinity(v))
             return true;
 
-        assert(v->type != ValueType::Infinity && v->type != ValueType::NegativeInfinity);
-
         switch (v->type) {
             case ValueType::Number:
             case ValueType::Bool:
@@ -249,11 +162,12 @@ extern "C"
         // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L157-L181
         switch (v->type) {
             case ValueType::Bool:
-            case ValueType::Infinity:
-            case ValueType::NegativeInfinity:
-            case ValueType::NaN:
                 return true;
+
             case ValueType::Number: {
+                if (std::isinf(v->numberValue) || std::isnan(v->numberValue))
+                    return true;
+
                 double intpart;
                 std::modf(v->numberValue, &intpart);
                 return v->numberValue == intpart;
@@ -282,9 +196,9 @@ extern "C"
     /*! Returns the long representation of the given value. */
     long value_toLong(const libscratchcpp::ValueData *v)
     {
-        if (v->type == ValueType::Number)
+        if (v->type == ValueType::Number) {
             return v->numberValue;
-        else if (v->type == ValueType::Bool)
+        } else if (v->type == ValueType::Bool)
             return v->boolValue;
         else if (v->type == ValueType::String)
             return value_stringToLong(v->stringValue);
@@ -314,10 +228,6 @@ extern "C"
             return v->boolValue;
         else if (v->type == ValueType::String)
             return value_stringToDouble(v->stringValue);
-        else if (v->type == ValueType::Infinity)
-            return std::numeric_limits<double>::infinity();
-        else if (v->type == ValueType::NegativeInfinity)
-            return -std::numeric_limits<double>::infinity();
         else
             return 0;
     }
@@ -331,10 +241,6 @@ extern "C"
             return v->numberValue != 0;
         } else if (v->type == ValueType::String) {
             return value_stringToBool(v->stringValue);
-        } else if (v->type == ValueType::Infinity || v->type == ValueType::NegativeInfinity) {
-            return true;
-        } else if (v->type == ValueType::NaN) {
-            return false;
         } else {
             return false;
         }
@@ -349,12 +255,6 @@ extern "C"
             value_doubleToString(v->numberValue, dst);
         else if (v->type == ValueType::Bool)
             dst->assign(v->boolValue ? "true" : "false");
-        else if (v->type == ValueType::Infinity)
-            dst->assign("Infinity");
-        else if (v->type == ValueType::NegativeInfinity)
-            dst->assign("-Infinity");
-        else if (v->type == ValueType::NaN)
-            dst->assign("NaN");
         else
             dst->clear();
     }
@@ -430,122 +330,36 @@ extern "C"
     /*! Adds the given values and writes the result to dst. */
     void value_add(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
     {
-        if (v1->type == ValueType::Number && v2->type == ValueType::Number) {
-            value_assign_double(dst, v1->numberValue + v2->numberValue);
-            return;
-        } else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool) {
-            value_assign_long(dst, v1->boolValue + v2->boolValue);
-            return;
-        } else if ((static_cast<int>(v1->type) < 0) || (static_cast<int>(v2->type) < 0)) {
-            if ((v1->type == ValueType::Infinity && v2->type == ValueType::NegativeInfinity) || (v1->type == ValueType::NegativeInfinity && v2->type == ValueType::Infinity)) {
-                value_assign_special(dst, SpecialValue::NaN);
-                return;
-            } else if (v1->type == ValueType::Infinity || v2->type == ValueType::Infinity) {
-                value_assign_special(dst, SpecialValue::Infinity);
-                return;
-            } else if (v1->type == ValueType::NegativeInfinity || v2->type == ValueType::NegativeInfinity) {
-                value_assign_special(dst, SpecialValue::NegativeInfinity);
-                return;
-            }
-        }
-
         value_assign_double(dst, value_toDouble(v1) + value_toDouble(v2));
     }
 
     /*! Subtracts the given values and writes the result to dst. */
     void value_subtract(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
     {
-        if (v1->type == ValueType::Number && v2->type == ValueType::Number) {
-            value_assign_double(dst, v1->numberValue - v2->numberValue);
-            return;
-        } else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool) {
-            value_assign_long(dst, v1->boolValue - v2->boolValue);
-            return;
-        } else if ((static_cast<int>(v1->type) < 0) || (static_cast<int>(v2->type) < 0)) {
-            if ((v1->type == ValueType::Infinity && v2->type == ValueType::Infinity) || (v1->type == ValueType::NegativeInfinity && v2->type == ValueType::NegativeInfinity)) {
-                value_assign_special(dst, SpecialValue::NaN);
-                return;
-            } else if (v1->type == ValueType::Infinity || v2->type == ValueType::NegativeInfinity) {
-                value_assign_special(dst, SpecialValue::Infinity);
-                return;
-            } else if (v1->type == ValueType::NegativeInfinity || v2->type == ValueType::Infinity) {
-                value_assign_special(dst, SpecialValue::NegativeInfinity);
-                return;
-            }
-        }
-
         value_assign_double(dst, value_toDouble(v1) - value_toDouble(v2));
     }
 
     /*! Multiplies the given values and writes the result to dst. */
     void value_multiply(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
     {
-
-        if (v1->type == ValueType::Number && v2->type == ValueType::Number)
-            value_assign_double(dst, v1->numberValue * v2->numberValue);
-        else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
-            value_assign_long(dst, v1->boolValue * v2->boolValue);
-        else {
-            const ValueType t1 = v1->type, t2 = v2->type;
-
-            if ((static_cast<int>(t1) < 0 && t1 != ValueType::NaN) || (static_cast<int>(t2) < 0 && t2 != ValueType::NaN)) {
-                if (t1 == ValueType::Infinity || t1 == ValueType::NegativeInfinity || t2 == ValueType::Infinity || t2 == ValueType::NegativeInfinity) {
-                    bool mode = (t1 == ValueType::Infinity || t2 == ValueType::Infinity);
-                    const ValueData *value;
-
-                    if ((t1 == ValueType::Infinity && (t2 == ValueType::Infinity || t2 == ValueType::NegativeInfinity)) || (t2 != ValueType::Infinity && t2 != ValueType::NegativeInfinity))
-                        value = v2;
-                    else
-                        value = v1;
-
-                    if (value_isPositive(value))
-                        value_assign_special(dst, mode ? SpecialValue::Infinity : SpecialValue::NegativeInfinity);
-                    else if (value_isNegative(value))
-                        value_assign_special(dst, mode ? SpecialValue::NegativeInfinity : SpecialValue::Infinity);
-                    else
-                        value_assign_special(dst, SpecialValue::NaN);
-                }
-            } else
-                value_assign_double(dst, value_toDouble(v1) * value_toDouble(v2));
-        }
+        value_assign_double(dst, value_toDouble(v1) * value_toDouble(v2));
     }
 
     /*! Divides the given values and writes the result to dst. */
     void value_divide(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
     {
-        if (value_isZero(v1) && value_isZero(v2))
-            value_assign_special(dst, SpecialValue::NaN);
-        else if (value_toDouble(v2) == 0) {
-            if (value_isPositive(v1))
-                value_assign_special(dst, SpecialValue::Infinity);
-            else
-                value_assign_special(dst, SpecialValue::NegativeInfinity);
-        } else if ((v1->type == ValueType::Infinity || v1->type == ValueType::NegativeInfinity) && (v2->type == ValueType::Infinity || v2->type == ValueType::NegativeInfinity)) {
-            value_assign_special(dst, SpecialValue::NaN);
-        } else if (v1->type == ValueType::Infinity || v1->type == ValueType::NegativeInfinity) {
-            if (value_toDouble(v2) < 0) {
-                if (v1->type == ValueType::Infinity)
-                    value_assign_special(dst, SpecialValue::NegativeInfinity);
-                else
-                    value_assign_special(dst, SpecialValue::Infinity);
-            } else {
-                if (v1->type == ValueType::Infinity)
-                    value_assign_special(dst, SpecialValue::Infinity);
-                else
-                    value_assign_special(dst, SpecialValue::NegativeInfinity);
-            }
-        } else if (v2->type == ValueType::Infinity || v2->type == ValueType::NegativeInfinity) {
-            value_assign_long(dst, 0);
-        } else
-            value_assign_double(dst, value_toDouble(v1) / value_toDouble(v2));
+        value_assign_double(dst, value_toDouble(v1) / value_toDouble(v2));
     }
 
     /*! Calculates the modulo the given values and writes the result to dst. */
     void value_mod(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
     {
-        if ((v2 == 0) || (v1->type == ValueType::Infinity || v1->type == ValueType::NegativeInfinity))
-            value_assign_special(dst, SpecialValue::NaN);
-        else if (v2->type == ValueType::Infinity || v2->type == ValueType::NegativeInfinity)
+        double a = value_toDouble(v1);
+        double b = value_toDouble(v2);
+
+        if ((b == 0) || std::isinf(a))
+            value_assign_double(dst, std::numeric_limits<double>::quiet_NaN());
+        else if (std::isinf(b))
             value_assign_double(dst, value_toDouble(v1));
         else if (value_isNegative(v1) || value_isNegative(v2))
             value_assign_double(dst, fmod(value_toDouble(v2) + fmod(value_toDouble(v1), -value_toDouble(v2)), value_toDouble(v2)));
@@ -561,9 +375,12 @@ extern "C"
         // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L121-L150
         assert(v1 && v2);
 
-        if (v1->type == ValueType::Number && v2->type == ValueType::Number)
+        if (v1->type == ValueType::Number && v2->type == ValueType::Number) {
+            if (std::isnan(v1->numberValue) && std::isnan(v2->numberValue))
+                return true;
+
             return v1->numberValue == v2->numberValue;
-        else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
+        } else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
             return v1->boolValue == v2->boolValue;
 
         bool ok;
@@ -584,8 +401,8 @@ extern "C"
 
         // Handle the special case of Infinity
         if ((static_cast<int>(v1->type) < 0) && (static_cast<int>(v2->type) < 0)) {
-            assert(v1->type != ValueType::NaN);
-            assert(v2->type != ValueType::NaN);
+            assert(!value_isNaN(v1));
+            assert(!value_isNaN(v2));
             return v1->type == v2->type;
         }
 
@@ -602,16 +419,6 @@ extern "C"
             return v1->numberValue > v2->numberValue;
         else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
             return v1->boolValue > v2->boolValue;
-        else if ((static_cast<int>(v1->type) < 0) || (static_cast<int>(v2->type) < 0)) {
-            if (v1->type == ValueType::Infinity) {
-                return v2->type != ValueType::Infinity;
-            } else if (v1->type == ValueType::NegativeInfinity)
-                return false;
-            else if (v2->type == ValueType::Infinity)
-                return false;
-            else if (v2->type == ValueType::NegativeInfinity)
-                return true;
-        }
 
         double n1, n2;
 
@@ -637,16 +444,6 @@ extern "C"
             return v1->numberValue < v2->numberValue;
         else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
             return v1->boolValue < v2->boolValue;
-        else if ((static_cast<int>(v1->type) < 0) || (static_cast<int>(v2->type) < 0)) {
-            if (v1->type == ValueType::Infinity) {
-                return false;
-            } else if (v1->type == ValueType::NegativeInfinity)
-                return v2->type != ValueType::NegativeInfinity;
-            else if (v2->type == ValueType::Infinity)
-                return v1->type != ValueType::Infinity;
-            else if (v2->type == ValueType::NegativeInfinity)
-                return false;
-        }
 
         return value_toDouble(v1) < value_toDouble(v2);
         double n1, n2;

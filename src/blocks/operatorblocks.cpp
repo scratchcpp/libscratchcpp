@@ -261,9 +261,9 @@ unsigned int OperatorBlocks::op_ln(VirtualMachine *vm)
 {
     const Value &v = *vm->getInput(0, 1);
     if (v < 0)
-        vm->replaceReturnValue(Value(SpecialValue::NaN), 1);
+        vm->replaceReturnValue(std::numeric_limits<double>::quiet_NaN(), 1);
     else if (v == 0 || v.isNaN())
-        vm->replaceReturnValue(Value(SpecialValue::NegativeInfinity), 1);
+        vm->replaceReturnValue(-std::numeric_limits<double>::infinity(), 1);
     else if (!v.isInfinity())
         vm->replaceReturnValue(std::log(v.toDouble()), 1);
     return 0;
@@ -273,9 +273,9 @@ unsigned int OperatorBlocks::op_log(VirtualMachine *vm)
 {
     const Value &v = *vm->getInput(0, 1);
     if (v < 0)
-        vm->replaceReturnValue(Value(SpecialValue::NaN), 1);
+        vm->replaceReturnValue(std::numeric_limits<double>::quiet_NaN(), 1);
     else if (v == 0 || v.isNaN())
-        vm->replaceReturnValue(Value(SpecialValue::NegativeInfinity), 1);
+        vm->replaceReturnValue(-std::numeric_limits<double>::infinity(), 1);
     else if (!v.isInfinity())
         vm->replaceReturnValue(std::log10(v.toDouble()), 1);
     return 0;
@@ -284,7 +284,9 @@ unsigned int OperatorBlocks::op_log(VirtualMachine *vm)
 unsigned int OperatorBlocks::op_eexp(VirtualMachine *vm)
 {
     const Value *v = vm->getInput(0, 1);
-    if (v->isNegativeInfinity())
+    if (v->isNaN())
+        vm->replaceReturnValue(1, 1);
+    else if (v->isNegativeInfinity())
         vm->replaceReturnValue(0, 1);
     else if (!v->isInfinity())
         vm->replaceReturnValue(std::exp(v->toDouble()), 1);
@@ -294,7 +296,9 @@ unsigned int OperatorBlocks::op_eexp(VirtualMachine *vm)
 unsigned int OperatorBlocks::op_10exp(VirtualMachine *vm)
 {
     const Value *v = vm->getInput(0, 1);
-    if (v->isNegativeInfinity())
+    if (v->isNaN())
+        vm->replaceReturnValue(1, 1);
+    else if (v->isNegativeInfinity())
         vm->replaceReturnValue(0, 1);
     else if (!v->isInfinity())
         vm->replaceReturnValue(std::pow(10, v->toDouble()), 1);
