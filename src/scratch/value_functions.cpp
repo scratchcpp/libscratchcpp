@@ -68,23 +68,6 @@ extern "C"
         }
     }
 
-    /*! Assigns special value to the given value. */
-    void value_assign_special(ValueData *v, SpecialValue specialValue)
-    {
-        value_free(v);
-
-        if (specialValue == SpecialValue::Infinity)
-            v->type = ValueType::Infinity;
-        else if (specialValue == SpecialValue::NegativeInfinity)
-            v->type = ValueType::NegativeInfinity;
-        else if (specialValue == SpecialValue::NaN)
-            v->type = ValueType::NaN;
-        else {
-            v->type = ValueType::Number;
-            v->numberValue = 0;
-        }
-    }
-
     /*! Assigns another value to the given value. */
     void value_assign_copy(ValueData *v, const libscratchcpp::ValueData *another)
     {
@@ -112,8 +95,6 @@ extern "C"
     bool value_isInfinity(const libscratchcpp::ValueData *v)
     {
         switch (v->type) {
-            case ValueType::Infinity:
-                return true;
             case ValueType::Number:
                 return value_isInf(v->numberValue);
             case ValueType::String:
@@ -127,8 +108,6 @@ extern "C"
     bool value_isNegativeInfinity(const libscratchcpp::ValueData *v)
     {
         switch (v->type) {
-            case ValueType::NegativeInfinity:
-                return true;
             case ValueType::Number:
                 return value_isNegativeInf(v->numberValue);
             case ValueType::String:
@@ -142,8 +121,6 @@ extern "C"
     bool value_isNaN(const libscratchcpp::ValueData *v)
     {
         switch (v->type) {
-            case ValueType::NaN:
-                return true;
             case ValueType::Number:
                 return std::isnan(v->numberValue);
             case ValueType::String:
@@ -168,8 +145,6 @@ extern "C"
         if (value_isInfinity(v) || value_isNegativeInfinity(v))
             return true;
 
-        assert(v->type != ValueType::Infinity && v->type != ValueType::NegativeInfinity);
-
         switch (v->type) {
             case ValueType::Number:
             case ValueType::Bool:
@@ -187,11 +162,12 @@ extern "C"
         // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L157-L181
         switch (v->type) {
             case ValueType::Bool:
-            case ValueType::Infinity:
-            case ValueType::NegativeInfinity:
-            case ValueType::NaN:
                 return true;
+
             case ValueType::Number: {
+                if (std::isinf(v->numberValue) || std::isnan(v->numberValue))
+                    return true;
+
                 double intpart;
                 std::modf(v->numberValue, &intpart);
                 return v->numberValue == intpart;
@@ -220,9 +196,9 @@ extern "C"
     /*! Returns the long representation of the given value. */
     long value_toLong(const libscratchcpp::ValueData *v)
     {
-        if (v->type == ValueType::Number)
+        if (v->type == ValueType::Number) {
             return v->numberValue;
-        else if (v->type == ValueType::Bool)
+        } else if (v->type == ValueType::Bool)
             return v->boolValue;
         else if (v->type == ValueType::String)
             return value_stringToLong(v->stringValue);
@@ -252,10 +228,6 @@ extern "C"
             return v->boolValue;
         else if (v->type == ValueType::String)
             return value_stringToDouble(v->stringValue);
-        else if (v->type == ValueType::Infinity)
-            return std::numeric_limits<double>::infinity();
-        else if (v->type == ValueType::NegativeInfinity)
-            return -std::numeric_limits<double>::infinity();
         else
             return 0;
     }
@@ -269,10 +241,6 @@ extern "C"
             return v->numberValue != 0;
         } else if (v->type == ValueType::String) {
             return value_stringToBool(v->stringValue);
-        } else if (v->type == ValueType::Infinity || v->type == ValueType::NegativeInfinity) {
-            return true;
-        } else if (v->type == ValueType::NaN) {
-            return false;
         } else {
             return false;
         }
@@ -287,12 +255,6 @@ extern "C"
             value_doubleToString(v->numberValue, dst);
         else if (v->type == ValueType::Bool)
             dst->assign(v->boolValue ? "true" : "false");
-        else if (v->type == ValueType::Infinity)
-            dst->assign("Infinity");
-        else if (v->type == ValueType::NegativeInfinity)
-            dst->assign("-Infinity");
-        else if (v->type == ValueType::NaN)
-            dst->assign("NaN");
         else
             dst->clear();
     }
@@ -396,7 +358,7 @@ extern "C"
         double b = value_toDouble(v2);
 
         if ((b == 0) || std::isinf(a))
-            value_assign_special(dst, SpecialValue::NaN);
+            value_assign_double(dst, std::numeric_limits<double>::quiet_NaN());
         else if (std::isinf(b))
             value_assign_double(dst, value_toDouble(v1));
         else if (value_isNegative(v1) || value_isNegative(v2))
@@ -413,9 +375,12 @@ extern "C"
         // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L121-L150
         assert(v1 && v2);
 
-        if (v1->type == ValueType::Number && v2->type == ValueType::Number)
+        if (v1->type == ValueType::Number && v2->type == ValueType::Number) {
+            if (std::isnan(v1->numberValue) && std::isnan(v2->numberValue))
+                return true;
+
             return v1->numberValue == v2->numberValue;
-        else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
+        } else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
             return v1->boolValue == v2->boolValue;
 
         bool ok;
@@ -436,8 +401,8 @@ extern "C"
 
         // Handle the special case of Infinity
         if ((static_cast<int>(v1->type) < 0) && (static_cast<int>(v2->type) < 0)) {
-            assert(v1->type != ValueType::NaN);
-            assert(v2->type != ValueType::NaN);
+            assert(!value_isNaN(v1));
+            assert(!value_isNaN(v2));
             return v1->type == v2->type;
         }
 

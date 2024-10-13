@@ -17,11 +17,8 @@
 
 using namespace libscratchcpp;
 
-static const std::map<ValueType, InputValue::Type> VALUE_TYPE_MAP = {
-    { ValueType::Number, InputValue::Type::Number },           { ValueType::Bool, InputValue::Type::String },
-    { ValueType::String, InputValue::Type::String },           { ValueType::Infinity, InputValue::Type::String },
-    { ValueType::NegativeInfinity, InputValue::Type::String }, { ValueType::NaN, InputValue::Type::String }
-};
+static const std::map<ValueType, InputValue::Type>
+    VALUE_TYPE_MAP = { { ValueType::Number, InputValue::Type::Number }, { ValueType::Bool, InputValue::Type::String }, { ValueType::String, InputValue::Type::String } };
 
 /*! Constructs InputValue with the given type. */
 InputValue::InputValue(Type type) :

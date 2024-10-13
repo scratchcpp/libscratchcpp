@@ -366,22 +366,17 @@ extern "C"
                 *ok = true;
 
             return ret;
-        } else
-            return 0;
+        }
 
         // Special values
-        if (strncmp(s, "Infinity", len) == 0) {
+        if (value_stringsEqual(s, "Infinity")) {
             if (ok)
                 *ok = true;
             return std::numeric_limits<double>::infinity();
-        } else if (strncmp(s, "-Infinity", len) == 0) {
+        } else if (value_stringsEqual(s, "-Infinity")) {
             if (ok)
                 *ok = true;
             return -std::numeric_limits<double>::infinity();
-        } else if (strncmp(s, "NaN", len) == 0) {
-            if (ok)
-                *ok = true;
-            return std::numeric_limits<double>::quiet_NaN();
         }
 
         return 0;
@@ -389,7 +384,12 @@ extern "C"
 
     inline long value_stringToLong(const char *s, bool *ok = nullptr)
     {
-        return value_stringToDoubleImpl(s, ok);
+        const double ret = value_stringToDoubleImpl(s, ok);
+
+        if (std::isinf(ret))
+            return 0;
+
+        return ret;
     }
 
     inline bool value_stringIsInt(const char *s, int n)
@@ -409,6 +409,18 @@ extern "C"
 
 inline void value_doubleToString(double v, std::string *dst)
 {
+    if (std::isinf(v)) {
+        if (v > 0)
+            dst->assign("Infinity");
+        else
+            dst->assign("-Infinity");
+
+        return;
+    } else if (std::isnan(v)) {
+        dst->assign("NaN");
+        return;
+    }
+
     std::stringstream stream;
 
     if (v != 0) {
@@ -469,18 +481,14 @@ extern "C"
         // we can optimize by prioritizing the other types here.
         if (v->type == ValueType::String)
             return value_stringToDoubleImpl(v->stringValue, ok);
-        else if (v->type == ValueType::Infinity)
-            return std::numeric_limits<double>::infinity();
-        else if (v->type == ValueType::NegativeInfinity)
-            return -std::numeric_limits<double>::infinity();
-        else if (v->type == ValueType::NaN) {
-            if (ok)
+        else if (v->type == ValueType::Number) {
+            if (std::isnan(v->numberValue)) {
                 *ok = false;
+                return 0;
+            }
 
-            return 0;
-        } else if (v->type == ValueType::Number)
             return v->numberValue;
-        else if (v->type == ValueType::Bool)
+        } else if (v->type == ValueType::Bool)
             return v->boolValue;
         else {
             assert(false); // this should never happen
@@ -497,12 +505,6 @@ extern "C"
             return v->numberValue > 0;
         else if (v->type == ValueType::Bool)
             return v->boolValue;
-        else if (static_cast<int>(v->type) < 0) {
-            if (v->type == ValueType::Infinity)
-                return true;
-            else
-                return false;
-        }
 
         return value_toDouble(v) > 0;
     }
@@ -513,12 +515,6 @@ extern "C"
             return v->numberValue < 0;
         else if (v->type == ValueType::Bool)
             return false;
-        else if (static_cast<int>(v->type) < 0) {
-            if (v->type == ValueType::NegativeInfinity)
-                return true;
-            else
-                return false;
-        }
 
         return value_toDouble(v) < 0;
     }

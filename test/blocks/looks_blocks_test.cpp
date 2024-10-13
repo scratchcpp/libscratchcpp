@@ -1476,7 +1476,9 @@ TEST_F(LooksBlocksTest, SwitchCostumeToImpl)
     static unsigned int bytecode13[] = { vm::OP_START, vm::OP_CONST, 12, vm::OP_EXEC, 0, vm::OP_HALT };
     static unsigned int bytecode14[] = { vm::OP_START, vm::OP_CONST, 13, vm::OP_EXEC, 0, vm::OP_HALT };
     static BlockFunc functions[] = { &LooksBlocks::switchCostumeTo };
-    static Value constValues[] = { "costume2", 0, 1, 2, 3, "2", "3", SpecialValue::NaN, SpecialValue::Infinity, SpecialValue::NegativeInfinity, "", "   ", "next costume", "previous costume" };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    static Value constValues[] = { "costume2", 0, 1, 2, 3, "2", "3", nan, inf, -inf, "", "   ", "next costume", "previous costume" };
 
     Target target;
     target.addCostume(std::make_shared<Costume>("costume1", "c1", "svg"));
@@ -1791,9 +1793,9 @@ TEST_F(LooksBlocksTest, SwitchBackdropToImpl)
     static unsigned int bytecode14[] = { vm::OP_START, vm::OP_CONST, 13, vm::OP_EXEC, 0, vm::OP_HALT };
     static unsigned int bytecode15[] = { vm::OP_START, vm::OP_CONST, 14, vm::OP_EXEC, 0, vm::OP_HALT };
     static BlockFunc functions[] = { &LooksBlocks::switchBackdropTo };
-    static Value constValues[] = {
-        "backdrop2", 0, 1, 2, 3, "2", "3", SpecialValue::NaN, SpecialValue::Infinity, SpecialValue::NegativeInfinity, "", "   ", "next backdrop", "previous backdrop", "random backdrop"
-    };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    static Value constValues[] = { "backdrop2", 0, 1, 2, 3, "2", "3", nan, inf, -inf, "", "   ", "next backdrop", "previous backdrop", "random backdrop" };
 
     Target target;
 
@@ -2068,9 +2070,9 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWaitImpl)
     static unsigned int bytecode14[] = { vm::OP_START, vm::OP_CONST, 13, vm::OP_EXEC, 0, vm::OP_HALT };
     static unsigned int bytecode15[] = { vm::OP_START, vm::OP_CONST, 14, vm::OP_EXEC, 0, vm::OP_HALT };
     static BlockFunc functions[] = { &LooksBlocks::switchBackdropToAndWait };
-    static Value constValues[] = {
-        "backdrop2", 0, 1, 2, 3, "2", "3", SpecialValue::NaN, SpecialValue::Infinity, SpecialValue::NegativeInfinity, "", "   ", "next backdrop", "previous backdrop", "random backdrop"
-    };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    static Value constValues[] = { "backdrop2", 0, 1, 2, 3, "2", "3", nan, inf, -inf, "", "   ", "next backdrop", "previous backdrop", "random backdrop" };
 
     Target target;
 

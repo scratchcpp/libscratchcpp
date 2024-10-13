@@ -57,13 +57,6 @@ class LIBSCRATCHCPP_EXPORT Value
             value_assign_cstring(&m_data, stringValue);
         }
 
-        /*! Constructs a special Value. */
-        Value(SpecialValue specialValue)
-        {
-            value_init(&m_data);
-            value_assign_special(&m_data, specialValue);
-        }
-
         /*! Constructs value from ValueData. */
         Value(const ValueData &v)
         {

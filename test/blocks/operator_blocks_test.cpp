@@ -832,7 +832,9 @@ TEST_F(OperatorBlocksTest, MathOpLn)
         vm::OP_HALT
     };
     static BlockFunc functions[] = { &OperatorBlocks::op_ln };
-    static Value constValues[] = { SpecialValue::NegativeInfinity, -2.5, 0, SpecialValue::NaN, std::exp(1), 50, SpecialValue::Infinity };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    static Value constValues[] = { -inf, -2.5, 0, nan, std::exp(1), 50, inf };
 
     VirtualMachine vm;
     vm.setBytecode(bytecode);
@@ -885,7 +887,9 @@ TEST_F(OperatorBlocksTest, MathOpLog)
         vm::OP_HALT
     };
     static BlockFunc functions[] = { &OperatorBlocks::op_log };
-    static Value constValues[] = { SpecialValue::NegativeInfinity, -2.5, 0, SpecialValue::NaN, 100, 1500, SpecialValue::Infinity };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    static Value constValues[] = { -inf, -2.5, 0, nan, 100, 1500, inf };
 
     VirtualMachine vm;
     vm.setBytecode(bytecode);
@@ -938,7 +942,9 @@ TEST_F(OperatorBlocksTest, MathOpExp)
         vm::OP_HALT
     };
     static BlockFunc functions[] = { &OperatorBlocks::op_eexp };
-    static Value constValues[] = { SpecialValue::NegativeInfinity, -3.25, 0, SpecialValue::NaN, 1, 5, SpecialValue::Infinity };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    static Value constValues[] = { -inf, -3.25, 0, nan, 1, 5, inf };
 
     VirtualMachine vm;
     vm.setBytecode(bytecode);
@@ -991,7 +997,9 @@ TEST_F(OperatorBlocksTest, MathOp10Exp)
         vm::OP_HALT
     };
     static BlockFunc functions[] = { &OperatorBlocks::op_10exp };
-    static Value constValues[] = { SpecialValue::NegativeInfinity, -2, 0, SpecialValue::NaN, 1, 5.5, SpecialValue::Infinity };
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    static Value constValues[] = { -inf, -2, 0, nan, 1, 5.5, inf };
 
     VirtualMachine vm;
     vm.setBytecode(bytecode);
