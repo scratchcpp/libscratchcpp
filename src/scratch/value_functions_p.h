@@ -409,7 +409,10 @@ extern "C"
 
 inline void value_doubleToString(double v, std::string *dst)
 {
-    if (std::isinf(v)) {
+    if (v == 0) {
+        dst->assign("0");
+        return;
+    } else if (std::isinf(v)) {
         if (v > 0)
             dst->assign("Infinity");
         else

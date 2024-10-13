@@ -1331,6 +1331,18 @@ TEST(ValueTest, ToString)
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
     ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
+    v = 0.0;
+    cStrings.push_back(value_toCString(&v.data()));
+    ASSERT_EQ(v.toString(), "0");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
+
+    v = -0.0;
+    cStrings.push_back(value_toCString(&v.data()));
+    ASSERT_EQ(v.toString(), "0");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
+
     v = 2.0;
     cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "2");
@@ -2658,6 +2670,14 @@ TEST(ValueTest, EqualityOperators)
 TEST(ValueTest, DoubleToCString)
 {
     char *ret;
+    ret = value_doubleToCString(0.0);
+    ASSERT_EQ(strcmp(ret, "0"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(-0.0);
+    ASSERT_EQ(strcmp(ret, "0"), 0);
+    free(ret);
+
     ret = value_doubleToCString(2.0);
     ASSERT_EQ(strcmp(ret, "2"), 0);
     free(ret);
