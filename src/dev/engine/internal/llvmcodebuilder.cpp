@@ -88,6 +88,16 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::Add: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *num1 = removeNaN(castValue(arg1.second, arg1.first));
+                llvm::Value *num2 = removeNaN(castValue(arg2.second, arg2.first));
+                step.functionReturnReg->value = m_builder.CreateFAdd(num1, num2);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -410,6 +420,11 @@ void LLVMCodeBuilder::addVariableValue(Variable *variable)
 
 void LLVMCodeBuilder::addListContents(List *list)
 {
+}
+
+void LLVMCodeBuilder::createAdd()
+{
+    createOp(Step::Type::Add, 2);
 }
 
 void LLVMCodeBuilder::beginIfStatement()
@@ -783,6 +798,34 @@ llvm::Type *LLVMCodeBuilder::getType(Compiler::StaticType type)
             assert(false);
             return nullptr;
     }
+}
+
+llvm::Value *LLVMCodeBuilder::removeNaN(llvm::Value *num)
+{
+    // Replace NaN with zero
+    llvm::Value *isNaN = m_builder.CreateFCmpUNO(num, num);
+    return m_builder.CreateSelect(isNaN, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)), num);
+}
+
+void LLVMCodeBuilder::createOp(Step::Type type, size_t argCount)
+{
+    Step step(type);
+
+    assert(m_tmpRegs.size() >= argCount);
+    size_t j = 0;
+
+    for (size_t i = m_tmpRegs.size() - argCount; i < m_tmpRegs.size(); i++)
+        step.args.push_back({ Compiler::StaticType::Number, m_tmpRegs[i] });
+
+    m_tmpRegs.erase(m_tmpRegs.end() - argCount, m_tmpRegs.end());
+
+    auto ret = std::make_shared<Register>(Compiler::StaticType::Number);
+    ret->isRawValue = true;
+    step.functionReturnReg = ret;
+    m_regs[m_currentFunction].push_back(ret);
+    m_tmpRegs.push_back(ret);
+
+    m_steps.push_back(step);
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolveFunction(const std::string name, llvm::FunctionType *type)

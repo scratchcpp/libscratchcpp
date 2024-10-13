@@ -200,6 +200,51 @@ TEST_F(LLVMCodeBuilderTest, RawValueCasting)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
+TEST_F(LLVMCodeBuilderTest, Add)
+{
+    std::string expected;
+
+    auto addOpTest = [this, &expected](Value v1, Value v2, double expectedResult) {
+        m_builder->addConstValue(v1);
+        m_builder->addConstValue(v2);
+        m_builder->createAdd();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v1);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->addConstValue(v2);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->createAdd();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        std::string str = Value(expectedResult).toString() + '\n';
+        expected += str;
+        expected += str;
+    };
+
+    createBuilder(true);
+
+    addOpTest(50, 25, 75);
+    addOpTest(-500, 25, -475);
+    addOpTest(-500, -25, -525);
+    addOpTest("2.54", "6.28", 8.82);
+    addOpTest(2.54, "-6.28", -3.74);
+    addOpTest(true, true, 2);
+    addOpTest("Infinity", "Infinity", std::numeric_limits<double>::infinity());
+    addOpTest("Infinity", "-Infinity", std::numeric_limits<double>::quiet_NaN());
+    addOpTest("-Infinity", "Infinity", std::numeric_limits<double>::quiet_NaN());
+    addOpTest("-Infinity", "-Infinity", -std::numeric_limits<double>::infinity());
+    addOpTest(1, "NaN", 1);
+    addOpTest("NaN", 1, 1);
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&m_target);
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
 TEST_F(LLVMCodeBuilderTest, Yield)
 {
     auto build = [this]() {

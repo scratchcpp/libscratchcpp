@@ -26,6 +26,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void addVariableValue(Variable *variable) override;
         void addListContents(List *list) override;
 
+        void createAdd() override;
         void beginIfStatement() override;
         void beginElseBranch() override;
         void endIf() override;
@@ -58,6 +59,7 @@ class LLVMCodeBuilder : public ICodeBuilder
                 enum class Type
                 {
                     FunctionCall,
+                    Add,
                     Yield,
                     BeginIf,
                     BeginElse,
@@ -124,6 +126,9 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Value *castRawValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType);
         llvm::Value *castConstValue(const Value &value, Compiler::StaticType targetType);
         llvm::Type *getType(Compiler::StaticType type);
+        llvm::Value *removeNaN(llvm::Value *num);
+
+        void createOp(Step::Type type, size_t argCount);
 
         llvm::FunctionCallee resolveFunction(const std::string name, llvm::FunctionType *type);
         llvm::FunctionCallee resolve_value_init();
