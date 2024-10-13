@@ -102,6 +102,30 @@ void Compiler::addInput(const std::string &name)
     addInput(impl->block->inputAt(impl->block->findInput(name)).get());
 }
 
+/*! Creates an add instruction from the last 2 values. */
+void Compiler::createAdd()
+{
+    impl->builder->createAdd();
+}
+
+/*! Creates a subtract instruction from the last 2 values. */
+void Compiler::createSub()
+{
+    impl->builder->createSub();
+}
+
+/*! Creates a multiply instruction from the last 2 values. */
+void Compiler::createMul()
+{
+    impl->builder->createMul();
+}
+
+/*! Creates a divide instruction from the last 2 values. */
+void Compiler::createDiv()
+{
+    impl->builder->createDiv();
+}
+
 /*! Jumps to the given if substack. */
 void Compiler::moveToIf(std::shared_ptr<Block> substack)
 {
