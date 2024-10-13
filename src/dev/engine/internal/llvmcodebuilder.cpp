@@ -108,6 +108,16 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::Mul: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *num1 = removeNaN(castValue(arg1.second, arg1.first));
+                llvm::Value *num2 = removeNaN(castValue(arg2.second, arg2.first));
+                step.functionReturnReg->value = m_builder.CreateFMul(num1, num2);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -440,6 +450,11 @@ void LLVMCodeBuilder::createAdd()
 void LLVMCodeBuilder::createSub()
 {
     createOp(Step::Type::Sub, 2);
+}
+
+void LLVMCodeBuilder::createMul()
+{
+    createOp(Step::Type::Mul, 2);
 }
 
 void LLVMCodeBuilder::beginIfStatement()
