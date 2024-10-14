@@ -454,22 +454,22 @@ void LLVMCodeBuilder::addListContents(List *list)
 
 void LLVMCodeBuilder::createAdd()
 {
-    createOp(Step::Type::Add, 2);
+    createOp(Step::Type::Add, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createSub()
 {
-    createOp(Step::Type::Sub, 2);
+    createOp(Step::Type::Sub, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createMul()
 {
-    createOp(Step::Type::Mul, 2);
+    createOp(Step::Type::Mul, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createDiv()
 {
-    createOp(Step::Type::Div, 2);
+    createOp(Step::Type::Div, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::beginIfStatement()
@@ -844,7 +844,7 @@ llvm::Value *LLVMCodeBuilder::removeNaN(llvm::Value *num)
     return m_builder.CreateSelect(isNaN, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)), num);
 }
 
-void LLVMCodeBuilder::createOp(Step::Type type, size_t argCount)
+void LLVMCodeBuilder::createOp(Step::Type type, Compiler::StaticType retType, size_t argCount)
 {
     Step step(type);
 
@@ -856,7 +856,7 @@ void LLVMCodeBuilder::createOp(Step::Type type, size_t argCount)
 
     m_tmpRegs.erase(m_tmpRegs.end() - argCount, m_tmpRegs.end());
 
-    auto ret = std::make_shared<Register>(Compiler::StaticType::Number);
+    auto ret = std::make_shared<Register>(retType);
     ret->isRawValue = true;
     step.functionReturnReg = ret;
     m_regs[m_currentFunction].push_back(ret);

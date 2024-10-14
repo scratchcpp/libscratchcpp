@@ -135,7 +135,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Type *getType(Compiler::StaticType type);
         llvm::Value *removeNaN(llvm::Value *num);
 
-        void createOp(Step::Type type, size_t argCount);
+        void createOp(Step::Type type, Compiler::StaticType retType, size_t argCount);
+        llvm::Value *createValue(std::shared_ptr<Register> reg);
 
         llvm::FunctionCallee resolveFunction(const std::string name, llvm::FunctionType *type);
         llvm::FunctionCallee resolve_value_init();
