@@ -546,19 +546,11 @@ void LLVMCodeBuilder::yield()
 void LLVMCodeBuilder::initTypes()
 {
     // Create the ValueData struct
-    llvm::Type *doubleType = llvm::Type::getDoubleTy(m_ctx);                             // double (numberValue)
-    llvm::Type *boolType = llvm::Type::getInt1Ty(m_ctx);                                 // bool (boolValue)
-    llvm::Type *stringPtrType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0); // char* (stringValue)
+    llvm::Type *unionType = m_builder.getInt64Ty(); // 64 bits is the largest size
 
-    // Create the union type (largest type size should dominate)
-    llvm::StructType *unionType = llvm::StructType::create(m_ctx, "union");
-    unionType->setBody({ doubleType, boolType, stringPtrType });
-
-    // Create the full struct type
     llvm::Type *valueType = llvm::Type::getInt32Ty(m_ctx); // Assuming ValueType is a 32-bit enum
     llvm::Type *sizeType = llvm::Type::getInt64Ty(m_ctx);  // size_t
 
-    // Combine them into the full struct
     m_valueDataType = llvm::StructType::create(m_ctx, "ValueData");
     m_valueDataType->setBody({ unionType, valueType, sizeType });
 }
