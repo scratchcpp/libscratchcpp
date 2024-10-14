@@ -131,7 +131,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void freeHeap();
         llvm::Value *castValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType);
         llvm::Value *castRawValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType);
-        llvm::Value *castConstValue(const Value &value, Compiler::StaticType targetType);
+        llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType);
         llvm::Type *getType(Compiler::StaticType type);
         llvm::Value *removeNaN(llvm::Value *num);
 

@@ -806,7 +806,7 @@ llvm::Value *LLVMCodeBuilder::castRawValue(std::shared_ptr<Register> reg, Compil
     }
 }
 
-llvm::Value *LLVMCodeBuilder::castConstValue(const Value &value, Compiler::StaticType targetType)
+llvm::Constant *LLVMCodeBuilder::castConstValue(const Value &value, Compiler::StaticType targetType)
 {
     switch (targetType) {
         case Compiler::StaticType::Number:
