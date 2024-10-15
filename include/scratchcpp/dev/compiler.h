@@ -29,7 +29,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
             Void,
             Number,
             Bool,
-            String
+            String,
+            Unknown
         };
 
         Compiler(IEngine *engine, Target *target);
