@@ -2606,15 +2606,33 @@ TEST(ValueTest, ComparisonOperators)
 
         ASSERT_FALSE(v1 == v3);
         ASSERT_TRUE(v1 != v3);
+        ASSERT_FALSE(v1 > v3);
+        ASSERT_TRUE(v1 < v3);
 
         ASSERT_FALSE(v1 == v4);
         ASSERT_TRUE(v1 != v4);
+        ASSERT_TRUE(v1 > v4);
+        ASSERT_FALSE(v1 < v4);
 
         ASSERT_FALSE(v1 == v5);
         ASSERT_TRUE(v1 != v5);
+        ASSERT_TRUE(v1 > v5);
+        ASSERT_FALSE(v1 < v5);
 
         ASSERT_FALSE(v2 == v5);
         ASSERT_TRUE(v2 != v5);
+        ASSERT_FALSE(v2 > v5);
+        ASSERT_TRUE(v2 < v5);
+    }
+
+    {
+        Value v1 = 0;
+        Value v2(std::numeric_limits<double>::quiet_NaN());
+
+        ASSERT_FALSE(v1 == v2);
+        ASSERT_TRUE(v1 != v2);
+        ASSERT_FALSE(v1 > v2);
+        ASSERT_TRUE(v1 < v2);
     }
 
     {
