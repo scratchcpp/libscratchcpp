@@ -9,6 +9,7 @@
 using namespace libscratchcpp;
 
 using ::testing::Return;
+using ::testing::Eq;
 
 class LLVMCodeBuilderTest : public testing::Test
 {
@@ -205,6 +206,8 @@ TEST_F(LLVMCodeBuilderTest, Add)
     std::string expected;
 
     auto addOpTest = [this, &expected](Value v1, Value v2, double expectedResult) {
+        createBuilder(true);
+
         m_builder->addConstValue(v1);
         m_builder->addConstValue(v2);
         m_builder->createAdd();
@@ -218,11 +221,17 @@ TEST_F(LLVMCodeBuilderTest, Add)
         m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
 
         std::string str = Value(expectedResult).toString() + '\n';
-        expected += str;
-        expected += str;
-    };
+        std::string expected = str + str;
 
-    createBuilder(true);
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes1 = v1.isString() ? "\"" : "";
+        const std::string quotes2 = v2.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+    };
 
     addOpTest(50, 25, 75);
     addOpTest(-500, 25, -475);
@@ -236,13 +245,6 @@ TEST_F(LLVMCodeBuilderTest, Add)
     addOpTest("-Infinity", "-Infinity", -std::numeric_limits<double>::infinity());
     addOpTest(1, "NaN", 1);
     addOpTest("NaN", 1, 1);
-
-    auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&m_target);
-
-    testing::internal::CaptureStdout();
-    code->run(ctx.get());
-    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
 TEST_F(LLVMCodeBuilderTest, Subtract)
@@ -250,6 +252,8 @@ TEST_F(LLVMCodeBuilderTest, Subtract)
     std::string expected;
 
     auto addOpTest = [this, &expected](Value v1, Value v2, double expectedResult) {
+        createBuilder(true);
+
         m_builder->addConstValue(v1);
         m_builder->addConstValue(v2);
         m_builder->createSub();
@@ -263,11 +267,17 @@ TEST_F(LLVMCodeBuilderTest, Subtract)
         m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
 
         std::string str = Value(expectedResult).toString() + '\n';
-        expected += str;
-        expected += str;
-    };
+        std::string expected = str + str;
 
-    createBuilder(true);
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes1 = v1.isString() ? "\"" : "";
+        const std::string quotes2 = v2.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+    };
 
     addOpTest(50, 25, 25);
     addOpTest(-500, 25, -525);
@@ -281,13 +291,6 @@ TEST_F(LLVMCodeBuilderTest, Subtract)
     addOpTest("-Infinity", "-Infinity", std::numeric_limits<double>::quiet_NaN());
     addOpTest(1, "NaN", 1);
     addOpTest("NaN", 1, -1);
-
-    auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&m_target);
-
-    testing::internal::CaptureStdout();
-    code->run(ctx.get());
-    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
 TEST_F(LLVMCodeBuilderTest, Multiply)
@@ -295,6 +298,8 @@ TEST_F(LLVMCodeBuilderTest, Multiply)
     std::string expected;
 
     auto addOpTest = [this, &expected](Value v1, Value v2, double expectedResult) {
+        createBuilder(true);
+
         m_builder->addConstValue(v1);
         m_builder->addConstValue(v2);
         m_builder->createMul();
@@ -308,11 +313,17 @@ TEST_F(LLVMCodeBuilderTest, Multiply)
         m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
 
         std::string str = Value(expectedResult).toString() + '\n';
-        expected += str;
-        expected += str;
-    };
+        std::string expected = str + str;
 
-    createBuilder(true);
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes1 = v1.isString() ? "\"" : "";
+        const std::string quotes2 = v2.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+    };
 
     addOpTest(50, 2, 100);
     addOpTest(-500, 25, -12500);
@@ -331,13 +342,6 @@ TEST_F(LLVMCodeBuilderTest, Multiply)
     addOpTest("-Infinity", "-Infinity", std::numeric_limits<double>::infinity());
     addOpTest(1, "NaN", 0);
     addOpTest("NaN", 1, 0);
-
-    auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&m_target);
-
-    testing::internal::CaptureStdout();
-    code->run(ctx.get());
-    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
 TEST_F(LLVMCodeBuilderTest, Divide)
@@ -345,6 +349,8 @@ TEST_F(LLVMCodeBuilderTest, Divide)
     std::string expected;
 
     auto addOpTest = [this, &expected](Value v1, Value v2, double expectedResult) {
+        createBuilder(true);
+
         m_builder->addConstValue(v1);
         m_builder->addConstValue(v2);
         m_builder->createDiv();
@@ -358,11 +364,17 @@ TEST_F(LLVMCodeBuilderTest, Divide)
         m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
 
         std::string str = Value(expectedResult).toString() + '\n';
-        expected += str;
-        expected += str;
-    };
+        std::string expected = str + str;
 
-    createBuilder(true);
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes1 = v1.isString() ? "\"" : "";
+        const std::string quotes2 = v2.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+    };
 
     addOpTest(50, 2, 25);
     addOpTest(-500, 25, -20);
@@ -390,13 +402,6 @@ TEST_F(LLVMCodeBuilderTest, Divide)
     addOpTest(5, 0, std::numeric_limits<double>::infinity());
     addOpTest(-5, 0, -std::numeric_limits<double>::infinity());
     addOpTest(0, 0, std::numeric_limits<double>::quiet_NaN());
-
-    auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&m_target);
-
-    testing::internal::CaptureStdout();
-    code->run(ctx.get());
-    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
 TEST_F(LLVMCodeBuilderTest, Yield)
