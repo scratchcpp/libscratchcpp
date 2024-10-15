@@ -539,6 +539,46 @@ extern "C"
         else
             return false;
     }
+
+    inline double value_compare(const ValueData *v1, const ValueData *v2)
+    {
+        // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L121-L150
+        assert(v1 && v2);
+
+        if (v1->type == ValueType::Number && v2->type == ValueType::Number && !std::isnan(v1->numberValue) && !std::isnan(v2->numberValue)) {
+            // Handle the special case of Infinity
+            if ((value_isInf(v1->numberValue) && value_isInf(v2->numberValue)) || (value_isNegativeInf(v1->numberValue) && value_isNegativeInf(v2->numberValue)))
+                return 0;
+
+            return v1->numberValue - v2->numberValue;
+        } else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
+            return v1->boolValue - v2->boolValue;
+
+        bool ok;
+        double n1 = value_getNumber(v1, &ok);
+        double n2;
+
+        if (ok)
+            n2 = value_getNumber(v2, &ok);
+
+        if (!ok) {
+            // At least one argument can't be converted to a number
+            // Scratch compares strings as case insensitive
+            char *s1 = value_toCString(v1);
+            char *s2 = value_toCString(v2);
+            int ret = strcasecmp(s1, s2);
+            free(s1);
+            free(s2);
+            return ret;
+        }
+
+        // Handle the special case of Infinity
+        if ((value_isInf(n1) && value_isInf(n2)) || (value_isNegativeInf(n1) && value_isNegativeInf(n2)))
+            return 0;
+
+        // Compare as numbers
+        return n1 - n2;
+    }
 }
 
 } // namespace libscratchcpp

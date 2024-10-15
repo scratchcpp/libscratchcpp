@@ -537,20 +537,22 @@ unsigned int *VirtualMachinePrivate::run(unsigned int *pos, bool reset)
     OP(ASIN) :
     {
         const Value &v = *READ_REG(0, 1);
-        if (v < -1 || v > 1)
+        const double num = v.toDouble();
+        if (num < -1 || num > 1)
             REPLACE_RET_VALUE(std::numeric_limits<double>::quiet_NaN(), 1);
         else
-            REPLACE_RET_VALUE(std::asin(v.toDouble()) * 180 / pi, 1);
+            REPLACE_RET_VALUE(std::asin(num) * 180 / pi, 1);
         DISPATCH();
     }
 
     OP(ACOS) :
     {
         const Value &v = *READ_REG(0, 1);
-        if (v < -1 || v > 1)
+        const double num = v.toDouble();
+        if (num < -1 || num > 1)
             REPLACE_RET_VALUE(std::numeric_limits<double>::quiet_NaN(), 1);
         else
-            REPLACE_RET_VALUE(std::acos(v.toDouble()) * 180 / pi, 1);
+            REPLACE_RET_VALUE(std::acos(num) * 180 / pi, 1);
         DISPATCH();
     }
 

@@ -2188,7 +2188,7 @@ TEST(ValueTest, ModOperator)
     ASSERT_EQ(v % "-Infinity", -150);
 }
 
-TEST(ValueTest, EqualityOperators)
+TEST(ValueTest, ComparisonOperators)
 {
     {
         Value v1 = 10;
@@ -2200,9 +2200,13 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v1 == v3);
         ASSERT_TRUE(v1 != v3);
+        ASSERT_TRUE(v1 > v3);
+        ASSERT_FALSE(v1 < v3);
 
         ASSERT_FALSE(v2 == v3);
         ASSERT_TRUE(v2 != v3);
+        ASSERT_TRUE(v2 > v3);
+        ASSERT_FALSE(v2 < v3);
     }
 
     {
@@ -2215,9 +2219,13 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v1 == v3);
         ASSERT_TRUE(v1 != v3);
+        ASSERT_FALSE(v1 > v3);
+        ASSERT_TRUE(v1 < v3);
 
         ASSERT_FALSE(v2 == v3);
         ASSERT_TRUE(v2 != v3);
+        ASSERT_FALSE(v2 > v3);
+        ASSERT_TRUE(v2 < v3);
     }
 
     {
@@ -2230,9 +2238,13 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v1 == v3);
         ASSERT_TRUE(v1 != v3);
+        ASSERT_TRUE(v1 > v3);
+        ASSERT_FALSE(v1 < v3);
 
         ASSERT_FALSE(v2 == v3);
         ASSERT_TRUE(v2 != v3);
+        ASSERT_TRUE(v2 > v3);
+        ASSERT_FALSE(v2 < v3);
     }
 
     {
@@ -2252,12 +2264,18 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v1 == v4);
         ASSERT_TRUE(v1 != v4);
+        ASSERT_FALSE(v1 > v4);
+        ASSERT_TRUE(v1 < v4);
 
         ASSERT_FALSE(v2 == v4);
         ASSERT_TRUE(v2 != v4);
+        ASSERT_FALSE(v2 > v4);
+        ASSERT_TRUE(v2 < v4);
 
         ASSERT_FALSE(v3 == v4);
         ASSERT_TRUE(v3 != v4);
+        ASSERT_FALSE(v3 > v4);
+        ASSERT_TRUE(v3 < v4);
     }
 
     {
@@ -2268,18 +2286,28 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v1 == v2);
         ASSERT_TRUE(v1 != v2);
+        ASSERT_TRUE(v1 > v2);
+        ASSERT_FALSE(v1 < v2);
 
         ASSERT_FALSE(v1 == v3);
         ASSERT_TRUE(v1 != v3);
+        ASSERT_FALSE(v1 > v3);
+        ASSERT_TRUE(v1 < v3);
 
         ASSERT_FALSE(v1 == v4);
         ASSERT_TRUE(v1 != v4);
+        ASSERT_FALSE(v1 > v4);
+        ASSERT_TRUE(v1 < v4);
 
         ASSERT_FALSE(v2 == v3);
         ASSERT_TRUE(v2 != v3);
+        ASSERT_FALSE(v2 > v3);
+        ASSERT_TRUE(v2 < v3);
 
         ASSERT_FALSE(v2 == v4);
         ASSERT_TRUE(v2 != v4);
+        ASSERT_FALSE(v2 > v4);
+        ASSERT_TRUE(v2 < v4);
 
         ASSERT_TRUE(v3 == v4);
         ASSERT_FALSE(v3 != v4);
@@ -2304,6 +2332,8 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v1 == v3);
         ASSERT_TRUE(v1 != v3);
+        ASSERT_TRUE(v1 > v3);
+        ASSERT_FALSE(v1 < v3);
 
         ASSERT_FALSE(v1 == v5);
         ASSERT_TRUE(v1 != v5);
@@ -2322,9 +2352,13 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v1 == v3);
         ASSERT_TRUE(v1 != v3);
+        ASSERT_FALSE(v1 > v3);
+        ASSERT_TRUE(v1 < v3);
 
         ASSERT_FALSE(v2 == v3);
         ASSERT_TRUE(v2 != v3);
+        ASSERT_FALSE(v2 > v3);
+        ASSERT_TRUE(v2 < v3);
     }
 
     {
@@ -2337,9 +2371,13 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v1 == v3);
         ASSERT_TRUE(v1 != v3);
+        ASSERT_TRUE(v1 > v3);
+        ASSERT_FALSE(v1 < v3);
 
         ASSERT_FALSE(v2 == v3);
         ASSERT_TRUE(v2 != v3);
+        ASSERT_TRUE(v2 > v3);
+        ASSERT_FALSE(v2 < v3);
     }
 
     {
@@ -2370,9 +2408,13 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v1 == v7);
         ASSERT_TRUE(v1 != v7);
+        ASSERT_FALSE(v1 > v7);
+        ASSERT_TRUE(v1 < v7);
 
         ASSERT_FALSE(v2 == v7);
         ASSERT_TRUE(v2 != v7);
+        ASSERT_FALSE(v2 > v7);
+        ASSERT_TRUE(v2 < v7);
 
         ASSERT_FALSE(v3 == v7);
         ASSERT_TRUE(v3 != v7);
@@ -2401,6 +2443,8 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v1 == v3);
         ASSERT_TRUE(v1 != v3);
+        ASSERT_FALSE(v1 > v3);
+        ASSERT_TRUE(v1 < v3);
 
         ASSERT_FALSE(v1 == v4);
         ASSERT_TRUE(v1 != v4);
@@ -2416,9 +2460,13 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v1 == v3);
         ASSERT_TRUE(v1 != v3);
+        ASSERT_TRUE(v1 > v3);
+        ASSERT_FALSE(v1 < v3);
 
         ASSERT_FALSE(v2 == v3);
         ASSERT_TRUE(v2 != v3);
+        ASSERT_TRUE(v2 > v3);
+        ASSERT_FALSE(v2 < v3);
     }
 
     {
@@ -2430,15 +2478,29 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v1 == v3);
         ASSERT_TRUE(v1 != v3);
+        ASSERT_FALSE(v1 > v3);
+        ASSERT_TRUE(v1 < v3);
 
         ASSERT_FALSE(v1 == v4);
         ASSERT_TRUE(v1 != v4);
+        ASSERT_TRUE(v1 > v4);
+        ASSERT_FALSE(v1 < v4);
 
         ASSERT_FALSE(v1 == v5);
         ASSERT_TRUE(v1 != v5);
 
         ASSERT_FALSE(v2 == v5);
         ASSERT_TRUE(v2 != v5);
+        ASSERT_FALSE(v2 > v5);
+        ASSERT_TRUE(v2 < v5);
+
+        // NaN vs Infinity
+        ASSERT_FALSE(v3 > v5);
+        ASSERT_TRUE(v2 < v5);
+
+        // NaN vs -Infinity
+        ASSERT_FALSE(v4 > v5);
+        ASSERT_TRUE(v2 < v5);
     }
 
     {
@@ -2451,15 +2513,23 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_TRUE(v1 == v3);
         ASSERT_FALSE(v1 != v3);
+        ASSERT_FALSE(v1 > v3);
+        ASSERT_FALSE(v1 < v3);
 
         ASSERT_TRUE(v2 == v4);
         ASSERT_FALSE(v2 != v4);
+        ASSERT_FALSE(v2 > v4);
+        ASSERT_FALSE(v2 < v4);
 
         ASSERT_FALSE(v1 == v2);
         ASSERT_TRUE(v1 != v2);
+        ASSERT_TRUE(v1 > v2);
+        ASSERT_FALSE(v1 < v2);
 
         ASSERT_FALSE(v2 == v3);
         ASSERT_TRUE(v2 != v3);
+        ASSERT_FALSE(v2 > v3);
+        ASSERT_TRUE(v2 < v3);
 
         ASSERT_TRUE(v1 == v5);
         ASSERT_FALSE(v1 != v5);
@@ -2479,6 +2549,8 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_FALSE(v1 == v4);
         ASSERT_TRUE(v1 != v4);
+        ASSERT_TRUE(v1 > v4);
+        ASSERT_FALSE(v1 < v4);
 
         ASSERT_TRUE(v2 == v4);
         ASSERT_FALSE(v2 != v4);
@@ -2559,12 +2631,18 @@ TEST(ValueTest, EqualityOperators)
         // Infinity
         ASSERT_TRUE(v1 == v7);
         ASSERT_FALSE(v1 != v7);
+        ASSERT_FALSE(v1 > v7);
+        ASSERT_FALSE(v1 < v7);
 
         ASSERT_FALSE(v1 == v8);
         ASSERT_TRUE(v1 != v8);
+        ASSERT_TRUE(v1 > v8);
+        ASSERT_FALSE(v1 < v8);
 
         ASSERT_FALSE(v1 == v9);
         ASSERT_TRUE(v1 != v9);
+        ASSERT_FALSE(v1 > v7);
+        ASSERT_FALSE(v1 < v7);
 
         // infinity
         ASSERT_TRUE(v2 == v7);
@@ -2615,6 +2693,18 @@ TEST(ValueTest, EqualityOperators)
 
         ASSERT_TRUE(v6 == v9);
         ASSERT_FALSE(v6 != v9);
+
+        // NaN vs Infinity
+        ASSERT_TRUE(v5 > v7);
+        ASSERT_FALSE(v5 < v7);
+        ASSERT_FALSE(v1 > v9);
+        ASSERT_TRUE(v1 < v9);
+
+        // NaN vs -Infinity
+        ASSERT_TRUE(v5 > v8);
+        ASSERT_FALSE(v5 < v8);
+        ASSERT_FALSE(v3 > v9);
+        ASSERT_TRUE(v3 < v9);
     }
 
     {

@@ -372,93 +372,19 @@ extern "C"
     /*! Returns true if the given values are equal. */
     bool value_equals(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2)
     {
-        // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L121-L150
-        assert(v1 && v2);
-
-        if (v1->type == ValueType::Number && v2->type == ValueType::Number) {
-            if (std::isnan(v1->numberValue) && std::isnan(v2->numberValue))
-                return true;
-
-            return v1->numberValue == v2->numberValue;
-        } else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
-            return v1->boolValue == v2->boolValue;
-
-        bool ok;
-        double n1 = value_getNumber(v1, &ok);
-        double n2;
-
-        if (ok)
-            n2 = value_getNumber(v2, &ok);
-
-        if (!ok) {
-            // At least one argument can't be converted to a number
-            // Scratch compares strings as case insensitive
-            std::u16string s1, s2;
-            value_toUtf16(v1, &s1);
-            value_toUtf16(v2, &s2);
-            return value_u16StringsEqual(s1, s2);
-        }
-
-        // Handle the special case of Infinity
-        if ((static_cast<int>(v1->type) < 0) && (static_cast<int>(v2->type) < 0)) {
-            assert(!value_isNaN(v1));
-            assert(!value_isNaN(v2));
-            return v1->type == v2->type;
-        }
-
-        // Compare as numbers
-        return n1 == n2;
+        return value_compare(v1, v2) == 0;
     }
 
     /*! Returns true if the first value is greater than the second value. */
     bool value_greater(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2)
     {
-        assert(v1 && v2);
-
-        if (v1->type == ValueType::Number && v2->type == ValueType::Number)
-            return v1->numberValue > v2->numberValue;
-        else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
-            return v1->boolValue > v2->boolValue;
-
-        double n1, n2;
-
-        if (v1->type == ValueType::String)
-            n1 = value_stringToDouble(v1->stringValue);
-        else
-            n1 = value_toDouble(v1);
-
-        if (v2->type == ValueType::String)
-            n2 = value_stringToDouble(v2->stringValue);
-        else
-            n2 = value_toDouble(v2);
-
-        return n1 > n2;
+        return value_compare(v1, v2) > 0;
     }
 
     /*! Returns true if the first value is lower than the second value. */
     bool value_lower(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2)
     {
-        assert(v1 && v2);
-
-        if (v1->type == ValueType::Number && v2->type == ValueType::Number)
-            return v1->numberValue < v2->numberValue;
-        else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
-            return v1->boolValue < v2->boolValue;
-
-        return value_toDouble(v1) < value_toDouble(v2);
-        double n1, n2;
-
-        if (v1->type == ValueType::String)
-            n1 = value_stringToDouble(v1->stringValue);
-        else
-            n1 = value_toDouble(v1);
-
-        if (v2->type == ValueType::String)
-            n2 = value_stringToDouble(v2->stringValue);
-        else
-            n2 = value_toDouble(v2);
-
-        return n1 < n2;
+        return value_compare(v1, v2) < 0;
     }
 }
 
