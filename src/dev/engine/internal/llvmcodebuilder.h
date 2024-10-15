@@ -32,6 +32,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createDiv() override;
 
         void createCmpEQ() override;
+        void createCmpGT() override;
         void beginIfStatement() override;
         void beginElseBranch() override;
         void endIf() override;
@@ -69,6 +70,7 @@ class LLVMCodeBuilder : public ICodeBuilder
                     Mul,
                     Div,
                     CmpEQ,
+                    CmpGT,
                     Yield,
                     BeginIf,
                     BeginElse,

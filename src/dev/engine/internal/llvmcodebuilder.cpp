@@ -136,6 +136,14 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::CmpGT: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0].second;
+                const auto &arg2 = step.args[1].second;
+                step.functionReturnReg->value = createComparison(arg1, arg2, Comparison::GT);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -477,6 +485,11 @@ void LLVMCodeBuilder::createDiv()
 void LLVMCodeBuilder::createCmpEQ()
 {
     createOp(Step::Type::CmpEQ, Compiler::StaticType::Bool, 2);
+}
+
+void LLVMCodeBuilder::createCmpGT()
+{
+    createOp(Step::Type::CmpGT, Compiler::StaticType::Bool, 2);
 }
 
 void LLVMCodeBuilder::beginIfStatement()
@@ -955,11 +968,17 @@ llvm::Value *LLVMCodeBuilder::createComparison(std::shared_ptr<Register> arg1, s
             type2 = Compiler::StaticType::Number;
 
         // Optimize number and bool comparison
-        if (type1 == Compiler::StaticType::Number && type2 == Compiler::StaticType::Bool)
-            type2 = Compiler::StaticType::Number;
+        int optNumberBool = 0;
 
-        if (type1 == Compiler::StaticType::Bool && type2 == Compiler::StaticType::Number)
+        if (type1 == Compiler::StaticType::Number && type2 == Compiler::StaticType::Bool) {
+            type2 = Compiler::StaticType::Number;
+            optNumberBool = 2; // operand 2 was bool
+        }
+
+        if (type1 == Compiler::StaticType::Bool && type2 == Compiler::StaticType::Number) {
             type1 = Compiler::StaticType::Number;
+            optNumberBool = 1; // operand 1 was bool
+        }
 
         if (type1 != type2 || type1 == Compiler::StaticType::Unknown || type2 == Compiler::StaticType::Unknown) {
             // If the types are different or at least one of them
@@ -997,8 +1016,25 @@ llvm::Value *LLVMCodeBuilder::createComparison(std::shared_ptr<Register> arg1, s
                             return m_builder.CreateSelect(nan, m_builder.getInt1(true), cmp);
                         }
 
-                        case Comparison::GT:
-                            return m_builder.CreateFCmpOGT(value1, value2);
+                        case Comparison::GT: {
+                            llvm::Value *bothNan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
+                            llvm::Value *cmp = m_builder.CreateFCmpOGT(value1, value2);
+                            llvm::Value *nan;
+                            llvm::Value *nanCmp;
+
+                            if (optNumberBool == 1) {
+                                nan = isNaN(value2);
+                                nanCmp = castValue(arg1, Compiler::StaticType::Bool);
+                            } else if (optNumberBool == 2) {
+                                nan = isNaN(value1);
+                                nanCmp = m_builder.CreateNot(castValue(arg2, Compiler::StaticType::Bool));
+                            } else {
+                                nan = isNaN(value1);
+                                nanCmp = m_builder.CreateFCmpUGT(value1, value2);
+                            }
+
+                            return m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, cmp));
+                        }
 
                         case Comparison::LT:
                             return m_builder.CreateFCmpOLT(value1, value2);
@@ -1016,7 +1052,8 @@ llvm::Value *LLVMCodeBuilder::createComparison(std::shared_ptr<Register> arg1, s
                             return m_builder.CreateICmpEQ(value1, value2);
 
                         case Comparison::GT:
-                            return m_builder.CreateICmpSGT(value1, value2);
+                            // value1 && !value2
+                            return m_builder.CreateAnd(value1, m_builder.CreateNot(value2));
 
                         case Comparison::LT:
                             return m_builder.CreateICmpSLT(value1, value2);

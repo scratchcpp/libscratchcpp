@@ -20,6 +20,7 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(void, createDiv, (), (override));
 
         MOCK_METHOD(void, createCmpEQ, (), (override));
+        MOCK_METHOD(void, createCmpGT, (), (override));
         MOCK_METHOD(void, beginIfStatement, (), (override));
         MOCK_METHOD(void, beginElseBranch, (), (override));
         MOCK_METHOD(void, endIf, (), (override));
