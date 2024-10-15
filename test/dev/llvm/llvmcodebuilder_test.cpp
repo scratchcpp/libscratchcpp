@@ -427,7 +427,7 @@ TEST_F(LLVMCodeBuilderTest, Divide)
 
 TEST_F(LLVMCodeBuilderTest, EqualComparison)
 {
-    auto addOpTest = [this](Value v1, Value v2, bool expectedResult) {
+    auto addOpTest = [this](Value v1, Value v2) {
         createBuilder(true);
 
         m_builder->addConstValue(v1);
@@ -442,7 +442,7 @@ TEST_F(LLVMCodeBuilderTest, EqualComparison)
         m_builder->createCmpEQ();
         m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
 
-        std::string str = Value(expectedResult).toString() + '\n';
+        std::string str = Value(v1 == v2).toString() + '\n';
         std::string expected = str + str;
 
         auto code = m_builder->finalize();
@@ -455,144 +455,144 @@ TEST_F(LLVMCodeBuilderTest, EqualComparison)
         ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
     };
 
-    addOpTest(10, 10, true);
-    addOpTest(10, 8, false);
-    addOpTest(8, 10, false);
+    addOpTest(10, 10);
+    addOpTest(10, 8);
+    addOpTest(8, 10);
 
-    addOpTest(-4.25, -4.25, true);
-    addOpTest(-4.25, 5.312, false);
-    addOpTest(5.312, -4.25, false);
+    addOpTest(-4.25, -4.25);
+    addOpTest(-4.25, 5.312);
+    addOpTest(5.312, -4.25);
 
-    addOpTest(true, true, true);
-    addOpTest(true, false, false);
-    addOpTest(false, true, false);
+    addOpTest(true, true);
+    addOpTest(true, false);
+    addOpTest(false, true);
 
-    addOpTest(1, true, true);
-    addOpTest(1, false, false);
+    addOpTest(1, true);
+    addOpTest(1, false);
 
-    addOpTest("abC def", "abC def", true);
-    addOpTest("abC def", "abc dEf", true);
-    addOpTest("abC def", "ghi Jkl", false);
-    addOpTest("abC def", "hello world", false);
+    addOpTest("abC def", "abC def");
+    addOpTest("abC def", "abc dEf");
+    addOpTest("abC def", "ghi Jkl");
+    addOpTest("abC def", "hello world");
 
-    addOpTest(" ", "", false);
-    addOpTest(" ", "0", false);
-    addOpTest(" ", 0, false);
-    addOpTest(0, " ", false);
-    addOpTest("", "0", false);
-    addOpTest("", 0, false);
-    addOpTest(0, "", false);
-    addOpTest("0", 0, true);
-    addOpTest(0, "0", true);
+    addOpTest(" ", "");
+    addOpTest(" ", "0");
+    addOpTest(" ", 0);
+    addOpTest(0, " ");
+    addOpTest("", "0");
+    addOpTest("", 0);
+    addOpTest(0, "");
+    addOpTest("0", 0);
+    addOpTest(0, "0");
 
-    addOpTest(5.25, "5.25", true);
-    addOpTest("5.25", 5.25, true);
-    addOpTest(5.25, " 5.25", true);
-    addOpTest(" 5.25", 5.25, true);
-    addOpTest(5.25, "5.25 ", true);
-    addOpTest("5.25 ", 5.25, true);
-    addOpTest(5.25, " 5.25 ", true);
-    addOpTest(" 5.25 ", 5.25, true);
-    addOpTest(5.25, "5.26", false);
-    addOpTest("5.26", 5.25, false);
-    addOpTest("5.25", "5.26", false);
-    addOpTest(5, "5  ", true);
-    addOpTest("5  ", 5, true);
-    addOpTest(0, "1", false);
-    addOpTest("1", 0, false);
-    addOpTest(0, "test", false);
-    addOpTest("test", 0, false);
+    addOpTest(5.25, "5.25");
+    addOpTest("5.25", 5.25);
+    addOpTest(5.25, " 5.25");
+    addOpTest(" 5.25", 5.25);
+    addOpTest(5.25, "5.25 ");
+    addOpTest("5.25 ", 5.25);
+    addOpTest(5.25, " 5.25 ");
+    addOpTest(" 5.25 ", 5.25);
+    addOpTest(5.25, "5.26");
+    addOpTest("5.26", 5.25);
+    addOpTest("5.25", "5.26");
+    addOpTest(5, "5  ");
+    addOpTest("5  ", 5);
+    addOpTest(0, "1");
+    addOpTest("1", 0);
+    addOpTest(0, "test");
+    addOpTest("test", 0);
 
     static const double inf = std::numeric_limits<double>::infinity();
     static const double nan = std::numeric_limits<double>::quiet_NaN();
 
-    addOpTest(inf, inf, true);
-    addOpTest(-inf, -inf, true);
-    addOpTest(nan, nan, true);
-    addOpTest(inf, -inf, false);
-    addOpTest(-inf, inf, false);
-    addOpTest(inf, nan, false);
-    addOpTest(nan, inf, false);
-    addOpTest(-inf, nan, false);
-    addOpTest(nan, -inf, false);
+    addOpTest(inf, inf);
+    addOpTest(-inf, -inf);
+    addOpTest(nan, nan);
+    addOpTest(inf, -inf);
+    addOpTest(-inf, inf);
+    addOpTest(inf, nan);
+    addOpTest(nan, inf);
+    addOpTest(-inf, nan);
+    addOpTest(nan, -inf);
 
-    addOpTest(5, inf, false);
-    addOpTest(5, -inf, false);
-    addOpTest(5, nan, false);
-    addOpTest(0, nan, false);
+    addOpTest(5, inf);
+    addOpTest(5, -inf);
+    addOpTest(5, nan);
+    addOpTest(0, nan);
 
-    addOpTest(true, "true", true);
-    addOpTest("true", true, true);
-    addOpTest(false, "false", true);
-    addOpTest("false", false, true);
-    addOpTest(false, "true", false);
-    addOpTest("true", false, false);
-    addOpTest(true, "false", false);
-    addOpTest("false", true, false);
-    addOpTest(true, "TRUE", true);
-    addOpTest("TRUE", true, true);
-    addOpTest(false, "FALSE", true);
-    addOpTest("FALSE", false, true);
+    addOpTest(true, "true");
+    addOpTest("true", true);
+    addOpTest(false, "false");
+    addOpTest("false", false);
+    addOpTest(false, "true");
+    addOpTest("true", false);
+    addOpTest(true, "false");
+    addOpTest("false", true);
+    addOpTest(true, "TRUE");
+    addOpTest("TRUE", true);
+    addOpTest(false, "FALSE");
+    addOpTest("FALSE", false);
 
-    addOpTest(true, "00001", true);
-    addOpTest("00001", true, true);
-    addOpTest(true, "00000", false);
-    addOpTest("00000", true, false);
-    addOpTest(false, "00000", true);
-    addOpTest("00000", false, true);
+    addOpTest(true, "00001");
+    addOpTest("00001", true);
+    addOpTest(true, "00000");
+    addOpTest("00000", true);
+    addOpTest(false, "00000");
+    addOpTest("00000", false);
 
-    addOpTest("true", 1, false);
-    addOpTest(1, "true", false);
-    addOpTest("true", 0, false);
-    addOpTest(0, "true", false);
-    addOpTest("false", 0, false);
-    addOpTest(0, "false", false);
-    addOpTest("false", 1, false);
-    addOpTest(1, "false", false);
+    addOpTest("true", 1);
+    addOpTest(1, "true");
+    addOpTest("true", 0);
+    addOpTest(0, "true");
+    addOpTest("false", 0);
+    addOpTest(0, "false");
+    addOpTest("false", 1);
+    addOpTest(1, "false");
 
-    addOpTest("true", "TRUE", true);
-    addOpTest("true", "FALSE", false);
-    addOpTest("false", "FALSE", true);
-    addOpTest("false", "TRUE", false);
+    addOpTest("true", "TRUE");
+    addOpTest("true", "FALSE");
+    addOpTest("false", "FALSE");
+    addOpTest("false", "TRUE");
 
-    addOpTest(true, inf, false);
-    addOpTest(true, -inf, false);
-    addOpTest(true, nan, false);
-    addOpTest(false, inf, false);
-    addOpTest(false, -inf, false);
-    addOpTest(false, nan, false);
+    addOpTest(true, inf);
+    addOpTest(true, -inf);
+    addOpTest(true, nan);
+    addOpTest(false, inf);
+    addOpTest(false, -inf);
+    addOpTest(false, nan);
 
-    addOpTest("Infinity", inf, true);
-    addOpTest("Infinity", -inf, false);
-    addOpTest("Infinity", nan, false);
-    addOpTest("infinity", inf, true);
-    addOpTest("infinity", -inf, false);
-    addOpTest("infinity", nan, false);
-    addOpTest("-Infinity", inf, false);
-    addOpTest("-Infinity", -inf, true);
-    addOpTest("-Infinity", nan, false);
-    addOpTest("-infinity", inf, false);
-    addOpTest("-infinity", -inf, true);
-    addOpTest("-infinity", nan, false);
-    addOpTest("NaN", inf, false);
-    addOpTest("NaN", -inf, false);
-    addOpTest("NaN", nan, true);
-    addOpTest("nan", inf, false);
-    addOpTest("nan", -inf, false);
-    addOpTest("nan", nan, true);
+    addOpTest("Infinity", inf);
+    addOpTest("Infinity", -inf);
+    addOpTest("Infinity", nan);
+    addOpTest("infinity", inf);
+    addOpTest("infinity", -inf);
+    addOpTest("infinity", nan);
+    addOpTest("-Infinity", inf);
+    addOpTest("-Infinity", -inf);
+    addOpTest("-Infinity", nan);
+    addOpTest("-infinity", inf);
+    addOpTest("-infinity", -inf);
+    addOpTest("-infinity", nan);
+    addOpTest("NaN", inf);
+    addOpTest("NaN", -inf);
+    addOpTest("NaN", nan);
+    addOpTest("nan", inf);
+    addOpTest("nan", -inf);
+    addOpTest("nan", nan);
 
-    addOpTest(inf, "abc", false);
-    addOpTest(inf, " ", false);
-    addOpTest(inf, "", false);
-    addOpTest(inf, "0", false);
-    addOpTest(-inf, "abc", false);
-    addOpTest(-inf, " ", false);
-    addOpTest(-inf, "", false);
-    addOpTest(-inf, "0", false);
-    addOpTest(nan, "abc", false);
-    addOpTest(nan, " ", false);
-    addOpTest(nan, "", false);
-    addOpTest(nan, "0", false);
+    addOpTest(inf, "abc");
+    addOpTest(inf, " ");
+    addOpTest(inf, "");
+    addOpTest(inf, "0");
+    addOpTest(-inf, "abc");
+    addOpTest(-inf, " ");
+    addOpTest(-inf, "");
+    addOpTest(-inf, "0");
+    addOpTest(nan, "abc");
+    addOpTest(nan, " ");
+    addOpTest(nan, "");
+    addOpTest(nan, "0");
 }
 
 TEST_F(LLVMCodeBuilderTest, Yield)
