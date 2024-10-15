@@ -271,6 +271,45 @@ TEST_F(CompilerTest, CreateDiv)
     compile(compiler, block);
 }
 
+TEST_F(CompilerTest, CreateCmpEQ)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createCmpEQ);
+        compiler->createCmpEQ();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateCmpGT)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createCmpGT);
+        compiler->createCmpGT();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateCmpLT)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createCmpLT);
+        compiler->createCmpLT();
+    });
+
+    compile(compiler, block);
+}
+
 TEST_F(CompilerTest, MoveToIf)
 {
     Compiler compiler(&m_engine, &m_target);

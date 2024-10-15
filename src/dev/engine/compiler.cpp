@@ -126,6 +126,24 @@ void Compiler::createDiv()
     impl->builder->createDiv();
 }
 
+/*! Creates an equality comparison instruction using the last 2 values. */
+void Compiler::createCmpEQ()
+{
+    impl->builder->createCmpEQ();
+}
+
+/*! Creates a greater than comparison instruction using the last 2 values. */
+void Compiler::createCmpGT()
+{
+    impl->builder->createCmpGT();
+}
+
+/*! Creates a lower than comparison instruction using the last 2 values. */
+void Compiler::createCmpLT()
+{
+    impl->builder->createCmpLT();
+}
+
 /*! Jumps to the given if substack. */
 void Compiler::moveToIf(std::shared_ptr<Block> substack)
 {

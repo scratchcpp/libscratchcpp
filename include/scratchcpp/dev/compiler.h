@@ -53,6 +53,10 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void createMul();
         void createDiv();
 
+        void createCmpEQ();
+        void createCmpGT();
+        void createCmpLT();
+
         void moveToIf(std::shared_ptr<Block> substack);
         void moveToIfElse(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2);
         void moveToRepeatLoop(std::shared_ptr<Block> substack);
