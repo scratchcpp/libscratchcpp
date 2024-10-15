@@ -128,6 +128,14 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::CmpEQ: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0].second;
+                const auto &arg2 = step.args[1].second;
+                step.functionReturnReg->value = createComparison(arg1, arg2, Comparison::EQ);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -464,6 +472,11 @@ void LLVMCodeBuilder::createMul()
 void LLVMCodeBuilder::createDiv()
 {
     createOp(Step::Type::Div, Compiler::StaticType::Number, 2);
+}
+
+void LLVMCodeBuilder::createCmpEQ()
+{
+    createOp(Step::Type::CmpEQ, Compiler::StaticType::Bool, 2);
 }
 
 void LLVMCodeBuilder::beginIfStatement()
@@ -831,11 +844,15 @@ llvm::Type *LLVMCodeBuilder::getType(Compiler::StaticType type)
     }
 }
 
+llvm::Value *LLVMCodeBuilder::isNaN(llvm::Value *num)
+{
+    return m_builder.CreateFCmpUNO(num, num);
+}
+
 llvm::Value *LLVMCodeBuilder::removeNaN(llvm::Value *num)
 {
     // Replace NaN with zero
-    llvm::Value *isNaN = m_builder.CreateFCmpUNO(num, num);
-    return m_builder.CreateSelect(isNaN, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)), num);
+    return m_builder.CreateSelect(isNaN(num), llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)), num);
 }
 
 void LLVMCodeBuilder::createOp(Step::Type type, Compiler::StaticType retType, size_t argCount)
@@ -857,6 +874,184 @@ void LLVMCodeBuilder::createOp(Step::Type type, Compiler::StaticType retType, si
     m_tmpRegs.push_back(ret);
 
     m_steps.push_back(step);
+}
+
+llvm::Value *LLVMCodeBuilder::createValue(std::shared_ptr<Register> reg)
+{
+    if (reg->isConstValue) {
+        // Create a constant ValueData instance and store it
+        llvm::Constant *value = castConstValue(reg->constValue, TYPE_MAP[reg->constValue.type()]);
+        llvm::Value *ret = m_builder.CreateAlloca(m_valueDataType);
+
+        if (reg->constValue.type() == ValueType::String)
+            value = llvm::ConstantExpr::getPtrToInt(value, m_valueDataType->getElementType(0));
+        else
+            value = llvm::ConstantExpr::getBitCast(value, m_valueDataType->getElementType(0));
+
+        llvm::Constant *type = m_builder.getInt32(static_cast<uint32_t>(reg->constValue.type()));
+        llvm::Constant *constValue = llvm::ConstantStruct::get(m_valueDataType, { value, type, m_builder.getInt64(0) });
+        m_builder.CreateStore(constValue, ret);
+
+        return ret;
+    } else if (reg->isRawValue) {
+        llvm::Value *value = castRawValue(reg, reg->type);
+        llvm::Value *ret = m_builder.CreateAlloca(m_valueDataType);
+
+        // Store value
+        llvm::Value *valueField = m_builder.CreateStructGEP(m_valueDataType, ret, 0);
+        m_builder.CreateStore(value, valueField);
+
+        auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [&reg](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == reg->type; });
+
+        if (it == TYPE_MAP.end()) {
+            assert(false);
+            return nullptr;
+        }
+
+        // Store type
+        llvm::Value *typeField = m_builder.CreateStructGEP(m_valueDataType, ret, 1);
+        ValueType type = it->first;
+        m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(type)), typeField);
+
+        return ret;
+    } else
+        return reg->value;
+}
+
+llvm::Value *LLVMCodeBuilder::createComparison(std::shared_ptr<Register> arg1, std::shared_ptr<Register> arg2, Comparison type)
+{
+    auto type1 = arg1->type;
+    auto type2 = arg2->type;
+
+    if (arg1->isConstValue && arg2->isConstValue) {
+        // If both operands are constant, perform the comparison at compile time
+        bool result = false;
+
+        switch (type) {
+            case Comparison::EQ:
+                result = arg1->constValue == arg2->constValue;
+                break;
+
+            case Comparison::GT:
+                result = arg1->constValue > arg2->constValue;
+                break;
+
+            case Comparison::LT:
+                result = arg1->constValue < arg2->constValue;
+                break;
+
+            default:
+                assert(false);
+                return nullptr;
+        }
+
+        return m_builder.getInt1(result);
+    } else {
+        // Optimize comparison of constant with number/bool
+        if (arg1->isConstValue && arg1->constValue.isValidNumber() && (type2 == Compiler::StaticType::Number || type2 == Compiler::StaticType::Bool))
+            type1 = Compiler::StaticType::Number;
+
+        if (arg2->isConstValue && arg2->constValue.isValidNumber() && (type1 == Compiler::StaticType::Number || type1 == Compiler::StaticType::Bool))
+            type2 = Compiler::StaticType::Number;
+
+        // Optimize number and bool comparison
+        if (type1 == Compiler::StaticType::Number && type2 == Compiler::StaticType::Bool)
+            type2 = Compiler::StaticType::Number;
+
+        if (type1 == Compiler::StaticType::Bool && type2 == Compiler::StaticType::Number)
+            type1 = Compiler::StaticType::Number;
+
+        if (type1 != type2 || type1 == Compiler::StaticType::Unknown || type2 == Compiler::StaticType::Unknown) {
+            // If the types are different or at least one of them
+            // is unknown, we must use value functions
+            llvm::Value *value1 = createValue(arg1);
+            llvm::Value *value2 = createValue(arg2);
+
+            switch (type) {
+                case Comparison::EQ:
+                    return m_builder.CreateCall(resolve_value_equals(), { value1, value2 });
+
+                case Comparison::GT:
+                    return m_builder.CreateCall(resolve_value_greater(), { value1, value2 });
+
+                case Comparison::LT:
+                    return m_builder.CreateCall(resolve_value_lower(), { value1, value2 });
+
+                default:
+                    assert(false);
+                    return nullptr;
+            }
+        } else {
+            // Compare raw values
+            llvm::Value *value1 = castValue(arg1, type1);
+            llvm::Value *value2 = castValue(arg2, type2);
+            assert(type1 == type2);
+
+            switch (type1) {
+                case Compiler::StaticType::Number: {
+                    // Compare two numbers
+                    switch (type) {
+                        case Comparison::EQ: {
+                            llvm::Value *nan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
+                            llvm::Value *cmp = m_builder.CreateFCmpOEQ(value1, value2);
+                            return m_builder.CreateSelect(nan, m_builder.getInt1(true), cmp);
+                        }
+
+                        case Comparison::GT:
+                            return m_builder.CreateFCmpOGT(value1, value2);
+
+                        case Comparison::LT:
+                            return m_builder.CreateFCmpOLT(value1, value2);
+
+                        default:
+                            assert(false);
+                            return nullptr;
+                    }
+                }
+
+                case Compiler::StaticType::Bool:
+                    // Compare two booleans
+                    switch (type) {
+                        case Comparison::EQ:
+                            return m_builder.CreateICmpEQ(value1, value2);
+
+                        case Comparison::GT:
+                            return m_builder.CreateICmpSGT(value1, value2);
+
+                        case Comparison::LT:
+                            return m_builder.CreateICmpSLT(value1, value2);
+
+                        default:
+                            assert(false);
+                            return nullptr;
+                    }
+
+                case Compiler::StaticType::String: {
+                    // Compare two strings
+                    llvm::Value *cmpRet = m_builder.CreateCall(resolve_strcasecmp(), { value1, value2 });
+
+                    switch (type) {
+                        case Comparison::EQ:
+                            return m_builder.CreateICmpEQ(cmpRet, m_builder.getInt32(0));
+
+                        case Comparison::GT:
+                            return m_builder.CreateICmpSGT(cmpRet, m_builder.getInt32(0));
+
+                        case Comparison::LT:
+                            return m_builder.CreateICmpSLT(cmpRet, m_builder.getInt32(0));
+
+                        default:
+                            assert(false);
+                            return nullptr;
+                    }
+                }
+
+                default:
+                    assert(false);
+                    return nullptr;
+            }
+        }
+    }
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolveFunction(const std::string name, llvm::FunctionType *type)
@@ -932,4 +1127,28 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_value_stringToDouble()
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_stringToBool()
 {
     return resolveFunction("value_stringToBool", llvm::FunctionType::get(m_builder.getInt1Ty(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_value_equals()
+{
+    llvm::Type *valuePtr = m_valueDataType->getPointerTo();
+    return resolveFunction("value_equals", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_value_greater()
+{
+    llvm::Type *valuePtr = m_valueDataType->getPointerTo();
+    return resolveFunction("value_greater", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_value_lower()
+{
+    llvm::Type *valuePtr = m_valueDataType->getPointerTo();
+    return resolveFunction("value_lower", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()
+{
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("strcasecmp", llvm::FunctionType::get(m_builder.getInt32Ty(), { pointerType, pointerType }, false));
 }

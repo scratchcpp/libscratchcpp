@@ -29,6 +29,7 @@ class ICodeBuilder
         virtual void createMul() = 0;
         virtual void createDiv() = 0;
 
+        virtual void createCmpEQ() = 0;
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;
         virtual void endIf() = 0;
