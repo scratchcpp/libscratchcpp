@@ -144,6 +144,14 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::CmpLT: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0].second;
+                const auto &arg2 = step.args[1].second;
+                step.functionReturnReg->value = createComparison(arg1, arg2, Comparison::LT);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -490,6 +498,11 @@ void LLVMCodeBuilder::createCmpEQ()
 void LLVMCodeBuilder::createCmpGT()
 {
     createOp(Step::Type::CmpGT, Compiler::StaticType::Bool, 2);
+}
+
+void LLVMCodeBuilder::createCmpLT()
+{
+    createOp(Step::Type::CmpLT, Compiler::StaticType::Bool, 2);
 }
 
 void LLVMCodeBuilder::beginIfStatement()
@@ -1036,8 +1049,25 @@ llvm::Value *LLVMCodeBuilder::createComparison(std::shared_ptr<Register> arg1, s
                             return m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, cmp));
                         }
 
-                        case Comparison::LT:
-                            return m_builder.CreateFCmpOLT(value1, value2);
+                        case Comparison::LT: {
+                            llvm::Value *bothNan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
+                            llvm::Value *cmp = m_builder.CreateFCmpOLT(value1, value2);
+                            llvm::Value *nan;
+                            llvm::Value *nanCmp;
+
+                            if (optNumberBool == 1) {
+                                nan = isNaN(value2);
+                                nanCmp = m_builder.CreateNot(castValue(arg1, Compiler::StaticType::Bool));
+                            } else if (optNumberBool == 2) {
+                                nan = isNaN(value1);
+                                nanCmp = castValue(arg2, Compiler::StaticType::Bool);
+                            } else {
+                                nan = isNaN(value2);
+                                nanCmp = m_builder.CreateFCmpULT(value1, value2);
+                            }
+
+                            return m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, cmp));
+                        }
 
                         default:
                             assert(false);
@@ -1056,7 +1086,8 @@ llvm::Value *LLVMCodeBuilder::createComparison(std::shared_ptr<Register> arg1, s
                             return m_builder.CreateAnd(value1, m_builder.CreateNot(value2));
 
                         case Comparison::LT:
-                            return m_builder.CreateICmpSLT(value1, value2);
+                            // value2 && !value1
+                            return m_builder.CreateAnd(value2, m_builder.CreateNot(value1));
 
                         default:
                             assert(false);

@@ -595,9 +595,10 @@ TEST_F(LLVMCodeBuilderTest, EqualComparison)
     addOpTest(nan, "0");
 }
 
-TEST_F(LLVMCodeBuilderTest, GreaterThanComparison)
+TEST_F(LLVMCodeBuilderTest, GreaterAndLowerThanComparison)
 {
     auto addOpTest = [this](Value v1, Value v2) {
+        // GT
         createBuilder(true);
 
         m_builder->addConstValue(v1);
@@ -622,7 +623,32 @@ TEST_F(LLVMCodeBuilderTest, GreaterThanComparison)
         code->run(ctx.get());
         const std::string quotes1 = v1.isString() ? "\"" : "";
         const std::string quotes2 = v2.isString() ? "\"" : "";
-        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << "GT: " << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+
+        // LT
+        createBuilder(true);
+
+        m_builder->addConstValue(v1);
+        m_builder->addConstValue(v2);
+        m_builder->createCmpLT();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v1);
+        callConstFuncForType(v1.type());
+        m_builder->addConstValue(v2);
+        callConstFuncForType(v2.type());
+        m_builder->createCmpLT();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        str = Value(v1 < v2).toString() + '\n';
+        expected = str + str;
+
+        code = m_builder->finalize();
+        ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << "LT: " << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
     };
 
     addOpTest(10, 10);
