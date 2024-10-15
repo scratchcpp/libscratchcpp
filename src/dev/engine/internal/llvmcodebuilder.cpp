@@ -400,12 +400,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     // Optimize
     optimize();
 
-#ifdef PRINT_LLVM_IR
-    std::cout << std::endl << "=== LLVM IR (" << m_module->getName().str() << ") ===" << std::endl;
-    m_module->print(llvm::outs(), nullptr);
-    std::cout << "==============" << std::endl << std::endl;
-#endif
-
     return std::make_shared<LLVMExecutableCode>(std::move(m_module));
 }
 
