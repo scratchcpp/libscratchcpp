@@ -172,6 +172,14 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::Not: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                llvm::Value *value = castValue(arg.second, arg.first);
+                step.functionReturnReg->value = m_builder.CreateNot(value);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -533,6 +541,11 @@ void LLVMCodeBuilder::createAnd()
 void LLVMCodeBuilder::createOr()
 {
     createOp(Step::Type::Or, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 2);
+}
+
+void LLVMCodeBuilder::createNot()
+{
+    createOp(Step::Type::Not, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 1);
 }
 
 void LLVMCodeBuilder::beginIfStatement()

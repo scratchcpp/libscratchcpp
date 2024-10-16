@@ -37,6 +37,8 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         void createAnd() override;
         void createOr() override;
+        void createNot() override;
+
         void beginIfStatement() override;
         void beginElseBranch() override;
         void endIf() override;
@@ -78,6 +80,7 @@ class LLVMCodeBuilder : public ICodeBuilder
                     CmpLT,
                     And,
                     Or,
+                    Not,
                     Yield,
                     BeginIf,
                     BeginElse,

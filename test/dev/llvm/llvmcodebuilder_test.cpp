@@ -962,6 +962,68 @@ TEST_F(LLVMCodeBuilderTest, AndOr)
     addOpTest("nan", nan);
 }
 
+TEST_F(LLVMCodeBuilderTest, Not)
+{
+    auto addOpTest = [this](Value v) {
+        createBuilder(true);
+
+        m_builder->addConstValue(v);
+        m_builder->createNot();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v);
+        callConstFuncForType(v.type());
+        m_builder->createNot();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        std::string str = Value(!v.toBool()).toString() + '\n';
+        std::string expected = str + str;
+
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes = v.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << "NOT: " << quotes << v.toString() << quotes;
+    };
+
+    addOpTest(10);
+    addOpTest(-4.25);
+    addOpTest(5.312);
+    addOpTest(1);
+    addOpTest(0);
+
+    addOpTest(true);
+    addOpTest(false);
+
+    addOpTest("abc");
+    addOpTest("5.25");
+    addOpTest("0");
+
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+
+    addOpTest(inf);
+    addOpTest(-inf);
+    addOpTest(nan);
+
+    addOpTest("true");
+    addOpTest("false");
+    addOpTest("TRUE");
+    addOpTest("FALSE");
+
+    addOpTest("00001");
+    addOpTest("00000");
+
+    addOpTest("Infinity");
+    addOpTest("infinity");
+    addOpTest("-Infinity");
+    addOpTest("-infinity");
+    addOpTest("NaN");
+    addOpTest("nan");
+}
+
 TEST_F(LLVMCodeBuilderTest, Yield)
 {
     auto build = [this]() {
