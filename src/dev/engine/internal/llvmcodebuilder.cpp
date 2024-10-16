@@ -152,6 +152,26 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::And: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *bool1 = castValue(arg1.second, arg1.first);
+                llvm::Value *bool2 = castValue(arg2.second, arg2.first);
+                step.functionReturnReg->value = m_builder.CreateAnd(bool1, bool2);
+                break;
+            }
+
+            case Step::Type::Or: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *bool1 = castValue(arg1.second, arg1.first);
+                llvm::Value *bool2 = castValue(arg2.second, arg2.first);
+                step.functionReturnReg->value = m_builder.CreateOr(bool1, bool2);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -472,37 +492,47 @@ void LLVMCodeBuilder::addListContents(List *list)
 
 void LLVMCodeBuilder::createAdd()
 {
-    createOp(Step::Type::Add, Compiler::StaticType::Number, 2);
+    createOp(Step::Type::Add, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createSub()
 {
-    createOp(Step::Type::Sub, Compiler::StaticType::Number, 2);
+    createOp(Step::Type::Sub, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createMul()
 {
-    createOp(Step::Type::Mul, Compiler::StaticType::Number, 2);
+    createOp(Step::Type::Mul, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createDiv()
 {
-    createOp(Step::Type::Div, Compiler::StaticType::Number, 2);
+    createOp(Step::Type::Div, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createCmpEQ()
 {
-    createOp(Step::Type::CmpEQ, Compiler::StaticType::Bool, 2);
+    createOp(Step::Type::CmpEQ, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createCmpGT()
 {
-    createOp(Step::Type::CmpGT, Compiler::StaticType::Bool, 2);
+    createOp(Step::Type::CmpGT, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createCmpLT()
 {
-    createOp(Step::Type::CmpLT, Compiler::StaticType::Bool, 2);
+    createOp(Step::Type::CmpLT, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
+}
+
+void LLVMCodeBuilder::createAnd()
+{
+    createOp(Step::Type::And, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 2);
+}
+
+void LLVMCodeBuilder::createOr()
+{
+    createOp(Step::Type::Or, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 2);
 }
 
 void LLVMCodeBuilder::beginIfStatement()
@@ -881,7 +911,7 @@ llvm::Value *LLVMCodeBuilder::removeNaN(llvm::Value *num)
     return m_builder.CreateSelect(isNaN(num), llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)), num);
 }
 
-void LLVMCodeBuilder::createOp(Step::Type type, Compiler::StaticType retType, size_t argCount)
+void LLVMCodeBuilder::createOp(Step::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount)
 {
     Step step(type);
 
@@ -889,7 +919,7 @@ void LLVMCodeBuilder::createOp(Step::Type type, Compiler::StaticType retType, si
     size_t j = 0;
 
     for (size_t i = m_tmpRegs.size() - argCount; i < m_tmpRegs.size(); i++)
-        step.args.push_back({ Compiler::StaticType::Number, m_tmpRegs[i] });
+        step.args.push_back({ argType, m_tmpRegs[i] });
 
     m_tmpRegs.erase(m_tmpRegs.end() - argCount, m_tmpRegs.end());
 

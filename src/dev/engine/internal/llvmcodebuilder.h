@@ -35,6 +35,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createCmpGT() override;
         void createCmpLT() override;
 
+        void createAnd() override;
+        void createOr() override;
         void beginIfStatement() override;
         void beginElseBranch() override;
         void endIf() override;
@@ -74,6 +76,8 @@ class LLVMCodeBuilder : public ICodeBuilder
                     CmpEQ,
                     CmpGT,
                     CmpLT,
+                    And,
+                    Or,
                     Yield,
                     BeginIf,
                     BeginElse,
@@ -150,7 +154,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Value *isNaN(llvm::Value *num);
         llvm::Value *removeNaN(llvm::Value *num);
 
-        void createOp(Step::Type type, Compiler::StaticType retType, size_t argCount);
+        void createOp(Step::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount);
         llvm::Value *createValue(std::shared_ptr<Register> reg);
         llvm::Value *createComparison(std::shared_ptr<Register> arg1, std::shared_ptr<Register> arg2, Comparison type);
 

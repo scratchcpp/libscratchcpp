@@ -33,6 +33,8 @@ class ICodeBuilder
         virtual void createCmpGT() = 0;
         virtual void createCmpLT() = 0;
 
+        virtual void createAnd() = 0;
+        virtual void createOr() = 0;
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;
         virtual void endIf() = 0;
