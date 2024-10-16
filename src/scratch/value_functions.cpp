@@ -238,7 +238,7 @@ extern "C"
         if (v->type == ValueType::Bool) {
             return v->boolValue;
         } else if (v->type == ValueType::Number) {
-            return v->numberValue != 0;
+            return v->numberValue != 0 && !std::isnan(v->numberValue);
         } else if (v->type == ValueType::String) {
             return value_stringToBool(v->stringValue);
         } else {

@@ -1152,6 +1152,15 @@ TEST(ValueTest, ToBool)
     v = -2.54;
     ASSERT_EQ(v.toBool(), true);
 
+    v = std::numeric_limits<double>::infinity();
+    ASSERT_EQ(v.toBool(), true);
+
+    v = -std::numeric_limits<double>::infinity();
+    ASSERT_EQ(v.toBool(), true);
+
+    v = std::numeric_limits<double>::quiet_NaN();
+    ASSERT_EQ(v.toBool(), false);
+
     v = false;
     ASSERT_EQ(v.toBool(), false);
     v = true;
