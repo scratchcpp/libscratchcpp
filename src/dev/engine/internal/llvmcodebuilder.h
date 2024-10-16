@@ -26,6 +26,19 @@ class LLVMCodeBuilder : public ICodeBuilder
         void addVariableValue(Variable *variable) override;
         void addListContents(List *list) override;
 
+        void createAdd() override;
+        void createSub() override;
+        void createMul() override;
+        void createDiv() override;
+
+        void createCmpEQ() override;
+        void createCmpGT() override;
+        void createCmpLT() override;
+
+        void createAnd() override;
+        void createOr() override;
+        void createNot() override;
+
         void beginIfStatement() override;
         void beginElseBranch() override;
         void endIf() override;
@@ -58,6 +71,16 @@ class LLVMCodeBuilder : public ICodeBuilder
                 enum class Type
                 {
                     FunctionCall,
+                    Add,
+                    Sub,
+                    Mul,
+                    Div,
+                    CmpEQ,
+                    CmpGT,
+                    CmpLT,
+                    And,
+                    Or,
+                    Not,
                     Yield,
                     BeginIf,
                     BeginElse,
@@ -113,6 +136,13 @@ class LLVMCodeBuilder : public ICodeBuilder
                 bool warp = false;
         };
 
+        enum class Comparison
+        {
+            EQ,
+            GT,
+            LT
+        };
+
         void initTypes();
 
         Coroutine initCoroutine(llvm::Function *func);
@@ -122,8 +152,14 @@ class LLVMCodeBuilder : public ICodeBuilder
         void freeHeap();
         llvm::Value *castValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType);
         llvm::Value *castRawValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType);
-        llvm::Value *castConstValue(const Value &value, Compiler::StaticType targetType);
+        llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType);
         llvm::Type *getType(Compiler::StaticType type);
+        llvm::Value *isNaN(llvm::Value *num);
+        llvm::Value *removeNaN(llvm::Value *num);
+
+        void createOp(Step::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount);
+        llvm::Value *createValue(std::shared_ptr<Register> reg);
+        llvm::Value *createComparison(std::shared_ptr<Register> arg1, std::shared_ptr<Register> arg2, Comparison type);
 
         llvm::FunctionCallee resolveFunction(const std::string name, llvm::FunctionType *type);
         llvm::FunctionCallee resolve_value_init();
@@ -140,6 +176,10 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_value_boolToCString();
         llvm::FunctionCallee resolve_value_stringToDouble();
         llvm::FunctionCallee resolve_value_stringToBool();
+        llvm::FunctionCallee resolve_value_equals();
+        llvm::FunctionCallee resolve_value_greater();
+        llvm::FunctionCallee resolve_value_lower();
+        llvm::FunctionCallee resolve_strcasecmp();
 
         std::string m_id;
         llvm::LLVMContext m_ctx;

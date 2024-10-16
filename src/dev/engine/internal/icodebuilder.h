@@ -24,6 +24,19 @@ class ICodeBuilder
         virtual void addVariableValue(Variable *variable) = 0;
         virtual void addListContents(List *list) = 0;
 
+        virtual void createAdd() = 0;
+        virtual void createSub() = 0;
+        virtual void createMul() = 0;
+        virtual void createDiv() = 0;
+
+        virtual void createCmpEQ() = 0;
+        virtual void createCmpGT() = 0;
+        virtual void createCmpLT() = 0;
+
+        virtual void createAnd() = 0;
+        virtual void createOr() = 0;
+        virtual void createNot() = 0;
+
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;
         virtual void endIf() = 0;

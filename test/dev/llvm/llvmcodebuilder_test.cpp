@@ -9,6 +9,7 @@
 using namespace libscratchcpp;
 
 using ::testing::Return;
+using ::testing::Eq;
 
 class LLVMCodeBuilderTest : public testing::Test
 {
@@ -19,6 +20,27 @@ class LLVMCodeBuilderTest : public testing::Test
         }
 
         void createBuilder(bool warp) { m_builder = std::make_unique<LLVMCodeBuilder>("test", warp); }
+
+        void callConstFuncForType(ValueType type)
+        {
+            switch (type) {
+                case ValueType::Number:
+                    m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+                    break;
+
+                case ValueType::Bool:
+                    m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool });
+                    break;
+
+                case ValueType::String:
+                    m_builder->addFunctionCall("test_const_string", Compiler::StaticType::String, { Compiler::StaticType::String });
+                    break;
+
+                default:
+                    FAIL();
+                    break;
+            }
+        }
 
         std::unique_ptr<LLVMCodeBuilder> m_builder;
         TargetMock m_target; // NOTE: isStage() is used for call expectations
@@ -198,6 +220,808 @@ TEST_F(LLVMCodeBuilderTest, RawValueCasting)
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, Add)
+{
+    std::string expected;
+
+    auto addOpTest = [this, &expected](Value v1, Value v2, double expectedResult) {
+        createBuilder(true);
+
+        m_builder->addConstValue(v1);
+        m_builder->addConstValue(v2);
+        m_builder->createAdd();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v1);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->addConstValue(v2);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->createAdd();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        std::string str = Value(expectedResult).toString() + '\n';
+        std::string expected = str + str;
+
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes1 = v1.isString() ? "\"" : "";
+        const std::string quotes2 = v2.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+    };
+
+    addOpTest(50, 25, 75);
+    addOpTest(-500, 25, -475);
+    addOpTest(-500, -25, -525);
+    addOpTest("2.54", "6.28", 8.82);
+    addOpTest(2.54, "-6.28", -3.74);
+    addOpTest(true, true, 2);
+    addOpTest("Infinity", "Infinity", std::numeric_limits<double>::infinity());
+    addOpTest("Infinity", "-Infinity", std::numeric_limits<double>::quiet_NaN());
+    addOpTest("-Infinity", "Infinity", std::numeric_limits<double>::quiet_NaN());
+    addOpTest("-Infinity", "-Infinity", -std::numeric_limits<double>::infinity());
+    addOpTest(1, "NaN", 1);
+    addOpTest("NaN", 1, 1);
+}
+
+TEST_F(LLVMCodeBuilderTest, Subtract)
+{
+    std::string expected;
+
+    auto addOpTest = [this, &expected](Value v1, Value v2, double expectedResult) {
+        createBuilder(true);
+
+        m_builder->addConstValue(v1);
+        m_builder->addConstValue(v2);
+        m_builder->createSub();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v1);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->addConstValue(v2);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->createSub();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        std::string str = Value(expectedResult).toString() + '\n';
+        std::string expected = str + str;
+
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes1 = v1.isString() ? "\"" : "";
+        const std::string quotes2 = v2.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+    };
+
+    addOpTest(50, 25, 25);
+    addOpTest(-500, 25, -525);
+    addOpTest(-500, -25, -475);
+    addOpTest("2.54", "6.28", -3.74);
+    addOpTest(2.54, "-6.28", 8.82);
+    addOpTest(true, true, 0);
+    addOpTest("Infinity", "Infinity", std::numeric_limits<double>::quiet_NaN());
+    addOpTest("Infinity", "-Infinity", std::numeric_limits<double>::infinity());
+    addOpTest("-Infinity", "Infinity", -std::numeric_limits<double>::infinity());
+    addOpTest("-Infinity", "-Infinity", std::numeric_limits<double>::quiet_NaN());
+    addOpTest(1, "NaN", 1);
+    addOpTest("NaN", 1, -1);
+}
+
+TEST_F(LLVMCodeBuilderTest, Multiply)
+{
+    std::string expected;
+
+    auto addOpTest = [this, &expected](Value v1, Value v2, double expectedResult) {
+        createBuilder(true);
+
+        m_builder->addConstValue(v1);
+        m_builder->addConstValue(v2);
+        m_builder->createMul();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v1);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->addConstValue(v2);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->createMul();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        std::string str = Value(expectedResult).toString() + '\n';
+        std::string expected = str + str;
+
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes1 = v1.isString() ? "\"" : "";
+        const std::string quotes2 = v2.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+    };
+
+    addOpTest(50, 2, 100);
+    addOpTest(-500, 25, -12500);
+    addOpTest("-500", -25, 12500);
+    addOpTest("2.54", "6.28", 15.9512);
+    addOpTest(true, true, 1);
+    addOpTest("Infinity", "Infinity", std::numeric_limits<double>::infinity());
+    addOpTest("Infinity", 0, std::numeric_limits<double>::quiet_NaN());
+    addOpTest("Infinity", 2, std::numeric_limits<double>::infinity());
+    addOpTest("Infinity", -2, -std::numeric_limits<double>::infinity());
+    addOpTest("Infinity", "-Infinity", -std::numeric_limits<double>::infinity());
+    addOpTest("-Infinity", "Infinity", -std::numeric_limits<double>::infinity());
+    addOpTest("-Infinity", 0, std::numeric_limits<double>::quiet_NaN());
+    addOpTest("-Infinity", 2, -std::numeric_limits<double>::infinity());
+    addOpTest("-Infinity", -2, std::numeric_limits<double>::infinity());
+    addOpTest("-Infinity", "-Infinity", std::numeric_limits<double>::infinity());
+    addOpTest(1, "NaN", 0);
+    addOpTest("NaN", 1, 0);
+}
+
+TEST_F(LLVMCodeBuilderTest, Divide)
+{
+    std::string expected;
+
+    auto addOpTest = [this, &expected](Value v1, Value v2, double expectedResult) {
+        createBuilder(true);
+
+        m_builder->addConstValue(v1);
+        m_builder->addConstValue(v2);
+        m_builder->createDiv();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v1);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->addConstValue(v2);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->createDiv();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        std::string str = Value(expectedResult).toString() + '\n';
+        std::string expected = str + str;
+
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes1 = v1.isString() ? "\"" : "";
+        const std::string quotes2 = v2.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+    };
+
+    addOpTest(50, 2, 25);
+    addOpTest(-500, 25, -20);
+    addOpTest("-500", -25, 20);
+    addOpTest("3.5", "2.5", 1.4);
+    addOpTest(true, true, 1);
+    addOpTest("Infinity", "Infinity", std::numeric_limits<double>::quiet_NaN());
+    addOpTest("Infinity", 0, std::numeric_limits<double>::infinity());
+    addOpTest("Infinity", 2, std::numeric_limits<double>::infinity());
+    addOpTest("Infinity", -2, -std::numeric_limits<double>::infinity());
+    addOpTest("Infinity", "-Infinity", std::numeric_limits<double>::quiet_NaN());
+    addOpTest("-Infinity", "Infinity", std::numeric_limits<double>::quiet_NaN());
+    addOpTest("-Infinity", 0, -std::numeric_limits<double>::infinity());
+    addOpTest("-Infinity", 2, -std::numeric_limits<double>::infinity());
+    addOpTest("-Infinity", -2, std::numeric_limits<double>::infinity());
+    addOpTest("-Infinity", "-Infinity", std::numeric_limits<double>::quiet_NaN());
+    addOpTest(0, "Infinity", 0);
+    addOpTest(2, "Infinity", 0);
+    addOpTest(-2, "Infinity", 0);
+    addOpTest(0, "-Infinity", 0);
+    addOpTest(2, "-Infinity", 0);
+    addOpTest(-2, "-Infinity", 0);
+    addOpTest(1, "NaN", std::numeric_limits<double>::infinity());
+    addOpTest("NaN", 1, 0);
+    addOpTest(5, 0, std::numeric_limits<double>::infinity());
+    addOpTest(-5, 0, -std::numeric_limits<double>::infinity());
+    addOpTest(0, 0, std::numeric_limits<double>::quiet_NaN());
+}
+
+TEST_F(LLVMCodeBuilderTest, EqualComparison)
+{
+    auto addOpTest = [this](Value v1, Value v2) {
+        createBuilder(true);
+
+        m_builder->addConstValue(v1);
+        m_builder->addConstValue(v2);
+        m_builder->createCmpEQ();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v1);
+        callConstFuncForType(v1.type());
+        m_builder->addConstValue(v2);
+        callConstFuncForType(v2.type());
+        m_builder->createCmpEQ();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        std::string str = Value(v1 == v2).toString() + '\n';
+        std::string expected = str + str;
+
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes1 = v1.isString() ? "\"" : "";
+        const std::string quotes2 = v2.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+    };
+
+    addOpTest(10, 10);
+    addOpTest(10, 8);
+    addOpTest(8, 10);
+
+    addOpTest(-4.25, -4.25);
+    addOpTest(-4.25, 5.312);
+    addOpTest(5.312, -4.25);
+
+    addOpTest(true, true);
+    addOpTest(true, false);
+    addOpTest(false, true);
+
+    addOpTest(1, true);
+    addOpTest(1, false);
+
+    addOpTest("abC def", "abC def");
+    addOpTest("abC def", "abc dEf");
+    addOpTest("abC def", "ghi Jkl");
+    addOpTest("abC def", "hello world");
+
+    addOpTest(" ", "");
+    addOpTest(" ", "0");
+    addOpTest(" ", 0);
+    addOpTest(0, " ");
+    addOpTest("", "0");
+    addOpTest("", 0);
+    addOpTest(0, "");
+    addOpTest("0", 0);
+    addOpTest(0, "0");
+
+    addOpTest(5.25, "5.25");
+    addOpTest("5.25", 5.25);
+    addOpTest(5.25, " 5.25");
+    addOpTest(" 5.25", 5.25);
+    addOpTest(5.25, "5.25 ");
+    addOpTest("5.25 ", 5.25);
+    addOpTest(5.25, " 5.25 ");
+    addOpTest(" 5.25 ", 5.25);
+    addOpTest(5.25, "5.26");
+    addOpTest("5.26", 5.25);
+    addOpTest("5.25", "5.26");
+    addOpTest(5, "5  ");
+    addOpTest("5  ", 5);
+    addOpTest(0, "1");
+    addOpTest("1", 0);
+    addOpTest(0, "test");
+    addOpTest("test", 0);
+
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+
+    addOpTest(inf, inf);
+    addOpTest(-inf, -inf);
+    addOpTest(nan, nan);
+    addOpTest(inf, -inf);
+    addOpTest(-inf, inf);
+    addOpTest(inf, nan);
+    addOpTest(nan, inf);
+    addOpTest(-inf, nan);
+    addOpTest(nan, -inf);
+
+    addOpTest(5, inf);
+    addOpTest(5, -inf);
+    addOpTest(5, nan);
+    addOpTest(0, nan);
+
+    addOpTest(true, "true");
+    addOpTest("true", true);
+    addOpTest(false, "false");
+    addOpTest("false", false);
+    addOpTest(false, "true");
+    addOpTest("true", false);
+    addOpTest(true, "false");
+    addOpTest("false", true);
+    addOpTest(true, "TRUE");
+    addOpTest("TRUE", true);
+    addOpTest(false, "FALSE");
+    addOpTest("FALSE", false);
+
+    addOpTest(true, "00001");
+    addOpTest("00001", true);
+    addOpTest(true, "00000");
+    addOpTest("00000", true);
+    addOpTest(false, "00000");
+    addOpTest("00000", false);
+
+    addOpTest("true", 1);
+    addOpTest(1, "true");
+    addOpTest("true", 0);
+    addOpTest(0, "true");
+    addOpTest("false", 0);
+    addOpTest(0, "false");
+    addOpTest("false", 1);
+    addOpTest(1, "false");
+
+    addOpTest("true", "TRUE");
+    addOpTest("true", "FALSE");
+    addOpTest("false", "FALSE");
+    addOpTest("false", "TRUE");
+
+    addOpTest(true, inf);
+    addOpTest(true, -inf);
+    addOpTest(true, nan);
+    addOpTest(false, inf);
+    addOpTest(false, -inf);
+    addOpTest(false, nan);
+
+    addOpTest("Infinity", inf);
+    addOpTest("Infinity", -inf);
+    addOpTest("Infinity", nan);
+    addOpTest("infinity", inf);
+    addOpTest("infinity", -inf);
+    addOpTest("infinity", nan);
+    addOpTest("-Infinity", inf);
+    addOpTest("-Infinity", -inf);
+    addOpTest("-Infinity", nan);
+    addOpTest("-infinity", inf);
+    addOpTest("-infinity", -inf);
+    addOpTest("-infinity", nan);
+    addOpTest("NaN", inf);
+    addOpTest("NaN", -inf);
+    addOpTest("NaN", nan);
+    addOpTest("nan", inf);
+    addOpTest("nan", -inf);
+    addOpTest("nan", nan);
+
+    addOpTest(inf, "abc");
+    addOpTest(inf, " ");
+    addOpTest(inf, "");
+    addOpTest(inf, "0");
+    addOpTest(-inf, "abc");
+    addOpTest(-inf, " ");
+    addOpTest(-inf, "");
+    addOpTest(-inf, "0");
+    addOpTest(nan, "abc");
+    addOpTest(nan, " ");
+    addOpTest(nan, "");
+    addOpTest(nan, "0");
+}
+
+TEST_F(LLVMCodeBuilderTest, GreaterAndLowerThanComparison)
+{
+    auto addOpTest = [this](Value v1, Value v2) {
+        // GT
+        createBuilder(true);
+
+        m_builder->addConstValue(v1);
+        m_builder->addConstValue(v2);
+        m_builder->createCmpGT();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v1);
+        callConstFuncForType(v1.type());
+        m_builder->addConstValue(v2);
+        callConstFuncForType(v2.type());
+        m_builder->createCmpGT();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        std::string str = Value(v1 > v2).toString() + '\n';
+        std::string expected = str + str;
+
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes1 = v1.isString() ? "\"" : "";
+        const std::string quotes2 = v2.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << "GT: " << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+
+        // LT
+        createBuilder(true);
+
+        m_builder->addConstValue(v1);
+        m_builder->addConstValue(v2);
+        m_builder->createCmpLT();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v1);
+        callConstFuncForType(v1.type());
+        m_builder->addConstValue(v2);
+        callConstFuncForType(v2.type());
+        m_builder->createCmpLT();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        str = Value(v1 < v2).toString() + '\n';
+        expected = str + str;
+
+        code = m_builder->finalize();
+        ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << "LT: " << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+    };
+
+    addOpTest(10, 10);
+    addOpTest(10, 8);
+    addOpTest(8, 10);
+
+    addOpTest(-4.25, -4.25);
+    addOpTest(-4.25, 5.312);
+    addOpTest(5.312, -4.25);
+
+    addOpTest(true, true);
+    addOpTest(true, false);
+    addOpTest(false, true);
+
+    addOpTest(1, true);
+    addOpTest(1, false);
+
+    addOpTest("abC def", "abC def");
+    addOpTest("abC def", "abc dEf");
+    addOpTest("abC def", "ghi Jkl");
+    addOpTest("ghi Jkl", "abC def");
+    addOpTest("abC def", "hello world");
+
+    addOpTest(" ", "");
+    addOpTest(" ", "0");
+    addOpTest(" ", 0);
+    addOpTest(0, " ");
+    addOpTest("", "0");
+    addOpTest("", 0);
+    addOpTest(0, "");
+    addOpTest("0", 0);
+    addOpTest(0, "0");
+
+    addOpTest(5.25, "5.25");
+    addOpTest("5.25", 5.25);
+    addOpTest(5.25, " 5.25");
+    addOpTest(" 5.25", 5.25);
+    addOpTest(5.25, "5.25 ");
+    addOpTest("5.25 ", 5.25);
+    addOpTest(5.25, " 5.25 ");
+    addOpTest(" 5.25 ", 5.25);
+    addOpTest(5.25, "5.26");
+    addOpTest("5.26", 5.25);
+    addOpTest("5.25", "5.26");
+    addOpTest(5, "5  ");
+    addOpTest("5  ", 5);
+    addOpTest(0, "1");
+    addOpTest("1", 0);
+    addOpTest(0, "test");
+    addOpTest("test", 0);
+
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+
+    addOpTest(inf, inf);
+    addOpTest(-inf, -inf);
+    addOpTest(nan, nan);
+    addOpTest(inf, -inf);
+    addOpTest(-inf, inf);
+    addOpTest(inf, nan);
+    addOpTest(nan, inf);
+    addOpTest(-inf, nan);
+    addOpTest(nan, -inf);
+
+    addOpTest(5, inf);
+    addOpTest(inf, 5);
+    addOpTest(5, -inf);
+    addOpTest(-inf, 5);
+    addOpTest(5, nan);
+    addOpTest(nan, 5);
+    addOpTest(0, nan);
+    addOpTest(nan, 0);
+
+    addOpTest(true, "true");
+    addOpTest("true", true);
+    addOpTest(false, "false");
+    addOpTest("false", false);
+    addOpTest(false, "true");
+    addOpTest("true", false);
+    addOpTest(true, "false");
+    addOpTest("false", true);
+    addOpTest(true, "TRUE");
+    addOpTest("TRUE", true);
+    addOpTest(false, "FALSE");
+    addOpTest("FALSE", false);
+
+    addOpTest(true, "00001");
+    addOpTest("00001", true);
+    addOpTest(true, "00000");
+    addOpTest("00000", true);
+    addOpTest(false, "00000");
+    addOpTest("00000", false);
+
+    addOpTest("true", 1);
+    addOpTest(1, "true");
+    addOpTest("true", 0);
+    addOpTest(0, "true");
+    addOpTest("false", 0);
+    addOpTest(0, "false");
+    addOpTest("false", 1);
+    addOpTest(1, "false");
+
+    addOpTest("true", "TRUE");
+    addOpTest("true", "FALSE");
+    addOpTest("false", "FALSE");
+    addOpTest("false", "TRUE");
+
+    addOpTest(true, inf);
+    addOpTest(inf, true);
+    addOpTest(true, -inf);
+    addOpTest(-inf, true);
+    addOpTest(true, nan);
+    addOpTest(nan, true);
+    addOpTest(false, inf);
+    addOpTest(inf, false);
+    addOpTest(false, -inf);
+    addOpTest(-inf, false);
+    addOpTest(false, nan);
+    addOpTest(nan, false);
+
+    addOpTest("Infinity", inf);
+    addOpTest("Infinity", -inf);
+    addOpTest("Infinity", nan);
+    addOpTest("infinity", inf);
+    addOpTest("infinity", -inf);
+    addOpTest("infinity", nan);
+    addOpTest("-Infinity", inf);
+    addOpTest("-Infinity", -inf);
+    addOpTest("-Infinity", nan);
+    addOpTest("-infinity", inf);
+    addOpTest("-infinity", -inf);
+    addOpTest("-infinity", nan);
+    addOpTest("NaN", inf);
+    addOpTest("NaN", -inf);
+    addOpTest("NaN", nan);
+    addOpTest("nan", inf);
+    addOpTest("nan", -inf);
+    addOpTest("nan", nan);
+
+    addOpTest(inf, "abc");
+    addOpTest(inf, " ");
+    addOpTest(inf, "");
+    addOpTest(inf, "0");
+    addOpTest(-inf, "abc");
+    addOpTest(-inf, " ");
+    addOpTest(-inf, "");
+    addOpTest(-inf, "0");
+    addOpTest(nan, "abc");
+    addOpTest(nan, " ");
+    addOpTest(nan, "");
+    addOpTest(nan, "0");
+}
+
+TEST_F(LLVMCodeBuilderTest, AndOr)
+{
+    auto addOpTest = [this](Value v1, Value v2) {
+        // And
+        createBuilder(true);
+
+        m_builder->addConstValue(v1);
+        m_builder->addConstValue(v2);
+        m_builder->createAnd();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v1);
+        callConstFuncForType(v1.type());
+        m_builder->addConstValue(v2);
+        callConstFuncForType(v2.type());
+        m_builder->createAnd();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        std::string str = Value(v1.toBool() && v2.toBool()).toString() + '\n';
+        std::string expected = str + str;
+
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes1 = v1.isString() ? "\"" : "";
+        const std::string quotes2 = v2.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << "AND: " << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+
+        // Or
+        createBuilder(true);
+
+        m_builder->addConstValue(v1);
+        m_builder->addConstValue(v2);
+        m_builder->createOr();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v1);
+        callConstFuncForType(v1.type());
+        m_builder->addConstValue(v2);
+        callConstFuncForType(v2.type());
+        m_builder->createOr();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        str = Value(v1.toBool() || v2.toBool()).toString() + '\n';
+        expected = str + str;
+
+        code = m_builder->finalize();
+        ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << "OR: " << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+    };
+
+    addOpTest(10, 8);
+    addOpTest(-4.25, -4.25);
+    addOpTest(-4.25, 5.312);
+
+    addOpTest(true, true);
+    addOpTest(true, false);
+    addOpTest(false, true);
+
+    addOpTest(1, true);
+    addOpTest(1, false);
+
+    addOpTest("abc", "def");
+    addOpTest("true", "true");
+    addOpTest("true", "false");
+    addOpTest("false", "true");
+    addOpTest("false", "false");
+
+    addOpTest(5.25, "5.25");
+    addOpTest("5.25", 5.25);
+    addOpTest(0, "1");
+    addOpTest("1", 0);
+    addOpTest(0, "test");
+    addOpTest("test", 0);
+
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+
+    addOpTest(inf, inf);
+    addOpTest(-inf, -inf);
+    addOpTest(nan, nan);
+    addOpTest(inf, -inf);
+    addOpTest(-inf, inf);
+    addOpTest(inf, nan);
+    addOpTest(nan, inf);
+    addOpTest(-inf, nan);
+    addOpTest(nan, -inf);
+
+    addOpTest(true, "true");
+    addOpTest("true", true);
+    addOpTest(false, "false");
+    addOpTest("false", false);
+    addOpTest(false, "true");
+    addOpTest("true", false);
+    addOpTest(true, "false");
+    addOpTest("false", true);
+    addOpTest(true, "TRUE");
+    addOpTest("TRUE", true);
+    addOpTest(false, "FALSE");
+    addOpTest("FALSE", false);
+
+    addOpTest(true, "00001");
+    addOpTest("00001", true);
+    addOpTest(true, "00000");
+    addOpTest("00000", true);
+    addOpTest(false, "00000");
+    addOpTest("00000", false);
+
+    addOpTest("true", 1);
+    addOpTest(1, "true");
+    addOpTest("true", 0);
+    addOpTest(0, "true");
+    addOpTest("false", 0);
+    addOpTest(0, "false");
+    addOpTest("false", 1);
+    addOpTest(1, "false");
+
+    addOpTest("true", "TRUE");
+    addOpTest("true", "FALSE");
+    addOpTest("false", "FALSE");
+    addOpTest("false", "TRUE");
+
+    addOpTest(true, inf);
+    addOpTest(inf, true);
+    addOpTest(true, -inf);
+    addOpTest(-inf, true);
+    addOpTest(true, nan);
+    addOpTest(nan, true);
+    addOpTest(false, inf);
+    addOpTest(inf, false);
+    addOpTest(false, -inf);
+    addOpTest(-inf, false);
+    addOpTest(false, nan);
+    addOpTest(nan, false);
+
+    addOpTest("Infinity", inf);
+    addOpTest("Infinity", -inf);
+    addOpTest("Infinity", nan);
+    addOpTest("infinity", inf);
+    addOpTest("infinity", -inf);
+    addOpTest("infinity", nan);
+    addOpTest("-Infinity", inf);
+    addOpTest("-Infinity", -inf);
+    addOpTest("-Infinity", nan);
+    addOpTest("-infinity", inf);
+    addOpTest("-infinity", -inf);
+    addOpTest("-infinity", nan);
+    addOpTest("NaN", inf);
+    addOpTest("NaN", -inf);
+    addOpTest("NaN", nan);
+    addOpTest("nan", inf);
+    addOpTest("nan", -inf);
+    addOpTest("nan", nan);
+}
+
+TEST_F(LLVMCodeBuilderTest, Not)
+{
+    auto addOpTest = [this](Value v) {
+        createBuilder(true);
+
+        m_builder->addConstValue(v);
+        m_builder->createNot();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v);
+        callConstFuncForType(v.type());
+        m_builder->createNot();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        std::string str = Value(!v.toBool()).toString() + '\n';
+        std::string expected = str + str;
+
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes = v.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << "NOT: " << quotes << v.toString() << quotes;
+    };
+
+    addOpTest(10);
+    addOpTest(-4.25);
+    addOpTest(5.312);
+    addOpTest(1);
+    addOpTest(0);
+
+    addOpTest(true);
+    addOpTest(false);
+
+    addOpTest("abc");
+    addOpTest("5.25");
+    addOpTest("0");
+
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+
+    addOpTest(inf);
+    addOpTest(-inf);
+    addOpTest(nan);
+
+    addOpTest("true");
+    addOpTest("false");
+    addOpTest("TRUE");
+    addOpTest("FALSE");
+
+    addOpTest("00001");
+    addOpTest("00000");
+
+    addOpTest("Infinity");
+    addOpTest("infinity");
+    addOpTest("-Infinity");
+    addOpTest("-infinity");
+    addOpTest("NaN");
+    addOpTest("nan");
 }
 
 TEST_F(LLVMCodeBuilderTest, Yield)

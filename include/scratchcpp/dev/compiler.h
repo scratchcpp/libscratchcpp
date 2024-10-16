@@ -29,7 +29,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
             Void,
             Number,
             Bool,
-            String
+            String,
+            Unknown
         };
 
         Compiler(IEngine *engine, Target *target);
@@ -46,6 +47,15 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void addVariableValue(Variable *variable);
         void addListContents(List *list);
         void addInput(const std::string &name);
+
+        void createAdd();
+        void createSub();
+        void createMul();
+        void createDiv();
+
+        void createCmpEQ();
+        void createCmpGT();
+        void createCmpLT();
 
         void moveToIf(std::shared_ptr<Block> substack);
         void moveToIfElse(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2);

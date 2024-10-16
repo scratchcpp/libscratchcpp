@@ -88,6 +88,98 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::Add: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *num1 = removeNaN(castValue(arg1.second, arg1.first));
+                llvm::Value *num2 = removeNaN(castValue(arg2.second, arg2.first));
+                step.functionReturnReg->value = m_builder.CreateFAdd(num1, num2);
+                break;
+            }
+
+            case Step::Type::Sub: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *num1 = removeNaN(castValue(arg1.second, arg1.first));
+                llvm::Value *num2 = removeNaN(castValue(arg2.second, arg2.first));
+                step.functionReturnReg->value = m_builder.CreateFSub(num1, num2);
+                break;
+            }
+
+            case Step::Type::Mul: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *num1 = removeNaN(castValue(arg1.second, arg1.first));
+                llvm::Value *num2 = removeNaN(castValue(arg2.second, arg2.first));
+                step.functionReturnReg->value = m_builder.CreateFMul(num1, num2);
+                break;
+            }
+
+            case Step::Type::Div: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *num1 = removeNaN(castValue(arg1.second, arg1.first));
+                llvm::Value *num2 = removeNaN(castValue(arg2.second, arg2.first));
+                step.functionReturnReg->value = m_builder.CreateFDiv(num1, num2);
+                break;
+            }
+
+            case Step::Type::CmpEQ: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0].second;
+                const auto &arg2 = step.args[1].second;
+                step.functionReturnReg->value = createComparison(arg1, arg2, Comparison::EQ);
+                break;
+            }
+
+            case Step::Type::CmpGT: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0].second;
+                const auto &arg2 = step.args[1].second;
+                step.functionReturnReg->value = createComparison(arg1, arg2, Comparison::GT);
+                break;
+            }
+
+            case Step::Type::CmpLT: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0].second;
+                const auto &arg2 = step.args[1].second;
+                step.functionReturnReg->value = createComparison(arg1, arg2, Comparison::LT);
+                break;
+            }
+
+            case Step::Type::And: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *bool1 = castValue(arg1.second, arg1.first);
+                llvm::Value *bool2 = castValue(arg2.second, arg2.first);
+                step.functionReturnReg->value = m_builder.CreateAnd(bool1, bool2);
+                break;
+            }
+
+            case Step::Type::Or: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *bool1 = castValue(arg1.second, arg1.first);
+                llvm::Value *bool2 = castValue(arg2.second, arg2.first);
+                step.functionReturnReg->value = m_builder.CreateOr(bool1, bool2);
+                break;
+            }
+
+            case Step::Type::Not: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                llvm::Value *value = castValue(arg.second, arg.first);
+                step.functionReturnReg->value = m_builder.CreateNot(value);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -360,12 +452,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     // Optimize
     optimize();
 
-#ifdef PRINT_LLVM_IR
-    std::cout << std::endl << "=== LLVM IR (" << m_module->getName().str() << ") ===" << std::endl;
-    m_module->print(llvm::outs(), nullptr);
-    std::cout << "==============" << std::endl << std::endl;
-#endif
-
     return std::make_shared<LLVMExecutableCode>(std::move(m_module));
 }
 
@@ -410,6 +496,56 @@ void LLVMCodeBuilder::addVariableValue(Variable *variable)
 
 void LLVMCodeBuilder::addListContents(List *list)
 {
+}
+
+void LLVMCodeBuilder::createAdd()
+{
+    createOp(Step::Type::Add, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+}
+
+void LLVMCodeBuilder::createSub()
+{
+    createOp(Step::Type::Sub, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+}
+
+void LLVMCodeBuilder::createMul()
+{
+    createOp(Step::Type::Mul, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+}
+
+void LLVMCodeBuilder::createDiv()
+{
+    createOp(Step::Type::Div, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+}
+
+void LLVMCodeBuilder::createCmpEQ()
+{
+    createOp(Step::Type::CmpEQ, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
+}
+
+void LLVMCodeBuilder::createCmpGT()
+{
+    createOp(Step::Type::CmpGT, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
+}
+
+void LLVMCodeBuilder::createCmpLT()
+{
+    createOp(Step::Type::CmpLT, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
+}
+
+void LLVMCodeBuilder::createAnd()
+{
+    createOp(Step::Type::And, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 2);
+}
+
+void LLVMCodeBuilder::createOr()
+{
+    createOp(Step::Type::Or, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 2);
+}
+
+void LLVMCodeBuilder::createNot()
+{
+    createOp(Step::Type::Not, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 1);
 }
 
 void LLVMCodeBuilder::beginIfStatement()
@@ -486,19 +622,11 @@ void LLVMCodeBuilder::yield()
 void LLVMCodeBuilder::initTypes()
 {
     // Create the ValueData struct
-    llvm::Type *doubleType = llvm::Type::getDoubleTy(m_ctx);                             // double (numberValue)
-    llvm::Type *boolType = llvm::Type::getInt1Ty(m_ctx);                                 // bool (boolValue)
-    llvm::Type *stringPtrType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0); // char* (stringValue)
+    llvm::Type *unionType = m_builder.getInt64Ty(); // 64 bits is the largest size
 
-    // Create the union type (largest type size should dominate)
-    llvm::StructType *unionType = llvm::StructType::create(m_ctx, "union");
-    unionType->setBody({ doubleType, boolType, stringPtrType });
-
-    // Create the full struct type
     llvm::Type *valueType = llvm::Type::getInt32Ty(m_ctx); // Assuming ValueType is a 32-bit enum
     llvm::Type *sizeType = llvm::Type::getInt64Ty(m_ctx);  // size_t
 
-    // Combine them into the full struct
     m_valueDataType = llvm::StructType::create(m_ctx, "ValueData");
     m_valueDataType->setBody({ unionType, valueType, sizeType });
 }
@@ -746,7 +874,7 @@ llvm::Value *LLVMCodeBuilder::castRawValue(std::shared_ptr<Register> reg, Compil
     }
 }
 
-llvm::Value *LLVMCodeBuilder::castConstValue(const Value &value, Compiler::StaticType targetType)
+llvm::Constant *LLVMCodeBuilder::castConstValue(const Value &value, Compiler::StaticType targetType)
 {
     switch (targetType) {
         case Compiler::StaticType::Number:
@@ -782,6 +910,258 @@ llvm::Type *LLVMCodeBuilder::getType(Compiler::StaticType type)
         default:
             assert(false);
             return nullptr;
+    }
+}
+
+llvm::Value *LLVMCodeBuilder::isNaN(llvm::Value *num)
+{
+    return m_builder.CreateFCmpUNO(num, num);
+}
+
+llvm::Value *LLVMCodeBuilder::removeNaN(llvm::Value *num)
+{
+    // Replace NaN with zero
+    return m_builder.CreateSelect(isNaN(num), llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)), num);
+}
+
+void LLVMCodeBuilder::createOp(Step::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount)
+{
+    Step step(type);
+
+    assert(m_tmpRegs.size() >= argCount);
+    size_t j = 0;
+
+    for (size_t i = m_tmpRegs.size() - argCount; i < m_tmpRegs.size(); i++)
+        step.args.push_back({ argType, m_tmpRegs[i] });
+
+    m_tmpRegs.erase(m_tmpRegs.end() - argCount, m_tmpRegs.end());
+
+    auto ret = std::make_shared<Register>(retType);
+    ret->isRawValue = true;
+    step.functionReturnReg = ret;
+    m_regs[m_currentFunction].push_back(ret);
+    m_tmpRegs.push_back(ret);
+
+    m_steps.push_back(step);
+}
+
+llvm::Value *LLVMCodeBuilder::createValue(std::shared_ptr<Register> reg)
+{
+    if (reg->isConstValue) {
+        // Create a constant ValueData instance and store it
+        llvm::Constant *value = castConstValue(reg->constValue, TYPE_MAP[reg->constValue.type()]);
+        llvm::Value *ret = m_builder.CreateAlloca(m_valueDataType);
+
+        if (reg->constValue.type() == ValueType::String)
+            value = llvm::ConstantExpr::getPtrToInt(value, m_valueDataType->getElementType(0));
+        else
+            value = llvm::ConstantExpr::getBitCast(value, m_valueDataType->getElementType(0));
+
+        llvm::Constant *type = m_builder.getInt32(static_cast<uint32_t>(reg->constValue.type()));
+        llvm::Constant *constValue = llvm::ConstantStruct::get(m_valueDataType, { value, type, m_builder.getInt64(0) });
+        m_builder.CreateStore(constValue, ret);
+
+        return ret;
+    } else if (reg->isRawValue) {
+        llvm::Value *value = castRawValue(reg, reg->type);
+        llvm::Value *ret = m_builder.CreateAlloca(m_valueDataType);
+
+        // Store value
+        llvm::Value *valueField = m_builder.CreateStructGEP(m_valueDataType, ret, 0);
+        m_builder.CreateStore(value, valueField);
+
+        auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [&reg](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == reg->type; });
+
+        if (it == TYPE_MAP.end()) {
+            assert(false);
+            return nullptr;
+        }
+
+        // Store type
+        llvm::Value *typeField = m_builder.CreateStructGEP(m_valueDataType, ret, 1);
+        ValueType type = it->first;
+        m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(type)), typeField);
+
+        return ret;
+    } else
+        return reg->value;
+}
+
+llvm::Value *LLVMCodeBuilder::createComparison(std::shared_ptr<Register> arg1, std::shared_ptr<Register> arg2, Comparison type)
+{
+    auto type1 = arg1->type;
+    auto type2 = arg2->type;
+
+    if (arg1->isConstValue && arg2->isConstValue) {
+        // If both operands are constant, perform the comparison at compile time
+        bool result = false;
+
+        switch (type) {
+            case Comparison::EQ:
+                result = arg1->constValue == arg2->constValue;
+                break;
+
+            case Comparison::GT:
+                result = arg1->constValue > arg2->constValue;
+                break;
+
+            case Comparison::LT:
+                result = arg1->constValue < arg2->constValue;
+                break;
+
+            default:
+                assert(false);
+                return nullptr;
+        }
+
+        return m_builder.getInt1(result);
+    } else {
+        // Optimize comparison of constant with number/bool
+        if (arg1->isConstValue && arg1->constValue.isValidNumber() && (type2 == Compiler::StaticType::Number || type2 == Compiler::StaticType::Bool))
+            type1 = Compiler::StaticType::Number;
+
+        if (arg2->isConstValue && arg2->constValue.isValidNumber() && (type1 == Compiler::StaticType::Number || type1 == Compiler::StaticType::Bool))
+            type2 = Compiler::StaticType::Number;
+
+        // Optimize number and bool comparison
+        int optNumberBool = 0;
+
+        if (type1 == Compiler::StaticType::Number && type2 == Compiler::StaticType::Bool) {
+            type2 = Compiler::StaticType::Number;
+            optNumberBool = 2; // operand 2 was bool
+        }
+
+        if (type1 == Compiler::StaticType::Bool && type2 == Compiler::StaticType::Number) {
+            type1 = Compiler::StaticType::Number;
+            optNumberBool = 1; // operand 1 was bool
+        }
+
+        if (type1 != type2 || type1 == Compiler::StaticType::Unknown || type2 == Compiler::StaticType::Unknown) {
+            // If the types are different or at least one of them
+            // is unknown, we must use value functions
+            llvm::Value *value1 = createValue(arg1);
+            llvm::Value *value2 = createValue(arg2);
+
+            switch (type) {
+                case Comparison::EQ:
+                    return m_builder.CreateCall(resolve_value_equals(), { value1, value2 });
+
+                case Comparison::GT:
+                    return m_builder.CreateCall(resolve_value_greater(), { value1, value2 });
+
+                case Comparison::LT:
+                    return m_builder.CreateCall(resolve_value_lower(), { value1, value2 });
+
+                default:
+                    assert(false);
+                    return nullptr;
+            }
+        } else {
+            // Compare raw values
+            llvm::Value *value1 = castValue(arg1, type1);
+            llvm::Value *value2 = castValue(arg2, type2);
+            assert(type1 == type2);
+
+            switch (type1) {
+                case Compiler::StaticType::Number: {
+                    // Compare two numbers
+                    switch (type) {
+                        case Comparison::EQ: {
+                            llvm::Value *nan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
+                            llvm::Value *cmp = m_builder.CreateFCmpOEQ(value1, value2);
+                            return m_builder.CreateSelect(nan, m_builder.getInt1(true), cmp);
+                        }
+
+                        case Comparison::GT: {
+                            llvm::Value *bothNan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
+                            llvm::Value *cmp = m_builder.CreateFCmpOGT(value1, value2);
+                            llvm::Value *nan;
+                            llvm::Value *nanCmp;
+
+                            if (optNumberBool == 1) {
+                                nan = isNaN(value2);
+                                nanCmp = castValue(arg1, Compiler::StaticType::Bool);
+                            } else if (optNumberBool == 2) {
+                                nan = isNaN(value1);
+                                nanCmp = m_builder.CreateNot(castValue(arg2, Compiler::StaticType::Bool));
+                            } else {
+                                nan = isNaN(value1);
+                                nanCmp = m_builder.CreateFCmpUGT(value1, value2);
+                            }
+
+                            return m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, cmp));
+                        }
+
+                        case Comparison::LT: {
+                            llvm::Value *bothNan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
+                            llvm::Value *cmp = m_builder.CreateFCmpOLT(value1, value2);
+                            llvm::Value *nan;
+                            llvm::Value *nanCmp;
+
+                            if (optNumberBool == 1) {
+                                nan = isNaN(value2);
+                                nanCmp = m_builder.CreateNot(castValue(arg1, Compiler::StaticType::Bool));
+                            } else if (optNumberBool == 2) {
+                                nan = isNaN(value1);
+                                nanCmp = castValue(arg2, Compiler::StaticType::Bool);
+                            } else {
+                                nan = isNaN(value2);
+                                nanCmp = m_builder.CreateFCmpULT(value1, value2);
+                            }
+
+                            return m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, cmp));
+                        }
+
+                        default:
+                            assert(false);
+                            return nullptr;
+                    }
+                }
+
+                case Compiler::StaticType::Bool:
+                    // Compare two booleans
+                    switch (type) {
+                        case Comparison::EQ:
+                            return m_builder.CreateICmpEQ(value1, value2);
+
+                        case Comparison::GT:
+                            // value1 && !value2
+                            return m_builder.CreateAnd(value1, m_builder.CreateNot(value2));
+
+                        case Comparison::LT:
+                            // value2 && !value1
+                            return m_builder.CreateAnd(value2, m_builder.CreateNot(value1));
+
+                        default:
+                            assert(false);
+                            return nullptr;
+                    }
+
+                case Compiler::StaticType::String: {
+                    // Compare two strings
+                    llvm::Value *cmpRet = m_builder.CreateCall(resolve_strcasecmp(), { value1, value2 });
+
+                    switch (type) {
+                        case Comparison::EQ:
+                            return m_builder.CreateICmpEQ(cmpRet, m_builder.getInt32(0));
+
+                        case Comparison::GT:
+                            return m_builder.CreateICmpSGT(cmpRet, m_builder.getInt32(0));
+
+                        case Comparison::LT:
+                            return m_builder.CreateICmpSLT(cmpRet, m_builder.getInt32(0));
+
+                        default:
+                            assert(false);
+                            return nullptr;
+                    }
+                }
+
+                default:
+                    assert(false);
+                    return nullptr;
+            }
+        }
     }
 }
 
@@ -858,4 +1238,28 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_value_stringToDouble()
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_stringToBool()
 {
     return resolveFunction("value_stringToBool", llvm::FunctionType::get(m_builder.getInt1Ty(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_value_equals()
+{
+    llvm::Type *valuePtr = m_valueDataType->getPointerTo();
+    return resolveFunction("value_equals", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_value_greater()
+{
+    llvm::Type *valuePtr = m_valueDataType->getPointerTo();
+    return resolveFunction("value_greater", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_value_lower()
+{
+    llvm::Type *valuePtr = m_valueDataType->getPointerTo();
+    return resolveFunction("value_lower", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()
+{
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("strcasecmp", llvm::FunctionType::get(m_builder.getInt32Ty(), { pointerType, pointerType }, false));
 }
