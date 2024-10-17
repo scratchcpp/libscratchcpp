@@ -35,6 +35,7 @@ class LIBSCRATCHCPP_EXPORT Rect
         void snapToInt();
 
         bool intersects(const Rect &rect) const;
+        bool contains(double x, double y) const;
 
     private:
         spimpl::impl_ptr<RectPrivate> impl;

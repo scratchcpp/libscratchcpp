@@ -106,3 +106,19 @@ bool Rect::intersects(const Rect &rect) const
     // Check if the rectangles intersect
     return !(x2 < rectX1 || rectX2 < x1 || y2 < rectY1 || rectY2 < y1);
 }
+
+/*! Returns true if the given point is inside or on the edge of the rectangle. */
+bool Rect::contains(double x, double y) const
+{
+    double bottom, top;
+
+    if (impl->top > impl->bottom) {
+        bottom = impl->bottom;
+        top = impl->top;
+    } else {
+        bottom = impl->top;
+        top = impl->bottom;
+    }
+
+    return (x >= impl->left && x <= impl->right && y >= bottom && y <= top);
+}

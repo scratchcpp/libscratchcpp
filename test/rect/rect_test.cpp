@@ -230,3 +230,41 @@ TEST(RectTest, Intersects)
         ASSERT_FALSE(rect2_ydown.intersects(rect1_ydown));
     }
 }
+
+TEST(RectTest, Contains)
+{
+    Rect rect(-50, 25, 150, -75);
+    Rect rect_ydown(-50, -75, 150, 25);
+
+    ASSERT_FALSE(rect.contains(-75, 30));
+    ASSERT_FALSE(rect.contains(-75, 10));
+    ASSERT_FALSE(rect.contains(-45, 30));
+    ASSERT_FALSE(rect.contains(151, -76));
+    ASSERT_FALSE(rect.contains(149, -76));
+    ASSERT_FALSE(rect.contains(151, -74));
+
+    ASSERT_FALSE(rect_ydown.contains(-75, 30));
+    ASSERT_FALSE(rect_ydown.contains(-75, 10));
+    ASSERT_FALSE(rect_ydown.contains(-45, 30));
+    ASSERT_FALSE(rect_ydown.contains(151, -76));
+    ASSERT_FALSE(rect_ydown.contains(149, -76));
+    ASSERT_FALSE(rect_ydown.contains(151, -74));
+
+    ASSERT_TRUE(rect.contains(-50, -75));
+    ASSERT_TRUE(rect.contains(150, -75));
+    ASSERT_TRUE(rect.contains(150, 25));
+    ASSERT_TRUE(rect.contains(-50, 25));
+    ASSERT_TRUE(rect.contains(-40, -70));
+    ASSERT_TRUE(rect.contains(100, 0));
+    ASSERT_TRUE(rect.contains(0, -40));
+    ASSERT_TRUE(rect.contains(5, 24));
+
+    ASSERT_TRUE(rect_ydown.contains(-50, -75));
+    ASSERT_TRUE(rect_ydown.contains(150, -75));
+    ASSERT_TRUE(rect_ydown.contains(150, 25));
+    ASSERT_TRUE(rect_ydown.contains(-50, 25));
+    ASSERT_TRUE(rect_ydown.contains(-40, -70));
+    ASSERT_TRUE(rect_ydown.contains(100, 0));
+    ASSERT_TRUE(rect_ydown.contains(0, -40));
+    ASSERT_TRUE(rect_ydown.contains(5, 24));
+}
