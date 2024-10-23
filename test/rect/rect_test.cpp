@@ -78,6 +78,72 @@ TEST(RectTest, Height)
     ASSERT_EQ(rect.height(), 35.272);
 }
 
+TEST(RectTest, Clamp)
+{
+    {
+        Rect rect(-50, 25, 150, -75);
+        rect.clamp(-40, 30, 160, -80);
+        ASSERT_EQ(rect.left(), -40);
+        ASSERT_EQ(rect.top(), 25);
+        ASSERT_EQ(rect.right(), 150);
+        ASSERT_EQ(rect.bottom(), -75);
+    }
+
+    {
+        Rect rect(-50, 25, 150, -75);
+        rect.clamp(-50, 24, 160, -75);
+        ASSERT_EQ(rect.left(), -50);
+        ASSERT_EQ(rect.top(), 24);
+        ASSERT_EQ(rect.right(), 150);
+        ASSERT_EQ(rect.bottom(), -75);
+    }
+
+    {
+        Rect rect(-50, 25, 150, -75);
+        rect.clamp(-50, 25, 145, -75);
+        ASSERT_EQ(rect.left(), -50);
+        ASSERT_EQ(rect.top(), 25);
+        ASSERT_EQ(rect.right(), 145);
+        ASSERT_EQ(rect.bottom(), -75);
+    }
+
+    {
+        Rect rect(-50, 25, 150, -75);
+        rect.clamp(-50, 25, 150, -68);
+        ASSERT_EQ(rect.left(), -50);
+        ASSERT_EQ(rect.top(), 25);
+        ASSERT_EQ(rect.right(), 150);
+        ASSERT_EQ(rect.bottom(), -68);
+    }
+
+    {
+        Rect rect(-50, 25, 150, -75);
+        rect.clamp(-100, 10, 50, -120);
+        ASSERT_EQ(rect.left(), -50);
+        ASSERT_EQ(rect.top(), 10);
+        ASSERT_EQ(rect.right(), 50);
+        ASSERT_EQ(rect.bottom(), -75);
+    }
+
+    {
+        Rect rect(-50, 25, 150, -75);
+        rect.clamp(-100, 30, 160, -120);
+        ASSERT_EQ(rect.left(), -50);
+        ASSERT_EQ(rect.top(), 25);
+        ASSERT_EQ(rect.right(), 150);
+        ASSERT_EQ(rect.bottom(), -75);
+    }
+
+    {
+        Rect rect(-50, 25, 150, -75);
+        rect.clamp(-50, 25, 150, -75);
+        ASSERT_EQ(rect.left(), -50);
+        ASSERT_EQ(rect.top(), 25);
+        ASSERT_EQ(rect.right(), 150);
+        ASSERT_EQ(rect.bottom(), -75);
+    }
+}
+
 TEST(RectTest, SnapToInt)
 {
     {

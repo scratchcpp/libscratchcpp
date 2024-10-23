@@ -32,6 +32,7 @@ class LIBSCRATCHCPP_EXPORT Rect
         double width() const;
         double height() const;
 
+        void clamp(double left, double top, double right, double bottom);
         void snapToInt();
 
         bool intersects(const Rect &rect) const;

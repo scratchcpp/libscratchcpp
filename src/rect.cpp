@@ -88,6 +88,21 @@ void Rect::snapToInt()
     impl->top = std::ceil(impl->top);
 }
 
+/*! Clamps the rectangle to the given bounds. */
+void Rect::clamp(double left, double top, double right, double bottom)
+{
+    // https://github.com/scratchfoundation/scratch-render/blob/c3ede9c3d54769730c7b023021511e2aba167b1f/src/Rectangle.js#L121-L131
+    impl->left = std::max(impl->left, left);
+    impl->right = std::min(impl->right, right);
+    impl->bottom = std::max(impl->bottom, bottom);
+    impl->top = std::min(impl->top, top);
+
+    impl->left = std::min(impl->left, right);
+    impl->right = std::max(impl->right, left);
+    impl->bottom = std::min(impl->bottom, top);
+    impl->top = std::max(impl->top, bottom);
+}
+
 /*! Returns true if the rectangle intersects the given rectangle. */
 bool Rect::intersects(const Rect &rect) const
 {
