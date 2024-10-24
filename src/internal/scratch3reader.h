@@ -17,10 +17,10 @@ class Scratch3Reader : public IProjectReader
         bool loadData(const std::string &data) override;
         bool isValid() override;
         void clear() override;
-        const std::vector<std::shared_ptr<Target>> &targets() override;
-        const std::vector<std::shared_ptr<Broadcast>> &broadcasts() override;
-        const std::vector<std::shared_ptr<Monitor>> &monitors() override;
-        const std::vector<std::string> &extensions() override;
+        const std::vector<std::shared_ptr<Target>> &targets() const override;
+        const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const override;
+        const std::vector<std::shared_ptr<Monitor>> &monitors() const override;
+        const std::vector<std::string> &extensions() const override;
         const std::string &userAgent() const override;
 
     private:

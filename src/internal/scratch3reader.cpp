@@ -527,22 +527,22 @@ void Scratch3Reader::clear()
     m_extensions.clear();
 }
 
-const std::vector<std::shared_ptr<Target>> &Scratch3Reader::targets()
+const std::vector<std::shared_ptr<Target>> &Scratch3Reader::targets() const
 {
     return m_targets;
 }
 
-const std::vector<std::shared_ptr<Broadcast>> &Scratch3Reader::broadcasts()
+const std::vector<std::shared_ptr<Broadcast>> &Scratch3Reader::broadcasts() const
 {
     return m_broadcasts;
 }
 
-const std::vector<std::shared_ptr<Monitor>> &Scratch3Reader::monitors()
+const std::vector<std::shared_ptr<Monitor>> &Scratch3Reader::monitors() const
 {
     return m_monitors;
 }
 
-const std::vector<std::string> &Scratch3Reader::extensions()
+const std::vector<std::string> &Scratch3Reader::extensions() const
 {
     return m_extensions;
 }

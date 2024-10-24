@@ -31,10 +31,10 @@ class IProjectReader
         virtual bool loadData(const std::string &data) = 0;
         virtual bool isValid() = 0;
         virtual void clear() = 0;
-        virtual const std::vector<std::shared_ptr<Target>> &targets() = 0;
-        virtual const std::vector<std::shared_ptr<Broadcast>> &broadcasts() = 0;
-        virtual const std::vector<std::shared_ptr<Monitor>> &monitors() = 0;
-        virtual const std::vector<std::string> &extensions() = 0;
+        virtual const std::vector<std::shared_ptr<Target>> &targets() const = 0;
+        virtual const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const = 0;
+        virtual const std::vector<std::shared_ptr<Monitor>> &monitors() const = 0;
+        virtual const std::vector<std::string> &extensions() const = 0;
         virtual const std::string &userAgent() const = 0;
 
     protected:
