@@ -335,12 +335,12 @@ TEST(RectTest, Contains)
     ASSERT_TRUE(rect_ydown.contains(5, 24));
 }
 
-TEST(RectTest, Intersection)
+TEST(RectTest, Intersected)
 {
     Rect rect1(-50, 25, 150, -75);
     Rect dst;
 
-    Rect::intersection(rect1, rect1, dst);
+    Rect::intersected(rect1, rect1, dst);
     ASSERT_EQ(dst.left(), rect1.left());
     ASSERT_EQ(dst.top(), rect1.top());
     ASSERT_EQ(dst.right(), rect1.right());
@@ -349,7 +349,7 @@ TEST(RectTest, Intersection)
     // left
     {
         Rect rect2(-75, 0, 125, -50);
-        Rect::intersection(rect1, rect2, dst);
+        Rect::intersected(rect1, rect2, dst);
         ASSERT_EQ(dst.left(), -50);
         ASSERT_EQ(dst.top(), 0);
         ASSERT_EQ(dst.right(), 125);
@@ -358,7 +358,7 @@ TEST(RectTest, Intersection)
 
     {
         Rect rect2(-100, 10, -50, -90);
-        Rect::intersection(rect1, rect2, dst);
+        Rect::intersected(rect1, rect2, dst);
         ASSERT_EQ(dst.left(), -50);
         ASSERT_EQ(dst.top(), 10);
         ASSERT_EQ(dst.right(), -50);
@@ -368,7 +368,7 @@ TEST(RectTest, Intersection)
     // top
     {
         Rect rect2(-25, 50, 125, 10);
-        Rect::intersection(rect1, rect2, dst);
+        Rect::intersected(rect1, rect2, dst);
         ASSERT_EQ(dst.left(), -25);
         ASSERT_EQ(dst.top(), 25);
         ASSERT_EQ(dst.right(), 125);
@@ -377,7 +377,7 @@ TEST(RectTest, Intersection)
 
     {
         Rect rect2(-100, 50, 200, 25);
-        Rect::intersection(rect1, rect2, dst);
+        Rect::intersected(rect1, rect2, dst);
         ASSERT_EQ(dst.left(), -50);
         ASSERT_EQ(dst.top(), 25);
         ASSERT_EQ(dst.right(), 150);
@@ -387,7 +387,7 @@ TEST(RectTest, Intersection)
     // right
     {
         Rect rect2(125, 0, 200, -50);
-        Rect::intersection(rect1, rect2, dst);
+        Rect::intersected(rect1, rect2, dst);
         ASSERT_EQ(dst.left(), 125);
         ASSERT_EQ(dst.top(), 0);
         ASSERT_EQ(dst.right(), 150);
@@ -396,7 +396,7 @@ TEST(RectTest, Intersection)
 
     {
         Rect rect2(150, 10, 200, -90);
-        Rect::intersection(rect1, rect2, dst);
+        Rect::intersected(rect1, rect2, dst);
         ASSERT_EQ(dst.left(), 150);
         ASSERT_EQ(dst.top(), 10);
         ASSERT_EQ(dst.right(), 150);
@@ -406,7 +406,7 @@ TEST(RectTest, Intersection)
     // bottom
     {
         Rect rect2(-25, -50, 125, -100);
-        Rect::intersection(rect1, rect2, dst);
+        Rect::intersected(rect1, rect2, dst);
         ASSERT_EQ(dst.left(), -25);
         ASSERT_EQ(dst.top(), -50);
         ASSERT_EQ(dst.right(), 125);
@@ -415,7 +415,7 @@ TEST(RectTest, Intersection)
 
     {
         Rect rect2(-100, -75, 200, -100);
-        Rect::intersection(rect1, rect2, dst);
+        Rect::intersected(rect1, rect2, dst);
         ASSERT_EQ(dst.left(), -50);
         ASSERT_EQ(dst.top(), -75);
         ASSERT_EQ(dst.right(), 150);
