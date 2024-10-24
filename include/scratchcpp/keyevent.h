@@ -31,6 +31,8 @@ class LIBSCRATCHCPP_EXPORT KeyEvent
         Type type() const;
         const std::string &name() const;
 
+        friend bool operator==(const KeyEvent &ev1, const KeyEvent &ev2) { return ev1.name() == ev2.name(); }
+
     private:
         spimpl::impl_ptr<KeyEventPrivate> impl;
 };

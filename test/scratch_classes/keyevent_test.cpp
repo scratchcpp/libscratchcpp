@@ -213,3 +213,33 @@ TEST(KeyEventTest, Constructors)
         ASSERT_EQ(event.name(), "down arrow");
     }
 }
+
+TEST(KeyEventTest, EqualityOperator)
+{
+    KeyEvent ev1(KeyEvent::Type::Any);
+    KeyEvent ev2(KeyEvent::Type::Any);
+    KeyEvent ev3(KeyEvent::Type::Space);
+    KeyEvent ev4(KeyEvent::Type::Space);
+    KeyEvent ev5(KeyEvent::Type::Left);
+    KeyEvent ev6(KeyEvent::Type::Left);
+    KeyEvent ev7(KeyEvent::Type::Right);
+    KeyEvent ev8(KeyEvent::Type::Right);
+    KeyEvent ev9("a");
+    KeyEvent ev10("A");
+    KeyEvent ev11("8");
+    KeyEvent ev12("8");
+    KeyEvent ev13("space");
+
+    ASSERT_TRUE(ev1 == ev2);
+    ASSERT_TRUE(ev3 == ev4);
+    ASSERT_TRUE(ev5 == ev6);
+    ASSERT_TRUE(ev7 == ev8);
+    ASSERT_TRUE(ev9 == ev10);
+    ASSERT_TRUE(ev11 == ev12);
+    ASSERT_TRUE(ev3 == ev13);
+
+    ASSERT_FALSE(ev1 == ev3);
+    ASSERT_FALSE(ev4 == ev6);
+    ASSERT_FALSE(ev7 == ev10);
+    ASSERT_FALSE(ev11 == ev13);
+}
