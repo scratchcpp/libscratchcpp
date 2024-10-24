@@ -137,3 +137,12 @@ bool Rect::contains(double x, double y) const
 
     return (x >= impl->left && x <= impl->right && y >= bottom && y <= top);
 }
+
+/*! Saves the intersection of the given rectangles (in Scratch space) to dst. */
+void Rect::intersection(const Rect &a, const Rect &b, Rect &dst)
+{
+    dst.impl->left = std::max(a.impl->left, b.impl->left);
+    dst.impl->right = std::min(a.impl->right, b.impl->right);
+    dst.impl->top = std::min(a.impl->top, b.impl->top);
+    dst.impl->bottom = std::max(a.impl->bottom, b.impl->bottom);
+}
