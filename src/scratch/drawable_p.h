@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <scratchcpp/signal.h>
+
 namespace libscratchcpp
 {
 
@@ -11,6 +13,7 @@ struct DrawablePrivate
 {
         int layerOrder = 0;
         IEngine *engine = nullptr;
+        mutable sigslot::signal<int> layerOrderChanged;
 };
 
 } // namespace libscratchcpp

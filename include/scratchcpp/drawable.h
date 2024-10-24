@@ -3,6 +3,7 @@
 #pragma once
 
 #include "global.h"
+#include "signal.h"
 #include "spimpl.h"
 
 namespace libscratchcpp
@@ -27,6 +28,7 @@ class LIBSCRATCHCPP_EXPORT Drawable
 
         int layerOrder() const;
         virtual void setLayerOrder(int newLayerOrder);
+        sigslot::signal<int> &layerOrderChanged() const;
 
         IEngine *engine() const;
         virtual void setEngine(IEngine *engine);

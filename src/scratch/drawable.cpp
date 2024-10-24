@@ -22,6 +22,13 @@ int Drawable::layerOrder() const
 void Drawable::setLayerOrder(int newLayerOrder)
 {
     impl->layerOrder = newLayerOrder;
+    impl->layerOrderChanged(newLayerOrder);
+}
+
+/*! Emits when the layer number changes. */
+sigslot::signal<int> &Drawable::layerOrderChanged() const
+{
+    return impl->layerOrderChanged;
 }
 
 /*! Returns the engine. */
