@@ -146,3 +146,12 @@ void Rect::intersection(const Rect &a, const Rect &b, Rect &dst)
     dst.impl->top = std::min(a.impl->top, b.impl->top);
     dst.impl->bottom = std::max(a.impl->bottom, b.impl->bottom);
 }
+
+/*! Saves the union of the given rectangles (in Scratch space) to dst. */
+void Rect::united(const Rect &a, const Rect &b, Rect &dst)
+{
+    dst.impl->left = std::min(a.impl->left, b.impl->left);
+    dst.impl->right = std::max(a.impl->right, b.impl->right);
+    dst.impl->top = std::max(a.impl->top, b.impl->top);
+    dst.impl->bottom = std::min(a.impl->bottom, b.impl->bottom);
+}

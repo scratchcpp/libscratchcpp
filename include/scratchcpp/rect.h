@@ -39,6 +39,7 @@ class LIBSCRATCHCPP_EXPORT Rect
         bool contains(double x, double y) const;
 
         static void intersection(const Rect &a, const Rect &b, Rect &dst);
+        static void united(const Rect &a, const Rect &b, Rect &dst);
 
     private:
         spimpl::impl_ptr<RectPrivate> impl;
