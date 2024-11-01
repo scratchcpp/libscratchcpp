@@ -981,6 +981,8 @@ TEST(ValueTest, ToDouble)
     ASSERT_TRUE(v.toDouble() < 0 && std::isinf(v.toDouble()));
     v = "NaN";
     ASSERT_EQ(v.toDouble(), 0.0);
+    v = std::numeric_limits<double>::quiet_NaN();
+    ASSERT_EQ(v.toDouble(), 0.0);
 
     v = "something";
     ASSERT_EQ(v.toDouble(), 0.0);

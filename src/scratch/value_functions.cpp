@@ -222,9 +222,9 @@ extern "C"
     /*! Returns the double representation of the given value. */
     double value_toDouble(const libscratchcpp::ValueData *v)
     {
-        if (v->type == ValueType::Number)
-            return v->numberValue;
-        else if (v->type == ValueType::Bool)
+        if (v->type == ValueType::Number) {
+            return std::isnan(v->numberValue) ? 0 : v->numberValue;
+        } else if (v->type == ValueType::Bool)
             return v->boolValue;
         else if (v->type == ValueType::String)
             return value_stringToDouble(v->stringValue);
