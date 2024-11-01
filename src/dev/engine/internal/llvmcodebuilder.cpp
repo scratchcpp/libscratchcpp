@@ -877,8 +877,10 @@ llvm::Value *LLVMCodeBuilder::castRawValue(std::shared_ptr<Register> reg, Compil
 llvm::Constant *LLVMCodeBuilder::castConstValue(const Value &value, Compiler::StaticType targetType)
 {
     switch (targetType) {
-        case Compiler::StaticType::Number:
-            return llvm::ConstantFP::get(m_ctx, llvm::APFloat(value.toDouble()));
+        case Compiler::StaticType::Number: {
+            const double nan = std::numeric_limits<double>::quiet_NaN();
+            return llvm::ConstantFP::get(m_ctx, llvm::APFloat(value.isNaN() ? nan : value.toDouble()));
+        }
 
         case Compiler::StaticType::Bool:
             return m_builder.getInt1(value.toBool());
