@@ -45,8 +45,6 @@ std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBl
     impl->block = startBlock;
 
     while (impl->block) {
-        size_t substacks = impl->substackTree.size();
-
         if (impl->block->compileFunction())
             impl->block->compile(this);
         else {
