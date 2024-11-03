@@ -142,6 +142,24 @@ void Compiler::createCmpLT()
     impl->builder->createCmpLT();
 }
 
+/*! Creates an AND operation using the last 2 values. */
+void Compiler::createAnd()
+{
+    impl->builder->createAnd();
+}
+
+/*! Creates an OR operation using the last 2 values. */
+void Compiler::createOr()
+{
+    impl->builder->createOr();
+}
+
+/*! Creates a NOT operation using the last value. */
+void Compiler::createNot()
+{
+    impl->builder->createNot();
+}
+
 /*! Jumps to the given if substack. */
 void Compiler::moveToIf(std::shared_ptr<Block> substack)
 {

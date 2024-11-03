@@ -310,6 +310,45 @@ TEST_F(CompilerTest, CreateCmpLT)
     compile(compiler, block);
 }
 
+TEST_F(CompilerTest, CreateAnd)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createAnd);
+        compiler->createAnd();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateOr)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createOr);
+        compiler->createOr();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateNot)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createNot);
+        compiler->createNot();
+    });
+
+    compile(compiler, block);
+}
+
 TEST_F(CompilerTest, MoveToIf)
 {
     Compiler compiler(&m_engine, &m_target);
