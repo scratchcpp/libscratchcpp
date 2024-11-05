@@ -37,6 +37,8 @@ class ICodeBuilder
         virtual void createOr() = 0;
         virtual void createNot() = 0;
 
+        virtual void createMod() = 0;
+
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;
         virtual void endIf() = 0;

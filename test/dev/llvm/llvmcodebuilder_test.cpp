@@ -1024,6 +1024,67 @@ TEST_F(LLVMCodeBuilderTest, Not)
     addOpTest("nan");
 }
 
+TEST_F(LLVMCodeBuilderTest, Mod)
+{
+    std::string expected;
+
+    auto addOpTest = [this, &expected](Value v1, Value v2) {
+        createBuilder(true);
+
+        m_builder->addConstValue(v1);
+        m_builder->addConstValue(v2);
+        m_builder->createMod();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(v1);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->addConstValue(v2);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->createMod();
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        std::string str = (v1 % v2).toString() + '\n';
+        std::string expected = str + str;
+
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes1 = v1.isString() ? "\"" : "";
+        const std::string quotes2 = v2.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+    };
+
+    addOpTest(4, 3);
+    addOpTest(3, 3);
+    addOpTest(2, 3);
+    addOpTest(1, 3);
+    addOpTest(0, 3);
+    addOpTest(-1, 3);
+    addOpTest(-2, 3);
+    addOpTest(-3, 3);
+    addOpTest(-4, 3);
+    addOpTest(4.75, 2);
+    addOpTest(-4.75, 2);
+    addOpTest(-4.75, -2);
+    addOpTest(4.75, -2);
+    addOpTest(5, 0);
+    addOpTest(-5, 0);
+    addOpTest(-2.5, "Infinity");
+    addOpTest(-1.2, "-Infinity");
+    addOpTest(2.5, "Infinity");
+    addOpTest(1.2, "-Infinity");
+    addOpTest("Infinity", 2);
+    addOpTest("-Infinity", 2);
+    addOpTest("Infinity", -2);
+    addOpTest("-Infinity", -2);
+    addOpTest(3, "NaN");
+    addOpTest(-3, "NaN");
+    addOpTest("NaN", 5);
+    addOpTest("NaN", -5);
+}
+
 TEST_F(LLVMCodeBuilderTest, Yield)
 {
     auto build = [this]() {

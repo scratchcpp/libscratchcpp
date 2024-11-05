@@ -180,6 +180,20 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::Mod: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                // rem(a, b) / b < 0.0 ? rem(a, b) + b : rem(a, b)
+                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
+                llvm::Value *num1 = removeNaN(castValue(arg1.second, arg1.first));
+                llvm::Value *num2 = removeNaN(castValue(arg2.second, arg2.first));
+                llvm::Value *value = m_builder.CreateFRem(num1, num2);                                // rem(a, b)
+                llvm::Value *cond = m_builder.CreateFCmpOLT(m_builder.CreateFDiv(value, num2), zero); // rem(a, b) / b < 0.0                                                            // rem(a, b)
+                step.functionReturnReg->value = m_builder.CreateSelect(cond, m_builder.CreateFAdd(value, num2), value);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -546,6 +560,11 @@ void LLVMCodeBuilder::createOr()
 void LLVMCodeBuilder::createNot()
 {
     createOp(Step::Type::Not, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 1);
+}
+
+void LLVMCodeBuilder::createMod()
+{
+    createOp(Step::Type::Mod, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::beginIfStatement()
