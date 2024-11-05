@@ -50,7 +50,7 @@ extern "C"
         return v < 0 && std::isinf(v);
     }
 
-    inline long value_convert_int_str(const char *str, int n, bool *ok)
+    inline double value_convert_int_str(const char *str, int n, bool *ok)
     {
         if (ok)
             *ok = false;
@@ -80,7 +80,7 @@ extern "C"
             *ok = true;
 
         if (isNegative)
-            return -ret;
+            return -static_cast<double>(ret); // for negative zero
         else
             return ret;
     }
