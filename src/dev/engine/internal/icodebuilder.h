@@ -38,6 +38,7 @@ class ICodeBuilder
         virtual void createNot() = 0;
 
         virtual void createMod() = 0;
+        virtual void createRound() = 0;
 
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;

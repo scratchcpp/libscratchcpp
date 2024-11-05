@@ -1085,6 +1085,54 @@ TEST_F(LLVMCodeBuilderTest, Mod)
     addOpTest("NaN", -5);
 }
 
+TEST_F(LLVMCodeBuilderTest, Round)
+{
+    std::string expected;
+
+    auto addOpTest = [this, &expected](Value v1, double expectedResult) {
+        createBuilder(true);
+
+        m_builder->addConstValue(v1);
+        m_builder->createRound();
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number });
+
+        m_builder->addConstValue(v1);
+        m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+        m_builder->createRound();
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number });
+
+        std::stringstream stream;
+        stream << expectedResult;
+        std::string str = stream.str() + '\n';
+        std::string expected = str + str;
+
+        auto code = m_builder->finalize();
+        auto ctx = code->createExecutionContext(&m_target);
+
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        const std::string quotes1 = v1.isString() ? "\"" : "";
+        ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes1 << v1.toString() << quotes1;
+    };
+
+    static const double inf = std::numeric_limits<double>::infinity();
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+
+    addOpTest(4.0, 4.0);
+    addOpTest(3.2, 3.0);
+    addOpTest(3.5, 4.0);
+    addOpTest(3.6, 4.0);
+    addOpTest(-2.4, -2.0);
+    addOpTest(-2.5, -2.0);
+    addOpTest(-2.6, -3.0);
+    addOpTest(-0.4, -0.0);
+    addOpTest(-0.5, -0.0);
+    addOpTest(-0.51, -1.0);
+    addOpTest(inf, inf);
+    addOpTest(-inf, -inf);
+    addOpTest(nan, 0);
+}
+
 TEST_F(LLVMCodeBuilderTest, Yield)
 {
     auto build = [this]() {

@@ -194,6 +194,23 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::Round: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // x >= 0.0 ? round(x) : (x >= -0.5 ? -0.0 : floor(x + 0.5))
+                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
+                llvm::Constant *negativeZero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(-0.0));
+                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::round, m_builder.getDoubleTy());
+                llvm::Function *floorFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::floor, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                llvm::Value *notNegative = m_builder.CreateFCmpOGE(num, zero);                                                                             // num >= 0.0
+                llvm::Value *roundNum = m_builder.CreateCall(roundFunc, num);                                                                              // round(num)
+                llvm::Value *negativeCond = m_builder.CreateFCmpOGE(num, llvm::ConstantFP::get(m_ctx, llvm::APFloat(-0.5)));                               // num >= -0.5
+                llvm::Value *negativeRound = m_builder.CreateCall(floorFunc, m_builder.CreateFAdd(num, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.5)))); // floor(x + 0.5)
+                step.functionReturnReg->value = m_builder.CreateSelect(notNegative, roundNum, m_builder.CreateSelect(negativeCond, negativeZero, negativeRound));
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -565,6 +582,11 @@ void LLVMCodeBuilder::createNot()
 void LLVMCodeBuilder::createMod()
 {
     createOp(Step::Type::Mod, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+}
+
+void LLVMCodeBuilder::createRound()
+{
+    createOp(Step::Type::Round, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::beginIfStatement()
