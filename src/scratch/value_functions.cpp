@@ -354,17 +354,9 @@ extern "C"
     /*! Calculates the modulo the given values and writes the result to dst. */
     void value_mod(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
     {
-        double a = value_toDouble(v1);
-        double b = value_toDouble(v2);
-
-        if ((b == 0) || std::isinf(a))
-            value_assign_double(dst, std::numeric_limits<double>::quiet_NaN());
-        else if (std::isinf(b))
-            value_assign_double(dst, value_toDouble(v1));
-        else if (value_isNegative(v1) || value_isNegative(v2))
-            value_assign_double(dst, fmod(value_toDouble(v2) + fmod(value_toDouble(v1), -value_toDouble(v2)), value_toDouble(v2)));
-        else
-            value_assign_double(dst, fmod(value_toDouble(v1), value_toDouble(v2)));
+        const double a = value_toDouble(v1);
+        const double b = value_toDouble(v2);
+        value_assign_double(dst, fmod(a, b) / b < 0.0 ? fmod(a, b) + b : fmod(a, b));
     }
 
     /* comparison */
