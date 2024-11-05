@@ -938,6 +938,15 @@ TEST(ValueTest, ToDouble)
     v = "-0.15";
     ASSERT_EQ(v.toDouble(), -0.15);
 
+    v = "0";
+    ASSERT_EQ(v.toDouble(), 0.0);
+    v = "-0";
+    ASSERT_EQ(v.toDouble(), -0.0);
+    v = "0.0";
+    ASSERT_EQ(v.toDouble(), 0.0);
+    v = "-0.0";
+    ASSERT_EQ(v.toDouble(), -0.0);
+
     v = "+.15";
     ASSERT_EQ(v.toDouble(), 0.15);
     v = ".15";
@@ -2878,6 +2887,11 @@ TEST(ValueTest, StringToDouble)
 
     ASSERT_EQ(value_stringToDouble("0.15"), 0.15);
     ASSERT_EQ(value_stringToDouble("-0.15"), -0.15);
+
+    ASSERT_EQ(value_stringToDouble("0"), 0.0);
+    ASSERT_EQ(value_stringToDouble("-0"), -0.0);
+    ASSERT_EQ(value_stringToDouble("0.0"), 0.0);
+    ASSERT_EQ(value_stringToDouble("-0.0"), -0.0);
 
     ASSERT_EQ(value_stringToDouble("+.15"), 0.15);
     ASSERT_EQ(value_stringToDouble(".15"), 0.15);
