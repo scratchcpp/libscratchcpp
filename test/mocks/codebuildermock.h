@@ -35,6 +35,7 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(void, createSqrt, (), (override));
         MOCK_METHOD(void, createSin, (), (override));
         MOCK_METHOD(void, createCos, (), (override));
+        MOCK_METHOD(void, createTan, (), (override));
 
         MOCK_METHOD(void, beginIfStatement, (), (override));
         MOCK_METHOD(void, beginElseBranch, (), (override));
