@@ -41,6 +41,7 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         void createMod() override;
         void createRound() override;
+        void createAbs() override;
 
         void beginIfStatement() override;
         void beginElseBranch() override;
@@ -86,6 +87,7 @@ class LLVMCodeBuilder : public ICodeBuilder
                     Not,
                     Mod,
                     Round,
+                    Abs,
                     Yield,
                     BeginIf,
                     BeginElse,
