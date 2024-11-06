@@ -238,6 +238,18 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::Sqrt: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // sqrt(x) + 0.0
+                // This avoids negative zero
+                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
+                llvm::Function *sqrtFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::sqrt, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateCall(sqrtFunc, num), zero);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -629,6 +641,11 @@ void LLVMCodeBuilder::createFloor()
 void LLVMCodeBuilder::createCeil()
 {
     createOp(Step::Type::Ceil, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createSqrt()
+{
+    createOp(Step::Type::Sqrt, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::beginIfStatement()
