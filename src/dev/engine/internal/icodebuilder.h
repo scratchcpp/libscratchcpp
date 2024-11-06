@@ -41,6 +41,7 @@ class ICodeBuilder
         virtual void createRound() = 0;
         virtual void createAbs() = 0;
         virtual void createFloor() = 0;
+        virtual void createCeil() = 0;
 
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;

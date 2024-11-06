@@ -229,6 +229,15 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::Ceil: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                llvm::Function *ceilFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::ceil, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateCall(ceilFunc, num);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -615,6 +624,11 @@ void LLVMCodeBuilder::createAbs()
 void LLVMCodeBuilder::createFloor()
 {
     createOp(Step::Type::Floor, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createCeil()
+{
+    createOp(Step::Type::Ceil, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::beginIfStatement()
