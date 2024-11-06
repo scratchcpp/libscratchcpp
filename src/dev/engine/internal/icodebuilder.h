@@ -44,6 +44,7 @@ class ICodeBuilder
         virtual void createCeil() = 0;
         virtual void createSqrt() = 0;
         virtual void createSin() = 0;
+        virtual void createCos() = 0;
 
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;
