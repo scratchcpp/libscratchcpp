@@ -45,6 +45,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createFloor() override;
         void createCeil() override;
         void createSqrt() override;
+        void createSin() override;
 
         void beginIfStatement() override;
         void beginElseBranch() override;
@@ -94,6 +95,7 @@ class LLVMCodeBuilder : public ICodeBuilder
                     Floor,
                     Ceil,
                     Sqrt,
+                    Sin,
                     Yield,
                     BeginIf,
                     BeginElse,
