@@ -40,6 +40,7 @@ class ICodeBuilder
         virtual void createMod() = 0;
         virtual void createRound() = 0;
         virtual void createAbs() = 0;
+        virtual void createFloor() = 0;
 
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;
