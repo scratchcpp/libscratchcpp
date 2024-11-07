@@ -180,6 +180,220 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::Mod: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                // rem(a, b) / b < 0.0 ? rem(a, b) + b : rem(a, b)
+                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
+                llvm::Value *num1 = removeNaN(castValue(arg1.second, arg1.first));
+                llvm::Value *num2 = removeNaN(castValue(arg2.second, arg2.first));
+                llvm::Value *value = m_builder.CreateFRem(num1, num2);                                // rem(a, b)
+                llvm::Value *cond = m_builder.CreateFCmpOLT(m_builder.CreateFDiv(value, num2), zero); // rem(a, b) / b < 0.0                                                            // rem(a, b)
+                step.functionReturnReg->value = m_builder.CreateSelect(cond, m_builder.CreateFAdd(value, num2), value);
+                break;
+            }
+
+            case Step::Type::Round: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // x >= 0.0 ? round(x) : (x >= -0.5 ? -0.0 : floor(x + 0.5))
+                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
+                llvm::Constant *negativeZero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(-0.0));
+                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::round, m_builder.getDoubleTy());
+                llvm::Function *floorFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::floor, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                llvm::Value *notNegative = m_builder.CreateFCmpOGE(num, zero);                                                                             // num >= 0.0
+                llvm::Value *roundNum = m_builder.CreateCall(roundFunc, num);                                                                              // round(num)
+                llvm::Value *negativeCond = m_builder.CreateFCmpOGE(num, llvm::ConstantFP::get(m_ctx, llvm::APFloat(-0.5)));                               // num >= -0.5
+                llvm::Value *negativeRound = m_builder.CreateCall(floorFunc, m_builder.CreateFAdd(num, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.5)))); // floor(x + 0.5)
+                step.functionReturnReg->value = m_builder.CreateSelect(notNegative, roundNum, m_builder.CreateSelect(negativeCond, negativeZero, negativeRound));
+                break;
+            }
+
+            case Step::Type::Abs: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                llvm::Function *absFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::fabs, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateCall(absFunc, num);
+                break;
+            }
+
+            case Step::Type::Floor: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                llvm::Function *floorFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::floor, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateCall(floorFunc, num);
+                break;
+            }
+
+            case Step::Type::Ceil: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                llvm::Function *ceilFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::ceil, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateCall(ceilFunc, num);
+                break;
+            }
+
+            case Step::Type::Sqrt: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // sqrt(x) + 0.0
+                // This avoids negative zero
+                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
+                llvm::Function *sqrtFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::sqrt, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateCall(sqrtFunc, num), zero);
+                break;
+            }
+
+            case Step::Type::Sin: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // round(sin(x * pi / 180.0) * 1e10) / 1e10 + 0.0
+                // +0.0 to avoid -0.0
+                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
+                llvm::Constant *pi = llvm::ConstantFP::get(m_ctx, llvm::APFloat(std::acos(-1.0)));
+                llvm::Constant *piDeg = llvm::ConstantFP::get(m_ctx, llvm::APFloat(180.0));
+                llvm::Constant *factor = llvm::ConstantFP::get(m_ctx, llvm::APFloat(1e10));
+                llvm::Function *sinFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::sin, m_builder.getDoubleTy());
+                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::round, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                llvm::Value *sinResult = m_builder.CreateCall(sinFunc, m_builder.CreateFDiv(m_builder.CreateFMul(num, pi), piDeg)); // sin(x * pi / 180)
+                llvm::Value *rounded = m_builder.CreateCall(roundFunc, m_builder.CreateFMul(sinResult, factor));                    // round(sin(x * 180) * 1e10)
+                step.functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateFDiv(rounded, factor), zero);
+                break;
+            }
+
+            case Step::Type::Cos: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // round(cos(x * pi / 180.0) * 1e10) / 1e10
+                llvm::Constant *pi = llvm::ConstantFP::get(m_ctx, llvm::APFloat(std::acos(-1.0)));
+                llvm::Constant *piDeg = llvm::ConstantFP::get(m_ctx, llvm::APFloat(180.0));
+                llvm::Constant *factor = llvm::ConstantFP::get(m_ctx, llvm::APFloat(1e10));
+                llvm::Function *cosFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::cos, m_builder.getDoubleTy());
+                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::round, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                llvm::Value *cosResult = m_builder.CreateCall(cosFunc, m_builder.CreateFDiv(m_builder.CreateFMul(num, pi), piDeg)); // cos(x * pi / 180)
+                llvm::Value *rounded = m_builder.CreateCall(roundFunc, m_builder.CreateFMul(cosResult, factor));                    // round(cos(x * 180) * 1e10)
+                step.functionReturnReg->value = m_builder.CreateFDiv(rounded, factor);
+                break;
+            }
+
+            case Step::Type::Tan: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // ((mod = rem(x, 360.0)) == -270.0 || mod == 90.0) ? inf : ((mod == -90.0 || mod == 270.0) ? -inf : round(tan(x * pi / 180.0) * 1e10) / 1e10 + 0.0)
+                // +0.0 to avoid -0.0
+                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
+                llvm::Constant *full = llvm::ConstantFP::get(m_ctx, llvm::APFloat(360.0));
+                llvm::Constant *posInf = llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), false);
+                llvm::Constant *negInf = llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), true);
+                llvm::Constant *undefined1 = llvm::ConstantFP::get(m_ctx, llvm::APFloat(-270.0));
+                llvm::Constant *undefined2 = llvm::ConstantFP::get(m_ctx, llvm::APFloat(90.0));
+                llvm::Constant *undefined3 = llvm::ConstantFP::get(m_ctx, llvm::APFloat(-90.0));
+                llvm::Constant *undefined4 = llvm::ConstantFP::get(m_ctx, llvm::APFloat(270.0));
+                llvm::Constant *pi = llvm::ConstantFP::get(m_ctx, llvm::APFloat(std::acos(-1.0)));
+                llvm::Constant *piDeg = llvm::ConstantFP::get(m_ctx, llvm::APFloat(180.0));
+                llvm::Constant *factor = llvm::ConstantFP::get(m_ctx, llvm::APFloat(1e10));
+                llvm::Function *tanFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::tan, m_builder.getDoubleTy());
+                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::round, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                llvm::Value *mod = m_builder.CreateFRem(num, full);
+                llvm::Value *isUndefined1 = m_builder.CreateFCmpOEQ(mod, undefined1);                                               // rem(x, 360.0) == -270.0
+                llvm::Value *isUndefined2 = m_builder.CreateFCmpOEQ(mod, undefined2);                                               // rem(x, 360.0) == 90.0
+                llvm::Value *isUndefined3 = m_builder.CreateFCmpOEQ(mod, undefined3);                                               // rem(x, 360.0) == -90.0
+                llvm::Value *isUndefined4 = m_builder.CreateFCmpOEQ(mod, undefined4);                                               // rem(x, 360.0) == 270.0
+                llvm::Value *tanResult = m_builder.CreateCall(tanFunc, m_builder.CreateFDiv(m_builder.CreateFMul(num, pi), piDeg)); // tan(x * pi / 180)
+                llvm::Value *rounded = m_builder.CreateCall(roundFunc, m_builder.CreateFMul(tanResult, factor));                    // round(tan(x * 180) * 1e10)
+                llvm::Value *result = m_builder.CreateFAdd(m_builder.CreateFDiv(rounded, factor), zero);                            // round(tan(x * pi / 180.0) * 1e10) / 1e10 + 0.0
+                llvm::Value *inner = m_builder.CreateSelect(m_builder.CreateOr(isUndefined3, isUndefined4), negInf, result);
+                step.functionReturnReg->value = m_builder.CreateSelect(m_builder.CreateOr(isUndefined1, isUndefined2), posInf, inner);
+                break;
+            }
+
+            case Step::Type::Asin: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // asin(x) * 180.0 / pi + 0.0
+                // +0.0 to avoid -0.0
+                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
+                llvm::Constant *pi = llvm::ConstantFP::get(m_ctx, llvm::APFloat(std::acos(-1.0)));
+                llvm::Constant *piDeg = llvm::ConstantFP::get(m_ctx, llvm::APFloat(180.0));
+                llvm::Function *asinFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::asin, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(asinFunc, num), piDeg), pi), zero);
+                break;
+            }
+
+            case Step::Type::Acos: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // acos(x) * 180.0 / pi
+                llvm::Constant *pi = llvm::ConstantFP::get(m_ctx, llvm::APFloat(std::acos(-1.0)));
+                llvm::Constant *piDeg = llvm::ConstantFP::get(m_ctx, llvm::APFloat(180.0));
+                llvm::Function *acosFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::acos, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(acosFunc, num), piDeg), pi);
+                break;
+            }
+
+            case Step::Type::Atan: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // atan(x) * 180.0 / pi
+                llvm::Constant *pi = llvm::ConstantFP::get(m_ctx, llvm::APFloat(std::acos(-1.0)));
+                llvm::Constant *piDeg = llvm::ConstantFP::get(m_ctx, llvm::APFloat(180.0));
+                llvm::Function *atanFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::atan, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(atanFunc, num), piDeg), pi);
+                break;
+            }
+
+            case Step::Type::Ln: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // log(x)
+                llvm::Function *logFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::log, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateCall(logFunc, num);
+                break;
+            }
+
+            case Step::Type::Log10: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // log10(x)
+                llvm::Function *log10Func = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::log10, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateCall(log10Func, num);
+                break;
+            }
+
+            case Step::Type::Exp: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // exp(x)
+                llvm::Function *expFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::exp, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateCall(expFunc, num);
+                break;
+            }
+
+            case Step::Type::Exp10: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // exp10(x)
+                llvm::Function *expFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::exp10, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateCall(expFunc, num);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -546,6 +760,86 @@ void LLVMCodeBuilder::createOr()
 void LLVMCodeBuilder::createNot()
 {
     createOp(Step::Type::Not, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 1);
+}
+
+void LLVMCodeBuilder::createMod()
+{
+    createOp(Step::Type::Mod, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+}
+
+void LLVMCodeBuilder::createRound()
+{
+    createOp(Step::Type::Round, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createAbs()
+{
+    createOp(Step::Type::Abs, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createFloor()
+{
+    createOp(Step::Type::Floor, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createCeil()
+{
+    createOp(Step::Type::Ceil, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createSqrt()
+{
+    createOp(Step::Type::Sqrt, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createSin()
+{
+    createOp(Step::Type::Sin, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createCos()
+{
+    createOp(Step::Type::Cos, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createTan()
+{
+    createOp(Step::Type::Tan, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createAsin()
+{
+    createOp(Step::Type::Asin, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createAcos()
+{
+    createOp(Step::Type::Acos, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createAtan()
+{
+    createOp(Step::Type::Atan, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createLn()
+{
+    createOp(Step::Type::Ln, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createLog10()
+{
+    createOp(Step::Type::Log10, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createExp()
+{
+    createOp(Step::Type::Exp, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createExp10()
+{
+    createOp(Step::Type::Exp10, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::beginIfStatement()

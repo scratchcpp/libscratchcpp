@@ -27,6 +27,23 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(void, createOr, (), (override));
         MOCK_METHOD(void, createNot, (), (override));
 
+        MOCK_METHOD(void, createMod, (), (override));
+        MOCK_METHOD(void, createRound, (), (override));
+        MOCK_METHOD(void, createAbs, (), (override));
+        MOCK_METHOD(void, createFloor, (), (override));
+        MOCK_METHOD(void, createCeil, (), (override));
+        MOCK_METHOD(void, createSqrt, (), (override));
+        MOCK_METHOD(void, createSin, (), (override));
+        MOCK_METHOD(void, createCos, (), (override));
+        MOCK_METHOD(void, createTan, (), (override));
+        MOCK_METHOD(void, createAsin, (), (override));
+        MOCK_METHOD(void, createAcos, (), (override));
+        MOCK_METHOD(void, createAtan, (), (override));
+        MOCK_METHOD(void, createLn, (), (override));
+        MOCK_METHOD(void, createLog10, (), (override));
+        MOCK_METHOD(void, createExp, (), (override));
+        MOCK_METHOD(void, createExp10, (), (override));
+
         MOCK_METHOD(void, beginIfStatement, (), (override));
         MOCK_METHOD(void, beginElseBranch, (), (override));
         MOCK_METHOD(void, endIf, (), (override));

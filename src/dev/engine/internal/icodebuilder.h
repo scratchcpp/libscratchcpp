@@ -37,6 +37,23 @@ class ICodeBuilder
         virtual void createOr() = 0;
         virtual void createNot() = 0;
 
+        virtual void createMod() = 0;
+        virtual void createRound() = 0;
+        virtual void createAbs() = 0;
+        virtual void createFloor() = 0;
+        virtual void createCeil() = 0;
+        virtual void createSqrt() = 0;
+        virtual void createSin() = 0;
+        virtual void createCos() = 0;
+        virtual void createTan() = 0;
+        virtual void createAsin() = 0;
+        virtual void createAcos() = 0;
+        virtual void createAtan() = 0;
+        virtual void createLn() = 0;
+        virtual void createLog10() = 0;
+        virtual void createExp() = 0;
+        virtual void createExp10() = 0;
+
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;
         virtual void endIf() = 0;

@@ -61,6 +61,23 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void createOr();
         void createNot();
 
+        void createMod();
+        void createRound();
+        void createAbs();
+        void createFloor();
+        void createCeil();
+        void createSqrt();
+        void createSin();
+        void createCos();
+        void createTan();
+        void createAsin();
+        void createAcos();
+        void createAtan();
+        void createLn();
+        void createLog10();
+        void createExp();
+        void createExp10();
+
         void moveToIf(std::shared_ptr<Block> substack);
         void moveToIfElse(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2);
         void moveToRepeatLoop(std::shared_ptr<Block> substack);

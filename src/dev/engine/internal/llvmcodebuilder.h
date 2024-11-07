@@ -39,6 +39,23 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createOr() override;
         void createNot() override;
 
+        void createMod() override;
+        void createRound() override;
+        void createAbs() override;
+        void createFloor() override;
+        void createCeil() override;
+        void createSqrt() override;
+        void createSin() override;
+        void createCos() override;
+        void createTan() override;
+        void createAsin() override;
+        void createAcos() override;
+        void createAtan() override;
+        void createLn() override;
+        void createLog10() override;
+        void createExp() override;
+        void createExp10() override;
+
         void beginIfStatement() override;
         void beginElseBranch() override;
         void endIf() override;
@@ -81,6 +98,22 @@ class LLVMCodeBuilder : public ICodeBuilder
                     And,
                     Or,
                     Not,
+                    Mod,
+                    Round,
+                    Abs,
+                    Floor,
+                    Ceil,
+                    Sqrt,
+                    Sin,
+                    Cos,
+                    Tan,
+                    Asin,
+                    Acos,
+                    Atan,
+                    Ln,
+                    Log10,
+                    Exp,
+                    Exp10,
                     Yield,
                     BeginIf,
                     BeginElse,
