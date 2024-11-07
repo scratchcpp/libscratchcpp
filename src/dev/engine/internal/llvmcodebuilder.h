@@ -54,6 +54,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createLn() override;
         void createLog10() override;
         void createExp() override;
+        void createExp10() override;
 
         void beginIfStatement() override;
         void beginElseBranch() override;
@@ -112,6 +113,7 @@ class LLVMCodeBuilder : public ICodeBuilder
                     Ln,
                     Log10,
                     Exp,
+                    Exp10,
                     Yield,
                     BeginIf,
                     BeginElse,

@@ -52,6 +52,7 @@ class ICodeBuilder
         virtual void createLn() = 0;
         virtual void createLog10() = 0;
         virtual void createExp() = 0;
+        virtual void createExp10() = 0;
 
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;
