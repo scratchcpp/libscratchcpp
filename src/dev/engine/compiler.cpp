@@ -160,6 +160,102 @@ void Compiler::createNot()
     impl->builder->createNot();
 }
 
+/*! Creates a remainder operation using the last 2 values. */
+void Compiler::createMod()
+{
+    impl->builder->createMod();
+}
+
+/*! Creates a round operation using the last value. */
+void Compiler::createRound()
+{
+    impl->builder->createRound();
+}
+
+/*! Creates an abs operation using the last value. */
+void Compiler::createAbs()
+{
+    impl->builder->createAbs();
+}
+
+/*! Creates a floor operation using the last value. */
+void Compiler::createFloor()
+{
+    impl->builder->createFloor();
+}
+
+/*! Creates a ceiling operation using the last value. */
+void Compiler::createCeil()
+{
+    impl->builder->createCeil();
+}
+
+/*! Creates a square root operation using the last value. */
+void Compiler::createSqrt()
+{
+    impl->builder->createSqrt();
+}
+
+/*! Creates a sin operation using the last value. */
+void Compiler::createSin()
+{
+    impl->builder->createSin();
+}
+
+/*! Creates a cos operation using the last value. */
+void Compiler::createCos()
+{
+    impl->builder->createCos();
+}
+
+/*! Creates a tan operation using the last value. */
+void Compiler::createTan()
+{
+    impl->builder->createTan();
+}
+
+/*! Creates an asin operation using the last value. */
+void Compiler::createAsin()
+{
+    impl->builder->createAsin();
+}
+
+/*! Creates an acos operation using the last value. */
+void Compiler::createAcos()
+{
+    impl->builder->createAcos();
+}
+
+/*! Creates an atan operation using the last value. */
+void Compiler::createAtan()
+{
+    impl->builder->createAtan();
+}
+
+/*! Creates an ln operation using the last value. */
+void Compiler::createLn()
+{
+    impl->builder->createLn();
+}
+
+/*! Creates a log10 operation using the last value. */
+void Compiler::createLog10()
+{
+    impl->builder->createLog10();
+}
+
+/*! Creates an e^x operation using the last value. */
+void Compiler::createExp()
+{
+    impl->builder->createExp();
+}
+
+/*! Creates a 10^x operation using the last value. */
+void Compiler::createExp10()
+{
+    impl->builder->createExp10();
+}
+
 /*! Jumps to the given if substack. */
 void Compiler::moveToIf(std::shared_ptr<Block> substack)
 {

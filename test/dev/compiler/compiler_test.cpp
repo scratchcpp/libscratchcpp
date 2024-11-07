@@ -349,6 +349,214 @@ TEST_F(CompilerTest, CreateNot)
     compile(compiler, block);
 }
 
+TEST_F(CompilerTest, CreateMod)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createMod);
+        compiler->createMod();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateRound)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createRound);
+        compiler->createRound();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateAbs)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createAbs);
+        compiler->createAbs();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateFloor)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createFloor);
+        compiler->createFloor();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateCeil)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createCeil);
+        compiler->createCeil();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateSqrt)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createSqrt);
+        compiler->createSqrt();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateSin)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createSin);
+        compiler->createSin();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateCos)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createCos);
+        compiler->createCos();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateTan)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createTan);
+        compiler->createTan();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateAsin)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createAsin);
+        compiler->createAsin();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateAcos)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createAcos);
+        compiler->createAcos();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateAtan)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createAtan);
+        compiler->createAtan();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateLn)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createLn);
+        compiler->createLn();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateLog10)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createLog10);
+        compiler->createLog10();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateExp)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createExp);
+        compiler->createExp();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateExp10)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, createExp10);
+        compiler->createExp10();
+    });
+
+    compile(compiler, block);
+}
+
 TEST_F(CompilerTest, MoveToIf)
 {
     Compiler compiler(&m_engine, &m_target);
