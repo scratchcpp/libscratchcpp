@@ -46,6 +46,7 @@ class ICodeBuilder
         virtual void createSin() = 0;
         virtual void createCos() = 0;
         virtual void createTan() = 0;
+        virtual void createAsin() = 0;
 
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;

@@ -316,6 +316,20 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::Asin: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // asin(x) * 180.0 / pi + 0.0
+                // +0.0 to avoid -0.0
+                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
+                llvm::Constant *pi = llvm::ConstantFP::get(m_ctx, llvm::APFloat(std::acos(-1.0)));
+                llvm::Constant *piDeg = llvm::ConstantFP::get(m_ctx, llvm::APFloat(180.0));
+                llvm::Function *asinFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::asin, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(asinFunc, num), piDeg), pi), zero);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -727,6 +741,11 @@ void LLVMCodeBuilder::createCos()
 void LLVMCodeBuilder::createTan()
 {
     createOp(Step::Type::Tan, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createAsin()
+{
+    createOp(Step::Type::Asin, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::beginIfStatement()

@@ -48,6 +48,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createSin() override;
         void createCos() override;
         void createTan() override;
+        void createAsin() override;
 
         void beginIfStatement() override;
         void beginElseBranch() override;
@@ -100,6 +101,7 @@ class LLVMCodeBuilder : public ICodeBuilder
                     Sin,
                     Cos,
                     Tan,
+                    Asin,
                     Yield,
                     BeginIf,
                     BeginElse,
