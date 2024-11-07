@@ -354,6 +354,16 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::Ln: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // log(x)
+                llvm::Function *logFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::log, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateCall(logFunc, num);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -780,6 +790,11 @@ void LLVMCodeBuilder::createAcos()
 void LLVMCodeBuilder::createAtan()
 {
     createOp(Step::Type::Atan, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createLn()
+{
+    createOp(Step::Type::Ln, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::beginIfStatement()

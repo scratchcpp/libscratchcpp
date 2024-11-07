@@ -51,6 +51,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createAsin() override;
         void createAcos() override;
         void createAtan() override;
+        void createLn() override;
 
         void beginIfStatement() override;
         void beginElseBranch() override;
@@ -106,6 +107,7 @@ class LLVMCodeBuilder : public ICodeBuilder
                     Asin,
                     Acos,
                     Atan,
+                    Ln,
                     Yield,
                     BeginIf,
                     BeginElse,

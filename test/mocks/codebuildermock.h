@@ -39,6 +39,7 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(void, createAsin, (), (override));
         MOCK_METHOD(void, createAcos, (), (override));
         MOCK_METHOD(void, createAtan, (), (override));
+        MOCK_METHOD(void, createLn, (), (override));
 
         MOCK_METHOD(void, beginIfStatement, (), (override));
         MOCK_METHOD(void, beginElseBranch, (), (override));
