@@ -50,6 +50,7 @@ class ICodeBuilder
         virtual void createAcos() = 0;
         virtual void createAtan() = 0;
         virtual void createLn() = 0;
+        virtual void createLog10() = 0;
 
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;
