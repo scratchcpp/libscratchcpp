@@ -374,6 +374,16 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::Exp: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // exp(x)
+                llvm::Function *expFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::exp, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateCall(expFunc, num);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -810,6 +820,11 @@ void LLVMCodeBuilder::createLn()
 void LLVMCodeBuilder::createLog10()
 {
     createOp(Step::Type::Log10, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createExp()
+{
+    createOp(Step::Type::Exp, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::beginIfStatement()

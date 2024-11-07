@@ -53,6 +53,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createAtan() override;
         void createLn() override;
         void createLog10() override;
+        void createExp() override;
 
         void beginIfStatement() override;
         void beginElseBranch() override;
@@ -110,6 +111,7 @@ class LLVMCodeBuilder : public ICodeBuilder
                     Atan,
                     Ln,
                     Log10,
+                    Exp,
                     Yield,
                     BeginIf,
                     BeginElse,
