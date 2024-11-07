@@ -330,6 +330,18 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::Acos: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                // acos(x) * 180.0 / pi
+                llvm::Constant *pi = llvm::ConstantFP::get(m_ctx, llvm::APFloat(std::acos(-1.0)));
+                llvm::Constant *piDeg = llvm::ConstantFP::get(m_ctx, llvm::APFloat(180.0));
+                llvm::Function *acosFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::acos, m_builder.getDoubleTy());
+                llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
+                step.functionReturnReg->value = m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(acosFunc, num), piDeg), pi);
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -746,6 +758,11 @@ void LLVMCodeBuilder::createTan()
 void LLVMCodeBuilder::createAsin()
 {
     createOp(Step::Type::Asin, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+}
+
+void LLVMCodeBuilder::createAcos()
+{
+    createOp(Step::Type::Acos, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::beginIfStatement()
