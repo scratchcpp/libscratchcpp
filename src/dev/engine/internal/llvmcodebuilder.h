@@ -56,6 +56,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createExp() override;
         void createExp10() override;
 
+        void createVariableWrite(Variable *variable) override;
+
         void beginIfStatement() override;
         void beginElseBranch() override;
         void endIf() override;
@@ -114,6 +116,8 @@ class LLVMCodeBuilder : public ICodeBuilder
                     Log10,
                     Exp,
                     Exp10,
+                    WriteVariable,
+                    ReadVariable,
                     Yield,
                     BeginIf,
                     BeginElse,
@@ -135,6 +139,7 @@ class LLVMCodeBuilder : public ICodeBuilder
                 std::vector<std::pair<Compiler::StaticType, std::shared_ptr<Register>>> args; // target type, register
                 Compiler::StaticType functionReturnType = Compiler::StaticType::Void;
                 std::shared_ptr<Register> functionReturnReg;
+                Variable *workVariable = nullptr; // for variable write
         };
 
         struct IfStatement
@@ -163,6 +168,14 @@ class LLVMCodeBuilder : public ICodeBuilder
                 llvm::Value *didSuspend = nullptr;
         };
 
+        struct VariablePtr
+        {
+                llvm::Value *ptr = nullptr;
+                Compiler::StaticType type = Compiler::StaticType::Unknown;
+                bool onStack = false;
+                bool changed = false;
+        };
+
         struct Procedure
         {
                 // TODO: Implement procedures
@@ -177,6 +190,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         };
 
         void initTypes();
+        void createVariableMap();
 
         Coroutine initCoroutine(llvm::Function *func);
         void verifyFunction(llvm::Function *func);
@@ -190,7 +204,14 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Value *isNaN(llvm::Value *num);
         llvm::Value *removeNaN(llvm::Value *num);
 
-        void createOp(Step::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount);
+        llvm::Value *getVariablePtr(llvm::Value *targetVariables, Variable *variable);
+        void syncVariables(llvm::Value *targetVariables);
+
+        Step &createOp(Step::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount);
+
+        void createValueStore(std::shared_ptr<Register> reg, llvm::Value *targetPtr);
+        void createValueCopy(llvm::Value *source, llvm::Value *target);
+        void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
         llvm::Value *createValue(std::shared_ptr<Register> reg);
         llvm::Value *createComparison(std::shared_ptr<Register> arg1, std::shared_ptr<Register> arg2, Comparison type);
 
@@ -202,6 +223,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_value_assign_bool();
         llvm::FunctionCallee resolve_value_assign_cstring();
         llvm::FunctionCallee resolve_value_assign_special();
+        llvm::FunctionCallee resolve_value_assign_copy();
         llvm::FunctionCallee resolve_value_toDouble();
         llvm::FunctionCallee resolve_value_toBool();
         llvm::FunctionCallee resolve_value_toCString();
@@ -215,6 +237,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_strcasecmp();
 
         Target *m_target = nullptr;
+        std::unordered_map<Variable *, size_t> m_targetVariableMap;
+        std::unordered_map<Variable *, VariablePtr> m_variablePtrs;
 
         std::string m_id;
         llvm::LLVMContext m_ctx;

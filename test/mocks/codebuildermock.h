@@ -44,6 +44,8 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(void, createExp, (), (override));
         MOCK_METHOD(void, createExp10, (), (override));
 
+        MOCK_METHOD(void, createVariableWrite, (Variable *), (override));
+
         MOCK_METHOD(void, beginIfStatement, (), (override));
         MOCK_METHOD(void, beginElseBranch, (), (override));
         MOCK_METHOD(void, endIf, (), (override));
