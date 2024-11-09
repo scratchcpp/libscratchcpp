@@ -41,7 +41,7 @@ class CompilerTest : public testing::Test
         {
             ASSERT_EQ(compiler.block(), nullptr);
             // TODO: Test warp
-            EXPECT_CALL(m_builderFactory, create(block->id(), false)).WillOnce(Return(m_builder));
+            EXPECT_CALL(m_builderFactory, create(compiler.target(), block->id(), false)).WillOnce(Return(m_builder));
             EXPECT_CALL(*m_builder, finalize()).WillOnce(Return(m_code));
             ASSERT_EQ(compiler.compile(block), m_code);
             ASSERT_EQ(compiler.block(), nullptr);

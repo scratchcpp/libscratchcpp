@@ -19,7 +19,8 @@ class LLVMCodeBuilderTest : public testing::Test
             test_function(nullptr, nullptr); // force dependency
         }
 
-        void createBuilder(bool warp) { m_builder = std::make_unique<LLVMCodeBuilder>("test", warp); }
+        void createBuilder(Target *target, bool warp) { m_builder = std::make_unique<LLVMCodeBuilder>(target, "test", warp); }
+        void createBuilder(bool warp) { createBuilder(nullptr, warp); }
 
         void callConstFuncForType(ValueType type)
         {

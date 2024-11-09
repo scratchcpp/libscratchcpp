@@ -17,7 +17,7 @@ class Target;
 class LLVMCodeBuilder : public ICodeBuilder
 {
     public:
-        LLVMCodeBuilder(const std::string &id, bool warp);
+        LLVMCodeBuilder(Target *target, const std::string &id, bool warp);
 
         std::shared_ptr<ExecutableCode> finalize() override;
 
@@ -213,6 +213,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_value_greater();
         llvm::FunctionCallee resolve_value_lower();
         llvm::FunctionCallee resolve_strcasecmp();
+
+        Target *m_target = nullptr;
 
         std::string m_id;
         llvm::LLVMContext m_ctx;

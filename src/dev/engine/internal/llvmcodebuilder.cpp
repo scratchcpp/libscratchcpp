@@ -13,7 +13,8 @@ using namespace libscratchcpp;
 static std::unordered_map<ValueType, Compiler::StaticType>
     TYPE_MAP = { { ValueType::Number, Compiler::StaticType::Number }, { ValueType::Bool, Compiler::StaticType::Bool }, { ValueType::String, Compiler::StaticType::String } };
 
-LLVMCodeBuilder::LLVMCodeBuilder(const std::string &id, bool warp) :
+LLVMCodeBuilder::LLVMCodeBuilder(Target *target, const std::string &id, bool warp) :
+    m_target(target),
     m_id(id),
     m_module(std::make_unique<llvm::Module>(id, m_ctx)),
     m_builder(m_ctx),

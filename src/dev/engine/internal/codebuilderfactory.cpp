@@ -12,7 +12,7 @@ std::shared_ptr<CodeBuilderFactory> CodeBuilderFactory::instance()
     return m_instance;
 }
 
-std::shared_ptr<ICodeBuilder> CodeBuilderFactory::create(const std::string &id, bool warp) const
+std::shared_ptr<ICodeBuilder> CodeBuilderFactory::create(Target *target, const std::string &id, bool warp) const
 {
-    return std::make_shared<LLVMCodeBuilder>(id, warp);
+    return std::make_shared<LLVMCodeBuilder>(target, id, warp);
 }
