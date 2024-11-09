@@ -1488,7 +1488,7 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_double()
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_bool()
 {
-    return resolveFunction("value_assign_double", llvm::FunctionType::get(m_builder.getVoidTy(), { m_valueDataType->getPointerTo(), m_builder.getInt1Ty() }, false));
+    return resolveFunction("value_assign_bool", llvm::FunctionType::get(m_builder.getVoidTy(), { m_valueDataType->getPointerTo(), m_builder.getInt1Ty() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_cstring()
