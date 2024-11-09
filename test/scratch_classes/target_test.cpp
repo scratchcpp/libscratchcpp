@@ -75,10 +75,19 @@ TEST(TargetTest, Variables)
     auto v3 = std::make_shared<Variable>("c", "var3");
 
     Target target;
+    ASSERT_EQ(target.variableData(), nullptr);
     ASSERT_EQ(target.addVariable(v1), 0);
+    ASSERT_TRUE(target.variableData());
+    ASSERT_EQ(target.variableData()[0], &v1->value().data());
     ASSERT_EQ(target.addVariable(v2), 1);
     ASSERT_EQ(target.addVariable(v3), 2);
+    ASSERT_EQ(target.variableData()[0], &v1->value().data());
+    ASSERT_EQ(target.variableData()[1], &v2->value().data());
+    ASSERT_EQ(target.variableData()[2], &v3->value().data());
     ASSERT_EQ(target.addVariable(v2), 1); // add existing variable
+    ASSERT_EQ(target.variableData()[0], &v1->value().data());
+    ASSERT_EQ(target.variableData()[1], &v2->value().data());
+    ASSERT_EQ(target.variableData()[2], &v3->value().data());
 
     ASSERT_EQ(v1->target(), &target);
     ASSERT_EQ(v2->target(), &target);

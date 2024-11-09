@@ -28,6 +28,8 @@ struct TargetPrivate
 
         std::string name;
         std::vector<std::shared_ptr<Variable>> variables;
+        bool variableDataDirty = true;
+        ValueData **variableData = nullptr;
         std::vector<std::shared_ptr<List>> lists;
         std::vector<std::shared_ptr<Block>> blocks;
         std::vector<std::shared_ptr<Comment>> comments;
