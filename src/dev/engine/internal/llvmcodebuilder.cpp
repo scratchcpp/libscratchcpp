@@ -1044,8 +1044,9 @@ llvm::Value *LLVMCodeBuilder::castValue(std::shared_ptr<Register> reg, Compiler:
                     return m_builder.CreateSIToFP(boolValue, m_builder.getDoubleTy());
                 }
 
-                case Compiler::StaticType::String: {
-                    // Convert string to double
+                case Compiler::StaticType::String:
+                case Compiler::StaticType::Unknown: {
+                    // Convert to double
                     return m_builder.CreateCall(resolve_value_toDouble(), reg->value);
                 }
 
@@ -1070,7 +1071,8 @@ llvm::Value *LLVMCodeBuilder::castValue(std::shared_ptr<Register> reg, Compiler:
                 }
 
                 case Compiler::StaticType::String:
-                    // Convert string to bool
+                case Compiler::StaticType::Unknown:
+                    // Convert to bool
                     return m_builder.CreateCall(resolve_value_toBool(), reg->value);
 
                 default:
@@ -1081,7 +1083,8 @@ llvm::Value *LLVMCodeBuilder::castValue(std::shared_ptr<Register> reg, Compiler:
         case Compiler::StaticType::String:
             switch (reg->type) {
                 case Compiler::StaticType::Number:
-                case Compiler::StaticType::Bool: {
+                case Compiler::StaticType::Bool:
+                case Compiler::StaticType::Unknown: {
                     // Cast to string
                     llvm::Value *ptr = m_builder.CreateCall(resolve_value_toCString(), reg->value);
                     m_heap.push_back(ptr); // deallocate later
