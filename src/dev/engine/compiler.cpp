@@ -38,7 +38,7 @@ std::shared_ptr<libscratchcpp::Block> Compiler::block() const
 /*! Compiles the script starting with the given block. */
 std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBlock)
 {
-    impl->builder = impl->builderFactory->create(startBlock->id(), false);
+    impl->builder = impl->builderFactory->create(impl->target, startBlock->id(), false);
     impl->substackTree.clear();
     impl->substackHit = false;
     impl->warp = false;
@@ -254,6 +254,12 @@ void Compiler::createExp()
 void Compiler::createExp10()
 {
     impl->builder->createExp10();
+}
+
+/*! Creates a variable write operation using the last value. */
+void Compiler::createVariableWrite(Variable *variable)
+{
+    impl->builder->createVariableWrite(variable);
 }
 
 /*! Jumps to the given if substack. */

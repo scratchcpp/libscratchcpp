@@ -29,6 +29,13 @@ Target::Target() :
 {
 }
 
+/*! Destroys Target. */
+Target::~Target()
+{
+    if (impl->variableData)
+        free(impl->variableData);
+}
+
 /*! Returns true. */
 bool Target::isTarget() const
 {
@@ -66,6 +73,7 @@ int Target::addVariable(std::shared_ptr<Variable> variable)
         return it - impl->variables.begin();
 
     impl->variables.push_back(variable);
+    impl->variableDataDirty = true;
     variable->setTarget(this);
 
     return impl->variables.size() - 1;
@@ -100,6 +108,31 @@ int Target::findVariableById(const std::string &id) const
         return -1;
     else
         return it - impl->variables.begin();
+}
+
+/*! Returns an array of raw variable data pointers (for optimized variable access). */
+ValueData **Target::variableData()
+{
+    if (impl->variableDataDirty) {
+        const size_t len = impl->variables.size();
+
+        if (len == 0) {
+            impl->variableDataDirty = false;
+            return nullptr;
+        }
+
+        if (impl->variableData)
+            impl->variableData = (ValueData **)realloc(impl->variableData, len * sizeof(ValueData *));
+        else
+            impl->variableData = (ValueData **)malloc(len * sizeof(ValueData *));
+
+        for (size_t i = 0; i < len; i++)
+            impl->variableData[i] = &impl->variables[i]->valuePtr()->data();
+
+        impl->variableDataDirty = false;
+    }
+
+    return impl->variableData;
 }
 
 /*! Returns the list of Scratch lists. */

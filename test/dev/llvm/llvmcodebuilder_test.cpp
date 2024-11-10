@@ -1,8 +1,12 @@
 #include <scratchcpp/value.h>
 #include <scratchcpp/dev/executablecode.h>
+#include <scratchcpp/sprite.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/variable.h>
 #include <dev/engine/internal/llvmcodebuilder.h>
 #include <gmock/gmock.h>
 #include <targetmock.h>
+#include <enginemock.h>
 
 #include "testfunctions.h"
 
@@ -19,7 +23,8 @@ class LLVMCodeBuilderTest : public testing::Test
             test_function(nullptr, nullptr); // force dependency
         }
 
-        void createBuilder(bool warp) { m_builder = std::make_unique<LLVMCodeBuilder>("test", warp); }
+        void createBuilder(Target *target, bool warp) { m_builder = std::make_unique<LLVMCodeBuilder>(target, "test", warp); }
+        void createBuilder(bool warp) { createBuilder(nullptr, warp); }
 
         void callConstFuncForType(ValueType type)
         {
@@ -1775,6 +1780,123 @@ TEST_F(LLVMCodeBuilderTest, Exp10)
     addOpTest(inf, inf);
     addOpTest(-inf, 0.0);
     addOpTest(nan, 1.0);
+}
+
+TEST_F(LLVMCodeBuilderTest, WriteVariable)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalVar1 = std::make_shared<Variable>("", "");
+    auto globalVar2 = std::make_shared<Variable>("", "");
+    auto globalVar3 = std::make_shared<Variable>("", "");
+    stage.addVariable(globalVar1);
+    stage.addVariable(globalVar2);
+    stage.addVariable(globalVar3);
+
+    auto localVar1 = std::make_shared<Variable>("", "");
+    auto localVar2 = std::make_shared<Variable>("", "");
+    auto localVar3 = std::make_shared<Variable>("", "");
+    sprite.addVariable(localVar1);
+    sprite.addVariable(localVar2);
+    sprite.addVariable(localVar3);
+
+    createBuilder(&sprite, true);
+
+    m_builder->addConstValue(5);
+    m_builder->createVariableWrite(globalVar1.get());
+
+    m_builder->addConstValue(-23.5);
+    m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number });
+    m_builder->createVariableWrite(globalVar2.get());
+
+    m_builder->addConstValue("test");
+    m_builder->createVariableWrite(globalVar3.get());
+
+    m_builder->addConstValue("abc");
+    m_builder->createVariableWrite(localVar1.get());
+
+    m_builder->addConstValue("hello world");
+    m_builder->addFunctionCall("test_const_string", Compiler::StaticType::String, { Compiler::StaticType::String });
+    m_builder->createVariableWrite(localVar1.get());
+
+    m_builder->addConstValue(false);
+    m_builder->createVariableWrite(localVar2.get());
+
+    m_builder->addConstValue(true);
+    m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool });
+    m_builder->createVariableWrite(localVar3.get());
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    code->run(ctx.get());
+
+    ASSERT_EQ(globalVar1->value(), 5);
+    ASSERT_EQ(globalVar2->value(), -23.5);
+    ASSERT_EQ(globalVar3->value(), "test");
+    ASSERT_EQ(localVar1->value(), "hello world");
+    ASSERT_EQ(localVar2->value(), false);
+    ASSERT_EQ(localVar3->value(), true);
+}
+
+TEST_F(LLVMCodeBuilderTest, ReadVariable)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalVar1 = std::make_shared<Variable>("", "", 87);
+    auto globalVar2 = std::make_shared<Variable>("", "", 6.4);
+    auto globalVar3 = std::make_shared<Variable>("", "", "abc");
+    stage.addVariable(globalVar1);
+    stage.addVariable(globalVar2);
+    stage.addVariable(globalVar3);
+
+    auto localVar1 = std::make_shared<Variable>("", "", false);
+    auto localVar2 = std::make_shared<Variable>("", "", true);
+    auto localVar3 = std::make_shared<Variable>("", "", "test");
+    sprite.addVariable(localVar1);
+    sprite.addVariable(localVar2);
+    sprite.addVariable(localVar3);
+
+    createBuilder(&sprite, true);
+
+    m_builder->addVariableValue(globalVar1.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addVariableValue(globalVar2.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addVariableValue(globalVar3.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addVariableValue(localVar1.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addVariableValue(localVar2.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addVariableValue(localVar3.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    std::string expected;
+    expected += globalVar1->value().toString() + '\n';
+    expected += globalVar2->value().toString() + '\n';
+    expected += globalVar3->value().toString() + '\n';
+    expected += localVar1->value().toString() + '\n';
+    expected += localVar2->value().toString() + '\n';
+    expected += localVar3->value().toString() + '\n';
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
 TEST_F(LLVMCodeBuilderTest, Yield)

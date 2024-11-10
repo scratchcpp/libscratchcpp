@@ -54,6 +54,8 @@ class ICodeBuilder
         virtual void createExp() = 0;
         virtual void createExp10() = 0;
 
+        virtual void createVariableWrite(Variable *variable) = 0;
+
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;
         virtual void endIf() = 0;

@@ -41,7 +41,7 @@ class CompilerTest : public testing::Test
         {
             ASSERT_EQ(compiler.block(), nullptr);
             // TODO: Test warp
-            EXPECT_CALL(m_builderFactory, create(block->id(), false)).WillOnce(Return(m_builder));
+            EXPECT_CALL(m_builderFactory, create(compiler.target(), block->id(), false)).WillOnce(Return(m_builder));
             EXPECT_CALL(*m_builder, finalize()).WillOnce(Return(m_code));
             ASSERT_EQ(compiler.compile(block), m_code);
             ASSERT_EQ(compiler.block(), nullptr);
@@ -116,7 +116,7 @@ TEST_F(CompilerTest, AddVariableValue)
     compile(compiler, block);
 }
 
-TEST_F(CompilerTest, AddListValue)
+TEST_F(CompilerTest, AddListContents)
 {
     Compiler compiler(&m_engine, &m_target);
     auto block = std::make_shared<Block>("a", "");
@@ -552,6 +552,20 @@ TEST_F(CompilerTest, CreateExp10)
     block->setCompileFunction([](Compiler *compiler) {
         EXPECT_CALL(*m_builder, createExp10);
         compiler->createExp10();
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateVariableWrite)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        auto var = std::make_shared<Variable>("", "");
+        EXPECT_CALL(*m_builder, createVariableWrite(var.get()));
+        compiler->createVariableWrite(var.get());
     });
 
     compile(compiler, block);

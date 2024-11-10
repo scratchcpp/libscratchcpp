@@ -5,6 +5,10 @@
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
 #include <llvm/Passes/PassBuilder.h>
 
+#include <scratchcpp/stage.h>
+#include <scratchcpp/iengine.h>
+#include <scratchcpp/variable.h>
+
 #include "llvmcodebuilder.h"
 #include "llvmexecutablecode.h"
 
@@ -13,7 +17,8 @@ using namespace libscratchcpp;
 static std::unordered_map<ValueType, Compiler::StaticType>
     TYPE_MAP = { { ValueType::Number, Compiler::StaticType::Number }, { ValueType::Bool, Compiler::StaticType::Bool }, { ValueType::String, Compiler::StaticType::String } };
 
-LLVMCodeBuilder::LLVMCodeBuilder(const std::string &id, bool warp) :
+LLVMCodeBuilder::LLVMCodeBuilder(Target *target, const std::string &id, bool warp) :
+    m_target(target),
     m_id(id),
     m_module(std::make_unique<llvm::Module>(id, m_ctx)),
     m_builder(m_ctx),
@@ -27,6 +32,7 @@ LLVMCodeBuilder::LLVMCodeBuilder(const std::string &id, bool warp) :
     m_constValues.push_back({});
     m_regs.push_back({});
     initTypes();
+    createVariableMap();
 }
 
 std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
@@ -40,10 +46,12 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     }
 
     // Create function
-    // void *f(Target *)
+    // void *f(Target *, ValueData **)
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
-    llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, pointerType, false);
+    llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, { pointerType, pointerType }, false);
     llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module.get());
+    llvm::Value *targetPtr = func->getArg(0);
+    llvm::Value *targetVariables = func->getArg(1);
 
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
     m_builder.SetInsertPoint(entry);
@@ -58,6 +66,20 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     std::vector<Loop> loops;
     m_heap.clear();
 
+    // Create variable pointers
+    for (auto &[var, varPtr] : m_variablePtrs) {
+        llvm::Value *ptr = getVariablePtr(targetVariables, var);
+
+        // Access variable directly (slow?)
+        // varPtr.ptr = ptr;
+
+        // All variables are currently copied to the stack and synced later (seems to be faster)
+        // NOTE: Strings are NOT copied, only the pointer and string size are copied
+        varPtr.ptr = m_builder.CreateAlloca(m_valueDataType);
+        varPtr.onStack = true;
+        createValueCopy(ptr, varPtr.ptr);
+    }
+
     // Execute recorded steps
     for (const Step &step : m_steps) {
         switch (step.type) {
@@ -66,9 +88,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 std::vector<llvm::Value *> args;
 
                 // Add target pointer arg
-                assert(func->arg_size() == 1);
                 types.push_back(llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0));
-                args.push_back(func->getArg(0));
+                args.push_back(targetPtr);
 
                 // Args
                 for (auto &arg : step.args) {
@@ -394,9 +415,27 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case Step::Type::WriteVariable: {
+                assert(step.args.size() == 1);
+                assert(m_variablePtrs.find(step.workVariable) != m_variablePtrs.cend());
+                const auto &arg = step.args[0];
+                VariablePtr &varPtr = m_variablePtrs[step.workVariable];
+                varPtr.changed = true;
+                createValueStore(arg.second, varPtr.ptr);
+                break;
+            }
+
+            case Step::Type::ReadVariable: {
+                assert(step.args.size() == 0);
+                const VariablePtr &varPtr = m_variablePtrs[step.workVariable];
+                step.functionReturnReg->value = varPtr.ptr;
+                break;
+            }
+
             case Step::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
+                    syncVariables(targetVariables);
                     m_builder.CreateStore(m_builder.getInt1(true), coro.didSuspend);
                     llvm::BasicBlock *resumeBranch = llvm::BasicBlock::Create(m_ctx, "", func);
                     llvm::Value *noneToken = llvm::ConstantTokenNone::get(m_ctx);
@@ -607,6 +646,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     }
 
     freeHeap();
+    syncVariables(targetVariables);
 
     // Add final suspend point
     if (!m_warp) {
@@ -706,6 +746,18 @@ void LLVMCodeBuilder::addConstValue(const Value &value)
 
 void LLVMCodeBuilder::addVariableValue(Variable *variable)
 {
+    // TODO: Implement type prediction
+    Step step(Step::Type::ReadVariable);
+    step.workVariable = variable;
+    m_variablePtrs[variable] = VariablePtr();
+
+    auto ret = std::make_shared<Register>(Compiler::StaticType::Unknown);
+    ret->isRawValue = false;
+    step.functionReturnReg = ret;
+    m_regs[m_currentFunction].push_back(ret);
+    m_tmpRegs.push_back(ret);
+
+    m_steps.push_back(step);
 }
 
 void LLVMCodeBuilder::addListContents(List *list)
@@ -842,6 +894,13 @@ void LLVMCodeBuilder::createExp10()
     createOp(Step::Type::Exp10, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
+void LLVMCodeBuilder::createVariableWrite(Variable *variable)
+{
+    Step &step = createOp(Step::Type::WriteVariable, Compiler::StaticType::Void, Compiler::StaticType::Unknown, 1);
+    step.workVariable = variable;
+    m_variablePtrs[variable] = VariablePtr();
+}
+
 void LLVMCodeBuilder::beginIfStatement()
 {
     Step step(Step::Type::BeginIf);
@@ -923,6 +982,36 @@ void LLVMCodeBuilder::initTypes()
 
     m_valueDataType = llvm::StructType::create(m_ctx, "ValueData");
     m_valueDataType->setBody({ unionType, valueType, sizeType });
+}
+
+void LLVMCodeBuilder::createVariableMap()
+{
+    if (!m_target)
+        return;
+
+    // Map variable pointers to variable data array indices
+    const auto &variables = m_target->variables();
+    ValueData **variableData = m_target->variableData();
+    const size_t len = variables.size();
+    m_targetVariableMap.clear();
+    m_targetVariableMap.reserve(len);
+
+    size_t i, j;
+
+    for (i = 0; i < len; i++) {
+        Variable *var = variables[i].get();
+
+        // Find the data for this variable
+        for (j = 0; j < len; j++) {
+            if (variableData[j] == &var->valuePtr()->data())
+                break;
+        }
+
+        if (j < len)
+            m_targetVariableMap[var] = j;
+        else
+            assert(false);
+    }
 }
 
 LLVMCodeBuilder::Coroutine LLVMCodeBuilder::initCoroutine(llvm::Function *func)
@@ -1043,8 +1132,9 @@ llvm::Value *LLVMCodeBuilder::castValue(std::shared_ptr<Register> reg, Compiler:
                     return m_builder.CreateSIToFP(boolValue, m_builder.getDoubleTy());
                 }
 
-                case Compiler::StaticType::String: {
-                    // Convert string to double
+                case Compiler::StaticType::String:
+                case Compiler::StaticType::Unknown: {
+                    // Convert to double
                     return m_builder.CreateCall(resolve_value_toDouble(), reg->value);
                 }
 
@@ -1069,7 +1159,8 @@ llvm::Value *LLVMCodeBuilder::castValue(std::shared_ptr<Register> reg, Compiler:
                 }
 
                 case Compiler::StaticType::String:
-                    // Convert string to bool
+                case Compiler::StaticType::Unknown:
+                    // Convert to bool
                     return m_builder.CreateCall(resolve_value_toBool(), reg->value);
 
                 default:
@@ -1080,7 +1171,8 @@ llvm::Value *LLVMCodeBuilder::castValue(std::shared_ptr<Register> reg, Compiler:
         case Compiler::StaticType::String:
             switch (reg->type) {
                 case Compiler::StaticType::Number:
-                case Compiler::StaticType::Bool: {
+                case Compiler::StaticType::Bool:
+                case Compiler::StaticType::Unknown: {
                     // Cast to string
                     llvm::Value *ptr = m_builder.CreateCall(resolve_value_toCString(), reg->value);
                     m_heap.push_back(ptr); // deallocate later
@@ -1220,7 +1312,32 @@ llvm::Value *LLVMCodeBuilder::removeNaN(llvm::Value *num)
     return m_builder.CreateSelect(isNaN(num), llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)), num);
 }
 
-void LLVMCodeBuilder::createOp(Step::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount)
+llvm::Value *LLVMCodeBuilder::getVariablePtr(llvm::Value *targetVariables, Variable *variable)
+{
+    if (!m_target->isStage() && variable->target() == m_target) {
+        // If this is a local sprite variable, use the variable array at runtime (for clones)
+        assert(m_targetVariableMap.find(variable) != m_targetVariableMap.cend());
+        const size_t index = m_targetVariableMap[variable];
+        llvm::Value *ptr = m_builder.CreateGEP(m_valueDataType->getPointerTo(), targetVariables, m_builder.getInt64(index));
+        return m_builder.CreateLoad(m_valueDataType->getPointerTo(), ptr);
+    }
+
+    // Otherwise create a raw pointer at compile time
+    llvm::Value *addr = m_builder.getInt64((uintptr_t)&variable->value().data());
+    return m_builder.CreateIntToPtr(addr, m_valueDataType->getPointerTo());
+}
+
+void LLVMCodeBuilder::syncVariables(llvm::Value *targetVariables)
+{
+    for (auto &[var, varPtr] : m_variablePtrs) {
+        if (varPtr.onStack && varPtr.changed)
+            createValueCopy(varPtr.ptr, getVariablePtr(targetVariables, var));
+
+        varPtr.changed = false;
+    }
+}
+
+LLVMCodeBuilder::Step &LLVMCodeBuilder::createOp(Step::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount)
 {
     Step step(type);
 
@@ -1232,13 +1349,71 @@ void LLVMCodeBuilder::createOp(Step::Type type, Compiler::StaticType retType, Co
 
     m_tmpRegs.erase(m_tmpRegs.end() - argCount, m_tmpRegs.end());
 
-    auto ret = std::make_shared<Register>(retType);
-    ret->isRawValue = true;
-    step.functionReturnReg = ret;
-    m_regs[m_currentFunction].push_back(ret);
-    m_tmpRegs.push_back(ret);
+    if (retType != Compiler::StaticType::Void) {
+        auto ret = std::make_shared<Register>(retType);
+        ret->isRawValue = true;
+        step.functionReturnReg = ret;
+        m_regs[m_currentFunction].push_back(ret);
+        m_tmpRegs.push_back(ret);
+    }
 
     m_steps.push_back(step);
+    return m_steps.back();
+}
+
+void LLVMCodeBuilder::createValueStore(std::shared_ptr<Register> reg, llvm::Value *targetPtr)
+{
+    // TODO: Implement type prediction
+    Compiler::StaticType type = reg->type;
+    llvm::Value *converted = nullptr;
+
+    // Optimize string constants that represent numbers
+    if (reg->isConstValue && reg->type == Compiler::StaticType::String && reg->constValue.isValidNumber())
+        type = Compiler::StaticType::Number;
+
+    switch (type) {
+        case Compiler::StaticType::Number:
+            converted = castValue(reg, type);
+            m_builder.CreateCall(resolve_value_assign_double(), { targetPtr, converted });
+            /*{
+                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+                m_builder.CreateStore(converted, ptr);
+            }*/
+            break;
+
+        case Compiler::StaticType::Bool:
+            converted = castValue(reg, type);
+            m_builder.CreateCall(resolve_value_assign_bool(), { targetPtr, converted });
+            break;
+
+        case Compiler::StaticType::String:
+            converted = castValue(reg, type);
+            m_builder.CreateCall(resolve_value_assign_cstring(), { targetPtr, converted });
+            break;
+
+        case Compiler::StaticType::Unknown:
+            m_builder.CreateCall(resolve_value_assign_copy(), { targetPtr, reg->value });
+            break;
+
+        default:
+            assert(false);
+            break;
+    }
+}
+
+void LLVMCodeBuilder::createValueCopy(llvm::Value *source, llvm::Value *target)
+{
+    // NOTE: This doesn't copy strings, but only the pointers
+    copyStructField(source, target, 0, m_valueDataType, m_builder.getInt64Ty()); // value
+    copyStructField(source, target, 1, m_valueDataType, m_builder.getInt32Ty()); // type
+    copyStructField(source, target, 2, m_valueDataType, m_builder.getInt64Ty()); // string size
+}
+
+void LLVMCodeBuilder::copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType)
+{
+    llvm::Value *sourceField = m_builder.CreateStructGEP(structType, source, index);
+    llvm::Value *targetField = m_builder.CreateStructGEP(structType, target, index);
+    m_builder.CreateStore(m_builder.CreateLoad(fieldType, sourceField), targetField);
 }
 
 llvm::Value *LLVMCodeBuilder::createValue(std::shared_ptr<Register> reg)
@@ -1499,6 +1674,11 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_cstring()
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_special()
 {
     return resolveFunction("value_assign_special", llvm::FunctionType::get(m_builder.getVoidTy(), { m_valueDataType->getPointerTo(), m_builder.getInt32Ty() }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_copy()
+{
+    return resolveFunction("value_assign_copy", llvm::FunctionType::get(m_builder.getVoidTy(), { m_valueDataType->getPointerTo(), m_valueDataType->getPointerTo() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_toDouble()

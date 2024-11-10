@@ -12,6 +12,7 @@ namespace libscratchcpp
 {
 
 class Variable;
+struct ValueData;
 class List;
 class Block;
 class Comment;
@@ -28,7 +29,7 @@ class LIBSCRATCHCPP_EXPORT Target : public Drawable
     public:
         Target();
         Target(const Target &) = delete;
-        virtual ~Target() { }
+        virtual ~Target();
 
         bool isTarget() const override final;
 
@@ -43,6 +44,8 @@ class LIBSCRATCHCPP_EXPORT Target : public Drawable
         std::shared_ptr<Variable> variableAt(int index) const;
         int findVariable(const std::string &variableName) const;
         int findVariableById(const std::string &id) const;
+
+        ValueData **variableData();
 
         const std::vector<std::shared_ptr<List>> &lists() const;
         int addList(std::shared_ptr<List> list);

@@ -29,9 +29,9 @@ class LLVMExecutableCodeTest : public testing::Test
 
         llvm::Function *beginMainFunction()
         {
-            // void *f(Target *)
+            // void *f(Target *, ValueData **, ValueData **)
             llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
-            llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, pointerType, false);
+            llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, { pointerType, pointerType, pointerType }, false);
             llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module.get());
 
             llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);

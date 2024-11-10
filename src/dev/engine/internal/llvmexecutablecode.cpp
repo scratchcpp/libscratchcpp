@@ -2,6 +2,8 @@
 
 #include <scratchcpp/dev/executioncontext.h>
 #include <scratchcpp/value_functions.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/iengine.h>
 #include <llvm/Support/Error.h>
 #include <iostream>
 
@@ -52,7 +54,8 @@ void LLVMExecutableCode::run(ExecutionContext *context)
 
         ctx->setFinished(done);
     } else {
-        void *handle = m_mainFunction(context->target());
+        Target *target = ctx->target();
+        void *handle = m_mainFunction(target, target->variableData());
 
         if (!handle)
             ctx->setFinished(true);

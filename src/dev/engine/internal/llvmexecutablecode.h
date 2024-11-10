@@ -32,7 +32,7 @@ class LLVMExecutableCode : public ExecutableCode
     private:
         uint64_t lookupFunction(const std::string &name);
 
-        using MainFunctionType = void *(*)(Target *);
+        using MainFunctionType = void *(*)(Target *, ValueData **);
         using ResumeFunctionType = bool (*)(void *);
 
         static LLVMExecutionContext *getContext(ExecutionContext *context);
