@@ -116,7 +116,7 @@ TEST_F(CompilerTest, AddVariableValue)
     compile(compiler, block);
 }
 
-TEST_F(CompilerTest, AddListValue)
+TEST_F(CompilerTest, AddListContents)
 {
     Compiler compiler(&m_engine, &m_target);
     auto block = std::make_shared<Block>("a", "");
