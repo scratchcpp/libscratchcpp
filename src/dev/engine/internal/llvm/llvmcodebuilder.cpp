@@ -48,6 +48,13 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             m_warp = true;
     }
 
+    // Set fast math flags
+    llvm::FastMathFlags fmf;
+    fmf.setFast(true);
+    fmf.setNoNaNs(false);
+    fmf.setNoSignedZeros(false);
+    m_builder.setFastMathFlags(fmf);
+
     // Create function
     // void *f(Target *, ValueData **)
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
