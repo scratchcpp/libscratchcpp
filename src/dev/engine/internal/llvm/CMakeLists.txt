@@ -1,0 +1,16 @@
+target_sources(scratchcpp
+  PRIVATE
+    llvmcodebuilder.cpp
+    llvmcodebuilder.h
+    llvmregister.h
+    llvminstruction.h
+    llvmifstatement.h
+    llvmloop.h
+    llvmcoroutine.h
+    llvmvariableptr.h
+    llvmprocedure.h
+    llvmexecutablecode.cpp
+    llvmexecutablecode.h
+    llvmexecutioncontext.cpp
+    llvmexecutioncontext.h
+)
