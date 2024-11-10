@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "codebuilderfactory.h"
-#include "llvmcodebuilder.h"
+#include "llvm/llvmcodebuilder.h"
 
 using namespace libscratchcpp;
 

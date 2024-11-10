@@ -10,10 +10,10 @@ target_sources(scratchcpp
     internal/icodebuilderfactory.h
     internal/codebuilderfactory.cpp
     internal/codebuilderfactory.h
-    internal/llvmcodebuilder.cpp
-    internal/llvmcodebuilder.h
-    internal/llvmexecutablecode.cpp
-    internal/llvmexecutablecode.h
-    internal/llvmexecutioncontext.cpp
-    internal/llvmexecutioncontext.h
+    internal/llvm/llvmcodebuilder.cpp
+    internal/llvm/llvmcodebuilder.h
+    internal/llvm/llvmexecutablecode.cpp
+    internal/llvm/llvmexecutablecode.h
+    internal/llvm/llvmexecutioncontext.cpp
+    internal/llvm/llvmexecutioncontext.h
 )

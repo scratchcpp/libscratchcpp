@@ -3,7 +3,7 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/variable.h>
-#include <dev/engine/internal/llvmcodebuilder.h>
+#include <dev/engine/internal/llvm/llvmcodebuilder.h>
 #include <gmock/gmock.h>
 #include <targetmock.h>
 #include <enginemock.h>

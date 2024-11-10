@@ -7,7 +7,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
 
-#include "icodebuilder.h"
+#include "../icodebuilder.h"
 
 namespace libscratchcpp
 {

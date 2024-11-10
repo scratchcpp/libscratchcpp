@@ -1,5 +1,5 @@
 #include <scratchcpp/target.h>
-#include <dev/engine/internal/llvmexecutioncontext.h>
+#include <dev/engine/internal/llvm/llvmexecutioncontext.h>
 #include <gtest/gtest.h>
 
 using namespace libscratchcpp;

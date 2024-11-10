@@ -1,7 +1,7 @@
 #include <scratchcpp/target.h>
 #include <scratchcpp/value_functions.h>
-#include <dev/engine/internal/llvmexecutablecode.h>
-#include <dev/engine/internal/llvmexecutioncontext.h>
+#include <dev/engine/internal/llvm/llvmexecutablecode.h>
+#include <dev/engine/internal/llvm/llvmexecutioncontext.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/IR/IRBuilder.h>
 #include <gmock/gmock.h>
