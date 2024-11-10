@@ -13,6 +13,7 @@
 #include "llvmexecutablecode.h"
 #include "llvmifstatement.h"
 #include "llvmloop.h"
+#include "llvmtypes.h"
 
 using namespace libscratchcpp;
 
@@ -976,14 +977,7 @@ void LLVMCodeBuilder::yield()
 
 void LLVMCodeBuilder::initTypes()
 {
-    // Create the ValueData struct
-    llvm::Type *unionType = m_builder.getInt64Ty(); // 64 bits is the largest size
-
-    llvm::Type *valueType = llvm::Type::getInt32Ty(m_ctx); // Assuming ValueType is a 32-bit enum
-    llvm::Type *sizeType = llvm::Type::getInt64Ty(m_ctx);  // size_t
-
-    m_valueDataType = llvm::StructType::create(m_ctx, "ValueData");
-    m_valueDataType->setBody({ unionType, valueType, sizeType });
+    m_valueDataType = LLVMTypes::createValueDataType(&m_builder);
 }
 
 void LLVMCodeBuilder::createVariableMap()
