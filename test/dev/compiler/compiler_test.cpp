@@ -557,6 +557,20 @@ TEST_F(CompilerTest, CreateExp10)
     compile(compiler, block);
 }
 
+TEST_F(CompilerTest, CreateVariableWrite)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        auto var = std::make_shared<Variable>("", "");
+        EXPECT_CALL(*m_builder, createVariableWrite(var.get()));
+        compiler->createVariableWrite(var.get());
+    });
+
+    compile(compiler, block);
+}
+
 TEST_F(CompilerTest, MoveToIf)
 {
     Compiler compiler(&m_engine, &m_target);

@@ -256,6 +256,12 @@ void Compiler::createExp10()
     impl->builder->createExp10();
 }
 
+/*! Creates a variable write operation using the last value. */
+void Compiler::createVariableWrite(Variable *variable)
+{
+    impl->builder->createVariableWrite(variable);
+}
+
 /*! Jumps to the given if substack. */
 void Compiler::moveToIf(std::shared_ptr<Block> substack)
 {

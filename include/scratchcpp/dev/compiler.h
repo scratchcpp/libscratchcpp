@@ -78,6 +78,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void createExp();
         void createExp10();
 
+        void createVariableWrite(Variable *variable);
+
         void moveToIf(std::shared_ptr<Block> substack);
         void moveToIfElse(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2);
         void moveToRepeatLoop(std::shared_ptr<Block> substack);
