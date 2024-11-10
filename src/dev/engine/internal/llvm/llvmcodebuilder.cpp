@@ -11,6 +11,8 @@
 
 #include "llvmcodebuilder.h"
 #include "llvmexecutablecode.h"
+#include "llvmifstatement.h"
+#include "llvmloop.h"
 
 using namespace libscratchcpp;
 
@@ -39,9 +41,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 {
     // Do not create coroutine if there are no yield instructions
     if (!m_warp) {
-        auto it = std::find_if(m_steps.begin(), m_steps.end(), [](const Step &step) { return step.type == Step::Type::Yield; });
+        auto it = std::find_if(m_instructions.begin(), m_instructions.end(), [](const LLVMInstruction &step) { return step.type == LLVMInstruction::Type::Yield; });
 
-        if (it == m_steps.end())
+        if (it == m_instructions.end())
             m_warp = true;
     }
 
@@ -57,13 +59,13 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     m_builder.SetInsertPoint(entry);
 
     // Init coroutine
-    Coroutine coro;
+    LLVMCoroutine coro;
 
     if (!m_warp)
         coro = initCoroutine(func);
 
-    std::vector<IfStatement> ifStatements;
-    std::vector<Loop> loops;
+    std::vector<LLVMIfStatement> ifStatements;
+    std::vector<LLVMLoop> loops;
     m_heap.clear();
 
     // Create variable pointers
@@ -81,9 +83,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     }
 
     // Execute recorded steps
-    for (const Step &step : m_steps) {
+    for (const LLVMInstruction &step : m_instructions) {
         switch (step.type) {
-            case Step::Type::FunctionCall: {
+            case LLVMInstruction::Type::FunctionCall: {
                 std::vector<llvm::Type *> types;
                 std::vector<llvm::Value *> args;
 
@@ -109,7 +111,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Add: {
+            case LLVMInstruction::Type::Add: {
                 assert(step.args.size() == 2);
                 const auto &arg1 = step.args[0];
                 const auto &arg2 = step.args[1];
@@ -119,7 +121,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Sub: {
+            case LLVMInstruction::Type::Sub: {
                 assert(step.args.size() == 2);
                 const auto &arg1 = step.args[0];
                 const auto &arg2 = step.args[1];
@@ -129,7 +131,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Mul: {
+            case LLVMInstruction::Type::Mul: {
                 assert(step.args.size() == 2);
                 const auto &arg1 = step.args[0];
                 const auto &arg2 = step.args[1];
@@ -139,7 +141,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Div: {
+            case LLVMInstruction::Type::Div: {
                 assert(step.args.size() == 2);
                 const auto &arg1 = step.args[0];
                 const auto &arg2 = step.args[1];
@@ -149,7 +151,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::CmpEQ: {
+            case LLVMInstruction::Type::CmpEQ: {
                 assert(step.args.size() == 2);
                 const auto &arg1 = step.args[0].second;
                 const auto &arg2 = step.args[1].second;
@@ -157,7 +159,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::CmpGT: {
+            case LLVMInstruction::Type::CmpGT: {
                 assert(step.args.size() == 2);
                 const auto &arg1 = step.args[0].second;
                 const auto &arg2 = step.args[1].second;
@@ -165,7 +167,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::CmpLT: {
+            case LLVMInstruction::Type::CmpLT: {
                 assert(step.args.size() == 2);
                 const auto &arg1 = step.args[0].second;
                 const auto &arg2 = step.args[1].second;
@@ -173,7 +175,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::And: {
+            case LLVMInstruction::Type::And: {
                 assert(step.args.size() == 2);
                 const auto &arg1 = step.args[0];
                 const auto &arg2 = step.args[1];
@@ -183,7 +185,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Or: {
+            case LLVMInstruction::Type::Or: {
                 assert(step.args.size() == 2);
                 const auto &arg1 = step.args[0];
                 const auto &arg2 = step.args[1];
@@ -193,7 +195,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Not: {
+            case LLVMInstruction::Type::Not: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 llvm::Value *value = castValue(arg.second, arg.first);
@@ -201,7 +203,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Mod: {
+            case LLVMInstruction::Type::Mod: {
                 assert(step.args.size() == 2);
                 const auto &arg1 = step.args[0];
                 const auto &arg2 = step.args[1];
@@ -215,7 +217,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Round: {
+            case LLVMInstruction::Type::Round: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // x >= 0.0 ? round(x) : (x >= -0.5 ? -0.0 : floor(x + 0.5))
@@ -232,7 +234,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Abs: {
+            case LLVMInstruction::Type::Abs: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 llvm::Function *absFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::fabs, m_builder.getDoubleTy());
@@ -241,7 +243,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Floor: {
+            case LLVMInstruction::Type::Floor: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 llvm::Function *floorFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::floor, m_builder.getDoubleTy());
@@ -250,7 +252,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Ceil: {
+            case LLVMInstruction::Type::Ceil: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 llvm::Function *ceilFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::ceil, m_builder.getDoubleTy());
@@ -259,7 +261,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Sqrt: {
+            case LLVMInstruction::Type::Sqrt: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // sqrt(x) + 0.0
@@ -271,7 +273,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Sin: {
+            case LLVMInstruction::Type::Sin: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // round(sin(x * pi / 180.0) * 1e10) / 1e10 + 0.0
@@ -289,7 +291,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Cos: {
+            case LLVMInstruction::Type::Cos: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // round(cos(x * pi / 180.0) * 1e10) / 1e10
@@ -305,7 +307,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Tan: {
+            case LLVMInstruction::Type::Tan: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // ((mod = rem(x, 360.0)) == -270.0 || mod == 90.0) ? inf : ((mod == -90.0 || mod == 270.0) ? -inf : round(tan(x * pi / 180.0) * 1e10) / 1e10 + 0.0)
@@ -337,7 +339,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Asin: {
+            case LLVMInstruction::Type::Asin: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // asin(x) * 180.0 / pi + 0.0
@@ -351,7 +353,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Acos: {
+            case LLVMInstruction::Type::Acos: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // acos(x) * 180.0 / pi
@@ -363,7 +365,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Atan: {
+            case LLVMInstruction::Type::Atan: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // atan(x) * 180.0 / pi
@@ -375,7 +377,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Ln: {
+            case LLVMInstruction::Type::Ln: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // log(x)
@@ -385,7 +387,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Log10: {
+            case LLVMInstruction::Type::Log10: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // log10(x)
@@ -395,7 +397,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Exp: {
+            case LLVMInstruction::Type::Exp: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // exp(x)
@@ -405,7 +407,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::Exp10: {
+            case LLVMInstruction::Type::Exp10: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // exp10(x)
@@ -415,24 +417,24 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::WriteVariable: {
+            case LLVMInstruction::Type::WriteVariable: {
                 assert(step.args.size() == 1);
                 assert(m_variablePtrs.find(step.workVariable) != m_variablePtrs.cend());
                 const auto &arg = step.args[0];
-                VariablePtr &varPtr = m_variablePtrs[step.workVariable];
+                LLVMVariablePtr &varPtr = m_variablePtrs[step.workVariable];
                 varPtr.changed = true;
                 createValueStore(arg.second, varPtr.ptr);
                 break;
             }
 
-            case Step::Type::ReadVariable: {
+            case LLVMInstruction::Type::ReadVariable: {
                 assert(step.args.size() == 0);
-                const VariablePtr &varPtr = m_variablePtrs[step.workVariable];
+                const LLVMVariablePtr &varPtr = m_variablePtrs[step.workVariable];
                 step.functionReturnReg->value = varPtr.ptr;
                 break;
             }
 
-            case Step::Type::Yield:
+            case LLVMInstruction::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
                     syncVariables(targetVariables);
@@ -448,8 +450,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 break;
 
-            case Step::Type::BeginIf: {
-                IfStatement statement;
+            case LLVMInstruction::Type::BeginIf: {
+                LLVMIfStatement statement;
                 statement.beforeIf = m_builder.GetInsertBlock();
                 statement.body = llvm::BasicBlock::Create(m_ctx, "", func);
 
@@ -467,9 +469,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::BeginElse: {
+            case LLVMInstruction::Type::BeginElse: {
                 assert(!ifStatements.empty());
-                IfStatement &statement = ifStatements.back();
+                LLVMIfStatement &statement = ifStatements.back();
 
                 // Jump to the branch after the if statement
                 assert(!statement.afterIf);
@@ -490,9 +492,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::EndIf: {
+            case LLVMInstruction::Type::EndIf: {
                 assert(!ifStatements.empty());
-                IfStatement &statement = ifStatements.back();
+                LLVMIfStatement &statement = ifStatements.back();
 
                 // Jump to the branch after the if statement
                 if (!statement.afterIf)
@@ -515,8 +517,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::BeginRepeatLoop: {
-                Loop loop;
+            case LLVMInstruction::Type::BeginRepeatLoop: {
+                LLVMLoop loop;
                 loop.isRepeatLoop = true;
 
                 // index = 0
@@ -568,9 +570,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::BeginWhileLoop: {
+            case LLVMInstruction::Type::BeginWhileLoop: {
                 assert(!loops.empty());
-                Loop &loop = loops.back();
+                LLVMLoop &loop = loops.back();
 
                 // Create branches
                 llvm::BasicBlock *body = llvm::BasicBlock::Create(m_ctx, "", func);
@@ -589,9 +591,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::BeginRepeatUntilLoop: {
+            case LLVMInstruction::Type::BeginRepeatUntilLoop: {
                 assert(!loops.empty());
-                Loop &loop = loops.back();
+                LLVMLoop &loop = loops.back();
 
                 // Create branches
                 llvm::BasicBlock *body = llvm::BasicBlock::Create(m_ctx, "", func);
@@ -610,8 +612,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::BeginLoopCondition: {
-                Loop loop;
+            case LLVMInstruction::Type::BeginLoopCondition: {
+                LLVMLoop loop;
                 loop.isRepeatLoop = false;
                 loop.conditionBranch = llvm::BasicBlock::Create(m_ctx, "", func);
                 freeHeap();
@@ -621,9 +623,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
-            case Step::Type::EndLoop: {
+            case LLVMInstruction::Type::EndLoop: {
                 assert(!loops.empty());
-                Loop &loop = loops.back();
+                LLVMLoop &loop = loops.back();
 
                 if (loop.isRepeatLoop) {
                     // Increment index
@@ -711,33 +713,33 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
 void LLVMCodeBuilder::addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const std::vector<Compiler::StaticType> &argTypes)
 {
-    Step step(Step::Type::FunctionCall);
-    step.functionName = functionName;
+    LLVMInstruction ins(LLVMInstruction::Type::FunctionCall);
+    ins.functionName = functionName;
 
     assert(m_tmpRegs.size() >= argTypes.size());
     size_t j = 0;
 
     for (size_t i = m_tmpRegs.size() - argTypes.size(); i < m_tmpRegs.size(); i++)
-        step.args.push_back({ argTypes[j++], m_tmpRegs[i] });
+        ins.args.push_back({ argTypes[j++], m_tmpRegs[i] });
 
     m_tmpRegs.erase(m_tmpRegs.end() - argTypes.size(), m_tmpRegs.end());
 
-    step.functionReturnType = returnType;
+    ins.functionReturnType = returnType;
 
     if (returnType != Compiler::StaticType::Void) {
-        auto reg = std::make_shared<Register>(returnType);
+        auto reg = std::make_shared<LLVMRegister>(returnType);
         reg->isRawValue = true;
-        step.functionReturnReg = reg;
+        ins.functionReturnReg = reg;
         m_regs[m_currentFunction].push_back(reg);
         m_tmpRegs.push_back(reg);
     }
 
-    m_steps.push_back(step);
+    m_instructions.push_back(ins);
 }
 
 void LLVMCodeBuilder::addConstValue(const Value &value)
 {
-    auto reg = std::make_shared<Register>(TYPE_MAP[value.type()]);
+    auto reg = std::make_shared<LLVMRegister>(TYPE_MAP[value.type()]);
     reg->isConstValue = true;
     reg->constValue = value;
     m_regs[m_currentFunction].push_back(reg);
@@ -747,17 +749,17 @@ void LLVMCodeBuilder::addConstValue(const Value &value)
 void LLVMCodeBuilder::addVariableValue(Variable *variable)
 {
     // TODO: Implement type prediction
-    Step step(Step::Type::ReadVariable);
-    step.workVariable = variable;
-    m_variablePtrs[variable] = VariablePtr();
+    LLVMInstruction ins(LLVMInstruction::Type::ReadVariable);
+    ins.workVariable = variable;
+    m_variablePtrs[variable] = LLVMVariablePtr();
 
-    auto ret = std::make_shared<Register>(Compiler::StaticType::Unknown);
+    auto ret = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     ret->isRawValue = false;
-    step.functionReturnReg = ret;
+    ins.functionReturnReg = ret;
     m_regs[m_currentFunction].push_back(ret);
     m_tmpRegs.push_back(ret);
 
-    m_steps.push_back(step);
+    m_instructions.push_back(ins);
 }
 
 void LLVMCodeBuilder::addListContents(List *list)
@@ -766,203 +768,203 @@ void LLVMCodeBuilder::addListContents(List *list)
 
 void LLVMCodeBuilder::createAdd()
 {
-    createOp(Step::Type::Add, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+    createOp(LLVMInstruction::Type::Add, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createSub()
 {
-    createOp(Step::Type::Sub, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+    createOp(LLVMInstruction::Type::Sub, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createMul()
 {
-    createOp(Step::Type::Mul, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+    createOp(LLVMInstruction::Type::Mul, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createDiv()
 {
-    createOp(Step::Type::Div, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+    createOp(LLVMInstruction::Type::Div, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createCmpEQ()
 {
-    createOp(Step::Type::CmpEQ, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
+    createOp(LLVMInstruction::Type::CmpEQ, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createCmpGT()
 {
-    createOp(Step::Type::CmpGT, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
+    createOp(LLVMInstruction::Type::CmpGT, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createCmpLT()
 {
-    createOp(Step::Type::CmpLT, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
+    createOp(LLVMInstruction::Type::CmpLT, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createAnd()
 {
-    createOp(Step::Type::And, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 2);
+    createOp(LLVMInstruction::Type::And, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 2);
 }
 
 void LLVMCodeBuilder::createOr()
 {
-    createOp(Step::Type::Or, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 2);
+    createOp(LLVMInstruction::Type::Or, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 2);
 }
 
 void LLVMCodeBuilder::createNot()
 {
-    createOp(Step::Type::Not, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 1);
+    createOp(LLVMInstruction::Type::Not, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 1);
 }
 
 void LLVMCodeBuilder::createMod()
 {
-    createOp(Step::Type::Mod, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+    createOp(LLVMInstruction::Type::Mod, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
 }
 
 void LLVMCodeBuilder::createRound()
 {
-    createOp(Step::Type::Round, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Round, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createAbs()
 {
-    createOp(Step::Type::Abs, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Abs, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createFloor()
 {
-    createOp(Step::Type::Floor, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Floor, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createCeil()
 {
-    createOp(Step::Type::Ceil, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Ceil, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createSqrt()
 {
-    createOp(Step::Type::Sqrt, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Sqrt, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createSin()
 {
-    createOp(Step::Type::Sin, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Sin, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createCos()
 {
-    createOp(Step::Type::Cos, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Cos, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createTan()
 {
-    createOp(Step::Type::Tan, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Tan, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createAsin()
 {
-    createOp(Step::Type::Asin, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Asin, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createAcos()
 {
-    createOp(Step::Type::Acos, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Acos, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createAtan()
 {
-    createOp(Step::Type::Atan, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Atan, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createLn()
 {
-    createOp(Step::Type::Ln, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Ln, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createLog10()
 {
-    createOp(Step::Type::Log10, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Log10, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createExp()
 {
-    createOp(Step::Type::Exp, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Exp, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createExp10()
 {
-    createOp(Step::Type::Exp10, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    createOp(LLVMInstruction::Type::Exp10, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
 }
 
 void LLVMCodeBuilder::createVariableWrite(Variable *variable)
 {
-    Step &step = createOp(Step::Type::WriteVariable, Compiler::StaticType::Void, Compiler::StaticType::Unknown, 1);
-    step.workVariable = variable;
-    m_variablePtrs[variable] = VariablePtr();
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::WriteVariable, Compiler::StaticType::Void, Compiler::StaticType::Unknown, 1);
+    ins.workVariable = variable;
+    m_variablePtrs[variable] = LLVMVariablePtr();
 }
 
 void LLVMCodeBuilder::beginIfStatement()
 {
-    Step step(Step::Type::BeginIf);
+    LLVMInstruction ins(LLVMInstruction::Type::BeginIf);
     assert(!m_tmpRegs.empty());
-    step.args.push_back({ Compiler::StaticType::Bool, m_tmpRegs.back() });
+    ins.args.push_back({ Compiler::StaticType::Bool, m_tmpRegs.back() });
     m_tmpRegs.pop_back();
-    m_steps.push_back(step);
+    m_instructions.push_back(ins);
 }
 
 void LLVMCodeBuilder::beginElseBranch()
 {
-    m_steps.push_back(Step(Step::Type::BeginElse));
+    m_instructions.push_back(LLVMInstruction(LLVMInstruction::Type::BeginElse));
 }
 
 void LLVMCodeBuilder::endIf()
 {
-    m_steps.push_back(Step(Step::Type::EndIf));
+    m_instructions.push_back(LLVMInstruction(LLVMInstruction::Type::EndIf));
 }
 
 void LLVMCodeBuilder::beginRepeatLoop()
 {
-    Step step(Step::Type::BeginRepeatLoop);
+    LLVMInstruction ins(LLVMInstruction::Type::BeginRepeatLoop);
     assert(!m_tmpRegs.empty());
-    step.args.push_back({ Compiler::StaticType::Number, m_tmpRegs.back() });
+    ins.args.push_back({ Compiler::StaticType::Number, m_tmpRegs.back() });
     m_tmpRegs.pop_back();
-    m_steps.push_back(step);
+    m_instructions.push_back(ins);
 }
 
 void LLVMCodeBuilder::beginWhileLoop()
 {
-    Step step(Step::Type::BeginWhileLoop);
+    LLVMInstruction ins(LLVMInstruction::Type::BeginWhileLoop);
     assert(!m_tmpRegs.empty());
-    step.args.push_back({ Compiler::StaticType::Bool, m_tmpRegs.back() });
+    ins.args.push_back({ Compiler::StaticType::Bool, m_tmpRegs.back() });
     m_tmpRegs.pop_back();
-    m_steps.push_back(step);
+    m_instructions.push_back(ins);
 }
 
 void LLVMCodeBuilder::beginRepeatUntilLoop()
 {
-    Step step(Step::Type::BeginRepeatUntilLoop);
+    LLVMInstruction ins(LLVMInstruction::Type::BeginRepeatUntilLoop);
     assert(!m_tmpRegs.empty());
-    step.args.push_back({ Compiler::StaticType::Bool, m_tmpRegs.back() });
+    ins.args.push_back({ Compiler::StaticType::Bool, m_tmpRegs.back() });
     m_tmpRegs.pop_back();
-    m_steps.push_back(step);
+    m_instructions.push_back(ins);
 }
 
 void LLVMCodeBuilder::beginLoopCondition()
 {
-    m_steps.push_back(Step(Step::Type::BeginLoopCondition));
+    m_instructions.push_back(LLVMInstruction(LLVMInstruction::Type::BeginLoopCondition));
 }
 
 void LLVMCodeBuilder::endLoop()
 {
     if (!m_warp)
-        m_steps.push_back(Step(Step::Type::Yield));
+        m_instructions.push_back(LLVMInstruction(LLVMInstruction::Type::Yield));
 
-    m_steps.push_back(Step(Step::Type::EndLoop));
+    m_instructions.push_back(LLVMInstruction(LLVMInstruction::Type::EndLoop));
 }
 
 void LLVMCodeBuilder::yield()
 {
-    m_steps.push_back({ Step::Type::Yield });
+    m_instructions.push_back({ LLVMInstruction::Type::Yield });
     m_currentFunction++;
 
     assert(m_currentFunction == m_constValues.size());
@@ -1014,7 +1016,7 @@ void LLVMCodeBuilder::createVariableMap()
     }
 }
 
-LLVMCodeBuilder::Coroutine LLVMCodeBuilder::initCoroutine(llvm::Function *func)
+LLVMCoroutine LLVMCodeBuilder::initCoroutine(llvm::Function *func)
 {
     // Set presplitcoroutine attribute
     func->setPresplitCoroutine();
@@ -1027,7 +1029,7 @@ LLVMCodeBuilder::Coroutine LLVMCodeBuilder::initCoroutine(llvm::Function *func)
     llvm::Function *coroFree = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_free);
 
     // Init coroutine
-    Coroutine coro;
+    LLVMCoroutine coro;
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
     llvm::Constant *nullPointer = llvm::ConstantPointerNull::get(pointerType);
     llvm::Value *coroIdRet = m_builder.CreateCall(coroId, { m_builder.getInt32(8), nullPointer, nullPointer, nullPointer });
@@ -1106,7 +1108,7 @@ void LLVMCodeBuilder::freeHeap()
     m_heap.clear();
 }
 
-llvm::Value *LLVMCodeBuilder::castValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType)
+llvm::Value *LLVMCodeBuilder::castValue(LLVMRegisterPtr reg, Compiler::StaticType targetType)
 {
     if (reg->isConstValue)
         return castConstValue(reg->constValue, targetType);
@@ -1196,7 +1198,7 @@ llvm::Value *LLVMCodeBuilder::castValue(std::shared_ptr<Register> reg, Compiler:
     }
 }
 
-llvm::Value *LLVMCodeBuilder::castRawValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType)
+llvm::Value *LLVMCodeBuilder::castRawValue(LLVMRegisterPtr reg, Compiler::StaticType targetType)
 {
     if (reg->type == targetType)
         return reg->value;
@@ -1337,31 +1339,31 @@ void LLVMCodeBuilder::syncVariables(llvm::Value *targetVariables)
     }
 }
 
-LLVMCodeBuilder::Step &LLVMCodeBuilder::createOp(Step::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount)
+LLVMInstruction &LLVMCodeBuilder::createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount)
 {
-    Step step(type);
+    LLVMInstruction ins(type);
 
     assert(m_tmpRegs.size() >= argCount);
     size_t j = 0;
 
     for (size_t i = m_tmpRegs.size() - argCount; i < m_tmpRegs.size(); i++)
-        step.args.push_back({ argType, m_tmpRegs[i] });
+        ins.args.push_back({ argType, m_tmpRegs[i] });
 
     m_tmpRegs.erase(m_tmpRegs.end() - argCount, m_tmpRegs.end());
 
     if (retType != Compiler::StaticType::Void) {
-        auto ret = std::make_shared<Register>(retType);
+        auto ret = std::make_shared<LLVMRegister>(retType);
         ret->isRawValue = true;
-        step.functionReturnReg = ret;
+        ins.functionReturnReg = ret;
         m_regs[m_currentFunction].push_back(ret);
         m_tmpRegs.push_back(ret);
     }
 
-    m_steps.push_back(step);
-    return m_steps.back();
+    m_instructions.push_back(ins);
+    return m_instructions.back();
 }
 
-void LLVMCodeBuilder::createValueStore(std::shared_ptr<Register> reg, llvm::Value *targetPtr)
+void LLVMCodeBuilder::createValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr)
 {
     // TODO: Implement type prediction
     Compiler::StaticType type = reg->type;
@@ -1416,7 +1418,7 @@ void LLVMCodeBuilder::copyStructField(llvm::Value *source, llvm::Value *target, 
     m_builder.CreateStore(m_builder.CreateLoad(fieldType, sourceField), targetField);
 }
 
-llvm::Value *LLVMCodeBuilder::createValue(std::shared_ptr<Register> reg)
+llvm::Value *LLVMCodeBuilder::createValue(LLVMRegisterPtr reg)
 {
     if (reg->isConstValue) {
         // Create a constant ValueData instance and store it
@@ -1458,7 +1460,7 @@ llvm::Value *LLVMCodeBuilder::createValue(std::shared_ptr<Register> reg)
         return reg->value;
 }
 
-llvm::Value *LLVMCodeBuilder::createComparison(std::shared_ptr<Register> arg1, std::shared_ptr<Register> arg2, Comparison type)
+llvm::Value *LLVMCodeBuilder::createComparison(LLVMRegisterPtr arg1, LLVMRegisterPtr arg2, Comparison type)
 {
     auto type1 = arg1->type;
     auto type2 = arg2->type;

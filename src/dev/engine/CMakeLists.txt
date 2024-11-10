@@ -12,6 +12,13 @@ target_sources(scratchcpp
     internal/codebuilderfactory.h
     internal/llvm/llvmcodebuilder.cpp
     internal/llvm/llvmcodebuilder.h
+    internal/llvm/llvmregister.h
+    internal/llvm/llvminstruction.h
+    internal/llvm/llvmifstatement.h
+    internal/llvm/llvmloop.h
+    internal/llvm/llvmcoroutine.h
+    internal/llvm/llvmvariableptr.h
+    internal/llvm/llvmprocedure.h
     internal/llvm/llvmexecutablecode.cpp
     internal/llvm/llvmexecutablecode.h
     internal/llvm/llvmexecutioncontext.cpp

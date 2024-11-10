@@ -8,6 +8,9 @@
 #include <llvm/IR/IRBuilder.h>
 
 #include "../icodebuilder.h"
+#include "llvminstruction.h"
+#include "llvmcoroutine.h"
+#include "llvmvariableptr.h"
 
 namespace libscratchcpp
 {
@@ -71,117 +74,6 @@ class LLVMCodeBuilder : public ICodeBuilder
         void yield() override;
 
     private:
-        struct Register
-        {
-                Register(Compiler::StaticType type) :
-                    type(type)
-                {
-                }
-
-                Compiler::StaticType type = Compiler::StaticType::Void;
-                llvm::Value *value = nullptr;
-                bool isRawValue = false;
-                bool isConstValue = false;
-                Value constValue;
-        };
-
-        struct Step
-        {
-                enum class Type
-                {
-                    FunctionCall,
-                    Add,
-                    Sub,
-                    Mul,
-                    Div,
-                    CmpEQ,
-                    CmpGT,
-                    CmpLT,
-                    And,
-                    Or,
-                    Not,
-                    Mod,
-                    Round,
-                    Abs,
-                    Floor,
-                    Ceil,
-                    Sqrt,
-                    Sin,
-                    Cos,
-                    Tan,
-                    Asin,
-                    Acos,
-                    Atan,
-                    Ln,
-                    Log10,
-                    Exp,
-                    Exp10,
-                    WriteVariable,
-                    ReadVariable,
-                    Yield,
-                    BeginIf,
-                    BeginElse,
-                    EndIf,
-                    BeginRepeatLoop,
-                    BeginWhileLoop,
-                    BeginRepeatUntilLoop,
-                    BeginLoopCondition,
-                    EndLoop
-                };
-
-                Step(Type type) :
-                    type(type)
-                {
-                }
-
-                Type type;
-                std::string functionName;
-                std::vector<std::pair<Compiler::StaticType, std::shared_ptr<Register>>> args; // target type, register
-                Compiler::StaticType functionReturnType = Compiler::StaticType::Void;
-                std::shared_ptr<Register> functionReturnReg;
-                Variable *workVariable = nullptr; // for variable write
-        };
-
-        struct IfStatement
-        {
-                llvm::Value *condition = nullptr;
-                llvm::BasicBlock *beforeIf = nullptr;
-                llvm::BasicBlock *body = nullptr;
-                llvm::BasicBlock *elseBranch = nullptr;
-                llvm::BasicBlock *afterIf = nullptr;
-        };
-
-        struct Loop
-        {
-                bool isRepeatLoop = false;
-                llvm::Value *index = nullptr;
-                llvm::BasicBlock *conditionBranch = nullptr;
-                llvm::BasicBlock *afterLoop = nullptr;
-        };
-
-        struct Coroutine
-        {
-                llvm::Value *handle = nullptr;
-                llvm::BasicBlock *suspend = nullptr;
-                llvm::BasicBlock *cleanup = nullptr;
-                llvm::BasicBlock *freeMemRet = nullptr;
-                llvm::Value *didSuspend = nullptr;
-        };
-
-        struct VariablePtr
-        {
-                llvm::Value *ptr = nullptr;
-                Compiler::StaticType type = Compiler::StaticType::Unknown;
-                bool onStack = false;
-                bool changed = false;
-        };
-
-        struct Procedure
-        {
-                // TODO: Implement procedures
-                bool warp = false;
-        };
-
         enum class Comparison
         {
             EQ,
@@ -192,13 +84,13 @@ class LLVMCodeBuilder : public ICodeBuilder
         void initTypes();
         void createVariableMap();
 
-        Coroutine initCoroutine(llvm::Function *func);
+        LLVMCoroutine initCoroutine(llvm::Function *func);
         void verifyFunction(llvm::Function *func);
         void optimize();
 
         void freeHeap();
-        llvm::Value *castValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType);
-        llvm::Value *castRawValue(std::shared_ptr<Register> reg, Compiler::StaticType targetType);
+        llvm::Value *castValue(LLVMRegisterPtr reg, Compiler::StaticType targetType);
+        llvm::Value *castRawValue(LLVMRegisterPtr reg, Compiler::StaticType targetType);
         llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType);
         llvm::Type *getType(Compiler::StaticType type);
         llvm::Value *isNaN(llvm::Value *num);
@@ -207,13 +99,13 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Value *getVariablePtr(llvm::Value *targetVariables, Variable *variable);
         void syncVariables(llvm::Value *targetVariables);
 
-        Step &createOp(Step::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount);
+        LLVMInstruction &createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount);
 
-        void createValueStore(std::shared_ptr<Register> reg, llvm::Value *targetPtr);
+        void createValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr);
         void createValueCopy(llvm::Value *source, llvm::Value *target);
         void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
-        llvm::Value *createValue(std::shared_ptr<Register> reg);
-        llvm::Value *createComparison(std::shared_ptr<Register> arg1, std::shared_ptr<Register> arg2, Comparison type);
+        llvm::Value *createValue(LLVMRegisterPtr reg);
+        llvm::Value *createComparison(LLVMRegisterPtr arg1, LLVMRegisterPtr arg2, Comparison type);
 
         llvm::FunctionCallee resolveFunction(const std::string name, llvm::FunctionType *type);
         llvm::FunctionCallee resolve_value_init();
@@ -238,7 +130,7 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         Target *m_target = nullptr;
         std::unordered_map<Variable *, size_t> m_targetVariableMap;
-        std::unordered_map<Variable *, VariablePtr> m_variablePtrs;
+        std::unordered_map<Variable *, LLVMVariablePtr> m_variablePtrs;
 
         std::string m_id;
         llvm::LLVMContext m_ctx;
@@ -247,11 +139,11 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         llvm::StructType *m_valueDataType = nullptr;
 
-        std::vector<Step> m_steps;
+        std::vector<LLVMInstruction> m_instructions;
         size_t m_currentFunction = 0;
         std::vector<Value> m_constValues;
-        std::vector<std::vector<std::shared_ptr<Register>>> m_regs;
-        std::vector<std::shared_ptr<Register>> m_tmpRegs;
+        std::vector<std::vector<LLVMRegisterPtr>> m_regs;
+        std::vector<LLVMRegisterPtr> m_tmpRegs;
         bool m_defaultWarp = false;
         bool m_warp = false;
 
