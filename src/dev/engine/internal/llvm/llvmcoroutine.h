@@ -2,24 +2,38 @@
 
 #pragma once
 
-namespace llvm
-{
-
-class Value;
-class BasicBlock;
-
-} // namespace llvm
+#include <llvm/IR/IRBuilder.h>
 
 namespace libscratchcpp
 {
 
-struct LLVMCoroutine
+class LLVMCoroutine
 {
-        llvm::Value *handle = nullptr;
-        llvm::BasicBlock *suspend = nullptr;
-        llvm::BasicBlock *cleanup = nullptr;
-        llvm::BasicBlock *freeMemRet = nullptr;
-        llvm::Value *didSuspend = nullptr;
+    public:
+        LLVMCoroutine(llvm::Module *module, llvm::IRBuilder<> *builder, llvm::Function *func);
+        LLVMCoroutine(const LLVMCoroutine &) = delete;
+
+        llvm::Value *handle() const;
+
+        llvm::BasicBlock *suspendBlock() const;
+        llvm::BasicBlock *cleanupBlock() const;
+        llvm::BasicBlock *freeMemRetBlock() const;
+
+        llvm::Value *didSuspendVar() const;
+
+        void createSuspend();
+        llvm::Value *createResume(llvm::Value *coroHandle);
+        void end();
+
+    private:
+        llvm::Module *m_module = nullptr;
+        llvm::IRBuilder<> *m_builder = nullptr;
+        llvm::Function *m_function = nullptr;
+        llvm::Value *m_handle = nullptr;
+        llvm::BasicBlock *m_suspendBlock = nullptr;
+        llvm::BasicBlock *m_cleanupBlock = nullptr;
+        llvm::BasicBlock *m_freeMemRetBlock = nullptr;
+        llvm::Value *m_didSuspendVar = nullptr;
 };
 
 } // namespace libscratchcpp

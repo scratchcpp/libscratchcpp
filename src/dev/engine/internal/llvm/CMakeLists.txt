@@ -6,6 +6,7 @@ target_sources(scratchcpp
     llvminstruction.h
     llvmifstatement.h
     llvmloop.h
+    llvmcoroutine.cpp
     llvmcoroutine.h
     llvmvariableptr.h
     llvmprocedure.h

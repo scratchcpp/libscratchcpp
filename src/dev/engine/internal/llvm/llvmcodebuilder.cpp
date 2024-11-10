@@ -60,10 +60,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     m_builder.SetInsertPoint(entry);
 
     // Init coroutine
-    LLVMCoroutine coro;
+    std::unique_ptr<LLVMCoroutine> coro;
 
     if (!m_warp)
-        coro = initCoroutine(func);
+        coro = std::make_unique<LLVMCoroutine>(m_module.get(), &m_builder, func);
 
     std::vector<LLVMIfStatement> ifStatements;
     std::vector<LLVMLoop> loops;
@@ -439,14 +439,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 if (!m_warp) {
                     freeHeap();
                     syncVariables(targetVariables);
-                    m_builder.CreateStore(m_builder.getInt1(true), coro.didSuspend);
-                    llvm::BasicBlock *resumeBranch = llvm::BasicBlock::Create(m_ctx, "", func);
-                    llvm::Value *noneToken = llvm::ConstantTokenNone::get(m_ctx);
-                    llvm::Value *suspendResult = m_builder.CreateCall(llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_suspend), { noneToken, m_builder.getInt1(false) });
-                    llvm::SwitchInst *sw = m_builder.CreateSwitch(suspendResult, coro.suspend, 2);
-                    sw->addCase(m_builder.getInt8(0), resumeBranch);
-                    sw->addCase(m_builder.getInt8(1), coro.cleanup);
-                    m_builder.SetInsertPoint(resumeBranch);
+                    coro->createSuspend();
                 }
 
                 break;
@@ -651,33 +644,17 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     freeHeap();
     syncVariables(targetVariables);
 
-    // Add final suspend point
-    if (!m_warp) {
-        llvm::BasicBlock *endBranch = llvm::BasicBlock::Create(m_ctx, "end", func);
-        llvm::BasicBlock *finalSuspendBranch = llvm::BasicBlock::Create(m_ctx, "finalSuspend", func);
-        m_builder.CreateCondBr(m_builder.CreateLoad(m_builder.getInt1Ty(), coro.didSuspend), finalSuspendBranch, endBranch);
-
-        m_builder.SetInsertPoint(finalSuspendBranch);
-        llvm::Value *suspendResult =
-            m_builder.CreateCall(llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_suspend), { llvm::ConstantTokenNone::get(m_ctx), m_builder.getInt1(true) });
-        llvm::SwitchInst *sw = m_builder.CreateSwitch(suspendResult, coro.suspend, 2);
-        sw->addCase(m_builder.getInt8(0), endBranch); // unreachable
-        sw->addCase(m_builder.getInt8(1), coro.cleanup);
-
-        m_builder.SetInsertPoint(endBranch);
-    }
-
     // End and verify the function
+    if (m_warp)
+        m_builder.CreateRet(llvm::ConstantPointerNull::get(pointerType));
+    else
+        coro->end();
+
     if (!m_tmpRegs.empty()) {
         std::cout
             << "warning: " << m_tmpRegs.size() << " registers were leaked by script '" << m_module->getName().str() << "', function '" << func->getName().str()
             << "' (if you see this as a regular user, this is a bug and should be reported)" << std::endl;
     }
-
-    if (m_warp)
-        m_builder.CreateRet(llvm::ConstantPointerNull::get(pointerType));
-    else
-        m_builder.CreateBr(coro.freeMemRet);
 
     verifyFunction(func);
 
@@ -691,12 +668,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
     if (m_warp)
         m_builder.CreateRet(m_builder.getInt1(true));
-    else {
-        llvm::Value *coroHandle = func->getArg(0);
-        m_builder.CreateCall(llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_resume), { coroHandle });
-        llvm::Value *done = m_builder.CreateCall(llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_done), { coroHandle });
-        m_builder.CreateRet(done);
-    }
+    else
+        m_builder.CreateRet(coro->createResume(func->getArg(0)));
 
     verifyFunction(func);
 
@@ -1008,63 +981,6 @@ void LLVMCodeBuilder::createVariableMap()
         else
             assert(false);
     }
-}
-
-LLVMCoroutine LLVMCodeBuilder::initCoroutine(llvm::Function *func)
-{
-    // Set presplitcoroutine attribute
-    func->setPresplitCoroutine();
-
-    // Coroutine intrinsics
-    llvm::Function *coroId = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_id);
-    llvm::Function *coroSize = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_size, m_builder.getInt64Ty());
-    llvm::Function *coroBegin = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_begin);
-    llvm::Function *coroEnd = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_end);
-    llvm::Function *coroFree = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_free);
-
-    // Init coroutine
-    LLVMCoroutine coro;
-    llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
-    llvm::Constant *nullPointer = llvm::ConstantPointerNull::get(pointerType);
-    llvm::Value *coroIdRet = m_builder.CreateCall(coroId, { m_builder.getInt32(8), nullPointer, nullPointer, nullPointer });
-
-    // Allocate memory
-    llvm::Value *coroSizeRet = m_builder.CreateCall(coroSize, std::nullopt, "size");
-    llvm::Function *mallocFunc = llvm::Function::Create(llvm::FunctionType::get(pointerType, { m_builder.getInt64Ty() }, false), llvm::Function::ExternalLinkage, "malloc", m_module.get());
-    llvm::Value *alloc = m_builder.CreateCall(mallocFunc, coroSizeRet, "mem");
-
-    // Begin
-    coro.handle = m_builder.CreateCall(coroBegin, { coroIdRet, alloc });
-    coro.didSuspend = m_builder.CreateAlloca(m_builder.getInt1Ty(), nullptr, "didSuspend");
-    m_builder.CreateStore(m_builder.getInt1(false), coro.didSuspend);
-    llvm::BasicBlock *entry = m_builder.GetInsertBlock();
-
-    // Create suspend branch
-    coro.suspend = llvm::BasicBlock::Create(m_ctx, "suspend", func);
-    m_builder.SetInsertPoint(coro.suspend);
-    m_builder.CreateCall(coroEnd, { coro.handle, m_builder.getInt1(false), llvm::ConstantTokenNone::get(m_ctx) });
-    m_builder.CreateRet(coro.handle);
-
-    // Create free branches
-    coro.freeMemRet = llvm::BasicBlock::Create(m_ctx, "freeMemRet", func);
-    m_builder.SetInsertPoint(coro.freeMemRet);
-    m_builder.CreateFree(alloc);
-    m_builder.CreateRet(llvm::ConstantPointerNull::get(pointerType));
-
-    llvm::BasicBlock *freeBranch = llvm::BasicBlock::Create(m_ctx, "free", func);
-    m_builder.SetInsertPoint(freeBranch);
-    m_builder.CreateFree(alloc);
-    m_builder.CreateBr(coro.suspend);
-
-    // Create cleanup branch
-    coro.cleanup = llvm::BasicBlock::Create(m_ctx, "cleanup", func);
-    m_builder.SetInsertPoint(coro.cleanup);
-    llvm::Value *mem = m_builder.CreateCall(coroFree, { coroIdRet, coro.handle });
-    llvm::Value *needFree = m_builder.CreateIsNotNull(mem);
-    m_builder.CreateCondBr(needFree, freeBranch, coro.suspend);
-
-    m_builder.SetInsertPoint(entry);
-    return coro;
 }
 
 void LLVMCodeBuilder::verifyFunction(llvm::Function *func)

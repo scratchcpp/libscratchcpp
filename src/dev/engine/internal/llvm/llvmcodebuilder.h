@@ -84,7 +84,6 @@ class LLVMCodeBuilder : public ICodeBuilder
         void initTypes();
         void createVariableMap();
 
-        LLVMCoroutine initCoroutine(llvm::Function *func);
         void verifyFunction(llvm::Function *func);
         void optimize();
 
