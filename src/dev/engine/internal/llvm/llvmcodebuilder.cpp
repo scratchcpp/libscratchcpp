@@ -107,12 +107,13 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     args.push_back(castValue(arg.second, arg.first));
                 }
 
-                llvm::Value *ret = m_builder.CreateCall(resolveFunction(step.functionName, llvm::FunctionType::get(getType(step.functionReturnType), types, false)), args);
+                llvm::Type *retType = getType(step.functionReturnReg ? step.functionReturnReg->type : Compiler::StaticType::Void);
+                llvm::Value *ret = m_builder.CreateCall(resolveFunction(step.functionName, llvm::FunctionType::get(retType, types, false)), args);
 
                 if (step.functionReturnReg) {
                     step.functionReturnReg->value = ret;
 
-                    if (step.functionReturnType == Compiler::StaticType::String)
+                    if (step.functionReturnReg->type == Compiler::StaticType::String)
                         m_heap.push_back(step.functionReturnReg->value);
                 }
 
@@ -704,8 +705,6 @@ void LLVMCodeBuilder::addFunctionCall(const std::string &functionName, Compiler:
         ins.args.push_back({ argTypes[j++], m_tmpRegs[i] });
 
     m_tmpRegs.erase(m_tmpRegs.end() - argTypes.size(), m_tmpRegs.end());
-
-    ins.functionReturnType = returnType;
 
     if (returnType != Compiler::StaticType::Void) {
         auto reg = std::make_shared<LLVMRegister>(returnType);

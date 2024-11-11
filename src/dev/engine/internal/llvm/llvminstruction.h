@@ -61,7 +61,6 @@ struct LLVMInstruction
         Type type;
         std::string functionName;
         std::vector<std::pair<Compiler::StaticType, LLVMRegisterPtr>> args; // target type, register
-        Compiler::StaticType functionReturnType = Compiler::StaticType::Void;
         LLVMRegisterPtr functionReturnReg;
         Variable *workVariable = nullptr; // for variables
 };
