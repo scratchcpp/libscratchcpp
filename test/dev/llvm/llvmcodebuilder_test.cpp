@@ -3,6 +3,7 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
 #include <dev/engine/internal/llvm/llvmcodebuilder.h>
 #include <gmock/gmock.h>
 #include <targetmock.h>
@@ -1897,6 +1898,80 @@ TEST_F(LLVMCodeBuilderTest, ReadVariable)
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ClearList)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    std::unordered_map<List *, std::string> strings;
+
+    auto globalList1 = std::make_shared<List>("", "");
+    auto globalList2 = std::make_shared<List>("", "");
+    auto globalList3 = std::make_shared<List>("", "");
+    stage.addList(globalList1);
+    stage.addList(globalList2);
+    stage.addList(globalList3);
+
+    auto localList1 = std::make_shared<List>("", "");
+    auto localList2 = std::make_shared<List>("", "");
+    auto localList3 = std::make_shared<List>("", "");
+    sprite.addList(localList1);
+    sprite.addList(localList2);
+    sprite.addList(localList3);
+
+    globalList1->append(1);
+    globalList1->append(2);
+    globalList1->append(3);
+    strings[globalList1.get()] = globalList1->toString();
+
+    globalList2->append("Lorem");
+    globalList2->append("ipsum");
+    globalList2->append(-4.52);
+    strings[globalList2.get()] = globalList2->toString();
+
+    globalList3->append(true);
+    globalList3->append(false);
+    globalList3->append(true);
+    strings[globalList3.get()] = globalList3->toString();
+
+    localList1->append("dolor");
+    localList1->append("sit");
+    localList1->append("amet");
+    strings[localList1.get()] = localList1->toString();
+
+    localList2->append(10);
+    localList2->append(9.8);
+    localList2->append(true);
+    strings[localList2.get()] = localList2->toString();
+
+    localList3->append("test");
+    localList3->append(1.2);
+    localList3->append(false);
+    strings[localList3.get()] = localList3->toString();
+
+    createBuilder(&sprite, true);
+
+    m_builder->createListClear(globalList1.get());
+    m_builder->createListClear(globalList3.get());
+    m_builder->createListClear(localList1.get());
+    m_builder->createListClear(localList2.get());
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    code->run(ctx.get());
+
+    ASSERT_TRUE(globalList1->empty());
+    ASSERT_EQ(globalList2->toString(), strings[globalList2.get()]);
+    ASSERT_TRUE(globalList3->empty());
+
+    ASSERT_TRUE(localList1->empty());
+    ASSERT_TRUE(localList2->empty());
+    ASSERT_EQ(localList3->toString(), strings[localList3.get()]);
 }
 
 TEST_F(LLVMCodeBuilderTest, Yield)

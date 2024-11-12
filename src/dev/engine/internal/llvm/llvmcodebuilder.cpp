@@ -477,6 +477,13 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::ClearList: {
+                assert(step.args.size() == 0);
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                m_builder.CreateCall(resolve_list_clear(), listPtr.ptr);
+                break;
+            }
+
             case LLVMInstruction::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -930,6 +937,13 @@ void LLVMCodeBuilder::createVariableWrite(Variable *variable)
     LLVMInstruction &ins = createOp(LLVMInstruction::Type::WriteVariable, Compiler::StaticType::Void, Compiler::StaticType::Unknown, 1);
     ins.workVariable = variable;
     m_variablePtrs[variable] = LLVMVariablePtr();
+}
+
+void LLVMCodeBuilder::createListClear(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::ClearList, Compiler::StaticType::Void, Compiler::StaticType::Void, 0);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
 }
 
 void LLVMCodeBuilder::beginIfStatement()
@@ -1820,6 +1834,12 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_value_lower()
 {
     llvm::Type *valuePtr = m_valueDataType->getPointerTo();
     return resolveFunction("value_lower", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_clear()
+{
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("list_clear", llvm::FunctionType::get(m_builder.getInt1Ty(), { listPtr }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()

@@ -42,6 +42,7 @@ struct LLVMInstruction
             Exp10,
             WriteVariable,
             ReadVariable,
+            ClearList,
             Yield,
             BeginIf,
             BeginElse,
