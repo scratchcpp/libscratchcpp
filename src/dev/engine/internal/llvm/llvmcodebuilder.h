@@ -11,6 +11,7 @@
 #include "llvminstruction.h"
 #include "llvmcoroutine.h"
 #include "llvmvariableptr.h"
+#include "llvmlistptr.h"
 
 namespace libscratchcpp
 {
@@ -83,6 +84,7 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         void initTypes();
         void createVariableMap();
+        void createListMap();
         void pushScopeLevel();
         void popScopeLevel();
 
@@ -99,6 +101,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Value *removeNaN(llvm::Value *num);
 
         llvm::Value *getVariablePtr(llvm::Value *targetVariables, Variable *variable);
+        llvm::Value *getListPtr(llvm::Value *targetLists, List *list);
         void syncVariables(llvm::Value *targetVariables);
         void reloadVariables(llvm::Value *targetVariables);
 
@@ -132,9 +135,13 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_strcasecmp();
 
         Target *m_target = nullptr;
+
         std::unordered_map<Variable *, size_t> m_targetVariableMap;
         std::unordered_map<Variable *, LLVMVariablePtr> m_variablePtrs;
         std::vector<std::unordered_map<LLVMVariablePtr *, Compiler::StaticType>> m_scopeVariables;
+
+        std::unordered_map<List *, size_t> m_targetListMap;
+        std::unordered_map<List *, LLVMListPtr> m_listPtrs;
 
         std::string m_id;
         llvm::LLVMContext m_ctx;

@@ -11,6 +11,7 @@ namespace libscratchcpp
 {
 
 class Target;
+class List;
 class LLVMExecutionContext;
 
 class LLVMExecutableCode : public ExecutableCode
@@ -32,7 +33,7 @@ class LLVMExecutableCode : public ExecutableCode
     private:
         uint64_t lookupFunction(const std::string &name);
 
-        using MainFunctionType = void *(*)(Target *, ValueData **);
+        using MainFunctionType = void *(*)(Target *, ValueData **, List **);
         using ResumeFunctionType = bool (*)(void *);
 
         static LLVMExecutionContext *getContext(ExecutionContext *context);

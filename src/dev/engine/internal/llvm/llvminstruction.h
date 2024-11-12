@@ -63,6 +63,7 @@ struct LLVMInstruction
         std::vector<std::pair<Compiler::StaticType, LLVMRegisterPtr>> args; // target type, register
         LLVMRegisterPtr functionReturnReg;
         Variable *workVariable = nullptr; // for variables
+        List *workList = nullptr;         // for lists
 };
 
 } // namespace libscratchcpp

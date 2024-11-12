@@ -8,6 +8,7 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
 
 #include "llvmcodebuilder.h"
 #include "llvmexecutablecode.h"
@@ -36,6 +37,7 @@ LLVMCodeBuilder::LLVMCodeBuilder(Target *target, const std::string &id, bool war
     m_regs.push_back({});
     initTypes();
     createVariableMap();
+    createListMap();
 }
 
 std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
@@ -56,12 +58,13 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     m_builder.setFastMathFlags(fmf);
 
     // Create function
-    // void *f(Target *, ValueData **)
+    // void *f(Target *, ValueData **, List **)
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
-    llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, { pointerType, pointerType }, false);
+    llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, { pointerType, pointerType, pointerType }, false);
     llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module.get());
     llvm::Value *targetPtr = func->getArg(0);
     llvm::Value *targetVariables = func->getArg(1);
+    llvm::Value *targetLists = func->getArg(2);
 
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
     m_builder.SetInsertPoint(entry);
@@ -91,6 +94,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
     m_scopeVariables.clear();
     m_scopeVariables.push_back({});
+
+    // Create list pointers
+    for (auto &[list, listPtr] : m_listPtrs)
+        listPtr.ptr = getListPtr(targetLists, list);
 
     // Execute recorded steps
     for (const LLVMInstruction &step : m_instructions) {
@@ -1031,6 +1038,36 @@ void LLVMCodeBuilder::createVariableMap()
     }
 }
 
+void LLVMCodeBuilder::createListMap()
+{
+    if (!m_target)
+        return;
+
+    // Map list pointers to list array indices
+    const auto &lists = m_target->lists();
+    List **listData = m_target->listData();
+    const size_t len = lists.size();
+    m_targetListMap.clear();
+    m_targetListMap.reserve(len);
+
+    size_t i, j;
+
+    for (i = 0; i < len; i++) {
+        List *list = lists[i].get();
+
+        // Find this list
+        for (j = 0; j < len; j++) {
+            if (listData[j] == list)
+                break;
+        }
+
+        if (j < len)
+            m_targetListMap[list] = j;
+        else
+            assert(false);
+    }
+}
+
 void LLVMCodeBuilder::pushScopeLevel()
 {
     m_scopeVariables.push_back({});
@@ -1312,6 +1349,22 @@ llvm::Value *LLVMCodeBuilder::getVariablePtr(llvm::Value *targetVariables, Varia
 
     // Otherwise create a raw pointer at compile time
     llvm::Value *addr = m_builder.getInt64((uintptr_t)&variable->value().data());
+    return m_builder.CreateIntToPtr(addr, m_valueDataType->getPointerTo());
+}
+
+llvm::Value *LLVMCodeBuilder::getListPtr(llvm::Value *targetLists, List *list)
+{
+    if (!m_target->isStage() && list->target() == m_target) {
+        // If this is a local sprite list, use the list array at runtime (for clones)
+        assert(m_targetListMap.find(list) != m_targetListMap.cend());
+        const size_t index = m_targetListMap[list];
+        auto pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+        llvm::Value *ptr = m_builder.CreateGEP(pointerType, targetLists, m_builder.getInt64(index));
+        return m_builder.CreateLoad(pointerType, ptr);
+    }
+
+    // Otherwise create a raw pointer at compile time
+    llvm::Value *addr = m_builder.getInt64((uintptr_t)list);
     return m_builder.CreateIntToPtr(addr, m_valueDataType->getPointerTo());
 }
 

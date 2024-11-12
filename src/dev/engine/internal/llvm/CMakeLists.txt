@@ -9,6 +9,7 @@ target_sources(scratchcpp
     llvmcoroutine.cpp
     llvmcoroutine.h
     llvmvariableptr.h
+    llvmlistptr.h
     llvmprocedure.h
     llvmtypes.cpp
     llvmtypes.h
