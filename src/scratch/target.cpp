@@ -150,6 +150,7 @@ int Target::addList(std::shared_ptr<List> list)
         return it - impl->lists.begin();
 
     impl->lists.push_back(list);
+    impl->listDataDirty = true;
     list->setTarget(this);
 
     return impl->lists.size() - 1;
@@ -184,6 +185,31 @@ int Target::findListById(const std::string &id) const
         return -1;
     else
         return it - impl->lists.begin();
+}
+
+/*! Returns an array of list pointers (for optimized list access). */
+List **Target::listData()
+{
+    if (impl->listDataDirty) {
+        const size_t len = impl->lists.size();
+
+        if (len == 0) {
+            impl->listDataDirty = false;
+            return nullptr;
+        }
+
+        if (impl->listData)
+            impl->listData = (List **)realloc(impl->listData, len * sizeof(List *));
+        else
+            impl->listData = (List **)malloc(len * sizeof(List *));
+
+        for (size_t i = 0; i < len; i++)
+            impl->listData[i] = impl->lists[i].get();
+
+        impl->listDataDirty = false;
+    }
+
+    return impl->listData;
 }
 
 /*! Returns the list of blocks. */

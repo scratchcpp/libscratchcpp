@@ -31,6 +31,8 @@ struct TargetPrivate
         bool variableDataDirty = true;
         ValueData **variableData = nullptr;
         std::vector<std::shared_ptr<List>> lists;
+        bool listDataDirty = true;
+        List **listData = nullptr;
         std::vector<std::shared_ptr<Block>> blocks;
         std::vector<std::shared_ptr<Comment>> comments;
         int costumeIndex = -1;
