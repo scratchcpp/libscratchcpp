@@ -83,6 +83,8 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         void initTypes();
         void createVariableMap();
+        void pushScopeLevel();
+        void popScopeLevel();
 
         void verifyFunction(llvm::Function *func);
         void optimize();
@@ -91,16 +93,18 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Value *castValue(LLVMRegisterPtr reg, Compiler::StaticType targetType);
         llvm::Value *castRawValue(LLVMRegisterPtr reg, Compiler::StaticType targetType);
         llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType);
+        Compiler::StaticType optimizeRegisterType(LLVMRegisterPtr reg);
         llvm::Type *getType(Compiler::StaticType type);
         llvm::Value *isNaN(llvm::Value *num);
         llvm::Value *removeNaN(llvm::Value *num);
 
         llvm::Value *getVariablePtr(llvm::Value *targetVariables, Variable *variable);
         void syncVariables(llvm::Value *targetVariables);
+        void reloadVariables(llvm::Value *targetVariables);
 
         LLVMInstruction &createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount);
 
-        void createValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr);
+        void createValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
         void createValueCopy(llvm::Value *source, llvm::Value *target);
         void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
         llvm::Value *createValue(LLVMRegisterPtr reg);
@@ -130,6 +134,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         Target *m_target = nullptr;
         std::unordered_map<Variable *, size_t> m_targetVariableMap;
         std::unordered_map<Variable *, LLVMVariablePtr> m_variablePtrs;
+        std::vector<std::unordered_map<LLVMVariablePtr *, Compiler::StaticType>> m_scopeVariables;
 
         std::string m_id;
         llvm::LLVMContext m_ctx;

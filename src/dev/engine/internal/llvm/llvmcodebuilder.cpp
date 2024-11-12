@@ -80,15 +80,17 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     for (auto &[var, varPtr] : m_variablePtrs) {
         llvm::Value *ptr = getVariablePtr(targetVariables, var);
 
-        // Access variable directly (slow?)
-        // varPtr.ptr = ptr;
+        // Direct access
+        varPtr.heapPtr = ptr;
 
-        // All variables are currently copied to the stack and synced later (seems to be faster)
+        // All variables are currently created on the stack and synced later (seems to be faster)
         // NOTE: Strings are NOT copied, only the pointer and string size are copied
-        varPtr.ptr = m_builder.CreateAlloca(m_valueDataType);
-        varPtr.onStack = true;
-        createValueCopy(ptr, varPtr.ptr);
+        varPtr.stackPtr = m_builder.CreateAlloca(m_valueDataType);
+        varPtr.onStack = false; // use heap before the first assignment
     }
+
+    m_scopeVariables.clear();
+    m_scopeVariables.push_back({});
 
     // Execute recorded steps
     for (const LLVMInstruction &step : m_instructions) {
@@ -430,16 +432,41 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 assert(m_variablePtrs.find(step.workVariable) != m_variablePtrs.cend());
                 const auto &arg = step.args[0];
+                Compiler::StaticType type = optimizeRegisterType(arg.second);
                 LLVMVariablePtr &varPtr = m_variablePtrs[step.workVariable];
                 varPtr.changed = true;
-                createValueStore(arg.second, varPtr.ptr);
+
+                // Initialize stack variable on first assignment
+                if (!varPtr.onStack) {
+                    varPtr.onStack = true;
+                    varPtr.type = type; // don't care about unknown type on first assignment
+
+                    ValueType mappedType;
+
+                    if (type == Compiler::StaticType::String || type == Compiler::StaticType::Unknown) {
+                        // Value functions are used for these types, so don't break them
+                        mappedType = ValueType::Number;
+                    } else {
+                        auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [type](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == type; });
+                        assert(it != TYPE_MAP.cend());
+                        mappedType = it->first;
+                    }
+
+                    llvm::Value *typeField = m_builder.CreateStructGEP(m_valueDataType, varPtr.stackPtr, 1);
+                    m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typeField);
+                }
+
+                createValueStore(arg.second, varPtr.stackPtr, type, varPtr.type);
+                varPtr.type = type;
+                m_scopeVariables.back()[&varPtr] = varPtr.type;
                 break;
             }
 
             case LLVMInstruction::Type::ReadVariable: {
                 assert(step.args.size() == 0);
                 const LLVMVariablePtr &varPtr = m_variablePtrs[step.workVariable];
-                step.functionReturnReg->value = varPtr.ptr;
+                step.functionReturnReg->value = varPtr.onStack ? varPtr.stackPtr : varPtr.heapPtr;
+                step.functionReturnReg->type = varPtr.type;
                 break;
             }
 
@@ -448,6 +475,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     freeHeap();
                     syncVariables(targetVariables);
                     coro->createSuspend();
+                    reloadVariables(targetVariables);
                 }
 
                 break;
@@ -468,12 +496,22 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.SetInsertPoint(statement.body);
 
                 ifStatements.push_back(statement);
+                pushScopeLevel();
                 break;
             }
 
             case LLVMInstruction::Type::BeginElse: {
                 assert(!ifStatements.empty());
                 LLVMIfStatement &statement = ifStatements.back();
+
+                // Restore types from parent scope
+                std::unordered_map<LLVMVariablePtr *, Compiler::StaticType> parentScopeVariables = m_scopeVariables[m_scopeVariables.size() - 2]; // no reference!
+                popScopeLevel();
+
+                for (auto &[ptr, type] : parentScopeVariables)
+                    ptr->type = type;
+
+                pushScopeLevel();
 
                 // Jump to the branch after the if statement
                 assert(!statement.afterIf);
@@ -516,6 +554,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.SetInsertPoint(statement.afterIf);
 
                 ifStatements.pop_back();
+                popScopeLevel();
                 break;
             }
 
@@ -569,6 +608,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.SetInsertPoint(body);
 
                 loops.push_back(loop);
+                pushScopeLevel();
                 break;
             }
 
@@ -590,6 +630,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 // Switch to body branch
                 m_builder.SetInsertPoint(body);
+                pushScopeLevel();
                 break;
             }
 
@@ -611,6 +652,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 // Switch to body branch
                 m_builder.SetInsertPoint(body);
+                pushScopeLevel();
                 break;
             }
 
@@ -644,6 +686,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.SetInsertPoint(loop.afterLoop);
 
                 loops.pop_back();
+                popScopeLevel();
                 break;
             }
         }
@@ -728,7 +771,6 @@ void LLVMCodeBuilder::addConstValue(const Value &value)
 
 void LLVMCodeBuilder::addVariableValue(Variable *variable)
 {
-    // TODO: Implement type prediction
     LLVMInstruction ins(LLVMInstruction::Type::ReadVariable);
     ins.workVariable = variable;
     m_variablePtrs[variable] = LLVMVariablePtr();
@@ -989,6 +1031,23 @@ void LLVMCodeBuilder::createVariableMap()
     }
 }
 
+void LLVMCodeBuilder::pushScopeLevel()
+{
+    m_scopeVariables.push_back({});
+}
+
+void LLVMCodeBuilder::popScopeLevel()
+{
+    for (size_t i = 0; i < m_scopeVariables.size() - 1; i++) {
+        for (auto &[ptr, type] : m_scopeVariables[i]) {
+            if (ptr->type != type)
+                ptr->type = Compiler::StaticType::Unknown;
+        }
+    }
+
+    m_scopeVariables.pop_back();
+}
+
 void LLVMCodeBuilder::verifyFunction(llvm::Function *func)
 {
     if (llvm::verifyFunction(*func, &llvm::errs())) {
@@ -1198,6 +1257,17 @@ llvm::Constant *LLVMCodeBuilder::castConstValue(const Value &value, Compiler::St
     }
 }
 
+Compiler::StaticType LLVMCodeBuilder::optimizeRegisterType(LLVMRegisterPtr reg)
+{
+    Compiler::StaticType ret = reg->type;
+
+    // Optimize string constants that represent numbers
+    if (reg->isConstValue && reg->type == Compiler::StaticType::String && reg->constValue.isValidNumber())
+        ret = Compiler::StaticType::Number;
+
+    return ret;
+}
+
 llvm::Type *LLVMCodeBuilder::getType(Compiler::StaticType type)
 {
     switch (type) {
@@ -1247,11 +1317,22 @@ llvm::Value *LLVMCodeBuilder::getVariablePtr(llvm::Value *targetVariables, Varia
 
 void LLVMCodeBuilder::syncVariables(llvm::Value *targetVariables)
 {
+    // Copy stack variables to the actual variables
     for (auto &[var, varPtr] : m_variablePtrs) {
         if (varPtr.onStack && varPtr.changed)
-            createValueCopy(varPtr.ptr, getVariablePtr(targetVariables, var));
+            createValueCopy(varPtr.stackPtr, getVariablePtr(targetVariables, var));
 
         varPtr.changed = false;
+    }
+}
+
+void LLVMCodeBuilder::reloadVariables(llvm::Value *targetVariables)
+{
+    // Reset variables to use heap
+    for (auto &[var, varPtr] : m_variablePtrs) {
+        varPtr.onStack = false;
+        varPtr.changed = false;
+        varPtr.type = Compiler::StaticType::Unknown;
     }
 }
 
@@ -1279,33 +1360,69 @@ LLVMInstruction &LLVMCodeBuilder::createOp(LLVMInstruction::Type type, Compiler:
     return m_instructions.back();
 }
 
-void LLVMCodeBuilder::createValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr)
+void LLVMCodeBuilder::createValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType)
 {
-    // TODO: Implement type prediction
-    Compiler::StaticType type = reg->type;
     llvm::Value *converted = nullptr;
 
-    // Optimize string constants that represent numbers
-    if (reg->isConstValue && reg->type == Compiler::StaticType::String && reg->constValue.isValidNumber())
-        type = Compiler::StaticType::Number;
+    if (sourceType != Compiler::StaticType::Unknown)
+        converted = castValue(reg, sourceType);
 
-    switch (type) {
+    auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [sourceType](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == sourceType; });
+    const ValueType mappedType = it == TYPE_MAP.cend() ? ValueType::Number : it->first; // unknown type can be ignored
+
+    switch (sourceType) {
         case Compiler::StaticType::Number:
-            converted = castValue(reg, type);
-            m_builder.CreateCall(resolve_value_assign_double(), { targetPtr, converted });
-            /*{
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
-                m_builder.CreateStore(converted, ptr);
-            }*/
+            switch (targetType) {
+                case Compiler::StaticType::Number: {
+                    // Write number to number directly
+                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+                    m_builder.CreateStore(converted, ptr);
+                    break;
+                }
+
+                case Compiler::StaticType::Bool: {
+                    // Write number to bool value directly and change type
+                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+                    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+                    m_builder.CreateStore(converted, ptr);
+                    m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typePtr);
+                    break;
+                }
+
+                default:
+                    m_builder.CreateCall(resolve_value_assign_double(), { targetPtr, converted });
+                    break;
+            }
+
             break;
 
         case Compiler::StaticType::Bool:
-            converted = castValue(reg, type);
-            m_builder.CreateCall(resolve_value_assign_bool(), { targetPtr, converted });
+            switch (targetType) {
+                case Compiler::StaticType::Number: {
+                    // Write bool to number value directly and change type
+                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+                    m_builder.CreateStore(converted, ptr);
+                    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+                    m_builder.CreateStore(converted, ptr);
+                    m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typePtr);
+                    break;
+                }
+
+                case Compiler::StaticType::Bool: {
+                    // Write bool to bool directly
+                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+                    m_builder.CreateStore(converted, ptr);
+                    break;
+                }
+
+                default:
+                    m_builder.CreateCall(resolve_value_assign_bool(), { targetPtr, converted });
+                    break;
+            }
+
             break;
 
         case Compiler::StaticType::String:
-            converted = castValue(reg, type);
             m_builder.CreateCall(resolve_value_assign_cstring(), { targetPtr, converted });
             break;
 

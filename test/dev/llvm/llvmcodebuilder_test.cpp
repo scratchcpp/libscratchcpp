@@ -1973,6 +1973,53 @@ TEST_F(LLVMCodeBuilderTest, Yield)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
+TEST_F(LLVMCodeBuilderTest, VariablesAfterSuspend)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalVar = std::make_shared<Variable>("", "", 87);
+    stage.addVariable(globalVar);
+
+    auto localVar = std::make_shared<Variable>("", "", "test");
+    sprite.addVariable(localVar);
+
+    createBuilder(&sprite, false);
+
+    m_builder->addConstValue(12.5);
+    m_builder->createVariableWrite(globalVar.get());
+
+    m_builder->addConstValue(true);
+    m_builder->createVariableWrite(localVar.get());
+
+    m_builder->yield();
+
+    m_builder->addVariableValue(globalVar.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addVariableValue(localVar.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    std::string expected =
+        "hello world\n"
+        "-4.8\n";
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    code->run(ctx.get());
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    globalVar->setValue("hello world");
+    localVar->setValue(-4.8);
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
 TEST_F(LLVMCodeBuilderTest, IfStatement)
 {
     createBuilder(true);
@@ -2139,6 +2186,100 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
         "1_arg 7\n";
 
     EXPECT_CALL(m_target, isStage).WillRepeatedly(Return(false));
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, IfStatementVariables)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalVar = std::make_shared<Variable>("", "", "test");
+    stage.addVariable(globalVar);
+
+    auto localVar = std::make_shared<Variable>("", "", 87);
+    sprite.addVariable(localVar);
+
+    createBuilder(&sprite, true);
+
+    m_builder->addConstValue(12.5);
+    m_builder->createVariableWrite(globalVar.get());
+
+    m_builder->addConstValue(true);
+    m_builder->createVariableWrite(localVar.get());
+
+    m_builder->addConstValue(true);
+    m_builder->beginIfStatement();
+    {
+        m_builder->addConstValue("hello world");
+        m_builder->createVariableWrite(globalVar.get());
+    }
+    m_builder->endIf();
+
+    m_builder->addVariableValue(globalVar.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(12.5);
+    m_builder->createVariableWrite(globalVar.get());
+
+    m_builder->addConstValue(false);
+    m_builder->beginIfStatement();
+    {
+        m_builder->addConstValue("hello world");
+        m_builder->createVariableWrite(globalVar.get());
+
+        m_builder->addConstValue(0);
+        m_builder->createVariableWrite(localVar.get());
+    }
+    m_builder->endIf();
+
+    m_builder->addVariableValue(globalVar.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addVariableValue(localVar.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(true);
+    m_builder->beginIfStatement();
+    {
+        m_builder->addConstValue(true);
+        m_builder->beginIfStatement();
+        {
+            m_builder->addConstValue(true);
+            m_builder->createVariableWrite(globalVar.get());
+        }
+        m_builder->endIf();
+
+        m_builder->addConstValue(false);
+        m_builder->beginIfStatement();
+        {
+            m_builder->addConstValue(-8.2);
+            m_builder->createVariableWrite(localVar.get());
+        }
+        m_builder->endIf();
+    }
+    m_builder->endIf();
+
+    m_builder->addVariableValue(globalVar.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addVariableValue(localVar.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    std::string expected =
+        "hello world\n"
+        "12.5\n"
+        "true\n"
+        "true\n"
+        "true\n";
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
@@ -2485,4 +2626,134 @@ TEST_F(LLVMCodeBuilderTest, RepeatUntilLoop)
         ASSERT_EQ(testing::internal::GetCapturedStdout(), expected1);
         ASSERT_FALSE(code->isFinished(ctx.get()));
     }
+}
+
+TEST_F(LLVMCodeBuilderTest, LoopVariables)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalVar = std::make_shared<Variable>("", "", "test");
+    stage.addVariable(globalVar);
+
+    auto localVar = std::make_shared<Variable>("", "", 87);
+    auto counter1 = std::make_shared<Variable>("", "");
+    auto counter2 = std::make_shared<Variable>("", "");
+    sprite.addVariable(localVar);
+    sprite.addVariable(counter1);
+    sprite.addVariable(counter2);
+
+    createBuilder(&sprite, true);
+
+    m_builder->addConstValue(12.5);
+    m_builder->createVariableWrite(globalVar.get());
+
+    m_builder->addConstValue(true);
+    m_builder->createVariableWrite(localVar.get());
+
+    m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop();
+    {
+        m_builder->addConstValue("hello world");
+        m_builder->createVariableWrite(globalVar.get());
+    }
+    m_builder->endLoop();
+
+    m_builder->addVariableValue(globalVar.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(12.5);
+    m_builder->createVariableWrite(globalVar.get());
+
+    m_builder->addConstValue(0);
+    m_builder->beginRepeatLoop();
+    {
+        m_builder->addConstValue("hello world");
+        m_builder->createVariableWrite(globalVar.get());
+
+        m_builder->addConstValue(0);
+        m_builder->createVariableWrite(localVar.get());
+    }
+    m_builder->endLoop();
+
+    m_builder->addVariableValue(globalVar.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addVariableValue(localVar.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(0);
+    m_builder->createVariableWrite(counter1.get());
+
+    m_builder->beginLoopCondition();
+    m_builder->addVariableValue(counter1.get());
+    m_builder->addConstValue(5);
+    m_builder->createCmpLT();
+    m_builder->beginWhileLoop();
+    {
+        m_builder->addConstValue(0);
+        m_builder->createVariableWrite(counter2.get());
+
+        m_builder->beginLoopCondition();
+        m_builder->addVariableValue(counter2.get());
+        m_builder->addConstValue(3);
+        m_builder->createCmpEQ();
+        m_builder->beginRepeatUntilLoop();
+        {
+            m_builder->addConstValue(true);
+            m_builder->createVariableWrite(globalVar.get());
+
+            m_builder->addVariableValue(counter2.get());
+            m_builder->addConstValue(1);
+            m_builder->createAdd();
+            m_builder->createVariableWrite(counter2.get());
+        }
+        m_builder->endLoop();
+
+        m_builder->beginLoopCondition();
+        m_builder->addConstValue(false);
+        m_builder->beginWhileLoop();
+        {
+            m_builder->addConstValue(-8.2);
+            m_builder->createVariableWrite(localVar.get());
+        }
+        m_builder->endLoop();
+
+        m_builder->addVariableValue(counter1.get());
+        m_builder->addConstValue(1);
+        m_builder->createAdd();
+        m_builder->createVariableWrite(counter1.get());
+    }
+    m_builder->endLoop();
+
+    m_builder->beginLoopCondition();
+    m_builder->addConstValue(true);
+    m_builder->beginRepeatUntilLoop();
+    {
+        m_builder->addConstValue(-8.2);
+        m_builder->createVariableWrite(localVar.get());
+    }
+    m_builder->endLoop();
+
+    m_builder->addVariableValue(globalVar.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addVariableValue(localVar.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    std::string expected =
+        "hello world\n"
+        "12.5\n"
+        "true\n"
+        "true\n"
+        "true\n";
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
