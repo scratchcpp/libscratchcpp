@@ -16,7 +16,8 @@ namespace libscratchcpp
 
 struct LLVMVariablePtr
 {
-        llvm::Value *ptr = nullptr;
+        llvm::Value *stackPtr = nullptr;
+        llvm::Value *heapPtr = nullptr;
         Compiler::StaticType type = Compiler::StaticType::Unknown;
         bool onStack = false;
         bool changed = false;
