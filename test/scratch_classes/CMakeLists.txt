@@ -16,6 +16,7 @@ gtest_discover_tests(blockprototype_test)
 add_executable(
   list_test
   list_test.cpp
+  list_functions_test.cpp
 )
 
 target_link_libraries(
