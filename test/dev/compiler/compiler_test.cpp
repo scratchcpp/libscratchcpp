@@ -571,6 +571,28 @@ TEST_F(CompilerTest, CreateVariableWrite)
     compile(compiler, block);
 }
 
+TEST_F(CompilerTest, CustomIfStatement)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, beginIfStatement());
+        compiler->beginIfStatement();
+        EXPECT_CALL(*m_builder, endIf());
+        compiler->endIf();
+
+        EXPECT_CALL(*m_builder, beginIfStatement());
+        compiler->beginIfStatement();
+        EXPECT_CALL(*m_builder, beginElseBranch());
+        compiler->beginElseBranch();
+        EXPECT_CALL(*m_builder, endIf());
+        compiler->endIf();
+    });
+
+    compile(compiler, block);
+}
+
 TEST_F(CompilerTest, MoveToIf)
 {
     Compiler compiler(&m_engine, &m_target);

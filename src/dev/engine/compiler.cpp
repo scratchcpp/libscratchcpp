@@ -45,9 +45,15 @@ std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBl
     impl->block = startBlock;
 
     while (impl->block) {
-        if (impl->block->compileFunction())
+        if (impl->block->compileFunction()) {
+            assert(impl->customIfStatementCount == 0);
             impl->block->compile(this);
-        else {
+
+            if (impl->customIfStatementCount > 0) {
+                std::cerr << "error: if statement created by block '" << impl->block->opcode() << "' not terminated" << std::endl;
+                assert(false);
+            }
+        } else {
             std::cout << "warning: unsupported block: " << impl->block->opcode() << std::endl;
             impl->unsupportedBlocks.insert(impl->block->opcode());
         }
@@ -260,6 +266,35 @@ void Compiler::createExp10()
 void Compiler::createVariableWrite(Variable *variable)
 {
     impl->builder->createVariableWrite(variable);
+}
+
+/*!
+ * Starts a custom if statement.
+ * \note The if statement must be terminated using endIf() after compiling your block.
+ */
+void Compiler::beginIfStatement()
+{
+    impl->builder->beginIfStatement();
+    impl->customIfStatementCount++;
+}
+
+/*! Starts the else branch of custom if statement. */
+void Compiler::beginElseBranch()
+{
+    impl->builder->beginElseBranch();
+}
+
+/*! Ends custom if statement. */
+void Compiler::endIf()
+{
+    if (impl->customIfStatementCount == 0) {
+        std::cerr << "error: called Compiler::endIf() without an if statement";
+        assert(false);
+        return;
+    }
+
+    impl->builder->endIf();
+    impl->customIfStatementCount--;
 }
 
 /*! Jumps to the given if substack. */
