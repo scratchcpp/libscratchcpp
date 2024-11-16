@@ -1466,7 +1466,7 @@ void LLVMCodeBuilder::createValueStore(LLVMRegisterPtr reg, llvm::Value *targetP
                 case Compiler::StaticType::Bool: {
                     // Write number to bool value directly and change type
                     llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
-                    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+                    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 1);
                     m_builder.CreateStore(converted, ptr);
                     m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typePtr);
                     break;
@@ -1485,7 +1485,7 @@ void LLVMCodeBuilder::createValueStore(LLVMRegisterPtr reg, llvm::Value *targetP
                     // Write bool to number value directly and change type
                     llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
                     m_builder.CreateStore(converted, ptr);
-                    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+                    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 1);
                     m_builder.CreateStore(converted, ptr);
                     m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typePtr);
                     break;
