@@ -1855,13 +1855,13 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_value_lower()
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_clear()
 {
     llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
-    return resolveFunction("list_clear", llvm::FunctionType::get(m_builder.getInt1Ty(), { listPtr }, false));
+    return resolveFunction("list_clear", llvm::FunctionType::get(m_builder.getVoidTy(), { listPtr }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_remove()
 {
     llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
-    return resolveFunction("list_remove", llvm::FunctionType::get(m_builder.getInt1Ty(), { listPtr, m_builder.getInt64Ty() }, false));
+    return resolveFunction("list_remove", llvm::FunctionType::get(m_builder.getVoidTy(), { listPtr, m_builder.getInt64Ty() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()
