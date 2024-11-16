@@ -17,4 +17,9 @@ extern "C"
     {
         list->removeAt(index);
     }
+
+    ValueData *list_append_empty(List *list)
+    {
+        return &list->appendEmpty();
+    }
 }

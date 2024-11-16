@@ -35,3 +35,20 @@ TEST(ListFunctionsTest, Remove)
     list_remove(&list, 0);
     ASSERT_TRUE(list.empty());
 }
+
+TEST(ListFunctionsTest, AppendEmpty)
+{
+    List list("", "test list");
+    list.append("Lorem");
+    list.append("ipsum");
+
+    ValueData *v = list_append_empty(&list);
+    value_init(v);
+    value_assign_double(v, 5);
+    ASSERT_EQ(list.toString(), "Lorem ipsum 5");
+
+    v = list_append_empty(&list);
+    value_init(v);
+    value_assign_string(v, "test");
+    ASSERT_EQ(list.toString(), "Lorem ipsum 5 test");
+}
