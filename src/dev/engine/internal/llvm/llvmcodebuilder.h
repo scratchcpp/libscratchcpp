@@ -63,6 +63,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createVariableWrite(Variable *variable) override;
 
         void createListClear(List *list) override;
+        void createListRemove(List *list) override;
 
         void beginIfStatement() override;
         void beginElseBranch() override;
@@ -135,6 +136,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_value_greater();
         llvm::FunctionCallee resolve_value_lower();
         llvm::FunctionCallee resolve_list_clear();
+        llvm::FunctionCallee resolve_list_remove();
         llvm::FunctionCallee resolve_strcasecmp();
 
         Target *m_target = nullptr;

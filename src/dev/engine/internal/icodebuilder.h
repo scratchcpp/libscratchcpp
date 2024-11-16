@@ -57,6 +57,7 @@ class ICodeBuilder
         virtual void createVariableWrite(Variable *variable) = 0;
 
         virtual void createListClear(List *list) = 0;
+        virtual void createListRemove(List *list) = 0;
 
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;

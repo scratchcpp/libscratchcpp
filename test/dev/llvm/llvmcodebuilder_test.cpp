@@ -1974,6 +1974,48 @@ TEST_F(LLVMCodeBuilderTest, ClearList)
     ASSERT_EQ(localList3->toString(), strings[localList3.get()]);
 }
 
+TEST_F(LLVMCodeBuilderTest, RemoveFromList)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    std::unordered_map<List *, std::string> strings;
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    globalList->append(1);
+    globalList->append(2);
+    globalList->append(3);
+
+    localList->append("Lorem");
+    localList->append("ipsum");
+    localList->append("dolor");
+    localList->append("sit");
+    strings[localList.get()] = localList->toString();
+
+    createBuilder(&sprite, true);
+
+    m_builder->addConstValue(1);
+    m_builder->createListRemove(globalList.get());
+
+    m_builder->addConstValue(3);
+    m_builder->createListRemove(localList.get());
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    code->run(ctx.get());
+
+    ASSERT_EQ(globalList->toString(), "13");
+    ASSERT_EQ(localList->toString(), "Lorem ipsum dolor");
+}
+
 TEST_F(LLVMCodeBuilderTest, Yield)
 {
     auto build = [this]() {

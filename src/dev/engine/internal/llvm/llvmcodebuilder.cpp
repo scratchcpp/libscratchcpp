@@ -484,6 +484,15 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::RemoveListItem: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                llvm::Value *index = m_builder.CreateFPToUI(castValue(arg.second, arg.first), m_builder.getInt64Ty());
+                m_builder.CreateCall(resolve_list_remove(), { listPtr.ptr, index });
+                break;
+            }
+
             case LLVMInstruction::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -942,6 +951,13 @@ void LLVMCodeBuilder::createVariableWrite(Variable *variable)
 void LLVMCodeBuilder::createListClear(List *list)
 {
     LLVMInstruction &ins = createOp(LLVMInstruction::Type::ClearList, Compiler::StaticType::Void, Compiler::StaticType::Void, 0);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+}
+
+void LLVMCodeBuilder::createListRemove(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::RemoveListItem, Compiler::StaticType::Void, Compiler::StaticType::Number, 1);
     ins.workList = list;
     m_listPtrs[list] = LLVMListPtr();
 }
@@ -1840,6 +1856,12 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_list_clear()
 {
     llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
     return resolveFunction("list_clear", llvm::FunctionType::get(m_builder.getInt1Ty(), { listPtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_remove()
+{
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("list_remove", llvm::FunctionType::get(m_builder.getInt1Ty(), { listPtr, m_builder.getInt64Ty() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()
