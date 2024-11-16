@@ -12,4 +12,9 @@ extern "C"
     {
         list->clear();
     }
+
+    void list_remove(List *list, size_t index)
+    {
+        list->removeAt(index);
+    }
 }
