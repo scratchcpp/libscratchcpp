@@ -44,6 +44,7 @@ struct LLVMInstruction
             ReadVariable,
             ClearList,
             RemoveListItem,
+            AppendToList,
             Yield,
             BeginIf,
             BeginElse,

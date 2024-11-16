@@ -64,6 +64,7 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         void createListClear(List *list) override;
         void createListRemove(List *list) override;
+        void createListAppend(List *list) override;
 
         void beginIfStatement() override;
         void beginElseBranch() override;
@@ -111,6 +112,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         LLVMInstruction &createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount);
 
         void createValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
+        void createInitialValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType);
         void createValueCopy(llvm::Value *source, llvm::Value *target);
         void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
         llvm::Value *createValue(LLVMRegisterPtr reg);
@@ -137,6 +139,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_value_lower();
         llvm::FunctionCallee resolve_list_clear();
         llvm::FunctionCallee resolve_list_remove();
+        llvm::FunctionCallee resolve_list_append_empty();
         llvm::FunctionCallee resolve_strcasecmp();
 
         Target *m_target = nullptr;

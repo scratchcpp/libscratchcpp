@@ -493,6 +493,17 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::AppendToList: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                Compiler::StaticType type = optimizeRegisterType(arg.second);
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                llvm::Value *itemPtr = m_builder.CreateCall(resolve_list_append_empty(), listPtr.ptr);
+                createInitialValueStore(arg.second, itemPtr, type);
+                // TODO: Implement list type prediction
+                break;
+            }
+
             case LLVMInstruction::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -958,6 +969,13 @@ void LLVMCodeBuilder::createListClear(List *list)
 void LLVMCodeBuilder::createListRemove(List *list)
 {
     LLVMInstruction &ins = createOp(LLVMInstruction::Type::RemoveListItem, Compiler::StaticType::Void, Compiler::StaticType::Number, 1);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+}
+
+void LLVMCodeBuilder::createListAppend(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::AppendToList, Compiler::StaticType::Void, Compiler::StaticType::Unknown, 1);
     ins.workList = list;
     m_listPtrs[list] = LLVMListPtr();
 }
@@ -1519,6 +1537,41 @@ void LLVMCodeBuilder::createValueStore(LLVMRegisterPtr reg, llvm::Value *targetP
     }
 }
 
+void LLVMCodeBuilder::createInitialValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType)
+{
+    llvm::Value *converted = nullptr;
+
+    if (sourceType != Compiler::StaticType::Unknown)
+        converted = castValue(reg, sourceType);
+
+    auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [sourceType](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == sourceType; });
+    const ValueType mappedType = it == TYPE_MAP.cend() ? ValueType::Number : it->first; // unknown type can be ignored
+
+    llvm::Value *valuePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 1);
+    m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typePtr);
+
+    switch (sourceType) {
+        case Compiler::StaticType::Number:
+        case Compiler::StaticType::Bool:
+            // Write number/bool directly
+            m_builder.CreateStore(converted, valuePtr);
+            break;
+
+        case Compiler::StaticType::String:
+            m_builder.CreateCall(resolve_value_assign_cstring(), { targetPtr, converted });
+            break;
+
+        case Compiler::StaticType::Unknown:
+            m_builder.CreateCall(resolve_value_assign_copy(), { targetPtr, reg->value });
+            break;
+
+        default:
+            assert(false);
+            break;
+    }
+}
+
 void LLVMCodeBuilder::createValueCopy(llvm::Value *source, llvm::Value *target)
 {
     // NOTE: This doesn't copy strings, but only the pointers
@@ -1862,6 +1915,12 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_list_remove()
 {
     llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
     return resolveFunction("list_remove", llvm::FunctionType::get(m_builder.getVoidTy(), { listPtr, m_builder.getInt64Ty() }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_append_empty()
+{
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("list_append_empty", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()
