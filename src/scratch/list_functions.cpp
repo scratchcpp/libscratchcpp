@@ -27,4 +27,9 @@ extern "C"
     {
         return &list->insertEmpty(index);
     }
+
+    ValueData *list_get_item(List *list, size_t index)
+    {
+        return &list->operator[](index);
+    }
 }

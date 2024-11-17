@@ -69,3 +69,19 @@ TEST(ListFunctionsTest, InsertEmpty)
     value_assign_string(v, "test");
     ASSERT_EQ(list.toString(), "5 Lorem test ipsum");
 }
+
+TEST(ListFunctionsTest, GetItem)
+{
+    List list("", "test list");
+    list.append("Lorem");
+    list.append("ipsum");
+    list.append("dolor");
+    list.append("sit");
+    list.append("amet");
+
+    ASSERT_EQ(list_get_item(&list, 0), &list[0]);
+    ASSERT_EQ(list_get_item(&list, 1), &list[1]);
+    ASSERT_EQ(list_get_item(&list, 2), &list[2]);
+    ASSERT_EQ(list_get_item(&list, 3), &list[3]);
+    ASSERT_EQ(list_get_item(&list, 4), &list[4]);
+}
