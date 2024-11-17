@@ -2134,6 +2134,62 @@ TEST_F(LLVMCodeBuilderTest, InsertToList)
     ASSERT_EQ(localList->toString(), "false hello world true");
 }
 
+TEST_F(LLVMCodeBuilderTest, ListReplace)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    std::unordered_map<List *, std::string> strings;
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    globalList->append(1);
+    globalList->append(2);
+    globalList->append(3);
+
+    localList->append("Lorem");
+    localList->append("ipsum");
+    localList->append("dolor");
+    localList->append("sit");
+    strings[localList.get()] = localList->toString();
+
+    createBuilder(&sprite, true);
+
+    m_builder->addConstValue(2);
+    m_builder->addConstValue(1);
+    m_builder->createListReplace(globalList.get());
+
+    m_builder->addConstValue(1);
+    m_builder->addConstValue("test");
+    m_builder->createListReplace(globalList.get());
+
+    m_builder->addConstValue(0);
+    m_builder->addConstValue(3);
+    m_builder->createListReplace(localList.get());
+
+    m_builder->addConstValue(2);
+    m_builder->addConstValue(true);
+    m_builder->createListReplace(localList.get());
+
+    m_builder->addConstValue(3);
+    m_builder->addConstValue("hello world");
+    m_builder->createListReplace(localList.get());
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    code->run(ctx.get());
+
+    ASSERT_EQ(globalList->toString(), "1 test 1");
+    ASSERT_EQ(localList->toString(), "3 ipsum true hello world");
+}
+
 TEST_F(LLVMCodeBuilderTest, Yield)
 {
     auto build = [this]() {

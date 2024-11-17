@@ -66,6 +66,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createListRemove(List *list) override;
         void createListAppend(List *list) override;
         void createListInsert(List *list) override;
+        void createListReplace(List *list) override;
 
         void beginIfStatement() override;
         void beginElseBranch() override;
@@ -143,6 +144,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_list_remove();
         llvm::FunctionCallee resolve_list_append_empty();
         llvm::FunctionCallee resolve_list_insert_empty();
+        llvm::FunctionCallee resolve_list_get_item();
         llvm::FunctionCallee resolve_strcasecmp();
 
         Target *m_target = nullptr;

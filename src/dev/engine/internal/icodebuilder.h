@@ -60,6 +60,7 @@ class ICodeBuilder
         virtual void createListRemove(List *list) = 0;
         virtual void createListAppend(List *list) = 0;
         virtual void createListInsert(List *list) = 0;
+        virtual void createListReplace(List *list) = 0;
 
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;
