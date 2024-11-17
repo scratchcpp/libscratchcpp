@@ -504,6 +504,19 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::InsertToList: {
+                assert(step.args.size() == 2);
+                const auto &indexArg = step.args[0];
+                const auto &valueArg = step.args[1];
+                Compiler::StaticType type = optimizeRegisterType(valueArg.second);
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                llvm::Value *index = m_builder.CreateFPToUI(castValue(indexArg.second, indexArg.first), m_builder.getInt64Ty());
+                llvm::Value *itemPtr = m_builder.CreateCall(resolve_list_insert_empty(), { listPtr.ptr, index });
+                createInitialValueStore(valueArg.second, itemPtr, type);
+                // TODO: Implement list type prediction
+                break;
+            }
+
             case LLVMInstruction::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -976,6 +989,13 @@ void LLVMCodeBuilder::createListRemove(List *list)
 void LLVMCodeBuilder::createListAppend(List *list)
 {
     LLVMInstruction &ins = createOp(LLVMInstruction::Type::AppendToList, Compiler::StaticType::Void, Compiler::StaticType::Unknown, 1);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+}
+
+void LLVMCodeBuilder::createListInsert(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::InsertToList, Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Unknown }, 2);
     ins.workList = list;
     m_listPtrs[list] = LLVMListPtr();
 }
@@ -1934,6 +1954,12 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_list_append_empty()
 {
     llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
     return resolveFunction("list_append_empty", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_insert_empty()
+{
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("list_insert_empty", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr, m_builder.getInt64Ty() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()
