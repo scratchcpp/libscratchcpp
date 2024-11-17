@@ -52,3 +52,20 @@ TEST(ListFunctionsTest, AppendEmpty)
     value_assign_string(v, "test");
     ASSERT_EQ(list.toString(), "Lorem ipsum 5 test");
 }
+
+TEST(ListFunctionsTest, InsertEmpty)
+{
+    List list("", "test list");
+    list.append("Lorem");
+    list.append("ipsum");
+
+    ValueData *v = list_insert_empty(&list, 0);
+    value_init(v);
+    value_assign_double(v, 5);
+    ASSERT_EQ(list.toString(), "5 Lorem ipsum");
+
+    v = list_insert_empty(&list, 2);
+    value_init(v);
+    value_assign_string(v, "test");
+    ASSERT_EQ(list.toString(), "5 Lorem test ipsum");
+}

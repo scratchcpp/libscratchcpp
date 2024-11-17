@@ -22,4 +22,9 @@ extern "C"
     {
         return &list->appendEmpty();
     }
+
+    ValueData *list_insert_empty(List *list, size_t index)
+    {
+        return &list->insertEmpty(index);
+    }
 }

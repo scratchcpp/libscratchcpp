@@ -16,6 +16,7 @@ extern "C"
     void list_remove(List *list, size_t index);
 
     ValueData *list_append_empty(List *list);
+    ValueData *list_insert_empty(List *list, size_t index);
 }
 
 } // namespace libscratchcpp
