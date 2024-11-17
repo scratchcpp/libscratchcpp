@@ -110,6 +110,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void reloadVariables(llvm::Value *targetVariables);
 
         LLVMInstruction &createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount);
+        LLVMInstruction &createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const std::vector<Compiler::StaticType> &argTypes, size_t argCount);
 
         void createValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
         void createInitialValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType);

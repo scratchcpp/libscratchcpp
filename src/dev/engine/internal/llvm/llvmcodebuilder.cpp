@@ -1439,13 +1439,26 @@ void LLVMCodeBuilder::reloadVariables(llvm::Value *targetVariables)
 
 LLVMInstruction &LLVMCodeBuilder::createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount)
 {
+    std::vector<Compiler::StaticType> types;
+    types.reserve(argCount);
+
+    for (size_t i = 0; i < argCount; i++)
+        types.push_back(argType);
+
+    return createOp(type, retType, types, argCount);
+}
+
+LLVMInstruction &LLVMCodeBuilder::createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const std::vector<Compiler::StaticType> &argTypes, size_t argCount)
+{
     LLVMInstruction ins(type);
 
     assert(m_tmpRegs.size() >= argCount);
     size_t j = 0;
 
-    for (size_t i = m_tmpRegs.size() - argCount; i < m_tmpRegs.size(); i++)
-        ins.args.push_back({ argType, m_tmpRegs[i] });
+    for (size_t i = m_tmpRegs.size() - argCount; i < m_tmpRegs.size(); i++) {
+        ins.args.push_back({ argTypes[j], m_tmpRegs[i] });
+        j++;
+    }
 
     m_tmpRegs.erase(m_tmpRegs.end() - argCount, m_tmpRegs.end());
 
