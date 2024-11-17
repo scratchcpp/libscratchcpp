@@ -96,15 +96,18 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
             m_size--;
         }
 
-        /*! Inserts an item at index. */
-        inline void insert(size_t index, const ValueData &value)
+        /*! Inserts an empty item at index and returns the reference to it. Can be used for custom initialization. */
+        inline ValueData &insertEmpty(size_t index)
         {
             assert(index >= 0 && index <= size());
             m_size++;
             reserve(getAllocSize(m_size));
             std::rotate(m_dataPtr->rbegin() + m_dataPtr->size() - m_size, m_dataPtr->rbegin() + m_dataPtr->size() - m_size + 1, m_dataPtr->rend() - index);
-            value_assign_copy(&m_dataPtr->operator[](index), &value);
+            return m_dataPtr->operator[](index);
         }
+
+        /*! Inserts an item at index. */
+        inline void insert(size_t index, const ValueData &value) { value_assign_copy(&insertEmpty(index), &value); }
 
         /*! Inserts an item at index. */
         inline void insert(size_t index, const Value &value) { insert(index, value.data()); }
