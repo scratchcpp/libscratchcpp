@@ -32,4 +32,9 @@ extern "C"
     {
         return &list->operator[](index);
     }
+
+    size_t list_size(List *list)
+    {
+        return list->size();
+    }
 }
