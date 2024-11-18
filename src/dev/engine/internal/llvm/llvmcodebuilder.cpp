@@ -530,6 +530,16 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::GetListItem: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                llvm::Value *index = m_builder.CreateFPToUI(castValue(arg.second, arg.first), m_builder.getInt64Ty());
+                step.functionReturnReg->value = m_builder.CreateCall(resolve_list_get_item(), { listPtr.ptr, index });
+                step.functionReturnReg->type = listPtr.type;
+                break;
+            }
+
             case LLVMInstruction::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -846,6 +856,26 @@ void LLVMCodeBuilder::addVariableValue(Variable *variable)
 
 void LLVMCodeBuilder::addListContents(List *list)
 {
+}
+
+void LLVMCodeBuilder::addListItem(List *list)
+{
+    LLVMInstruction ins(LLVMInstruction::Type::GetListItem);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+
+    assert(m_tmpRegs.size() >= 1);
+    ins.args.push_back({ Compiler::StaticType::Number, m_tmpRegs[0] });
+
+    m_tmpRegs.erase(m_tmpRegs.end() - 1, m_tmpRegs.end());
+
+    auto ret = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    ret->isRawValue = false;
+    ins.functionReturnReg = ret;
+    m_regs[m_currentFunction].push_back(ret);
+    m_tmpRegs.push_back(ret);
+
+    m_instructions.push_back(ins);
 }
 
 void LLVMCodeBuilder::createAdd()

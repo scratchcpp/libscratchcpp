@@ -47,6 +47,7 @@ struct LLVMInstruction
             AppendToList,
             InsertToList,
             ListReplace,
+            GetListItem,
             Yield,
             BeginIf,
             BeginElse,

@@ -29,6 +29,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void addConstValue(const Value &value) override;
         void addVariableValue(Variable *variable) override;
         void addListContents(List *list) override;
+        void addListItem(List *list) override;
 
         void createAdd() override;
         void createSub() override;

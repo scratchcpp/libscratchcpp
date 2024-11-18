@@ -13,6 +13,7 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(void, addConstValue, (const Value &), (override));
         MOCK_METHOD(void, addVariableValue, (Variable *), (override));
         MOCK_METHOD(void, addListContents, (List *), (override));
+        MOCK_METHOD(void, addListItem, (List *), (override));
 
         MOCK_METHOD(void, createAdd, (), (override));
         MOCK_METHOD(void, createSub, (), (override));

@@ -2190,6 +2190,75 @@ TEST_F(LLVMCodeBuilderTest, ListReplace)
     ASSERT_EQ(localList->toString(), "3 ipsum true hello world");
 }
 
+TEST_F(LLVMCodeBuilderTest, GetListItem)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    std::unordered_map<List *, std::string> strings;
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    globalList->append(1);
+    globalList->append(2);
+    globalList->append(3);
+
+    localList->append("Lorem");
+    localList->append("ipsum");
+    localList->append("dolor");
+    localList->append("sit");
+    strings[localList.get()] = localList->toString();
+
+    createBuilder(&sprite, true);
+
+    m_builder->addConstValue(2);
+    m_builder->addListItem(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(1);
+    m_builder->addConstValue("test");
+    m_builder->createListReplace(globalList.get());
+
+    m_builder->addConstValue(0);
+    m_builder->addListItem(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(0);
+    m_builder->addListItem(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(2);
+    m_builder->addListItem(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(3);
+    m_builder->addListItem(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    static const std::string expected =
+        "3\n"
+        "1\n"
+        "Lorem\n"
+        "dolor\n"
+        "sit\n";
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+
+    ASSERT_EQ(globalList->toString(), "1 test 3");
+    ASSERT_EQ(localList->toString(), "Lorem ipsum dolor sit");
+}
+
 TEST_F(LLVMCodeBuilderTest, Yield)
 {
     auto build = [this]() {

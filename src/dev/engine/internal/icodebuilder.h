@@ -23,6 +23,7 @@ class ICodeBuilder
         virtual void addConstValue(const Value &value) = 0;
         virtual void addVariableValue(Variable *variable) = 0;
         virtual void addListContents(List *list) = 0;
+        virtual void addListItem(List *list) = 0;
 
         virtual void createAdd() = 0;
         virtual void createSub() = 0;
