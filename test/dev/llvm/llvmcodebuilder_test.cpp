@@ -2259,6 +2259,51 @@ TEST_F(LLVMCodeBuilderTest, GetListItem)
     ASSERT_EQ(localList->toString(), "Lorem ipsum dolor sit");
 }
 
+TEST_F(LLVMCodeBuilderTest, GetListSize)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    globalList->append(1);
+    globalList->append(2);
+    globalList->append(3);
+
+    localList->append("Lorem");
+    localList->append("ipsum");
+    localList->append("dolor");
+    localList->append("sit");
+
+    createBuilder(&sprite, true);
+
+    m_builder->addListSize(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addListSize(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    static const std::string expected =
+        "3\n"
+        "4\n";
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+
+    ASSERT_EQ(globalList->toString(), "123");
+    ASSERT_EQ(localList->toString(), "Lorem ipsum dolor sit");
+}
+
 TEST_F(LLVMCodeBuilderTest, Yield)
 {
     auto build = [this]() {

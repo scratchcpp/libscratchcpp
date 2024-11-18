@@ -30,6 +30,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void addVariableValue(Variable *variable) override;
         void addListContents(List *list) override;
         void addListItem(List *list) override;
+        void addListSize(List *list) override;
 
         void createAdd() override;
         void createSub() override;
@@ -146,6 +147,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_list_append_empty();
         llvm::FunctionCallee resolve_list_insert_empty();
         llvm::FunctionCallee resolve_list_get_item();
+        llvm::FunctionCallee resolve_list_size();
         llvm::FunctionCallee resolve_strcasecmp();
 
         Target *m_target = nullptr;

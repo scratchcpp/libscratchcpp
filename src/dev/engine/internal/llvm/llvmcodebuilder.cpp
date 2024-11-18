@@ -540,6 +540,13 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::GetListSize: {
+                assert(step.args.size() == 0);
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                step.functionReturnReg->value = m_builder.CreateUIToFP(m_builder.CreateCall(resolve_list_size(), listPtr.ptr), m_builder.getDoubleTy());
+                break;
+            }
+
             case LLVMInstruction::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -876,6 +883,13 @@ void LLVMCodeBuilder::addListItem(List *list)
     m_tmpRegs.push_back(ret);
 
     m_instructions.push_back(ins);
+}
+
+void LLVMCodeBuilder::addListSize(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::GetListSize, Compiler::StaticType::Number, {}, 0);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
 }
 
 void LLVMCodeBuilder::createAdd()
@@ -2016,6 +2030,12 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_list_get_item()
 {
     llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
     return resolveFunction("list_get_item", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr, m_builder.getInt64Ty() }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_size()
+{
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("list_size", llvm::FunctionType::get(m_builder.getInt64Ty(), { listPtr }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()

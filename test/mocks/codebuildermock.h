@@ -14,6 +14,7 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(void, addVariableValue, (Variable *), (override));
         MOCK_METHOD(void, addListContents, (List *), (override));
         MOCK_METHOD(void, addListItem, (List *), (override));
+        MOCK_METHOD(void, addListSize, (List *), (override));
 
         MOCK_METHOD(void, createAdd, (), (override));
         MOCK_METHOD(void, createSub, (), (override));
