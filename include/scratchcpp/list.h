@@ -37,6 +37,9 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
         Monitor *monitor() const;
         void setMonitor(Monitor *monitor);
 
+        /*! Returns a pointer to the raw list data. */
+        inline ValueData *data() const { return m_dataPtr->data(); }
+
         /*! Returns the list size. */
         inline size_t size() const { return m_size; }
 

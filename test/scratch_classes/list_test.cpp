@@ -40,6 +40,23 @@ TEST(ListTest, Monitor)
     ASSERT_EQ(list.monitor(), &monitor);
 }
 
+TEST(ListTest, Data)
+{
+    List list("", "");
+    list.append("Lorem");
+    list.append("ipsum");
+    list.append("dolor");
+    list.append("sit");
+    list.append("amet");
+
+    ValueData *data = list.data();
+    ASSERT_EQ(&data[0], &list[0]);
+    ASSERT_EQ(&data[1], &list[1]);
+    ASSERT_EQ(&data[2], &list[2]);
+    ASSERT_EQ(&data[3], &list[3]);
+    ASSERT_EQ(&data[4], &list[4]);
+}
+
 TEST(ListTest, Size)
 {
     List list("", "test list");
