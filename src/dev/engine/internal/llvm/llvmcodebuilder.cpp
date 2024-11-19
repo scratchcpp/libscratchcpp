@@ -100,6 +100,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
         listPtr.ptr = getListPtr(targetLists, list);
         listPtr.dataPtr = m_builder.CreateAlloca(m_valueDataType->getPointerTo());
         m_builder.CreateStore(m_builder.CreateCall(resolve_list_data(), listPtr.ptr), listPtr.dataPtr);
+        listPtr.sizePtr = m_builder.CreateAlloca(m_builder.getInt64Ty()->getPointerTo());
+        m_builder.CreateStore(m_builder.CreateCall(resolve_list_size_ptr(), listPtr.ptr), listPtr.sizePtr);
     }
 
     // Execute recorded steps
@@ -548,7 +550,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             case LLVMInstruction::Type::GetListSize: {
                 assert(step.args.size() == 0);
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
-                step.functionReturnReg->value = m_builder.CreateUIToFP(m_builder.CreateCall(resolve_list_size(), listPtr.ptr), m_builder.getDoubleTy());
+                llvm::Value *sizePtr = m_builder.CreateLoad(m_builder.getInt64Ty()->getPointerTo(), listPtr.sizePtr);
+                step.functionReturnReg->value = m_builder.CreateUIToFP(m_builder.CreateLoad(m_builder.getInt64Ty(), sizePtr), m_builder.getDoubleTy());
                 break;
             }
 
@@ -2050,10 +2053,10 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_list_data()
     return resolveFunction("list_data", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr }, false));
 }
 
-llvm::FunctionCallee LLVMCodeBuilder::resolve_list_size()
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_size_ptr()
 {
     llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
-    return resolveFunction("list_size", llvm::FunctionType::get(m_builder.getInt64Ty(), { listPtr }, false));
+    return resolveFunction("list_size_ptr", llvm::FunctionType::get(m_builder.getInt64Ty()->getPointerTo()->getPointerTo(), { listPtr }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()
