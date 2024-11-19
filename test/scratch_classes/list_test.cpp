@@ -57,6 +57,31 @@ TEST(ListTest, Data)
     ASSERT_EQ(&data[4], &list[4]);
 }
 
+TEST(ListTest, SizePtr)
+{
+    List list("", "test list");
+    ASSERT_TRUE(list.sizePtr());
+    ASSERT_EQ(*list.sizePtr(), 0);
+    ASSERT_TRUE(list.empty());
+
+    list.append("Lorem");
+    list.append("ipsum");
+    ASSERT_EQ(*list.sizePtr(), 2);
+    ASSERT_FALSE(list.empty());
+
+    list.append("dolor");
+    ASSERT_EQ(*list.sizePtr(), 3);
+    ASSERT_FALSE(list.empty());
+
+    list.removeAt(0);
+    ASSERT_EQ(*list.sizePtr(), 2);
+    ASSERT_FALSE(list.empty());
+
+    *list.sizePtr() = 100;
+    ASSERT_EQ(*list.sizePtr(), 100);
+    ASSERT_EQ(list.size(), 100);
+}
+
 TEST(ListTest, Size)
 {
     List list("", "test list");

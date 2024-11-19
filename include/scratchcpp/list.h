@@ -40,6 +40,12 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
         /*! Returns a pointer to the raw list data. */
         inline ValueData *data() const { return m_dataPtr->data(); }
 
+        /*!
+         * Returns a pointer to the list size.
+         * \note This is used internally by compiled code for various optimizations.
+         */
+        inline size_t *sizePtr() { return &m_size; }
+
         /*! Returns the list size. */
         inline size_t size() const { return m_size; }
 
