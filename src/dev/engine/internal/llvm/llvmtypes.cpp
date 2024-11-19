@@ -14,10 +14,11 @@ llvm::StructType *LLVMTypes::createValueDataType(llvm::IRBuilder<> *builder)
     llvm::Type *unionType = builder->getInt64Ty(); // 64 bits is the largest size
 
     llvm::Type *valueType = llvm::Type::getInt32Ty(ctx); // Assuming ValueType is a 32-bit enum
+    llvm::Type *padding = llvm::Type::getInt32Ty(ctx);   // Padding for alignment
     llvm::Type *sizeType = llvm::Type::getInt64Ty(ctx);  // size_t
 
     llvm::StructType *ret = llvm::StructType::create(ctx, "ValueData");
-    ret->setBody({ unionType, valueType, sizeType });
+    ret->setBody({ unionType, valueType, padding, sizeType });
 
     return ret;
 }
