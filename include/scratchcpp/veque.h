@@ -375,6 +375,11 @@ namespace veque
             return _size;
         }
 
+        // For libscratchcpp List
+        inline const size_type *sizePtr() const noexcept {
+            return &_size;
+        }
+
         size_type max_size() const noexcept
         {
             constexpr auto compile_time_limit = std::min(
