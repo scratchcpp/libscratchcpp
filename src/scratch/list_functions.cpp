@@ -38,13 +38,18 @@ extern "C"
         return list->data();
     }
 
-    size_t list_size(List *list)
-    {
-        return list->size();
-    }
-
     size_t *list_size_ptr(List *list)
     {
         return list->sizePtr();
+    }
+
+    const size_t *list_alloc_size_ptr(List *list)
+    {
+        return list->allocatedSizePtr();
+    }
+
+    size_t list_size(List *list)
+    {
+        return list->size();
     }
 }

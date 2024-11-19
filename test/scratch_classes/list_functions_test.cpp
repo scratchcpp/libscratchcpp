@@ -112,6 +112,19 @@ TEST(ListFunctionsTest, SizePtr)
     ASSERT_EQ(sizePtr, list.sizePtr());
 }
 
+TEST(ListFunctionsTest, AllocSizePtr)
+{
+    List list("", "");
+    list.append("Lorem");
+    list.append("ipsum");
+    list.append("dolor");
+    list.append("sit");
+    list.append("amet");
+
+    const size_t *sizePtr = list_alloc_size_ptr(&list);
+    ASSERT_EQ(sizePtr, list.allocatedSizePtr());
+}
+
 TEST(ListFunctionsTest, Size)
 {
     {
