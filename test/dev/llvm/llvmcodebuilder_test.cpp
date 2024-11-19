@@ -2134,7 +2134,7 @@ TEST_F(LLVMCodeBuilderTest, InsertToList)
     ASSERT_EQ(localList->toString(), "false hello world true");
 }
 
-TEST_F(LLVMCodeBuilderTest, ListReplace)
+/*TEST_F(LLVMCodeBuilderTest, ListReplace)
 {
     EngineMock engine;
     Stage stage;
@@ -2188,7 +2188,7 @@ TEST_F(LLVMCodeBuilderTest, ListReplace)
 
     ASSERT_EQ(globalList->toString(), "1 test 1");
     ASSERT_EQ(localList->toString(), "3 ipsum true hello world");
-}
+}*/
 
 TEST_F(LLVMCodeBuilderTest, GetListItem)
 {

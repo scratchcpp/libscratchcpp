@@ -17,6 +17,7 @@ namespace libscratchcpp
 struct LLVMListPtr
 {
         llvm::Value *ptr = nullptr;
+        llvm::Value *dataPtr = nullptr;
         Compiler::StaticType type = Compiler::StaticType::Unknown;
 };
 
