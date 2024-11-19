@@ -62,6 +62,7 @@ TEST(ListTest, SizePtr)
     List list("", "test list");
     ASSERT_TRUE(list.sizePtr());
     ASSERT_EQ(*list.sizePtr(), 0);
+    const size_t *ptr = list.sizePtr();
     ASSERT_TRUE(list.empty());
 
     list.append("Lorem");
@@ -71,6 +72,7 @@ TEST(ListTest, SizePtr)
 
     list.append("dolor");
     ASSERT_EQ(*list.sizePtr(), 3);
+    ASSERT_EQ(list.sizePtr(), ptr);
     ASSERT_FALSE(list.empty());
 
     list.removeAt(0);
@@ -80,6 +82,21 @@ TEST(ListTest, SizePtr)
     *list.sizePtr() = 100;
     ASSERT_EQ(*list.sizePtr(), 100);
     ASSERT_EQ(list.size(), 100);
+}
+
+TEST(ListTest, AllocatedSizePtr)
+{
+    List list("", "test list");
+    ASSERT_TRUE(list.allocatedSizePtr());
+    ASSERT_EQ(*list.allocatedSizePtr(), 0);
+    const size_t *ptr = list.allocatedSizePtr();
+
+    list.append("Lorem");
+    list.append("ipsum");
+
+    ASSERT_GT(*list.allocatedSizePtr(), 0);
+    ASSERT_EQ(list.allocatedSizePtr(), ptr);
+    ASSERT_NE(list.allocatedSizePtr(), list.sizePtr());
 }
 
 TEST(ListTest, Size)

@@ -46,6 +46,12 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
          */
         inline size_t *sizePtr() { return &m_size; }
 
+        /*!
+         * Returns a pointer to the allocated list size.
+         * \note This is used internally by compiled code for various optimizations.
+         */
+        inline const size_t *allocatedSizePtr() const { return m_dataPtr->sizePtr(); }
+
         /*! Returns the list size. */
         inline size_t size() const { return m_size; }
 
