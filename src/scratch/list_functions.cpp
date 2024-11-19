@@ -33,6 +33,11 @@ extern "C"
         return &list->operator[](index);
     }
 
+    ValueData *list_data(List *list)
+    {
+        return list->data();
+    }
+
     size_t list_size(List *list)
     {
         return list->size();

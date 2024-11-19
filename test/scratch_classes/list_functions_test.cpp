@@ -86,6 +86,19 @@ TEST(ListFunctionsTest, GetItem)
     ASSERT_EQ(list_get_item(&list, 4), &list[4]);
 }
 
+TEST(ListFunctionsTest, Data)
+{
+    List list("", "");
+    list.append("Lorem");
+    list.append("ipsum");
+    list.append("dolor");
+    list.append("sit");
+    list.append("amet");
+
+    ValueData *data = list_data(&list);
+    ASSERT_EQ(data, list.data());
+}
+
 TEST(ListFunctionsTest, Size)
 {
     {
