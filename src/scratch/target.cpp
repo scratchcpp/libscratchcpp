@@ -34,6 +34,9 @@ Target::~Target()
 {
     if (impl->variableData)
         free(impl->variableData);
+
+    if (impl->listData)
+        free(impl->listData);
 }
 
 /*! Returns true. */
