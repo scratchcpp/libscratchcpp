@@ -42,4 +42,9 @@ extern "C"
     {
         return list->size();
     }
+
+    size_t *list_size_ptr(List *list)
+    {
+        return list->sizePtr();
+    }
 }

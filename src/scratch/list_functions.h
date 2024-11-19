@@ -20,6 +20,7 @@ extern "C"
 
     ValueData *list_get_item(List *list, size_t index);
     ValueData *list_data(List *list);
+    size_t *list_size_ptr(List *list);
     size_t list_size(List *list);
 }
 

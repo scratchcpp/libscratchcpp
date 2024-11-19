@@ -99,6 +99,19 @@ TEST(ListFunctionsTest, Data)
     ASSERT_EQ(data, list.data());
 }
 
+TEST(ListFunctionsTest, SizePtr)
+{
+    List list("", "");
+    list.append("Lorem");
+    list.append("ipsum");
+    list.append("dolor");
+    list.append("sit");
+    list.append("amet");
+
+    size_t *sizePtr = list_size_ptr(&list);
+    ASSERT_EQ(sizePtr, list.sizePtr());
+}
+
 TEST(ListFunctionsTest, Size)
 {
     {
