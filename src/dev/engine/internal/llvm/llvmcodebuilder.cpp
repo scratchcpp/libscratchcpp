@@ -98,9 +98,12 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     // Create list pointers
     for (auto &[list, listPtr] : m_listPtrs) {
         listPtr.ptr = getListPtr(targetLists, list);
+
         listPtr.dataPtr = m_builder.CreateAlloca(m_valueDataType->getPointerTo());
         m_builder.CreateStore(m_builder.CreateCall(resolve_list_data(), listPtr.ptr), listPtr.dataPtr);
+
         listPtr.sizePtr = m_builder.CreateCall(resolve_list_size_ptr(), listPtr.ptr);
+        listPtr.allocatedSizePtr = m_builder.CreateCall(resolve_list_alloc_size_ptr(), listPtr.ptr);
     }
 
     // Execute recorded steps
@@ -502,9 +505,32 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg = step.args[0];
                 Compiler::StaticType type = optimizeRegisterType(arg.second);
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
-                llvm::Value *itemPtr = m_builder.CreateCall(resolve_list_append_empty(), listPtr.ptr);
+
+                // Check if enough space is allocated
+                llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
+                llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+                llvm::Value *isAllocated = m_builder.CreateICmpUGT(allocatedSize, size);
+                llvm::BasicBlock *ifBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+                llvm::BasicBlock *elseBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+                llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+                m_builder.CreateCondBr(isAllocated, ifBlock, elseBlock);
+
+                // If there's enough space, use the allocated memory
+                m_builder.SetInsertPoint(ifBlock);
+                llvm::Value *itemPtr = getListItem(m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr), size);
                 createInitialValueStore(arg.second, itemPtr, type);
+                m_builder.CreateStore(m_builder.CreateAdd(size, m_builder.getInt64(1)), listPtr.sizePtr);
+                m_builder.CreateBr(nextBlock);
+
+                // Otherwise call appendEmpty()
+                m_builder.SetInsertPoint(elseBlock);
+                itemPtr = m_builder.CreateCall(resolve_list_append_empty(), listPtr.ptr);
+                createInitialValueStore(arg.second, itemPtr, type);
+                // TODO: Update list data only when needed
                 m_builder.CreateStore(m_builder.CreateCall(resolve_list_data(), listPtr.ptr), listPtr.dataPtr);
+                m_builder.CreateBr(nextBlock);
+
+                m_builder.SetInsertPoint(nextBlock);
                 // TODO: Implement list type prediction
                 break;
             }
@@ -2056,6 +2082,12 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_list_size_ptr()
 {
     llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
     return resolveFunction("list_size_ptr", llvm::FunctionType::get(m_builder.getInt64Ty()->getPointerTo()->getPointerTo(), { listPtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_alloc_size_ptr()
+{
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("list_alloc_size_ptr", llvm::FunctionType::get(m_builder.getInt64Ty()->getPointerTo()->getPointerTo(), { listPtr }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()
