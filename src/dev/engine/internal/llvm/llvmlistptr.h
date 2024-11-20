@@ -20,6 +20,7 @@ struct LLVMListPtr
         llvm::Value *dataPtr = nullptr;
         llvm::Value *sizePtr = nullptr;
         llvm::Value *allocatedSizePtr = nullptr;
+        llvm::Value *dataPtrDirty = nullptr;
         Compiler::StaticType type = Compiler::StaticType::Unknown;
 };
 

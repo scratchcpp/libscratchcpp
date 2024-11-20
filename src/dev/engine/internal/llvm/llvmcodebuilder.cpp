@@ -104,6 +104,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
         listPtr.sizePtr = m_builder.CreateCall(resolve_list_size_ptr(), listPtr.ptr);
         listPtr.allocatedSizePtr = m_builder.CreateCall(resolve_list_alloc_size_ptr(), listPtr.ptr);
+
+        listPtr.dataPtrDirty = m_builder.CreateAlloca(m_builder.getInt1Ty());
+        m_builder.CreateStore(m_builder.getInt1(false), listPtr.dataPtrDirty);
     }
 
     // Execute recorded steps
@@ -488,6 +491,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 0);
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
                 m_builder.CreateCall(resolve_list_clear(), listPtr.ptr);
+                // NOTE: Clearing doesn't deallocate (see List::clear()), so there's no need to update the data pointer
                 break;
             }
 
@@ -497,6 +501,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
                 llvm::Value *index = m_builder.CreateFPToUI(castValue(arg.second, arg.first), m_builder.getInt64Ty());
                 m_builder.CreateCall(resolve_list_remove(), { listPtr.ptr, index });
+                // NOTE: Removing doesn't deallocate (see List::removeAt()), so there's no need to update the data pointer
                 break;
             }
 
@@ -517,7 +522,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 // If there's enough space, use the allocated memory
                 m_builder.SetInsertPoint(ifBlock);
-                llvm::Value *itemPtr = getListItem(m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr), size);
+                llvm::Value *itemPtr = getListItem(listPtr, size, func);
                 createInitialValueStore(arg.second, itemPtr, type);
                 m_builder.CreateStore(m_builder.CreateAdd(size, m_builder.getInt64(1)), listPtr.sizePtr);
                 m_builder.CreateBr(nextBlock);
@@ -526,8 +531,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.SetInsertPoint(elseBlock);
                 itemPtr = m_builder.CreateCall(resolve_list_append_empty(), listPtr.ptr);
                 createInitialValueStore(arg.second, itemPtr, type);
-                // TODO: Update list data only when needed
-                m_builder.CreateStore(m_builder.CreateCall(resolve_list_data(), listPtr.ptr), listPtr.dataPtr);
+                m_builder.CreateStore(m_builder.getInt1(true), listPtr.dataPtrDirty);
                 m_builder.CreateBr(nextBlock);
 
                 m_builder.SetInsertPoint(nextBlock);
@@ -541,10 +545,16 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &valueArg = step.args[1];
                 Compiler::StaticType type = optimizeRegisterType(valueArg.second);
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+
+                // dataPtrDirty
+                llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
+                llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+                m_builder.CreateStore(m_builder.CreateICmpEQ(allocatedSize, size), listPtr.dataPtrDirty);
+
+                // Insert
                 llvm::Value *index = m_builder.CreateFPToUI(castValue(indexArg.second, indexArg.first), m_builder.getInt64Ty());
                 llvm::Value *itemPtr = m_builder.CreateCall(resolve_list_insert_empty(), { listPtr.ptr, index });
                 createInitialValueStore(valueArg.second, itemPtr, type);
-                m_builder.CreateStore(m_builder.CreateCall(resolve_list_data(), listPtr.ptr), listPtr.dataPtr);
                 // TODO: Implement list type prediction
                 break;
             }
@@ -556,7 +566,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 Compiler::StaticType type = optimizeRegisterType(valueArg.second);
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
                 llvm::Value *index = m_builder.CreateFPToUI(castValue(indexArg.second, indexArg.first), m_builder.getInt64Ty());
-                llvm::Value *itemPtr = getListItem(m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr), index);
+                llvm::Value *itemPtr = getListItem(listPtr, index, func);
                 createValueStore(valueArg.second, itemPtr, type, listPtr.type);
                 // TODO: Implement list type prediction
                 break;
@@ -567,7 +577,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg = step.args[0];
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
                 llvm::Value *index = m_builder.CreateFPToUI(castValue(arg.second, arg.first), m_builder.getInt64Ty());
-                step.functionReturnReg->value = getListItem(m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr), index);
+                step.functionReturnReg->value = getListItem(listPtr, index, func);
                 step.functionReturnReg->type = listPtr.type;
                 break;
             }
@@ -1562,6 +1572,16 @@ void LLVMCodeBuilder::reloadLists()
         m_builder.CreateStore(m_builder.CreateCall(resolve_list_data(), listPtr.ptr), listPtr.dataPtr);
 }
 
+void LLVMCodeBuilder::updateListDataPtr(const LLVMListPtr &listPtr, llvm::Function *func)
+{
+    // dataPtr = dirty ? list_data(list) : dataPtr
+    // dirty = false
+    llvm::Value *dirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
+    llvm::Value *dataPtr = m_builder.CreateSelect(dirty, m_builder.CreateCall(resolve_list_data(), listPtr.ptr), m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr));
+    m_builder.CreateStore(dataPtr, listPtr.dataPtr);
+    m_builder.CreateStore(m_builder.getInt1(false), listPtr.dataPtrDirty);
+}
+
 LLVMInstruction &LLVMCodeBuilder::createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount)
 {
     std::vector<Compiler::StaticType> types;
@@ -1725,9 +1745,10 @@ void LLVMCodeBuilder::copyStructField(llvm::Value *source, llvm::Value *target, 
     m_builder.CreateStore(m_builder.CreateLoad(fieldType, sourceField), targetField);
 }
 
-llvm::Value *LLVMCodeBuilder::getListItem(llvm::Value *dataPtr, llvm::Value *index)
+llvm::Value *LLVMCodeBuilder::getListItem(const LLVMListPtr &listPtr, llvm::Value *index, llvm::Function *func)
 {
-    return m_builder.CreateGEP(m_valueDataType, dataPtr, index);
+    updateListDataPtr(listPtr, func);
+    return m_builder.CreateGEP(m_valueDataType, m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr), index);
 }
 
 llvm::Value *LLVMCodeBuilder::createValue(LLVMRegisterPtr reg)

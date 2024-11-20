@@ -113,6 +113,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void syncVariables(llvm::Value *targetVariables);
         void reloadVariables(llvm::Value *targetVariables);
         void reloadLists();
+        void updateListDataPtr(const LLVMListPtr &listPtr, llvm::Function *func);
 
         LLVMInstruction &createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount);
         LLVMInstruction &createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const std::vector<Compiler::StaticType> &argTypes, size_t argCount);
@@ -121,7 +122,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createInitialValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType);
         void createValueCopy(llvm::Value *source, llvm::Value *target);
         void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
-        llvm::Value *getListItem(llvm::Value *dataPtr, llvm::Value *index);
+        llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index, llvm::Function *func);
         llvm::Value *createValue(LLVMRegisterPtr reg);
         llvm::Value *createComparison(LLVMRegisterPtr arg1, LLVMRegisterPtr arg2, Comparison type);
 
