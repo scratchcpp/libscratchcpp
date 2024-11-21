@@ -1759,10 +1759,24 @@ llvm::Value *LLVMCodeBuilder::createValue(LLVMRegisterPtr reg)
         llvm::Constant *value = castConstValue(reg->constValue, TYPE_MAP[reg->constValue.type()]);
         llvm::Value *ret = m_builder.CreateAlloca(m_valueDataType);
 
-        if (reg->constValue.type() == ValueType::String)
-            value = llvm::ConstantExpr::getPtrToInt(value, m_valueDataType->getElementType(0));
-        else
-            value = llvm::ConstantExpr::getBitCast(value, m_valueDataType->getElementType(0));
+        switch (reg->constValue.type()) {
+            case ValueType::Number:
+                value = llvm::ConstantExpr::getBitCast(value, m_valueDataType->getElementType(0));
+                break;
+
+            case ValueType::Bool:
+                // Assuming union type is int64
+                value = m_builder.getInt64(reg->constValue.toBool());
+                break;
+
+            case ValueType::String:
+                value = llvm::ConstantExpr::getPtrToInt(value, m_valueDataType->getElementType(0));
+                break;
+
+            default:
+                assert(false);
+                break;
+        }
 
         llvm::Constant *type = m_builder.getInt32(static_cast<uint32_t>(reg->constValue.type()));
         llvm::Constant *padding = m_builder.getInt32(0);
