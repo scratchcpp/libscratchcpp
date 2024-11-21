@@ -46,6 +46,10 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void addConstValue(const Value &value);
         void addVariableValue(Variable *variable);
         void addListContents(List *list);
+        void addListItem(List *list);
+        void addListItemIndex(List *list);
+        void addListContains(List *list);
+        void addListSize(List *list);
         void addInput(const std::string &name);
 
         void createAdd();
@@ -79,6 +83,12 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void createExp10();
 
         void createVariableWrite(Variable *variable);
+
+        void createListClear(List *list);
+        void createListRemove(List *list);
+        void createListAppend(List *list);
+        void createListInsert(List *list);
+        void createListReplace(List *list);
 
         void beginIfStatement();
         void beginElseBranch();

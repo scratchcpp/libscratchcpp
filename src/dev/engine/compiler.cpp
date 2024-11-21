@@ -100,6 +100,30 @@ void Compiler::addListContents(List *list)
     impl->builder->addListContents(list);
 }
 
+/*! Adds the item with index from the last value of the given list to the code. */
+void Compiler::addListItem(List *list)
+{
+    impl->builder->addListItem(list);
+}
+
+/*! Adds the index of the item from the last value of the given list to the code. */
+void Compiler::addListItemIndex(List *list)
+{
+    impl->builder->addListItemIndex(list);
+}
+
+/*! Adds the result of a list contains item from the  check to the code. */
+void Compiler::addListContains(List *list)
+{
+    impl->builder->addListContains(list);
+}
+
+/*! Adds the length of the given list to the code. */
+void Compiler::addListSize(List *list)
+{
+    impl->builder->addListSize(list);
+}
+
 /*! Compiles the given input (resolved by name) and adds it to the compiled code. */
 void Compiler::addInput(const std::string &name)
 {
@@ -266,6 +290,39 @@ void Compiler::createExp10()
 void Compiler::createVariableWrite(Variable *variable)
 {
     impl->builder->createVariableWrite(variable);
+}
+
+/*! Creates a clear list operation. */
+void Compiler::createListClear(List *list)
+{
+    impl->builder->createListClear(list);
+}
+
+/*!
+ * Creates a remove item from list operation.
+ * \note The index starts with 0 and is cast to number, special strings like "last" are not handled.
+ */
+void Compiler::createListRemove(List *list)
+{
+    impl->builder->createListRemove(list);
+}
+
+/*! Creates a list append operation using the last value. */
+void Compiler::createListAppend(List *list)
+{
+    impl->builder->createListAppend(list);
+}
+
+/*! Creates a list insert operation using the last 2 values (index, value). */
+void Compiler::createListInsert(List *list)
+{
+    impl->builder->createListInsert(list);
+}
+
+/*! Creates a list replace operation using the last 2 values (index, value). */
+void Compiler::createListReplace(List *list)
+{
+    impl->builder->createListReplace(list);
 }
 
 /*!
