@@ -594,7 +594,16 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
-                step.functionReturnReg->value = getListItemIndex(listPtr, arg.second, func);
+                step.functionReturnReg->value = m_builder.CreateSIToFP(getListItemIndex(listPtr, arg.second, func), m_builder.getDoubleTy());
+                break;
+            }
+
+            case LLVMInstruction::Type::ListContainsItem: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                llvm::Value *index = getListItemIndex(listPtr, arg.second, func);
+                step.functionReturnReg->value = m_builder.CreateICmpSGT(index, llvm::ConstantInt::get(m_builder.getInt64Ty(), -1, true));
                 break;
             }
 
@@ -940,6 +949,13 @@ void LLVMCodeBuilder::addListItem(List *list)
 void LLVMCodeBuilder::addListItemIndex(List *list)
 {
     LLVMInstruction &ins = createOp(LLVMInstruction::Type::GetListItemIndex, Compiler::StaticType::Number, Compiler::StaticType::Unknown, 1);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+}
+
+void LLVMCodeBuilder::addListContains(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::ListContainsItem, Compiler::StaticType::Bool, Compiler::StaticType::Unknown, 1);
     ins.workList = list;
     m_listPtrs[list] = LLVMListPtr();
 }
@@ -1814,7 +1830,7 @@ llvm::Value *LLVMCodeBuilder::getListItemIndex(const LLVMListPtr &listPtr, LLVMR
     // nextBlock:
     m_builder.SetInsertPoint(nextBlock);
 
-    return m_builder.CreateSIToFP(m_builder.CreateLoad(m_builder.getInt64Ty(), index), m_builder.getDoubleTy());
+    return m_builder.CreateLoad(m_builder.getInt64Ty(), index);
 }
 
 llvm::Value *LLVMCodeBuilder::createValue(LLVMRegisterPtr reg)

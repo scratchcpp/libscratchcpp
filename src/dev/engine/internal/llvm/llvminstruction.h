@@ -50,6 +50,7 @@ struct LLVMInstruction
             GetListItem,
             GetListSize,
             GetListItemIndex,
+            ListContainsItem,
             Yield,
             BeginIf,
             BeginElse,

@@ -25,6 +25,7 @@ class ICodeBuilder
         virtual void addListContents(List *list) = 0;
         virtual void addListItem(List *list) = 0;
         virtual void addListItemIndex(List *list) = 0;
+        virtual void addListContains(List *list) = 0;
         virtual void addListSize(List *list) = 0;
 
         virtual void createAdd() = 0;

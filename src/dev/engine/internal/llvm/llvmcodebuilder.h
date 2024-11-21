@@ -31,6 +31,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void addListContents(List *list) override;
         void addListItem(List *list) override;
         void addListItemIndex(List *list) override;
+        void addListContains(List *list) override;
         void addListSize(List *list) override;
 
         void createAdd() override;

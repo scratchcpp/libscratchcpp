@@ -2395,6 +2395,97 @@ TEST_F(LLVMCodeBuilderTest, GetListItemIndex)
     ASSERT_EQ(localList->toString(), "Lorem ipsum dolor sit");
 }
 
+TEST_F(LLVMCodeBuilderTest, ListContainsItem)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    globalList->append(1);
+    globalList->append(2);
+    globalList->append(3);
+
+    localList->append("Lorem");
+    localList->append("ipsum");
+    localList->append("dolor");
+    localList->append("sit");
+
+    createBuilder(&sprite, true);
+
+    m_builder->addConstValue(2);
+    m_builder->addListContains(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(1);
+    m_builder->addListContains(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(0);
+    m_builder->addListContains(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(1);
+    m_builder->addConstValue("test");
+    m_builder->createListReplace(globalList.get());
+
+    m_builder->addConstValue(2);
+    m_builder->addListContains(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(1);
+    m_builder->addListContains(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue("test");
+    m_builder->addListContains(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue("abc");
+    m_builder->addListContains(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue("doLor");
+    m_builder->addListContains(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(true);
+    m_builder->addListContains(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue("site");
+    m_builder->addListContains(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    static const std::string expected =
+        "true\n"
+        "true\n"
+        "false\n"
+        "false\n"
+        "true\n"
+        "true\n"
+        "false\n"
+        "true\n"
+        "false\n"
+        "false\n";
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+
+    ASSERT_EQ(globalList->toString(), "1 test 3");
+    ASSERT_EQ(localList->toString(), "Lorem ipsum dolor sit");
+}
+
 TEST_F(LLVMCodeBuilderTest, Yield)
 {
     auto build = [this]() {
