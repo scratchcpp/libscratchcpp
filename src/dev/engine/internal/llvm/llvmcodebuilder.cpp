@@ -1735,7 +1735,8 @@ void LLVMCodeBuilder::createValueCopy(llvm::Value *source, llvm::Value *target)
     // NOTE: This doesn't copy strings, but only the pointers
     copyStructField(source, target, 0, m_valueDataType, m_builder.getInt64Ty()); // value
     copyStructField(source, target, 1, m_valueDataType, m_builder.getInt32Ty()); // type
-    copyStructField(source, target, 2, m_valueDataType, m_builder.getInt64Ty()); // string size
+    /* 2: padding */
+    copyStructField(source, target, 3, m_valueDataType, m_builder.getInt64Ty()); // string size
 }
 
 void LLVMCodeBuilder::copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType)
@@ -1764,7 +1765,8 @@ llvm::Value *LLVMCodeBuilder::createValue(LLVMRegisterPtr reg)
             value = llvm::ConstantExpr::getBitCast(value, m_valueDataType->getElementType(0));
 
         llvm::Constant *type = m_builder.getInt32(static_cast<uint32_t>(reg->constValue.type()));
-        llvm::Constant *constValue = llvm::ConstantStruct::get(m_valueDataType, { value, type, m_builder.getInt64(0) });
+        llvm::Constant *padding = m_builder.getInt32(0);
+        llvm::Constant *constValue = llvm::ConstantStruct::get(m_valueDataType, { value, type, padding, m_builder.getInt64(0) });
         m_builder.CreateStore(constValue, ret);
 
         return ret;
