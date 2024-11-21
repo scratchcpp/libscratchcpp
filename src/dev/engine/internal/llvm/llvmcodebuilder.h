@@ -30,6 +30,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void addVariableValue(Variable *variable) override;
         void addListContents(List *list) override;
         void addListItem(List *list) override;
+        void addListItemIndex(List *list) override;
         void addListSize(List *list) override;
 
         void createAdd() override;
@@ -123,6 +124,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createValueCopy(llvm::Value *source, llvm::Value *target);
         void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
         llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index, llvm::Function *func);
+        llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, LLVMRegisterPtr item, llvm::Function *func);
         llvm::Value *createValue(LLVMRegisterPtr reg);
         llvm::Value *createComparison(LLVMRegisterPtr arg1, LLVMRegisterPtr arg2, Comparison type);
 

@@ -590,6 +590,14 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::GetListItemIndex: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                step.functionReturnReg->value = getListItemIndex(listPtr, arg.second, func);
+                break;
+            }
+
             case LLVMInstruction::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
@@ -927,6 +935,13 @@ void LLVMCodeBuilder::addListItem(List *list)
     m_tmpRegs.push_back(ret);
 
     m_instructions.push_back(ins);
+}
+
+void LLVMCodeBuilder::addListItemIndex(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::GetListItemIndex, Compiler::StaticType::Number, Compiler::StaticType::Unknown, 1);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
 }
 
 void LLVMCodeBuilder::addListSize(List *list)
@@ -1750,6 +1765,56 @@ llvm::Value *LLVMCodeBuilder::getListItem(const LLVMListPtr &listPtr, llvm::Valu
 {
     updateListDataPtr(listPtr, func);
     return m_builder.CreateGEP(m_valueDataType, m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr), index);
+}
+
+llvm::Value *LLVMCodeBuilder::getListItemIndex(const LLVMListPtr &listPtr, LLVMRegisterPtr item, llvm::Function *func)
+{
+    llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+    llvm::BasicBlock *condBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+    llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+    llvm::BasicBlock *cmpIfBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+    llvm::BasicBlock *cmpElseBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+    llvm::BasicBlock *notFoundBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+    llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+
+    // index = 0
+    llvm::Value *index = m_builder.CreateAlloca(m_builder.getInt64Ty());
+    m_builder.CreateStore(m_builder.getInt64(0), index);
+    m_builder.CreateBr(condBlock);
+
+    // while (index < size)
+    m_builder.SetInsertPoint(condBlock);
+    llvm::Value *cond = m_builder.CreateICmpULT(m_builder.CreateLoad(m_builder.getInt64Ty(), index), size);
+    m_builder.CreateCondBr(cond, bodyBlock, notFoundBlock);
+
+    // if (list[index] == item)
+    m_builder.SetInsertPoint(bodyBlock);
+    LLVMRegisterPtr currentItem = std::make_shared<LLVMRegister>(listPtr.type);
+    currentItem->isRawValue = false;
+    currentItem->value = getListItem(listPtr, m_builder.CreateLoad(m_builder.getInt64Ty(), index), func);
+    llvm::Value *cmp = createComparison(currentItem, item, Comparison::EQ);
+    m_builder.CreateCondBr(cmp, cmpIfBlock, cmpElseBlock);
+
+    // goto nextBlock
+    m_builder.SetInsertPoint(cmpIfBlock);
+    m_builder.CreateBr(nextBlock);
+
+    // else index++
+    m_builder.SetInsertPoint(cmpElseBlock);
+    m_builder.CreateStore(m_builder.CreateAdd(m_builder.CreateLoad(m_builder.getInt64Ty(), index), m_builder.getInt64(1)), index);
+    m_builder.CreateBr(condBlock);
+
+    // notFoundBlock:
+    // index = -1
+    // goto nextBlock
+    m_builder.SetInsertPoint(notFoundBlock);
+    m_builder.CreateStore(llvm::ConstantInt::get(llvm::Type::getInt64Ty(m_ctx), -1, true), index);
+    m_builder.CreateBr(nextBlock);
+
+    // nextBlock:
+    m_builder.SetInsertPoint(nextBlock);
+
+    return m_builder.CreateSIToFP(m_builder.CreateLoad(m_builder.getInt64Ty(), index), m_builder.getDoubleTy());
 }
 
 llvm::Value *LLVMCodeBuilder::createValue(LLVMRegisterPtr reg)

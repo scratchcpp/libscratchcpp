@@ -49,6 +49,7 @@ struct LLVMInstruction
             ListReplace,
             GetListItem,
             GetListSize,
+            GetListItemIndex,
             Yield,
             BeginIf,
             BeginElse,
