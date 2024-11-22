@@ -132,6 +132,70 @@ TEST_F(CompilerTest, AddListContents)
     compile(compiler, block);
 }
 
+TEST_F(CompilerTest, AddListItem)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("a", "");
+    block->setCompileFunction([](Compiler *compiler) {
+        List list1("", ""), list2("", "");
+        EXPECT_CALL(*m_builder, addListItem(&list1));
+        compiler->addListItem(&list1);
+
+        EXPECT_CALL(*m_builder, addListItem(&list2));
+        compiler->addListItem(&list2);
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, AddListItemIndex)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("a", "");
+    block->setCompileFunction([](Compiler *compiler) {
+        List list1("", ""), list2("", "");
+        EXPECT_CALL(*m_builder, addListItemIndex(&list1));
+        compiler->addListItemIndex(&list1);
+
+        EXPECT_CALL(*m_builder, addListItemIndex(&list2));
+        compiler->addListItemIndex(&list2);
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, AddListSize)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("a", "");
+    block->setCompileFunction([](Compiler *compiler) {
+        List list1("", ""), list2("", "");
+        EXPECT_CALL(*m_builder, addListSize(&list1));
+        compiler->addListSize(&list1);
+
+        EXPECT_CALL(*m_builder, addListSize(&list2));
+        compiler->addListSize(&list2);
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, AddListContains)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("a", "");
+    block->setCompileFunction([](Compiler *compiler) {
+        List list1("", ""), list2("", "");
+        EXPECT_CALL(*m_builder, addListContains(&list1));
+        compiler->addListContains(&list1);
+
+        EXPECT_CALL(*m_builder, addListContains(&list2));
+        compiler->addListContains(&list2);
+    });
+
+    compile(compiler, block);
+}
+
 TEST_F(CompilerTest, AddInput)
 {
     Compiler compiler(&m_engine, &m_target);
@@ -566,6 +630,28 @@ TEST_F(CompilerTest, CreateVariableWrite)
         auto var = std::make_shared<Variable>("", "");
         EXPECT_CALL(*m_builder, createVariableWrite(var.get()));
         compiler->createVariableWrite(var.get());
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CustomIfStatement)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) {
+        EXPECT_CALL(*m_builder, beginIfStatement());
+        compiler->beginIfStatement();
+        EXPECT_CALL(*m_builder, endIf());
+        compiler->endIf();
+
+        EXPECT_CALL(*m_builder, beginIfStatement());
+        compiler->beginIfStatement();
+        EXPECT_CALL(*m_builder, beginElseBranch());
+        compiler->beginElseBranch();
+        EXPECT_CALL(*m_builder, endIf());
+        compiler->endIf();
     });
 
     compile(compiler, block);

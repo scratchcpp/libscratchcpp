@@ -14,6 +14,8 @@ target_sources(scratchcpp
     list.cpp
     list_p.cpp
     list_p.h
+    list_functions.cpp
+    list_functions.h
     block.cpp
     block_p.cpp
     block_p.h

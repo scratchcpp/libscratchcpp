@@ -11,6 +11,7 @@
 #include "llvminstruction.h"
 #include "llvmcoroutine.h"
 #include "llvmvariableptr.h"
+#include "llvmlistptr.h"
 
 namespace libscratchcpp
 {
@@ -28,6 +29,10 @@ class LLVMCodeBuilder : public ICodeBuilder
         void addConstValue(const Value &value) override;
         void addVariableValue(Variable *variable) override;
         void addListContents(List *list) override;
+        void addListItem(List *list) override;
+        void addListItemIndex(List *list) override;
+        void addListContains(List *list) override;
+        void addListSize(List *list) override;
 
         void createAdd() override;
         void createSub() override;
@@ -61,6 +66,12 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         void createVariableWrite(Variable *variable) override;
 
+        void createListClear(List *list) override;
+        void createListRemove(List *list) override;
+        void createListAppend(List *list) override;
+        void createListInsert(List *list) override;
+        void createListReplace(List *list) override;
+
         void beginIfStatement() override;
         void beginElseBranch() override;
         void endIf() override;
@@ -83,6 +94,7 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         void initTypes();
         void createVariableMap();
+        void createListMap();
         void pushScopeLevel();
         void popScopeLevel();
 
@@ -99,14 +111,21 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Value *removeNaN(llvm::Value *num);
 
         llvm::Value *getVariablePtr(llvm::Value *targetVariables, Variable *variable);
+        llvm::Value *getListPtr(llvm::Value *targetLists, List *list);
         void syncVariables(llvm::Value *targetVariables);
         void reloadVariables(llvm::Value *targetVariables);
+        void reloadLists();
+        void updateListDataPtr(const LLVMListPtr &listPtr, llvm::Function *func);
 
         LLVMInstruction &createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount);
+        LLVMInstruction &createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const std::vector<Compiler::StaticType> &argTypes, size_t argCount);
 
         void createValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
+        void createInitialValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType);
         void createValueCopy(llvm::Value *source, llvm::Value *target);
         void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
+        llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index, llvm::Function *func);
+        llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, LLVMRegisterPtr item, llvm::Function *func);
         llvm::Value *createValue(LLVMRegisterPtr reg);
         llvm::Value *createComparison(LLVMRegisterPtr arg1, LLVMRegisterPtr arg2, Comparison type);
 
@@ -129,12 +148,23 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_value_equals();
         llvm::FunctionCallee resolve_value_greater();
         llvm::FunctionCallee resolve_value_lower();
+        llvm::FunctionCallee resolve_list_clear();
+        llvm::FunctionCallee resolve_list_remove();
+        llvm::FunctionCallee resolve_list_append_empty();
+        llvm::FunctionCallee resolve_list_insert_empty();
+        llvm::FunctionCallee resolve_list_data();
+        llvm::FunctionCallee resolve_list_size_ptr();
+        llvm::FunctionCallee resolve_list_alloc_size_ptr();
         llvm::FunctionCallee resolve_strcasecmp();
 
         Target *m_target = nullptr;
+
         std::unordered_map<Variable *, size_t> m_targetVariableMap;
         std::unordered_map<Variable *, LLVMVariablePtr> m_variablePtrs;
         std::vector<std::unordered_map<LLVMVariablePtr *, Compiler::StaticType>> m_scopeVariables;
+
+        std::unordered_map<List *, size_t> m_targetListMap;
+        std::unordered_map<List *, LLVMListPtr> m_listPtrs;
 
         std::string m_id;
         llvm::LLVMContext m_ctx;

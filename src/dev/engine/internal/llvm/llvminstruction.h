@@ -42,6 +42,15 @@ struct LLVMInstruction
             Exp10,
             WriteVariable,
             ReadVariable,
+            ClearList,
+            RemoveListItem,
+            AppendToList,
+            InsertToList,
+            ListReplace,
+            GetListItem,
+            GetListSize,
+            GetListItemIndex,
+            ListContainsItem,
             Yield,
             BeginIf,
             BeginElse,
@@ -63,6 +72,7 @@ struct LLVMInstruction
         std::vector<std::pair<Compiler::StaticType, LLVMRegisterPtr>> args; // target type, register
         LLVMRegisterPtr functionReturnReg;
         Variable *workVariable = nullptr; // for variables
+        List *workList = nullptr;         // for lists
 };
 
 } // namespace libscratchcpp

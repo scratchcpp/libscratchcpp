@@ -119,9 +119,17 @@ TEST(TargetTest, Lists)
 
     Target target;
     ASSERT_EQ(target.addList(l1), 0);
+    ASSERT_TRUE(target.listData());
+    ASSERT_EQ(target.listData()[0], l1.get());
     ASSERT_EQ(target.addList(l2), 1);
     ASSERT_EQ(target.addList(l3), 2);
+    ASSERT_EQ(target.listData()[0], l1.get());
+    ASSERT_EQ(target.listData()[1], l2.get());
+    ASSERT_EQ(target.listData()[2], l3.get());
     ASSERT_EQ(target.addList(l2), 1); // add existing list
+    ASSERT_EQ(target.listData()[0], l1.get());
+    ASSERT_EQ(target.listData()[1], l2.get());
+    ASSERT_EQ(target.listData()[2], l3.get());
 
     ASSERT_EQ(l1->target(), &target);
     ASSERT_EQ(l2->target(), &target);

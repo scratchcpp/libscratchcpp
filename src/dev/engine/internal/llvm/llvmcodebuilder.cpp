@@ -8,6 +8,7 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
 
 #include "llvmcodebuilder.h"
 #include "llvmexecutablecode.h"
@@ -36,6 +37,7 @@ LLVMCodeBuilder::LLVMCodeBuilder(Target *target, const std::string &id, bool war
     m_regs.push_back({});
     initTypes();
     createVariableMap();
+    createListMap();
 }
 
 std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
@@ -56,12 +58,13 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     m_builder.setFastMathFlags(fmf);
 
     // Create function
-    // void *f(Target *, ValueData **)
+    // void *f(Target *, ValueData **, List **)
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
-    llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, { pointerType, pointerType }, false);
+    llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, { pointerType, pointerType, pointerType }, false);
     llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module.get());
     llvm::Value *targetPtr = func->getArg(0);
     llvm::Value *targetVariables = func->getArg(1);
+    llvm::Value *targetLists = func->getArg(2);
 
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
     m_builder.SetInsertPoint(entry);
@@ -91,6 +94,20 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
     m_scopeVariables.clear();
     m_scopeVariables.push_back({});
+
+    // Create list pointers
+    for (auto &[list, listPtr] : m_listPtrs) {
+        listPtr.ptr = getListPtr(targetLists, list);
+
+        listPtr.dataPtr = m_builder.CreateAlloca(m_valueDataType->getPointerTo());
+        m_builder.CreateStore(m_builder.CreateCall(resolve_list_data(), listPtr.ptr), listPtr.dataPtr);
+
+        listPtr.sizePtr = m_builder.CreateCall(resolve_list_size_ptr(), listPtr.ptr);
+        listPtr.allocatedSizePtr = m_builder.CreateCall(resolve_list_alloc_size_ptr(), listPtr.ptr);
+
+        listPtr.dataPtrDirty = m_builder.CreateAlloca(m_builder.getInt1Ty());
+        m_builder.CreateStore(m_builder.getInt1(false), listPtr.dataPtrDirty);
+    }
 
     // Execute recorded steps
     for (const LLVMInstruction &step : m_instructions) {
@@ -470,10 +487,131 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::ClearList: {
+                assert(step.args.size() == 0);
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                m_builder.CreateCall(resolve_list_clear(), listPtr.ptr);
+                // NOTE: Clearing doesn't deallocate (see List::clear()), so there's no need to update the data pointer
+                break;
+            }
+
+            case LLVMInstruction::Type::RemoveListItem: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                llvm::Value *index = m_builder.CreateFPToUI(castValue(arg.second, arg.first), m_builder.getInt64Ty());
+                m_builder.CreateCall(resolve_list_remove(), { listPtr.ptr, index });
+                // NOTE: Removing doesn't deallocate (see List::removeAt()), so there's no need to update the data pointer
+                break;
+            }
+
+            case LLVMInstruction::Type::AppendToList: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                Compiler::StaticType type = optimizeRegisterType(arg.second);
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+
+                // Check if enough space is allocated
+                llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
+                llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+                llvm::Value *isAllocated = m_builder.CreateICmpUGT(allocatedSize, size);
+                llvm::BasicBlock *ifBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+                llvm::BasicBlock *elseBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+                llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+                m_builder.CreateCondBr(isAllocated, ifBlock, elseBlock);
+
+                // If there's enough space, use the allocated memory
+                m_builder.SetInsertPoint(ifBlock);
+                llvm::Value *itemPtr = getListItem(listPtr, size, func);
+                createInitialValueStore(arg.second, itemPtr, type);
+                m_builder.CreateStore(m_builder.CreateAdd(size, m_builder.getInt64(1)), listPtr.sizePtr);
+                m_builder.CreateBr(nextBlock);
+
+                // Otherwise call appendEmpty()
+                m_builder.SetInsertPoint(elseBlock);
+                itemPtr = m_builder.CreateCall(resolve_list_append_empty(), listPtr.ptr);
+                createInitialValueStore(arg.second, itemPtr, type);
+                m_builder.CreateStore(m_builder.getInt1(true), listPtr.dataPtrDirty);
+                m_builder.CreateBr(nextBlock);
+
+                m_builder.SetInsertPoint(nextBlock);
+                // TODO: Implement list type prediction
+                break;
+            }
+
+            case LLVMInstruction::Type::InsertToList: {
+                assert(step.args.size() == 2);
+                const auto &indexArg = step.args[0];
+                const auto &valueArg = step.args[1];
+                Compiler::StaticType type = optimizeRegisterType(valueArg.second);
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+
+                // dataPtrDirty
+                llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
+                llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+                m_builder.CreateStore(m_builder.CreateICmpEQ(allocatedSize, size), listPtr.dataPtrDirty);
+
+                // Insert
+                llvm::Value *index = m_builder.CreateFPToUI(castValue(indexArg.second, indexArg.first), m_builder.getInt64Ty());
+                llvm::Value *itemPtr = m_builder.CreateCall(resolve_list_insert_empty(), { listPtr.ptr, index });
+                createInitialValueStore(valueArg.second, itemPtr, type);
+                // TODO: Implement list type prediction
+                break;
+            }
+
+            case LLVMInstruction::Type::ListReplace: {
+                assert(step.args.size() == 2);
+                const auto &indexArg = step.args[0];
+                const auto &valueArg = step.args[1];
+                Compiler::StaticType type = optimizeRegisterType(valueArg.second);
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                llvm::Value *index = m_builder.CreateFPToUI(castValue(indexArg.second, indexArg.first), m_builder.getInt64Ty());
+                llvm::Value *itemPtr = getListItem(listPtr, index, func);
+                createValueStore(valueArg.second, itemPtr, type, listPtr.type);
+                // TODO: Implement list type prediction
+                break;
+            }
+
+            case LLVMInstruction::Type::GetListItem: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                llvm::Value *index = m_builder.CreateFPToUI(castValue(arg.second, arg.first), m_builder.getInt64Ty());
+                step.functionReturnReg->value = getListItem(listPtr, index, func);
+                step.functionReturnReg->type = listPtr.type;
+                break;
+            }
+
+            case LLVMInstruction::Type::GetListSize: {
+                assert(step.args.size() == 0);
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+                step.functionReturnReg->value = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
+                break;
+            }
+
+            case LLVMInstruction::Type::GetListItemIndex: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                step.functionReturnReg->value = m_builder.CreateSIToFP(getListItemIndex(listPtr, arg.second, func), m_builder.getDoubleTy());
+                break;
+            }
+
+            case LLVMInstruction::Type::ListContainsItem: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                llvm::Value *index = getListItemIndex(listPtr, arg.second, func);
+                step.functionReturnReg->value = m_builder.CreateICmpSGT(index, llvm::ConstantInt::get(m_builder.getInt64Ty(), -1, true));
+                break;
+            }
+
             case LLVMInstruction::Type::Yield:
                 if (!m_warp) {
                     freeHeap();
                     syncVariables(targetVariables);
+                    reloadLists();
                     coro->createSuspend();
                     reloadVariables(targetVariables);
                 }
@@ -788,6 +926,47 @@ void LLVMCodeBuilder::addListContents(List *list)
 {
 }
 
+void LLVMCodeBuilder::addListItem(List *list)
+{
+    LLVMInstruction ins(LLVMInstruction::Type::GetListItem);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+
+    assert(m_tmpRegs.size() >= 1);
+    ins.args.push_back({ Compiler::StaticType::Number, m_tmpRegs[0] });
+
+    m_tmpRegs.erase(m_tmpRegs.end() - 1, m_tmpRegs.end());
+
+    auto ret = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    ret->isRawValue = false;
+    ins.functionReturnReg = ret;
+    m_regs[m_currentFunction].push_back(ret);
+    m_tmpRegs.push_back(ret);
+
+    m_instructions.push_back(ins);
+}
+
+void LLVMCodeBuilder::addListItemIndex(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::GetListItemIndex, Compiler::StaticType::Number, Compiler::StaticType::Unknown, 1);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+}
+
+void LLVMCodeBuilder::addListContains(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::ListContainsItem, Compiler::StaticType::Bool, Compiler::StaticType::Unknown, 1);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+}
+
+void LLVMCodeBuilder::addListSize(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::GetListSize, Compiler::StaticType::Number, {}, 0);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+}
+
 void LLVMCodeBuilder::createAdd()
 {
     createOp(LLVMInstruction::Type::Add, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
@@ -925,6 +1104,41 @@ void LLVMCodeBuilder::createVariableWrite(Variable *variable)
     m_variablePtrs[variable] = LLVMVariablePtr();
 }
 
+void LLVMCodeBuilder::createListClear(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::ClearList, Compiler::StaticType::Void, Compiler::StaticType::Void, 0);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+}
+
+void LLVMCodeBuilder::createListRemove(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::RemoveListItem, Compiler::StaticType::Void, Compiler::StaticType::Number, 1);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+}
+
+void LLVMCodeBuilder::createListAppend(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::AppendToList, Compiler::StaticType::Void, Compiler::StaticType::Unknown, 1);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+}
+
+void LLVMCodeBuilder::createListInsert(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::InsertToList, Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Unknown }, 2);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+}
+
+void LLVMCodeBuilder::createListReplace(List *list)
+{
+    LLVMInstruction &ins = createOp(LLVMInstruction::Type::ListReplace, Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Unknown }, 2);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+}
+
 void LLVMCodeBuilder::beginIfStatement()
 {
     LLVMInstruction ins(LLVMInstruction::Type::BeginIf);
@@ -1026,6 +1240,36 @@ void LLVMCodeBuilder::createVariableMap()
 
         if (j < len)
             m_targetVariableMap[var] = j;
+        else
+            assert(false);
+    }
+}
+
+void LLVMCodeBuilder::createListMap()
+{
+    if (!m_target)
+        return;
+
+    // Map list pointers to list array indices
+    const auto &lists = m_target->lists();
+    List **listData = m_target->listData();
+    const size_t len = lists.size();
+    m_targetListMap.clear();
+    m_targetListMap.reserve(len);
+
+    size_t i, j;
+
+    for (i = 0; i < len; i++) {
+        List *list = lists[i].get();
+
+        // Find this list
+        for (j = 0; j < len; j++) {
+            if (listData[j] == list)
+                break;
+        }
+
+        if (j < len)
+            m_targetListMap[list] = j;
         else
             assert(false);
     }
@@ -1315,6 +1559,22 @@ llvm::Value *LLVMCodeBuilder::getVariablePtr(llvm::Value *targetVariables, Varia
     return m_builder.CreateIntToPtr(addr, m_valueDataType->getPointerTo());
 }
 
+llvm::Value *LLVMCodeBuilder::getListPtr(llvm::Value *targetLists, List *list)
+{
+    if (!m_target->isStage() && list->target() == m_target) {
+        // If this is a local sprite list, use the list array at runtime (for clones)
+        assert(m_targetListMap.find(list) != m_targetListMap.cend());
+        const size_t index = m_targetListMap[list];
+        auto pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+        llvm::Value *ptr = m_builder.CreateGEP(pointerType, targetLists, m_builder.getInt64(index));
+        return m_builder.CreateLoad(pointerType, ptr);
+    }
+
+    // Otherwise create a raw pointer at compile time
+    llvm::Value *addr = m_builder.getInt64((uintptr_t)list);
+    return m_builder.CreateIntToPtr(addr, m_valueDataType->getPointerTo());
+}
+
 void LLVMCodeBuilder::syncVariables(llvm::Value *targetVariables)
 {
     // Copy stack variables to the actual variables
@@ -1336,15 +1596,45 @@ void LLVMCodeBuilder::reloadVariables(llvm::Value *targetVariables)
     }
 }
 
+void LLVMCodeBuilder::reloadLists()
+{
+    // Reload list data pointers
+    for (auto &[list, listPtr] : m_listPtrs)
+        m_builder.CreateStore(m_builder.CreateCall(resolve_list_data(), listPtr.ptr), listPtr.dataPtr);
+}
+
+void LLVMCodeBuilder::updateListDataPtr(const LLVMListPtr &listPtr, llvm::Function *func)
+{
+    // dataPtr = dirty ? list_data(list) : dataPtr
+    // dirty = false
+    llvm::Value *dirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
+    llvm::Value *dataPtr = m_builder.CreateSelect(dirty, m_builder.CreateCall(resolve_list_data(), listPtr.ptr), m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr));
+    m_builder.CreateStore(dataPtr, listPtr.dataPtr);
+    m_builder.CreateStore(m_builder.getInt1(false), listPtr.dataPtrDirty);
+}
+
 LLVMInstruction &LLVMCodeBuilder::createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount)
+{
+    std::vector<Compiler::StaticType> types;
+    types.reserve(argCount);
+
+    for (size_t i = 0; i < argCount; i++)
+        types.push_back(argType);
+
+    return createOp(type, retType, types, argCount);
+}
+
+LLVMInstruction &LLVMCodeBuilder::createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const std::vector<Compiler::StaticType> &argTypes, size_t argCount)
 {
     LLVMInstruction ins(type);
 
     assert(m_tmpRegs.size() >= argCount);
     size_t j = 0;
 
-    for (size_t i = m_tmpRegs.size() - argCount; i < m_tmpRegs.size(); i++)
-        ins.args.push_back({ argType, m_tmpRegs[i] });
+    for (size_t i = m_tmpRegs.size() - argCount; i < m_tmpRegs.size(); i++) {
+        ins.args.push_back({ argTypes[j], m_tmpRegs[i] });
+        j++;
+    }
 
     m_tmpRegs.erase(m_tmpRegs.end() - argCount, m_tmpRegs.end());
 
@@ -1383,7 +1673,7 @@ void LLVMCodeBuilder::createValueStore(LLVMRegisterPtr reg, llvm::Value *targetP
                 case Compiler::StaticType::Bool: {
                     // Write number to bool value directly and change type
                     llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
-                    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+                    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 1);
                     m_builder.CreateStore(converted, ptr);
                     m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typePtr);
                     break;
@@ -1402,7 +1692,7 @@ void LLVMCodeBuilder::createValueStore(LLVMRegisterPtr reg, llvm::Value *targetP
                     // Write bool to number value directly and change type
                     llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
                     m_builder.CreateStore(converted, ptr);
-                    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+                    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 1);
                     m_builder.CreateStore(converted, ptr);
                     m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typePtr);
                     break;
@@ -1436,12 +1726,48 @@ void LLVMCodeBuilder::createValueStore(LLVMRegisterPtr reg, llvm::Value *targetP
     }
 }
 
+void LLVMCodeBuilder::createInitialValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType)
+{
+    llvm::Value *converted = nullptr;
+
+    if (sourceType != Compiler::StaticType::Unknown)
+        converted = castValue(reg, sourceType);
+
+    auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [sourceType](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == sourceType; });
+    const ValueType mappedType = it == TYPE_MAP.cend() ? ValueType::Number : it->first; // unknown type can be ignored
+
+    llvm::Value *valuePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 1);
+    m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typePtr);
+
+    switch (sourceType) {
+        case Compiler::StaticType::Number:
+        case Compiler::StaticType::Bool:
+            // Write number/bool directly
+            m_builder.CreateStore(converted, valuePtr);
+            break;
+
+        case Compiler::StaticType::String:
+            m_builder.CreateCall(resolve_value_assign_cstring(), { targetPtr, converted });
+            break;
+
+        case Compiler::StaticType::Unknown:
+            m_builder.CreateCall(resolve_value_assign_copy(), { targetPtr, reg->value });
+            break;
+
+        default:
+            assert(false);
+            break;
+    }
+}
+
 void LLVMCodeBuilder::createValueCopy(llvm::Value *source, llvm::Value *target)
 {
     // NOTE: This doesn't copy strings, but only the pointers
     copyStructField(source, target, 0, m_valueDataType, m_builder.getInt64Ty()); // value
     copyStructField(source, target, 1, m_valueDataType, m_builder.getInt32Ty()); // type
-    copyStructField(source, target, 2, m_valueDataType, m_builder.getInt64Ty()); // string size
+    /* 2: padding */
+    copyStructField(source, target, 3, m_valueDataType, m_builder.getInt64Ty()); // string size
 }
 
 void LLVMCodeBuilder::copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType)
@@ -1451,6 +1777,62 @@ void LLVMCodeBuilder::copyStructField(llvm::Value *source, llvm::Value *target, 
     m_builder.CreateStore(m_builder.CreateLoad(fieldType, sourceField), targetField);
 }
 
+llvm::Value *LLVMCodeBuilder::getListItem(const LLVMListPtr &listPtr, llvm::Value *index, llvm::Function *func)
+{
+    updateListDataPtr(listPtr, func);
+    return m_builder.CreateGEP(m_valueDataType, m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr), index);
+}
+
+llvm::Value *LLVMCodeBuilder::getListItemIndex(const LLVMListPtr &listPtr, LLVMRegisterPtr item, llvm::Function *func)
+{
+    llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+    llvm::BasicBlock *condBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+    llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+    llvm::BasicBlock *cmpIfBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+    llvm::BasicBlock *cmpElseBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+    llvm::BasicBlock *notFoundBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+    llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+
+    // index = 0
+    llvm::Value *index = m_builder.CreateAlloca(m_builder.getInt64Ty());
+    m_builder.CreateStore(m_builder.getInt64(0), index);
+    m_builder.CreateBr(condBlock);
+
+    // while (index < size)
+    m_builder.SetInsertPoint(condBlock);
+    llvm::Value *cond = m_builder.CreateICmpULT(m_builder.CreateLoad(m_builder.getInt64Ty(), index), size);
+    m_builder.CreateCondBr(cond, bodyBlock, notFoundBlock);
+
+    // if (list[index] == item)
+    m_builder.SetInsertPoint(bodyBlock);
+    LLVMRegisterPtr currentItem = std::make_shared<LLVMRegister>(listPtr.type);
+    currentItem->isRawValue = false;
+    currentItem->value = getListItem(listPtr, m_builder.CreateLoad(m_builder.getInt64Ty(), index), func);
+    llvm::Value *cmp = createComparison(currentItem, item, Comparison::EQ);
+    m_builder.CreateCondBr(cmp, cmpIfBlock, cmpElseBlock);
+
+    // goto nextBlock
+    m_builder.SetInsertPoint(cmpIfBlock);
+    m_builder.CreateBr(nextBlock);
+
+    // else index++
+    m_builder.SetInsertPoint(cmpElseBlock);
+    m_builder.CreateStore(m_builder.CreateAdd(m_builder.CreateLoad(m_builder.getInt64Ty(), index), m_builder.getInt64(1)), index);
+    m_builder.CreateBr(condBlock);
+
+    // notFoundBlock:
+    // index = -1
+    // goto nextBlock
+    m_builder.SetInsertPoint(notFoundBlock);
+    m_builder.CreateStore(llvm::ConstantInt::get(llvm::Type::getInt64Ty(m_ctx), -1, true), index);
+    m_builder.CreateBr(nextBlock);
+
+    // nextBlock:
+    m_builder.SetInsertPoint(nextBlock);
+
+    return m_builder.CreateLoad(m_builder.getInt64Ty(), index);
+}
+
 llvm::Value *LLVMCodeBuilder::createValue(LLVMRegisterPtr reg)
 {
     if (reg->isConstValue) {
@@ -1458,13 +1840,28 @@ llvm::Value *LLVMCodeBuilder::createValue(LLVMRegisterPtr reg)
         llvm::Constant *value = castConstValue(reg->constValue, TYPE_MAP[reg->constValue.type()]);
         llvm::Value *ret = m_builder.CreateAlloca(m_valueDataType);
 
-        if (reg->constValue.type() == ValueType::String)
-            value = llvm::ConstantExpr::getPtrToInt(value, m_valueDataType->getElementType(0));
-        else
-            value = llvm::ConstantExpr::getBitCast(value, m_valueDataType->getElementType(0));
+        switch (reg->constValue.type()) {
+            case ValueType::Number:
+                value = llvm::ConstantExpr::getBitCast(value, m_valueDataType->getElementType(0));
+                break;
+
+            case ValueType::Bool:
+                // Assuming union type is int64
+                value = m_builder.getInt64(reg->constValue.toBool());
+                break;
+
+            case ValueType::String:
+                value = llvm::ConstantExpr::getPtrToInt(value, m_valueDataType->getElementType(0));
+                break;
+
+            default:
+                assert(false);
+                break;
+        }
 
         llvm::Constant *type = m_builder.getInt32(static_cast<uint32_t>(reg->constValue.type()));
-        llvm::Constant *constValue = llvm::ConstantStruct::get(m_valueDataType, { value, type, m_builder.getInt64(0) });
+        llvm::Constant *padding = m_builder.getInt32(0);
+        llvm::Constant *constValue = llvm::ConstantStruct::get(m_valueDataType, { value, type, padding, m_builder.getInt64(0) });
         m_builder.CreateStore(constValue, ret);
 
         return ret;
@@ -1767,6 +2164,48 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_value_lower()
 {
     llvm::Type *valuePtr = m_valueDataType->getPointerTo();
     return resolveFunction("value_lower", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_clear()
+{
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("list_clear", llvm::FunctionType::get(m_builder.getVoidTy(), { listPtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_remove()
+{
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("list_remove", llvm::FunctionType::get(m_builder.getVoidTy(), { listPtr, m_builder.getInt64Ty() }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_append_empty()
+{
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("list_append_empty", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_insert_empty()
+{
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("list_insert_empty", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr, m_builder.getInt64Ty() }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_data()
+{
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("list_data", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_size_ptr()
+{
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("list_size_ptr", llvm::FunctionType::get(m_builder.getInt64Ty()->getPointerTo()->getPointerTo(), { listPtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_alloc_size_ptr()
+{
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("list_alloc_size_ptr", llvm::FunctionType::get(m_builder.getInt64Ty()->getPointerTo()->getPointerTo(), { listPtr }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()

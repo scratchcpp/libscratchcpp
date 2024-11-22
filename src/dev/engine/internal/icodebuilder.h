@@ -23,6 +23,10 @@ class ICodeBuilder
         virtual void addConstValue(const Value &value) = 0;
         virtual void addVariableValue(Variable *variable) = 0;
         virtual void addListContents(List *list) = 0;
+        virtual void addListItem(List *list) = 0;
+        virtual void addListItemIndex(List *list) = 0;
+        virtual void addListContains(List *list) = 0;
+        virtual void addListSize(List *list) = 0;
 
         virtual void createAdd() = 0;
         virtual void createSub() = 0;
@@ -55,6 +59,12 @@ class ICodeBuilder
         virtual void createExp10() = 0;
 
         virtual void createVariableWrite(Variable *variable) = 0;
+
+        virtual void createListClear(List *list) = 0;
+        virtual void createListRemove(List *list) = 0;
+        virtual void createListAppend(List *list) = 0;
+        virtual void createListInsert(List *list) = 0;
+        virtual void createListReplace(List *list) = 0;
 
         virtual void beginIfStatement() = 0;
         virtual void beginElseBranch() = 0;

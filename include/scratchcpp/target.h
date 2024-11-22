@@ -53,6 +53,8 @@ class LIBSCRATCHCPP_EXPORT Target : public Drawable
         int findList(const std::string &listName) const;
         int findListById(const std::string &id) const;
 
+        List **listData();
+
         const std::vector<std::shared_ptr<Block>> &blocks() const;
         int addBlock(std::shared_ptr<Block> block);
         std::shared_ptr<Block> blockAt(int index) const;

@@ -37,6 +37,21 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
         Monitor *monitor() const;
         void setMonitor(Monitor *monitor);
 
+        /*! Returns a pointer to the raw list data. */
+        inline ValueData *data() const { return m_dataPtr->data(); }
+
+        /*!
+         * Returns a pointer to the list size.
+         * \note This is used internally by compiled code for various optimizations.
+         */
+        inline size_t *sizePtr() { return &m_size; }
+
+        /*!
+         * Returns a pointer to the allocated list size.
+         * \note This is used internally by compiled code for various optimizations.
+         */
+        inline const size_t *allocatedSizePtr() const { return m_dataPtr->sizePtr(); }
+
         /*! Returns the list size. */
         inline size_t size() const { return m_size; }
 
@@ -96,15 +111,18 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
             m_size--;
         }
 
-        /*! Inserts an item at index. */
-        inline void insert(size_t index, const ValueData &value)
+        /*! Inserts an empty item at index and returns the reference to it. Can be used for custom initialization. */
+        inline ValueData &insertEmpty(size_t index)
         {
             assert(index >= 0 && index <= size());
             m_size++;
             reserve(getAllocSize(m_size));
             std::rotate(m_dataPtr->rbegin() + m_dataPtr->size() - m_size, m_dataPtr->rbegin() + m_dataPtr->size() - m_size + 1, m_dataPtr->rend() - index);
-            value_assign_copy(&m_dataPtr->operator[](index), &value);
+            return m_dataPtr->operator[](index);
         }
+
+        /*! Inserts an item at index. */
+        inline void insert(size_t index, const ValueData &value) { value_assign_copy(&insertEmpty(index), &value); }
 
         /*! Inserts an item at index. */
         inline void insert(size_t index, const Value &value) { insert(index, value.data()); }

@@ -31,6 +31,7 @@ struct CompilerPrivate
         Target *target = nullptr;
 
         std::shared_ptr<Block> block;
+        int customIfStatementCount = 0;
         std::vector<std::pair<std::pair<std::shared_ptr<Block>, std::shared_ptr<Block>>, SubstackType>> substackTree;
         bool substackHit = false;
         bool warp = false;

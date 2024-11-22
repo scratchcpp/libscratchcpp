@@ -11,10 +11,10 @@ static int counter = 0;
 
 extern "C"
 {
-    void test_function(TestMock *mock, Target *target)
+    void test_function(TestMock *mock, Target *target, ValueData **varData, List **listData)
     {
         if (mock)
-            mock->f(target);
+            mock->f(target, varData, listData);
     }
 
     void test_print_function(ValueData *arg1, ValueData *arg2)

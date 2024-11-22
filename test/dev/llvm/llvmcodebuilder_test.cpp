@@ -3,6 +3,7 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
 #include <dev/engine/internal/llvm/llvmcodebuilder.h>
 #include <gmock/gmock.h>
 #include <targetmock.h>
@@ -20,7 +21,7 @@ class LLVMCodeBuilderTest : public testing::Test
     public:
         void SetUp() override
         {
-            test_function(nullptr, nullptr); // force dependency
+            test_function(nullptr, nullptr, nullptr, nullptr); // force dependency
         }
 
         void createBuilder(Target *target, bool warp) { m_builder = std::make_unique<LLVMCodeBuilder>(target, "test", warp); }
@@ -1897,6 +1898,592 @@ TEST_F(LLVMCodeBuilderTest, ReadVariable)
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ClearList)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    std::unordered_map<List *, std::string> strings;
+
+    auto globalList1 = std::make_shared<List>("", "");
+    auto globalList2 = std::make_shared<List>("", "");
+    auto globalList3 = std::make_shared<List>("", "");
+    stage.addList(globalList1);
+    stage.addList(globalList2);
+    stage.addList(globalList3);
+
+    auto localList1 = std::make_shared<List>("", "");
+    auto localList2 = std::make_shared<List>("", "");
+    auto localList3 = std::make_shared<List>("", "");
+    sprite.addList(localList1);
+    sprite.addList(localList2);
+    sprite.addList(localList3);
+
+    globalList1->append(1);
+    globalList1->append(2);
+    globalList1->append(3);
+    strings[globalList1.get()] = globalList1->toString();
+
+    globalList2->append("Lorem");
+    globalList2->append("ipsum");
+    globalList2->append(-4.52);
+    strings[globalList2.get()] = globalList2->toString();
+
+    globalList3->append(true);
+    globalList3->append(false);
+    globalList3->append(true);
+    strings[globalList3.get()] = globalList3->toString();
+
+    localList1->append("dolor");
+    localList1->append("sit");
+    localList1->append("amet");
+    strings[localList1.get()] = localList1->toString();
+
+    localList2->append(10);
+    localList2->append(9.8);
+    localList2->append(true);
+    strings[localList2.get()] = localList2->toString();
+
+    localList3->append("test");
+    localList3->append(1.2);
+    localList3->append(false);
+    strings[localList3.get()] = localList3->toString();
+
+    createBuilder(&sprite, true);
+
+    m_builder->createListClear(globalList1.get());
+    m_builder->createListClear(globalList3.get());
+    m_builder->createListClear(localList1.get());
+    m_builder->createListClear(localList2.get());
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    code->run(ctx.get());
+
+    ASSERT_TRUE(globalList1->empty());
+    ASSERT_EQ(globalList2->toString(), strings[globalList2.get()]);
+    ASSERT_TRUE(globalList3->empty());
+
+    ASSERT_TRUE(localList1->empty());
+    ASSERT_TRUE(localList2->empty());
+    ASSERT_EQ(localList3->toString(), strings[localList3.get()]);
+}
+
+TEST_F(LLVMCodeBuilderTest, RemoveFromList)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    std::unordered_map<List *, std::string> strings;
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    globalList->append(1);
+    globalList->append(2);
+    globalList->append(3);
+
+    localList->append("Lorem");
+    localList->append("ipsum");
+    localList->append("dolor");
+    localList->append("sit");
+    strings[localList.get()] = localList->toString();
+
+    createBuilder(&sprite, true);
+
+    m_builder->addConstValue(1);
+    m_builder->createListRemove(globalList.get());
+
+    m_builder->addConstValue(3);
+    m_builder->createListRemove(localList.get());
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    code->run(ctx.get());
+
+    ASSERT_EQ(globalList->toString(), "13");
+    ASSERT_EQ(localList->toString(), "Lorem ipsum dolor");
+}
+
+TEST_F(LLVMCodeBuilderTest, AppendToList)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    std::unordered_map<List *, std::string> strings;
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    globalList->append(1);
+    globalList->append(2);
+    globalList->append(3);
+
+    localList->append("Lorem");
+    localList->append("ipsum");
+    localList->append("dolor");
+    localList->append("sit");
+    strings[localList.get()] = localList->toString();
+
+    createBuilder(&sprite, true);
+
+    m_builder->addConstValue(1);
+    m_builder->createListAppend(globalList.get());
+
+    m_builder->addConstValue("test");
+    m_builder->createListAppend(globalList.get());
+
+    m_builder->addConstValue(3);
+    m_builder->createListAppend(localList.get());
+
+    m_builder->createListClear(localList.get());
+
+    m_builder->addConstValue(true);
+    m_builder->createListAppend(localList.get());
+
+    m_builder->addConstValue(false);
+    m_builder->createListAppend(localList.get());
+
+    m_builder->addConstValue("hello world");
+    m_builder->createListAppend(localList.get());
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    code->run(ctx.get());
+
+    ASSERT_EQ(globalList->toString(), "1 2 3 1 test");
+    ASSERT_EQ(localList->toString(), "true false hello world");
+}
+
+TEST_F(LLVMCodeBuilderTest, InsertToList)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    std::unordered_map<List *, std::string> strings;
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    globalList->append(1);
+    globalList->append(2);
+    globalList->append(3);
+
+    localList->append("Lorem");
+    localList->append("ipsum");
+    localList->append("dolor");
+    localList->append("sit");
+    strings[localList.get()] = localList->toString();
+
+    createBuilder(&sprite, true);
+
+    m_builder->addConstValue(2);
+    m_builder->addConstValue(1);
+    m_builder->createListInsert(globalList.get());
+
+    m_builder->addConstValue(3);
+    m_builder->addConstValue("test");
+    m_builder->createListInsert(globalList.get());
+
+    m_builder->addConstValue(0);
+    m_builder->addConstValue(3);
+    m_builder->createListInsert(localList.get());
+
+    m_builder->createListClear(localList.get());
+
+    m_builder->addConstValue(0);
+    m_builder->addConstValue(true);
+    m_builder->createListInsert(localList.get());
+
+    m_builder->addConstValue(0);
+    m_builder->addConstValue(false);
+    m_builder->createListInsert(localList.get());
+
+    m_builder->addConstValue(1);
+    m_builder->addConstValue("hello world");
+    m_builder->createListInsert(localList.get());
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    code->run(ctx.get());
+
+    ASSERT_EQ(globalList->toString(), "1 2 1 test 3");
+    ASSERT_EQ(localList->toString(), "false hello world true");
+}
+
+TEST_F(LLVMCodeBuilderTest, ListReplace)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    std::unordered_map<List *, std::string> strings;
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    globalList->append(1);
+    globalList->append(2);
+    globalList->append(3);
+
+    localList->append("Lorem");
+    localList->append("ipsum");
+    localList->append("dolor");
+    localList->append("sit");
+    strings[localList.get()] = localList->toString();
+
+    createBuilder(&sprite, true);
+
+    m_builder->addConstValue(2);
+    m_builder->addConstValue(1);
+    m_builder->createListReplace(globalList.get());
+
+    m_builder->addConstValue(1);
+    m_builder->addConstValue("test");
+    m_builder->createListReplace(globalList.get());
+
+    m_builder->addConstValue(0);
+    m_builder->addConstValue(3);
+    m_builder->createListReplace(localList.get());
+
+    m_builder->addConstValue(2);
+    m_builder->addConstValue(true);
+    m_builder->createListReplace(localList.get());
+
+    m_builder->addConstValue(3);
+    m_builder->addConstValue("hello world");
+    m_builder->createListReplace(localList.get());
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    code->run(ctx.get());
+
+    ASSERT_EQ(globalList->toString(), "1 test 1");
+    ASSERT_EQ(localList->toString(), "3 ipsum true hello world");
+}
+
+TEST_F(LLVMCodeBuilderTest, GetListItem)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    std::unordered_map<List *, std::string> strings;
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    globalList->append(1);
+    globalList->append(2);
+    globalList->append(3);
+
+    localList->append("Lorem");
+    localList->append("ipsum");
+    localList->append("dolor");
+    localList->append("sit");
+    strings[localList.get()] = localList->toString();
+
+    createBuilder(&sprite, true);
+
+    m_builder->addConstValue(2);
+    m_builder->addListItem(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(1);
+    m_builder->addConstValue("test");
+    m_builder->createListReplace(globalList.get());
+
+    m_builder->addConstValue(0);
+    m_builder->addListItem(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(0);
+    m_builder->addListItem(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(2);
+    m_builder->addListItem(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(3);
+    m_builder->addListItem(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    static const std::string expected =
+        "3\n"
+        "1\n"
+        "Lorem\n"
+        "dolor\n"
+        "sit\n";
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+
+    ASSERT_EQ(globalList->toString(), "1 test 3");
+    ASSERT_EQ(localList->toString(), "Lorem ipsum dolor sit");
+}
+
+TEST_F(LLVMCodeBuilderTest, GetListSize)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    globalList->append(1);
+    globalList->append(2);
+    globalList->append(3);
+
+    localList->append("Lorem");
+    localList->append("ipsum");
+    localList->append("dolor");
+    localList->append("sit");
+
+    createBuilder(&sprite, true);
+
+    m_builder->addListSize(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addListSize(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    static const std::string expected =
+        "3\n"
+        "4\n";
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+
+    ASSERT_EQ(globalList->toString(), "123");
+    ASSERT_EQ(localList->toString(), "Lorem ipsum dolor sit");
+}
+
+TEST_F(LLVMCodeBuilderTest, GetListItemIndex)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    globalList->append(1);
+    globalList->append(2);
+    globalList->append(3);
+
+    localList->append("Lorem");
+    localList->append("ipsum");
+    localList->append("dolor");
+    localList->append("sit");
+
+    createBuilder(&sprite, true);
+
+    m_builder->addConstValue(2);
+    m_builder->addListItemIndex(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(1);
+    m_builder->addListItemIndex(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(0);
+    m_builder->addListItemIndex(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(1);
+    m_builder->addConstValue("test");
+    m_builder->createListReplace(globalList.get());
+
+    m_builder->addConstValue(2);
+    m_builder->addListItemIndex(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(1);
+    m_builder->addListItemIndex(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue("test");
+    m_builder->addListItemIndex(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue("abc");
+    m_builder->addListItemIndex(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue("doLor");
+    m_builder->addListItemIndex(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(true);
+    m_builder->addListItemIndex(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue("site");
+    m_builder->addListItemIndex(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    static const std::string expected =
+        "1\n"
+        "0\n"
+        "-1\n"
+        "-1\n"
+        "0\n"
+        "1\n"
+        "-1\n"
+        "2\n"
+        "-1\n"
+        "-1\n";
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+
+    ASSERT_EQ(globalList->toString(), "1 test 3");
+    ASSERT_EQ(localList->toString(), "Lorem ipsum dolor sit");
+}
+
+TEST_F(LLVMCodeBuilderTest, ListContainsItem)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    globalList->append(1);
+    globalList->append(2);
+    globalList->append(3);
+
+    localList->append("Lorem");
+    localList->append("ipsum");
+    localList->append("dolor");
+    localList->append("sit");
+
+    createBuilder(&sprite, true);
+
+    m_builder->addConstValue(2);
+    m_builder->addListContains(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(1);
+    m_builder->addListContains(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(0);
+    m_builder->addListContains(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(1);
+    m_builder->addConstValue("test");
+    m_builder->createListReplace(globalList.get());
+
+    m_builder->addConstValue(2);
+    m_builder->addListContains(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(1);
+    m_builder->addListContains(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue("test");
+    m_builder->addListContains(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue("abc");
+    m_builder->addListContains(globalList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue("doLor");
+    m_builder->addListContains(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(true);
+    m_builder->addListContains(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue("site");
+    m_builder->addListContains(localList.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    static const std::string expected =
+        "true\n"
+        "true\n"
+        "false\n"
+        "false\n"
+        "true\n"
+        "true\n"
+        "false\n"
+        "true\n"
+        "false\n"
+        "false\n";
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+
+    ASSERT_EQ(globalList->toString(), "1 test 3");
+    ASSERT_EQ(localList->toString(), "Lorem ipsum dolor sit");
 }
 
 TEST_F(LLVMCodeBuilderTest, Yield)
