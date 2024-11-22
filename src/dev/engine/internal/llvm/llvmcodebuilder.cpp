@@ -547,9 +547,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
                 // dataPtrDirty
+                llvm::Value *dataPtrDirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
                 llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
                 llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
-                m_builder.CreateStore(m_builder.CreateICmpEQ(allocatedSize, size), listPtr.dataPtrDirty);
+                m_builder.CreateStore(m_builder.CreateOr(dataPtrDirty, m_builder.CreateICmpEQ(allocatedSize, size)), listPtr.dataPtrDirty);
 
                 // Insert
                 llvm::Value *index = m_builder.CreateFPToUI(castValue(indexArg.second, indexArg.first), m_builder.getInt64Ty());
