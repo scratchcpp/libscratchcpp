@@ -489,9 +489,15 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
             case LLVMInstruction::Type::ClearList: {
                 assert(step.args.size() == 0);
-                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                llvm::Value *oldAllocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
                 m_builder.CreateCall(resolve_list_clear(), listPtr.ptr);
-                // NOTE: Clearing doesn't deallocate (see List::clear()), so there's no need to update the data pointer
+                m_builder.CreateStore(m_builder.getInt1(true), listPtr.dataPtrDirty);
+
+                // Clearing may deallocate, so check if the allocated size changed
+                llvm::Value *dataPtrDirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
+                llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
+                m_builder.CreateStore(m_builder.CreateOr(dataPtrDirty, m_builder.CreateICmpNE(allocatedSize, oldAllocatedSize)), listPtr.dataPtrDirty);
                 break;
             }
 
