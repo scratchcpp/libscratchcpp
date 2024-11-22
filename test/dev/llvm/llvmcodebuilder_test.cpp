@@ -2607,6 +2607,119 @@ TEST_F(LLVMCodeBuilderTest, VariablesAfterSuspend)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
+TEST_F(LLVMCodeBuilderTest, ListsAfterSuspend)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList1 = std::make_shared<List>("", "");
+    stage.addList(globalList1);
+
+    auto globalList2 = std::make_shared<List>("", "");
+    stage.addList(globalList2);
+
+    auto localList1 = std::make_shared<List>("", "");
+    sprite.addList(localList1);
+
+    auto localList2 = std::make_shared<List>("", "");
+    sprite.addList(localList2);
+
+    createBuilder(&sprite, false);
+
+    m_builder->createListClear(globalList1.get());
+    m_builder->createListClear(globalList2.get());
+    m_builder->createListClear(localList1.get());
+    m_builder->createListClear(localList2.get());
+
+    m_builder->addConstValue(1);
+    m_builder->createListAppend(globalList1.get());
+    m_builder->addConstValue(2);
+    m_builder->createListAppend(globalList1.get());
+    m_builder->addConstValue(3);
+    m_builder->createListAppend(globalList1.get());
+
+    m_builder->addConstValue(1);
+    m_builder->createListAppend(globalList2.get());
+    m_builder->addConstValue(2);
+    m_builder->createListAppend(globalList2.get());
+    m_builder->addConstValue(3);
+    m_builder->createListAppend(globalList2.get());
+
+    m_builder->addConstValue(1);
+    m_builder->addConstValue(12.5);
+    m_builder->createListReplace(globalList2.get());
+
+    m_builder->addConstValue(0);
+    m_builder->addConstValue("Lorem");
+    m_builder->createListInsert(localList1.get());
+    m_builder->addConstValue(0);
+    m_builder->addConstValue("ipsum");
+    m_builder->createListInsert(localList1.get());
+
+    m_builder->addConstValue(0);
+    m_builder->addConstValue(true);
+    m_builder->createListInsert(localList2.get());
+    m_builder->addConstValue(0);
+    m_builder->addConstValue(false);
+    m_builder->createListInsert(localList2.get());
+
+    m_builder->yield();
+
+    m_builder->addConstValue(1);
+    m_builder->addListItem(globalList1.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(2);
+    m_builder->addListItem(globalList1.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(1);
+    m_builder->addListItem(globalList2.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(0);
+    m_builder->addListItem(globalList2.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(0);
+    m_builder->addListItem(localList1.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(1);
+    m_builder->addListItem(localList1.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    m_builder->addConstValue(0);
+    m_builder->addListItem(localList2.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+    std::string expected =
+        "2\n"
+        "test\n"
+        "12.5\n"
+        "false\n"
+        "ipsum\n"
+        "-5.48\n"
+        "hello\n";
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    code->run(ctx.get());
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    globalList1->replace(2, "test");
+    globalList2->replace(0, false);
+    localList1->replace(1, -5.48);
+    localList2->replace(0, "hello");
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
 TEST_F(LLVMCodeBuilderTest, IfStatement)
 {
     createBuilder(true);
@@ -2864,6 +2977,151 @@ TEST_F(LLVMCodeBuilderTest, IfStatementVariables)
         "true\n"
         "true\n"
         "true\n";
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, IfStatementLists)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList1 = std::make_shared<List>("", "");
+    stage.addList(globalList1);
+
+    auto globalList2 = std::make_shared<List>("", "");
+    stage.addList(globalList2);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    createBuilder(&sprite, false);
+
+    auto resetLists = [this, globalList1, globalList2, localList]() {
+        m_builder->createListClear(globalList1.get());
+        m_builder->createListClear(globalList2.get());
+        m_builder->createListClear(localList.get());
+
+        m_builder->addConstValue(1);
+        m_builder->createListAppend(globalList1.get());
+        m_builder->addConstValue(2);
+        m_builder->createListAppend(globalList1.get());
+
+        m_builder->addConstValue("hello");
+        m_builder->createListAppend(globalList2.get());
+        m_builder->addConstValue("world");
+        m_builder->createListAppend(globalList2.get());
+
+        m_builder->addConstValue(false);
+        m_builder->createListAppend(localList.get());
+        m_builder->addConstValue(true);
+        m_builder->createListAppend(localList.get());
+    };
+
+    auto checkLists = [this, globalList1, globalList2, localList]() {
+        m_builder->addConstValue(0);
+        m_builder->addListItem(globalList1.get());
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(1);
+        m_builder->addListItem(globalList2.get());
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(0);
+        m_builder->addListItem(localList.get());
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+    };
+
+    // if (true)
+    resetLists();
+
+    m_builder->addConstValue(true);
+    m_builder->beginIfStatement();
+    {
+        m_builder->addConstValue("hello world");
+        m_builder->createListAppend(globalList1.get());
+
+        m_builder->addConstValue(0);
+        m_builder->addConstValue(8.5);
+        m_builder->createListInsert(globalList2.get());
+
+        m_builder->addConstValue(1);
+        m_builder->addConstValue(-4.25);
+        m_builder->createListReplace(localList.get());
+    }
+    m_builder->endIf();
+
+    checkLists();
+
+    // if (false)
+    resetLists();
+
+    m_builder->addConstValue(false);
+    m_builder->beginIfStatement();
+    {
+        m_builder->addConstValue("hello world");
+        m_builder->createListAppend(globalList1.get());
+
+        m_builder->addConstValue(0);
+        m_builder->addConstValue(8.5);
+        m_builder->createListInsert(globalList2.get());
+
+        m_builder->addConstValue(1);
+        m_builder->addConstValue(-4.25);
+        m_builder->createListReplace(localList.get());
+    }
+    m_builder->endIf();
+
+    checkLists();
+
+    // if (true) { if (true) { ... }; if (false) { ... } }
+    resetLists();
+
+    m_builder->addConstValue(true);
+    m_builder->beginIfStatement();
+    {
+        m_builder->addConstValue(true);
+        m_builder->beginIfStatement();
+        {
+            m_builder->addConstValue("hello world");
+            m_builder->createListAppend(globalList1.get());
+
+            m_builder->addConstValue(0);
+            m_builder->addConstValue(8.5);
+            m_builder->createListInsert(globalList2.get());
+        }
+        m_builder->endIf();
+
+        m_builder->addConstValue(false);
+        m_builder->beginIfStatement();
+        {
+            m_builder->addConstValue(1);
+            m_builder->addConstValue(-4.25);
+            m_builder->createListReplace(localList.get());
+        }
+        m_builder->endIf();
+    }
+    m_builder->endIf();
+
+    checkLists();
+
+    std::string expected =
+        "1\n"
+        "hello\n"
+        "false\n"
+        "1\n"
+        "world\n"
+        "false\n"
+        "1\n"
+        "hello\n"
+        "false\n";
 
     auto code = m_builder->finalize();
     auto ctx = code->createExecutionContext(&sprite);
@@ -3337,6 +3595,204 @@ TEST_F(LLVMCodeBuilderTest, LoopVariables)
         "true\n"
         "true\n"
         "true\n";
+
+    auto code = m_builder->finalize();
+    auto ctx = code->createExecutionContext(&sprite);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, LoopLists)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList1 = std::make_shared<List>("", "");
+    stage.addList(globalList1);
+
+    auto globalList2 = std::make_shared<List>("", "");
+    stage.addList(globalList2);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    auto counter1 = std::make_shared<Variable>("", "");
+    auto counter2 = std::make_shared<Variable>("", "");
+    sprite.addVariable(counter1);
+    sprite.addVariable(counter2);
+
+    createBuilder(&sprite, true);
+
+    auto resetLists = [this, globalList1, globalList2, localList]() {
+        m_builder->createListClear(globalList1.get());
+        m_builder->createListClear(globalList2.get());
+        m_builder->createListClear(localList.get());
+
+        m_builder->addConstValue(1);
+        m_builder->createListAppend(globalList1.get());
+        m_builder->addConstValue(2);
+        m_builder->createListAppend(globalList1.get());
+
+        m_builder->addConstValue("hello");
+        m_builder->createListAppend(globalList2.get());
+        m_builder->addConstValue("world");
+        m_builder->createListAppend(globalList2.get());
+
+        m_builder->addConstValue(false);
+        m_builder->createListAppend(localList.get());
+        m_builder->addConstValue(true);
+        m_builder->createListAppend(localList.get());
+    };
+
+    auto checkLists = [this, globalList1, globalList2, localList]() {
+        m_builder->addConstValue(0);
+        m_builder->addListItem(globalList1.get());
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(1);
+        m_builder->addListItem(globalList2.get());
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+
+        m_builder->addConstValue(0);
+        m_builder->addListItem(localList.get());
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String });
+    };
+
+    // repeat (2)
+    resetLists();
+
+    m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop();
+    {
+        m_builder->addConstValue("hello world");
+        m_builder->createListAppend(globalList1.get());
+
+        m_builder->addConstValue(0);
+        m_builder->addConstValue(8.5);
+        m_builder->createListInsert(globalList2.get());
+
+        m_builder->addConstValue(1);
+        m_builder->addConstValue(-4.25);
+        m_builder->createListReplace(localList.get());
+    }
+    m_builder->endLoop();
+
+    checkLists();
+
+    // repeat(0)
+    resetLists();
+
+    m_builder->addConstValue(0);
+    m_builder->beginRepeatLoop();
+    {
+        m_builder->addConstValue("hello world");
+        m_builder->createListAppend(globalList1.get());
+
+        m_builder->addConstValue(0);
+        m_builder->addConstValue(8.5);
+        m_builder->createListInsert(globalList2.get());
+
+        m_builder->addConstValue(1);
+        m_builder->addConstValue(-4.25);
+        m_builder->createListReplace(localList.get());
+    }
+    m_builder->endLoop();
+
+    checkLists();
+
+    // while (counter1 < 5) { ... until (counter2 == 3) {... counter2++ }; while (false) { ... }; counter1++ }
+    resetLists();
+
+    m_builder->addConstValue(0);
+    m_builder->createVariableWrite(counter1.get());
+
+    m_builder->beginLoopCondition();
+    m_builder->addVariableValue(counter1.get());
+    m_builder->addConstValue(5);
+    m_builder->createCmpLT();
+    m_builder->beginWhileLoop();
+    {
+        m_builder->addConstValue(0);
+        m_builder->createVariableWrite(counter2.get());
+
+        m_builder->beginLoopCondition();
+        m_builder->addVariableValue(counter2.get());
+        m_builder->addConstValue(3);
+        m_builder->createCmpEQ();
+        m_builder->beginRepeatUntilLoop();
+        {
+            m_builder->addConstValue(0);
+            m_builder->addConstValue(8.5);
+            m_builder->createListInsert(globalList2.get());
+
+            m_builder->addConstValue(1);
+            m_builder->addConstValue(-4.25);
+            m_builder->createListReplace(localList.get());
+
+            m_builder->addVariableValue(counter2.get());
+            m_builder->addConstValue(1);
+            m_builder->createAdd();
+            m_builder->createVariableWrite(counter2.get());
+        }
+        m_builder->endLoop();
+
+        m_builder->beginLoopCondition();
+        m_builder->addConstValue(false);
+        m_builder->beginWhileLoop();
+        {
+            m_builder->addConstValue("hello world");
+            m_builder->createListAppend(globalList1.get());
+        }
+        m_builder->endLoop();
+
+        m_builder->addVariableValue(counter1.get());
+        m_builder->addConstValue(1);
+        m_builder->createAdd();
+        m_builder->createVariableWrite(counter1.get());
+    }
+    m_builder->endLoop();
+
+    checkLists();
+
+    // until (true)
+    resetLists();
+
+    m_builder->beginLoopCondition();
+    m_builder->addConstValue(true);
+    m_builder->beginRepeatUntilLoop();
+    {
+        m_builder->addConstValue("hello world");
+        m_builder->createListAppend(globalList1.get());
+
+        m_builder->addConstValue(0);
+        m_builder->addConstValue(8.5);
+        m_builder->createListInsert(globalList2.get());
+
+        m_builder->addConstValue(1);
+        m_builder->addConstValue(-4.25);
+        m_builder->createListReplace(localList.get());
+    }
+    m_builder->endLoop();
+
+    checkLists();
+
+    std::string expected =
+        "1\n"
+        "8.5\n"
+        "false\n"
+        "1\n"
+        "world\n"
+        "false\n"
+        "1\n"
+        "8.5\n"
+        "false\n"
+        "1\n"
+        "world\n"
+        "false\n";
 
     auto code = m_builder->finalize();
     auto ctx = code->createExecutionContext(&sprite);

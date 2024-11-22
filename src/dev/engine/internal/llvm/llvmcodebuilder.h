@@ -165,6 +165,7 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         std::unordered_map<List *, size_t> m_targetListMap;
         std::unordered_map<List *, LLVMListPtr> m_listPtrs;
+        std::vector<std::unordered_map<LLVMListPtr *, Compiler::StaticType>> m_scopeLists;
 
         std::string m_id;
         llvm::LLVMContext m_ctx;

@@ -92,9 +92,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
         varPtr.onStack = false; // use heap before the first assignment
     }
 
-    m_scopeVariables.clear();
-    m_scopeVariables.push_back({});
-
     // Create list pointers
     for (auto &[list, listPtr] : m_listPtrs) {
         listPtr.ptr = getListPtr(targetLists, list);
@@ -108,6 +105,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
         listPtr.dataPtrDirty = m_builder.CreateAlloca(m_builder.getInt1Ty());
         m_builder.CreateStore(m_builder.getInt1(false), listPtr.dataPtrDirty);
     }
+
+    m_scopeVariables.clear();
+    m_scopeLists.clear();
+    pushScopeLevel();
 
     // Execute recorded steps
     for (const LLVMInstruction &step : m_instructions) {
@@ -498,6 +499,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *dataPtrDirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
                 llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
                 m_builder.CreateStore(m_builder.CreateOr(dataPtrDirty, m_builder.CreateICmpNE(allocatedSize, oldAllocatedSize)), listPtr.dataPtrDirty);
+
+                m_scopeLists.back().erase(&listPtr);
                 break;
             }
 
@@ -515,7 +518,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 Compiler::StaticType type = optimizeRegisterType(arg.second);
-                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
                 // Check if enough space is allocated
                 llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
@@ -541,7 +544,16 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.CreateBr(nextBlock);
 
                 m_builder.SetInsertPoint(nextBlock);
-                // TODO: Implement list type prediction
+                auto &typeMap = m_scopeLists.back();
+
+                if (typeMap.find(&listPtr) == typeMap.cend()) {
+                    listPtr.type = type;
+                    typeMap[&listPtr] = listPtr.type;
+                } else if (listPtr.type != type) {
+                    listPtr.type = Compiler::StaticType::Unknown;
+                    typeMap[&listPtr] = listPtr.type;
+                }
+
                 break;
             }
 
@@ -550,7 +562,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &indexArg = step.args[0];
                 const auto &valueArg = step.args[1];
                 Compiler::StaticType type = optimizeRegisterType(valueArg.second);
-                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
                 // dataPtrDirty
                 llvm::Value *dataPtrDirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
@@ -561,8 +573,18 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // Insert
                 llvm::Value *index = m_builder.CreateFPToUI(castValue(indexArg.second, indexArg.first), m_builder.getInt64Ty());
                 llvm::Value *itemPtr = m_builder.CreateCall(resolve_list_insert_empty(), { listPtr.ptr, index });
-                // TODO: Implement list type prediction
                 createReusedValueStore(valueArg.second, itemPtr, type);
+
+                auto &typeMap = m_scopeLists.back();
+
+                if (typeMap.find(&listPtr) == typeMap.cend()) {
+                    listPtr.type = type;
+                    typeMap[&listPtr] = listPtr.type;
+                } else if (listPtr.type != type) {
+                    listPtr.type = Compiler::StaticType::Unknown;
+                    typeMap[&listPtr] = listPtr.type;
+                }
+
                 break;
             }
 
@@ -571,11 +593,21 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &indexArg = step.args[0];
                 const auto &valueArg = step.args[1];
                 Compiler::StaticType type = optimizeRegisterType(valueArg.second);
-                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                LLVMListPtr &listPtr = m_listPtrs[step.workList];
                 llvm::Value *index = m_builder.CreateFPToUI(castValue(indexArg.second, indexArg.first), m_builder.getInt64Ty());
                 llvm::Value *itemPtr = getListItem(listPtr, index, func);
                 createValueStore(valueArg.second, itemPtr, type, listPtr.type);
-                // TODO: Implement list type prediction
+
+                auto &typeMap = m_scopeLists.back();
+
+                if (typeMap.find(&listPtr) == typeMap.cend()) {
+                    listPtr.type = type;
+                    typeMap[&listPtr] = listPtr.type;
+                } else if (listPtr.type != type) {
+                    listPtr.type = Compiler::StaticType::Unknown;
+                    typeMap[&listPtr] = listPtr.type;
+                }
+
                 break;
             }
 
@@ -618,9 +650,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 if (!m_warp) {
                     freeHeap();
                     syncVariables(targetVariables);
-                    reloadLists();
                     coro->createSuspend();
                     reloadVariables(targetVariables);
+                    reloadLists();
                 }
 
                 break;
@@ -1285,6 +1317,16 @@ void LLVMCodeBuilder::createListMap()
 void LLVMCodeBuilder::pushScopeLevel()
 {
     m_scopeVariables.push_back({});
+
+    if (m_scopeLists.empty()) {
+        std::unordered_map<LLVMListPtr *, Compiler::StaticType> listTypes;
+
+        for (auto &[list, listPtr] : m_listPtrs)
+            listTypes[&listPtr] = Compiler::StaticType::Unknown;
+
+        m_scopeLists.push_back(listTypes);
+    } else
+        m_scopeLists.push_back(m_scopeLists.back());
 }
 
 void LLVMCodeBuilder::popScopeLevel()
@@ -1297,6 +1339,15 @@ void LLVMCodeBuilder::popScopeLevel()
     }
 
     m_scopeVariables.pop_back();
+
+    for (size_t i = 0; i < m_scopeLists.size() - 1; i++) {
+        for (auto &[ptr, type] : m_scopeLists[i]) {
+            if (ptr->type != type)
+                ptr->type = Compiler::StaticType::Unknown;
+        }
+    }
+
+    m_scopeLists.pop_back();
 }
 
 void LLVMCodeBuilder::verifyFunction(llvm::Function *func)
@@ -1605,9 +1656,14 @@ void LLVMCodeBuilder::reloadVariables(llvm::Value *targetVariables)
 
 void LLVMCodeBuilder::reloadLists()
 {
-    // Reload list data pointers
-    for (auto &[list, listPtr] : m_listPtrs)
-        m_builder.CreateStore(m_builder.CreateCall(resolve_list_data(), listPtr.ptr), listPtr.dataPtr);
+    // Reset list data dirty and list types
+    auto &typeMap = m_scopeLists.back();
+
+    for (auto &[list, listPtr] : m_listPtrs) {
+        m_builder.CreateStore(m_builder.getInt1(true), listPtr.dataPtrDirty);
+        listPtr.type = Compiler::StaticType::Unknown;
+        typeMap[&listPtr] = listPtr.type;
+    }
 }
 
 void LLVMCodeBuilder::updateListDataPtr(const LLVMListPtr &listPtr, llvm::Function *func)
