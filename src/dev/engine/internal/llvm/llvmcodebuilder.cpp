@@ -523,14 +523,14 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // If there's enough space, use the allocated memory
                 m_builder.SetInsertPoint(ifBlock);
                 llvm::Value *itemPtr = getListItem(listPtr, size, func);
-                createInitialValueStore(arg.second, itemPtr, type);
+                createReusedValueStore(arg.second, itemPtr, type);
                 m_builder.CreateStore(m_builder.CreateAdd(size, m_builder.getInt64(1)), listPtr.sizePtr);
                 m_builder.CreateBr(nextBlock);
 
                 // Otherwise call appendEmpty()
                 m_builder.SetInsertPoint(elseBlock);
                 itemPtr = m_builder.CreateCall(resolve_list_append_empty(), listPtr.ptr);
-                createInitialValueStore(arg.second, itemPtr, type);
+                createReusedValueStore(arg.second, itemPtr, type);
                 m_builder.CreateStore(m_builder.getInt1(true), listPtr.dataPtrDirty);
                 m_builder.CreateBr(nextBlock);
 
@@ -555,8 +555,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // Insert
                 llvm::Value *index = m_builder.CreateFPToUI(castValue(indexArg.second, indexArg.first), m_builder.getInt64Ty());
                 llvm::Value *itemPtr = m_builder.CreateCall(resolve_list_insert_empty(), { listPtr.ptr, index });
-                createInitialValueStore(valueArg.second, itemPtr, type);
                 // TODO: Implement list type prediction
+                createReusedValueStore(valueArg.second, itemPtr, type);
                 break;
             }
 
@@ -1727,25 +1727,20 @@ void LLVMCodeBuilder::createValueStore(LLVMRegisterPtr reg, llvm::Value *targetP
     }
 }
 
-void LLVMCodeBuilder::createInitialValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType)
+void LLVMCodeBuilder::createReusedValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType)
 {
     llvm::Value *converted = nullptr;
 
     if (sourceType != Compiler::StaticType::Unknown)
         converted = castValue(reg, sourceType);
 
-    auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [sourceType](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == sourceType; });
-    const ValueType mappedType = it == TYPE_MAP.cend() ? ValueType::Number : it->first; // unknown type can be ignored
-
-    llvm::Value *valuePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
-    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 1);
-    m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typePtr);
-
     switch (sourceType) {
         case Compiler::StaticType::Number:
+            m_builder.CreateCall(resolve_value_assign_double(), { targetPtr, converted });
+            break;
+
         case Compiler::StaticType::Bool:
-            // Write number/bool directly
-            m_builder.CreateStore(converted, valuePtr);
+            m_builder.CreateCall(resolve_value_assign_bool(), { targetPtr, converted });
             break;
 
         case Compiler::StaticType::String:
