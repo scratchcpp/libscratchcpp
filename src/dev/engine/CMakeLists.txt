@@ -3,6 +3,9 @@ target_sources(scratchcpp
     compiler.cpp
     compiler_p.cpp
     compiler_p.h
+    compilervalue.cpp
+    compilervalue_p.cpp
+    compilervalue_p.h
     executioncontext.cpp
     executioncontext_p.cpp
     executioncontext_p.h
