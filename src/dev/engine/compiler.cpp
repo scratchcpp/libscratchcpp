@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/dev/compiler.h>
+#include <scratchcpp/dev/compilerconstant.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
@@ -77,219 +78,220 @@ std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBl
  * Adds a call to the given function.\n
  * For example: extern "C" bool some_block(Target *target, double arg1, const char *arg2)
  */
-void Compiler::addFunctionCall(const std::string &functionName, StaticType returnType, const std::vector<StaticType> &argTypes)
+CompilerValue *Compiler::addFunctionCall(const std::string &functionName, StaticType returnType, const ArgTypes &argTypes, const Args &args)
 {
-    impl->builder->addFunctionCall(functionName, returnType, argTypes);
+    assert(argTypes.size() == args.size());
+    return impl->builder->addFunctionCall(functionName, returnType, argTypes, args);
 }
 
-/*! Adds a constant value to the compiled code. */
-void Compiler::addConstValue(const Value &value)
+/*! Adds the given constant to the compiled code. */
+CompilerConstant *Compiler::addConstValue(const Value &value)
 {
-    impl->builder->addConstValue(value);
+    return static_cast<CompilerConstant *>(impl->builder->addConstValue(value));
 }
 
-/*! Adds the given variable to the code (to read it). */
-void Compiler::addVariableValue(Variable *variable)
+/*! Adds the value of the given variable to the code. */
+CompilerValue *Compiler::addVariableValue(Variable *variable)
 {
-    impl->builder->addVariableValue(variable);
+    return impl->builder->addVariableValue(variable);
 }
 
-/*! Adds the given list to the code (to read its string representation). */
-void Compiler::addListContents(List *list)
+/*! Adds the string representation of the given list to the code. */
+CompilerValue *Compiler::addListContents(List *list)
 {
-    impl->builder->addListContents(list);
+    return impl->builder->addListContents(list);
 }
 
-/*! Adds the item with index from the last value of the given list to the code. */
-void Compiler::addListItem(List *list)
+/*! Adds the item with index of the given list to the code. */
+CompilerValue *Compiler::addListItem(List *list, CompilerValue *index)
 {
-    impl->builder->addListItem(list);
+    return impl->builder->addListItem(list, index);
 }
 
-/*! Adds the index of the item from the last value of the given list to the code. */
-void Compiler::addListItemIndex(List *list)
+/*! Adds the index of item of the given list to the code. */
+CompilerValue *Compiler::addListItemIndex(List *list, CompilerValue *item)
 {
-    impl->builder->addListItemIndex(list);
+    return impl->builder->addListItemIndex(list, item);
 }
 
-/*! Adds the result of a list contains item from the  check to the code. */
-void Compiler::addListContains(List *list)
+/*! Adds the result of a list contains item check to the code. */
+CompilerValue *Compiler::addListContains(List *list, CompilerValue *item)
 {
-    impl->builder->addListContains(list);
+    return impl->builder->addListContains(list, item);
 }
 
 /*! Adds the length of the given list to the code. */
-void Compiler::addListSize(List *list)
+CompilerValue *Compiler::addListSize(List *list)
 {
-    impl->builder->addListSize(list);
+    return impl->builder->addListSize(list);
 }
 
 /*! Compiles the given input (resolved by name) and adds it to the compiled code. */
-void Compiler::addInput(const std::string &name)
+CompilerValue *Compiler::addInput(const std::string &name)
 {
-    addInput(impl->block->inputAt(impl->block->findInput(name)).get());
+    return addInput(impl->block->inputAt(impl->block->findInput(name)).get());
 }
 
-/*! Creates an add instruction from the last 2 values. */
-void Compiler::createAdd()
+/*! Creates an add instruction. */
+CompilerValue *Compiler::createAdd(CompilerValue *operand1, CompilerValue *operand2)
 {
-    impl->builder->createAdd();
+    return impl->builder->createAdd(operand1, operand2);
 }
 
-/*! Creates a subtract instruction from the last 2 values. */
-void Compiler::createSub()
+/*! Creates a subtract instruction. */
+CompilerValue *Compiler::createSub(CompilerValue *operand1, CompilerValue *operand2)
 {
-    impl->builder->createSub();
+    return impl->builder->createSub(operand1, operand2);
 }
 
-/*! Creates a multiply instruction from the last 2 values. */
-void Compiler::createMul()
+/*! Creates a multiply instruction. */
+CompilerValue *Compiler::createMul(CompilerValue *operand1, CompilerValue *operand2)
 {
-    impl->builder->createMul();
+    return impl->builder->createMul(operand1, operand2);
 }
 
-/*! Creates a divide instruction from the last 2 values. */
-void Compiler::createDiv()
+/*! Creates a divide instruction. */
+CompilerValue *Compiler::createDiv(CompilerValue *operand1, CompilerValue *operand2)
 {
-    impl->builder->createDiv();
+    return impl->builder->createDiv(operand1, operand2);
 }
 
-/*! Creates an equality comparison instruction using the last 2 values. */
-void Compiler::createCmpEQ()
+/*! Creates an equality comparison instruction. */
+CompilerValue *Compiler::createCmpEQ(CompilerValue *operand1, CompilerValue *operand2)
 {
-    impl->builder->createCmpEQ();
+    return impl->builder->createCmpEQ(operand1, operand2);
 }
 
-/*! Creates a greater than comparison instruction using the last 2 values. */
-void Compiler::createCmpGT()
+/*! Creates a greater than comparison instruction. */
+CompilerValue *Compiler::createCmpGT(CompilerValue *operand1, CompilerValue *operand2)
 {
-    impl->builder->createCmpGT();
+    return impl->builder->createCmpGT(operand1, operand2);
 }
 
-/*! Creates a lower than comparison instruction using the last 2 values. */
-void Compiler::createCmpLT()
+/*! Creates a lower than comparison instruction. */
+CompilerValue *Compiler::createCmpLT(CompilerValue *operand1, CompilerValue *operand2)
 {
-    impl->builder->createCmpLT();
+    return impl->builder->createCmpLT(operand1, operand2);
 }
 
-/*! Creates an AND operation using the last 2 values. */
-void Compiler::createAnd()
+/*! Creates an AND operation. */
+CompilerValue *Compiler::createAnd(CompilerValue *operand1, CompilerValue *operand2)
 {
-    impl->builder->createAnd();
+    return impl->builder->createAnd(operand1, operand2);
 }
 
-/*! Creates an OR operation using the last 2 values. */
-void Compiler::createOr()
+/*! Creates an OR operation. */
+CompilerValue *Compiler::createOr(CompilerValue *operand1, CompilerValue *operand2)
 {
-    impl->builder->createOr();
+    return impl->builder->createOr(operand1, operand2);
 }
 
-/*! Creates a NOT operation using the last value. */
-void Compiler::createNot()
+/*! Creates a NOT operation. */
+CompilerValue *Compiler::createNot(CompilerValue *operand)
 {
-    impl->builder->createNot();
+    return impl->builder->createNot(operand);
 }
 
-/*! Creates a remainder operation using the last 2 values. */
-void Compiler::createMod()
+/*! Creates a remainder operation. */
+CompilerValue *Compiler::createMod(CompilerValue *num1, CompilerValue *num2)
 {
-    impl->builder->createMod();
+    return impl->builder->createMod(num1, num2);
 }
 
-/*! Creates a round operation using the last value. */
-void Compiler::createRound()
+/*! Creates a round operation. */
+CompilerValue *Compiler::createRound(CompilerValue *num)
 {
-    impl->builder->createRound();
+    return impl->builder->createRound(num);
 }
 
-/*! Creates an abs operation using the last value. */
-void Compiler::createAbs()
+/*! Creates an abs operation. */
+CompilerValue *Compiler::createAbs(CompilerValue *num)
 {
-    impl->builder->createAbs();
+    return impl->builder->createAbs(num);
 }
 
-/*! Creates a floor operation using the last value. */
-void Compiler::createFloor()
+/*! Creates a floor operation. */
+CompilerValue *Compiler::createFloor(CompilerValue *num)
 {
-    impl->builder->createFloor();
+    return impl->builder->createFloor(num);
 }
 
-/*! Creates a ceiling operation using the last value. */
-void Compiler::createCeil()
+/*! Creates a ceiling operation. */
+CompilerValue *Compiler::createCeil(CompilerValue *num)
 {
-    impl->builder->createCeil();
+    return impl->builder->createCeil(num);
 }
 
-/*! Creates a square root operation using the last value. */
-void Compiler::createSqrt()
+/*! Creates a square root operation. */
+CompilerValue *Compiler::createSqrt(CompilerValue *num)
 {
-    impl->builder->createSqrt();
+    return impl->builder->createSqrt(num);
 }
 
-/*! Creates a sin operation using the last value. */
-void Compiler::createSin()
+/*! Creates a sin operation. */
+CompilerValue *Compiler::createSin(CompilerValue *num)
 {
-    impl->builder->createSin();
+    return impl->builder->createSin(num);
 }
 
-/*! Creates a cos operation using the last value. */
-void Compiler::createCos()
+/*! Creates a cos operation. */
+CompilerValue *Compiler::createCos(CompilerValue *num)
 {
-    impl->builder->createCos();
+    return impl->builder->createCos(num);
 }
 
-/*! Creates a tan operation using the last value. */
-void Compiler::createTan()
+/*! Creates a tan operation. */
+CompilerValue *Compiler::createTan(CompilerValue *num)
 {
-    impl->builder->createTan();
+    return impl->builder->createTan(num);
 }
 
-/*! Creates an asin operation using the last value. */
-void Compiler::createAsin()
+/*! Creates an asin operation. */
+CompilerValue *Compiler::createAsin(CompilerValue *num)
 {
-    impl->builder->createAsin();
+    return impl->builder->createAsin(num);
 }
 
-/*! Creates an acos operation using the last value. */
-void Compiler::createAcos()
+/*! Creates an acos operation. */
+CompilerValue *Compiler::createAcos(CompilerValue *num)
 {
-    impl->builder->createAcos();
+    return impl->builder->createAcos(num);
 }
 
-/*! Creates an atan operation using the last value. */
-void Compiler::createAtan()
+/*! Creates an atan operation. */
+CompilerValue *Compiler::createAtan(CompilerValue *num)
 {
-    impl->builder->createAtan();
+    return impl->builder->createAtan(num);
 }
 
-/*! Creates an ln operation using the last value. */
-void Compiler::createLn()
+/*! Creates an ln operation. */
+CompilerValue *Compiler::createLn(CompilerValue *num)
 {
-    impl->builder->createLn();
+    return impl->builder->createLn(num);
 }
 
-/*! Creates a log10 operation using the last value. */
-void Compiler::createLog10()
+/*! Creates a log10 operation. */
+CompilerValue *Compiler::createLog10(CompilerValue *num)
 {
-    impl->builder->createLog10();
+    return impl->builder->createLog10(num);
 }
 
-/*! Creates an e^x operation using the last value. */
-void Compiler::createExp()
+/*! Creates an e^x operation. */
+CompilerValue *Compiler::createExp(CompilerValue *num)
 {
-    impl->builder->createExp();
+    return impl->builder->createExp(num);
 }
 
-/*! Creates a 10^x operation using the last value. */
-void Compiler::createExp10()
+/*! Creates a 10^x operation. */
+CompilerValue *Compiler::createExp10(CompilerValue *num)
 {
-    impl->builder->createExp10();
+    return impl->builder->createExp10(num);
 }
 
-/*! Creates a variable write operation using the last value. */
-void Compiler::createVariableWrite(Variable *variable)
+/*! Creates a variable write operation. */
+void Compiler::createVariableWrite(Variable *variable, CompilerValue *value)
 {
-    impl->builder->createVariableWrite(variable);
+    impl->builder->createVariableWrite(variable, value);
 }
 
 /*! Creates a clear list operation. */
@@ -302,36 +304,36 @@ void Compiler::createListClear(List *list)
  * Creates a remove item from list operation.
  * \note The index starts with 0 and is cast to number, special strings like "last" are not handled.
  */
-void Compiler::createListRemove(List *list)
+void Compiler::createListRemove(List *list, CompilerValue *index)
 {
-    impl->builder->createListRemove(list);
+    impl->builder->createListRemove(list, index);
 }
 
-/*! Creates a list append operation using the last value. */
-void Compiler::createListAppend(List *list)
+/*! Creates a list append operation. */
+void Compiler::createListAppend(List *list, CompilerValue *item)
 {
-    impl->builder->createListAppend(list);
+    impl->builder->createListAppend(list, item);
 }
 
-/*! Creates a list insert operation using the last 2 values (index, value). */
-void Compiler::createListInsert(List *list)
+/*! Creates a list insert operation. */
+void Compiler::createListInsert(List *list, CompilerValue *index, CompilerValue *item)
 {
-    impl->builder->createListInsert(list);
+    impl->builder->createListInsert(list, index, item);
 }
 
-/*! Creates a list replace operation using the last 2 values (index, value). */
-void Compiler::createListReplace(List *list)
+/*! Creates a list replace operation. */
+void Compiler::createListReplace(List *list, CompilerValue *index, CompilerValue *item)
 {
-    impl->builder->createListReplace(list);
+    impl->builder->createListReplace(list, index, item);
 }
 
 /*!
  * Starts a custom if statement.
  * \note The if statement must be terminated using endIf() after compiling your block.
  */
-void Compiler::beginIfStatement()
+void Compiler::beginIfStatement(CompilerValue *cond)
 {
-    impl->builder->beginIfStatement();
+    impl->builder->beginIfStatement(cond);
     impl->customIfStatementCount++;
 }
 
@@ -355,7 +357,7 @@ void Compiler::endIf()
 }
 
 /*! Jumps to the given if substack. */
-void Compiler::moveToIf(std::shared_ptr<Block> substack)
+void Compiler::moveToIf(CompilerValue *cond, std::shared_ptr<Block> substack)
 {
     if (!substack)
         return; // ignore empty if statements
@@ -363,11 +365,11 @@ void Compiler::moveToIf(std::shared_ptr<Block> substack)
     impl->substackHit = true;
     impl->substackTree.push_back({ { impl->block, nullptr }, CompilerPrivate::SubstackType::IfStatement });
     impl->block = substack;
-    impl->builder->beginIfStatement();
+    impl->builder->beginIfStatement(cond);
 }
 
 /*! Jumps to the given if/else substack. The second substack is used for the else branch. */
-void Compiler::moveToIfElse(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2)
+void Compiler::moveToIfElse(CompilerValue *cond, std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2)
 {
     if (!substack1 && !substack2)
         return; // ignore empty if statements
@@ -375,43 +377,43 @@ void Compiler::moveToIfElse(std::shared_ptr<Block> substack1, std::shared_ptr<Bl
     impl->substackHit = true;
     impl->substackTree.push_back({ { impl->block, substack2 }, CompilerPrivate::SubstackType::IfStatement });
     impl->block = substack1;
-    impl->builder->beginIfStatement();
+    impl->builder->beginIfStatement(cond);
 
     if (!impl->block)
         impl->substackEnd();
 }
 
 /*! Jumps to the given repeat loop substack. */
-void Compiler::moveToRepeatLoop(std::shared_ptr<Block> substack)
+void Compiler::moveToRepeatLoop(CompilerValue *count, std::shared_ptr<Block> substack)
 {
     impl->substackHit = true;
     impl->substackTree.push_back({ { impl->block, nullptr }, CompilerPrivate::SubstackType::Loop });
     impl->block = substack;
-    impl->builder->beginRepeatLoop();
+    impl->builder->beginRepeatLoop(count);
 
     if (!impl->block)
         impl->substackEnd();
 }
 
 /*! Jumps to the given while loop substack. */
-void Compiler::moveToWhileLoop(std::shared_ptr<Block> substack)
+void Compiler::moveToWhileLoop(CompilerValue *cond, std::shared_ptr<Block> substack)
 {
     impl->substackHit = true;
     impl->substackTree.push_back({ { impl->block, nullptr }, CompilerPrivate::SubstackType::Loop });
     impl->block = substack;
-    impl->builder->beginWhileLoop();
+    impl->builder->beginWhileLoop(cond);
 
     if (!impl->block)
         impl->substackEnd();
 }
 
 /*! Jumps to the given until loop substack. */
-void Compiler::moveToRepeatUntilLoop(std::shared_ptr<Block> substack)
+void Compiler::moveToRepeatUntilLoop(CompilerValue *cond, std::shared_ptr<Block> substack)
 {
     impl->substackHit = true;
     impl->substackTree.push_back({ { impl->block, nullptr }, CompilerPrivate::SubstackType::Loop });
     impl->block = substack;
-    impl->builder->beginRepeatUntilLoop();
+    impl->builder->beginRepeatUntilLoop(cond);
 
     if (!impl->block)
         impl->substackEnd();
@@ -447,55 +449,57 @@ const std::unordered_set<std::string> &Compiler::unsupportedBlocks() const
     return impl->unsupportedBlocks;
 }
 
-void Compiler::addInput(Input *input)
+CompilerValue *Compiler::addInput(Input *input)
 {
-    if (!input) {
-        addConstValue(Value());
-        return;
-    }
+    if (!input)
+        return addConstValue(Value());
 
     switch (input->type()) {
         case Input::Type::Shadow:
         case Input::Type::NoShadow: {
             if (input->pointsToDropdownMenu())
-                addConstValue(input->selectedMenuItem());
+                return addConstValue(input->selectedMenuItem());
             else {
+                CompilerValue *ret = nullptr;
                 auto previousBlock = impl->block;
                 impl->block = input->valueBlock();
 
                 if (impl->block) {
                     if (impl->block->compileFunction())
-                        impl->block->compile(this);
+                        ret = impl->block->compile(this);
                     else {
                         std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
                         impl->unsupportedBlocks.insert(impl->block->opcode());
-                        addConstValue(Value());
+                        ret = addConstValue(Value());
                     }
                 } else
-                    addConstValue(input->primaryValue()->value());
+                    ret = addConstValue(input->primaryValue()->value());
 
                 impl->block = previousBlock;
+                return ret;
             }
-
-            break;
         }
 
         case Input::Type::ObscuredShadow: {
+            CompilerValue *ret = nullptr;
             auto previousBlock = impl->block;
             impl->block = input->valueBlock();
+
             if (impl->block) {
                 if (impl->block->compileFunction())
-                    impl->block->compile(this);
+                    ret = impl->block->compile(this);
                 else {
                     std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
                     impl->unsupportedBlocks.insert(impl->block->opcode());
-                    addConstValue(Value());
+                    ret = addConstValue(Value());
                 }
             } else
-                input->primaryValue()->compile(this);
+                ret = input->primaryValue()->compile(this);
 
             impl->block = previousBlock;
-            break;
+            return ret;
         }
     }
+
+    return nullptr;
 }

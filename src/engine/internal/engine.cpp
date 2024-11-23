@@ -1003,7 +1003,11 @@ void Engine::addHatBlock(IExtension *extension, const std::string &opcode)
     if (m_compileFunctions.find(extension) == m_compileFunctions.cend())
         m_compileFunctions[extension] = {};
 
+#ifdef USE_LLVM
+    m_compileFunctions[extension][opcode] = [](Compiler *compiler) -> CompilerValue * { return nullptr; };
+#else
     m_compileFunctions[extension][opcode] = [](Compiler *compiler) {};
+#endif
 }
 
 void Engine::addInput(IExtension *extension, const std::string &name, int id)

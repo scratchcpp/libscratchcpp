@@ -3,6 +3,7 @@
 #include <scratchcpp/inputvalue.h>
 #ifdef USE_LLVM
 #include <scratchcpp/dev/compiler.h>
+#include <scratchcpp/dev/compilerconstant.h>
 #else
 #include <scratchcpp/compiler.h>
 #endif
@@ -26,6 +27,40 @@ InputValue::InputValue(Type type) :
 {
 }
 
+#ifdef USE_LLVM
+/*! Compiles the input value. */
+CompilerValue *InputValue::compile(Compiler *compiler)
+{
+    switch (impl->type) {
+        case Type::Color:
+            // TODO: Add support for colors
+            return nullptr;
+
+        case Type::Variable: {
+            assert(impl->valuePtr);
+            Variable *var = dynamic_cast<Variable *>(impl->valuePtr.get());
+
+            if (var)
+                return compiler->addVariableValue(var);
+            else
+                return compiler->addConstValue(Value());
+        }
+
+        case Type::List: {
+            assert(impl->valuePtr);
+            List *list = dynamic_cast<List *>(impl->valuePtr.get());
+
+            if (list)
+                return compiler->addListContents(list);
+            else
+                return compiler->addConstValue(Value());
+        }
+
+        default:
+            return compiler->addConstValue(impl->value);
+    }
+}
+#else
 /*! Compiles the input value. */
 void InputValue::compile(Compiler *compiler)
 {
@@ -36,45 +71,24 @@ void InputValue::compile(Compiler *compiler)
 
         case Type::Variable: {
             assert(impl->valuePtr);
-#ifdef USE_LLVM
-            Variable *var = dynamic_cast<Variable *>(impl->valuePtr.get());
-
-            if (var)
-                compiler->addVariableValue(var);
-            else
-                compiler->addConstValue(Value());
-#else
             compiler->addInstruction(vm::OP_READ_VAR, { compiler->variableIndex(impl->valuePtr) });
-#endif
 
             break;
         }
 
         case Type::List: {
             assert(impl->valuePtr);
-#ifdef USE_LLVM
-            List *list = dynamic_cast<List *>(impl->valuePtr.get());
-
-            if (list)
-                compiler->addListContents(list);
-            else
-                compiler->addConstValue(Value());
-#else
             compiler->addInstruction(vm::OP_READ_LIST, { compiler->listIndex(impl->valuePtr) });
-#endif
 
             break;
         }
 
         default:
-#ifdef USE_LLVM
-            compiler->addConstValue(impl->value);
-#else
             compiler->addInstruction(vm::OP_CONST, { compiler->constIndex(this) });
-#endif
             break;
     }
 }
+#endif // USE_LLVM
 
 /*! Returns the type of the value. */
 InputValue::Type InputValue::type() const

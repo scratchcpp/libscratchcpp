@@ -2,7 +2,9 @@ target_sources(scratchcpp
   PRIVATE
     llvmcodebuilder.cpp
     llvmcodebuilder.h
+    llvmregisterbase.h
     llvmregister.h
+    llvmconstantregister.h
     llvminstruction.h
     llvmifstatement.h
     llvmloop.h

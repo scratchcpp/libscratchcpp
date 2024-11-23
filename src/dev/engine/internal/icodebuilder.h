@@ -19,60 +19,60 @@ class ICodeBuilder
 
         virtual std::shared_ptr<ExecutableCode> finalize() = 0;
 
-        virtual void addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const std::vector<Compiler::StaticType> &argTypes) = 0;
-        virtual void addConstValue(const Value &value) = 0;
-        virtual void addVariableValue(Variable *variable) = 0;
-        virtual void addListContents(List *list) = 0;
-        virtual void addListItem(List *list) = 0;
-        virtual void addListItemIndex(List *list) = 0;
-        virtual void addListContains(List *list) = 0;
-        virtual void addListSize(List *list) = 0;
+        virtual CompilerValue *addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) = 0;
+        virtual CompilerConstant *addConstValue(const Value &value) = 0;
+        virtual CompilerValue *addVariableValue(Variable *variable) = 0;
+        virtual CompilerValue *addListContents(List *list) = 0;
+        virtual CompilerValue *addListItem(List *list, CompilerValue *index) = 0;
+        virtual CompilerValue *addListItemIndex(List *list, CompilerValue *item) = 0;
+        virtual CompilerValue *addListContains(List *list, CompilerValue *item) = 0;
+        virtual CompilerValue *addListSize(List *list) = 0;
 
-        virtual void createAdd() = 0;
-        virtual void createSub() = 0;
-        virtual void createMul() = 0;
-        virtual void createDiv() = 0;
+        virtual CompilerValue *createAdd(CompilerValue *operand1, CompilerValue *operand2) = 0;
+        virtual CompilerValue *createSub(CompilerValue *operand1, CompilerValue *operand2) = 0;
+        virtual CompilerValue *createMul(CompilerValue *operand1, CompilerValue *operand2) = 0;
+        virtual CompilerValue *createDiv(CompilerValue *operand1, CompilerValue *operand2) = 0;
 
-        virtual void createCmpEQ() = 0;
-        virtual void createCmpGT() = 0;
-        virtual void createCmpLT() = 0;
+        virtual CompilerValue *createCmpEQ(CompilerValue *operand1, CompilerValue *operand2) = 0;
+        virtual CompilerValue *createCmpGT(CompilerValue *operand1, CompilerValue *operand2) = 0;
+        virtual CompilerValue *createCmpLT(CompilerValue *operand1, CompilerValue *operand2) = 0;
 
-        virtual void createAnd() = 0;
-        virtual void createOr() = 0;
-        virtual void createNot() = 0;
+        virtual CompilerValue *createAnd(CompilerValue *operand1, CompilerValue *operand2) = 0;
+        virtual CompilerValue *createOr(CompilerValue *operand1, CompilerValue *operand2) = 0;
+        virtual CompilerValue *createNot(CompilerValue *operand) = 0;
 
-        virtual void createMod() = 0;
-        virtual void createRound() = 0;
-        virtual void createAbs() = 0;
-        virtual void createFloor() = 0;
-        virtual void createCeil() = 0;
-        virtual void createSqrt() = 0;
-        virtual void createSin() = 0;
-        virtual void createCos() = 0;
-        virtual void createTan() = 0;
-        virtual void createAsin() = 0;
-        virtual void createAcos() = 0;
-        virtual void createAtan() = 0;
-        virtual void createLn() = 0;
-        virtual void createLog10() = 0;
-        virtual void createExp() = 0;
-        virtual void createExp10() = 0;
+        virtual CompilerValue *createMod(CompilerValue *num1, CompilerValue *num2) = 0;
+        virtual CompilerValue *createRound(CompilerValue *num) = 0;
+        virtual CompilerValue *createAbs(CompilerValue *num) = 0;
+        virtual CompilerValue *createFloor(CompilerValue *num) = 0;
+        virtual CompilerValue *createCeil(CompilerValue *num) = 0;
+        virtual CompilerValue *createSqrt(CompilerValue *num) = 0;
+        virtual CompilerValue *createSin(CompilerValue *num) = 0;
+        virtual CompilerValue *createCos(CompilerValue *num) = 0;
+        virtual CompilerValue *createTan(CompilerValue *num) = 0;
+        virtual CompilerValue *createAsin(CompilerValue *num) = 0;
+        virtual CompilerValue *createAcos(CompilerValue *num) = 0;
+        virtual CompilerValue *createAtan(CompilerValue *num) = 0;
+        virtual CompilerValue *createLn(CompilerValue *num) = 0;
+        virtual CompilerValue *createLog10(CompilerValue *num) = 0;
+        virtual CompilerValue *createExp(CompilerValue *num) = 0;
+        virtual CompilerValue *createExp10(CompilerValue *num) = 0;
 
-        virtual void createVariableWrite(Variable *variable) = 0;
+        virtual void createVariableWrite(Variable *variable, CompilerValue *value) = 0;
 
         virtual void createListClear(List *list) = 0;
-        virtual void createListRemove(List *list) = 0;
-        virtual void createListAppend(List *list) = 0;
-        virtual void createListInsert(List *list) = 0;
-        virtual void createListReplace(List *list) = 0;
+        virtual void createListRemove(List *list, CompilerValue *index) = 0;
+        virtual void createListAppend(List *list, CompilerValue *item) = 0;
+        virtual void createListInsert(List *list, CompilerValue *index, CompilerValue *item) = 0;
+        virtual void createListReplace(List *list, CompilerValue *index, CompilerValue *item) = 0;
 
-        virtual void beginIfStatement() = 0;
+        virtual void beginIfStatement(CompilerValue *cond) = 0;
         virtual void beginElseBranch() = 0;
         virtual void endIf() = 0;
 
-        virtual void beginRepeatLoop() = 0;
-        virtual void beginWhileLoop() = 0;
-        virtual void beginRepeatUntilLoop() = 0;
+        virtual void beginRepeatLoop(CompilerValue *count) = 0;
+        virtual void beginWhileLoop(CompilerValue *cond) = 0;
+        virtual void beginRepeatUntilLoop(CompilerValue *cond) = 0;
         virtual void beginLoopCondition() = 0;
         virtual void endLoop() = 0;
 

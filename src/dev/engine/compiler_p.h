@@ -12,6 +12,7 @@ namespace libscratchcpp
 class IEngine;
 class Target;
 class Block;
+class CompilerValue;
 class ICodeBuilderFactory;
 class ICodeBuilder;
 
