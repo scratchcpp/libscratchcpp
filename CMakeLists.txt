@@ -73,6 +73,7 @@ if (LIBSCRATCHCPP_USE_LLVM)
       PUBLIC
         include/scratchcpp/dev/compiler.h
         include/scratchcpp/dev/compilervalue.h
+        include/scratchcpp/dev/compilerconstant.h
         include/scratchcpp/dev/executablecode.h
         include/scratchcpp/dev/executioncontext.h
     )
