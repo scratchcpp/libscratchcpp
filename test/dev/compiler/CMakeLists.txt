@@ -1,6 +1,8 @@
 add_executable(
   compiler_test
   compiler_test.cpp
+  compilervalue_test.cpp
+  compilerconstant_test.cpp
 )
 
 target_link_libraries(

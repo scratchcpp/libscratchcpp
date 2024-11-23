@@ -9,9 +9,11 @@
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/dev/compilerconstant.h>
 
 #include "llvmcodebuilder.h"
 #include "llvmexecutablecode.h"
+#include "llvmconstantregister.h"
 #include "llvmifstatement.h"
 #include "llvmloop.h"
 #include "llvmtypes.h"
@@ -33,8 +35,6 @@ LLVMCodeBuilder::LLVMCodeBuilder(Target *target, const std::string &id, bool war
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 
-    m_constValues.push_back({});
-    m_regs.push_back({});
     initTypes();
     createVariableMap();
     createListMap();
@@ -127,13 +127,13 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     args.push_back(castValue(arg.second, arg.first));
                 }
 
-                llvm::Type *retType = getType(step.functionReturnReg ? step.functionReturnReg->type : Compiler::StaticType::Void);
+                llvm::Type *retType = getType(step.functionReturnReg ? step.functionReturnReg->type() : Compiler::StaticType::Void);
                 llvm::Value *ret = m_builder.CreateCall(resolveFunction(step.functionName, llvm::FunctionType::get(retType, types, false)), args);
 
                 if (step.functionReturnReg) {
                     step.functionReturnReg->value = ret;
 
-                    if (step.functionReturnReg->type == Compiler::StaticType::String)
+                    if (step.functionReturnReg->type() == Compiler::StaticType::String)
                         m_heap.push_back(step.functionReturnReg->value);
                 }
 
@@ -484,7 +484,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 0);
                 const LLVMVariablePtr &varPtr = m_variablePtrs[step.workVariable];
                 step.functionReturnReg->value = varPtr.onStack ? varPtr.stackPtr : varPtr.heapPtr;
-                step.functionReturnReg->type = varPtr.type;
+                step.functionReturnReg->setType(varPtr.type);
                 break;
             }
 
@@ -617,7 +617,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
                 llvm::Value *index = m_builder.CreateFPToUI(castValue(arg.second, arg.first), m_builder.getInt64Ty());
                 step.functionReturnReg->value = getListItem(listPtr, index, func);
-                step.functionReturnReg->type = listPtr.type;
+                step.functionReturnReg->setType(listPtr.type);
                 break;
             }
 
@@ -878,12 +878,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     else
         coro->end();
 
-    if (!m_tmpRegs.empty()) {
-        std::cout
-            << "warning: " << m_tmpRegs.size() << " registers were leaked by script '" << m_module->getName().str() << "', function '" << func->getName().str()
-            << "' (if you see this as a regular user, this is a bug and should be reported)" << std::endl;
-    }
-
     verifyFunction(func);
 
     // Create resume function
@@ -913,40 +907,36 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     return std::make_shared<LLVMExecutableCode>(std::move(m_module));
 }
 
-void LLVMCodeBuilder::addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const std::vector<Compiler::StaticType> &argTypes)
+CompilerValue *LLVMCodeBuilder::addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
 {
+    assert(argTypes.size() == args.size());
+
     LLVMInstruction ins(LLVMInstruction::Type::FunctionCall);
     ins.functionName = functionName;
 
-    assert(m_tmpRegs.size() >= argTypes.size());
-    size_t j = 0;
-
-    for (size_t i = m_tmpRegs.size() - argTypes.size(); i < m_tmpRegs.size(); i++)
-        ins.args.push_back({ argTypes[j++], m_tmpRegs[i] });
-
-    m_tmpRegs.erase(m_tmpRegs.end() - argTypes.size(), m_tmpRegs.end());
+    for (size_t i = 0; i < args.size(); i++)
+        ins.args.push_back({ argTypes[i], static_cast<LLVMRegister *>(args[i]) });
 
     if (returnType != Compiler::StaticType::Void) {
         auto reg = std::make_shared<LLVMRegister>(returnType);
         reg->isRawValue = true;
-        ins.functionReturnReg = reg;
-        m_regs[m_currentFunction].push_back(reg);
-        m_tmpRegs.push_back(reg);
+        ins.functionReturnReg = reg.get();
+        m_instructions.push_back(ins);
+        return addReg(reg);
     }
 
     m_instructions.push_back(ins);
+    return nullptr;
 }
 
-void LLVMCodeBuilder::addConstValue(const Value &value)
+CompilerConstant *LLVMCodeBuilder::addConstValue(const Value &value)
 {
-    auto reg = std::make_shared<LLVMRegister>(TYPE_MAP[value.type()]);
-    reg->isConstValue = true;
-    reg->constValue = value;
-    m_regs[m_currentFunction].push_back(reg);
-    m_tmpRegs.push_back(reg);
+    auto constReg = std::make_shared<LLVMConstantRegister>(TYPE_MAP[value.type()], value);
+    auto reg = std::reinterpret_pointer_cast<LLVMRegister>(constReg);
+    return static_cast<CompilerConstant *>(addReg(reg));
 }
 
-void LLVMCodeBuilder::addVariableValue(Variable *variable)
+CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
 {
     LLVMInstruction ins(LLVMInstruction::Type::ReadVariable);
     ins.workVariable = variable;
@@ -954,236 +944,239 @@ void LLVMCodeBuilder::addVariableValue(Variable *variable)
 
     auto ret = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     ret->isRawValue = false;
-    ins.functionReturnReg = ret;
-    m_regs[m_currentFunction].push_back(ret);
-    m_tmpRegs.push_back(ret);
+    ins.functionReturnReg = ret.get();
 
     m_instructions.push_back(ins);
+    return addReg(ret);
 }
 
-void LLVMCodeBuilder::addListContents(List *list)
+CompilerValue *LLVMCodeBuilder::addListContents(List *list)
 {
+    return addConstValue(Value());
 }
 
-void LLVMCodeBuilder::addListItem(List *list)
+CompilerValue *LLVMCodeBuilder::addListItem(List *list, CompilerValue *index)
 {
     LLVMInstruction ins(LLVMInstruction::Type::GetListItem);
     ins.workList = list;
     m_listPtrs[list] = LLVMListPtr();
 
-    assert(m_tmpRegs.size() >= 1);
-    ins.args.push_back({ Compiler::StaticType::Number, m_tmpRegs[0] });
-
-    m_tmpRegs.erase(m_tmpRegs.end() - 1, m_tmpRegs.end());
+    ins.args.push_back({ Compiler::StaticType::Number, static_cast<LLVMRegister *>(index) });
 
     auto ret = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     ret->isRawValue = false;
-    ins.functionReturnReg = ret;
-    m_regs[m_currentFunction].push_back(ret);
-    m_tmpRegs.push_back(ret);
+    ins.functionReturnReg = ret.get();
 
     m_instructions.push_back(ins);
+    return addReg(ret);
 }
 
-void LLVMCodeBuilder::addListItemIndex(List *list)
+CompilerValue *LLVMCodeBuilder::addListItemIndex(List *list, CompilerValue *item)
 {
-    LLVMInstruction &ins = createOp(LLVMInstruction::Type::GetListItemIndex, Compiler::StaticType::Number, Compiler::StaticType::Unknown, 1);
+    LLVMInstruction ins(LLVMInstruction::Type::GetListItemIndex);
     ins.workList = list;
     m_listPtrs[list] = LLVMListPtr();
+    return createOp(ins, Compiler::StaticType::Number, Compiler::StaticType::Unknown, { item });
 }
 
-void LLVMCodeBuilder::addListContains(List *list)
+CompilerValue *LLVMCodeBuilder::addListContains(List *list, CompilerValue *item)
 {
-    LLVMInstruction &ins = createOp(LLVMInstruction::Type::ListContainsItem, Compiler::StaticType::Bool, Compiler::StaticType::Unknown, 1);
+    LLVMInstruction ins(LLVMInstruction::Type::ListContainsItem);
     ins.workList = list;
     m_listPtrs[list] = LLVMListPtr();
+    return createOp(ins, Compiler::StaticType::Bool, Compiler::StaticType::Unknown, { item });
 }
 
-void LLVMCodeBuilder::addListSize(List *list)
+CompilerValue *LLVMCodeBuilder::addListSize(List *list)
 {
-    LLVMInstruction &ins = createOp(LLVMInstruction::Type::GetListSize, Compiler::StaticType::Number, {}, 0);
+    LLVMInstruction ins(LLVMInstruction::Type::GetListSize);
     ins.workList = list;
     m_listPtrs[list] = LLVMListPtr();
+    return createOp(ins, Compiler::StaticType::Number);
 }
 
-void LLVMCodeBuilder::createAdd()
+CompilerValue *LLVMCodeBuilder::createAdd(CompilerValue *operand1, CompilerValue *operand2)
 {
-    createOp(LLVMInstruction::Type::Add, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+    return createOp(LLVMInstruction::Type::Add, Compiler::StaticType::Number, Compiler::StaticType::Number, { operand1, operand2 });
 }
 
-void LLVMCodeBuilder::createSub()
+CompilerValue *LLVMCodeBuilder::createSub(CompilerValue *operand1, CompilerValue *operand2)
 {
-    createOp(LLVMInstruction::Type::Sub, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+    return createOp(LLVMInstruction::Type::Sub, Compiler::StaticType::Number, Compiler::StaticType::Number, { operand1, operand2 });
 }
 
-void LLVMCodeBuilder::createMul()
+CompilerValue *LLVMCodeBuilder::createMul(CompilerValue *operand1, CompilerValue *operand2)
 {
-    createOp(LLVMInstruction::Type::Mul, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+    return createOp(LLVMInstruction::Type::Mul, Compiler::StaticType::Number, Compiler::StaticType::Number, { operand1, operand2 });
 }
 
-void LLVMCodeBuilder::createDiv()
+CompilerValue *LLVMCodeBuilder::createDiv(CompilerValue *operand1, CompilerValue *operand2)
 {
-    createOp(LLVMInstruction::Type::Div, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+    return createOp(LLVMInstruction::Type::Div, Compiler::StaticType::Number, Compiler::StaticType::Number, { operand1, operand2 });
 }
 
-void LLVMCodeBuilder::createCmpEQ()
+CompilerValue *LLVMCodeBuilder::createCmpEQ(CompilerValue *operand1, CompilerValue *operand2)
 {
-    createOp(LLVMInstruction::Type::CmpEQ, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
+    return createOp(LLVMInstruction::Type::CmpEQ, Compiler::StaticType::Bool, Compiler::StaticType::Number, { operand1, operand2 });
 }
 
-void LLVMCodeBuilder::createCmpGT()
+CompilerValue *LLVMCodeBuilder::createCmpGT(CompilerValue *operand1, CompilerValue *operand2)
 {
-    createOp(LLVMInstruction::Type::CmpGT, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
+    return createOp(LLVMInstruction::Type::CmpGT, Compiler::StaticType::Bool, Compiler::StaticType::Number, { operand1, operand2 });
 }
 
-void LLVMCodeBuilder::createCmpLT()
+CompilerValue *LLVMCodeBuilder::createCmpLT(CompilerValue *operand1, CompilerValue *operand2)
 {
-    createOp(LLVMInstruction::Type::CmpLT, Compiler::StaticType::Bool, Compiler::StaticType::Number, 2);
+    return createOp(LLVMInstruction::Type::CmpLT, Compiler::StaticType::Bool, Compiler::StaticType::Number, { operand1, operand2 });
 }
 
-void LLVMCodeBuilder::createAnd()
+CompilerValue *LLVMCodeBuilder::createAnd(CompilerValue *operand1, CompilerValue *operand2)
 {
-    createOp(LLVMInstruction::Type::And, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 2);
+    return createOp(LLVMInstruction::Type::And, Compiler::StaticType::Bool, Compiler::StaticType::Bool, { operand1, operand2 });
 }
 
-void LLVMCodeBuilder::createOr()
+CompilerValue *LLVMCodeBuilder::createOr(CompilerValue *operand1, CompilerValue *operand2)
 {
-    createOp(LLVMInstruction::Type::Or, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 2);
+    return createOp(LLVMInstruction::Type::Or, Compiler::StaticType::Bool, Compiler::StaticType::Bool, { operand1, operand2 });
 }
 
-void LLVMCodeBuilder::createNot()
+CompilerValue *LLVMCodeBuilder::createNot(CompilerValue *operand)
 {
-    createOp(LLVMInstruction::Type::Not, Compiler::StaticType::Bool, Compiler::StaticType::Bool, 1);
+    return createOp(LLVMInstruction::Type::Not, Compiler::StaticType::Bool, Compiler::StaticType::Bool, { operand });
 }
 
-void LLVMCodeBuilder::createMod()
+CompilerValue *LLVMCodeBuilder::createMod(CompilerValue *num1, CompilerValue *num2)
 {
-    createOp(LLVMInstruction::Type::Mod, Compiler::StaticType::Number, Compiler::StaticType::Number, 2);
+    return createOp(LLVMInstruction::Type::Mod, Compiler::StaticType::Number, Compiler::StaticType::Number, { num1, num2 });
 }
 
-void LLVMCodeBuilder::createRound()
+CompilerValue *LLVMCodeBuilder::createRound(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Round, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Round, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createAbs()
+CompilerValue *LLVMCodeBuilder::createAbs(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Abs, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Abs, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createFloor()
+CompilerValue *LLVMCodeBuilder::createFloor(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Floor, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Floor, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createCeil()
+CompilerValue *LLVMCodeBuilder::createCeil(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Ceil, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Ceil, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createSqrt()
+CompilerValue *LLVMCodeBuilder::createSqrt(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Sqrt, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Sqrt, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createSin()
+CompilerValue *LLVMCodeBuilder::createSin(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Sin, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Sin, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createCos()
+CompilerValue *LLVMCodeBuilder::createCos(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Cos, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Cos, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createTan()
+CompilerValue *LLVMCodeBuilder::createTan(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Tan, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Tan, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createAsin()
+CompilerValue *LLVMCodeBuilder::createAsin(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Asin, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Asin, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createAcos()
+CompilerValue *LLVMCodeBuilder::createAcos(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Acos, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Acos, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createAtan()
+CompilerValue *LLVMCodeBuilder::createAtan(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Atan, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Atan, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createLn()
+CompilerValue *LLVMCodeBuilder::createLn(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Ln, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Ln, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createLog10()
+CompilerValue *LLVMCodeBuilder::createLog10(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Log10, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Log10, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createExp()
+CompilerValue *LLVMCodeBuilder::createExp(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Exp, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Exp, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createExp10()
+CompilerValue *LLVMCodeBuilder::createExp10(CompilerValue *num)
 {
-    createOp(LLVMInstruction::Type::Exp10, Compiler::StaticType::Number, Compiler::StaticType::Number, 1);
+    return createOp(LLVMInstruction::Type::Exp10, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
 }
 
-void LLVMCodeBuilder::createVariableWrite(Variable *variable)
+void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *value)
 {
-    LLVMInstruction &ins = createOp(LLVMInstruction::Type::WriteVariable, Compiler::StaticType::Void, Compiler::StaticType::Unknown, 1);
+    LLVMInstruction ins(LLVMInstruction::Type::WriteVariable);
     ins.workVariable = variable;
     m_variablePtrs[variable] = LLVMVariablePtr();
+    createOp(ins, Compiler::StaticType::Void, Compiler::StaticType::Unknown, { value });
 }
 
 void LLVMCodeBuilder::createListClear(List *list)
 {
-    LLVMInstruction &ins = createOp(LLVMInstruction::Type::ClearList, Compiler::StaticType::Void, Compiler::StaticType::Void, 0);
+    LLVMInstruction ins(LLVMInstruction::Type::ClearList);
     ins.workList = list;
     m_listPtrs[list] = LLVMListPtr();
+    createOp(ins, Compiler::StaticType::Void);
 }
 
-void LLVMCodeBuilder::createListRemove(List *list)
+void LLVMCodeBuilder::createListRemove(List *list, CompilerValue *index)
 {
-    LLVMInstruction &ins = createOp(LLVMInstruction::Type::RemoveListItem, Compiler::StaticType::Void, Compiler::StaticType::Number, 1);
+    LLVMInstruction ins(LLVMInstruction::Type::RemoveListItem);
     ins.workList = list;
     m_listPtrs[list] = LLVMListPtr();
+    createOp(ins, Compiler::StaticType::Void, Compiler::StaticType::Number, { index });
 }
 
-void LLVMCodeBuilder::createListAppend(List *list)
+void LLVMCodeBuilder::createListAppend(List *list, CompilerValue *item)
 {
-    LLVMInstruction &ins = createOp(LLVMInstruction::Type::AppendToList, Compiler::StaticType::Void, Compiler::StaticType::Unknown, 1);
+    LLVMInstruction ins(LLVMInstruction::Type::AppendToList);
     ins.workList = list;
     m_listPtrs[list] = LLVMListPtr();
+    createOp(ins, Compiler::StaticType::Void, Compiler::StaticType::Unknown, { item });
 }
 
-void LLVMCodeBuilder::createListInsert(List *list)
+void LLVMCodeBuilder::createListInsert(List *list, CompilerValue *index, CompilerValue *item)
 {
-    LLVMInstruction &ins = createOp(LLVMInstruction::Type::InsertToList, Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Unknown }, 2);
+    LLVMInstruction ins(LLVMInstruction::Type::InsertToList);
     ins.workList = list;
     m_listPtrs[list] = LLVMListPtr();
+    createOp(ins, Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Unknown }, { index, item });
 }
 
-void LLVMCodeBuilder::createListReplace(List *list)
+void LLVMCodeBuilder::createListReplace(List *list, CompilerValue *index, CompilerValue *item)
 {
-    LLVMInstruction &ins = createOp(LLVMInstruction::Type::ListReplace, Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Unknown }, 2);
+    LLVMInstruction ins(LLVMInstruction::Type::ListReplace);
     ins.workList = list;
     m_listPtrs[list] = LLVMListPtr();
+    createOp(ins, Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Unknown }, { index, item });
 }
 
-void LLVMCodeBuilder::beginIfStatement()
+void LLVMCodeBuilder::beginIfStatement(CompilerValue *cond)
 {
     LLVMInstruction ins(LLVMInstruction::Type::BeginIf);
-    assert(!m_tmpRegs.empty());
-    ins.args.push_back({ Compiler::StaticType::Bool, m_tmpRegs.back() });
-    m_tmpRegs.pop_back();
+    ins.args.push_back({ Compiler::StaticType::Bool, static_cast<LLVMRegister *>(cond) });
     m_instructions.push_back(ins);
 }
 
@@ -1197,36 +1190,30 @@ void LLVMCodeBuilder::endIf()
     m_instructions.push_back(LLVMInstruction(LLVMInstruction::Type::EndIf));
 }
 
-void LLVMCodeBuilder::beginRepeatLoop()
+void LLVMCodeBuilder::beginRepeatLoop(CompilerValue *count)
 {
     LLVMInstruction ins(LLVMInstruction::Type::BeginRepeatLoop);
-    assert(!m_tmpRegs.empty());
-    ins.args.push_back({ Compiler::StaticType::Number, m_tmpRegs.back() });
-    m_tmpRegs.pop_back();
+    ins.args.push_back({ Compiler::StaticType::Number, static_cast<LLVMRegister *>(count) });
     m_instructions.push_back(ins);
 }
 
-void LLVMCodeBuilder::beginWhileLoop()
+void LLVMCodeBuilder::beginWhileLoop(CompilerValue *cond)
 {
     LLVMInstruction ins(LLVMInstruction::Type::BeginWhileLoop);
-    assert(!m_tmpRegs.empty());
-    ins.args.push_back({ Compiler::StaticType::Bool, m_tmpRegs.back() });
-    m_tmpRegs.pop_back();
+    ins.args.push_back({ Compiler::StaticType::Bool, static_cast<LLVMRegister *>(cond) });
     m_instructions.push_back(ins);
 }
 
-void LLVMCodeBuilder::beginRepeatUntilLoop()
+void LLVMCodeBuilder::beginRepeatUntilLoop(CompilerValue *cond)
 {
     LLVMInstruction ins(LLVMInstruction::Type::BeginRepeatUntilLoop);
-    assert(!m_tmpRegs.empty());
-    ins.args.push_back({ Compiler::StaticType::Bool, m_tmpRegs.back() });
-    m_tmpRegs.pop_back();
+    ins.args.push_back({ Compiler::StaticType::Bool, static_cast<LLVMRegister *>(cond) });
     m_instructions.push_back(ins);
 }
 
 void LLVMCodeBuilder::beginLoopCondition()
 {
-    m_instructions.push_back(LLVMInstruction(LLVMInstruction::Type::BeginLoopCondition));
+    m_instructions.push_back({ LLVMInstruction::Type::BeginLoopCondition });
 }
 
 void LLVMCodeBuilder::endLoop()
@@ -1240,13 +1227,6 @@ void LLVMCodeBuilder::endLoop()
 void LLVMCodeBuilder::yield()
 {
     m_instructions.push_back({ LLVMInstruction::Type::Yield });
-    m_currentFunction++;
-
-    assert(m_currentFunction == m_constValues.size());
-    m_constValues.push_back({});
-
-    assert(m_currentFunction == m_regs.size());
-    m_regs.push_back({});
 }
 
 void LLVMCodeBuilder::initTypes()
@@ -1376,6 +1356,12 @@ void LLVMCodeBuilder::optimize()
     modulePassManager.run(*m_module, moduleAnalysisManager);
 }
 
+CompilerValue *LLVMCodeBuilder::addReg(std::shared_ptr<LLVMRegister> reg)
+{
+    m_regs.push_back(reg);
+    return reg.get();
+}
+
 void LLVMCodeBuilder::freeHeap()
 {
     // Free dynamically allocated memory
@@ -1385,19 +1371,19 @@ void LLVMCodeBuilder::freeHeap()
     m_heap.clear();
 }
 
-llvm::Value *LLVMCodeBuilder::castValue(LLVMRegisterPtr reg, Compiler::StaticType targetType)
+llvm::Value *LLVMCodeBuilder::castValue(LLVMRegister *reg, Compiler::StaticType targetType)
 {
-    if (reg->isConstValue)
-        return castConstValue(reg->constValue, targetType);
+    if (reg->isConst())
+        return castConstValue(reg->constValue(), targetType);
 
     if (reg->isRawValue)
         return castRawValue(reg, targetType);
 
-    assert(reg->type != Compiler::StaticType::Void && targetType != Compiler::StaticType::Void);
+    assert(reg->type() != Compiler::StaticType::Void && targetType != Compiler::StaticType::Void);
 
     switch (targetType) {
         case Compiler::StaticType::Number:
-            switch (reg->type) {
+            switch (reg->type()) {
                 case Compiler::StaticType::Number: {
                     // Read number directly
                     llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
@@ -1423,7 +1409,7 @@ llvm::Value *LLVMCodeBuilder::castValue(LLVMRegisterPtr reg, Compiler::StaticTyp
             }
 
         case Compiler::StaticType::Bool:
-            switch (reg->type) {
+            switch (reg->type()) {
                 case Compiler::StaticType::Number: {
                     // True if != 0
                     llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
@@ -1448,7 +1434,7 @@ llvm::Value *LLVMCodeBuilder::castValue(LLVMRegisterPtr reg, Compiler::StaticTyp
             }
 
         case Compiler::StaticType::String:
-            switch (reg->type) {
+            switch (reg->type()) {
                 case Compiler::StaticType::Number:
                 case Compiler::StaticType::Bool:
                 case Compiler::StaticType::Unknown: {
@@ -1475,14 +1461,14 @@ llvm::Value *LLVMCodeBuilder::castValue(LLVMRegisterPtr reg, Compiler::StaticTyp
     }
 }
 
-llvm::Value *LLVMCodeBuilder::castRawValue(LLVMRegisterPtr reg, Compiler::StaticType targetType)
+llvm::Value *LLVMCodeBuilder::castRawValue(LLVMRegister *reg, Compiler::StaticType targetType)
 {
-    if (reg->type == targetType)
+    if (reg->type() == targetType)
         return reg->value;
 
     switch (targetType) {
         case Compiler::StaticType::Number:
-            switch (reg->type) {
+            switch (reg->type()) {
                 case Compiler::StaticType::Bool:
                     // Cast bool to double
                     return m_builder.CreateUIToFP(reg->value, m_builder.getDoubleTy());
@@ -1498,7 +1484,7 @@ llvm::Value *LLVMCodeBuilder::castRawValue(LLVMRegisterPtr reg, Compiler::Static
             }
 
         case Compiler::StaticType::Bool:
-            switch (reg->type) {
+            switch (reg->type()) {
                 case Compiler::StaticType::Number:
                     // Cast double to bool (true if != 0)
                     return m_builder.CreateFCmpONE(reg->value, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)));
@@ -1513,7 +1499,7 @@ llvm::Value *LLVMCodeBuilder::castRawValue(LLVMRegisterPtr reg, Compiler::Static
             }
 
         case Compiler::StaticType::String:
-            switch (reg->type) {
+            switch (reg->type()) {
                 case Compiler::StaticType::Number: {
                     // Convert double to string
                     llvm::Value *ptr = m_builder.CreateCall(resolve_value_doubleToCString(), reg->value);
@@ -1559,12 +1545,12 @@ llvm::Constant *LLVMCodeBuilder::castConstValue(const Value &value, Compiler::St
     }
 }
 
-Compiler::StaticType LLVMCodeBuilder::optimizeRegisterType(LLVMRegisterPtr reg)
+Compiler::StaticType LLVMCodeBuilder::optimizeRegisterType(LLVMRegister *reg)
 {
-    Compiler::StaticType ret = reg->type;
+    Compiler::StaticType ret = reg->type();
 
     // Optimize string constants that represent numbers
-    if (reg->isConstValue && reg->type == Compiler::StaticType::String && reg->constValue.isValidNumber())
+    if (reg->isConst() && reg->type() == Compiler::StaticType::String && reg->constValue().isValidNumber())
         ret = Compiler::StaticType::Number;
 
     return ret;
@@ -1676,44 +1662,36 @@ void LLVMCodeBuilder::updateListDataPtr(const LLVMListPtr &listPtr, llvm::Functi
     m_builder.CreateStore(m_builder.getInt1(false), listPtr.dataPtrDirty);
 }
 
-LLVMInstruction &LLVMCodeBuilder::createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount)
+CompilerValue *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args)
 {
     std::vector<Compiler::StaticType> types;
-    types.reserve(argCount);
+    types.reserve(args.size());
 
-    for (size_t i = 0; i < argCount; i++)
+    for (size_t i = 0; i < args.size(); i++)
         types.push_back(argType);
 
-    return createOp(type, retType, types, argCount);
+    return createOp(ins, retType, types, args);
 }
 
-LLVMInstruction &LLVMCodeBuilder::createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const std::vector<Compiler::StaticType> &argTypes, size_t argCount)
+CompilerValue *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
 {
-    LLVMInstruction ins(type);
+    m_instructions.push_back(ins);
+    LLVMInstruction &createdIns = m_instructions.back();
 
-    assert(m_tmpRegs.size() >= argCount);
-    size_t j = 0;
-
-    for (size_t i = m_tmpRegs.size() - argCount; i < m_tmpRegs.size(); i++) {
-        ins.args.push_back({ argTypes[j], m_tmpRegs[i] });
-        j++;
-    }
-
-    m_tmpRegs.erase(m_tmpRegs.end() - argCount, m_tmpRegs.end());
+    for (size_t i = 0; i < args.size(); i++)
+        createdIns.args.push_back({ argTypes[i], static_cast<LLVMRegister *>(args[i]) });
 
     if (retType != Compiler::StaticType::Void) {
         auto ret = std::make_shared<LLVMRegister>(retType);
         ret->isRawValue = true;
-        ins.functionReturnReg = ret;
-        m_regs[m_currentFunction].push_back(ret);
-        m_tmpRegs.push_back(ret);
+        createdIns.functionReturnReg = ret.get();
+        return addReg(ret);
     }
 
-    m_instructions.push_back(ins);
-    return m_instructions.back();
+    return nullptr;
 }
 
-void LLVMCodeBuilder::createValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType)
+void LLVMCodeBuilder::createValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType)
 {
     llvm::Value *converted = nullptr;
 
@@ -1789,7 +1767,7 @@ void LLVMCodeBuilder::createValueStore(LLVMRegisterPtr reg, llvm::Value *targetP
     }
 }
 
-void LLVMCodeBuilder::createReusedValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType)
+void LLVMCodeBuilder::createReusedValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType)
 {
     llvm::Value *converted = nullptr;
 
@@ -1841,7 +1819,7 @@ llvm::Value *LLVMCodeBuilder::getListItem(const LLVMListPtr &listPtr, llvm::Valu
     return m_builder.CreateGEP(m_valueDataType, m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr), index);
 }
 
-llvm::Value *LLVMCodeBuilder::getListItemIndex(const LLVMListPtr &listPtr, LLVMRegisterPtr item, llvm::Function *func)
+llvm::Value *LLVMCodeBuilder::getListItemIndex(const LLVMListPtr &listPtr, LLVMRegister *item, llvm::Function *func)
 {
     llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
     llvm::BasicBlock *condBlock = llvm::BasicBlock::Create(m_ctx, "", func);
@@ -1863,10 +1841,10 @@ llvm::Value *LLVMCodeBuilder::getListItemIndex(const LLVMListPtr &listPtr, LLVMR
 
     // if (list[index] == item)
     m_builder.SetInsertPoint(bodyBlock);
-    LLVMRegisterPtr currentItem = std::make_shared<LLVMRegister>(listPtr.type);
-    currentItem->isRawValue = false;
-    currentItem->value = getListItem(listPtr, m_builder.CreateLoad(m_builder.getInt64Ty(), index), func);
-    llvm::Value *cmp = createComparison(currentItem, item, Comparison::EQ);
+    LLVMRegister currentItem(listPtr.type);
+    currentItem.isRawValue = false;
+    currentItem.value = getListItem(listPtr, m_builder.CreateLoad(m_builder.getInt64Ty(), index), func);
+    llvm::Value *cmp = createComparison(&currentItem, item, Comparison::EQ);
     m_builder.CreateCondBr(cmp, cmpIfBlock, cmpElseBlock);
 
     // goto nextBlock
@@ -1891,21 +1869,21 @@ llvm::Value *LLVMCodeBuilder::getListItemIndex(const LLVMListPtr &listPtr, LLVMR
     return m_builder.CreateLoad(m_builder.getInt64Ty(), index);
 }
 
-llvm::Value *LLVMCodeBuilder::createValue(LLVMRegisterPtr reg)
+llvm::Value *LLVMCodeBuilder::createValue(LLVMRegister *reg)
 {
-    if (reg->isConstValue) {
+    if (reg->isConst()) {
         // Create a constant ValueData instance and store it
-        llvm::Constant *value = castConstValue(reg->constValue, TYPE_MAP[reg->constValue.type()]);
+        llvm::Constant *value = castConstValue(reg->constValue(), TYPE_MAP[reg->constValue().type()]);
         llvm::Value *ret = m_builder.CreateAlloca(m_valueDataType);
 
-        switch (reg->constValue.type()) {
+        switch (reg->constValue().type()) {
             case ValueType::Number:
                 value = llvm::ConstantExpr::getBitCast(value, m_valueDataType->getElementType(0));
                 break;
 
             case ValueType::Bool:
                 // Assuming union type is int64
-                value = m_builder.getInt64(reg->constValue.toBool());
+                value = m_builder.getInt64(reg->constValue().toBool());
                 break;
 
             case ValueType::String:
@@ -1917,21 +1895,21 @@ llvm::Value *LLVMCodeBuilder::createValue(LLVMRegisterPtr reg)
                 break;
         }
 
-        llvm::Constant *type = m_builder.getInt32(static_cast<uint32_t>(reg->constValue.type()));
+        llvm::Constant *type = m_builder.getInt32(static_cast<uint32_t>(reg->constValue().type()));
         llvm::Constant *padding = m_builder.getInt32(0);
         llvm::Constant *constValue = llvm::ConstantStruct::get(m_valueDataType, { value, type, padding, m_builder.getInt64(0) });
         m_builder.CreateStore(constValue, ret);
 
         return ret;
     } else if (reg->isRawValue) {
-        llvm::Value *value = castRawValue(reg, reg->type);
+        llvm::Value *value = castRawValue(reg, reg->type());
         llvm::Value *ret = m_builder.CreateAlloca(m_valueDataType);
 
         // Store value
         llvm::Value *valueField = m_builder.CreateStructGEP(m_valueDataType, ret, 0);
         m_builder.CreateStore(value, valueField);
 
-        auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [&reg](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == reg->type; });
+        auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [&reg](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == reg->type(); });
 
         if (it == TYPE_MAP.end()) {
             assert(false);
@@ -1948,26 +1926,26 @@ llvm::Value *LLVMCodeBuilder::createValue(LLVMRegisterPtr reg)
         return reg->value;
 }
 
-llvm::Value *LLVMCodeBuilder::createComparison(LLVMRegisterPtr arg1, LLVMRegisterPtr arg2, Comparison type)
+llvm::Value *LLVMCodeBuilder::createComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
 {
-    auto type1 = arg1->type;
-    auto type2 = arg2->type;
+    auto type1 = arg1->type();
+    auto type2 = arg2->type();
 
-    if (arg1->isConstValue && arg2->isConstValue) {
+    if (arg1->isConst() && arg2->isConst()) {
         // If both operands are constant, perform the comparison at compile time
         bool result = false;
 
         switch (type) {
             case Comparison::EQ:
-                result = arg1->constValue == arg2->constValue;
+                result = arg1->constValue() == arg2->constValue();
                 break;
 
             case Comparison::GT:
-                result = arg1->constValue > arg2->constValue;
+                result = arg1->constValue() > arg2->constValue();
                 break;
 
             case Comparison::LT:
-                result = arg1->constValue < arg2->constValue;
+                result = arg1->constValue() < arg2->constValue();
                 break;
 
             default:
@@ -1978,10 +1956,10 @@ llvm::Value *LLVMCodeBuilder::createComparison(LLVMRegisterPtr arg1, LLVMRegiste
         return m_builder.getInt1(result);
     } else {
         // Optimize comparison of constant with number/bool
-        if (arg1->isConstValue && arg1->constValue.isValidNumber() && (type2 == Compiler::StaticType::Number || type2 == Compiler::StaticType::Bool))
+        if (arg1->isConst() && arg1->constValue().isValidNumber() && (type2 == Compiler::StaticType::Number || type2 == Compiler::StaticType::Bool))
             type1 = Compiler::StaticType::Number;
 
-        if (arg2->isConstValue && arg2->constValue.isValidNumber() && (type1 == Compiler::StaticType::Number || type1 == Compiler::StaticType::Bool))
+        if (arg2->isConst() && arg2->constValue().isValidNumber() && (type1 == Compiler::StaticType::Number || type1 == Compiler::StaticType::Bool))
             type2 = Compiler::StaticType::Number;
 
         // Optimize number and bool comparison

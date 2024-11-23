@@ -17,6 +17,7 @@ namespace libscratchcpp
 {
 
 class Target;
+class LLVMConstantRegister;
 
 class LLVMCodeBuilder : public ICodeBuilder
 {
@@ -25,60 +26,60 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         std::shared_ptr<ExecutableCode> finalize() override;
 
-        void addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const std::vector<Compiler::StaticType> &argTypes) override;
-        void addConstValue(const Value &value) override;
-        void addVariableValue(Variable *variable) override;
-        void addListContents(List *list) override;
-        void addListItem(List *list) override;
-        void addListItemIndex(List *list) override;
-        void addListContains(List *list) override;
-        void addListSize(List *list) override;
+        CompilerValue *addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
+        CompilerConstant *addConstValue(const Value &value) override;
+        CompilerValue *addVariableValue(Variable *variable) override;
+        CompilerValue *addListContents(List *list) override;
+        CompilerValue *addListItem(List *list, CompilerValue *index) override;
+        CompilerValue *addListItemIndex(List *list, CompilerValue *item) override;
+        CompilerValue *addListContains(List *list, CompilerValue *item) override;
+        CompilerValue *addListSize(List *list) override;
 
-        void createAdd() override;
-        void createSub() override;
-        void createMul() override;
-        void createDiv() override;
+        CompilerValue *createAdd(CompilerValue *operand1, CompilerValue *operand2) override;
+        CompilerValue *createSub(CompilerValue *operand1, CompilerValue *operand2) override;
+        CompilerValue *createMul(CompilerValue *operand1, CompilerValue *operand2) override;
+        CompilerValue *createDiv(CompilerValue *operand1, CompilerValue *operand2) override;
 
-        void createCmpEQ() override;
-        void createCmpGT() override;
-        void createCmpLT() override;
+        CompilerValue *createCmpEQ(CompilerValue *operand1, CompilerValue *operand2) override;
+        CompilerValue *createCmpGT(CompilerValue *operand1, CompilerValue *operand2) override;
+        CompilerValue *createCmpLT(CompilerValue *operand1, CompilerValue *operand2) override;
 
-        void createAnd() override;
-        void createOr() override;
-        void createNot() override;
+        CompilerValue *createAnd(CompilerValue *operand1, CompilerValue *operand2) override;
+        CompilerValue *createOr(CompilerValue *operand1, CompilerValue *operand2) override;
+        CompilerValue *createNot(CompilerValue *operand) override;
 
-        void createMod() override;
-        void createRound() override;
-        void createAbs() override;
-        void createFloor() override;
-        void createCeil() override;
-        void createSqrt() override;
-        void createSin() override;
-        void createCos() override;
-        void createTan() override;
-        void createAsin() override;
-        void createAcos() override;
-        void createAtan() override;
-        void createLn() override;
-        void createLog10() override;
-        void createExp() override;
-        void createExp10() override;
+        CompilerValue *createMod(CompilerValue *num1, CompilerValue *num2) override;
+        CompilerValue *createRound(CompilerValue *num) override;
+        CompilerValue *createAbs(CompilerValue *num) override;
+        CompilerValue *createFloor(CompilerValue *num) override;
+        CompilerValue *createCeil(CompilerValue *num) override;
+        CompilerValue *createSqrt(CompilerValue *num) override;
+        CompilerValue *createSin(CompilerValue *num) override;
+        CompilerValue *createCos(CompilerValue *num) override;
+        CompilerValue *createTan(CompilerValue *num) override;
+        CompilerValue *createAsin(CompilerValue *num) override;
+        CompilerValue *createAcos(CompilerValue *num) override;
+        CompilerValue *createAtan(CompilerValue *num) override;
+        CompilerValue *createLn(CompilerValue *num) override;
+        CompilerValue *createLog10(CompilerValue *num) override;
+        CompilerValue *createExp(CompilerValue *num) override;
+        CompilerValue *createExp10(CompilerValue *num) override;
 
-        void createVariableWrite(Variable *variable) override;
+        void createVariableWrite(Variable *variable, CompilerValue *value) override;
 
         void createListClear(List *list) override;
-        void createListRemove(List *list) override;
-        void createListAppend(List *list) override;
-        void createListInsert(List *list) override;
-        void createListReplace(List *list) override;
+        void createListRemove(List *list, CompilerValue *index) override;
+        void createListAppend(List *list, CompilerValue *item) override;
+        void createListInsert(List *list, CompilerValue *index, CompilerValue *item) override;
+        void createListReplace(List *list, CompilerValue *index, CompilerValue *item) override;
 
-        void beginIfStatement() override;
+        void beginIfStatement(CompilerValue *cond) override;
         void beginElseBranch() override;
         void endIf() override;
 
-        void beginRepeatLoop() override;
-        void beginWhileLoop() override;
-        void beginRepeatUntilLoop() override;
+        void beginRepeatLoop(CompilerValue *count) override;
+        void beginWhileLoop(CompilerValue *cond) override;
+        void beginRepeatUntilLoop(CompilerValue *cond) override;
         void beginLoopCondition() override;
         void endLoop() override;
 
@@ -101,11 +102,13 @@ class LLVMCodeBuilder : public ICodeBuilder
         void verifyFunction(llvm::Function *func);
         void optimize();
 
+        CompilerValue *addReg(std::shared_ptr<LLVMRegister> reg);
+
         void freeHeap();
-        llvm::Value *castValue(LLVMRegisterPtr reg, Compiler::StaticType targetType);
-        llvm::Value *castRawValue(LLVMRegisterPtr reg, Compiler::StaticType targetType);
+        llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType);
+        llvm::Value *castRawValue(LLVMRegister *reg, Compiler::StaticType targetType);
         llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType);
-        Compiler::StaticType optimizeRegisterType(LLVMRegisterPtr reg);
+        Compiler::StaticType optimizeRegisterType(LLVMRegister *reg);
         llvm::Type *getType(Compiler::StaticType type);
         llvm::Value *isNaN(llvm::Value *num);
         llvm::Value *removeNaN(llvm::Value *num);
@@ -117,17 +120,17 @@ class LLVMCodeBuilder : public ICodeBuilder
         void reloadLists();
         void updateListDataPtr(const LLVMListPtr &listPtr, llvm::Function *func);
 
-        LLVMInstruction &createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, size_t argCount);
-        LLVMInstruction &createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const std::vector<Compiler::StaticType> &argTypes, size_t argCount);
+        CompilerValue *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
+        CompilerValue *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
 
-        void createValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
-        void createReusedValueStore(LLVMRegisterPtr reg, llvm::Value *targetPtr, Compiler::StaticType sourceType);
+        void createValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
+        void createReusedValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType);
         void createValueCopy(llvm::Value *source, llvm::Value *target);
         void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
         llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index, llvm::Function *func);
-        llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, LLVMRegisterPtr item, llvm::Function *func);
-        llvm::Value *createValue(LLVMRegisterPtr reg);
-        llvm::Value *createComparison(LLVMRegisterPtr arg1, LLVMRegisterPtr arg2, Comparison type);
+        llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, LLVMRegister *item, llvm::Function *func);
+        llvm::Value *createValue(LLVMRegister *reg);
+        llvm::Value *createComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
 
         llvm::FunctionCallee resolveFunction(const std::string name, llvm::FunctionType *type);
         llvm::FunctionCallee resolve_value_init();
@@ -175,10 +178,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::StructType *m_valueDataType = nullptr;
 
         std::vector<LLVMInstruction> m_instructions;
-        size_t m_currentFunction = 0;
-        std::vector<Value> m_constValues;
-        std::vector<std::vector<LLVMRegisterPtr>> m_regs;
-        std::vector<LLVMRegisterPtr> m_tmpRegs;
+        std::vector<std::shared_ptr<LLVMRegister>> m_regs;
         bool m_defaultWarp = false;
         bool m_warp = false;
 

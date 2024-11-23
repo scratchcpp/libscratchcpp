@@ -3,6 +3,12 @@ target_sources(scratchcpp
     compiler.cpp
     compiler_p.cpp
     compiler_p.h
+    compilervalue.cpp
+    compilervalue_p.cpp
+    compilervalue_p.h
+    compilerconstant.cpp
+    compilerconstant_p.cpp
+    compilerconstant_p.h
     executioncontext.cpp
     executioncontext_p.cpp
     executioncontext_p.h

@@ -14,6 +14,8 @@ namespace libscratchcpp
 class IEngine;
 class Target;
 class ExecutableCode;
+class CompilerValue;
+class CompilerConstant;
 class Variable;
 class List;
 class Input;
@@ -33,6 +35,9 @@ class LIBSCRATCHCPP_EXPORT Compiler
             Unknown
         };
 
+        using ArgTypes = std::vector<StaticType>;
+        using Args = std::vector<CompilerValue *>;
+
         Compiler(IEngine *engine, Target *target);
         Compiler(const Compiler &) = delete;
 
@@ -42,63 +47,63 @@ class LIBSCRATCHCPP_EXPORT Compiler
 
         std::shared_ptr<ExecutableCode> compile(std::shared_ptr<Block> startBlock);
 
-        void addFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const std::vector<StaticType> &argTypes = {});
-        void addConstValue(const Value &value);
-        void addVariableValue(Variable *variable);
-        void addListContents(List *list);
-        void addListItem(List *list);
-        void addListItemIndex(List *list);
-        void addListContains(List *list);
-        void addListSize(List *list);
-        void addInput(const std::string &name);
+        CompilerValue *addFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
+        CompilerConstant *addConstValue(const Value &value);
+        CompilerValue *addVariableValue(Variable *variable);
+        CompilerValue *addListContents(List *list);
+        CompilerValue *addListItem(List *list, CompilerValue *index);
+        CompilerValue *addListItemIndex(List *list, CompilerValue *item);
+        CompilerValue *addListContains(List *list, CompilerValue *item);
+        CompilerValue *addListSize(List *list);
+        CompilerValue *addInput(const std::string &name);
 
-        void createAdd();
-        void createSub();
-        void createMul();
-        void createDiv();
+        CompilerValue *createAdd(CompilerValue *operand1, CompilerValue *operand2);
+        CompilerValue *createSub(CompilerValue *operand1, CompilerValue *operand2);
+        CompilerValue *createMul(CompilerValue *operand1, CompilerValue *operand2);
+        CompilerValue *createDiv(CompilerValue *operand1, CompilerValue *operand2);
 
-        void createCmpEQ();
-        void createCmpGT();
-        void createCmpLT();
+        CompilerValue *createCmpEQ(CompilerValue *operand1, CompilerValue *operand2);
+        CompilerValue *createCmpGT(CompilerValue *operand1, CompilerValue *operand2);
+        CompilerValue *createCmpLT(CompilerValue *operand1, CompilerValue *operand2);
 
-        void createAnd();
-        void createOr();
-        void createNot();
+        CompilerValue *createAnd(CompilerValue *operand1, CompilerValue *operand2);
+        CompilerValue *createOr(CompilerValue *operand1, CompilerValue *operand2);
+        CompilerValue *createNot(CompilerValue *operand);
 
-        void createMod();
-        void createRound();
-        void createAbs();
-        void createFloor();
-        void createCeil();
-        void createSqrt();
-        void createSin();
-        void createCos();
-        void createTan();
-        void createAsin();
-        void createAcos();
-        void createAtan();
-        void createLn();
-        void createLog10();
-        void createExp();
-        void createExp10();
+        CompilerValue *createMod(CompilerValue *num1, CompilerValue *num2);
+        CompilerValue *createRound(CompilerValue *num);
+        CompilerValue *createAbs(CompilerValue *num);
+        CompilerValue *createFloor(CompilerValue *num);
+        CompilerValue *createCeil(CompilerValue *num);
+        CompilerValue *createSqrt(CompilerValue *num);
+        CompilerValue *createSin(CompilerValue *num);
+        CompilerValue *createCos(CompilerValue *num);
+        CompilerValue *createTan(CompilerValue *num);
+        CompilerValue *createAsin(CompilerValue *num);
+        CompilerValue *createAcos(CompilerValue *num);
+        CompilerValue *createAtan(CompilerValue *num);
+        CompilerValue *createLn(CompilerValue *num);
+        CompilerValue *createLog10(CompilerValue *num);
+        CompilerValue *createExp(CompilerValue *num);
+        CompilerValue *createExp10(CompilerValue *num);
 
-        void createVariableWrite(Variable *variable);
+        void createVariableWrite(Variable *variable, CompilerValue *value);
 
         void createListClear(List *list);
-        void createListRemove(List *list);
-        void createListAppend(List *list);
-        void createListInsert(List *list);
-        void createListReplace(List *list);
+        void createListRemove(List *list, CompilerValue *index);
+        void createListAppend(List *list, CompilerValue *item);
+        void createListInsert(List *list, CompilerValue *index, CompilerValue *item);
+        void createListReplace(List *list, CompilerValue *index, CompilerValue *item);
 
-        void beginIfStatement();
+        void beginIfStatement(CompilerValue *cond);
         void beginElseBranch();
         void endIf();
 
-        void moveToIf(std::shared_ptr<Block> substack);
-        void moveToIfElse(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2);
-        void moveToRepeatLoop(std::shared_ptr<Block> substack);
-        void moveToWhileLoop(std::shared_ptr<Block> substack);
-        void moveToRepeatUntilLoop(std::shared_ptr<Block> substack);
+        void moveToIf(CompilerValue *cond, std::shared_ptr<Block> substack);
+        void moveToIfElse(CompilerValue *cond, std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2);
+        void moveToRepeatLoop(CompilerValue *count, std::shared_ptr<Block> substack);
+        void moveToWhileLoop(CompilerValue *cond, std::shared_ptr<Block> substack);
+        void moveToRepeatUntilLoop(CompilerValue *cond, std::shared_ptr<Block> substack);
         void beginLoopCondition();
         void warp();
 
@@ -108,7 +113,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         const std::unordered_set<std::string> &unsupportedBlocks() const;
 
     private:
-        void addInput(Input *input);
+        CompilerValue *addInput(Input *input);
 
         spimpl::unique_impl_ptr<CompilerPrivate> impl;
 };
