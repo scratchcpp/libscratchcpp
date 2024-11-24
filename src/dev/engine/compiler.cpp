@@ -76,12 +76,32 @@ std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBl
 
 /*!
  * Adds a call to the given function.\n
- * For example: extern "C" bool some_block(Target *target, double arg1, const char *arg2)
+ * For example: extern "C" bool some_block(double arg1, const char *arg2)
  */
 CompilerValue *Compiler::addFunctionCall(const std::string &functionName, StaticType returnType, const ArgTypes &argTypes, const Args &args)
 {
     assert(argTypes.size() == args.size());
     return impl->builder->addFunctionCall(functionName, returnType, argTypes, args);
+}
+
+/*!
+ * Adds a call to the given function with a target parameter.\n
+ * For example: extern "C" bool some_block(Target *target, double arg1, const char *arg2)
+ */
+CompilerValue *Compiler::addTargetFunctionCall(const std::string &functionName, StaticType returnType, const ArgTypes &argTypes, const Args &args)
+{
+    assert(argTypes.size() == args.size());
+    return impl->builder->addTargetFunctionCall(functionName, returnType, argTypes, args);
+}
+
+/*!
+ * Adds a call to the given function with an execution context parameter.\n
+ * For example: extern "C" bool some_block(ExecutionContext *ctx, double arg1, const char *arg2)
+ */
+CompilerValue *Compiler::addFunctionCallWithCtx(const std::string &functionName, StaticType returnType, const ArgTypes &argTypes, const Args &args)
+{
+    assert(argTypes.size() == args.size());
+    return impl->builder->addFunctionCallWithCtx(functionName, returnType, argTypes, args);
 }
 
 /*! Adds the given constant to the compiled code. */

@@ -48,6 +48,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
         std::shared_ptr<ExecutableCode> compile(std::shared_ptr<Block> startBlock);
 
         CompilerValue *addFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
+        CompilerValue *addTargetFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
+        CompilerValue *addFunctionCallWithCtx(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
         CompilerConstant *addConstValue(const Value &value);
         CompilerValue *addVariableValue(Variable *variable);
         CompilerValue *addListContents(List *list);

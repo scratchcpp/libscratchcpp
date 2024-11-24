@@ -89,6 +89,56 @@ TEST_F(CompilerTest, AddFunctionCall)
     compile(compiler, block);
 }
 
+TEST_F(CompilerTest, AddTargetFunctionCall)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("a", "");
+    m_compareBlock = block;
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        EXPECT_EQ(compiler->block(), m_compareBlock);
+        CompilerValue arg1(Compiler::StaticType::Unknown);
+        CompilerValue arg2(Compiler::StaticType::Unknown);
+        Compiler::ArgTypes argTypes = { Compiler::StaticType::Number, Compiler::StaticType::Bool };
+        Compiler::Args args = { &arg1, &arg2 };
+        EXPECT_CALL(*m_builder, addTargetFunctionCall("test1", Compiler::StaticType::Void, argTypes, args));
+        compiler->addTargetFunctionCall("test1", Compiler::StaticType::Void, argTypes, args);
+
+        args = { &arg1 };
+        argTypes = { Compiler::StaticType::String };
+        EXPECT_CALL(*m_builder, addTargetFunctionCall("test2", Compiler::StaticType::Bool, argTypes, args));
+        compiler->addTargetFunctionCall("test2", Compiler::StaticType::Bool, argTypes, args);
+
+        return nullptr;
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, AddFunctionCallWithCtx)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("a", "");
+    m_compareBlock = block;
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        EXPECT_EQ(compiler->block(), m_compareBlock);
+        CompilerValue arg1(Compiler::StaticType::Unknown);
+        CompilerValue arg2(Compiler::StaticType::Unknown);
+        Compiler::ArgTypes argTypes = { Compiler::StaticType::Number, Compiler::StaticType::Bool };
+        Compiler::Args args = { &arg1, &arg2 };
+        EXPECT_CALL(*m_builder, addFunctionCallWithCtx("test1", Compiler::StaticType::Void, argTypes, args));
+        compiler->addFunctionCallWithCtx("test1", Compiler::StaticType::Void, argTypes, args);
+
+        args = { &arg1 };
+        argTypes = { Compiler::StaticType::String };
+        EXPECT_CALL(*m_builder, addFunctionCallWithCtx("test2", Compiler::StaticType::Bool, argTypes, args));
+        compiler->addFunctionCallWithCtx("test2", Compiler::StaticType::Bool, argTypes, args);
+
+        return nullptr;
+    });
+
+    compile(compiler, block);
+}
+
 TEST_F(CompilerTest, AddConstValue)
 {
     Compiler compiler(&m_engine, &m_target);
