@@ -25,6 +25,17 @@ extern "C"
         std::cout << s1 << " " << s2 << std::endl;
     }
 
+    void test_empty_function()
+    {
+        std::cout << "empty" << std::endl;
+    }
+
+    void test_ctx_function(ExecutionContext *ctx, const char *arg)
+    {
+        std::cout << ctx << std::endl;
+        std::cout << arg << std::endl;
+    }
+
     void test_function_no_args(Target *target)
     {
         target->isStage();
@@ -67,69 +78,69 @@ extern "C"
         return value_toCString(&v.data());
     }
 
-    bool test_equals(Target *target, const char *a, const char *b)
+    bool test_equals(const char *a, const char *b)
     {
         return strcmp(a, b) == 0;
     }
 
-    void test_unreachable(Target *target)
+    void test_unreachable()
     {
         std::cout << "error: unreachable reached" << std::endl;
         exit(1);
     }
 
-    bool test_lower_than(Target *target, double a, double b)
+    bool test_lower_than(double a, double b)
     {
         return a < b;
     }
 
-    double test_const_number(Target *target, double v)
+    double test_const_number(double v)
     {
         return v;
     }
 
-    bool test_const_bool(Target *target, bool v)
+    bool test_const_bool(bool v)
     {
         return v;
     }
 
-    char *test_const_string(Target *target, const char *v)
+    char *test_const_string(const char *v)
     {
         Value value(v);
         return value_toCString(&value.data());
     }
 
-    bool test_not(Target *target, bool arg)
+    bool test_not(bool arg)
     {
         return !arg;
     }
 
-    void test_reset_counter(Target *target)
+    void test_reset_counter()
     {
         counter = 0;
     }
 
-    void test_increment_counter(Target *target)
+    void test_increment_counter()
     {
         counter++;
     }
 
-    double test_get_counter(Target *target)
+    double test_get_counter()
     {
         return counter;
     }
 
-    void test_print_number(Target *target, double v)
+    void test_print_number(double v)
     {
         std::cout << v << std::endl;
     }
 
-    void test_print_bool(Target *target, bool v)
+    void test_print_bool(bool v)
     {
         std::cout << v << std::endl;
     }
 
-    void test_print_string(Target *target, const char *v)
+    void test_print_string(const char *v)
     {
         std::cout << v << std::endl;
     }

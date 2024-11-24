@@ -73,6 +73,8 @@ struct LLVMInstruction
         std::string functionName;
         std::vector<std::pair<Compiler::StaticType, LLVMRegister *>> args; // target type, register
         LLVMRegister *functionReturnReg = nullptr;
+        bool functionTargetArg = false;   // whether to add target ptr to function parameters
+        bool functionCtxArg = false;      // whether to add execution context ptr to function parameters
         Variable *workVariable = nullptr; // for variables
         List *workList = nullptr;         // for lists
 };
