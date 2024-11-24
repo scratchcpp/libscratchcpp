@@ -55,7 +55,7 @@ void LLVMExecutableCode::run(ExecutionContext *context)
         ctx->setFinished(done);
     } else {
         Target *target = ctx->target();
-        void *handle = m_mainFunction(target, target->variableData(), target->listData());
+        void *handle = m_mainFunction(context, target, target->variableData(), target->listData());
 
         if (!handle)
             ctx->setFinished(true);

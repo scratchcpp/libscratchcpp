@@ -12,7 +12,7 @@ class List;
 class TestMock
 {
     public:
-        MOCK_METHOD(void, f, (Target *, ValueData **, List **));
+        MOCK_METHOD(void, f, (ExecutionContext * ctx, Target *, ValueData **, List **));
 };
 
 } // namespace libscratchcpp

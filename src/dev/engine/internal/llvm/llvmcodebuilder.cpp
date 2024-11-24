@@ -58,13 +58,14 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     m_builder.setFastMathFlags(fmf);
 
     // Create function
-    // void *f(Target *, ValueData **, List **)
+    // void *f(ExecutionContext *, Target *, ValueData **, List **)
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
-    llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, { pointerType, pointerType, pointerType }, false);
+    llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, { pointerType, pointerType, pointerType, pointerType }, false);
     llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module.get());
-    llvm::Value *targetPtr = func->getArg(0);
-    llvm::Value *targetVariables = func->getArg(1);
-    llvm::Value *targetLists = func->getArg(2);
+    llvm::Value *executionContextPtr = func->getArg(0);
+    llvm::Value *targetPtr = func->getArg(1);
+    llvm::Value *targetVariables = func->getArg(2);
+    llvm::Value *targetLists = func->getArg(3);
 
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
     m_builder.SetInsertPoint(entry);

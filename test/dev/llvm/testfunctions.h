@@ -7,10 +7,11 @@ class TestMock;
 class Target;
 class ValueData;
 class List;
+class ExecutionContext;
 
 extern "C"
 {
-    void test_function(TestMock *mock, Target *target, ValueData **varData, List **listData);
+    void test_function(TestMock *mock, ExecutionContext *ctx, Target *target, ValueData **varData, List **listData);
     void test_print_function(ValueData *arg1, ValueData *arg2);
 
     void test_function_no_args(Target *target);

@@ -20,7 +20,7 @@ class LLVMExecutableCodeTest : public testing::Test
         {
             m_module = std::make_unique<llvm::Module>("test", m_ctx);
             m_builder = std::make_unique<llvm::IRBuilder<>>(m_ctx);
-            test_function(nullptr, nullptr, nullptr, nullptr); // force dependency
+            test_function(nullptr, nullptr, nullptr, nullptr, nullptr); // force dependency
 
             llvm::InitializeNativeTarget();
             llvm::InitializeNativeTargetAsmPrinter();
@@ -31,9 +31,9 @@ class LLVMExecutableCodeTest : public testing::Test
 
         llvm::Function *beginMainFunction()
         {
-            // void *f(Target *, ValueData **, List **)
+            // void *f(ExecutionContext *, Target *, ValueData **, List **)
             llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
-            llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, { pointerType, pointerType, pointerType }, false);
+            llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, { pointerType, pointerType, pointerType, pointerType }, false);
             llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module.get());
 
             llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
@@ -57,12 +57,12 @@ class LLVMExecutableCodeTest : public testing::Test
         void addTestFunction(llvm::Function *mainFunc)
         {
             auto ptrType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
-            auto func = m_module->getOrInsertFunction("test_function", llvm::FunctionType::get(m_builder->getVoidTy(), { ptrType, ptrType, ptrType, ptrType }, false));
+            auto func = m_module->getOrInsertFunction("test_function", llvm::FunctionType::get(m_builder->getVoidTy(), { ptrType, ptrType, ptrType, ptrType, ptrType }, false));
 
             llvm::Constant *mockInt = llvm::ConstantInt::get(llvm::Type::getInt64Ty(m_ctx), (uintptr_t)&m_mock, false);
             llvm::Constant *mockPtr = llvm::ConstantExpr::getIntToPtr(mockInt, ptrType);
 
-            m_builder->CreateCall(func, { mockPtr, mainFunc->getArg(0), mainFunc->getArg(1), mainFunc->getArg(2) });
+            m_builder->CreateCall(func, { mockPtr, mainFunc->getArg(0), mainFunc->getArg(1), mainFunc->getArg(2), mainFunc->getArg(3) });
         }
 
         void addTestPrintFunction(llvm::Value *arg1, llvm::Value *arg2)
@@ -110,7 +110,7 @@ TEST_F(LLVMExecutableCodeTest, MainFunction)
     auto ctx = code.createExecutionContext(&m_target);
     ASSERT_FALSE(code.isFinished(ctx.get()));
 
-    EXPECT_CALL(m_mock, f(&m_target, m_target.variableData(), m_target.listData()));
+    EXPECT_CALL(m_mock, f(ctx.get(), &m_target, m_target.variableData(), m_target.listData()));
     code.run(ctx.get());
     ASSERT_TRUE(code.isFinished(ctx.get()));
 
@@ -135,7 +135,7 @@ TEST_F(LLVMExecutableCodeTest, MainFunction)
     ASSERT_FALSE(code.isFinished(anotherCtx.get()));
     ASSERT_TRUE(code.isFinished(ctx.get()));
 
-    EXPECT_CALL(m_mock, f(&anotherTarget, anotherTarget.variableData(), anotherTarget.listData()));
+    EXPECT_CALL(m_mock, f(anotherCtx.get(), &anotherTarget, anotherTarget.variableData(), anotherTarget.listData()));
     code.run(anotherCtx.get());
     ASSERT_TRUE(code.isFinished(anotherCtx.get()));
     ASSERT_TRUE(code.isFinished(ctx.get()));

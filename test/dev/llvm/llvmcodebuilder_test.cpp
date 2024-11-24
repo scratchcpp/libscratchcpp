@@ -52,7 +52,7 @@ class LLVMCodeBuilderTest : public testing::Test
 
         void SetUp() override
         {
-            test_function(nullptr, nullptr, nullptr, nullptr); // force dependency
+            test_function(nullptr, nullptr, nullptr, nullptr, nullptr); // force dependency
         }
 
         void createBuilder(Target *target, bool warp) { m_builder = std::make_unique<LLVMCodeBuilder>(target, "test", warp); }
