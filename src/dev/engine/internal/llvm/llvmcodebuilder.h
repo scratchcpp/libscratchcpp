@@ -65,6 +65,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         CompilerValue *createExp(CompilerValue *num) override;
         CompilerValue *createExp10(CompilerValue *num) override;
 
+        CompilerValue *createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType) override;
+
         void createVariableWrite(Variable *variable, CompilerValue *value) override;
 
         void createListClear(List *list) override;

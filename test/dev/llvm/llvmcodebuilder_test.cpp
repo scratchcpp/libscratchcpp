@@ -1381,6 +1381,79 @@ TEST_F(LLVMCodeBuilderTest, WriteVariable)
     ASSERT_EQ(localVar3->value(), true);
 }
 
+TEST_F(LLVMCodeBuilderTest, Select)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    createBuilder(&sprite, true);
+
+    // Number
+    CompilerValue *v = m_builder->addConstValue(true);
+    v = m_builder->createSelect(v, m_builder->addConstValue(5.8), m_builder->addConstValue(-17.42), Compiler::StaticType::Number);
+    m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = m_builder->addConstValue(false);
+    v = m_builder->createSelect(v, m_builder->addConstValue(5.8), m_builder->addConstValue(-17.42), Compiler::StaticType::Number);
+    m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    // Bool
+    v = m_builder->addConstValue(true);
+    v = m_builder->createSelect(v, m_builder->addConstValue(true), m_builder->addConstValue(false), Compiler::StaticType::Bool);
+    m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    v = m_builder->addConstValue(false);
+    v = m_builder->createSelect(v, m_builder->addConstValue(true), m_builder->addConstValue(false), Compiler::StaticType::Bool);
+    m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    // String
+    v = m_builder->addConstValue(true);
+    v = m_builder->createSelect(v, m_builder->addConstValue("hello"), m_builder->addConstValue("world"), Compiler::StaticType::String);
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = m_builder->addConstValue(false);
+    v = m_builder->createSelect(v, m_builder->addConstValue("hello"), m_builder->addConstValue("world"), Compiler::StaticType::String);
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    // Different types
+    v = m_builder->addConstValue(true);
+    v = m_builder->createSelect(v, m_builder->addConstValue("543"), m_builder->addConstValue("true"), Compiler::StaticType::Number);
+    m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = m_builder->addConstValue(false);
+    v = m_builder->createSelect(v, m_builder->addConstValue("543"), m_builder->addConstValue("true"), Compiler::StaticType::Number);
+    m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = m_builder->addConstValue(true);
+    v = m_builder->createSelect(v, m_builder->addConstValue(1), m_builder->addConstValue("false"), Compiler::StaticType::Bool);
+    m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    v = m_builder->addConstValue(false);
+    v = m_builder->createSelect(v, m_builder->addConstValue(1), m_builder->addConstValue("false"), Compiler::StaticType::Bool);
+    m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    static const std::string expected =
+        "5.8\n"
+        "-17.42\n"
+        "1\n"
+        "0\n"
+        "hello\n"
+        "world\n"
+        "543\n"
+        "0\n"
+        "1\n"
+        "0\n";
+
+    auto code = m_builder->finalize();
+    testing::internal::CaptureStdout();
+    auto ctx = code->createExecutionContext(&sprite);
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
 TEST_F(LLVMCodeBuilderTest, ReadVariable)
 {
     EngineMock engine;

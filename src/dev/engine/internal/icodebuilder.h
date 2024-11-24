@@ -58,6 +58,8 @@ class ICodeBuilder
         virtual CompilerValue *createExp(CompilerValue *num) = 0;
         virtual CompilerValue *createExp10(CompilerValue *num) = 0;
 
+        virtual CompilerValue *createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType) = 0;
+
         virtual void createVariableWrite(Variable *variable, CompilerValue *value) = 0;
 
         virtual void createListClear(List *list) = 0;

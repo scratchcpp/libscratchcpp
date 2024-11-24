@@ -40,6 +40,7 @@ struct LLVMInstruction
             Log10,
             Exp,
             Exp10,
+            Select,
             WriteVariable,
             ReadVariable,
             ClearList,

@@ -446,6 +446,18 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::Select: {
+                assert(step.args.size() == 3);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                const auto &arg3 = step.args[2];
+                llvm::Value *cond = castValue(arg1.second, arg1.first);
+                llvm::Value *trueValue = castValue(arg2.second, arg2.first);
+                llvm::Value *falseValue = castValue(arg3.second, arg3.first);
+                step.functionReturnReg->value = m_builder.CreateSelect(cond, trueValue, falseValue);
+                break;
+            }
+
             case LLVMInstruction::Type::WriteVariable: {
                 assert(step.args.size() == 1);
                 assert(m_variablePtrs.find(step.workVariable) != m_variablePtrs.cend());
@@ -1123,6 +1135,11 @@ CompilerValue *LLVMCodeBuilder::createExp(CompilerValue *num)
 CompilerValue *LLVMCodeBuilder::createExp10(CompilerValue *num)
 {
     return createOp(LLVMInstruction::Type::Exp10, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
+}
+
+CompilerValue *LLVMCodeBuilder::createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType)
+{
+    return createOp(LLVMInstruction::Type::Select, valueType, { Compiler::StaticType::Bool, valueType, valueType }, { cond, trueValue, falseValue });
 }
 
 void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *value)
