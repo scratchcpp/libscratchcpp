@@ -777,6 +777,29 @@ TEST_F(CompilerTest, CreateExp10)
     compile(compiler, block);
 }
 
+TEST_F(CompilerTest, CreateSelect)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        CompilerValue arg1(Compiler::StaticType::Unknown);
+        CompilerValue arg2(Compiler::StaticType::Unknown);
+        CompilerValue arg3(Compiler::StaticType::Unknown);
+        CompilerValue ret(Compiler::StaticType::Unknown);
+
+        EXPECT_CALL(*m_builder, createSelect(&arg1, &arg2, &arg3, Compiler::StaticType::Number)).WillOnce(Return(&ret));
+        EXPECT_EQ(compiler->createSelect(&arg1, &arg2, &arg3, Compiler::StaticType::Number), &ret);
+
+        EXPECT_CALL(*m_builder, createSelect(&arg1, &arg2, &arg3, Compiler::StaticType::Unknown)).WillOnce(Return(nullptr));
+        EXPECT_EQ(compiler->createSelect(&arg1, &arg2, &arg3, Compiler::StaticType::Unknown), nullptr);
+
+        return nullptr;
+    });
+
+    compile(compiler, block);
+}
+
 TEST_F(CompilerTest, CreateVariableWrite)
 {
     Compiler compiler(&m_engine, &m_target);

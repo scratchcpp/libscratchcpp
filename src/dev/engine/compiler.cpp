@@ -288,6 +288,12 @@ CompilerValue *Compiler::createExp10(CompilerValue *num)
     return impl->builder->createExp10(num);
 }
 
+/*! Creates a select instruction (ternary operator). */
+CompilerValue *Compiler::createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, StaticType valueType)
+{
+    return impl->builder->createSelect(cond, trueValue, falseValue, valueType);
+}
+
 /*! Creates a variable write operation. */
 void Compiler::createVariableWrite(Variable *variable, CompilerValue *value)
 {

@@ -87,6 +87,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
         CompilerValue *createExp(CompilerValue *num);
         CompilerValue *createExp10(CompilerValue *num);
 
+        CompilerValue *createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType);
+
         void createVariableWrite(Variable *variable, CompilerValue *value);
 
         void createListClear(List *list);
