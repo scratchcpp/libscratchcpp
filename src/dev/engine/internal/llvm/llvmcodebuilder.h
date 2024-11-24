@@ -160,6 +160,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_list_data();
         llvm::FunctionCallee resolve_list_size_ptr();
         llvm::FunctionCallee resolve_list_alloc_size_ptr();
+        llvm::FunctionCallee resolve_list_to_string();
         llvm::FunctionCallee resolve_strcasecmp();
 
         Target *m_target = nullptr;

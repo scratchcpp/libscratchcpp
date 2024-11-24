@@ -48,6 +48,7 @@ struct LLVMInstruction
             AppendToList,
             InsertToList,
             ListReplace,
+            GetListContents,
             GetListItem,
             GetListSize,
             GetListItemIndex,

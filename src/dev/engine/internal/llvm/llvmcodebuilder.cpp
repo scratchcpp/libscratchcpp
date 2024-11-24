@@ -623,6 +623,15 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::GetListContents: {
+                assert(step.args.size() == 0);
+                const LLVMListPtr &listPtr = m_listPtrs[step.workList];
+                llvm::Value *ptr = m_builder.CreateCall(resolve_list_to_string(), listPtr.ptr);
+                m_heap.push_back(ptr); // deallocate later
+                step.functionReturnReg->value = ptr;
+                break;
+            }
+
             case LLVMInstruction::Type::GetListItem: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
@@ -964,7 +973,10 @@ CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
 
 CompilerValue *LLVMCodeBuilder::addListContents(List *list)
 {
-    return addConstValue(Value());
+    LLVMInstruction ins(LLVMInstruction::Type::GetListContents);
+    ins.workList = list;
+    m_listPtrs[list] = LLVMListPtr();
+    return createOp(ins, Compiler::StaticType::String);
 }
 
 CompilerValue *LLVMCodeBuilder::addListItem(List *list, CompilerValue *index)
@@ -2259,6 +2271,12 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_list_alloc_size_ptr()
 {
     llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
     return resolveFunction("list_alloc_size_ptr", llvm::FunctionType::get(m_builder.getInt64Ty()->getPointerTo()->getPointerTo(), { listPtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_to_string()
+{
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("list_to_string", llvm::FunctionType::get(pointerType, { pointerType }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()
