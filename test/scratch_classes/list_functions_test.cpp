@@ -146,3 +146,30 @@ TEST(ListFunctionsTest, Size)
         ASSERT_EQ(list_size(&list), 2);
     }
 }
+
+TEST(ListFunctionsTest, ToString)
+{
+    {
+        List list("", "test list");
+        list.append("Lorem");
+        list.append("ipsum");
+        list.append("dolor");
+        list.append("sit");
+        list.append("amet");
+
+        char *str = list_to_string(&list);
+        ASSERT_TRUE(strcmp(str, "Lorem ipsum dolor sit amet") == 0);
+        free(str);
+    }
+
+    {
+        List list("", "test list");
+        list.append(1);
+        list.append(2);
+        list.append(3);
+
+        char *str = list_to_string(&list);
+        ASSERT_TRUE(strcmp(str, "123") == 0);
+        free(str);
+    }
+}
