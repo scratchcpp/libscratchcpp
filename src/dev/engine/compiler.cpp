@@ -54,6 +54,11 @@ std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBl
                 std::cerr << "error: if statement created by block '" << impl->block->opcode() << "' not terminated" << std::endl;
                 assert(false);
             }
+
+            if (impl->customLoopCount > 0) {
+                std::cerr << "error: loop created by block '" << impl->block->opcode() << "' not terminated" << std::endl;
+                assert(false);
+            }
         } else {
             std::cout << "warning: unsupported block: " << impl->block->opcode() << std::endl;
             impl->unsupportedBlocks.insert(impl->block->opcode());
@@ -382,6 +387,45 @@ void Compiler::endIf()
     impl->customIfStatementCount--;
 }
 
+/*!
+ * Begins a custom while loop.
+ * \note The loop must be terminated with endLoop() after compiling your block.
+ */
+void Compiler::beginWhileLoop(CompilerValue *cond)
+{
+    impl->builder->beginWhileLoop(cond);
+    impl->customLoopCount++;
+}
+
+/*!
+ * Begins a custom repeat until loop.
+ * \note The loop must be terminated with endLoop() after compiling your block.
+ */
+void Compiler::beginRepeatUntilLoop(CompilerValue *cond)
+{
+    impl->builder->beginRepeatUntilLoop(cond);
+    impl->customLoopCount++;
+}
+
+/*! Begins a while/until loop condition. */
+void Compiler::beginLoopCondition()
+{
+    impl->builder->beginLoopCondition();
+}
+
+/*! Ends custom loop. */
+void Compiler::endLoop()
+{
+    if (impl->customLoopCount == 0) {
+        std::cerr << "error: called Compiler::endLoop() without a loop";
+        assert(false);
+        return;
+    }
+
+    impl->builder->endLoop();
+    impl->customLoopCount--;
+}
+
 /*! Jumps to the given if substack. */
 void Compiler::moveToIf(CompilerValue *cond, std::shared_ptr<Block> substack)
 {
@@ -443,12 +487,6 @@ void Compiler::moveToRepeatUntilLoop(CompilerValue *cond, std::shared_ptr<Block>
 
     if (!impl->block)
         impl->substackEnd();
-}
-
-/*! Begins a while/until loop condition. */
-void Compiler::beginLoopCondition()
-{
-    impl->builder->beginLoopCondition();
 }
 
 /*! Makes current script run without screen refresh. */

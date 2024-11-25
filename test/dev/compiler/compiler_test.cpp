@@ -892,6 +892,55 @@ TEST_F(CompilerTest, CustomIfStatement)
     compile(compiler, block);
 }
 
+TEST_F(CompilerTest, CustomWhileLoop)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        CompilerValue arg(Compiler::StaticType::Unknown);
+        EXPECT_CALL(*m_builder, beginWhileLoop(&arg));
+        compiler->beginWhileLoop(&arg);
+        EXPECT_CALL(*m_builder, endLoop());
+        compiler->endLoop();
+
+        return nullptr;
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CustomRepeatUntilLoop)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        CompilerValue arg(Compiler::StaticType::Unknown);
+        EXPECT_CALL(*m_builder, beginRepeatUntilLoop(&arg));
+        compiler->beginRepeatUntilLoop(&arg);
+        EXPECT_CALL(*m_builder, endLoop());
+        compiler->endLoop();
+
+        return nullptr;
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, BeginLoopCondition)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("a", "");
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        EXPECT_CALL(*m_builder, beginLoopCondition());
+        compiler->beginLoopCondition();
+        return nullptr;
+    });
+
+    compile(compiler, block);
+}
+
 TEST_F(CompilerTest, MoveToIf)
 {
     Compiler compiler(&m_engine, &m_target);
@@ -1367,19 +1416,6 @@ TEST_F(CompilerTest, MoveToRepeatUntilLoop)
 
     EXPECT_CALL(*m_builder, addConstValue(Value("after")));
     compile(compiler, l1);
-}
-
-TEST_F(CompilerTest, BeginLoopCondition)
-{
-    Compiler compiler(&m_engine, &m_target);
-    auto block = std::make_shared<Block>("a", "");
-    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
-        EXPECT_CALL(*m_builder, beginLoopCondition());
-        compiler->beginLoopCondition();
-        return nullptr;
-    });
-
-    compile(compiler, block);
 }
 
 TEST_F(CompilerTest, Input)

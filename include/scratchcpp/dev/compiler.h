@@ -103,12 +103,16 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void beginElseBranch();
         void endIf();
 
+        void beginWhileLoop(CompilerValue *cond);
+        void beginRepeatUntilLoop(CompilerValue *cond);
+        void beginLoopCondition();
+        void endLoop();
+
         void moveToIf(CompilerValue *cond, std::shared_ptr<Block> substack);
         void moveToIfElse(CompilerValue *cond, std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2);
         void moveToRepeatLoop(CompilerValue *count, std::shared_ptr<Block> substack);
         void moveToWhileLoop(CompilerValue *cond, std::shared_ptr<Block> substack);
         void moveToRepeatUntilLoop(CompilerValue *cond, std::shared_ptr<Block> substack);
-        void beginLoopCondition();
         void warp();
 
         Input *input(const std::string &name) const;
