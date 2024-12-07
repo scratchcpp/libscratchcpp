@@ -48,6 +48,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
         std::shared_ptr<ExecutableCode> compile(std::shared_ptr<Block> startBlock);
 
         CompilerValue *addFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
+        CompilerValue *addTargetFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
+        CompilerValue *addFunctionCallWithCtx(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
         CompilerConstant *addConstValue(const Value &value);
         CompilerValue *addVariableValue(Variable *variable);
         CompilerValue *addListContents(List *list);
@@ -101,12 +103,16 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void beginElseBranch();
         void endIf();
 
+        void beginWhileLoop(CompilerValue *cond);
+        void beginRepeatUntilLoop(CompilerValue *cond);
+        void beginLoopCondition();
+        void endLoop();
+
         void moveToIf(CompilerValue *cond, std::shared_ptr<Block> substack);
         void moveToIfElse(CompilerValue *cond, std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2);
         void moveToRepeatLoop(CompilerValue *count, std::shared_ptr<Block> substack);
         void moveToWhileLoop(CompilerValue *cond, std::shared_ptr<Block> substack);
         void moveToRepeatUntilLoop(CompilerValue *cond, std::shared_ptr<Block> substack);
-        void beginLoopCondition();
         void warp();
 
         Input *input(const std::string &name) const;

@@ -14,8 +14,5 @@ class ExecutableCodeMock : public ExecutableCode
 
         MOCK_METHOD(bool, isFinished, (ExecutionContext *), (const, override));
 
-        MOCK_METHOD(void, promise, (), (override));
-        MOCK_METHOD(void, resolvePromise, (), (override));
-
         MOCK_METHOD(std::shared_ptr<ExecutionContext>, createExecutionContext, (Target *), (const, override));
 };

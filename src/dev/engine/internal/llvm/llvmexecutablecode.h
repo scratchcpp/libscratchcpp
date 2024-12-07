@@ -25,15 +25,12 @@ class LLVMExecutableCode : public ExecutableCode
 
         bool isFinished(ExecutionContext *context) const override;
 
-        void promise() override;
-        void resolvePromise() override;
-
         std::shared_ptr<ExecutionContext> createExecutionContext(Target *target) const override;
 
     private:
         uint64_t lookupFunction(const std::string &name);
 
-        using MainFunctionType = void *(*)(Target *, ValueData **, List **);
+        using MainFunctionType = void *(*)(ExecutionContext *, Target *, ValueData **, List **);
         using ResumeFunctionType = bool (*)(void *);
 
         static LLVMExecutionContext *getContext(ExecutionContext *context);

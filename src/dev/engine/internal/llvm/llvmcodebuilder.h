@@ -27,6 +27,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         std::shared_ptr<ExecutableCode> finalize() override;
 
         CompilerValue *addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
+        CompilerValue *addTargetFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
+        CompilerValue *addFunctionCallWithCtx(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
         CompilerConstant *addConstValue(const Value &value) override;
         CompilerValue *addVariableValue(Variable *variable) override;
         CompilerValue *addListContents(List *list) override;

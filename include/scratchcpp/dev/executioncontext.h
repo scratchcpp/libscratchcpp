@@ -9,6 +9,7 @@ namespace libscratchcpp
 {
 
 class Target;
+class Promise;
 class ExecutionContextPrivate;
 
 /*! \brief The ExecutionContext represents the execution context of a target (can be a clone) with variables, lists, etc. */
@@ -20,6 +21,9 @@ class LIBSCRATCHCPP_EXPORT ExecutionContext
         virtual ~ExecutionContext() { }
 
         Target *target() const;
+
+        std::shared_ptr<Promise> promise() const;
+        void setPromise(std::shared_ptr<Promise> promise);
 
     private:
         spimpl::unique_impl_ptr<ExecutionContextPrivate> impl;

@@ -17,3 +17,15 @@ Target *ExecutionContext::target() const
 {
     return impl->target;
 }
+
+/*! Returns the script promise. */
+std::shared_ptr<Promise> ExecutionContext::promise() const
+{
+    return impl->promise;
+}
+
+/*! Sets the script promise (yields until the promise is resolved). */
+void ExecutionContext::setPromise(std::shared_ptr<Promise> promise)
+{
+    impl->promise = promise;
+}

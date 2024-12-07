@@ -5,6 +5,7 @@
 #ifdef USE_LLVM
 #include <scratchcpp/script.h>
 #include <scratchcpp/dev/executablecode.h>
+#include <scratchcpp/dev/executioncontext.h>
 #endif
 
 #include "thread_p.h"
@@ -87,22 +88,28 @@ bool Thread::isFinished() const
 #endif
 }
 
+#ifdef USE_LLVM
+/*! Returns the script promise. */
+std::shared_ptr<Promise> Thread::promise() const
+{
+    return impl->executionContext->promise();
+}
+
+/*! Sets the script promise (yields until the promise is resolved). */
+void Thread::setPromise(std::shared_ptr<Promise> promise)
+{
+    impl->executionContext->setPromise(promise);
+}
+#else
 /*! Pauses the script (when it's executed using run() again) until resolvePromise() is called. */
 void Thread::promise()
 {
-#ifdef USE_LLVM
-    impl->code->promise();
-#else
     impl->vm->promise();
-#endif
 }
 
 /*! Resolves the promise and resumes the script. */
 void Thread::resolvePromise()
 {
-#ifdef USE_LLVM
-    impl->code->resolvePromise();
-#else
     impl->vm->resolvePromise();
-#endif
 }
+#endif // USE_LLVM

@@ -9,6 +9,7 @@
 #include <scratchcpp/broadcast.h>
 #ifdef USE_LLVM
 #include <scratchcpp/dev/compiler.h>
+#include <scratchcpp/dev/promise.h>
 #else
 #include <scratchcpp/compiler.h>
 #endif
@@ -593,8 +594,16 @@ void Engine::step()
         } else {
             Thread *th = senderThread;
 
-            if (std::find_if(m_threads.begin(), m_threads.end(), [th](std::shared_ptr<Thread> thread) { return thread.get() == th; }) != m_threads.end())
+            if (std::find_if(m_threads.begin(), m_threads.end(), [th](std::shared_ptr<Thread> thread) { return thread.get() == th; }) != m_threads.end()) {
+#ifdef USE_LLVM
+                auto promise = th->promise();
+
+                if (promise)
+                    promise->resolve();
+#else
                 th->resolvePromise();
+#endif
+            }
 
             resolved.push_back(broadcast);
             resolvedThreads.push_back(th);
@@ -2018,8 +2027,16 @@ void Engine::addBroadcastPromise(Broadcast *broadcast, Thread *sender, bool wait
     // Resolve broadcast promise if it's already running
     auto it = m_broadcastSenders.find(broadcast);
 
-    if (it != m_broadcastSenders.cend() && std::find_if(m_threads.begin(), m_threads.end(), [&it](std::shared_ptr<Thread> thread) { return thread.get() == it->second; }) != m_threads.end())
+    if (it != m_broadcastSenders.cend() && std::find_if(m_threads.begin(), m_threads.end(), [&it](std::shared_ptr<Thread> thread) { return thread.get() == it->second; }) != m_threads.end()) {
+#ifdef USE_LLVM
+        auto promise = it->second->promise();
+
+        if (promise)
+            promise->resolve();
+#else
         it->second->resolvePromise();
+#endif
+    }
 
     if (wait)
         m_broadcastSenders[broadcast] = sender;

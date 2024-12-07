@@ -4,6 +4,7 @@
 #include <scratchcpp/value_functions.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/iengine.h>
+#include <scratchcpp/dev/promise.h>
 #include <llvm/Support/Error.h>
 #include <iostream>
 
@@ -46,6 +47,15 @@ void LLVMExecutableCode::run(ExecutionContext *context)
     if (ctx->finished())
         return;
 
+    auto promise = ctx->promise();
+
+    if (promise) {
+        if (promise->isResolved())
+            ctx->setPromise(nullptr);
+        else
+            return;
+    }
+
     if (ctx->coroutineHandle()) {
         bool done = m_resumeFunction(ctx->coroutineHandle());
 
@@ -55,7 +65,7 @@ void LLVMExecutableCode::run(ExecutionContext *context)
         ctx->setFinished(done);
     } else {
         Target *target = ctx->target();
-        void *handle = m_mainFunction(target, target->variableData(), target->listData());
+        void *handle = m_mainFunction(context, target, target->variableData(), target->listData());
 
         if (!handle)
             ctx->setFinished(true);
@@ -69,6 +79,7 @@ void LLVMExecutableCode::kill(ExecutionContext *context)
     LLVMExecutionContext *ctx = getContext(context);
     ctx->setCoroutineHandle(nullptr);
     ctx->setFinished(true);
+    ctx->setPromise(nullptr);
 }
 
 void LLVMExecutableCode::reset(ExecutionContext *context)
@@ -76,19 +87,12 @@ void LLVMExecutableCode::reset(ExecutionContext *context)
     LLVMExecutionContext *ctx = getContext(context);
     ctx->setCoroutineHandle(nullptr);
     ctx->setFinished(false);
+    ctx->setPromise(nullptr);
 }
 
 bool LLVMExecutableCode::isFinished(ExecutionContext *context) const
 {
     return getContext(context)->finished();
-}
-
-void LLVMExecutableCode::promise()
-{
-}
-
-void LLVMExecutableCode::resolvePromise()
-{
 }
 
 std::shared_ptr<ExecutionContext> LLVMExecutableCode::createExecutionContext(Target *target) const
