@@ -25,9 +25,6 @@ class LLVMExecutableCode : public ExecutableCode
 
         bool isFinished(ExecutionContext *context) const override;
 
-        void promise() override;
-        void resolvePromise() override;
-
         std::shared_ptr<ExecutionContext> createExecutionContext(Target *target) const override;
 
     private:

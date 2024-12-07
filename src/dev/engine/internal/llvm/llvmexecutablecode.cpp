@@ -83,14 +83,6 @@ bool LLVMExecutableCode::isFinished(ExecutionContext *context) const
     return getContext(context)->finished();
 }
 
-void LLVMExecutableCode::promise()
-{
-}
-
-void LLVMExecutableCode::resolvePromise()
-{
-}
-
 std::shared_ptr<ExecutionContext> LLVMExecutableCode::createExecutionContext(Target *target) const
 {
     return std::make_shared<LLVMExecutionContext>(target);
