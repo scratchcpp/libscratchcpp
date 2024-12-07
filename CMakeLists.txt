@@ -76,6 +76,7 @@ if (LIBSCRATCHCPP_USE_LLVM)
         include/scratchcpp/dev/compilerconstant.h
         include/scratchcpp/dev/executablecode.h
         include/scratchcpp/dev/executioncontext.h
+        include/scratchcpp/dev/promise.h
     )
 
     if(LIBSCRATCHCPP_PRINT_LLVM_IR)

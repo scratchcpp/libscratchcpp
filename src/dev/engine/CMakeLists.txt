@@ -12,6 +12,9 @@ target_sources(scratchcpp
     executioncontext.cpp
     executioncontext_p.cpp
     executioncontext_p.h
+    promise.cpp
+    promise_p.cpp
+    promise_p.h
     internal/icodebuilder.h
     internal/icodebuilderfactory.h
     internal/codebuilderfactory.cpp
