@@ -4,6 +4,7 @@
 #include <scratchcpp/value_functions.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/iengine.h>
+#include <scratchcpp/dev/promise.h>
 #include <llvm/Support/Error.h>
 #include <iostream>
 
@@ -46,6 +47,15 @@ void LLVMExecutableCode::run(ExecutionContext *context)
     if (ctx->finished())
         return;
 
+    auto promise = ctx->promise();
+
+    if (promise) {
+        if (promise->isResolved())
+            ctx->setPromise(nullptr);
+        else
+            return;
+    }
+
     if (ctx->coroutineHandle()) {
         bool done = m_resumeFunction(ctx->coroutineHandle());
 
@@ -69,6 +79,7 @@ void LLVMExecutableCode::kill(ExecutionContext *context)
     LLVMExecutionContext *ctx = getContext(context);
     ctx->setCoroutineHandle(nullptr);
     ctx->setFinished(true);
+    ctx->setPromise(nullptr);
 }
 
 void LLVMExecutableCode::reset(ExecutionContext *context)
@@ -76,6 +87,7 @@ void LLVMExecutableCode::reset(ExecutionContext *context)
     LLVMExecutionContext *ctx = getContext(context);
     ctx->setCoroutineHandle(nullptr);
     ctx->setFinished(false);
+    ctx->setPromise(nullptr);
 }
 
 bool LLVMExecutableCode::isFinished(ExecutionContext *context) const
