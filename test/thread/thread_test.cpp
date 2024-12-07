@@ -2,6 +2,7 @@
 #include <scratchcpp/script.h>
 #include <scratchcpp/virtualmachine.h>
 #include <scratchcpp/dev/executioncontext.h>
+#include <scratchcpp/dev/promise.h>
 #include <targetmock.h>
 #include <enginemock.h>
 #include <executablecodemock.h>
@@ -76,5 +77,19 @@ TEST_F(ThreadTest, IsFinished)
     ASSERT_TRUE(m_thread->isFinished());
 }
 
-// TODO: Test promise() and resolvePromise()
+TEST_F(ThreadTest, Promise)
+{
+    ASSERT_EQ(m_thread->promise(), m_ctx->promise());
+
+    auto promise = std::make_shared<Promise>();
+    m_ctx->setPromise(promise);
+    ASSERT_EQ(m_thread->promise(), m_ctx->promise());
+
+    m_ctx->setPromise(nullptr);
+    ASSERT_EQ(m_thread->promise(), m_ctx->promise());
+
+    m_thread->setPromise(promise);
+    ASSERT_EQ(m_thread->promise(), promise);
+    ASSERT_EQ(m_ctx->promise(), promise);
+}
 #endif // USE_LLVM

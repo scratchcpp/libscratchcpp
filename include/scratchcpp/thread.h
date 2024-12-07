@@ -10,6 +10,9 @@ namespace libscratchcpp
 
 class VirtualMachine;
 class Target;
+#ifdef USE_LLVM
+class Promise;
+#endif
 class IEngine;
 class Script;
 class ThreadPrivate;
@@ -32,8 +35,13 @@ class LIBSCRATCHCPP_EXPORT Thread
 
         bool isFinished() const;
 
+#ifdef USE_LLVM
+        std::shared_ptr<Promise> promise() const;
+        void setPromise(std::shared_ptr<Promise> promise);
+#else
         void promise();
         void resolvePromise();
+#endif
 
     private:
         spimpl::unique_impl_ptr<ThreadPrivate> impl;
