@@ -96,4 +96,16 @@ TEST(RandomGeneratorTest, RandIntExcept)
         num = rng->randintExcept(1, 2, 2);
         ASSERT_EQ(num, 1);
     }
+
+    for (int i = 0; i < 25; i++) {
+        num = rng->randintExcept(1, 5, 1);
+        ASSERT_GE(num, 2);
+        ASSERT_LE(num, 5);
+    }
+
+    for (int i = 0; i < 25; i++) {
+        num = rng->randintExcept(1, 5, 5);
+        ASSERT_GE(num, 1);
+        ASSERT_LE(num, 4);
+    }
 }

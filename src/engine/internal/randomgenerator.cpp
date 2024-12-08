@@ -57,13 +57,12 @@ long RandomGenerator::randintExcept(long start, long end, long except) const
             return end;
         else
             return start;
-    }
-
-    if (randint(0, 1) == 0) {
-        std::uniform_int_distribution<long> distribution(start, except - 1);
-        return distribution(*m_generator);
-    } else {
-        std::uniform_int_distribution<long> distribution(except + 1, end);
-        return distribution(*m_generator);
-    }
+    } else if (except == start)
+        return randint(except + 1, end);
+    else if (except == end)
+        return randint(start, except - 1);
+    else if (randint(0, 1) == 0)
+        return randint(start, except - 1);
+    else
+        return randint(except + 1, end);
 }
