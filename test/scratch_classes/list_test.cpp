@@ -278,6 +278,20 @@ TEST(ListTest, ToString)
     list.toString(s);
     ASSERT_EQ(s, "098");
     ASSERT_EQ(list.toString(), "098");
+
+    list.clear();
+    list.append("true");
+    list.append("false");
+    list.toString(s);
+    ASSERT_EQ(s, "true false");
+    ASSERT_EQ(list.toString(), "true false");
+
+    list.clear();
+    list.append(true);
+    list.append(false);
+    list.toString(s);
+    ASSERT_EQ(s, "true false");
+    ASSERT_EQ(list.toString(), "true false");
 }
 
 TEST(ListTest, Clone)
