@@ -157,7 +157,7 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
                 strings.push_back(std::string());
                 value_toString(item, &strings.back());
 
-                if (value_isValidNumber(item) && !strings.back().empty()) {
+                if (value_isValidNumber(item) && !value_isBool(item) && !strings.back().empty()) {
                     double doubleNum = value_toDouble(item);
                     long num = value_toLong(item);
 
