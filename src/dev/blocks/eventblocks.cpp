@@ -28,6 +28,7 @@ void EventBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "event_whenstageclicked", &compileWhenStageClicked);
     engine->addCompileFunction(this, "event_whenbroadcastreceived", &compileWhenBroadcastReceived);
     engine->addCompileFunction(this, "event_whenbackdropswitchesto", &compileWhenBackdropSwitchesTo);
+    engine->addCompileFunction(this, "event_whengreaterthan", &compileWhenGreaterThan);
 }
 
 CompilerValue *EventBlocks::compileWhenTouchingObject(Compiler *compiler)
@@ -75,5 +76,11 @@ CompilerValue *EventBlocks::compileWhenBackdropSwitchesTo(Compiler *compiler)
     if (field)
         compiler->engine()->addBackdropChangeScript(block, field);
 
+    return nullptr;
+}
+
+CompilerValue *EventBlocks::compileWhenGreaterThan(Compiler *compiler)
+{
+    compiler->engine()->addWhenGreaterThanScript(compiler->block());
     return nullptr;
 }

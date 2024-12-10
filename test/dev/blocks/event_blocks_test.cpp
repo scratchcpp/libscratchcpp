@@ -113,3 +113,20 @@ TEST_F(EventBlocksTest, WhenBackdropSwitchesTo)
     EXPECT_CALL(m_engineMock, addBackdropChangeScript(block, block->fieldAt(0).get()));
     compiler.compile(block);
 }
+
+// TODO: Add test for when greater than hat predicate
+
+TEST_F(EventBlocksTest, WhenGreaterThan)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("event_whengreaterthan");
+    builder.addDropdownField("WHENGREATERTHANMENU", "LOUDNESS");
+    builder.addValueInput("VALUE", 8.9);
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    EXPECT_CALL(m_engineMock, addWhenGreaterThanScript(block));
+    compiler.compile(block);
+}
