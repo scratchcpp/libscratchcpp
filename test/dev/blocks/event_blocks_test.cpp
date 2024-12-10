@@ -4,6 +4,9 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/block.h>
+#include <scratchcpp/script.h>
+#include <scratchcpp/thread.h>
+#include <scratchcpp/dev/executablecode.h>
 #include <enginemock.h>
 
 #include "../common.h"
@@ -11,6 +14,8 @@
 
 using namespace libscratchcpp;
 using namespace libscratchcpp::test;
+
+using ::testing::Return;
 
 class EventBlocksTest : public testing::Test
 {
@@ -129,4 +134,51 @@ TEST_F(EventBlocksTest, WhenGreaterThan)
     Compiler compiler(&m_engineMock, target.get());
     EXPECT_CALL(m_engineMock, addWhenGreaterThanScript(block));
     compiler.compile(block);
+}
+
+TEST_F(EventBlocksTest, Broadcast)
+{
+    auto broadcast = std::make_shared<Broadcast>("", "test");
+    m_engine->setBroadcasts({ broadcast });
+
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("event_broadcast");
+    builder.addEntityInput("BROADCAST_INPUT", "test", InputValue::Type::Broadcast, broadcast);
+    auto block1 = builder.currentBlock();
+
+    builder.addBlock("event_broadcast");
+    builder.addNullObscuredInput("BROADCAST_INPUT");
+    auto block2 = builder.currentBlock();
+
+    block1->setNext(nullptr);
+    block2->setParent(nullptr);
+
+    {
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block1);
+        Script script(target.get(), block1, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        EXPECT_CALL(m_engineMock, findBroadcasts("test")).WillOnce(Return(std::vector<int>({ 1, 4 })));
+        EXPECT_CALL(m_engineMock, broadcast(1, &thread, false));
+        EXPECT_CALL(m_engineMock, broadcast(4, &thread, false));
+        thread.run();
+    }
+
+    {
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block2);
+        Script script(target.get(), block2, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        EXPECT_CALL(m_engineMock, findBroadcasts("0")).WillOnce(Return(std::vector<int>({ 5, 7, 8 })));
+        EXPECT_CALL(m_engineMock, broadcast(5, &thread, false));
+        EXPECT_CALL(m_engineMock, broadcast(7, &thread, false));
+        EXPECT_CALL(m_engineMock, broadcast(8, &thread, false));
+        thread.run();
+    }
 }

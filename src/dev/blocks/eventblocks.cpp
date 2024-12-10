@@ -5,6 +5,8 @@
 #include <scratchcpp/block.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/broadcast.h>
+#include <scratchcpp/dev/executioncontext.h>
+#include <scratchcpp/thread.h>
 
 #include "eventblocks.h"
 
@@ -29,6 +31,7 @@ void EventBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "event_whenbroadcastreceived", &compileWhenBroadcastReceived);
     engine->addCompileFunction(this, "event_whenbackdropswitchesto", &compileWhenBackdropSwitchesTo);
     engine->addCompileFunction(this, "event_whengreaterthan", &compileWhenGreaterThan);
+    engine->addCompileFunction(this, "event_broadcast", &compileBroadcast);
 }
 
 CompilerValue *EventBlocks::compileWhenTouchingObject(Compiler *compiler)
@@ -83,4 +86,21 @@ CompilerValue *EventBlocks::compileWhenGreaterThan(Compiler *compiler)
 {
     compiler->engine()->addWhenGreaterThanScript(compiler->block());
     return nullptr;
+}
+
+CompilerValue *EventBlocks::compileBroadcast(Compiler *compiler)
+{
+    auto input = compiler->addInput("BROADCAST_INPUT");
+    compiler->addFunctionCallWithCtx("event_broadcast", Compiler::StaticType::Void, { Compiler::StaticType::String }, { input });
+    return nullptr;
+}
+
+extern "C" void event_broadcast(ExecutionContext *ctx, const char *name)
+{
+    Thread *thread = ctx->thread();
+    IEngine *engine = thread->engine();
+    std::vector<int> broadcasts = engine->findBroadcasts(name);
+
+    for (int index : broadcasts)
+        engine->broadcast(index, thread, false);
 }

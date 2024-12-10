@@ -23,6 +23,7 @@ class EventBlocks : public IExtension
         static CompilerValue *compileWhenBroadcastReceived(Compiler *compiler);
         static CompilerValue *compileWhenBackdropSwitchesTo(Compiler *compiler);
         static CompilerValue *compileWhenGreaterThan(Compiler *compiler);
+        static CompilerValue *compileBroadcast(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
