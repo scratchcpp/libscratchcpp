@@ -27,6 +27,7 @@ void EventBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "event_whenthisspriteclicked", &compileWhenThisSpriteClicked);
     engine->addCompileFunction(this, "event_whenstageclicked", &compileWhenStageClicked);
     engine->addCompileFunction(this, "event_whenbroadcastreceived", &compileWhenBroadcastReceived);
+    engine->addCompileFunction(this, "event_whenbackdropswitchesto", &compileWhenBackdropSwitchesTo);
 }
 
 CompilerValue *EventBlocks::compileWhenTouchingObject(Compiler *compiler)
@@ -62,6 +63,17 @@ CompilerValue *EventBlocks::compileWhenBroadcastReceived(Compiler *compiler)
         auto broadcast = std::static_pointer_cast<Broadcast>(field->valuePtr());
         compiler->engine()->addBroadcastScript(block, field, broadcast.get());
     }
+
+    return nullptr;
+}
+
+CompilerValue *EventBlocks::compileWhenBackdropSwitchesTo(Compiler *compiler)
+{
+    auto block = compiler->block();
+    Field *field = compiler->field("BACKDROP");
+
+    if (field)
+        compiler->engine()->addBackdropChangeScript(block, field);
 
     return nullptr;
 }

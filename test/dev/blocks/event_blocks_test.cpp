@@ -99,3 +99,17 @@ TEST_F(EventBlocksTest, WhenBroadcastReceived)
     EXPECT_CALL(m_engineMock, addBroadcastScript(block, block->fieldAt(0).get(), broadcast.get()));
     compiler.compile(block);
 }
+
+TEST_F(EventBlocksTest, WhenBackdropSwitchesTo)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("event_whenbackdropswitchesto");
+    builder.addDropdownField("BACKDROP", "backdrop2");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    EXPECT_CALL(m_engineMock, addBackdropChangeScript(block, block->fieldAt(0).get()));
+    compiler.compile(block);
+}
