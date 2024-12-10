@@ -3,6 +3,7 @@
 #include <scratchcpp/dev/test/scriptbuilder.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
+#include <scratchcpp/inputvalue.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/dev/compilerconstant.h>
 #include <scratchcpp/dev/executablecode.h>
@@ -150,6 +151,20 @@ void ScriptBuilder::addDropdownField(const std::string &name, const std::string 
 
     auto field = std::make_shared<Field>(name, selectedValue);
     impl->lastBlock->addField(field);
+}
+
+/*! Adds an input pointing to an entity (variable, list, broadcast, etc.) */
+void ScriptBuilder::addEntityInput(const std::string &name, const std::string &entityName, InputValue::Type entityType, std::shared_ptr<Entity> entity)
+{
+    if (!impl->lastBlock)
+        return;
+
+    entity->setId(std::to_string(impl->blockId++));
+    auto input = std::make_shared<Input>(name, Input::Type::Shadow);
+    input->setPrimaryValue(entityName);
+    input->primaryValue()->setValuePtr(entity);
+    input->primaryValue()->setType(entityType);
+    impl->lastBlock->addInput(input);
 }
 
 /*! Adds a field pointing to an entity (variable, list, broadcast, etc.) */

@@ -162,19 +162,35 @@ TEST_F(ScriptBuilderTest, AddDropdownField)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "hello\n");
 }
 
+TEST_F(ScriptBuilderTest, AddEntityInput)
+{
+    auto broadcast = std::make_shared<Broadcast>("", "");
+    m_engine->setBroadcasts({ broadcast });
+
+    m_builder->addBlock("test_simple");
+    m_builder->addEntityInput("BROADCAST", "test", InputValue::Type::Broadcast, broadcast);
+    auto block = m_builder->currentBlock();
+    ASSERT_TRUE(block);
+    ASSERT_EQ(block->opcode(), "test_simple");
+    ASSERT_EQ(block->inputs().size(), 1);
+    ASSERT_EQ(block->inputAt(0)->name(), "BROADCAST");
+    ASSERT_EQ(block->inputAt(0)->primaryValue()->valuePtr(), broadcast);
+    ASSERT_EQ(block->inputAt(0)->primaryValue()->type(), InputValue::Type::Broadcast);
+}
+
 TEST_F(ScriptBuilderTest, AddEntityField)
 {
     auto broadcast = std::make_shared<Broadcast>("", "");
     m_engine->setBroadcasts({ broadcast });
 
-    m_builder->addBlock("test_print_field");
-    m_builder->addEntityField("STRING", broadcast);
+    m_builder->addBlock("test_simple");
+    m_builder->addEntityField("BROADCAST", broadcast);
     auto block = m_builder->currentBlock();
     ASSERT_TRUE(block);
-    ASSERT_EQ(block->opcode(), "test_print_field");
+    ASSERT_EQ(block->opcode(), "test_simple");
     ASSERT_TRUE(block->inputs().empty());
     ASSERT_EQ(block->fields().size(), 1);
-    ASSERT_EQ(block->fieldAt(0)->name(), "STRING");
+    ASSERT_EQ(block->fieldAt(0)->name(), "BROADCAST");
     ASSERT_EQ(block->fieldAt(0)->valuePtr(), broadcast);
 }
 
