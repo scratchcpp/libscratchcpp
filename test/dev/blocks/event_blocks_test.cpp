@@ -67,3 +67,16 @@ TEST_F(EventBlocksTest, WhenThisSpriteClicked)
     EXPECT_CALL(m_engineMock, addTargetClickScript(block));
     compiler.compile(block);
 }
+
+TEST_F(EventBlocksTest, WhenStageClicked)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("event_whenstageclicked");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    EXPECT_CALL(m_engineMock, addTargetClickScript(block));
+    compiler.compile(block);
+}
