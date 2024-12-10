@@ -20,10 +20,17 @@ std::string libscratchcpp::EventBlocks::description() const
 void EventBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "event_whentouchingobject", &compileWhenTouchingObject);
+    engine->addCompileFunction(this, "event_whenflagclicked", &compileWhenFlagClicked);
 }
 
 CompilerValue *EventBlocks::compileWhenTouchingObject(Compiler *compiler)
 {
     compiler->engine()->addWhenTouchingObjectScript(compiler->block());
+    return nullptr;
+}
+
+CompilerValue *EventBlocks::compileWhenFlagClicked(Compiler *compiler)
+{
+    compiler->engine()->addGreenFlagScript(compiler->block());
     return nullptr;
 }

@@ -41,3 +41,16 @@ TEST_F(EventBlocksTest, WhenTouchingObject)
     EXPECT_CALL(m_engineMock, addWhenTouchingObjectScript(block));
     compiler.compile(block);
 }
+
+TEST_F(EventBlocksTest, WhenFlagClicked)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("event_whenflagclicked");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    EXPECT_CALL(m_engineMock, addGreenFlagScript(block));
+    compiler.compile(block);
+}

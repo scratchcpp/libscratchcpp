@@ -17,6 +17,7 @@ class EventBlocks : public IExtension
 
     private:
         static CompilerValue *compileWhenTouchingObject(Compiler *compiler);
+        static CompilerValue *compileWhenFlagClicked(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
