@@ -2,6 +2,8 @@
 #include <scratchcpp/dev/test/scriptbuilder.h>
 #include <scratchcpp/dev/compiler.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/broadcast.h>
+#include <scratchcpp/block.h>
 #include <enginemock.h>
 
 #include "../common.h"
@@ -78,5 +80,22 @@ TEST_F(EventBlocksTest, WhenStageClicked)
 
     Compiler compiler(&m_engineMock, target.get());
     EXPECT_CALL(m_engineMock, addTargetClickScript(block));
+    compiler.compile(block);
+}
+
+TEST_F(EventBlocksTest, WhenBroadcastReceived)
+{
+    auto broadcast = std::make_shared<Broadcast>("", "");
+    m_engine->setBroadcasts({ broadcast });
+
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("event_whenbroadcastreceived");
+    builder.addEntityField("BROADCAST_OPTION", broadcast);
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    EXPECT_CALL(m_engineMock, addBroadcastScript(block, block->fieldAt(0).get(), broadcast.get()));
     compiler.compile(block);
 }

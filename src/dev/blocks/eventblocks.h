@@ -20,6 +20,7 @@ class EventBlocks : public IExtension
         static CompilerValue *compileWhenFlagClicked(Compiler *compiler);
         static CompilerValue *compileWhenThisSpriteClicked(Compiler *compiler);
         static CompilerValue *compileWhenStageClicked(Compiler *compiler);
+        static CompilerValue *compileWhenBroadcastReceived(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

@@ -2,6 +2,9 @@
 
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/dev/compiler.h>
+#include <scratchcpp/block.h>
+#include <scratchcpp/field.h>
+#include <scratchcpp/broadcast.h>
 
 #include "eventblocks.h"
 
@@ -23,6 +26,7 @@ void EventBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "event_whenflagclicked", &compileWhenFlagClicked);
     engine->addCompileFunction(this, "event_whenthisspriteclicked", &compileWhenThisSpriteClicked);
     engine->addCompileFunction(this, "event_whenstageclicked", &compileWhenStageClicked);
+    engine->addCompileFunction(this, "event_whenbroadcastreceived", &compileWhenBroadcastReceived);
 }
 
 CompilerValue *EventBlocks::compileWhenTouchingObject(Compiler *compiler)
@@ -46,5 +50,18 @@ CompilerValue *EventBlocks::compileWhenThisSpriteClicked(Compiler *compiler)
 CompilerValue *EventBlocks::compileWhenStageClicked(Compiler *compiler)
 {
     compiler->engine()->addTargetClickScript(compiler->block());
+    return nullptr;
+}
+
+CompilerValue *EventBlocks::compileWhenBroadcastReceived(Compiler *compiler)
+{
+    auto block = compiler->block();
+    Field *field = compiler->field("BROADCAST_OPTION");
+
+    if (field) {
+        auto broadcast = std::static_pointer_cast<Broadcast>(field->valuePtr());
+        compiler->engine()->addBroadcastScript(block, field, broadcast.get());
+    }
+
     return nullptr;
 }
