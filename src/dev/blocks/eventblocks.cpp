@@ -34,6 +34,7 @@ void EventBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "event_whengreaterthan", &compileWhenGreaterThan);
     engine->addCompileFunction(this, "event_broadcast", &compileBroadcast);
     engine->addCompileFunction(this, "event_broadcastandwait", &compileBroadcastAndWait);
+    engine->addCompileFunction(this, "event_whenkeypressed", &compileWhenKeyPressed);
 }
 
 CompilerValue *EventBlocks::compileWhenTouchingObject(Compiler *compiler)
@@ -103,6 +104,17 @@ CompilerValue *EventBlocks::compileBroadcastAndWait(Compiler *compiler)
     auto input = compiler->addInput("BROADCAST_INPUT");
     auto wait = compiler->addConstValue(true);
     compiler->addFunctionCallWithCtx("event_broadcast", Compiler::StaticType::Void, { Compiler::StaticType::String, Compiler::StaticType::Bool }, { input, wait });
+    return nullptr;
+}
+
+CompilerValue *EventBlocks::compileWhenKeyPressed(Compiler *compiler)
+{
+    auto block = compiler->block();
+    Field *field = compiler->field("KEY_OPTION");
+
+    if (field)
+        compiler->engine()->addKeyPressScript(block, field);
+
     return nullptr;
 }
 

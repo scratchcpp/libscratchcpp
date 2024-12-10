@@ -229,3 +229,17 @@ TEST_F(EventBlocksTest, BroadcastAndWait)
         thread.run();
     }
 }
+
+TEST_F(EventBlocksTest, WhenKeyPressed)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("event_whenkeypressed");
+    builder.addDropdownField("KEY_OPTION", "a");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    EXPECT_CALL(m_engineMock, addKeyPressScript(block, block->fieldAt(0).get()));
+    compiler.compile(block);
+}

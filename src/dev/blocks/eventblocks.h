@@ -25,6 +25,7 @@ class EventBlocks : public IExtension
         static CompilerValue *compileWhenGreaterThan(Compiler *compiler);
         static CompilerValue *compileBroadcast(Compiler *compiler);
         static CompilerValue *compileBroadcastAndWait(Compiler *compiler);
+        static CompilerValue *compileWhenKeyPressed(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
