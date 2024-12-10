@@ -10,7 +10,7 @@ namespace libscratchcpp
 {
 
 class ExecutionContext;
-class Target;
+class Thread;
 
 /*! \brief The ExecutableCode class represents the code of a compiled Scratch script. */
 class LIBSCRATCHCPP_EXPORT ExecutableCode
@@ -31,7 +31,7 @@ class LIBSCRATCHCPP_EXPORT ExecutableCode
         virtual bool isFinished(ExecutionContext *context) const = 0;
 
         /*! Creates an execution context for the given Target. */
-        virtual std::shared_ptr<ExecutionContext> createExecutionContext(Target *target) const = 0;
+        virtual std::shared_ptr<ExecutionContext> createExecutionContext(Thread *thread) const = 0;
 };
 
 } // namespace libscratchcpp

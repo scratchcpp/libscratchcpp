@@ -3,11 +3,13 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/dev/promise.h>
+#include <scratchcpp/thread.h>
+#include <scratchcpp/script.h>
 #include <dev/engine/internal/llvm/llvmexecutablecode.h>
 #include <dev/engine/internal/llvm/llvmexecutioncontext.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/IR/IRBuilder.h>
-#include <gmock/gmock.h>
+#include <enginemock.h>
 
 #include "testmock.h"
 #include "testfunctions.h"
@@ -22,6 +24,8 @@ class LLVMExecutableCodeTest : public testing::Test
             m_module = std::make_unique<llvm::Module>("test", m_ctx);
             m_builder = std::make_unique<llvm::IRBuilder<>>(m_ctx);
             test_function(nullptr, nullptr, nullptr, nullptr, nullptr); // force dependency
+
+            m_script = std::make_unique<Script>(&m_target, nullptr, &m_engine);
 
             llvm::InitializeNativeTarget();
             llvm::InitializeNativeTargetAsmPrinter();
@@ -77,6 +81,8 @@ class LLVMExecutableCodeTest : public testing::Test
         std::unique_ptr<llvm::Module> m_module;
         std::unique_ptr<llvm::IRBuilder<>> m_builder;
         Target m_target;
+        EngineMock m_engine;
+        std::unique_ptr<Script> m_script;
         TestMock m_mock;
 };
 
@@ -88,10 +94,12 @@ TEST_F(LLVMExecutableCodeTest, CreateExecutionContext)
     beginResumeFunction();
     endFunction(m_builder->getInt1(true));
 
-    LLVMExecutableCode code(std::move(m_module));
-    auto ctx = code.createExecutionContext(&m_target);
+    auto code = std::make_shared<LLVMExecutableCode>(std::move(m_module));
+    m_script->setCode(code);
+    Thread thread(&m_target, &m_engine, m_script.get());
+    auto ctx = code->createExecutionContext(&thread);
     ASSERT_TRUE(ctx);
-    ASSERT_EQ(ctx->target(), &m_target);
+    ASSERT_EQ(ctx->thread(), &thread);
     ASSERT_TRUE(dynamic_cast<LLVMExecutionContext *>(ctx.get()));
 }
 
@@ -107,43 +115,48 @@ TEST_F(LLVMExecutableCodeTest, MainFunction)
     beginResumeFunction();
     endFunction(m_builder->getInt1(true));
 
-    LLVMExecutableCode code(std::move(m_module));
-    auto ctx = code.createExecutionContext(&m_target);
-    ASSERT_FALSE(code.isFinished(ctx.get()));
+    auto code = std::make_shared<LLVMExecutableCode>(std::move(m_module));
+    m_script->setCode(code);
+    Thread thread(&m_target, &m_engine, m_script.get());
+    auto ctx = code->createExecutionContext(&thread);
+    ASSERT_FALSE(code->isFinished(ctx.get()));
 
     EXPECT_CALL(m_mock, f(ctx.get(), &m_target, m_target.variableData(), m_target.listData()));
-    code.run(ctx.get());
-    ASSERT_TRUE(code.isFinished(ctx.get()));
+    code->run(ctx.get());
+    ASSERT_TRUE(code->isFinished(ctx.get()));
 
-    code.kill(ctx.get());
-    ASSERT_TRUE(code.isFinished(ctx.get()));
+    code->kill(ctx.get());
+    ASSERT_TRUE(code->isFinished(ctx.get()));
 
-    code.reset(ctx.get());
-    ASSERT_FALSE(code.isFinished(ctx.get()));
+    code->reset(ctx.get());
+    ASSERT_FALSE(code->isFinished(ctx.get()));
 
-    code.kill(ctx.get());
-    ASSERT_TRUE(code.isFinished(ctx.get()));
+    code->kill(ctx.get());
+    ASSERT_TRUE(code->isFinished(ctx.get()));
 
     EXPECT_CALL(m_mock, f).Times(0);
-    code.run(ctx.get());
-    ASSERT_TRUE(code.isFinished(ctx.get()));
+    code->run(ctx.get());
+    ASSERT_TRUE(code->isFinished(ctx.get()));
 
     // Test with another context
     Target anotherTarget;
     anotherTarget.addVariable(std::make_shared<Variable>("", ""));
     anotherTarget.addList(std::make_shared<List>("", ""));
-    auto anotherCtx = code.createExecutionContext(&anotherTarget);
-    ASSERT_FALSE(code.isFinished(anotherCtx.get()));
-    ASSERT_TRUE(code.isFinished(ctx.get()));
+    Script script(&anotherTarget, nullptr, &m_engine);
+    script.setCode(code);
+    Thread anotherThread(&anotherTarget, &m_engine, &script);
+    auto anotherCtx = code->createExecutionContext(&anotherThread);
+    ASSERT_FALSE(code->isFinished(anotherCtx.get()));
+    ASSERT_TRUE(code->isFinished(ctx.get()));
 
     EXPECT_CALL(m_mock, f(anotherCtx.get(), &anotherTarget, anotherTarget.variableData(), anotherTarget.listData()));
-    code.run(anotherCtx.get());
-    ASSERT_TRUE(code.isFinished(anotherCtx.get()));
-    ASSERT_TRUE(code.isFinished(ctx.get()));
+    code->run(anotherCtx.get());
+    ASSERT_TRUE(code->isFinished(anotherCtx.get()));
+    ASSERT_TRUE(code->isFinished(ctx.get()));
 
-    code.reset(ctx.get());
-    ASSERT_TRUE(code.isFinished(anotherCtx.get()));
-    ASSERT_FALSE(code.isFinished(ctx.get()));
+    code->reset(ctx.get());
+    ASSERT_TRUE(code->isFinished(anotherCtx.get()));
+    ASSERT_FALSE(code->isFinished(ctx.get()));
 }
 
 TEST_F(LLVMExecutableCodeTest, Promise)
@@ -155,9 +168,11 @@ TEST_F(LLVMExecutableCodeTest, Promise)
     beginResumeFunction();
     endFunction(m_builder->getInt1(true));
 
-    LLVMExecutableCode code(std::move(m_module));
-    auto ctx = code.createExecutionContext(&m_target);
-    ASSERT_FALSE(code.isFinished(ctx.get()));
+    auto code = std::make_shared<LLVMExecutableCode>(std::move(m_module));
+    m_script->setCode(code);
+    Thread thread(&m_target, &m_engine, m_script.get());
+    auto ctx = code->createExecutionContext(&thread);
+    ASSERT_FALSE(code->isFinished(ctx.get()));
 
     // run()
     auto promise = std::make_shared<Promise>();
@@ -165,17 +180,17 @@ TEST_F(LLVMExecutableCodeTest, Promise)
     EXPECT_CALL(m_mock, f).Times(0);
 
     for (int i = 0; i < 10; i++) {
-        code.run(ctx.get());
-        ASSERT_FALSE(code.isFinished(ctx.get()));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
     }
 
     promise->resolve();
 
     EXPECT_CALL(m_mock, f);
-    code.run(ctx.get());
-    ASSERT_TRUE(code.isFinished(ctx.get()));
+    code->run(ctx.get());
+    ASSERT_TRUE(code->isFinished(ctx.get()));
     ASSERT_EQ(ctx->promise(), nullptr);
-    code.reset(ctx.get());
+    code->reset(ctx.get());
 
     // kill()
     promise = std::make_shared<Promise>();
@@ -183,14 +198,14 @@ TEST_F(LLVMExecutableCodeTest, Promise)
     EXPECT_CALL(m_mock, f).Times(0);
 
     for (int i = 0; i < 10; i++) {
-        code.run(ctx.get());
-        ASSERT_FALSE(code.isFinished(ctx.get()));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
     }
 
-    code.kill(ctx.get());
-    ASSERT_TRUE(code.isFinished(ctx.get()));
+    code->kill(ctx.get());
+    ASSERT_TRUE(code->isFinished(ctx.get()));
     ASSERT_EQ(ctx->promise(), nullptr);
-    code.reset(ctx.get());
+    code->reset(ctx.get());
 
     // reset()
     promise = std::make_shared<Promise>();
@@ -198,41 +213,44 @@ TEST_F(LLVMExecutableCodeTest, Promise)
     EXPECT_CALL(m_mock, f).Times(0);
 
     for (int i = 0; i < 10; i++) {
-        code.run(ctx.get());
-        ASSERT_FALSE(code.isFinished(ctx.get()));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
     }
 
-    code.reset(ctx.get());
-    ASSERT_FALSE(code.isFinished(ctx.get()));
+    code->reset(ctx.get());
+    ASSERT_FALSE(code->isFinished(ctx.get()));
     ASSERT_EQ(ctx->promise(), nullptr);
 
     EXPECT_CALL(m_mock, f);
-    code.run(ctx.get());
-    ASSERT_TRUE(code.isFinished(ctx.get()));
+    code->run(ctx.get());
+    ASSERT_TRUE(code->isFinished(ctx.get()));
 
     // Test with another context
     Target anotherTarget;
-    auto anotherCtx = code.createExecutionContext(&anotherTarget);
-    ASSERT_FALSE(code.isFinished(anotherCtx.get()));
-    ASSERT_TRUE(code.isFinished(ctx.get()));
+    Script script(&anotherTarget, nullptr, &m_engine);
+    script.setCode(code);
+    Thread anotherThread(&anotherTarget, &m_engine, &script);
+    auto anotherCtx = code->createExecutionContext(&anotherThread);
+    ASSERT_FALSE(code->isFinished(anotherCtx.get()));
+    ASSERT_TRUE(code->isFinished(ctx.get()));
 
     promise = std::make_shared<Promise>();
     anotherCtx->setPromise(promise);
     EXPECT_CALL(m_mock, f).Times(0);
 
     for (int i = 0; i < 10; i++) {
-        code.run(anotherCtx.get());
-        ASSERT_FALSE(code.isFinished(anotherCtx.get()));
+        code->run(anotherCtx.get());
+        ASSERT_FALSE(code->isFinished(anotherCtx.get()));
     }
 
     promise->resolve();
 
     EXPECT_CALL(m_mock, f);
-    code.run(anotherCtx.get());
-    ASSERT_TRUE(code.isFinished(anotherCtx.get()));
-    ASSERT_TRUE(code.isFinished(ctx.get()));
+    code->run(anotherCtx.get());
+    ASSERT_TRUE(code->isFinished(anotherCtx.get()));
+    ASSERT_TRUE(code->isFinished(ctx.get()));
 
-    code.reset(ctx.get());
-    ASSERT_TRUE(code.isFinished(anotherCtx.get()));
-    ASSERT_FALSE(code.isFinished(ctx.get()));
+    code->reset(ctx.get());
+    ASSERT_TRUE(code->isFinished(anotherCtx.get()));
+    ASSERT_FALSE(code->isFinished(ctx.get()));
 }

@@ -25,7 +25,7 @@ class LLVMExecutableCode : public ExecutableCode
 
         bool isFinished(ExecutionContext *context) const override;
 
-        std::shared_ptr<ExecutionContext> createExecutionContext(Target *target) const override;
+        std::shared_ptr<ExecutionContext> createExecutionContext(Thread *thread) const override;
 
     private:
         uint64_t lookupFunction(const std::string &name);

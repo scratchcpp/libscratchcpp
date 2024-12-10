@@ -18,8 +18,12 @@ Thread::Thread(Target *target, IEngine *engine, Script *script) :
 {
     impl->vm = std::make_unique<VirtualMachine>(target, engine, script, this);
 #ifdef USE_LLVM
-    impl->code = impl->script->code();
-    impl->executionContext = impl->code->createExecutionContext(target);
+    if (impl->script) {
+        impl->code = impl->script->code();
+
+        if (impl->code)
+            impl->executionContext = impl->code->createExecutionContext(this);
+    }
 #endif
 }
 

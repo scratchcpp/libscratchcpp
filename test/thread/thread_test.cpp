@@ -12,6 +12,8 @@
 using namespace libscratchcpp;
 
 using ::testing::Return;
+using ::testing::Invoke;
+using ::testing::_;
 
 class ThreadTest : public testing::Test
 {
@@ -22,8 +24,10 @@ class ThreadTest : public testing::Test
 #ifdef USE_LLVM
             m_code = std::make_shared<ExecutableCodeMock>();
             m_script->setCode(m_code);
-            m_ctx = std::make_shared<ExecutionContext>(&m_target);
-            EXPECT_CALL(*m_code, createExecutionContext(&m_target)).WillOnce(Return(m_ctx));
+            EXPECT_CALL(*m_code, createExecutionContext(_)).WillOnce(Invoke([this](Thread *thread) {
+                m_ctx = std::make_shared<ExecutionContext>(thread);
+                return m_ctx;
+            }));
 #endif
             m_thread = std::make_unique<Thread>(&m_target, &m_engine, m_script.get());
         }

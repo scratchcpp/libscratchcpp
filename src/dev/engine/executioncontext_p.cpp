@@ -4,7 +4,7 @@
 
 using namespace libscratchcpp;
 
-ExecutionContextPrivate::ExecutionContextPrivate(Target *target) :
-    target(target)
+ExecutionContextPrivate::ExecutionContextPrivate(Thread *thread) :
+    thread(thread)
 {
 }

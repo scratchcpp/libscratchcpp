@@ -1,5 +1,5 @@
 #include <scratchcpp/dev/executioncontext.h>
-#include <scratchcpp/target.h>
+#include <scratchcpp/thread.h>
 #include <scratchcpp/dev/promise.h>
 
 #include "../../common.h"
@@ -8,15 +8,14 @@ using namespace libscratchcpp;
 
 TEST(ExecutionContextTest, Constructor)
 {
-    Target target;
-    ExecutionContext ctx(&target);
-    ASSERT_EQ(ctx.target(), &target);
+    Thread thread(nullptr, nullptr, nullptr);
+    ExecutionContext ctx(&thread);
+    ASSERT_EQ(ctx.thread(), &thread);
 }
 
 TEST(ExecutionContextTest, Promise)
 {
-    Target target;
-    ExecutionContext ctx(&target);
+    ExecutionContext ctx(nullptr);
     ASSERT_EQ(ctx.promise(), nullptr);
 
     auto promise = std::make_shared<Promise>();
