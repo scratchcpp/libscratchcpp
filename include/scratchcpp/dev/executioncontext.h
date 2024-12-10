@@ -9,7 +9,7 @@ namespace libscratchcpp
 {
 
 class Thread;
-class Target;
+class IEngine;
 class Promise;
 class ExecutionContextPrivate;
 
@@ -22,6 +22,7 @@ class LIBSCRATCHCPP_EXPORT ExecutionContext
         virtual ~ExecutionContext() { }
 
         Thread *thread() const;
+        IEngine *engine() const;
 
         std::shared_ptr<Promise> promise() const;
         void setPromise(std::shared_ptr<Promise> promise);

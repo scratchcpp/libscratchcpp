@@ -19,6 +19,12 @@ Thread *ExecutionContext::thread() const
     return impl->thread;
 }
 
+/*! Returns the engine of the project. */
+IEngine *ExecutionContext::engine() const
+{
+    return impl->thread->engine();
+}
+
 /*! Returns the script promise. */
 std::shared_ptr<Promise> ExecutionContext::promise() const
 {

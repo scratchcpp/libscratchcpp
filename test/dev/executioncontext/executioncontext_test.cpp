@@ -2,15 +2,19 @@
 #include <scratchcpp/thread.h>
 #include <scratchcpp/dev/promise.h>
 
+#include <enginemock.h>
+
 #include "../../common.h"
 
 using namespace libscratchcpp;
 
 TEST(ExecutionContextTest, Constructor)
 {
-    Thread thread(nullptr, nullptr, nullptr);
+    EngineMock engine;
+    Thread thread(nullptr, &engine, nullptr);
     ExecutionContext ctx(&thread);
     ASSERT_EQ(ctx.thread(), &thread);
+    ASSERT_EQ(ctx.engine(), &engine);
 }
 
 TEST(ExecutionContextTest, Promise)
