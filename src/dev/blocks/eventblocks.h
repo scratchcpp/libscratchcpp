@@ -14,6 +14,9 @@ class EventBlocks : public IExtension
         std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
+
+    private:
+        static CompilerValue *compileWhenTouchingObject(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
