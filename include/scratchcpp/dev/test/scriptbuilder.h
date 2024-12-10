@@ -44,7 +44,7 @@ class LIBSCRATCHCPP_EXPORT ScriptBuilder
         void addDropdownInput(const std::string &name, const std::string &selectedValue);
         void addDropdownField(const std::string &name, const std::string &selectedValue);
 
-        std::shared_ptr<Block> currentBlock() const;
+        std::shared_ptr<Block> currentBlock();
 
         void build();
         void run();
@@ -53,6 +53,7 @@ class LIBSCRATCHCPP_EXPORT ScriptBuilder
 
     private:
         void addBlock(std::shared_ptr<Block> block);
+        void build(std::shared_ptr<Target> target);
 
         spimpl::unique_impl_ptr<ScriptBuilderPrivate> impl;
 };

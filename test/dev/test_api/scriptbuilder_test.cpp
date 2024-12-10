@@ -40,6 +40,7 @@ TEST_F(ScriptBuilderTest, AddBlock)
     auto block = m_builder->currentBlock();
     ASSERT_TRUE(block);
     ASSERT_EQ(block->opcode(), "test_simple");
+    ASSERT_TRUE(block->compileFunction());
 
     m_builder->build();
 
