@@ -153,6 +153,12 @@ void ScriptBuilder::addDropdownField(const std::string &name, const std::string 
     impl->blocks.back()->addField(field);
 }
 
+/*! Returns the current block (can be used e. g. with a custom Compiler instance). */
+std::shared_ptr<Block> ScriptBuilder::currentBlock() const
+{
+    return impl->lastBlock;
+}
+
 /*! Builds and compiles the script. */
 void ScriptBuilder::build()
 {
