@@ -7,6 +7,7 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/broadcast.h>
 
 #include "../../common.h"
 #include "testextension.h"
@@ -159,6 +160,22 @@ TEST_F(ScriptBuilderTest, AddDropdownField)
     testing::internal::CaptureStdout();
     m_builder->run();
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "hello\n");
+}
+
+TEST_F(ScriptBuilderTest, AddEntityField)
+{
+    auto broadcast = std::make_shared<Broadcast>("", "");
+    m_engine->setBroadcasts({ broadcast });
+
+    m_builder->addBlock("test_print_field");
+    m_builder->addEntityField("STRING", broadcast);
+    auto block = m_builder->currentBlock();
+    ASSERT_TRUE(block);
+    ASSERT_EQ(block->opcode(), "test_print_field");
+    ASSERT_TRUE(block->inputs().empty());
+    ASSERT_EQ(block->fields().size(), 1);
+    ASSERT_EQ(block->fieldAt(0)->name(), "STRING");
+    ASSERT_EQ(block->fieldAt(0)->valuePtr(), broadcast);
 }
 
 TEST_F(ScriptBuilderTest, ReporterBlocks)

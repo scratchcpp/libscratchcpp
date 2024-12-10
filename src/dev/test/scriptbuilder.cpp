@@ -152,6 +152,17 @@ void ScriptBuilder::addDropdownField(const std::string &name, const std::string 
     impl->lastBlock->addField(field);
 }
 
+/*! Adds a field pointing to an entity (variable, list, broadcast, etc.) */
+void ScriptBuilder::addEntityField(const std::string &name, std::shared_ptr<Entity> entity)
+{
+    if (!impl->lastBlock)
+        return;
+
+    entity->setId(std::to_string(impl->blockId++));
+    auto field = std::make_shared<Field>(name, Value(), entity);
+    impl->lastBlock->addField(field);
+}
+
 /*!
  * Returns the current block (can be used e. g. with a custom Compiler instance).\n
  * The script is automatically built to set the compile function of the block.
@@ -199,8 +210,6 @@ void ScriptBuilder::addBlock(std::shared_ptr<Block> block)
 
 void ScriptBuilder::build(std::shared_ptr<Target> target)
 {
-    impl->engine->clear();
-
     if (target->blocks().empty()) {
         for (auto block : impl->blocks)
             target->addBlock(block);

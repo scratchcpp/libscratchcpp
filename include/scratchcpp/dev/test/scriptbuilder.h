@@ -13,6 +13,7 @@ namespace libscratchcpp
 class IExtension;
 class IEngine;
 class Target;
+class Entity;
 class List;
 
 } // namespace libscratchcpp
@@ -43,6 +44,8 @@ class LIBSCRATCHCPP_EXPORT ScriptBuilder
 
         void addDropdownInput(const std::string &name, const std::string &selectedValue);
         void addDropdownField(const std::string &name, const std::string &selectedValue);
+
+        void addEntityField(const std::string &name, std::shared_ptr<Entity> entity);
 
         std::shared_ptr<Block> currentBlock();
 
