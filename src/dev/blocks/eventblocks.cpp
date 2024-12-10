@@ -7,6 +7,7 @@
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/dev/executioncontext.h>
 #include <scratchcpp/thread.h>
+#include <scratchcpp/dev/compilerconstant.h>
 
 #include "eventblocks.h"
 
@@ -32,6 +33,7 @@ void EventBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "event_whenbackdropswitchesto", &compileWhenBackdropSwitchesTo);
     engine->addCompileFunction(this, "event_whengreaterthan", &compileWhenGreaterThan);
     engine->addCompileFunction(this, "event_broadcast", &compileBroadcast);
+    engine->addCompileFunction(this, "event_broadcastandwait", &compileBroadcastAndWait);
 }
 
 CompilerValue *EventBlocks::compileWhenTouchingObject(Compiler *compiler)
@@ -91,16 +93,25 @@ CompilerValue *EventBlocks::compileWhenGreaterThan(Compiler *compiler)
 CompilerValue *EventBlocks::compileBroadcast(Compiler *compiler)
 {
     auto input = compiler->addInput("BROADCAST_INPUT");
-    compiler->addFunctionCallWithCtx("event_broadcast", Compiler::StaticType::Void, { Compiler::StaticType::String }, { input });
+    auto wait = compiler->addConstValue(false);
+    compiler->addFunctionCallWithCtx("event_broadcast", Compiler::StaticType::Void, { Compiler::StaticType::String, Compiler::StaticType::Bool }, { input, wait });
     return nullptr;
 }
 
-extern "C" void event_broadcast(ExecutionContext *ctx, const char *name)
+CompilerValue *EventBlocks::compileBroadcastAndWait(Compiler *compiler)
+{
+    auto input = compiler->addInput("BROADCAST_INPUT");
+    auto wait = compiler->addConstValue(true);
+    compiler->addFunctionCallWithCtx("event_broadcast", Compiler::StaticType::Void, { Compiler::StaticType::String, Compiler::StaticType::Bool }, { input, wait });
+    return nullptr;
+}
+
+extern "C" void event_broadcast(ExecutionContext *ctx, const char *name, bool wait)
 {
     Thread *thread = ctx->thread();
     IEngine *engine = thread->engine();
     std::vector<int> broadcasts = engine->findBroadcasts(name);
 
     for (int index : broadcasts)
-        engine->broadcast(index, thread, false);
+        engine->broadcast(index, thread, wait);
 }
