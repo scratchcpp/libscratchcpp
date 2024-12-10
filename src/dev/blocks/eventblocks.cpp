@@ -21,6 +21,7 @@ void EventBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "event_whentouchingobject", &compileWhenTouchingObject);
     engine->addCompileFunction(this, "event_whenflagclicked", &compileWhenFlagClicked);
+    engine->addCompileFunction(this, "event_whenthisspriteclicked", &compileWhenThisSpriteClicked);
 }
 
 CompilerValue *EventBlocks::compileWhenTouchingObject(Compiler *compiler)
@@ -32,5 +33,11 @@ CompilerValue *EventBlocks::compileWhenTouchingObject(Compiler *compiler)
 CompilerValue *EventBlocks::compileWhenFlagClicked(Compiler *compiler)
 {
     compiler->engine()->addGreenFlagScript(compiler->block());
+    return nullptr;
+}
+
+CompilerValue *EventBlocks::compileWhenThisSpriteClicked(Compiler *compiler)
+{
+    compiler->engine()->addTargetClickScript(compiler->block());
     return nullptr;
 }
