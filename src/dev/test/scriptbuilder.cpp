@@ -121,7 +121,7 @@ void ScriptBuilder::addNullObscuredInput(const std::string &name)
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(Value()); });
     input->setValueBlock(block);
     impl->inputBlocks.push_back(block);
-    impl->blocks.back()->addInput(input);
+    impl->lastBlock->addInput(input);
 }
 
 /*! Adds a dropdown menu input to the current block. */
@@ -130,11 +130,10 @@ void ScriptBuilder::addDropdownInput(const std::string &name, const std::string 
     if (!impl->lastBlock)
         return;
 
-    auto block = impl->blocks.back();
     auto input = std::make_shared<Input>(name, Input::Type::Shadow);
-    block->addInput(input);
+    impl->lastBlock->addInput(input);
 
-    auto menu = std::make_shared<Block>(std::to_string(impl->blockId++), block->opcode() + "_menu");
+    auto menu = std::make_shared<Block>(std::to_string(impl->blockId++), impl->lastBlock->opcode() + "_menu");
     menu->setShadow(true);
     impl->inputBlocks.push_back(menu);
     input->setValueBlock(menu);
@@ -150,7 +149,7 @@ void ScriptBuilder::addDropdownField(const std::string &name, const std::string 
         return;
 
     auto field = std::make_shared<Field>(name, selectedValue);
-    impl->blocks.back()->addField(field);
+    impl->lastBlock->addField(field);
 }
 
 /*!
