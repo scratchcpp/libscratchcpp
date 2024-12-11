@@ -5,6 +5,9 @@
 #include <scratchcpp/dev/compilerconstant.h>
 #include <scratchcpp/value.h>
 #include <scratchcpp/input.h>
+#include <scratchcpp/field.h>
+#include <scratchcpp/dev/executioncontext.h>
+#include <scratchcpp/thread.h>
 
 #include "controlblocks.h"
 
@@ -26,6 +29,7 @@ void ControlBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "control_repeat", &compileRepeat);
     engine->addCompileFunction(this, "control_if", &compileIf);
     engine->addCompileFunction(this, "control_if_else", &compileIfElse);
+    engine->addCompileFunction(this, "control_stop", &compileStop);
 }
 
 CompilerValue *ControlBlocks::compileForever(Compiler *compiler)
@@ -56,4 +60,33 @@ CompilerValue *ControlBlocks::compileIfElse(Compiler *compiler)
     auto substack2 = compiler->input("SUBSTACK2");
     compiler->moveToIfElse(compiler->addInput("CONDITION"), substack ? substack->valueBlock() : nullptr, substack2 ? substack2->valueBlock() : nullptr);
     return nullptr;
+}
+
+CompilerValue *ControlBlocks::compileStop(Compiler *compiler)
+{
+    Field *option = compiler->field("STOP_OPTION");
+
+    if (option) {
+        std::string str = option->value().toString();
+
+        if (str == "all")
+            compiler->addFunctionCallWithCtx("control_stop_all", Compiler::StaticType::Void);
+        else if (str == "this script")
+            compiler->createStop();
+        else if (str == "other scripts in sprite" || str == "other scripts in stage")
+            compiler->addFunctionCallWithCtx("control_stop_other_scripts_in_target", Compiler::StaticType::Void);
+    }
+
+    return nullptr;
+}
+
+extern "C" void control_stop_all(ExecutionContext *ctx)
+{
+    ctx->engine()->stop();
+}
+
+extern "C" void control_stop_other_scripts_in_target(ExecutionContext *ctx)
+{
+    Thread *thread = ctx->thread();
+    ctx->engine()->stopTarget(thread->target(), thread);
 }
