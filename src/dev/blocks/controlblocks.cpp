@@ -24,6 +24,7 @@ void ControlBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "control_forever", &compileForever);
     engine->addCompileFunction(this, "control_repeat", &compileRepeat);
+    engine->addCompileFunction(this, "control_if", &compileIf);
 }
 
 CompilerValue *ControlBlocks::compileForever(Compiler *compiler)
@@ -38,5 +39,12 @@ CompilerValue *ControlBlocks::compileRepeat(Compiler *compiler)
 {
     auto substack = compiler->input("SUBSTACK");
     compiler->moveToRepeatLoop(compiler->addInput("TIMES"), substack ? substack->valueBlock() : nullptr);
+    return nullptr;
+}
+
+CompilerValue *ControlBlocks::compileIf(Compiler *compiler)
+{
+    auto substack = compiler->input("SUBSTACK");
+    compiler->moveToIf(compiler->addInput("CONDITION"), substack ? substack->valueBlock() : nullptr);
     return nullptr;
 }
