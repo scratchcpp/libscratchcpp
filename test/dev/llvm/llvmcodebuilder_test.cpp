@@ -3568,3 +3568,72 @@ TEST_F(LLVMCodeBuilderTest, LoopLists)
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
+
+TEST_F(LLVMCodeBuilderTest, StopNoWarp)
+{
+    Sprite sprite;
+    createBuilder(&sprite, false);
+
+    m_builder->beginLoopCondition();
+    CompilerValue *v = m_builder->addConstValue(true);
+    m_builder->beginWhileLoop(v);
+    m_builder->createStop();
+    m_builder->endLoop();
+
+    m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
+
+    std::string expected = "";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, StopWarp)
+{
+    Sprite sprite;
+    createBuilder(&sprite, true);
+
+    CompilerValue *v = m_builder->addConstValue(true);
+    m_builder->beginIfStatement(v);
+    m_builder->createStop();
+    m_builder->endIf();
+
+    m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
+
+    std::string expected = "";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, StopAndReturn)
+{
+    Sprite sprite;
+    createBuilder(&sprite, true);
+
+    m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
+    m_builder->createStop();
+
+    std::string expected = "no_args\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}

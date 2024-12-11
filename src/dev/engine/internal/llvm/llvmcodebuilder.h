@@ -89,6 +89,8 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         void yield() override;
 
+        void createStop() override;
+
     private:
         enum class Comparison
         {

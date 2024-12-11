@@ -81,6 +81,8 @@ class ICodeBuilder
         virtual void endLoop() = 0;
 
         virtual void yield() = 0;
+
+        virtual void createStop() = 0;
 };
 
 } // namespace libscratchcpp

@@ -68,6 +68,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     llvm::Value *targetLists = func->getArg(3);
 
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
+    llvm::BasicBlock *endBranch = llvm::BasicBlock::Create(m_ctx, "end", func);
     m_builder.SetInsertPoint(entry);
 
     // Init coroutine
@@ -898,9 +899,19 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 popScopeLevel();
                 break;
             }
+
+            case LLVMInstruction::Type::Stop: {
+                m_builder.CreateBr(endBranch);
+                llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_ctx, "", func);
+                m_builder.SetInsertPoint(nextBranch);
+                break;
+            }
         }
     }
 
+    m_builder.CreateBr(endBranch);
+
+    m_builder.SetInsertPoint(endBranch);
     freeHeap();
     syncVariables(targetVariables);
 
@@ -1281,6 +1292,11 @@ void LLVMCodeBuilder::endLoop()
 void LLVMCodeBuilder::yield()
 {
     m_instructions.push_back({ LLVMInstruction::Type::Yield });
+}
+
+void LLVMCodeBuilder::createStop()
+{
+    m_instructions.push_back({ LLVMInstruction::Type::Stop });
 }
 
 void LLVMCodeBuilder::initTypes()
