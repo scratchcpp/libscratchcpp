@@ -81,6 +81,11 @@ TEST_F(ControlBlocksTest, Repeat)
         builder.addObscuredInput("SUBSTACK", substack);
         builder.addValueInput("TIMES", 5);
 
+        builder.addBlock("control_repeat");
+        substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        builder.addNullObscuredInput("TIMES");
+
         builder.build();
 
         testing::internal::CaptureStdout();
@@ -116,6 +121,11 @@ TEST_F(ControlBlocksTest, If)
         builder.addBlock("control_if");
         auto substack = std::make_shared<Block>("", "test_print_test");
         builder.addValueInput("CONDITION", false);
+        builder.addObscuredInput("SUBSTACK", substack);
+
+        builder.addBlock("control_if");
+        substack = std::make_shared<Block>("", "test_print_test");
+        builder.addNullObscuredInput("CONDITION");
         builder.addObscuredInput("SUBSTACK", substack);
 
         builder.addBlock("control_if");
