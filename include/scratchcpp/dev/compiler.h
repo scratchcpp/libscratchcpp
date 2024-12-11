@@ -115,6 +115,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void moveToRepeatUntilLoop(CompilerValue *cond, std::shared_ptr<Block> substack);
         void warp();
 
+        void createStop();
+
         Input *input(const std::string &name) const;
         Field *field(const std::string &name) const;
 

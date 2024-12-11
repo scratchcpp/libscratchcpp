@@ -495,6 +495,12 @@ void Compiler::warp()
     impl->warp = true;
 }
 
+/*! Creates a stop script instruction. */
+void Compiler::createStop()
+{
+    impl->builder->createStop();
+}
+
 /*! Convenience method which returns the field with the given name. */
 Input *Compiler::input(const std::string &name) const
 {
