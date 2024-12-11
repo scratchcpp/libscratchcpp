@@ -22,6 +22,12 @@ void registerBlocks(IEngine *engine, IExtension *extension)
         compiler->addFunctionCall("test_print", Compiler::StaticType::Void, { Compiler::StaticType::String }, { input });
         return nullptr;
     });
+
+    engine->addCompileFunction(extension, "test_print_test2", [](Compiler *compiler) -> CompilerValue * {
+        auto input = compiler->addConstValue("test2");
+        compiler->addFunctionCall("test_print", Compiler::StaticType::Void, { Compiler::StaticType::String }, { input });
+        return nullptr;
+    });
 }
 
 extern "C" void test_print(const char *str)

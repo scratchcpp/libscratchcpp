@@ -152,3 +152,101 @@ TEST_F(ControlBlocksTest, If)
         builder.run();
     }
 }
+
+TEST_F(ControlBlocksTest, IfElse)
+{
+    auto target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", false);
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        auto substack2 = std::make_shared<Block>("", "test_print_test2");
+        builder.addObscuredInput("SUBSTACK2", substack2);
+
+        builder.addBlock("control_if_else");
+        builder.addNullObscuredInput("CONDITION");
+        substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        substack2 = std::make_shared<Block>("", "test_print_test2");
+        builder.addObscuredInput("SUBSTACK2", substack2);
+
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", true);
+        substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        substack2 = std::make_shared<Block>("", "test_print_test2");
+        builder.addObscuredInput("SUBSTACK2", substack2);
+
+        builder.build();
+
+        testing::internal::CaptureStdout();
+        builder.run();
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "test2\ntest2\ntest\n");
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", false);
+        auto substack2 = std::make_shared<Block>("", "test_print_test2");
+        builder.addObscuredInput("SUBSTACK2", substack2);
+
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", true);
+        substack2 = std::make_shared<Block>("", "test_print_test2");
+        builder.addObscuredInput("SUBSTACK2", substack2);
+
+        builder.build();
+
+        testing::internal::CaptureStdout();
+        builder.run();
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "test2\n");
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", false);
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", true);
+        substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+
+        builder.build();
+
+        testing::internal::CaptureStdout();
+        builder.run();
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\n");
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", false);
+
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", true);
+
+        builder.build();
+        builder.run();
+    }
+}
