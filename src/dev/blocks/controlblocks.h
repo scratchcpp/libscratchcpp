@@ -14,6 +14,9 @@ class ControlBlocks : public IExtension
         std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
+
+    private:
+        static CompilerValue *compileForever(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
