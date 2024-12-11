@@ -10,7 +10,7 @@ namespace libscratchcpp
 class LLVMExecutionContext : public ExecutionContext
 {
     public:
-        LLVMExecutionContext(Target *target);
+        LLVMExecutionContext(Thread *thread);
 
         void *coroutineHandle() const;
         void setCoroutineHandle(void *newCoroutineHandle);

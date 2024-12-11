@@ -1526,10 +1526,12 @@ std::shared_ptr<Variable> Engine::getVariable(const std::string &id, Target *tar
     int index;
 
     // Check stage
-    index = stage->findVariableById(id);
+    if (stage) {
+        index = stage->findVariableById(id);
 
-    if (index != -1)
-        return stage->variableAt(index);
+        if (index != -1)
+            return stage->variableAt(index);
+    }
 
     // Check currently compiled target
     if (target != stage) {
@@ -1562,10 +1564,12 @@ std::shared_ptr<List> Engine::getList(const std::string &id, Target *target)
     int index;
 
     // Check stage
-    index = stage->findListById(id);
+    if (stage) {
+        index = stage->findListById(id);
 
-    if (index != -1)
-        return stage->listAt(index);
+        if (index != -1)
+            return stage->listAt(index);
+    }
 
     // Check currently compiled target
     if (target != stage) {

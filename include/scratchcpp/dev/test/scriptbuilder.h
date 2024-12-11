@@ -4,8 +4,7 @@
 
 #include <vector>
 
-#include "../../global.h"
-#include "../../spimpl.h"
+#include "../../inputvalue.h"
 
 namespace libscratchcpp
 {
@@ -44,6 +43,11 @@ class LIBSCRATCHCPP_EXPORT ScriptBuilder
         void addDropdownInput(const std::string &name, const std::string &selectedValue);
         void addDropdownField(const std::string &name, const std::string &selectedValue);
 
+        void addEntityInput(const std::string &name, const std::string &entityName, InputValue::Type entityType, std::shared_ptr<Entity> entity);
+        void addEntityField(const std::string &name, std::shared_ptr<Entity> entity);
+
+        std::shared_ptr<Block> currentBlock();
+
         void build();
         void run();
 
@@ -51,6 +55,7 @@ class LIBSCRATCHCPP_EXPORT ScriptBuilder
 
     private:
         void addBlock(std::shared_ptr<Block> block);
+        void build(std::shared_ptr<Target> target);
 
         spimpl::unique_impl_ptr<ScriptBuilderPrivate> impl;
 };

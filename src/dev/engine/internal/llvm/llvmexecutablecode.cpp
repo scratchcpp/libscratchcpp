@@ -5,6 +5,7 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/dev/promise.h>
+#include <scratchcpp/thread.h>
 #include <llvm/Support/Error.h>
 #include <iostream>
 
@@ -64,7 +65,7 @@ void LLVMExecutableCode::run(ExecutionContext *context)
 
         ctx->setFinished(done);
     } else {
-        Target *target = ctx->target();
+        Target *target = ctx->thread()->target();
         void *handle = m_mainFunction(context, target, target->variableData(), target->listData());
 
         if (!handle)
@@ -95,9 +96,9 @@ bool LLVMExecutableCode::isFinished(ExecutionContext *context) const
     return getContext(context)->finished();
 }
 
-std::shared_ptr<ExecutionContext> LLVMExecutableCode::createExecutionContext(Target *target) const
+std::shared_ptr<ExecutionContext> LLVMExecutableCode::createExecutionContext(Thread *thread) const
 {
-    return std::make_shared<LLVMExecutionContext>(target);
+    return std::make_shared<LLVMExecutionContext>(thread);
 }
 
 uint64_t LLVMExecutableCode::lookupFunction(const std::string &name)

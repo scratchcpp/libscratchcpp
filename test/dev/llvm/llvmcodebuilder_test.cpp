@@ -1,5 +1,7 @@
 #include <scratchcpp/value.h>
 #include <scratchcpp/dev/executablecode.h>
+#include <scratchcpp/script.h>
+#include <scratchcpp/thread.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/variable.h>
@@ -243,7 +245,10 @@ class LLVMCodeBuilderTest : public testing::Test
             std::string expected = str + str;
 
             auto code = m_builder->finalize();
-            auto ctx = code->createExecutionContext(&m_target);
+            Script script(&m_target, nullptr, nullptr);
+            script.setCode(code);
+            Thread thread(&m_target, nullptr, &script);
+            auto ctx = code->createExecutionContext(&thread);
 
             testing::internal::CaptureStdout();
             code->run(ctx.get());
@@ -269,7 +274,10 @@ class LLVMCodeBuilderTest : public testing::Test
             std::string expected = str + str;
 
             auto code = m_builder->finalize();
-            auto ctx = code->createExecutionContext(&m_target);
+            Script script(&m_target, nullptr, nullptr);
+            script.setCode(code);
+            Thread thread(&m_target, nullptr, &script);
+            auto ctx = code->createExecutionContext(&thread);
 
             testing::internal::CaptureStdout();
             code->run(ctx.get());
@@ -296,7 +304,10 @@ class LLVMCodeBuilderTest : public testing::Test
             std::string expected = str + str;
 
             auto code = m_builder->finalize();
-            auto ctx = code->createExecutionContext(&m_target);
+            Script script(&m_target, nullptr, nullptr);
+            script.setCode(code);
+            Thread thread(&m_target, nullptr, &script);
+            auto ctx = code->createExecutionContext(&thread);
 
             testing::internal::CaptureStdout();
             code->run(ctx.get());
@@ -342,7 +353,10 @@ TEST_F(LLVMCodeBuilderTest, FunctionCalls)
             { v, v1, v2 });
         m_builder->addTargetFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
         auto code = m_builder->finalize();
-        auto ctx = code->createExecutionContext(&m_target);
+        Script script(&m_target, nullptr, nullptr);
+        script.setCode(code);
+        Thread thread(&m_target, nullptr, &script);
+        auto ctx = code->createExecutionContext(&thread);
 
         std::stringstream s;
         s << ctx.get();
@@ -393,7 +407,10 @@ TEST_F(LLVMCodeBuilderTest, ConstCasting)
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&m_target);
+    Script script(&m_target, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&m_target, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
 
     static const std::string expected =
         "5.2\n"
@@ -479,7 +496,10 @@ TEST_F(LLVMCodeBuilderTest, RawValueCasting)
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&m_target);
+    Script script(&m_target, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&m_target, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
 
     static const std::string expected =
         "5.2\n"
@@ -1384,7 +1404,11 @@ TEST_F(LLVMCodeBuilderTest, WriteVariable)
     m_builder->createVariableWrite(localVar3.get(), v);
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     code->run(ctx.get());
 
     ASSERT_EQ(globalVar1->value(), 5);
@@ -1463,7 +1487,11 @@ TEST_F(LLVMCodeBuilderTest, Select)
 
     auto code = m_builder->finalize();
     testing::internal::CaptureStdout();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
@@ -1519,7 +1547,11 @@ TEST_F(LLVMCodeBuilderTest, ReadVariable)
     expected += localVar3->value().toString() + '\n';
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
@@ -1587,7 +1619,11 @@ TEST_F(LLVMCodeBuilderTest, ClearList)
     m_builder->createListClear(localList2.get());
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     code->run(ctx.get());
 
     ASSERT_TRUE(globalList1->empty());
@@ -1634,7 +1670,11 @@ TEST_F(LLVMCodeBuilderTest, RemoveFromList)
     m_builder->createListRemove(localList.get(), v);
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     code->run(ctx.get());
 
     ASSERT_EQ(globalList->toString(), "13");
@@ -1690,7 +1730,11 @@ TEST_F(LLVMCodeBuilderTest, AppendToList)
     m_builder->createListAppend(localList.get(), v);
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     code->run(ctx.get());
 
     ASSERT_EQ(globalList->toString(), "1 2 3 1 test");
@@ -1752,7 +1796,11 @@ TEST_F(LLVMCodeBuilderTest, InsertToList)
     m_builder->createListInsert(localList.get(), v1, v2);
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     code->run(ctx.get());
 
     ASSERT_EQ(globalList->toString(), "1 2 1 test 3");
@@ -1808,7 +1856,11 @@ TEST_F(LLVMCodeBuilderTest, ListReplace)
     m_builder->createListReplace(localList.get(), v1, v2);
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     code->run(ctx.get());
 
     ASSERT_EQ(globalList->toString(), "1 test 1");
@@ -1854,7 +1906,11 @@ TEST_F(LLVMCodeBuilderTest, GetListContents)
         "Lorem ipsum dolor sit\n";
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
@@ -1923,7 +1979,11 @@ TEST_F(LLVMCodeBuilderTest, GetListItem)
         "sit\n";
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
@@ -1968,7 +2028,11 @@ TEST_F(LLVMCodeBuilderTest, GetListSize)
         "4\n";
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
@@ -2059,7 +2123,11 @@ TEST_F(LLVMCodeBuilderTest, GetListItemIndex)
         "-1\n";
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
@@ -2150,7 +2218,11 @@ TEST_F(LLVMCodeBuilderTest, ListContainsItem)
         "false\n";
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
@@ -2192,7 +2264,10 @@ TEST_F(LLVMCodeBuilderTest, Yield)
     build();
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&m_target);
+    Script script(&m_target, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&m_target, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
 
     static const std::string expected1 =
         "no_args\n"
@@ -2221,7 +2296,7 @@ TEST_F(LLVMCodeBuilderTest, Yield)
     createBuilder(true);
     build();
     code = m_builder->finalize();
-    ctx = code->createExecutionContext(&m_target);
+    ctx = code->createExecutionContext(&thread);
 
     static const std::string expected =
         "no_args\n"
@@ -2273,7 +2348,11 @@ TEST_F(LLVMCodeBuilderTest, VariablesAfterSuspend)
         "-4.8\n";
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     code->run(ctx.get());
     ASSERT_FALSE(code->isFinished(ctx.get()));
 
@@ -2361,7 +2440,11 @@ TEST_F(LLVMCodeBuilderTest, ListsAfterSuspend)
         "hello\n";
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     code->run(ctx.get());
     ASSERT_FALSE(code->isFinished(ctx.get()));
 
@@ -2523,7 +2606,10 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
     m_builder->endIf();
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&m_target);
+    Script script(&m_target, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&m_target, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
 
     static const std::string expected =
         "no_args\n"
@@ -2634,7 +2720,11 @@ TEST_F(LLVMCodeBuilderTest, IfStatementVariables)
         "true\n";
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
@@ -2771,7 +2861,11 @@ TEST_F(LLVMCodeBuilderTest, IfStatementLists)
         "false\n";
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
@@ -2842,7 +2936,10 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     m_builder->endLoop();
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&m_target);
+    Script script(&m_target, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&m_target, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
 
     static const std::string expected =
         "no_args\n"
@@ -2882,7 +2979,7 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     m_builder->endLoop();
 
     code = m_builder->finalize();
-    ctx = code->createExecutionContext(&m_target);
+    ctx = code->createExecutionContext(&thread);
 
     static const std::string expected1 = "no_args\n";
 
@@ -2908,7 +3005,7 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     m_builder->endLoop();
 
     code = m_builder->finalize();
-    ctx = code->createExecutionContext(&m_target);
+    ctx = code->createExecutionContext(&thread);
     code->run(ctx.get());
     ASSERT_TRUE(code->isFinished(ctx.get()));
 }
@@ -2976,7 +3073,10 @@ TEST_F(LLVMCodeBuilderTest, WhileLoop)
     m_builder->endLoop();
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&m_target);
+    Script script(&m_target, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&m_target, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
 
     static const std::string expected =
         "1_arg 0\n"
@@ -3001,7 +3101,7 @@ TEST_F(LLVMCodeBuilderTest, WhileLoop)
     m_builder->endLoop();
 
     code = m_builder->finalize();
-    ctx = code->createExecutionContext(&m_target);
+    ctx = code->createExecutionContext(&thread);
 
     static const std::string expected1 = "no_args\n";
 
@@ -3081,7 +3181,10 @@ TEST_F(LLVMCodeBuilderTest, RepeatUntilLoop)
     m_builder->endLoop();
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&m_target);
+    Script script(&m_target, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&m_target, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
 
     static const std::string expected =
         "1_arg 0\n"
@@ -3106,7 +3209,7 @@ TEST_F(LLVMCodeBuilderTest, RepeatUntilLoop)
     m_builder->endLoop();
 
     code = m_builder->finalize();
-    ctx = code->createExecutionContext(&m_target);
+    ctx = code->createExecutionContext(&thread);
 
     static const std::string expected1 = "no_args\n";
 
@@ -3244,7 +3347,11 @@ TEST_F(LLVMCodeBuilderTest, LoopVariables)
         "true\n";
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
@@ -3434,7 +3541,11 @@ TEST_F(LLVMCodeBuilderTest, LoopLists)
         "false\n";
 
     auto code = m_builder->finalize();
-    auto ctx = code->createExecutionContext(&sprite);
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);

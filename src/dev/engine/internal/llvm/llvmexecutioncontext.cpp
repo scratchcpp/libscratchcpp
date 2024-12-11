@@ -4,8 +4,8 @@
 
 using namespace libscratchcpp;
 
-LLVMExecutionContext::LLVMExecutionContext(Target *target) :
-    ExecutionContext(target)
+LLVMExecutionContext::LLVMExecutionContext(Thread *thread) :
+    ExecutionContext(thread)
 {
 }
 

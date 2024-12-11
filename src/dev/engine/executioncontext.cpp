@@ -1,21 +1,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/dev/executioncontext.h>
+#include <scratchcpp/thread.h>
 
 #include "executioncontext_p.h"
 
 using namespace libscratchcpp;
 
 /*! Constructs ExecutionContext. */
-ExecutionContext::ExecutionContext(Target *target) :
-    impl(spimpl::make_unique_impl<ExecutionContextPrivate>(target))
+ExecutionContext::ExecutionContext(Thread *thread) :
+    impl(spimpl::make_unique_impl<ExecutionContextPrivate>(thread))
 {
 }
 
-/*! Returns the Target of this context. */
-Target *ExecutionContext::target() const
+/*! Returns the thread of this context. */
+Thread *ExecutionContext::thread() const
 {
-    return impl->target;
+    return impl->thread;
+}
+
+/*! Returns the engine of the project. */
+IEngine *ExecutionContext::engine() const
+{
+    return impl->thread->engine();
 }
 
 /*! Returns the script promise. */

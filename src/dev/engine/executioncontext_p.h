@@ -7,14 +7,15 @@
 namespace libscratchcpp
 {
 
+class Thread;
 class Target;
 class Promise;
 
 struct ExecutionContextPrivate
 {
-        ExecutionContextPrivate(Target *target);
+        ExecutionContextPrivate(Thread *thread);
 
-        Target *target = nullptr;
+        Thread *thread = nullptr;
         std::shared_ptr<Promise> promise;
 };
 

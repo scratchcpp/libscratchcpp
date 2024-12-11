@@ -3,10 +3,11 @@
 #include <scratchcpp/dev/test/scriptbuilder.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
+#include <scratchcpp/inputvalue.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/dev/compilerconstant.h>
 #include <scratchcpp/dev/executablecode.h>
-#include <scratchcpp/stage.h>
+#include <scratchcpp/sprite.h>
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/list.h>
 
@@ -121,7 +122,7 @@ void ScriptBuilder::addNullObscuredInput(const std::string &name)
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(Value()); });
     input->setValueBlock(block);
     impl->inputBlocks.push_back(block);
-    impl->blocks.back()->addInput(input);
+    impl->lastBlock->addInput(input);
 }
 
 /*! Adds a dropdown menu input to the current block. */
@@ -130,11 +131,10 @@ void ScriptBuilder::addDropdownInput(const std::string &name, const std::string 
     if (!impl->lastBlock)
         return;
 
-    auto block = impl->blocks.back();
     auto input = std::make_shared<Input>(name, Input::Type::Shadow);
-    block->addInput(input);
+    impl->lastBlock->addInput(input);
 
-    auto menu = std::make_shared<Block>(std::to_string(impl->blockId++), block->opcode() + "_menu");
+    auto menu = std::make_shared<Block>(std::to_string(impl->blockId++), impl->lastBlock->opcode() + "_menu");
     menu->setShadow(true);
     impl->inputBlocks.push_back(menu);
     input->setValueBlock(menu);
@@ -150,28 +150,54 @@ void ScriptBuilder::addDropdownField(const std::string &name, const std::string 
         return;
 
     auto field = std::make_shared<Field>(name, selectedValue);
-    impl->blocks.back()->addField(field);
+    impl->lastBlock->addField(field);
+}
+
+/*! Adds an input pointing to an entity (variable, list, broadcast, etc.) */
+void ScriptBuilder::addEntityInput(const std::string &name, const std::string &entityName, InputValue::Type entityType, std::shared_ptr<Entity> entity)
+{
+    if (!impl->lastBlock)
+        return;
+
+    entity->setId(std::to_string(impl->blockId++));
+    auto input = std::make_shared<Input>(name, Input::Type::Shadow);
+    input->setPrimaryValue(entityName);
+    input->primaryValue()->setValuePtr(entity);
+    input->primaryValue()->setType(entityType);
+    impl->lastBlock->addInput(input);
+}
+
+/*! Adds a field pointing to an entity (variable, list, broadcast, etc.) */
+void ScriptBuilder::addEntityField(const std::string &name, std::shared_ptr<Entity> entity)
+{
+    if (!impl->lastBlock)
+        return;
+
+    entity->setId(std::to_string(impl->blockId++));
+    auto field = std::make_shared<Field>(name, Value(), entity);
+    impl->lastBlock->addField(field);
+}
+
+/*!
+ * Returns the current block (can be used e. g. with a custom Compiler instance).\n
+ * The script is automatically built to set the compile function of the block.
+ * \note This method is not intended for building scripts, use build() for that.
+ */
+std::shared_ptr<Block> ScriptBuilder::currentBlock()
+{
+    if (!impl->lastBlock)
+        return nullptr;
+
+    if (!impl->lastBlock->compileFunction())
+        build(std::make_shared<Sprite>());
+
+    return impl->lastBlock;
 }
 
 /*! Builds and compiles the script. */
 void ScriptBuilder::build()
 {
-    if (impl->target->blocks().empty()) {
-        for (auto block : impl->blocks)
-            impl->target->addBlock(block);
-
-        for (auto block : impl->inputBlocks)
-            impl->target->addBlock(block);
-    }
-
-    std::vector<std::shared_ptr<Target>> targets = impl->engine->targets();
-
-    if (std::find(targets.begin(), targets.end(), impl->target) == targets.end()) {
-        targets.push_back(impl->target);
-        impl->engine->setTargets({ impl->target });
-    }
-
-    impl->engine->compile();
+    build(impl->target);
 }
 
 /*! Runs the built script. */
@@ -195,4 +221,24 @@ void ScriptBuilder::addBlock(std::shared_ptr<Block> block)
     }
 
     impl->blocks.push_back(block);
+}
+
+void ScriptBuilder::build(std::shared_ptr<Target> target)
+{
+    if (target->blocks().empty()) {
+        for (auto block : impl->blocks)
+            target->addBlock(block);
+
+        for (auto block : impl->inputBlocks)
+            target->addBlock(block);
+    }
+
+    std::vector<std::shared_ptr<Target>> targets = impl->engine->targets();
+
+    if (std::find(targets.begin(), targets.end(), target) == targets.end()) {
+        targets.push_back(target);
+        impl->engine->setTargets({ target });
+    }
+
+    impl->engine->compile();
 }
