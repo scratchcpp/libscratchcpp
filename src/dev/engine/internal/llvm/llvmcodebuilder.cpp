@@ -784,6 +784,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &reg = step.args[0];
                 assert(reg.first == Compiler::StaticType::Number);
                 llvm::Value *count = castValue(reg.second, reg.first);
+                llvm::Value *isInf = m_builder.CreateFCmpOEQ(count, llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), false));
 
                 // Clamp count if <= 0 (we can skip the loop if count is not positive)
                 llvm::Value *comparison = m_builder.CreateFCmpULE(count, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)));
@@ -795,6 +796,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::round, { count->getType() });
                 count = m_builder.CreateCall(roundFunc, { count });
                 count = m_builder.CreateFPToSI(count, m_builder.getInt64Ty()); // cast to signed integer
+                count = m_builder.CreateSelect(isInf, zero, count);
 
                 // Jump to condition branch
                 m_builder.CreateBr(loop.conditionBranch);
@@ -808,7 +810,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", func);
 
                 llvm::Value *currentIndex = m_builder.CreateLoad(m_builder.getInt64Ty(), loop.index);
-                comparison = m_builder.CreateICmpULT(currentIndex, count);
+                comparison = m_builder.CreateOr(isInf, m_builder.CreateICmpULT(currentIndex, count));
                 m_builder.CreateCondBr(comparison, body, loop.afterLoop);
 
                 // Switch to body branch

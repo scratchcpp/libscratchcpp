@@ -3008,6 +3008,24 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     ctx = code->createExecutionContext(&thread);
     code->run(ctx.get());
     ASSERT_TRUE(code->isFinished(ctx.get()));
+
+    // Infinite no warp loop
+    createBuilder(false);
+
+    v = m_builder->addConstValue("Infinity");
+    m_builder->beginRepeatLoop(v);
+    m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
+    m_builder->endLoop();
+
+    code = m_builder->finalize();
+    ctx = code->createExecutionContext(&thread);
+
+    for (int i = 0; i < 10; i++) {
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "no_args\n");
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+    }
 }
 
 TEST_F(LLVMCodeBuilderTest, WhileLoop)
