@@ -23,6 +23,7 @@ std::string ControlBlocks::description() const
 void ControlBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "control_forever", &compileForever);
+    engine->addCompileFunction(this, "control_repeat", &compileRepeat);
 }
 
 CompilerValue *ControlBlocks::compileForever(Compiler *compiler)
@@ -30,5 +31,12 @@ CompilerValue *ControlBlocks::compileForever(Compiler *compiler)
     auto substack = compiler->input("SUBSTACK");
     compiler->beginLoopCondition();
     compiler->moveToWhileLoop(compiler->addConstValue(true), substack ? substack->valueBlock() : nullptr);
+    return nullptr;
+}
+
+CompilerValue *ControlBlocks::compileRepeat(Compiler *compiler)
+{
+    auto substack = compiler->input("SUBSTACK");
+    compiler->moveToRepeatLoop(compiler->addInput("TIMES"), substack ? substack->valueBlock() : nullptr);
     return nullptr;
 }

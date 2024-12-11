@@ -68,3 +68,40 @@ TEST_F(ControlBlocksTest, Forever)
         }
     }
 }
+
+TEST_F(ControlBlocksTest, Repeat)
+{
+    auto target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_repeat");
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        builder.addValueInput("TIMES", 5);
+
+        builder.build();
+
+        testing::internal::CaptureStdout();
+        builder.run();
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\ntest\ntest\ntest\ntest\n");
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+        builder.addBlock("control_repeat");
+        builder.addValueInput("TIMES", "Infinity");
+
+        builder.build();
+        m_engine->start();
+
+        for (int i = 0; i < 2; i++) {
+            m_engine->step();
+            ASSERT_TRUE(m_engine->isRunning());
+        }
+    }
+}
