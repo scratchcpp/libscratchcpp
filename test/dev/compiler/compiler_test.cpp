@@ -1418,13 +1418,26 @@ TEST_F(CompilerTest, MoveToRepeatUntilLoop)
     compile(compiler, l1);
 }
 
+TEST_F(CompilerTest, CreateYield)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        EXPECT_CALL(*m_builder, yield());
+        compiler->createYield();
+        return nullptr;
+    });
+
+    compile(compiler, block);
+}
+
 TEST_F(CompilerTest, CreateStop)
 {
     Compiler compiler(&m_engine, &m_target);
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
-        CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, createStop());
         compiler->createStop();
         return nullptr;

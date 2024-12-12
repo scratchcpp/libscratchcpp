@@ -495,6 +495,12 @@ void Compiler::warp()
     impl->warp = true;
 }
 
+/*! Creates a suspend instruction. */
+void Compiler::createYield()
+{
+    impl->builder->yield();
+}
+
 /*! Creates a stop script instruction. */
 void Compiler::createStop()
 {
