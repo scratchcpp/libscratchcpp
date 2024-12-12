@@ -36,3 +36,15 @@ void ExecutionContext::setPromise(std::shared_ptr<Promise> promise)
 {
     impl->promise = promise;
 }
+
+/*! Returns the stack timer of this context. Can be used for wait blocks. */
+IStackTimer *ExecutionContext::stackTimer() const
+{
+    return impl->stackTimer;
+}
+
+/*! Sets a custom stack timer. */
+void ExecutionContext::setStackTimer(IStackTimer *newStackTimer)
+{
+    impl->stackTimer = newStackTimer;
+}
