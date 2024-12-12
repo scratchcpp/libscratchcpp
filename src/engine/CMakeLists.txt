@@ -16,6 +16,8 @@ target_sources(scratchcpp
     internal/iclock.h
     internal/timer.cpp
     internal/timer.h
+    internal/stacktimer.cpp
+    internal/stacktimer.h
     internal/randomgenerator.h
     internal/randomgenerator.cpp
     internal/irandomgenerator.h

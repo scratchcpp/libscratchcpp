@@ -59,6 +59,7 @@ target_sources(scratchcpp
     include/scratchcpp/sprite.h
     include/scratchcpp/textbubble.h
     include/scratchcpp/itimer.h
+    include/scratchcpp/istacktimer.h
     include/scratchcpp/keyevent.h
     include/scratchcpp/rect.h
     include/scratchcpp/igraphicseffect.h
