@@ -6,7 +6,11 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/script.h>
 #include <scratchcpp/thread.h>
+#include <scratchcpp/dev/executablecode.h>
+#include <scratchcpp/dev/executioncontext.h>
+
 #include <enginemock.h>
+#include <stacktimermock.h>
 
 #include "../common.h"
 #include "dev/blocks/controlblocks.h"
@@ -14,6 +18,8 @@
 
 using namespace libscratchcpp;
 using namespace libscratchcpp::test;
+
+using ::testing::Return;
 
 class ControlBlocksTest : public testing::Test
 {
@@ -330,5 +336,71 @@ TEST_F(ControlBlocksTest, Stop)
 
         EXPECT_CALL(m_engineMock, stopTarget(target.get(), &thread));
         thread.run();
+    }
+}
+
+TEST_F(ControlBlocksTest, Wait)
+{
+    auto target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_wait");
+        builder.addValueInput("DURATION", 2.5);
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(timer, start(2.5));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsed()).WillOnce(Return(false));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsed()).WillOnce(Return(false));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsed()).WillOnce(Return(true));
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_wait");
+        builder.addNullObscuredInput("DURATION");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(timer, start(0.0));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsed()).WillOnce(Return(true));
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
     }
 }

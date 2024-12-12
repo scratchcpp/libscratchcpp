@@ -8,6 +8,7 @@
 #include <scratchcpp/field.h>
 #include <scratchcpp/dev/executioncontext.h>
 #include <scratchcpp/thread.h>
+#include <scratchcpp/istacktimer.h>
 
 #include "controlblocks.h"
 
@@ -30,6 +31,7 @@ void ControlBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "control_if", &compileIf);
     engine->addCompileFunction(this, "control_if_else", &compileIfElse);
     engine->addCompileFunction(this, "control_stop", &compileStop);
+    engine->addCompileFunction(this, "control_wait", &compileWait);
 }
 
 CompilerValue *ControlBlocks::compileForever(Compiler *compiler)
@@ -80,6 +82,20 @@ CompilerValue *ControlBlocks::compileStop(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *ControlBlocks::compileWait(Compiler *compiler)
+{
+    auto duration = compiler->addInput("DURATION");
+    compiler->addFunctionCallWithCtx("control_start_stack_timer", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { duration });
+    compiler->createYield();
+
+    compiler->beginLoopCondition();
+    auto elapsed = compiler->addFunctionCallWithCtx("control_stack_timer_elapsed", Compiler::StaticType::Bool);
+    compiler->beginRepeatUntilLoop(elapsed);
+    compiler->endLoop();
+
+    return nullptr;
+}
+
 extern "C" void control_stop_all(ExecutionContext *ctx)
 {
     ctx->engine()->stop();
@@ -89,4 +105,14 @@ extern "C" void control_stop_other_scripts_in_target(ExecutionContext *ctx)
 {
     Thread *thread = ctx->thread();
     ctx->engine()->stopTarget(thread->target(), thread);
+}
+
+extern "C" void control_start_stack_timer(ExecutionContext *ctx, double seconds)
+{
+    ctx->stackTimer()->start(seconds);
+}
+
+extern "C" bool control_stack_timer_elapsed(ExecutionContext *ctx)
+{
+    return ctx->stackTimer()->elapsed();
 }
