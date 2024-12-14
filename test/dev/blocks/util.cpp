@@ -28,11 +28,18 @@ void registerBlocks(IEngine *engine, IExtension *extension)
         compiler->addFunctionCall("test_print", Compiler::StaticType::Void, { Compiler::StaticType::String }, { input });
         return nullptr;
     });
+
+    engine->addCompileFunction(extension, "test_condition", [](Compiler *compiler) -> CompilerValue * { return compiler->addFunctionCall("test_condition", Compiler::StaticType::Bool); });
 }
 
 extern "C" void test_print(const char *str)
 {
     std::cout << str << std::endl;
+}
+
+extern "C" bool test_condition()
+{
+    return conditionReturnValue;
 }
 
 } // namespace libscratchcpp

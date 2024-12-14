@@ -32,6 +32,7 @@ void ControlBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "control_if_else", &compileIfElse);
     engine->addCompileFunction(this, "control_stop", &compileStop);
     engine->addCompileFunction(this, "control_wait", &compileWait);
+    engine->addCompileFunction(this, "control_wait_until", &compileWaitUntil);
 }
 
 CompilerValue *ControlBlocks::compileForever(Compiler *compiler)
@@ -93,6 +94,14 @@ CompilerValue *ControlBlocks::compileWait(Compiler *compiler)
     compiler->beginRepeatUntilLoop(elapsed);
     compiler->endLoop();
 
+    return nullptr;
+}
+
+CompilerValue *ControlBlocks::compileWaitUntil(Compiler *compiler)
+{
+    compiler->beginLoopCondition();
+    compiler->beginRepeatUntilLoop(compiler->addInput("CONDITION"));
+    compiler->endLoop();
     return nullptr;
 }
 

@@ -410,3 +410,65 @@ TEST_F(ControlBlocksTest, Wait)
         ASSERT_TRUE(code->isFinished(ctx.get()));
     }
 }
+
+TEST_F(ControlBlocksTest, WaitUntil)
+{
+    auto target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_wait_until");
+        builder.addValueInput("CONDITION", false);
+        builder.build();
+        m_engine->start();
+
+        m_engine->step();
+        ASSERT_TRUE(m_engine->isRunning());
+
+        m_engine->step();
+        ASSERT_TRUE(m_engine->isRunning());
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_wait_until");
+        builder.addValueInput("CONDITION", true);
+        builder.build();
+        m_engine->start();
+
+        m_engine->step();
+        m_engine->step();
+        ASSERT_FALSE(m_engine->isRunning());
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_wait_until");
+        auto block = std::make_shared<Block>("", "test_condition");
+        builder.addObscuredInput("CONDITION", block);
+        builder.build();
+
+        conditionReturnValue = false;
+        m_engine->start();
+
+        m_engine->step();
+        ASSERT_TRUE(m_engine->isRunning());
+
+        m_engine->step();
+        ASSERT_TRUE(m_engine->isRunning());
+
+        conditionReturnValue = true;
+        m_engine->step();
+        m_engine->step();
+        ASSERT_FALSE(m_engine->isRunning());
+    }
+}
