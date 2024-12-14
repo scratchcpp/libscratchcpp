@@ -796,7 +796,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.SetInsertPoint(roundBranch);
                 llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::round, { count->getType() });
                 count = m_builder.CreateCall(roundFunc, { count });
-                count = m_builder.CreateFPToSI(count, m_builder.getInt64Ty()); // cast to signed integer
+                count = m_builder.CreateFPToUI(count, m_builder.getInt64Ty()); // cast to unsigned integer
                 count = m_builder.CreateSelect(isInf, zero, count);
 
                 // Jump to condition branch
@@ -884,7 +884,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 if (loop.isRepeatLoop) {
                     // Increment index
                     llvm::Value *currentIndex = m_builder.CreateLoad(m_builder.getInt64Ty(), loop.index);
-                    llvm::Value *incremented = m_builder.CreateAdd(currentIndex, llvm::ConstantInt::get(m_builder.getInt64Ty(), 1, true));
+                    llvm::Value *incremented = m_builder.CreateAdd(currentIndex, llvm::ConstantInt::get(m_builder.getInt64Ty(), 1, false));
                     m_builder.CreateStore(incremented, loop.index);
                 }
 
