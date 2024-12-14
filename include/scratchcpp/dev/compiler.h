@@ -51,6 +51,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         CompilerValue *addTargetFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
         CompilerValue *addFunctionCallWithCtx(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
         CompilerConstant *addConstValue(const Value &value);
+        CompilerValue *addLoopIndex();
         CompilerValue *addVariableValue(Variable *variable);
         CompilerValue *addListContents(List *list);
         CompilerValue *addListItem(List *list, CompilerValue *index);

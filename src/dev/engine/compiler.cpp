@@ -115,6 +115,12 @@ CompilerConstant *Compiler::addConstValue(const Value &value)
     return static_cast<CompilerConstant *>(impl->builder->addConstValue(value));
 }
 
+/*! Adds the index of the current repeat loop to the compiled code. */
+CompilerValue *Compiler::addLoopIndex()
+{
+    return impl->builder->addLoopIndex();
+}
+
 /*! Adds the value of the given variable to the code. */
 CompilerValue *Compiler::addVariableValue(Variable *variable)
 {
