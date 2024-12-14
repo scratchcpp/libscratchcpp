@@ -360,18 +360,22 @@ TEST_F(ControlBlocksTest, Wait)
         ctx->setStackTimer(&timer);
 
         EXPECT_CALL(timer, start(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw());
         code->run(ctx.get());
         ASSERT_FALSE(code->isFinished(ctx.get()));
 
         EXPECT_CALL(timer, elapsed()).WillOnce(Return(false));
+        EXPECT_CALL(m_engineMock, requestRedraw()).Times(0);
         code->run(ctx.get());
         ASSERT_FALSE(code->isFinished(ctx.get()));
 
         EXPECT_CALL(timer, elapsed()).WillOnce(Return(false));
+        EXPECT_CALL(m_engineMock, requestRedraw()).Times(0);
         code->run(ctx.get());
         ASSERT_FALSE(code->isFinished(ctx.get()));
 
         EXPECT_CALL(timer, elapsed()).WillOnce(Return(true));
+        EXPECT_CALL(m_engineMock, requestRedraw()).Times(0);
         code->run(ctx.get());
         ASSERT_TRUE(code->isFinished(ctx.get()));
     }
@@ -396,10 +400,12 @@ TEST_F(ControlBlocksTest, Wait)
         ctx->setStackTimer(&timer);
 
         EXPECT_CALL(timer, start(0.0));
+        EXPECT_CALL(m_engineMock, requestRedraw());
         code->run(ctx.get());
         ASSERT_FALSE(code->isFinished(ctx.get()));
 
         EXPECT_CALL(timer, elapsed()).WillOnce(Return(true));
+        EXPECT_CALL(m_engineMock, requestRedraw()).Times(0);
         code->run(ctx.get());
         ASSERT_TRUE(code->isFinished(ctx.get()));
     }

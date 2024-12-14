@@ -85,7 +85,7 @@ CompilerValue *ControlBlocks::compileStop(Compiler *compiler)
 CompilerValue *ControlBlocks::compileWait(Compiler *compiler)
 {
     auto duration = compiler->addInput("DURATION");
-    compiler->addFunctionCallWithCtx("control_start_stack_timer", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { duration });
+    compiler->addFunctionCallWithCtx("control_start_wait", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { duration });
     compiler->createYield();
 
     compiler->beginLoopCondition();
@@ -107,9 +107,10 @@ extern "C" void control_stop_other_scripts_in_target(ExecutionContext *ctx)
     ctx->engine()->stopTarget(thread->target(), thread);
 }
 
-extern "C" void control_start_stack_timer(ExecutionContext *ctx, double seconds)
+extern "C" void control_start_wait(ExecutionContext *ctx, double seconds)
 {
     ctx->stackTimer()->start(seconds);
+    ctx->engine()->requestRedraw();
 }
 
 extern "C" bool control_stack_timer_elapsed(ExecutionContext *ctx)
