@@ -822,6 +822,14 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::LoopIndex: {
+                assert(!loops.empty());
+                LLVMLoop &loop = loops.back();
+                llvm::Value *index = m_builder.CreateLoad(m_builder.getInt64Ty(), loop.index);
+                step.functionReturnReg->value = m_builder.CreateUIToFP(index, m_builder.getDoubleTy());
+                break;
+            }
+
             case LLVMInstruction::Type::BeginWhileLoop: {
                 assert(!loops.empty());
                 LLVMLoop &loop = loops.back();
@@ -991,6 +999,11 @@ CompilerConstant *LLVMCodeBuilder::addConstValue(const Value &value)
     auto constReg = std::make_shared<LLVMConstantRegister>(TYPE_MAP[value.type()], value);
     auto reg = std::reinterpret_pointer_cast<LLVMRegister>(constReg);
     return static_cast<CompilerConstant *>(addReg(reg));
+}
+
+CompilerValue *LLVMCodeBuilder::addLoopIndex()
+{
+    return createOp(LLVMInstruction::Type::LoopIndex, Compiler::StaticType::Number, {}, {});
 }
 
 CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
