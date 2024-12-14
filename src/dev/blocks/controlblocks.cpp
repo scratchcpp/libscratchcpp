@@ -33,6 +33,7 @@ void ControlBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "control_stop", &compileStop);
     engine->addCompileFunction(this, "control_wait", &compileWait);
     engine->addCompileFunction(this, "control_wait_until", &compileWaitUntil);
+    engine->addCompileFunction(this, "control_repeat_until", &compileRepeatUntil);
 }
 
 CompilerValue *ControlBlocks::compileForever(Compiler *compiler)
@@ -102,6 +103,14 @@ CompilerValue *ControlBlocks::compileWaitUntil(Compiler *compiler)
     compiler->beginLoopCondition();
     compiler->beginRepeatUntilLoop(compiler->addInput("CONDITION"));
     compiler->endLoop();
+    return nullptr;
+}
+
+CompilerValue *ControlBlocks::compileRepeatUntil(Compiler *compiler)
+{
+    auto substack = compiler->input("SUBSTACK");
+    compiler->beginLoopCondition();
+    compiler->moveToRepeatUntilLoop(compiler->addInput("CONDITION"), substack ? substack->valueBlock() : nullptr);
     return nullptr;
 }
 

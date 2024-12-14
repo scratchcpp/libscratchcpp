@@ -472,3 +472,90 @@ TEST_F(ControlBlocksTest, WaitUntil)
         ASSERT_FALSE(m_engine->isRunning());
     }
 }
+
+TEST_F(ControlBlocksTest, RepeatUntil)
+{
+    auto target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_repeat_until");
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        builder.addValueInput("CONDITION", false);
+        builder.build();
+        m_engine->start();
+
+        for (int i = 0; i < 2; i++) {
+            testing::internal::CaptureStdout();
+            m_engine->step();
+            ASSERT_EQ(testing::internal::GetCapturedStdout().substr(0, 10), "test\ntest\n");
+            ASSERT_TRUE(m_engine->isRunning());
+        }
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_repeat_until");
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        builder.addValueInput("CONDITION", true);
+        builder.build();
+        m_engine->start();
+
+        testing::internal::CaptureStdout();
+        m_engine->step();
+        m_engine->step();
+        ASSERT_TRUE(testing::internal::GetCapturedStdout().empty());
+        ASSERT_FALSE(m_engine->isRunning());
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_repeat_until");
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        auto block = std::make_shared<Block>("", "test_condition");
+        builder.addObscuredInput("CONDITION", block);
+        builder.build();
+
+        conditionReturnValue = false;
+        m_engine->start();
+
+        testing::internal::CaptureStdout();
+        m_engine->step();
+        ASSERT_EQ(testing::internal::GetCapturedStdout().substr(0, 10), "test\ntest\n");
+        ASSERT_TRUE(m_engine->isRunning());
+
+        conditionReturnValue = true;
+        m_engine->step();
+        m_engine->step();
+        ASSERT_FALSE(m_engine->isRunning());
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+        builder.addBlock("control_repeat_until");
+        builder.addValueInput("CONDITION", false);
+
+        builder.build();
+        m_engine->start();
+
+        for (int i = 0; i < 2; i++) {
+            m_engine->step();
+            ASSERT_TRUE(m_engine->isRunning());
+        }
+    }
+}
