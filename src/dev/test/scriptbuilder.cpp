@@ -103,8 +103,23 @@ void ScriptBuilder::addObscuredInput(const std::string &name, std::shared_ptr<Bl
     if (!impl->lastBlock)
         return;
 
-    valueBlock->setId(std::to_string(impl->blockId++));
-    impl->inputBlocks.push_back(valueBlock);
+    auto block = valueBlock;
+
+    while (block) {
+        block->setId(std::to_string(impl->blockId++));
+        impl->inputBlocks.push_back(block);
+
+        auto parent = block->parent();
+        auto next = block->next();
+
+        if (parent)
+            parent->setNext(block);
+
+        if (next)
+            next->setParent(block);
+
+        block = next;
+    }
 
     auto input = std::make_shared<Input>(name, Input::Type::ObscuredShadow);
     input->setValueBlock(valueBlock);

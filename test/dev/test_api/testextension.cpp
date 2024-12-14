@@ -29,6 +29,7 @@ void TestExtension::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "test_print_field", &compilePrintField);
     engine->addCompileFunction(this, "test_teststr", &compileTestStr);
     engine->addCompileFunction(this, "test_input", &compileInput);
+    engine->addCompileFunction(this, "test_substack", &compileSubstack);
 }
 
 CompilerValue *TestExtension::compileSimple(Compiler *compiler)
@@ -67,6 +68,13 @@ CompilerValue *TestExtension::compileTestStr(Compiler *compiler)
 CompilerValue *TestExtension::compileInput(Compiler *compiler)
 {
     return compiler->addInput("INPUT");
+}
+
+CompilerValue *TestExtension::compileSubstack(Compiler *compiler)
+{
+    auto substack = compiler->input("SUBSTACK");
+    compiler->moveToIf(compiler->addConstValue(true), substack->valueBlock());
+    return nullptr;
 }
 
 extern "C" void test_simple()
