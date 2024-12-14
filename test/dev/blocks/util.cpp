@@ -2,6 +2,8 @@
 #include <scratchcpp/dev/compiler.h>
 #include <scratchcpp/dev/compilerconstant.h>
 #include <scratchcpp/value.h>
+#include <scratchcpp/field.h>
+#include <scratchcpp/variable.h>
 #include <iostream>
 
 #include "util.h"
@@ -30,6 +32,12 @@ void registerBlocks(IEngine *engine, IExtension *extension)
     });
 
     engine->addCompileFunction(extension, "test_condition", [](Compiler *compiler) -> CompilerValue * { return compiler->addFunctionCall("test_condition", Compiler::StaticType::Bool); });
+
+    engine->addCompileFunction(extension, "test_set_var", [](Compiler *compiler) -> CompilerValue * {
+        Variable *var = static_cast<Variable *>(compiler->field("VARIABLE")->valuePtr().get());
+        compiler->createVariableWrite(var, compiler->addInput("VALUE"));
+        return nullptr;
+    });
 }
 
 extern "C" void test_print(const char *str)

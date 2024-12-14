@@ -9,6 +9,7 @@
 #include <scratchcpp/dev/executioncontext.h>
 #include <scratchcpp/thread.h>
 #include <scratchcpp/istacktimer.h>
+#include <scratchcpp/variable.h>
 
 #include "controlblocks.h"
 
@@ -35,6 +36,7 @@ void ControlBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "control_wait_until", &compileWaitUntil);
     engine->addCompileFunction(this, "control_repeat_until", &compileRepeatUntil);
     engine->addCompileFunction(this, "control_while", &compileWhile);
+    engine->addCompileFunction(this, "control_for_each", &compileForEach);
 }
 
 CompilerValue *ControlBlocks::compileForever(Compiler *compiler)
@@ -120,6 +122,17 @@ CompilerValue *ControlBlocks::compileWhile(Compiler *compiler)
     auto substack = compiler->input("SUBSTACK");
     compiler->beginLoopCondition();
     compiler->moveToWhileLoop(compiler->addInput("CONDITION"), substack ? substack->valueBlock() : nullptr);
+    return nullptr;
+}
+
+CompilerValue *ControlBlocks::compileForEach(Compiler *compiler)
+{
+    Variable *var = static_cast<Variable *>(compiler->field("VARIABLE")->valuePtr().get());
+    assert(var);
+    auto substack = compiler->input("SUBSTACK");
+    compiler->moveToRepeatLoop(compiler->addInput("VALUE"), substack ? substack->valueBlock() : nullptr);
+    auto index = compiler->createAdd(compiler->addLoopIndex(), compiler->addConstValue(1));
+    compiler->createVariableWrite(var, index);
     return nullptr;
 }
 

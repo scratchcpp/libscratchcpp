@@ -4,10 +4,12 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
+#include <scratchcpp/field.h>
 #include <scratchcpp/script.h>
 #include <scratchcpp/thread.h>
 #include <scratchcpp/dev/executablecode.h>
 #include <scratchcpp/dev/executioncontext.h>
+#include <scratchcpp/variable.h>
 
 #include <enginemock.h>
 #include <stacktimermock.h>
@@ -644,5 +646,111 @@ TEST_F(ControlBlocksTest, While)
             m_engine->step();
             ASSERT_TRUE(m_engine->isRunning());
         }
+    }
+}
+
+TEST_F(ControlBlocksTest, ForEach)
+{
+    auto target = std::make_shared<Sprite>();
+    auto var1 = std::make_shared<Variable>("", "");
+    auto var2 = std::make_shared<Variable>("", "");
+    target->addVariable(var1);
+    target->addVariable(var2);
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_for_each");
+
+        auto substack = std::make_shared<Block>("", "test_print");
+        auto input = std::make_shared<Input>("STRING", Input::Type::ObscuredShadow);
+        input->primaryValue()->setValuePtr(var1);
+        substack->addInput(input);
+
+        builder.addObscuredInput("SUBSTACK", substack);
+
+        builder.addValueInput("VALUE", 5);
+        builder.addEntityField("VARIABLE", var1);
+
+        builder.addBlock("control_for_each");
+        substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        builder.addNullObscuredInput("VALUE");
+        builder.addEntityField("VARIABLE", var2);
+
+        builder.build();
+
+        var1->setValue(10);
+        testing::internal::CaptureStdout();
+        builder.run();
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "1\n2\n3\n4\n5\n");
+        ASSERT_EQ(var1->value(), 5);
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+    target->addVariable(var1);
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_for_each");
+
+        auto substack = std::make_shared<Block>("", "test_print");
+        auto input = std::make_shared<Input>("STRING", Input::Type::ObscuredShadow);
+        input->primaryValue()->setValuePtr(var1);
+        substack->addInput(input);
+
+        auto setVar = std::make_shared<Block>("", "test_set_var");
+        substack->setNext(setVar);
+        setVar->setParent(substack);
+        auto field = std::make_shared<Field>("VARIABLE", "");
+        setVar->addField(field);
+        input = std::make_shared<Input>("VALUE", Input::Type::Shadow);
+        input->setPrimaryValue(0);
+        setVar->addInput(input);
+
+        auto printAgain = std::make_shared<Block>("", "test_print");
+        setVar->setNext(printAgain);
+        printAgain->setParent(setVar);
+        input = std::make_shared<Input>("STRING", Input::Type::ObscuredShadow);
+        printAgain->addInput(input);
+
+        builder.addObscuredInput("SUBSTACK", substack);
+
+        builder.addValueInput("VALUE", 3);
+        builder.addEntityField("VARIABLE", var1);
+
+        field->setValuePtr(var1);
+        input->primaryValue()->setValuePtr(var1);
+
+        builder.build();
+
+        var1->setValue(7);
+        testing::internal::CaptureStdout();
+        builder.run();
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "1\n0\n2\n0\n3\n0\n");
+        ASSERT_EQ(var1->value(), 0);
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+    target->addVariable(var1);
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+        builder.addBlock("control_for_each");
+        builder.addValueInput("VALUE", "Infinity");
+        builder.addEntityField("VARIABLE", var1);
+
+        builder.build();
+        m_engine->start();
+
+        for (int i = 0; i < 2; i++) {
+            m_engine->step();
+            ASSERT_TRUE(m_engine->isRunning());
+        }
+
+        ASSERT_GT(var1->value(), 0);
     }
 }
