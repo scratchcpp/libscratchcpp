@@ -42,6 +42,7 @@ std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBl
     impl->builder = impl->builderFactory->create(impl->target, startBlock->id(), false);
     impl->substackTree.clear();
     impl->substackHit = false;
+    impl->emptySubstack = false;
     impl->warp = false;
     impl->block = startBlock;
 
@@ -53,6 +54,11 @@ std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBl
             if (impl->customIfStatementCount > 0) {
                 std::cerr << "error: if statement created by block '" << impl->block->opcode() << "' not terminated" << std::endl;
                 assert(false);
+            }
+
+            if (impl->emptySubstack) {
+                impl->emptySubstack = false;
+                impl->substackEnd();
             }
 
             if (impl->customLoopCount > 0) {
@@ -456,7 +462,7 @@ void Compiler::moveToIfElse(CompilerValue *cond, std::shared_ptr<Block> substack
     impl->builder->beginIfStatement(cond);
 
     if (!impl->block)
-        impl->substackEnd();
+        impl->emptySubstack = true;
 }
 
 /*! Jumps to the given repeat loop substack. */
@@ -468,7 +474,7 @@ void Compiler::moveToRepeatLoop(CompilerValue *count, std::shared_ptr<Block> sub
     impl->builder->beginRepeatLoop(count);
 
     if (!impl->block)
-        impl->substackEnd();
+        impl->emptySubstack = true;
 }
 
 /*! Jumps to the given while loop substack. */
@@ -480,7 +486,7 @@ void Compiler::moveToWhileLoop(CompilerValue *cond, std::shared_ptr<Block> subst
     impl->builder->beginWhileLoop(cond);
 
     if (!impl->block)
-        impl->substackEnd();
+        impl->emptySubstack = true;
 }
 
 /*! Jumps to the given until loop substack. */
@@ -492,7 +498,7 @@ void Compiler::moveToRepeatUntilLoop(CompilerValue *cond, std::shared_ptr<Block>
     impl->builder->beginRepeatUntilLoop(cond);
 
     if (!impl->block)
-        impl->substackEnd();
+        impl->emptySubstack = true;
 }
 
 /*! Makes current script run without screen refresh. */
