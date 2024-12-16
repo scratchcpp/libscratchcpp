@@ -26,6 +26,7 @@ class ControlBlocks : public IExtension
         static CompilerValue *compileRepeatUntil(Compiler *compiler);
         static CompilerValue *compileWhile(Compiler *compiler);
         static CompilerValue *compileForEach(Compiler *compiler);
+        static CompilerValue *compileStartAsClone(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

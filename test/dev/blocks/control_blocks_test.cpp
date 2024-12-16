@@ -754,3 +754,16 @@ TEST_F(ControlBlocksTest, ForEach)
         ASSERT_GT(var1->value(), 0);
     }
 }
+
+TEST_F(ControlBlocksTest, StartAsClone)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("control_start_as_clone");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    EXPECT_CALL(m_engineMock, addCloneInitScript(block));
+    compiler.compile(block);
+}

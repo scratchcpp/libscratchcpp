@@ -37,6 +37,7 @@ void ControlBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "control_repeat_until", &compileRepeatUntil);
     engine->addCompileFunction(this, "control_while", &compileWhile);
     engine->addCompileFunction(this, "control_for_each", &compileForEach);
+    engine->addCompileFunction(this, "control_start_as_clone", &compileStartAsClone);
 }
 
 CompilerValue *ControlBlocks::compileForever(Compiler *compiler)
@@ -133,6 +134,12 @@ CompilerValue *ControlBlocks::compileForEach(Compiler *compiler)
     compiler->moveToRepeatLoop(compiler->addInput("VALUE"), substack ? substack->valueBlock() : nullptr);
     auto index = compiler->createAdd(compiler->addLoopIndex(), compiler->addConstValue(1));
     compiler->createVariableWrite(var, index);
+    return nullptr;
+}
+
+CompilerValue *ControlBlocks::compileStartAsClone(Compiler *compiler)
+{
+    compiler->engine()->addCloneInitScript(compiler->block());
     return nullptr;
 }
 
