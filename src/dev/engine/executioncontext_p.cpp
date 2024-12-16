@@ -5,6 +5,8 @@
 using namespace libscratchcpp;
 
 ExecutionContextPrivate::ExecutionContextPrivate(Thread *thread) :
-    thread(thread)
+    thread(thread),
+    defaultStackTimer(std::make_unique<StackTimer>()),
+    stackTimer(defaultStackTimer.get())
 {
 }

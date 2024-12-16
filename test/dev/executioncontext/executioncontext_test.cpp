@@ -3,6 +3,7 @@
 #include <scratchcpp/dev/promise.h>
 
 #include <enginemock.h>
+#include <stacktimermock.h>
 
 #include "../../common.h"
 
@@ -28,4 +29,14 @@ TEST(ExecutionContextTest, Promise)
 
     ctx.setPromise(nullptr);
     ASSERT_EQ(ctx.promise(), nullptr);
+}
+
+TEST(ExecutionContextTest, StackTimer)
+{
+    ExecutionContext ctx(nullptr);
+    ASSERT_TRUE(ctx.stackTimer());
+
+    StackTimerMock timer;
+    ctx.setStackTimer(&timer);
+    ASSERT_EQ(ctx.stackTimer(), &timer);
 }

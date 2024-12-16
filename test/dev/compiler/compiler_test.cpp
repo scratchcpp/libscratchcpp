@@ -161,6 +161,25 @@ TEST_F(CompilerTest, AddConstValue)
     compile(compiler, block);
 }
 
+TEST_F(CompilerTest, AddLoopIndex)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("a", "");
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        CompilerValue ret(Compiler::StaticType::Unknown);
+
+        EXPECT_CALL(*m_builder, addLoopIndex()).WillOnce(Return(&ret));
+        EXPECT_EQ(compiler->addLoopIndex(), &ret);
+
+        EXPECT_CALL(*m_builder, addLoopIndex()).WillOnce(Return(nullptr));
+        EXPECT_EQ(compiler->addLoopIndex(), nullptr);
+
+        return nullptr;
+    });
+
+    compile(compiler, block);
+}
+
 TEST_F(CompilerTest, AddVariableValue)
 {
     Compiler compiler(&m_engine, &m_target);
@@ -1416,6 +1435,34 @@ TEST_F(CompilerTest, MoveToRepeatUntilLoop)
 
     EXPECT_CALL(*m_builder, addConstValue(Value("after")));
     compile(compiler, l1);
+}
+
+TEST_F(CompilerTest, CreateYield)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        EXPECT_CALL(*m_builder, yield());
+        compiler->createYield();
+        return nullptr;
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateStop)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        EXPECT_CALL(*m_builder, createStop());
+        compiler->createStop();
+        return nullptr;
+    });
+
+    compile(compiler, block);
 }
 
 TEST_F(CompilerTest, Input)

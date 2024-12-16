@@ -58,10 +58,12 @@ struct LLVMInstruction
             BeginElse,
             EndIf,
             BeginRepeatLoop,
+            LoopIndex,
             BeginWhileLoop,
             BeginRepeatUntilLoop,
             BeginLoopCondition,
-            EndLoop
+            EndLoop,
+            Stop
         };
 
         LLVMInstruction(Type type) :

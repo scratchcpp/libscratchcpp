@@ -4,11 +4,12 @@
 
 #include <memory>
 
+#include "../../engine/internal/stacktimer.h"
+
 namespace libscratchcpp
 {
 
 class Thread;
-class Target;
 class Promise;
 
 struct ExecutionContextPrivate
@@ -17,6 +18,8 @@ struct ExecutionContextPrivate
 
         Thread *thread = nullptr;
         std::shared_ptr<Promise> promise;
+        std::unique_ptr<IStackTimer> defaultStackTimer;
+        IStackTimer *stackTimer = nullptr;
 };
 
 } // namespace libscratchcpp

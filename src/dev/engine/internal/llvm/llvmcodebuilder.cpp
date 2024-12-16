@@ -68,6 +68,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     llvm::Value *targetLists = func->getArg(3);
 
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
+    llvm::BasicBlock *endBranch = llvm::BasicBlock::Create(m_ctx, "end", func);
     m_builder.SetInsertPoint(entry);
 
     // Init coroutine
@@ -784,6 +785,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &reg = step.args[0];
                 assert(reg.first == Compiler::StaticType::Number);
                 llvm::Value *count = castValue(reg.second, reg.first);
+                llvm::Value *isInf = m_builder.CreateFCmpOEQ(count, llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), false));
 
                 // Clamp count if <= 0 (we can skip the loop if count is not positive)
                 llvm::Value *comparison = m_builder.CreateFCmpULE(count, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)));
@@ -794,7 +796,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.SetInsertPoint(roundBranch);
                 llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::round, { count->getType() });
                 count = m_builder.CreateCall(roundFunc, { count });
-                count = m_builder.CreateFPToSI(count, m_builder.getInt64Ty()); // cast to signed integer
+                count = m_builder.CreateFPToUI(count, m_builder.getInt64Ty()); // cast to unsigned integer
+                count = m_builder.CreateSelect(isInf, zero, count);
 
                 // Jump to condition branch
                 m_builder.CreateBr(loop.conditionBranch);
@@ -808,7 +811,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", func);
 
                 llvm::Value *currentIndex = m_builder.CreateLoad(m_builder.getInt64Ty(), loop.index);
-                comparison = m_builder.CreateICmpULT(currentIndex, count);
+                comparison = m_builder.CreateOr(isInf, m_builder.CreateICmpULT(currentIndex, count));
                 m_builder.CreateCondBr(comparison, body, loop.afterLoop);
 
                 // Switch to body branch
@@ -816,6 +819,14 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 loops.push_back(loop);
                 pushScopeLevel();
+                break;
+            }
+
+            case LLVMInstruction::Type::LoopIndex: {
+                assert(!loops.empty());
+                LLVMLoop &loop = loops.back();
+                llvm::Value *index = m_builder.CreateLoad(m_builder.getInt64Ty(), loop.index);
+                step.functionReturnReg->value = m_builder.CreateUIToFP(index, m_builder.getDoubleTy());
                 break;
             }
 
@@ -881,7 +892,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 if (loop.isRepeatLoop) {
                     // Increment index
                     llvm::Value *currentIndex = m_builder.CreateLoad(m_builder.getInt64Ty(), loop.index);
-                    llvm::Value *incremented = m_builder.CreateAdd(currentIndex, llvm::ConstantInt::get(m_builder.getInt64Ty(), 1, true));
+                    llvm::Value *incremented = m_builder.CreateAdd(currentIndex, llvm::ConstantInt::get(m_builder.getInt64Ty(), 1, false));
                     m_builder.CreateStore(incremented, loop.index);
                 }
 
@@ -896,9 +907,19 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 popScopeLevel();
                 break;
             }
+
+            case LLVMInstruction::Type::Stop: {
+                m_builder.CreateBr(endBranch);
+                llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_ctx, "", func);
+                m_builder.SetInsertPoint(nextBranch);
+                break;
+            }
         }
     }
 
+    m_builder.CreateBr(endBranch);
+
+    m_builder.SetInsertPoint(endBranch);
     freeHeap();
     syncVariables(targetVariables);
 
@@ -978,6 +999,11 @@ CompilerConstant *LLVMCodeBuilder::addConstValue(const Value &value)
     auto constReg = std::make_shared<LLVMConstantRegister>(TYPE_MAP[value.type()], value);
     auto reg = std::reinterpret_pointer_cast<LLVMRegister>(constReg);
     return static_cast<CompilerConstant *>(addReg(reg));
+}
+
+CompilerValue *LLVMCodeBuilder::addLoopIndex()
+{
+    return createOp(LLVMInstruction::Type::LoopIndex, Compiler::StaticType::Number, {}, {});
 }
 
 CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
@@ -1279,6 +1305,11 @@ void LLVMCodeBuilder::endLoop()
 void LLVMCodeBuilder::yield()
 {
     m_instructions.push_back({ LLVMInstruction::Type::Yield });
+}
+
+void LLVMCodeBuilder::createStop()
+{
+    m_instructions.push_back({ LLVMInstruction::Type::Stop });
 }
 
 void LLVMCodeBuilder::initTypes()

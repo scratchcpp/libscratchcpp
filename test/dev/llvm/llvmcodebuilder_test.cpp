@@ -2907,7 +2907,8 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     v = m_builder->addConstValue(2);
     v = callConstFuncForType(ValueType::Number, v);
     m_builder->beginRepeatLoop(v);
-    m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
+    CompilerValue *index = m_builder->addLoopIndex();
+    m_builder->addTargetFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { index });
     m_builder->endLoop();
 
     // Nested
@@ -2928,8 +2929,8 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
         v = m_builder->addConstValue(3);
         m_builder->beginRepeatLoop(v);
         {
-            v = m_builder->addConstValue(3);
-            m_builder->addTargetFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+            index = m_builder->addLoopIndex();
+            m_builder->addTargetFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { index });
         }
         m_builder->endLoop();
     }
@@ -2950,20 +2951,20 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
         "1_arg 1\n"
         "1_arg 1\n"
         "1_arg 1\n"
-        "no_args\n"
-        "no_args\n"
+        "0\n"
+        "1\n"
         "1_arg 1\n"
         "1_arg 1\n"
         "1_arg 2\n"
-        "1_arg 3\n"
-        "1_arg 3\n"
-        "1_arg 3\n"
+        "0\n"
+        "1\n"
+        "2\n"
         "1_arg 1\n"
         "1_arg 1\n"
         "1_arg 2\n"
-        "1_arg 3\n"
-        "1_arg 3\n"
-        "1_arg 3\n";
+        "0\n"
+        "1\n"
+        "2\n";
 
     EXPECT_CALL(m_target, isStage).WillRepeatedly(Return(false));
     testing::internal::CaptureStdout();
@@ -3008,6 +3009,24 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     ctx = code->createExecutionContext(&thread);
     code->run(ctx.get());
     ASSERT_TRUE(code->isFinished(ctx.get()));
+
+    // Infinite no warp loop
+    createBuilder(false);
+
+    v = m_builder->addConstValue("Infinity");
+    m_builder->beginRepeatLoop(v);
+    m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
+    m_builder->endLoop();
+
+    code = m_builder->finalize();
+    ctx = code->createExecutionContext(&thread);
+
+    for (int i = 0; i < 10; i++) {
+        testing::internal::CaptureStdout();
+        code->run(ctx.get());
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "no_args\n");
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+    }
 }
 
 TEST_F(LLVMCodeBuilderTest, WhileLoop)
@@ -3544,6 +3563,75 @@ TEST_F(LLVMCodeBuilderTest, LoopLists)
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, StopNoWarp)
+{
+    Sprite sprite;
+    createBuilder(&sprite, false);
+
+    m_builder->beginLoopCondition();
+    CompilerValue *v = m_builder->addConstValue(true);
+    m_builder->beginWhileLoop(v);
+    m_builder->createStop();
+    m_builder->endLoop();
+
+    m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
+
+    std::string expected = "";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, StopWarp)
+{
+    Sprite sprite;
+    createBuilder(&sprite, true);
+
+    CompilerValue *v = m_builder->addConstValue(true);
+    m_builder->beginIfStatement(v);
+    m_builder->createStop();
+    m_builder->endIf();
+
+    m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
+
+    std::string expected = "";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, StopAndReturn)
+{
+    Sprite sprite;
+    createBuilder(&sprite, true);
+
+    m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
+    m_builder->createStop();
+
+    std::string expected = "no_args\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
     Thread thread(&sprite, nullptr, &script);
     auto ctx = code->createExecutionContext(&thread);
     testing::internal::CaptureStdout();

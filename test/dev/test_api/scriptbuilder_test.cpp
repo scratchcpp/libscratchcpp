@@ -110,6 +110,25 @@ TEST_F(ScriptBuilderTest, AddObscuredInput)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\n");
 }
 
+TEST_F(ScriptBuilderTest, AddObscuredInputMultipleBlocks)
+{
+    m_builder->addBlock("test_substack");
+    auto substack = std::make_shared<Block>("", "test_simple");
+    auto block1 = std::make_shared<Block>("", "test_simple");
+    substack->setNext(block1);
+    block1->setParent(substack);
+    auto block2 = std::make_shared<Block>("", "test_simple");
+    block1->setNext(block2);
+    block2->setParent(block1);
+    m_builder->addObscuredInput("SUBSTACK", substack);
+
+    m_builder->build();
+
+    testing::internal::CaptureStdout();
+    m_builder->run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\ntest\ntest\n");
+}
+
 TEST_F(ScriptBuilderTest, AddNullObscuredInput)
 {
     m_builder->addBlock("test_print");

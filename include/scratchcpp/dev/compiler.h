@@ -51,6 +51,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         CompilerValue *addTargetFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
         CompilerValue *addFunctionCallWithCtx(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
         CompilerConstant *addConstValue(const Value &value);
+        CompilerValue *addLoopIndex();
         CompilerValue *addVariableValue(Variable *variable);
         CompilerValue *addListContents(List *list);
         CompilerValue *addListItem(List *list, CompilerValue *index);
@@ -114,6 +115,9 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void moveToWhileLoop(CompilerValue *cond, std::shared_ptr<Block> substack);
         void moveToRepeatUntilLoop(CompilerValue *cond, std::shared_ptr<Block> substack);
         void warp();
+
+        void createYield();
+        void createStop();
 
         Input *input(const std::string &name) const;
         Field *field(const std::string &name) const;

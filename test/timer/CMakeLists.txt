@@ -1,6 +1,7 @@
 add_executable(
   timer_test
   timer_test.cpp
+  stacktimer_test.cpp
 )
 
 target_link_libraries(
