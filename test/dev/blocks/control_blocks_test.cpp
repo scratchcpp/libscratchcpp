@@ -1063,3 +1063,53 @@ TEST_F(ControlBlocksTest, CreateCloneOfStage)
         thread.run();
     }
 }
+
+TEST_F(ControlBlocksTest, DeleteThisClone)
+{
+    Sprite sprite;
+    sprite.setEngine(&m_engineMock);
+
+    std::shared_ptr<Sprite> clone;
+    EXPECT_CALL(m_engineMock, cloneLimit()).WillRepeatedly(Return(-1));
+    EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+    EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
+    EXPECT_CALL(m_engineMock, requestRedraw());
+    sprite.clone();
+    ASSERT_TRUE(clone);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, clone);
+
+    builder.addBlock("control_delete_this_clone");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, clone.get());
+    auto code = compiler.compile(block);
+    Script script(clone.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(clone.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, stopTarget(clone.get(), nullptr));
+    EXPECT_CALL(m_engineMock, deinitClone(clone));
+    thread.run();
+}
+
+TEST_F(ControlBlocksTest, DeleteThisCloneStage)
+{
+    auto target = std::make_shared<Stage>();
+    target->setEngine(&m_engineMock);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("control_delete_this_clone");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, stopTarget).Times(0);
+    EXPECT_CALL(m_engineMock, deinitClone).Times(0);
+    thread.run();
+}

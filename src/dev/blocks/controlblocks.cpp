@@ -40,6 +40,7 @@ void ControlBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "control_for_each", &compileForEach);
     engine->addCompileFunction(this, "control_start_as_clone", &compileStartAsClone);
     engine->addCompileFunction(this, "control_create_clone_of", &compileCreateCloneOf);
+    engine->addCompileFunction(this, "control_delete_this_clone", &compileDeleteThisClone);
 }
 
 CompilerValue *ControlBlocks::compileForever(Compiler *compiler)
@@ -167,6 +168,12 @@ CompilerValue *ControlBlocks::compileCreateCloneOf(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *ControlBlocks::compileDeleteThisClone(Compiler *compiler)
+{
+    compiler->addTargetFunctionCall("control_delete_this_clone");
+    return nullptr;
+}
+
 extern "C" void control_stop_all(ExecutionContext *ctx)
 {
     ctx->engine()->stop();
@@ -214,5 +221,13 @@ extern "C" void control_create_clone(ExecutionContext *ctx, const char *spriteNa
 
         if (!target->isStage())
             static_cast<Sprite *>(target)->clone();
+    }
+}
+
+extern "C" void control_delete_this_clone(Target *target)
+{
+    if (!target->isStage()) {
+        target->engine()->stopTarget(target, nullptr);
+        static_cast<Sprite *>(target)->deleteClone();
     }
 }
