@@ -2,6 +2,7 @@
 #include <scratchcpp/dev/compiler.h>
 #include <scratchcpp/dev/test/scriptbuilder.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/stage.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
@@ -22,6 +23,8 @@ using namespace libscratchcpp;
 using namespace libscratchcpp::test;
 
 using ::testing::Return;
+using ::testing::SaveArg;
+using ::testing::_;
 
 class ControlBlocksTest : public testing::Test
 {
@@ -766,4 +769,297 @@ TEST_F(ControlBlocksTest, StartAsClone)
     Compiler compiler(&m_engineMock, target.get());
     EXPECT_CALL(m_engineMock, addCloneInitScript(block));
     compiler.compile(block);
+}
+
+TEST_F(ControlBlocksTest, CreateCloneOfSprite)
+{
+    EXPECT_CALL(m_engineMock, cloneLimit()).WillRepeatedly(Return(-1));
+    EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+    auto target = std::make_shared<Sprite>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of [Sprite1]
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        builder.addDropdownInput("CLONE_OPTION", "Sprite1");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget("Sprite1")).WillOnce(Return(4));
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        Sprite sprite;
+        sprite.setEngine(&m_engineMock);
+        std::shared_ptr<Sprite> clone;
+        EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
+        EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+        EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
+        thread.run();
+        ASSERT_TRUE(clone);
+        ASSERT_EQ(clone->cloneSprite(), &sprite);
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of [myself]
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        builder.addDropdownInput("CLONE_OPTION", "_myself_");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        std::shared_ptr<Sprite> clone;
+        EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+        EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, target.get()));
+        thread.run();
+        ASSERT_TRUE(clone);
+        ASSERT_EQ(clone->cloneSprite(), target.get());
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of ["_mYself_"]
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        builder.addDropdownInput("CLONE_OPTION", "_mYself_");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget("_mYself_")).WillOnce(Return(4));
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        Sprite sprite;
+        sprite.setEngine(&m_engineMock);
+        std::shared_ptr<Sprite> clone;
+        EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
+        EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+        EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
+        thread.run();
+        ASSERT_TRUE(clone);
+        ASSERT_EQ(clone->cloneSprite(), &sprite);
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of (null block)
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        builder.addNullObscuredInput("CLONE_OPTION");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        Sprite sprite;
+        sprite.setEngine(&m_engineMock);
+        std::shared_ptr<Sprite> clone;
+        EXPECT_CALL(m_engineMock, findTarget("0")).WillOnce(Return(2));
+        EXPECT_CALL(m_engineMock, targetAt(2)).WillOnce(Return(&sprite));
+        EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+        EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
+        thread.run();
+        ASSERT_TRUE(clone);
+        ASSERT_EQ(clone->cloneSprite(), &sprite);
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of ("_myself_")
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        auto valueBlock = std::make_shared<Block>("", "test_input");
+        auto input = std::make_shared<Input>("INPUT", Input::Type::Shadow);
+        input->setPrimaryValue("_myself_");
+        valueBlock->addInput(input);
+        builder.addObscuredInput("CLONE_OPTION", valueBlock);
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        std::shared_ptr<Sprite> clone;
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+        EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, target.get()));
+        thread.run();
+        ASSERT_TRUE(clone);
+        ASSERT_EQ(clone->cloneSprite(), target.get());
+    }
+
+    // create clone of ("_mYself_")
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        auto valueBlock = std::make_shared<Block>("", "test_input");
+        auto input = std::make_shared<Input>("INPUT", Input::Type::Shadow);
+        input->setPrimaryValue("_mYself_");
+        valueBlock->addInput(input);
+        builder.addObscuredInput("CLONE_OPTION", valueBlock);
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        Sprite sprite;
+        sprite.setEngine(&m_engineMock);
+        std::shared_ptr<Sprite> clone;
+        EXPECT_CALL(m_engineMock, findTarget("_mYself_")).WillOnce(Return(2));
+        EXPECT_CALL(m_engineMock, targetAt(2)).WillOnce(Return(&sprite));
+        EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+        EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
+        thread.run();
+        ASSERT_TRUE(clone);
+        ASSERT_EQ(clone->cloneSprite(), &sprite);
+    }
+}
+
+TEST_F(ControlBlocksTest, CreateCloneOfStage)
+{
+    EXPECT_CALL(m_engineMock, cloneLimit()).WillRepeatedly(Return(-1));
+    EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+    auto target = std::make_shared<Stage>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of [Stage]
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        builder.addDropdownInput("CLONE_OPTION", "_stage_");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(8));
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        Stage stage;
+        stage.setEngine(&m_engineMock);
+        EXPECT_CALL(m_engineMock, targetAt(8)).WillOnce(Return(&stage));
+        EXPECT_CALL(m_engineMock, initClone).Times(0);
+        thread.run();
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Stage>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of [myself]
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        builder.addDropdownInput("CLONE_OPTION", "_myself_");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        EXPECT_CALL(m_engineMock, initClone).Times(0);
+        thread.run();
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Stage>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of (null block)
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        builder.addNullObscuredInput("CLONE_OPTION");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        Stage stage;
+        stage.setEngine(&m_engineMock);
+        EXPECT_CALL(m_engineMock, findTarget("0")).WillOnce(Return(2));
+        EXPECT_CALL(m_engineMock, targetAt(2)).WillOnce(Return(&stage));
+        EXPECT_CALL(m_engineMock, initClone).Times(0);
+        thread.run();
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Stage>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of ("_myself_")
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        auto valueBlock = std::make_shared<Block>("", "test_input");
+        auto input = std::make_shared<Input>("INPUT", Input::Type::Shadow);
+        input->setPrimaryValue("_myself_");
+        valueBlock->addInput(input);
+        builder.addObscuredInput("CLONE_OPTION", valueBlock);
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        EXPECT_CALL(m_engineMock, initClone).Times(0);
+        thread.run();
+    }
 }

@@ -33,6 +33,8 @@ void registerBlocks(IEngine *engine, IExtension *extension)
 
     engine->addCompileFunction(extension, "test_condition", [](Compiler *compiler) -> CompilerValue * { return compiler->addFunctionCall("test_condition", Compiler::StaticType::Bool); });
 
+    engine->addCompileFunction(extension, "test_input", [](Compiler *compiler) -> CompilerValue * { return compiler->addInput("INPUT"); });
+
     engine->addCompileFunction(extension, "test_set_var", [](Compiler *compiler) -> CompilerValue * {
         Variable *var = static_cast<Variable *>(compiler->field("VARIABLE")->valuePtr().get());
         compiler->createVariableWrite(var, compiler->addInput("VALUE"));

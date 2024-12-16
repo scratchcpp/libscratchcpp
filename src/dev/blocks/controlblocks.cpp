@@ -10,6 +10,7 @@
 #include <scratchcpp/thread.h>
 #include <scratchcpp/istacktimer.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/sprite.h>
 
 #include "controlblocks.h"
 
@@ -38,6 +39,7 @@ void ControlBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "control_while", &compileWhile);
     engine->addCompileFunction(this, "control_for_each", &compileForEach);
     engine->addCompileFunction(this, "control_start_as_clone", &compileStartAsClone);
+    engine->addCompileFunction(this, "control_create_clone_of", &compileCreateCloneOf);
 }
 
 CompilerValue *ControlBlocks::compileForever(Compiler *compiler)
@@ -143,6 +145,28 @@ CompilerValue *ControlBlocks::compileStartAsClone(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *ControlBlocks::compileCreateCloneOf(Compiler *compiler)
+{
+    Input *input = compiler->input("CLONE_OPTION");
+
+    if (input->pointsToDropdownMenu()) {
+        std::string spriteName = input->selectedMenuItem();
+
+        if (spriteName == "_myself_")
+            compiler->addTargetFunctionCall("control_create_clone_of_myself");
+        else {
+            auto index = compiler->engine()->findTarget(spriteName);
+            CompilerValue *arg = compiler->addConstValue(index);
+            compiler->addFunctionCallWithCtx("control_create_clone_by_index", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { arg });
+        }
+    } else {
+        CompilerValue *arg = compiler->addInput("CLONE_OPTION");
+        compiler->addFunctionCallWithCtx("control_create_clone", Compiler::StaticType::Void, { Compiler::StaticType::String }, { arg });
+    }
+
+    return nullptr;
+}
+
 extern "C" void control_stop_all(ExecutionContext *ctx)
 {
     ctx->engine()->stop();
@@ -163,4 +187,32 @@ extern "C" void control_start_wait(ExecutionContext *ctx, double seconds)
 extern "C" bool control_stack_timer_elapsed(ExecutionContext *ctx)
 {
     return ctx->stackTimer()->elapsed();
+}
+
+extern "C" void control_create_clone_of_myself(Target *target)
+{
+    if (!target->isStage())
+        static_cast<Sprite *>(target)->clone();
+}
+
+extern "C" void control_create_clone_by_index(ExecutionContext *ctx, double index)
+{
+    Target *target = ctx->engine()->targetAt(index);
+
+    if (!target->isStage())
+        static_cast<Sprite *>(target)->clone();
+}
+
+extern "C" void control_create_clone(ExecutionContext *ctx, const char *spriteName)
+{
+    if (strcmp(spriteName, "_myself_") == 0)
+        control_create_clone_of_myself(ctx->thread()->target());
+    else {
+        IEngine *engine = ctx->engine();
+        auto index = engine->findTarget(spriteName);
+        Target *target = engine->targetAt(index);
+
+        if (!target->isStage())
+            static_cast<Sprite *>(target)->clone();
+    }
 }
