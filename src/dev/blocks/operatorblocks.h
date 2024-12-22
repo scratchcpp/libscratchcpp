@@ -17,6 +17,7 @@ class OperatorBlocks : public IExtension
 
     private:
         static CompilerValue *compileAdd(Compiler *compiler);
+        static CompilerValue *compileSubtract(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
