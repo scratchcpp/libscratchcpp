@@ -14,6 +14,9 @@ class OperatorBlocks : public IExtension
         std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
+
+    private:
+        static CompilerValue *compileAdd(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

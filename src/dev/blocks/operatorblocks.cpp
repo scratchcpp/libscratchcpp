@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/iengine.h>
+#include <scratchcpp/dev/compiler.h>
+
 #include "operatorblocks.h"
 
 using namespace libscratchcpp;
@@ -16,4 +19,10 @@ std::string OperatorBlocks::description() const
 
 void OperatorBlocks::registerBlocks(IEngine *engine)
 {
+    engine->addCompileFunction(this, "operator_add", &compileAdd);
+}
+
+CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
+{
+    return compiler->createAdd(compiler->addInput("NUM1"), compiler->addInput("NUM2"));
 }
