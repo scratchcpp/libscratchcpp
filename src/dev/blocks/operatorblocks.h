@@ -19,6 +19,7 @@ class OperatorBlocks : public IExtension
         static CompilerValue *compileAdd(Compiler *compiler);
         static CompilerValue *compileSubtract(Compiler *compiler);
         static CompilerValue *compileMultiply(Compiler *compiler);
+        static CompilerValue *compileDivide(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

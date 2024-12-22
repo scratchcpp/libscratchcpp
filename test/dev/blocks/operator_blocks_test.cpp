@@ -83,3 +83,22 @@ TEST_F(OperatorBlocksTest, Multiply)
     ASSERT_EQ(valueList->size(), 1);
     ASSERT_EQ(Value(values[0]), 14.25);
 }
+
+TEST_F(OperatorBlocksTest, Divide)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("operator_divide");
+    builder.addValueInput("NUM1", 5.7);
+    builder.addValueInput("NUM2", 2.5);
+    builder.captureBlockReturnValue();
+
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 1);
+    ASSERT_EQ(std::round(value_toDouble(&values[0]) * 100) / 100, 2.28);
+}

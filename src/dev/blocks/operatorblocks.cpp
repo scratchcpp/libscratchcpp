@@ -22,6 +22,7 @@ void OperatorBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "operator_add", &compileAdd);
     engine->addCompileFunction(this, "operator_subtract", &compileSubtract);
     engine->addCompileFunction(this, "operator_multiply", &compileMultiply);
+    engine->addCompileFunction(this, "operator_divide", &compileDivide);
 }
 
 CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
@@ -37,4 +38,9 @@ CompilerValue *OperatorBlocks::compileSubtract(Compiler *compiler)
 CompilerValue *OperatorBlocks::compileMultiply(Compiler *compiler)
 {
     return compiler->createMul(compiler->addInput("NUM1"), compiler->addInput("NUM2"));
+}
+
+CompilerValue *OperatorBlocks::compileDivide(Compiler *compiler)
+{
+    return compiler->createDiv(compiler->addInput("NUM1"), compiler->addInput("NUM2"));
 }
