@@ -25,6 +25,7 @@ void OperatorBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "operator_multiply", &compileMultiply);
     engine->addCompileFunction(this, "operator_divide", &compileDivide);
     engine->addCompileFunction(this, "operator_random", &compileRandom);
+    engine->addCompileFunction(this, "operator_lt", &compileLt);
 }
 
 CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
@@ -52,4 +53,9 @@ CompilerValue *OperatorBlocks::compileRandom(Compiler *compiler)
     auto from = compiler->addInput("FROM");
     auto to = compiler->addInput("TO");
     return compiler->createRandom(from, to);
+}
+
+CompilerValue *OperatorBlocks::compileLt(Compiler *compiler)
+{
+    return compiler->createCmpLT(compiler->addInput("OPERAND1"), compiler->addInput("OPERAND2"));
 }
