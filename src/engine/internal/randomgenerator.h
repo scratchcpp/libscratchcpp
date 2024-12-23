@@ -2,10 +2,9 @@
 
 #pragma once
 
+#include <scratchcpp/irandomgenerator.h>
 #include <memory>
 #include <random>
-
-#include "irandomgenerator.h"
 
 namespace libscratchcpp
 {
