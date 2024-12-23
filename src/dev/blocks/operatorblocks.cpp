@@ -28,6 +28,7 @@ void OperatorBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "operator_lt", &compileLt);
     engine->addCompileFunction(this, "operator_equals", &compileEquals);
     engine->addCompileFunction(this, "operator_gt", &compileGt);
+    engine->addCompileFunction(this, "operator_and", &compileAnd);
 }
 
 CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
@@ -70,4 +71,9 @@ CompilerValue *OperatorBlocks::compileEquals(Compiler *compiler)
 CompilerValue *OperatorBlocks::compileGt(Compiler *compiler)
 {
     return compiler->createCmpGT(compiler->addInput("OPERAND1"), compiler->addInput("OPERAND2"));
+}
+
+CompilerValue *OperatorBlocks::compileAnd(Compiler *compiler)
+{
+    return compiler->createAnd(compiler->addInput("OPERAND1"), compiler->addInput("OPERAND2"));
 }
