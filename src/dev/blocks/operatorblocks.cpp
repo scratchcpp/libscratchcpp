@@ -2,6 +2,7 @@
 
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/dev/compiler.h>
+#include <scratchcpp/dev/compilervalue.h>
 
 #include "operatorblocks.h"
 
@@ -23,6 +24,7 @@ void OperatorBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "operator_subtract", &compileSubtract);
     engine->addCompileFunction(this, "operator_multiply", &compileMultiply);
     engine->addCompileFunction(this, "operator_divide", &compileDivide);
+    engine->addCompileFunction(this, "operator_random", &compileRandom);
 }
 
 CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
@@ -43,4 +45,11 @@ CompilerValue *OperatorBlocks::compileMultiply(Compiler *compiler)
 CompilerValue *OperatorBlocks::compileDivide(Compiler *compiler)
 {
     return compiler->createDiv(compiler->addInput("NUM1"), compiler->addInput("NUM2"));
+}
+
+CompilerValue *OperatorBlocks::compileRandom(Compiler *compiler)
+{
+    auto from = compiler->addInput("FROM");
+    auto to = compiler->addInput("TO");
+    return compiler->createRandom(from, to);
 }

@@ -2,14 +2,24 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/dev/compiler.h>
+#include <scratchcpp/block.h>
+#include <scratchcpp/input.h>
+#include <scratchcpp/script.h>
+#include <scratchcpp/thread.h>
+#include <scratchcpp/dev/executablecode.h>
+#include <scratchcpp/dev/executioncontext.h>
 #include <scratchcpp/dev/test/scriptbuilder.h>
 #include <enginemock.h>
+#include <randomgeneratormock.h>
 
 #include "../common.h"
 #include "dev/blocks/operatorblocks.h"
+#include "util.h"
 
 using namespace libscratchcpp;
 using namespace libscratchcpp::test;
+
+using ::testing::Return;
 
 class OperatorBlocksTest : public testing::Test
 {
@@ -19,12 +29,14 @@ class OperatorBlocksTest : public testing::Test
             m_extension = std::make_unique<OperatorBlocks>();
             m_engine = m_project.engine().get();
             m_extension->registerBlocks(m_engine);
+            registerBlocks(m_engine, m_extension.get());
         }
 
         std::unique_ptr<IExtension> m_extension;
         Project m_project;
         IEngine *m_engine = nullptr;
         EngineMock m_engineMock;
+        RandomGeneratorMock m_rng;
 };
 
 TEST_F(OperatorBlocksTest, Add)
@@ -101,4 +113,53 @@ TEST_F(OperatorBlocksTest, Divide)
     ValueData *values = valueList->data();
     ASSERT_EQ(valueList->size(), 1);
     ASSERT_EQ(std::round(value_toDouble(&values[0]) * 100) / 100, 2.28);
+}
+
+TEST_F(OperatorBlocksTest, Random)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    auto addRandomTest = [&builder](const Value &from, const Value &to) {
+        auto block = std::make_shared<Block>("", "operator_random");
+        auto input = std::make_shared<Input>("FROM", Input::Type::Shadow);
+        input->setPrimaryValue(from);
+        block->addInput(input);
+        input = std::make_shared<Input>("TO", Input::Type::Shadow);
+        input->setPrimaryValue(to);
+        block->addInput(input);
+
+        builder.addBlock("test_print");
+        builder.addObscuredInput("STRING", block);
+        return builder.currentBlock();
+    };
+
+    auto block = addRandomTest(-45, 12);
+    addRandomTest(12, 6.05);
+    addRandomTest(-78.686, -45);
+    addRandomTest(6.05, -78.686);
+
+    builder.build();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    ctx->setRng(&m_rng);
+
+    static const std::string expected =
+        "-18\n"
+        "3.486789\n"
+        "-59.468873\n"
+        "-28.648764\n";
+
+    EXPECT_CALL(m_rng, randint(-45, 12)).WillOnce(Return(-18));
+    EXPECT_CALL(m_rng, randintDouble(12, 6.05)).WillOnce(Return(3.486789));
+    EXPECT_CALL(m_rng, randintDouble(-78.686, -45)).WillOnce(Return(-59.468873));
+    EXPECT_CALL(m_rng, randintDouble(6.05, -78.686)).WillOnce(Return(-28.648764));
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
