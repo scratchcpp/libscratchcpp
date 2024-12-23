@@ -3,6 +3,7 @@
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/dev/compiler.h>
 #include <scratchcpp/dev/compilervalue.h>
+#include <utf8.h>
 
 #include "operatorblocks.h"
 
@@ -32,6 +33,7 @@ void OperatorBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "operator_or", &compileOr);
     engine->addCompileFunction(this, "operator_not", &compileNot);
     engine->addCompileFunction(this, "operator_join", &compileJoin);
+    engine->addCompileFunction(this, "operator_letter_of", &compileLetterOf);
 }
 
 CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
@@ -98,6 +100,13 @@ CompilerValue *OperatorBlocks::compileJoin(Compiler *compiler)
     return compiler->addFunctionCall("operator_join", Compiler::StaticType::String, { Compiler::StaticType::String, Compiler::StaticType::String }, { string1, string2 });
 }
 
+CompilerValue *OperatorBlocks::compileLetterOf(Compiler *compiler)
+{
+    auto letter = compiler->addInput("LETTER");
+    auto string = compiler->addInput("STRING");
+    return compiler->addFunctionCall("operator_letter_of", Compiler::StaticType::String, { Compiler::StaticType::Number, Compiler::StaticType::String }, { letter, string });
+}
+
 extern "C" char *operator_join(const char *string1, const char *string2)
 {
     const size_t len1 = strlen(string1);
@@ -111,6 +120,25 @@ extern "C" char *operator_join(const char *string1, const char *string2)
 
     for (i = 0; i < len2 + 1; i++) // +1: null-terminate
         ret[len1 + i] = string2[i];
+
+    return ret;
+}
+
+extern "C" char *operator_letter_of(double letter, const char *string)
+{
+    const size_t len = strlen(string);
+
+    if (letter < 1 || letter > len) {
+        char *ret = (char *)malloc(sizeof(char));
+        ret[0] = '\0';
+        return ret;
+    }
+
+    // TODO: Rewrite this
+    std::u16string u16 = utf8::utf8to16(std::string(string));
+    std::string str = utf8::utf16to8(std::u16string({ u16[(size_t)letter - 1] }));
+    char *ret = (char *)malloc((str.size() + 1) * sizeof(char));
+    strcpy(ret, str.c_str());
 
     return ret;
 }

@@ -378,3 +378,46 @@ TEST_F(OperatorBlocksTest, Join)
     ASSERT_EQ(Value(values[0]), "abcdef");
     ASSERT_EQ(Value(values[1]), "Hello world");
 }
+
+TEST_F(OperatorBlocksTest, LetterOf)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("operator_letter_of");
+    builder.addValueInput("LETTER", 2);
+    builder.addValueInput("STRING", "abc");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_letter_of");
+    builder.addValueInput("LETTER", 7);
+    builder.addValueInput("STRING", "Hello world");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_letter_of");
+    builder.addValueInput("LETTER", 0);
+    builder.addValueInput("STRING", "Hello world");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_letter_of");
+    builder.addValueInput("LETTER", 12);
+    builder.addValueInput("STRING", "Hello world");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_letter_of");
+    builder.addValueInput("LETTER", 1);
+    builder.addValueInput("STRING", "Ábč");
+    builder.captureBlockReturnValue();
+
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 5);
+    ASSERT_EQ(Value(values[0]), "b");
+    ASSERT_EQ(Value(values[1]), "w");
+    ASSERT_EQ(Value(values[2]), "");
+    ASSERT_EQ(Value(values[3]), "");
+    ASSERT_EQ(Value(values[4]), "Á");
+}
