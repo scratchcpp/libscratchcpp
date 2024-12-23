@@ -36,6 +36,8 @@ class ICodeBuilder
         virtual CompilerValue *createMul(CompilerValue *operand1, CompilerValue *operand2) = 0;
         virtual CompilerValue *createDiv(CompilerValue *operand1, CompilerValue *operand2) = 0;
 
+        virtual CompilerValue *createRandom(CompilerValue *from, CompilerValue *to) = 0;
+
         virtual CompilerValue *createCmpEQ(CompilerValue *operand1, CompilerValue *operand2) = 0;
         virtual CompilerValue *createCmpGT(CompilerValue *operand1, CompilerValue *operand2) = 0;
         virtual CompilerValue *createCmpLT(CompilerValue *operand1, CompilerValue *operand2) = 0;
