@@ -34,6 +34,7 @@ void OperatorBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "operator_not", &compileNot);
     engine->addCompileFunction(this, "operator_join", &compileJoin);
     engine->addCompileFunction(this, "operator_letter_of", &compileLetterOf);
+    engine->addCompileFunction(this, "operator_length", &compileLength);
 }
 
 CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
@@ -107,6 +108,12 @@ CompilerValue *OperatorBlocks::compileLetterOf(Compiler *compiler)
     return compiler->addFunctionCall("operator_letter_of", Compiler::StaticType::String, { Compiler::StaticType::Number, Compiler::StaticType::String }, { letter, string });
 }
 
+CompilerValue *OperatorBlocks::compileLength(Compiler *compiler)
+{
+    auto string = compiler->addInput("STRING");
+    return compiler->addFunctionCall("operator_length", Compiler::StaticType::Number, { Compiler::StaticType::String }, { string });
+}
+
 extern "C" char *operator_join(const char *string1, const char *string2)
 {
     const size_t len1 = strlen(string1);
@@ -141,4 +148,10 @@ extern "C" char *operator_letter_of(double letter, const char *string)
     strcpy(ret, str.c_str());
 
     return ret;
+}
+
+extern "C" double operator_length(const char *string)
+{
+    // TODO: Rewrite this
+    return utf8::utf8to16(std::string(string)).size();
 }

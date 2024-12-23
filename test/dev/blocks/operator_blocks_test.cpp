@@ -421,3 +421,31 @@ TEST_F(OperatorBlocksTest, LetterOf)
     ASSERT_EQ(Value(values[3]), "");
     ASSERT_EQ(Value(values[4]), "Á");
 }
+
+TEST_F(OperatorBlocksTest, Length)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("operator_length");
+    builder.addValueInput("STRING", "abc");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_length");
+    builder.addValueInput("STRING", "Hello world");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_length");
+    builder.addValueInput("STRING", "dOádčĐaší");
+    builder.captureBlockReturnValue();
+
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 3);
+    ASSERT_EQ(Value(values[0]), 3);
+    ASSERT_EQ(Value(values[1]), 11);
+    ASSERT_EQ(Value(values[2]), 9);
+}

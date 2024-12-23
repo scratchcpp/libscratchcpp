@@ -31,6 +31,7 @@ class OperatorBlocks : public IExtension
         static CompilerValue *compileNot(Compiler *compiler);
         static CompilerValue *compileJoin(Compiler *compiler);
         static CompilerValue *compileLetterOf(Compiler *compiler);
+        static CompilerValue *compileLength(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
