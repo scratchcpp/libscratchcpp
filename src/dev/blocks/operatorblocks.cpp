@@ -26,6 +26,7 @@ void OperatorBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "operator_divide", &compileDivide);
     engine->addCompileFunction(this, "operator_random", &compileRandom);
     engine->addCompileFunction(this, "operator_lt", &compileLt);
+    engine->addCompileFunction(this, "operator_equals", &compileEquals);
 }
 
 CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
@@ -58,4 +59,9 @@ CompilerValue *OperatorBlocks::compileRandom(Compiler *compiler)
 CompilerValue *OperatorBlocks::compileLt(Compiler *compiler)
 {
     return compiler->createCmpLT(compiler->addInput("OPERAND1"), compiler->addInput("OPERAND2"));
+}
+
+CompilerValue *OperatorBlocks::compileEquals(Compiler *compiler)
+{
+    return compiler->createCmpEQ(compiler->addInput("OPERAND1"), compiler->addInput("OPERAND2"));
 }

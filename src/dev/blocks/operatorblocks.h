@@ -24,6 +24,7 @@ class OperatorBlocks : public IExtension
         static CompilerValue *compileDivide(Compiler *compiler);
         static CompilerValue *compileRandom(Compiler *compiler);
         static CompilerValue *compileLt(Compiler *compiler);
+        static CompilerValue *compileEquals(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
