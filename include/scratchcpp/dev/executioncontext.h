@@ -12,6 +12,7 @@ class Thread;
 class IEngine;
 class Promise;
 class IStackTimer;
+class IRandomGenerator;
 class ExecutionContextPrivate;
 
 /*! \brief The ExecutionContext represents the execution context of a target (can be a clone) with variables, lists, etc. */
@@ -30,6 +31,9 @@ class LIBSCRATCHCPP_EXPORT ExecutionContext
 
         IStackTimer *stackTimer() const;
         void setStackTimer(IStackTimer *newStackTimer);
+
+        IRandomGenerator *rng() const;
+        void setRng(IRandomGenerator *newRng);
 
     private:
         spimpl::unique_impl_ptr<ExecutionContextPrivate> impl;

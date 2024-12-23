@@ -11,6 +11,7 @@ namespace libscratchcpp
 
 class Thread;
 class Promise;
+class IRandomGenerator;
 
 struct ExecutionContextPrivate
 {
@@ -20,6 +21,7 @@ struct ExecutionContextPrivate
         std::shared_ptr<Promise> promise;
         std::unique_ptr<IStackTimer> defaultStackTimer;
         IStackTimer *stackTimer = nullptr;
+        IRandomGenerator *rng = nullptr;
 };
 
 } // namespace libscratchcpp
