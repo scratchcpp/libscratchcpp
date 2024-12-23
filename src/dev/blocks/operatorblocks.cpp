@@ -30,6 +30,7 @@ void OperatorBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "operator_gt", &compileGt);
     engine->addCompileFunction(this, "operator_and", &compileAnd);
     engine->addCompileFunction(this, "operator_or", &compileOr);
+    engine->addCompileFunction(this, "operator_not", &compileNot);
 }
 
 CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
@@ -82,4 +83,9 @@ CompilerValue *OperatorBlocks::compileAnd(Compiler *compiler)
 CompilerValue *OperatorBlocks::compileOr(Compiler *compiler)
 {
     return compiler->createOr(compiler->addInput("OPERAND1"), compiler->addInput("OPERAND2"));
+}
+
+CompilerValue *OperatorBlocks::compileNot(Compiler *compiler)
+{
+    return compiler->createNot(compiler->addInput("OPERAND"));
 }
