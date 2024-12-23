@@ -2795,6 +2795,16 @@ TEST(ValueTest, ComparisonOperators)
     }
 }
 
+TEST(ValueTest, DoubleIsInt)
+{
+    ASSERT_TRUE(value_doubleIsInt(0.0));
+    ASSERT_TRUE(value_doubleIsInt(15.0));
+    ASSERT_TRUE(value_doubleIsInt(-468.0));
+    ASSERT_FALSE(value_doubleIsInt(0.1));
+    ASSERT_FALSE(value_doubleIsInt(1.2));
+    ASSERT_FALSE(value_doubleIsInt(-12.5852));
+}
+
 TEST(ValueTest, DoubleToCString)
 {
     char *ret;
