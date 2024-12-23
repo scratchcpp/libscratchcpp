@@ -31,6 +31,7 @@ void OperatorBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "operator_and", &compileAnd);
     engine->addCompileFunction(this, "operator_or", &compileOr);
     engine->addCompileFunction(this, "operator_not", &compileNot);
+    engine->addCompileFunction(this, "operator_join", &compileJoin);
 }
 
 CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
@@ -88,4 +89,28 @@ CompilerValue *OperatorBlocks::compileOr(Compiler *compiler)
 CompilerValue *OperatorBlocks::compileNot(Compiler *compiler)
 {
     return compiler->createNot(compiler->addInput("OPERAND"));
+}
+
+CompilerValue *OperatorBlocks::compileJoin(Compiler *compiler)
+{
+    auto string1 = compiler->addInput("STRING1");
+    auto string2 = compiler->addInput("STRING2");
+    return compiler->addFunctionCall("operator_join", Compiler::StaticType::String, { Compiler::StaticType::String, Compiler::StaticType::String }, { string1, string2 });
+}
+
+extern "C" char *operator_join(const char *string1, const char *string2)
+{
+    const size_t len1 = strlen(string1);
+    const size_t len2 = strlen(string2);
+
+    char *ret = (char *)malloc((len1 + len2 + 1) * sizeof(char));
+    size_t i;
+
+    for (i = 0; i < len1; i++)
+        ret[i] = string1[i];
+
+    for (i = 0; i < len2 + 1; i++) // +1: null-terminate
+        ret[len1 + i] = string2[i];
+
+    return ret;
 }
