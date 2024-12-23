@@ -193,6 +193,12 @@ CompilerValue *Compiler::createDiv(CompilerValue *operand1, CompilerValue *opera
     return impl->builder->createDiv(operand1, operand2);
 }
 
+/*! Creates a random instruction (Scratch behavior). */
+CompilerValue *Compiler::createRandom(CompilerValue *from, CompilerValue *to)
+{
+    return impl->builder->createRandom(from, to);
+}
+
 /*! Creates an equality comparison instruction. */
 CompilerValue *Compiler::createCmpEQ(CompilerValue *operand1, CompilerValue *operand2)
 {
