@@ -27,6 +27,7 @@ class OperatorBlocks : public IExtension
         static CompilerValue *compileEquals(Compiler *compiler);
         static CompilerValue *compileGt(Compiler *compiler);
         static CompilerValue *compileAnd(Compiler *compiler);
+        static CompilerValue *compileOr(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

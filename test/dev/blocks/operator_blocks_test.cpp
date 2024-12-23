@@ -293,3 +293,40 @@ TEST_F(OperatorBlocksTest, And)
     ASSERT_EQ(Value(values[2]), false);
     ASSERT_EQ(Value(values[3]), true);
 }
+
+TEST_F(OperatorBlocksTest, Or)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("operator_or");
+    builder.addValueInput("OPERAND1", false);
+    builder.addValueInput("OPERAND2", false);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_or");
+    builder.addValueInput("OPERAND1", true);
+    builder.addValueInput("OPERAND2", false);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_or");
+    builder.addValueInput("OPERAND1", false);
+    builder.addValueInput("OPERAND2", true);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_or");
+    builder.addValueInput("OPERAND1", true);
+    builder.addValueInput("OPERAND2", true);
+    builder.captureBlockReturnValue();
+
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 4);
+    ASSERT_EQ(Value(values[0]), false);
+    ASSERT_EQ(Value(values[1]), true);
+    ASSERT_EQ(Value(values[2]), true);
+    ASSERT_EQ(Value(values[3]), true);
+}
