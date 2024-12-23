@@ -53,6 +53,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     // Set fast math flags
     llvm::FastMathFlags fmf;
     fmf.setFast(true);
+    fmf.setNoInfs(false);
     fmf.setNoNaNs(false);
     fmf.setNoSignedZeros(false);
     m_builder.setFastMathFlags(fmf);
