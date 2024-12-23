@@ -449,3 +449,64 @@ TEST_F(OperatorBlocksTest, Length)
     ASSERT_EQ(Value(values[1]), 11);
     ASSERT_EQ(Value(values[2]), 9);
 }
+
+TEST_F(OperatorBlocksTest, Contains)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "abc");
+    builder.addValueInput("STRING2", "a");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "abc");
+    builder.addValueInput("STRING2", "e");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "abc");
+    builder.addValueInput("STRING2", "C");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "Hello world");
+    builder.addValueInput("STRING2", "ello");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "Hello world");
+    builder.addValueInput("STRING2", "olld");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "ábČ");
+    builder.addValueInput("STRING2", "á");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "ábČ");
+    builder.addValueInput("STRING2", "bČ");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "ábČ");
+    builder.addValueInput("STRING2", "ďá");
+    builder.captureBlockReturnValue();
+
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 8);
+    ASSERT_EQ(Value(values[0]), true);
+    ASSERT_EQ(Value(values[1]), false);
+    ASSERT_EQ(Value(values[2]), true);
+    ASSERT_EQ(Value(values[3]), true);
+    ASSERT_EQ(Value(values[4]), false);
+    ASSERT_EQ(Value(values[5]), true);
+    ASSERT_EQ(Value(values[6]), true);
+    ASSERT_EQ(Value(values[7]), false);
+}

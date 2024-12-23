@@ -35,6 +35,7 @@ void OperatorBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "operator_join", &compileJoin);
     engine->addCompileFunction(this, "operator_letter_of", &compileLetterOf);
     engine->addCompileFunction(this, "operator_length", &compileLength);
+    engine->addCompileFunction(this, "operator_contains", &compileContains);
 }
 
 CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
@@ -114,6 +115,13 @@ CompilerValue *OperatorBlocks::compileLength(Compiler *compiler)
     return compiler->addFunctionCall("operator_length", Compiler::StaticType::Number, { Compiler::StaticType::String }, { string });
 }
 
+CompilerValue *OperatorBlocks::compileContains(Compiler *compiler)
+{
+    auto string1 = compiler->addInput("STRING1");
+    auto string2 = compiler->addInput("STRING2");
+    return compiler->addFunctionCall("operator_contains", Compiler::StaticType::Bool, { Compiler::StaticType::String, Compiler::StaticType::String }, { string1, string2 });
+}
+
 extern "C" char *operator_join(const char *string1, const char *string2)
 {
     const size_t len1 = strlen(string1);
@@ -154,4 +162,14 @@ extern "C" double operator_length(const char *string)
 {
     // TODO: Rewrite this
     return utf8::utf8to16(std::string(string)).size();
+}
+
+extern "C" bool operator_contains(const char *string1, const char *string2)
+{
+    // TODO: Rewrite this
+    std::u16string u16string1 = utf8::utf8to16(std::string(string1));
+    std::u16string u16string2 = utf8::utf8to16(std::string(string2));
+    std::transform(u16string1.begin(), u16string1.end(), u16string1.begin(), ::tolower);
+    std::transform(u16string2.begin(), u16string2.end(), u16string2.begin(), ::tolower);
+    return (u16string1.find(u16string2) != std::u16string::npos);
 }
