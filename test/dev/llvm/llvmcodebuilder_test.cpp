@@ -1,5 +1,6 @@
 #include <scratchcpp/value.h>
 #include <scratchcpp/dev/executablecode.h>
+#include <scratchcpp/dev/executioncontext.h>
 #include <scratchcpp/script.h>
 #include <scratchcpp/thread.h>
 #include <scratchcpp/sprite.h>
@@ -7,7 +8,6 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <dev/engine/internal/llvm/llvmcodebuilder.h>
-#include <dev/engine/internal/llvm/llvmfunctions.h>
 #include <gmock/gmock.h>
 #include <targetmock.h>
 #include <enginemock.h>
@@ -260,6 +260,7 @@ class LLVMCodeBuilderTest : public testing::Test
             script.setCode(code);
             Thread thread(&m_target, nullptr, &script);
             auto ctx = code->createExecutionContext(&thread);
+            ctx->setRng(&m_rng);
 
             testing::internal::CaptureStdout();
             code->run(ctx.get());
@@ -638,8 +639,6 @@ TEST_F(LLVMCodeBuilderTest, Divide)
 
 TEST_F(LLVMCodeBuilderTest, Random)
 {
-    llvm_rng = &m_rng;
-
     EXPECT_CALL(m_rng, randint(-45, 12)).Times(3).WillRepeatedly(Return(-18));
     runOpTest(OpType::Random, -45, 12);
 
@@ -716,8 +715,6 @@ TEST_F(LLVMCodeBuilderTest, Random)
     runOpTest(OpType::Random, -inf, -inf, -inf);
     runOpTest(OpType::Random, inf, -inf, nan);
     runOpTest(OpType::Random, -inf, inf, nan);
-
-    llvm_rng = nullptr;
 }
 
 TEST_F(LLVMCodeBuilderTest, EqualComparison)
