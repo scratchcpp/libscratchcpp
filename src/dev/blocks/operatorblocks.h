@@ -33,6 +33,7 @@ class OperatorBlocks : public IExtension
         static CompilerValue *compileLetterOf(Compiler *compiler);
         static CompilerValue *compileLength(Compiler *compiler);
         static CompilerValue *compileContains(Compiler *compiler);
+        static CompilerValue *compileMod(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

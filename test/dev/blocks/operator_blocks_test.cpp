@@ -510,3 +510,28 @@ TEST_F(OperatorBlocksTest, Contains)
     ASSERT_EQ(Value(values[6]), true);
     ASSERT_EQ(Value(values[7]), false);
 }
+
+TEST_F(OperatorBlocksTest, Mod)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("operator_mod");
+    builder.addValueInput("NUM1", 5.7);
+    builder.addValueInput("NUM2", 2.5);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mod");
+    builder.addValueInput("NUM1", -5.7);
+    builder.addValueInput("NUM2", 2.5);
+    builder.captureBlockReturnValue();
+
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 2);
+    ASSERT_EQ(std::round(value_toDouble(&values[0]) * 100) / 100, 0.7);
+    ASSERT_EQ(std::round(value_toDouble(&values[1]) * 100) / 100, 1.8);
+}

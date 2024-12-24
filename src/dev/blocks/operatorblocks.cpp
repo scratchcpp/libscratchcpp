@@ -36,6 +36,7 @@ void OperatorBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "operator_letter_of", &compileLetterOf);
     engine->addCompileFunction(this, "operator_length", &compileLength);
     engine->addCompileFunction(this, "operator_contains", &compileContains);
+    engine->addCompileFunction(this, "operator_mod", &compileMod);
 }
 
 CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
@@ -120,6 +121,11 @@ CompilerValue *OperatorBlocks::compileContains(Compiler *compiler)
     auto string1 = compiler->addInput("STRING1");
     auto string2 = compiler->addInput("STRING2");
     return compiler->addFunctionCall("operator_contains", Compiler::StaticType::Bool, { Compiler::StaticType::String, Compiler::StaticType::String }, { string1, string2 });
+}
+
+CompilerValue *OperatorBlocks::compileMod(Compiler *compiler)
+{
+    return compiler->createMod(compiler->addInput("NUM1"), compiler->addInput("NUM2"));
 }
 
 extern "C" char *operator_join(const char *string1, const char *string2)
