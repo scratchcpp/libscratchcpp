@@ -2,7 +2,9 @@
 
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/dev/compiler.h>
-#include <scratchcpp/dev/compilervalue.h>
+#include <scratchcpp/dev/compilerconstant.h>
+#include <scratchcpp/field.h>
+#include <scratchcpp/value.h>
 #include <utf8.h>
 
 #include "operatorblocks.h"
@@ -38,6 +40,7 @@ void OperatorBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "operator_contains", &compileContains);
     engine->addCompileFunction(this, "operator_mod", &compileMod);
     engine->addCompileFunction(this, "operator_round", &compileRound);
+    engine->addCompileFunction(this, "operator_mathop", &compileMathOp);
 }
 
 CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
@@ -132,6 +135,44 @@ CompilerValue *OperatorBlocks::compileMod(Compiler *compiler)
 CompilerValue *OperatorBlocks::compileRound(Compiler *compiler)
 {
     return compiler->createRound(compiler->addInput("NUM"));
+}
+
+CompilerValue *OperatorBlocks::compileMathOp(Compiler *compiler)
+{
+    Field *opField = compiler->field("OPERATOR");
+    const std::string numInput = "NUM";
+    const std::string &op = opField->value().toString();
+
+    if (op == "abs")
+        return compiler->createAbs(compiler->addInput(numInput));
+    else if (op == "floor")
+        return compiler->createFloor(compiler->addInput(numInput));
+    else if (op == "ceiling")
+        return compiler->createCeil(compiler->addInput(numInput));
+    else if (op == "sqrt")
+        return compiler->createSqrt(compiler->addInput(numInput));
+    else if (op == "sin")
+        return compiler->createSin(compiler->addInput(numInput));
+    else if (op == "cos")
+        return compiler->createCos(compiler->addInput(numInput));
+    else if (op == "tan")
+        return compiler->createTan(compiler->addInput(numInput));
+    else if (op == "asin")
+        return compiler->createAsin(compiler->addInput(numInput));
+    else if (op == "acos")
+        return compiler->createAcos(compiler->addInput(numInput));
+    else if (op == "atan")
+        return compiler->createAtan(compiler->addInput(numInput));
+    else if (op == "ln")
+        return compiler->createLn(compiler->addInput(numInput));
+    else if (op == "log")
+        return compiler->createLog10(compiler->addInput(numInput));
+    else if (op == "e ^")
+        return compiler->createExp(compiler->addInput(numInput));
+    else if (op == "10 ^")
+        return compiler->createExp10(compiler->addInput(numInput));
+    else
+        return compiler->addConstValue(Value());
 }
 
 extern "C" char *operator_join(const char *string1, const char *string2)

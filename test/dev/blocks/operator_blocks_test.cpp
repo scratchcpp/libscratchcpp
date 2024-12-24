@@ -558,3 +558,205 @@ TEST_F(OperatorBlocksTest, Round)
     ASSERT_EQ(Value(values[0]), 6);
     ASSERT_EQ(Value(values[1]), 2);
 }
+
+TEST_F(OperatorBlocksTest, MathOp)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    // abs
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "abs");
+    builder.addValueInput("NUM", 5.7);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "abs");
+    builder.addValueInput("NUM", -5.7);
+    builder.captureBlockReturnValue();
+
+    // floor
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "floor");
+    builder.addValueInput("NUM", 3.2);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "floor");
+    builder.addValueInput("NUM", 5.7);
+    builder.captureBlockReturnValue();
+
+    // ceiling
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "ceiling");
+    builder.addValueInput("NUM", 3.2);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "ceiling");
+    builder.addValueInput("NUM", 5.7);
+    builder.captureBlockReturnValue();
+
+    // sqrt
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "sqrt");
+    builder.addValueInput("NUM", 16);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "sqrt");
+    builder.addValueInput("NUM", 2);
+    builder.captureBlockReturnValue();
+
+    // sin
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "sin");
+    builder.addValueInput("NUM", 90);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "sin");
+    builder.addValueInput("NUM", 30);
+    builder.captureBlockReturnValue();
+
+    // cos
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "cos");
+    builder.addValueInput("NUM", 0);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "cos");
+    builder.addValueInput("NUM", 60);
+    builder.captureBlockReturnValue();
+
+    // tan
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "tan");
+    builder.addValueInput("NUM", 30);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "tan");
+    builder.addValueInput("NUM", 45);
+    builder.captureBlockReturnValue();
+
+    // asin
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "asin");
+    builder.addValueInput("NUM", 1);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "asin");
+    builder.addValueInput("NUM", 0.5);
+    builder.captureBlockReturnValue();
+
+    // acos
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "acos");
+    builder.addValueInput("NUM", 1);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "acos");
+    builder.addValueInput("NUM", 0.5);
+    builder.captureBlockReturnValue();
+
+    // atan
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "atan");
+    builder.addValueInput("NUM", 0.5);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "atan");
+    builder.addValueInput("NUM", 1);
+    builder.captureBlockReturnValue();
+
+    // ln
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "ln");
+    builder.addValueInput("NUM", 1);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "ln");
+    builder.addValueInput("NUM", 10);
+    builder.captureBlockReturnValue();
+
+    // log
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "log");
+    builder.addValueInput("NUM", 1);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "log");
+    builder.addValueInput("NUM", 100);
+    builder.captureBlockReturnValue();
+
+    // e ^
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "e ^");
+    builder.addValueInput("NUM", 1);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "e ^");
+    builder.addValueInput("NUM", 8.2);
+    builder.captureBlockReturnValue();
+
+    // 10 ^
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "10 ^");
+    builder.addValueInput("NUM", 1);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "10 ^");
+    builder.addValueInput("NUM", 8.2);
+    builder.captureBlockReturnValue();
+
+    // invalid
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "invalid");
+    builder.addValueInput("NUM", -5.54);
+    builder.captureBlockReturnValue();
+
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 29);
+    ASSERT_EQ(std::round(value_toDouble(&values[0]) * 100) / 100, 5.7);
+    ASSERT_EQ(std::round(value_toDouble(&values[1]) * 100) / 100, 5.7);
+    ASSERT_EQ(std::round(value_toDouble(&values[2]) * 100) / 100, 3);
+    ASSERT_EQ(std::round(value_toDouble(&values[3]) * 100) / 100, 5);
+    ASSERT_EQ(std::round(value_toDouble(&values[4]) * 100) / 100, 4);
+    ASSERT_EQ(std::round(value_toDouble(&values[5]) * 100) / 100, 6);
+    ASSERT_EQ(std::round(value_toDouble(&values[6]) * 100) / 100, 4);
+    ASSERT_EQ(std::round(value_toDouble(&values[7]) * 100) / 100, 1.41);
+    ASSERT_EQ(std::round(value_toDouble(&values[8]) * 100) / 100, 1);
+    ASSERT_EQ(std::round(value_toDouble(&values[9]) * 100) / 100, 0.5);
+    ASSERT_EQ(std::round(value_toDouble(&values[10]) * 100) / 100, 1);
+    ASSERT_EQ(std::round(value_toDouble(&values[11]) * 100) / 100, 0.5);
+    ASSERT_EQ(std::round(value_toDouble(&values[12]) * 100) / 100, 0.58);
+    ASSERT_EQ(std::round(value_toDouble(&values[13]) * 100) / 100, 1);
+    ASSERT_EQ(std::round(value_toDouble(&values[14]) * 100) / 100, 90);
+    ASSERT_EQ(std::round(value_toDouble(&values[15]) * 100) / 100, 30);
+    ASSERT_EQ(std::round(value_toDouble(&values[16]) * 100) / 100, 0);
+    ASSERT_EQ(std::round(value_toDouble(&values[17]) * 100) / 100, 60);
+    ASSERT_EQ(std::round(value_toDouble(&values[18]) * 100) / 100, 26.57);
+    ASSERT_EQ(std::round(value_toDouble(&values[19]) * 100) / 100, 45);
+    ASSERT_EQ(std::round(value_toDouble(&values[20]) * 100) / 100, 0);
+    ASSERT_EQ(std::round(value_toDouble(&values[21]) * 100) / 100, 2.3);
+    ASSERT_EQ(std::round(value_toDouble(&values[22]) * 100) / 100, 0);
+    ASSERT_EQ(std::round(value_toDouble(&values[23]) * 100) / 100, 2);
+    ASSERT_EQ(std::round(value_toDouble(&values[24]) * 100) / 100, 2.72);
+    ASSERT_EQ(std::round(value_toDouble(&values[25]) * 100) / 100, 3640.95);
+    ASSERT_EQ(std::round(value_toDouble(&values[26]) * 100) / 100, 10);
+    ASSERT_EQ(std::round(value_toDouble(&values[27]) * 100) / 100, 158489319.25);
+    ASSERT_EQ(std::round(value_toDouble(&values[28]) * 100) / 100, 0);
+}
