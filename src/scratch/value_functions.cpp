@@ -164,14 +164,9 @@ extern "C"
             case ValueType::Bool:
                 return true;
 
-            case ValueType::Number: {
-                if (std::isinf(v->numberValue) || std::isnan(v->numberValue))
-                    return true;
+            case ValueType::Number:
+                return value_doubleIsInt(v->numberValue);
 
-                double intpart;
-                std::modf(v->numberValue, &intpart);
-                return v->numberValue == intpart;
-            }
             case ValueType::String:
                 return value_checkString(v->stringValue) == 1;
         }
@@ -278,6 +273,17 @@ extern "C"
         std::string s;
         value_toString(v, &s);
         dst->assign(utf8::utf8to16(s));
+    }
+
+    /*! Returns true if the given number represents a round integer. */
+    bool value_doubleIsInt(double v)
+    {
+        if (std::isinf(v) || std::isnan(v))
+            return true;
+
+        double intpart;
+        std::modf(v, &intpart);
+        return v == intpart;
     }
 
     /*!

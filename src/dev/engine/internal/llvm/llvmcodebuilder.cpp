@@ -53,6 +53,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     // Set fast math flags
     llvm::FastMathFlags fmf;
     fmf.setFast(true);
+    fmf.setNoInfs(false);
     fmf.setNoNaNs(false);
     fmf.setNoSignedZeros(false);
     m_builder.setFastMathFlags(fmf);
@@ -187,6 +188,38 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *num1 = removeNaN(castValue(arg1.second, arg1.first));
                 llvm::Value *num2 = removeNaN(castValue(arg2.second, arg2.first));
                 step.functionReturnReg->value = m_builder.CreateFDiv(num1, num2);
+                break;
+            }
+
+            case LLVMInstruction::Type::Random: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                LLVMRegister *reg1 = arg1.second;
+                LLVMRegister *reg2 = arg2.second;
+
+                if (reg1->type() == Compiler::StaticType::Bool && reg2->type() == Compiler::StaticType::Bool) {
+                    llvm::Value *bool1 = castValue(arg1.second, Compiler::StaticType::Bool);
+                    llvm::Value *bool2 = castValue(arg2.second, Compiler::StaticType::Bool);
+                    step.functionReturnReg->value = m_builder.CreateCall(resolve_llvm_random_bool(), { executionContextPtr, bool1, bool2 });
+                } else {
+                    llvm::Constant *inf = llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), false);
+                    llvm::Value *num1 = removeNaN(castValue(arg1.second, Compiler::StaticType::Number));
+                    llvm::Value *num2 = removeNaN(castValue(arg2.second, Compiler::StaticType::Number));
+                    llvm::Value *sum = m_builder.CreateFAdd(num1, num2);
+                    llvm::Value *sumDiv = m_builder.CreateFDiv(sum, inf);
+                    llvm::Value *isInfOrNaN = isNaN(sumDiv);
+
+                    // NOTE: The random function will be called even in edge cases where it isn't needed, but they're rare, so it shouldn't be an issue
+                    if (reg1->type() == Compiler::StaticType::Number && reg2->type() == Compiler::StaticType::Number)
+                        step.functionReturnReg->value = m_builder.CreateSelect(isInfOrNaN, sum, m_builder.CreateCall(resolve_llvm_random_double(), { executionContextPtr, num1, num2 }));
+                    else {
+                        llvm::Value *value1 = createValue(reg1);
+                        llvm::Value *value2 = createValue(reg2);
+                        step.functionReturnReg->value = m_builder.CreateSelect(isInfOrNaN, sum, m_builder.CreateCall(resolve_llvm_random(), { executionContextPtr, value1, value2 }));
+                    }
+                }
+
                 break;
             }
 
@@ -1086,6 +1119,11 @@ CompilerValue *LLVMCodeBuilder::createMul(CompilerValue *operand1, CompilerValue
 CompilerValue *LLVMCodeBuilder::createDiv(CompilerValue *operand1, CompilerValue *operand2)
 {
     return createOp(LLVMInstruction::Type::Div, Compiler::StaticType::Number, Compiler::StaticType::Number, { operand1, operand2 });
+}
+
+CompilerValue *LLVMCodeBuilder::createRandom(CompilerValue *from, CompilerValue *to)
+{
+    return createOp(LLVMInstruction::Type::Random, Compiler::StaticType::Number, Compiler::StaticType::Unknown, { from, to });
 }
 
 CompilerValue *LLVMCodeBuilder::createCmpEQ(CompilerValue *operand1, CompilerValue *operand2)
@@ -2331,6 +2369,25 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_list_to_string()
 {
     llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
     return resolveFunction("list_to_string", llvm::FunctionType::get(pointerType, { pointerType }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random()
+{
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Type *valuePtr = m_valueDataType->getPointerTo();
+    return resolveFunction("llvm_random", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, valuePtr, valuePtr }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_double()
+{
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("llvm_random_double", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, m_builder.getDoubleTy(), m_builder.getDoubleTy() }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_bool()
+{
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("llvm_random_bool", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, m_builder.getInt1Ty(), m_builder.getInt1Ty() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()

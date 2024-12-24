@@ -18,6 +18,7 @@ struct LLVMInstruction
             Sub,
             Mul,
             Div,
+            Random,
             CmpEQ,
             CmpGT,
             CmpLT,

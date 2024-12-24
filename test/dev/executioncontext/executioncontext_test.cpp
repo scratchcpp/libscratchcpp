@@ -4,6 +4,7 @@
 
 #include <enginemock.h>
 #include <stacktimermock.h>
+#include <randomgeneratormock.h>
 
 #include "../../common.h"
 
@@ -39,4 +40,14 @@ TEST(ExecutionContextTest, StackTimer)
     StackTimerMock timer;
     ctx.setStackTimer(&timer);
     ASSERT_EQ(ctx.stackTimer(), &timer);
+}
+
+TEST(ExecutionContextTest, Rng)
+{
+    ExecutionContext ctx(nullptr);
+    ASSERT_TRUE(ctx.rng());
+
+    RandomGeneratorMock rng;
+    ctx.setRng(&rng);
+    ASSERT_EQ(ctx.rng(), &rng);
 }

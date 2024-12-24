@@ -15,6 +15,7 @@ target_sources(scratchcpp
     llvmprocedure.h
     llvmtypes.cpp
     llvmtypes.h
+    llvmfunctions.cpp
     llvmexecutablecode.cpp
     llvmexecutablecode.h
     llvmexecutioncontext.cpp

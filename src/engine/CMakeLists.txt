@@ -20,7 +20,6 @@ target_sources(scratchcpp
     internal/stacktimer.h
     internal/randomgenerator.h
     internal/randomgenerator.cpp
-    internal/irandomgenerator.h
 )
 
 if(NOT LIBSCRATCHCPP_USE_LLVM)

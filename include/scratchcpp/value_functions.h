@@ -34,6 +34,8 @@ extern "C"
     LIBSCRATCHCPP_EXPORT char *value_toCString(const ValueData *v);
     LIBSCRATCHCPP_EXPORT void value_toUtf16(const ValueData *v, std::u16string *dst);
 
+    LIBSCRATCHCPP_EXPORT bool value_doubleIsInt(double v);
+
     LIBSCRATCHCPP_EXPORT char *value_doubleToCString(double v);
     LIBSCRATCHCPP_EXPORT const char *value_boolToCString(bool v);
     LIBSCRATCHCPP_EXPORT double value_stringToDouble(const char *s);

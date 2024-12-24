@@ -48,3 +48,15 @@ void ExecutionContext::setStackTimer(IStackTimer *newStackTimer)
 {
     impl->stackTimer = newStackTimer;
 }
+
+/*! Returns the random number generator of this context. */
+IRandomGenerator *ExecutionContext::rng() const
+{
+    return impl->rng;
+}
+
+/*! Sets a custom random number generator. */
+void ExecutionContext::setRng(IRandomGenerator *newRng)
+{
+    impl->rng = newRng;
+}

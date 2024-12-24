@@ -1,6 +1,6 @@
 #pragma once
 
-#include <engine/internal/irandomgenerator.h>
+#include <scratchcpp/irandomgenerator.h>
 #include <gmock/gmock.h>
 
 using namespace libscratchcpp;

@@ -1,5 +1,6 @@
 #include <scratchcpp/value.h>
 #include <scratchcpp/dev/executablecode.h>
+#include <scratchcpp/dev/executioncontext.h>
 #include <scratchcpp/script.h>
 #include <scratchcpp/thread.h>
 #include <scratchcpp/sprite.h>
@@ -10,6 +11,7 @@
 #include <gmock/gmock.h>
 #include <targetmock.h>
 #include <enginemock.h>
+#include <randomgeneratormock.h>
 
 #include "testfunctions.h"
 
@@ -27,6 +29,7 @@ class LLVMCodeBuilderTest : public testing::Test
             Sub,
             Mul,
             Div,
+            Random,
             CmpEQ,
             CmpGT,
             CmpLT,
@@ -49,7 +52,6 @@ class LLVMCodeBuilderTest : public testing::Test
             Log10,
             Exp,
             Exp10
-
         };
 
         void SetUp() override
@@ -92,6 +94,9 @@ class LLVMCodeBuilderTest : public testing::Test
 
                 case OpType::Div:
                     return m_builder->createDiv(arg1, arg2);
+
+                case OpType::Random:
+                    return m_builder->createRandom(arg1, arg2);
 
                 case OpType::CmpEQ:
                     return m_builder->createCmpEQ(arg1, arg2);
@@ -189,6 +194,15 @@ class LLVMCodeBuilderTest : public testing::Test
                 case OpType::Div:
                     return v1 / v2;
 
+                case OpType::Random: {
+                    const double sum = v1.toDouble() + v2.toDouble();
+
+                    if (std::isnan(sum) || std::isinf(sum))
+                        return sum;
+
+                    return v1.isInt() && v2.isInt() ? m_rng.randint(v1.toLong(), v2.toLong()) : m_rng.randintDouble(v1.toDouble(), v2.toDouble());
+                }
+
                 case OpType::CmpEQ:
                     return v1 == v2;
 
@@ -225,7 +239,7 @@ class LLVMCodeBuilderTest : public testing::Test
             }
         }
 
-        void runOpTest(OpType type, const Value &v1, const Value &v2)
+        void runOpTestCommon(OpType type, const Value &v1, const Value &v2)
         {
             createBuilder(true);
 
@@ -241,20 +255,37 @@ class LLVMCodeBuilderTest : public testing::Test
             ret = addOp(type, arg1, arg2);
             m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { ret });
 
-            std::string str = doOp(type, v1, v2).toString() + '\n';
-            std::string expected = str + str;
-
             auto code = m_builder->finalize();
             Script script(&m_target, nullptr, nullptr);
             script.setCode(code);
             Thread thread(&m_target, nullptr, &script);
             auto ctx = code->createExecutionContext(&thread);
+            ctx->setRng(&m_rng);
 
             testing::internal::CaptureStdout();
             code->run(ctx.get());
+        }
+
+        void checkOpTest(const Value &v1, const Value &v2, const std::string &expected)
+        {
             const std::string quotes1 = v1.isString() ? "\"" : "";
             const std::string quotes2 = v2.isString() ? "\"" : "";
             ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes1 << v1.toString() << quotes1 << " " << quotes2 << v2.toString() << quotes2;
+        }
+
+        void runOpTest(OpType type, const Value &v1, const Value &v2, const Value &expected)
+        {
+            std::string str = expected.toString();
+            runOpTestCommon(type, v1, v2);
+            checkOpTest(v1, v2, str + '\n' + str + '\n');
+        };
+
+        void runOpTest(OpType type, const Value &v1, const Value &v2)
+        {
+            runOpTestCommon(type, v1, v2);
+            std::string str = doOp(type, v1, v2).toString() + '\n';
+            std::string expected = str + str;
+            checkOpTest(v1, v2, expected);
         };
 
         void runOpTest(OpType type, const Value &v)
@@ -317,6 +348,7 @@ class LLVMCodeBuilderTest : public testing::Test
 
         std::unique_ptr<LLVMCodeBuilder> m_builder;
         TargetMock m_target; // NOTE: isStage() is used for call expectations
+        RandomGeneratorMock m_rng;
 };
 
 TEST_F(LLVMCodeBuilderTest, FunctionCalls)
@@ -603,6 +635,86 @@ TEST_F(LLVMCodeBuilderTest, Divide)
     runOpTest(OpType::Div, 5, 0);
     runOpTest(OpType::Div, -5, 0);
     runOpTest(OpType::Div, 0, 0);
+}
+
+TEST_F(LLVMCodeBuilderTest, Random)
+{
+    EXPECT_CALL(m_rng, randint(-45, 12)).Times(3).WillRepeatedly(Return(-18));
+    runOpTest(OpType::Random, -45, 12);
+
+    EXPECT_CALL(m_rng, randint(-45, 12)).Times(3).WillRepeatedly(Return(5));
+    runOpTest(OpType::Random, -45.0, 12.0);
+
+    EXPECT_CALL(m_rng, randintDouble(12, 6.05)).Times(3).WillRepeatedly(Return(3.486789));
+    runOpTest(OpType::Random, 12, 6.05);
+
+    EXPECT_CALL(m_rng, randintDouble(-78.686, -45)).Times(3).WillRepeatedly(Return(-59.468873));
+    runOpTest(OpType::Random, -78.686, -45);
+
+    EXPECT_CALL(m_rng, randintDouble(6.05, -78.686)).Times(3).WillRepeatedly(Return(-28.648764));
+    runOpTest(OpType::Random, 6.05, -78.686);
+
+    EXPECT_CALL(m_rng, randint(-45, 12)).Times(3).WillRepeatedly(Return(0));
+    runOpTest(OpType::Random, "-45", "12");
+
+    EXPECT_CALL(m_rng, randintDouble(-45, 12)).Times(3).WillRepeatedly(Return(5.2));
+    runOpTest(OpType::Random, "-45.0", "12");
+
+    EXPECT_CALL(m_rng, randintDouble(-45, 12)).Times(3).WillRepeatedly(Return(-15.5787));
+    runOpTest(OpType::Random, "-45", "12.0");
+
+    EXPECT_CALL(m_rng, randintDouble(-45, 12)).Times(3).WillRepeatedly(Return(2.587964));
+    runOpTest(OpType::Random, "-45.0", "12.0");
+
+    EXPECT_CALL(m_rng, randintDouble(6.05, -78.686)).Times(3).WillRepeatedly(Return(5.648764));
+    runOpTest(OpType::Random, "6.05", "-78.686");
+
+    EXPECT_CALL(m_rng, randint(-45, 12)).Times(3).WillRepeatedly(Return(0));
+    runOpTest(OpType::Random, "-45", 12);
+
+    EXPECT_CALL(m_rng, randint(-45, 12)).Times(3).WillRepeatedly(Return(0));
+    runOpTest(OpType::Random, -45, "12");
+
+    EXPECT_CALL(m_rng, randintDouble(-45, 12)).Times(3).WillRepeatedly(Return(5.2));
+    runOpTest(OpType::Random, "-45.0", 12);
+
+    EXPECT_CALL(m_rng, randintDouble(-45, 12)).Times(3).WillRepeatedly(Return(-15.5787));
+    runOpTest(OpType::Random, -45, "12.0");
+
+    EXPECT_CALL(m_rng, randintDouble(6.05, -78.686)).Times(3).WillRepeatedly(Return(5.648764));
+    runOpTest(OpType::Random, 6.05, "-78.686");
+
+    EXPECT_CALL(m_rng, randintDouble(6.05, -78.686)).Times(3).WillRepeatedly(Return(5.648764));
+    runOpTest(OpType::Random, "6.05", -78.686);
+
+    EXPECT_CALL(m_rng, randint(0, 1)).Times(3).WillRepeatedly(Return(1));
+    runOpTest(OpType::Random, false, true);
+
+    EXPECT_CALL(m_rng, randint(1, 5)).Times(3).WillRepeatedly(Return(1));
+    runOpTest(OpType::Random, true, 5);
+
+    EXPECT_CALL(m_rng, randint(8, 0)).Times(3).WillRepeatedly(Return(1));
+    runOpTest(OpType::Random, 8, false);
+
+    const double inf = std::numeric_limits<double>::infinity();
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    EXPECT_CALL(m_rng, randint).WillRepeatedly(Return(0));
+    EXPECT_CALL(m_rng, randintDouble).WillRepeatedly(Return(0));
+
+    runOpTest(OpType::Random, inf, 2, inf);
+    runOpTest(OpType::Random, -8, inf, inf);
+    runOpTest(OpType::Random, -inf, -2, -inf);
+    runOpTest(OpType::Random, 8, -inf, -inf);
+
+    runOpTest(OpType::Random, inf, 2.5, inf);
+    runOpTest(OpType::Random, -8.09, inf, inf);
+    runOpTest(OpType::Random, -inf, -2.5, -inf);
+    runOpTest(OpType::Random, 8.09, -inf, -inf);
+
+    runOpTest(OpType::Random, inf, inf, inf);
+    runOpTest(OpType::Random, -inf, -inf, -inf);
+    runOpTest(OpType::Random, inf, -inf, nan);
+    runOpTest(OpType::Random, -inf, inf, nan);
 }
 
 TEST_F(LLVMCodeBuilderTest, EqualComparison)
