@@ -37,6 +37,7 @@ void OperatorBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "operator_length", &compileLength);
     engine->addCompileFunction(this, "operator_contains", &compileContains);
     engine->addCompileFunction(this, "operator_mod", &compileMod);
+    engine->addCompileFunction(this, "operator_round", &compileRound);
 }
 
 CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
@@ -126,6 +127,11 @@ CompilerValue *OperatorBlocks::compileContains(Compiler *compiler)
 CompilerValue *OperatorBlocks::compileMod(Compiler *compiler)
 {
     return compiler->createMod(compiler->addInput("NUM1"), compiler->addInput("NUM2"));
+}
+
+CompilerValue *OperatorBlocks::compileRound(Compiler *compiler)
+{
+    return compiler->createRound(compiler->addInput("NUM"));
 }
 
 extern "C" char *operator_join(const char *string1, const char *string2)
