@@ -77,3 +77,35 @@ TEST_F(VariableBlocksTest, SetVariableTo)
     ASSERT_EQ(var1->value(), "test");
     ASSERT_EQ(var2->value(), 123);
 }
+
+TEST_F(VariableBlocksTest, ChangeVariableBy)
+{
+    auto target = std::make_shared<Sprite>();
+    auto var1 = std::make_shared<Variable>("", "", 835.21);
+    target->addVariable(var1);
+    auto var2 = std::make_shared<Variable>("", "", "Hello world");
+    target->addVariable(var2);
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("data_changevariableby");
+    builder.addEntityField("VARIABLE", var1);
+    builder.addValueInput("VALUE", "5.12");
+
+    builder.addBlock("data_changevariableby");
+    builder.addEntityField("VARIABLE", var2);
+    builder.addValueInput("VALUE", -2.5);
+
+    builder.build();
+
+    builder.run();
+    ASSERT_EQ(var1->value(), 840.33);
+    ASSERT_EQ(var2->value(), -2.5);
+
+    builder.run();
+    ASSERT_EQ(var1->value(), 845.45);
+    ASSERT_EQ(var2->value(), -5);
+
+    builder.run();
+    ASSERT_EQ(var1->value(), 850.57);
+    ASSERT_EQ(var2->value(), -7.5);
+}

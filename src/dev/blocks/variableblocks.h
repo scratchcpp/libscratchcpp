@@ -18,6 +18,7 @@ class VariableBlocks : public IExtension
     private:
         static CompilerValue *compileVariable(Compiler *compiler);
         static CompilerValue *compileSetVariableTo(Compiler *compiler);
+        static CompilerValue *compileChangeVariableBy(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

@@ -25,6 +25,7 @@ void VariableBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "data_variable", &compileVariable);
     engine->addCompileFunction(this, "data_setvariableto", &compileSetVariableTo);
+    engine->addCompileFunction(this, "data_changevariableby", &compileChangeVariableBy);
 }
 
 CompilerValue *VariableBlocks::compileVariable(Compiler *compiler)
@@ -47,6 +48,20 @@ CompilerValue *VariableBlocks::compileSetVariableTo(Compiler *compiler)
 
     if (var)
         compiler->createVariableWrite(var, compiler->addInput("VALUE"));
+
+    return nullptr;
+}
+
+CompilerValue *VariableBlocks::compileChangeVariableBy(Compiler *compiler)
+{
+    Field *varField = compiler->field("VARIABLE");
+    Variable *var = static_cast<Variable *>(varField->valuePtr().get());
+    assert(var);
+
+    if (var) {
+        CompilerValue *value = compiler->createAdd(compiler->addVariableValue(var), compiler->addInput("VALUE"));
+        compiler->createVariableWrite(var, value);
+    }
 
     return nullptr;
 }
