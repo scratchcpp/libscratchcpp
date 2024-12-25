@@ -24,6 +24,7 @@ std::string VariableBlocks::description() const
 void VariableBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "data_variable", &compileVariable);
+    engine->addCompileFunction(this, "data_setvariableto", &compileSetVariableTo);
 }
 
 CompilerValue *VariableBlocks::compileVariable(Compiler *compiler)
@@ -36,4 +37,16 @@ CompilerValue *VariableBlocks::compileVariable(Compiler *compiler)
         return compiler->addVariableValue(var);
     else
         return compiler->addConstValue(Value());
+}
+
+CompilerValue *VariableBlocks::compileSetVariableTo(Compiler *compiler)
+{
+    Field *varField = compiler->field("VARIABLE");
+    Variable *var = static_cast<Variable *>(varField->valuePtr().get());
+    assert(var);
+
+    if (var)
+        compiler->createVariableWrite(var, compiler->addInput("VALUE"));
+
+    return nullptr;
 }

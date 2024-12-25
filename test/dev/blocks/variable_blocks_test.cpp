@@ -54,3 +54,26 @@ TEST_F(VariableBlocksTest, Variable)
     ASSERT_EQ(Value(values[0]), 835.21);
     ASSERT_EQ(Value(values[1]), "Hello world");
 }
+
+TEST_F(VariableBlocksTest, SetVariableTo)
+{
+    auto target = std::make_shared<Sprite>();
+    auto var1 = std::make_shared<Variable>("", "", 835.21);
+    target->addVariable(var1);
+    auto var2 = std::make_shared<Variable>("", "", "Hello world");
+    target->addVariable(var2);
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("data_setvariableto");
+    builder.addEntityField("VARIABLE", var1);
+    builder.addValueInput("VALUE", "test");
+
+    builder.addBlock("data_setvariableto");
+    builder.addEntityField("VARIABLE", var2);
+    builder.addValueInput("VALUE", 123);
+
+    builder.build();
+    builder.run();
+    ASSERT_EQ(var1->value(), "test");
+    ASSERT_EQ(var2->value(), 123);
+}
