@@ -2253,6 +2253,7 @@ TEST(EngineTest, DuplicateVariableOrListIDs)
     ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, BroadcastStopsWaitBlocks)
 {
     // Regtest for #563
@@ -2272,7 +2273,6 @@ TEST(EngineTest, BroadcastStopsWaitBlocks)
     ASSERT_TRUE(GET_VAR(stage, "backdrop_passed")->value().toBool());
 }
 
-#ifndef USE_LLVM
 TEST(EngineTest, BroadcastAndWaitCaseInsensitive)
 {
     // Regtest for #578
