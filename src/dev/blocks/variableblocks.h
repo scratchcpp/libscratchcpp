@@ -14,6 +14,9 @@ class VariableBlocks : public IExtension
         std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
+
+    private:
+        static CompilerValue *compileVariable(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
