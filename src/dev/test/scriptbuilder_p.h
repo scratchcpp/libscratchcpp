@@ -11,6 +11,7 @@ namespace libscratchcpp
 class IEngine;
 class Target;
 class Block;
+class Entity;
 class List;
 
 } // namespace libscratchcpp
@@ -29,6 +30,7 @@ class ScriptBuilderPrivate
         std::shared_ptr<Block> lastBlock;
         std::vector<std::shared_ptr<Block>> blocks;
         std::vector<std::shared_ptr<Block>> inputBlocks;
+        std::vector<std::shared_ptr<Entity>> entities;
         unsigned int blockId = 0;
 };
 

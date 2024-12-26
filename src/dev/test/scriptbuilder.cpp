@@ -174,7 +174,11 @@ void ScriptBuilder::addEntityInput(const std::string &name, const std::string &e
     if (!impl->lastBlock)
         return;
 
-    entity->setId(std::to_string(impl->blockId++));
+    if (std::find(impl->entities.begin(), impl->entities.end(), entity) == impl->entities.end()) {
+        entity->setId(std::to_string(impl->blockId++));
+        impl->entities.push_back(entity);
+    }
+
     auto input = std::make_shared<Input>(name, Input::Type::Shadow);
     input->setPrimaryValue(entityName);
     input->primaryValue()->setValuePtr(entity);
@@ -188,7 +192,11 @@ void ScriptBuilder::addEntityField(const std::string &name, std::shared_ptr<Enti
     if (!impl->lastBlock)
         return;
 
-    entity->setId(std::to_string(impl->blockId++));
+    if (std::find(impl->entities.begin(), impl->entities.end(), entity) == impl->entities.end()) {
+        entity->setId(std::to_string(impl->blockId++));
+        impl->entities.push_back(entity);
+    }
+
     auto field = std::make_shared<Field>(name, Value(), entity);
     impl->lastBlock->addField(field);
 }
@@ -203,8 +211,19 @@ std::shared_ptr<Block> ScriptBuilder::currentBlock()
     if (!impl->lastBlock)
         return nullptr;
 
-    if (!impl->lastBlock->compileFunction())
-        build(std::make_shared<Sprite>());
+    if (!impl->lastBlock->compileFunction()) {
+        auto target = std::make_shared<Sprite>();
+        const auto &variables = impl->target->variables();
+        const auto &lists = impl->target->lists();
+
+        for (auto var : variables)
+            target->addVariable(var);
+
+        for (auto list : lists)
+            target->addList(list);
+
+        build(target);
+    }
 
     return impl->lastBlock;
 }

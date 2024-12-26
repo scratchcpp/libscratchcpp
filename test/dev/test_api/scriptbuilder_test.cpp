@@ -7,7 +7,7 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/list.h>
-#include <scratchcpp/broadcast.h>
+#include <scratchcpp/variable.h>
 
 #include "../../common.h"
 #include "testextension.h"
@@ -183,34 +183,42 @@ TEST_F(ScriptBuilderTest, AddDropdownField)
 
 TEST_F(ScriptBuilderTest, AddEntityInput)
 {
-    auto broadcast = std::make_shared<Broadcast>("", "");
-    m_engine->setBroadcasts({ broadcast });
+    auto var = std::make_shared<Variable>("", "");
+    m_target->addVariable(var);
 
     m_builder->addBlock("test_simple");
-    m_builder->addEntityInput("BROADCAST", "test", InputValue::Type::Broadcast, broadcast);
+    m_builder->addEntityInput("VARIABLE", "test", InputValue::Type::Variable, var);
     auto block = m_builder->currentBlock();
     ASSERT_TRUE(block);
     ASSERT_EQ(block->opcode(), "test_simple");
     ASSERT_EQ(block->inputs().size(), 1);
-    ASSERT_EQ(block->inputAt(0)->name(), "BROADCAST");
-    ASSERT_EQ(block->inputAt(0)->primaryValue()->valuePtr(), broadcast);
-    ASSERT_EQ(block->inputAt(0)->primaryValue()->type(), InputValue::Type::Broadcast);
+    ASSERT_EQ(block->inputAt(0)->name(), "VARIABLE");
+    ASSERT_EQ(block->inputAt(0)->primaryValue()->valuePtr(), var);
+    ASSERT_EQ(block->inputAt(0)->primaryValue()->type(), InputValue::Type::Variable);
+
+    m_builder->addBlock("test_simple");
+    m_builder->addEntityInput("VARIABLE", "test", InputValue::Type::Variable, var);
+    m_builder->build();
 }
 
 TEST_F(ScriptBuilderTest, AddEntityField)
 {
-    auto broadcast = std::make_shared<Broadcast>("", "");
-    m_engine->setBroadcasts({ broadcast });
+    auto var = std::make_shared<Variable>("", "");
+    m_target->addVariable(var);
 
     m_builder->addBlock("test_simple");
-    m_builder->addEntityField("BROADCAST", broadcast);
+    m_builder->addEntityField("VARIABLE", var);
     auto block = m_builder->currentBlock();
     ASSERT_TRUE(block);
     ASSERT_EQ(block->opcode(), "test_simple");
     ASSERT_TRUE(block->inputs().empty());
     ASSERT_EQ(block->fields().size(), 1);
-    ASSERT_EQ(block->fieldAt(0)->name(), "BROADCAST");
-    ASSERT_EQ(block->fieldAt(0)->valuePtr(), broadcast);
+    ASSERT_EQ(block->fieldAt(0)->name(), "VARIABLE");
+    ASSERT_EQ(block->fieldAt(0)->valuePtr(), var);
+
+    m_builder->addBlock("test_simple");
+    m_builder->addEntityField("VARIABLE", var);
+    m_builder->build();
 }
 
 TEST_F(ScriptBuilderTest, ReporterBlocks)
