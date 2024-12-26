@@ -14,6 +14,9 @@ class ListBlocks : public IExtension
         std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
+
+    private:
+        static CompilerValue *compileAddToList(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
