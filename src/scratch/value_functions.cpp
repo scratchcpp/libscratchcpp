@@ -192,7 +192,7 @@ extern "C"
     long value_toLong(const libscratchcpp::ValueData *v)
     {
         if (v->type == ValueType::Number) {
-            return v->numberValue;
+            return std::isnan(v->numberValue) || std::isinf(v->numberValue) ? 0 : v->numberValue;
         } else if (v->type == ValueType::Bool)
             return v->boolValue;
         else if (v->type == ValueType::String)
@@ -205,7 +205,7 @@ extern "C"
     int value_toInt(const libscratchcpp::ValueData *v)
     {
         if (v->type == ValueType::Number)
-            return v->numberValue;
+            return std::isnan(v->numberValue) || std::isinf(v->numberValue) ? 0 : v->numberValue;
         else if (v->type == ValueType::Bool)
             return v->boolValue;
         else if (v->type == ValueType::String)

@@ -653,6 +653,13 @@ TEST(ValueTest, ToInt)
     v = "NaN";
     ASSERT_EQ(v.toInt(), 0);
 
+    v = std::numeric_limits<double>::infinity();
+    ASSERT_EQ(v.toInt(), 0);
+    v = -std::numeric_limits<double>::infinity();
+    ASSERT_EQ(v.toInt(), 0);
+    v = std::numeric_limits<double>::quiet_NaN();
+    ASSERT_EQ(v.toInt(), 0);
+
     v = "something";
     ASSERT_EQ(v.toInt(), 0);
 
@@ -793,6 +800,13 @@ TEST(ValueTest, ToLong)
     v = "-Infinity";
     ASSERT_EQ(v.toLong(), 0);
     v = "NaN";
+    ASSERT_EQ(v.toLong(), 0);
+
+    v = std::numeric_limits<double>::infinity();
+    ASSERT_EQ(v.toLong(), 0);
+    v = -std::numeric_limits<double>::infinity();
+    ASSERT_EQ(v.toLong(), 0);
+    v = std::numeric_limits<double>::quiet_NaN();
     ASSERT_EQ(v.toLong(), 0);
 
     v = "something";
