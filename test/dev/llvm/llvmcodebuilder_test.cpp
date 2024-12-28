@@ -698,6 +698,16 @@ TEST_F(LLVMCodeBuilderTest, Random)
 
     const double inf = std::numeric_limits<double>::infinity();
     const double nan = std::numeric_limits<double>::quiet_NaN();
+
+    EXPECT_CALL(m_rng, randint(0, 5)).Times(3).WillRepeatedly(Return(5));
+    runOpTest(OpType::Random, nan, 5);
+
+    EXPECT_CALL(m_rng, randint(5, 0)).Times(3).WillRepeatedly(Return(3));
+    runOpTest(OpType::Random, 5, nan);
+
+    EXPECT_CALL(m_rng, randint(0, 0)).Times(3).WillRepeatedly(Return(0));
+    runOpTest(OpType::Random, nan, nan);
+
     EXPECT_CALL(m_rng, randint).WillRepeatedly(Return(0));
     EXPECT_CALL(m_rng, randintDouble).WillRepeatedly(Return(0));
 
