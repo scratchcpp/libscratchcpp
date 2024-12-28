@@ -199,6 +199,15 @@ CompilerValue *Compiler::createRandom(CompilerValue *from, CompilerValue *to)
     return impl->builder->createRandom(from, to);
 }
 
+/*!
+ * Creates a random integer instruction.
+ * \note Infinity or NaN results in undefined behavior.
+ */
+CompilerValue *Compiler::createRandomInt(CompilerValue *from, CompilerValue *to)
+{
+    return impl->builder->createRandomInt(from, to);
+}
+
 /*! Creates an equality comparison instruction. */
 CompilerValue *Compiler::createCmpEQ(CompilerValue *operand1, CompilerValue *operand2)
 {

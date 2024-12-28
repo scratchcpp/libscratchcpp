@@ -66,6 +66,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         CompilerValue *createDiv(CompilerValue *operand1, CompilerValue *operand2);
 
         CompilerValue *createRandom(CompilerValue *from, CompilerValue *to);
+        CompilerValue *createRandomInt(CompilerValue *from, CompilerValue *to);
 
         CompilerValue *createCmpEQ(CompilerValue *operand1, CompilerValue *operand2);
         CompilerValue *createCmpGT(CompilerValue *operand1, CompilerValue *operand2);

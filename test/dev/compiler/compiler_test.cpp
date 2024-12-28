@@ -484,6 +484,24 @@ TEST_F(CompilerTest, CreateRandom)
     compile(compiler, block);
 }
 
+TEST_F(CompilerTest, CreateRandomInt)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        CompilerValue arg1(Compiler::StaticType::Unknown);
+        CompilerValue arg2(Compiler::StaticType::Unknown);
+        CompilerValue ret(Compiler::StaticType::Unknown);
+        EXPECT_CALL(*m_builder, createRandomInt(&arg1, &arg2)).WillOnce(Return(&ret));
+        EXPECT_EQ(compiler->createRandomInt(&arg1, &arg2), &ret);
+
+        return nullptr;
+    });
+
+    compile(compiler, block);
+}
+
 TEST_F(CompilerTest, CreateCmpEQ)
 {
     Compiler compiler(&m_engine, &m_target);
