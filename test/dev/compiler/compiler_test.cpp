@@ -1,5 +1,6 @@
 #include <scratchcpp/dev/compiler.h>
 #include <scratchcpp/dev/compilerconstant.h>
+#include <scratchcpp/dev/compilerlocalvariable.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
@@ -173,6 +174,29 @@ TEST_F(CompilerTest, AddLoopIndex)
 
         EXPECT_CALL(*m_builder, addLoopIndex()).WillOnce(Return(nullptr));
         EXPECT_EQ(compiler->addLoopIndex(), nullptr);
+
+        return nullptr;
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, AddLocalVariableValue)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("a", "");
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        CompilerValue ret(Compiler::StaticType::Number);
+        CompilerValue ptr1(Compiler::StaticType::Number);
+        CompilerValue ptr2(Compiler::StaticType::Bool);
+        CompilerLocalVariable var1(&ptr1);
+        CompilerLocalVariable var2(&ptr2);
+
+        EXPECT_CALL(*m_builder, addLocalVariableValue(&var1)).WillOnce(Return(&ret));
+        EXPECT_EQ(compiler->addLocalVariableValue(&var1), &ret);
+
+        EXPECT_CALL(*m_builder, addLocalVariableValue(&var2)).WillOnce(Return(nullptr));
+        EXPECT_EQ(compiler->addLocalVariableValue(&var2), nullptr);
 
         return nullptr;
     });
@@ -898,6 +922,46 @@ TEST_F(CompilerTest, CreateSelect)
 
         EXPECT_CALL(*m_builder, createSelect(&arg1, &arg2, &arg3, Compiler::StaticType::Unknown)).WillOnce(Return(nullptr));
         EXPECT_EQ(compiler->createSelect(&arg1, &arg2, &arg3, Compiler::StaticType::Unknown), nullptr);
+
+        return nullptr;
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateLocalVariable)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        CompilerValue ptr1(Compiler::StaticType::Number);
+        CompilerLocalVariable var1(&ptr1);
+        EXPECT_CALL(*m_builder, createLocalVariable(var1.type())).WillOnce(Return(&var1));
+        EXPECT_EQ(compiler->createLocalVariable(var1.type()), &var1);
+
+        CompilerValue ptr2(Compiler::StaticType::Number);
+        CompilerLocalVariable var2(&ptr2);
+        EXPECT_CALL(*m_builder, createLocalVariable(var2.type())).WillOnce(Return(&var2));
+        EXPECT_EQ(compiler->createLocalVariable(var2.type()), &var2);
+
+        return nullptr;
+    });
+
+    compile(compiler, block);
+}
+
+TEST_F(CompilerTest, CreateLocalVariableWrite)
+{
+    Compiler compiler(&m_engine, &m_target);
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        CompilerValue ptr(Compiler::StaticType::Number);
+        CompilerLocalVariable var(&ptr);
+        CompilerValue arg(Compiler::StaticType::Number);
+        EXPECT_CALL(*m_builder, createLocalVariableWrite(&var, &arg));
+        compiler->createLocalVariableWrite(&var, &arg);
 
         return nullptr;
     });

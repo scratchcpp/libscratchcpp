@@ -127,6 +127,12 @@ CompilerValue *Compiler::addLoopIndex()
     return impl->builder->addLoopIndex();
 }
 
+/*! Adds the value of the given local variable to the code. */
+CompilerValue *Compiler::addLocalVariableValue(CompilerLocalVariable *variable)
+{
+    return impl->builder->addLocalVariableValue(variable);
+}
+
 /*! Adds the value of the given variable to the code. */
 CompilerValue *Compiler::addVariableValue(Variable *variable)
 {
@@ -344,6 +350,18 @@ CompilerValue *Compiler::createExp10(CompilerValue *num)
 CompilerValue *Compiler::createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, StaticType valueType)
 {
     return impl->builder->createSelect(cond, trueValue, falseValue, valueType);
+}
+
+/*! Creates a local variable with the given type. */
+CompilerLocalVariable *Compiler::createLocalVariable(StaticType type)
+{
+    return impl->builder->createLocalVariable(type);
+}
+
+/*! Creates a local variable write operation. */
+void Compiler::createLocalVariableWrite(CompilerLocalVariable *variable, CompilerValue *value)
+{
+    impl->builder->createLocalVariableWrite(variable, value);
 }
 
 /*! Creates a variable write operation. */
