@@ -30,6 +30,7 @@ class LLVMCodeBuilderTest : public testing::Test
             Mul,
             Div,
             Random,
+            RandomInt,
             CmpEQ,
             CmpGT,
             CmpLT,
@@ -97,6 +98,9 @@ class LLVMCodeBuilderTest : public testing::Test
 
                 case OpType::Random:
                     return m_builder->createRandom(arg1, arg2);
+
+                case OpType::RandomInt:
+                    return m_builder->createRandomInt(arg1, arg2);
 
                 case OpType::CmpEQ:
                     return m_builder->createCmpEQ(arg1, arg2);
@@ -202,6 +206,9 @@ class LLVMCodeBuilderTest : public testing::Test
 
                     return v1.isInt() && v2.isInt() ? m_rng.randint(v1.toLong(), v2.toLong()) : m_rng.randintDouble(v1.toDouble(), v2.toDouble());
                 }
+
+                case OpType::RandomInt:
+                    return m_rng.randint(v1.toLong(), v2.toLong());
 
                 case OpType::CmpEQ:
                     return v1 == v2;
@@ -725,6 +732,41 @@ TEST_F(LLVMCodeBuilderTest, Random)
     runOpTest(OpType::Random, -inf, -inf, -inf);
     runOpTest(OpType::Random, inf, -inf, nan);
     runOpTest(OpType::Random, -inf, inf, nan);
+}
+
+TEST_F(LLVMCodeBuilderTest, RandomInt)
+{
+    EXPECT_CALL(m_rng, randint(-45, 12)).Times(3).WillRepeatedly(Return(-18));
+    runOpTest(OpType::RandomInt, -45, 12);
+
+    EXPECT_CALL(m_rng, randint(-45, 12)).Times(3).WillRepeatedly(Return(5));
+    runOpTest(OpType::RandomInt, -45.0, 12.0);
+
+    EXPECT_CALL(m_rng, randint(12, 6)).Times(3).WillRepeatedly(Return(3));
+    runOpTest(OpType::RandomInt, 12, 6.05);
+
+    EXPECT_CALL(m_rng, randint(-78, -45)).Times(3).WillRepeatedly(Return(-59));
+    runOpTest(OpType::RandomInt, -78.686, -45);
+
+    EXPECT_CALL(m_rng, randint(-45, 12)).Times(3).WillRepeatedly(Return(0));
+    runOpTest(OpType::RandomInt, "-45", "12");
+
+    EXPECT_CALL(m_rng, randint(-45, 12)).Times(3).WillRepeatedly(Return(5));
+    runOpTest(OpType::RandomInt, "-45.0", "12");
+
+    EXPECT_CALL(m_rng, randint(-45, 12)).Times(3).WillRepeatedly(Return(-15));
+    runOpTest(OpType::RandomInt, "-45", "12.0");
+
+    EXPECT_CALL(m_rng, randint(0, 1)).Times(3).WillRepeatedly(Return(1));
+    runOpTest(OpType::RandomInt, false, true);
+
+    EXPECT_CALL(m_rng, randint(1, 5)).Times(3).WillRepeatedly(Return(1));
+    runOpTest(OpType::RandomInt, true, 5);
+
+    EXPECT_CALL(m_rng, randint(8, 0)).Times(3).WillRepeatedly(Return(1));
+    runOpTest(OpType::RandomInt, 8, false);
+
+    // NOTE: Infinity, -Infinity and NaN behavior is undefined
 }
 
 TEST_F(LLVMCodeBuilderTest, EqualComparison)

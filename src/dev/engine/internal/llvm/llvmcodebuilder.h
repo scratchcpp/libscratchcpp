@@ -44,6 +44,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         CompilerValue *createDiv(CompilerValue *operand1, CompilerValue *operand2) override;
 
         CompilerValue *createRandom(CompilerValue *from, CompilerValue *to) override;
+        CompilerValue *createRandomInt(CompilerValue *from, CompilerValue *to) override;
 
         CompilerValue *createCmpEQ(CompilerValue *operand1, CompilerValue *operand2) override;
         CompilerValue *createCmpGT(CompilerValue *operand1, CompilerValue *operand2) override;
@@ -170,6 +171,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_list_to_string();
         llvm::FunctionCallee resolve_llvm_random();
         llvm::FunctionCallee resolve_llvm_random_double();
+        llvm::FunctionCallee resolve_llvm_random_long();
         llvm::FunctionCallee resolve_llvm_random_bool();
         llvm::FunctionCallee resolve_strcasecmp();
 

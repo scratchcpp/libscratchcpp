@@ -19,6 +19,11 @@ extern "C"
         return value_doubleIsInt(from) && value_doubleIsInt(to) ? ctx->rng()->randint(from, to) : ctx->rng()->randintDouble(from, to);
     }
 
+    double llvm_random_long(ExecutionContext *ctx, long from, long to)
+    {
+        return ctx->rng()->randint(from, to);
+    }
+
     double llvm_random_bool(ExecutionContext *ctx, bool from, bool to)
     {
         return ctx->rng()->randint(from, to);

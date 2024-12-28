@@ -223,6 +223,16 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::RandomInt: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *from = m_builder.CreateFPToSI(castValue(arg1.second, arg1.first), m_builder.getInt64Ty());
+                llvm::Value *to = m_builder.CreateFPToSI(castValue(arg2.second, arg2.first), m_builder.getInt64Ty());
+                step.functionReturnReg->value = m_builder.CreateCall(resolve_llvm_random_long(), { executionContextPtr, from, to });
+                break;
+            }
+
             case LLVMInstruction::Type::CmpEQ: {
                 assert(step.args.size() == 2);
                 const auto &arg1 = step.args[0].second;
@@ -1124,6 +1134,11 @@ CompilerValue *LLVMCodeBuilder::createDiv(CompilerValue *operand1, CompilerValue
 CompilerValue *LLVMCodeBuilder::createRandom(CompilerValue *from, CompilerValue *to)
 {
     return createOp(LLVMInstruction::Type::Random, Compiler::StaticType::Number, Compiler::StaticType::Unknown, { from, to });
+}
+
+CompilerValue *LLVMCodeBuilder::createRandomInt(CompilerValue *from, CompilerValue *to)
+{
+    return createOp(LLVMInstruction::Type::RandomInt, Compiler::StaticType::Number, Compiler::StaticType::Number, { from, to });
 }
 
 CompilerValue *LLVMCodeBuilder::createCmpEQ(CompilerValue *operand1, CompilerValue *operand2)
@@ -2382,6 +2397,12 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_double()
 {
     llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
     return resolveFunction("llvm_random_double", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, m_builder.getDoubleTy(), m_builder.getDoubleTy() }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_long()
+{
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("llvm_random_long", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, m_builder.getInt64Ty(), m_builder.getInt64Ty() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_bool()

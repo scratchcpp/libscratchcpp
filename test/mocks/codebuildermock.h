@@ -27,6 +27,7 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(CompilerValue *, createDiv, (CompilerValue *, CompilerValue *), (override));
 
         MOCK_METHOD(CompilerValue *, createRandom, (CompilerValue *, CompilerValue *), (override));
+        MOCK_METHOD(CompilerValue *, createRandomInt, (CompilerValue *, CompilerValue *), (override));
 
         MOCK_METHOD(CompilerValue *, createCmpEQ, (CompilerValue *, CompilerValue *), (override));
         MOCK_METHOD(CompilerValue *, createCmpGT, (CompilerValue *, CompilerValue *), (override));
