@@ -24,6 +24,7 @@ void ListBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "data_addtolist", &compileAddToList);
     engine->addCompileFunction(this, "data_deleteoflist", &compileDeleteOfList);
+    engine->addCompileFunction(this, "data_deletealloflist", &compileDeleteAllOfList);
 }
 
 CompilerValue *ListBlocks::compileAddToList(Compiler *compiler)
@@ -88,6 +89,17 @@ CompilerValue *ListBlocks::compileDeleteOfList(Compiler *compiler)
         }
         compiler->endIf();
     }
+
+    return nullptr;
+}
+
+CompilerValue *ListBlocks::compileDeleteAllOfList(Compiler *compiler)
+{
+    auto list = compiler->field("LIST")->valuePtr();
+    assert(list);
+
+    if (list)
+        compiler->createListClear(static_cast<List *>(list.get()));
 
     return nullptr;
 }

@@ -133,3 +133,24 @@ TEST_F(ListBlocksTest, DeleteOfList)
     ASSERT_EQ(list2->toString(), "Hello false abc");
     ASSERT_TRUE(list3->empty());
 }
+
+TEST_F(ListBlocksTest, DeleteAllOfList)
+{
+    auto target = std::make_shared<Sprite>();
+
+    auto list = std::make_shared<List>("", "");
+    list->append("Lorem");
+    list->append("ipsum");
+    list->append("dolor");
+    list->append(123);
+    list->append(true);
+    target->addList(list);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+    builder.addBlock("data_deletealloflist");
+    builder.addEntityField("LIST", list);
+    builder.build();
+
+    builder.run();
+    ASSERT_TRUE(list->empty());
+}
