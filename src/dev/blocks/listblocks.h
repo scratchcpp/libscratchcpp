@@ -7,6 +7,8 @@
 namespace libscratchcpp
 {
 
+class List;
+
 class ListBlocks : public IExtension
 {
     public:
@@ -17,6 +19,9 @@ class ListBlocks : public IExtension
 
     private:
         static CompilerValue *compileAddToList(Compiler *compiler);
+        static CompilerValue *getListIndex(Compiler *compiler, CompilerValue *input, List *list);
+        static CompilerValue *compileDeleteOfList(Compiler *compiler);
+        static CompilerValue *compileDeleteAllOfList(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
