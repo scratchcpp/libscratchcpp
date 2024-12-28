@@ -31,6 +31,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         CompilerValue *addFunctionCallWithCtx(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
         CompilerConstant *addConstValue(const Value &value) override;
         CompilerValue *addLoopIndex() override;
+        CompilerValue *addLocalVariableValue(CompilerLocalVariable *variable) override;
         CompilerValue *addVariableValue(Variable *variable) override;
         CompilerValue *addListContents(List *list) override;
         CompilerValue *addListItem(List *list, CompilerValue *index) override;
@@ -72,6 +73,9 @@ class LLVMCodeBuilder : public ICodeBuilder
         CompilerValue *createExp10(CompilerValue *num) override;
 
         CompilerValue *createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType) override;
+
+        CompilerLocalVariable *createLocalVariable(Compiler::StaticType type) override;
+        void createLocalVariableWrite(CompilerLocalVariable *variable, CompilerValue *value) override;
 
         void createVariableWrite(Variable *variable, CompilerValue *value) override;
 
@@ -194,6 +198,7 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         std::vector<LLVMInstruction> m_instructions;
         std::vector<std::shared_ptr<LLVMRegister>> m_regs;
+        std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
         bool m_defaultWarp = false;
         bool m_warp = false;
 

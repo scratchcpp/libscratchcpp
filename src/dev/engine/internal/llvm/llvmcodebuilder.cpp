@@ -10,6 +10,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/dev/compilerconstant.h>
+#include <scratchcpp/dev/compilerlocalvariable.h>
 
 #include "llvmcodebuilder.h"
 #include "llvmexecutablecode.h"
@@ -508,6 +509,64 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *trueValue = castValue(arg2.second, arg2.first);
                 llvm::Value *falseValue = castValue(arg3.second, arg3.first);
                 step.functionReturnReg->value = m_builder.CreateSelect(cond, trueValue, falseValue);
+                break;
+            }
+
+            case LLVMInstruction::Type::CreateLocalVariable: {
+                assert(step.args.empty());
+                llvm::Type *type = nullptr;
+
+                switch (step.functionReturnReg->type()) {
+                    case Compiler::StaticType::Number:
+                        type = m_builder.getDoubleTy();
+                        break;
+
+                    case Compiler::StaticType::Bool:
+                        type = m_builder.getInt1Ty();
+                        break;
+
+                    case Compiler::StaticType::String:
+                        std::cerr << "error: local variables do not support string type" << std::endl;
+                        break;
+
+                    default:
+                        assert(false);
+                        break;
+                }
+
+                step.functionReturnReg->value = m_builder.CreateAlloca(type);
+                break;
+            }
+
+            case LLVMInstruction::Type::WriteLocalVariable: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *converted = castValue(arg2.second, arg2.first);
+                m_builder.CreateStore(converted, arg1.second->value);
+                break;
+            }
+
+            case LLVMInstruction::Type::ReadLocalVariable: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                llvm::Type *type = nullptr;
+
+                switch (step.functionReturnReg->type()) {
+                    case Compiler::StaticType::Number:
+                        type = m_builder.getDoubleTy();
+                        break;
+
+                    case Compiler::StaticType::Bool:
+                        type = m_builder.getInt1Ty();
+                        break;
+
+                    default:
+                        assert(false);
+                        break;
+                }
+
+                step.functionReturnReg->value = m_builder.CreateLoad(type, arg.second->value);
                 break;
             }
 
@@ -1049,6 +1108,11 @@ CompilerValue *LLVMCodeBuilder::addLoopIndex()
     return createOp(LLVMInstruction::Type::LoopIndex, Compiler::StaticType::Number, {}, {});
 }
 
+CompilerValue *LLVMCodeBuilder::addLocalVariableValue(CompilerLocalVariable *variable)
+{
+    return createOp(LLVMInstruction::Type::ReadLocalVariable, variable->type(), variable->type(), { variable->ptr() });
+}
+
 CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
 {
     LLVMInstruction ins(LLVMInstruction::Type::ReadVariable);
@@ -1254,6 +1318,19 @@ CompilerValue *LLVMCodeBuilder::createExp10(CompilerValue *num)
 CompilerValue *LLVMCodeBuilder::createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType)
 {
     return createOp(LLVMInstruction::Type::Select, valueType, { Compiler::StaticType::Bool, valueType, valueType }, { cond, trueValue, falseValue });
+}
+
+CompilerLocalVariable *LLVMCodeBuilder::createLocalVariable(Compiler::StaticType type)
+{
+    CompilerValue *ptr = createOp(LLVMInstruction::Type::CreateLocalVariable, type);
+    auto var = std::make_shared<CompilerLocalVariable>(ptr);
+    m_localVars.push_back(var);
+    return var.get();
+}
+
+void LLVMCodeBuilder::createLocalVariableWrite(CompilerLocalVariable *variable, CompilerValue *value)
+{
+    createOp(LLVMInstruction::Type::WriteLocalVariable, Compiler::StaticType::Void, variable->type(), { variable->ptr(), value });
 }
 
 void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *value)

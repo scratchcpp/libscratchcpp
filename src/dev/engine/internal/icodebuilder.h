@@ -24,6 +24,7 @@ class ICodeBuilder
         virtual CompilerValue *addFunctionCallWithCtx(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) = 0;
         virtual CompilerConstant *addConstValue(const Value &value) = 0;
         virtual CompilerValue *addLoopIndex() = 0;
+        virtual CompilerValue *addLocalVariableValue(CompilerLocalVariable *variable) = 0;
         virtual CompilerValue *addVariableValue(Variable *variable) = 0;
         virtual CompilerValue *addListContents(List *list) = 0;
         virtual CompilerValue *addListItem(List *list, CompilerValue *index) = 0;
@@ -65,6 +66,9 @@ class ICodeBuilder
         virtual CompilerValue *createExp10(CompilerValue *num) = 0;
 
         virtual CompilerValue *createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType) = 0;
+
+        virtual CompilerLocalVariable *createLocalVariable(Compiler::StaticType type) = 0;
+        virtual void createLocalVariableWrite(CompilerLocalVariable *variable, CompilerValue *value) = 0;
 
         virtual void createVariableWrite(Variable *variable, CompilerValue *value) = 0;
 

@@ -1519,6 +1519,63 @@ TEST_F(LLVMCodeBuilderTest, Exp10)
     runUnaryNumOpTest(OpType::Exp10, nan, 1.0);
 }
 
+TEST_F(LLVMCodeBuilderTest, LocalVariables)
+{
+    EngineMock engine;
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&engine);
+    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+
+    createBuilder(&sprite, true);
+
+    CompilerLocalVariable *var1 = m_builder->createLocalVariable(Compiler::StaticType::Number);
+    CompilerLocalVariable *var2 = m_builder->createLocalVariable(Compiler::StaticType::Number);
+    CompilerLocalVariable *var3 = m_builder->createLocalVariable(Compiler::StaticType::Bool);
+    CompilerLocalVariable *var4 = m_builder->createLocalVariable(Compiler::StaticType::Bool);
+
+    CompilerValue *v = m_builder->addConstValue(5);
+    m_builder->createLocalVariableWrite(var1, v);
+
+    v = m_builder->addConstValue(-23.5);
+    v = callConstFuncForType(ValueType::Number, v);
+    m_builder->createLocalVariableWrite(var2, v);
+
+    v = m_builder->addConstValue(5.2);
+    v = callConstFuncForType(ValueType::Number, v);
+    m_builder->createLocalVariableWrite(var2, v);
+
+    v = m_builder->addConstValue(false);
+    m_builder->createLocalVariableWrite(var3, v);
+
+    v = m_builder->addConstValue(true);
+    m_builder->createLocalVariableWrite(var3, v);
+
+    v = m_builder->addConstValue(false);
+    v = callConstFuncForType(ValueType::Bool, v);
+    m_builder->createLocalVariableWrite(var4, v);
+
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { m_builder->addLocalVariableValue(var1) });
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { m_builder->addLocalVariableValue(var2) });
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { m_builder->addLocalVariableValue(var3) });
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { m_builder->addLocalVariableValue(var4) });
+
+    static const std::string expected =
+        "5\n"
+        "5.2\n"
+        "true\n"
+        "false\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
 TEST_F(LLVMCodeBuilderTest, WriteVariable)
 {
     EngineMock engine;
