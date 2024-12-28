@@ -1694,6 +1694,15 @@ TEST_F(LLVMCodeBuilderTest, Select)
     v = m_builder->createSelect(v, m_builder->addConstValue(1), m_builder->addConstValue("false"), Compiler::StaticType::Bool);
     m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
 
+    // Unknown types
+    v = m_builder->addConstValue(true);
+    v = m_builder->createSelect(v, m_builder->addConstValue("test"), m_builder->addConstValue(-456.2), Compiler::StaticType::Unknown);
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = m_builder->addConstValue(false);
+    v = m_builder->createSelect(v, m_builder->addConstValue("abc"), m_builder->addConstValue(true), Compiler::StaticType::Unknown);
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
     static const std::string expected =
         "5.8\n"
         "-17.42\n"
@@ -1704,7 +1713,9 @@ TEST_F(LLVMCodeBuilderTest, Select)
         "543\n"
         "0\n"
         "1\n"
-        "0\n";
+        "0\n"
+        "test\n"
+        "true\n";
 
     auto code = m_builder->finalize();
     testing::internal::CaptureStdout();

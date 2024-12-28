@@ -505,9 +505,19 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg1 = step.args[0];
                 const auto &arg2 = step.args[1];
                 const auto &arg3 = step.args[2];
+                auto type = arg2.first;
                 llvm::Value *cond = castValue(arg1.second, arg1.first);
-                llvm::Value *trueValue = castValue(arg2.second, arg2.first);
-                llvm::Value *falseValue = castValue(arg3.second, arg3.first);
+                llvm::Value *trueValue;
+                llvm::Value *falseValue;
+
+                if (type == Compiler::StaticType::Unknown) {
+                    trueValue = createValue(arg2.second);
+                    falseValue = createValue(arg3.second);
+                } else {
+                    trueValue = castValue(arg2.second, type);
+                    falseValue = castValue(arg3.second, type);
+                }
+
                 step.functionReturnReg->value = m_builder.CreateSelect(cond, trueValue, falseValue);
                 break;
             }
@@ -1100,7 +1110,7 @@ CompilerConstant *LLVMCodeBuilder::addConstValue(const Value &value)
 {
     auto constReg = std::make_shared<LLVMConstantRegister>(TYPE_MAP[value.type()], value);
     auto reg = std::reinterpret_pointer_cast<LLVMRegister>(constReg);
-    return static_cast<CompilerConstant *>(addReg(reg));
+    return static_cast<CompilerConstant *>(static_cast<CompilerValue *>(addReg(reg)));
 }
 
 CompilerValue *LLVMCodeBuilder::addLoopIndex()
@@ -1317,7 +1327,12 @@ CompilerValue *LLVMCodeBuilder::createExp10(CompilerValue *num)
 
 CompilerValue *LLVMCodeBuilder::createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType)
 {
-    return createOp(LLVMInstruction::Type::Select, valueType, { Compiler::StaticType::Bool, valueType, valueType }, { cond, trueValue, falseValue });
+    LLVMRegister *ret = createOp(LLVMInstruction::Type::Select, valueType, { Compiler::StaticType::Bool, valueType, valueType }, { cond, trueValue, falseValue });
+
+    if (valueType == Compiler::StaticType::Unknown)
+        ret->isRawValue = false;
+
+    return ret;
 }
 
 CompilerLocalVariable *LLVMCodeBuilder::createLocalVariable(Compiler::StaticType type)
@@ -1569,7 +1584,7 @@ void LLVMCodeBuilder::optimize()
     modulePassManager.run(*m_module, moduleAnalysisManager);
 }
 
-CompilerValue *LLVMCodeBuilder::addReg(std::shared_ptr<LLVMRegister> reg)
+LLVMRegister *LLVMCodeBuilder::addReg(std::shared_ptr<LLVMRegister> reg)
 {
     m_regs.push_back(reg);
     return reg.get();
@@ -1875,7 +1890,7 @@ void LLVMCodeBuilder::updateListDataPtr(const LLVMListPtr &listPtr, llvm::Functi
     m_builder.CreateStore(m_builder.getInt1(false), listPtr.dataPtrDirty);
 }
 
-CompilerValue *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args)
+LLVMRegister *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args)
 {
     std::vector<Compiler::StaticType> types;
     types.reserve(args.size());
@@ -1886,7 +1901,7 @@ CompilerValue *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::S
     return createOp(ins, retType, types, args);
 }
 
-CompilerValue *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
+LLVMRegister *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
 {
     m_instructions.push_back(ins);
     LLVMInstruction &createdIns = m_instructions.back();

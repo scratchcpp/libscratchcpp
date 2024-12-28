@@ -116,7 +116,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void verifyFunction(llvm::Function *func);
         void optimize();
 
-        CompilerValue *addReg(std::shared_ptr<LLVMRegister> reg);
+        LLVMRegister *addReg(std::shared_ptr<LLVMRegister> reg);
 
         void freeHeap();
         llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType);
@@ -134,8 +134,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         void reloadLists();
         void updateListDataPtr(const LLVMListPtr &listPtr, llvm::Function *func);
 
-        CompilerValue *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
-        CompilerValue *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
+        LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
+        LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
 
         void createValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
         void createReusedValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType);
