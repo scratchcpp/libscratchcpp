@@ -19,9 +19,10 @@ class ListBlocks : public IExtension
 
     private:
         static CompilerValue *compileAddToList(Compiler *compiler);
-        static CompilerValue *getListIndex(Compiler *compiler, CompilerValue *input, List *list);
+        static CompilerValue *getListIndex(Compiler *compiler, CompilerValue *input, List *list, CompilerValue *listSize);
         static CompilerValue *compileDeleteOfList(Compiler *compiler);
         static CompilerValue *compileDeleteAllOfList(Compiler *compiler);
+        static CompilerValue *compileInsertAtList(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

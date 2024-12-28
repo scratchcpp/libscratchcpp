@@ -25,6 +25,7 @@ void ListBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "data_addtolist", &compileAddToList);
     engine->addCompileFunction(this, "data_deleteoflist", &compileDeleteOfList);
     engine->addCompileFunction(this, "data_deletealloflist", &compileDeleteAllOfList);
+    engine->addCompileFunction(this, "data_insertatlist", &compileInsertAtList);
 }
 
 CompilerValue *ListBlocks::compileAddToList(Compiler *compiler)
@@ -38,10 +39,9 @@ CompilerValue *ListBlocks::compileAddToList(Compiler *compiler)
     return nullptr;
 }
 
-CompilerValue *ListBlocks::getListIndex(Compiler *compiler, CompilerValue *input, List *list)
+CompilerValue *ListBlocks::getListIndex(Compiler *compiler, CompilerValue *input, List *list, CompilerValue *listSize)
 {
     CompilerLocalVariable *ret = compiler->createLocalVariable(Compiler::StaticType::Number);
-    CompilerValue *size = compiler->addListSize(list);
 
     CompilerValue *isRandom1 = compiler->createCmpEQ(input, compiler->addConstValue("random"));
     CompilerValue *isRandom2 = compiler->createCmpEQ(input, compiler->addConstValue("any"));
@@ -49,13 +49,13 @@ CompilerValue *ListBlocks::getListIndex(Compiler *compiler, CompilerValue *input
 
     compiler->beginIfStatement(isRandom);
     {
-        CompilerValue *random = compiler->createRandomInt(compiler->addConstValue(1), size);
+        CompilerValue *random = compiler->createRandomInt(compiler->addConstValue(1), listSize);
         compiler->createLocalVariableWrite(ret, random);
     }
     compiler->beginElseBranch();
     {
         CompilerValue *isLast = compiler->createCmpEQ(input, compiler->addConstValue("last"));
-        compiler->createLocalVariableWrite(ret, compiler->createSelect(isLast, size, input, Compiler::StaticType::Number));
+        compiler->createLocalVariableWrite(ret, compiler->createSelect(isLast, listSize, input, Compiler::StaticType::Number));
     }
     compiler->endIf();
 
@@ -76,10 +76,10 @@ CompilerValue *ListBlocks::compileDeleteOfList(Compiler *compiler)
         }
         compiler->beginElseBranch();
         {
-            index = getListIndex(compiler, index, list);
-            index = compiler->createSub(index, compiler->addConstValue(1));
             CompilerValue *min = compiler->addConstValue(-1);
             CompilerValue *max = compiler->addListSize(list);
+            index = getListIndex(compiler, index, list, max);
+            index = compiler->createSub(index, compiler->addConstValue(1));
             cond = compiler->createAnd(compiler->createCmpGT(index, min), compiler->createCmpLT(index, max));
             compiler->beginIfStatement(cond);
             {
@@ -100,6 +100,29 @@ CompilerValue *ListBlocks::compileDeleteAllOfList(Compiler *compiler)
 
     if (list)
         compiler->createListClear(static_cast<List *>(list.get()));
+
+    return nullptr;
+}
+
+CompilerValue *ListBlocks::compileInsertAtList(Compiler *compiler)
+{
+    List *list = static_cast<List *>(compiler->field("LIST")->valuePtr().get());
+    assert(list);
+
+    if (list) {
+        CompilerValue *index = compiler->addInput("INDEX");
+        CompilerValue *min = compiler->addConstValue(-1);
+        CompilerValue *max = compiler->createAdd(compiler->addListSize(list), compiler->addConstValue(1));
+        index = getListIndex(compiler, index, list, max);
+        index = compiler->createSub(index, compiler->addConstValue(1));
+        CompilerValue *cond = compiler->createAnd(compiler->createCmpGT(index, min), compiler->createCmpLT(index, max));
+        compiler->beginIfStatement(cond);
+        {
+            CompilerValue *item = compiler->addInput("ITEM");
+            compiler->createListInsert(list, index, item);
+        }
+        compiler->endIf();
+    }
 
     return nullptr;
 }

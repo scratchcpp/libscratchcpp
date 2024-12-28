@@ -154,3 +154,60 @@ TEST_F(ListBlocksTest, DeleteAllOfList)
     builder.run();
     ASSERT_TRUE(list->empty());
 }
+
+TEST_F(ListBlocksTest, InsertAtList)
+{
+    auto target = std::make_shared<Sprite>();
+
+    auto list1 = std::make_shared<List>("", "");
+    list1->append("Lorem");
+    list1->append("ipsum");
+    list1->append("dolor");
+    list1->append(123);
+    list1->append(true);
+    target->addList(list1);
+
+    auto list2 = std::make_shared<List>("", "");
+    list2->append("Hello");
+    list2->append("world");
+    list2->append(false);
+    list2->append(-543.5);
+    list2->append("abc");
+    list2->append(52.4);
+    target->addList(list2);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    auto addTest = [&builder](const Value &index, const Value &item, std::shared_ptr<List> list) {
+        builder.addBlock("data_insertatlist");
+        builder.addValueInput("ITEM", item);
+        builder.addValueInput("INDEX", index);
+        builder.addEntityField("LIST", list);
+        return builder.currentBlock();
+    };
+
+    auto block = addTest(4, "sit", list1);
+    addTest(7, false, list1);
+    addTest(0, "test", list1);
+    addTest(9, "test", list1);
+
+    addTest("last", "lorem", list2);
+    addTest("random", "ipsum", list2);
+    addTest("any", "dolor", list2);
+
+    builder.build();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    ctx->setRng(&m_rng);
+
+    EXPECT_CALL(m_rng, randint(1, 8)).WillOnce(Return(8));
+    EXPECT_CALL(m_rng, randint(1, 9)).WillOnce(Return(3));
+    code->run(ctx.get());
+    ASSERT_EQ(list1->toString(), "Lorem ipsum dolor sit 123 true false");
+    ASSERT_EQ(list2->toString(), "Hello world dolor false -543.5 abc 52.4 lorem ipsum");
+}
