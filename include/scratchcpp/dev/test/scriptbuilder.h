@@ -31,7 +31,6 @@ class LIBSCRATCHCPP_EXPORT ScriptBuilder
         ~ScriptBuilder();
 
         void addBlock(const std::string &opcode);
-        void addReporterBlock(const std::string &opcode);
         void captureBlockReturnValue();
 
         void addValueInput(const std::string &name, const Value &value);
@@ -47,6 +46,7 @@ class LIBSCRATCHCPP_EXPORT ScriptBuilder
         void addEntityField(const std::string &name, std::shared_ptr<Entity> entity);
 
         std::shared_ptr<Block> currentBlock();
+        std::shared_ptr<Block> takeBlock();
 
         void build();
         void run();

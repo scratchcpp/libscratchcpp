@@ -129,6 +129,28 @@ TEST_F(ScriptBuilderTest, AddObscuredInputMultipleBlocks)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\ntest\ntest\n");
 }
 
+TEST_F(ScriptBuilderTest, AdvancedObscuredInput)
+{
+    for (int i = 1; i <= 3; i++) {
+        m_builder->addBlock("test_input");
+        m_builder->addValueInput("INPUT", i);
+        auto valueBlock = m_builder->takeBlock();
+
+        m_builder->addBlock("test_input");
+        m_builder->addObscuredInput("INPUT", valueBlock);
+        valueBlock = m_builder->takeBlock();
+
+        m_builder->addBlock("test_print");
+        m_builder->addObscuredInput("STRING", valueBlock);
+    }
+
+    m_builder->build();
+
+    testing::internal::CaptureStdout();
+    m_builder->run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "1\n2\n3\n");
+}
+
 TEST_F(ScriptBuilderTest, AddNullObscuredInput)
 {
     m_builder->addBlock("test_print");
@@ -221,15 +243,15 @@ TEST_F(ScriptBuilderTest, AddEntityField)
     m_builder->build();
 }
 
-TEST_F(ScriptBuilderTest, ReporterBlocks)
+TEST_F(ScriptBuilderTest, CaptureBlockReturnValue)
 {
-    m_builder->addReporterBlock("test_teststr");
+    m_builder->addBlock("test_teststr");
     auto block = m_builder->currentBlock();
     ASSERT_TRUE(block);
     ASSERT_EQ(block->opcode(), "test_teststr");
     m_builder->captureBlockReturnValue();
 
-    m_builder->addReporterBlock("test_input");
+    m_builder->addBlock("test_input");
     m_builder->addValueInput("INPUT", -93.4);
     block = m_builder->currentBlock();
     ASSERT_TRUE(block);

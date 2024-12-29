@@ -59,19 +59,13 @@ void ScriptBuilder::addBlock(const std::string &opcode)
     addBlock(impl->lastBlock);
 }
 
-/*! Creates a reporter block with the given opcode to be used with captureBlockReturnValue() later. */
-void ScriptBuilder::addReporterBlock(const std::string &opcode)
-{
-    impl->lastBlock = std::make_shared<Block>(std::to_string(impl->blockId++), opcode);
-}
-
 /*! Captures the return value of the created reporter block. It can be retrieved using capturedValues() later. */
 void ScriptBuilder::captureBlockReturnValue()
 {
     if (!impl->lastBlock)
         return;
 
-    auto valueBlock = impl->lastBlock;
+    auto valueBlock = takeBlock();
     addBlock("script_builder_capture");
     addObscuredInput("VALUE", valueBlock);
 }
@@ -104,6 +98,7 @@ void ScriptBuilder::addObscuredInput(const std::string &name, std::shared_ptr<Bl
         return;
 
     auto block = valueBlock;
+    block->setParent(impl->lastBlock);
 
     while (block) {
         block->setId(std::to_string(impl->blockId++));
@@ -112,7 +107,7 @@ void ScriptBuilder::addObscuredInput(const std::string &name, std::shared_ptr<Bl
         auto parent = block->parent();
         auto next = block->next();
 
-        if (parent)
+        if (parent && block != valueBlock)
             parent->setNext(block);
 
         if (next)
@@ -226,6 +221,24 @@ std::shared_ptr<Block> ScriptBuilder::currentBlock()
     }
 
     return impl->lastBlock;
+}
+
+/*! Removes the current block from the script and returns it. Can be used in inputs later. */
+std::shared_ptr<Block> ScriptBuilder::takeBlock()
+{
+    if (!impl->lastBlock)
+        return nullptr;
+
+    auto block = impl->lastBlock;
+    impl->blocks.pop_back();
+
+    if (!impl->blocks.empty())
+        impl->blocks.back()->setNext(nullptr);
+
+    block->setParent(nullptr);
+    block->setNext(nullptr);
+
+    return block;
 }
 
 /*! Builds and compiles the script. */
