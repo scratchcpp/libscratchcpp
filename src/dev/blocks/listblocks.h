@@ -25,6 +25,7 @@ class ListBlocks : public IExtension
         static CompilerValue *compileInsertAtList(Compiler *compiler);
         static CompilerValue *compileReplaceItemOfList(Compiler *compiler);
         static CompilerValue *compileItemOfList(Compiler *compiler);
+        static CompilerValue *compileItemNumOfList(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

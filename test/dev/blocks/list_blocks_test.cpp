@@ -336,3 +336,46 @@ TEST_F(ListBlocksTest, ItemOfList)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
     ASSERT_EQ(list->toString(), "Lorem ipsum dolor 123 true");
 }
+
+TEST_F(ListBlocksTest, ItemNumOfList)
+{
+    auto target = std::make_shared<Sprite>();
+
+    auto list = std::make_shared<List>("list", "");
+    list->append("Lorem");
+    list->append("ipsum");
+    list->append("dolor");
+    list->append(123);
+    list->append(true);
+    list->append("dolor");
+    target->addList(list);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    auto addTest = [&builder](const Value &item, std::shared_ptr<List> list) {
+        builder.addBlock("data_itemnumoflist");
+        builder.addValueInput("ITEM", item);
+        builder.addEntityField("LIST", list);
+        auto block = builder.takeBlock();
+
+        builder.addBlock("test_print");
+        builder.addObscuredInput("STRING", block);
+        return builder.currentBlock();
+    };
+
+    auto block = addTest("dolor", list);
+    addTest(true, list);
+    addTest("nonexistent", list);
+
+    builder.build();
+
+    static const std::string expected =
+        "3\n"
+        "5\n"
+        "0\n";
+
+    testing::internal::CaptureStdout();
+    builder.run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+    ASSERT_EQ(list->toString(), "Lorem ipsum dolor 123 true dolor");
+}
