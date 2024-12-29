@@ -379,3 +379,48 @@ TEST_F(ListBlocksTest, ItemNumOfList)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
     ASSERT_EQ(list->toString(), "Lorem ipsum dolor 123 true dolor");
 }
+
+TEST_F(ListBlocksTest, LengthOfList)
+{
+    auto target = std::make_shared<Sprite>();
+
+    auto list1 = std::make_shared<List>("list1", "");
+    list1->append("Lorem");
+    list1->append("ipsum");
+    list1->append("dolor");
+    list1->append(123);
+    list1->append(true);
+    target->addList(list1);
+
+    auto list2 = std::make_shared<List>("list2", "");
+    list2->append(1);
+    list2->append(false);
+    target->addList(list2);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    auto addTest = [&builder](std::shared_ptr<List> list) {
+        builder.addBlock("data_lengthoflist");
+        builder.addEntityField("LIST", list);
+        auto block = builder.takeBlock();
+
+        builder.addBlock("test_print");
+        builder.addObscuredInput("STRING", block);
+        return builder.currentBlock();
+    };
+
+    auto block = addTest(list1);
+    addTest(list2);
+
+    builder.build();
+
+    static const std::string expected =
+        "5\n"
+        "2\n";
+
+    testing::internal::CaptureStdout();
+    builder.run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+    ASSERT_EQ(list1->toString(), "Lorem ipsum dolor 123 true");
+    ASSERT_EQ(list2->toString(), "1 false");
+}

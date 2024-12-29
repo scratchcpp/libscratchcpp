@@ -29,6 +29,7 @@ void ListBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "data_replaceitemoflist", &compileReplaceItemOfList);
     engine->addCompileFunction(this, "data_itemoflist", &compileItemOfList);
     engine->addCompileFunction(this, "data_itemnumoflist", &compileItemNumOfList);
+    engine->addCompileFunction(this, "data_lengthoflist", &compileLengthOfList);
 }
 
 CompilerValue *ListBlocks::compileAddToList(Compiler *compiler)
@@ -181,6 +182,17 @@ CompilerValue *ListBlocks::compileItemNumOfList(Compiler *compiler)
         CompilerValue *item = compiler->addInput("ITEM");
         return compiler->createAdd(compiler->addListItemIndex(list, item), compiler->addConstValue(1));
     }
+
+    return nullptr;
+}
+
+CompilerValue *ListBlocks::compileLengthOfList(Compiler *compiler)
+{
+    List *list = static_cast<List *>(compiler->field("LIST")->valuePtr().get());
+    assert(list);
+
+    if (list)
+        return compiler->addListSize(list);
 
     return nullptr;
 }
