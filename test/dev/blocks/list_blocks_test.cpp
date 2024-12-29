@@ -5,12 +5,16 @@
 #include <scratchcpp/dev/test/scriptbuilder.h>
 #include <scratchcpp/script.h>
 #include <scratchcpp/thread.h>
+#include <scratchcpp/block.h>
+#include <scratchcpp/input.h>
+#include <scratchcpp/field.h>
 #include <scratchcpp/dev/executioncontext.h>
 #include <scratchcpp/dev/executablecode.h>
 #include <enginemock.h>
 #include <randomgeneratormock.h>
 
 #include "../common.h"
+#include "util.h"
 #include "dev/blocks/listblocks.h"
 
 using namespace libscratchcpp;
@@ -26,6 +30,7 @@ class ListBlocksTest : public testing::Test
             m_extension = std::make_unique<ListBlocks>();
             m_engine = m_project.engine().get();
             m_extension->registerBlocks(m_engine);
+            registerBlocks(m_engine, m_extension.get());
         }
 
         std::unique_ptr<IExtension> m_extension;
@@ -266,4 +271,68 @@ TEST_F(ListBlocksTest, ReplaceItemOfList)
     code->run(ctx.get());
     ASSERT_EQ(list1->toString(), "Lorem ipsum dolor sit -53.18");
     ASSERT_EQ(list2->toString(), "dolor world false ipsum abc lorem");
+}
+
+TEST_F(ListBlocksTest, ItemOfList)
+{
+    auto target = std::make_shared<Sprite>();
+
+    auto list = std::make_shared<List>("list", "");
+    list->append("Lorem");
+    list->append("ipsum");
+    list->append("dolor");
+    list->append(123);
+    list->append(true);
+    target->addList(list);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    auto addTest = [&builder](const Value &index, std::shared_ptr<List> list) {
+        builder.addBlock("test_const_string");
+        builder.addValueInput("STRING", index);
+        auto valueBlock = builder.takeBlock();
+
+        builder.addBlock("data_itemoflist");
+        builder.addObscuredInput("INDEX", valueBlock);
+        builder.addEntityField("LIST", list);
+        auto block = builder.takeBlock();
+
+        builder.addBlock("test_print");
+        builder.addObscuredInput("STRING", block);
+        return builder.currentBlock();
+    };
+
+    auto block = addTest(3, list);
+    addTest(5, list);
+    addTest(0, list);
+    addTest(6, list);
+
+    addTest("last", list);
+    addTest("random", list);
+    addTest("any", list);
+
+    builder.build();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    ctx->setRng(&m_rng);
+
+    static const std::string expected =
+        "dolor\n"
+        "true\n"
+        "0\n"
+        "0\n"
+        "true\n"
+        "123\n"
+        "Lorem\n";
+
+    EXPECT_CALL(m_rng, randint(1, 5)).WillOnce(Return(4)).WillOnce(Return(1));
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+    ASSERT_EQ(list->toString(), "Lorem ipsum dolor 123 true");
 }

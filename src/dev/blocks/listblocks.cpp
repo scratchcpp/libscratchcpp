@@ -27,6 +27,7 @@ void ListBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "data_deletealloflist", &compileDeleteAllOfList);
     engine->addCompileFunction(this, "data_insertatlist", &compileInsertAtList);
     engine->addCompileFunction(this, "data_replaceitemoflist", &compileReplaceItemOfList);
+    engine->addCompileFunction(this, "data_itemoflist", &compileItemOfList);
 }
 
 CompilerValue *ListBlocks::compileAddToList(Compiler *compiler)
@@ -146,6 +147,25 @@ CompilerValue *ListBlocks::compileReplaceItemOfList(Compiler *compiler)
             compiler->createListReplace(list, index, item);
         }
         compiler->endIf();
+    }
+
+    return nullptr;
+}
+
+CompilerValue *ListBlocks::compileItemOfList(Compiler *compiler)
+{
+    List *list = static_cast<List *>(compiler->field("LIST")->valuePtr().get());
+    assert(list);
+
+    if (list) {
+        CompilerValue *index = compiler->addInput("INDEX");
+        CompilerValue *min = compiler->addConstValue(-1);
+        CompilerValue *max = compiler->addListSize(list);
+        index = getListIndex(compiler, index, list, max);
+        index = compiler->createSub(index, compiler->addConstValue(1));
+        CompilerValue *cond = compiler->createAnd(compiler->createCmpGT(index, min), compiler->createCmpLT(index, max));
+        CompilerValue *item = compiler->addListItem(list, index);
+        return compiler->createSelect(cond, item, compiler->addConstValue(Value()), Compiler::StaticType::Unknown);
     }
 
     return nullptr;
