@@ -166,6 +166,8 @@ TEST_F(EventBlocksTest, Broadcast)
         EXPECT_CALL(m_engineMock, broadcast(1, &thread, false));
         EXPECT_CALL(m_engineMock, broadcast(4, &thread, false));
         thread.run();
+        ASSERT_TRUE(thread.isFinished());
+        ASSERT_FALSE(thread.promise());
     }
 
     {
@@ -180,6 +182,8 @@ TEST_F(EventBlocksTest, Broadcast)
         EXPECT_CALL(m_engineMock, broadcast(7, &thread, false));
         EXPECT_CALL(m_engineMock, broadcast(8, &thread, false));
         thread.run();
+        ASSERT_TRUE(thread.isFinished());
+        ASSERT_FALSE(thread.promise());
     }
 }
 
@@ -213,6 +217,8 @@ TEST_F(EventBlocksTest, BroadcastAndWait)
         EXPECT_CALL(m_engineMock, broadcast(1, &thread, true));
         EXPECT_CALL(m_engineMock, broadcast(4, &thread, true));
         thread.run();
+        ASSERT_FALSE(thread.isFinished());
+        ASSERT_TRUE(thread.promise());
     }
 
     {
@@ -227,6 +233,8 @@ TEST_F(EventBlocksTest, BroadcastAndWait)
         EXPECT_CALL(m_engineMock, broadcast(7, &thread, true));
         EXPECT_CALL(m_engineMock, broadcast(8, &thread, true));
         thread.run();
+        ASSERT_FALSE(thread.isFinished());
+        ASSERT_TRUE(thread.promise());
     }
 }
 

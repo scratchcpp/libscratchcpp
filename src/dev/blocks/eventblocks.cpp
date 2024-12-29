@@ -8,6 +8,7 @@
 #include <scratchcpp/dev/executioncontext.h>
 #include <scratchcpp/thread.h>
 #include <scratchcpp/dev/compilerconstant.h>
+#include <scratchcpp/dev/promise.h>
 
 #include "eventblocks.h"
 
@@ -104,6 +105,7 @@ CompilerValue *EventBlocks::compileBroadcastAndWait(Compiler *compiler)
     auto input = compiler->addInput("BROADCAST_INPUT");
     auto wait = compiler->addConstValue(true);
     compiler->addFunctionCallWithCtx("event_broadcast", Compiler::StaticType::Void, { Compiler::StaticType::String, Compiler::StaticType::Bool }, { input, wait });
+    compiler->createYield();
     return nullptr;
 }
 
@@ -126,4 +128,7 @@ extern "C" void event_broadcast(ExecutionContext *ctx, const char *name, bool wa
 
     for (int index : broadcasts)
         engine->broadcast(index, thread, wait);
+
+    if (wait)
+        ctx->setPromise(std::make_shared<Promise>());
 }
