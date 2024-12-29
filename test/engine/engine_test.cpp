@@ -126,7 +126,6 @@ TEST(EngineTest, Clear)
     ScratchConfiguration::removeExtension(extension);
 }
 
-#ifndef USE_LLVM
 TEST(EngineTest, ClearThreadAboutToStopSignal)
 {
     Project p("3_threads.sb3");
@@ -199,6 +198,7 @@ TEST(EngineTest, StopSignal)
     }
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, CompileAndExecuteMonitors)
 {
     Engine engine;
@@ -352,7 +352,6 @@ TEST(EngineTest, GlobalVolume)
     engine.setGlobalVolume(92.36);
 }
 
-#ifndef USE_LLVM
 TEST(EngineTest, Step)
 {
     Project p("step.sb3");
@@ -377,7 +376,6 @@ TEST(EngineTest, Step)
         ASSERT_EQ(test2->value().toInt(), i > 1 ? 3 : 1);
     }
 }
-#endif
 
 TEST(EngineTest, EventLoop)
 {
@@ -628,7 +626,6 @@ TEST(EngineTest, KeyState)
     ASSERT_TRUE(engine.keyPressed("any"));
 }
 
-#ifndef USE_LLVM
 TEST(EngineTest, WhenKeyPressed)
 {
     Project p("when_key_pressed.sb3");
@@ -894,7 +891,6 @@ TEST(EngineTest, MouseWheel)
     ASSERT_VAR(stage, "any");
     ASSERT_EQ(GET_VAR(stage, "any")->value().toInt(), 0);
 }
-#endif
 
 TEST(EngineTest, MouseX)
 {
@@ -1059,7 +1055,6 @@ TEST(EngineTest, Broadcasts)
     ASSERT_EQ(engine.findBroadcastById("c"), 2);
 }
 
-#ifndef USE_LLVM
 TEST(EngineTest, TargetClickScripts)
 {
     Project p("target_click_scripts.sb3");
@@ -1165,7 +1160,6 @@ TEST(EngineTest, TargetClickScripts)
     ASSERT_VAR(stage, "stage");
     ASSERT_EQ(GET_VAR(stage, "stage")->value().toInt(), 2);
 }
-#endif
 
 TEST(EngineTest, Targets)
 {
@@ -1872,6 +1866,7 @@ TEST(EngineTest, BroadcastsProject)
     ASSERT_VAR(stage, "test5");
     ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 2 0 0");
 }
+#endif
 
 TEST(EngineTest, StopAll)
 {
@@ -1949,6 +1944,7 @@ TEST(EngineTest, StopOtherScriptsInSprite)
     ASSERT_EQ(GET_VAR(stage, "l")->value().toInt(), 110);
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, EdgeActivatedHats)
 {
     Project p("when_greater_than.sb3");
@@ -2057,7 +2053,6 @@ TEST(EngineTest, NoCrashOnBroadcastSelfCall)
     p.run();
 }
 
-#ifndef USE_LLVM
 TEST(EngineTest, NoRefreshWhenCallingRunningBroadcast)
 {
     // Regtest for #257
@@ -2078,6 +2073,7 @@ TEST(EngineTest, NoRefreshWhenCallingRunningBroadcast)
     ASSERT_TRUE(GET_VAR(stage, "passed2")->value().toBool());
 }
 
+#ifndef USE_LLVM
 TEST(EngineTest, NoStopWhenCallingRunningBroadcastFromCustomBlock)
 {
     // Regtest for #257
@@ -2096,6 +2092,7 @@ TEST(EngineTest, NoStopWhenCallingRunningBroadcastFromCustomBlock)
     ASSERT_VAR(stage, "passed2");
     ASSERT_TRUE(GET_VAR(stage, "passed2")->value().toBool());
 }
+#endif
 
 TEST(EngineTest, ResetRunningHats)
 {
@@ -2217,7 +2214,6 @@ TEST(EngineTest, NoCrashWithUndefinedVariableOrList)
     ASSERT_EQ(list->id(), "}l+w#Er5y!:*gh~5!3t%");
     ASSERT_TRUE(list->empty());
 }
-#endif
 
 TEST(EngineTest, AlwaysStopCloneThreads)
 {
@@ -2289,4 +2285,4 @@ TEST(EngineTest, BroadcastAndWaitCaseInsensitive)
     ASSERT_VAR(stage, "passed");
     ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
 }
-#endif // USE_LLVM
+#endif
