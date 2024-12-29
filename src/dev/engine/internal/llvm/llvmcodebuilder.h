@@ -118,7 +118,8 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         LLVMRegister *addReg(std::shared_ptr<LLVMRegister> reg);
 
-        void freeHeap();
+        void freeLater(llvm::Value *value);
+        void freeScopeHeap();
         llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType);
         llvm::Value *castRawValue(LLVMRegister *reg, Compiler::StaticType targetType);
         llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType);
@@ -202,7 +203,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         bool m_defaultWarp = false;
         bool m_warp = false;
 
-        std::vector<llvm::Value *> m_heap;
+        std::vector<std::vector<llvm::Value *>> m_heap; // scopes
 
         std::shared_ptr<ExecutableCode> m_output;
 };

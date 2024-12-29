@@ -2765,6 +2765,7 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
     m_builder->endIf();
 
     // Nested 1
+    CompilerValue *str = m_builder->addFunctionCall("test_const_string", Compiler::StaticType::String, { Compiler::StaticType::String }, { m_builder->addConstValue("test") });
     v = m_builder->addConstValue(true);
     m_builder->beginIfStatement(v);
     {
@@ -2779,6 +2780,9 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
             v = m_builder->addConstValue(1);
             m_builder->addTargetFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
 
+            // str should still be allocated
+            m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { str });
+
             v = m_builder->addConstValue(false);
             m_builder->beginIfStatement(v);
             m_builder->beginElseBranch();
@@ -2787,6 +2791,9 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
                 m_builder->addTargetFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
             }
             m_builder->endIf();
+
+            // str should still be allocated
+            m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { str });
         }
         m_builder->endIf();
     }
@@ -2807,6 +2814,9 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
     }
     m_builder->endIf();
 
+    // str should still be allocated
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { str });
+
     // Nested 2
     v = m_builder->addConstValue(false);
     m_builder->beginIfStatement(v);
@@ -2826,6 +2836,8 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
     }
     m_builder->beginElseBranch();
     {
+        str = m_builder->addFunctionCall("test_const_string", Compiler::StaticType::String, { Compiler::StaticType::String }, { m_builder->addConstValue("test") });
+
         v = m_builder->addConstValue(true);
         m_builder->beginIfStatement(v);
         {
@@ -2834,6 +2846,9 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
         }
         m_builder->beginElseBranch();
         m_builder->endIf();
+
+        // str should still be allocated
+        m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { str });
     }
     m_builder->endIf();
 
@@ -2855,8 +2870,12 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
         "no_args_ret\n"
         "1_arg 9\n"
         "1_arg 1\n"
+        "test\n"
         "1_arg 2\n"
-        "1_arg 7\n";
+        "test\n"
+        "test\n"
+        "1_arg 7\n"
+        "test\n";
 
     EXPECT_CALL(m_target, isStage).WillRepeatedly(Return(false));
     testing::internal::CaptureStdout();
@@ -3144,6 +3163,7 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     m_builder->endLoop();
 
     // Nested
+    CompilerValue *str = m_builder->addFunctionCall("test_const_string", Compiler::StaticType::String, { Compiler::StaticType::String }, { m_builder->addConstValue("test") });
     v = m_builder->addConstValue(2);
     m_builder->beginRepeatLoop(v);
     {
@@ -3152,6 +3172,9 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
         {
             v = m_builder->addConstValue(1);
             m_builder->addTargetFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+            // str should still be allocated
+            m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { str });
         }
         m_builder->endLoop();
 
@@ -3167,6 +3190,9 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
         m_builder->endLoop();
     }
     m_builder->endLoop();
+
+    // str should still be allocated
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { str });
 
     auto code = m_builder->finalize();
     Script script(&m_target, nullptr, nullptr);
@@ -3186,17 +3212,22 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
         "0\n"
         "1\n"
         "1_arg 1\n"
+        "test\n"
         "1_arg 1\n"
+        "test\n"
         "1_arg 2\n"
         "0\n"
         "1\n"
         "2\n"
         "1_arg 1\n"
+        "test\n"
         "1_arg 1\n"
+        "test\n"
         "1_arg 2\n"
         "0\n"
         "1\n"
-        "2\n";
+        "2\n"
+        "test\n";
 
     EXPECT_CALL(m_target, isStage).WillRepeatedly(Return(false));
     testing::internal::CaptureStdout();

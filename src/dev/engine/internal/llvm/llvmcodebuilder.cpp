@@ -146,7 +146,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     step.functionReturnReg->value = ret;
 
                     if (step.functionReturnReg->type() == Compiler::StaticType::String)
-                        m_heap.push_back(step.functionReturnReg->value);
+                        freeLater(step.functionReturnReg->value);
                 }
 
                 break;
@@ -749,7 +749,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 0);
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
                 llvm::Value *ptr = m_builder.CreateCall(resolve_list_to_string(), listPtr.ptr);
-                m_heap.push_back(ptr); // deallocate later
+                freeLater(ptr);
                 step.functionReturnReg->value = ptr;
                 break;
             }
@@ -791,7 +791,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
             case LLVMInstruction::Type::Yield:
                 if (!m_warp) {
-                    freeHeap();
+                    // TODO: Do not allow use after suspend (use after free)
+                    freeScopeHeap();
                     syncVariables(targetVariables);
                     coro->createSuspend();
                     reloadVariables(targetVariables);
@@ -809,7 +810,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &reg = step.args[0];
                 assert(reg.first == Compiler::StaticType::Bool);
-                freeHeap();
                 statement.condition = castValue(reg.second, reg.first);
 
                 // Switch to body branch
@@ -836,7 +836,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // Jump to the branch after the if statement
                 assert(!statement.afterIf);
                 statement.afterIf = llvm::BasicBlock::Create(m_ctx, "", func);
-                freeHeap();
+                freeScopeHeap();
                 m_builder.CreateBr(statement.afterIf);
 
                 // Create else branch
@@ -855,12 +855,12 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             case LLVMInstruction::Type::EndIf: {
                 assert(!ifStatements.empty());
                 LLVMIfStatement &statement = ifStatements.back();
+                freeScopeHeap();
 
                 // Jump to the branch after the if statement
                 if (!statement.afterIf)
                     statement.afterIf = llvm::BasicBlock::Create(m_ctx, "", func);
 
-                freeHeap();
                 m_builder.CreateBr(statement.afterIf);
 
                 if (statement.elseBranch) {
@@ -901,7 +901,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 // Clamp count if <= 0 (we can skip the loop if count is not positive)
                 llvm::Value *comparison = m_builder.CreateFCmpULE(count, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)));
-                freeHeap();
                 m_builder.CreateCondBr(comparison, loop.afterLoop, roundBranch);
 
                 // Round (Scratch-specific behavior)
@@ -955,7 +954,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &reg = step.args[0];
                 assert(reg.first == Compiler::StaticType::Bool);
                 llvm::Value *condition = castValue(reg.second, reg.first);
-                freeHeap();
                 m_builder.CreateCondBr(condition, body, loop.afterLoop);
 
                 // Switch to body branch
@@ -977,7 +975,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &reg = step.args[0];
                 assert(reg.first == Compiler::StaticType::Bool);
                 llvm::Value *condition = castValue(reg.second, reg.first);
-                freeHeap();
                 m_builder.CreateCondBr(condition, loop.afterLoop, body);
 
                 // Switch to body branch
@@ -990,7 +987,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 LLVMLoop loop;
                 loop.isRepeatLoop = false;
                 loop.conditionBranch = llvm::BasicBlock::Create(m_ctx, "", func);
-                freeHeap();
                 m_builder.CreateBr(loop.conditionBranch);
                 m_builder.SetInsertPoint(loop.conditionBranch);
                 loops.push_back(loop);
@@ -1009,7 +1005,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 }
 
                 // Jump to the condition branch
-                freeHeap();
+                freeScopeHeap();
                 m_builder.CreateBr(loop.conditionBranch);
 
                 // Switch to the branch after the loop
@@ -1032,7 +1028,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     m_builder.CreateBr(endBranch);
 
     m_builder.SetInsertPoint(endBranch);
-    freeHeap();
+    assert(m_heap.size() == 1);
+    freeScopeHeap();
     syncVariables(targetVariables);
 
     // End and verify the function
@@ -1535,6 +1532,8 @@ void LLVMCodeBuilder::pushScopeLevel()
         m_scopeLists.push_back(listTypes);
     } else
         m_scopeLists.push_back(m_scopeLists.back());
+
+    m_heap.push_back({});
 }
 
 void LLVMCodeBuilder::popScopeLevel()
@@ -1556,6 +1555,9 @@ void LLVMCodeBuilder::popScopeLevel()
     }
 
     m_scopeLists.pop_back();
+
+    freeScopeHeap();
+    m_heap.pop_back();
 }
 
 void LLVMCodeBuilder::verifyFunction(llvm::Function *func)
@@ -1590,13 +1592,28 @@ LLVMRegister *LLVMCodeBuilder::addReg(std::shared_ptr<LLVMRegister> reg)
     return reg.get();
 }
 
-void LLVMCodeBuilder::freeHeap()
+void LLVMCodeBuilder::freeLater(llvm::Value *value)
 {
-    // Free dynamically allocated memory
-    for (llvm::Value *ptr : m_heap)
+    assert(!m_heap.empty());
+
+    if (m_heap.empty())
+        return;
+
+    m_heap.back().push_back(value);
+}
+
+void LLVMCodeBuilder::freeScopeHeap()
+{
+    if (m_heap.empty())
+        return;
+
+    // Free dynamically allocated memory in current scope
+    auto &heap = m_heap.back();
+
+    for (llvm::Value *ptr : heap)
         m_builder.CreateFree(ptr);
 
-    m_heap.clear();
+    heap.clear();
 }
 
 llvm::Value *LLVMCodeBuilder::castValue(LLVMRegister *reg, Compiler::StaticType targetType)
@@ -1668,7 +1685,7 @@ llvm::Value *LLVMCodeBuilder::castValue(LLVMRegister *reg, Compiler::StaticType 
                 case Compiler::StaticType::Unknown: {
                     // Cast to string
                     llvm::Value *ptr = m_builder.CreateCall(resolve_value_toCString(), reg->value);
-                    m_heap.push_back(ptr); // deallocate later
+                    freeLater(ptr);
                     return ptr;
                 }
 
@@ -1731,7 +1748,7 @@ llvm::Value *LLVMCodeBuilder::castRawValue(LLVMRegister *reg, Compiler::StaticTy
                 case Compiler::StaticType::Number: {
                     // Convert double to string
                     llvm::Value *ptr = m_builder.CreateCall(resolve_value_doubleToCString(), reg->value);
-                    m_heap.push_back(ptr); // deallocate later
+                    freeLater(ptr);
                     return ptr;
                 }
 
