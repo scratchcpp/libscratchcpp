@@ -16,6 +16,7 @@ class Target;
 class ExecutableCode;
 class CompilerValue;
 class CompilerConstant;
+class CompilerLocalVariable;
 class Variable;
 class List;
 class Input;
@@ -52,6 +53,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         CompilerValue *addFunctionCallWithCtx(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
         CompilerConstant *addConstValue(const Value &value);
         CompilerValue *addLoopIndex();
+        CompilerValue *addLocalVariableValue(CompilerLocalVariable *variable);
         CompilerValue *addVariableValue(Variable *variable);
         CompilerValue *addListContents(List *list);
         CompilerValue *addListItem(List *list, CompilerValue *index);
@@ -66,6 +68,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         CompilerValue *createDiv(CompilerValue *operand1, CompilerValue *operand2);
 
         CompilerValue *createRandom(CompilerValue *from, CompilerValue *to);
+        CompilerValue *createRandomInt(CompilerValue *from, CompilerValue *to);
 
         CompilerValue *createCmpEQ(CompilerValue *operand1, CompilerValue *operand2);
         CompilerValue *createCmpGT(CompilerValue *operand1, CompilerValue *operand2);
@@ -93,6 +96,9 @@ class LIBSCRATCHCPP_EXPORT Compiler
         CompilerValue *createExp10(CompilerValue *num);
 
         CompilerValue *createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType);
+
+        CompilerLocalVariable *createLocalVariable(Compiler::StaticType type);
+        void createLocalVariableWrite(CompilerLocalVariable *variable, CompilerValue *value);
 
         void createVariableWrite(Variable *variable, CompilerValue *value);
 

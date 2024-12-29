@@ -10,6 +10,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/dev/compilerconstant.h>
+#include <scratchcpp/dev/compilerlocalvariable.h>
 
 #include "llvmcodebuilder.h"
 #include "llvmexecutablecode.h"
@@ -145,7 +146,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     step.functionReturnReg->value = ret;
 
                     if (step.functionReturnReg->type() == Compiler::StaticType::String)
-                        m_heap.push_back(step.functionReturnReg->value);
+                        freeLater(step.functionReturnReg->value);
                 }
 
                 break;
@@ -220,6 +221,16 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     }
                 }
 
+                break;
+            }
+
+            case LLVMInstruction::Type::RandomInt: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *from = m_builder.CreateFPToSI(castValue(arg1.second, arg1.first), m_builder.getInt64Ty());
+                llvm::Value *to = m_builder.CreateFPToSI(castValue(arg2.second, arg2.first), m_builder.getInt64Ty());
+                step.functionReturnReg->value = m_builder.CreateCall(resolve_llvm_random_long(), { executionContextPtr, from, to });
                 break;
             }
 
@@ -494,10 +505,78 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg1 = step.args[0];
                 const auto &arg2 = step.args[1];
                 const auto &arg3 = step.args[2];
+                auto type = arg2.first;
                 llvm::Value *cond = castValue(arg1.second, arg1.first);
-                llvm::Value *trueValue = castValue(arg2.second, arg2.first);
-                llvm::Value *falseValue = castValue(arg3.second, arg3.first);
+                llvm::Value *trueValue;
+                llvm::Value *falseValue;
+
+                if (type == Compiler::StaticType::Unknown) {
+                    trueValue = createValue(arg2.second);
+                    falseValue = createValue(arg3.second);
+                } else {
+                    trueValue = castValue(arg2.second, type);
+                    falseValue = castValue(arg3.second, type);
+                }
+
                 step.functionReturnReg->value = m_builder.CreateSelect(cond, trueValue, falseValue);
+                break;
+            }
+
+            case LLVMInstruction::Type::CreateLocalVariable: {
+                assert(step.args.empty());
+                llvm::Type *type = nullptr;
+
+                switch (step.functionReturnReg->type()) {
+                    case Compiler::StaticType::Number:
+                        type = m_builder.getDoubleTy();
+                        break;
+
+                    case Compiler::StaticType::Bool:
+                        type = m_builder.getInt1Ty();
+                        break;
+
+                    case Compiler::StaticType::String:
+                        std::cerr << "error: local variables do not support string type" << std::endl;
+                        break;
+
+                    default:
+                        assert(false);
+                        break;
+                }
+
+                step.functionReturnReg->value = m_builder.CreateAlloca(type);
+                break;
+            }
+
+            case LLVMInstruction::Type::WriteLocalVariable: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *converted = castValue(arg2.second, arg2.first);
+                m_builder.CreateStore(converted, arg1.second->value);
+                break;
+            }
+
+            case LLVMInstruction::Type::ReadLocalVariable: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                llvm::Type *type = nullptr;
+
+                switch (step.functionReturnReg->type()) {
+                    case Compiler::StaticType::Number:
+                        type = m_builder.getDoubleTy();
+                        break;
+
+                    case Compiler::StaticType::Bool:
+                        type = m_builder.getInt1Ty();
+                        break;
+
+                    default:
+                        assert(false);
+                        break;
+                }
+
+                step.functionReturnReg->value = m_builder.CreateLoad(type, arg.second->value);
                 break;
             }
 
@@ -670,7 +749,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 0);
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
                 llvm::Value *ptr = m_builder.CreateCall(resolve_list_to_string(), listPtr.ptr);
-                m_heap.push_back(ptr); // deallocate later
+                freeLater(ptr);
                 step.functionReturnReg->value = ptr;
                 break;
             }
@@ -712,7 +791,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
             case LLVMInstruction::Type::Yield:
                 if (!m_warp) {
-                    freeHeap();
+                    // TODO: Do not allow use after suspend (use after free)
+                    freeScopeHeap();
                     syncVariables(targetVariables);
                     coro->createSuspend();
                     reloadVariables(targetVariables);
@@ -730,7 +810,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &reg = step.args[0];
                 assert(reg.first == Compiler::StaticType::Bool);
-                freeHeap();
                 statement.condition = castValue(reg.second, reg.first);
 
                 // Switch to body branch
@@ -757,7 +836,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // Jump to the branch after the if statement
                 assert(!statement.afterIf);
                 statement.afterIf = llvm::BasicBlock::Create(m_ctx, "", func);
-                freeHeap();
+                freeScopeHeap();
                 m_builder.CreateBr(statement.afterIf);
 
                 // Create else branch
@@ -776,12 +855,12 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             case LLVMInstruction::Type::EndIf: {
                 assert(!ifStatements.empty());
                 LLVMIfStatement &statement = ifStatements.back();
+                freeScopeHeap();
 
                 // Jump to the branch after the if statement
                 if (!statement.afterIf)
                     statement.afterIf = llvm::BasicBlock::Create(m_ctx, "", func);
 
-                freeHeap();
                 m_builder.CreateBr(statement.afterIf);
 
                 if (statement.elseBranch) {
@@ -822,7 +901,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 // Clamp count if <= 0 (we can skip the loop if count is not positive)
                 llvm::Value *comparison = m_builder.CreateFCmpULE(count, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)));
-                freeHeap();
                 m_builder.CreateCondBr(comparison, loop.afterLoop, roundBranch);
 
                 // Round (Scratch-specific behavior)
@@ -876,7 +954,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &reg = step.args[0];
                 assert(reg.first == Compiler::StaticType::Bool);
                 llvm::Value *condition = castValue(reg.second, reg.first);
-                freeHeap();
                 m_builder.CreateCondBr(condition, body, loop.afterLoop);
 
                 // Switch to body branch
@@ -898,7 +975,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &reg = step.args[0];
                 assert(reg.first == Compiler::StaticType::Bool);
                 llvm::Value *condition = castValue(reg.second, reg.first);
-                freeHeap();
                 m_builder.CreateCondBr(condition, loop.afterLoop, body);
 
                 // Switch to body branch
@@ -911,7 +987,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 LLVMLoop loop;
                 loop.isRepeatLoop = false;
                 loop.conditionBranch = llvm::BasicBlock::Create(m_ctx, "", func);
-                freeHeap();
                 m_builder.CreateBr(loop.conditionBranch);
                 m_builder.SetInsertPoint(loop.conditionBranch);
                 loops.push_back(loop);
@@ -930,7 +1005,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 }
 
                 // Jump to the condition branch
-                freeHeap();
+                freeScopeHeap();
                 m_builder.CreateBr(loop.conditionBranch);
 
                 // Switch to the branch after the loop
@@ -953,7 +1028,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     m_builder.CreateBr(endBranch);
 
     m_builder.SetInsertPoint(endBranch);
-    freeHeap();
+    assert(m_heap.size() == 1);
+    freeScopeHeap();
     syncVariables(targetVariables);
 
     // End and verify the function
@@ -1031,12 +1107,17 @@ CompilerConstant *LLVMCodeBuilder::addConstValue(const Value &value)
 {
     auto constReg = std::make_shared<LLVMConstantRegister>(TYPE_MAP[value.type()], value);
     auto reg = std::reinterpret_pointer_cast<LLVMRegister>(constReg);
-    return static_cast<CompilerConstant *>(addReg(reg));
+    return static_cast<CompilerConstant *>(static_cast<CompilerValue *>(addReg(reg)));
 }
 
 CompilerValue *LLVMCodeBuilder::addLoopIndex()
 {
     return createOp(LLVMInstruction::Type::LoopIndex, Compiler::StaticType::Number, {}, {});
+}
+
+CompilerValue *LLVMCodeBuilder::addLocalVariableValue(CompilerLocalVariable *variable)
+{
+    return createOp(LLVMInstruction::Type::ReadLocalVariable, variable->type(), variable->type(), { variable->ptr() });
 }
 
 CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
@@ -1124,6 +1205,11 @@ CompilerValue *LLVMCodeBuilder::createDiv(CompilerValue *operand1, CompilerValue
 CompilerValue *LLVMCodeBuilder::createRandom(CompilerValue *from, CompilerValue *to)
 {
     return createOp(LLVMInstruction::Type::Random, Compiler::StaticType::Number, Compiler::StaticType::Unknown, { from, to });
+}
+
+CompilerValue *LLVMCodeBuilder::createRandomInt(CompilerValue *from, CompilerValue *to)
+{
+    return createOp(LLVMInstruction::Type::RandomInt, Compiler::StaticType::Number, Compiler::StaticType::Number, { from, to });
 }
 
 CompilerValue *LLVMCodeBuilder::createCmpEQ(CompilerValue *operand1, CompilerValue *operand2)
@@ -1238,7 +1324,25 @@ CompilerValue *LLVMCodeBuilder::createExp10(CompilerValue *num)
 
 CompilerValue *LLVMCodeBuilder::createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType)
 {
-    return createOp(LLVMInstruction::Type::Select, valueType, { Compiler::StaticType::Bool, valueType, valueType }, { cond, trueValue, falseValue });
+    LLVMRegister *ret = createOp(LLVMInstruction::Type::Select, valueType, { Compiler::StaticType::Bool, valueType, valueType }, { cond, trueValue, falseValue });
+
+    if (valueType == Compiler::StaticType::Unknown)
+        ret->isRawValue = false;
+
+    return ret;
+}
+
+CompilerLocalVariable *LLVMCodeBuilder::createLocalVariable(Compiler::StaticType type)
+{
+    CompilerValue *ptr = createOp(LLVMInstruction::Type::CreateLocalVariable, type);
+    auto var = std::make_shared<CompilerLocalVariable>(ptr);
+    m_localVars.push_back(var);
+    return var.get();
+}
+
+void LLVMCodeBuilder::createLocalVariableWrite(CompilerLocalVariable *variable, CompilerValue *value)
+{
+    createOp(LLVMInstruction::Type::WriteLocalVariable, Compiler::StaticType::Void, variable->type(), { variable->ptr(), value });
 }
 
 void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *value)
@@ -1428,6 +1532,8 @@ void LLVMCodeBuilder::pushScopeLevel()
         m_scopeLists.push_back(listTypes);
     } else
         m_scopeLists.push_back(m_scopeLists.back());
+
+    m_heap.push_back({});
 }
 
 void LLVMCodeBuilder::popScopeLevel()
@@ -1449,6 +1555,9 @@ void LLVMCodeBuilder::popScopeLevel()
     }
 
     m_scopeLists.pop_back();
+
+    freeScopeHeap();
+    m_heap.pop_back();
 }
 
 void LLVMCodeBuilder::verifyFunction(llvm::Function *func)
@@ -1477,19 +1586,34 @@ void LLVMCodeBuilder::optimize()
     modulePassManager.run(*m_module, moduleAnalysisManager);
 }
 
-CompilerValue *LLVMCodeBuilder::addReg(std::shared_ptr<LLVMRegister> reg)
+LLVMRegister *LLVMCodeBuilder::addReg(std::shared_ptr<LLVMRegister> reg)
 {
     m_regs.push_back(reg);
     return reg.get();
 }
 
-void LLVMCodeBuilder::freeHeap()
+void LLVMCodeBuilder::freeLater(llvm::Value *value)
 {
-    // Free dynamically allocated memory
-    for (llvm::Value *ptr : m_heap)
+    assert(!m_heap.empty());
+
+    if (m_heap.empty())
+        return;
+
+    m_heap.back().push_back(value);
+}
+
+void LLVMCodeBuilder::freeScopeHeap()
+{
+    if (m_heap.empty())
+        return;
+
+    // Free dynamically allocated memory in current scope
+    auto &heap = m_heap.back();
+
+    for (llvm::Value *ptr : heap)
         m_builder.CreateFree(ptr);
 
-    m_heap.clear();
+    heap.clear();
 }
 
 llvm::Value *LLVMCodeBuilder::castValue(LLVMRegister *reg, Compiler::StaticType targetType)
@@ -1561,7 +1685,7 @@ llvm::Value *LLVMCodeBuilder::castValue(LLVMRegister *reg, Compiler::StaticType 
                 case Compiler::StaticType::Unknown: {
                     // Cast to string
                     llvm::Value *ptr = m_builder.CreateCall(resolve_value_toCString(), reg->value);
-                    m_heap.push_back(ptr); // deallocate later
+                    freeLater(ptr);
                     return ptr;
                 }
 
@@ -1624,7 +1748,7 @@ llvm::Value *LLVMCodeBuilder::castRawValue(LLVMRegister *reg, Compiler::StaticTy
                 case Compiler::StaticType::Number: {
                     // Convert double to string
                     llvm::Value *ptr = m_builder.CreateCall(resolve_value_doubleToCString(), reg->value);
-                    m_heap.push_back(ptr); // deallocate later
+                    freeLater(ptr);
                     return ptr;
                 }
 
@@ -1783,7 +1907,7 @@ void LLVMCodeBuilder::updateListDataPtr(const LLVMListPtr &listPtr, llvm::Functi
     m_builder.CreateStore(m_builder.getInt1(false), listPtr.dataPtrDirty);
 }
 
-CompilerValue *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args)
+LLVMRegister *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args)
 {
     std::vector<Compiler::StaticType> types;
     types.reserve(args.size());
@@ -1794,7 +1918,7 @@ CompilerValue *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::S
     return createOp(ins, retType, types, args);
 }
 
-CompilerValue *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
+LLVMRegister *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
 {
     m_instructions.push_back(ins);
     LLVMInstruction &createdIns = m_instructions.back();
@@ -2382,6 +2506,12 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_double()
 {
     llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
     return resolveFunction("llvm_random_double", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, m_builder.getDoubleTy(), m_builder.getDoubleTy() }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_long()
+{
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    return resolveFunction("llvm_random_long", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, m_builder.getInt64Ty(), m_builder.getInt64Ty() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_bool()

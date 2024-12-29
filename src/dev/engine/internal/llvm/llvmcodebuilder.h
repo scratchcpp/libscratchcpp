@@ -31,6 +31,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         CompilerValue *addFunctionCallWithCtx(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
         CompilerConstant *addConstValue(const Value &value) override;
         CompilerValue *addLoopIndex() override;
+        CompilerValue *addLocalVariableValue(CompilerLocalVariable *variable) override;
         CompilerValue *addVariableValue(Variable *variable) override;
         CompilerValue *addListContents(List *list) override;
         CompilerValue *addListItem(List *list, CompilerValue *index) override;
@@ -44,6 +45,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         CompilerValue *createDiv(CompilerValue *operand1, CompilerValue *operand2) override;
 
         CompilerValue *createRandom(CompilerValue *from, CompilerValue *to) override;
+        CompilerValue *createRandomInt(CompilerValue *from, CompilerValue *to) override;
 
         CompilerValue *createCmpEQ(CompilerValue *operand1, CompilerValue *operand2) override;
         CompilerValue *createCmpGT(CompilerValue *operand1, CompilerValue *operand2) override;
@@ -71,6 +73,9 @@ class LLVMCodeBuilder : public ICodeBuilder
         CompilerValue *createExp10(CompilerValue *num) override;
 
         CompilerValue *createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType) override;
+
+        CompilerLocalVariable *createLocalVariable(Compiler::StaticType type) override;
+        void createLocalVariableWrite(CompilerLocalVariable *variable, CompilerValue *value) override;
 
         void createVariableWrite(Variable *variable, CompilerValue *value) override;
 
@@ -111,9 +116,10 @@ class LLVMCodeBuilder : public ICodeBuilder
         void verifyFunction(llvm::Function *func);
         void optimize();
 
-        CompilerValue *addReg(std::shared_ptr<LLVMRegister> reg);
+        LLVMRegister *addReg(std::shared_ptr<LLVMRegister> reg);
 
-        void freeHeap();
+        void freeLater(llvm::Value *value);
+        void freeScopeHeap();
         llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType);
         llvm::Value *castRawValue(LLVMRegister *reg, Compiler::StaticType targetType);
         llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType);
@@ -129,8 +135,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         void reloadLists();
         void updateListDataPtr(const LLVMListPtr &listPtr, llvm::Function *func);
 
-        CompilerValue *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
-        CompilerValue *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
+        LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
+        LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
 
         void createValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
         void createReusedValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType);
@@ -170,6 +176,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_list_to_string();
         llvm::FunctionCallee resolve_llvm_random();
         llvm::FunctionCallee resolve_llvm_random_double();
+        llvm::FunctionCallee resolve_llvm_random_long();
         llvm::FunctionCallee resolve_llvm_random_bool();
         llvm::FunctionCallee resolve_strcasecmp();
 
@@ -192,10 +199,11 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         std::vector<LLVMInstruction> m_instructions;
         std::vector<std::shared_ptr<LLVMRegister>> m_regs;
+        std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
         bool m_defaultWarp = false;
         bool m_warp = false;
 
-        std::vector<llvm::Value *> m_heap;
+        std::vector<std::vector<llvm::Value *>> m_heap; // scopes
 
         std::shared_ptr<ExecutableCode> m_output;
 };

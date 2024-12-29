@@ -9,6 +9,9 @@ target_sources(scratchcpp
     compilerconstant.cpp
     compilerconstant_p.cpp
     compilerconstant_p.h
+    compilerlocalvariable.cpp
+    compilerlocalvariable_p.cpp
+    compilerlocalvariable_p.h
     executioncontext.cpp
     executioncontext_p.cpp
     executioncontext_p.h

@@ -14,6 +14,7 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(CompilerValue *, addFunctionCallWithCtx, (const std::string &, Compiler::StaticType, const Compiler::ArgTypes &, const Compiler::Args &), (override));
         MOCK_METHOD(CompilerConstant *, addConstValue, (const Value &), (override));
         MOCK_METHOD(CompilerValue *, addLoopIndex, (), (override));
+        MOCK_METHOD(CompilerValue *, addLocalVariableValue, (CompilerLocalVariable *), (override));
         MOCK_METHOD(CompilerValue *, addVariableValue, (Variable *), (override));
         MOCK_METHOD(CompilerValue *, addListContents, (List *), (override));
         MOCK_METHOD(CompilerValue *, addListItem, (List *, CompilerValue *), (override));
@@ -27,6 +28,7 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(CompilerValue *, createDiv, (CompilerValue *, CompilerValue *), (override));
 
         MOCK_METHOD(CompilerValue *, createRandom, (CompilerValue *, CompilerValue *), (override));
+        MOCK_METHOD(CompilerValue *, createRandomInt, (CompilerValue *, CompilerValue *), (override));
 
         MOCK_METHOD(CompilerValue *, createCmpEQ, (CompilerValue *, CompilerValue *), (override));
         MOCK_METHOD(CompilerValue *, createCmpGT, (CompilerValue *, CompilerValue *), (override));
@@ -54,6 +56,9 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(CompilerValue *, createExp10, (CompilerValue *), (override));
 
         MOCK_METHOD(CompilerValue *, createSelect, (CompilerValue *, CompilerValue *, CompilerValue *, Compiler::StaticType), (override));
+
+        MOCK_METHOD(CompilerLocalVariable *, createLocalVariable, (Compiler::StaticType), (override));
+        MOCK_METHOD(void, createLocalVariableWrite, (CompilerLocalVariable *, CompilerValue *), (override));
 
         MOCK_METHOD(void, createVariableWrite, (Variable *, CompilerValue *), (override));
 

@@ -7,7 +7,7 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/list.h>
-#include <scratchcpp/broadcast.h>
+#include <scratchcpp/variable.h>
 
 #include "../../common.h"
 #include "testextension.h"
@@ -129,6 +129,28 @@ TEST_F(ScriptBuilderTest, AddObscuredInputMultipleBlocks)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\ntest\ntest\n");
 }
 
+TEST_F(ScriptBuilderTest, AdvancedObscuredInput)
+{
+    for (int i = 1; i <= 3; i++) {
+        m_builder->addBlock("test_input");
+        m_builder->addValueInput("INPUT", i);
+        auto valueBlock = m_builder->takeBlock();
+
+        m_builder->addBlock("test_input");
+        m_builder->addObscuredInput("INPUT", valueBlock);
+        valueBlock = m_builder->takeBlock();
+
+        m_builder->addBlock("test_print");
+        m_builder->addObscuredInput("STRING", valueBlock);
+    }
+
+    m_builder->build();
+
+    testing::internal::CaptureStdout();
+    m_builder->run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "1\n2\n3\n");
+}
+
 TEST_F(ScriptBuilderTest, AddNullObscuredInput)
 {
     m_builder->addBlock("test_print");
@@ -183,45 +205,53 @@ TEST_F(ScriptBuilderTest, AddDropdownField)
 
 TEST_F(ScriptBuilderTest, AddEntityInput)
 {
-    auto broadcast = std::make_shared<Broadcast>("", "");
-    m_engine->setBroadcasts({ broadcast });
+    auto var = std::make_shared<Variable>("", "");
+    m_target->addVariable(var);
 
     m_builder->addBlock("test_simple");
-    m_builder->addEntityInput("BROADCAST", "test", InputValue::Type::Broadcast, broadcast);
+    m_builder->addEntityInput("VARIABLE", "test", InputValue::Type::Variable, var);
     auto block = m_builder->currentBlock();
     ASSERT_TRUE(block);
     ASSERT_EQ(block->opcode(), "test_simple");
     ASSERT_EQ(block->inputs().size(), 1);
-    ASSERT_EQ(block->inputAt(0)->name(), "BROADCAST");
-    ASSERT_EQ(block->inputAt(0)->primaryValue()->valuePtr(), broadcast);
-    ASSERT_EQ(block->inputAt(0)->primaryValue()->type(), InputValue::Type::Broadcast);
+    ASSERT_EQ(block->inputAt(0)->name(), "VARIABLE");
+    ASSERT_EQ(block->inputAt(0)->primaryValue()->valuePtr(), var);
+    ASSERT_EQ(block->inputAt(0)->primaryValue()->type(), InputValue::Type::Variable);
+
+    m_builder->addBlock("test_simple");
+    m_builder->addEntityInput("VARIABLE", "test", InputValue::Type::Variable, var);
+    m_builder->build();
 }
 
 TEST_F(ScriptBuilderTest, AddEntityField)
 {
-    auto broadcast = std::make_shared<Broadcast>("", "");
-    m_engine->setBroadcasts({ broadcast });
+    auto var = std::make_shared<Variable>("", "");
+    m_target->addVariable(var);
 
     m_builder->addBlock("test_simple");
-    m_builder->addEntityField("BROADCAST", broadcast);
+    m_builder->addEntityField("VARIABLE", var);
     auto block = m_builder->currentBlock();
     ASSERT_TRUE(block);
     ASSERT_EQ(block->opcode(), "test_simple");
     ASSERT_TRUE(block->inputs().empty());
     ASSERT_EQ(block->fields().size(), 1);
-    ASSERT_EQ(block->fieldAt(0)->name(), "BROADCAST");
-    ASSERT_EQ(block->fieldAt(0)->valuePtr(), broadcast);
+    ASSERT_EQ(block->fieldAt(0)->name(), "VARIABLE");
+    ASSERT_EQ(block->fieldAt(0)->valuePtr(), var);
+
+    m_builder->addBlock("test_simple");
+    m_builder->addEntityField("VARIABLE", var);
+    m_builder->build();
 }
 
-TEST_F(ScriptBuilderTest, ReporterBlocks)
+TEST_F(ScriptBuilderTest, CaptureBlockReturnValue)
 {
-    m_builder->addReporterBlock("test_teststr");
+    m_builder->addBlock("test_teststr");
     auto block = m_builder->currentBlock();
     ASSERT_TRUE(block);
     ASSERT_EQ(block->opcode(), "test_teststr");
     m_builder->captureBlockReturnValue();
 
-    m_builder->addReporterBlock("test_input");
+    m_builder->addBlock("test_input");
     m_builder->addValueInput("INPUT", -93.4);
     block = m_builder->currentBlock();
     ASSERT_TRUE(block);

@@ -59,19 +59,13 @@ void ScriptBuilder::addBlock(const std::string &opcode)
     addBlock(impl->lastBlock);
 }
 
-/*! Creates a reporter block with the given opcode to be used with captureBlockReturnValue() later. */
-void ScriptBuilder::addReporterBlock(const std::string &opcode)
-{
-    impl->lastBlock = std::make_shared<Block>(std::to_string(impl->blockId++), opcode);
-}
-
 /*! Captures the return value of the created reporter block. It can be retrieved using capturedValues() later. */
 void ScriptBuilder::captureBlockReturnValue()
 {
     if (!impl->lastBlock)
         return;
 
-    auto valueBlock = impl->lastBlock;
+    auto valueBlock = takeBlock();
     addBlock("script_builder_capture");
     addObscuredInput("VALUE", valueBlock);
 }
@@ -104,6 +98,7 @@ void ScriptBuilder::addObscuredInput(const std::string &name, std::shared_ptr<Bl
         return;
 
     auto block = valueBlock;
+    block->setParent(impl->lastBlock);
 
     while (block) {
         block->setId(std::to_string(impl->blockId++));
@@ -112,7 +107,7 @@ void ScriptBuilder::addObscuredInput(const std::string &name, std::shared_ptr<Bl
         auto parent = block->parent();
         auto next = block->next();
 
-        if (parent)
+        if (parent && block != valueBlock)
             parent->setNext(block);
 
         if (next)
@@ -174,7 +169,11 @@ void ScriptBuilder::addEntityInput(const std::string &name, const std::string &e
     if (!impl->lastBlock)
         return;
 
-    entity->setId(std::to_string(impl->blockId++));
+    if (std::find(impl->entities.begin(), impl->entities.end(), entity) == impl->entities.end()) {
+        entity->setId(std::to_string(impl->blockId++));
+        impl->entities.push_back(entity);
+    }
+
     auto input = std::make_shared<Input>(name, Input::Type::Shadow);
     input->setPrimaryValue(entityName);
     input->primaryValue()->setValuePtr(entity);
@@ -188,7 +187,11 @@ void ScriptBuilder::addEntityField(const std::string &name, std::shared_ptr<Enti
     if (!impl->lastBlock)
         return;
 
-    entity->setId(std::to_string(impl->blockId++));
+    if (std::find(impl->entities.begin(), impl->entities.end(), entity) == impl->entities.end()) {
+        entity->setId(std::to_string(impl->blockId++));
+        impl->entities.push_back(entity);
+    }
+
     auto field = std::make_shared<Field>(name, Value(), entity);
     impl->lastBlock->addField(field);
 }
@@ -203,10 +206,39 @@ std::shared_ptr<Block> ScriptBuilder::currentBlock()
     if (!impl->lastBlock)
         return nullptr;
 
-    if (!impl->lastBlock->compileFunction())
-        build(std::make_shared<Sprite>());
+    if (!impl->lastBlock->compileFunction()) {
+        auto target = std::make_shared<Sprite>();
+        const auto &variables = impl->target->variables();
+        const auto &lists = impl->target->lists();
+
+        for (auto var : variables)
+            target->addVariable(var);
+
+        for (auto list : lists)
+            target->addList(list);
+
+        build(target);
+    }
 
     return impl->lastBlock;
+}
+
+/*! Removes the current block from the script and returns it. Can be used in inputs later. */
+std::shared_ptr<Block> ScriptBuilder::takeBlock()
+{
+    if (!impl->lastBlock)
+        return nullptr;
+
+    auto block = impl->lastBlock;
+    impl->blocks.pop_back();
+
+    if (!impl->blocks.empty())
+        impl->blocks.back()->setNext(nullptr);
+
+    block->setParent(nullptr);
+    block->setNext(nullptr);
+
+    return block;
 }
 
 /*! Builds and compiles the script. */

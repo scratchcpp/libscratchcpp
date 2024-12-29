@@ -169,6 +169,7 @@ if (LIBSCRATCHCPP_ENABLE_LIST_BLOCKS)
       GTest::gmock_main
       scratchcpp
       scratchcpp_mocks
+      block_test_deps
     )
 
     gtest_discover_tests(list_blocks_test)
