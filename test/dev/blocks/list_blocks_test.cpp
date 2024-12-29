@@ -424,3 +424,46 @@ TEST_F(ListBlocksTest, LengthOfList)
     ASSERT_EQ(list1->toString(), "Lorem ipsum dolor 123 true");
     ASSERT_EQ(list2->toString(), "1 false");
 }
+
+TEST_F(ListBlocksTest, ListContainsItem)
+{
+    auto target = std::make_shared<Sprite>();
+
+    auto list = std::make_shared<List>("list", "");
+    list->append("Lorem");
+    list->append("ipsum");
+    list->append("dolor");
+    list->append(123);
+    list->append(true);
+    list->append("dolor");
+    target->addList(list);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    auto addTest = [&builder](const Value &item, std::shared_ptr<List> list) {
+        builder.addBlock("data_listcontainsitem");
+        builder.addEntityField("LIST", list);
+        builder.addValueInput("ITEM", item);
+        auto block = builder.takeBlock();
+
+        builder.addBlock("test_print");
+        builder.addObscuredInput("STRING", block);
+        return builder.currentBlock();
+    };
+
+    auto block = addTest("dolor", list);
+    addTest(true, list);
+    addTest("nonexistent", list);
+
+    builder.build();
+
+    static const std::string expected =
+        "true\n"
+        "true\n"
+        "false\n";
+
+    testing::internal::CaptureStdout();
+    builder.run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+    ASSERT_EQ(list->toString(), "Lorem ipsum dolor 123 true dolor");
+}

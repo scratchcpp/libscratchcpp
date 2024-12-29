@@ -30,6 +30,7 @@ void ListBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "data_itemoflist", &compileItemOfList);
     engine->addCompileFunction(this, "data_itemnumoflist", &compileItemNumOfList);
     engine->addCompileFunction(this, "data_lengthoflist", &compileLengthOfList);
+    engine->addCompileFunction(this, "data_listcontainsitem", &compileListContainsItem);
 }
 
 CompilerValue *ListBlocks::compileAddToList(Compiler *compiler)
@@ -193,6 +194,19 @@ CompilerValue *ListBlocks::compileLengthOfList(Compiler *compiler)
 
     if (list)
         return compiler->addListSize(list);
+
+    return nullptr;
+}
+
+CompilerValue *ListBlocks::compileListContainsItem(Compiler *compiler)
+{
+    List *list = static_cast<List *>(compiler->field("LIST")->valuePtr().get());
+    assert(list);
+
+    if (list) {
+        CompilerValue *item = compiler->addInput("ITEM");
+        return compiler->addListContains(list, item);
+    }
 
     return nullptr;
 }
