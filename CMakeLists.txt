@@ -74,6 +74,7 @@ if (LIBSCRATCHCPP_USE_LLVM)
     target_sources(scratchcpp
       PUBLIC
         include/scratchcpp/dev/compiler.h
+        include/scratchcpp/dev/compilercontext.h
         include/scratchcpp/dev/compilervalue.h
         include/scratchcpp/dev/compilerconstant.h
         include/scratchcpp/dev/compilerlocalvariable.h
