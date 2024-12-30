@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <llvm/IR/Module.h>
+
 #include "llvmcoroutine.h"
 
 using namespace libscratchcpp;
@@ -28,7 +30,7 @@ LLVMCoroutine::LLVMCoroutine(llvm::Module *module, llvm::IRBuilder<> *builder, l
 
     // Allocate memory
     llvm::Value *coroSizeRet = builder->CreateCall(coroSize, std::nullopt, "size");
-    llvm::Function *mallocFunc = llvm::Function::Create(llvm::FunctionType::get(pointerType, { builder->getInt64Ty() }, false), llvm::Function::ExternalLinkage, "malloc", module);
+    llvm::FunctionCallee mallocFunc = module->getOrInsertFunction("malloc", llvm::FunctionType::get(pointerType, { builder->getInt64Ty() }, false));
     llvm::Value *alloc = builder->CreateCall(mallocFunc, coroSizeRet, "mem");
 
     // Begin

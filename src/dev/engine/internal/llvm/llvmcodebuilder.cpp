@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include <llvm/Support/TargetSelect.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
 #include <llvm/Passes/PassBuilder.h>
@@ -13,6 +12,7 @@
 #include <scratchcpp/dev/compilerlocalvariable.h>
 
 #include "llvmcodebuilder.h"
+#include "llvmcompilercontext.h"
 #include "llvmexecutablecode.h"
 #include "llvmconstantregister.h"
 #include "llvmifstatement.h"
@@ -24,18 +24,15 @@ using namespace libscratchcpp;
 static std::unordered_map<ValueType, Compiler::StaticType>
     TYPE_MAP = { { ValueType::Number, Compiler::StaticType::Number }, { ValueType::Bool, Compiler::StaticType::Bool }, { ValueType::String, Compiler::StaticType::String } };
 
-LLVMCodeBuilder::LLVMCodeBuilder(Target *target, const std::string &id, bool warp) :
-    m_target(target),
-    m_id(id),
-    m_module(std::make_unique<llvm::Module>(id, m_ctx)),
-    m_builder(m_ctx),
+LLVMCodeBuilder::LLVMCodeBuilder(LLVMCompilerContext *ctx, bool warp) :
+    m_ctx(ctx),
+    m_target(ctx->target()),
+    m_llvmCtx(*ctx->llvmCtx()),
+    m_module(ctx->module()),
+    m_builder(m_llvmCtx),
     m_defaultWarp(warp),
     m_warp(warp)
 {
-    llvm::InitializeNativeTarget();
-    llvm::InitializeNativeTargetAsmPrinter();
-    llvm::InitializeNativeTargetAsmParser();
-
     initTypes();
     createVariableMap();
     createListMap();
@@ -61,23 +58,23 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
     // Create function
     // void *f(ExecutionContext *, Target *, ValueData **, List **)
-    llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, { pointerType, pointerType, pointerType, pointerType }, false);
-    llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module.get());
+    llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module);
     llvm::Value *executionContextPtr = func->getArg(0);
     llvm::Value *targetPtr = func->getArg(1);
     llvm::Value *targetVariables = func->getArg(2);
     llvm::Value *targetLists = func->getArg(3);
 
-    llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
-    llvm::BasicBlock *endBranch = llvm::BasicBlock::Create(m_ctx, "end", func);
+    llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_llvmCtx, "entry", func);
+    llvm::BasicBlock *endBranch = llvm::BasicBlock::Create(m_llvmCtx, "end", func);
     m_builder.SetInsertPoint(entry);
 
     // Init coroutine
     std::unique_ptr<LLVMCoroutine> coro;
 
     if (!m_warp)
-        coro = std::make_unique<LLVMCoroutine>(m_module.get(), &m_builder, func);
+        coro = std::make_unique<LLVMCoroutine>(m_module, &m_builder, func);
 
     std::vector<LLVMIfStatement> ifStatements;
     std::vector<LLVMLoop> loops;
@@ -123,13 +120,13 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 // Add execution context arg
                 if (step.functionCtxArg) {
-                    types.push_back(llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0));
+                    types.push_back(llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0));
                     args.push_back(executionContextPtr);
                 }
 
                 // Add target pointer arg
                 if (step.functionTargetArg) {
-                    types.push_back(llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0));
+                    types.push_back(llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0));
                     args.push_back(targetPtr);
                 }
 
@@ -291,7 +288,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg1 = step.args[0];
                 const auto &arg2 = step.args[1];
                 // rem(a, b) / b < 0.0 ? rem(a, b) + b : rem(a, b)
-                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
+                llvm::Constant *zero = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
                 llvm::Value *num1 = removeNaN(castValue(arg1.second, arg1.first));
                 llvm::Value *num2 = removeNaN(castValue(arg2.second, arg2.first));
                 llvm::Value *value = m_builder.CreateFRem(num1, num2);                                // rem(a, b)
@@ -304,15 +301,15 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // x >= 0.0 ? round(x) : (x >= -0.5 ? -0.0 : floor(x + 0.5))
-                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
-                llvm::Constant *negativeZero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(-0.0));
-                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::round, m_builder.getDoubleTy());
-                llvm::Function *floorFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::floor, m_builder.getDoubleTy());
+                llvm::Constant *zero = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
+                llvm::Constant *negativeZero = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(-0.0));
+                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::round, m_builder.getDoubleTy());
+                llvm::Function *floorFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::floor, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
-                llvm::Value *notNegative = m_builder.CreateFCmpOGE(num, zero);                                                                             // num >= 0.0
-                llvm::Value *roundNum = m_builder.CreateCall(roundFunc, num);                                                                              // round(num)
-                llvm::Value *negativeCond = m_builder.CreateFCmpOGE(num, llvm::ConstantFP::get(m_ctx, llvm::APFloat(-0.5)));                               // num >= -0.5
-                llvm::Value *negativeRound = m_builder.CreateCall(floorFunc, m_builder.CreateFAdd(num, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.5)))); // floor(x + 0.5)
+                llvm::Value *notNegative = m_builder.CreateFCmpOGE(num, zero);                                                                                 // num >= 0.0
+                llvm::Value *roundNum = m_builder.CreateCall(roundFunc, num);                                                                                  // round(num)
+                llvm::Value *negativeCond = m_builder.CreateFCmpOGE(num, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(-0.5)));                               // num >= -0.5
+                llvm::Value *negativeRound = m_builder.CreateCall(floorFunc, m_builder.CreateFAdd(num, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.5)))); // floor(x + 0.5)
                 step.functionReturnReg->value = m_builder.CreateSelect(notNegative, roundNum, m_builder.CreateSelect(negativeCond, negativeZero, negativeRound));
                 break;
             }
@@ -320,7 +317,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             case LLVMInstruction::Type::Abs: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
-                llvm::Function *absFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::fabs, m_builder.getDoubleTy());
+                llvm::Function *absFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::fabs, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
                 step.functionReturnReg->value = m_builder.CreateCall(absFunc, num);
                 break;
@@ -329,7 +326,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             case LLVMInstruction::Type::Floor: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
-                llvm::Function *floorFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::floor, m_builder.getDoubleTy());
+                llvm::Function *floorFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::floor, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
                 step.functionReturnReg->value = m_builder.CreateCall(floorFunc, num);
                 break;
@@ -338,7 +335,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             case LLVMInstruction::Type::Ceil: {
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
-                llvm::Function *ceilFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::ceil, m_builder.getDoubleTy());
+                llvm::Function *ceilFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::ceil, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
                 step.functionReturnReg->value = m_builder.CreateCall(ceilFunc, num);
                 break;
@@ -349,8 +346,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg = step.args[0];
                 // sqrt(x) + 0.0
                 // This avoids negative zero
-                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
-                llvm::Function *sqrtFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::sqrt, m_builder.getDoubleTy());
+                llvm::Constant *zero = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
+                llvm::Function *sqrtFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::sqrt, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
                 step.functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateCall(sqrtFunc, num), zero);
                 break;
@@ -361,12 +358,12 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg = step.args[0];
                 // round(sin(x * pi / 180.0) * 1e10) / 1e10 + 0.0
                 // +0.0 to avoid -0.0
-                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
-                llvm::Constant *pi = llvm::ConstantFP::get(m_ctx, llvm::APFloat(std::acos(-1.0)));
-                llvm::Constant *piDeg = llvm::ConstantFP::get(m_ctx, llvm::APFloat(180.0));
-                llvm::Constant *factor = llvm::ConstantFP::get(m_ctx, llvm::APFloat(1e10));
-                llvm::Function *sinFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::sin, m_builder.getDoubleTy());
-                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::round, m_builder.getDoubleTy());
+                llvm::Constant *zero = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
+                llvm::Constant *pi = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(std::acos(-1.0)));
+                llvm::Constant *piDeg = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(180.0));
+                llvm::Constant *factor = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(1e10));
+                llvm::Function *sinFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::sin, m_builder.getDoubleTy());
+                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::round, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
                 llvm::Value *sinResult = m_builder.CreateCall(sinFunc, m_builder.CreateFDiv(m_builder.CreateFMul(num, pi), piDeg)); // sin(x * pi / 180)
                 llvm::Value *rounded = m_builder.CreateCall(roundFunc, m_builder.CreateFMul(sinResult, factor));                    // round(sin(x * 180) * 1e10)
@@ -378,11 +375,11 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // round(cos(x * pi / 180.0) * 1e10) / 1e10
-                llvm::Constant *pi = llvm::ConstantFP::get(m_ctx, llvm::APFloat(std::acos(-1.0)));
-                llvm::Constant *piDeg = llvm::ConstantFP::get(m_ctx, llvm::APFloat(180.0));
-                llvm::Constant *factor = llvm::ConstantFP::get(m_ctx, llvm::APFloat(1e10));
-                llvm::Function *cosFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::cos, m_builder.getDoubleTy());
-                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::round, m_builder.getDoubleTy());
+                llvm::Constant *pi = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(std::acos(-1.0)));
+                llvm::Constant *piDeg = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(180.0));
+                llvm::Constant *factor = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(1e10));
+                llvm::Function *cosFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::cos, m_builder.getDoubleTy());
+                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::round, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
                 llvm::Value *cosResult = m_builder.CreateCall(cosFunc, m_builder.CreateFDiv(m_builder.CreateFMul(num, pi), piDeg)); // cos(x * pi / 180)
                 llvm::Value *rounded = m_builder.CreateCall(roundFunc, m_builder.CreateFMul(cosResult, factor));                    // round(cos(x * 180) * 1e10)
@@ -395,19 +392,19 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg = step.args[0];
                 // ((mod = rem(x, 360.0)) == -270.0 || mod == 90.0) ? inf : ((mod == -90.0 || mod == 270.0) ? -inf : round(tan(x * pi / 180.0) * 1e10) / 1e10 + 0.0)
                 // +0.0 to avoid -0.0
-                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
-                llvm::Constant *full = llvm::ConstantFP::get(m_ctx, llvm::APFloat(360.0));
+                llvm::Constant *zero = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
+                llvm::Constant *full = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(360.0));
                 llvm::Constant *posInf = llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), false);
                 llvm::Constant *negInf = llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), true);
-                llvm::Constant *undefined1 = llvm::ConstantFP::get(m_ctx, llvm::APFloat(-270.0));
-                llvm::Constant *undefined2 = llvm::ConstantFP::get(m_ctx, llvm::APFloat(90.0));
-                llvm::Constant *undefined3 = llvm::ConstantFP::get(m_ctx, llvm::APFloat(-90.0));
-                llvm::Constant *undefined4 = llvm::ConstantFP::get(m_ctx, llvm::APFloat(270.0));
-                llvm::Constant *pi = llvm::ConstantFP::get(m_ctx, llvm::APFloat(std::acos(-1.0)));
-                llvm::Constant *piDeg = llvm::ConstantFP::get(m_ctx, llvm::APFloat(180.0));
-                llvm::Constant *factor = llvm::ConstantFP::get(m_ctx, llvm::APFloat(1e10));
-                llvm::Function *tanFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::tan, m_builder.getDoubleTy());
-                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::round, m_builder.getDoubleTy());
+                llvm::Constant *undefined1 = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(-270.0));
+                llvm::Constant *undefined2 = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(90.0));
+                llvm::Constant *undefined3 = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(-90.0));
+                llvm::Constant *undefined4 = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(270.0));
+                llvm::Constant *pi = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(std::acos(-1.0)));
+                llvm::Constant *piDeg = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(180.0));
+                llvm::Constant *factor = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(1e10));
+                llvm::Function *tanFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::tan, m_builder.getDoubleTy());
+                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::round, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
                 llvm::Value *mod = m_builder.CreateFRem(num, full);
                 llvm::Value *isUndefined1 = m_builder.CreateFCmpOEQ(mod, undefined1);                                               // rem(x, 360.0) == -270.0
@@ -427,10 +424,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg = step.args[0];
                 // asin(x) * 180.0 / pi + 0.0
                 // +0.0 to avoid -0.0
-                llvm::Constant *zero = llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0));
-                llvm::Constant *pi = llvm::ConstantFP::get(m_ctx, llvm::APFloat(std::acos(-1.0)));
-                llvm::Constant *piDeg = llvm::ConstantFP::get(m_ctx, llvm::APFloat(180.0));
-                llvm::Function *asinFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::asin, m_builder.getDoubleTy());
+                llvm::Constant *zero = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
+                llvm::Constant *pi = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(std::acos(-1.0)));
+                llvm::Constant *piDeg = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(180.0));
+                llvm::Function *asinFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::asin, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
                 step.functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(asinFunc, num), piDeg), pi), zero);
                 break;
@@ -440,9 +437,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // acos(x) * 180.0 / pi
-                llvm::Constant *pi = llvm::ConstantFP::get(m_ctx, llvm::APFloat(std::acos(-1.0)));
-                llvm::Constant *piDeg = llvm::ConstantFP::get(m_ctx, llvm::APFloat(180.0));
-                llvm::Function *acosFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::acos, m_builder.getDoubleTy());
+                llvm::Constant *pi = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(std::acos(-1.0)));
+                llvm::Constant *piDeg = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(180.0));
+                llvm::Function *acosFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::acos, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
                 step.functionReturnReg->value = m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(acosFunc, num), piDeg), pi);
                 break;
@@ -452,9 +449,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // atan(x) * 180.0 / pi
-                llvm::Constant *pi = llvm::ConstantFP::get(m_ctx, llvm::APFloat(std::acos(-1.0)));
-                llvm::Constant *piDeg = llvm::ConstantFP::get(m_ctx, llvm::APFloat(180.0));
-                llvm::Function *atanFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::atan, m_builder.getDoubleTy());
+                llvm::Constant *pi = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(std::acos(-1.0)));
+                llvm::Constant *piDeg = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(180.0));
+                llvm::Function *atanFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::atan, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
                 step.functionReturnReg->value = m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(atanFunc, num), piDeg), pi);
                 break;
@@ -464,7 +461,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // log(x)
-                llvm::Function *logFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::log, m_builder.getDoubleTy());
+                llvm::Function *logFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::log, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
                 step.functionReturnReg->value = m_builder.CreateCall(logFunc, num);
                 break;
@@ -474,7 +471,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // log10(x)
-                llvm::Function *log10Func = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::log10, m_builder.getDoubleTy());
+                llvm::Function *log10Func = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::log10, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
                 step.functionReturnReg->value = m_builder.CreateCall(log10Func, num);
                 break;
@@ -484,7 +481,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // exp(x)
-                llvm::Function *expFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::exp, m_builder.getDoubleTy());
+                llvm::Function *expFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::exp, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
                 step.functionReturnReg->value = m_builder.CreateCall(expFunc, num);
                 break;
@@ -494,7 +491,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 // exp10(x)
-                llvm::Function *expFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::exp10, m_builder.getDoubleTy());
+                llvm::Function *expFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::exp10, m_builder.getDoubleTy());
                 llvm::Value *num = removeNaN(castValue(arg.second, arg.first));
                 step.functionReturnReg->value = m_builder.CreateCall(expFunc, num);
                 break;
@@ -658,9 +655,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
                 llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
                 llvm::Value *isAllocated = m_builder.CreateICmpUGT(allocatedSize, size);
-                llvm::BasicBlock *ifBlock = llvm::BasicBlock::Create(m_ctx, "", func);
-                llvm::BasicBlock *elseBlock = llvm::BasicBlock::Create(m_ctx, "", func);
-                llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+                llvm::BasicBlock *ifBlock = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+                llvm::BasicBlock *elseBlock = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+                llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "", func);
                 m_builder.CreateCondBr(isAllocated, ifBlock, elseBlock);
 
                 // If there's enough space, use the allocated memory
@@ -804,7 +801,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             case LLVMInstruction::Type::BeginIf: {
                 LLVMIfStatement statement;
                 statement.beforeIf = m_builder.GetInsertBlock();
-                statement.body = llvm::BasicBlock::Create(m_ctx, "", func);
+                statement.body = llvm::BasicBlock::Create(m_llvmCtx, "", func);
 
                 // Use last reg
                 assert(step.args.size() == 1);
@@ -835,13 +832,13 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 // Jump to the branch after the if statement
                 assert(!statement.afterIf);
-                statement.afterIf = llvm::BasicBlock::Create(m_ctx, "", func);
+                statement.afterIf = llvm::BasicBlock::Create(m_llvmCtx, "", func);
                 freeScopeHeap();
                 m_builder.CreateBr(statement.afterIf);
 
                 // Create else branch
                 assert(!statement.elseBranch);
-                statement.elseBranch = llvm::BasicBlock::Create(m_ctx, "", func);
+                statement.elseBranch = llvm::BasicBlock::Create(m_llvmCtx, "", func);
 
                 // Since there's an else branch, the conditional instruction should jump to it
                 m_builder.SetInsertPoint(statement.beforeIf);
@@ -859,7 +856,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 // Jump to the branch after the if statement
                 if (!statement.afterIf)
-                    statement.afterIf = llvm::BasicBlock::Create(m_ctx, "", func);
+                    statement.afterIf = llvm::BasicBlock::Create(m_llvmCtx, "", func);
 
                 m_builder.CreateBr(statement.afterIf);
 
@@ -888,9 +885,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.CreateStore(zero, loop.index);
 
                 // Create branches
-                llvm::BasicBlock *roundBranch = llvm::BasicBlock::Create(m_ctx, "", func);
-                loop.conditionBranch = llvm::BasicBlock::Create(m_ctx, "", func);
-                loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", func);
+                llvm::BasicBlock *roundBranch = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+                loop.conditionBranch = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+                loop.afterLoop = llvm::BasicBlock::Create(m_llvmCtx, "", func);
 
                 // Use last reg for count
                 assert(step.args.size() == 1);
@@ -900,12 +897,12 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *isInf = m_builder.CreateFCmpOEQ(count, llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), false));
 
                 // Clamp count if <= 0 (we can skip the loop if count is not positive)
-                llvm::Value *comparison = m_builder.CreateFCmpULE(count, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)));
+                llvm::Value *comparison = m_builder.CreateFCmpULE(count, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)));
                 m_builder.CreateCondBr(comparison, loop.afterLoop, roundBranch);
 
                 // Round (Scratch-specific behavior)
                 m_builder.SetInsertPoint(roundBranch);
-                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::round, { count->getType() });
+                llvm::Function *roundFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::round, { count->getType() });
                 count = m_builder.CreateCall(roundFunc, { count });
                 count = m_builder.CreateFPToUI(count, m_builder.getInt64Ty()); // cast to unsigned integer
                 count = m_builder.CreateSelect(isInf, zero, count);
@@ -916,10 +913,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // Check index
                 m_builder.SetInsertPoint(loop.conditionBranch);
 
-                llvm::BasicBlock *body = llvm::BasicBlock::Create(m_ctx, "", func);
+                llvm::BasicBlock *body = llvm::BasicBlock::Create(m_llvmCtx, "", func);
 
                 if (!loop.afterLoop)
-                    loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", func);
+                    loop.afterLoop = llvm::BasicBlock::Create(m_llvmCtx, "", func);
 
                 llvm::Value *currentIndex = m_builder.CreateLoad(m_builder.getInt64Ty(), loop.index);
                 comparison = m_builder.CreateOr(isInf, m_builder.CreateICmpULT(currentIndex, count));
@@ -946,8 +943,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 LLVMLoop &loop = loops.back();
 
                 // Create branches
-                llvm::BasicBlock *body = llvm::BasicBlock::Create(m_ctx, "", func);
-                loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", func);
+                llvm::BasicBlock *body = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+                loop.afterLoop = llvm::BasicBlock::Create(m_llvmCtx, "", func);
 
                 // Use last reg
                 assert(step.args.size() == 1);
@@ -967,8 +964,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 LLVMLoop &loop = loops.back();
 
                 // Create branches
-                llvm::BasicBlock *body = llvm::BasicBlock::Create(m_ctx, "", func);
-                loop.afterLoop = llvm::BasicBlock::Create(m_ctx, "", func);
+                llvm::BasicBlock *body = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+                loop.afterLoop = llvm::BasicBlock::Create(m_llvmCtx, "", func);
 
                 // Use last reg
                 assert(step.args.size() == 1);
@@ -986,7 +983,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             case LLVMInstruction::Type::BeginLoopCondition: {
                 LLVMLoop loop;
                 loop.isRepeatLoop = false;
-                loop.conditionBranch = llvm::BasicBlock::Create(m_ctx, "", func);
+                loop.conditionBranch = llvm::BasicBlock::Create(m_llvmCtx, "", func);
                 m_builder.CreateBr(loop.conditionBranch);
                 m_builder.SetInsertPoint(loop.conditionBranch);
                 loops.push_back(loop);
@@ -1018,7 +1015,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
             case LLVMInstruction::Type::Stop: {
                 m_builder.CreateBr(endBranch);
-                llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_ctx, "", func);
+                llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_llvmCtx, "", func);
                 m_builder.SetInsertPoint(nextBranch);
                 break;
             }
@@ -1043,17 +1040,17 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     // Create resume function
     // bool resume(void *)
     funcType = llvm::FunctionType::get(m_builder.getInt1Ty(), pointerType, false);
-    func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "resume", m_module.get());
+    llvm::Function *resumeFunc = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "resume", m_module);
 
-    entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
+    entry = llvm::BasicBlock::Create(m_llvmCtx, "entry", resumeFunc);
     m_builder.SetInsertPoint(entry);
 
     if (m_warp)
         m_builder.CreateRet(m_builder.getInt1(true));
     else
-        m_builder.CreateRet(coro->createResume(func->getArg(0)));
+        m_builder.CreateRet(coro->createResume(resumeFunc->getArg(0)));
 
-    verifyFunction(func);
+    verifyFunction(resumeFunc);
 
 #ifdef PRINT_LLVM_IR
     std::cout << std::endl << "=== LLVM IR (" << m_module->getName().str() << ") ===" << std::endl;
@@ -1064,7 +1061,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     // Optimize
     optimize();
 
-    return std::make_shared<LLVMExecutableCode>(std::move(m_module));
+    return std::make_shared<LLVMExecutableCode>(m_ctx, func->getName().str(), resumeFunc->getName().str());
 }
 
 CompilerValue *LLVMCodeBuilder::addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
@@ -1564,7 +1561,7 @@ void LLVMCodeBuilder::verifyFunction(llvm::Function *func)
 {
     if (llvm::verifyFunction(*func, &llvm::errs())) {
         llvm::errs() << "error: LLVM function verficiation failed!\n";
-        llvm::errs() << "script hat ID: " << m_id << "\n";
+        llvm::errs() << "module name: " << m_module->getName() << "\n";
     }
 }
 
@@ -1659,7 +1656,7 @@ llvm::Value *LLVMCodeBuilder::castValue(LLVMRegister *reg, Compiler::StaticType 
                     // True if != 0
                     llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
                     llvm::Value *numberValue = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-                    return m_builder.CreateFCmpONE(numberValue, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)));
+                    return m_builder.CreateFCmpONE(numberValue, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)));
                 }
 
                 case Compiler::StaticType::Bool: {
@@ -1692,7 +1689,7 @@ llvm::Value *LLVMCodeBuilder::castValue(LLVMRegister *reg, Compiler::StaticType 
                 case Compiler::StaticType::String: {
                     // Read string pointer directly
                     llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                    return m_builder.CreateLoad(llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), ptr);
+                    return m_builder.CreateLoad(llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), ptr);
                 }
 
                 default:
@@ -1732,7 +1729,7 @@ llvm::Value *LLVMCodeBuilder::castRawValue(LLVMRegister *reg, Compiler::StaticTy
             switch (reg->type()) {
                 case Compiler::StaticType::Number:
                     // Cast double to bool (true if != 0)
-                    return m_builder.CreateFCmpONE(reg->value, llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)));
+                    return m_builder.CreateFCmpONE(reg->value, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)));
 
                 case Compiler::StaticType::String:
                     // Convert string to bool
@@ -1775,7 +1772,7 @@ llvm::Constant *LLVMCodeBuilder::castConstValue(const Value &value, Compiler::St
     switch (targetType) {
         case Compiler::StaticType::Number: {
             const double nan = std::numeric_limits<double>::quiet_NaN();
-            return llvm::ConstantFP::get(m_ctx, llvm::APFloat(value.isNaN() ? nan : value.toDouble()));
+            return llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(value.isNaN() ? nan : value.toDouble()));
         }
 
         case Compiler::StaticType::Bool:
@@ -1814,7 +1811,7 @@ llvm::Type *LLVMCodeBuilder::getType(Compiler::StaticType type)
             return m_builder.getInt1Ty();
 
         case Compiler::StaticType::String:
-            return llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+            return llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
 
         default:
             assert(false);
@@ -1830,7 +1827,7 @@ llvm::Value *LLVMCodeBuilder::isNaN(llvm::Value *num)
 llvm::Value *LLVMCodeBuilder::removeNaN(llvm::Value *num)
 {
     // Replace NaN with zero
-    return m_builder.CreateSelect(isNaN(num), llvm::ConstantFP::get(m_ctx, llvm::APFloat(0.0)), num);
+    return m_builder.CreateSelect(isNaN(num), llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)), num);
 }
 
 llvm::Value *LLVMCodeBuilder::getVariablePtr(llvm::Value *targetVariables, Variable *variable)
@@ -1854,7 +1851,7 @@ llvm::Value *LLVMCodeBuilder::getListPtr(llvm::Value *targetLists, List *list)
         // If this is a local sprite list, use the list array at runtime (for clones)
         assert(m_targetListMap.find(list) != m_targetListMap.cend());
         const size_t index = m_targetListMap[list];
-        auto pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+        auto pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
         llvm::Value *ptr = m_builder.CreateGEP(pointerType, targetLists, m_builder.getInt64(index));
         return m_builder.CreateLoad(pointerType, ptr);
     }
@@ -2067,12 +2064,12 @@ llvm::Value *LLVMCodeBuilder::getListItem(const LLVMListPtr &listPtr, llvm::Valu
 llvm::Value *LLVMCodeBuilder::getListItemIndex(const LLVMListPtr &listPtr, LLVMRegister *item, llvm::Function *func)
 {
     llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
-    llvm::BasicBlock *condBlock = llvm::BasicBlock::Create(m_ctx, "", func);
-    llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(m_ctx, "", func);
-    llvm::BasicBlock *cmpIfBlock = llvm::BasicBlock::Create(m_ctx, "", func);
-    llvm::BasicBlock *cmpElseBlock = llvm::BasicBlock::Create(m_ctx, "", func);
-    llvm::BasicBlock *notFoundBlock = llvm::BasicBlock::Create(m_ctx, "", func);
-    llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_ctx, "", func);
+    llvm::BasicBlock *condBlock = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+    llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+    llvm::BasicBlock *cmpIfBlock = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+    llvm::BasicBlock *cmpElseBlock = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+    llvm::BasicBlock *notFoundBlock = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+    llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "", func);
 
     // index = 0
     llvm::Value *index = m_builder.CreateAlloca(m_builder.getInt64Ty());
@@ -2105,7 +2102,7 @@ llvm::Value *LLVMCodeBuilder::getListItemIndex(const LLVMListPtr &listPtr, LLVMR
     // index = -1
     // goto nextBlock
     m_builder.SetInsertPoint(notFoundBlock);
-    m_builder.CreateStore(llvm::ConstantInt::get(llvm::Type::getInt64Ty(m_ctx), -1, true), index);
+    m_builder.CreateStore(llvm::ConstantInt::get(llvm::Type::getInt64Ty(m_llvmCtx), -1, true), index);
     m_builder.CreateBr(nextBlock);
 
     // nextBlock:
@@ -2381,7 +2378,9 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_bool()
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_cstring()
 {
-    return resolveFunction("value_assign_cstring", llvm::FunctionType::get(m_builder.getVoidTy(), { m_valueDataType->getPointerTo(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0) }, false));
+    return resolveFunction(
+        "value_assign_cstring",
+        llvm::FunctionType::get(m_builder.getVoidTy(), { m_valueDataType->getPointerTo(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0) }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_special()
@@ -2406,27 +2405,27 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_value_toBool()
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_toCString()
 {
-    return resolveFunction("value_toCString", llvm::FunctionType::get(llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), m_valueDataType->getPointerTo(), false));
+    return resolveFunction("value_toCString", llvm::FunctionType::get(llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), m_valueDataType->getPointerTo(), false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_doubleToCString()
 {
-    return resolveFunction("value_doubleToCString", llvm::FunctionType::get(llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), m_builder.getDoubleTy(), false));
+    return resolveFunction("value_doubleToCString", llvm::FunctionType::get(llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), m_builder.getDoubleTy(), false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_boolToCString()
 {
-    return resolveFunction("value_boolToCString", llvm::FunctionType::get(llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), m_builder.getInt1Ty(), false));
+    return resolveFunction("value_boolToCString", llvm::FunctionType::get(llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), m_builder.getInt1Ty(), false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_stringToDouble()
 {
-    return resolveFunction("value_stringToDouble", llvm::FunctionType::get(m_builder.getDoubleTy(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), false));
+    return resolveFunction("value_stringToDouble", llvm::FunctionType::get(m_builder.getDoubleTy(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_stringToBool()
 {
-    return resolveFunction("value_stringToBool", llvm::FunctionType::get(m_builder.getInt1Ty(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), false));
+    return resolveFunction("value_stringToBool", llvm::FunctionType::get(m_builder.getInt1Ty(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_equals()
@@ -2449,79 +2448,79 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_value_lower()
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_clear()
 {
-    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     return resolveFunction("list_clear", llvm::FunctionType::get(m_builder.getVoidTy(), { listPtr }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_remove()
 {
-    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     return resolveFunction("list_remove", llvm::FunctionType::get(m_builder.getVoidTy(), { listPtr, m_builder.getInt64Ty() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_append_empty()
 {
-    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     return resolveFunction("list_append_empty", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_insert_empty()
 {
-    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     return resolveFunction("list_insert_empty", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr, m_builder.getInt64Ty() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_data()
 {
-    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     return resolveFunction("list_data", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_size_ptr()
 {
-    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     return resolveFunction("list_size_ptr", llvm::FunctionType::get(m_builder.getInt64Ty()->getPointerTo()->getPointerTo(), { listPtr }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_alloc_size_ptr()
 {
-    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     return resolveFunction("list_alloc_size_ptr", llvm::FunctionType::get(m_builder.getInt64Ty()->getPointerTo()->getPointerTo(), { listPtr }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_to_string()
 {
-    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     return resolveFunction("list_to_string", llvm::FunctionType::get(pointerType, { pointerType }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random()
 {
-    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     llvm::Type *valuePtr = m_valueDataType->getPointerTo();
     return resolveFunction("llvm_random", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, valuePtr, valuePtr }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_double()
 {
-    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     return resolveFunction("llvm_random_double", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, m_builder.getDoubleTy(), m_builder.getDoubleTy() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_long()
 {
-    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     return resolveFunction("llvm_random_long", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, m_builder.getInt64Ty(), m_builder.getInt64Ty() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_bool()
 {
-    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     return resolveFunction("llvm_random_bool", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, m_builder.getInt1Ty(), m_builder.getInt1Ty() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()
 {
-    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     return resolveFunction("strcasecmp", llvm::FunctionType::get(m_builder.getInt32Ty(), { pointerType, pointerType }, false));
 }

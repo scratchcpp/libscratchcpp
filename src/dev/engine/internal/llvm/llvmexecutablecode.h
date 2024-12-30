@@ -5,19 +5,18 @@
 #include <scratchcpp/dev/executablecode.h>
 #include <scratchcpp/valuedata.h>
 #include <llvm/IR/LLVMContext.h>
-#include <llvm/ExecutionEngine/Orc/LLJIT.h>
+
+#include "llvmcompilercontext.h"
 
 namespace libscratchcpp
 {
 
-class Target;
-class List;
 class LLVMExecutionContext;
 
 class LLVMExecutableCode : public ExecutableCode
 {
     public:
-        LLVMExecutableCode(std::unique_ptr<llvm::Module> module);
+        LLVMExecutableCode(LLVMCompilerContext *ctx, const std::string &mainFunctionName, const std::string &resumeFunctionName);
 
         void run(ExecutionContext *context) override;
         void kill(libscratchcpp::ExecutionContext *context) override;
@@ -28,18 +27,16 @@ class LLVMExecutableCode : public ExecutableCode
         std::shared_ptr<ExecutionContext> createExecutionContext(Thread *thread) const override;
 
     private:
-        uint64_t lookupFunction(const std::string &name);
-
         using MainFunctionType = void *(*)(ExecutionContext *, Target *, ValueData **, List **);
         using ResumeFunctionType = bool (*)(void *);
 
         static LLVMExecutionContext *getContext(ExecutionContext *context);
 
-        std::unique_ptr<llvm::LLVMContext> m_ctx;
-        llvm::Expected<std::unique_ptr<llvm::orc::LLJIT>> m_jit;
-
-        MainFunctionType m_mainFunction;
-        ResumeFunctionType m_resumeFunction;
+        LLVMCompilerContext *m_ctx = nullptr;
+        std::string m_mainFunctionName;
+        std::string m_resumeFunctionName;
+        mutable MainFunctionType m_mainFunction = nullptr;
+        mutable ResumeFunctionType m_resumeFunction = nullptr;
 };
 
 } // namespace libscratchcpp

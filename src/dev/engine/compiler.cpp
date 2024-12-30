@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/dev/compiler.h>
+#include <scratchcpp/dev/compilercontext.h>
 #include <scratchcpp/dev/compilerconstant.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
@@ -12,7 +13,13 @@
 
 using namespace libscratchcpp;
 
-/*! Constructs Compiler. */
+/*! Constructs Compiler using the given context. */
+Compiler::Compiler(CompilerContext *ctx) :
+    impl(spimpl::make_unique_impl<CompilerPrivate>(ctx))
+{
+}
+
+/*! Constructs Compiler using a new context for the given target. */
 Compiler::Compiler(IEngine *engine, Target *target) :
     impl(spimpl::make_unique_impl<CompilerPrivate>(engine, target))
 {
@@ -21,13 +28,13 @@ Compiler::Compiler(IEngine *engine, Target *target) :
 /*! Returns the Engine of the project. */
 IEngine *Compiler::engine() const
 {
-    return impl->engine;
+    return impl->ctx->engine();
 }
 
 /*! Returns the Target of this compiler. */
 Target *Compiler::target() const
 {
-    return impl->target;
+    return impl->ctx->target();
 }
 
 /*! Returns currently compiled block. */
@@ -39,7 +46,7 @@ std::shared_ptr<libscratchcpp::Block> Compiler::block() const
 /*! Compiles the script starting with the given block. */
 std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBlock)
 {
-    impl->builder = impl->builderFactory->create(impl->target, startBlock->id(), false);
+    impl->builder = impl->builderFactory->create(impl->ctx, false);
     impl->substackTree.clear();
     impl->substackHit = false;
     impl->emptySubstack = false;
@@ -568,6 +575,13 @@ Field *Compiler::field(const std::string &name) const
 const std::unordered_set<std::string> &Compiler::unsupportedBlocks() const
 {
     return impl->unsupportedBlocks;
+}
+
+/*! Creates a compiler context for the given target. */
+std::shared_ptr<CompilerContext> Compiler::createContext(IEngine *engine, Target *target)
+{
+    CompilerPrivate::initBuilderFactory();
+    return CompilerPrivate::builderFactory->createCtx(engine, target);
 }
 
 CompilerValue *Compiler::addInput(Input *input)

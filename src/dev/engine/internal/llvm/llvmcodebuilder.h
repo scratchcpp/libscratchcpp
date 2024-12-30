@@ -16,13 +16,13 @@
 namespace libscratchcpp
 {
 
-class Target;
+class LLVMCompilerContext;
 class LLVMConstantRegister;
 
 class LLVMCodeBuilder : public ICodeBuilder
 {
     public:
-        LLVMCodeBuilder(Target *target, const std::string &id, bool warp);
+        LLVMCodeBuilder(LLVMCompilerContext *ctx, bool warp);
 
         std::shared_ptr<ExecutableCode> finalize() override;
 
@@ -190,9 +190,9 @@ class LLVMCodeBuilder : public ICodeBuilder
         std::unordered_map<List *, LLVMListPtr> m_listPtrs;
         std::vector<std::unordered_map<LLVMListPtr *, Compiler::StaticType>> m_scopeLists;
 
-        std::string m_id;
-        llvm::LLVMContext m_ctx;
-        std::unique_ptr<llvm::Module> m_module;
+        LLVMCompilerContext *m_ctx;
+        llvm::LLVMContext &m_llvmCtx;
+        llvm::Module *m_module = nullptr;
         llvm::IRBuilder<> m_builder;
 
         llvm::StructType *m_valueDataType = nullptr;

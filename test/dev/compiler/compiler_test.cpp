@@ -1,4 +1,5 @@
 #include <scratchcpp/dev/compiler.h>
+#include <scratchcpp/dev/compilercontext.h>
 #include <scratchcpp/dev/compilerconstant.h>
 #include <scratchcpp/dev/compilerlocalvariable.h>
 #include <scratchcpp/block.h>
@@ -26,7 +27,12 @@ class CompilerTest : public testing::Test
     public:
         void SetUp() override
         {
+            m_ctx = std::make_shared<CompilerContext>(&m_engine, &m_target);
             CompilerPrivate::builderFactory = &m_builderFactory;
+
+            EXPECT_CALL(m_builderFactory, createCtx(&m_engine, &m_target)).WillOnce(Return(m_ctx));
+            m_compiler = std::make_unique<Compiler>(&m_engine, &m_target);
+
             m_builder = std::make_shared<CodeBuilderMock>();
             m_code = std::make_shared<ExecutableCodeMock>();
         }
@@ -39,18 +45,20 @@ class CompilerTest : public testing::Test
             m_testVar.reset();
         }
 
-        void compile(Compiler &compiler, std::shared_ptr<Block> block)
+        void compile(Compiler *compiler, std::shared_ptr<Block> block)
         {
-            ASSERT_EQ(compiler.block(), nullptr);
+            ASSERT_EQ(compiler->block(), nullptr);
             // TODO: Test warp
-            EXPECT_CALL(m_builderFactory, create(compiler.target(), block->id(), false)).WillOnce(Return(m_builder));
+            EXPECT_CALL(m_builderFactory, create(m_ctx.get(), false)).WillOnce(Return(m_builder));
             EXPECT_CALL(*m_builder, finalize()).WillOnce(Return(m_code));
-            ASSERT_EQ(compiler.compile(block), m_code);
-            ASSERT_EQ(compiler.block(), nullptr);
+            ASSERT_EQ(compiler->compile(block), m_code);
+            ASSERT_EQ(compiler->block(), nullptr);
         }
 
         EngineMock m_engine;
         TargetMock m_target;
+        std::unique_ptr<Compiler> m_compiler;
+        std::shared_ptr<CompilerContext> m_ctx;
         CodeBuilderFactoryMock m_builderFactory;
         static inline std::shared_ptr<CodeBuilderMock> m_builder;
         std::shared_ptr<ExecutableCodeMock> m_code;
@@ -58,16 +66,19 @@ class CompilerTest : public testing::Test
         static inline std::shared_ptr<Variable> m_testVar;
 };
 
-TEST_F(CompilerTest, Constructors)
+TEST_F(CompilerTest, Engine)
 {
-    Compiler compiler(&m_engine, &m_target);
-    ASSERT_EQ(compiler.engine(), &m_engine);
-    ASSERT_EQ(compiler.target(), &m_target);
+    ASSERT_EQ(m_compiler->engine(), &m_engine);
+}
+
+TEST_F(CompilerTest, Target)
+{
+    ASSERT_EQ(m_compiler->target(), &m_target);
 }
 
 TEST_F(CompilerTest, AddFunctionCall)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     m_compareBlock = block;
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -87,12 +98,12 @@ TEST_F(CompilerTest, AddFunctionCall)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, AddTargetFunctionCall)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     m_compareBlock = block;
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -112,12 +123,12 @@ TEST_F(CompilerTest, AddTargetFunctionCall)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, AddFunctionCallWithCtx)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     m_compareBlock = block;
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -137,12 +148,12 @@ TEST_F(CompilerTest, AddFunctionCallWithCtx)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, AddConstValue)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerConstant ret(Compiler::StaticType::Unknown, Value());
@@ -159,12 +170,12 @@ TEST_F(CompilerTest, AddConstValue)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, AddLoopIndex)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue ret(Compiler::StaticType::Unknown);
@@ -178,12 +189,12 @@ TEST_F(CompilerTest, AddLoopIndex)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, AddLocalVariableValue)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue ret(Compiler::StaticType::Number);
@@ -201,12 +212,12 @@ TEST_F(CompilerTest, AddLocalVariableValue)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, AddVariableValue)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue ret(Compiler::StaticType::Unknown);
@@ -221,12 +232,12 @@ TEST_F(CompilerTest, AddVariableValue)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, AddListContents)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue ret(Compiler::StaticType::Unknown);
@@ -241,12 +252,12 @@ TEST_F(CompilerTest, AddListContents)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, AddListItem)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue ret(Compiler::StaticType::Unknown);
@@ -262,12 +273,12 @@ TEST_F(CompilerTest, AddListItem)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, AddListItemIndex)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue ret(Compiler::StaticType::Unknown);
@@ -283,12 +294,12 @@ TEST_F(CompilerTest, AddListItemIndex)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, AddListSize)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue ret(Compiler::StaticType::Unknown);
@@ -303,12 +314,12 @@ TEST_F(CompilerTest, AddListSize)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, AddListContains)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue ret(Compiler::StaticType::Unknown);
@@ -324,12 +335,12 @@ TEST_F(CompilerTest, AddListContains)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, AddInput)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     auto valueBlock = std::make_shared<Block>("b", "");
     m_compareBlock = valueBlock;
@@ -415,12 +426,12 @@ TEST_F(CompilerTest, AddInput)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateAdd)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -433,12 +444,12 @@ TEST_F(CompilerTest, CreateAdd)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateSub)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -451,12 +462,12 @@ TEST_F(CompilerTest, CreateSub)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateMul)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -469,12 +480,12 @@ TEST_F(CompilerTest, CreateMul)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateDiv)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -487,12 +498,12 @@ TEST_F(CompilerTest, CreateDiv)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateRandom)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -505,12 +516,12 @@ TEST_F(CompilerTest, CreateRandom)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateRandomInt)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -523,12 +534,12 @@ TEST_F(CompilerTest, CreateRandomInt)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateCmpEQ)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -541,12 +552,12 @@ TEST_F(CompilerTest, CreateCmpEQ)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateCmpGT)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -559,12 +570,12 @@ TEST_F(CompilerTest, CreateCmpGT)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateCmpLT)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -577,12 +588,12 @@ TEST_F(CompilerTest, CreateCmpLT)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateAnd)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -595,12 +606,12 @@ TEST_F(CompilerTest, CreateAnd)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateOr)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -613,12 +624,12 @@ TEST_F(CompilerTest, CreateOr)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateNot)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -630,12 +641,12 @@ TEST_F(CompilerTest, CreateNot)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateMod)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -648,12 +659,12 @@ TEST_F(CompilerTest, CreateMod)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateRound)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -665,12 +676,12 @@ TEST_F(CompilerTest, CreateRound)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateAbs)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -682,12 +693,12 @@ TEST_F(CompilerTest, CreateAbs)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateFloor)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -699,12 +710,12 @@ TEST_F(CompilerTest, CreateFloor)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateCeil)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -716,12 +727,12 @@ TEST_F(CompilerTest, CreateCeil)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateSqrt)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -733,12 +744,12 @@ TEST_F(CompilerTest, CreateSqrt)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateSin)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -750,12 +761,12 @@ TEST_F(CompilerTest, CreateSin)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateCos)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -767,12 +778,12 @@ TEST_F(CompilerTest, CreateCos)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateTan)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -784,12 +795,12 @@ TEST_F(CompilerTest, CreateTan)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateAsin)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -801,12 +812,12 @@ TEST_F(CompilerTest, CreateAsin)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateAcos)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -818,12 +829,12 @@ TEST_F(CompilerTest, CreateAcos)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateAtan)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -835,12 +846,12 @@ TEST_F(CompilerTest, CreateAtan)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateLn)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -852,12 +863,12 @@ TEST_F(CompilerTest, CreateLn)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateLog10)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -869,12 +880,12 @@ TEST_F(CompilerTest, CreateLog10)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateExp)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -886,12 +897,12 @@ TEST_F(CompilerTest, CreateExp)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateExp10)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -903,12 +914,12 @@ TEST_F(CompilerTest, CreateExp10)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateSelect)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -926,12 +937,12 @@ TEST_F(CompilerTest, CreateSelect)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateLocalVariable)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -948,12 +959,12 @@ TEST_F(CompilerTest, CreateLocalVariable)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateLocalVariableWrite)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -966,12 +977,12 @@ TEST_F(CompilerTest, CreateLocalVariableWrite)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateVariableWrite)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -983,12 +994,12 @@ TEST_F(CompilerTest, CreateVariableWrite)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CustomIfStatement)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -1008,12 +1019,12 @@ TEST_F(CompilerTest, CustomIfStatement)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CustomWhileLoop)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -1026,12 +1037,12 @@ TEST_F(CompilerTest, CustomWhileLoop)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CustomRepeatUntilLoop)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -1044,12 +1055,12 @@ TEST_F(CompilerTest, CustomRepeatUntilLoop)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, BeginLoopCondition)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         EXPECT_CALL(*m_builder, beginLoopCondition());
@@ -1057,12 +1068,12 @@ TEST_F(CompilerTest, BeginLoopCondition)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, MoveToIf)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     EXPECT_CALL(*m_builder, beginElseBranch).Times(0);
 
     auto if1 = std::make_shared<Block>("", "if");
@@ -1094,12 +1105,11 @@ TEST_F(CompilerTest, MoveToIf)
     input->setValueBlock(substack1);
     if2->addInput(input);
 
-    compile(compiler, if1);
+    compile(m_compiler.get(), if1);
 }
 
 TEST_F(CompilerTest, MoveToIfElse)
 {
-    Compiler compiler(&m_engine, &m_target);
 
     auto if1 = std::make_shared<Block>("", "if");
     if1->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -1264,12 +1274,11 @@ TEST_F(CompilerTest, MoveToIfElse)
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue("after"); });
 
     EXPECT_CALL(*m_builder, addConstValue(Value("after")));
-    compile(compiler, if1);
+    compile(m_compiler.get(), if1);
 }
 
 TEST_F(CompilerTest, MoveToRepeatLoop)
 {
-    Compiler compiler(&m_engine, &m_target);
 
     auto l1 = std::make_shared<Block>("", "loop");
     l1->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -1354,12 +1363,11 @@ TEST_F(CompilerTest, MoveToRepeatLoop)
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue("after"); });
 
     EXPECT_CALL(*m_builder, addConstValue(Value("after")));
-    compile(compiler, l1);
+    compile(m_compiler.get(), l1);
 }
 
 TEST_F(CompilerTest, MoveToWhileLoop)
 {
-    Compiler compiler(&m_engine, &m_target);
 
     auto l1 = std::make_shared<Block>("", "loop");
     l1->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -1444,12 +1452,11 @@ TEST_F(CompilerTest, MoveToWhileLoop)
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue("after"); });
 
     EXPECT_CALL(*m_builder, addConstValue(Value("after")));
-    compile(compiler, l1);
+    compile(m_compiler.get(), l1);
 }
 
 TEST_F(CompilerTest, MoveToRepeatUntilLoop)
 {
-    Compiler compiler(&m_engine, &m_target);
 
     auto l1 = std::make_shared<Block>("", "loop");
     l1->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -1534,12 +1541,12 @@ TEST_F(CompilerTest, MoveToRepeatUntilLoop)
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue("after"); });
 
     EXPECT_CALL(*m_builder, addConstValue(Value("after")));
-    compile(compiler, l1);
+    compile(m_compiler.get(), l1);
 }
 
 TEST_F(CompilerTest, CreateYield)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -1548,12 +1555,12 @@ TEST_F(CompilerTest, CreateYield)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, CreateStop)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -1562,12 +1569,12 @@ TEST_F(CompilerTest, CreateStop)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, Input)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     block->addInput(std::make_shared<Input>("TEST", Input::Type::Shadow));
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -1576,12 +1583,12 @@ TEST_F(CompilerTest, Input)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, Field)
 {
-    Compiler compiler(&m_engine, &m_target);
+
     auto block = std::make_shared<Block>("a", "");
     block->addField(std::make_shared<Field>("TEST", "test"));
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -1590,7 +1597,7 @@ TEST_F(CompilerTest, Field)
         return nullptr;
     });
 
-    compile(compiler, block);
+    compile(m_compiler.get(), block);
 }
 
 TEST_F(CompilerTest, UnsupportedBlocks)
@@ -1648,9 +1655,8 @@ TEST_F(CompilerTest, UnsupportedBlocks)
     block4->setParent(block3);
     block3->setNext(block4);
 
-    Compiler compiler(&m_engine, &m_target);
     EXPECT_CALL(*m_builder, addConstValue).WillRepeatedly(Return(nullptr));
-    compile(compiler, block1);
+    compile(m_compiler.get(), block1);
 
-    ASSERT_EQ(compiler.unsupportedBlocks(), std::unordered_set<std::string>({ "block1", "block2", "value_block1", "value_block3", "value_block5", "block4" }));
+    ASSERT_EQ(m_compiler->unsupportedBlocks(), std::unordered_set<std::string>({ "block1", "block2", "value_block1", "value_block3", "value_block5", "block4" }));
 }

@@ -271,10 +271,14 @@ void Engine::compile()
     // Compile scripts to bytecode
     for (auto target : m_targets) {
         std::cout << "Compiling scripts in target " << target->name() << "..." << std::endl;
-#ifndef USE_LLVM
+#ifdef USE_LLVM
+        auto ctx = Compiler::createContext(this, target.get());
+        m_compilerContexts[target.get()] = ctx;
+        Compiler compiler(ctx.get());
+#else
         std::unordered_map<std::string, unsigned int *> procedureBytecodeMap;
-#endif
         Compiler compiler(this, target.get());
+#endif
         const auto &blocks = target->blocks();
         for (auto block : blocks) {
             if (block->topLevel() && !block->isTopLevelReporter() && !block->shadow()) {

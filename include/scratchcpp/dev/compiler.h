@@ -11,6 +11,7 @@
 namespace libscratchcpp
 {
 
+class CompilerContext;
 class IEngine;
 class Target;
 class ExecutableCode;
@@ -39,6 +40,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         using ArgTypes = std::vector<StaticType>;
         using Args = std::vector<CompilerValue *>;
 
+        Compiler(CompilerContext *ctx);
         Compiler(IEngine *engine, Target *target);
         Compiler(const Compiler &) = delete;
 
@@ -131,6 +133,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
         Field *field(const std::string &name) const;
 
         const std::unordered_set<std::string> &unsupportedBlocks() const;
+
+        static std::shared_ptr<CompilerContext> createContext(IEngine *engine, Target *target);
 
     private:
         CompilerValue *addInput(Input *input);

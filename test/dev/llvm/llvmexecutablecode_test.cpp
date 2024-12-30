@@ -6,8 +6,9 @@
 #include <scratchcpp/thread.h>
 #include <scratchcpp/script.h>
 #include <dev/engine/internal/llvm/llvmexecutablecode.h>
+#include <dev/engine/internal/llvm/llvmcompilercontext.h>
 #include <dev/engine/internal/llvm/llvmexecutioncontext.h>
-#include <llvm/Support/TargetSelect.h>
+#include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
 #include <enginemock.h>
 
@@ -21,27 +22,26 @@ class LLVMExecutableCodeTest : public testing::Test
     public:
         void SetUp() override
         {
-            m_module = std::make_unique<llvm::Module>("test", m_ctx);
-            m_builder = std::make_unique<llvm::IRBuilder<>>(m_ctx);
+            m_target.setName("test");
+            m_ctx = std::make_unique<LLVMCompilerContext>(&m_engine, &m_target);
+            m_module = m_ctx->module();
+            m_llvmCtx = m_ctx->llvmCtx();
+            m_builder = std::make_unique<llvm::IRBuilder<>>(*m_llvmCtx);
             test_function(nullptr, nullptr, nullptr, nullptr, nullptr); // force dependency
 
             m_script = std::make_unique<Script>(&m_target, nullptr, &m_engine);
-
-            llvm::InitializeNativeTarget();
-            llvm::InitializeNativeTargetAsmPrinter();
-            llvm::InitializeNativeTargetAsmParser();
         }
 
-        inline llvm::Constant *nullPointer() { return llvm::ConstantPointerNull::get(llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0)); }
+        inline llvm::Constant *nullPointer() { return llvm::ConstantPointerNull::get(llvm::PointerType::get(llvm::Type::getInt8Ty(*m_llvmCtx), 0)); }
 
         llvm::Function *beginMainFunction()
         {
             // void *f(ExecutionContext *, Target *, ValueData **, List **)
-            llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+            llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_llvmCtx), 0);
             llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, { pointerType, pointerType, pointerType, pointerType }, false);
-            llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module.get());
+            llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module);
 
-            llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
+            llvm::BasicBlock *entry = llvm::BasicBlock::Create(*m_llvmCtx, "entry", func);
             m_builder->SetInsertPoint(entry);
             return func;
         }
@@ -49,10 +49,10 @@ class LLVMExecutableCodeTest : public testing::Test
         llvm::Function *beginResumeFunction()
         {
             // bool f(void *)
-            llvm::FunctionType *funcType = llvm::FunctionType::get(m_builder->getInt1Ty(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0), false);
-            llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "resume", m_module.get());
+            llvm::FunctionType *funcType = llvm::FunctionType::get(m_builder->getInt1Ty(), llvm::PointerType::get(llvm::Type::getInt8Ty(*m_llvmCtx), 0), false);
+            llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "resume", m_module);
 
-            llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_ctx, "entry", func);
+            llvm::BasicBlock *entry = llvm::BasicBlock::Create(*m_llvmCtx, "entry", func);
             m_builder->SetInsertPoint(entry);
             return func;
         }
@@ -61,10 +61,10 @@ class LLVMExecutableCodeTest : public testing::Test
 
         void addTestFunction(llvm::Function *mainFunc)
         {
-            auto ptrType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+            auto ptrType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_llvmCtx), 0);
             auto func = m_module->getOrInsertFunction("test_function", llvm::FunctionType::get(m_builder->getVoidTy(), { ptrType, ptrType, ptrType, ptrType, ptrType }, false));
 
-            llvm::Constant *mockInt = llvm::ConstantInt::get(llvm::Type::getInt64Ty(m_ctx), (uintptr_t)&m_mock, false);
+            llvm::Constant *mockInt = llvm::ConstantInt::get(llvm::Type::getInt64Ty(*m_llvmCtx), (uintptr_t)&m_mock, false);
             llvm::Constant *mockPtr = llvm::ConstantExpr::getIntToPtr(mockInt, ptrType);
 
             m_builder->CreateCall(func, { mockPtr, mainFunc->getArg(0), mainFunc->getArg(1), mainFunc->getArg(2), mainFunc->getArg(3) });
@@ -72,13 +72,14 @@ class LLVMExecutableCodeTest : public testing::Test
 
         void addTestPrintFunction(llvm::Value *arg1, llvm::Value *arg2)
         {
-            auto ptrType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_ctx), 0);
+            auto ptrType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_llvmCtx), 0);
             auto func = m_module->getOrInsertFunction("test_print_function", llvm::FunctionType::get(m_builder->getVoidTy(), { ptrType, ptrType }, false));
             m_builder->CreateCall(func, { arg1, arg2 });
         }
 
-        llvm::LLVMContext m_ctx;
-        std::unique_ptr<llvm::Module> m_module;
+        std::unique_ptr<LLVMCompilerContext> m_ctx;
+        llvm::LLVMContext *m_llvmCtx = nullptr;
+        llvm::Module *m_module = nullptr;
         std::unique_ptr<llvm::IRBuilder<>> m_builder;
         Target m_target;
         EngineMock m_engine;
@@ -88,13 +89,13 @@ class LLVMExecutableCodeTest : public testing::Test
 
 TEST_F(LLVMExecutableCodeTest, CreateExecutionContext)
 {
-    beginMainFunction();
+    llvm::Function *mainFunc = beginMainFunction();
     endFunction(nullPointer());
 
-    beginResumeFunction();
+    llvm::Function *resumeFunc = beginResumeFunction();
     endFunction(m_builder->getInt1(true));
 
-    auto code = std::make_shared<LLVMExecutableCode>(std::move(m_module));
+    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str());
     m_script->setCode(code);
     Thread thread(&m_target, &m_engine, m_script.get());
     auto ctx = code->createExecutionContext(&thread);
@@ -108,14 +109,14 @@ TEST_F(LLVMExecutableCodeTest, MainFunction)
     m_target.addVariable(std::make_shared<Variable>("", ""));
     m_target.addList(std::make_shared<List>("", ""));
 
-    auto f = beginMainFunction();
-    addTestFunction(f);
+    llvm::Function *mainFunc = beginMainFunction();
+    addTestFunction(mainFunc);
     endFunction(nullPointer());
 
-    beginResumeFunction();
+    llvm::Function *resumeFunc = beginResumeFunction();
     endFunction(m_builder->getInt1(true));
 
-    auto code = std::make_shared<LLVMExecutableCode>(std::move(m_module));
+    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str());
     m_script->setCode(code);
     Thread thread(&m_target, &m_engine, m_script.get());
     auto ctx = code->createExecutionContext(&thread);
@@ -161,14 +162,14 @@ TEST_F(LLVMExecutableCodeTest, MainFunction)
 
 TEST_F(LLVMExecutableCodeTest, Promise)
 {
-    auto f = beginMainFunction();
-    addTestFunction(f);
+    llvm::Function *mainFunc = beginMainFunction();
+    addTestFunction(mainFunc);
     endFunction(nullPointer());
 
-    beginResumeFunction();
+    llvm::Function *resumeFunc = beginResumeFunction();
     endFunction(m_builder->getInt1(true));
 
-    auto code = std::make_shared<LLVMExecutableCode>(std::move(m_module));
+    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str());
     m_script->setCode(code);
     Thread thread(&m_target, &m_engine, m_script.get());
     auto ctx = code->createExecutionContext(&thread);
