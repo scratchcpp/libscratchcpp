@@ -3902,6 +3902,45 @@ TEST_F(LLVMCodeBuilderTest, StopAndReturn)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
+TEST_F(LLVMCodeBuilderTest, MultipleScripts)
+{
+    Sprite sprite;
+
+    // Script 1
+    createBuilder(&sprite, nullptr);
+
+    CompilerValue *v = m_builder->addConstValue("script1");
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    auto code1 = m_builder->finalize();
+
+    // Script 2
+    createBuilder(&sprite, nullptr);
+
+    v = m_builder->addConstValue("script2");
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    auto code2 = m_builder->finalize();
+
+    Script script1(&sprite, nullptr, nullptr);
+    script1.setCode(code1);
+    Thread thread1(&sprite, nullptr, &script1);
+    auto ctx = code1->createExecutionContext(&thread1);
+
+    testing::internal::CaptureStdout();
+    code1->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "script1\n");
+
+    Script script2(&sprite, nullptr, nullptr);
+    script2.setCode(code2);
+    Thread thread2(&sprite, nullptr, &script2);
+    ctx = code2->createExecutionContext(&thread2);
+
+    testing::internal::CaptureStdout();
+    code2->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "script2\n");
+}
+
 TEST_F(LLVMCodeBuilderTest, Procedures)
 {
     Sprite sprite;
