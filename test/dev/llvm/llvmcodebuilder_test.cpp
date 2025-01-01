@@ -3976,6 +3976,9 @@ TEST_F(LLVMCodeBuilderTest, Procedures)
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
     m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
 
+    v = m_builder->addProcedureArgument("invalid");
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
     m_builder->finalize();
 
     // Procedure 2
@@ -3996,12 +3999,16 @@ TEST_F(LLVMCodeBuilderTest, Procedures)
     m_builder->createProcedureCall(&prototype1, { m_builder->addConstValue("test"), m_builder->addConstValue(true), m_builder->addConstValue(false) });
     m_builder->createProcedureCall(&prototype2, {});
 
+    v = m_builder->addProcedureArgument("test");
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
     std::string expected1 = "no_args\n";
 
     std::string expected2 =
         "test\n"
         "true\n"
         "false\n"
+        "0\n"
         "0\n";
 
     std::string expected3 =
@@ -4011,12 +4018,15 @@ TEST_F(LLVMCodeBuilderTest, Procedures)
         "false\n"
         "true\n"
         "1\n"
+        "0\n"
         "no_args\n"
         "no_args\n"
         "-652.3\n"
         "false\n"
         "true\n"
-        "1\n";
+        "1\n"
+        "0\n"
+        "0\n";
 
     auto code = m_builder->finalize();
     Script script(&sprite, nullptr, nullptr);
