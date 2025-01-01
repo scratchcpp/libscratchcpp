@@ -123,7 +123,6 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionType *getMainFunctionType(BlockPrototype *procedurePrototype);
         llvm::Function *getOrCreateFunction(const std::string &name, llvm::FunctionType *type);
         void verifyFunction(llvm::Function *func);
-        void optimize();
 
         LLVMRegister *addReg(std::shared_ptr<LLVMRegister> reg);
 

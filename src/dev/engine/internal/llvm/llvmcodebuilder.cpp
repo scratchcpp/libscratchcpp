@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <llvm/IR/Verifier.h>
-#include <llvm/ExecutionEngine/Orc/LLJIT.h>
-#include <llvm/Passes/PassBuilder.h>
 
 #include <scratchcpp/stage.h>
 #include <scratchcpp/iengine.h>
@@ -1119,15 +1117,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
     verifyFunction(resumeFunc);
 
-#ifdef PRINT_LLVM_IR
-    std::cout << std::endl << "=== LLVM IR (" << m_module->getName().str() << ") ===" << std::endl;
-    m_module->print(llvm::outs(), nullptr);
-    std::cout << "==============" << std::endl << std::endl;
-#endif
-
-    // Optimize
-    optimize();
-
     return std::make_shared<LLVMExecutableCode>(m_ctx, func->getName().str(), resumeFunc->getName().str());
 }
 
@@ -1713,24 +1702,6 @@ void LLVMCodeBuilder::verifyFunction(llvm::Function *func)
         llvm::errs() << "error: LLVM function verficiation failed!\n";
         llvm::errs() << "module name: " << m_module->getName() << "\n";
     }
-}
-
-void LLVMCodeBuilder::optimize()
-{
-    llvm::PassBuilder passBuilder;
-    llvm::LoopAnalysisManager loopAnalysisManager;
-    llvm::FunctionAnalysisManager functionAnalysisManager;
-    llvm::CGSCCAnalysisManager cGSCCAnalysisManager;
-    llvm::ModuleAnalysisManager moduleAnalysisManager;
-
-    passBuilder.registerModuleAnalyses(moduleAnalysisManager);
-    passBuilder.registerCGSCCAnalyses(cGSCCAnalysisManager);
-    passBuilder.registerFunctionAnalyses(functionAnalysisManager);
-    passBuilder.registerLoopAnalyses(loopAnalysisManager);
-    passBuilder.crossRegisterProxies(loopAnalysisManager, functionAnalysisManager, cGSCCAnalysisManager, moduleAnalysisManager);
-
-    llvm::ModulePassManager modulePassManager = passBuilder.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
-    modulePassManager.run(*m_module, moduleAnalysisManager);
 }
 
 LLVMRegister *LLVMCodeBuilder::addReg(std::shared_ptr<LLVMRegister> reg)
