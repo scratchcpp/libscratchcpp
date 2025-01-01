@@ -22,6 +22,7 @@ class Variable;
 class List;
 class Input;
 class Field;
+class BlockPrototype;
 class CompilerPrivate;
 
 /*! \brief The Compiler class provides API for compiling Scratch scripts. */
@@ -62,6 +63,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
         CompilerValue *addListItemIndex(List *list, CompilerValue *item);
         CompilerValue *addListContains(List *list, CompilerValue *item);
         CompilerValue *addListSize(List *list);
+        CompilerValue *addProcedureArgument(const std::string &name);
+
         CompilerValue *addInput(const std::string &name);
         CompilerValue *addInput(Input *input);
 
@@ -129,6 +132,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
 
         void createYield();
         void createStop();
+
+        void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args);
 
         Input *input(const std::string &name) const;
         Field *field(const std::string &name) const;

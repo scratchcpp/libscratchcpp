@@ -46,7 +46,21 @@ std::shared_ptr<libscratchcpp::Block> Compiler::block() const
 /*! Compiles the script starting with the given block. */
 std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBlock)
 {
-    impl->builder = impl->builderFactory->create(impl->ctx, nullptr);
+    BlockPrototype *procedurePrototype = nullptr;
+
+    if (startBlock) {
+        // TODO: Move procedure definition logic to the custom blocks extension
+        auto input = startBlock->inputAt(0);
+
+        if (input && input->valueBlock()) {
+            procedurePrototype = input->valueBlock()->mutationPrototype();
+
+            if (procedurePrototype && procedurePrototype->procCode().empty())
+                procedurePrototype = nullptr;
+        }
+    }
+
+    impl->builder = impl->builderFactory->create(impl->ctx, procedurePrototype);
     impl->substackTree.clear();
     impl->substackHit = false;
     impl->emptySubstack = false;
@@ -174,6 +188,12 @@ CompilerValue *Compiler::addListContains(List *list, CompilerValue *item)
 CompilerValue *Compiler::addListSize(List *list)
 {
     return impl->builder->addListSize(list);
+}
+
+/*! Adds the procedure argument with the given name to the code. */
+CompilerValue *Compiler::addProcedureArgument(const std::string &name)
+{
+    return impl->builder->addProcedureArgument(name);
 }
 
 /*! Compiles the given input (resolved by name) and adds it to the compiled code. */
@@ -613,6 +633,12 @@ void Compiler::createYield()
 void Compiler::createStop()
 {
     impl->builder->createStop();
+}
+
+/*! Creates a call to the procedure with the given prototype. */
+void Compiler::createProcedureCall(BlockPrototype *prototype, const libscratchcpp::Compiler::Args &args)
+{
+    impl->builder->createProcedureCall(prototype, args);
 }
 
 /*! Convenience method which returns the field with the given name. */

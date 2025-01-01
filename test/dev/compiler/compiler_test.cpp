@@ -45,11 +45,10 @@ class CompilerTest : public testing::Test
             m_testVar.reset();
         }
 
-        void compile(Compiler *compiler, std::shared_ptr<Block> block)
+        void compile(Compiler *compiler, std::shared_ptr<Block> block, BlockPrototype *procedurePrototype = nullptr)
         {
             ASSERT_EQ(compiler->block(), nullptr);
-            // TODO: Test procedures
-            EXPECT_CALL(m_builderFactory, create(m_ctx.get(), nullptr)).WillOnce(Return(m_builder));
+            EXPECT_CALL(m_builderFactory, create(m_ctx.get(), procedurePrototype)).WillOnce(Return(m_builder));
             EXPECT_CALL(*m_builder, finalize()).WillOnce(Return(m_code));
             ASSERT_EQ(compiler->compile(block), m_code);
             ASSERT_EQ(compiler->block(), nullptr);
@@ -331,6 +330,25 @@ TEST_F(CompilerTest, AddListContains)
 
         EXPECT_CALL(*m_builder, addListContains(&list2, &arg)).WillOnce(Return(nullptr));
         EXPECT_EQ(compiler->addListContains(&list2, &arg), nullptr);
+
+        return nullptr;
+    });
+
+    compile(m_compiler.get(), block);
+}
+
+TEST_F(CompilerTest, AddProcedureArgument)
+{
+
+    auto block = std::make_shared<Block>("a", "");
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        CompilerValue ret(Compiler::StaticType::Unknown);
+
+        EXPECT_CALL(*m_builder, addProcedureArgument("arg 1")).WillOnce(Return(&ret));
+        EXPECT_EQ(compiler->addProcedureArgument("arg 1"), &ret);
+
+        EXPECT_CALL(*m_builder, addProcedureArgument("arg 2")).WillOnce(Return(nullptr));
+        EXPECT_EQ(compiler->addProcedureArgument("arg 2"), nullptr);
 
         return nullptr;
     });
@@ -1572,6 +1590,25 @@ TEST_F(CompilerTest, CreateStop)
     compile(m_compiler.get(), block);
 }
 
+TEST_F(CompilerTest, CreateProcedureCall)
+{
+
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        BlockPrototype prototype;
+        CompilerValue arg1(Compiler::StaticType::Unknown);
+        CompilerValue arg2(Compiler::StaticType::Unknown);
+        Compiler::Args args = { &arg1, &arg2 };
+
+        EXPECT_CALL(*m_builder, createProcedureCall(&prototype, args));
+        compiler->createProcedureCall(&prototype, args);
+        return nullptr;
+    });
+
+    compile(m_compiler.get(), block);
+}
+
 TEST_F(CompilerTest, Input)
 {
 
@@ -1659,4 +1696,31 @@ TEST_F(CompilerTest, UnsupportedBlocks)
     compile(m_compiler.get(), block1);
 
     ASSERT_EQ(m_compiler->unsupportedBlocks(), std::unordered_set<std::string>({ "block1", "block2", "value_block1", "value_block3", "value_block5", "block4" }));
+}
+
+TEST_F(CompilerTest, Procedure)
+{
+    {
+        auto block = std::make_shared<Block>("", "");
+        auto customBlock = std::make_shared<Block>("", "");
+        customBlock->mutationPrototype()->setProcCode("");
+
+        auto input = std::make_shared<Input>("custom_block", Input::Type::ObscuredShadow);
+        input->setValueBlock(customBlock);
+        block->addInput(input);
+
+        compile(m_compiler.get(), block, nullptr);
+    }
+
+    {
+        auto block = std::make_shared<Block>("", "");
+        auto customBlock = std::make_shared<Block>("", "");
+        customBlock->mutationPrototype()->setProcCode("test");
+
+        auto input = std::make_shared<Input>("custom_block", Input::Type::ObscuredShadow);
+        input->setValueBlock(customBlock);
+        block->addInput(input);
+
+        compile(m_compiler.get(), block, customBlock->mutationPrototype());
+    }
 }
