@@ -3,6 +3,8 @@
 #pragma once
 
 #include <scratchcpp/value.h>
+#include <scratchcpp/blockprototype.h>
+
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
@@ -38,6 +40,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         CompilerValue *addListItemIndex(List *list, CompilerValue *item) override;
         CompilerValue *addListContains(List *list, CompilerValue *item) override;
         CompilerValue *addListSize(List *list) override;
+        CompilerValue *addProcedureArgument(const std::string &name) override;
 
         CompilerValue *createAdd(CompilerValue *operand1, CompilerValue *operand2) override;
         CompilerValue *createSub(CompilerValue *operand1, CompilerValue *operand2) override;
@@ -99,7 +102,7 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         void createStop() override;
 
-        void createProcedureCall(BlockPrototype *prototype) override;
+        void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args) override;
 
     private:
         enum class Comparison
@@ -131,6 +134,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType);
         Compiler::StaticType optimizeRegisterType(LLVMRegister *reg);
         llvm::Type *getType(Compiler::StaticType type);
+        Compiler::StaticType getProcedureArgType(BlockPrototype::ArgType type);
         llvm::Value *isNaN(llvm::Value *num);
         llvm::Value *removeNaN(llvm::Value *num);
 
@@ -212,6 +216,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         BlockPrototype *m_procedurePrototype = nullptr;
         bool m_defaultWarp = false;
         bool m_warp = false;
+        int m_defaultArgCount = 0;
 
         std::vector<std::vector<llvm::Value *>> m_heap; // scopes
 

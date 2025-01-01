@@ -71,7 +71,8 @@ struct LLVMInstruction
             BeginLoopCondition,
             EndLoop,
             Stop,
-            CallProcedure
+            CallProcedure,
+            ProcedureArg
         };
 
         LLVMInstruction(Type type) :
@@ -88,6 +89,7 @@ struct LLVMInstruction
         Variable *workVariable = nullptr; // for variables
         List *workList = nullptr;         // for lists
         BlockPrototype *procedurePrototype = nullptr;
+        size_t procedureArgIndex = 0;
 };
 
 } // namespace libscratchcpp

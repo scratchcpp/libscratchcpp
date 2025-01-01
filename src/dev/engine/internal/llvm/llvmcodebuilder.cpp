@@ -8,7 +8,6 @@
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
-#include <scratchcpp/blockprototype.h>
 #include <scratchcpp/dev/compilerconstant.h>
 #include <scratchcpp/dev/compilerlocalvariable.h>
 
@@ -38,6 +37,9 @@ LLVMCodeBuilder::LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *proce
     initTypes();
     createVariableMap();
     createListMap();
+
+    llvm::FunctionType *funcType = getMainFunctionType(nullptr);
+    m_defaultArgCount = funcType->getNumParams();
 }
 
 std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
@@ -1030,15 +1032,15 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
             case LLVMInstruction::Type::CallProcedure: {
                 assert(step.procedurePrototype);
+                assert(step.args.size() == step.procedurePrototype->argumentTypes().size());
                 freeScopeHeap();
                 syncVariables(targetVariables);
 
                 std::string name = getMainFunctionName(step.procedurePrototype);
                 llvm::FunctionType *type = getMainFunctionType(step.procedurePrototype);
                 std::vector<llvm::Value *> args;
-                const size_t argCount = type->getNumParams() - 1 - step.procedurePrototype->argumentTypes().size(); // omit warp arg and procedure args
 
-                for (size_t i = 0; i < argCount; i++)
+                for (size_t i = 0; i < m_defaultArgCount; i++)
                     args.push_back(func->getArg(i));
 
                 // Add warp arg
@@ -1047,7 +1049,14 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 else
                     args.push_back(m_procedurePrototype ? warpArg : m_builder.getInt1(false));
 
-                // TODO: Add procedure args
+                // Add procedure args
+                for (const auto &arg : step.args) {
+                    if (arg.first == Compiler::StaticType::Unknown)
+                        args.push_back(createValue(arg.second));
+                    else
+                        args.push_back(castValue(arg.second, arg.first));
+                }
+
                 llvm::Value *handle = m_builder.CreateCall(resolveFunction(name, type), args);
 
                 if (!m_warp && !step.procedurePrototype->warp()) {
@@ -1066,6 +1075,13 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 reloadVariables(targetVariables);
                 reloadLists();
+                break;
+            }
+
+            case LLVMInstruction::Type::ProcedureArg: {
+                assert(m_procedurePrototype);
+                llvm::Value *arg = func->getArg(m_defaultArgCount + 1 + step.procedureArgIndex); // omit warp arg
+                step.functionReturnReg->value = arg;
                 break;
             }
         }
@@ -1228,6 +1244,31 @@ CompilerValue *LLVMCodeBuilder::addListSize(List *list)
     ins.workList = list;
     m_listPtrs[list] = LLVMListPtr();
     return createOp(ins, Compiler::StaticType::Number);
+}
+
+CompilerValue *LLVMCodeBuilder::addProcedureArgument(const std::string &name)
+{
+    if (!m_procedurePrototype)
+        return addConstValue(Value());
+
+    const auto &argNames = m_procedurePrototype->argumentNames();
+    auto it = std::find(argNames.begin(), argNames.end(), name);
+
+    if (it == argNames.end()) {
+        std::cout << "warning: could not find argument '" << name << "' in custom block '" << m_procedurePrototype->procCode() << "'" << std::endl;
+        return addConstValue(Value());
+    }
+
+    const auto index = it - argNames.begin();
+    const Compiler::StaticType type = getProcedureArgType(m_procedurePrototype->argumentTypes()[index]);
+    LLVMInstruction ins(LLVMInstruction::Type::ProcedureArg);
+    auto ret = std::make_shared<LLVMRegister>(type);
+    ret->isRawValue = (type != Compiler::StaticType::Unknown);
+    ins.functionReturnReg = ret.get();
+    ins.procedureArgIndex = index;
+
+    m_instructions.push_back(ins);
+    return addReg(ret);
 }
 
 CompilerValue *LLVMCodeBuilder::createAdd(CompilerValue *operand1, CompilerValue *operand2)
@@ -1502,11 +1543,19 @@ void LLVMCodeBuilder::createStop()
     m_instructions.push_back({ LLVMInstruction::Type::Stop });
 }
 
-void LLVMCodeBuilder::createProcedureCall(BlockPrototype *prototype)
+void LLVMCodeBuilder::createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args)
 {
+    assert(prototype);
+    assert(prototype->argumentTypes().size() == args.size());
+    const auto &procedureArgs = prototype->argumentTypes();
+    Compiler::ArgTypes types;
+
+    for (BlockPrototype::ArgType type : procedureArgs)
+        types.push_back(getProcedureArgType(type));
+
     LLVMInstruction ins(LLVMInstruction::Type::CallProcedure);
     ins.procedurePrototype = prototype;
-    m_instructions.push_back(ins);
+    createOp(ins, Compiler::StaticType::Void, types, args);
 }
 
 void LLVMCodeBuilder::initTypes()
@@ -1918,6 +1967,11 @@ llvm::Type *LLVMCodeBuilder::getType(Compiler::StaticType type)
             assert(false);
             return nullptr;
     }
+}
+
+Compiler::StaticType LLVMCodeBuilder::getProcedureArgType(BlockPrototype::ArgType type)
+{
+    return type == BlockPrototype::ArgType::Bool ? Compiler::StaticType::Bool : Compiler::StaticType::Unknown;
 }
 
 llvm::Value *LLVMCodeBuilder::isNaN(llvm::Value *num)

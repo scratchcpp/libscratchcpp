@@ -32,6 +32,7 @@ class ICodeBuilder
         virtual CompilerValue *addListItemIndex(List *list, CompilerValue *item) = 0;
         virtual CompilerValue *addListContains(List *list, CompilerValue *item) = 0;
         virtual CompilerValue *addListSize(List *list) = 0;
+        virtual CompilerValue *addProcedureArgument(const std::string &name) = 0;
 
         virtual CompilerValue *createAdd(CompilerValue *operand1, CompilerValue *operand2) = 0;
         virtual CompilerValue *createSub(CompilerValue *operand1, CompilerValue *operand2) = 0;
@@ -93,7 +94,7 @@ class ICodeBuilder
 
         virtual void createStop() = 0;
 
-        virtual void createProcedureCall(BlockPrototype *prototype) = 0;
+        virtual void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args) = 0;
 };
 
 } // namespace libscratchcpp

@@ -3951,7 +3951,9 @@ TEST_F(LLVMCodeBuilderTest, Procedures)
 
     // Procedure 1
     BlockPrototype prototype1;
-    prototype1.setProcCode("procedure 1");
+    prototype1.setProcCode("procedure 1 %s %s %b");
+    prototype1.setArgumentNames({ "any type 1", "any type 2", "bool" });
+    prototype1.setArgumentIds({ "a", "b", "c" });
     prototype1.setWarp(false);
     createBuilder(&sprite, &prototype1);
 
@@ -3960,15 +3962,19 @@ TEST_F(LLVMCodeBuilderTest, Procedures)
     m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
     m_builder->endLoop();
 
-    m_builder->createVariableWrite(var.get(), m_builder->addConstValue("test"));
+    m_builder->createVariableWrite(var.get(), m_builder->addProcedureArgument("any type 1"));
     m_builder->createListClear(list.get());
-    m_builder->createListAppend(list.get(), m_builder->addConstValue("hello world"));
+    m_builder->createListAppend(list.get(), m_builder->addProcedureArgument("any type 2"));
 
     v = m_builder->addVariableValue(var.get());
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
 
     v = m_builder->addListItem(list.get(), m_builder->addConstValue(0));
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = m_builder->addProcedureArgument("bool");
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+    m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
 
     m_builder->finalize();
 
@@ -3980,31 +3986,37 @@ TEST_F(LLVMCodeBuilderTest, Procedures)
 
     v = m_builder->addConstValue(2);
     m_builder->beginRepeatLoop(v);
-    m_builder->createProcedureCall(&prototype1);
+    m_builder->createProcedureCall(&prototype1, { m_builder->addConstValue(-652.3), m_builder->addConstValue(false), m_builder->addConstValue(true) });
     m_builder->endLoop();
 
     m_builder->finalize();
 
     // Script
     createBuilder(&sprite, false);
-    m_builder->createProcedureCall(&prototype1);
-    m_builder->createProcedureCall(&prototype2);
+    m_builder->createProcedureCall(&prototype1, { m_builder->addConstValue("test"), m_builder->addConstValue(true), m_builder->addConstValue(false) });
+    m_builder->createProcedureCall(&prototype2, {});
 
     std::string expected1 = "no_args\n";
 
     std::string expected2 =
         "test\n"
-        "hello world\n";
+        "true\n"
+        "false\n"
+        "0\n";
 
     std::string expected3 =
         "no_args\n"
         "no_args\n"
-        "test\n"
-        "hello world\n"
+        "-652.3\n"
+        "false\n"
+        "true\n"
+        "1\n"
         "no_args\n"
         "no_args\n"
-        "test\n"
-        "hello world\n";
+        "-652.3\n"
+        "false\n"
+        "true\n"
+        "1\n";
 
     auto code = m_builder->finalize();
     Script script(&sprite, nullptr, nullptr);
