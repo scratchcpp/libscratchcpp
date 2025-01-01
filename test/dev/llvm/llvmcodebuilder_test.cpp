@@ -1734,12 +1734,12 @@ TEST_F(LLVMCodeBuilderTest, Select)
         "true\n";
 
     auto code = m_builder->finalize();
-    testing::internal::CaptureStdout();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
     Thread thread(&sprite, nullptr, &script);
     auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
