@@ -418,10 +418,10 @@ TEST_F(CompilerTest, AddInput)
         EXPECT_EQ(compiler->addInput("OBSCURED_SHADOW"), &constRet);
 
         EXPECT_CALL(*m_builder, addVariableValue(m_testVar.get())).WillOnce(Return(&ret));
-        EXPECT_EQ(compiler->addInput("OBSCURED_SHADOW_VARIABLE"), &ret);
+        EXPECT_EQ(compiler->addInput(compiler->input("OBSCURED_SHADOW_VARIABLE")), &ret);
 
         EXPECT_CALL(*m_builder, addConstValue(Value("value block"))).WillOnce(Return(&constRet));
-        EXPECT_EQ(compiler->addInput("OBSCURED_SHADOW_BLOCK"), &constRet);
+        EXPECT_EQ(compiler->addInput(compiler->input("OBSCURED_SHADOW_BLOCK")), &constRet);
 
         return nullptr;
     });

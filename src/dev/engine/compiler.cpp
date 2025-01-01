@@ -182,6 +182,62 @@ CompilerValue *Compiler::addInput(const std::string &name)
     return addInput(impl->block->inputAt(impl->block->findInput(name)).get());
 }
 
+/*! Compiles the given input and adds it to the compiled code. */
+CompilerValue *Compiler::addInput(Input *input)
+{
+    if (!input)
+        return addConstValue(Value());
+
+    switch (input->type()) {
+        case Input::Type::Shadow:
+        case Input::Type::NoShadow: {
+            if (input->pointsToDropdownMenu())
+                return addConstValue(input->selectedMenuItem());
+            else {
+                CompilerValue *ret = nullptr;
+                auto previousBlock = impl->block;
+                impl->block = input->valueBlock();
+
+                if (impl->block) {
+                    if (impl->block->compileFunction())
+                        ret = impl->block->compile(this);
+                    else {
+                        std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
+                        impl->unsupportedBlocks.insert(impl->block->opcode());
+                        ret = addConstValue(Value());
+                    }
+                } else
+                    ret = addConstValue(input->primaryValue()->value());
+
+                impl->block = previousBlock;
+                return ret;
+            }
+        }
+
+        case Input::Type::ObscuredShadow: {
+            CompilerValue *ret = nullptr;
+            auto previousBlock = impl->block;
+            impl->block = input->valueBlock();
+
+            if (impl->block) {
+                if (impl->block->compileFunction())
+                    ret = impl->block->compile(this);
+                else {
+                    std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
+                    impl->unsupportedBlocks.insert(impl->block->opcode());
+                    ret = addConstValue(Value());
+                }
+            } else
+                ret = input->primaryValue()->compile(this);
+
+            impl->block = previousBlock;
+            return ret;
+        }
+    }
+
+    return nullptr;
+}
+
 /*! Creates an add instruction. */
 CompilerValue *Compiler::createAdd(CompilerValue *operand1, CompilerValue *operand2)
 {
@@ -582,59 +638,4 @@ std::shared_ptr<CompilerContext> Compiler::createContext(IEngine *engine, Target
 {
     CompilerPrivate::initBuilderFactory();
     return CompilerPrivate::builderFactory->createCtx(engine, target);
-}
-
-CompilerValue *Compiler::addInput(Input *input)
-{
-    if (!input)
-        return addConstValue(Value());
-
-    switch (input->type()) {
-        case Input::Type::Shadow:
-        case Input::Type::NoShadow: {
-            if (input->pointsToDropdownMenu())
-                return addConstValue(input->selectedMenuItem());
-            else {
-                CompilerValue *ret = nullptr;
-                auto previousBlock = impl->block;
-                impl->block = input->valueBlock();
-
-                if (impl->block) {
-                    if (impl->block->compileFunction())
-                        ret = impl->block->compile(this);
-                    else {
-                        std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
-                        impl->unsupportedBlocks.insert(impl->block->opcode());
-                        ret = addConstValue(Value());
-                    }
-                } else
-                    ret = addConstValue(input->primaryValue()->value());
-
-                impl->block = previousBlock;
-                return ret;
-            }
-        }
-
-        case Input::Type::ObscuredShadow: {
-            CompilerValue *ret = nullptr;
-            auto previousBlock = impl->block;
-            impl->block = input->valueBlock();
-
-            if (impl->block) {
-                if (impl->block->compileFunction())
-                    ret = impl->block->compile(this);
-                else {
-                    std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
-                    impl->unsupportedBlocks.insert(impl->block->opcode());
-                    ret = addConstValue(Value());
-                }
-            } else
-                ret = input->primaryValue()->compile(this);
-
-            impl->block = previousBlock;
-            return ret;
-        }
-    }
-
-    return nullptr;
 }

@@ -63,6 +63,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         CompilerValue *addListContains(List *list, CompilerValue *item);
         CompilerValue *addListSize(List *list);
         CompilerValue *addInput(const std::string &name);
+        CompilerValue *addInput(Input *input);
 
         CompilerValue *createAdd(CompilerValue *operand1, CompilerValue *operand2);
         CompilerValue *createSub(CompilerValue *operand1, CompilerValue *operand2);
@@ -137,8 +138,6 @@ class LIBSCRATCHCPP_EXPORT Compiler
         static std::shared_ptr<CompilerContext> createContext(IEngine *engine, Target *target);
 
     private:
-        CompilerValue *addInput(Input *input);
-
         spimpl::unique_impl_ptr<CompilerPrivate> impl;
 };
 
