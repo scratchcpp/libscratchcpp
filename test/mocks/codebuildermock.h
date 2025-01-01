@@ -81,4 +81,6 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(void, yield, (), (override));
 
         MOCK_METHOD(void, createStop, (), (override));
+
+        MOCK_METHOD(void, createProcedureCall, (BlockPrototype *), (override));
 };

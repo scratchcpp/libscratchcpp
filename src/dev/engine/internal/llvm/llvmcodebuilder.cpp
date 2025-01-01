@@ -8,6 +8,7 @@
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/blockprototype.h>
 #include <scratchcpp/dev/compilerconstant.h>
 #include <scratchcpp/dev/compilerlocalvariable.h>
 
@@ -24,14 +25,15 @@ using namespace libscratchcpp;
 static std::unordered_map<ValueType, Compiler::StaticType>
     TYPE_MAP = { { ValueType::Number, Compiler::StaticType::Number }, { ValueType::Bool, Compiler::StaticType::Bool }, { ValueType::String, Compiler::StaticType::String } };
 
-LLVMCodeBuilder::LLVMCodeBuilder(LLVMCompilerContext *ctx, bool warp) :
+LLVMCodeBuilder::LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *procedurePrototype) :
     m_ctx(ctx),
     m_target(ctx->target()),
     m_llvmCtx(*ctx->llvmCtx()),
     m_module(ctx->module()),
     m_builder(m_llvmCtx),
-    m_defaultWarp(warp),
-    m_warp(warp)
+    m_procedurePrototype(procedurePrototype),
+    m_defaultWarp(procedurePrototype ? procedurePrototype->warp() : false),
+    m_warp(m_defaultWarp)
 {
     initTypes();
     createVariableMap();
@@ -40,9 +42,11 @@ LLVMCodeBuilder::LLVMCodeBuilder(LLVMCompilerContext *ctx, bool warp) :
 
 std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 {
-    // Do not create coroutine if there are no yield instructions
     if (!m_warp) {
-        auto it = std::find_if(m_instructions.begin(), m_instructions.end(), [](const LLVMInstruction &step) { return step.type == LLVMInstruction::Type::Yield; });
+        // Do not create coroutine if there are no yield instructions nor non-warp procedure calls
+        auto it = std::find_if(m_instructions.begin(), m_instructions.end(), [](const LLVMInstruction &step) {
+            return step.type == LLVMInstruction::Type::Yield || (step.type == LLVMInstruction::Type::CallProcedure && step.procedurePrototype && !step.procedurePrototype->warp());
+        });
 
         if (it == m_instructions.end())
             m_warp = true;
@@ -57,14 +61,25 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     m_builder.setFastMathFlags(fmf);
 
     // Create function
-    // void *f(ExecutionContext *, Target *, ValueData **, List **)
-    llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, { pointerType, pointerType, pointerType, pointerType }, false);
-    llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module);
+    std::string funcName = getMainFunctionName(m_procedurePrototype);
+    llvm::FunctionType *funcType = getMainFunctionType(m_procedurePrototype);
+    llvm::Function *func;
+
+    if (m_procedurePrototype)
+        func = getOrCreateFunction(funcName, funcType);
+    else
+        func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, funcName, m_module);
+
     llvm::Value *executionContextPtr = func->getArg(0);
     llvm::Value *targetPtr = func->getArg(1);
     llvm::Value *targetVariables = func->getArg(2);
     llvm::Value *targetLists = func->getArg(3);
+    llvm::Value *warpArg = nullptr;
+
+    if (m_procedurePrototype) {
+        func->addFnAttr(llvm::Attribute::AlwaysInline);
+        warpArg = func->getArg(4);
+    }
 
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_llvmCtx, "entry", func);
     llvm::BasicBlock *endBranch = llvm::BasicBlock::Create(m_llvmCtx, "end", func);
@@ -787,15 +802,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             }
 
             case LLVMInstruction::Type::Yield:
-                if (!m_warp) {
-                    // TODO: Do not allow use after suspend (use after free)
-                    freeScopeHeap();
-                    syncVariables(targetVariables);
-                    coro->createSuspend();
-                    reloadVariables(targetVariables);
-                    reloadLists();
-                }
-
+                // TODO: Do not allow use after suspend (use after free)
+                createSuspend(coro.get(), func, warpArg, targetVariables);
                 break;
 
             case LLVMInstruction::Type::BeginIf: {
@@ -1019,6 +1027,47 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.SetInsertPoint(nextBranch);
                 break;
             }
+
+            case LLVMInstruction::Type::CallProcedure: {
+                assert(step.procedurePrototype);
+                freeScopeHeap();
+                syncVariables(targetVariables);
+
+                std::string name = getMainFunctionName(step.procedurePrototype);
+                llvm::FunctionType *type = getMainFunctionType(step.procedurePrototype);
+                std::vector<llvm::Value *> args;
+                const size_t argCount = type->getNumParams() - 1 - step.procedurePrototype->argumentTypes().size(); // omit warp arg and procedure args
+
+                for (size_t i = 0; i < argCount; i++)
+                    args.push_back(func->getArg(i));
+
+                // Add warp arg
+                if (m_warp)
+                    args.push_back(m_builder.getInt1(true));
+                else
+                    args.push_back(m_procedurePrototype ? warpArg : m_builder.getInt1(false));
+
+                // TODO: Add procedure args
+                llvm::Value *handle = m_builder.CreateCall(resolveFunction(name, type), args);
+
+                if (!m_warp && !step.procedurePrototype->warp()) {
+                    llvm::BasicBlock *suspendBranch = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+                    llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+                    m_builder.CreateCondBr(m_builder.CreateIsNull(handle), nextBranch, suspendBranch);
+
+                    m_builder.SetInsertPoint(suspendBranch);
+                    createSuspend(coro.get(), func, warpArg, targetVariables);
+                    name = getResumeFunctionName(step.procedurePrototype);
+                    llvm::Value *done = m_builder.CreateCall(resolveFunction(name, m_resumeFuncType), { handle });
+                    m_builder.CreateCondBr(done, nextBranch, suspendBranch);
+
+                    m_builder.SetInsertPoint(nextBranch);
+                }
+
+                reloadVariables(targetVariables);
+                reloadLists();
+                break;
+            }
         }
     }
 
@@ -1030,6 +1079,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     syncVariables(targetVariables);
 
     // End and verify the function
+    llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
+
     if (m_warp)
         m_builder.CreateRet(llvm::ConstantPointerNull::get(pointerType));
     else
@@ -1039,8 +1090,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
     // Create resume function
     // bool resume(void *)
-    funcType = llvm::FunctionType::get(m_builder.getInt1Ty(), pointerType, false);
-    llvm::Function *resumeFunc = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "resume", m_module);
+    funcName = getResumeFunctionName(m_procedurePrototype);
+    llvm::Function *resumeFunc = getOrCreateFunction(funcName, m_resumeFuncType);
 
     entry = llvm::BasicBlock::Create(m_llvmCtx, "entry", resumeFunc);
     m_builder.SetInsertPoint(entry);
@@ -1451,9 +1502,18 @@ void LLVMCodeBuilder::createStop()
     m_instructions.push_back({ LLVMInstruction::Type::Stop });
 }
 
+void LLVMCodeBuilder::createProcedureCall(BlockPrototype *prototype)
+{
+    LLVMInstruction ins(LLVMInstruction::Type::CallProcedure);
+    ins.procedurePrototype = prototype;
+    m_instructions.push_back(ins);
+}
+
 void LLVMCodeBuilder::initTypes()
 {
+    llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     m_valueDataType = LLVMTypes::createValueDataType(&m_builder);
+    m_resumeFuncType = llvm::FunctionType::get(m_builder.getInt1Ty(), pointerType, false);
 }
 
 void LLVMCodeBuilder::createVariableMap()
@@ -1555,6 +1615,47 @@ void LLVMCodeBuilder::popScopeLevel()
 
     freeScopeHeap();
     m_heap.pop_back();
+}
+
+std::string LLVMCodeBuilder::getMainFunctionName(BlockPrototype *procedurePrototype)
+{
+    return procedurePrototype ? "f." + procedurePrototype->procCode() : "f";
+}
+
+std::string LLVMCodeBuilder::getResumeFunctionName(BlockPrototype *procedurePrototype)
+{
+    return procedurePrototype ? "resume." + procedurePrototype->procCode() : "resume";
+}
+
+llvm::FunctionType *LLVMCodeBuilder::getMainFunctionType(BlockPrototype *procedurePrototype)
+{
+    // void *f(ExecutionContext *, Target *, ValueData **, List **, (warp arg), (procedure args...))
+    llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
+    std::vector<llvm::Type *> argTypes = { pointerType, pointerType, pointerType, pointerType };
+
+    if (procedurePrototype) {
+        argTypes.push_back(m_builder.getInt1Ty()); // warp arg (only in procedures)
+        const auto &types = procedurePrototype->argumentTypes();
+
+        for (BlockPrototype::ArgType type : types) {
+            if (type == BlockPrototype::ArgType::Bool)
+                argTypes.push_back(m_builder.getInt1Ty());
+            else
+                argTypes.push_back(m_valueDataType->getPointerTo());
+        }
+    }
+
+    return llvm::FunctionType::get(pointerType, argTypes, false);
+}
+
+llvm::Function *LLVMCodeBuilder::getOrCreateFunction(const std::string &name, llvm::FunctionType *type)
+{
+    llvm::Function *func = m_module->getFunction(name);
+
+    if (func)
+        return func;
+    else
+        return llvm::Function::Create(type, llvm::Function::ExternalLinkage, name, m_module);
 }
 
 void LLVMCodeBuilder::verifyFunction(llvm::Function *func)
@@ -2342,6 +2443,31 @@ llvm::Value *LLVMCodeBuilder::createComparison(LLVMRegister *arg1, LLVMRegister 
                     assert(false);
                     return nullptr;
             }
+        }
+    }
+}
+
+void LLVMCodeBuilder::createSuspend(LLVMCoroutine *coro, llvm::Function *func, llvm::Value *warpArg, llvm::Value *targetVariables)
+{
+    if (!m_warp) {
+        llvm::BasicBlock *suspendBranch, *nextBranch;
+
+        if (warpArg) {
+            suspendBranch = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+            nextBranch = llvm::BasicBlock::Create(m_llvmCtx, "", func);
+            m_builder.CreateCondBr(warpArg, nextBranch, suspendBranch);
+            m_builder.SetInsertPoint(suspendBranch);
+        }
+
+        freeScopeHeap();
+        syncVariables(targetVariables);
+        coro->createSuspend();
+        reloadVariables(targetVariables);
+        reloadLists();
+
+        if (warpArg) {
+            m_builder.CreateBr(nextBranch);
+            m_builder.SetInsertPoint(nextBranch);
         }
     }
 }

@@ -9,6 +9,8 @@
 namespace libscratchcpp
 {
 
+class BlockPrototype;
+
 struct LLVMInstruction
 {
         enum class Type
@@ -68,7 +70,8 @@ struct LLVMInstruction
             BeginRepeatUntilLoop,
             BeginLoopCondition,
             EndLoop,
-            Stop
+            Stop,
+            CallProcedure
         };
 
         LLVMInstruction(Type type) :
@@ -84,6 +87,7 @@ struct LLVMInstruction
         bool functionCtxArg = false;      // whether to add execution context ptr to function parameters
         Variable *workVariable = nullptr; // for variables
         List *workList = nullptr;         // for lists
+        BlockPrototype *procedurePrototype = nullptr;
 };
 
 } // namespace libscratchcpp

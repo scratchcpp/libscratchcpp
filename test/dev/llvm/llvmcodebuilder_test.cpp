@@ -7,6 +7,7 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/blockprototype.h>
 #include <dev/engine/internal/llvm/llvmcodebuilder.h>
 #include <dev/engine/internal/llvm/llvmcompilercontext.h>
 #include <gmock/gmock.h>
@@ -61,10 +62,19 @@ class LLVMCodeBuilderTest : public testing::Test
             test_function(nullptr, nullptr, nullptr, nullptr, nullptr); // force dependency
         }
 
+        void createBuilder(Target *target, BlockPrototype *procedurePrototype)
+        {
+            if (m_contexts.find(target) == m_contexts.cend() || !target)
+                m_contexts[target] = std::make_unique<LLVMCompilerContext>(&m_engine, target);
+
+            m_builder = std::make_unique<LLVMCodeBuilder>(m_contexts[target].get(), procedurePrototype);
+        }
+
         void createBuilder(Target *target, bool warp)
         {
-            m_ctx = std::make_unique<LLVMCompilerContext>(&m_engine, target);
-            m_builder = std::make_unique<LLVMCodeBuilder>(m_ctx.get(), warp);
+            m_procedurePrototype = std::make_shared<BlockPrototype>("test");
+            m_procedurePrototype->setWarp(warp);
+            createBuilder(target, m_procedurePrototype.get());
         }
 
         void createBuilder(bool warp) { createBuilder(nullptr, warp); }
@@ -359,8 +369,9 @@ class LLVMCodeBuilderTest : public testing::Test
             ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes << v.toString() << quotes;
         };
 
-        std::unique_ptr<LLVMCompilerContext> m_ctx;
+        std::unordered_map<Target *, std::unique_ptr<LLVMCompilerContext>> m_contexts;
         std::unique_ptr<LLVMCodeBuilder> m_builder;
+        std::shared_ptr<BlockPrototype> m_procedurePrototype;
         EngineMock m_engine;
         TargetMock m_target; // NOTE: isStage() is used for call expectations
         RandomGeneratorMock m_rng;
@@ -3889,4 +3900,91 @@ TEST_F(LLVMCodeBuilderTest, StopAndReturn)
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, Procedures)
+{
+    Sprite sprite;
+    auto var = std::make_shared<Variable>("", "");
+    auto list = std::make_shared<List>("", "");
+    sprite.addVariable(var);
+    sprite.addList(list);
+
+    // Procedure 1
+    BlockPrototype prototype1;
+    prototype1.setProcCode("procedure 1");
+    prototype1.setWarp(false);
+    createBuilder(&sprite, &prototype1);
+
+    CompilerValue *v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
+    m_builder->endLoop();
+
+    m_builder->createVariableWrite(var.get(), m_builder->addConstValue("test"));
+    m_builder->createListClear(list.get());
+    m_builder->createListAppend(list.get(), m_builder->addConstValue("hello world"));
+
+    v = m_builder->addVariableValue(var.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = m_builder->addListItem(list.get(), m_builder->addConstValue(0));
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    m_builder->finalize();
+
+    // Procedure 2
+    BlockPrototype prototype2;
+    prototype2.setProcCode("procedure 2");
+    prototype2.setWarp(true);
+    createBuilder(&sprite, &prototype2);
+
+    v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    m_builder->createProcedureCall(&prototype1);
+    m_builder->endLoop();
+
+    m_builder->finalize();
+
+    // Script
+    createBuilder(&sprite, false);
+    m_builder->createProcedureCall(&prototype1);
+    m_builder->createProcedureCall(&prototype2);
+
+    std::string expected1 = "no_args\n";
+
+    std::string expected2 =
+        "test\n"
+        "hello world\n";
+
+    std::string expected3 =
+        "no_args\n"
+        "no_args\n"
+        "test\n"
+        "hello world\n"
+        "no_args\n"
+        "no_args\n"
+        "test\n"
+        "hello world\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected1);
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected1);
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected2 + expected3);
+    ASSERT_TRUE(code->isFinished(ctx.get()));
 }

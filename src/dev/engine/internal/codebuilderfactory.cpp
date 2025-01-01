@@ -13,10 +13,10 @@ std::shared_ptr<CodeBuilderFactory> CodeBuilderFactory::instance()
     return m_instance;
 }
 
-std::shared_ptr<ICodeBuilder> CodeBuilderFactory::create(CompilerContext *ctx, bool warp) const
+std::shared_ptr<ICodeBuilder> CodeBuilderFactory::create(CompilerContext *ctx, BlockPrototype *procedurePrototype) const
 {
     assert(dynamic_cast<LLVMCompilerContext *>(ctx));
-    return std::make_shared<LLVMCodeBuilder>(static_cast<LLVMCompilerContext *>(ctx), warp);
+    return std::make_shared<LLVMCodeBuilder>(static_cast<LLVMCompilerContext *>(ctx), procedurePrototype);
 }
 
 std::shared_ptr<CompilerContext> CodeBuilderFactory::createCtx(IEngine *engine, Target *target) const

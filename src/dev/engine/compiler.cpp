@@ -46,7 +46,7 @@ std::shared_ptr<libscratchcpp::Block> Compiler::block() const
 /*! Compiles the script starting with the given block. */
 std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBlock)
 {
-    impl->builder = impl->builderFactory->create(impl->ctx, false);
+    impl->builder = impl->builderFactory->create(impl->ctx, nullptr);
     impl->substackTree.clear();
     impl->substackHit = false;
     impl->emptySubstack = false;

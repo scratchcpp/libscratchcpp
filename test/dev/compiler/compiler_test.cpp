@@ -48,8 +48,8 @@ class CompilerTest : public testing::Test
         void compile(Compiler *compiler, std::shared_ptr<Block> block)
         {
             ASSERT_EQ(compiler->block(), nullptr);
-            // TODO: Test warp
-            EXPECT_CALL(m_builderFactory, create(m_ctx.get(), false)).WillOnce(Return(m_builder));
+            // TODO: Test procedures
+            EXPECT_CALL(m_builderFactory, create(m_ctx.get(), nullptr)).WillOnce(Return(m_builder));
             EXPECT_CALL(*m_builder, finalize()).WillOnce(Return(m_code));
             ASSERT_EQ(compiler->compile(block), m_code);
             ASSERT_EQ(compiler->block(), nullptr);

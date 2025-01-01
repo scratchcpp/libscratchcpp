@@ -11,6 +11,7 @@ class Value;
 class Variable;
 class List;
 class ExecutableCode;
+class BlockPrototype;
 
 class ICodeBuilder
 {
@@ -91,6 +92,8 @@ class ICodeBuilder
         virtual void yield() = 0;
 
         virtual void createStop() = 0;
+
+        virtual void createProcedureCall(BlockPrototype *prototype) = 0;
 };
 
 } // namespace libscratchcpp

@@ -22,7 +22,7 @@ class LLVMConstantRegister;
 class LLVMCodeBuilder : public ICodeBuilder
 {
     public:
-        LLVMCodeBuilder(LLVMCompilerContext *ctx, bool warp);
+        LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *procedurePrototype = nullptr);
 
         std::shared_ptr<ExecutableCode> finalize() override;
 
@@ -99,6 +99,8 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         void createStop() override;
 
+        void createProcedureCall(BlockPrototype *prototype) override;
+
     private:
         enum class Comparison
         {
@@ -113,6 +115,10 @@ class LLVMCodeBuilder : public ICodeBuilder
         void pushScopeLevel();
         void popScopeLevel();
 
+        std::string getMainFunctionName(BlockPrototype *procedurePrototype);
+        std::string getResumeFunctionName(BlockPrototype *procedurePrototype);
+        llvm::FunctionType *getMainFunctionType(BlockPrototype *procedurePrototype);
+        llvm::Function *getOrCreateFunction(const std::string &name, llvm::FunctionType *type);
         void verifyFunction(llvm::Function *func);
         void optimize();
 
@@ -146,6 +152,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, LLVMRegister *item, llvm::Function *func);
         llvm::Value *createValue(LLVMRegister *reg);
         llvm::Value *createComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
+
+        void createSuspend(LLVMCoroutine *coro, llvm::Function *func, llvm::Value *warpArg, llvm::Value *targetVariables);
 
         llvm::FunctionCallee resolveFunction(const std::string name, llvm::FunctionType *type);
         llvm::FunctionCallee resolve_value_init();
@@ -196,10 +204,12 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::IRBuilder<> m_builder;
 
         llvm::StructType *m_valueDataType = nullptr;
+        llvm::FunctionType *m_resumeFuncType = nullptr;
 
         std::vector<LLVMInstruction> m_instructions;
         std::vector<std::shared_ptr<LLVMRegister>> m_regs;
         std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
+        BlockPrototype *m_procedurePrototype = nullptr;
         bool m_defaultWarp = false;
         bool m_warp = false;
 
