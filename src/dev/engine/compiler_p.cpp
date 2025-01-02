@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/dev/compiler.h>
 #include <scratchcpp/block.h>
 
 #include "compiler_p.h"
@@ -9,9 +10,21 @@
 
 using namespace libscratchcpp;
 
+CompilerPrivate::CompilerPrivate(CompilerContext *ctx) :
+    ctx(ctx)
+{
+    assert(ctx);
+    initBuilderFactory();
+}
+
 CompilerPrivate::CompilerPrivate(IEngine *engine, Target *target) :
-    engine(engine),
-    target(target)
+    ctxPtr(Compiler::createContext(engine, target)),
+    ctx(ctxPtr.get())
+{
+    initBuilderFactory();
+}
+
+void CompilerPrivate::initBuilderFactory()
 {
     if (!builderFactory)
         builderFactory = CodeBuilderFactory::instance().get();

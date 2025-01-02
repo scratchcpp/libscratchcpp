@@ -130,7 +130,7 @@ TEST(InputValueTest, Compile)
     Compiler compiler(&engine, &target);
 
     auto block = std::make_shared<Block>("", "");
-    EXPECT_CALL(builderFactory, create(_, _, _)).WillOnce(Return(builder));
+    EXPECT_CALL(builderFactory, create).WillOnce(Return(builder));
     EXPECT_CALL(*builder, finalize);
     compiler.compile(block);
     CompilerPrivate::builderFactory = nullptr;

@@ -2,6 +2,7 @@
 
 #include "codebuilderfactory.h"
 #include "llvm/llvmcodebuilder.h"
+#include "llvm/llvmcompilercontext.h"
 
 using namespace libscratchcpp;
 
@@ -12,7 +13,14 @@ std::shared_ptr<CodeBuilderFactory> CodeBuilderFactory::instance()
     return m_instance;
 }
 
-std::shared_ptr<ICodeBuilder> CodeBuilderFactory::create(Target *target, const std::string &id, bool warp) const
+std::shared_ptr<ICodeBuilder> CodeBuilderFactory::create(CompilerContext *ctx, BlockPrototype *procedurePrototype) const
 {
-    return std::make_shared<LLVMCodeBuilder>(target, id, warp);
+    assert(dynamic_cast<LLVMCompilerContext *>(ctx));
+    return std::make_shared<LLVMCodeBuilder>(static_cast<LLVMCompilerContext *>(ctx), procedurePrototype);
+}
+
+std::shared_ptr<CompilerContext> CodeBuilderFactory::createCtx(IEngine *engine, Target *target) const
+{
+    auto ptr = std::make_shared<LLVMCompilerContext>(engine, target);
+    return ptr;
 }

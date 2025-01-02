@@ -21,6 +21,7 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(CompilerValue *, addListItemIndex, (List *, CompilerValue *), (override));
         MOCK_METHOD(CompilerValue *, addListContains, (List *, CompilerValue *), (override));
         MOCK_METHOD(CompilerValue *, addListSize, (List *), (override));
+        MOCK_METHOD(CompilerValue *, addProcedureArgument, (const std::string &), (override));
 
         MOCK_METHOD(CompilerValue *, createAdd, (CompilerValue *, CompilerValue *), (override));
         MOCK_METHOD(CompilerValue *, createSub, (CompilerValue *, CompilerValue *), (override));
@@ -81,4 +82,6 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(void, yield, (), (override));
 
         MOCK_METHOD(void, createStop, (), (override));
+
+        MOCK_METHOD(void, createProcedureCall, (BlockPrototype *, const Compiler::Args &), (override));
 };

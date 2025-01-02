@@ -1,6 +1,7 @@
 add_executable(
   compiler_test
   compiler_test.cpp
+  compilercontext_test.cpp
   compilervalue_test.cpp
   compilerconstant_test.cpp
   compilerlocalvariable_test.cpp

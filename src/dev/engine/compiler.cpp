@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/dev/compiler.h>
+#include <scratchcpp/dev/compilercontext.h>
 #include <scratchcpp/dev/compilerconstant.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
@@ -12,7 +13,13 @@
 
 using namespace libscratchcpp;
 
-/*! Constructs Compiler. */
+/*! Constructs Compiler using the given context. */
+Compiler::Compiler(CompilerContext *ctx) :
+    impl(spimpl::make_unique_impl<CompilerPrivate>(ctx))
+{
+}
+
+/*! Constructs Compiler using a new context for the given target. */
 Compiler::Compiler(IEngine *engine, Target *target) :
     impl(spimpl::make_unique_impl<CompilerPrivate>(engine, target))
 {
@@ -21,13 +28,13 @@ Compiler::Compiler(IEngine *engine, Target *target) :
 /*! Returns the Engine of the project. */
 IEngine *Compiler::engine() const
 {
-    return impl->engine;
+    return impl->ctx->engine();
 }
 
 /*! Returns the Target of this compiler. */
 Target *Compiler::target() const
 {
-    return impl->target;
+    return impl->ctx->target();
 }
 
 /*! Returns currently compiled block. */
@@ -39,7 +46,21 @@ std::shared_ptr<libscratchcpp::Block> Compiler::block() const
 /*! Compiles the script starting with the given block. */
 std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBlock)
 {
-    impl->builder = impl->builderFactory->create(impl->target, startBlock->id(), false);
+    BlockPrototype *procedurePrototype = nullptr;
+
+    if (startBlock) {
+        // TODO: Move procedure definition logic to the custom blocks extension
+        auto input = startBlock->inputAt(0);
+
+        if (input && input->valueBlock()) {
+            procedurePrototype = input->valueBlock()->mutationPrototype();
+
+            if (procedurePrototype && procedurePrototype->procCode().empty())
+                procedurePrototype = nullptr;
+        }
+    }
+
+    impl->builder = impl->builderFactory->create(impl->ctx, procedurePrototype);
     impl->substackTree.clear();
     impl->substackHit = false;
     impl->emptySubstack = false;
@@ -169,10 +190,72 @@ CompilerValue *Compiler::addListSize(List *list)
     return impl->builder->addListSize(list);
 }
 
+/*! Adds the procedure argument with the given name to the code. */
+CompilerValue *Compiler::addProcedureArgument(const std::string &name)
+{
+    return impl->builder->addProcedureArgument(name);
+}
+
 /*! Compiles the given input (resolved by name) and adds it to the compiled code. */
 CompilerValue *Compiler::addInput(const std::string &name)
 {
     return addInput(impl->block->inputAt(impl->block->findInput(name)).get());
+}
+
+/*! Compiles the given input and adds it to the compiled code. */
+CompilerValue *Compiler::addInput(Input *input)
+{
+    if (!input)
+        return addConstValue(Value());
+
+    switch (input->type()) {
+        case Input::Type::Shadow:
+        case Input::Type::NoShadow: {
+            if (input->pointsToDropdownMenu())
+                return addConstValue(input->selectedMenuItem());
+            else {
+                CompilerValue *ret = nullptr;
+                auto previousBlock = impl->block;
+                impl->block = input->valueBlock();
+
+                if (impl->block) {
+                    if (impl->block->compileFunction())
+                        ret = impl->block->compile(this);
+                    else {
+                        std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
+                        impl->unsupportedBlocks.insert(impl->block->opcode());
+                        ret = addConstValue(Value());
+                    }
+                } else
+                    ret = addConstValue(input->primaryValue()->value());
+
+                impl->block = previousBlock;
+                return ret;
+            }
+        }
+
+        case Input::Type::ObscuredShadow: {
+            CompilerValue *ret = nullptr;
+            auto previousBlock = impl->block;
+            impl->block = input->valueBlock();
+
+            if (impl->block) {
+                if (impl->block->compileFunction())
+                    ret = impl->block->compile(this);
+                else {
+                    std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
+                    impl->unsupportedBlocks.insert(impl->block->opcode());
+                    ret = addConstValue(Value());
+                }
+            } else
+                ret = input->primaryValue()->compile(this);
+
+            impl->block = previousBlock;
+            return ret;
+        }
+    }
+
+    return nullptr;
 }
 
 /*! Creates an add instruction. */
@@ -552,6 +635,12 @@ void Compiler::createStop()
     impl->builder->createStop();
 }
 
+/*! Creates a call to the procedure with the given prototype. */
+void Compiler::createProcedureCall(BlockPrototype *prototype, const libscratchcpp::Compiler::Args &args)
+{
+    impl->builder->createProcedureCall(prototype, args);
+}
+
 /*! Convenience method which returns the field with the given name. */
 Input *Compiler::input(const std::string &name) const
 {
@@ -570,57 +659,9 @@ const std::unordered_set<std::string> &Compiler::unsupportedBlocks() const
     return impl->unsupportedBlocks;
 }
 
-CompilerValue *Compiler::addInput(Input *input)
+/*! Creates a compiler context for the given target. */
+std::shared_ptr<CompilerContext> Compiler::createContext(IEngine *engine, Target *target)
 {
-    if (!input)
-        return addConstValue(Value());
-
-    switch (input->type()) {
-        case Input::Type::Shadow:
-        case Input::Type::NoShadow: {
-            if (input->pointsToDropdownMenu())
-                return addConstValue(input->selectedMenuItem());
-            else {
-                CompilerValue *ret = nullptr;
-                auto previousBlock = impl->block;
-                impl->block = input->valueBlock();
-
-                if (impl->block) {
-                    if (impl->block->compileFunction())
-                        ret = impl->block->compile(this);
-                    else {
-                        std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
-                        impl->unsupportedBlocks.insert(impl->block->opcode());
-                        ret = addConstValue(Value());
-                    }
-                } else
-                    ret = addConstValue(input->primaryValue()->value());
-
-                impl->block = previousBlock;
-                return ret;
-            }
-        }
-
-        case Input::Type::ObscuredShadow: {
-            CompilerValue *ret = nullptr;
-            auto previousBlock = impl->block;
-            impl->block = input->valueBlock();
-
-            if (impl->block) {
-                if (impl->block->compileFunction())
-                    ret = impl->block->compile(this);
-                else {
-                    std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
-                    impl->unsupportedBlocks.insert(impl->block->opcode());
-                    ret = addConstValue(Value());
-                }
-            } else
-                ret = input->primaryValue()->compile(this);
-
-            impl->block = previousBlock;
-            return ret;
-        }
-    }
-
-    return nullptr;
+    CompilerPrivate::initBuilderFactory();
+    return CompilerPrivate::builderFactory->createCtx(engine, target);
 }

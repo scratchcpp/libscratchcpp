@@ -11,7 +11,8 @@ class CodeBuilderFactory : public ICodeBuilderFactory
 {
     public:
         static std::shared_ptr<CodeBuilderFactory> instance();
-        std::shared_ptr<ICodeBuilder> create(Target *target, const std::string &id, bool warp) const override;
+        std::shared_ptr<ICodeBuilder> create(CompilerContext *ctx, BlockPrototype *procedurePrototype) const override;
+        std::shared_ptr<CompilerContext> createCtx(IEngine *engine, Target *target) const override;
 
     private:
         static std::shared_ptr<CodeBuilderFactory> m_instance;

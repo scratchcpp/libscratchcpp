@@ -3,6 +3,8 @@
 #pragma once
 
 #include <scratchcpp/value.h>
+#include <scratchcpp/blockprototype.h>
+
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
@@ -16,13 +18,13 @@
 namespace libscratchcpp
 {
 
-class Target;
+class LLVMCompilerContext;
 class LLVMConstantRegister;
 
 class LLVMCodeBuilder : public ICodeBuilder
 {
     public:
-        LLVMCodeBuilder(Target *target, const std::string &id, bool warp);
+        LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *procedurePrototype = nullptr);
 
         std::shared_ptr<ExecutableCode> finalize() override;
 
@@ -38,6 +40,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         CompilerValue *addListItemIndex(List *list, CompilerValue *item) override;
         CompilerValue *addListContains(List *list, CompilerValue *item) override;
         CompilerValue *addListSize(List *list) override;
+        CompilerValue *addProcedureArgument(const std::string &name) override;
 
         CompilerValue *createAdd(CompilerValue *operand1, CompilerValue *operand2) override;
         CompilerValue *createSub(CompilerValue *operand1, CompilerValue *operand2) override;
@@ -99,6 +102,8 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         void createStop() override;
 
+        void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args) override;
+
     private:
         enum class Comparison
         {
@@ -113,8 +118,11 @@ class LLVMCodeBuilder : public ICodeBuilder
         void pushScopeLevel();
         void popScopeLevel();
 
+        std::string getMainFunctionName(BlockPrototype *procedurePrototype);
+        std::string getResumeFunctionName(BlockPrototype *procedurePrototype);
+        llvm::FunctionType *getMainFunctionType(BlockPrototype *procedurePrototype);
+        llvm::Function *getOrCreateFunction(const std::string &name, llvm::FunctionType *type);
         void verifyFunction(llvm::Function *func);
-        void optimize();
 
         LLVMRegister *addReg(std::shared_ptr<LLVMRegister> reg);
 
@@ -125,6 +133,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType);
         Compiler::StaticType optimizeRegisterType(LLVMRegister *reg);
         llvm::Type *getType(Compiler::StaticType type);
+        Compiler::StaticType getProcedureArgType(BlockPrototype::ArgType type);
         llvm::Value *isNaN(llvm::Value *num);
         llvm::Value *removeNaN(llvm::Value *num);
 
@@ -146,6 +155,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, LLVMRegister *item, llvm::Function *func);
         llvm::Value *createValue(LLVMRegister *reg);
         llvm::Value *createComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
+
+        void createSuspend(LLVMCoroutine *coro, llvm::Function *func, llvm::Value *warpArg, llvm::Value *targetVariables);
 
         llvm::FunctionCallee resolveFunction(const std::string name, llvm::FunctionType *type);
         llvm::FunctionCallee resolve_value_init();
@@ -190,18 +201,21 @@ class LLVMCodeBuilder : public ICodeBuilder
         std::unordered_map<List *, LLVMListPtr> m_listPtrs;
         std::vector<std::unordered_map<LLVMListPtr *, Compiler::StaticType>> m_scopeLists;
 
-        std::string m_id;
-        llvm::LLVMContext m_ctx;
-        std::unique_ptr<llvm::Module> m_module;
+        LLVMCompilerContext *m_ctx;
+        llvm::LLVMContext &m_llvmCtx;
+        llvm::Module *m_module = nullptr;
         llvm::IRBuilder<> m_builder;
 
         llvm::StructType *m_valueDataType = nullptr;
+        llvm::FunctionType *m_resumeFuncType = nullptr;
 
         std::vector<LLVMInstruction> m_instructions;
         std::vector<std::shared_ptr<LLVMRegister>> m_regs;
         std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
+        BlockPrototype *m_procedurePrototype = nullptr;
         bool m_defaultWarp = false;
         bool m_warp = false;
+        int m_defaultArgCount = 0;
 
         std::vector<std::vector<llvm::Value *>> m_heap; // scopes
 

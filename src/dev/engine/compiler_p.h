@@ -9,6 +9,7 @@
 namespace libscratchcpp
 {
 
+class CompilerContext;
 class IEngine;
 class Target;
 class Block;
@@ -24,12 +25,15 @@ struct CompilerPrivate
             IfStatement
         };
 
+        CompilerPrivate(CompilerContext *ctx);
         CompilerPrivate(IEngine *engine, Target *target);
+
+        static void initBuilderFactory();
 
         void substackEnd();
 
-        IEngine *engine = nullptr;
-        Target *target = nullptr;
+        std::shared_ptr<CompilerContext> ctxPtr; // for self-managed contexts
+        CompilerContext *ctx = nullptr;
 
         std::shared_ptr<Block> block;
         int customIfStatementCount = 0;

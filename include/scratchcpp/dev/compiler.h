@@ -11,6 +11,7 @@
 namespace libscratchcpp
 {
 
+class CompilerContext;
 class IEngine;
 class Target;
 class ExecutableCode;
@@ -21,6 +22,7 @@ class Variable;
 class List;
 class Input;
 class Field;
+class BlockPrototype;
 class CompilerPrivate;
 
 /*! \brief The Compiler class provides API for compiling Scratch scripts. */
@@ -39,6 +41,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         using ArgTypes = std::vector<StaticType>;
         using Args = std::vector<CompilerValue *>;
 
+        Compiler(CompilerContext *ctx);
         Compiler(IEngine *engine, Target *target);
         Compiler(const Compiler &) = delete;
 
@@ -60,7 +63,10 @@ class LIBSCRATCHCPP_EXPORT Compiler
         CompilerValue *addListItemIndex(List *list, CompilerValue *item);
         CompilerValue *addListContains(List *list, CompilerValue *item);
         CompilerValue *addListSize(List *list);
+        CompilerValue *addProcedureArgument(const std::string &name);
+
         CompilerValue *addInput(const std::string &name);
+        CompilerValue *addInput(Input *input);
 
         CompilerValue *createAdd(CompilerValue *operand1, CompilerValue *operand2);
         CompilerValue *createSub(CompilerValue *operand1, CompilerValue *operand2);
@@ -127,14 +133,16 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void createYield();
         void createStop();
 
+        void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args);
+
         Input *input(const std::string &name) const;
         Field *field(const std::string &name) const;
 
         const std::unordered_set<std::string> &unsupportedBlocks() const;
 
-    private:
-        CompilerValue *addInput(Input *input);
+        static std::shared_ptr<CompilerContext> createContext(IEngine *engine, Target *target);
 
+    private:
         spimpl::unique_impl_ptr<CompilerPrivate> impl;
 };
 

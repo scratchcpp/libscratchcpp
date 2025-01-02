@@ -7,7 +7,9 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/blockprototype.h>
 #include <dev/engine/internal/llvm/llvmcodebuilder.h>
+#include <dev/engine/internal/llvm/llvmcompilercontext.h>
 #include <gmock/gmock.h>
 #include <targetmock.h>
 #include <enginemock.h>
@@ -60,7 +62,21 @@ class LLVMCodeBuilderTest : public testing::Test
             test_function(nullptr, nullptr, nullptr, nullptr, nullptr); // force dependency
         }
 
-        void createBuilder(Target *target, bool warp) { m_builder = std::make_unique<LLVMCodeBuilder>(target, "test", warp); }
+        void createBuilder(Target *target, BlockPrototype *procedurePrototype)
+        {
+            if (m_contexts.find(target) == m_contexts.cend() || !target)
+                m_contexts[target] = std::make_unique<LLVMCompilerContext>(&m_engine, target);
+
+            m_builder = std::make_unique<LLVMCodeBuilder>(m_contexts[target].get(), procedurePrototype);
+        }
+
+        void createBuilder(Target *target, bool warp)
+        {
+            m_procedurePrototype = std::make_shared<BlockPrototype>("test");
+            m_procedurePrototype->setWarp(warp);
+            createBuilder(target, m_procedurePrototype.get());
+        }
+
         void createBuilder(bool warp) { createBuilder(nullptr, warp); }
 
         CompilerValue *callConstFuncForType(ValueType type, CompilerValue *arg)
@@ -353,7 +369,10 @@ class LLVMCodeBuilderTest : public testing::Test
             ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes << v.toString() << quotes;
         };
 
+        std::unordered_map<Target *, std::unique_ptr<LLVMCompilerContext>> m_contexts;
         std::unique_ptr<LLVMCodeBuilder> m_builder;
+        std::shared_ptr<BlockPrototype> m_procedurePrototype;
+        EngineMock m_engine;
         TargetMock m_target; // NOTE: isStage() is used for call expectations
         RandomGeneratorMock m_rng;
 };
@@ -1521,11 +1540,10 @@ TEST_F(LLVMCodeBuilderTest, Exp10)
 
 TEST_F(LLVMCodeBuilderTest, LocalVariables)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     createBuilder(&sprite, true);
 
@@ -1578,11 +1596,10 @@ TEST_F(LLVMCodeBuilderTest, LocalVariables)
 
 TEST_F(LLVMCodeBuilderTest, WriteVariable)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     auto globalVar1 = std::make_shared<Variable>("", "");
     auto globalVar2 = std::make_shared<Variable>("", "");
@@ -1642,11 +1659,10 @@ TEST_F(LLVMCodeBuilderTest, WriteVariable)
 
 TEST_F(LLVMCodeBuilderTest, Select)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     createBuilder(&sprite, true);
 
@@ -1718,23 +1734,22 @@ TEST_F(LLVMCodeBuilderTest, Select)
         "true\n";
 
     auto code = m_builder->finalize();
-    testing::internal::CaptureStdout();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
     Thread thread(&sprite, nullptr, &script);
     auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
 TEST_F(LLVMCodeBuilderTest, ReadVariable)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     auto globalVar1 = std::make_shared<Variable>("", "", 87);
     auto globalVar2 = std::make_shared<Variable>("", "", 6.4);
@@ -1791,11 +1806,10 @@ TEST_F(LLVMCodeBuilderTest, ReadVariable)
 
 TEST_F(LLVMCodeBuilderTest, ClearList)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     std::unordered_map<List *, std::string> strings;
 
@@ -1869,11 +1883,10 @@ TEST_F(LLVMCodeBuilderTest, ClearList)
 
 TEST_F(LLVMCodeBuilderTest, RemoveFromList)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     std::unordered_map<List *, std::string> strings;
 
@@ -1915,11 +1928,10 @@ TEST_F(LLVMCodeBuilderTest, RemoveFromList)
 
 TEST_F(LLVMCodeBuilderTest, AppendToList)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     std::unordered_map<List *, std::string> strings;
 
@@ -1975,11 +1987,10 @@ TEST_F(LLVMCodeBuilderTest, AppendToList)
 
 TEST_F(LLVMCodeBuilderTest, InsertToList)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     std::unordered_map<List *, std::string> strings;
 
@@ -2041,11 +2052,10 @@ TEST_F(LLVMCodeBuilderTest, InsertToList)
 
 TEST_F(LLVMCodeBuilderTest, ListReplace)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     std::unordered_map<List *, std::string> strings;
 
@@ -2101,11 +2111,10 @@ TEST_F(LLVMCodeBuilderTest, ListReplace)
 
 TEST_F(LLVMCodeBuilderTest, GetListContents)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     std::unordered_map<List *, std::string> strings;
 
@@ -2153,11 +2162,10 @@ TEST_F(LLVMCodeBuilderTest, GetListContents)
 
 TEST_F(LLVMCodeBuilderTest, GetListItem)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     std::unordered_map<List *, std::string> strings;
 
@@ -2226,11 +2234,10 @@ TEST_F(LLVMCodeBuilderTest, GetListItem)
 
 TEST_F(LLVMCodeBuilderTest, GetListSize)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     auto globalList = std::make_shared<List>("", "");
     stage.addList(globalList);
@@ -2275,11 +2282,10 @@ TEST_F(LLVMCodeBuilderTest, GetListSize)
 
 TEST_F(LLVMCodeBuilderTest, GetListItemIndex)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     auto globalList = std::make_shared<List>("", "");
     stage.addList(globalList);
@@ -2370,11 +2376,10 @@ TEST_F(LLVMCodeBuilderTest, GetListItemIndex)
 
 TEST_F(LLVMCodeBuilderTest, ListContainsItem)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     auto globalList = std::make_shared<List>("", "");
     stage.addList(globalList);
@@ -2547,11 +2552,10 @@ TEST_F(LLVMCodeBuilderTest, Yield)
 
 TEST_F(LLVMCodeBuilderTest, VariablesAfterSuspend)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     auto globalVar = std::make_shared<Variable>("", "", 87);
     stage.addVariable(globalVar);
@@ -2598,11 +2602,11 @@ TEST_F(LLVMCodeBuilderTest, VariablesAfterSuspend)
 
 TEST_F(LLVMCodeBuilderTest, ListsAfterSuspend)
 {
-    EngineMock engine;
+
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     auto globalList1 = std::make_shared<List>("", "");
     stage.addList(globalList1);
@@ -2885,11 +2889,10 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
 
 TEST_F(LLVMCodeBuilderTest, IfStatementVariables)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     auto globalVar = std::make_shared<Variable>("", "", "test");
     stage.addVariable(globalVar);
@@ -2983,11 +2986,10 @@ TEST_F(LLVMCodeBuilderTest, IfStatementVariables)
 
 TEST_F(LLVMCodeBuilderTest, IfStatementLists)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     auto globalList1 = std::make_shared<List>("", "");
     stage.addList(globalList1);
@@ -3507,11 +3509,10 @@ TEST_F(LLVMCodeBuilderTest, RepeatUntilLoop)
 
 TEST_F(LLVMCodeBuilderTest, LoopVariables)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     auto globalVar = std::make_shared<Variable>("", "", "test");
     stage.addVariable(globalVar);
@@ -3641,11 +3642,10 @@ TEST_F(LLVMCodeBuilderTest, LoopVariables)
 
 TEST_F(LLVMCodeBuilderTest, LoopLists)
 {
-    EngineMock engine;
     Stage stage;
     Sprite sprite;
-    sprite.setEngine(&engine);
-    EXPECT_CALL(engine, stage()).WillRepeatedly(Return(&stage));
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
     auto globalList1 = std::make_shared<List>("", "");
     stage.addList(globalList1);
@@ -3900,4 +3900,152 @@ TEST_F(LLVMCodeBuilderTest, StopAndReturn)
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, MultipleScripts)
+{
+    Sprite sprite;
+
+    // Script 1
+    createBuilder(&sprite, nullptr);
+
+    CompilerValue *v = m_builder->addConstValue("script1");
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    auto code1 = m_builder->finalize();
+
+    // Script 2
+    createBuilder(&sprite, nullptr);
+
+    v = m_builder->addConstValue("script2");
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    auto code2 = m_builder->finalize();
+
+    Script script1(&sprite, nullptr, nullptr);
+    script1.setCode(code1);
+    Thread thread1(&sprite, nullptr, &script1);
+    auto ctx = code1->createExecutionContext(&thread1);
+
+    testing::internal::CaptureStdout();
+    code1->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "script1\n");
+
+    Script script2(&sprite, nullptr, nullptr);
+    script2.setCode(code2);
+    Thread thread2(&sprite, nullptr, &script2);
+    ctx = code2->createExecutionContext(&thread2);
+
+    testing::internal::CaptureStdout();
+    code2->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "script2\n");
+}
+
+TEST_F(LLVMCodeBuilderTest, Procedures)
+{
+    Sprite sprite;
+    auto var = std::make_shared<Variable>("", "");
+    auto list = std::make_shared<List>("", "");
+    sprite.addVariable(var);
+    sprite.addList(list);
+
+    // Procedure 1
+    BlockPrototype prototype1;
+    prototype1.setProcCode("procedure 1 %s %s %b");
+    prototype1.setArgumentNames({ "any type 1", "any type 2", "bool" });
+    prototype1.setArgumentIds({ "a", "b", "c" });
+    prototype1.setWarp(false);
+    createBuilder(&sprite, &prototype1);
+
+    CompilerValue *v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
+    m_builder->endLoop();
+
+    m_builder->createVariableWrite(var.get(), m_builder->addProcedureArgument("any type 1"));
+    m_builder->createListClear(list.get());
+    m_builder->createListAppend(list.get(), m_builder->addProcedureArgument("any type 2"));
+
+    v = m_builder->addVariableValue(var.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = m_builder->addListItem(list.get(), m_builder->addConstValue(0));
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = m_builder->addProcedureArgument("bool");
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+    m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = m_builder->addProcedureArgument("invalid");
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    m_builder->finalize();
+
+    // Procedure 2
+    BlockPrototype prototype2;
+    prototype2.setProcCode("procedure 2");
+    prototype2.setWarp(true);
+    createBuilder(&sprite, &prototype2);
+
+    v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    m_builder->createProcedureCall(&prototype1, { m_builder->addConstValue(-652.3), m_builder->addConstValue(false), m_builder->addConstValue(true) });
+    m_builder->endLoop();
+
+    m_builder->finalize();
+
+    // Script
+    createBuilder(&sprite, false);
+    m_builder->createProcedureCall(&prototype1, { m_builder->addConstValue("test"), m_builder->addConstValue(true), m_builder->addConstValue(false) });
+    m_builder->createProcedureCall(&prototype2, {});
+
+    v = m_builder->addProcedureArgument("test");
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    std::string expected1 = "no_args\n";
+
+    std::string expected2 =
+        "test\n"
+        "true\n"
+        "false\n"
+        "0\n"
+        "0\n";
+
+    std::string expected3 =
+        "no_args\n"
+        "no_args\n"
+        "-652.3\n"
+        "false\n"
+        "true\n"
+        "1\n"
+        "0\n"
+        "no_args\n"
+        "no_args\n"
+        "-652.3\n"
+        "false\n"
+        "true\n"
+        "1\n"
+        "0\n"
+        "0\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected1);
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected1);
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected2 + expected3);
+    ASSERT_TRUE(code->isFinished(ctx.get()));
 }

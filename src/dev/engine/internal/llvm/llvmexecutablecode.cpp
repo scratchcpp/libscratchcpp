@@ -6,43 +6,33 @@
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/dev/promise.h>
 #include <scratchcpp/thread.h>
-#include <llvm/Support/Error.h>
 #include <iostream>
 
+#include <llvm/Support/Error.h>
+
 #include "llvmexecutablecode.h"
+#include "llvmcompilercontext.h"
 #include "llvmexecutioncontext.h"
 
 using namespace libscratchcpp;
 
-LLVMExecutableCode::LLVMExecutableCode(std::unique_ptr<llvm::Module> module) :
-    m_ctx(std::make_unique<llvm::LLVMContext>()),
-    m_jit(llvm::orc::LLJITBuilder().create())
+LLVMExecutableCode::LLVMExecutableCode(LLVMCompilerContext *ctx, const std::string &mainFunctionName, const std::string &resumeFunctionName) :
+    m_ctx(ctx),
+    m_mainFunctionName(mainFunctionName),
+    m_resumeFunctionName(resumeFunctionName)
 {
-    if (!m_jit) {
-        llvm::errs() << "error: failed to create JIT: " << toString(m_jit.takeError()) << "\n";
-        return;
+    assert(m_ctx);
+
+    if (m_ctx->jitInitialized()) {
+        std::cerr << "error: cannot create LLVM code after JIT compiler had been initialized" << std::endl;
+        assert(false);
     }
-
-    if (!module)
-        return;
-
-    std::string name = module->getName().str();
-    auto err = m_jit->get()->addIRModule(llvm::orc::ThreadSafeModule(std::move(module), std::move(m_ctx)));
-
-    if (err) {
-        llvm::errs() << "error: failed to add module '" << name << "' to JIT: " << toString(std::move(err)) << "\n";
-        return;
-    }
-
-    // Lookup functions
-    m_mainFunction = (MainFunctionType)lookupFunction("f");
-    assert(m_mainFunction);
-    m_resumeFunction = (ResumeFunctionType)lookupFunction("resume");
-    assert(m_resumeFunction);
 }
 
 void LLVMExecutableCode::run(ExecutionContext *context)
 {
+    assert(m_mainFunction);
+    assert(m_resumeFunction);
     LLVMExecutionContext *ctx = getContext(context);
 
     if (ctx->finished())
@@ -98,19 +88,12 @@ bool LLVMExecutableCode::isFinished(ExecutionContext *context) const
 
 std::shared_ptr<ExecutionContext> LLVMExecutableCode::createExecutionContext(Thread *thread) const
 {
+    if (!m_ctx->jitInitialized())
+        m_ctx->initJit();
+
+    m_mainFunction = m_ctx->lookupFunction<MainFunctionType>(m_mainFunctionName);
+    m_resumeFunction = m_ctx->lookupFunction<ResumeFunctionType>(m_resumeFunctionName);
     return std::make_shared<LLVMExecutionContext>(thread);
-}
-
-uint64_t LLVMExecutableCode::lookupFunction(const std::string &name)
-{
-    auto func = m_jit->get()->lookup(name);
-
-    if (func)
-        return func->getValue();
-    else {
-        llvm::errs() << "error: failed to lookup LLVM function: " << toString(func.takeError()) << "\n";
-        return 0;
-    }
 }
 
 LLVMExecutionContext *LLVMExecutableCode::getContext(ExecutionContext *context)
