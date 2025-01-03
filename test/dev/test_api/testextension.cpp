@@ -30,6 +30,7 @@ void TestExtension::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "test_teststr", &compileTestStr);
     engine->addCompileFunction(this, "test_input", &compileInput);
     engine->addCompileFunction(this, "test_substack", &compileSubstack);
+    engine->addCompileFunction(this, "test_click_hat", &compileClickHat);
 }
 
 CompilerValue *TestExtension::compileSimple(Compiler *compiler)
@@ -74,6 +75,12 @@ CompilerValue *TestExtension::compileSubstack(Compiler *compiler)
 {
     auto substack = compiler->input("SUBSTACK");
     compiler->moveToIf(compiler->addConstValue(true), substack->valueBlock());
+    return nullptr;
+}
+
+CompilerValue *TestExtension::compileClickHat(Compiler *compiler)
+{
+    compiler->engine()->addTargetClickScript(compiler->block());
     return nullptr;
 }
 

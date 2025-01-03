@@ -21,6 +21,7 @@ class TestExtension : public IExtension
         static CompilerValue *compileTestStr(Compiler *compiler);
         static CompilerValue *compileInput(Compiler *compiler);
         static CompilerValue *compileSubstack(Compiler *compiler);
+        static CompilerValue *compileClickHat(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
