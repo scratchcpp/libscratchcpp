@@ -25,11 +25,12 @@ class ScriptBuilderPrivate;
 class LIBSCRATCHCPP_EXPORT ScriptBuilder
 {
     public:
-        ScriptBuilder(IExtension *extension, IEngine *engine, std::shared_ptr<Target> target);
+        ScriptBuilder(IExtension *extension, IEngine *engine, std::shared_ptr<Target> target, bool createHatBlock = true);
         ScriptBuilder(const ScriptBuilder &) = delete;
 
         ~ScriptBuilder();
 
+        void addBlock(std::shared_ptr<Block> block);
         void addBlock(const std::string &opcode);
         void captureBlockReturnValue();
 
@@ -53,9 +54,15 @@ class LIBSCRATCHCPP_EXPORT ScriptBuilder
 
         List *capturedValues() const;
 
+        static void buildMultiple(const std::vector<ScriptBuilder *> &builders);
+
     private:
-        void addBlock(std::shared_ptr<Block> block);
+        void addBlockToList(std::shared_ptr<Block> block);
         void build(std::shared_ptr<Target> target);
+        std::string nextId();
+
+        static void addBlocksToTarget(Target *target, const std::vector<std::shared_ptr<Block>> &blocks);
+        static void addTargetToEngine(IEngine *engine, std::shared_ptr<Target> target);
 
         spimpl::unique_impl_ptr<ScriptBuilderPrivate> impl;
 };

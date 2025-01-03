@@ -16,32 +16,31 @@
 using namespace libscratchcpp;
 using namespace libscratchcpp::test;
 
-static std::unordered_map<IEngine *, std::shared_ptr<List>> captureLists;
+// TODO: Add support for return values captures when building multiple scripts
+static std::unordered_map<const ScriptBuilder *, std::shared_ptr<List>> captureLists;
+static ScriptBuilder *currentScriptBuilder = nullptr;
 
 /*! Constructs ScriptBuilder. */
-ScriptBuilder::ScriptBuilder(IExtension *extension, IEngine *engine, std::shared_ptr<Target> target) :
+ScriptBuilder::ScriptBuilder(IExtension *extension, IEngine *engine, std::shared_ptr<Target> target, bool createHatBlock) :
     impl(spimpl::make_unique_impl<ScriptBuilderPrivate>(engine, target))
 {
     // Create capture list
-    if (captureLists.find(engine) != captureLists.cend()) {
-        std::cerr << "error: only one ScriptBuilder can be created for each engine" << std::endl;
-        return;
-    }
-
-    captureLists[engine] = std::make_shared<List>("", "");
+    captureLists[this] = std::make_shared<List>("", "");
 
     // Add start hat block
-    auto block = std::make_shared<Block>(std::to_string(impl->blockId++), "script_builder_init");
-    engine->addCompileFunction(extension, block->opcode(), [](Compiler *compiler) -> CompilerValue * {
-        compiler->engine()->addGreenFlagScript(compiler->block());
-        return nullptr;
-    });
-    addBlock(block);
+    if (createHatBlock) {
+        auto block = std::make_shared<Block>(nextId(), "script_builder_init");
+        engine->addCompileFunction(extension, block->opcode(), [](Compiler *compiler) -> CompilerValue * {
+            compiler->engine()->addGreenFlagScript(compiler->block());
+            return nullptr;
+        });
+        addBlockToList(block);
+    }
 
     // Add compile function for return value capture block
     engine->addCompileFunction(extension, "script_builder_capture", [](Compiler *compiler) -> CompilerValue * {
         CompilerValue *input = compiler->addInput("VALUE");
-        compiler->createListAppend(captureLists[compiler->engine()].get(), input);
+        compiler->createListAppend(captureLists[currentScriptBuilder].get(), input);
         return nullptr;
     });
 }
@@ -49,14 +48,21 @@ ScriptBuilder::ScriptBuilder(IExtension *extension, IEngine *engine, std::shared
 /*! Destroys ScriptBuilder. */
 ScriptBuilder::~ScriptBuilder()
 {
-    captureLists.erase(impl->engine);
+    captureLists.erase(this);
+}
+
+/*! Adds the given block to the script. */
+void ScriptBuilder::addBlock(std::shared_ptr<Block> block)
+{
+    block->setId(nextId());
+    impl->lastBlock = block;
+    addBlockToList(block);
 }
 
 /*! Adds a block with the given opcode to the script. */
 void ScriptBuilder::addBlock(const std::string &opcode)
 {
-    impl->lastBlock = std::make_shared<Block>(std::to_string(impl->blockId++), opcode);
-    addBlock(impl->lastBlock);
+    addBlock(std::make_shared<Block>("", opcode));
 }
 
 /*! Captures the return value of the created reporter block. It can be retrieved using capturedValues() later. */
@@ -101,7 +107,7 @@ void ScriptBuilder::addObscuredInput(const std::string &name, std::shared_ptr<Bl
     block->setParent(impl->lastBlock);
 
     while (block) {
-        block->setId(std::to_string(impl->blockId++));
+        block->setId(nextId());
         impl->inputBlocks.push_back(block);
 
         auto parent = block->parent();
@@ -128,7 +134,7 @@ void ScriptBuilder::addNullObscuredInput(const std::string &name)
         return;
 
     auto input = std::make_shared<Input>(name, Input::Type::ObscuredShadow);
-    auto block = std::make_shared<Block>(std::to_string(impl->blockId++), "");
+    auto block = std::make_shared<Block>(nextId(), "");
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(Value()); });
     input->setValueBlock(block);
     impl->inputBlocks.push_back(block);
@@ -144,7 +150,7 @@ void ScriptBuilder::addDropdownInput(const std::string &name, const std::string 
     auto input = std::make_shared<Input>(name, Input::Type::Shadow);
     impl->lastBlock->addInput(input);
 
-    auto menu = std::make_shared<Block>(std::to_string(impl->blockId++), impl->lastBlock->opcode() + "_menu");
+    auto menu = std::make_shared<Block>(nextId(), impl->lastBlock->opcode() + "_menu");
     menu->setShadow(true);
     impl->inputBlocks.push_back(menu);
     input->setValueBlock(menu);
@@ -170,7 +176,7 @@ void ScriptBuilder::addEntityInput(const std::string &name, const std::string &e
         return;
 
     if (std::find(impl->entities.begin(), impl->entities.end(), entity) == impl->entities.end()) {
-        entity->setId(std::to_string(impl->blockId++));
+        entity->setId(nextId());
         impl->entities.push_back(entity);
     }
 
@@ -188,7 +194,7 @@ void ScriptBuilder::addEntityField(const std::string &name, std::shared_ptr<Enti
         return;
 
     if (std::find(impl->entities.begin(), impl->entities.end(), entity) == impl->entities.end()) {
-        entity->setId(std::to_string(impl->blockId++));
+        entity->setId(nextId());
         impl->entities.push_back(entity);
     }
 
@@ -218,6 +224,10 @@ std::shared_ptr<Block> ScriptBuilder::currentBlock()
             target->addList(list);
 
         build(target);
+
+        std::vector<std::shared_ptr<Target>> targets = impl->engine->targets();
+        targets.erase(std::remove(targets.begin(), targets.end(), target), targets.end());
+        impl->engine->setTargets(targets);
     }
 
     return impl->lastBlock;
@@ -256,10 +266,31 @@ void ScriptBuilder::run()
 /*! Returns the list of captured block return values. */
 List *ScriptBuilder::capturedValues() const
 {
-    return captureLists[impl->engine].get();
+    return captureLists[this].get();
 }
 
-void ScriptBuilder::addBlock(std::shared_ptr<Block> block)
+/*!
+ * Builds multiple scripts using the given script builders.
+ * \note Using run() on any of the script builders will result in all scripts without a custom hat block being called. Use this only with a single when flag clicked block.
+ * \note Return value capturing is not supported when building multiple scripts.
+ */
+void ScriptBuilder::buildMultiple(const std::vector<ScriptBuilder *> &builders)
+{
+    std::unordered_set<IEngine *> engines;
+
+    for (ScriptBuilder *builder : builders) {
+        auto target = builder->impl->target;
+        addBlocksToTarget(target.get(), builder->impl->blocks);
+        addBlocksToTarget(target.get(), builder->impl->inputBlocks);
+        addTargetToEngine(builder->impl->engine, target);
+        engines.insert(builder->impl->engine);
+    }
+
+    for (IEngine *engine : engines)
+        engine->compile();
+}
+
+void ScriptBuilder::addBlockToList(std::shared_ptr<Block> block)
 {
     if (!impl->blocks.empty()) {
         auto lastBlock = impl->blocks.back();
@@ -272,20 +303,37 @@ void ScriptBuilder::addBlock(std::shared_ptr<Block> block)
 
 void ScriptBuilder::build(std::shared_ptr<Target> target)
 {
-    if (target->blocks().empty()) {
-        for (auto block : impl->blocks)
-            target->addBlock(block);
+    currentScriptBuilder = this;
 
-        for (auto block : impl->inputBlocks)
+    addBlocksToTarget(target.get(), impl->blocks);
+    addBlocksToTarget(target.get(), impl->inputBlocks);
+    addTargetToEngine(impl->engine, target);
+
+    impl->engine->compile();
+    currentScriptBuilder = nullptr;
+}
+
+std::string ScriptBuilder::nextId()
+{
+    return std::to_string((uintptr_t)this) + '.' + std::to_string(impl->blockId++);
+}
+
+void ScriptBuilder::addBlocksToTarget(Target *target, const std::vector<std::shared_ptr<Block>> &blocks)
+{
+    auto targetBlocks = target->blocks();
+
+    for (auto block : blocks) {
+        if (std::find(targetBlocks.begin(), targetBlocks.end(), block) == targetBlocks.end())
             target->addBlock(block);
     }
+}
 
-    std::vector<std::shared_ptr<Target>> targets = impl->engine->targets();
+void ScriptBuilder::addTargetToEngine(IEngine *engine, std::shared_ptr<Target> target)
+{
+    std::vector<std::shared_ptr<Target>> targets = engine->targets();
 
     if (std::find(targets.begin(), targets.end(), target) == targets.end()) {
         targets.push_back(target);
-        impl->engine->setTargets({ target });
+        engine->setTargets(targets);
     }
-
-    impl->engine->compile();
 }

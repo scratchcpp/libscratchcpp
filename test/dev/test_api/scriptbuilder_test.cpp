@@ -1,6 +1,7 @@
 #include <scratchcpp/dev/test/scriptbuilder.h>
 #include <scratchcpp/project.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/stage.h>
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/value.h>
 #include <scratchcpp/block.h>
@@ -43,11 +44,18 @@ TEST_F(ScriptBuilderTest, AddBlock)
     ASSERT_EQ(block->opcode(), "test_simple");
     ASSERT_TRUE(block->compileFunction());
 
+    block = std::make_shared<Block>("", "test_simple");
+    m_builder->addBlock(block);
+    block = m_builder->currentBlock();
+    ASSERT_TRUE(block);
+    ASSERT_EQ(block->opcode(), "test_simple");
+    ASSERT_TRUE(block->compileFunction());
+
     m_builder->build();
 
     testing::internal::CaptureStdout();
     m_builder->run();
-    ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\n");
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\ntest\n");
 }
 
 TEST_F(ScriptBuilderTest, AddValueInput)
@@ -270,4 +278,32 @@ TEST_F(ScriptBuilderTest, CaptureBlockReturnValue)
     value_toString(&values->operator[](0), &str);
     ASSERT_EQ(str, "test");
     ASSERT_EQ(value_toDouble(&values->operator[](1)), -93.4);
+}
+
+TEST_F(ScriptBuilderTest, MultipleScripts)
+{
+    ScriptBuilder builder1(&m_extension, m_engine, m_target, false);
+    builder1.addBlock("test_click_hat");
+    builder1.addBlock("test_simple");
+
+    ScriptBuilder builder2(&m_extension, m_engine, m_target);
+    builder2.addBlock("test_print");
+    builder2.addValueInput("STRING", "Hello world");
+
+    Project project;
+    IEngine *engine = project.engine().get();
+    m_extension.registerBlocks(engine);
+    auto target = std::make_shared<Stage>();
+    ScriptBuilder builder3(&m_extension, engine, target);
+    builder3.addBlock("test_simple");
+
+    ScriptBuilder::buildMultiple({ &builder1, &builder2, &builder3 });
+
+    testing::internal::CaptureStdout();
+    builder2.run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "Hello world\n");
+
+    testing::internal::CaptureStdout();
+    builder3.run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\n");
 }
