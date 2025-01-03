@@ -50,6 +50,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         std::shared_ptr<Block> block() const;
 
         std::shared_ptr<ExecutableCode> compile(std::shared_ptr<Block> startBlock);
+        void preoptimize();
 
         CompilerValue *addFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
         CompilerValue *addTargetFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});

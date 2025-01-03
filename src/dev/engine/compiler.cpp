@@ -107,6 +107,15 @@ std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBl
 }
 
 /*!
+ * Optimizes all compiled scripts before they're called for the first time.
+ * \note Call this only after compiling all scripts.
+ */
+void Compiler::preoptimize()
+{
+    impl->ctx->preoptimize();
+}
+
+/*!
  * Adds a call to the given function.\n
  * For example: extern "C" bool some_block(double arg1, const char *arg2)
  */

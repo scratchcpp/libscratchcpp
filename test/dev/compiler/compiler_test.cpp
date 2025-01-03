@@ -14,6 +14,7 @@
 #include <codebuilderfactorymock.h>
 #include <codebuildermock.h>
 #include <executablecodemock.h>
+#include <compilercontextmock.h>
 
 #include "../common.h"
 
@@ -1723,4 +1724,15 @@ TEST_F(CompilerTest, Procedure)
 
         compile(m_compiler.get(), block, customBlock->mutationPrototype());
     }
+}
+
+TEST_F(CompilerTest, Preoptimize)
+{
+    auto ctx = std::make_shared<CompilerContextMock>(&m_engine, &m_target);
+
+    EXPECT_CALL(m_builderFactory, createCtx(&m_engine, &m_target)).WillOnce(Return(ctx));
+    Compiler compiler(&m_engine, &m_target);
+
+    EXPECT_CALL(*ctx, preoptimize());
+    compiler.preoptimize();
 }
