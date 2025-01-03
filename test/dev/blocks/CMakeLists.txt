@@ -188,6 +188,7 @@ if (LIBSCRATCHCPP_ENABLE_CUSTOM_BLOCKS)
       GTest::gmock_main
       scratchcpp
       scratchcpp_mocks
+      block_test_deps
     )
 
     gtest_discover_tests(custom_blocks_test)

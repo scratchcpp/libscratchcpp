@@ -14,6 +14,10 @@ class CustomBlocks : public IExtension
         std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
+
+    private:
+        static CompilerValue *compileCall(Compiler *compiler);
+        static CompilerValue *compileArgument(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
