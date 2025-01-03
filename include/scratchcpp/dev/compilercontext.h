@@ -23,6 +23,12 @@ class LIBSCRATCHCPP_EXPORT CompilerContext
         IEngine *engine() const;
         Target *target() const;
 
+        /*!
+         * Optimizes compiled scripts ahead of time.
+         * \see Compiler#preoptimize()
+         */
+        virtual void preoptimize() { }
+
     private:
         spimpl::unique_impl_ptr<CompilerContextPrivate> impl;
 };

@@ -24,6 +24,11 @@ LLVMCompilerContext::LLVMCompilerContext(IEngine *engine, Target *target) :
     }
 }
 
+void LLVMCompilerContext::preoptimize()
+{
+    initJit();
+}
+
 llvm::LLVMContext *LLVMCompilerContext::llvmCtx()
 {
     return m_llvmCtxPtr;

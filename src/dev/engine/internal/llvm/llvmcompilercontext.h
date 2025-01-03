@@ -20,6 +20,8 @@ class LLVMCompilerContext : public CompilerContext
     public:
         LLVMCompilerContext(IEngine *engine, Target *target);
 
+        void preoptimize() override;
+
         llvm::LLVMContext *llvmCtx();
         llvm::Module *module();
 
