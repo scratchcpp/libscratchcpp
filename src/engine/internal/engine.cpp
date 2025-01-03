@@ -327,6 +327,12 @@ void Engine::compile()
 
         for (const std::string &opcode : unsupportedBlocks)
             m_unsupportedBlocks.insert(opcode);
+
+#ifdef USE_LLVM
+        // Preoptimize to avoid lag when starting scripts for the first time
+        std::cout << "Optimizing target " << target->name() << "..." << std::endl;
+        compiler.preoptimize();
+#endif
     }
 
     // Compile monitor blocks to bytecode
