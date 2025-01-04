@@ -58,6 +58,7 @@ void LLVMCompilerContext::initJit()
 
     // Optimize
     const auto &functions = m_module->getFunctionList();
+    std::vector<std::string> functionNames;
 
     llvm::PassBuilder passBuilder;
     llvm::LoopAnalysisManager loopAnalysisManager;
@@ -83,6 +84,8 @@ void LLVMCompilerContext::initJit()
     // Run the O3 pipeline for specific functions
     for (llvm::Function &func : m_module->functions()) {
         if (!func.isDeclaration()) {
+            functionNames.push_back(func.getName().str());
+
             if (func.hasExternalLinkage() && !func.hasFnAttribute(llvm::Attribute::OptimizeNone)) {
 #ifndef NDEBUG
                 std::cout << "debug: optimizing function: " << functionNames.back() << std::endl;
@@ -103,6 +106,14 @@ void LLVMCompilerContext::initJit()
     if (err) {
         llvm::errs() << "error: failed to add module '" << name << "' to JIT: " << toString(std::move(err)) << "\n";
         return;
+    }
+
+    // Lookup functions to JIT-compile ahead of time
+    for (const std::string &name : functionNames) {
+#ifndef NDEBUG
+        std::cout << "debug: looking up function: " << name << std::endl;
+#endif
+        lookupFunction<void *>(name);
     }
 }
 
