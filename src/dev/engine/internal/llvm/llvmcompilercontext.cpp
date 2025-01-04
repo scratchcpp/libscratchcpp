@@ -88,6 +88,10 @@ void LLVMCompilerContext::initJit()
                 std::cout << "debug: optimizing function: " << functionNames.back() << std::endl;
 #endif
                 functionPassManager.run(func, functionAnalysisManager);
+            } else if (func.hasFnAttribute(llvm::Attribute::OptimizeNone)) {
+                // Remove this attribute to avoid JIT hangs
+                // TODO: Optimize all functions, maybe it doesn't take so long
+                func.removeFnAttr(llvm::Attribute::OptimizeNone);
             }
         }
     }

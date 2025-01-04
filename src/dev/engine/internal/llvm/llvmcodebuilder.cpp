@@ -82,6 +82,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     if (m_procedurePrototype && m_warp)
         func->addFnAttr(llvm::Attribute::InlineHint);
     else {
+        // NOTE: These attributes will be overriden by LLVMCompilerContext
+        // TODO: Optimize all functions, maybe it doesn't take so long
         func->addFnAttr(llvm::Attribute::NoInline);
         func->addFnAttr(llvm::Attribute::OptimizeNone);
     }
