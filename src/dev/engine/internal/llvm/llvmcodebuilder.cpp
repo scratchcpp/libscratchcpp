@@ -76,9 +76,14 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     llvm::Value *targetLists = func->getArg(3);
     llvm::Value *warpArg = nullptr;
 
-    if (m_procedurePrototype) {
-        func->addFnAttr(llvm::Attribute::AlwaysInline);
+    if (m_procedurePrototype)
         warpArg = func->getArg(4);
+
+    if (m_procedurePrototype && m_warp)
+        func->addFnAttr(llvm::Attribute::InlineHint);
+    else {
+        func->addFnAttr(llvm::Attribute::NoInline);
+        func->addFnAttr(llvm::Attribute::OptimizeNone);
     }
 
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_llvmCtx, "entry", func);
@@ -1106,6 +1111,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     // bool resume(void *)
     funcName = getResumeFunctionName(m_procedurePrototype);
     llvm::Function *resumeFunc = getOrCreateFunction(funcName, m_resumeFuncType);
+    resumeFunc->addFnAttr(llvm::Attribute::NoInline);
+    resumeFunc->addFnAttr(llvm::Attribute::OptimizeNone);
 
     entry = llvm::BasicBlock::Create(m_llvmCtx, "entry", resumeFunc);
     m_builder.SetInsertPoint(entry);

@@ -57,6 +57,8 @@ void LLVMCompilerContext::initJit()
 #endif
 
     // Optimize
+    const auto &functions = m_module->getFunctionList();
+
     llvm::PassBuilder passBuilder;
     llvm::LoopAnalysisManager loopAnalysisManager;
     llvm::FunctionAnalysisManager functionAnalysisManager;
@@ -69,8 +71,26 @@ void LLVMCompilerContext::initJit()
     passBuilder.registerLoopAnalyses(loopAnalysisManager);
     passBuilder.crossRegisterProxies(loopAnalysisManager, functionAnalysisManager, cGSCCAnalysisManager, moduleAnalysisManager);
 
-    llvm::ModulePassManager modulePassManager = passBuilder.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
+    // Use O0 for the entire module
+    llvm::ModulePassManager modulePassManager = passBuilder.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O0);
+
+    // Create a FunctionPassManager for O3 optimizations
+    llvm::FunctionPassManager functionPassManager = passBuilder.buildFunctionSimplificationPipeline(llvm::OptimizationLevel::O3, llvm::ThinOrFullLTOPhase::None);
+
+    // Run the O0 pipeline for the module
     modulePassManager.run(*m_module, moduleAnalysisManager);
+
+    // Run the O3 pipeline for specific functions
+    for (llvm::Function &func : m_module->functions()) {
+        if (!func.isDeclaration()) {
+            if (!func.hasFnAttribute(llvm::Attribute::OptimizeNone)) {
+#ifndef NDEBUG
+                std::cout << "debug: optimizing function: " << functionNames.back() << std::endl;
+#endif
+                functionPassManager.run(func, functionAnalysisManager);
+            }
+        }
+    }
 
     // Init JIT compiler
     std::string name = m_module->getName().str();
