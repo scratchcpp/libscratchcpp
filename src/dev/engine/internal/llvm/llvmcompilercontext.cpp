@@ -83,7 +83,7 @@ void LLVMCompilerContext::initJit()
     // Run the O3 pipeline for specific functions
     for (llvm::Function &func : m_module->functions()) {
         if (!func.isDeclaration()) {
-            if (!func.hasFnAttribute(llvm::Attribute::OptimizeNone)) {
+            if (func.hasExternalLinkage() && !func.hasFnAttribute(llvm::Attribute::OptimizeNone)) {
 #ifndef NDEBUG
                 std::cout << "debug: optimizing function: " << functionNames.back() << std::endl;
 #endif
