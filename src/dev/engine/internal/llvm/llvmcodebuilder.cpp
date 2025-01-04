@@ -1666,12 +1666,12 @@ void LLVMCodeBuilder::popScopeLevel()
 
 std::string LLVMCodeBuilder::getMainFunctionName(BlockPrototype *procedurePrototype)
 {
-    return procedurePrototype ? "f." + procedurePrototype->procCode() : "f";
+    return procedurePrototype ? "proc." + procedurePrototype->procCode() : "script";
 }
 
 std::string LLVMCodeBuilder::getResumeFunctionName(BlockPrototype *procedurePrototype)
 {
-    return procedurePrototype ? "resume." + procedurePrototype->procCode() : "resume";
+    return procedurePrototype ? "resume.proc." + procedurePrototype->procCode() : "resume.script";
 }
 
 llvm::FunctionType *LLVMCodeBuilder::getMainFunctionType(BlockPrototype *procedurePrototype)
