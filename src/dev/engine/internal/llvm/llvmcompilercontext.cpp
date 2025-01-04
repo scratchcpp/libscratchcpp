@@ -58,7 +58,7 @@ void LLVMCompilerContext::initJit()
 
     // Optimize
     const auto &functions = m_module->getFunctionList();
-    std::vector<std::string> functionNames;
+    std::vector<std::string> lookupNames;
 
     llvm::PassBuilder passBuilder;
     llvm::LoopAnalysisManager loopAnalysisManager;
@@ -84,17 +84,19 @@ void LLVMCompilerContext::initJit()
     // Run the O3 pipeline for specific functions
     for (llvm::Function &func : m_module->functions()) {
         if (!func.isDeclaration()) {
-            functionNames.push_back(func.getName().str());
+            if (func.hasExternalLinkage()) {
+                lookupNames.push_back(func.getName().str());
 
-            if (func.hasExternalLinkage() && !func.hasFnAttribute(llvm::Attribute::OptimizeNone)) {
+                if (func.hasFnAttribute(llvm::Attribute::OptimizeNone)) {
+                    // Remove this attribute to avoid JIT hangs
+                    // TODO: Optimize all functions, maybe it doesn't take so long
+                    func.removeFnAttr(llvm::Attribute::OptimizeNone);
+                } else {
 #ifndef NDEBUG
-                std::cout << "debug: optimizing function: " << functionNames.back() << std::endl;
+                    std::cout << "debug: optimizing function: " << func.getName().str() << std::endl;
 #endif
-                functionPassManager.run(func, functionAnalysisManager);
-            } else if (func.hasFnAttribute(llvm::Attribute::OptimizeNone)) {
-                // Remove this attribute to avoid JIT hangs
-                // TODO: Optimize all functions, maybe it doesn't take so long
-                func.removeFnAttr(llvm::Attribute::OptimizeNone);
+                    functionPassManager.run(func, functionAnalysisManager);
+                }
             }
         }
     }
@@ -109,7 +111,7 @@ void LLVMCompilerContext::initJit()
     }
 
     // Lookup functions to JIT-compile ahead of time
-    for (const std::string &name : functionNames) {
+    for (const std::string &name : lookupNames) {
 #ifndef NDEBUG
         std::cout << "debug: looking up function: " << name << std::endl;
 #endif
