@@ -17,16 +17,17 @@ TEST(BlockPrototypeTest, Constructors)
     ASSERT_TRUE(p2.argumentDefaults().empty());
     ASSERT_FALSE(p2.warp());
 
-    BlockPrototype p3("test %s block %s %b");
-    ASSERT_EQ(p3.procCode(), "test %s block %s %b");
+    BlockPrototype p3("test %s block %s %b test %n");
+    ASSERT_EQ(p3.procCode(), "test %s block %s %b test %n");
     ASSERT_EQ(
         p3.argumentTypes(),
         std::vector<BlockPrototype::ArgType>({
             BlockPrototype::ArgType::StringNum,
             BlockPrototype::ArgType::StringNum,
             BlockPrototype::ArgType::Bool,
+            BlockPrototype::ArgType::StringNum,
         }));
-    ASSERT_EQ(p3.argumentDefaults(), std::vector<Value>({ "", "", false }));
+    ASSERT_EQ(p3.argumentDefaults(), std::vector<Value>({ "", "", false, "" }));
     ASSERT_FALSE(p3.warp());
 }
 

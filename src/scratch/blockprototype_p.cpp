@@ -27,6 +27,7 @@ void BlockPrototypePrivate::setProcCode(const std::string &newProcCode)
             arg = false;
             switch (c) {
                 case 's':
+                case 'n':
                     argumentDefaults.push_back("");
                     argumentTypes.push_back(BlockPrototype::ArgType::StringNum);
                     break;
