@@ -126,6 +126,7 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         LLVMRegister *addReg(std::shared_ptr<LLVMRegister> reg);
 
+        llvm::Value *addAlloca(llvm::Type *type);
         void freeLater(llvm::Value *value);
         void freeScopeHeap();
         llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType);

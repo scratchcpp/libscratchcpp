@@ -562,7 +562,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                         break;
                 }
 
-                step.functionReturnReg->value = m_builder.CreateAlloca(type);
+                step.functionReturnReg->value = addAlloca(type);
                 break;
             }
 
@@ -895,7 +895,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 // index = 0
                 llvm::Constant *zero = llvm::ConstantInt::get(m_builder.getInt64Ty(), 0, true);
-                loop.index = m_builder.CreateAlloca(m_builder.getInt64Ty());
+                loop.index = addAlloca(m_builder.getInt64Ty());
                 m_builder.CreateStore(zero, loop.index);
 
                 // Create branches
@@ -1718,6 +1718,16 @@ LLVMRegister *LLVMCodeBuilder::addReg(std::shared_ptr<LLVMRegister> reg)
     return reg.get();
 }
 
+llvm::Value *LLVMCodeBuilder::addAlloca(llvm::Type *type)
+{
+    // Add an alloca to the entry block because allocas must be there (to avoid stack overflow)
+    llvm::BasicBlock *block = m_builder.GetInsertBlock();
+    m_builder.SetInsertPointPastAllocas(m_function);
+    llvm::Value *ret = m_builder.CreateAlloca(type);
+    m_builder.SetInsertPoint(block);
+    return ret;
+}
+
 void LLVMCodeBuilder::freeLater(llvm::Value *value)
 {
     assert(!m_heap.empty());
@@ -2206,7 +2216,7 @@ llvm::Value *LLVMCodeBuilder::getListItemIndex(const LLVMListPtr &listPtr, LLVMR
     llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
 
     // index = 0
-    llvm::Value *index = m_builder.CreateAlloca(m_builder.getInt64Ty());
+    llvm::Value *index = addAlloca(m_builder.getInt64Ty());
     m_builder.CreateStore(m_builder.getInt64(0), index);
     m_builder.CreateBr(condBlock);
 
@@ -2250,7 +2260,7 @@ llvm::Value *LLVMCodeBuilder::createValue(LLVMRegister *reg)
     if (reg->isConst()) {
         // Create a constant ValueData instance and store it
         llvm::Constant *value = castConstValue(reg->constValue(), TYPE_MAP[reg->constValue().type()]);
-        llvm::Value *ret = m_builder.CreateAlloca(m_valueDataType);
+        llvm::Value *ret = addAlloca(m_valueDataType);
 
         switch (reg->constValue().type()) {
             case ValueType::Number:
@@ -2279,7 +2289,7 @@ llvm::Value *LLVMCodeBuilder::createValue(LLVMRegister *reg)
         return ret;
     } else if (reg->isRawValue) {
         llvm::Value *value = castRawValue(reg, reg->type());
-        llvm::Value *ret = m_builder.CreateAlloca(m_valueDataType);
+        llvm::Value *ret = addAlloca(m_valueDataType);
 
         // Store value
         llvm::Value *valueField = m_builder.CreateStructGEP(m_valueDataType, ret, 0);
