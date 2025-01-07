@@ -142,7 +142,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void syncVariables(llvm::Value *targetVariables);
         void reloadVariables(llvm::Value *targetVariables);
         void reloadLists();
-        void updateListDataPtr(const LLVMListPtr &listPtr, llvm::Function *func);
+        void updateListDataPtr(const LLVMListPtr &listPtr);
 
         LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
         LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
@@ -151,12 +151,12 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createReusedValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType);
         void createValueCopy(llvm::Value *source, llvm::Value *target);
         void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
-        llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index, llvm::Function *func);
-        llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, LLVMRegister *item, llvm::Function *func);
+        llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index);
+        llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, LLVMRegister *item);
         llvm::Value *createValue(LLVMRegister *reg);
         llvm::Value *createComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
 
-        void createSuspend(LLVMCoroutine *coro, llvm::Function *func, llvm::Value *warpArg, llvm::Value *targetVariables);
+        void createSuspend(LLVMCoroutine *coro, llvm::Value *warpArg, llvm::Value *targetVariables);
 
         llvm::FunctionCallee resolveFunction(const std::string name, llvm::FunctionType *type);
         llvm::FunctionCallee resolve_value_init();
@@ -205,6 +205,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::LLVMContext &m_llvmCtx;
         llvm::Module *m_module = nullptr;
         llvm::IRBuilder<> m_builder;
+        llvm::Function *m_function = nullptr;
 
         llvm::StructType *m_valueDataType = nullptr;
         llvm::FunctionType *m_resumeFuncType = nullptr;
