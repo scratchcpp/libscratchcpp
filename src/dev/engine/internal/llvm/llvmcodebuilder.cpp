@@ -672,6 +672,16 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 Compiler::StaticType type = optimizeRegisterType(arg.second);
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
+                auto &typeMap = m_scopeLists.back();
+
+                if (typeMap.find(&listPtr) == typeMap.cend()) {
+                    listPtr.type = type;
+                    typeMap[&listPtr] = listPtr.type;
+                } else if (listPtr.type != type) {
+                    listPtr.type = Compiler::StaticType::Unknown;
+                    typeMap[&listPtr] = listPtr.type;
+                }
+
                 // Check if enough space is allocated
                 llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
                 llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
@@ -684,27 +694,18 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // If there's enough space, use the allocated memory
                 m_builder.SetInsertPoint(ifBlock);
                 llvm::Value *itemPtr = getListItem(listPtr, size);
-                createReusedValueStore(arg.second, itemPtr, type);
+                createReusedValueStore(arg.second, itemPtr, type, listPtr.type);
                 m_builder.CreateStore(m_builder.CreateAdd(size, m_builder.getInt64(1)), listPtr.sizePtr);
                 m_builder.CreateBr(nextBlock);
 
                 // Otherwise call appendEmpty()
                 m_builder.SetInsertPoint(elseBlock);
                 itemPtr = m_builder.CreateCall(resolve_list_append_empty(), listPtr.ptr);
-                createReusedValueStore(arg.second, itemPtr, type);
+                createReusedValueStore(arg.second, itemPtr, type, listPtr.type);
                 m_builder.CreateStore(m_builder.getInt1(true), listPtr.dataPtrDirty);
                 m_builder.CreateBr(nextBlock);
 
                 m_builder.SetInsertPoint(nextBlock);
-                auto &typeMap = m_scopeLists.back();
-
-                if (typeMap.find(&listPtr) == typeMap.cend()) {
-                    listPtr.type = type;
-                    typeMap[&listPtr] = listPtr.type;
-                } else if (listPtr.type != type) {
-                    listPtr.type = Compiler::StaticType::Unknown;
-                    typeMap[&listPtr] = listPtr.type;
-                }
 
                 break;
             }
@@ -716,17 +717,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 Compiler::StaticType type = optimizeRegisterType(valueArg.second);
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
-                // dataPtrDirty
-                llvm::Value *dataPtrDirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
-                llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
-                llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
-                m_builder.CreateStore(m_builder.CreateOr(dataPtrDirty, m_builder.CreateICmpEQ(allocatedSize, size)), listPtr.dataPtrDirty);
-
-                // Insert
-                llvm::Value *index = m_builder.CreateFPToUI(castValue(indexArg.second, indexArg.first), m_builder.getInt64Ty());
-                llvm::Value *itemPtr = m_builder.CreateCall(resolve_list_insert_empty(), { listPtr.ptr, index });
-                createReusedValueStore(valueArg.second, itemPtr, type);
-
                 auto &typeMap = m_scopeLists.back();
 
                 if (typeMap.find(&listPtr) == typeMap.cend()) {
@@ -736,6 +726,17 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     listPtr.type = Compiler::StaticType::Unknown;
                     typeMap[&listPtr] = listPtr.type;
                 }
+
+                // dataPtrDirty
+                llvm::Value *dataPtrDirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
+                llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
+                llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+                m_builder.CreateStore(m_builder.CreateOr(dataPtrDirty, m_builder.CreateICmpEQ(allocatedSize, size)), listPtr.dataPtrDirty);
+
+                // Insert
+                llvm::Value *index = m_builder.CreateFPToUI(castValue(indexArg.second, indexArg.first), m_builder.getInt64Ty());
+                llvm::Value *itemPtr = m_builder.CreateCall(resolve_list_insert_empty(), { listPtr.ptr, index });
+                createReusedValueStore(valueArg.second, itemPtr, type, listPtr.type);
 
                 break;
             }
@@ -2153,33 +2154,18 @@ void LLVMCodeBuilder::createValueStore(LLVMRegister *reg, llvm::Value *targetPtr
     }
 }
 
-void LLVMCodeBuilder::createReusedValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType)
+void LLVMCodeBuilder::createReusedValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType)
 {
-    llvm::Value *converted = nullptr;
+    // Same as createValueStore(), but ensures that type is updated
+    createValueStore(reg, targetPtr, sourceType, targetType);
 
-    if (sourceType != Compiler::StaticType::Unknown)
-        converted = castValue(reg, sourceType);
+    auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [sourceType](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == sourceType; });
+    const ValueType mappedType = it == TYPE_MAP.cend() ? ValueType::Number : it->first; // unknown type can be ignored
 
-    switch (sourceType) {
-        case Compiler::StaticType::Number:
-            m_builder.CreateCall(resolve_value_assign_double(), { targetPtr, converted });
-            break;
-
-        case Compiler::StaticType::Bool:
-            m_builder.CreateCall(resolve_value_assign_bool(), { targetPtr, converted });
-            break;
-
-        case Compiler::StaticType::String:
-            m_builder.CreateCall(resolve_value_assign_cstring(), { targetPtr, converted });
-            break;
-
-        case Compiler::StaticType::Unknown:
-            m_builder.CreateCall(resolve_value_assign_copy(), { targetPtr, reg->value });
-            break;
-
-        default:
-            assert(false);
-            break;
+    if ((sourceType == Compiler::StaticType::Number || sourceType == Compiler::StaticType::Bool) && sourceType == targetType) {
+        // Update type when writing number to number and bool to bool
+        llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 1);
+        m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typePtr);
     }
 }
 

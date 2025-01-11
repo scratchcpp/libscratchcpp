@@ -149,7 +149,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
 
         void createValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
-        void createReusedValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType);
+        void createReusedValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
         void createValueCopy(llvm::Value *source, llvm::Value *target);
         void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
         llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index);
