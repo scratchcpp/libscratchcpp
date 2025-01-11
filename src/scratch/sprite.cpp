@@ -579,12 +579,8 @@ void Sprite::setXY(double x, double y)
     } else
         impl->getFencedPosition(x, y, &impl->x, &impl->y);
 
-    if (impl->visible) {
-        IEngine *eng = engine();
-
-        if (eng)
-            eng->requestRedraw();
-    }
+    if (eng && impl->visible)
+        eng->requestRedraw();
 
     if (impl->iface)
         impl->iface->onMoved(oldX, oldY, impl->x, impl->y);
