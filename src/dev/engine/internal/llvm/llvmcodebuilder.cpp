@@ -2347,6 +2347,16 @@ llvm::Value *LLVMCodeBuilder::createComparison(LLVMRegister *arg1, LLVMRegister 
             optNumberBool = 1; // operand 1 was bool
         }
 
+        // Optimize number and string constant comparison
+        // TODO: GT and LT comparison can be optimized here (e. g. by checking the string constant characters and comparing with numbers and .+-e)
+        if (type == Comparison::EQ) {
+            if (type1 == Compiler::StaticType::Number && type2 == Compiler::StaticType::String && arg2->isConst() && !arg2->constValue().isValidNumber())
+                return m_builder.getInt1(false);
+
+            if (type1 == Compiler::StaticType::String && type2 == Compiler::StaticType::Number && arg1->isConst() && !arg1->constValue().isValidNumber())
+                return m_builder.getInt1(false);
+        }
+
         if (type1 != type2 || type1 == Compiler::StaticType::Unknown || type2 == Compiler::StaticType::Unknown) {
             // If the types are different or at least one of them
             // is unknown, we must use value functions

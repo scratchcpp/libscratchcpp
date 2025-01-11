@@ -983,6 +983,8 @@ TEST_F(LLVMCodeBuilderTest, GreaterAndLowerThanComparison)
         runOpTest(type, "1", 0);
         runOpTest(type, 0, "test");
         runOpTest(type, "test", 0);
+        runOpTest(type, 55, "abc");
+        runOpTest(type, "abc", 55);
 
         static const double inf = std::numeric_limits<double>::infinity();
         static const double nan = std::numeric_limits<double>::quiet_NaN();
