@@ -242,16 +242,11 @@ extern "C"
     }
 
     /*! Writes the string representation of the given value to dst. */
-    void value_toString(const libscratchcpp::ValueData *v, std::string *dst)
+    void value_toString(const ValueData *v, std::string *dst)
     {
-        if (v->type == ValueType::String)
-            dst->assign(v->stringValue);
-        else if (v->type == ValueType::Number)
-            value_doubleToString(v->numberValue, dst);
-        else if (v->type == ValueType::Bool)
-            dst->assign(v->boolValue ? "true" : "false");
-        else
-            dst->clear();
+        char *str = value_toCString(v);
+        dst->assign(str);
+        free(str);
     }
 
     /*!
@@ -260,11 +255,29 @@ extern "C"
      */
     char *value_toCString(const ValueData *v)
     {
-        std::string out;
-        value_toString(v, &out);
-        char *ret = (char *)malloc((out.size() + 1) * sizeof(char));
-        strncpy(ret, out.c_str(), out.size() + 1);
-        return ret;
+        if (v->type == ValueType::String) {
+            char *ret = (char *)malloc((strlen(v->stringValue) + 1) * sizeof(char));
+            strcpy(ret, v->stringValue);
+            return ret;
+        } else if (v->type == ValueType::Number)
+            return value_doubleToCString(v->numberValue);
+        else if (v->type == ValueType::Bool) {
+            char *ret;
+
+            if (v->boolValue) {
+                ret = (char *)malloc((4 + 1) * sizeof(char));
+                strcpy(ret, "true");
+            } else {
+                ret = (char *)malloc((5 + 1) * sizeof(char));
+                strcpy(ret, "false");
+            }
+
+            return ret;
+        } else {
+            char *ret = (char *)malloc(sizeof(char));
+            ret[0] = '\0';
+            return ret;
+        }
     }
 
     /*! Writes the UTF-16 representation of the given value to dst. */
@@ -292,11 +305,74 @@ extern "C"
      */
     char *value_doubleToCString(double v)
     {
-        std::string out;
-        value_doubleToString(v, &out);
-        char *ret = (char *)malloc((out.size() + 1) * sizeof(char));
-        strncpy(ret, out.c_str(), out.size() + 1);
-        return ret;
+        if (v == 0) {
+            char *ret = (char *)malloc((1 + 1) * sizeof(char));
+            strcpy(ret, "0");
+            return ret;
+        } else if (std::isinf(v)) {
+            if (v > 0) {
+                char *ret = (char *)malloc((8 + 1) * sizeof(char));
+                strcpy(ret, "Infinity");
+                return ret;
+            } else {
+                char *ret = (char *)malloc((9 + 1) * sizeof(char));
+                strcpy(ret, "-Infinity");
+                return ret;
+            }
+        } else if (std::isnan(v)) {
+            char *ret = (char *)malloc((3 + 1) * sizeof(char));
+            strcpy(ret, "NaN");
+            return ret;
+        }
+
+        const int maxlen = 26; // should be enough for any number
+        char *buffer = (char *)malloc((maxlen + 1) * sizeof(char));
+
+        // Constants for significant digits and thresholds
+        const int significantDigits = 17 - value_intDigitCount(std::floor(std::fabs(v)));
+        constexpr double scientificThreshold = 1e21;
+        constexpr double minScientificThreshold = 1e-6;
+
+        // Use scientific notation if the number is very large or very small
+        if (std::fabs(v) >= scientificThreshold || std::fabs(v) < minScientificThreshold) {
+            int ret = snprintf(buffer, maxlen, "%.*g", significantDigits - 1, v);
+            assert(ret >= 0);
+        } else {
+            snprintf(buffer, maxlen, "%.*f", significantDigits - 1, v);
+
+            // Remove trailing zeros from the fractional part
+            char *dot = std::strchr(buffer, '.');
+
+            if (dot) {
+                char *end = buffer + std::strlen(buffer) - 1;
+                while (end > dot && *end == '0') {
+                    *end-- = '\0';
+                }
+                if (*end == '.') {
+                    *end = '\0'; // Remove trailing dot
+                }
+            }
+        }
+
+        // Remove leading zeros after e+/e-
+        for (int i = 0; i < 2; i++) {
+            const char *target = (i == 0) ? "e+" : "e-";
+            char *index = strstr(buffer, target);
+
+            if (index != nullptr) {
+                char *ptr = index + 2;
+                while (*(ptr + 1) != '\0' && *ptr == '0') {
+                    // Shift the characters left to erase '0'
+                    char *shiftPtr = ptr;
+                    do {
+                        *shiftPtr = *(shiftPtr + 1);
+                        shiftPtr++;
+                    } while (*shiftPtr != '\0');
+                }
+            }
+        }
+
+        return buffer;
     }
 
     /*!

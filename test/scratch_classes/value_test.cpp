@@ -1401,6 +1401,30 @@ TEST(ValueTest, ToString)
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
     ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
+    v = 59.8;
+    cStrings.push_back(value_toCString(&v.data()));
+    ASSERT_EQ(v.toString(), "59.8");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
+
+    v = -59.8;
+    cStrings.push_back(value_toCString(&v.data()));
+    ASSERT_EQ(v.toString(), "-59.8");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
+
+    v = 5.3;
+    cStrings.push_back(value_toCString(&v.data()));
+    ASSERT_EQ(v.toString(), "5.3");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
+
+    v = -5.3;
+    cStrings.push_back(value_toCString(&v.data()));
+    ASSERT_EQ(v.toString(), "-5.3");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
+
     v = 2550.625021000115;
     cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "2550.625021000115");
@@ -1445,6 +1469,28 @@ TEST(ValueTest, ToString)
     v = -0.001;
     cStrings.push_back(value_toCString(&v.data()));
     ASSERT_EQ(v.toString(), "-0.001");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
+
+    v = 0.000001;
+    cStrings.push_back(value_toCString(&v.data()));
+    ASSERT_EQ(v.toString(), "0.000001");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
+    v = -0.000001;
+    cStrings.push_back(value_toCString(&v.data()));
+    ASSERT_EQ(v.toString(), "-0.000001");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
+
+    v = 0.0000001;
+    cStrings.push_back(value_toCString(&v.data()));
+    ASSERT_EQ(v.toString(), "1e-7");
+    ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
+    ASSERT_EQ(std::string(cStrings.back()), v.toString());
+    v = -0.0000001;
+    cStrings.push_back(value_toCString(&v.data()));
+    ASSERT_EQ(v.toString(), "-1e-7");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
     ASSERT_EQ(std::string(cStrings.back()), v.toString());
 
@@ -2846,6 +2892,22 @@ TEST(ValueTest, DoubleToCString)
     ASSERT_EQ(strcmp(ret, "-2.54"), 0);
     free(ret);
 
+    ret = value_doubleToCString(59.8);
+    ASSERT_EQ(strcmp(ret, "59.8"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(-59.8);
+    ASSERT_EQ(strcmp(ret, "-59.8"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(5.3);
+    ASSERT_EQ(strcmp(ret, "5.3"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(-5.3);
+    ASSERT_EQ(strcmp(ret, "-5.3"), 0);
+    free(ret);
+
     ret = value_doubleToCString(2550.625021000115);
     ASSERT_EQ(strcmp(ret, "2550.625021000115"), 0);
     free(ret);
@@ -2876,6 +2938,22 @@ TEST(ValueTest, DoubleToCString)
 
     ret = value_doubleToCString(-0.001);
     ASSERT_EQ(strcmp(ret, "-0.001"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(0.000001);
+    ASSERT_EQ(strcmp(ret, "0.000001"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(-0.000001);
+    ASSERT_EQ(strcmp(ret, "-0.000001"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(0.0000001);
+    ASSERT_EQ(strcmp(ret, "1e-7"), 0);
+    free(ret);
+
+    ret = value_doubleToCString(-0.0000001);
+    ASSERT_EQ(strcmp(ret, "-1e-7"), 0);
     free(ret);
 
     ret = value_doubleToCString(std::numeric_limits<double>::infinity());

@@ -19,6 +19,19 @@ namespace libscratchcpp
 {
 
 template<typename T>
+inline unsigned int value_intDigitCount(T v)
+{
+    unsigned int i = 0;
+
+    while (v >= 1) {
+        v /= 10;
+        i++;
+    }
+
+    return i;
+}
+
+template<typename T>
 inline unsigned int value_digitCount(T v)
 {
     const T epsilon = 0.0000001;
@@ -404,51 +417,6 @@ extern "C"
         }
 
         return true;
-    }
-}
-
-inline void value_doubleToString(double v, std::string *dst)
-{
-    if (v == 0) {
-        dst->assign("0");
-        return;
-    } else if (std::isinf(v)) {
-        if (v > 0)
-            dst->assign("Infinity");
-        else
-            dst->assign("-Infinity");
-
-        return;
-    } else if (std::isnan(v)) {
-        dst->assign("NaN");
-        return;
-    }
-
-    std::stringstream stream;
-
-    if (v != 0) {
-        const int exponent = std::log10(std::abs(v));
-
-        if (exponent > 20)
-            stream << std::scientific << std::setprecision(value_digitCount(v / std::pow(10, exponent + 1)) - 1) << v;
-        else
-            stream << std::setprecision(std::max(16u, value_digitCount(v))) << v;
-    } else
-        stream << std::setprecision(std::max(16u, value_digitCount(v))) << v;
-
-    dst->assign(stream.str());
-    std::size_t index;
-
-    for (int i = 0; i < 2; i++) {
-        if (i == 0)
-            index = dst->find("e+");
-        else
-            index = dst->find("e-");
-
-        if (index != std::string::npos) {
-            while ((dst->size() >= index + 3) && ((*dst)[index + 2] == '0'))
-                dst->erase(index + 2, 1);
-        }
     }
 }
 
