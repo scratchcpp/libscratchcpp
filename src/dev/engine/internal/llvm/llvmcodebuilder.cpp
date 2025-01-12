@@ -645,7 +645,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
                 llvm::Value *oldAllocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
                 m_builder.CreateCall(resolve_list_clear(), listPtr.ptr);
-                m_builder.CreateStore(m_builder.getInt1(true), listPtr.dataPtrDirty);
 
                 // Clearing may deallocate, so check if the allocated size changed
                 llvm::Value *dataPtrDirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
@@ -743,13 +742,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     typeMap[&listPtr] = listPtr.type;
                 }
 
-                // dataPtrDirty
-                llvm::Value *dataPtrDirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
-                llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
-                llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
-                m_builder.CreateStore(m_builder.CreateOr(dataPtrDirty, m_builder.CreateICmpEQ(allocatedSize, size)), listPtr.dataPtrDirty);
+                llvm::Value *oldAllocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
 
                 // Range check
+                llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
                 llvm::Value *min = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
                 size = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
                 llvm::Value *index = castValue(indexArg.second, indexArg.first);
@@ -763,6 +759,12 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
                 llvm::Value *itemPtr = m_builder.CreateCall(resolve_list_insert_empty(), { listPtr.ptr, index });
                 createReusedValueStore(valueArg.second, itemPtr, type, listPtr.type);
+
+                // Check if the allocated size changed
+                llvm::Value *dataPtrDirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
+                llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
+                m_builder.CreateStore(m_builder.CreateOr(dataPtrDirty, m_builder.CreateICmpNE(allocatedSize, oldAllocatedSize)), listPtr.dataPtrDirty);
+
                 m_builder.CreateBr(nextBlock);
 
                 m_builder.SetInsertPoint(nextBlock);
