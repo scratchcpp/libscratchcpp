@@ -1913,7 +1913,19 @@ TEST_F(LLVMCodeBuilderTest, RemoveFromList)
     CompilerValue *v = m_builder->addConstValue(1);
     m_builder->createListRemove(globalList.get(), v);
 
+    v = m_builder->addConstValue(-1);
+    m_builder->createListRemove(globalList.get(), v);
+
     v = m_builder->addConstValue(3);
+    m_builder->createListRemove(globalList.get(), v);
+
+    v = m_builder->addConstValue(3);
+    m_builder->createListRemove(localList.get(), v);
+
+    v = m_builder->addConstValue(-1);
+    m_builder->createListRemove(localList.get(), v);
+
+    v = m_builder->addConstValue(4);
     m_builder->createListRemove(localList.get(), v);
 
     auto code = m_builder->finalize();
@@ -2040,6 +2052,18 @@ TEST_F(LLVMCodeBuilderTest, InsertToList)
     v2 = m_builder->addConstValue("hello world");
     m_builder->createListInsert(localList.get(), v1, v2);
 
+    v1 = m_builder->addConstValue(3);
+    v2 = m_builder->addConstValue("test");
+    m_builder->createListInsert(localList.get(), v1, v2);
+
+    v1 = m_builder->addConstValue(-1);
+    v2 = m_builder->addConstValue(123);
+    m_builder->createListInsert(localList.get(), v1, v2);
+
+    v1 = m_builder->addConstValue(6);
+    v2 = m_builder->addConstValue(123);
+    m_builder->createListInsert(localList.get(), v1, v2);
+
     auto code = m_builder->finalize();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
@@ -2049,7 +2073,7 @@ TEST_F(LLVMCodeBuilderTest, InsertToList)
     code->run(ctx.get());
 
     ASSERT_EQ(globalList->toString(), "1 2 1 test 3");
-    ASSERT_EQ(localList->toString(), "false hello world true");
+    ASSERT_EQ(localList->toString(), "false hello world true test");
 }
 
 TEST_F(LLVMCodeBuilderTest, ListReplace)
@@ -2097,6 +2121,14 @@ TEST_F(LLVMCodeBuilderTest, ListReplace)
 
     v1 = m_builder->addConstValue(3);
     v2 = m_builder->addConstValue("hello world");
+    m_builder->createListReplace(localList.get(), v1, v2);
+
+    v1 = m_builder->addConstValue(-1);
+    v2 = m_builder->addConstValue(123);
+    m_builder->createListReplace(localList.get(), v1, v2);
+
+    v1 = m_builder->addConstValue(5);
+    v2 = m_builder->addConstValue(123);
     m_builder->createListReplace(localList.get(), v1, v2);
 
     auto code = m_builder->finalize();
@@ -2169,26 +2201,36 @@ TEST_F(LLVMCodeBuilderTest, GetListItem)
     sprite.setEngine(&m_engine);
     EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
 
-    std::unordered_map<List *, std::string> strings;
-
     auto globalList = std::make_shared<List>("", "");
     stage.addList(globalList);
 
-    auto localList = std::make_shared<List>("", "");
-    sprite.addList(localList);
+    auto localList1 = std::make_shared<List>("", "");
+    sprite.addList(localList1);
+
+    auto localList2 = std::make_shared<List>("", "");
+    sprite.addList(localList2);
+
+    auto localList3 = std::make_shared<List>("", "");
+    sprite.addList(localList3);
 
     globalList->append(1);
     globalList->append(2);
     globalList->append(3);
 
-    localList->append("Lorem");
-    localList->append("ipsum");
-    localList->append("dolor");
-    localList->append("sit");
-    strings[localList.get()] = localList->toString();
+    localList1->append("Lorem");
+    localList1->append("ipsum");
+    localList1->append("dolor");
+    localList1->append("sit");
+
+    localList2->append(-564.121);
+    localList2->append(4257.4);
+
+    localList3->append(true);
+    localList3->append(false);
 
     createBuilder(&sprite, true);
 
+    // Global
     CompilerValue *v = m_builder->addConstValue(2);
     v = m_builder->addListItem(globalList.get(), v);
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
@@ -2201,24 +2243,67 @@ TEST_F(LLVMCodeBuilderTest, GetListItem)
     v = m_builder->addListItem(globalList.get(), v);
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
 
-    v = m_builder->addConstValue(0);
-    v = m_builder->addListItem(localList.get(), v);
-    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
-
-    v = m_builder->addConstValue(2);
-    v = m_builder->addListItem(localList.get(), v);
+    v = m_builder->addConstValue(-1);
+    v = m_builder->addListItem(globalList.get(), v);
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
 
     v = m_builder->addConstValue(3);
-    v = m_builder->addListItem(localList.get(), v);
+    v = m_builder->addListItem(globalList.get(), v);
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    // Local 1
+    v = m_builder->addConstValue(0);
+    v = m_builder->addListItem(localList1.get(), v);
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = m_builder->addConstValue(2);
+    v = m_builder->addListItem(localList1.get(), v);
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = m_builder->addConstValue(3);
+    v = m_builder->addListItem(localList1.get(), v);
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = m_builder->addConstValue(-1);
+    v = m_builder->addListItem(localList1.get(), v);
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = m_builder->addConstValue(4);
+    v = m_builder->addListItem(localList1.get(), v);
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    // Local 2
+    v = m_builder->addConstValue(-1);
+    v = m_builder->addListItem(localList2.get(), v);
+    m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = m_builder->addConstValue(2);
+    v = m_builder->addListItem(localList2.get(), v);
+    m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    // Local 3
+    v = m_builder->addConstValue(-1);
+    v = m_builder->addListItem(localList3.get(), v);
+    m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = m_builder->addConstValue(2);
+    v = m_builder->addListItem(localList3.get(), v);
+    m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
 
     static const std::string expected =
         "3\n"
         "1\n"
+        "0\n"
+        "0\n"
         "Lorem\n"
         "dolor\n"
-        "sit\n";
+        "sit\n"
+        "0\n"
+        "0\n"
+        "0\n"
+        "0\n"
+        "0\n"
+        "0\n";
 
     auto code = m_builder->finalize();
     Script script(&sprite, nullptr, nullptr);
@@ -2231,7 +2316,9 @@ TEST_F(LLVMCodeBuilderTest, GetListItem)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 
     ASSERT_EQ(globalList->toString(), "1 test 3");
-    ASSERT_EQ(localList->toString(), "Lorem ipsum dolor sit");
+    ASSERT_EQ(localList1->toString(), "Lorem ipsum dolor sit");
+    ASSERT_EQ(localList2->toString(), "-564.121 4257.4");
+    ASSERT_EQ(localList3->toString(), "true false");
 }
 
 TEST_F(LLVMCodeBuilderTest, GetListSize)

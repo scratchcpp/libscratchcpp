@@ -660,9 +660,25 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
-                llvm::Value *index = m_builder.CreateFPToUI(castValue(arg.second, arg.first), m_builder.getInt64Ty());
+
+                // Range check
+                llvm::Value *min = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
+                llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+                size = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
+                llvm::Value *index = castValue(arg.second, arg.first);
+                llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size));
+                llvm::BasicBlock *removeBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+                llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+                m_builder.CreateCondBr(inRange, removeBlock, nextBlock);
+
+                // Remove
+                m_builder.SetInsertPoint(removeBlock);
+                index = m_builder.CreateFPToUI(castValue(arg.second, arg.first), m_builder.getInt64Ty());
                 m_builder.CreateCall(resolve_list_remove(), { listPtr.ptr, index });
                 // NOTE: Removing doesn't deallocate (see List::removeAt()), so there's no need to update the data pointer
+                m_builder.CreateBr(nextBlock);
+
+                m_builder.SetInsertPoint(nextBlock);
                 break;
             }
 
@@ -733,11 +749,23 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
                 m_builder.CreateStore(m_builder.CreateOr(dataPtrDirty, m_builder.CreateICmpEQ(allocatedSize, size)), listPtr.dataPtrDirty);
 
+                // Range check
+                llvm::Value *min = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
+                size = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
+                llvm::Value *index = castValue(indexArg.second, indexArg.first);
+                llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLE(index, size));
+                llvm::BasicBlock *insertBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+                llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+                m_builder.CreateCondBr(inRange, insertBlock, nextBlock);
+
                 // Insert
-                llvm::Value *index = m_builder.CreateFPToUI(castValue(indexArg.second, indexArg.first), m_builder.getInt64Ty());
+                m_builder.SetInsertPoint(insertBlock);
+                index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
                 llvm::Value *itemPtr = m_builder.CreateCall(resolve_list_insert_empty(), { listPtr.ptr, index });
                 createReusedValueStore(valueArg.second, itemPtr, type, listPtr.type);
+                m_builder.CreateBr(nextBlock);
 
+                m_builder.SetInsertPoint(nextBlock);
                 break;
             }
 
@@ -747,9 +775,23 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &valueArg = step.args[1];
                 Compiler::StaticType type = optimizeRegisterType(valueArg.second);
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
-                llvm::Value *index = m_builder.CreateFPToUI(castValue(indexArg.second, indexArg.first), m_builder.getInt64Ty());
+
+                // Range check
+                llvm::Value *min = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
+                llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+                size = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
+                llvm::Value *index = castValue(indexArg.second, indexArg.first);
+                llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size));
+                llvm::BasicBlock *replaceBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+                llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+                m_builder.CreateCondBr(inRange, replaceBlock, nextBlock);
+
+                // Replace
+                m_builder.SetInsertPoint(replaceBlock);
+                index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
                 llvm::Value *itemPtr = getListItem(listPtr, index);
                 createValueStore(valueArg.second, itemPtr, type, listPtr.type);
+                m_builder.CreateBr(nextBlock);
 
                 auto &typeMap = m_scopeLists.back();
 
@@ -761,6 +803,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     typeMap[&listPtr] = listPtr.type;
                 }
 
+                m_builder.SetInsertPoint(nextBlock);
                 break;
             }
 
@@ -777,8 +820,18 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
-                llvm::Value *index = m_builder.CreateFPToUI(castValue(arg.second, arg.first), m_builder.getInt64Ty());
-                step.functionReturnReg->value = getListItem(listPtr, index);
+
+                llvm::Value *min = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
+                llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+                size = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
+                llvm::Value *index = castValue(arg.second, arg.first);
+                llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size));
+
+                LLVMConstantRegister nullReg(listPtr.type == Compiler::StaticType::Unknown ? Compiler::StaticType::Number : listPtr.type, Value());
+                llvm::Value *null = createValue(static_cast<LLVMRegister *>(static_cast<CompilerValue *>(&nullReg)));
+
+                index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
+                step.functionReturnReg->value = m_builder.CreateSelect(inRange, getListItem(listPtr, index), null);
                 step.functionReturnReg->setType(listPtr.type);
                 break;
             }
