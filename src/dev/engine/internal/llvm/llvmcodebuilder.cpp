@@ -270,6 +270,22 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::StrCmpEQCS: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0].second;
+                const auto &arg2 = step.args[1].second;
+                step.functionReturnReg->value = createStringComparison(arg1, arg2, true);
+                break;
+            }
+
+            case LLVMInstruction::Type::StrCmpEQCI: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0].second;
+                const auto &arg2 = step.args[1].second;
+                step.functionReturnReg->value = createStringComparison(arg1, arg2, false);
+                break;
+            }
+
             case LLVMInstruction::Type::And: {
                 assert(step.args.size() == 2);
                 const auto &arg1 = step.args[0];
@@ -1363,6 +1379,11 @@ CompilerValue *LLVMCodeBuilder::createCmpLT(CompilerValue *operand1, CompilerVal
     return createOp(LLVMInstruction::Type::CmpLT, Compiler::StaticType::Bool, Compiler::StaticType::Number, { operand1, operand2 });
 }
 
+CompilerValue *LLVMCodeBuilder::createStrCmpEQ(CompilerValue *string1, CompilerValue *string2, bool caseSensitive)
+{
+    return createOp(caseSensitive ? LLVMInstruction::Type::StrCmpEQCS : LLVMInstruction::Type::StrCmpEQCI, Compiler::StaticType::Bool, Compiler::StaticType::String, { string1, string2 });
+}
+
 CompilerValue *LLVMCodeBuilder::createAnd(CompilerValue *operand1, CompilerValue *operand2)
 {
     return createOp(LLVMInstruction::Type::And, Compiler::StaticType::Bool, Compiler::StaticType::Bool, { operand1, operand2 });
@@ -2399,10 +2420,8 @@ llvm::Value *LLVMCodeBuilder::createComparison(LLVMRegister *arg1, LLVMRegister 
         // Optimize number and string constant comparison
         // TODO: GT and LT comparison can be optimized here (e. g. by checking the string constant characters and comparing with numbers and .+-e)
         if (type == Comparison::EQ) {
-            if (type1 == Compiler::StaticType::Number && type2 == Compiler::StaticType::String && arg2->isConst() && !arg2->constValue().isValidNumber())
-                return m_builder.getInt1(false);
-
-            if (type1 == Compiler::StaticType::String && type2 == Compiler::StaticType::Number && arg1->isConst() && !arg1->constValue().isValidNumber())
+            if ((type1 == Compiler::StaticType::Number && type2 == Compiler::StaticType::String && arg2->isConst() && !arg2->constValue().isValidNumber()) ||
+                (type1 == Compiler::StaticType::String && type2 == Compiler::StaticType::Number && arg1->isConst() && !arg1->constValue().isValidNumber()))
                 return m_builder.getInt1(false);
         }
 
@@ -2532,6 +2551,39 @@ llvm::Value *LLVMCodeBuilder::createComparison(LLVMRegister *arg1, LLVMRegister 
                     return nullptr;
             }
         }
+    }
+}
+
+llvm::Value *LLVMCodeBuilder::createStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, bool caseSensitive)
+{
+    auto type1 = arg1->type();
+    auto type2 = arg2->type();
+
+    if (arg1->isConst() && arg2->isConst()) {
+        // If both operands are constant, perform the comparison at compile time
+        bool result;
+
+        if (caseSensitive)
+            result = arg1->constValue().toString() == arg2->constValue().toString();
+        else {
+            std::string str1 = arg1->constValue().toString();
+            std::string str2 = arg2->constValue().toString();
+            result = strcasecmp(str1.c_str(), str2.c_str()) == 0;
+        }
+
+        return m_builder.getInt1(result);
+    } else {
+        // Optimize number and string constant comparison
+        // TODO: Optimize bool and string constant comparison (in compare() as well)
+        if ((type1 == Compiler::StaticType::Number && type2 == Compiler::StaticType::String && arg2->isConst() && !arg2->constValue().isValidNumber()) ||
+            (type1 == Compiler::StaticType::String && type2 == Compiler::StaticType::Number && arg1->isConst() && !arg1->constValue().isValidNumber()))
+            return m_builder.getInt1(false);
+
+        // Explicitly cast to string
+        llvm::Value *string1 = castValue(arg1, Compiler::StaticType::String);
+        llvm::Value *string2 = castValue(arg2, Compiler::StaticType::String);
+        llvm::Value *cmp = m_builder.CreateCall(caseSensitive ? resolve_strcmp() : resolve_strcasecmp(), { string1, string2 });
+        return m_builder.CreateICmpEQ(cmp, m_builder.getInt32(0));
     }
 }
 
@@ -2767,6 +2819,15 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_bool()
 {
     llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     return resolveFunction("llvm_random_bool", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, m_builder.getInt1Ty(), m_builder.getInt1Ty() }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_strcmp()
+{
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
+    llvm::FunctionCallee callee = resolveFunction("strcmp", llvm::FunctionType::get(m_builder.getInt32Ty(), { pointerType, pointerType }, false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()

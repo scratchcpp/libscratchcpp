@@ -25,6 +25,8 @@ struct LLVMInstruction
             CmpEQ,
             CmpGT,
             CmpLT,
+            StrCmpEQCS, // case sensitive
+            StrCmpEQCI, // case insensitive
             And,
             Or,
             Not,

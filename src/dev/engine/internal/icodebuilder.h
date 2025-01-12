@@ -46,6 +46,8 @@ class ICodeBuilder
         virtual CompilerValue *createCmpGT(CompilerValue *operand1, CompilerValue *operand2) = 0;
         virtual CompilerValue *createCmpLT(CompilerValue *operand1, CompilerValue *operand2) = 0;
 
+        virtual CompilerValue *createStrCmpEQ(CompilerValue *string1, CompilerValue *string2, bool caseSensitive = false) = 0;
+
         virtual CompilerValue *createAnd(CompilerValue *operand1, CompilerValue *operand2) = 0;
         virtual CompilerValue *createOr(CompilerValue *operand1, CompilerValue *operand2) = 0;
         virtual CompilerValue *createNot(CompilerValue *operand) = 0;

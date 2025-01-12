@@ -36,6 +36,8 @@ class LLVMCodeBuilderTest : public testing::Test
             CmpEQ,
             CmpGT,
             CmpLT,
+            StrCmpEQCS,
+            StrCmpEQCI,
             And,
             Or,
             Not,
@@ -126,6 +128,12 @@ class LLVMCodeBuilderTest : public testing::Test
 
                 case OpType::CmpLT:
                     return m_builder->createCmpLT(arg1, arg2);
+
+                case OpType::StrCmpEQCS:
+                    return m_builder->createStrCmpEQ(arg1, arg2, true);
+
+                case OpType::StrCmpEQCI:
+                    return m_builder->createStrCmpEQ(arg1, arg2, false);
 
                 case OpType::And:
                     return m_builder->createAnd(arg1, arg2);
@@ -234,6 +242,16 @@ class LLVMCodeBuilderTest : public testing::Test
 
                 case OpType::CmpLT:
                     return v1 < v2;
+
+                case OpType::StrCmpEQCS:
+                    return v1.toString() == v2.toString();
+
+                case OpType::StrCmpEQCI: {
+                    // TODO: Use a custom function for string comparison
+                    std::string str1 = v1.toString();
+                    std::string str2 = v2.toString();
+                    return strcasecmp(str1.c_str(), str2.c_str()) == 0;
+                }
 
                 case OpType::And:
                     return v1.toBool() && v2.toBool();
@@ -1054,6 +1072,152 @@ TEST_F(LLVMCodeBuilderTest, GreaterAndLowerThanComparison)
         runOpTest(type, -inf, false);
         runOpTest(type, false, nan);
         runOpTest(type, nan, false);
+
+        runOpTest(type, "Infinity", inf);
+        runOpTest(type, "Infinity", -inf);
+        runOpTest(type, "Infinity", nan);
+        runOpTest(type, "infinity", inf);
+        runOpTest(type, "infinity", -inf);
+        runOpTest(type, "infinity", nan);
+        runOpTest(type, "-Infinity", inf);
+        runOpTest(type, "-Infinity", -inf);
+        runOpTest(type, "-Infinity", nan);
+        runOpTest(type, "-infinity", inf);
+        runOpTest(type, "-infinity", -inf);
+        runOpTest(type, "-infinity", nan);
+        runOpTest(type, "NaN", inf);
+        runOpTest(type, "NaN", -inf);
+        runOpTest(type, "NaN", nan);
+        runOpTest(type, "nan", inf);
+        runOpTest(type, "nan", -inf);
+        runOpTest(type, "nan", nan);
+
+        runOpTest(type, inf, "abc");
+        runOpTest(type, inf, " ");
+        runOpTest(type, inf, "");
+        runOpTest(type, inf, "0");
+        runOpTest(type, -inf, "abc");
+        runOpTest(type, -inf, " ");
+        runOpTest(type, -inf, "");
+        runOpTest(type, -inf, "0");
+        runOpTest(type, nan, "abc");
+        runOpTest(type, nan, " ");
+        runOpTest(type, nan, "");
+        runOpTest(type, nan, "0");
+    }
+}
+
+TEST_F(LLVMCodeBuilderTest, StringEqualComparison)
+{
+    std::vector<OpType> types = { OpType::StrCmpEQCS, OpType::StrCmpEQCI };
+
+    for (OpType type : types) {
+        runOpTest(type, 10, 10);
+        runOpTest(type, 10, 8);
+        runOpTest(type, 8, 10);
+
+        runOpTest(type, -4.25, -4.25);
+        runOpTest(type, -4.25, 5.312);
+        runOpTest(type, 5.312, -4.25);
+
+        runOpTest(type, true, true);
+        runOpTest(type, true, false);
+        runOpTest(type, false, true);
+
+        runOpTest(type, 1, true);
+        runOpTest(type, 1, false);
+
+        runOpTest(type, "abC def", "abC def");
+        runOpTest(type, "abC def", "abc dEf");
+        runOpTest(type, "abC def", "ghi Jkl");
+        runOpTest(type, "abC def", "hello world");
+
+        runOpTest(type, " ", "");
+        runOpTest(type, " ", "0");
+        runOpTest(type, " ", 0);
+        runOpTest(type, 0, " ");
+        runOpTest(type, "", "0");
+        runOpTest(type, "", 0);
+        runOpTest(type, 0, "");
+        runOpTest(type, "0", 0);
+        runOpTest(type, 0, "0");
+
+        runOpTest(type, 5.25, "5.25");
+        runOpTest(type, "5.25", 5.25);
+        runOpTest(type, 5.25, " 5.25");
+        runOpTest(type, " 5.25", 5.25);
+        runOpTest(type, 5.25, "5.25 ");
+        runOpTest(type, "5.25 ", 5.25);
+        runOpTest(type, 5.25, " 5.25 ");
+        runOpTest(type, " 5.25 ", 5.25);
+        runOpTest(type, 5.25, "5.26");
+        runOpTest(type, "5.26", 5.25);
+        runOpTest(type, "5.25", "5.26");
+        runOpTest(type, 5, "5  ");
+        runOpTest(type, "5  ", 5);
+        runOpTest(type, 0, "1");
+        runOpTest(type, "1", 0);
+        runOpTest(type, 0, "test");
+        runOpTest(type, "test", 0);
+
+        static const double inf = std::numeric_limits<double>::infinity();
+        static const double nan = std::numeric_limits<double>::quiet_NaN();
+
+        runOpTest(type, inf, inf);
+        runOpTest(type, -inf, -inf);
+        runOpTest(type, nan, nan);
+        runOpTest(type, inf, -inf);
+        runOpTest(type, -inf, inf);
+        runOpTest(type, inf, nan);
+        runOpTest(type, nan, inf);
+        runOpTest(type, -inf, nan);
+        runOpTest(type, nan, -inf);
+
+        runOpTest(type, 5, inf);
+        runOpTest(type, 5, -inf);
+        runOpTest(type, 5, nan);
+        runOpTest(type, 0, nan);
+
+        runOpTest(type, true, "true");
+        runOpTest(type, "true", true);
+        runOpTest(type, false, "false");
+        runOpTest(type, "false", false);
+        runOpTest(type, false, "true");
+        runOpTest(type, "true", false);
+        runOpTest(type, true, "false");
+        runOpTest(type, "false", true);
+        runOpTest(type, true, "TRUE");
+        runOpTest(type, "TRUE", true);
+        runOpTest(type, false, "FALSE");
+        runOpTest(type, "FALSE", false);
+
+        runOpTest(type, true, "00001");
+        runOpTest(type, "00001", true);
+        runOpTest(type, true, "00000");
+        runOpTest(type, "00000", true);
+        runOpTest(type, false, "00000");
+        runOpTest(type, "00000", false);
+
+        runOpTest(type, "true", 1);
+        runOpTest(type, 1, "true");
+        runOpTest(type, "true", 0);
+        runOpTest(type, 0, "true");
+        runOpTest(type, "false", 0);
+        runOpTest(type, 0, "false");
+        runOpTest(type, "false", 1);
+        runOpTest(type, 1, "false");
+
+        runOpTest(type, "true", "TRUE");
+        runOpTest(type, "true", "FALSE");
+        runOpTest(type, "false", "FALSE");
+        runOpTest(type, "false", "TRUE");
+
+        runOpTest(type, true, inf);
+        runOpTest(type, true, -inf);
+        runOpTest(type, true, nan);
+        runOpTest(type, false, inf);
+        runOpTest(type, false, -inf);
+        runOpTest(type, false, nan);
 
         runOpTest(type, "Infinity", inf);
         runOpTest(type, "Infinity", -inf);

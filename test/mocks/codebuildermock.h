@@ -35,6 +35,8 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(CompilerValue *, createCmpGT, (CompilerValue *, CompilerValue *), (override));
         MOCK_METHOD(CompilerValue *, createCmpLT, (CompilerValue *, CompilerValue *), (override));
 
+        MOCK_METHOD(CompilerValue *, createStrCmpEQ, (CompilerValue *, CompilerValue *, bool), (override));
+
         MOCK_METHOD(CompilerValue *, createAnd, (CompilerValue *, CompilerValue *), (override));
         MOCK_METHOD(CompilerValue *, createOr, (CompilerValue *, CompilerValue *), (override));
         MOCK_METHOD(CompilerValue *, createNot, (CompilerValue *), (override));

@@ -54,6 +54,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         CompilerValue *createCmpGT(CompilerValue *operand1, CompilerValue *operand2) override;
         CompilerValue *createCmpLT(CompilerValue *operand1, CompilerValue *operand2) override;
 
+        CompilerValue *createStrCmpEQ(CompilerValue *string1, CompilerValue *string2, bool caseSensitive = false) override;
+
         CompilerValue *createAnd(CompilerValue *operand1, CompilerValue *operand2) override;
         CompilerValue *createOr(CompilerValue *operand1, CompilerValue *operand2) override;
         CompilerValue *createNot(CompilerValue *operand) override;
@@ -156,6 +158,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, LLVMRegister *item);
         llvm::Value *createValue(LLVMRegister *reg);
         llvm::Value *createComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
+        llvm::Value *createStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, bool caseSensitive);
 
         void createSuspend(LLVMCoroutine *coro, llvm::Value *warpArg, llvm::Value *targetVariables);
 
@@ -190,6 +193,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_llvm_random_double();
         llvm::FunctionCallee resolve_llvm_random_long();
         llvm::FunctionCallee resolve_llvm_random_bool();
+        llvm::FunctionCallee resolve_strcmp();
         llvm::FunctionCallee resolve_strcasecmp();
 
         Target *m_target = nullptr;
