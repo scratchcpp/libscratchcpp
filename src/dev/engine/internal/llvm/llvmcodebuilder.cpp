@@ -2615,55 +2615,79 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_copy()
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_toDouble()
 {
-    return resolveFunction("value_toDouble", llvm::FunctionType::get(m_builder.getDoubleTy(), m_valueDataType->getPointerTo(), false));
+    llvm::FunctionCallee callee = resolveFunction("value_toDouble", llvm::FunctionType::get(m_builder.getDoubleTy(), m_valueDataType->getPointerTo(), false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_toBool()
 {
-    return resolveFunction("value_toBool", llvm::FunctionType::get(m_builder.getInt1Ty(), m_valueDataType->getPointerTo(), false));
+    llvm::FunctionCallee callee = resolveFunction("value_toBool", llvm::FunctionType::get(m_builder.getInt1Ty(), m_valueDataType->getPointerTo(), false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_toCString()
 {
+    // NOTE: This function can't be marked read-only because it allocates on the heap
     return resolveFunction("value_toCString", llvm::FunctionType::get(llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), m_valueDataType->getPointerTo(), false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_doubleToCString()
 {
+    // NOTE: This function can't be marked read-only because it allocates on the heap
     return resolveFunction("value_doubleToCString", llvm::FunctionType::get(llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), m_builder.getDoubleTy(), false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_boolToCString()
 {
+    // NOTE: This function can't be marked read-only because it allocates on the heap
     return resolveFunction("value_boolToCString", llvm::FunctionType::get(llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), m_builder.getInt1Ty(), false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_stringToDouble()
 {
-    return resolveFunction("value_stringToDouble", llvm::FunctionType::get(m_builder.getDoubleTy(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), false));
+    llvm::FunctionCallee callee = resolveFunction("value_stringToDouble", llvm::FunctionType::get(m_builder.getDoubleTy(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_stringToBool()
 {
-    return resolveFunction("value_stringToBool", llvm::FunctionType::get(m_builder.getInt1Ty(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), false));
+    llvm::FunctionCallee callee = resolveFunction("value_stringToBool", llvm::FunctionType::get(m_builder.getInt1Ty(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_equals()
 {
     llvm::Type *valuePtr = m_valueDataType->getPointerTo();
-    return resolveFunction("value_equals", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
+    llvm::FunctionCallee callee = resolveFunction("value_equals", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_greater()
 {
     llvm::Type *valuePtr = m_valueDataType->getPointerTo();
-    return resolveFunction("value_greater", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
+    llvm::FunctionCallee callee = resolveFunction("value_greater", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_value_lower()
 {
     llvm::Type *valuePtr = m_valueDataType->getPointerTo();
-    return resolveFunction("value_lower", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
+    llvm::FunctionCallee callee = resolveFunction("value_lower", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_clear()
@@ -2693,25 +2717,37 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_list_insert_empty()
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_data()
 {
     llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    return resolveFunction("list_data", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr }, false));
+    llvm::FunctionCallee callee = resolveFunction("list_data", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr }, false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_size_ptr()
 {
     llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    return resolveFunction("list_size_ptr", llvm::FunctionType::get(m_builder.getInt64Ty()->getPointerTo()->getPointerTo(), { listPtr }, false));
+    llvm::FunctionCallee callee = resolveFunction("list_size_ptr", llvm::FunctionType::get(m_builder.getInt64Ty()->getPointerTo()->getPointerTo(), { listPtr }, false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_alloc_size_ptr()
 {
     llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    return resolveFunction("list_alloc_size_ptr", llvm::FunctionType::get(m_builder.getInt64Ty()->getPointerTo()->getPointerTo(), { listPtr }, false));
+    llvm::FunctionCallee callee = resolveFunction("list_alloc_size_ptr", llvm::FunctionType::get(m_builder.getInt64Ty()->getPointerTo()->getPointerTo(), { listPtr }, false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_list_to_string()
 {
     llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    return resolveFunction("list_to_string", llvm::FunctionType::get(pointerType, { pointerType }, false));
+    llvm::FunctionCallee callee = resolveFunction("list_to_string", llvm::FunctionType::get(pointerType, { pointerType }, false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random()
@@ -2742,5 +2778,8 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_bool()
 llvm::FunctionCallee LLVMCodeBuilder::resolve_strcasecmp()
 {
     llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    return resolveFunction("strcasecmp", llvm::FunctionType::get(m_builder.getInt32Ty(), { pointerType, pointerType }, false));
+    llvm::FunctionCallee callee = resolveFunction("strcasecmp", llvm::FunctionType::get(m_builder.getInt32Ty(), { pointerType, pointerType }, false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
