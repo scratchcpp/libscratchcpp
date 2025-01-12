@@ -121,6 +121,12 @@ TEST_F(ListBlocksTest, DeleteOfList)
 
     addTest("all", list3);
 
+    addTest("Last", list2);
+    addTest("raNdom", list2);
+    addTest("aNY", list2);
+
+    addTest("aLl", list3);
+
     builder.build();
 
     Compiler compiler(&m_engineMock, target.get());
@@ -200,6 +206,10 @@ TEST_F(ListBlocksTest, InsertAtList)
     addTest("random", "ipsum", list2);
     addTest("any", "dolor", list2);
 
+    addTest("lAsT", "lorem", list2);
+    addTest("raNDom", "ipsum", list2);
+    addTest("Any", "dolor", list2);
+
     builder.build();
 
     Compiler compiler(&m_engineMock, target.get());
@@ -257,6 +267,10 @@ TEST_F(ListBlocksTest, ReplaceItemOfList)
     addTest("random", "ipsum", list2);
     addTest("any", "dolor", list2);
 
+    addTest("LasT", "lorem", list2);
+    addTest("rAndOm", "ipsum", list2);
+    addTest("AnY", "dolor", list2);
+
     builder.build();
 
     Compiler compiler(&m_engineMock, target.get());
@@ -311,6 +325,10 @@ TEST_F(ListBlocksTest, ItemOfList)
     addTest("random", list);
     addTest("any", list);
 
+    addTest("laSt", list);
+    addTest("RAndom", list);
+    addTest("aNy", list);
+
     builder.build();
 
     Compiler compiler(&m_engineMock, target.get());
@@ -328,7 +346,10 @@ TEST_F(ListBlocksTest, ItemOfList)
         "0\n"
         "true\n"
         "123\n"
-        "Lorem\n";
+        "Lorem\n"
+        "0\n"
+        "0\n"
+        "0\n";
 
     EXPECT_CALL(m_rng, randint(1, 5)).WillOnce(Return(4)).WillOnce(Return(1));
     testing::internal::CaptureStdout();

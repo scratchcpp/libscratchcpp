@@ -48,8 +48,8 @@ CompilerValue *ListBlocks::getListIndex(Compiler *compiler, CompilerValue *input
 {
     CompilerLocalVariable *ret = compiler->createLocalVariable(Compiler::StaticType::Number);
 
-    CompilerValue *isRandom1 = compiler->createCmpEQ(input, compiler->addConstValue("random"));
-    CompilerValue *isRandom2 = compiler->createCmpEQ(input, compiler->addConstValue("any"));
+    CompilerValue *isRandom1 = compiler->createStrCmpEQ(input, compiler->addConstValue("random"), true);
+    CompilerValue *isRandom2 = compiler->createStrCmpEQ(input, compiler->addConstValue("any"), true);
     CompilerValue *isRandom = compiler->createOr(isRandom1, isRandom2);
 
     compiler->beginIfStatement(isRandom);
@@ -59,7 +59,7 @@ CompilerValue *ListBlocks::getListIndex(Compiler *compiler, CompilerValue *input
     }
     compiler->beginElseBranch();
     {
-        CompilerValue *isLast = compiler->createCmpEQ(input, compiler->addConstValue("last"));
+        CompilerValue *isLast = compiler->createStrCmpEQ(input, compiler->addConstValue("last"), true);
         compiler->createLocalVariableWrite(ret, compiler->createSelect(isLast, listSize, input, Compiler::StaticType::Number));
     }
     compiler->endIf();
@@ -74,7 +74,7 @@ CompilerValue *ListBlocks::compileDeleteOfList(Compiler *compiler)
 
     if (list) {
         CompilerValue *index = compiler->addInput("INDEX");
-        CompilerValue *cond = compiler->createCmpEQ(index, compiler->addConstValue("all"));
+        CompilerValue *cond = compiler->createStrCmpEQ(index, compiler->addConstValue("all"), true);
         compiler->beginIfStatement(cond);
         {
             compiler->createListClear(list);
