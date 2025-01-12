@@ -57,9 +57,6 @@ void LLVMCompilerContext::initJit()
 #endif
 
     // Optimize
-    const auto &functions = m_module->getFunctionList();
-    std::vector<std::string> lookupNames;
-
     llvm::PassBuilder passBuilder;
     llvm::LoopAnalysisManager loopAnalysisManager;
     llvm::FunctionAnalysisManager functionAnalysisManager;
@@ -72,33 +69,15 @@ void LLVMCompilerContext::initJit()
     passBuilder.registerLoopAnalyses(loopAnalysisManager);
     passBuilder.crossRegisterProxies(loopAnalysisManager, functionAnalysisManager, cGSCCAnalysisManager, moduleAnalysisManager);
 
-    // Use O0 for the entire module
-    llvm::ModulePassManager modulePassManager = passBuilder.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O0);
-
-    // Create a FunctionPassManager for O3 optimizations
-    llvm::FunctionPassManager functionPassManager = passBuilder.buildFunctionSimplificationPipeline(llvm::OptimizationLevel::O3, llvm::ThinOrFullLTOPhase::None);
-
-    // Run the O0 pipeline for the module
+    llvm::ModulePassManager modulePassManager = passBuilder.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
     modulePassManager.run(*m_module, moduleAnalysisManager);
 
-    // Run the O3 pipeline for specific functions
-    for (llvm::Function &func : m_module->functions()) {
-        if (!func.isDeclaration()) {
-            if (func.hasExternalLinkage()) {
-                lookupNames.push_back(func.getName().str());
+    const auto &functions = m_module->getFunctionList();
+    std::vector<std::string> lookupNames;
 
-                if (func.hasFnAttribute(llvm::Attribute::OptimizeNone)) {
-                    // Remove this attribute to avoid JIT hangs
-                    // TODO: Optimize all functions, maybe it doesn't take so long
-                    func.removeFnAttr(llvm::Attribute::OptimizeNone);
-                } else {
-#ifndef NDEBUG
-                    std::cout << "debug: optimizing function: " << func.getName().str() << std::endl;
-#endif
-                    functionPassManager.run(func, functionAnalysisManager);
-                }
-            }
-        }
+    for (const llvm::Function &func : functions) {
+        if (func.hasExternalLinkage() && !func.isDeclaration())
+            lookupNames.push_back(func.getName().str());
     }
 
     // Init JIT compiler

@@ -80,12 +80,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
     if (m_procedurePrototype && m_warp)
         m_function->addFnAttr(llvm::Attribute::InlineHint);
-    else {
-        // NOTE: These attributes will be overriden by LLVMCompilerContext
-        // TODO: Optimize all functions, maybe it doesn't take so long
-        m_function->addFnAttr(llvm::Attribute::NoInline);
-        m_function->addFnAttr(llvm::Attribute::OptimizeNone);
-    }
 
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_llvmCtx, "entry", m_function);
     llvm::BasicBlock *endBranch = llvm::BasicBlock::Create(m_llvmCtx, "end", m_function);
