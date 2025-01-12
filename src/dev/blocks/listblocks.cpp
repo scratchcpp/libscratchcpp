@@ -81,16 +81,10 @@ CompilerValue *ListBlocks::compileDeleteOfList(Compiler *compiler)
         }
         compiler->beginElseBranch();
         {
-            CompilerValue *min = compiler->addConstValue(-1);
             CompilerValue *max = compiler->addListSize(list);
             index = getListIndex(compiler, index, list, max);
             index = compiler->createSub(index, compiler->addConstValue(1));
-            cond = compiler->createAnd(compiler->createCmpGT(index, min), compiler->createCmpLT(index, max));
-            compiler->beginIfStatement(cond);
-            {
-                compiler->createListRemove(list, index);
-            }
-            compiler->endIf();
+            compiler->createListRemove(list, index);
         }
         compiler->endIf();
     }
@@ -116,17 +110,11 @@ CompilerValue *ListBlocks::compileInsertAtList(Compiler *compiler)
 
     if (list) {
         CompilerValue *index = compiler->addInput("INDEX");
-        CompilerValue *min = compiler->addConstValue(-1);
         CompilerValue *max = compiler->createAdd(compiler->addListSize(list), compiler->addConstValue(1));
         index = getListIndex(compiler, index, list, max);
         index = compiler->createSub(index, compiler->addConstValue(1));
-        CompilerValue *cond = compiler->createAnd(compiler->createCmpGT(index, min), compiler->createCmpLT(index, max));
-        compiler->beginIfStatement(cond);
-        {
-            CompilerValue *item = compiler->addInput("ITEM");
-            compiler->createListInsert(list, index, item);
-        }
-        compiler->endIf();
+        CompilerValue *item = compiler->addInput("ITEM");
+        compiler->createListInsert(list, index, item);
     }
 
     return nullptr;
@@ -139,17 +127,11 @@ CompilerValue *ListBlocks::compileReplaceItemOfList(Compiler *compiler)
 
     if (list) {
         CompilerValue *index = compiler->addInput("INDEX");
-        CompilerValue *min = compiler->addConstValue(-1);
         CompilerValue *max = compiler->addListSize(list);
         index = getListIndex(compiler, index, list, max);
         index = compiler->createSub(index, compiler->addConstValue(1));
-        CompilerValue *cond = compiler->createAnd(compiler->createCmpGT(index, min), compiler->createCmpLT(index, max));
-        compiler->beginIfStatement(cond);
-        {
-            CompilerValue *item = compiler->addInput("ITEM");
-            compiler->createListReplace(list, index, item);
-        }
-        compiler->endIf();
+        CompilerValue *item = compiler->addInput("ITEM");
+        compiler->createListReplace(list, index, item);
     }
 
     return nullptr;
@@ -162,13 +144,10 @@ CompilerValue *ListBlocks::compileItemOfList(Compiler *compiler)
 
     if (list) {
         CompilerValue *index = compiler->addInput("INDEX");
-        CompilerValue *min = compiler->addConstValue(-1);
         CompilerValue *max = compiler->addListSize(list);
         index = getListIndex(compiler, index, list, max);
         index = compiler->createSub(index, compiler->addConstValue(1));
-        CompilerValue *cond = compiler->createAnd(compiler->createCmpGT(index, min), compiler->createCmpLT(index, max));
-        CompilerValue *item = compiler->addListItem(list, index);
-        return compiler->createSelect(cond, item, compiler->addConstValue(Value()), Compiler::StaticType::Unknown);
+        return compiler->addListItem(list, index);
     }
 
     return nullptr;
