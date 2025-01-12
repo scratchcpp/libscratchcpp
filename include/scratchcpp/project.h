@@ -29,6 +29,7 @@ class LIBSCRATCHCPP_EXPORT Project
         Project(const Project &) = delete;
 
         bool load();
+        void stopLoading();
 
         void start();
         void run();

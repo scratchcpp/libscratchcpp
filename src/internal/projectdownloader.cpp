@@ -17,14 +17,11 @@ static const std::string ASSET_PREFIX = "https://assets.scratch.mit.edu/internal
 static const std::string ASSET_SUFFIX = "/get";
 
 #define CHECK_CANCEL()                                                                                                                                                                                 \
-    m_cancelMutex.lock();                                                                                                                                                                              \
     if (m_cancel) {                                                                                                                                                                                    \
         m_downloadedAssetCount = 0;                                                                                                                                                                    \
-        m_cancelMutex.unlock();                                                                                                                                                                        \
         std::cout << "Download aborted!" << std::endl;                                                                                                                                                 \
         return false;                                                                                                                                                                                  \
-    }                                                                                                                                                                                                  \
-    m_cancelMutex.unlock()
+    }
 
 ProjectDownloader::ProjectDownloader(IDownloaderFactory *downloaderFactory) :
     m_downloaderFactory(downloaderFactory)
@@ -38,9 +35,7 @@ ProjectDownloader::ProjectDownloader(IDownloaderFactory *downloaderFactory) :
 
 bool ProjectDownloader::downloadJson(const std::string &projectId)
 {
-    m_cancelMutex.lock();
     m_cancel = false;
-    m_cancelMutex.unlock();
 
     // Get project token
     std::cout << "Fetching project info of " << projectId << std::endl;
@@ -89,9 +84,7 @@ bool ProjectDownloader::downloadJson(const std::string &projectId)
 
 bool ProjectDownloader::downloadAssets(const std::vector<std::string> &assetIds)
 {
-    m_cancelMutex.lock();
     m_cancel = false;
-    m_cancelMutex.unlock();
 
     auto count = assetIds.size();
     // unsigned int threadCount = std::thread::hardware_concurrency();
@@ -119,20 +112,14 @@ bool ProjectDownloader::downloadAssets(const std::vector<std::string> &assetIds)
 
     // Download assets
     auto f = [this, count](std::shared_ptr<IDownloader> downloader, int index, const std::string &id) {
-        m_cancelMutex.lock();
-
         if (m_cancel)
             return;
-
-        m_cancelMutex.unlock();
 
         bool ret = downloader->download(ASSET_PREFIX + id + ASSET_SUFFIX);
 
         if (!ret) {
             std::cerr << "Failed to download asset: " << id << std::endl;
-            m_cancelMutex.lock();
             m_cancel = true;
-            m_cancelMutex.unlock();
             return;
         }
 
@@ -178,7 +165,7 @@ bool ProjectDownloader::downloadAssets(const std::vector<std::string> &assetIds)
 
         m_assetsMutex.lock();
 
-        if (m_downloadedAssetCount != lastCount) {
+        if (m_downloadedAssetCount != lastCount && !m_cancel) {
             std::cout << "Downloaded assets: " << m_downloadedAssetCount << " of " << count << std::endl;
             lastCount = m_downloadedAssetCount;
         }
@@ -197,7 +184,7 @@ bool ProjectDownloader::downloadAssets(const std::vector<std::string> &assetIds)
             threads.erase(index);
         }
 
-        if (done) {
+        if (done || m_cancel) {
             for (auto &[index, info] : threads)
                 info.first.join();
 
@@ -212,9 +199,7 @@ bool ProjectDownloader::downloadAssets(const std::vector<std::string> &assetIds)
 
 void ProjectDownloader::cancel()
 {
-    m_cancelMutex.lock();
     m_cancel = true;
-    m_cancelMutex.unlock();
     m_downloadedAssetCount = 0;
 }
 

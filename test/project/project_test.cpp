@@ -115,3 +115,17 @@ TEST(LoadProjectTest, DownloadProgressChanged)
     EXPECT_CALL(*downloader, downloadProgressChanged).WillOnce(ReturnRef(signal));
     ASSERT_EQ(&p.downloadProgressChanged(), &signal);
 }
+
+TEST(LoadProjectTest, AbortDownload)
+{
+    ProjectDownloaderFactoryMock factory;
+    auto downloader = std::make_shared<ProjectDownloaderMock>();
+    ProjectPrivate::downloaderFactory = &factory;
+
+    EXPECT_CALL(factory, create()).WillOnce(Return(downloader));
+    Project p;
+    ProjectPrivate::downloaderFactory = nullptr;
+
+    EXPECT_CALL(*downloader, cancel());
+    p.stopLoading();
+}

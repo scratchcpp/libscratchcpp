@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/project.h>
+#include <iostream>
 
 #include "project_p.h"
+#include "internal/projectdownloader.h"
 
 using namespace libscratchcpp;
 
@@ -25,6 +27,14 @@ Project::Project(const std::string &fileName) :
 bool Project::load()
 {
     return impl->load();
+}
+
+/*! Cancels project loading if loading in another thread. */
+void Project::stopLoading()
+{
+    std::cout << "Aborting project loading..." << std::endl;
+    impl->stopLoading = true;
+    impl->downloader->cancel();
 }
 
 /*!

@@ -21,6 +21,7 @@ struct ProjectPrivate
 
         bool load();
         bool tryLoad(IProjectReader *reader);
+        void loadingAborted();
 
         void start();
         void run();
@@ -29,6 +30,7 @@ struct ProjectPrivate
         sigslot::signal<unsigned int, unsigned int> &downloadProgressChanged();
 
         std::string fileName;
+        std::atomic<bool> stopLoading = false;
         std::shared_ptr<IEngine> engine = nullptr;
 
         static IProjectDownloaderFactory *downloaderFactory;

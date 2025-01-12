@@ -36,8 +36,7 @@ class ProjectDownloader : public IProjectDownloader
         std::vector<std::string> m_assets;
         std::mutex m_assetsMutex;
         std::atomic<unsigned int> m_downloadedAssetCount = 0;
-        bool m_cancel = false;
-        std::mutex m_cancelMutex;
+        std::atomic<bool> m_cancel = false;
         sigslot::signal<unsigned int, unsigned int> m_downloadProgressChanged;
 };
 
