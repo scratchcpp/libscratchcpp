@@ -47,6 +47,8 @@ bool ProjectPrivate::load()
 
 bool ProjectPrivate::tryLoad(IProjectReader *reader)
 {
+    stopLoading = false;
+
     // Load from URL
     ProjectUrl url(fileName);
 
@@ -57,7 +59,17 @@ bool ProjectPrivate::tryLoad(IProjectReader *reader)
             return false;
         }
 
+        if (stopLoading) {
+            loadingAborted();
+            return false;
+        }
+
         bool ret = reader->loadData(downloader->json());
+
+        if (stopLoading) {
+            loadingAborted();
+            return false;
+        }
 
         if (!ret)
             return false;
@@ -91,7 +103,14 @@ bool ProjectPrivate::tryLoad(IProjectReader *reader)
         }
 
         // Download assets
-        if (!downloader->downloadAssets(assetNames)) {
+        ret = downloader->downloadAssets(assetNames);
+
+        if (stopLoading) {
+            loadingAborted();
+            return false;
+        }
+
+        if (!ret) {
             std::cerr << "Failed to download the project assets." << std::endl;
             return false;
         }
@@ -113,7 +132,18 @@ bool ProjectPrivate::tryLoad(IProjectReader *reader)
             return false;
         }
 
+        if (stopLoading) {
+            loadingAborted();
+            return false;
+        }
+
         bool ret = reader->load();
+
+        if (stopLoading) {
+            loadingAborted();
+            return false;
+        }
+
         if (!ret)
             return false;
     }
@@ -125,7 +155,18 @@ bool ProjectPrivate::tryLoad(IProjectReader *reader)
     engine->setExtensions(reader->extensions());
     engine->setUserAgent(reader->userAgent());
     engine->compile();
+
+    if (stopLoading) {
+        loadingAborted();
+        return false;
+    }
+
     return true;
+}
+
+void ProjectPrivate::loadingAborted()
+{
+    std::cout << "Loading aborted." << std::endl;
 }
 
 void ProjectPrivate::start()
