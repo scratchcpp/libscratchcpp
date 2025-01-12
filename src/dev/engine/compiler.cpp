@@ -324,6 +324,12 @@ CompilerValue *Compiler::createCmpLT(CompilerValue *operand1, CompilerValue *ope
     return impl->builder->createCmpLT(operand1, operand2);
 }
 
+/*! Creates a string equality comparison (explicitly casts operands to string). */
+CompilerValue *Compiler::createStrCmpEQ(CompilerValue *string1, CompilerValue *string2, bool caseSensitive)
+{
+    return impl->builder->createStrCmpEQ(string1, string2, caseSensitive);
+}
+
 /*! Creates an AND operation. */
 CompilerValue *Compiler::createAnd(CompilerValue *operand1, CompilerValue *operand2)
 {

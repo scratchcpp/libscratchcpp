@@ -81,6 +81,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
         CompilerValue *createCmpGT(CompilerValue *operand1, CompilerValue *operand2);
         CompilerValue *createCmpLT(CompilerValue *operand1, CompilerValue *operand2);
 
+        CompilerValue *createStrCmpEQ(CompilerValue *string1, CompilerValue *string2, bool caseSensitive = false);
+
         CompilerValue *createAnd(CompilerValue *operand1, CompilerValue *operand2);
         CompilerValue *createOr(CompilerValue *operand1, CompilerValue *operand2);
         CompilerValue *createNot(CompilerValue *operand);

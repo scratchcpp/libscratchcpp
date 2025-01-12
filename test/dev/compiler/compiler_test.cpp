@@ -610,6 +610,27 @@ TEST_F(CompilerTest, CreateCmpLT)
     compile(m_compiler.get(), block);
 }
 
+TEST_F(CompilerTest, CreateStrCmpEQ)
+{
+
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        CompilerValue arg1(Compiler::StaticType::Unknown);
+        CompilerValue arg2(Compiler::StaticType::Unknown);
+        CompilerValue ret(Compiler::StaticType::Unknown);
+        EXPECT_CALL(*m_builder, createStrCmpEQ(&arg1, &arg2, true)).WillOnce(Return(&ret));
+        EXPECT_EQ(compiler->createStrCmpEQ(&arg1, &arg2, true), &ret);
+
+        EXPECT_CALL(*m_builder, createStrCmpEQ(&arg1, &arg2, false)).WillOnce(Return(&ret));
+        EXPECT_EQ(compiler->createStrCmpEQ(&arg1, &arg2, false), &ret);
+
+        return nullptr;
+    });
+
+    compile(m_compiler.get(), block);
+}
+
 TEST_F(CompilerTest, CreateAnd)
 {
 
