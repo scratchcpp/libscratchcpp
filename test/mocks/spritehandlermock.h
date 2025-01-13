@@ -35,6 +35,6 @@ class SpriteHandlerMock : public ISpriteHandler
 
         MOCK_METHOD(bool, touchingClones, (const std::vector<Sprite *> &), (const, override));
         MOCK_METHOD(bool, touchingPoint, (double, double), (const, override));
-        MOCK_METHOD(bool, touchingColor, (const Value &), (const, override));
-        MOCK_METHOD(bool, touchingColor, (const Value &, const Value &), (const, override));
+        MOCK_METHOD(bool, touchingColor, (Rgb), (const, override));
+        MOCK_METHOD(bool, touchingColor, (Rgb, Rgb), (const, override));
 };

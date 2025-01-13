@@ -5,6 +5,45 @@
 namespace libscratchcpp
 {
 
+/*! A typedef for unsigned int. Holds the RGBA values. */
+using Rgb = unsigned int;
+
+/*! Returns the red component of the quadruplet rgb. */
+inline constexpr int red(Rgb rgb)
+{
+    return ((rgb >> 16) & 0xff);
+}
+
+/*! Returns the green component of the quadruplet rgb. */
+inline constexpr int green(Rgb rgb)
+{
+    return ((rgb >> 8) & 0xff);
+}
+
+/*! Returns the blue component of the quadruplet rgb. */
+inline constexpr int blue(Rgb rgb)
+{
+    return (rgb & 0xff);
+}
+
+/*! Returns the alpha component of the quadruplet rgb. */
+inline constexpr int alpha(Rgb rgb)
+{
+    return rgb >> 24;
+}
+
+/*! Creates an RGB triplet from the given color components. */
+inline constexpr Rgb rgb(int r, int g, int b)
+{
+    return (0xffu << 24) | ((r & 0xffu) << 16) | ((g & 0xffu) << 8) | (b & 0xffu);
+}
+
+/*! Creates an RGBA quadruplet from the given color components. */
+inline constexpr Rgb rgba(int r, int g, int b, int a)
+{
+    return ((a & 0xffu) << 24) | ((r & 0xffu) << 16) | ((g & 0xffu) << 8) | (b & 0xffu);
+}
+
 extern "C"
 {
     LIBSCRATCHCPP_EXPORT void value_free(ValueData *v);
@@ -33,6 +72,7 @@ extern "C"
     LIBSCRATCHCPP_EXPORT void value_toString(const ValueData *v, std::string *dst);
     LIBSCRATCHCPP_EXPORT char *value_toCString(const ValueData *v);
     LIBSCRATCHCPP_EXPORT void value_toUtf16(const ValueData *v, std::u16string *dst);
+    LIBSCRATCHCPP_EXPORT Rgb value_toRgba(const ValueData *v);
 
     LIBSCRATCHCPP_EXPORT bool value_doubleIsInt(double v);
 

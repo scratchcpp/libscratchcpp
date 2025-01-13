@@ -229,18 +229,19 @@ TEST(StageTest, TouchingColor)
     EXPECT_CALL(iface, init);
     stage.setInterface(&iface);
 
-    Value v1 = 4278228630, v2 = "#FF00FA";
-    EXPECT_CALL(iface, touchingColor(v1)).WillOnce(Return(false));
-    ASSERT_FALSE(stage.touchingColor(v1));
+    Rgb c1 = Value(4278228630).toRgba();
+    Rgb c2 = Value("#FF00FA").toRgba();
+    EXPECT_CALL(iface, touchingColor(c1)).WillOnce(Return(false));
+    ASSERT_FALSE(stage.touchingColor(c1));
 
-    EXPECT_CALL(iface, touchingColor(v2)).WillOnce(Return(true));
-    ASSERT_TRUE(stage.touchingColor(v2));
+    EXPECT_CALL(iface, touchingColor(c2)).WillOnce(Return(true));
+    ASSERT_TRUE(stage.touchingColor(c2));
 
-    EXPECT_CALL(iface, touchingColor(v1, v2)).WillOnce(Return(false));
-    ASSERT_FALSE(stage.touchingColor(v1, v2));
+    EXPECT_CALL(iface, touchingColor(c1, c2)).WillOnce(Return(false));
+    ASSERT_FALSE(stage.touchingColor(c1, c2));
 
-    EXPECT_CALL(iface, touchingColor(v2, v1)).WillOnce(Return(true));
-    ASSERT_TRUE(stage.touchingColor(v2, v1));
+    EXPECT_CALL(iface, touchingColor(c2, c1)).WillOnce(Return(true));
+    ASSERT_TRUE(stage.touchingColor(c2, c1));
 }
 
 TEST(StageTest, GraphicsEffects)

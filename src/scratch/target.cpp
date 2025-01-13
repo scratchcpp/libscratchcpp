@@ -588,13 +588,13 @@ bool Target::touchingEdge() const
 }
 
 /*! Returns true if the Target is touching the given color (RGB triplet). */
-bool Target::touchingColor(const Value &color) const
+bool Target::touchingColor(Rgb color) const
 {
     return false;
 }
 
 /*! Returns true if the mask part of the Target is touching the given color (RGB triplet). */
-bool Target::touchingColor(const Value &color, const Value &mask) const
+bool Target::touchingColor(Rgb color, Rgb mask) const
 {
     return false;
 }

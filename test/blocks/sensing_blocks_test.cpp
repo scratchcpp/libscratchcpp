@@ -422,21 +422,21 @@ TEST_F(SensingBlocksTest, TouchingColorImpl)
     vm.setFunctions(functions);
     vm.setConstValues(constValues);
 
-    EXPECT_CALL(target, touchingColor(constValues[0])).WillOnce(Return(false));
+    EXPECT_CALL(target, touchingColor(constValues[0].toRgba())).WillOnce(Return(false));
     vm.setBytecode(bytecode1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_FALSE(vm.getInput(0, 1)->toBool());
 
-    EXPECT_CALL(target, touchingColor(constValues[0])).WillOnce(Return(true));
+    EXPECT_CALL(target, touchingColor(constValues[0].toRgba())).WillOnce(Return(true));
     vm.reset();
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_TRUE(vm.getInput(0, 1)->toBool());
 
-    EXPECT_CALL(target, touchingColor(constValues[1])).WillOnce(Return(false));
+    EXPECT_CALL(target, touchingColor(constValues[1].toRgba())).WillOnce(Return(false));
     vm.reset();
     vm.setBytecode(bytecode2);
     vm.run();
@@ -444,7 +444,7 @@ TEST_F(SensingBlocksTest, TouchingColorImpl)
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_FALSE(vm.getInput(0, 1)->toBool());
 
-    EXPECT_CALL(target, touchingColor(constValues[1])).WillOnce(Return(true));
+    EXPECT_CALL(target, touchingColor(constValues[1].toRgba())).WillOnce(Return(true));
     vm.reset();
     vm.run();
 
@@ -495,21 +495,21 @@ TEST_F(SensingBlocksTest, ColorIsTouchingColorImpl)
     vm.setFunctions(functions);
     vm.setConstValues(constValues);
 
-    EXPECT_CALL(target, touchingColor(constValues[0], constValues[1])).WillOnce(Return(false));
+    EXPECT_CALL(target, touchingColor(constValues[0].toRgba(), constValues[1].toRgba())).WillOnce(Return(false));
     vm.setBytecode(bytecode1);
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_FALSE(vm.getInput(0, 1)->toBool());
 
-    EXPECT_CALL(target, touchingColor(constValues[0], constValues[1])).WillOnce(Return(true));
+    EXPECT_CALL(target, touchingColor(constValues[0].toRgba(), constValues[1].toRgba())).WillOnce(Return(true));
     vm.reset();
     vm.run();
 
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_TRUE(vm.getInput(0, 1)->toBool());
 
-    EXPECT_CALL(target, touchingColor(constValues[2], constValues[3])).WillOnce(Return(false));
+    EXPECT_CALL(target, touchingColor(constValues[2].toRgba(), constValues[3].toRgba())).WillOnce(Return(false));
     vm.reset();
     vm.setBytecode(bytecode2);
     vm.run();
@@ -517,7 +517,7 @@ TEST_F(SensingBlocksTest, ColorIsTouchingColorImpl)
     ASSERT_EQ(vm.registerCount(), 1);
     ASSERT_FALSE(vm.getInput(0, 1)->toBool());
 
-    EXPECT_CALL(target, touchingColor(constValues[2], constValues[3])).WillOnce(Return(true));
+    EXPECT_CALL(target, touchingColor(constValues[2].toRgba(), constValues[3].toRgba())).WillOnce(Return(true));
     vm.reset();
     vm.run();
 

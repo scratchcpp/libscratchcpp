@@ -759,9 +759,9 @@ TEST(TargetTest, TouchingEdge)
 TEST(TargetTest, TouchingColor)
 {
     Target target;
-    Value v;
-    ASSERT_FALSE(target.touchingColor(v));
-    ASSERT_FALSE(target.touchingColor(v, v));
+    Rgb c = 0;
+    ASSERT_FALSE(target.touchingColor(c));
+    ASSERT_FALSE(target.touchingColor(c, c));
 }
 
 TEST(TargetTest, GraphicsEffects)

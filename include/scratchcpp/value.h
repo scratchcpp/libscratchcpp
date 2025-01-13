@@ -139,6 +139,9 @@ class LIBSCRATCHCPP_EXPORT Value
             return ret;
         }
 
+        /*! Converts the value to an RGBA quadruplet. */
+        Rgb toRgba() const { return value_toRgba(&m_data); }
+
         /*! Adds the given value to the value. */
         void add(const Value &v) { value_add(&m_data, &v.m_data, &m_data); }
 

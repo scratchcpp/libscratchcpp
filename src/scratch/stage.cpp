@@ -186,7 +186,7 @@ bool Stage::touchingPoint(double x, double y) const
 }
 
 /*! Overrides Target#touchingColor(). */
-bool Stage::touchingColor(const Value &color) const
+bool Stage::touchingColor(Rgb color) const
 {
     if (!impl->iface)
         return false;
@@ -195,7 +195,7 @@ bool Stage::touchingColor(const Value &color) const
 }
 
 /*! Overrides Target#touchingColor(). */
-bool Stage::touchingColor(const Value &color, const Value &mask) const
+bool Stage::touchingColor(Rgb color, Rgb mask) const
 {
     if (!impl->iface)
         return false;
