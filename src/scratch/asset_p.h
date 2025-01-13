@@ -7,6 +7,8 @@
 namespace libscratchcpp
 {
 
+class Target;
+
 struct AssetPrivate
 {
         AssetPrivate(const std::string &name, const std::string &format);
@@ -19,6 +21,7 @@ struct AssetPrivate
         std::string fileName;
         const void *data = nullptr;
         unsigned int dataSize = 0;
+        Target *target = nullptr;
 };
 
 } // namespace libscratchcpp

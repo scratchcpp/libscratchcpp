@@ -9,7 +9,6 @@
 namespace libscratchcpp
 {
 
-class Target;
 class SoundPrivate;
 
 /*! \brief The Sound class represents a Scratch sound. */
@@ -39,9 +38,6 @@ class LIBSCRATCHCPP_EXPORT Sound : public Asset
         virtual void stop();
 
         virtual bool isPlaying() const;
-
-        Target *target() const;
-        void setTarget(Target *target);
 
         std::shared_ptr<Sound> clone() const;
 

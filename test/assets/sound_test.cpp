@@ -145,16 +145,6 @@ TEST_F(SoundTest, IsPlaying)
     SoundPrivate::audioOutput = nullptr;
 }
 
-TEST_F(SoundTest, Target)
-{
-    Sound sound("sound1", "a", "wav");
-    ASSERT_EQ(sound.target(), nullptr);
-
-    Target target;
-    sound.setTarget(&target);
-    ASSERT_EQ(sound.target(), &target);
-}
-
 TEST_F(SoundTest, Clone)
 {
     auto sound = std::make_shared<Sound>("sound1", "a", "wav");

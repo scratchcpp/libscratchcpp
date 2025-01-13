@@ -58,3 +58,15 @@ void Asset::setData(unsigned int size, void *data)
     impl->data = data;
     processData(size, data);
 }
+
+/*! Returns the sprite or stage this asset belongs to. */
+Target *Asset::target() const
+{
+    return impl->target;
+}
+
+/*! Sets the sprite or stage this asset belongs to. */
+void Asset::setTarget(Target *target)
+{
+    impl->target = target;
+}

@@ -1,4 +1,5 @@
 #include <scratchcpp/asset.h>
+#include <scratchcpp/target.h>
 
 #include "../common.h"
 #include "testasset.h"
@@ -34,4 +35,14 @@ TEST(AssetTest, Data)
     ASSERT_EQ(asset.size, 5);
     ASSERT_EQ(asset.processedData, data);
     ASSERT_EQ(asset.callCount, 1);
+}
+
+TEST(AssetTest, Target)
+{
+    Asset asset("sound1", "a", "wav");
+    ASSERT_EQ(asset.target(), nullptr);
+
+    Target target;
+    asset.setTarget(&target);
+    ASSERT_EQ(asset.target(), &target);
 }

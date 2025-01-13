@@ -9,6 +9,7 @@
 namespace libscratchcpp
 {
 
+class Target;
 class AssetPrivate;
 
 /*! \brief The Asset class represents a Scratch asset, for example a Costume or a Sound. */
@@ -31,6 +32,9 @@ class LIBSCRATCHCPP_EXPORT Asset : public Entity
         const void *data() const;
         unsigned int dataSize() const;
         void setData(unsigned int size, void *data);
+
+        Target *target() const;
+        void setTarget(Target *target);
 
     protected:
         virtual void processData(unsigned int size, void *data) { }
