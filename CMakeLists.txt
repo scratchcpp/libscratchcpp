@@ -8,23 +8,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(LIBSCRATCHCPP_BUILD_UNIT_TESTS "Build unit tests" ON)
 option(LIBSCRATCHCPP_NETWORK_SUPPORT "Support for downloading projects" ON)
-option(LIBSCRATCHCPP_COMPUTED_GOTO "Support for computed goto" ON)
 option(LIBSCRATCHCPP_USE_LLVM "Compile scripts to LLVM IR (work in progress)" OFF)
 option(LIBSCRATCHCPP_PRINT_LLVM_IR "Print LLVM IR of compiled Scratch scripts (for debugging)" OFF)
-
-if (NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
-	# Computed goto not supported on anything except GCC
-	set(LIBSCRATCHCPP_COMPUTED_GOTO OFF CACHE BOOL "" FORCE)
-endif()
 
 add_library(scratchcpp SHARED)
 add_subdirectory(src)
 include_directories(src) # TODO: Remove this line
 include_directories(include)
-
-if (LIBSCRATCHCPP_COMPUTED_GOTO)
-	target_compile_definitions(scratchcpp PRIVATE ENABLE_COMPUTED_GOTO)
-endif()
 
 target_sources(scratchcpp
   PUBLIC
