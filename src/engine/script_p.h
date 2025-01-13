@@ -21,28 +21,11 @@ struct ScriptPrivate
         ScriptPrivate(Target *target, std::shared_ptr<Block> topBlock, IEngine *engine);
         ScriptPrivate(const ScriptPrivate &) = delete;
 
-        unsigned int *bytecode = nullptr;
-        std::vector<unsigned int> bytecodeVector;
-        std::vector<unsigned int> hatPredicateBytecodeVector;
-
-#ifdef USE_LLVM
         std::shared_ptr<ExecutableCode> code;
-#endif
 
         Target *target = nullptr;
         std::shared_ptr<Block> topBlock;
         IEngine *engine = nullptr;
-
-        unsigned int **procedures = nullptr;
-        std::vector<unsigned int *> proceduresVector;
-
-        const Value *constValues = nullptr;
-        std::vector<Value> constValuesVector;
-
-        std::vector<Value *> variableValues;
-        std::vector<Variable *> variables;
-
-        std::vector<List *> lists;
 };
 
 } // namespace libscratchcpp

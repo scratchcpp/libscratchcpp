@@ -3,7 +3,6 @@
 #pragma once
 
 #include <scratchcpp/monitor.h>
-#include <scratchcpp/virtualmachine.h>
 
 namespace libscratchcpp
 {
@@ -23,7 +22,6 @@ struct MonitorPrivate
         IExtension *extension = nullptr;
         std::shared_ptr<Block> block; // Compiler needs shared_ptr
         MonitorChangeFunc changeFunc = nullptr;
-        VirtualMachine changeValueVM;
         unsigned int width = 0;
         unsigned int height = 0;
         int x = 0;

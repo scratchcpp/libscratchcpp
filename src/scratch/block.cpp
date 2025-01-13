@@ -4,10 +4,8 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/comment.h>
-#ifdef USE_LLVM
 #include <scratchcpp/dev/compiler.h>
 #include <scratchcpp/dev/compilerconstant.h>
-#endif
 #include <iostream>
 
 #include "block_p.h"
@@ -21,7 +19,6 @@ Block::Block(const std::string &id, const std::string &opcode) :
 {
 }
 
-#ifdef USE_LLVM
 /*! Calls the compile function. */
 CompilerValue *Block::compile(Compiler *compiler)
 {
@@ -30,14 +27,6 @@ CompilerValue *Block::compile(Compiler *compiler)
     else
         return nullptr;
 }
-#else
-/*! Calls the compile function. */
-void Block::compile(Compiler *compiler)
-{
-    if (impl->compileFunction)
-        return impl->compileFunction(compiler);
-}
-#endif
 
 /*! Returns the opcode. */
 const std::string &Block::opcode() const

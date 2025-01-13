@@ -37,7 +37,6 @@ target_sources(scratchcpp
     include/scratchcpp/field.h
     include/scratchcpp/script.h
     include/scratchcpp/broadcast.h
-    include/scratchcpp/virtualmachine.h
     include/scratchcpp/blockprototype.h
     include/scratchcpp/block.h
     include/scratchcpp/istagehandler.h

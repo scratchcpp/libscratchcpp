@@ -1,8 +1,5 @@
 target_sources(scratchcpp
   PRIVATE
-    virtualmachine.cpp
-    virtualmachine_p.cpp
-    virtualmachine_p.h
     script.cpp
     script_p.cpp
     script_p.h

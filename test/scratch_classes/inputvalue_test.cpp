@@ -3,18 +3,12 @@
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
-#ifdef USE_LLVM
 #include <scratchcpp/dev/compiler.h>
-#else
-#include <scratchcpp/compiler.h>
-#endif
 #include <scratchcpp/input.h>
 #include <enginemock.h>
 #include <targetmock.h>
-#ifdef USE_LLVM
 #include <codebuilderfactorymock.h>
 #include <codebuildermock.h>
-#endif
 
 #include "../common.h"
 #include "dev/engine/compiler_p.h"
@@ -119,7 +113,6 @@ TEST(InputValueTest, ValuePtr)
     ASSERT_EQ(value2.type(), InputValue::Type::Variable);
 }
 
-#ifdef USE_LLVM
 TEST(InputValueTest, Compile)
 {
     EngineMock engine;
@@ -186,61 +179,3 @@ TEST(InputValueTest, Compile)
     value->setValuePtr(list);
     value->compile(&compiler);
 }
-#else
-TEST(InputValueTest, Compile)
-{
-    EngineMock engine;
-    Compiler compiler(&engine);
-
-    auto block = std::make_shared<Block>("", "");
-    auto input = std::make_shared<Input>("", Input::Type::Shadow);
-    input->setPrimaryValue(5);
-    block->addInput(input);
-
-    InputValue *value = input->primaryValue();
-
-    compiler.init();
-    compiler.setBlock(block);
-    value->setType(InputValue::Type::Number);
-    value->compile(&compiler);
-    value->setType(InputValue::Type::PositiveNumber);
-    value->compile(&compiler);
-    value->setType(InputValue::Type::PositiveInteger);
-    value->compile(&compiler);
-    value->setType(InputValue::Type::Integer);
-    value->compile(&compiler);
-    value->setType(InputValue::Type::Angle);
-    value->compile(&compiler);
-    // TODO: Add support for colors
-    /*value->setType(InputValue::Type::Color);
-    value->compile(&compiler);*/
-    value->setType(InputValue::Type::String);
-    value->compile(&compiler);
-    value->setType(InputValue::Type::Broadcast);
-    value->compile(&compiler);
-    compiler.end();
-
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 0, vm::OP_CONST, 0, vm::OP_CONST, 0, vm::OP_CONST, 0, vm::OP_CONST, 0, vm::OP_CONST, 0, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0].toDouble(), 5);
-
-    auto variable = std::make_shared<Variable>("", "");
-    auto list = std::make_shared<List>("", "");
-
-    compiler.init();
-    compiler.setBlock(block);
-    value->setType(InputValue::Type::Variable);
-    value->setValuePtr(variable);
-    value->compile(&compiler);
-    value->setType(InputValue::Type::List);
-    value->setValuePtr(list);
-    value->compile(&compiler);
-    compiler.end();
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_READ_VAR, 0, vm::OP_READ_LIST, 0, vm::OP_HALT }));
-    ASSERT_EQ(compiler.variables(), std::vector<Variable *>({ variable.get() }));
-    ASSERT_EQ(compiler.lists(), std::vector<List *>({ list.get() }));
-}
-#endif // USE_LLVM

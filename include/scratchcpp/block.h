@@ -10,9 +10,7 @@ namespace libscratchcpp
 
 class IEngine;
 class Target;
-#ifdef USE_LLVM
 class CompilerValue;
-#endif
 class Input;
 class Field;
 class Comment;
@@ -28,11 +26,7 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
         Block(const std::string &id, const std::string &opcode);
         Block(const Block &) = delete;
 
-#ifdef USE_LLVM
         CompilerValue *compile(Compiler *compiler);
-#else
-        void compile(Compiler *compiler);
-#endif
 
         const std::string &opcode() const;
 

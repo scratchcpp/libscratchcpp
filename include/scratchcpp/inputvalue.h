@@ -10,9 +10,7 @@
 namespace libscratchcpp
 {
 
-#ifdef USE_LLVM
 class CompilerValue;
-#endif
 class Block;
 class Entity;
 class InputValuePrivate;
@@ -37,11 +35,7 @@ class LIBSCRATCHCPP_EXPORT InputValue
 
         InputValue(Type type = Type::Number);
 
-#ifdef USE_LLVM
         CompilerValue *compile(Compiler *compiler);
-#else
-        void compile(Compiler *compiler);
-#endif
 
         Type type() const;
         void setType(Type newType);

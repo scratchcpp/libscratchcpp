@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/inputvalue.h>
-#ifdef USE_LLVM
 #include <scratchcpp/dev/compiler.h>
 #include <scratchcpp/dev/compilerconstant.h>
-#else
-#include <scratchcpp/compiler.h>
-#endif
 #include <scratchcpp/block.h>
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/variable.h>
@@ -27,7 +23,6 @@ InputValue::InputValue(Type type) :
 {
 }
 
-#ifdef USE_LLVM
 /*! Compiles the input value. */
 CompilerValue *InputValue::compile(Compiler *compiler)
 {
@@ -60,35 +55,6 @@ CompilerValue *InputValue::compile(Compiler *compiler)
             return compiler->addConstValue(impl->value);
     }
 }
-#else
-/*! Compiles the input value. */
-void InputValue::compile(Compiler *compiler)
-{
-    switch (impl->type) {
-        case Type::Color:
-            // TODO: Add support for colors
-            break;
-
-        case Type::Variable: {
-            assert(impl->valuePtr);
-            compiler->addInstruction(vm::OP_READ_VAR, { compiler->variableIndex(impl->valuePtr) });
-
-            break;
-        }
-
-        case Type::List: {
-            assert(impl->valuePtr);
-            compiler->addInstruction(vm::OP_READ_LIST, { compiler->listIndex(impl->valuePtr) });
-
-            break;
-        }
-
-        default:
-            compiler->addInstruction(vm::OP_CONST, { compiler->constIndex(this) });
-            break;
-    }
-}
-#endif // USE_LLVM
 
 /*! Returns the type of the value. */
 InputValue::Type InputValue::type() const

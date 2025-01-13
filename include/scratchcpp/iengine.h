@@ -6,7 +6,6 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <functional>
 
 #include "global.h"
 #include "signal.h"
@@ -218,12 +217,6 @@ class LIBSCRATCHCPP_EXPORT IEngine
 
         /*! Returns the timer of the project. */
         virtual ITimer *timer() const = 0;
-
-        /*! Returns the index of the given block function. */
-        virtual unsigned int functionIndex(BlockFunc f) = 0;
-
-        /*! Returns the list of block functions. */
-        virtual const std::vector<BlockFunc> &blockFunctions() const = 0;
 
         /*!
          * Call this from IExtension#registerBlocks() to add a compile function to a block section.

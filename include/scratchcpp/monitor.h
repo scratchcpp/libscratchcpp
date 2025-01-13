@@ -56,7 +56,8 @@ class LIBSCRATCHCPP_EXPORT Monitor : public Entity
 
         const std::string &opcode() const;
 
-        void updateValue(const VirtualMachine *vm);
+        // TODO: Add updateValue()
+        // void updateValue(const VirtualMachine *vm);
 
         void setValueChangeFunction(MonitorChangeFunc f);
         void changeValue(const Value &newValue);
