@@ -288,6 +288,63 @@ extern "C"
         dst->assign(utf8::utf8to16(s));
     }
 
+    /*! Returns the RGBA quadruplet from the given color value. */
+    Rgb value_toRgba(const ValueData *v)
+    {
+        // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L92-L103
+        char *string = nullptr;
+        size_t stringLen = 0;
+
+        if (v->type == ValueType::Number)
+            return v->numberValue;
+        else if (v->type == ValueType::String) {
+            string = value_toCString(v);
+            stringLen = strlen(string);
+        } else if (v->type == ValueType::Bool)
+            return v->boolValue;
+
+        if (stringLen > 0 && string[0] == '#') {
+            // https://github.com/scratchfoundation/scratch-vm/blob/a4f095db5e03e072ba222fe721eeeb543c9b9c15/src/util/color.js#L60-L69
+            // (this implementation avoids regex)
+
+            // Handle shorthand hex (e.g., "abc" -> "aabbcc")
+            char expandedHex[7] = { 0 };
+            char *ptr;
+
+            if (stringLen == 4) {
+                expandedHex[0] = string[1];
+                expandedHex[1] = string[1];
+                expandedHex[2] = string[2];
+                expandedHex[3] = string[2];
+                expandedHex[4] = string[3];
+                expandedHex[5] = string[3];
+                ptr = expandedHex;
+            } else if (stringLen == 7)
+                ptr = string + 1; // skip '#'
+            else {
+                free(string);
+                return rgb(0, 0, 0);
+            }
+
+            // Convert hex components to integers
+            int r, g, b;
+
+            if (std::sscanf(ptr, "%2x%2x%2x", &r, &g, &b) == 3) {
+                free(string);
+                return rgb(r, g, b);
+            }
+
+            free(string);
+        } else if (stringLen > 0) {
+            const double ret = value_stringToDouble(string);
+            free(string);
+            return ret;
+        } else if (string)
+            free(string);
+
+        return rgb(0, 0, 0);
+    }
+
     /*! Returns true if the given number represents a round integer. */
     bool value_doubleIsInt(double v)
     {

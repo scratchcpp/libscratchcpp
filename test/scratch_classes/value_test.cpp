@@ -1616,6 +1616,60 @@ TEST(ValueTest, ToString)
         free(s);
 }
 
+TEST(ValueTest, ToRgba)
+{
+    Value v = "#ff0000";
+    ASSERT_EQ(v.toRgba(), rgba(255, 0, 0, 255));
+
+    v = "#00ff00";
+    ASSERT_EQ(v.toRgba(), rgba(0, 255, 0, 255));
+
+    v = "#0000ff";
+    ASSERT_EQ(v.toRgba(), rgba(0, 0, 255, 255));
+
+    v = "#800000";
+    ASSERT_EQ(v.toRgba(), rgba(128, 0, 0, 255));
+
+    v = "#008000";
+    ASSERT_EQ(v.toRgba(), rgba(0, 128, 0, 255));
+
+    v = "#000080";
+    ASSERT_EQ(v.toRgba(), rgba(0, 0, 128, 255));
+
+    v = "#FF0080FF";
+    ASSERT_EQ(v.toRgba(), rgba(0, 0, 0, 255));
+
+    v = "#abc";
+    ASSERT_EQ(v.toRgba(), rgba(170, 187, 204, 255));
+
+    v = "00ff00";
+    ASSERT_EQ(v.toRgba(), 0);
+
+    v = "123";
+    ASSERT_EQ(v.toRgba(), 123);
+
+    v = "#12345";
+    ASSERT_EQ(v.toRgba(), rgba(0, 0, 0, 255));
+
+    v = "";
+    ASSERT_EQ(v.toRgba(), rgba(0, 0, 0, 255));
+
+    v = "#gggggg";
+    ASSERT_EQ(v.toRgba(), rgba(0, 0, 0, 255));
+
+    v = 2164195583;
+    ASSERT_EQ(v.toRgba(), 2164195583);
+
+    v = 0;
+    ASSERT_EQ(v.toRgba(), 0);
+
+    v = true;
+    ASSERT_EQ(v.toRgba(), 1);
+
+    v = false;
+    ASSERT_EQ(v.toRgba(), 0);
+}
+
 TEST(ValueTest, AddFunction)
 {
     Value v = 50;
@@ -3120,4 +3174,40 @@ TEST(ValueTest, StringToBool)
     ASSERT_TRUE(value_stringToBool("0B1110100110"));
     ASSERT_TRUE(value_stringToBool("0b100112001"));
     ASSERT_TRUE(value_stringToBool("0b10011001.1"));
+}
+
+TEST(ValueTest, RedComponent)
+{
+    Rgb color = rgba(255, 100, 50, 255);
+    ASSERT_EQ(red(color), 255);
+}
+
+TEST(ValueTest, GreenComponent)
+{
+    Rgb color = rgba(255, 100, 50, 255);
+    ASSERT_EQ(green(color), 100);
+}
+
+TEST(ValueTest, BlueComponent)
+{
+    Rgb color = rgba(255, 100, 50, 255);
+    ASSERT_EQ(blue(color), 50);
+}
+
+TEST(ValueTest, AlphaComponent)
+{
+    Rgb color = rgba(255, 100, 50, 128);
+    ASSERT_EQ(alpha(color), 128);
+}
+
+TEST(ValueTest, RGB)
+{
+    Rgb color = rgb(255, 100, 50);
+    ASSERT_EQ(color, 0xFFFF6432);
+}
+
+TEST(ValueTest, RGBA)
+{
+    Rgb color = rgba(255, 100, 50, 128);
+    ASSERT_EQ(color, 0x80FF6432);
 }
