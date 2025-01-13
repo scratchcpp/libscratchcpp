@@ -85,10 +85,10 @@ class LIBSCRATCHCPP_EXPORT ISpriteHandler
         virtual bool touchingPoint(double x, double y) const = 0;
 
         /*! Used to check whether the sprite touches the given color. */
-        virtual bool touchingColor(const Value &color) const = 0;
+        virtual bool touchingColor(Rgb color) const = 0;
 
         /*! Used to check whether the mask part of the sprite touches the given color. */
-        virtual bool touchingColor(const Value &color, const Value &mask) const = 0;
+        virtual bool touchingColor(Rgb color, Rgb mask) const = 0;
 };
 
 } // namespace libscratchcpp

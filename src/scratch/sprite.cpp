@@ -504,7 +504,7 @@ bool Sprite::touchingPoint(double x, double y) const
 }
 
 /*! Overrides Target#touchingColor(). */
-bool Sprite::touchingColor(const Value &color) const
+bool Sprite::touchingColor(Rgb color) const
 {
     if (!impl->iface)
         return false;
@@ -513,7 +513,7 @@ bool Sprite::touchingColor(const Value &color) const
 }
 
 /*! Overrides Target#touchingColor(). */
-bool Sprite::touchingColor(const Value &color, const Value &mask) const
+bool Sprite::touchingColor(Rgb color, Rgb mask) const
 {
     if (!impl->iface)
         return false;

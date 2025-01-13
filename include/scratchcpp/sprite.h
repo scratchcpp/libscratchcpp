@@ -81,8 +81,8 @@ class LIBSCRATCHCPP_EXPORT Sprite
         void keepInFence(double newX, double newY, double *fencedX, double *fencedY) const;
 
         bool touchingPoint(double x, double y) const override;
-        bool touchingColor(const Value &color) const override;
-        bool touchingColor(const Value &color, const Value &mask) const override;
+        bool touchingColor(Rgb color) const override;
+        bool touchingColor(Rgb color, Rgb mask) const override;
 
         void setGraphicsEffectValue(IGraphicsEffect *effect, double value) override;
 

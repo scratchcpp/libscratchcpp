@@ -538,13 +538,13 @@ unsigned int SensingBlocks::touchingEdge(VirtualMachine *vm)
 
 unsigned int SensingBlocks::touchingColor(VirtualMachine *vm)
 {
-    vm->replaceReturnValue(vm->target()->touchingColor(*vm->getInput(0, 1)), 1);
+    vm->replaceReturnValue(vm->target()->touchingColor(vm->getInput(0, 1)->toRgba()), 1);
     return 0;
 }
 
 unsigned int SensingBlocks::colorIsTouchingColor(VirtualMachine *vm)
 {
-    vm->replaceReturnValue(vm->target()->touchingColor(*vm->getInput(0, 2), *vm->getInput(1, 2)), 2);
+    vm->replaceReturnValue(vm->target()->touchingColor(vm->getInput(0, 2)->toRgba(), vm->getInput(1, 2)->toRgba()), 2);
     return 1;
 }
 

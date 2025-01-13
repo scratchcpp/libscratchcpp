@@ -3,6 +3,7 @@
 #pragma once
 
 #include <vector>
+#include <scratchcpp/value_functions.h>
 
 #include "drawable.h"
 #include "rect.h"
@@ -12,7 +13,6 @@ namespace libscratchcpp
 {
 
 class Variable;
-struct ValueData;
 class List;
 class Block;
 class Comment;
@@ -97,8 +97,8 @@ class LIBSCRATCHCPP_EXPORT Target : public Drawable
         bool touchingSprite(Sprite *sprite) const;
         virtual bool touchingPoint(double x, double y) const;
         bool touchingEdge() const;
-        virtual bool touchingColor(const Value &color) const;
-        virtual bool touchingColor(const Value &color, const Value &mask) const;
+        virtual bool touchingColor(Rgb color) const;
+        virtual bool touchingColor(Rgb color, Rgb mask) const;
 
         double graphicsEffectValue(IGraphicsEffect *effect) const;
         virtual void setGraphicsEffectValue(IGraphicsEffect *effect, double value);
