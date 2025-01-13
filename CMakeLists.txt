@@ -8,7 +8,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(LIBSCRATCHCPP_BUILD_UNIT_TESTS "Build unit tests" ON)
 option(LIBSCRATCHCPP_NETWORK_SUPPORT "Support for downloading projects" ON)
-option(LIBSCRATCHCPP_USE_LLVM "Compile scripts to LLVM IR (work in progress)" OFF)
 option(LIBSCRATCHCPP_PRINT_LLVM_IR "Print LLVM IR of compiled Scratch scripts (for debugging)" OFF)
 
 add_library(scratchcpp SHARED)
@@ -57,31 +56,21 @@ target_sources(scratchcpp
     include/scratchcpp/comment.h
     include/scratchcpp/monitor.h
     include/scratchcpp/imonitorhandler.h
+    include/scratchcpp/dev/compiler.h
+    include/scratchcpp/dev/compilercontext.h
+    include/scratchcpp/dev/compilervalue.h
+    include/scratchcpp/dev/compilerconstant.h
+    include/scratchcpp/dev/compilerlocalvariable.h
+    include/scratchcpp/dev/executablecode.h
+    include/scratchcpp/dev/executioncontext.h
+    include/scratchcpp/dev/promise.h
+    include/scratchcpp/dev/test/scriptbuilder.h
 )
 
-if (LIBSCRATCHCPP_USE_LLVM)
-    target_compile_definitions(scratchcpp PUBLIC USE_LLVM)
-    target_sources(scratchcpp
-      PUBLIC
-        include/scratchcpp/dev/compiler.h
-        include/scratchcpp/dev/compilercontext.h
-        include/scratchcpp/dev/compilervalue.h
-        include/scratchcpp/dev/compilerconstant.h
-        include/scratchcpp/dev/compilerlocalvariable.h
-        include/scratchcpp/dev/executablecode.h
-        include/scratchcpp/dev/executioncontext.h
-        include/scratchcpp/dev/promise.h
-        include/scratchcpp/dev/test/scriptbuilder.h
-    )
+target_compile_definitions(scratchcpp PUBLIC USE_LLVM)
 
-    if(LIBSCRATCHCPP_PRINT_LLVM_IR)
-        target_compile_definitions(scratchcpp PRIVATE PRINT_LLVM_IR)
-    endif()
-else()
-    target_sources(scratchcpp
-      PUBLIC
-        include/scratchcpp/compiler.h
-    )
+if(LIBSCRATCHCPP_PRINT_LLVM_IR)
+    target_compile_definitions(scratchcpp PRIVATE PRINT_LLVM_IR)
 endif()
 
 include(FetchContent)
@@ -113,11 +102,9 @@ if (LIBSCRATCHCPP_NETWORK_SUPPORT)
     target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_NETWORK_SUPPORT)
 endif()
 
-if (LIBSCRATCHCPP_USE_LLVM)
-    include(build/HunterPackages.cmake)
-    include(build/LLVM.cmake)
-    target_link_libraries(scratchcpp PRIVATE LLVM)
-endif()
+include(build/HunterPackages.cmake)
+include(build/LLVM.cmake)
+target_link_libraries(scratchcpp PRIVATE LLVM)
 
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_LIBRARY)
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION="${PROJECT_VERSION}")

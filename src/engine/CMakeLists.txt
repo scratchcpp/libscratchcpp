@@ -21,12 +21,3 @@ target_sources(scratchcpp
     internal/randomgenerator.h
     internal/randomgenerator.cpp
 )
-
-if(NOT LIBSCRATCHCPP_USE_LLVM)
-    target_sources(scratchcpp
-      PRIVATE
-        compiler.cpp
-        compiler_p.cpp
-        compiler_p.h
-    )
-endif()
