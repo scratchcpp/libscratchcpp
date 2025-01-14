@@ -1,8 +1,26 @@
 target_sources(scratchcpp
   PRIVATE
-    virtualmachine.cpp
-    virtualmachine_p.cpp
-    virtualmachine_p.h
+    compiler.cpp
+    compiler_p.cpp
+    compiler_p.h
+    compilercontext.cpp
+    compilercontext_p.cpp
+    compilercontext_p.h
+    compilervalue.cpp
+    compilervalue_p.cpp
+    compilervalue_p.h
+    compilerconstant.cpp
+    compilerconstant_p.cpp
+    compilerconstant_p.h
+    compilerlocalvariable.cpp
+    compilerlocalvariable_p.cpp
+    compilerlocalvariable_p.h
+    executioncontext.cpp
+    executioncontext_p.cpp
+    executioncontext_p.h
+    promise.cpp
+    promise_p.cpp
+    promise_p.h
     script.cpp
     script_p.cpp
     script_p.h
@@ -11,6 +29,10 @@ target_sources(scratchcpp
     thread_p.h
     internal/engine.cpp
     internal/engine.h
+    internal/icodebuilder.h
+    internal/icodebuilderfactory.h
+    internal/codebuilderfactory.cpp
+    internal/codebuilderfactory.h
     internal/clock.cpp
     internal/clock.h
     internal/iclock.h
@@ -22,11 +44,4 @@ target_sources(scratchcpp
     internal/randomgenerator.cpp
 )
 
-if(NOT LIBSCRATCHCPP_USE_LLVM)
-    target_sources(scratchcpp
-      PRIVATE
-        compiler.cpp
-        compiler_p.cpp
-        compiler_p.h
-    )
-endif()
+add_subdirectory(internal/llvm)

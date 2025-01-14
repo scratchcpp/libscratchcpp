@@ -2,7 +2,10 @@
 
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/compilerconstant.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/value.h>
+#include <utf8.h>
 
 #include "operatorblocks.h"
 
@@ -20,15 +23,14 @@ std::string OperatorBlocks::description() const
 
 void OperatorBlocks::registerBlocks(IEngine *engine)
 {
-    // Blocks
     engine->addCompileFunction(this, "operator_add", &compileAdd);
     engine->addCompileFunction(this, "operator_subtract", &compileSubtract);
     engine->addCompileFunction(this, "operator_multiply", &compileMultiply);
     engine->addCompileFunction(this, "operator_divide", &compileDivide);
-    engine->addCompileFunction(this, "operator_random", &compilePickRandom);
-    engine->addCompileFunction(this, "operator_lt", &compileLessThan);
+    engine->addCompileFunction(this, "operator_random", &compileRandom);
+    engine->addCompileFunction(this, "operator_lt", &compileLt);
     engine->addCompileFunction(this, "operator_equals", &compileEquals);
-    engine->addCompileFunction(this, "operator_gt", &compileGreaterThan);
+    engine->addCompileFunction(this, "operator_gt", &compileGt);
     engine->addCompileFunction(this, "operator_and", &compileAnd);
     engine->addCompileFunction(this, "operator_or", &compileOr);
     engine->addCompileFunction(this, "operator_not", &compileNot);
@@ -39,268 +41,188 @@ void OperatorBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "operator_mod", &compileMod);
     engine->addCompileFunction(this, "operator_round", &compileRound);
     engine->addCompileFunction(this, "operator_mathop", &compileMathOp);
-
-    // Inputs
-    engine->addInput(this, "NUM1", NUM1);
-    engine->addInput(this, "NUM2", NUM2);
-    engine->addInput(this, "FROM", FROM);
-    engine->addInput(this, "TO", TO);
-    engine->addInput(this, "OPERAND1", OPERAND1);
-    engine->addInput(this, "OPERAND2", OPERAND2);
-    engine->addInput(this, "OPERAND", OPERAND);
-    engine->addInput(this, "STRING1", STRING1);
-    engine->addInput(this, "STRING2", STRING2);
-    engine->addInput(this, "LETTER", LETTER);
-    engine->addInput(this, "STRING", STRING);
-    engine->addInput(this, "NUM", NUM);
-
-    // Fields
-    engine->addField(this, "OPERATOR", OPERATOR);
-
-    // Field values
-    engine->addFieldValue(this, "abs", Abs);
-    engine->addFieldValue(this, "floor", Floor);
-    engine->addFieldValue(this, "ceiling", Ceiling);
-    engine->addFieldValue(this, "sqrt", Sqrt);
-    engine->addFieldValue(this, "sin", Sin);
-    engine->addFieldValue(this, "cos", Cos);
-    engine->addFieldValue(this, "tan", Tan);
-    engine->addFieldValue(this, "asin", Asin);
-    engine->addFieldValue(this, "acos", Acos);
-    engine->addFieldValue(this, "atan", Atan);
-    engine->addFieldValue(this, "ln", Ln);
-    engine->addFieldValue(this, "log", Log);
-    engine->addFieldValue(this, "e ^", Eexp);
-    engine->addFieldValue(this, "10 ^", Op_10exp);
 }
 
-void OperatorBlocks::compileAdd(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileAdd(Compiler *compiler)
 {
-    compiler->addInput(NUM1);
-    compiler->addInput(NUM2);
-    compiler->addInstruction(vm::OP_ADD);
+    return compiler->createAdd(compiler->addInput("NUM1"), compiler->addInput("NUM2"));
 }
 
-void OperatorBlocks::compileSubtract(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileSubtract(Compiler *compiler)
 {
-    compiler->addInput(NUM1);
-    compiler->addInput(NUM2);
-    compiler->addInstruction(vm::OP_SUBTRACT);
+    return compiler->createSub(compiler->addInput("NUM1"), compiler->addInput("NUM2"));
 }
 
-void OperatorBlocks::compileMultiply(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileMultiply(Compiler *compiler)
 {
-    compiler->addInput(NUM1);
-    compiler->addInput(NUM2);
-    compiler->addInstruction(vm::OP_MULTIPLY);
+    return compiler->createMul(compiler->addInput("NUM1"), compiler->addInput("NUM2"));
 }
 
-void OperatorBlocks::compileDivide(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileDivide(Compiler *compiler)
 {
-    compiler->addInput(NUM1);
-    compiler->addInput(NUM2);
-    compiler->addInstruction(vm::OP_DIVIDE);
+    return compiler->createDiv(compiler->addInput("NUM1"), compiler->addInput("NUM2"));
 }
 
-void OperatorBlocks::compilePickRandom(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileRandom(Compiler *compiler)
 {
-    compiler->addInput(FROM);
-    compiler->addInput(TO);
-    compiler->addInstruction(vm::OP_RANDOM);
+    auto from = compiler->addInput("FROM");
+    auto to = compiler->addInput("TO");
+    return compiler->createRandom(from, to);
 }
 
-void OperatorBlocks::compileLessThan(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileLt(Compiler *compiler)
 {
-    compiler->addInput(OPERAND1);
-    compiler->addInput(OPERAND2);
-    compiler->addInstruction(vm::OP_LESS_THAN);
+    return compiler->createCmpLT(compiler->addInput("OPERAND1"), compiler->addInput("OPERAND2"));
 }
 
-void OperatorBlocks::compileEquals(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileEquals(Compiler *compiler)
 {
-    compiler->addInput(OPERAND1);
-    compiler->addInput(OPERAND2);
-    compiler->addInstruction(vm::OP_EQUALS);
+    return compiler->createCmpEQ(compiler->addInput("OPERAND1"), compiler->addInput("OPERAND2"));
 }
 
-void OperatorBlocks::compileGreaterThan(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileGt(Compiler *compiler)
 {
-    compiler->addInput(OPERAND1);
-    compiler->addInput(OPERAND2);
-    compiler->addInstruction(vm::OP_GREATER_THAN);
+    return compiler->createCmpGT(compiler->addInput("OPERAND1"), compiler->addInput("OPERAND2"));
 }
 
-void OperatorBlocks::compileAnd(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileAnd(Compiler *compiler)
 {
-    compiler->addInput(OPERAND1);
-    compiler->addInput(OPERAND2);
-    compiler->addInstruction(vm::OP_AND);
+    return compiler->createAnd(compiler->addInput("OPERAND1"), compiler->addInput("OPERAND2"));
 }
 
-void OperatorBlocks::compileOr(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileOr(Compiler *compiler)
 {
-    compiler->addInput(OPERAND1);
-    compiler->addInput(OPERAND2);
-    compiler->addInstruction(vm::OP_OR);
+    return compiler->createOr(compiler->addInput("OPERAND1"), compiler->addInput("OPERAND2"));
 }
 
-void OperatorBlocks::compileNot(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileNot(Compiler *compiler)
 {
-    compiler->addInput(OPERAND);
-    compiler->addInstruction(vm::OP_NOT);
+    return compiler->createNot(compiler->addInput("OPERAND"));
 }
 
-void OperatorBlocks::compileJoin(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileJoin(Compiler *compiler)
 {
-    compiler->addInput(STRING1);
-    compiler->addInput(STRING2);
-    compiler->addInstruction(vm::OP_STR_CONCAT);
+    auto string1 = compiler->addInput("STRING1");
+    auto string2 = compiler->addInput("STRING2");
+    return compiler->addFunctionCall("operator_join", Compiler::StaticType::String, { Compiler::StaticType::String, Compiler::StaticType::String }, { string1, string2 });
 }
 
-void OperatorBlocks::compileLetterOf(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileLetterOf(Compiler *compiler)
 {
-    compiler->addInput(STRING);
-    compiler->addInput(LETTER);
-    compiler->addInstruction(vm::OP_STR_AT);
+    auto letter = compiler->addInput("LETTER");
+    auto string = compiler->addInput("STRING");
+    return compiler->addFunctionCall("operator_letter_of", Compiler::StaticType::String, { Compiler::StaticType::Number, Compiler::StaticType::String }, { letter, string });
 }
 
-void OperatorBlocks::compileLength(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileLength(Compiler *compiler)
 {
-    compiler->addInput(STRING);
-    compiler->addInstruction(vm::OP_STR_LENGTH);
+    auto string = compiler->addInput("STRING");
+    return compiler->addFunctionCall("operator_length", Compiler::StaticType::Number, { Compiler::StaticType::String }, { string });
 }
 
-void OperatorBlocks::compileContains(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileContains(Compiler *compiler)
 {
-    compiler->addInput(STRING1);
-    compiler->addInput(STRING2);
-    compiler->addInstruction(vm::OP_STR_CONTAINS);
+    auto string1 = compiler->addInput("STRING1");
+    auto string2 = compiler->addInput("STRING2");
+    return compiler->addFunctionCall("operator_contains", Compiler::StaticType::Bool, { Compiler::StaticType::String, Compiler::StaticType::String }, { string1, string2 });
 }
 
-void OperatorBlocks::compileMod(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileMod(Compiler *compiler)
 {
-    compiler->addInput(NUM1);
-    compiler->addInput(NUM2);
-    compiler->addInstruction(vm::OP_MOD);
+    return compiler->createMod(compiler->addInput("NUM1"), compiler->addInput("NUM2"));
 }
 
-void OperatorBlocks::compileRound(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileRound(Compiler *compiler)
 {
-    compiler->addInput(NUM);
-    compiler->addInstruction(vm::OP_ROUND);
+    return compiler->createRound(compiler->addInput("NUM"));
 }
 
-void OperatorBlocks::compileMathOp(Compiler *compiler)
+CompilerValue *OperatorBlocks::compileMathOp(Compiler *compiler)
 {
-    compiler->addInput(NUM);
+    Field *opField = compiler->field("OPERATOR");
+    const std::string numInput = "NUM";
+    const std::string &op = opField->value().toString();
 
-    int id = compiler->field(OPERATOR)->specialValueId();
-    switch (id) {
-        case Abs:
-            compiler->addInstruction(vm::OP_ABS);
-            break;
+    if (op == "abs")
+        return compiler->createAbs(compiler->addInput(numInput));
+    else if (op == "floor")
+        return compiler->createFloor(compiler->addInput(numInput));
+    else if (op == "ceiling")
+        return compiler->createCeil(compiler->addInput(numInput));
+    else if (op == "sqrt")
+        return compiler->createSqrt(compiler->addInput(numInput));
+    else if (op == "sin")
+        return compiler->createSin(compiler->addInput(numInput));
+    else if (op == "cos")
+        return compiler->createCos(compiler->addInput(numInput));
+    else if (op == "tan")
+        return compiler->createTan(compiler->addInput(numInput));
+    else if (op == "asin")
+        return compiler->createAsin(compiler->addInput(numInput));
+    else if (op == "acos")
+        return compiler->createAcos(compiler->addInput(numInput));
+    else if (op == "atan")
+        return compiler->createAtan(compiler->addInput(numInput));
+    else if (op == "ln")
+        return compiler->createLn(compiler->addInput(numInput));
+    else if (op == "log")
+        return compiler->createLog10(compiler->addInput(numInput));
+    else if (op == "e ^")
+        return compiler->createExp(compiler->addInput(numInput));
+    else if (op == "10 ^")
+        return compiler->createExp10(compiler->addInput(numInput));
+    else
+        return compiler->addConstValue(Value());
+}
 
-        case Floor:
-            compiler->addInstruction(vm::OP_FLOOR);
-            break;
+extern "C" char *operator_join(const char *string1, const char *string2)
+{
+    const size_t len1 = strlen(string1);
+    const size_t len2 = strlen(string2);
 
-        case Ceiling:
-            compiler->addInstruction(vm::OP_CEIL);
-            break;
+    char *ret = (char *)malloc((len1 + len2 + 1) * sizeof(char));
+    size_t i;
 
-        case Sqrt:
-            compiler->addInstruction(vm::OP_SQRT);
-            break;
+    for (i = 0; i < len1; i++)
+        ret[i] = string1[i];
 
-        case Sin:
-            compiler->addInstruction(vm::OP_SIN);
-            break;
+    for (i = 0; i < len2 + 1; i++) // +1: null-terminate
+        ret[len1 + i] = string2[i];
 
-        case Cos:
-            compiler->addInstruction(vm::OP_COS);
-            break;
+    return ret;
+}
 
-        case Tan:
-            compiler->addInstruction(vm::OP_TAN);
-            break;
+extern "C" char *operator_letter_of(double letter, const char *string)
+{
+    const size_t len = strlen(string);
 
-        case Asin:
-            compiler->addInstruction(vm::OP_ASIN);
-            break;
-
-        case Acos:
-            compiler->addInstruction(vm::OP_ACOS);
-            break;
-
-        case Atan:
-            compiler->addInstruction(vm::OP_ATAN);
-            break;
-
-        case Ln:
-            compiler->addFunctionCall(&op_ln);
-            break;
-
-        case Log:
-            compiler->addFunctionCall(&op_log);
-            break;
-
-        case Eexp:
-            compiler->addFunctionCall(&op_eexp);
-            break;
-
-        case Op_10exp:
-            compiler->addFunctionCall(&op_10exp);
-            break;
-
-        default:
-            break;
+    if (letter < 1 || letter > len) {
+        char *ret = (char *)malloc(sizeof(char));
+        ret[0] = '\0';
+        return ret;
     }
+
+    // TODO: Rewrite this
+    std::u16string u16 = utf8::utf8to16(std::string(string));
+    std::string str = utf8::utf16to8(std::u16string({ u16[(size_t)letter - 1] }));
+    char *ret = (char *)malloc((str.size() + 1) * sizeof(char));
+    strcpy(ret, str.c_str());
+
+    return ret;
 }
 
-unsigned int OperatorBlocks::op_ln(VirtualMachine *vm)
+extern "C" double operator_length(const char *string)
 {
-    const Value &v = *vm->getInput(0, 1);
-    if (v < 0)
-        vm->replaceReturnValue(std::numeric_limits<double>::quiet_NaN(), 1);
-    else if (v == 0 || v.isNaN())
-        vm->replaceReturnValue(-std::numeric_limits<double>::infinity(), 1);
-    else if (!v.isInfinity())
-        vm->replaceReturnValue(std::log(v.toDouble()), 1);
-    return 0;
+    // TODO: Rewrite this
+    return utf8::utf8to16(std::string(string)).size();
 }
 
-unsigned int OperatorBlocks::op_log(VirtualMachine *vm)
+extern "C" bool operator_contains(const char *string1, const char *string2)
 {
-    const Value &v = *vm->getInput(0, 1);
-    if (v < 0)
-        vm->replaceReturnValue(std::numeric_limits<double>::quiet_NaN(), 1);
-    else if (v == 0 || v.isNaN())
-        vm->replaceReturnValue(-std::numeric_limits<double>::infinity(), 1);
-    else if (!v.isInfinity())
-        vm->replaceReturnValue(std::log10(v.toDouble()), 1);
-    return 0;
-}
-
-unsigned int OperatorBlocks::op_eexp(VirtualMachine *vm)
-{
-    const Value *v = vm->getInput(0, 1);
-    if (v->isNaN())
-        vm->replaceReturnValue(1, 1);
-    else if (v->isNegativeInfinity())
-        vm->replaceReturnValue(0, 1);
-    else if (!v->isInfinity())
-        vm->replaceReturnValue(std::exp(v->toDouble()), 1);
-    return 0;
-}
-
-unsigned int OperatorBlocks::op_10exp(VirtualMachine *vm)
-{
-    const Value *v = vm->getInput(0, 1);
-    if (v->isNaN())
-        vm->replaceReturnValue(1, 1);
-    else if (v->isNegativeInfinity())
-        vm->replaceReturnValue(0, 1);
-    else if (!v->isInfinity())
-        vm->replaceReturnValue(std::pow(10, v->toDouble()), 1);
-    return 0;
+    // TODO: Rewrite this
+    std::u16string u16string1 = utf8::utf8to16(std::string(string1));
+    std::u16string u16string2 = utf8::utf8to16(std::string(string2));
+    std::transform(u16string1.begin(), u16string1.end(), u16string1.begin(), ::tolower);
+    std::transform(u16string2.begin(), u16string2.end(), u16string2.begin(), ::tolower);
+    return (u16string1.find(u16string2) != std::u16string::npos);
 }

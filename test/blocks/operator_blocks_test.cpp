@@ -1,14 +1,23 @@
+#include <scratchcpp/project.h>
+#include <scratchcpp/sprite.h>
+#include <scratchcpp/list.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
-#include <scratchcpp/field.h>
+#include <scratchcpp/script.h>
+#include <scratchcpp/thread.h>
+#include <scratchcpp/executablecode.h>
+#include <scratchcpp/executioncontext.h>
+#include <scratchcpp/test/scriptbuilder.h>
 #include <enginemock.h>
+#include <randomgeneratormock.h>
 
 #include "../common.h"
 #include "blocks/operatorblocks.h"
-#include "engine/internal/engine.h"
+#include "util.h"
 
 using namespace libscratchcpp;
+using namespace libscratchcpp::test;
 
 using ::testing::Return;
 
@@ -18,1001 +27,736 @@ class OperatorBlocksTest : public testing::Test
         void SetUp() override
         {
             m_extension = std::make_unique<OperatorBlocks>();
-            m_extension->registerBlocks(&m_engine);
-        }
-
-        // For any operator block
-        std::shared_ptr<Block> createOperatorBlock(const std::string &id, const std::string &opcode) const { return std::make_shared<Block>(id, opcode); }
-
-        void addInput(std::shared_ptr<Block> block, const std::string &name, OperatorBlocks::Inputs id, const Value &value) const
-        {
-            auto input = std::make_shared<Input>(name, Input::Type::Shadow);
-            input->setPrimaryValue(value);
-            input->setInputId(id);
-            block->addInput(input);
-        }
-
-        void addObscuredInput(std::shared_ptr<Block> block, const std::string &name, OperatorBlocks::Inputs id, std::shared_ptr<Block> valueBlock) const
-        {
-            auto input = std::make_shared<Input>(name, Input::Type::ObscuredShadow);
-            input->setValueBlock(valueBlock);
-            input->setInputId(id);
-            block->addInput(input);
-        }
-
-        void addNullInput(std::shared_ptr<Block> block, const std::string &name, OperatorBlocks::Inputs id) const
-        {
-            auto input = std::make_shared<Input>(name, Input::Type::Shadow);
-            input->setInputId(id);
-            block->addInput(input);
-        }
-
-        // For the mathop block
-        void addMathOpField(std::shared_ptr<Block> block, const std::string &operatorStr, OperatorBlocks::FieldValues operatorId)
-        {
-            auto field = std::make_shared<Field>("OPERATOR", operatorStr);
-            field->setFieldId(OperatorBlocks::OPERATOR);
-            field->setSpecialValueId(operatorId);
-            block->addField(field);
+            m_engine = m_project.engine().get();
+            m_extension->registerBlocks(m_engine);
+            registerBlocks(m_engine, m_extension.get());
         }
 
         std::unique_ptr<IExtension> m_extension;
+        Project m_project;
+        IEngine *m_engine = nullptr;
         EngineMock m_engineMock;
-        Engine m_engine;
+        RandomGeneratorMock m_rng;
 };
-
-TEST_F(OperatorBlocksTest, Name)
-{
-    ASSERT_EQ(m_extension->name(), "Operators");
-}
-
-TEST_F(OperatorBlocksTest, RegisterBlocks)
-{
-    // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_add", &OperatorBlocks::compileAdd)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_subtract", &OperatorBlocks::compileSubtract)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_multiply", &OperatorBlocks::compileMultiply)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_divide", &OperatorBlocks::compileDivide)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_random", &OperatorBlocks::compilePickRandom)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_lt", &OperatorBlocks::compileLessThan)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_equals", &OperatorBlocks::compileEquals)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_gt", &OperatorBlocks::compileGreaterThan)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_and", &OperatorBlocks::compileAnd)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_or", &OperatorBlocks::compileOr)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_not", &OperatorBlocks::compileNot)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_join", &OperatorBlocks::compileJoin)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_letter_of", &OperatorBlocks::compileLetterOf)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_length", &OperatorBlocks::compileLength)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_contains", &OperatorBlocks::compileContains)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_mod", &OperatorBlocks::compileMod)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_round", &OperatorBlocks::compileRound)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "operator_mathop", &OperatorBlocks::compileMathOp)).Times(1);
-
-    // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "NUM1", OperatorBlocks::NUM1)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "NUM2", OperatorBlocks::NUM2)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "FROM", OperatorBlocks::FROM)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "TO", OperatorBlocks::TO)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "OPERAND1", OperatorBlocks::OPERAND1)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "OPERAND2", OperatorBlocks::OPERAND2)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "OPERAND", OperatorBlocks::OPERAND)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "STRING1", OperatorBlocks::STRING1)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "STRING2", OperatorBlocks::STRING2)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "LETTER", OperatorBlocks::LETTER)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "STRING", OperatorBlocks::STRING)).Times(1);
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "NUM", OperatorBlocks::NUM)).Times(1);
-
-    // Fields
-    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "OPERATOR", OperatorBlocks::OPERATOR));
-
-    // Field values
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "abs", OperatorBlocks::Abs)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "floor", OperatorBlocks::Floor)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "ceiling", OperatorBlocks::Ceiling)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "sqrt", OperatorBlocks::Sqrt)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "sin", OperatorBlocks::Sin)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "cos", OperatorBlocks::Cos)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "tan", OperatorBlocks::Tan)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "asin", OperatorBlocks::Asin)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "acos", OperatorBlocks::Acos)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "atan", OperatorBlocks::Atan)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "ln", OperatorBlocks::Ln)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "log", OperatorBlocks::Log)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "e ^", OperatorBlocks::Eexp)).Times(1);
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "10 ^", OperatorBlocks::Op_10exp)).Times(1);
-
-    m_extension->registerBlocks(&m_engineMock);
-}
 
 TEST_F(OperatorBlocksTest, Add)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // 2 + 3
-    auto block1 = createOperatorBlock("a", "operator_add");
-    addInput(block1, "NUM1", OperatorBlocks::NUM1, 2);
-    addInput(block1, "NUM2", OperatorBlocks::NUM2, 3);
+    builder.addBlock("operator_add");
+    builder.addValueInput("NUM1", 5.7);
+    builder.addValueInput("NUM2", 2.5);
+    builder.captureBlockReturnValue();
 
-    // 5.25 + 12.227
-    auto block2 = createOperatorBlock("b", "operator_add");
-    addInput(block2, "NUM1", OperatorBlocks::NUM1, 5.25);
-    addInput(block2, "NUM2", OperatorBlocks::NUM2, 12.227);
+    builder.build();
+    builder.run();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileAdd(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileAdd(&compiler);
-    compiler.end();
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_ADD, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_ADD, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 2, 3, 5.25, 12.227 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 1);
+    ASSERT_EQ(Value(values[0]), 8.2);
 }
 
 TEST_F(OperatorBlocksTest, Subtract)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // 5 - 2
-    auto block1 = createOperatorBlock("a", "operator_subtract");
-    addInput(block1, "NUM1", OperatorBlocks::NUM1, 5);
-    addInput(block1, "NUM2", OperatorBlocks::NUM2, 2);
+    builder.addBlock("operator_subtract");
+    builder.addValueInput("NUM1", 5.7);
+    builder.addValueInput("NUM2", 2.5);
+    builder.captureBlockReturnValue();
 
-    // 50.3 - 0.25
-    auto block2 = createOperatorBlock("b", "operator_subtract");
-    addInput(block2, "NUM1", OperatorBlocks::NUM1, 50.3);
-    addInput(block2, "NUM2", OperatorBlocks::NUM2, 0.25);
+    builder.build();
+    builder.run();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileSubtract(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileSubtract(&compiler);
-    compiler.end();
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_SUBTRACT, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_SUBTRACT, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 5, 2, 50.3, 0.25 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 1);
+    ASSERT_EQ(Value(values[0]), 3.2);
 }
 
 TEST_F(OperatorBlocksTest, Multiply)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // 2 * 5
-    auto block1 = createOperatorBlock("a", "operator_multiply");
-    addInput(block1, "NUM1", OperatorBlocks::NUM1, 2);
-    addInput(block1, "NUM2", OperatorBlocks::NUM2, 5);
+    builder.addBlock("operator_multiply");
+    builder.addValueInput("NUM1", 5.7);
+    builder.addValueInput("NUM2", 2.5);
+    builder.captureBlockReturnValue();
 
-    // 1.2 * 0.12
-    auto block2 = createOperatorBlock("b", "operator_multiply");
-    addInput(block2, "NUM1", OperatorBlocks::NUM1, 1.2);
-    addInput(block2, "NUM2", OperatorBlocks::NUM2, 0.12);
+    builder.build();
+    builder.run();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileMultiply(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileMultiply(&compiler);
-    compiler.end();
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_MULTIPLY, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_MULTIPLY, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 2, 5, 1.2, 0.12 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 1);
+    ASSERT_EQ(Value(values[0]), 14.25);
 }
 
 TEST_F(OperatorBlocksTest, Divide)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // 3 / 2
-    auto block1 = createOperatorBlock("a", "operator_divide");
-    addInput(block1, "NUM1", OperatorBlocks::NUM1, 3);
-    addInput(block1, "NUM2", OperatorBlocks::NUM2, 2);
+    builder.addBlock("operator_divide");
+    builder.addValueInput("NUM1", 5.7);
+    builder.addValueInput("NUM2", 2.5);
+    builder.captureBlockReturnValue();
 
-    // -2 / 0.5
-    auto block2 = createOperatorBlock("b", "operator_divide");
-    addInput(block2, "NUM1", OperatorBlocks::NUM1, -2);
-    addInput(block2, "NUM2", OperatorBlocks::NUM2, 0.5);
+    builder.build();
+    builder.run();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileDivide(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileDivide(&compiler);
-    compiler.end();
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_DIVIDE, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_DIVIDE, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 3, 2, -2, 0.5 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 1);
+    ASSERT_EQ(std::round(value_toDouble(&values[0]) * 100) / 100, 2.28);
 }
 
 TEST_F(OperatorBlocksTest, Random)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // pick random 1 to 10
-    auto block1 = createOperatorBlock("a", "operator_random");
-    addInput(block1, "FROM", OperatorBlocks::FROM, 1);
-    addInput(block1, "TO", OperatorBlocks::TO, 10);
+    auto addRandomTest = [&builder](const Value &from, const Value &to) {
+        auto block = std::make_shared<Block>("", "operator_random");
+        auto input = std::make_shared<Input>("FROM", Input::Type::Shadow);
+        input->setPrimaryValue(from);
+        block->addInput(input);
+        input = std::make_shared<Input>("TO", Input::Type::Shadow);
+        input->setPrimaryValue(to);
+        block->addInput(input);
 
-    // pick random -2.32 to 5.3
-    auto block2 = createOperatorBlock("b", "operator_random");
-    addInput(block2, "FROM", OperatorBlocks::FROM, -2.32);
-    addInput(block2, "TO", OperatorBlocks::TO, 5.3);
+        builder.addBlock("test_print");
+        builder.addObscuredInput("STRING", block);
+        return builder.currentBlock();
+    };
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compilePickRandom(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compilePickRandom(&compiler);
-    compiler.end();
+    auto block = addRandomTest(-45, 12);
+    addRandomTest(12, 6.05);
+    addRandomTest(-78.686, -45);
+    addRandomTest(6.05, -78.686);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_RANDOM, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_RANDOM, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 1, 10, -2.32, 5.3 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    builder.build();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    ctx->setRng(&m_rng);
+
+    static const std::string expected =
+        "-18\n"
+        "3.486789\n"
+        "-59.468873\n"
+        "-28.648764\n";
+
+    EXPECT_CALL(m_rng, randint(-45, 12)).WillOnce(Return(-18));
+    EXPECT_CALL(m_rng, randintDouble(12, 6.05)).WillOnce(Return(3.486789));
+    EXPECT_CALL(m_rng, randintDouble(-78.686, -45)).WillOnce(Return(-59.468873));
+    EXPECT_CALL(m_rng, randintDouble(6.05, -78.686)).WillOnce(Return(-28.648764));
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
 TEST_F(OperatorBlocksTest, Lt)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // 2 < 4
-    auto block1 = createOperatorBlock("a", "operator_lt");
-    addInput(block1, "OPERAND1", OperatorBlocks::OPERAND1, 2);
-    addInput(block1, "OPERAND2", OperatorBlocks::OPERAND2, 4);
+    builder.addBlock("operator_lt");
+    builder.addValueInput("OPERAND1", 5.4645);
+    builder.addValueInput("OPERAND2", 12.486);
+    builder.captureBlockReturnValue();
 
-    // 81.5 < -35.221
-    auto block2 = createOperatorBlock("b", "operator_lt");
-    addInput(block2, "OPERAND1", OperatorBlocks::OPERAND1, 81.5);
-    addInput(block2, "OPERAND2", OperatorBlocks::OPERAND2, -35.221);
+    builder.addBlock("operator_lt");
+    builder.addValueInput("OPERAND1", 153.25);
+    builder.addValueInput("OPERAND2", 96.5);
+    builder.captureBlockReturnValue();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileLessThan(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileLessThan(&compiler);
-    compiler.end();
+    builder.addBlock("operator_lt");
+    builder.addValueInput("OPERAND1", 2.8465);
+    builder.addValueInput("OPERAND2", 2.8465);
+    builder.captureBlockReturnValue();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_LESS_THAN, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_LESS_THAN, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 2, 4, 81.5, -35.221 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 3);
+    ASSERT_EQ(Value(values[0]), true);
+    ASSERT_EQ(Value(values[1]), false);
+    ASSERT_EQ(Value(values[2]), false);
 }
 
 TEST_F(OperatorBlocksTest, Equals)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // 2 = 4
-    auto block1 = createOperatorBlock("a", "operator_equals");
-    addInput(block1, "OPERAND1", OperatorBlocks::OPERAND1, 2);
-    addInput(block1, "OPERAND2", OperatorBlocks::OPERAND2, 4);
+    builder.addBlock("operator_equals");
+    builder.addValueInput("OPERAND1", 5.4645);
+    builder.addValueInput("OPERAND2", 12.486);
+    builder.captureBlockReturnValue();
 
-    // 81.5 = -35.221
-    auto block2 = createOperatorBlock("b", "operator_equals");
-    addInput(block2, "OPERAND1", OperatorBlocks::OPERAND1, 81.5);
-    addInput(block2, "OPERAND2", OperatorBlocks::OPERAND2, -35.221);
+    builder.addBlock("operator_equals");
+    builder.addValueInput("OPERAND1", 153.25);
+    builder.addValueInput("OPERAND2", 96.5);
+    builder.captureBlockReturnValue();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileEquals(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileEquals(&compiler);
-    compiler.end();
+    builder.addBlock("operator_equals");
+    builder.addValueInput("OPERAND1", 2.8465);
+    builder.addValueInput("OPERAND2", 2.8465);
+    builder.captureBlockReturnValue();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_EQUALS, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_EQUALS, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 2, 4, 81.5, -35.221 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 3);
+    ASSERT_EQ(Value(values[0]), false);
+    ASSERT_EQ(Value(values[1]), false);
+    ASSERT_EQ(Value(values[2]), true);
 }
 
 TEST_F(OperatorBlocksTest, Gt)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // 2 > 4
-    auto block1 = createOperatorBlock("a", "operator_gt");
-    addInput(block1, "OPERAND1", OperatorBlocks::OPERAND1, 2);
-    addInput(block1, "OPERAND2", OperatorBlocks::OPERAND2, 4);
+    builder.addBlock("operator_gt");
+    builder.addValueInput("OPERAND1", 5.4645);
+    builder.addValueInput("OPERAND2", 12.486);
+    builder.captureBlockReturnValue();
 
-    // 81.5 > -35.221
-    auto block2 = createOperatorBlock("b", "operator_gt");
-    addInput(block2, "OPERAND1", OperatorBlocks::OPERAND1, 81.5);
-    addInput(block2, "OPERAND2", OperatorBlocks::OPERAND2, -35.221);
+    builder.addBlock("operator_gt");
+    builder.addValueInput("OPERAND1", 153.25);
+    builder.addValueInput("OPERAND2", 96.5);
+    builder.captureBlockReturnValue();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileGreaterThan(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileGreaterThan(&compiler);
-    compiler.end();
+    builder.addBlock("operator_gt");
+    builder.addValueInput("OPERAND1", 2.8465);
+    builder.addValueInput("OPERAND2", 2.8465);
+    builder.captureBlockReturnValue();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_GREATER_THAN, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_GREATER_THAN, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 2, 4, 81.5, -35.221 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 3);
+    ASSERT_EQ(Value(values[0]), false);
+    ASSERT_EQ(Value(values[1]), true);
+    ASSERT_EQ(Value(values[2]), false);
 }
 
 TEST_F(OperatorBlocksTest, And)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // <> and <> (without inputs)
-    auto block1 = createOperatorBlock("a", "operator_and");
+    builder.addBlock("operator_and");
+    builder.addValueInput("OPERAND1", false);
+    builder.addValueInput("OPERAND2", false);
+    builder.captureBlockReturnValue();
 
-    // <3 > 2> and <null> (second input is a null shadow)
-    auto block2 = createOperatorBlock("b", "operator_and");
-    auto gtBlock = createOperatorBlock("c", "operator_gt");
-    gtBlock->setCompileFunction(&OperatorBlocks::compileGreaterThan);
-    addInput(gtBlock, "OPERAND1", OperatorBlocks::OPERAND1, 3);
-    addInput(gtBlock, "OPERAND2", OperatorBlocks::OPERAND2, 2);
-    addObscuredInput(block2, "OPERAND1", OperatorBlocks::OPERAND1, gtBlock);
-    addNullInput(block2, "OPERAND2", OperatorBlocks::OPERAND2);
+    builder.addBlock("operator_and");
+    builder.addValueInput("OPERAND1", true);
+    builder.addValueInput("OPERAND2", false);
+    builder.captureBlockReturnValue();
 
-    // <> and <1 < 10> (first input is missing)
-    auto block3 = createOperatorBlock("d", "operator_and");
-    auto ltBlock = createOperatorBlock("e", "operator_lt");
-    ltBlock->setCompileFunction(&OperatorBlocks::compileLessThan);
-    addInput(ltBlock, "OPERAND1", OperatorBlocks::OPERAND1, 1);
-    addInput(ltBlock, "OPERAND2", OperatorBlocks::OPERAND2, 10);
-    addObscuredInput(block3, "OPERAND2", OperatorBlocks::OPERAND2, ltBlock);
+    builder.addBlock("operator_and");
+    builder.addValueInput("OPERAND1", false);
+    builder.addValueInput("OPERAND2", true);
+    builder.captureBlockReturnValue();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileAnd(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileAnd(&compiler);
-    compiler.setBlock(block3);
-    OperatorBlocks::compileAnd(&compiler);
-    compiler.end();
+    builder.addBlock("operator_and");
+    builder.addValueInput("OPERAND1", true);
+    builder.addValueInput("OPERAND2", true);
+    builder.captureBlockReturnValue();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>(
-            { vm::OP_START, vm::OP_NULL, vm::OP_NULL,  vm::OP_AND, vm::OP_CONST, 0, vm::OP_CONST,     1,          vm::OP_GREATER_THAN, vm::OP_CONST, 2,
-              vm::OP_AND,   vm::OP_NULL, vm::OP_CONST, 3,          vm::OP_CONST, 4, vm::OP_LESS_THAN, vm::OP_AND, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 3, 2, Value(), 1, 10 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 4);
+    ASSERT_EQ(Value(values[0]), false);
+    ASSERT_EQ(Value(values[1]), false);
+    ASSERT_EQ(Value(values[2]), false);
+    ASSERT_EQ(Value(values[3]), true);
 }
 
 TEST_F(OperatorBlocksTest, Or)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // <> or <> (without inputs)
-    auto block1 = createOperatorBlock("a", "operator_or");
+    builder.addBlock("operator_or");
+    builder.addValueInput("OPERAND1", false);
+    builder.addValueInput("OPERAND2", false);
+    builder.captureBlockReturnValue();
 
-    // <3 > 2> or <null> (second input is a null shadow)
-    auto block2 = createOperatorBlock("b", "operator_or");
-    auto gtBlock = createOperatorBlock("c", "operator_gt");
-    gtBlock->setCompileFunction(&OperatorBlocks::compileGreaterThan);
-    addInput(gtBlock, "OPERAND1", OperatorBlocks::OPERAND1, 3);
-    addInput(gtBlock, "OPERAND2", OperatorBlocks::OPERAND2, 2);
-    addObscuredInput(block2, "OPERAND1", OperatorBlocks::OPERAND1, gtBlock);
-    addNullInput(block2, "OPERAND2", OperatorBlocks::OPERAND2);
+    builder.addBlock("operator_or");
+    builder.addValueInput("OPERAND1", true);
+    builder.addValueInput("OPERAND2", false);
+    builder.captureBlockReturnValue();
 
-    // <> or <1 < 10> (first input is missing)
-    auto block3 = createOperatorBlock("d", "operator_or");
-    auto ltBlock = createOperatorBlock("e", "operator_lt");
-    ltBlock->setCompileFunction(&OperatorBlocks::compileLessThan);
-    addInput(ltBlock, "OPERAND1", OperatorBlocks::OPERAND1, 1);
-    addInput(ltBlock, "OPERAND2", OperatorBlocks::OPERAND2, 10);
-    addObscuredInput(block3, "OPERAND2", OperatorBlocks::OPERAND2, ltBlock);
+    builder.addBlock("operator_or");
+    builder.addValueInput("OPERAND1", false);
+    builder.addValueInput("OPERAND2", true);
+    builder.captureBlockReturnValue();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileOr(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileOr(&compiler);
-    compiler.setBlock(block3);
-    OperatorBlocks::compileOr(&compiler);
-    compiler.end();
+    builder.addBlock("operator_or");
+    builder.addValueInput("OPERAND1", true);
+    builder.addValueInput("OPERAND2", true);
+    builder.captureBlockReturnValue();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>(
-            { vm::OP_START, vm::OP_NULL, vm::OP_NULL,  vm::OP_OR, vm::OP_CONST, 0, vm::OP_CONST,     1,         vm::OP_GREATER_THAN, vm::OP_CONST, 2,
-              vm::OP_OR,    vm::OP_NULL, vm::OP_CONST, 3,         vm::OP_CONST, 4, vm::OP_LESS_THAN, vm::OP_OR, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 3, 2, Value(), 1, 10 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 4);
+    ASSERT_EQ(Value(values[0]), false);
+    ASSERT_EQ(Value(values[1]), true);
+    ASSERT_EQ(Value(values[2]), true);
+    ASSERT_EQ(Value(values[3]), true);
 }
 
 TEST_F(OperatorBlocksTest, Not)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // <> (without any input)
-    auto block1 = createOperatorBlock("a", "operator_not");
+    builder.addBlock("operator_not");
+    builder.addValueInput("OPERAND", false);
+    builder.captureBlockReturnValue();
 
-    // <3 > 2>
-    auto block2 = createOperatorBlock("b", "operator_not");
-    auto gtBlock = createOperatorBlock("c", "operator_gt");
-    gtBlock->setCompileFunction(&OperatorBlocks::compileGreaterThan);
-    addInput(gtBlock, "OPERAND1", OperatorBlocks::OPERAND1, 3);
-    addInput(gtBlock, "OPERAND2", OperatorBlocks::OPERAND2, 2);
-    addObscuredInput(block2, "OPERAND", OperatorBlocks::OPERAND, gtBlock);
+    builder.addBlock("operator_not");
+    builder.addValueInput("OPERAND", true);
+    builder.captureBlockReturnValue();
 
-    // <null> (the input is a null shadow)
-    auto block3 = createOperatorBlock("d", "operator_not");
-    addNullInput(block3, "OPERAND", OperatorBlocks::OPERAND);
+    builder.build();
+    builder.run();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileNot(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileNot(&compiler);
-    compiler.setBlock(block3);
-    OperatorBlocks::compileNot(&compiler);
-    compiler.end();
-
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_NULL, vm::OP_NOT, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_GREATER_THAN, vm::OP_NOT, vm::OP_CONST, 2, vm::OP_NOT, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 3, 2, Value() }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 2);
+    ASSERT_EQ(Value(values[0]), true);
+    ASSERT_EQ(Value(values[1]), false);
 }
 
 TEST_F(OperatorBlocksTest, Join)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // join "hello " "world"
-    auto block1 = createOperatorBlock("a", "operator_join");
-    addInput(block1, "STRING1", OperatorBlocks::STRING1, "hello ");
-    addInput(block1, "STRING2", OperatorBlocks::STRING2, "world");
+    builder.addBlock("operator_join");
+    builder.addValueInput("STRING1", "abc");
+    builder.addValueInput("STRING2", "def");
+    builder.captureBlockReturnValue();
 
-    // join "test_" 50.01
-    auto block2 = createOperatorBlock("b", "operator_join");
-    addInput(block2, "STRING1", OperatorBlocks::STRING1, "test_");
-    addInput(block2, "STRING2", OperatorBlocks::STRING2, 50.01);
+    builder.addBlock("operator_join");
+    builder.addValueInput("STRING1", "Hello ");
+    builder.addValueInput("STRING2", "world");
+    builder.captureBlockReturnValue();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileJoin(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileJoin(&compiler);
-    compiler.end();
+    builder.build();
+    builder.run();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_STR_CONCAT, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_STR_CONCAT, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "hello ", "world", "test_", 50.01 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 2);
+    ASSERT_EQ(Value(values[0]), "abcdef");
+    ASSERT_EQ(Value(values[1]), "Hello world");
 }
 
 TEST_F(OperatorBlocksTest, LetterOf)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // letter 5 of "test"
-    auto block1 = createOperatorBlock("a", "operator_letter_of");
-    addInput(block1, "LETTER", OperatorBlocks::LETTER, 5);
-    addInput(block1, "STRING", OperatorBlocks::STRING, "test");
+    builder.addBlock("operator_letter_of");
+    builder.addValueInput("LETTER", 2);
+    builder.addValueInput("STRING", "abc");
+    builder.captureBlockReturnValue();
 
-    // join 7 of -85.108
-    auto block2 = createOperatorBlock("b", "operator_letter_of");
-    addInput(block2, "LETTER", OperatorBlocks::LETTER, 7);
-    addInput(block2, "STRING", OperatorBlocks::STRING, -85.108);
+    builder.addBlock("operator_letter_of");
+    builder.addValueInput("LETTER", 7);
+    builder.addValueInput("STRING", "Hello world");
+    builder.captureBlockReturnValue();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileLetterOf(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileLetterOf(&compiler);
-    compiler.end();
+    builder.addBlock("operator_letter_of");
+    builder.addValueInput("LETTER", 0);
+    builder.addValueInput("STRING", "Hello world");
+    builder.captureBlockReturnValue();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_STR_AT, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_STR_AT, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "test", 5, -85.108, 7 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    builder.addBlock("operator_letter_of");
+    builder.addValueInput("LETTER", 12);
+    builder.addValueInput("STRING", "Hello world");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_letter_of");
+    builder.addValueInput("LETTER", 1);
+    builder.addValueInput("STRING", "Ábč");
+    builder.captureBlockReturnValue();
+
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 5);
+    ASSERT_EQ(Value(values[0]), "b");
+    ASSERT_EQ(Value(values[1]), "w");
+    ASSERT_EQ(Value(values[2]), "");
+    ASSERT_EQ(Value(values[3]), "");
+    ASSERT_EQ(Value(values[4]), "Á");
 }
 
 TEST_F(OperatorBlocksTest, Length)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // length of "test"
-    auto block1 = createOperatorBlock("a", "operator_length");
-    addInput(block1, "STRING", OperatorBlocks::STRING, "test");
+    builder.addBlock("operator_length");
+    builder.addValueInput("STRING", "abc");
+    builder.captureBlockReturnValue();
 
-    // length of -85.108
-    auto block2 = createOperatorBlock("b", "operator_length");
-    addInput(block2, "STRING", OperatorBlocks::STRING, -85.108);
+    builder.addBlock("operator_length");
+    builder.addValueInput("STRING", "Hello world");
+    builder.captureBlockReturnValue();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileLength(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileLength(&compiler);
-    compiler.end();
+    builder.addBlock("operator_length");
+    builder.addValueInput("STRING", "dOádčĐaší");
+    builder.captureBlockReturnValue();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_STR_LENGTH, vm::OP_CONST, 1, vm::OP_STR_LENGTH, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "test", -85.108 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 3);
+    ASSERT_EQ(Value(values[0]), 3);
+    ASSERT_EQ(Value(values[1]), 11);
+    ASSERT_EQ(Value(values[2]), 9);
 }
 
 TEST_F(OperatorBlocksTest, Contains)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // "hello" contains "e"
-    auto block1 = createOperatorBlock("a", "operator_contains");
-    addInput(block1, "STRING1", OperatorBlocks::STRING1, "hello");
-    addInput(block1, "STRING2", OperatorBlocks::STRING2, "e");
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "abc");
+    builder.addValueInput("STRING2", "a");
+    builder.captureBlockReturnValue();
 
-    // 50.01 contains "1"
-    auto block2 = createOperatorBlock("b", "operator_contains");
-    addInput(block2, "STRING1", OperatorBlocks::STRING1, 50.01);
-    addInput(block2, "STRING2", OperatorBlocks::STRING2, "1");
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "abc");
+    builder.addValueInput("STRING2", "e");
+    builder.captureBlockReturnValue();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileContains(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileContains(&compiler);
-    compiler.end();
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "abc");
+    builder.addValueInput("STRING2", "C");
+    builder.captureBlockReturnValue();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_STR_CONTAINS, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_STR_CONTAINS, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "hello", "e", 50.01, "1" }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "Hello world");
+    builder.addValueInput("STRING2", "ello");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "Hello world");
+    builder.addValueInput("STRING2", "olld");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "ábČ");
+    builder.addValueInput("STRING2", "á");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "ábČ");
+    builder.addValueInput("STRING2", "bČ");
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("operator_contains");
+    builder.addValueInput("STRING1", "ábČ");
+    builder.addValueInput("STRING2", "ďá");
+    builder.captureBlockReturnValue();
+
+    builder.build();
+    builder.run();
+
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 8);
+    ASSERT_EQ(Value(values[0]), true);
+    ASSERT_EQ(Value(values[1]), false);
+    ASSERT_EQ(Value(values[2]), true);
+    ASSERT_EQ(Value(values[3]), true);
+    ASSERT_EQ(Value(values[4]), false);
+    ASSERT_EQ(Value(values[5]), true);
+    ASSERT_EQ(Value(values[6]), true);
+    ASSERT_EQ(Value(values[7]), false);
 }
 
 TEST_F(OperatorBlocksTest, Mod)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // 7 mod 5
-    auto block1 = createOperatorBlock("a", "operator_mod");
-    addInput(block1, "NUM1", OperatorBlocks::NUM1, 7);
-    addInput(block1, "NUM2", OperatorBlocks::NUM2, 5);
+    builder.addBlock("operator_mod");
+    builder.addValueInput("NUM1", 5.7);
+    builder.addValueInput("NUM2", 2.5);
+    builder.captureBlockReturnValue();
 
-    // -5.25 mod 3.5
-    auto block2 = createOperatorBlock("b", "operator_mod");
-    addInput(block2, "NUM1", OperatorBlocks::NUM1, -5.25);
-    addInput(block2, "NUM2", OperatorBlocks::NUM2, 3.5);
+    builder.addBlock("operator_mod");
+    builder.addValueInput("NUM1", -5.7);
+    builder.addValueInput("NUM2", 2.5);
+    builder.captureBlockReturnValue();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileMod(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileMod(&compiler);
-    compiler.end();
+    builder.build();
+    builder.run();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_MOD, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_MOD, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 7, 5, -5.25, 3.5 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 2);
+    ASSERT_EQ(std::round(value_toDouble(&values[0]) * 100) / 100, 0.7);
+    ASSERT_EQ(std::round(value_toDouble(&values[1]) * 100) / 100, 1.8);
 }
 
 TEST_F(OperatorBlocksTest, Round)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // round 6
-    auto block1 = createOperatorBlock("a", "operator_round");
-    addInput(block1, "NUM", OperatorBlocks::NUM, 6);
+    builder.addBlock("operator_round");
+    builder.addValueInput("NUM", 5.7);
+    builder.captureBlockReturnValue();
 
-    // round -2.054
-    auto block2 = createOperatorBlock("b", "operator_round");
-    addInput(block2, "NUM", OperatorBlocks::NUM, -2.054);
+    builder.addBlock("operator_round");
+    builder.addValueInput("NUM", 2.3);
+    builder.captureBlockReturnValue();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    OperatorBlocks::compileRound(&compiler);
-    compiler.setBlock(block2);
-    OperatorBlocks::compileRound(&compiler);
-    compiler.end();
+    builder.build();
+    builder.run();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_ROUND, vm::OP_CONST, 1, vm::OP_ROUND, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 6, -2.054 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 2);
+    ASSERT_EQ(Value(values[0]), 6);
+    ASSERT_EQ(Value(values[1]), 2);
 }
 
 TEST_F(OperatorBlocksTest, MathOp)
 {
-    Compiler compiler(&m_engineMock);
-    std::vector<std::shared_ptr<Block>> blocks;
-    std::shared_ptr<Block> block;
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // abs of -5
-    block = createOperatorBlock("a", "operator_mathop");
-    addMathOpField(block, "abs", OperatorBlocks::Abs);
-    addInput(block, "NUM", OperatorBlocks::NUM, -5);
-    blocks.push_back(block);
+    // abs
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "abs");
+    builder.addValueInput("NUM", 5.7);
+    builder.captureBlockReturnValue();
 
-    // floor of 2.054
-    block = createOperatorBlock("b", "operator_mathop");
-    addMathOpField(block, "floor", OperatorBlocks::Floor);
-    addInput(block, "NUM", OperatorBlocks::NUM, 2.054);
-    blocks.push_back(block);
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "abs");
+    builder.addValueInput("NUM", -5.7);
+    builder.captureBlockReturnValue();
 
-    // ceiling of 8.2
-    block = createOperatorBlock("c", "operator_mathop");
-    addMathOpField(block, "ceiling", OperatorBlocks::Ceiling);
-    addInput(block, "NUM", OperatorBlocks::NUM, 8.2);
-    blocks.push_back(block);
+    // floor
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "floor");
+    builder.addValueInput("NUM", 3.2);
+    builder.captureBlockReturnValue();
 
-    // sqrt of 25
-    block = createOperatorBlock("d", "operator_mathop");
-    addMathOpField(block, "sqrt", OperatorBlocks::Sqrt);
-    addInput(block, "NUM", OperatorBlocks::NUM, 25);
-    blocks.push_back(block);
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "floor");
+    builder.addValueInput("NUM", 5.7);
+    builder.captureBlockReturnValue();
 
-    // sin of 45
-    block = createOperatorBlock("e", "operator_mathop");
-    addMathOpField(block, "sin", OperatorBlocks::Sin);
-    addInput(block, "NUM", OperatorBlocks::NUM, 45);
-    blocks.push_back(block);
+    // ceiling
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "ceiling");
+    builder.addValueInput("NUM", 3.2);
+    builder.captureBlockReturnValue();
 
-    // cos of 90
-    block = createOperatorBlock("f", "operator_mathop");
-    addMathOpField(block, "cos", OperatorBlocks::Cos);
-    addInput(block, "NUM", OperatorBlocks::NUM, 90);
-    blocks.push_back(block);
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "ceiling");
+    builder.addValueInput("NUM", 5.7);
+    builder.captureBlockReturnValue();
 
-    // tan of 10.5
-    block = createOperatorBlock("g", "operator_mathop");
-    addMathOpField(block, "tan", OperatorBlocks::Tan);
-    addInput(block, "NUM", OperatorBlocks::NUM, 10.5);
-    blocks.push_back(block);
+    // sqrt
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "sqrt");
+    builder.addValueInput("NUM", 16);
+    builder.captureBlockReturnValue();
 
-    // asin of 0.5
-    block = createOperatorBlock("h", "operator_mathop");
-    addMathOpField(block, "asin", OperatorBlocks::Asin);
-    addInput(block, "NUM", OperatorBlocks::NUM, 0.5);
-    blocks.push_back(block);
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "sqrt");
+    builder.addValueInput("NUM", 2);
+    builder.captureBlockReturnValue();
 
-    // acos of 0
-    block = createOperatorBlock("i", "operator_mathop");
-    addMathOpField(block, "acos", OperatorBlocks::Acos);
-    addInput(block, "NUM", OperatorBlocks::NUM, 0);
-    blocks.push_back(block);
+    // sin
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "sin");
+    builder.addValueInput("NUM", 90);
+    builder.captureBlockReturnValue();
 
-    // atan of 20
-    block = createOperatorBlock("j", "operator_mathop");
-    addMathOpField(block, "atan", OperatorBlocks::Atan);
-    addInput(block, "NUM", OperatorBlocks::NUM, 20);
-    blocks.push_back(block);
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "sin");
+    builder.addValueInput("NUM", 30);
+    builder.captureBlockReturnValue();
 
-    // ln of 3
-    block = createOperatorBlock("k", "operator_mathop");
-    addMathOpField(block, "ln", OperatorBlocks::Ln);
-    addInput(block, "NUM", OperatorBlocks::NUM, 3);
-    blocks.push_back(block);
+    // cos
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "cos");
+    builder.addValueInput("NUM", 0);
+    builder.captureBlockReturnValue();
 
-    // log of 100
-    block = createOperatorBlock("l", "operator_mathop");
-    addMathOpField(block, "log", OperatorBlocks::Log);
-    addInput(block, "NUM", OperatorBlocks::NUM, 100);
-    blocks.push_back(block);
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "cos");
+    builder.addValueInput("NUM", 60);
+    builder.captureBlockReturnValue();
 
-    // e ^ of 100
-    block = createOperatorBlock("m", "operator_mathop");
-    addMathOpField(block, "e ^", OperatorBlocks::Eexp);
-    addInput(block, "NUM", OperatorBlocks::NUM, 100);
-    blocks.push_back(block);
+    // tan
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "tan");
+    builder.addValueInput("NUM", 30);
+    builder.captureBlockReturnValue();
 
-    // 10 ^ of 4
-    block = createOperatorBlock("n", "operator_mathop");
-    addMathOpField(block, "10 ^", OperatorBlocks::Op_10exp);
-    addInput(block, "NUM", OperatorBlocks::NUM, 4);
-    blocks.push_back(block);
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "tan");
+    builder.addValueInput("NUM", 45);
+    builder.captureBlockReturnValue();
 
-    compiler.init();
+    // asin
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "asin");
+    builder.addValueInput("NUM", 1);
+    builder.captureBlockReturnValue();
 
-    for (auto block : blocks) {
-        compiler.setBlock(block);
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "asin");
+    builder.addValueInput("NUM", 0.5);
+    builder.captureBlockReturnValue();
 
-        switch (block->fieldAt(0)->specialValueId()) {
-            case OperatorBlocks::Ln:
-                EXPECT_CALL(m_engineMock, functionIndex(&OperatorBlocks::op_ln)).WillOnce(Return(0));
-                break;
-            case OperatorBlocks::Log:
-                EXPECT_CALL(m_engineMock, functionIndex(&OperatorBlocks::op_log)).WillOnce(Return(1));
-                break;
-            case OperatorBlocks::Eexp:
-                EXPECT_CALL(m_engineMock, functionIndex(&OperatorBlocks::op_eexp)).WillOnce(Return(2));
-                break;
-            case OperatorBlocks::Op_10exp:
-                EXPECT_CALL(m_engineMock, functionIndex(&OperatorBlocks::op_10exp)).WillOnce(Return(3));
-                break;
-            default:
-                break;
-        }
+    // acos
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "acos");
+    builder.addValueInput("NUM", 1);
+    builder.captureBlockReturnValue();
 
-        OperatorBlocks::compileMathOp(&compiler);
-    }
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "acos");
+    builder.addValueInput("NUM", 0.5);
+    builder.captureBlockReturnValue();
 
-    compiler.end();
+    // atan
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "atan");
+    builder.addValueInput("NUM", 0.5);
+    builder.captureBlockReturnValue();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>(
-            { vm::OP_START,
-              vm::OP_CONST,
-              0,
-              vm::OP_ABS,
-              vm::OP_CONST,
-              1,
-              vm::OP_FLOOR,
-              vm::OP_CONST,
-              2,
-              vm::OP_CEIL,
-              vm::OP_CONST,
-              3,
-              vm::OP_SQRT,
-              vm::OP_CONST,
-              4,
-              vm::OP_SIN,
-              vm::OP_CONST,
-              5,
-              vm::OP_COS,
-              vm::OP_CONST,
-              6,
-              vm::OP_TAN,
-              vm::OP_CONST,
-              7,
-              vm::OP_ASIN,
-              vm::OP_CONST,
-              8,
-              vm::OP_ACOS,
-              vm::OP_CONST,
-              9,
-              vm::OP_ATAN,
-              vm::OP_CONST,
-              10,
-              vm::OP_EXEC,
-              0,
-              vm::OP_CONST,
-              11,
-              vm::OP_EXEC,
-              1,
-              vm::OP_CONST,
-              12,
-              vm::OP_EXEC,
-              2,
-              vm::OP_CONST,
-              13,
-              vm::OP_EXEC,
-              3,
-              vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ -5, 2.054, 8.2, 25, 45, 90, 10.5, 0.5, 0, 20, 3, 100, 100, 4 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-}
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "atan");
+    builder.addValueInput("NUM", 1);
+    builder.captureBlockReturnValue();
 
-TEST_F(OperatorBlocksTest, MathOpLn)
-{
-    static unsigned int bytecode[] = {
-        vm::OP_START,
-        vm::OP_CONST,
-        0,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        1,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        2,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        3,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        4,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        5,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        6,
-        vm::OP_EXEC,
-        0,
-        vm::OP_HALT
-    };
-    static BlockFunc functions[] = { &OperatorBlocks::op_ln };
-    static const double inf = std::numeric_limits<double>::infinity();
-    static const double nan = std::numeric_limits<double>::quiet_NaN();
-    static Value constValues[] = { -inf, -2.5, 0, nan, std::exp(1), 50, inf };
+    // ln
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "ln");
+    builder.addValueInput("NUM", 1);
+    builder.captureBlockReturnValue();
 
-    VirtualMachine vm;
-    vm.setBytecode(bytecode);
-    vm.setFunctions(functions);
-    vm.setConstValues(constValues);
-    vm.run();
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "ln");
+    builder.addValueInput("NUM", 10);
+    builder.captureBlockReturnValue();
 
-    ASSERT_EQ(vm.registerCount(), 7);
-    ASSERT_TRUE(vm.getInput(0, 7)->isNaN());
-    ASSERT_TRUE(vm.getInput(1, 7)->isNaN());
-    ASSERT_TRUE(vm.getInput(2, 7)->isNegativeInfinity());
-    ASSERT_TRUE(vm.getInput(3, 7)->isNegativeInfinity());
-    ASSERT_EQ(vm.getInput(4, 7)->toDouble(), 1);
-    ASSERT_EQ(std::round(vm.getInput(5, 7)->toDouble() * 1000) / 1000, 3.912);
-    ASSERT_TRUE(vm.getInput(6, 7)->isInfinity());
-}
+    // log
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "log");
+    builder.addValueInput("NUM", 1);
+    builder.captureBlockReturnValue();
 
-TEST_F(OperatorBlocksTest, MathOpLog)
-{
-    static unsigned int bytecode[] = {
-        vm::OP_START,
-        vm::OP_CONST,
-        0,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        1,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        2,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        3,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        4,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        5,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        6,
-        vm::OP_EXEC,
-        0,
-        vm::OP_HALT
-    };
-    static BlockFunc functions[] = { &OperatorBlocks::op_log };
-    static const double inf = std::numeric_limits<double>::infinity();
-    static const double nan = std::numeric_limits<double>::quiet_NaN();
-    static Value constValues[] = { -inf, -2.5, 0, nan, 100, 1500, inf };
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "log");
+    builder.addValueInput("NUM", 100);
+    builder.captureBlockReturnValue();
 
-    VirtualMachine vm;
-    vm.setBytecode(bytecode);
-    vm.setFunctions(functions);
-    vm.setConstValues(constValues);
-    vm.run();
+    // e ^
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "e ^");
+    builder.addValueInput("NUM", 1);
+    builder.captureBlockReturnValue();
 
-    ASSERT_EQ(vm.registerCount(), 7);
-    ASSERT_TRUE(vm.getInput(0, 7)->isNaN());
-    ASSERT_TRUE(vm.getInput(1, 7)->isNaN());
-    ASSERT_TRUE(vm.getInput(2, 7)->isNegativeInfinity());
-    ASSERT_TRUE(vm.getInput(3, 7)->isNegativeInfinity());
-    ASSERT_EQ(vm.getInput(4, 7)->toDouble(), 2);
-    ASSERT_EQ(std::round(vm.getInput(5, 7)->toDouble() * 1000) / 1000, 3.176);
-    ASSERT_TRUE(vm.getInput(6, 7)->isInfinity());
-}
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "e ^");
+    builder.addValueInput("NUM", 8.2);
+    builder.captureBlockReturnValue();
 
-TEST_F(OperatorBlocksTest, MathOpExp)
-{
-    static unsigned int bytecode[] = {
-        vm::OP_START,
-        vm::OP_CONST,
-        0,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        1,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        2,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        3,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        4,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        5,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        6,
-        vm::OP_EXEC,
-        0,
-        vm::OP_HALT
-    };
-    static BlockFunc functions[] = { &OperatorBlocks::op_eexp };
-    static const double inf = std::numeric_limits<double>::infinity();
-    static const double nan = std::numeric_limits<double>::quiet_NaN();
-    static Value constValues[] = { -inf, -3.25, 0, nan, 1, 5, inf };
+    // 10 ^
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "10 ^");
+    builder.addValueInput("NUM", 1);
+    builder.captureBlockReturnValue();
 
-    VirtualMachine vm;
-    vm.setBytecode(bytecode);
-    vm.setFunctions(functions);
-    vm.setConstValues(constValues);
-    vm.run();
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "10 ^");
+    builder.addValueInput("NUM", 8.2);
+    builder.captureBlockReturnValue();
 
-    ASSERT_EQ(vm.registerCount(), 7);
-    ASSERT_EQ(vm.getInput(0, 7)->toDouble(), 0);
-    ASSERT_EQ(vm.getInput(1, 7)->toDouble(), std::exp(-3.25));
-    ASSERT_EQ(vm.getInput(2, 7)->toDouble(), 1);
-    ASSERT_EQ(vm.getInput(3, 7)->toDouble(), 1);
-    ASSERT_EQ(vm.getInput(4, 7)->toDouble(), std::exp(1));
-    ASSERT_EQ(vm.getInput(5, 7)->toDouble(), std::exp(5));
-    ASSERT_TRUE(vm.getInput(6, 7)->isInfinity());
-}
+    // invalid
+    builder.addBlock("operator_mathop");
+    builder.addDropdownField("OPERATOR", "invalid");
+    builder.addValueInput("NUM", -5.54);
+    builder.captureBlockReturnValue();
 
-TEST_F(OperatorBlocksTest, MathOp10Exp)
-{
-    static unsigned int bytecode[] = {
-        vm::OP_START,
-        vm::OP_CONST,
-        0,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        1,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        2,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        3,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        4,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        5,
-        vm::OP_EXEC,
-        0,
-        vm::OP_CONST,
-        6,
-        vm::OP_EXEC,
-        0,
-        vm::OP_HALT
-    };
-    static BlockFunc functions[] = { &OperatorBlocks::op_10exp };
-    static const double inf = std::numeric_limits<double>::infinity();
-    static const double nan = std::numeric_limits<double>::quiet_NaN();
-    static Value constValues[] = { -inf, -2, 0, nan, 1, 5.5, inf };
+    builder.build();
+    builder.run();
 
-    VirtualMachine vm;
-    vm.setBytecode(bytecode);
-    vm.setFunctions(functions);
-    vm.setConstValues(constValues);
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 7);
-    ASSERT_EQ(vm.getInput(0, 7)->toDouble(), 0);
-    ASSERT_EQ(vm.getInput(1, 7)->toDouble(), 0.01);
-    ASSERT_EQ(vm.getInput(2, 7)->toDouble(), 1);
-    ASSERT_EQ(vm.getInput(3, 7)->toDouble(), 1);
-    ASSERT_EQ(vm.getInput(4, 7)->toDouble(), 10);
-    ASSERT_EQ(vm.getInput(5, 7)->toDouble(), std::pow(10, 5.5));
-    ASSERT_TRUE(vm.getInput(6, 7)->isInfinity());
+    List *valueList = builder.capturedValues();
+    ValueData *values = valueList->data();
+    ASSERT_EQ(valueList->size(), 29);
+    ASSERT_EQ(std::round(value_toDouble(&values[0]) * 100) / 100, 5.7);
+    ASSERT_EQ(std::round(value_toDouble(&values[1]) * 100) / 100, 5.7);
+    ASSERT_EQ(std::round(value_toDouble(&values[2]) * 100) / 100, 3);
+    ASSERT_EQ(std::round(value_toDouble(&values[3]) * 100) / 100, 5);
+    ASSERT_EQ(std::round(value_toDouble(&values[4]) * 100) / 100, 4);
+    ASSERT_EQ(std::round(value_toDouble(&values[5]) * 100) / 100, 6);
+    ASSERT_EQ(std::round(value_toDouble(&values[6]) * 100) / 100, 4);
+    ASSERT_EQ(std::round(value_toDouble(&values[7]) * 100) / 100, 1.41);
+    ASSERT_EQ(std::round(value_toDouble(&values[8]) * 100) / 100, 1);
+    ASSERT_EQ(std::round(value_toDouble(&values[9]) * 100) / 100, 0.5);
+    ASSERT_EQ(std::round(value_toDouble(&values[10]) * 100) / 100, 1);
+    ASSERT_EQ(std::round(value_toDouble(&values[11]) * 100) / 100, 0.5);
+    ASSERT_EQ(std::round(value_toDouble(&values[12]) * 100) / 100, 0.58);
+    ASSERT_EQ(std::round(value_toDouble(&values[13]) * 100) / 100, 1);
+    ASSERT_EQ(std::round(value_toDouble(&values[14]) * 100) / 100, 90);
+    ASSERT_EQ(std::round(value_toDouble(&values[15]) * 100) / 100, 30);
+    ASSERT_EQ(std::round(value_toDouble(&values[16]) * 100) / 100, 0);
+    ASSERT_EQ(std::round(value_toDouble(&values[17]) * 100) / 100, 60);
+    ASSERT_EQ(std::round(value_toDouble(&values[18]) * 100) / 100, 26.57);
+    ASSERT_EQ(std::round(value_toDouble(&values[19]) * 100) / 100, 45);
+    ASSERT_EQ(std::round(value_toDouble(&values[20]) * 100) / 100, 0);
+    ASSERT_EQ(std::round(value_toDouble(&values[21]) * 100) / 100, 2.3);
+    ASSERT_EQ(std::round(value_toDouble(&values[22]) * 100) / 100, 0);
+    ASSERT_EQ(std::round(value_toDouble(&values[23]) * 100) / 100, 2);
+    ASSERT_EQ(std::round(value_toDouble(&values[24]) * 100) / 100, 2.72);
+    ASSERT_EQ(std::round(value_toDouble(&values[25]) * 100) / 100, 3640.95);
+    ASSERT_EQ(std::round(value_toDouble(&values[26]) * 100) / 100, 10);
+    ASSERT_EQ(std::round(value_toDouble(&values[27]) * 100) / 100, 158489319.25);
+    ASSERT_EQ(std::round(value_toDouble(&values[28]) * 100) / 100, 0);
 }

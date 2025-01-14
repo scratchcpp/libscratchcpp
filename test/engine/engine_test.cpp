@@ -9,11 +9,7 @@
 #include <scratchcpp/keyevent.h>
 #include <scratchcpp/monitor.h>
 #include <scratchcpp/field.h>
-#ifndef USE_LLVM
-#include <scratchcpp/compiler.h>
-#endif
 #include <scratchcpp/script.h>
-#include <scratchcpp/virtualmachine.h>
 #include <scratchcpp/thread.h>
 #include <scratchcpp/scratchconfiguration.h>
 #include <scratch/sound_p.h>
@@ -31,11 +27,6 @@
 #include "../common.h"
 #include "engine/internal/engine.h"
 #include "engine/internal/clock.h"
-
-// TODO: Remove this
-#ifndef USE_LLVM
-#include "blocks/eventblocks.h"
-#endif
 
 using namespace libscratchcpp;
 
@@ -198,8 +189,7 @@ TEST(EngineTest, StopSignal)
     }
 }
 
-#ifndef USE_LLVM
-TEST(EngineTest, CompileAndExecuteMonitors)
+/*TEST(EngineTest, CompileAndExecuteMonitors)
 {
     Engine engine;
     auto stage = std::make_shared<Stage>();
@@ -285,8 +275,7 @@ TEST(EngineTest, CompileAndExecuteMonitors)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "change 2!\n");
 
     ScratchConfiguration::removeExtension(extension);
-}
-#endif
+}*/
 
 TEST(EngineTest, IsRunning)
 {
@@ -411,8 +400,7 @@ TEST(EngineTest, Fps)
     ASSERT_EQ(engine.fps(), 250);
 }
 
-#ifndef USE_LLVM
-TEST(EngineTest, FpsProject)
+/*TEST(EngineTest, FpsProject)
 {
     Project p("2_frames.sb3");
     ASSERT_TRUE(p.load());
@@ -482,8 +470,7 @@ TEST(EngineTest, FpsProject)
     EXPECT_CALL(clock, sleep).Times(0);
     EXPECT_CALL(redrawMock, redraw());
     p.run();
-}
-#endif
+}*/
 
 TEST(EngineTest, TurboModeEnabled)
 {
@@ -497,8 +484,7 @@ TEST(EngineTest, TurboModeEnabled)
     ASSERT_FALSE(engine.turboModeEnabled());
 }
 
-#ifndef USE_LLVM
-TEST(EngineTest, ExecutionOrder)
+/*TEST(EngineTest, ExecutionOrder)
 {
     Project p("execution_order.sb3");
     ASSERT_TRUE(p.load());
@@ -527,8 +513,7 @@ TEST(EngineTest, ExecutionOrder)
     ASSERT_EQ(Value((*list)[10]).toString(), "Sprite1 2 msg");
     ASSERT_EQ(Value((*list)[11]).toString(), "Sprite1 3 msg");
     ASSERT_EQ(Value((*list)[12]).toString(), "Stage msg");
-}
-#endif
+}*/
 
 TEST(EngineTest, KeyState)
 {
@@ -999,28 +984,6 @@ TEST(EngineTest, Extensions)
 
     ScratchConfiguration::removeExtension(extension1);
     ScratchConfiguration::removeExtension(extension2);
-}
-
-unsigned int testFunction1(VirtualMachine *)
-{
-    return 0;
-}
-
-unsigned int testFunction2(VirtualMachine *)
-{
-    return 0;
-}
-
-TEST(EngineTest, Functions)
-{
-    Engine engine;
-
-    ASSERT_EQ(engine.functionIndex(&testFunction1), 0);
-    ASSERT_EQ(engine.functionIndex(&testFunction2), 1);
-    ASSERT_EQ(engine.functionIndex(&testFunction1), 0);
-    ASSERT_EQ(engine.functionIndex(&testFunction2), 1);
-
-    ASSERT_EQ(engine.blockFunctions(), std::vector<BlockFunc>({ &testFunction1, &testFunction2 }));
 }
 
 TEST(EngineTest, Broadcasts)
@@ -1705,8 +1668,7 @@ void questionFunction(const std::string &)
 {
 }
 
-#ifndef USE_LLVM
-TEST(EngineTest, Clones)
+/*TEST(EngineTest, Clones)
 {
     Project p("clones.sb3");
     ASSERT_TRUE(p.load());
@@ -1865,8 +1827,7 @@ TEST(EngineTest, BroadcastsProject)
     ASSERT_EQ(GET_VAR(stage, "test4")->value().toInt(), 10);
     ASSERT_VAR(stage, "test5");
     ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 2 0 0");
-}
-#endif
+}*/
 
 TEST(EngineTest, StopAll)
 {
@@ -1944,8 +1905,7 @@ TEST(EngineTest, StopOtherScriptsInSprite)
     ASSERT_EQ(GET_VAR(stage, "l")->value().toInt(), 110);
 }
 
-#ifndef USE_LLVM
-TEST(EngineTest, EdgeActivatedHats)
+/*TEST(EngineTest, EdgeActivatedHats)
 {
     Project p("when_greater_than.sb3");
     ASSERT_TRUE(p.load());
@@ -2014,8 +1974,7 @@ TEST(EngineTest, EdgeActivatedHats)
     ASSERT_EQ(var2->value().toInt(), 3);
 
     EventBlocks::audioInput = nullptr;
-}
-#endif
+}*/
 
 TEST(EngineTest, UserAgent)
 {
@@ -2026,16 +1985,14 @@ TEST(EngineTest, UserAgent)
     ASSERT_EQ(engine.userAgent(), "test");
 }
 
-#ifndef USE_LLVM
-TEST(EngineTest, UnsupportedBlocks)
+/*TEST(EngineTest, UnsupportedBlocks)
 {
     Project p("unsupported_blocks.sb3");
     ASSERT_TRUE(p.load());
     ASSERT_EQ(
         p.engine()->unsupportedBlocks(),
         std::unordered_set<std::string>({ "ev3_motorTurnClockwise", "ev3_motorSetPower", "ev3_getMotorPosition", "ev3_whenButtonPressed", "ev3_getBrightness", "ev3_getDistance" }));
-}
-#endif
+}*/
 
 TEST(EngineTest, NoCrashAfterStop)
 {
@@ -2073,8 +2030,7 @@ TEST(EngineTest, NoRefreshWhenCallingRunningBroadcast)
     ASSERT_TRUE(GET_VAR(stage, "passed2")->value().toBool());
 }
 
-#ifndef USE_LLVM
-TEST(EngineTest, NoStopWhenCallingRunningBroadcastFromCustomBlock)
+/*TEST(EngineTest, NoStopWhenCallingRunningBroadcastFromCustomBlock)
 {
     // Regtest for #257
     Project p("regtest_projects/277_custom_block_call_running_broadcast_stop.sb3");
@@ -2091,8 +2047,7 @@ TEST(EngineTest, NoStopWhenCallingRunningBroadcastFromCustomBlock)
 
     ASSERT_VAR(stage, "passed2");
     ASSERT_TRUE(GET_VAR(stage, "passed2")->value().toBool());
-}
-#endif
+}*/
 
 TEST(EngineTest, ResetRunningHats)
 {
@@ -2249,8 +2204,7 @@ TEST(EngineTest, DuplicateVariableOrListIDs)
     ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
 }
 
-#ifndef USE_LLVM
-TEST(EngineTest, BroadcastStopsWaitBlocks)
+/*TEST(EngineTest, BroadcastStopsWaitBlocks)
 {
     // Regtest for #563
     Project p("regtest_projects/563_broadcast_stops_wait_blocks.sb3");
@@ -2284,5 +2238,4 @@ TEST(EngineTest, BroadcastAndWaitCaseInsensitive)
 
     ASSERT_VAR(stage, "passed");
     ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
-}
-#endif
+}*/

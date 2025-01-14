@@ -7,29 +7,17 @@
 namespace libscratchcpp
 {
 
-class Compiler;
-
 class CustomBlocks : public IExtension
 {
     public:
-        enum Inputs
-        {
-            CUSTOM_BLOCK
-        };
-
-        enum Fields
-        {
-            VALUE
-        };
-
         std::string name() const override;
         std::string description() const override;
 
         void registerBlocks(IEngine *engine) override;
 
-        static void compileDefinition(Compiler *compiler);
-        static void compileCall(Compiler *compiler);
-        static void compileArgument(Compiler *compiler);
+    private:
+        static CompilerValue *compileCall(Compiler *compiler);
+        static CompilerValue *compileArgument(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

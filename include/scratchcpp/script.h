@@ -14,13 +14,8 @@ namespace libscratchcpp
 class Target;
 class Block;
 class IEngine;
-#ifdef USE_LLVM
 class ExecutableCode;
-#endif
-class Value;
 class Thread;
-class Variable;
-class List;
 class ScriptPrivate;
 
 /*! \brief The Script class represents a compiled Scratch script. */
@@ -33,29 +28,15 @@ class LIBSCRATCHCPP_EXPORT Script
         Target *target() const;
         std::shared_ptr<Block> topBlock() const;
 
-        unsigned int *bytecode() const;
-        const std::vector<unsigned int> &bytecodeVector() const;
-        void setBytecode(const std::vector<unsigned int> &code);
-
-#ifdef USE_LLVM
         ExecutableCode *code() const;
         void setCode(std::shared_ptr<ExecutableCode> code);
-#endif
 
-        void setHatPredicateBytecode(const std::vector<unsigned int> &code);
         bool runHatPredicate(Target *target);
-
-        void setProcedures(const std::vector<unsigned int *> &procedures);
-        void setConstValues(const std::vector<Value> &values);
-        void setVariables(const std::vector<Variable *> &variables);
-        void setLists(const std::vector<List *> &lists);
 
         std::shared_ptr<Thread> start();
         std::shared_ptr<Thread> start(Target *target);
 
     private:
-        BlockFunc *getFunctions() const;
-
         spimpl::unique_impl_ptr<ScriptPrivate> impl;
 };
 

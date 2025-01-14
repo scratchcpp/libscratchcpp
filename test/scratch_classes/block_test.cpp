@@ -3,11 +3,7 @@
 #include <scratchcpp/field.h>
 #include <scratchcpp/comment.h>
 #include <scratchcpp/target.h>
-#ifdef USE_LLVM
-#include <scratchcpp/dev/compiler.h>
-#else
 #include <scratchcpp/compiler.h>
-#endif
 #include <enginemock.h>
 
 #include "../common.h"
@@ -17,11 +13,7 @@ using namespace libscratchcpp;
 class BlockTestMock
 {
     public:
-#ifdef USE_LLVM
         MOCK_METHOD(CompilerValue *, compileTest, (Compiler *), ());
-#else
-        MOCK_METHOD(void, compileTest, (Compiler *), ());
-#endif
 };
 
 class BlockTest : public testing::Test
@@ -29,19 +21,11 @@ class BlockTest : public testing::Test
     public:
         void SetUp() override { m_mockPtr = &m_mock; }
 
-#ifdef USE_LLVM
         static CompilerValue *compileTest(Compiler *compiler)
         {
             EXPECT_TRUE(m_mockPtr);
             return m_mockPtr->compileTest(compiler);
         }
-#else
-        static void compileTest(Compiler *compiler)
-        {
-            ASSERT_TRUE(m_mockPtr);
-            m_mockPtr->compileTest(compiler);
-        }
-#endif // USE_LLVM
 
         static inline BlockTestMock *m_mockPtr = nullptr;
         BlockTestMock m_mock;

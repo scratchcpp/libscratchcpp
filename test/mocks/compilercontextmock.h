@@ -1,6 +1,6 @@
 #pragma once
 
-#include <scratchcpp/dev/compilercontext.h>
+#include <scratchcpp/compilercontext.h>
 #include <gmock/gmock.h>
 
 using namespace libscratchcpp;

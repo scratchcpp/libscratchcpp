@@ -8,23 +8,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(LIBSCRATCHCPP_BUILD_UNIT_TESTS "Build unit tests" ON)
 option(LIBSCRATCHCPP_NETWORK_SUPPORT "Support for downloading projects" ON)
-option(LIBSCRATCHCPP_COMPUTED_GOTO "Support for computed goto" ON)
-option(LIBSCRATCHCPP_USE_LLVM "Compile scripts to LLVM IR (work in progress)" OFF)
 option(LIBSCRATCHCPP_PRINT_LLVM_IR "Print LLVM IR of compiled Scratch scripts (for debugging)" OFF)
-
-if (NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
-	# Computed goto not supported on anything except GCC
-	set(LIBSCRATCHCPP_COMPUTED_GOTO OFF CACHE BOOL "" FORCE)
-endif()
 
 add_library(scratchcpp SHARED)
 add_subdirectory(src)
 include_directories(src) # TODO: Remove this line
 include_directories(include)
-
-if (LIBSCRATCHCPP_COMPUTED_GOTO)
-	target_compile_definitions(scratchcpp PRIVATE ENABLE_COMPUTED_GOTO)
-endif()
 
 target_sources(scratchcpp
   PUBLIC
@@ -33,6 +22,14 @@ target_sources(scratchcpp
     include/scratchcpp/scratchconfiguration.h
     include/scratchcpp/iengine.h
     include/scratchcpp/iextension.h
+    include/scratchcpp/compiler.h
+    include/scratchcpp/compilercontext.h
+    include/scratchcpp/compilervalue.h
+    include/scratchcpp/compilerconstant.h
+    include/scratchcpp/compilerlocalvariable.h
+    include/scratchcpp/executablecode.h
+    include/scratchcpp/executioncontext.h
+    include/scratchcpp/promise.h
     include/scratchcpp/thread.h
     include/scratchcpp/asset.h
     include/scratchcpp/costume.h
@@ -48,7 +45,6 @@ target_sources(scratchcpp
     include/scratchcpp/field.h
     include/scratchcpp/script.h
     include/scratchcpp/broadcast.h
-    include/scratchcpp/virtualmachine.h
     include/scratchcpp/blockprototype.h
     include/scratchcpp/block.h
     include/scratchcpp/istagehandler.h
@@ -67,31 +63,11 @@ target_sources(scratchcpp
     include/scratchcpp/comment.h
     include/scratchcpp/monitor.h
     include/scratchcpp/imonitorhandler.h
+    include/scratchcpp/test/scriptbuilder.h
 )
 
-if (LIBSCRATCHCPP_USE_LLVM)
-    target_compile_definitions(scratchcpp PUBLIC USE_LLVM)
-    target_sources(scratchcpp
-      PUBLIC
-        include/scratchcpp/dev/compiler.h
-        include/scratchcpp/dev/compilercontext.h
-        include/scratchcpp/dev/compilervalue.h
-        include/scratchcpp/dev/compilerconstant.h
-        include/scratchcpp/dev/compilerlocalvariable.h
-        include/scratchcpp/dev/executablecode.h
-        include/scratchcpp/dev/executioncontext.h
-        include/scratchcpp/dev/promise.h
-        include/scratchcpp/dev/test/scriptbuilder.h
-    )
-
-    if(LIBSCRATCHCPP_PRINT_LLVM_IR)
-        target_compile_definitions(scratchcpp PRIVATE PRINT_LLVM_IR)
-    endif()
-else()
-    target_sources(scratchcpp
-      PUBLIC
-        include/scratchcpp/compiler.h
-    )
+if(LIBSCRATCHCPP_PRINT_LLVM_IR)
+    target_compile_definitions(scratchcpp PRIVATE PRINT_LLVM_IR)
 endif()
 
 include(FetchContent)
@@ -123,11 +99,9 @@ if (LIBSCRATCHCPP_NETWORK_SUPPORT)
     target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_NETWORK_SUPPORT)
 endif()
 
-if (LIBSCRATCHCPP_USE_LLVM)
-    include(build/HunterPackages.cmake)
-    include(build/LLVM.cmake)
-    target_link_libraries(scratchcpp PRIVATE LLVM)
-endif()
+include(build/HunterPackages.cmake)
+include(build/LLVM.cmake)
+target_link_libraries(scratchcpp PRIVATE LLVM)
 
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_LIBRARY)
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION="${PROJECT_VERSION}")

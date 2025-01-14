@@ -1,4 +1,9 @@
+#include <scratchcpp/project.h>
+#include <scratchcpp/test/scriptbuilder.h>
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/script.h>
+#include <scratchcpp/thread.h>
+#include <scratchcpp/sprite.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
@@ -6,11 +11,10 @@
 
 #include "../common.h"
 #include "blocks/customblocks.h"
-#include "engine/internal/engine.h"
+#include "util.h"
 
 using namespace libscratchcpp;
-
-using ::testing::Return;
+using namespace libscratchcpp::test;
 
 class CustomBlocksTest : public testing::Test
 {
@@ -18,150 +22,82 @@ class CustomBlocksTest : public testing::Test
         void SetUp() override
         {
             m_extension = std::make_unique<CustomBlocks>();
-            m_extension->registerBlocks(&m_engine);
-        }
-
-        void addPrototypeInput(std::shared_ptr<Block> definitionBlock, std::shared_ptr<Block> prototypeBlock) const
-        {
-            auto input = std::make_shared<Input>("custom_block", Input::Type::NoShadow);
-            input->setValueBlock(prototypeBlock);
-            input->setInputId(CustomBlocks::CUSTOM_BLOCK);
-            definitionBlock->addInput(input);
-        }
-
-        void addArgumentInput(std::shared_ptr<Block> block, const std::string &argId, const Value &value) const
-        {
-            auto input = std::make_shared<Input>(argId, Input::Type::Shadow);
-            input->setPrimaryValue(value);
-            block->addInput(input);
+            m_engine = m_project.engine().get();
+            m_extension->registerBlocks(m_engine);
+            registerBlocks(m_engine, m_extension.get());
         }
 
         std::unique_ptr<IExtension> m_extension;
+        Project m_project;
+        IEngine *m_engine = nullptr;
         EngineMock m_engineMock;
-        Engine m_engine;
 };
 
-TEST_F(CustomBlocksTest, Name)
+TEST_F(CustomBlocksTest, Definition)
 {
-    ASSERT_EQ(m_extension->name(), "Custom blocks");
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("procedures_definition");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    compiler.compile(block);
+    ASSERT_TRUE(compiler.unsupportedBlocks().empty());
 }
 
-TEST_F(CustomBlocksTest, RegisterBlocks)
+TEST_F(CustomBlocksTest, CallWithArguments)
 {
-    // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "procedures_definition", &CustomBlocks::compileDefinition)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "procedures_call", &CustomBlocks::compileCall)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "argument_reporter_boolean", &CustomBlocks::compileArgument)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "argument_reporter_string_number", &CustomBlocks::compileArgument)).Times(1);
+    const std::string procCode = "procedure %s %b";
+    std::vector<std::string> argumentIds = { "a", "b" };
+    std::vector<std::string> argumentNames = { "string or number", "boolean" };
+    auto target = std::make_shared<Sprite>();
 
-    // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "custom_block", CustomBlocks::CUSTOM_BLOCK));
+    // Create definition
+    ScriptBuilder builder1(m_extension.get(), m_engine, target, false);
+    builder1.addBlock("procedures_prototype");
+    auto prototypeBlock = builder1.takeBlock();
+    BlockPrototype *prototype = prototypeBlock->mutationPrototype();
+    prototype->setProcCode(procCode);
+    prototype->setArgumentIds(argumentIds);
+    prototype->setArgumentNames(argumentNames);
 
-    // Fields
-    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "VALUE", CustomBlocks::VALUE));
+    builder1.addBlock("procedures_definition");
+    builder1.addObscuredInput("custom_block", prototypeBlock);
+    builder1.currentBlock();
 
-    m_extension->registerBlocks(&m_engineMock);
-}
+    // Print first arg
+    builder1.addBlock("argument_reporter_string_number");
+    builder1.addDropdownField("VALUE", "string or number");
+    auto argBlock = builder1.takeBlock();
 
-TEST_F(CustomBlocksTest, CustomBlocks)
-{
-    Compiler compiler(&m_engine);
+    builder1.addBlock("test_print");
+    builder1.addObscuredInput("STRING", argBlock);
 
-    // define [ test (string or number) (boolean) ]
-    // print (boolean)
-    // print (invalid) - to test non-existent arguments (arguments can be dragged from another custom block definition)
-    auto block1 = std::make_shared<Block>("a", "procedures_definition");
-    auto prototypeBlock = std::make_shared<Block>("b", "procedures_prototype");
-    auto prototype1 = prototypeBlock->mutationPrototype();
-    prototype1->setProcCode("test %s %b");
-    prototype1->setArgumentNames({ "string or number", "boolean" });
-    prototype1->setArgumentIds({ "c", "d" });
-    prototype1->setWarp(false);
-    addPrototypeInput(block1, prototypeBlock);
-    block1->setCompileFunction(&CustomBlocks::compileDefinition);
+    // Print second arg
+    builder1.addBlock("argument_reporter_boolean");
+    builder1.addDropdownField("VALUE", "boolean");
+    argBlock = builder1.takeBlock();
 
-    auto testBlock = std::make_shared<Block>("e", "some_block");
+    builder1.addBlock("test_print");
+    builder1.addObscuredInput("STRING", argBlock);
 
-    auto input = std::make_shared<Input>("test_input", Input::Type::ObscuredShadow);
-    auto argBlock = std::make_shared<Block>("f", "argument_reporter_boolean");
-    argBlock->setCompileFunction(&CustomBlocks::compileArgument);
-    auto valueField = std::make_shared<Field>("VALUE", "boolean");
-    valueField->setFieldId(CustomBlocks::VALUE);
-    argBlock->addField(valueField);
-    input->setValueBlock(argBlock);
-    input->setInputId(-100);
-    testBlock->addInput(input);
+    builder1.build();
 
-    input = std::make_shared<Input>("test_input2", Input::Type::ObscuredShadow);
-    argBlock = std::make_shared<Block>("g", "argument_reporter_boolean");
-    argBlock->setCompileFunction(&CustomBlocks::compileArgument);
-    valueField = std::make_shared<Field>("VALUE", "invalid");
-    valueField->setFieldId(CustomBlocks::VALUE);
-    argBlock->addField(valueField);
-    input->setValueBlock(argBlock);
-    input->setInputId(-101);
-    testBlock->addInput(input);
+    // Call the procedure
+    ScriptBuilder builder2(m_extension.get(), m_engine, target);
+    auto block = std::make_shared<Block>("", "procedures_call");
+    prototype = block->mutationPrototype();
+    prototype->setProcCode(procCode);
+    prototype->setArgumentIds(argumentIds);
+    prototype->setArgumentNames(argumentNames);
+    builder2.addBlock(block);
+    builder2.addValueInput("a", "Hello world");
+    builder2.addValueInput("b", true);
 
-    testBlock->setCompileFunction([](Compiler *compiler) {
-        compiler->addInput(-100);
-        compiler->addInstruction(vm::OP_PRINT);
-        compiler->addInput(-101);
-        compiler->addInstruction(vm::OP_PRINT);
-    });
-    testBlock->setParent(block1);
-    block1->setNext(testBlock);
+    ScriptBuilder::buildMultiple({ &builder1, &builder2 });
 
-    // define [ (a) + (b) ]
-    // (run without screen refresh)
-    auto block2 = std::make_shared<Block>("h", "procedures_definition");
-    prototypeBlock = std::make_shared<Block>("i", "procedures_prototype");
-    auto prototype2 = prototypeBlock->mutationPrototype();
-    prototype2->setProcCode("%s + %s");
-    prototype2->setArgumentNames({ "a", "b" });
-    prototype2->setArgumentIds({ "j", "k" });
-    prototype2->setWarp(true);
-    addPrototypeInput(block2, prototypeBlock);
-    block2->setCompileFunction(&CustomBlocks::compileDefinition);
-
-    // call [ 5 + (null) ]
-    auto block3 = std::make_shared<Block>("l", "procedures_call");
-    auto prototype3 = block3->mutationPrototype();
-    prototype3->setProcCode(prototype2->procCode());
-    prototype3->setArgumentNames(prototype2->argumentNames());
-    prototype3->setArgumentIds(prototype2->argumentIds());
-    addArgumentInput(block3, "j", 5);
-    block3->setCompileFunction(&CustomBlocks::compileCall);
-
-    compiler.compile(block1);
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_READ_ARG, 1, vm::OP_PRINT, vm::OP_NULL, vm::OP_PRINT, vm::OP_HALT }));
-    ASSERT_EQ(compiler.procedureArgIndex("test %s %b", "string or number"), 0);
-    ASSERT_EQ(compiler.procedureArgIndex("test %s %b", "boolean"), 1);
-    ASSERT_EQ(compiler.procedureArgIndex("test %s %b", "invalid"), -1);
-    ASSERT_EQ(compiler.procedureArgIndex("test %s %s", "boolean"), -1);
-    ASSERT_TRUE(compiler.constValues().empty());
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block2);
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_WARP, vm::OP_HALT }));
-    ASSERT_EQ(compiler.procedureArgIndex("%s + %s", "a"), 0);
-    ASSERT_EQ(compiler.procedureArgIndex("%s + %s", "b"), 1);
-    ASSERT_EQ(compiler.procedureArgIndex("%s + %s", "invalid"), -1);
-    ASSERT_EQ(compiler.procedureArgIndex("test %s %s", "a"), -1);
-    ASSERT_TRUE(compiler.constValues().empty());
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block3);
-
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_INIT_PROCEDURE, vm::OP_CONST, 0, vm::OP_ADD_ARG, vm::OP_NULL, vm::OP_ADD_ARG, vm::OP_CALL_PROCEDURE, 0, vm::OP_HALT }));
-    ASSERT_EQ(compiler.procedureIndex("%s + %s"), 0);
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>{ 5 });
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    testing::internal::CaptureStdout();
+    builder2.run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "Hello world\ntrue\n");
 }

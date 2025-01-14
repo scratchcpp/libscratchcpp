@@ -84,9 +84,6 @@ class EngineMock : public IEngine
 
         MOCK_METHOD(ITimer *, timer, (), (const, override));
 
-        MOCK_METHOD(unsigned int, functionIndex, (BlockFunc), (override));
-        MOCK_METHOD(const std::vector<BlockFunc> &, blockFunctions, (), (const, override));
-
         MOCK_METHOD(void, addCompileFunction, (IExtension *, const std::string &, BlockComp), (override));
         MOCK_METHOD(void, addHatPredicateCompileFunction, (IExtension *, const std::string &, HatPredicateCompileFunc), (override));
         MOCK_METHOD(void, addMonitorNameFunction, (IExtension *, const std::string &, MonitorNameFunc), (override));

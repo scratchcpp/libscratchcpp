@@ -5,34 +5,34 @@
 #include "blocks.h"
 
 #ifdef ENABLE_MOTION_BLOCKS
-#include "blocks/motionblocks.h"
+#include "motionblocks.h"
 #endif
 #ifdef ENABLE_LOOKS_BLOCKS
-#include "blocks/looksblocks.h"
+#include "looksblocks.h"
 #endif
 #ifdef ENABLE_SOUND_BLOCKS
-#include "blocks/soundblocks.h"
+#include "soundblocks.h"
 #endif
 #ifdef ENABLE_EVENT_BLOCKS
-#include "blocks/eventblocks.h"
+#include "eventblocks.h"
 #endif
 #ifdef ENABLE_CONTROL_BLOCKS
-#include "blocks/controlblocks.h"
+#include "controlblocks.h"
 #endif
 #ifdef ENABLE_SENSING_BLOCKS
-#include "blocks/sensingblocks.h"
+#include "sensingblocks.h"
 #endif
 #ifdef ENABLE_OPERATOR_BLOCKS
-#include "blocks/operatorblocks.h"
+#include "operatorblocks.h"
 #endif
 #ifdef ENABLE_VARIABLE_BLOCKS
-#include "blocks/variableblocks.h"
+#include "variableblocks.h"
 #endif
 #ifdef ENABLE_LIST_BLOCKS
-#include "blocks/listblocks.h"
+#include "listblocks.h"
 #endif
 #ifdef ENABLE_CUSTOM_BLOCKS
-#include "blocks/customblocks.h"
+#include "customblocks.h"
 #endif
 
 using namespace libscratchcpp;

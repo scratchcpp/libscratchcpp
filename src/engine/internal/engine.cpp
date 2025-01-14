@@ -7,12 +7,8 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/textbubble.h>
 #include <scratchcpp/broadcast.h>
-#ifdef USE_LLVM
-#include <scratchcpp/dev/compiler.h>
-#include <scratchcpp/dev/promise.h>
-#else
 #include <scratchcpp/compiler.h>
-#endif
+#include <scratchcpp/promise.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/field.h>
@@ -33,11 +29,7 @@
 #include "timer.h"
 #include "clock.h"
 #include "audio/iaudioengine.h"
-#ifdef USE_LLVM
-#include "dev/blocks/blocks.h"
-#else
 #include "blocks/blocks.h"
-#endif
 #include "scratch/monitor_p.h"
 
 using namespace libscratchcpp;
@@ -87,7 +79,6 @@ void Engine::clear()
     m_threads.clear();
     m_threadsToStop.clear();
     m_scripts.clear();
-    m_functions.clear();
 
     m_whenTouchingObjectHats.clear();
     m_greenFlagHats.clear();
@@ -271,35 +262,18 @@ void Engine::compile()
     // Compile scripts to bytecode
     for (auto target : m_targets) {
         std::cout << "Compiling scripts in target " << target->name() << "..." << std::endl;
-#ifdef USE_LLVM
         auto ctx = Compiler::createContext(this, target.get());
         m_compilerContexts[target.get()] = ctx;
         Compiler compiler(ctx.get());
-#else
-        std::unordered_map<std::string, unsigned int *> procedureBytecodeMap;
-        Compiler compiler(this, target.get());
-#endif
         const auto &blocks = target->blocks();
+
         for (auto block : blocks) {
             if (block->topLevel() && !block->isTopLevelReporter() && !block->shadow()) {
                 auto ext = blockExtension(block->opcode());
                 if (ext) {
                     auto script = std::make_shared<Script>(target.get(), block, this);
                     m_scripts[block] = script;
-
-#ifdef USE_LLVM
                     script->setCode(compiler.compile(block));
-#else
-                    compiler.compile(block);
-
-                    script->setBytecode(compiler.bytecode());
-                    script->setHatPredicateBytecode(compiler.hatPredicateBytecode());
-
-                    if (block->opcode() == "procedures_definition") {
-                        auto b = block->inputAt(block->findInput("custom_block"))->valueBlock();
-                        procedureBytecodeMap[b->mutationPrototype()->procCode()] = script->bytecode();
-                    }
-#endif // USE_LLVM
                 } else {
                     std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
                     m_unsupportedBlocks.insert(block->opcode());
@@ -307,32 +281,14 @@ void Engine::compile()
             }
         }
 
-#ifndef USE_LLVM
-        const std::vector<std::string> &procedures = compiler.procedures();
-        std::vector<unsigned int *> procedureBytecodes;
-        for (const std::string &code : procedures)
-            procedureBytecodes.push_back(procedureBytecodeMap[code]);
-
-        for (auto block : blocks) {
-            if (m_scripts.count(block) == 1) {
-                m_scripts[block]->setProcedures(procedureBytecodes);
-                m_scripts[block]->setConstValues(compiler.constValues());
-                m_scripts[block]->setVariables(compiler.variables());
-                m_scripts[block]->setLists(compiler.lists());
-            }
-        }
-#endif // USE_LLVM
-
         const auto &unsupportedBlocks = compiler.unsupportedBlocks();
 
         for (const std::string &opcode : unsupportedBlocks)
             m_unsupportedBlocks.insert(opcode);
 
-#ifdef USE_LLVM
         // Preoptimize to avoid lag when starting scripts for the first time
         std::cout << "Optimizing target " << target->name() << "..." << std::endl;
         compiler.preoptimize();
-#endif
     }
 
     // Compile monitor blocks to bytecode
@@ -509,9 +465,10 @@ void Engine::updateMonitors()
             auto script = monitor->script();
 
             if (script) {
-                auto thread = script->start();
+                // TODO: Implement this
+                /*auto thread = script->start();
                 thread->run();
-                monitor->updateValue(thread->vm());
+                monitor->updateValue(thread->vm());*/
             }
         }
     }
@@ -605,14 +562,10 @@ void Engine::step()
             Thread *th = senderThread;
 
             if (std::find_if(m_threads.begin(), m_threads.end(), [th](std::shared_ptr<Thread> thread) { return thread.get() == th; }) != m_threads.end()) {
-#ifdef USE_LLVM
                 auto promise = th->promise();
 
                 if (promise)
                     promise->resolve();
-#else
-                th->resolvePromise();
-#endif
             }
 
             resolved.push_back(broadcast);
@@ -971,20 +924,6 @@ void Engine::setTimer(ITimer *timer)
     m_timer = timer;
 }
 
-unsigned int Engine::functionIndex(BlockFunc f)
-{
-    auto it = std::find(m_functions.begin(), m_functions.end(), f);
-    if (it != m_functions.end())
-        return it - m_functions.begin();
-    m_functions.push_back(f);
-    return m_functions.size() - 1;
-}
-
-const std::vector<BlockFunc> &Engine::blockFunctions() const
-{
-    return m_functions;
-}
-
 void Engine::addCompileFunction(IExtension *extension, const std::string &opcode, BlockComp f)
 {
     if (m_compileFunctions.find(extension) == m_compileFunctions.cend())
@@ -1022,11 +961,7 @@ void Engine::addHatBlock(IExtension *extension, const std::string &opcode)
     if (m_compileFunctions.find(extension) == m_compileFunctions.cend())
         m_compileFunctions[extension] = {};
 
-#ifdef USE_LLVM
     m_compileFunctions[extension][opcode] = [](Compiler *compiler) -> CompilerValue * { return nullptr; };
-#else
-    m_compileFunctions[extension][opcode] = [](Compiler *compiler) {};
-#endif
 }
 
 void Engine::addInput(IExtension *extension, const std::string &name, int id)
@@ -1913,53 +1848,7 @@ int Engine::resolveFieldValue(IExtension *extension, const std::string &value) c
 
 void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
 {
-#ifndef USE_LLVM
-    Target *target = monitor->sprite() ? static_cast<Target *>(monitor->sprite()) : stage();
-    Compiler compiler(this, target);
-    auto block = monitor->block();
-    auto ext = blockExtension(block->opcode());
-
-    if (ext) {
-        MonitorNameFunc nameFunc = resolveMonitorNameFunc(ext, block->opcode());
-
-        if (nameFunc)
-            monitor->setName(nameFunc(block.get()));
-
-        MonitorChangeFunc changeFunc = resolveMonitorChangeFunc(ext, block->opcode());
-        monitor->setValueChangeFunction(changeFunc);
-
-        auto script = std::make_shared<Script>(target, block, this);
-        monitor->setScript(script);
-        compiler.init();
-        compiler.setBlock(block);
-
-        if (block->compileFunction())
-            block->compile(&compiler);
-        else
-            std::cout << "warning: monitor block doesn't have a compile function: " << block->opcode() << std::endl;
-
-        // Workaround for register leak warning spam: pause the script after getting the monitor value
-        compiler.addFunctionCall([](VirtualMachine *vm) -> unsigned int {
-            vm->stop(false, false, false);
-            return 0;
-        });
-
-        compiler.end();
-
-        script->setBytecode(compiler.bytecode());
-        script->setConstValues(compiler.constValues());
-        script->setVariables(compiler.variables());
-        script->setLists(compiler.lists());
-    } else {
-        std::cout << "warning: unsupported monitor block: " << block->opcode() << std::endl;
-        m_unsupportedBlocks.insert(block->opcode());
-    }
-
-    const auto &unsupportedBlocks = compiler.unsupportedBlocks();
-
-    for (const std::string &opcode : unsupportedBlocks)
-        m_unsupportedBlocks.insert(opcode);
-#endif // USE_LLVM
+    // TODO: Implement this
 }
 
 void Engine::finalize()
@@ -2042,14 +1931,10 @@ void Engine::addBroadcastPromise(Broadcast *broadcast, Thread *sender, bool wait
     auto it = m_broadcastSenders.find(broadcast);
 
     if (it != m_broadcastSenders.cend() && std::find_if(m_threads.begin(), m_threads.end(), [&it](std::shared_ptr<Thread> thread) { return thread.get() == it->second; }) != m_threads.end()) {
-#ifdef USE_LLVM
         auto promise = it->second->promise();
 
         if (promise)
             promise->resolve();
-#else
-        it->second->resolvePromise();
-#endif
     }
 
     if (wait)

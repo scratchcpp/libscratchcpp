@@ -1,18 +1,24 @@
+#include <scratchcpp/project.h>
+#include <scratchcpp/sprite.h>
+#include <scratchcpp/list.h>
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/test/scriptbuilder.h>
+#include <scratchcpp/script.h>
+#include <scratchcpp/thread.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
-#include <scratchcpp/list.h>
-#include <scratchcpp/sprite.h>
-#include <scratchcpp/stage.h>
-#include <scratchcpp/monitor.h>
+#include <scratchcpp/executioncontext.h>
+#include <scratchcpp/executablecode.h>
 #include <enginemock.h>
+#include <randomgeneratormock.h>
 
 #include "../common.h"
+#include "util.h"
 #include "blocks/listblocks.h"
-#include "engine/internal/engine.h"
 
 using namespace libscratchcpp;
+using namespace libscratchcpp::test;
 
 using ::testing::Return;
 
@@ -22,672 +28,463 @@ class ListBlocksTest : public testing::Test
         void SetUp() override
         {
             m_extension = std::make_unique<ListBlocks>();
-            m_extension->registerBlocks(&m_engine);
-        }
-
-        // For any list block
-        std::shared_ptr<Block> createListBlock(const std::string &id, const std::string &opcode, std::shared_ptr<List> list) const
-        {
-            auto block = std::make_shared<Block>(id, opcode);
-
-            auto listField = std::make_shared<Field>("LIST", Value(), list);
-            listField->setFieldId(ListBlocks::LIST);
-            block->addField(listField);
-
-            return block;
-        }
-
-        void addItemInput(std::shared_ptr<Block> block, const Value &item) const
-        {
-            auto input = std::make_shared<Input>("ITEM", Input::Type::Shadow);
-            input->setPrimaryValue(item);
-            input->setInputId(ListBlocks::ITEM);
-            block->addInput(input);
-        }
-
-        void addIndexInput(std::shared_ptr<Block> block, const Value &index) const
-        {
-            auto input = std::make_shared<Input>("INDEX", Input::Type::Shadow);
-            input->setPrimaryValue(index);
-            input->setInputId(ListBlocks::INDEX);
-            block->addInput(input);
-        }
-
-        // For add item, item index and list contains item
-        std::shared_ptr<Block> createListItemBlock(const std::string &id, const std::string &opcode, std::shared_ptr<List> list, const Value &item) const
-        {
-            auto block = createListBlock(id, opcode, list);
-            addItemInput(block, item);
-
-            return block;
-        }
-
-        // For delete index and item of list
-        std::shared_ptr<Block> createListIndexBlock(const std::string &id, const std::string &opcode, std::shared_ptr<List> list, const Value &index) const
-        {
-            auto block = createListBlock(id, opcode, list);
-            addIndexInput(block, index);
-
-            return block;
-        }
-
-        // For insert and replace
-        std::shared_ptr<Block> createListItemIndexBlock(const std::string &id, const std::string &opcode, std::shared_ptr<List> list, const Value &item, const Value &index) const
-        {
-            auto block = createListBlock(id, opcode, list);
-            addItemInput(block, item);
-            addIndexInput(block, index);
-
-            return block;
+            m_engine = m_project.engine().get();
+            m_extension->registerBlocks(m_engine);
+            registerBlocks(m_engine, m_extension.get());
         }
 
         std::unique_ptr<IExtension> m_extension;
+        Project m_project;
+        IEngine *m_engine = nullptr;
         EngineMock m_engineMock;
-        Engine m_engine;
+        RandomGeneratorMock m_rng;
 };
-
-TEST_F(ListBlocksTest, Name)
-{
-    ASSERT_EQ(m_extension->name(), "Lists");
-}
-
-TEST_F(ListBlocksTest, RegisterBlocks)
-{
-    // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_listcontents", &ListBlocks::compileListContents)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_addtolist", &ListBlocks::compileAddToList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_deleteoflist", &ListBlocks::compileDeleteFromList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_deletealloflist", &ListBlocks::compileDeleteAllOfList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_insertatlist", &ListBlocks::compileInsertToList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_replaceitemoflist", &ListBlocks::compileReplaceItemOfList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_itemoflist", &ListBlocks::compileItemOfList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_itemnumoflist", &ListBlocks::compileItemNumberInList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_lengthoflist", &ListBlocks::compileLengthOfList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_listcontainsitem", &ListBlocks::compileListContainsItem)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_showlist", &ListBlocks::compileShowList)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "data_hidelist", &ListBlocks::compileHideList)).Times(1);
-
-    // Monitor names
-    EXPECT_CALL(m_engineMock, addMonitorNameFunction(m_extension.get(), "data_listcontents", &ListBlocks::listContentsMonitorName));
-
-    // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "ITEM", ListBlocks::ITEM));
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "INDEX", ListBlocks::INDEX));
-
-    // Fields
-    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "LIST", ListBlocks::LIST));
-
-    m_extension->registerBlocks(&m_engineMock);
-}
-
-TEST_F(ListBlocksTest, ListContents)
-{
-    Compiler compiler(&m_engine);
-
-    // [list1]
-    auto list1 = std::make_shared<List>("b", "list1");
-    auto block1 = createListBlock("a", "data_listcontents", list1);
-
-    // [list2]
-    auto list2 = std::make_shared<List>("d", "list2");
-    auto block2 = createListBlock("c", "data_listcontents", list2);
-
-    compiler.init();
-    compiler.setBlock(block1);
-    ListBlocks::compileListContents(&compiler);
-    compiler.setBlock(block2);
-    ListBlocks::compileListContents(&compiler);
-    compiler.end();
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 0, 1 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_EQ(
-        compiler.lists(),
-        std::vector<List *>({
-            list1.get(),
-            list2.get(),
-        }));
-}
-
-TEST_F(ListBlocksTest, ListContentsMonitorName)
-{
-    // [list1]
-    auto list1 = std::make_shared<List>("b", "list1");
-    auto block1 = createListBlock("a", "data_listcontents", list1);
-
-    // [list2]
-    auto list2 = std::make_shared<List>("d", "list2");
-    auto block2 = createListBlock("c", "data_listcontents", list2);
-
-    ASSERT_EQ(ListBlocks::listContentsMonitorName(block1.get()), "list1");
-    ASSERT_EQ(ListBlocks::listContentsMonitorName(block2.get()), "list2");
-}
 
 TEST_F(ListBlocksTest, AddToList)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
+    auto list1 = std::make_shared<List>("", "");
+    target->addList(list1);
+    auto list2 = std::make_shared<List>("", "");
+    target->addList(list2);
 
-    // add "test" to [list1]
-    auto list1 = std::make_shared<List>("b", "list1");
-    auto block1 = createListItemBlock("a", "data_addtolist", list1, "test");
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // add 10.25 to [list2]
-    auto list2 = std::make_shared<List>("d", "list2");
-    auto block2 = createListItemBlock("c", "data_addtolist", list2, 10.25);
+    builder.addBlock("data_addtolist");
+    builder.addValueInput("ITEM", "test");
+    builder.addEntityField("LIST", list1);
 
-    compiler.init();
-    compiler.setBlock(block1);
-    ListBlocks::compileAddToList(&compiler);
-    compiler.setBlock(block2);
-    ListBlocks::compileAddToList(&compiler);
-    compiler.end();
+    builder.addBlock("data_addtolist");
+    builder.addValueInput("ITEM", true);
+    builder.addEntityField("LIST", list1);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_LIST_APPEND, 0, vm::OP_CONST, 1, vm::OP_LIST_APPEND, 1, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "test", 10.25 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_EQ(
-        compiler.lists(),
-        std::vector<List *>({
-            list1.get(),
-            list2.get(),
-        }));
+    builder.addBlock("data_addtolist");
+    builder.addValueInput("ITEM", 123);
+    builder.addEntityField("LIST", list2);
+
+    builder.addBlock("data_addtolist");
+    builder.addValueInput("ITEM", "Hello world");
+    builder.addEntityField("LIST", list2);
+
+    builder.build();
+
+    builder.run();
+    ASSERT_EQ(list1->toString(), "test true");
+    ASSERT_EQ(list2->toString(), "123 Hello world");
 }
 
 TEST_F(ListBlocksTest, DeleteOfList)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
 
-    // delete 2 of [list1]
-    auto list1 = std::make_shared<List>("b", "list1");
-    auto block1 = createListIndexBlock("a", "data_deleteoflist", list1, 2);
+    auto list1 = std::make_shared<List>("", "");
+    list1->append("Lorem");
+    list1->append("ipsum");
+    list1->append("dolor");
+    list1->append(123);
+    list1->append(true);
+    target->addList(list1);
 
-    // delete "last" of [list2]
-    auto list2 = std::make_shared<List>("d", "list2");
-    auto block2 = createListIndexBlock("c", "data_deleteoflist", list2, "last");
+    auto list2 = std::make_shared<List>("", "");
+    list2->append("Hello");
+    list2->append("world");
+    list2->append(false);
+    list2->append(-543.5);
+    list2->append("abc");
+    list2->append(52.4);
+    target->addList(list2);
 
-    compiler.init();
-    compiler.setBlock(block1);
-    ListBlocks::compileDeleteFromList(&compiler);
-    compiler.setBlock(block2);
-    ListBlocks::compileDeleteFromList(&compiler);
-    compiler.end();
+    auto list3 = std::make_shared<List>("", "");
+    list3->append(1);
+    list3->append(2);
+    list3->append(3);
+    target->addList(list3);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_LIST_DEL, 0, vm::OP_CONST, 1, vm::OP_LIST_DEL, 1, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 2, "last" }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_EQ(
-        compiler.lists(),
-        std::vector<List *>({
-            list1.get(),
-            list2.get(),
-        }));
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    auto addTest = [&builder](const Value &index, std::shared_ptr<List> list) {
+        builder.addBlock("data_deleteoflist");
+        builder.addValueInput("INDEX", index);
+        builder.addEntityField("LIST", list);
+        return builder.currentBlock();
+    };
+
+    auto block = addTest(1, list1);
+    addTest(3, list1);
+    addTest(2, list1);
+    addTest(0, list1);
+    addTest(3, list1);
+
+    addTest("last", list2);
+    addTest("random", list2);
+    addTest("any", list2);
+
+    addTest("all", list3);
+
+    addTest("Last", list2);
+    addTest("raNdom", list2);
+    addTest("aNY", list2);
+
+    addTest("aLl", list3);
+
+    builder.build();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    ctx->setRng(&m_rng);
+
+    EXPECT_CALL(m_rng, randint(1, 5)).WillOnce(Return(2));
+    EXPECT_CALL(m_rng, randint(1, 4)).WillOnce(Return(3));
+    code->run(ctx.get());
+    ASSERT_EQ(list1->toString(), "ipsum true");
+    ASSERT_EQ(list2->toString(), "Hello false abc");
+    ASSERT_TRUE(list3->empty());
 }
 
 TEST_F(ListBlocksTest, DeleteAllOfList)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
 
-    // delete all of [list1]
-    auto list1 = std::make_shared<List>("b", "list1");
-    auto block1 = createListBlock("a", "data_deletealloflist", list1);
+    auto list = std::make_shared<List>("", "");
+    list->append("Lorem");
+    list->append("ipsum");
+    list->append("dolor");
+    list->append(123);
+    list->append(true);
+    target->addList(list);
 
-    // delete all of [list2]
-    auto list2 = std::make_shared<List>("d", "list2");
-    auto block2 = createListBlock("c", "data_deletealloflist", list2);
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+    builder.addBlock("data_deletealloflist");
+    builder.addEntityField("LIST", list);
+    builder.build();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    ListBlocks::compileDeleteAllOfList(&compiler);
-    compiler.setBlock(block2);
-    ListBlocks::compileDeleteAllOfList(&compiler);
-    compiler.end();
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_LIST_DEL_ALL, 0, vm::OP_LIST_DEL_ALL, 1, vm::OP_HALT }));
-    ASSERT_TRUE(compiler.constValues().empty());
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_EQ(
-        compiler.lists(),
-        std::vector<List *>({
-            list1.get(),
-            list2.get(),
-        }));
+    builder.run();
+    ASSERT_TRUE(list->empty());
 }
 
 TEST_F(ListBlocksTest, InsertAtList)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
 
-    // insert "test" at 3 of [list1]
-    auto list1 = std::make_shared<List>("b", "list1");
-    auto block1 = createListItemIndexBlock("a", "data_insertatlist", list1, "test", 3);
+    auto list1 = std::make_shared<List>("", "");
+    list1->append("Lorem");
+    list1->append("ipsum");
+    list1->append("dolor");
+    list1->append(123);
+    list1->append(true);
+    target->addList(list1);
 
-    // insert 5.35 at "random" of [list2]
-    auto list2 = std::make_shared<List>("d", "list2");
-    auto block2 = createListItemIndexBlock("c", "data_insertatlist", list2, 5.35, "random");
+    auto list2 = std::make_shared<List>("", "");
+    list2->append("Hello");
+    list2->append("world");
+    list2->append(false);
+    list2->append(-543.5);
+    list2->append("abc");
+    list2->append(52.4);
+    target->addList(list2);
 
-    compiler.init();
-    compiler.setBlock(block1);
-    ListBlocks::compileInsertToList(&compiler);
-    compiler.setBlock(block2);
-    ListBlocks::compileInsertToList(&compiler);
-    compiler.end();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_LIST_INSERT, 0, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_LIST_INSERT, 1, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "test", 3, 5.35, "random" }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_EQ(
-        compiler.lists(),
-        std::vector<List *>({
-            list1.get(),
-            list2.get(),
-        }));
+    auto addTest = [&builder](const Value &index, const Value &item, std::shared_ptr<List> list) {
+        builder.addBlock("data_insertatlist");
+        builder.addValueInput("ITEM", item);
+        builder.addValueInput("INDEX", index);
+        builder.addEntityField("LIST", list);
+        return builder.currentBlock();
+    };
+
+    auto block = addTest(4, "sit", list1);
+    addTest(7, false, list1);
+    addTest(0, "test", list1);
+    addTest(9, "test", list1);
+
+    addTest("last", "lorem", list2);
+    addTest("random", "ipsum", list2);
+    addTest("any", "dolor", list2);
+
+    addTest("lAsT", "lorem", list2);
+    addTest("raNDom", "ipsum", list2);
+    addTest("Any", "dolor", list2);
+
+    builder.build();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    ctx->setRng(&m_rng);
+
+    EXPECT_CALL(m_rng, randint(1, 8)).WillOnce(Return(8));
+    EXPECT_CALL(m_rng, randint(1, 9)).WillOnce(Return(3));
+    code->run(ctx.get());
+    ASSERT_EQ(list1->toString(), "Lorem ipsum dolor sit 123 true false");
+    ASSERT_EQ(list2->toString(), "Hello world dolor false -543.5 abc 52.4 lorem ipsum");
 }
 
 TEST_F(ListBlocksTest, ReplaceItemOfList)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
 
-    // replace item 1 of [list1] with "test"
-    auto list1 = std::make_shared<List>("b", "list1");
-    auto block1 = createListItemIndexBlock("a", "data_replaceitemoflist", list1, "test", 1);
+    auto list1 = std::make_shared<List>("", "");
+    list1->append("Lorem");
+    list1->append("ipsum");
+    list1->append("dolor");
+    list1->append(123);
+    list1->append(true);
+    target->addList(list1);
 
-    // replace item "last" of [list2] with 100
-    auto list2 = std::make_shared<List>("d", "list2");
-    auto block2 = createListItemIndexBlock("c", "data_replaceitemoflist", list2, 100, "last");
+    auto list2 = std::make_shared<List>("", "");
+    list2->append("Hello");
+    list2->append("world");
+    list2->append(false);
+    list2->append(-543.5);
+    list2->append("abc");
+    list2->append(52.4);
+    target->addList(list2);
 
-    compiler.init();
-    compiler.setBlock(block1);
-    ListBlocks::compileReplaceItemOfList(&compiler);
-    compiler.setBlock(block2);
-    ListBlocks::compileReplaceItemOfList(&compiler);
-    compiler.end();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_CONST, 1, vm::OP_LIST_REPLACE, 0, vm::OP_CONST, 2, vm::OP_CONST, 3, vm::OP_LIST_REPLACE, 1, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 1, "test", "last", 100 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_EQ(
-        compiler.lists(),
-        std::vector<List *>({
-            list1.get(),
-            list2.get(),
-        }));
+    auto addTest = [&builder](const Value &index, const Value &item, std::shared_ptr<List> list) {
+        builder.addBlock("data_replaceitemoflist");
+        builder.addValueInput("INDEX", index);
+        builder.addEntityField("LIST", list);
+        builder.addValueInput("ITEM", item);
+        return builder.currentBlock();
+    };
+
+    auto block = addTest(4, "sit", list1);
+    addTest(5, -53.18, list1);
+    addTest(0, "test", list1);
+    addTest(6, "test", list1);
+
+    addTest("last", "lorem", list2);
+    addTest("random", "ipsum", list2);
+    addTest("any", "dolor", list2);
+
+    addTest("LasT", "lorem", list2);
+    addTest("rAndOm", "ipsum", list2);
+    addTest("AnY", "dolor", list2);
+
+    builder.build();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    ctx->setRng(&m_rng);
+
+    EXPECT_CALL(m_rng, randint(1, 6)).WillOnce(Return(4)).WillOnce(Return(1));
+    code->run(ctx.get());
+    ASSERT_EQ(list1->toString(), "Lorem ipsum dolor sit -53.18");
+    ASSERT_EQ(list2->toString(), "dolor world false ipsum abc lorem");
 }
 
 TEST_F(ListBlocksTest, ItemOfList)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
 
-    // item 50 of [list1]
-    auto list1 = std::make_shared<List>("b", "list1");
-    auto block1 = createListIndexBlock("a", "data_itemoflist", list1, 50);
+    auto list = std::make_shared<List>("list", "");
+    list->append("Lorem");
+    list->append("ipsum");
+    list->append("dolor");
+    list->append(123);
+    list->append(true);
+    target->addList(list);
 
-    // item "random" of [list2]
-    auto list2 = std::make_shared<List>("d", "list2");
-    auto block2 = createListIndexBlock("c", "data_itemoflist", list2, "random");
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    compiler.init();
-    compiler.setBlock(block1);
-    ListBlocks::compileItemOfList(&compiler);
-    compiler.setBlock(block2);
-    ListBlocks::compileItemOfList(&compiler);
-    compiler.end();
+    auto addTest = [&builder](const Value &index, std::shared_ptr<List> list) {
+        builder.addBlock("test_const_string");
+        builder.addValueInput("STRING", index);
+        auto valueBlock = builder.takeBlock();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_LIST_GET_ITEM, 0, vm::OP_CONST, 1, vm::OP_LIST_GET_ITEM, 1, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 50, "random" }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_EQ(
-        compiler.lists(),
-        std::vector<List *>({
-            list1.get(),
-            list2.get(),
-        }));
+        builder.addBlock("data_itemoflist");
+        builder.addObscuredInput("INDEX", valueBlock);
+        builder.addEntityField("LIST", list);
+        auto block = builder.takeBlock();
+
+        builder.addBlock("test_print");
+        builder.addObscuredInput("STRING", block);
+        return builder.currentBlock();
+    };
+
+    auto block = addTest(3, list);
+    addTest(5, list);
+    addTest(0, list);
+    addTest(6, list);
+
+    addTest("last", list);
+    addTest("random", list);
+    addTest("any", list);
+
+    addTest("laSt", list);
+    addTest("RAndom", list);
+    addTest("aNy", list);
+
+    builder.build();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    ctx->setRng(&m_rng);
+
+    static const std::string expected =
+        "dolor\n"
+        "true\n"
+        "0\n"
+        "0\n"
+        "true\n"
+        "123\n"
+        "Lorem\n"
+        "0\n"
+        "0\n"
+        "0\n";
+
+    EXPECT_CALL(m_rng, randint(1, 5)).WillOnce(Return(4)).WillOnce(Return(1));
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+    ASSERT_EQ(list->toString(), "Lorem ipsum dolor 123 true");
 }
 
 TEST_F(ListBlocksTest, ItemNumOfList)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
 
-    // item # of "test" in [list1]
-    auto list1 = std::make_shared<List>("b", "list1");
-    auto block1 = createListItemBlock("a", "data_itemnumoflist", list1, "test");
+    auto list = std::make_shared<List>("list", "");
+    list->append("Lorem");
+    list->append("ipsum");
+    list->append("dolor");
+    list->append(123);
+    list->append(true);
+    list->append("dolor");
+    target->addList(list);
 
-    // item # of 53.154 in [list2]
-    auto list2 = std::make_shared<List>("d", "list2");
-    auto block2 = createListItemBlock("c", "data_itemnumoflist", list2, 53.154);
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    compiler.init();
-    compiler.setBlock(block1);
-    ListBlocks::compileItemNumberInList(&compiler);
-    compiler.setBlock(block2);
-    ListBlocks::compileItemNumberInList(&compiler);
-    compiler.end();
+    auto addTest = [&builder](const Value &item, std::shared_ptr<List> list) {
+        builder.addBlock("data_itemnumoflist");
+        builder.addValueInput("ITEM", item);
+        builder.addEntityField("LIST", list);
+        auto block = builder.takeBlock();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_LIST_INDEX_OF, 0, vm::OP_CONST, 1, vm::OP_LIST_INDEX_OF, 1, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "test", 53.154 }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_EQ(
-        compiler.lists(),
-        std::vector<List *>({
-            list1.get(),
-            list2.get(),
-        }));
+        builder.addBlock("test_print");
+        builder.addObscuredInput("STRING", block);
+        return builder.currentBlock();
+    };
+
+    auto block = addTest("dolor", list);
+    addTest(true, list);
+    addTest("nonexistent", list);
+
+    builder.build();
+
+    static const std::string expected =
+        "3\n"
+        "5\n"
+        "0\n";
+
+    testing::internal::CaptureStdout();
+    builder.run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+    ASSERT_EQ(list->toString(), "Lorem ipsum dolor 123 true dolor");
 }
 
 TEST_F(ListBlocksTest, LengthOfList)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
 
-    // length of [list1]
-    auto list1 = std::make_shared<List>("b", "list1");
-    auto block1 = createListBlock("a", "data_lengthoflist", list1);
+    auto list1 = std::make_shared<List>("list1", "");
+    list1->append("Lorem");
+    list1->append("ipsum");
+    list1->append("dolor");
+    list1->append(123);
+    list1->append(true);
+    target->addList(list1);
 
-    // length of [list2]
-    auto list2 = std::make_shared<List>("d", "list2");
-    auto block2 = createListBlock("c", "data_lengthoflist", list2);
+    auto list2 = std::make_shared<List>("list2", "");
+    list2->append(1);
+    list2->append(false);
+    target->addList(list2);
 
-    compiler.init();
-    compiler.setBlock(block1);
-    ListBlocks::compileLengthOfList(&compiler);
-    compiler.setBlock(block2);
-    ListBlocks::compileLengthOfList(&compiler);
-    compiler.end();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_LIST_LENGTH, 0, vm::OP_LIST_LENGTH, 1, vm::OP_HALT }));
-    ASSERT_TRUE(compiler.constValues().empty());
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_EQ(
-        compiler.lists(),
-        std::vector<List *>({
-            list1.get(),
-            list2.get(),
-        }));
+    auto addTest = [&builder](std::shared_ptr<List> list) {
+        builder.addBlock("data_lengthoflist");
+        builder.addEntityField("LIST", list);
+        auto block = builder.takeBlock();
+
+        builder.addBlock("test_print");
+        builder.addObscuredInput("STRING", block);
+        return builder.currentBlock();
+    };
+
+    auto block = addTest(list1);
+    addTest(list2);
+
+    builder.build();
+
+    static const std::string expected =
+        "5\n"
+        "2\n";
+
+    testing::internal::CaptureStdout();
+    builder.run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+    ASSERT_EQ(list1->toString(), "Lorem ipsum dolor 123 true");
+    ASSERT_EQ(list2->toString(), "1 false");
 }
 
 TEST_F(ListBlocksTest, ListContainsItem)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
 
-    // [list1] contains "hello world"
-    auto list1 = std::make_shared<List>("b", "list1");
-    auto block1 = createListItemBlock("a", "data_listcontainsitem", list1, "hello world");
+    auto list = std::make_shared<List>("list", "");
+    list->append("Lorem");
+    list->append("ipsum");
+    list->append("dolor");
+    list->append(123);
+    list->append(true);
+    list->append("dolor");
+    target->addList(list);
 
-    // [list2] contains -Infinity
-    auto list2 = std::make_shared<List>("d", "list2");
-    auto block2 = createListItemBlock("c", "data_listcontainsitem", list2, -std::numeric_limits<double>::infinity());
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    compiler.init();
-    compiler.setBlock(block1);
-    ListBlocks::compileListContainsItem(&compiler);
-    compiler.setBlock(block2);
-    ListBlocks::compileListContainsItem(&compiler);
-    compiler.end();
+    auto addTest = [&builder](const Value &item, std::shared_ptr<List> list) {
+        builder.addBlock("data_listcontainsitem");
+        builder.addEntityField("LIST", list);
+        builder.addValueInput("ITEM", item);
+        auto block = builder.takeBlock();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_LIST_CONTAINS, 0, vm::OP_CONST, 1, vm::OP_LIST_CONTAINS, 1, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "hello world", -std::numeric_limits<double>::infinity() }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_EQ(
-        compiler.lists(),
-        std::vector<List *>({
-            list1.get(),
-            list2.get(),
-        }));
-}
+        builder.addBlock("test_print");
+        builder.addObscuredInput("STRING", block);
+        return builder.currentBlock();
+    };
 
-TEST_F(ListBlocksTest, ShowList)
-{
-    Compiler compiler(&m_engineMock);
-    Stage stage;
-    Target target;
+    auto block = addTest("dolor", list);
+    addTest(true, list);
+    addTest("nonexistent", list);
 
-    // show list [list1]
-    auto list1 = std::make_shared<List>("b", "list1");
-    list1->setTarget(&stage);
-    auto block1 = createListBlock("a", "data_showlist", list1);
+    builder.build();
 
-    // show list [list2]
-    auto list2 = std::make_shared<List>("d", "list2");
-    list2->setTarget(&target);
-    auto block2 = createListBlock("c", "data_showlist", list2);
+    static const std::string expected =
+        "true\n"
+        "true\n"
+        "false\n";
 
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&ListBlocks::showGlobalList)).WillOnce(Return(0));
-    compiler.init();
-    compiler.setBlock(block1);
-    ListBlocks::compileShowList(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&ListBlocks::showList)).WillOnce(Return(1));
-    compiler.setBlock(block2);
-    ListBlocks::compileShowList(&compiler);
-    compiler.end();
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "b", "d" }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-}
-
-TEST_F(ListBlocksTest, ShowListImpl)
-{
-    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 1, vm::OP_HALT };
-    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 1, vm::OP_HALT };
-    static BlockFunc functions[] = { &ListBlocks::showGlobalList, &ListBlocks::showList };
-    static Value constValues[] = { "a", "b", "c", "d" };
-
-    auto list1 = std::make_shared<List>("b", "");
-    Monitor monitor1("b", "");
-    monitor1.setVisible(false);
-    list1->setMonitor(&monitor1);
-
-    auto list2 = std::make_shared<List>("d", "");
-    Monitor monitor2("d", "");
-    monitor2.setVisible(false);
-    list2->setMonitor(&monitor2);
-
-    Stage stage;
-    stage.addList(list1);
-
-    Sprite sprite;
-    sprite.addList(list2);
-
-    Engine fakeEngine;
-    sprite.setEngine(&fakeEngine);
-    auto clone = sprite.clone();
-
-    // Global
-    VirtualMachine vm1(&stage, &m_engineMock, nullptr);
-    vm1.setBytecode(bytecode1);
-    vm1.setFunctions(functions);
-    vm1.setConstValues(constValues);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    vm1.run();
-
-    ASSERT_EQ(vm1.registerCount(), 0);
-    ASSERT_FALSE(monitor1.visible());
-    ASSERT_FALSE(monitor2.visible());
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    vm1.reset();
-    vm1.setBytecode(bytecode2);
-    vm1.run();
-
-    ASSERT_EQ(vm1.registerCount(), 0);
-    ASSERT_TRUE(monitor1.visible());
-    ASSERT_FALSE(monitor2.visible());
-
-    monitor1.setVisible(false);
-
-    // Local
-    VirtualMachine vm2(&sprite, &m_engineMock, nullptr);
-    vm2.setBytecode(bytecode3);
-    vm2.setFunctions(functions);
-    vm2.setConstValues(constValues);
-    vm2.run();
-
-    ASSERT_EQ(vm2.registerCount(), 0);
-    ASSERT_FALSE(monitor1.visible());
-    ASSERT_FALSE(monitor2.visible());
-
-    vm2.reset();
-    vm2.setBytecode(bytecode4);
-    vm2.run();
-
-    ASSERT_EQ(vm2.registerCount(), 0);
-    ASSERT_FALSE(monitor1.visible());
-    ASSERT_TRUE(monitor2.visible());
-
-    // Local - clone
-    monitor2.setVisible(false);
-    VirtualMachine vm3(clone.get(), &m_engineMock, nullptr);
-    vm3.setBytecode(bytecode3);
-    vm3.setFunctions(functions);
-    vm3.setConstValues(constValues);
-    vm3.run();
-
-    ASSERT_EQ(vm3.registerCount(), 0);
-    ASSERT_FALSE(monitor1.visible());
-    ASSERT_FALSE(monitor2.visible());
-
-    vm3.reset();
-    vm3.setBytecode(bytecode4);
-    vm3.run();
-
-    ASSERT_EQ(vm3.registerCount(), 0);
-    ASSERT_FALSE(monitor1.visible());
-    ASSERT_TRUE(monitor2.visible());
-}
-
-TEST_F(ListBlocksTest, HideList)
-{
-    Compiler compiler(&m_engineMock);
-    Stage stage;
-    Target target;
-
-    // hide list [list1]
-    auto list1 = std::make_shared<List>("b", "list1");
-    list1->setTarget(&stage);
-    auto block1 = createListBlock("a", "data_hidelist", list1);
-
-    // hide list [list2]
-    auto list2 = std::make_shared<List>("d", "list2");
-    list2->setTarget(&target);
-    auto block2 = createListBlock("c", "data_hidelist", list2);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&ListBlocks::hideGlobalList)).WillOnce(Return(0));
-    compiler.init();
-    compiler.setBlock(block1);
-    ListBlocks::compileHideList(&compiler);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    EXPECT_CALL(m_engineMock, functionIndex(&ListBlocks::hideList)).WillOnce(Return(1));
-    compiler.setBlock(block2);
-    ListBlocks::compileHideList(&compiler);
-    compiler.end();
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CONST, 1, vm::OP_EXEC, 1, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ "b", "d" }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-}
-
-TEST_F(ListBlocksTest, HideListImpl)
-{
-    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 1, vm::OP_HALT };
-    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 3, vm::OP_EXEC, 1, vm::OP_HALT };
-    static BlockFunc functions[] = { &ListBlocks::hideGlobalList, &ListBlocks::hideList };
-    static Value constValues[] = { "a", "b", "c", "d" };
-
-    auto list1 = std::make_shared<List>("b", "");
-    Monitor monitor1("b", "");
-    monitor1.setVisible(true);
-    list1->setMonitor(&monitor1);
-
-    auto list2 = std::make_shared<List>("d", "");
-    Monitor monitor2("d", "");
-    monitor2.setVisible(true);
-    list2->setMonitor(&monitor2);
-
-    Stage stage;
-    stage.addList(list1);
-
-    Sprite sprite;
-    sprite.addList(list2);
-
-    Engine fakeEngine;
-    sprite.setEngine(&fakeEngine);
-    auto clone = sprite.clone();
-
-    // Global
-    VirtualMachine vm1(&stage, &m_engineMock, nullptr);
-    vm1.setBytecode(bytecode1);
-    vm1.setFunctions(functions);
-    vm1.setConstValues(constValues);
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    vm1.run();
-
-    ASSERT_EQ(vm1.registerCount(), 0);
-    ASSERT_TRUE(monitor1.visible());
-    ASSERT_TRUE(monitor2.visible());
-
-    EXPECT_CALL(m_engineMock, stage()).WillOnce(Return(&stage));
-    vm1.reset();
-    vm1.setBytecode(bytecode2);
-    vm1.run();
-
-    ASSERT_EQ(vm1.registerCount(), 0);
-    ASSERT_FALSE(monitor1.visible());
-    ASSERT_TRUE(monitor2.visible());
-
-    monitor1.setVisible(true);
-
-    // Local
-    VirtualMachine vm2(&sprite, &m_engineMock, nullptr);
-    vm2.setBytecode(bytecode3);
-    vm2.setFunctions(functions);
-    vm2.setConstValues(constValues);
-    vm2.run();
-
-    ASSERT_EQ(vm2.registerCount(), 0);
-    ASSERT_TRUE(monitor1.visible());
-    ASSERT_TRUE(monitor2.visible());
-
-    vm2.reset();
-    vm2.setBytecode(bytecode4);
-    vm2.run();
-
-    ASSERT_EQ(vm2.registerCount(), 0);
-    ASSERT_TRUE(monitor1.visible());
-    ASSERT_FALSE(monitor2.visible());
-
-    // Local - clone
-    monitor2.setVisible(true);
-    VirtualMachine vm3(clone.get(), &m_engineMock, nullptr);
-    vm3.setBytecode(bytecode3);
-    vm3.setFunctions(functions);
-    vm3.setConstValues(constValues);
-    vm3.run();
-
-    ASSERT_EQ(vm3.registerCount(), 0);
-    ASSERT_TRUE(monitor1.visible());
-    ASSERT_TRUE(monitor2.visible());
-
-    vm3.reset();
-    vm3.setBytecode(bytecode4);
-    vm3.run();
-
-    ASSERT_EQ(vm3.registerCount(), 0);
-    ASSERT_TRUE(monitor1.visible());
-    ASSERT_FALSE(monitor2.visible());
+    testing::internal::CaptureStdout();
+    builder.run();
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+    ASSERT_EQ(list->toString(), "Lorem ipsum dolor 123 true dolor");
 }

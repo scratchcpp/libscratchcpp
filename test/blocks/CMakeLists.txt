@@ -1,3 +1,15 @@
+add_library(
+  block_test_deps SHARED
+  util.cpp
+  util.h
+)
+
+target_link_libraries(
+  block_test_deps
+  GTest::gtest_main
+  scratchcpp
+)
+
 # motion_blocks_test
 if (LIBSCRATCHCPP_ENABLE_MOTION_BLOCKS)
     add_executable(
@@ -83,6 +95,7 @@ if (LIBSCRATCHCPP_ENABLE_CONTROL_BLOCKS)
       GTest::gmock_main
       scratchcpp
       scratchcpp_mocks
+      block_test_deps
     )
 
     gtest_discover_tests(control_blocks_test)
@@ -119,6 +132,7 @@ if (LIBSCRATCHCPP_ENABLE_OPERATOR_BLOCKS)
       GTest::gmock_main
       scratchcpp
       scratchcpp_mocks
+      block_test_deps
     )
 
     gtest_discover_tests(operator_blocks_test)
@@ -155,6 +169,7 @@ if (LIBSCRATCHCPP_ENABLE_LIST_BLOCKS)
       GTest::gmock_main
       scratchcpp
       scratchcpp_mocks
+      block_test_deps
     )
 
     gtest_discover_tests(list_blocks_test)
@@ -173,6 +188,7 @@ if (LIBSCRATCHCPP_ENABLE_CUSTOM_BLOCKS)
       GTest::gmock_main
       scratchcpp
       scratchcpp_mocks
+      block_test_deps
     )
 
     gtest_discover_tests(custom_blocks_test)

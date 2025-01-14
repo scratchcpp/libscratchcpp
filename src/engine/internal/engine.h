@@ -19,9 +19,7 @@ class Entity;
 class IClock;
 class IAudioEngine;
 class Thread;
-#ifdef USE_LLVM
 class CompilerContext;
-#endif
 
 class Engine : public IEngine
 {
@@ -104,9 +102,6 @@ class Engine : public IEngine
 
         ITimer *timer() const override;
         void setTimer(ITimer *timer);
-
-        unsigned int functionIndex(BlockFunc f) override;
-        const std::vector<BlockFunc> &blockFunctions() const override;
 
         void addCompileFunction(IExtension *extension, const std::string &opcode, BlockComp f) override;
         void addHatPredicateCompileFunction(IExtension *extension, const std::string &opcode, HatPredicateCompileFunc f) override;
@@ -241,9 +236,7 @@ class Engine : public IEngine
         static const std::unordered_map<HatType, bool> m_hatEdgeActivated;          // used to check whether a hat is edge-activated (runs when a predicate becomes true)
 
         std::vector<std::shared_ptr<Target>> m_targets;
-#ifdef USE_LLVM
         std::unordered_map<Target *, std::shared_ptr<CompilerContext>> m_compilerContexts;
-#endif
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_broadcastMap;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_backdropBroadcastMap;
@@ -255,7 +248,6 @@ class Engine : public IEngine
         std::vector<std::shared_ptr<Thread>> m_threadsToStop;
         std::shared_ptr<Thread> m_activeThread;
         std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> m_scripts;
-        std::vector<BlockFunc> m_functions;
         std::recursive_mutex m_eventLoopMutex;
         std::string m_userAgent;
 

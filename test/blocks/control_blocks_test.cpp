@@ -1,24 +1,30 @@
+#include <scratchcpp/project.h>
 #include <scratchcpp/compiler.h>
-#include <scratchcpp/thread.h>
+#include <scratchcpp/test/scriptbuilder.h>
+#include <scratchcpp/sprite.h>
+#include <scratchcpp/stage.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/script.h>
+#include <scratchcpp/thread.h>
+#include <scratchcpp/executablecode.h>
+#include <scratchcpp/executioncontext.h>
 #include <scratchcpp/variable.h>
-#include <scratchcpp/sprite.h>
+
 #include <enginemock.h>
-#include <clockmock.h>
+#include <stacktimermock.h>
 
 #include "../common.h"
 #include "blocks/controlblocks.h"
-#include "blocks/operatorblocks.h"
-#include "engine/internal/engine.h"
-#include "engine/internal/clock.h"
+#include "util.h"
 
 using namespace libscratchcpp;
+using namespace libscratchcpp::test;
 
 using ::testing::Return;
-using ::testing::_;
 using ::testing::SaveArg;
+using ::testing::_;
 
 class ControlBlocksTest : public testing::Test
 {
@@ -26,991 +32,1084 @@ class ControlBlocksTest : public testing::Test
         void SetUp() override
         {
             m_extension = std::make_unique<ControlBlocks>();
-            m_extension->registerBlocks(&m_engine);
-        }
-
-        // For any control block
-        std::shared_ptr<Block> createControlBlock(const std::string &id, const std::string &opcode) const { return std::make_shared<Block>(id, opcode); }
-
-        // For control_create_clone_of
-        std::shared_ptr<Block> createCloneBlock(const std::string &id, const std::string &spriteName, std::shared_ptr<Block> valueBlock = nullptr)
-        {
-            auto block = createControlBlock(id, "control_create_clone_of");
-
-            if (valueBlock)
-                addObscuredInput(block, "CLONE_OPTION", ControlBlocks::CLONE_OPTION, valueBlock);
-            else {
-                auto input = addNullInput(block, "CLONE_OPTION", ControlBlocks::CLONE_OPTION);
-                auto menu = createControlBlock(id + "_menu", "control_create_clone_of_menu");
-                menu->setShadow(true);
-                input->setValueBlock(menu);
-                addDropdownField(menu, "CLONE_OPTION", static_cast<ControlBlocks::Fields>(-1), spriteName, static_cast<ControlBlocks::FieldValues>(-1));
-            }
-
-            return block;
-        }
-
-        std::shared_ptr<Block> createNullBlock(const std::string &id)
-        {
-            std::shared_ptr<Block> block = std::make_shared<Block>(id, "");
-            BlockComp func = [](Compiler *compiler) { compiler->addInstruction(vm::OP_NULL); };
-            block->setCompileFunction(func);
-
-            return block;
-        }
-
-        void addSubstackInput(std::shared_ptr<Block> block, const std::string &name, ControlBlocks::Inputs id, std::shared_ptr<Block> valueBlock) const
-        {
-            auto input = std::make_shared<Input>(name, Input::Type::NoShadow);
-            input->setValueBlock(valueBlock);
-            input->setInputId(id);
-            block->addInput(input);
-        }
-
-        void addObscuredInput(std::shared_ptr<Block> block, const std::string &name, ControlBlocks::Inputs id, std::shared_ptr<Block> valueBlock) const
-        {
-            auto input = std::make_shared<Input>(name, Input::Type::ObscuredShadow);
-            input->setValueBlock(valueBlock);
-            input->setInputId(id);
-            block->addInput(input);
-        }
-
-        void addValueInput(std::shared_ptr<Block> block, const std::string &name, ControlBlocks::Inputs id, const Value &value) const
-        {
-            auto input = std::make_shared<Input>(name, Input::Type::Shadow);
-            input->setPrimaryValue(value);
-            input->setInputId(id);
-            block->addInput(input);
-        }
-
-        std::shared_ptr<Input> addNullInput(std::shared_ptr<Block> block, const std::string &name, ControlBlocks::Inputs id) const
-        {
-            auto input = std::make_shared<Input>(name, Input::Type::Shadow);
-            input->setInputId(id);
-            block->addInput(input);
-
-            return input;
-        }
-
-        void addDropdownField(std::shared_ptr<Block> block, const std::string &name, ControlBlocks::Fields id, const std::string &value, ControlBlocks::FieldValues valueId) const
-        {
-            auto field = std::make_shared<Field>(name, value);
-            field->setFieldId(id);
-            field->setSpecialValueId(valueId);
-            block->addField(field);
-        }
-
-        void addVariableField(std::shared_ptr<Block> block, std::shared_ptr<Variable> variable)
-        {
-            auto variableField = std::make_shared<Field>("VARIABLE", Value(), variable);
-            variableField->setFieldId(ControlBlocks::VARIABLE);
-            block->addField(variableField);
-        }
-
-        std::shared_ptr<Block> createSubstack(const std::string &id)
-        {
-            auto block = std::make_shared<Block>("b", "some_block");
-
-            block->setCompileFunction([](Compiler *compiler) {
-                compiler->addInstruction(vm::OP_NULL);
-                compiler->addInstruction(vm::OP_PRINT);
-            });
-
-            return block;
-        }
-
-        std::shared_ptr<Block> createSubstack2(const std::string &id)
-        {
-            auto block = std::make_shared<Block>("b", "some_block");
-
-            block->setCompileFunction([](Compiler *compiler) {
-                compiler->addInstruction(vm::OP_NULL);
-                compiler->addInstruction(vm::OP_NOT); // to distinguish from substack1
-                compiler->addInstruction(vm::OP_PRINT);
-            });
-
-            return block;
+            m_engine = m_project.engine().get();
+            m_extension->registerBlocks(m_engine);
+            registerBlocks(m_engine, m_extension.get());
         }
 
         std::unique_ptr<IExtension> m_extension;
+        Project m_project;
+        IEngine *m_engine = nullptr;
         EngineMock m_engineMock;
-        Engine m_engine;
 };
-
-TEST_F(ControlBlocksTest, Name)
-{
-    ASSERT_EQ(m_extension->name(), "Control");
-}
-
-TEST_F(ControlBlocksTest, RegisterBlocks)
-{
-    // Blocks
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_forever", &ControlBlocks::compileRepeatForever)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_repeat", &ControlBlocks::compileRepeat)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_repeat_until", &ControlBlocks::compileRepeatUntil)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_while", &ControlBlocks::compileRepeatWhile)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_for_each", &ControlBlocks::compileRepeatForEach)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_if", &ControlBlocks::compileIfStatement)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_if_else", &ControlBlocks::compileIfElseStatement)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_stop", &ControlBlocks::compileStop)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_wait", &ControlBlocks::compileWait)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_wait_until", &ControlBlocks::compileWaitUntil)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_start_as_clone", &ControlBlocks::compileStartAsClone)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_create_clone_of", &ControlBlocks::compileCreateClone)).Times(1);
-    EXPECT_CALL(m_engineMock, addCompileFunction(m_extension.get(), "control_delete_this_clone", &ControlBlocks::compileDeleteThisClone)).Times(1);
-
-    // Inputs
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "SUBSTACK", ControlBlocks::SUBSTACK));
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "SUBSTACK2", ControlBlocks::SUBSTACK2));
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "TIMES", ControlBlocks::TIMES));
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "CONDITION", ControlBlocks::CONDITION));
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "DURATION", ControlBlocks::DURATION));
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "VALUE", ControlBlocks::VALUE));
-    EXPECT_CALL(m_engineMock, addInput(m_extension.get(), "CLONE_OPTION", ControlBlocks::CLONE_OPTION));
-
-    // Fields
-    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "STOP_OPTION", ControlBlocks::STOP_OPTION));
-    EXPECT_CALL(m_engineMock, addField(m_extension.get(), "VARIABLE", ControlBlocks::VARIABLE));
-
-    // Field values
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "all", ControlBlocks::StopAll));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "this script", ControlBlocks::StopThisScript));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "other scripts in sprite", ControlBlocks::StopOtherScriptsInSprite));
-    EXPECT_CALL(m_engineMock, addFieldValue(m_extension.get(), "other scripts in stage", ControlBlocks::StopOtherScriptsInSprite));
-
-    m_extension->registerBlocks(&m_engineMock);
-}
 
 TEST_F(ControlBlocksTest, Forever)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
 
-    // with substack
-    auto block1 = createControlBlock("a", "control_forever");
-    auto substack = createSubstack("b");
-    addSubstackInput(block1, "SUBSTACK", ControlBlocks::SUBSTACK, substack);
-    block1->setCompileFunction(&ControlBlocks::compileRepeatForever);
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // with null substack
-    auto block2 = createControlBlock("c", "control_forever");
-    addNullInput(block2, "SUBSTACK", ControlBlocks::SUBSTACK);
-    block2->setCompileFunction(&ControlBlocks::compileRepeatForever);
+        builder.addBlock("control_forever");
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
 
-    // without substack
-    auto block3 = createControlBlock("d", "control_forever");
-    block3->setCompileFunction(&ControlBlocks::compileRepeatForever);
+        builder.build();
+        m_engine->start();
 
-    compiler.compile(block1);
+        for (int i = 0; i < 2; i++) {
+            testing::internal::CaptureStdout();
+            m_engine->step();
+            ASSERT_EQ(testing::internal::GetCapturedStdout().substr(0, 10), "test\ntest\n");
+            ASSERT_TRUE(m_engine->isRunning());
+        }
+    }
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_FOREVER_LOOP, vm::OP_NULL, vm::OP_PRINT, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_TRUE(compiler.constValues().empty());
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
 
-    compiler.compile(block2);
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+        builder.addBlock("control_forever");
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_FOREVER_LOOP, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_TRUE(compiler.constValues().empty());
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+        builder.build();
+        m_engine->start();
 
-    compiler.compile(block3);
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_FOREVER_LOOP, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_TRUE(compiler.constValues().empty());
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+        for (int i = 0; i < 2; i++) {
+            m_engine->step();
+            ASSERT_TRUE(m_engine->isRunning());
+        }
+    }
 }
 
 TEST_F(ControlBlocksTest, Repeat)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
 
-    // with substack
-    auto block1 = createControlBlock("a", "control_repeat");
-    auto substack = createSubstack("b");
-    addSubstackInput(block1, "SUBSTACK", ControlBlocks::SUBSTACK, substack);
-    addValueInput(block1, "TIMES", ControlBlocks::TIMES, 5);
-    block1->setCompileFunction(&ControlBlocks::compileRepeat);
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // with null substack
-    auto block2 = createControlBlock("c", "control_repeat");
-    addNullInput(block2, "SUBSTACK", ControlBlocks::SUBSTACK);
-    addValueInput(block2, "TIMES", ControlBlocks::TIMES, 10);
-    block2->setCompileFunction(&ControlBlocks::compileRepeat);
+        builder.addBlock("control_repeat");
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        builder.addValueInput("TIMES", 5);
 
-    // without substack
-    auto block3 = createControlBlock("d", "control_repeat");
-    addValueInput(block3, "TIMES", ControlBlocks::TIMES, 8);
-    block3->setCompileFunction(&ControlBlocks::compileRepeat);
+        builder.addBlock("control_repeat");
+        substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        builder.addNullObscuredInput("TIMES");
 
-    compiler.compile(block1);
+        builder.build();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_REPEAT_LOOP, vm::OP_NULL, vm::OP_PRINT, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0].toDouble(), 5);
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+        testing::internal::CaptureStdout();
+        builder.run();
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\ntest\ntest\ntest\ntest\n");
+    }
 
-    compiler.compile(block2);
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0].toDouble(), 5);
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+        builder.addBlock("control_repeat");
+        builder.addValueInput("TIMES", "Infinity");
 
-    compiler.compile(block3);
+        builder.build();
+        m_engine->start();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0].toDouble(), 5);
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-}
-
-TEST_F(ControlBlocksTest, RepeatUntil)
-{
-    Compiler compiler(&m_engine);
-
-    // with substack
-    auto block1 = createControlBlock("a", "control_repeat_until");
-    auto substack = createSubstack("b");
-    addSubstackInput(block1, "SUBSTACK", ControlBlocks::SUBSTACK, substack);
-    addValueInput(block1, "CONDITION", ControlBlocks::CONDITION, false);
-    block1->setCompileFunction(&ControlBlocks::compileRepeatUntil);
-
-    // with null substack
-    auto block2 = createControlBlock("c", "control_repeat_until");
-    addNullInput(block2, "SUBSTACK", ControlBlocks::SUBSTACK);
-    addValueInput(block2, "CONDITION", ControlBlocks::CONDITION, false);
-    block2->setCompileFunction(&ControlBlocks::compileRepeatUntil);
-
-    // without substack
-    auto block3 = createControlBlock("d", "control_repeat_until");
-    addValueInput(block3, "CONDITION", ControlBlocks::CONDITION, false);
-    block3->setCompileFunction(&ControlBlocks::compileRepeatUntil);
-
-    // without substack and with null condition
-    auto block4 = createControlBlock("e", "control_repeat_until");
-    addNullInput(block4, "CONDITION", ControlBlocks::CONDITION);
-    block4->setCompileFunction(&ControlBlocks::compileRepeatUntil);
-
-    // without substack and without condition
-    auto block5 = createControlBlock("f", "control_repeat_until");
-    block5->setCompileFunction(&ControlBlocks::compileRepeatUntil);
-
-    compiler.compile(block1);
-
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 0, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_NULL, vm::OP_PRINT, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0].toBool(), false);
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block2);
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 1, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block3);
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 2, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block4);
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 3, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false, Value() }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block5);
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_NULL, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false, Value() }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-}
-
-TEST_F(ControlBlocksTest, While)
-{
-    Compiler compiler(&m_engine);
-
-    // with substack
-    auto block1 = createControlBlock("a", "control_while");
-    auto substack = createSubstack("b");
-    addSubstackInput(block1, "SUBSTACK", ControlBlocks::SUBSTACK, substack);
-    addValueInput(block1, "CONDITION", ControlBlocks::CONDITION, false);
-    block1->setCompileFunction(&ControlBlocks::compileRepeatWhile);
-
-    // with null substack
-    auto block2 = createControlBlock("c", "control_while");
-    addNullInput(block2, "SUBSTACK", ControlBlocks::SUBSTACK);
-    addValueInput(block2, "CONDITION", ControlBlocks::CONDITION, false);
-    block2->setCompileFunction(&ControlBlocks::compileRepeatWhile);
-
-    // without substack
-    auto block3 = createControlBlock("d", "control_while");
-    addValueInput(block3, "CONDITION", ControlBlocks::CONDITION, false);
-    block3->setCompileFunction(&ControlBlocks::compileRepeatWhile);
-
-    // without substack and with null condition
-    auto block4 = createControlBlock("e", "control_while");
-    addNullInput(block4, "CONDITION", ControlBlocks::CONDITION);
-    block4->setCompileFunction(&ControlBlocks::compileRepeatWhile);
-
-    // without substack and without condition
-    auto block5 = createControlBlock("f", "control_while");
-    block5->setCompileFunction(&ControlBlocks::compileRepeatWhile);
-
-    compiler.compile(block1);
-
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>(
-            { vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 0, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_NULL, vm::OP_PRINT, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0].toBool(), false);
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block2);
-
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 1, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block3);
-
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 2, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block4);
-
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_CONST, 3, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false, Value() }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block5);
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_UNTIL_LOOP, vm::OP_NULL, vm::OP_NOT, vm::OP_BEGIN_UNTIL_LOOP, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false, Value() }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-}
-
-TEST_F(ControlBlocksTest, ForEach)
-{
-    Compiler compiler(&m_engine);
-    auto var = std::make_shared<Variable>("v", "var");
-
-    // with substack
-    auto block1 = createControlBlock("a", "control_for_each");
-    auto substack = createSubstack("b");
-    addSubstackInput(block1, "SUBSTACK", ControlBlocks::SUBSTACK, substack);
-    addVariableField(block1, var);
-    addValueInput(block1, "VALUE", ControlBlocks::VALUE, 5);
-    block1->setCompileFunction(&ControlBlocks::compileRepeatForEach);
-
-    // with null substack
-    auto block2 = createControlBlock("c", "control_for_each");
-    addNullInput(block2, "SUBSTACK", ControlBlocks::SUBSTACK);
-    addVariableField(block2, var);
-    addValueInput(block2, "VALUE", ControlBlocks::VALUE, 10);
-    block2->setCompileFunction(&ControlBlocks::compileRepeatForEach);
-
-    // without substack
-    auto block3 = createControlBlock("d", "control_for_each");
-    addVariableField(block3, var);
-    addValueInput(block3, "VALUE", ControlBlocks::VALUE, 8);
-    block3->setCompileFunction(&ControlBlocks::compileRepeatForEach);
-
-    compiler.compile(block1);
-
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>(
-            { vm::OP_START, vm::OP_CONST, 0, vm::OP_REPEAT_LOOP, vm::OP_REPEAT_LOOP_INDEX1, vm::OP_SET_VAR, 0, vm::OP_NULL, vm::OP_PRINT, vm::OP_BREAK_FRAME, vm::OP_LOOP_END, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0].toDouble(), 5);
-    ASSERT_EQ(compiler.variables().size(), 1);
-    ASSERT_EQ(compiler.variables()[0], var.get());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block2);
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 1, vm::OP_SET_VAR, 0, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 5, 10 }));
-    ASSERT_EQ(compiler.variables().size(), 1);
-    ASSERT_EQ(compiler.variables()[0], var.get());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block3);
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 2, vm::OP_SET_VAR, 0, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ 5, 10, 8 }));
-    ASSERT_EQ(compiler.variables().size(), 1);
-    ASSERT_EQ(compiler.variables()[0], var.get());
-    ASSERT_TRUE(compiler.lists().empty());
+        for (int i = 0; i < 2; i++) {
+            m_engine->step();
+            ASSERT_TRUE(m_engine->isRunning());
+        }
+    }
 }
 
 TEST_F(ControlBlocksTest, If)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
 
-    // with substack
-    auto block1 = createControlBlock("a", "control_if");
-    auto substack = createSubstack("b");
-    addSubstackInput(block1, "SUBSTACK", ControlBlocks::SUBSTACK, substack);
-    addValueInput(block1, "CONDITION", ControlBlocks::CONDITION, false);
-    block1->setCompileFunction(&ControlBlocks::compileIfStatement);
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // with null substack
-    auto block2 = createControlBlock("c", "control_if");
-    addNullInput(block2, "SUBSTACK", ControlBlocks::SUBSTACK);
-    addValueInput(block2, "CONDITION", ControlBlocks::CONDITION, false);
-    block2->setCompileFunction(&ControlBlocks::compileIfStatement);
+        builder.addBlock("control_if");
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addValueInput("CONDITION", false);
+        builder.addObscuredInput("SUBSTACK", substack);
 
-    // without substack
-    auto block3 = createControlBlock("d", "control_if");
-    addValueInput(block3, "CONDITION", ControlBlocks::CONDITION, false);
-    block3->setCompileFunction(&ControlBlocks::compileIfStatement);
+        builder.addBlock("control_if");
+        substack = std::make_shared<Block>("", "test_print_test");
+        builder.addNullObscuredInput("CONDITION");
+        builder.addObscuredInput("SUBSTACK", substack);
 
-    // with substack and with null condition
-    auto block4 = createControlBlock("e", "control_if");
-    substack = createSubstack("f");
-    addSubstackInput(block4, "SUBSTACK", ControlBlocks::SUBSTACK, substack);
-    addNullInput(block4, "CONDITION", ControlBlocks::CONDITION);
-    block4->setCompileFunction(&ControlBlocks::compileIfStatement);
+        builder.addBlock("control_if");
+        substack = std::make_shared<Block>("", "test_print_test");
+        builder.addValueInput("CONDITION", true);
+        builder.addObscuredInput("SUBSTACK", substack);
 
-    // with substack and without condition
-    auto block5 = createControlBlock("g", "control_if");
-    substack = createSubstack("h");
-    addSubstackInput(block5, "SUBSTACK", ControlBlocks::SUBSTACK, substack);
-    block5->setCompileFunction(&ControlBlocks::compileIfStatement);
+        builder.build();
 
-    compiler.compile(block1);
+        testing::internal::CaptureStdout();
+        builder.run();
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\n");
+    }
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_IF, vm::OP_NULL, vm::OP_PRINT, vm::OP_ENDIF, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0].toBool(), false);
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
 
-    compiler.compile(block2);
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+        builder.addBlock("control_if");
+        builder.addValueInput("CONDITION", true);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0].toBool(), false);
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block3);
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0].toBool(), false);
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block4);
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 1, vm::OP_IF, vm::OP_NULL, vm::OP_PRINT, vm::OP_ENDIF, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, Value() }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-
-    compiler.compile(block5);
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_NULL, vm::OP_IF, vm::OP_NULL, vm::OP_PRINT, vm::OP_ENDIF, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, Value() }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+        builder.build();
+        builder.run();
+    }
 }
 
 TEST_F(ControlBlocksTest, IfElse)
 {
-    Compiler compiler(&m_engine);
+    auto target = std::make_shared<Sprite>();
 
-    // with both substacks
-    auto block1 = createControlBlock("a", "control_if_else");
-    auto substack1 = createSubstack("b");
-    addSubstackInput(block1, "SUBSTACK", ControlBlocks::SUBSTACK, substack1);
-    auto substack2 = createSubstack2("c");
-    addSubstackInput(block1, "SUBSTACK2", ControlBlocks::SUBSTACK2, substack2);
-    addValueInput(block1, "CONDITION", ControlBlocks::CONDITION, false);
-    block1->setCompileFunction(&ControlBlocks::compileIfElseStatement);
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // without first substack
-    auto block2 = createControlBlock("d", "control_if_else");
-    substack2 = createSubstack2("e");
-    addSubstackInput(block2, "SUBSTACK2", ControlBlocks::SUBSTACK2, substack2);
-    addValueInput(block2, "CONDITION", ControlBlocks::CONDITION, false);
-    block2->setCompileFunction(&ControlBlocks::compileIfElseStatement);
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", false);
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        auto substack2 = std::make_shared<Block>("", "test_print_test2");
+        builder.addObscuredInput("SUBSTACK2", substack2);
 
-    // without second substack
-    auto block3 = createControlBlock("f", "control_if_else");
-    substack1 = createSubstack("g");
-    addSubstackInput(block3, "SUBSTACK", ControlBlocks::SUBSTACK, substack1);
-    addValueInput(block3, "CONDITION", ControlBlocks::CONDITION, false);
-    block3->setCompileFunction(&ControlBlocks::compileIfElseStatement);
+        builder.addBlock("control_if_else");
+        builder.addNullObscuredInput("CONDITION");
+        substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        substack2 = std::make_shared<Block>("", "test_print_test2");
+        builder.addObscuredInput("SUBSTACK2", substack2);
 
-    // without any substack
-    auto block4 = createControlBlock("h", "control_if_else");
-    addValueInput(block4, "CONDITION", ControlBlocks::CONDITION, false);
-    block4->setCompileFunction(&ControlBlocks::compileIfElseStatement);
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", true);
+        substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        substack2 = std::make_shared<Block>("", "test_print_test2");
+        builder.addObscuredInput("SUBSTACK2", substack2);
 
-    // with both substacks and with null condition
-    auto block5 = createControlBlock("i", "control_if_else");
-    substack1 = createSubstack("j");
-    addSubstackInput(block5, "SUBSTACK", ControlBlocks::SUBSTACK, substack1);
-    substack2 = createSubstack2("k");
-    addSubstackInput(block5, "SUBSTACK2", ControlBlocks::SUBSTACK2, substack2);
-    addNullInput(block5, "CONDITION", ControlBlocks::CONDITION);
-    block5->setCompileFunction(&ControlBlocks::compileIfElseStatement);
+        builder.build();
 
-    // with both substacks and without condition
-    auto block6 = createControlBlock("i", "control_if_else");
-    substack1 = createSubstack("j");
-    addSubstackInput(block6, "SUBSTACK", ControlBlocks::SUBSTACK, substack1);
-    substack2 = createSubstack2("k");
-    addSubstackInput(block6, "SUBSTACK2", ControlBlocks::SUBSTACK2, substack2);
-    block6->setCompileFunction(&ControlBlocks::compileIfElseStatement);
+        testing::internal::CaptureStdout();
+        builder.run();
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "test2\ntest2\ntest\n");
+    }
 
-    compiler.compile(block1);
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_IF, vm::OP_NULL, vm::OP_PRINT, vm::OP_ELSE, vm::OP_NULL, vm::OP_NOT, vm::OP_PRINT, vm::OP_ENDIF, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0].toBool(), false);
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    compiler.compile(block2);
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", false);
+        auto substack2 = std::make_shared<Block>("", "test_print_test2");
+        builder.addObscuredInput("SUBSTACK2", substack2);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 1, vm::OP_NOT, vm::OP_IF, vm::OP_NULL, vm::OP_NOT, vm::OP_PRINT, vm::OP_ENDIF, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", true);
+        substack2 = std::make_shared<Block>("", "test_print_test2");
+        builder.addObscuredInput("SUBSTACK2", substack2);
 
-    compiler.compile(block3);
+        builder.build();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 2, vm::OP_IF, vm::OP_NULL, vm::OP_PRINT, vm::OP_ENDIF, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+        testing::internal::CaptureStdout();
+        builder.run();
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "test2\n");
+    }
 
-    compiler.compile(block4);
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    compiler.compile(block5);
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", false);
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 3, vm::OP_IF, vm::OP_NULL, vm::OP_PRINT, vm::OP_ELSE, vm::OP_NULL, vm::OP_NOT, vm::OP_PRINT, vm::OP_ENDIF, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false, Value() }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", true);
+        substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
 
-    compiler.compile(block6);
+        builder.build();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>({ vm::OP_START, vm::OP_NULL, vm::OP_IF, vm::OP_NULL, vm::OP_PRINT, vm::OP_ELSE, vm::OP_NULL, vm::OP_NOT, vm::OP_PRINT, vm::OP_ENDIF, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ false, false, false, Value() }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+        testing::internal::CaptureStdout();
+        builder.run();
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "test\n");
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", false);
+
+        builder.addBlock("control_if_else");
+        builder.addValueInput("CONDITION", true);
+
+        builder.build();
+        builder.run();
+    }
 }
 
 TEST_F(ControlBlocksTest, Stop)
 {
-    Compiler compiler(&m_engineMock);
+    auto target = std::make_shared<Sprite>();
 
-    // stop [all]
-    auto block1 = createControlBlock("a", "control_stop");
-    addDropdownField(block1, "STOP_OPTION", ControlBlocks::STOP_OPTION, "all", ControlBlocks::StopAll);
+    // Stop all
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // stop [this script]
-    auto block2 = createControlBlock("b", "control_stop");
-    addDropdownField(block2, "STOP_OPTION", ControlBlocks::STOP_OPTION, "this script", ControlBlocks::StopThisScript);
+        builder.addBlock("control_stop");
+        builder.addDropdownField("STOP_OPTION", "all");
+        auto block = builder.currentBlock();
 
-    // stop [other scripts in sprite]
-    auto block3 = createControlBlock("c", "control_stop");
-    addDropdownField(block3, "STOP_OPTION", ControlBlocks::STOP_OPTION, "other scripts in sprite", ControlBlocks::StopOtherScriptsInSprite);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
 
-    compiler.init();
+        EXPECT_CALL(m_engineMock, stop());
+        thread.run();
+    }
 
-    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::stopAll)).WillOnce(Return(0));
-    compiler.setBlock(block1);
-    ControlBlocks::compileStop(&compiler);
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
 
-    compiler.setBlock(block2);
-    ControlBlocks::compileStop(&compiler);
+    // Stop this script
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::stopOtherScriptsInSprite)).WillOnce(Return(1));
-    compiler.setBlock(block3);
-    ControlBlocks::compileStop(&compiler);
-    compiler.end();
+        builder.addBlock("control_stop");
+        builder.addDropdownField("STOP_OPTION", "this script");
+        builder.addBlock("test_print_test");
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT, vm::OP_HALT, vm::OP_EXEC, 1, vm::OP_HALT }));
-    ASSERT_TRUE(compiler.constValues().empty());
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-}
+        builder.build();
 
-TEST_F(ControlBlocksTest, StopAll)
-{
-    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
-    static BlockFunc functions[] = { &ControlBlocks::stopAll };
+        testing::internal::CaptureStdout();
+        builder.run();
+        ASSERT_TRUE(testing::internal::GetCapturedStdout().empty());
+    }
 
-    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
-    vm.setFunctions(functions);
-    vm.setBytecode(bytecode);
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
 
-    EXPECT_CALL(m_engineMock, stop()).Times(1);
-    vm.run();
+    // Stop other scripts in sprite
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    ASSERT_EQ(vm.registerCount(), 0);
-}
+        builder.addBlock("control_stop");
+        builder.addDropdownField("STOP_OPTION", "other scripts in sprite");
+        auto block = builder.currentBlock();
 
-TEST_F(ControlBlocksTest, StopOtherScriptsInSprite)
-{
-    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
-    static BlockFunc functions[] = { &ControlBlocks::stopOtherScriptsInSprite };
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
 
-    Target target;
-    Thread thread(&target, &m_engineMock, nullptr);
-    VirtualMachine *vm = thread.vm();
-    vm->setFunctions(functions);
-    vm->setBytecode(bytecode);
+        EXPECT_CALL(m_engineMock, stopTarget(target.get(), &thread));
+        thread.run();
+    }
 
-    EXPECT_CALL(m_engineMock, stopTarget(&target, &thread)).Times(1);
-    vm->run();
+    // Stop other scripts in stage
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    ASSERT_EQ(vm->registerCount(), 0);
+        builder.addBlock("control_stop");
+        builder.addDropdownField("STOP_OPTION", "other scripts in stage");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        EXPECT_CALL(m_engineMock, stopTarget(target.get(), &thread));
+        thread.run();
+    }
 }
 
 TEST_F(ControlBlocksTest, Wait)
 {
-    Compiler compiler(&m_engineMock);
+    auto target = std::make_shared<Sprite>();
 
-    // wait 5 seconds
-    auto block = createControlBlock("a", "control_wait");
-    addValueInput(block, "DURATION", ControlBlocks::DURATION, 5);
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    testing::Expectation startWait = EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::startWait)).WillOnce(Return(0));
-    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::wait)).After(startWait).WillOnce(Return(1));
+        builder.addBlock("control_wait");
+        builder.addValueInput("DURATION", 2.5);
+        auto block = builder.currentBlock();
 
-    compiler.init();
-    compiler.setBlock(block);
-    ControlBlocks::compileWait(&compiler);
-    compiler.end();
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0], 5);
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-}
+        EXPECT_CALL(timer, start(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
 
-TEST_F(ControlBlocksTest, WaitImpl)
-{
-    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_HALT };
-    static BlockFunc functions[] = { &ControlBlocks::startWait, &ControlBlocks::wait };
-    static Value constValues[] = { 5.5 };
+        EXPECT_CALL(timer, elapsed()).WillOnce(Return(false));
+        EXPECT_CALL(m_engineMock, requestRedraw()).Times(0);
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
 
-    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
-    vm.setFunctions(functions);
-    vm.setConstValues(constValues);
-    vm.setBytecode(bytecode);
+        EXPECT_CALL(timer, elapsed()).WillOnce(Return(false));
+        EXPECT_CALL(m_engineMock, requestRedraw()).Times(0);
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
 
-    ClockMock clock;
-    ControlBlocks::clock = &clock;
+        EXPECT_CALL(timer, elapsed()).WillOnce(Return(true));
+        EXPECT_CALL(m_engineMock, requestRedraw()).Times(0);
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+    }
 
-    std::chrono::steady_clock::time_point startTime(std::chrono::milliseconds(1000));
-    EXPECT_CALL(clock, currentSteadyTime()).Times(2).WillRepeatedly(Return(startTime));
-    EXPECT_CALL(m_engineMock, requestRedraw());
-    vm.run();
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(ControlBlocks::m_timeMap.find(&vm) != ControlBlocks::m_timeMap.cend());
-    ASSERT_FALSE(vm.atEnd());
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    std::chrono::steady_clock::time_point time1(std::chrono::milliseconds(6450));
-    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time1));
-    vm.run();
+        builder.addBlock("control_wait");
+        builder.addNullObscuredInput("DURATION");
+        auto block = builder.currentBlock();
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(ControlBlocks::m_timeMap.find(&vm) != ControlBlocks::m_timeMap.cend());
-    ASSERT_FALSE(vm.atEnd());
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
 
-    std::chrono::steady_clock::time_point time2(std::chrono::milliseconds(6500));
-    EXPECT_CALL(clock, currentSteadyTime()).WillOnce(Return(time2));
-    vm.run();
+        EXPECT_CALL(timer, start(0.0));
+        EXPECT_CALL(m_engineMock, requestRedraw());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(ControlBlocks::m_timeMap.find(&vm) == ControlBlocks::m_timeMap.cend());
-    ASSERT_FALSE(vm.atEnd());
-
-    vm.run();
-
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(ControlBlocks::m_timeMap.find(&vm) == ControlBlocks::m_timeMap.cend());
-    ASSERT_TRUE(vm.atEnd());
-
-    ControlBlocks::clock = Clock::instance().get();
+        EXPECT_CALL(timer, elapsed()).WillOnce(Return(true));
+        EXPECT_CALL(m_engineMock, requestRedraw()).Times(0);
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+    }
 }
 
 TEST_F(ControlBlocksTest, WaitUntil)
 {
-    Compiler compiler(&m_engineMock);
+    auto target = std::make_shared<Sprite>();
 
-    // wait until <>
-    auto block1 = createControlBlock("a", "control_wait_until");
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // wait until <null>
-    auto block2 = createControlBlock("b", "control_wait_until");
-    addNullInput(block2, "CONDITION", ControlBlocks::CONDITION);
+        builder.addBlock("control_wait_until");
+        builder.addValueInput("CONDITION", false);
+        builder.build();
+        m_engine->start();
 
-    // wait until <true>
-    auto block3 = createControlBlock("c", "control_wait_until");
-    addValueInput(block3, "CONDITION", ControlBlocks::CONDITION, true);
+        m_engine->step();
+        ASSERT_TRUE(m_engine->isRunning());
 
-    compiler.init();
+        m_engine->step();
+        ASSERT_TRUE(m_engine->isRunning());
+    }
 
-    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::waitUntil)).WillOnce(Return(0));
-    compiler.setBlock(block1);
-    ControlBlocks::compileWaitUntil(&compiler);
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
 
-    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::waitUntil)).WillOnce(Return(0));
-    compiler.setBlock(block2);
-    ControlBlocks::compileWaitUntil(&compiler);
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::waitUntil)).WillOnce(Return(0));
-    compiler.setBlock(block3);
-    ControlBlocks::compileWaitUntil(&compiler);
-    compiler.end();
+        builder.addBlock("control_wait_until");
+        builder.addValueInput("CONDITION", true);
+        builder.build();
+        m_engine->start();
 
-    ASSERT_EQ(
-        compiler.bytecode(),
-        std::vector<unsigned int>(
-            { vm::OP_START, vm::OP_CHECKPOINT, vm::OP_NULL, vm::OP_EXEC, 0, vm::OP_CHECKPOINT, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_CHECKPOINT, vm::OP_CONST, 1, vm::OP_EXEC, 0, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues(), std::vector<Value>({ Value(), true }));
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+        m_engine->step();
+        m_engine->step();
+        ASSERT_FALSE(m_engine->isRunning());
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_wait_until");
+        auto block = std::make_shared<Block>("", "test_condition");
+        builder.addObscuredInput("CONDITION", block);
+        builder.build();
+
+        conditionReturnValue = false;
+        m_engine->start();
+
+        m_engine->step();
+        ASSERT_TRUE(m_engine->isRunning());
+
+        m_engine->step();
+        ASSERT_TRUE(m_engine->isRunning());
+
+        conditionReturnValue = true;
+        m_engine->step();
+        m_engine->step();
+        ASSERT_FALSE(m_engine->isRunning());
+    }
 }
 
-TEST_F(ControlBlocksTest, WaitUntilImpl)
+TEST_F(ControlBlocksTest, RepeatUntil)
 {
-    static unsigned int bytecode[] = { vm::OP_START, vm::OP_CHECKPOINT, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
-    static BlockFunc functions[] = { &ControlBlocks::waitUntil };
-    static Value constValuesBefore[] = { false };
-    static Value constValuesAfter[] = { true };
+    auto target = std::make_shared<Sprite>();
 
-    VirtualMachine vm(nullptr, &m_engineMock, nullptr);
-    vm.setFunctions(functions);
-    vm.setConstValues(constValuesBefore);
-    vm.setBytecode(bytecode);
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    vm.run();
+        builder.addBlock("control_repeat_until");
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        builder.addValueInput("CONDITION", false);
+        builder.build();
+        m_engine->start();
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_FALSE(vm.atEnd());
+        for (int i = 0; i < 2; i++) {
+            testing::internal::CaptureStdout();
+            m_engine->step();
+            ASSERT_EQ(testing::internal::GetCapturedStdout().substr(0, 10), "test\ntest\n");
+            ASSERT_TRUE(m_engine->isRunning());
+        }
+    }
 
-    vm.run();
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_FALSE(vm.atEnd());
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    vm.setConstValues(constValuesAfter);
-    vm.run();
+        builder.addBlock("control_repeat_until");
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        builder.addValueInput("CONDITION", true);
+        builder.build();
+        m_engine->start();
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(vm.atEnd());
+        testing::internal::CaptureStdout();
+        m_engine->step();
+        m_engine->step();
+        ASSERT_TRUE(testing::internal::GetCapturedStdout().empty());
+        ASSERT_FALSE(m_engine->isRunning());
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_repeat_until");
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        auto block = std::make_shared<Block>("", "test_condition");
+        builder.addObscuredInput("CONDITION", block);
+        builder.build();
+
+        conditionReturnValue = false;
+        m_engine->start();
+
+        testing::internal::CaptureStdout();
+        m_engine->step();
+        ASSERT_EQ(testing::internal::GetCapturedStdout().substr(0, 10), "test\ntest\n");
+        ASSERT_TRUE(m_engine->isRunning());
+
+        conditionReturnValue = true;
+        m_engine->step();
+        m_engine->step();
+        ASSERT_FALSE(m_engine->isRunning());
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+        builder.addBlock("control_repeat_until");
+        builder.addValueInput("CONDITION", false);
+
+        builder.build();
+        m_engine->start();
+
+        for (int i = 0; i < 2; i++) {
+            m_engine->step();
+            ASSERT_TRUE(m_engine->isRunning());
+        }
+    }
 }
 
-TEST_F(ControlBlocksTest, CreateCloneOf)
+TEST_F(ControlBlocksTest, While)
 {
-    Compiler compiler(&m_engineMock);
+    auto target = std::make_shared<Sprite>();
 
-    // create clone of [Sprite1]
-    auto block1 = createCloneBlock("a", "Sprite1");
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // create clone of [myself]
-    auto block2 = createCloneBlock("b", "_myself_");
+        builder.addBlock("control_while");
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        builder.addValueInput("CONDITION", true);
+        builder.build();
+        m_engine->start();
 
-    // create clone of (null block)
-    auto block3 = createCloneBlock("c", "", createNullBlock("d"));
+        for (int i = 0; i < 2; i++) {
+            testing::internal::CaptureStdout();
+            m_engine->step();
+            ASSERT_EQ(testing::internal::GetCapturedStdout().substr(0, 10), "test\ntest\n");
+            ASSERT_TRUE(m_engine->isRunning());
+        }
+    }
 
-    EXPECT_CALL(m_engineMock, findTarget("Sprite1")).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::createCloneByIndex)).WillOnce(Return(0));
-    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::createCloneOfMyself)).WillOnce(Return(1));
-    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::createClone)).WillOnce(Return(2));
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
 
-    compiler.init();
-    compiler.setBlock(block1);
-    ControlBlocks::compileCreateClone(&compiler);
-    compiler.setBlock(block2);
-    ControlBlocks::compileCreateClone(&compiler);
-    compiler.setBlock(block3);
-    ControlBlocks::compileCreateClone(&compiler);
-    compiler.end();
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_EXEC, 1, vm::OP_NULL, vm::OP_EXEC, 2, vm::OP_HALT }));
-    ASSERT_EQ(compiler.constValues().size(), 1);
-    ASSERT_EQ(compiler.constValues()[0].toDouble(), 4);
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
+        builder.addBlock("control_while");
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        builder.addValueInput("CONDITION", false);
+        builder.build();
+        m_engine->start();
+
+        testing::internal::CaptureStdout();
+        m_engine->step();
+        m_engine->step();
+        ASSERT_TRUE(testing::internal::GetCapturedStdout().empty());
+        ASSERT_FALSE(m_engine->isRunning());
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_while");
+        auto substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        auto block = std::make_shared<Block>("", "test_condition");
+        builder.addObscuredInput("CONDITION", block);
+        builder.build();
+
+        conditionReturnValue = true;
+        m_engine->start();
+
+        testing::internal::CaptureStdout();
+        m_engine->step();
+        ASSERT_EQ(testing::internal::GetCapturedStdout().substr(0, 10), "test\ntest\n");
+        ASSERT_TRUE(m_engine->isRunning());
+
+        conditionReturnValue = false;
+        m_engine->step();
+        m_engine->step();
+        ASSERT_FALSE(m_engine->isRunning());
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+        builder.addBlock("control_while");
+        builder.addValueInput("CONDITION", true);
+
+        builder.build();
+        m_engine->start();
+
+        for (int i = 0; i < 2; i++) {
+            m_engine->step();
+            ASSERT_TRUE(m_engine->isRunning());
+        }
+    }
 }
 
-TEST_F(ControlBlocksTest, CreateCloneOfImpl)
+TEST_F(ControlBlocksTest, ForEach)
 {
-    static unsigned int bytecode1[] = { vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT };
-    static unsigned int bytecode2[] = { vm::OP_START, vm::OP_EXEC, 1, vm::OP_HALT };
-    static unsigned int bytecode3[] = { vm::OP_START, vm::OP_CONST, 1, vm::OP_EXEC, 2, vm::OP_HALT };
-    static unsigned int bytecode4[] = { vm::OP_START, vm::OP_CONST, 2, vm::OP_EXEC, 2, vm::OP_HALT };
-    static BlockFunc functions[] = { &ControlBlocks::createCloneByIndex, &ControlBlocks::createCloneOfMyself, &ControlBlocks::createClone };
-    static Value constValues[] = { 4, "Sprite1", "_myself_" };
+    auto target = std::make_shared<Sprite>();
+    auto var1 = std::make_shared<Variable>("", "");
+    auto var2 = std::make_shared<Variable>("", "");
+    target->addVariable(var1);
+    target->addVariable(var2);
 
-    Sprite sprite;
-    sprite.setEngine(&m_engineMock);
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    VirtualMachine vm(&sprite, &m_engineMock, nullptr);
-    vm.setFunctions(functions);
-    vm.setConstValues(constValues);
+        builder.addBlock("control_for_each");
 
-    std::shared_ptr<Sprite> clone1;
-    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
-    EXPECT_CALL(m_engineMock, cloneLimit()).Times(8).WillRepeatedly(Return(300));
-    EXPECT_CALL(m_engineMock, cloneCount()).Times(4).WillRepeatedly(Return(0));
-    EXPECT_CALL(m_engineMock, initClone).WillOnce(SaveArg<0>(&clone1));
-    EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
-    EXPECT_CALL(m_engineMock, requestRedraw());
+        auto substack = std::make_shared<Block>("", "test_print");
+        auto input = std::make_shared<Input>("STRING", Input::Type::ObscuredShadow);
+        input->primaryValue()->setValuePtr(var1);
+        substack->addInput(input);
 
-    vm.setBytecode(bytecode1);
-    vm.run();
+        builder.addObscuredInput("SUBSTACK", substack);
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.clones().size(), 1);
+        builder.addValueInput("VALUE", 5);
+        builder.addEntityField("VARIABLE", var1);
 
-    EXPECT_CALL(m_engineMock, initClone).Times(1);
-    EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
-    EXPECT_CALL(m_engineMock, requestRedraw());
+        builder.addBlock("control_for_each");
+        substack = std::make_shared<Block>("", "test_print_test");
+        builder.addObscuredInput("SUBSTACK", substack);
+        builder.addNullObscuredInput("VALUE");
+        builder.addEntityField("VARIABLE", var2);
 
-    vm.setBytecode(bytecode2);
-    vm.run();
+        builder.build();
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.clones().size(), 2);
+        var1->setValue(10);
+        testing::internal::CaptureStdout();
+        builder.run();
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "1\n2\n3\n4\n5\n");
+        ASSERT_EQ(var1->value(), 5);
+    }
 
-    std::shared_ptr<Sprite> clone3;
-    EXPECT_CALL(m_engineMock, findTarget).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
-    EXPECT_CALL(m_engineMock, initClone).WillOnce(SaveArg<0>(&clone3));
-    EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
-    EXPECT_CALL(m_engineMock, requestRedraw());
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+    target->addVariable(var1);
 
-    vm.setBytecode(bytecode3);
-    vm.run();
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.clones().size(), 3);
+        builder.addBlock("control_for_each");
 
-    EXPECT_CALL(m_engineMock, initClone).Times(1);
-    EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
-    EXPECT_CALL(m_engineMock, requestRedraw());
+        auto substack = std::make_shared<Block>("", "test_print");
+        auto input = std::make_shared<Input>("STRING", Input::Type::ObscuredShadow);
+        input->primaryValue()->setValuePtr(var1);
+        substack->addInput(input);
 
-    vm.setBytecode(bytecode4);
-    vm.run();
+        auto setVar = std::make_shared<Block>("", "test_set_var");
+        substack->setNext(setVar);
+        setVar->setParent(substack);
+        auto field = std::make_shared<Field>("VARIABLE", "");
+        setVar->addField(field);
+        input = std::make_shared<Input>("VALUE", Input::Type::Shadow);
+        input->setPrimaryValue(0);
+        setVar->addInput(input);
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_EQ(sprite.clones().size(), 4);
+        auto printAgain = std::make_shared<Block>("", "test_print");
+        setVar->setNext(printAgain);
+        printAgain->setParent(setVar);
+        input = std::make_shared<Input>("STRING", Input::Type::ObscuredShadow);
+        printAgain->addInput(input);
 
-    EXPECT_CALL(m_engineMock, deinitClone(clone1));
-    clone1->deleteClone();
+        builder.addObscuredInput("SUBSTACK", substack);
 
-    EXPECT_CALL(m_engineMock, deinitClone(clone3));
-    clone3->deleteClone();
+        builder.addValueInput("VALUE", 3);
+        builder.addEntityField("VARIABLE", var1);
+
+        field->setValuePtr(var1);
+        input->primaryValue()->setValuePtr(var1);
+
+        builder.build();
+
+        var1->setValue(7);
+        testing::internal::CaptureStdout();
+        builder.run();
+        ASSERT_EQ(testing::internal::GetCapturedStdout(), "1\n0\n2\n0\n3\n0\n");
+        ASSERT_EQ(var1->value(), 0);
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+    target->addVariable(var1);
+
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+        builder.addBlock("control_for_each");
+        builder.addValueInput("VALUE", "Infinity");
+        builder.addEntityField("VARIABLE", var1);
+
+        builder.build();
+        m_engine->start();
+
+        for (int i = 0; i < 2; i++) {
+            m_engine->step();
+            ASSERT_TRUE(m_engine->isRunning());
+        }
+
+        ASSERT_GT(var1->value(), 0);
+    }
 }
 
 TEST_F(ControlBlocksTest, StartAsClone)
 {
-    Compiler compiler(&m_engineMock);
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    auto block = createControlBlock("a", "control_start_as_clone");
-    compiler.setBlock(block);
+    builder.addBlock("control_start_as_clone");
+    auto block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, addCloneInitScript(block)).Times(1);
-    ControlBlocks::compileStartAsClone(&compiler);
+    Compiler compiler(&m_engineMock, target.get());
+    EXPECT_CALL(m_engineMock, addCloneInitScript(block));
+    compiler.compile(block);
+}
+
+TEST_F(ControlBlocksTest, CreateCloneOfSprite)
+{
+    EXPECT_CALL(m_engineMock, cloneLimit()).WillRepeatedly(Return(-1));
+    EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+    auto target = std::make_shared<Sprite>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of [Sprite1]
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        builder.addDropdownInput("CLONE_OPTION", "Sprite1");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget("Sprite1")).WillOnce(Return(4));
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        Sprite sprite;
+        sprite.setEngine(&m_engineMock);
+        std::shared_ptr<Sprite> clone;
+        EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
+        EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+        EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
+        thread.run();
+        ASSERT_TRUE(clone);
+        ASSERT_EQ(clone->cloneSprite(), &sprite);
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of [myself]
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        builder.addDropdownInput("CLONE_OPTION", "_myself_");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        std::shared_ptr<Sprite> clone;
+        EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+        EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, target.get()));
+        thread.run();
+        ASSERT_TRUE(clone);
+        ASSERT_EQ(clone->cloneSprite(), target.get());
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of ["_mYself_"]
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        builder.addDropdownInput("CLONE_OPTION", "_mYself_");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget("_mYself_")).WillOnce(Return(4));
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        Sprite sprite;
+        sprite.setEngine(&m_engineMock);
+        std::shared_ptr<Sprite> clone;
+        EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
+        EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+        EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
+        thread.run();
+        ASSERT_TRUE(clone);
+        ASSERT_EQ(clone->cloneSprite(), &sprite);
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of (null block)
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        builder.addNullObscuredInput("CLONE_OPTION");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        Sprite sprite;
+        sprite.setEngine(&m_engineMock);
+        std::shared_ptr<Sprite> clone;
+        EXPECT_CALL(m_engineMock, findTarget("0")).WillOnce(Return(2));
+        EXPECT_CALL(m_engineMock, targetAt(2)).WillOnce(Return(&sprite));
+        EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+        EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
+        thread.run();
+        ASSERT_TRUE(clone);
+        ASSERT_EQ(clone->cloneSprite(), &sprite);
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Sprite>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of ("_myself_")
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        auto valueBlock = std::make_shared<Block>("", "test_input");
+        auto input = std::make_shared<Input>("INPUT", Input::Type::Shadow);
+        input->setPrimaryValue("_myself_");
+        valueBlock->addInput(input);
+        builder.addObscuredInput("CLONE_OPTION", valueBlock);
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        std::shared_ptr<Sprite> clone;
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+        EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, target.get()));
+        thread.run();
+        ASSERT_TRUE(clone);
+        ASSERT_EQ(clone->cloneSprite(), target.get());
+    }
+
+    // create clone of ("_mYself_")
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        auto valueBlock = std::make_shared<Block>("", "test_input");
+        auto input = std::make_shared<Input>("INPUT", Input::Type::Shadow);
+        input->setPrimaryValue("_mYself_");
+        valueBlock->addInput(input);
+        builder.addObscuredInput("CLONE_OPTION", valueBlock);
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        Sprite sprite;
+        sprite.setEngine(&m_engineMock);
+        std::shared_ptr<Sprite> clone;
+        EXPECT_CALL(m_engineMock, findTarget("_mYself_")).WillOnce(Return(2));
+        EXPECT_CALL(m_engineMock, targetAt(2)).WillOnce(Return(&sprite));
+        EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
+        EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
+        thread.run();
+        ASSERT_TRUE(clone);
+        ASSERT_EQ(clone->cloneSprite(), &sprite);
+    }
+}
+
+TEST_F(ControlBlocksTest, CreateCloneOfStage)
+{
+    EXPECT_CALL(m_engineMock, cloneLimit()).WillRepeatedly(Return(-1));
+    EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+    auto target = std::make_shared<Stage>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of [Stage]
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        builder.addDropdownInput("CLONE_OPTION", "_stage_");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(8));
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        Stage stage;
+        stage.setEngine(&m_engineMock);
+        EXPECT_CALL(m_engineMock, targetAt(8)).WillOnce(Return(&stage));
+        EXPECT_CALL(m_engineMock, initClone).Times(0);
+        thread.run();
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Stage>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of [myself]
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        builder.addDropdownInput("CLONE_OPTION", "_myself_");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        EXPECT_CALL(m_engineMock, initClone).Times(0);
+        thread.run();
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Stage>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of (null block)
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        builder.addNullObscuredInput("CLONE_OPTION");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        Stage stage;
+        stage.setEngine(&m_engineMock);
+        EXPECT_CALL(m_engineMock, findTarget("0")).WillOnce(Return(2));
+        EXPECT_CALL(m_engineMock, targetAt(2)).WillOnce(Return(&stage));
+        EXPECT_CALL(m_engineMock, initClone).Times(0);
+        thread.run();
+    }
+
+    m_engine->clear();
+    target = std::make_shared<Stage>();
+    target->setEngine(&m_engineMock);
+
+    // create clone of ("_myself_")
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+        builder.addBlock("control_create_clone_of");
+        auto valueBlock = std::make_shared<Block>("", "test_input");
+        auto input = std::make_shared<Input>("INPUT", Input::Type::Shadow);
+        input->setPrimaryValue("_myself_");
+        valueBlock->addInput(input);
+        builder.addObscuredInput("CLONE_OPTION", valueBlock);
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block);
+        Script script(target.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        EXPECT_CALL(m_engineMock, findTarget).Times(0);
+        EXPECT_CALL(m_engineMock, initClone).Times(0);
+        thread.run();
+    }
 }
 
 TEST_F(ControlBlocksTest, DeleteThisClone)
 {
-    Compiler compiler(&m_engineMock);
-
-    auto block = createControlBlock("a", "control_delete_this_clone");
-
-    EXPECT_CALL(m_engineMock, functionIndex(&ControlBlocks::deleteThisClone)).WillOnce(Return(0));
-
-    compiler.init();
-    compiler.setBlock(block);
-    ControlBlocks::compileDeleteThisClone(&compiler);
-    compiler.end();
-
-    ASSERT_EQ(compiler.bytecode(), std::vector<unsigned int>({ vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT }));
-    ASSERT_TRUE(compiler.constValues().empty());
-    ASSERT_TRUE(compiler.variables().empty());
-    ASSERT_TRUE(compiler.lists().empty());
-}
-
-TEST_F(ControlBlocksTest, DeleteThisCloneImpl)
-{
-    static unsigned int bytecode[] = { vm::OP_START, vm::OP_EXEC, 0, vm::OP_HALT };
-    static BlockFunc functions[] = { &ControlBlocks::deleteThisClone };
-
     Sprite sprite;
     sprite.setEngine(&m_engineMock);
 
     std::shared_ptr<Sprite> clone;
-    EXPECT_CALL(m_engineMock, cloneLimit()).Times(2).WillRepeatedly(Return(300));
-    EXPECT_CALL(m_engineMock, cloneCount()).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, cloneLimit()).WillRepeatedly(Return(-1));
     EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
     EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
     EXPECT_CALL(m_engineMock, requestRedraw());
     sprite.clone();
     ASSERT_TRUE(clone);
 
-    VirtualMachine vm(clone.get(), &m_engineMock, nullptr);
-    vm.setFunctions(functions);
+    ScriptBuilder builder(m_extension.get(), m_engine, clone);
 
-    EXPECT_CALL(m_engineMock, stopTarget(clone.get(), nullptr)).Times(1);
+    builder.addBlock("control_delete_this_clone");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, clone.get());
+    auto code = compiler.compile(block);
+    Script script(clone.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(clone.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, stopTarget(clone.get(), nullptr));
     EXPECT_CALL(m_engineMock, deinitClone(clone));
+    thread.run();
+}
 
-    vm.setBytecode(bytecode);
-    vm.run();
+TEST_F(ControlBlocksTest, DeleteThisCloneStage)
+{
+    auto target = std::make_shared<Stage>();
+    target->setEngine(&m_engineMock);
 
-    ASSERT_EQ(vm.registerCount(), 0);
-    ASSERT_TRUE(sprite.clones().empty());
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("control_delete_this_clone");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, stopTarget).Times(0);
+    EXPECT_CALL(m_engineMock, deinitClone).Times(0);
+    thread.run();
 }

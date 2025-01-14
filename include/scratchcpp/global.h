@@ -23,36 +23,17 @@
 namespace libscratchcpp
 {
 
-class VirtualMachine;
 class Compiler;
-#ifdef USE_LLVM
 class CompilerValue;
-#endif
 class Block;
 class Value;
 
-/*!
- * \typedef BlockFunc
- *
- * BlockFunc is a function pointer for block implementation functions.
- */
-using BlockFunc = unsigned int (*)(VirtualMachine *vm);
-
-#ifdef USE_LLVM
 /*!
  * \typedef BlockComp
  *
  * BlockComp is a function pointer for functions which are used to compile blocks.
  */
 using BlockComp = CompilerValue *(*)(Compiler *);
-#else
-/*!
- * \typedef BlockComp
- *
- * BlockComp is a function pointer for functions which are used to compile blocks to bytecode.
- */
-using BlockComp = void (*)(Compiler *);
-#endif // USE_LLVM
 
 /*!
  * \typedef MonitorNameFunc
@@ -68,21 +49,12 @@ using MonitorNameFunc = const std::string &(*)(Block *);
  */
 using MonitorChangeFunc = void (*)(Block *, const Value &newValue);
 
-#ifdef USE_LLVM
 /*!
  * \typedef HatPredicateCompileFunc
  *
  * HatPredicateCompileFunc is a function pointer for functions which are used to compile edge-activated hat predicates.
  */
 using HatPredicateCompileFunc = CompilerValue *(*)(Compiler *vm);
-#else
-/*!
- * \typedef HatPredicateCompileFunc
- *
- * HatPredicateCompileFunc is a function pointer for functions which are used to compile edge-activated hat predicates to bytecode.
- */
-using HatPredicateCompileFunc = void (*)(Compiler *vm);
-#endif // USE_LLVM
 
 } // namespace libscratchcpp
 

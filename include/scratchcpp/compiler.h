@@ -2,88 +2,148 @@
 
 #pragma once
 
-#include <vector>
-#include <memory>
 #include <unordered_set>
+#include <vector>
 
 #include "global.h"
 #include "spimpl.h"
-#include "virtualmachine.h"
-#include "value.h"
 
 namespace libscratchcpp
 {
 
+class CompilerContext;
 class IEngine;
-class Block;
-class Input;
-class InputValue;
-class Field;
+class Target;
+class ExecutableCode;
+class CompilerValue;
+class CompilerConstant;
+class CompilerLocalVariable;
 class Variable;
 class List;
+class Input;
+class Field;
 class BlockPrototype;
-class Entity;
 class CompilerPrivate;
 
-/*! \brief The Compiler class provides an API for compiling scripts of targets to bytecode. */
+/*! \brief The Compiler class provides API for compiling Scratch scripts. */
 class LIBSCRATCHCPP_EXPORT Compiler
 {
     public:
-        enum class SubstackType
+        enum class StaticType
         {
-            Loop,
-            IfStatement
+            Void,
+            Number,
+            Bool,
+            String,
+            Unknown
         };
 
-        Compiler(IEngine *engine, Target *target = nullptr);
+        using ArgTypes = std::vector<StaticType>;
+        using Args = std::vector<CompilerValue *>;
+
+        Compiler(CompilerContext *ctx);
+        Compiler(IEngine *engine, Target *target);
         Compiler(const Compiler &) = delete;
-
-        void init();
-        void compile(std::shared_ptr<Block> topLevelBlock);
-        void end();
-
-        const std::vector<unsigned int> &bytecode() const;
-        const std::vector<unsigned int> &hatPredicateBytecode() const;
 
         IEngine *engine() const;
         Target *target() const;
+        std::shared_ptr<Block> block() const;
 
-        const std::vector<InputValue *> &constInputValues() const;
-        std::vector<Value> constValues() const;
+        std::shared_ptr<ExecutableCode> compile(std::shared_ptr<Block> startBlock);
+        void preoptimize();
 
-        const std::vector<Variable *> &variables() const;
-        std::vector<Value *> variablePtrs() const;
+        CompilerValue *addFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
+        CompilerValue *addTargetFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
+        CompilerValue *addFunctionCallWithCtx(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
+        CompilerConstant *addConstValue(const Value &value);
+        CompilerValue *addLoopIndex();
+        CompilerValue *addLocalVariableValue(CompilerLocalVariable *variable);
+        CompilerValue *addVariableValue(Variable *variable);
+        CompilerValue *addListContents(List *list);
+        CompilerValue *addListItem(List *list, CompilerValue *index);
+        CompilerValue *addListItemIndex(List *list, CompilerValue *item);
+        CompilerValue *addListContains(List *list, CompilerValue *item);
+        CompilerValue *addListSize(List *list);
+        CompilerValue *addProcedureArgument(const std::string &name);
 
-        const std::vector<List *> &lists() const;
+        CompilerValue *addInput(const std::string &name);
+        CompilerValue *addInput(Input *input);
 
-        void addInstruction(vm::Opcode opcode, const std::initializer_list<unsigned int> &args = {});
-        void addInput(Input *input);
-        void addInput(int id);
-        void addConstValue(const Value &value);
-        void addFunctionCall(BlockFunc f);
-        void addProcedureArg(const std::string &procCode, const std::string &argName);
-        void moveToSubstack(std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2, SubstackType type);
-        void moveToSubstack(std::shared_ptr<Block> substack, SubstackType type);
+        CompilerValue *createAdd(CompilerValue *operand1, CompilerValue *operand2);
+        CompilerValue *createSub(CompilerValue *operand1, CompilerValue *operand2);
+        CompilerValue *createMul(CompilerValue *operand1, CompilerValue *operand2);
+        CompilerValue *createDiv(CompilerValue *operand1, CompilerValue *operand2);
+
+        CompilerValue *createRandom(CompilerValue *from, CompilerValue *to);
+        CompilerValue *createRandomInt(CompilerValue *from, CompilerValue *to);
+
+        CompilerValue *createCmpEQ(CompilerValue *operand1, CompilerValue *operand2);
+        CompilerValue *createCmpGT(CompilerValue *operand1, CompilerValue *operand2);
+        CompilerValue *createCmpLT(CompilerValue *operand1, CompilerValue *operand2);
+
+        CompilerValue *createStrCmpEQ(CompilerValue *string1, CompilerValue *string2, bool caseSensitive = false);
+
+        CompilerValue *createAnd(CompilerValue *operand1, CompilerValue *operand2);
+        CompilerValue *createOr(CompilerValue *operand1, CompilerValue *operand2);
+        CompilerValue *createNot(CompilerValue *operand);
+
+        CompilerValue *createMod(CompilerValue *num1, CompilerValue *num2);
+        CompilerValue *createRound(CompilerValue *num);
+        CompilerValue *createAbs(CompilerValue *num);
+        CompilerValue *createFloor(CompilerValue *num);
+        CompilerValue *createCeil(CompilerValue *num);
+        CompilerValue *createSqrt(CompilerValue *num);
+        CompilerValue *createSin(CompilerValue *num);
+        CompilerValue *createCos(CompilerValue *num);
+        CompilerValue *createTan(CompilerValue *num);
+        CompilerValue *createAsin(CompilerValue *num);
+        CompilerValue *createAcos(CompilerValue *num);
+        CompilerValue *createAtan(CompilerValue *num);
+        CompilerValue *createLn(CompilerValue *num);
+        CompilerValue *createLog10(CompilerValue *num);
+        CompilerValue *createExp(CompilerValue *num);
+        CompilerValue *createExp10(CompilerValue *num);
+
+        CompilerValue *createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType);
+
+        CompilerLocalVariable *createLocalVariable(Compiler::StaticType type);
+        void createLocalVariableWrite(CompilerLocalVariable *variable, CompilerValue *value);
+
+        void createVariableWrite(Variable *variable, CompilerValue *value);
+
+        void createListClear(List *list);
+        void createListRemove(List *list, CompilerValue *index);
+        void createListAppend(List *list, CompilerValue *item);
+        void createListInsert(List *list, CompilerValue *index, CompilerValue *item);
+        void createListReplace(List *list, CompilerValue *index, CompilerValue *item);
+
+        void beginIfStatement(CompilerValue *cond);
+        void beginElseBranch();
+        void endIf();
+
+        void beginWhileLoop(CompilerValue *cond);
+        void beginRepeatUntilLoop(CompilerValue *cond);
+        void beginLoopCondition();
+        void endLoop();
+
+        void moveToIf(CompilerValue *cond, std::shared_ptr<Block> substack);
+        void moveToIfElse(CompilerValue *cond, std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2);
+        void moveToRepeatLoop(CompilerValue *count, std::shared_ptr<Block> substack);
+        void moveToWhileLoop(CompilerValue *cond, std::shared_ptr<Block> substack);
+        void moveToRepeatUntilLoop(CompilerValue *cond, std::shared_ptr<Block> substack);
         void warp();
 
-        Input *input(int id) const;
-        Field *field(int id) const;
-        std::shared_ptr<Block> inputBlock(int id) const;
-        unsigned int variableIndex(std::shared_ptr<Entity> varEntity);
-        unsigned int listIndex(std::shared_ptr<Entity> listEntity);
-        unsigned int constIndex(InputValue *value);
-        unsigned int procedureIndex(const std::string &proc);
-        long procedureArgIndex(const std::string &procCode, const std::string &argName);
+        void createYield();
+        void createStop();
 
-        const std::vector<std::string> &procedures() const;
+        void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args);
 
-        const std::shared_ptr<Block> &block() const;
-        void setBlock(std::shared_ptr<Block> block);
-
-        BlockPrototype *procedurePrototype() const;
-        void setProcedurePrototype(BlockPrototype *prototype);
+        Input *input(const std::string &name) const;
+        Field *field(const std::string &name) const;
 
         const std::unordered_set<std::string> &unsupportedBlocks() const;
+
+        static std::shared_ptr<CompilerContext> createContext(IEngine *engine, Target *target);
 
     private:
         spimpl::unique_impl_ptr<CompilerPrivate> impl;

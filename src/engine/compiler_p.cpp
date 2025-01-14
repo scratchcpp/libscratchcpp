@@ -1,55 +1,57 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/compiler.h>
 #include <scratchcpp/block.h>
 
 #include "compiler_p.h"
 
+#include "internal/codebuilderfactory.h"
+#include "internal/icodebuilder.h"
+
 using namespace libscratchcpp;
-using namespace vm;
+
+CompilerPrivate::CompilerPrivate(CompilerContext *ctx) :
+    ctx(ctx)
+{
+    assert(ctx);
+    initBuilderFactory();
+}
 
 CompilerPrivate::CompilerPrivate(IEngine *engine, Target *target) :
-    engine(engine),
-    target(target)
+    ctxPtr(Compiler::createContext(engine, target)),
+    ctx(ctxPtr.get())
 {
-    assert(engine);
+    initBuilderFactory();
 }
 
-void CompilerPrivate::addInstruction(vm::Opcode opcode, std::initializer_list<unsigned int> args)
+void CompilerPrivate::initBuilderFactory()
 {
-    bytecode.push_back(opcode);
-    for (auto arg : args)
-        bytecode.push_back(arg);
-}
-
-unsigned int CompilerPrivate::constIndex(InputValue *value, bool pointsToDropdownMenu, const std::string &selectedMenuItem)
-{
-    auto it = std::find(constValues.begin(), constValues.end(), value);
-    if (it != constValues.end())
-        return it - constValues.begin();
-    constValues.push_back(value);
-    constValueMenuInfo[value] = { pointsToDropdownMenu, selectedMenuItem };
-    return constValues.size() - 1;
+    if (!builderFactory)
+        builderFactory = CodeBuilderFactory::instance().get();
 }
 
 void CompilerPrivate::substackEnd()
 {
-    auto parent = substackTree.back();
+    auto &parent = substackTree.back();
+
     switch (parent.second) {
-        case Compiler::SubstackType::Loop:
-            // Break the frame at the end of the loop so that other scripts can run within the frame
-            // This won't happen in "warp" scripts
-            if (!warp)
-                addInstruction(OP_BREAK_FRAME);
-            addInstruction(OP_LOOP_END);
+        case SubstackType::Loop:
+            // Yield at loop end if not running without screen refresh
+            /*if (!warp)
+                builder->yield();*/
+
+            builder->endLoop();
             break;
-        case Compiler::SubstackType::IfStatement:
+
+        case SubstackType::IfStatement:
             if (parent.first.second) {
-                addInstruction(OP_ELSE);
+                builder->beginElseBranch();
                 block = parent.first.second;
-                substackTree[substackTree.size() - 1].first.second = nullptr;
+                parent.first.second = nullptr;
                 return;
             } else
-                addInstruction(OP_ENDIF);
+                builder->endIf();
+
             break;
     }
 
@@ -61,6 +63,7 @@ void CompilerPrivate::substackEnd()
         block = nullptr;
 
     substackTree.pop_back();
+
     if (!block && !substackTree.empty())
         substackEnd();
 }

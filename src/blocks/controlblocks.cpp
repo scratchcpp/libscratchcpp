@@ -2,18 +2,19 @@
 
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/compiler.h>
-#include <scratchcpp/sprite.h>
+#include <scratchcpp/compilerconstant.h>
+#include <scratchcpp/value.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
-#include <scratchcpp/block.h>
-#include <cassert>
+#include <scratchcpp/executioncontext.h>
+#include <scratchcpp/thread.h>
+#include <scratchcpp/istacktimer.h>
+#include <scratchcpp/variable.h>
+#include <scratchcpp/sprite.h>
 
 #include "controlblocks.h"
-#include "../engine/internal/clock.h"
 
 using namespace libscratchcpp;
-
-IClock *ControlBlocks::clock = nullptr;
 
 std::string ControlBlocks::name() const
 {
@@ -27,276 +28,206 @@ std::string ControlBlocks::description() const
 
 void ControlBlocks::registerBlocks(IEngine *engine)
 {
-    // Blocks
-    engine->addCompileFunction(this, "control_forever", &compileRepeatForever);
+    engine->addCompileFunction(this, "control_forever", &compileForever);
     engine->addCompileFunction(this, "control_repeat", &compileRepeat);
-    engine->addCompileFunction(this, "control_repeat_until", &compileRepeatUntil);
-    engine->addCompileFunction(this, "control_while", &compileRepeatWhile);
-    engine->addCompileFunction(this, "control_for_each", &compileRepeatForEach);
-    engine->addCompileFunction(this, "control_if", &compileIfStatement);
-    engine->addCompileFunction(this, "control_if_else", &compileIfElseStatement);
+    engine->addCompileFunction(this, "control_if", &compileIf);
+    engine->addCompileFunction(this, "control_if_else", &compileIfElse);
     engine->addCompileFunction(this, "control_stop", &compileStop);
     engine->addCompileFunction(this, "control_wait", &compileWait);
     engine->addCompileFunction(this, "control_wait_until", &compileWaitUntil);
+    engine->addCompileFunction(this, "control_repeat_until", &compileRepeatUntil);
+    engine->addCompileFunction(this, "control_while", &compileWhile);
+    engine->addCompileFunction(this, "control_for_each", &compileForEach);
     engine->addCompileFunction(this, "control_start_as_clone", &compileStartAsClone);
-    engine->addCompileFunction(this, "control_create_clone_of", &compileCreateClone);
+    engine->addCompileFunction(this, "control_create_clone_of", &compileCreateCloneOf);
     engine->addCompileFunction(this, "control_delete_this_clone", &compileDeleteThisClone);
-
-    // Inputs
-    engine->addInput(this, "SUBSTACK", SUBSTACK);
-    engine->addInput(this, "SUBSTACK2", SUBSTACK2);
-    engine->addInput(this, "TIMES", TIMES);
-    engine->addInput(this, "CONDITION", CONDITION);
-    engine->addInput(this, "DURATION", DURATION);
-    engine->addInput(this, "VALUE", VALUE);
-    engine->addInput(this, "CLONE_OPTION", CLONE_OPTION);
-
-    // Fields
-    engine->addField(this, "STOP_OPTION", STOP_OPTION);
-    engine->addField(this, "VARIABLE", VARIABLE);
-
-    // Field values
-    engine->addFieldValue(this, "all", StopAll);
-    engine->addFieldValue(this, "this script", StopThisScript);
-    engine->addFieldValue(this, "other scripts in sprite", StopOtherScriptsInSprite);
-    engine->addFieldValue(this, "other scripts in stage", StopOtherScriptsInSprite);
 }
 
-void ControlBlocks::compileRepeatForever(Compiler *compiler)
+CompilerValue *ControlBlocks::compileForever(Compiler *compiler)
 {
-    compiler->addInstruction(vm::OP_FOREVER_LOOP);
-    compiler->moveToSubstack(compiler->inputBlock(SUBSTACK), Compiler::SubstackType::Loop);
+    auto substack = compiler->input("SUBSTACK");
+    compiler->beginLoopCondition();
+    compiler->moveToWhileLoop(compiler->addConstValue(true), substack ? substack->valueBlock() : nullptr);
+    return nullptr;
 }
 
-void ControlBlocks::compileRepeat(Compiler *compiler)
+CompilerValue *ControlBlocks::compileRepeat(Compiler *compiler)
 {
-    auto substack = compiler->inputBlock(SUBSTACK);
-    if (substack) {
-        compiler->addInput(TIMES);
-        compiler->addInstruction(vm::OP_REPEAT_LOOP);
-        compiler->moveToSubstack(substack, Compiler::SubstackType::Loop);
+    auto substack = compiler->input("SUBSTACK");
+    compiler->moveToRepeatLoop(compiler->addInput("TIMES"), substack ? substack->valueBlock() : nullptr);
+    return nullptr;
+}
+
+CompilerValue *ControlBlocks::compileIf(Compiler *compiler)
+{
+    auto substack = compiler->input("SUBSTACK");
+    compiler->moveToIf(compiler->addInput("CONDITION"), substack ? substack->valueBlock() : nullptr);
+    return nullptr;
+}
+
+CompilerValue *ControlBlocks::compileIfElse(Compiler *compiler)
+{
+    auto substack = compiler->input("SUBSTACK");
+    auto substack2 = compiler->input("SUBSTACK2");
+    compiler->moveToIfElse(compiler->addInput("CONDITION"), substack ? substack->valueBlock() : nullptr, substack2 ? substack2->valueBlock() : nullptr);
+    return nullptr;
+}
+
+CompilerValue *ControlBlocks::compileStop(Compiler *compiler)
+{
+    Field *option = compiler->field("STOP_OPTION");
+
+    if (option) {
+        std::string str = option->value().toString();
+
+        if (str == "all")
+            compiler->addFunctionCallWithCtx("control_stop_all", Compiler::StaticType::Void);
+        else if (str == "this script")
+            compiler->createStop();
+        else if (str == "other scripts in sprite" || str == "other scripts in stage")
+            compiler->addFunctionCallWithCtx("control_stop_other_scripts_in_target", Compiler::StaticType::Void);
     }
+
+    return nullptr;
 }
 
-void ControlBlocks::compileRepeatUntil(Compiler *compiler)
+CompilerValue *ControlBlocks::compileWait(Compiler *compiler)
 {
-    auto substack = compiler->inputBlock(SUBSTACK);
-    compiler->addInstruction(vm::OP_UNTIL_LOOP);
-    compiler->addInput(CONDITION);
-    compiler->addInstruction(vm::OP_BEGIN_UNTIL_LOOP);
-    compiler->moveToSubstack(substack, Compiler::SubstackType::Loop);
+    auto duration = compiler->addInput("DURATION");
+    compiler->addFunctionCallWithCtx("control_start_wait", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { duration });
+    compiler->createYield();
+
+    compiler->beginLoopCondition();
+    auto elapsed = compiler->addFunctionCallWithCtx("control_stack_timer_elapsed", Compiler::StaticType::Bool);
+    compiler->beginRepeatUntilLoop(elapsed);
+    compiler->endLoop();
+
+    return nullptr;
 }
 
-void ControlBlocks::compileRepeatWhile(Compiler *compiler)
+CompilerValue *ControlBlocks::compileWaitUntil(Compiler *compiler)
 {
-    auto substack = compiler->inputBlock(SUBSTACK);
-    compiler->addInstruction(vm::OP_UNTIL_LOOP);
-    compiler->addInput(CONDITION);
-    compiler->addInstruction(vm::OP_NOT);
-    compiler->addInstruction(vm::OP_BEGIN_UNTIL_LOOP);
-    compiler->moveToSubstack(substack, Compiler::SubstackType::Loop);
+    compiler->beginLoopCondition();
+    compiler->beginRepeatUntilLoop(compiler->addInput("CONDITION"));
+    compiler->endLoop();
+    return nullptr;
 }
 
-void ControlBlocks::compileRepeatForEach(Compiler *compiler)
+CompilerValue *ControlBlocks::compileRepeatUntil(Compiler *compiler)
 {
-    compiler->addInput(VALUE);
-    auto substack = compiler->inputBlock(SUBSTACK);
-    if (substack) {
-        compiler->addInstruction(vm::OP_REPEAT_LOOP);
-        compiler->addInstruction(vm::OP_REPEAT_LOOP_INDEX1);
-        compiler->addInstruction(vm::OP_SET_VAR, { compiler->variableIndex(compiler->field(VARIABLE)->valuePtr()) });
-        compiler->moveToSubstack(substack, Compiler::SubstackType::Loop);
-    } else
-        compiler->addInstruction(vm::OP_SET_VAR, { compiler->variableIndex(compiler->field(VARIABLE)->valuePtr()) });
+    auto substack = compiler->input("SUBSTACK");
+    compiler->beginLoopCondition();
+    compiler->moveToRepeatUntilLoop(compiler->addInput("CONDITION"), substack ? substack->valueBlock() : nullptr);
+    return nullptr;
 }
 
-void ControlBlocks::compileIfStatement(Compiler *compiler)
+CompilerValue *ControlBlocks::compileWhile(Compiler *compiler)
 {
-    auto substack = compiler->inputBlock(SUBSTACK);
-    if (substack) {
-        compiler->addInput(CONDITION);
-        compiler->addInstruction(vm::OP_IF);
-        compiler->moveToSubstack(substack, Compiler::SubstackType::IfStatement);
-    }
+    auto substack = compiler->input("SUBSTACK");
+    compiler->beginLoopCondition();
+    compiler->moveToWhileLoop(compiler->addInput("CONDITION"), substack ? substack->valueBlock() : nullptr);
+    return nullptr;
 }
 
-void ControlBlocks::compileIfElseStatement(Compiler *compiler)
+CompilerValue *ControlBlocks::compileForEach(Compiler *compiler)
 {
-    auto substack1 = compiler->inputBlock(SUBSTACK);
-    auto substack2 = compiler->inputBlock(SUBSTACK2);
-    if (substack1 || substack2)
-        compiler->addInput(CONDITION);
-    if (substack1 && substack2) {
-        compiler->addInstruction(vm::OP_IF);
-        compiler->moveToSubstack(substack1, substack2, Compiler::SubstackType::IfStatement);
-    } else if (substack1) {
-        compiler->addInstruction(vm::OP_IF);
-        compiler->moveToSubstack(substack1, Compiler::SubstackType::IfStatement);
-    } else if (substack2) {
-        compiler->addInstruction(vm::OP_NOT);
-        compiler->addInstruction(vm::OP_IF);
-        compiler->moveToSubstack(substack2, Compiler::SubstackType::IfStatement);
-    }
+    Variable *var = static_cast<Variable *>(compiler->field("VARIABLE")->valuePtr().get());
+    assert(var);
+    auto substack = compiler->input("SUBSTACK");
+    compiler->moveToRepeatLoop(compiler->addInput("VALUE"), substack ? substack->valueBlock() : nullptr);
+    auto index = compiler->createAdd(compiler->addLoopIndex(), compiler->addConstValue(1));
+    compiler->createVariableWrite(var, index);
+    return nullptr;
 }
 
-void ControlBlocks::compileStop(Compiler *compiler)
-{
-    int option = compiler->field(STOP_OPTION)->specialValueId();
-    switch (option) {
-        case StopAll:
-            compiler->addFunctionCall(&stopAll);
-            compiler->addInstruction(vm::OP_HALT);
-            break;
-
-        case StopThisScript:
-            compiler->addInstruction(vm::OP_HALT);
-            break;
-
-        case StopOtherScriptsInSprite:
-            compiler->addFunctionCall(&stopOtherScriptsInSprite);
-            break;
-    }
-}
-
-void ControlBlocks::compileWait(Compiler *compiler)
-{
-    compiler->addInput(DURATION);
-    compiler->addFunctionCall(&startWait);
-    compiler->addFunctionCall(&wait);
-}
-
-void ControlBlocks::compileWaitUntil(Compiler *compiler)
-{
-    compiler->addInstruction(vm::OP_CHECKPOINT);
-    compiler->addInput(CONDITION);
-    compiler->addFunctionCall(&waitUntil);
-}
-
-void ControlBlocks::compileStartAsClone(Compiler *compiler)
+CompilerValue *ControlBlocks::compileStartAsClone(Compiler *compiler)
 {
     compiler->engine()->addCloneInitScript(compiler->block());
+    return nullptr;
 }
 
-void ControlBlocks::compileCreateClone(Compiler *compiler)
+CompilerValue *ControlBlocks::compileCreateCloneOf(Compiler *compiler)
 {
-    Input *input = compiler->input(CLONE_OPTION);
+    Input *input = compiler->input("CLONE_OPTION");
 
     if (input->pointsToDropdownMenu()) {
         std::string spriteName = input->selectedMenuItem();
 
         if (spriteName == "_myself_")
-            compiler->addFunctionCall(&createCloneOfMyself);
+            compiler->addTargetFunctionCall("control_create_clone_of_myself");
         else {
-            int index = compiler->engine()->findTarget(spriteName);
-            compiler->addConstValue(index);
-            compiler->addFunctionCall(&createCloneByIndex);
+            auto index = compiler->engine()->findTarget(spriteName);
+            CompilerValue *arg = compiler->addConstValue(index);
+            compiler->addFunctionCallWithCtx("control_create_clone_by_index", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { arg });
         }
     } else {
-        compiler->addInput(input);
-        compiler->addFunctionCall(&createClone);
+        CompilerValue *arg = compiler->addInput("CLONE_OPTION");
+        compiler->addFunctionCallWithCtx("control_create_clone", Compiler::StaticType::Void, { Compiler::StaticType::String }, { arg });
+    }
+
+    return nullptr;
+}
+
+CompilerValue *ControlBlocks::compileDeleteThisClone(Compiler *compiler)
+{
+    compiler->addTargetFunctionCall("control_delete_this_clone");
+    return nullptr;
+}
+
+extern "C" void control_stop_all(ExecutionContext *ctx)
+{
+    ctx->engine()->stop();
+}
+
+extern "C" void control_stop_other_scripts_in_target(ExecutionContext *ctx)
+{
+    Thread *thread = ctx->thread();
+    ctx->engine()->stopTarget(thread->target(), thread);
+}
+
+extern "C" void control_start_wait(ExecutionContext *ctx, double seconds)
+{
+    ctx->stackTimer()->start(seconds);
+    ctx->engine()->requestRedraw();
+}
+
+extern "C" bool control_stack_timer_elapsed(ExecutionContext *ctx)
+{
+    return ctx->stackTimer()->elapsed();
+}
+
+extern "C" void control_create_clone_of_myself(Target *target)
+{
+    if (!target->isStage())
+        static_cast<Sprite *>(target)->clone();
+}
+
+extern "C" void control_create_clone_by_index(ExecutionContext *ctx, double index)
+{
+    Target *target = ctx->engine()->targetAt(index);
+
+    if (!target->isStage())
+        static_cast<Sprite *>(target)->clone();
+}
+
+extern "C" void control_create_clone(ExecutionContext *ctx, const char *spriteName)
+{
+    if (strcmp(spriteName, "_myself_") == 0)
+        control_create_clone_of_myself(ctx->thread()->target());
+    else {
+        IEngine *engine = ctx->engine();
+        auto index = engine->findTarget(spriteName);
+        Target *target = engine->targetAt(index);
+
+        if (!target->isStage())
+            static_cast<Sprite *>(target)->clone();
     }
 }
 
-void ControlBlocks::compileDeleteThisClone(Compiler *compiler)
+extern "C" void control_delete_this_clone(Target *target)
 {
-    compiler->addFunctionCall(&deleteThisClone);
-}
-
-unsigned int ControlBlocks::stopAll(VirtualMachine *vm)
-{
-    vm->engine()->stop();
-    return 0;
-}
-
-unsigned int ControlBlocks::stopOtherScriptsInSprite(VirtualMachine *vm)
-{
-    vm->engine()->stopTarget(vm->target(), vm->thread());
-    return 0;
-}
-
-unsigned int ControlBlocks::startWait(VirtualMachine *vm)
-{
-    if (!clock)
-        clock = Clock::instance().get();
-
-    auto currentTime = clock->currentSteadyTime();
-    m_timeMap[vm] = { currentTime, vm->getInput(0, 1)->toDouble() * 1000 };
-    vm->engine()->requestRedraw();
-
-    return 1;
-}
-
-unsigned int ControlBlocks::wait(VirtualMachine *vm)
-{
-    if (!clock)
-        clock = Clock::instance().get();
-
-    auto currentTime = clock->currentSteadyTime();
-    assert(m_timeMap.count(vm) == 1);
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - m_timeMap[vm].first).count() >= m_timeMap[vm].second) {
-        m_timeMap.erase(vm);
-        vm->stop(true, true, false);
-    } else
-        vm->stop(true, true, true);
-    return 0;
-}
-
-unsigned int ControlBlocks::waitUntil(VirtualMachine *vm)
-{
-    if (!vm->getInput(0, 1)->toBool()) {
-        vm->moveToLastCheckpoint();
-        vm->stop(true, true, false);
+    if (!target->isStage()) {
+        target->engine()->stopTarget(target, nullptr);
+        static_cast<Sprite *>(target)->deleteClone();
     }
-    return 1;
-}
-
-unsigned int ControlBlocks::createClone(VirtualMachine *vm)
-{
-    std::string spriteName = vm->getInput(0, 1)->toString();
-    Target *target;
-
-    if (spriteName == "_myself_")
-        target = vm->target();
-    else
-        target = vm->engine()->targetAt(vm->engine()->findTarget(spriteName));
-
-    Sprite *sprite = dynamic_cast<Sprite *>(target);
-
-    if (sprite)
-        sprite->clone();
-
-    return 1;
-}
-
-unsigned int ControlBlocks::createCloneByIndex(VirtualMachine *vm)
-{
-    Target *target = vm->engine()->targetAt(vm->getInput(0, 1)->toInt());
-    Sprite *sprite = dynamic_cast<Sprite *>(target);
-
-    if (sprite)
-        sprite->clone();
-
-    return 1;
-}
-
-unsigned int ControlBlocks::createCloneOfMyself(VirtualMachine *vm)
-{
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
-
-    if (sprite)
-        sprite->clone();
-
-    return 0;
-}
-
-unsigned int ControlBlocks::deleteThisClone(VirtualMachine *vm)
-{
-    Sprite *sprite = dynamic_cast<Sprite *>(vm->target());
-
-    if (sprite && sprite->isClone()) {
-        vm->engine()->stopTarget(sprite, nullptr);
-        sprite->deleteClone();
-    }
-
-    return 0;
 }

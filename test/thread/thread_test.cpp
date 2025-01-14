@@ -1,8 +1,7 @@
 #include <scratchcpp/thread.h>
 #include <scratchcpp/script.h>
-#include <scratchcpp/virtualmachine.h>
-#include <scratchcpp/dev/executioncontext.h>
-#include <scratchcpp/dev/promise.h>
+#include <scratchcpp/executioncontext.h>
+#include <scratchcpp/promise.h>
 #include <targetmock.h>
 #include <enginemock.h>
 #include <executablecodemock.h>
@@ -21,14 +20,12 @@ class ThreadTest : public testing::Test
         void SetUp() override
         {
             m_script = std::make_unique<Script>(nullptr, nullptr, nullptr);
-#ifdef USE_LLVM
             m_code = std::make_shared<ExecutableCodeMock>();
             m_script->setCode(m_code);
             EXPECT_CALL(*m_code, createExecutionContext(_)).WillOnce(Invoke([this](Thread *thread) {
                 m_ctx = std::make_shared<ExecutionContext>(thread);
                 return m_ctx;
             }));
-#endif
             m_thread = std::make_unique<Thread>(&m_target, &m_engine, m_script.get());
         }
 
@@ -36,10 +33,8 @@ class ThreadTest : public testing::Test
         TargetMock m_target;
         EngineMock m_engine;
         std::unique_ptr<Script> m_script;
-#ifdef USE_LLVM
         std::shared_ptr<ExecutableCodeMock> m_code;
         std::shared_ptr<ExecutionContext> m_ctx;
-#endif
 };
 
 TEST_F(ThreadTest, Constructor)
@@ -47,13 +42,8 @@ TEST_F(ThreadTest, Constructor)
     ASSERT_EQ(m_thread->target(), &m_target);
     ASSERT_EQ(m_thread->engine(), &m_engine);
     ASSERT_EQ(m_thread->script(), m_script.get());
-    ASSERT_TRUE(m_thread->vm());
-    ASSERT_EQ(m_thread->vm()->target(), &m_target);
-    ASSERT_EQ(m_thread->vm()->engine(), &m_engine);
-    ASSERT_EQ(m_thread->vm()->script(), m_script.get());
 }
 
-#ifdef USE_LLVM
 TEST_F(ThreadTest, Run)
 {
     EXPECT_CALL(*m_code, run(m_ctx.get()));
@@ -96,4 +86,3 @@ TEST_F(ThreadTest, Promise)
     ASSERT_EQ(m_thread->promise(), promise);
     ASSERT_EQ(m_ctx->promise(), promise);
 }
-#endif // USE_LLVM

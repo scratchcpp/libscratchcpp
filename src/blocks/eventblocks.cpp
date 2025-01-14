@@ -1,24 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/iengine.h>
-#include <scratchcpp/broadcast.h>
 #include <scratchcpp/compiler.h>
-#include <scratchcpp/input.h>
-#include <scratchcpp/inputvalue.h>
-#include <scratchcpp/field.h>
-#include <scratchcpp/sprite.h>
-#include <scratchcpp/stage.h>
-#include <scratchcpp/costume.h>
 #include <scratchcpp/block.h>
-#include <scratchcpp/itimer.h>
+#include <scratchcpp/field.h>
+#include <scratchcpp/broadcast.h>
+#include <scratchcpp/executioncontext.h>
+#include <scratchcpp/thread.h>
+#include <scratchcpp/compilerconstant.h>
+#include <scratchcpp/promise.h>
 
 #include "eventblocks.h"
-#include "audio/audioinput.h"
-#include "audio/iaudioloudness.h"
 
 using namespace libscratchcpp;
-
-IAudioInput *EventBlocks::audioInput = nullptr;
 
 std::string EventBlocks::name() const
 {
@@ -32,192 +26,109 @@ std::string libscratchcpp::EventBlocks::description() const
 
 void EventBlocks::registerBlocks(IEngine *engine)
 {
-    // Blocks
     engine->addCompileFunction(this, "event_whentouchingobject", &compileWhenTouchingObject);
     engine->addCompileFunction(this, "event_whenflagclicked", &compileWhenFlagClicked);
     engine->addCompileFunction(this, "event_whenthisspriteclicked", &compileWhenThisSpriteClicked);
     engine->addCompileFunction(this, "event_whenstageclicked", &compileWhenStageClicked);
-    engine->addCompileFunction(this, "event_broadcast", &compileBroadcast);
-    engine->addCompileFunction(this, "event_broadcastandwait", &compileBroadcastAndWait);
     engine->addCompileFunction(this, "event_whenbroadcastreceived", &compileWhenBroadcastReceived);
     engine->addCompileFunction(this, "event_whenbackdropswitchesto", &compileWhenBackdropSwitchesTo);
     engine->addCompileFunction(this, "event_whengreaterthan", &compileWhenGreaterThan);
+    engine->addCompileFunction(this, "event_broadcast", &compileBroadcast);
+    engine->addCompileFunction(this, "event_broadcastandwait", &compileBroadcastAndWait);
     engine->addCompileFunction(this, "event_whenkeypressed", &compileWhenKeyPressed);
-
-    // Hat predicates
-    engine->addHatPredicateCompileFunction(this, "event_whentouchingobject", &compileWhenTouchingObjectPredicate);
-    engine->addHatPredicateCompileFunction(this, "event_whengreaterthan", &compileWhenGreaterThanPredicate);
-
-    // Inputs
-    engine->addInput(this, "TOUCHINGOBJECTMENU", TOUCHINGOBJECTMENU);
-    engine->addInput(this, "BROADCAST_INPUT", BROADCAST_INPUT);
-    engine->addInput(this, "VALUE", VALUE);
-
-    // Fields
-    engine->addField(this, "BROADCAST_OPTION", BROADCAST_OPTION);
-    engine->addField(this, "BACKDROP", BACKDROP);
-    engine->addField(this, "WHENGREATERTHANMENU", WHENGREATERTHANMENU);
-    engine->addField(this, "KEY_OPTION", KEY_OPTION);
-
-    // Fields values
-    engine->addFieldValue(this, "LOUDNESS", Loudness);
-    engine->addFieldValue(this, "TIMER", Timer);
 }
 
-void EventBlocks::compileWhenTouchingObjectPredicate(Compiler *compiler)
-{
-    Input *input = compiler->input(TOUCHINGOBJECTMENU);
-
-    if (input->pointsToDropdownMenu()) {
-        std::string value = input->selectedMenuItem();
-
-        compiler->addConstValue(value);
-        compiler->addFunctionCall(&whenTouchingObjectPredicate);
-    } else {
-        compiler->addInput(input);
-        compiler->addFunctionCall(&whenTouchingObjectPredicate);
-    }
-}
-
-void EventBlocks::compileWhenTouchingObject(Compiler *compiler)
+CompilerValue *EventBlocks::compileWhenTouchingObject(Compiler *compiler)
 {
     compiler->engine()->addWhenTouchingObjectScript(compiler->block());
+    return nullptr;
 }
 
-void EventBlocks::compileWhenFlagClicked(Compiler *compiler)
+CompilerValue *EventBlocks::compileWhenFlagClicked(Compiler *compiler)
 {
     compiler->engine()->addGreenFlagScript(compiler->block());
+    return nullptr;
 }
 
-void EventBlocks::compileWhenThisSpriteClicked(Compiler *compiler)
+CompilerValue *EventBlocks::compileWhenThisSpriteClicked(Compiler *compiler)
 {
     compiler->engine()->addTargetClickScript(compiler->block());
+    return nullptr;
 }
 
-void EventBlocks::compileWhenStageClicked(Compiler *compiler)
+CompilerValue *EventBlocks::compileWhenStageClicked(Compiler *compiler)
 {
     compiler->engine()->addTargetClickScript(compiler->block());
+    return nullptr;
 }
 
-void EventBlocks::compileBroadcast(Compiler *compiler)
+CompilerValue *EventBlocks::compileWhenBroadcastReceived(Compiler *compiler)
 {
-    compiler->addInput(BROADCAST_INPUT);
-    compiler->addFunctionCall(&broadcast);
-}
-
-void EventBlocks::compileBroadcastAndWait(Compiler *compiler)
-{
-    compiler->addInput(BROADCAST_INPUT);
-    compiler->addFunctionCall(&broadcastAndWait);
-}
-
-void EventBlocks::compileWhenBroadcastReceived(Compiler *compiler)
-{
-    Field *field = compiler->field(BROADCAST_OPTION);
-    auto broadcast = std::static_pointer_cast<Broadcast>(field->valuePtr());
-
-    compiler->engine()->addBroadcastScript(compiler->block(), field, broadcast.get());
-}
-
-void EventBlocks::compileWhenBackdropSwitchesTo(Compiler *compiler)
-{
-    compiler->engine()->addBackdropChangeScript(compiler->block(), compiler->field(BACKDROP));
-}
-
-void EventBlocks::compileWhenGreaterThanPredicate(Compiler *compiler)
-{
-    Field *field = compiler->field(WHENGREATERTHANMENU);
-    BlockFunc predicate = nullptr;
+    auto block = compiler->block();
+    Field *field = compiler->field("BROADCAST_OPTION");
 
     if (field) {
-        switch (field->specialValueId()) {
-            case Loudness:
-                predicate = &whenLoudnessGreaterThanPredicate;
-                break;
-
-            case Timer:
-                predicate = &whenTimerGreaterThanPredicate;
-                break;
-
-            default:
-                compiler->addInstruction(vm::OP_NULL);
-                return;
-        }
+        auto broadcast = std::static_pointer_cast<Broadcast>(field->valuePtr());
+        compiler->engine()->addBroadcastScript(block, field, broadcast.get());
     }
 
-    if (predicate) {
-        compiler->addInput(VALUE);
-        compiler->addFunctionCall(predicate);
-    }
+    return nullptr;
 }
 
-void EventBlocks::compileWhenGreaterThan(Compiler *compiler)
+CompilerValue *EventBlocks::compileWhenBackdropSwitchesTo(Compiler *compiler)
+{
+    auto block = compiler->block();
+    Field *field = compiler->field("BACKDROP");
+
+    if (field)
+        compiler->engine()->addBackdropChangeScript(block, field);
+
+    return nullptr;
+}
+
+CompilerValue *EventBlocks::compileWhenGreaterThan(Compiler *compiler)
 {
     compiler->engine()->addWhenGreaterThanScript(compiler->block());
+    return nullptr;
 }
 
-void EventBlocks::compileWhenKeyPressed(Compiler *compiler)
+CompilerValue *EventBlocks::compileBroadcast(Compiler *compiler)
 {
-    // NOTE: Field values don't have to be registered because keys are referenced by their names
-    compiler->engine()->addKeyPressScript(compiler->block(), compiler->field(KEY_OPTION));
+    auto input = compiler->addInput("BROADCAST_INPUT");
+    auto wait = compiler->addConstValue(false);
+    compiler->addFunctionCallWithCtx("event_broadcast", Compiler::StaticType::Void, { Compiler::StaticType::String, Compiler::StaticType::Bool }, { input, wait });
+    return nullptr;
 }
 
-unsigned int EventBlocks::whenTouchingObjectPredicate(VirtualMachine *vm)
+CompilerValue *EventBlocks::compileBroadcastAndWait(Compiler *compiler)
 {
-    std::string value = vm->getInput(0, 1)->toString();
-
-    if (value == "_mouse_")
-        vm->replaceReturnValue(vm->target()->touchingPoint(vm->engine()->mouseX(), vm->engine()->mouseY()), 1);
-    else if (value == "_edge_")
-        vm->replaceReturnValue(vm->target()->touchingEdge(), 1);
-    else {
-        Target *target = vm->engine()->targetAt(vm->engine()->findTarget(value));
-
-        if (target && !target->isStage())
-            vm->replaceReturnValue(vm->target()->touchingSprite(static_cast<Sprite *>(target)), 1);
-        else
-            vm->replaceReturnValue(false, 1);
-    }
-
-    return 0;
+    auto input = compiler->addInput("BROADCAST_INPUT");
+    auto wait = compiler->addConstValue(true);
+    compiler->addFunctionCallWithCtx("event_broadcast", Compiler::StaticType::Void, { Compiler::StaticType::String, Compiler::StaticType::Bool }, { input, wait });
+    compiler->createYield();
+    return nullptr;
 }
 
-unsigned int EventBlocks::broadcast(VirtualMachine *vm)
+CompilerValue *EventBlocks::compileWhenKeyPressed(Compiler *compiler)
 {
-    std::vector<int> broadcasts = vm->engine()->findBroadcasts(vm->getInput(0, 1)->toString());
+    auto block = compiler->block();
+    Field *field = compiler->field("KEY_OPTION");
+
+    if (field)
+        compiler->engine()->addKeyPressScript(block, field);
+
+    return nullptr;
+}
+
+extern "C" void event_broadcast(ExecutionContext *ctx, const char *name, bool wait)
+{
+    Thread *thread = ctx->thread();
+    IEngine *engine = thread->engine();
+    std::vector<int> broadcasts = engine->findBroadcasts(name);
 
     for (int index : broadcasts)
-        vm->engine()->broadcast(index, vm->thread(), false);
+        engine->broadcast(index, thread, wait);
 
-    return 1;
-}
-
-unsigned int EventBlocks::broadcastAndWait(VirtualMachine *vm)
-{
-    std::vector<int> broadcasts = vm->engine()->findBroadcasts(vm->getInput(0, 1)->toString());
-
-    for (int index : broadcasts)
-        vm->engine()->broadcast(index, vm->thread(), true);
-
-    vm->promise();
-
-    return 1;
-}
-
-unsigned int EventBlocks::whenLoudnessGreaterThanPredicate(VirtualMachine *vm)
-{
-    if (!audioInput)
-        audioInput = AudioInput::instance().get();
-
-    auto audioLoudness = audioInput->audioLoudness();
-    const Value &operand = *vm->getInput(0, 1);
-    vm->replaceReturnValue(Value(audioLoudness->getLoudness()) > operand, 1);
-    return 0;
-}
-
-unsigned int EventBlocks::whenTimerGreaterThanPredicate(VirtualMachine *vm)
-{
-    const Value &operand = *vm->getInput(0, 1);
-    vm->replaceReturnValue(Value(vm->engine()->timer()->value()) > operand, 1);
-    return 0;
+    if (wait)
+        ctx->setPromise(std::make_shared<Promise>());
 }
