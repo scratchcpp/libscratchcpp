@@ -66,8 +66,6 @@ target_sources(scratchcpp
     include/scratchcpp/dev/test/scriptbuilder.h
 )
 
-target_compile_definitions(scratchcpp PUBLIC USE_LLVM)
-
 if(LIBSCRATCHCPP_PRINT_LLVM_IR)
     target_compile_definitions(scratchcpp PRIVATE PRINT_LLVM_IR)
 endif()
