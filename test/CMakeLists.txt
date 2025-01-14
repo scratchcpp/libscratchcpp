@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_definitions(DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(GTEST_DIR thirdparty/googletest)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../${GTEST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/${GTEST_DIR})
 
 # For Windows: Prevent overriding the parent project's compiler/linker settings
