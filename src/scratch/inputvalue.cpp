@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/inputvalue.h>
-#include <scratchcpp/dev/compiler.h>
-#include <scratchcpp/dev/compilerconstant.h>
+#include <scratchcpp/compiler.h>
+#include <scratchcpp/compilerconstant.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/variable.h>

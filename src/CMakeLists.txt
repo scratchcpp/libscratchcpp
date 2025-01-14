@@ -11,11 +11,9 @@ target_sources(scratchcpp
     rect_p.h
 )
 
-#add_subdirectory(blocks)
-
+add_subdirectory(blocks)
 add_subdirectory(engine)
 add_subdirectory(internal)
 add_subdirectory(scratch)
 add_subdirectory(audio)
-
-add_subdirectory(dev)
+add_subdirectory(test)

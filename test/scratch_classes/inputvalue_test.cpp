@@ -3,7 +3,7 @@
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
-#include <scratchcpp/dev/compiler.h>
+#include <scratchcpp/compiler.h>
 #include <scratchcpp/input.h>
 #include <enginemock.h>
 #include <targetmock.h>
@@ -11,7 +11,7 @@
 #include <codebuildermock.h>
 
 #include "../common.h"
-#include "dev/engine/compiler_p.h"
+#include "engine/compiler_p.h"
 
 using namespace libscratchcpp;
 

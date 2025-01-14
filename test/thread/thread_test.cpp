@@ -1,7 +1,7 @@
 #include <scratchcpp/thread.h>
 #include <scratchcpp/script.h>
-#include <scratchcpp/dev/executioncontext.h>
-#include <scratchcpp/dev/promise.h>
+#include <scratchcpp/executioncontext.h>
+#include <scratchcpp/promise.h>
 #include <targetmock.h>
 #include <enginemock.h>
 #include <executablecodemock.h>

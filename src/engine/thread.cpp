@@ -2,8 +2,8 @@
 
 #include <scratchcpp/thread.h>
 #include <scratchcpp/script.h>
-#include <scratchcpp/dev/executablecode.h>
-#include <scratchcpp/dev/executioncontext.h>
+#include <scratchcpp/executablecode.h>
+#include <scratchcpp/executioncontext.h>
 
 #include "thread_p.h"
 

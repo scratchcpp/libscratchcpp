@@ -7,8 +7,8 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/textbubble.h>
 #include <scratchcpp/broadcast.h>
-#include <scratchcpp/dev/compiler.h>
-#include <scratchcpp/dev/promise.h>
+#include <scratchcpp/compiler.h>
+#include <scratchcpp/promise.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/inputvalue.h>
 #include <scratchcpp/field.h>
@@ -29,7 +29,7 @@
 #include "timer.h"
 #include "clock.h"
 #include "audio/iaudioengine.h"
-#include "dev/blocks/blocks.h"
+#include "blocks/blocks.h"
 #include "scratch/monitor_p.h"
 
 using namespace libscratchcpp;

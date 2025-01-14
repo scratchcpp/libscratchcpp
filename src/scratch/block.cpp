@@ -4,8 +4,8 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/comment.h>
-#include <scratchcpp/dev/compiler.h>
-#include <scratchcpp/dev/compilerconstant.h>
+#include <scratchcpp/compiler.h>
+#include <scratchcpp/compilerconstant.h>
 #include <iostream>
 
 #include "block_p.h"

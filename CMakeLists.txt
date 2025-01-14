@@ -22,6 +22,14 @@ target_sources(scratchcpp
     include/scratchcpp/scratchconfiguration.h
     include/scratchcpp/iengine.h
     include/scratchcpp/iextension.h
+    include/scratchcpp/compiler.h
+    include/scratchcpp/compilercontext.h
+    include/scratchcpp/compilervalue.h
+    include/scratchcpp/compilerconstant.h
+    include/scratchcpp/compilerlocalvariable.h
+    include/scratchcpp/executablecode.h
+    include/scratchcpp/executioncontext.h
+    include/scratchcpp/promise.h
     include/scratchcpp/thread.h
     include/scratchcpp/asset.h
     include/scratchcpp/costume.h
@@ -55,15 +63,7 @@ target_sources(scratchcpp
     include/scratchcpp/comment.h
     include/scratchcpp/monitor.h
     include/scratchcpp/imonitorhandler.h
-    include/scratchcpp/dev/compiler.h
-    include/scratchcpp/dev/compilercontext.h
-    include/scratchcpp/dev/compilervalue.h
-    include/scratchcpp/dev/compilerconstant.h
-    include/scratchcpp/dev/compilerlocalvariable.h
-    include/scratchcpp/dev/executablecode.h
-    include/scratchcpp/dev/executioncontext.h
-    include/scratchcpp/dev/promise.h
-    include/scratchcpp/dev/test/scriptbuilder.h
+    include/scratchcpp/test/scriptbuilder.h
 )
 
 if(LIBSCRATCHCPP_PRINT_LLVM_IR)

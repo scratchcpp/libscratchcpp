@@ -1,6 +1,6 @@
 #pragma once
 
-#include <scratchcpp/dev/executablecode.h>
+#include <scratchcpp/executablecode.h>
 #include <gmock/gmock.h>
 
 using namespace libscratchcpp;

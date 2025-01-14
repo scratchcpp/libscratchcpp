@@ -3,7 +3,7 @@
 #include <scratchcpp/field.h>
 #include <scratchcpp/comment.h>
 #include <scratchcpp/target.h>
-#include <scratchcpp/dev/compiler.h>
+#include <scratchcpp/compiler.h>
 #include <enginemock.h>
 
 #include "../common.h"
