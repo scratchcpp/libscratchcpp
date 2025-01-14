@@ -1267,7 +1267,10 @@ CompilerValue *LLVMCodeBuilder::addListContents(List *list)
 {
     LLVMInstruction ins(LLVMInstruction::Type::GetListContents);
     ins.workList = list;
-    m_listPtrs[list] = LLVMListPtr();
+
+    if (m_listPtrs.find(list) == m_listPtrs.cend())
+        m_listPtrs[list] = LLVMListPtr();
+
     return createOp(ins, Compiler::StaticType::String);
 }
 
@@ -1275,7 +1278,9 @@ CompilerValue *LLVMCodeBuilder::addListItem(List *list, CompilerValue *index)
 {
     LLVMInstruction ins(LLVMInstruction::Type::GetListItem);
     ins.workList = list;
-    m_listPtrs[list] = LLVMListPtr();
+
+    if (m_listPtrs.find(list) == m_listPtrs.cend())
+        m_listPtrs[list] = LLVMListPtr();
 
     ins.args.push_back({ Compiler::StaticType::Number, static_cast<LLVMRegister *>(index) });
 
@@ -1291,7 +1296,10 @@ CompilerValue *LLVMCodeBuilder::addListItemIndex(List *list, CompilerValue *item
 {
     LLVMInstruction ins(LLVMInstruction::Type::GetListItemIndex);
     ins.workList = list;
-    m_listPtrs[list] = LLVMListPtr();
+
+    if (m_listPtrs.find(list) == m_listPtrs.cend())
+        m_listPtrs[list] = LLVMListPtr();
+
     return createOp(ins, Compiler::StaticType::Number, Compiler::StaticType::Unknown, { item });
 }
 
@@ -1299,7 +1307,10 @@ CompilerValue *LLVMCodeBuilder::addListContains(List *list, CompilerValue *item)
 {
     LLVMInstruction ins(LLVMInstruction::Type::ListContainsItem);
     ins.workList = list;
-    m_listPtrs[list] = LLVMListPtr();
+
+    if (m_listPtrs.find(list) == m_listPtrs.cend())
+        m_listPtrs[list] = LLVMListPtr();
+
     return createOp(ins, Compiler::StaticType::Bool, Compiler::StaticType::Unknown, { item });
 }
 
@@ -1307,7 +1318,10 @@ CompilerValue *LLVMCodeBuilder::addListSize(List *list)
 {
     LLVMInstruction ins(LLVMInstruction::Type::GetListSize);
     ins.workList = list;
-    m_listPtrs[list] = LLVMListPtr();
+
+    if (m_listPtrs.find(list) == m_listPtrs.cend())
+        m_listPtrs[list] = LLVMListPtr();
+
     return createOp(ins, Compiler::StaticType::Number);
 }
 
@@ -1518,40 +1532,50 @@ void LLVMCodeBuilder::createListClear(List *list)
 {
     LLVMInstruction ins(LLVMInstruction::Type::ClearList);
     ins.workList = list;
-    m_listPtrs[list] = LLVMListPtr();
     createOp(ins, Compiler::StaticType::Void);
+
+    if (m_listPtrs.find(list) == m_listPtrs.cend())
+        m_listPtrs[list] = LLVMListPtr();
 }
 
 void LLVMCodeBuilder::createListRemove(List *list, CompilerValue *index)
 {
     LLVMInstruction ins(LLVMInstruction::Type::RemoveListItem);
     ins.workList = list;
-    m_listPtrs[list] = LLVMListPtr();
     createOp(ins, Compiler::StaticType::Void, Compiler::StaticType::Number, { index });
+
+    if (m_listPtrs.find(list) == m_listPtrs.cend())
+        m_listPtrs[list] = LLVMListPtr();
 }
 
 void LLVMCodeBuilder::createListAppend(List *list, CompilerValue *item)
 {
     LLVMInstruction ins(LLVMInstruction::Type::AppendToList);
     ins.workList = list;
-    m_listPtrs[list] = LLVMListPtr();
     createOp(ins, Compiler::StaticType::Void, Compiler::StaticType::Unknown, { item });
+
+    if (m_listPtrs.find(list) == m_listPtrs.cend())
+        m_listPtrs[list] = LLVMListPtr();
 }
 
 void LLVMCodeBuilder::createListInsert(List *list, CompilerValue *index, CompilerValue *item)
 {
     LLVMInstruction ins(LLVMInstruction::Type::InsertToList);
     ins.workList = list;
-    m_listPtrs[list] = LLVMListPtr();
     createOp(ins, Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Unknown }, { index, item });
+
+    if (m_listPtrs.find(list) == m_listPtrs.cend())
+        m_listPtrs[list] = LLVMListPtr();
 }
 
 void LLVMCodeBuilder::createListReplace(List *list, CompilerValue *index, CompilerValue *item)
 {
     LLVMInstruction ins(LLVMInstruction::Type::ListReplace);
     ins.workList = list;
-    m_listPtrs[list] = LLVMListPtr();
     createOp(ins, Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Unknown }, { index, item });
+
+    if (m_listPtrs.find(list) == m_listPtrs.cend())
+        m_listPtrs[list] = LLVMListPtr();
 }
 
 void LLVMCodeBuilder::beginIfStatement(CompilerValue *cond)
