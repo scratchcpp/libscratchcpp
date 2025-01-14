@@ -1251,7 +1251,9 @@ CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
 {
     LLVMInstruction ins(LLVMInstruction::Type::ReadVariable);
     ins.workVariable = variable;
-    m_variablePtrs[variable] = LLVMVariablePtr();
+
+    if (m_variablePtrs.find(variable) == m_variablePtrs.cend())
+        m_variablePtrs[variable] = LLVMVariablePtr();
 
     auto ret = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     ret->isRawValue = false;
@@ -1506,8 +1508,10 @@ void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *val
 {
     LLVMInstruction ins(LLVMInstruction::Type::WriteVariable);
     ins.workVariable = variable;
-    m_variablePtrs[variable] = LLVMVariablePtr();
     createOp(ins, Compiler::StaticType::Void, Compiler::StaticType::Unknown, { value });
+
+    if (m_variablePtrs.find(variable) == m_variablePtrs.cend())
+        m_variablePtrs[variable] = LLVMVariablePtr();
 }
 
 void LLVMCodeBuilder::createListClear(List *list)
