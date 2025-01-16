@@ -106,7 +106,18 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
         // All variables are currently created on the stack and synced later (seems to be faster)
         // NOTE: Strings are NOT copied, only the pointer and string size are copied
         varPtr.stackPtr = m_builder.CreateAlloca(m_valueDataType);
-        varPtr.onStack = false; // use heap before the first assignment
+
+        // If there are no write operations outside loops, initialize the stack variable now
+        Variable *variable = var;
+        auto it = std::find_if(m_variableInstructions.begin(), m_variableInstructions.end(), [variable](const std::shared_ptr<LLVMInstruction> &ins) {
+            return ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == variable && !ins->loopScope;
+        });
+
+        if (it == m_variableInstructions.end()) {
+            createValueCopy(ptr, varPtr.stackPtr);
+            varPtr.onStack = true;
+        } else
+            varPtr.onStack = false; // use heap before the first assignment
     }
 
     // Create list pointers
