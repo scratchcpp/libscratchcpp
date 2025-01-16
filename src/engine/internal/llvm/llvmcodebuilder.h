@@ -20,6 +20,7 @@ namespace libscratchcpp
 
 class LLVMCompilerContext;
 class LLVMConstantRegister;
+class LLVMLoopScope;
 
 class LLVMCodeBuilder : public ICodeBuilder
 {
@@ -119,6 +120,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createListMap();
         void pushScopeLevel();
         void popScopeLevel();
+        void pushLoopScope(bool buildPhase);
+        void popLoopScope();
 
         std::string getMainFunctionName(BlockPrototype *procedurePrototype);
         std::string getResumeFunctionName(BlockPrototype *procedurePrototype);
@@ -147,8 +150,11 @@ class LLVMCodeBuilder : public ICodeBuilder
         void reloadLists();
         void updateListDataPtr(const LLVMListPtr &listPtr);
 
+        LLVMRegister *createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
+        LLVMRegister *createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
         LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
         LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
+        std::shared_ptr<LLVMLoopScope> currentLoopScope() const;
 
         void createValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
         void createReusedValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
@@ -215,7 +221,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::StructType *m_valueDataType = nullptr;
         llvm::FunctionType *m_resumeFuncType = nullptr;
 
-        std::vector<LLVMInstruction> m_instructions;
+        std::vector<std::shared_ptr<LLVMInstruction>> m_instructions;
         std::vector<std::shared_ptr<LLVMRegister>> m_regs;
         std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
         BlockPrototype *m_procedurePrototype = nullptr;
@@ -223,6 +229,10 @@ class LLVMCodeBuilder : public ICodeBuilder
         bool m_warp = false;
         int m_defaultArgCount = 0;
 
+        long m_loopScope = -1; // index
+        std::vector<std::shared_ptr<LLVMLoopScope>> m_loopScopes;
+        long m_loopScopeCounter = 0; // replacement for m_loopScopes size in build phase
+        std::vector<long> m_loopScopeTree;
         std::vector<std::vector<llvm::Value *>> m_heap; // scopes
 
         std::shared_ptr<ExecutableCode> m_output;
