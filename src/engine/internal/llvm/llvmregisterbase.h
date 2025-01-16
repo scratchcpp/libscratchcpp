@@ -15,12 +15,15 @@ class Value;
 namespace libscratchcpp
 {
 
+class LLVMInstruction;
+
 struct LLVMRegisterBase
 {
         virtual const Value &constValue() const = 0;
 
         llvm::Value *value = nullptr;
         bool isRawValue = false;
+        std::shared_ptr<LLVMInstruction> instruction;
 };
 
 } // namespace libscratchcpp

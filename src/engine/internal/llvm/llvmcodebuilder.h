@@ -129,7 +129,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Function *getOrCreateFunction(const std::string &name, llvm::FunctionType *type);
         void verifyFunction(llvm::Function *func);
 
-        LLVMRegister *addReg(std::shared_ptr<LLVMRegister> reg);
+        LLVMRegister *addReg(std::shared_ptr<LLVMRegister> reg, std::shared_ptr<LLVMInstruction> ins);
 
         llvm::Value *addAlloca(llvm::Type *type);
         void freeLater(llvm::Value *value);
