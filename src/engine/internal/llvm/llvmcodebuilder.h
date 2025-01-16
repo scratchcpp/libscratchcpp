@@ -137,7 +137,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType);
         llvm::Value *castRawValue(LLVMRegister *reg, Compiler::StaticType targetType);
         llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType);
-        Compiler::StaticType optimizeRegisterType(LLVMRegister *reg);
+        Compiler::StaticType optimizeRegisterType(LLVMRegister *reg) const;
         llvm::Type *getType(Compiler::StaticType type);
         Compiler::StaticType getProcedureArgType(BlockPrototype::ArgType type);
         llvm::Value *isNaN(llvm::Value *num);
@@ -149,6 +149,9 @@ class LLVMCodeBuilder : public ICodeBuilder
         void reloadVariables(llvm::Value *targetVariables);
         void reloadLists();
         void updateListDataPtr(const LLVMListPtr &listPtr);
+        bool isVariableTypeSafe(std::shared_ptr<LLVMInstruction> ins, Compiler::StaticType expectedType) const;
+        bool isVariableTypeSafe(std::shared_ptr<LLVMInstruction> ins, Compiler::StaticType expectedType, std::unordered_set<LLVMInstruction *> &processed) const;
+        bool isVariableWriteResultTypeSafe(std::shared_ptr<LLVMInstruction> ins, Compiler::StaticType expectedType, bool ignoreSavedType, std::unordered_set<LLVMInstruction *> &processed) const;
 
         LLVMRegister *createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
         LLVMRegister *createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
