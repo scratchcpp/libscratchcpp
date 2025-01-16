@@ -10,6 +10,7 @@ namespace libscratchcpp
 {
 
 class BlockPrototype;
+class LLVMLoopScope;
 
 struct LLVMInstruction
 {
@@ -77,8 +78,9 @@ struct LLVMInstruction
             ProcedureArg
         };
 
-        LLVMInstruction(Type type) :
-            type(type)
+        LLVMInstruction(Type type, std::shared_ptr<LLVMLoopScope> loopScope) :
+            type(type),
+            loopScope(loopScope)
         {
         }
 
@@ -92,6 +94,7 @@ struct LLVMInstruction
         List *workList = nullptr;         // for lists
         BlockPrototype *procedurePrototype = nullptr;
         size_t procedureArgIndex = 0;
+        std::shared_ptr<LLVMLoopScope> loopScope;
 };
 
 } // namespace libscratchcpp

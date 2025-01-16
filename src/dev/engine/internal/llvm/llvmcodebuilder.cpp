@@ -16,6 +16,7 @@
 #include "llvmifstatement.h"
 #include "llvmloop.h"
 #include "llvmtypes.h"
+#include "llvmloopscope.h"
 
 using namespace libscratchcpp;
 
@@ -44,8 +45,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 {
     if (!m_warp) {
         // Do not create coroutine if there are no yield instructions nor non-warp procedure calls
-        auto it = std::find_if(m_instructions.begin(), m_instructions.end(), [](const LLVMInstruction &step) {
-            return step.type == LLVMInstruction::Type::Yield || (step.type == LLVMInstruction::Type::CallProcedure && step.procedurePrototype && !step.procedurePrototype->warp());
+        auto it = std::find_if(m_instructions.begin(), m_instructions.end(), [](const std::shared_ptr<LLVMInstruction> &step) {
+            return step->type == LLVMInstruction::Type::Yield || (step->type == LLVMInstruction::Type::CallProcedure && step->procedurePrototype && !step->procedurePrototype->warp());
         });
 
         if (it == m_instructions.end())
@@ -122,12 +123,16 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
         m_builder.CreateStore(m_builder.getInt1(false), listPtr.dataPtrDirty);
     }
 
+    assert(m_loopScope == -1);
+    m_loopScope = -1;
     m_scopeVariables.clear();
     m_scopeLists.clear();
     pushScopeLevel();
 
     // Execute recorded steps
-    for (const LLVMInstruction &step : m_instructions) {
+    for (const auto insPtr : m_instructions) {
+        const LLVMInstruction &step = *insPtr;
+
         switch (step.type) {
             case LLVMInstruction::Type::FunctionCall: {
                 std::vector<llvm::Type *> types;
@@ -1007,6 +1012,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 loops.push_back(loop);
                 pushScopeLevel();
+                pushLoopScope(true);
                 break;
             }
 
@@ -1036,6 +1042,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // Switch to body branch
                 m_builder.SetInsertPoint(body);
                 pushScopeLevel();
+                pushLoopScope(true);
                 break;
             }
 
@@ -1057,6 +1064,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // Switch to body branch
                 m_builder.SetInsertPoint(body);
                 pushScopeLevel();
+                pushLoopScope(true);
                 break;
             }
 
@@ -1090,6 +1098,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 loops.pop_back();
                 popScopeLevel();
+                popLoopScope();
                 break;
             }
 
@@ -1198,16 +1207,16 @@ CompilerValue *LLVMCodeBuilder::addFunctionCall(const std::string &functionName,
 {
     assert(argTypes.size() == args.size());
 
-    LLVMInstruction ins(LLVMInstruction::Type::FunctionCall);
-    ins.functionName = functionName;
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, currentLoopScope());
+    ins->functionName = functionName;
 
     for (size_t i = 0; i < args.size(); i++)
-        ins.args.push_back({ argTypes[i], static_cast<LLVMRegister *>(args[i]) });
+        ins->args.push_back({ argTypes[i], static_cast<LLVMRegister *>(args[i]) });
 
     if (returnType != Compiler::StaticType::Void) {
         auto reg = std::make_shared<LLVMRegister>(returnType);
         reg->isRawValue = true;
-        ins.functionReturnReg = reg.get();
+        ins->functionReturnReg = reg.get();
         m_instructions.push_back(ins);
         return addReg(reg);
     }
@@ -1219,14 +1228,14 @@ CompilerValue *LLVMCodeBuilder::addFunctionCall(const std::string &functionName,
 CompilerValue *LLVMCodeBuilder::addTargetFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
 {
     CompilerValue *ret = addFunctionCall(functionName, returnType, argTypes, args);
-    m_instructions.back().functionTargetArg = true;
+    m_instructions.back()->functionTargetArg = true;
     return ret;
 }
 
 CompilerValue *LLVMCodeBuilder::addFunctionCallWithCtx(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
 {
     CompilerValue *ret = addFunctionCall(functionName, returnType, argTypes, args);
-    m_instructions.back().functionCtxArg = true;
+    m_instructions.back()->functionCtxArg = true;
     return ret;
 }
 
@@ -1249,15 +1258,15 @@ CompilerValue *LLVMCodeBuilder::addLocalVariableValue(CompilerLocalVariable *var
 
 CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::ReadVariable);
-    ins.workVariable = variable;
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, currentLoopScope());
+    ins->workVariable = variable;
 
     if (m_variablePtrs.find(variable) == m_variablePtrs.cend())
         m_variablePtrs[variable] = LLVMVariablePtr();
 
     auto ret = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     ret->isRawValue = false;
-    ins.functionReturnReg = ret.get();
+    ins->functionReturnReg = ret.get();
 
     m_instructions.push_back(ins);
     return addReg(ret);
@@ -1265,7 +1274,7 @@ CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
 
 CompilerValue *LLVMCodeBuilder::addListContents(List *list)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::GetListContents);
+    LLVMInstruction ins(LLVMInstruction::Type::GetListContents, currentLoopScope());
     ins.workList = list;
 
     if (m_listPtrs.find(list) == m_listPtrs.cend())
@@ -1276,17 +1285,17 @@ CompilerValue *LLVMCodeBuilder::addListContents(List *list)
 
 CompilerValue *LLVMCodeBuilder::addListItem(List *list, CompilerValue *index)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::GetListItem);
-    ins.workList = list;
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, currentLoopScope());
+    ins->workList = list;
 
     if (m_listPtrs.find(list) == m_listPtrs.cend())
         m_listPtrs[list] = LLVMListPtr();
 
-    ins.args.push_back({ Compiler::StaticType::Number, static_cast<LLVMRegister *>(index) });
+    ins->args.push_back({ Compiler::StaticType::Number, static_cast<LLVMRegister *>(index) });
 
     auto ret = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     ret->isRawValue = false;
-    ins.functionReturnReg = ret.get();
+    ins->functionReturnReg = ret.get();
 
     m_instructions.push_back(ins);
     return addReg(ret);
@@ -1294,7 +1303,7 @@ CompilerValue *LLVMCodeBuilder::addListItem(List *list, CompilerValue *index)
 
 CompilerValue *LLVMCodeBuilder::addListItemIndex(List *list, CompilerValue *item)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::GetListItemIndex);
+    LLVMInstruction ins(LLVMInstruction::Type::GetListItemIndex, currentLoopScope());
     ins.workList = list;
 
     if (m_listPtrs.find(list) == m_listPtrs.cend())
@@ -1305,7 +1314,7 @@ CompilerValue *LLVMCodeBuilder::addListItemIndex(List *list, CompilerValue *item
 
 CompilerValue *LLVMCodeBuilder::addListContains(List *list, CompilerValue *item)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::ListContainsItem);
+    LLVMInstruction ins(LLVMInstruction::Type::ListContainsItem, currentLoopScope());
     ins.workList = list;
 
     if (m_listPtrs.find(list) == m_listPtrs.cend())
@@ -1316,7 +1325,7 @@ CompilerValue *LLVMCodeBuilder::addListContains(List *list, CompilerValue *item)
 
 CompilerValue *LLVMCodeBuilder::addListSize(List *list)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::GetListSize);
+    LLVMInstruction ins(LLVMInstruction::Type::GetListSize, currentLoopScope());
     ins.workList = list;
 
     if (m_listPtrs.find(list) == m_listPtrs.cend())
@@ -1340,11 +1349,11 @@ CompilerValue *LLVMCodeBuilder::addProcedureArgument(const std::string &name)
 
     const auto index = it - argNames.begin();
     const Compiler::StaticType type = getProcedureArgType(m_procedurePrototype->argumentTypes()[index]);
-    LLVMInstruction ins(LLVMInstruction::Type::ProcedureArg);
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ProcedureArg, currentLoopScope());
     auto ret = std::make_shared<LLVMRegister>(type);
     ret->isRawValue = (type != Compiler::StaticType::Unknown);
-    ins.functionReturnReg = ret.get();
-    ins.procedureArgIndex = index;
+    ins->functionReturnReg = ret.get();
+    ins->procedureArgIndex = index;
 
     m_instructions.push_back(ins);
     return addReg(ret);
@@ -1520,7 +1529,7 @@ void LLVMCodeBuilder::createLocalVariableWrite(CompilerLocalVariable *variable, 
 
 void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *value)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::WriteVariable);
+    LLVMInstruction ins(LLVMInstruction::Type::WriteVariable, currentLoopScope());
     ins.workVariable = variable;
     createOp(ins, Compiler::StaticType::Void, Compiler::StaticType::Unknown, { value });
 
@@ -1530,7 +1539,7 @@ void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *val
 
 void LLVMCodeBuilder::createListClear(List *list)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::ClearList);
+    LLVMInstruction ins(LLVMInstruction::Type::ClearList, currentLoopScope());
     ins.workList = list;
     createOp(ins, Compiler::StaticType::Void);
 
@@ -1540,7 +1549,7 @@ void LLVMCodeBuilder::createListClear(List *list)
 
 void LLVMCodeBuilder::createListRemove(List *list, CompilerValue *index)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::RemoveListItem);
+    LLVMInstruction ins(LLVMInstruction::Type::RemoveListItem, currentLoopScope());
     ins.workList = list;
     createOp(ins, Compiler::StaticType::Void, Compiler::StaticType::Number, { index });
 
@@ -1550,7 +1559,7 @@ void LLVMCodeBuilder::createListRemove(List *list, CompilerValue *index)
 
 void LLVMCodeBuilder::createListAppend(List *list, CompilerValue *item)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::AppendToList);
+    LLVMInstruction ins(LLVMInstruction::Type::AppendToList, currentLoopScope());
     ins.workList = list;
     createOp(ins, Compiler::StaticType::Void, Compiler::StaticType::Unknown, { item });
 
@@ -1560,7 +1569,7 @@ void LLVMCodeBuilder::createListAppend(List *list, CompilerValue *item)
 
 void LLVMCodeBuilder::createListInsert(List *list, CompilerValue *index, CompilerValue *item)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::InsertToList);
+    LLVMInstruction ins(LLVMInstruction::Type::InsertToList, currentLoopScope());
     ins.workList = list;
     createOp(ins, Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Unknown }, { index, item });
 
@@ -1570,7 +1579,7 @@ void LLVMCodeBuilder::createListInsert(List *list, CompilerValue *index, Compile
 
 void LLVMCodeBuilder::createListReplace(List *list, CompilerValue *index, CompilerValue *item)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::ListReplace);
+    LLVMInstruction ins(LLVMInstruction::Type::ListReplace, currentLoopScope());
     ins.workList = list;
     createOp(ins, Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Unknown }, { index, item });
 
@@ -1580,63 +1589,70 @@ void LLVMCodeBuilder::createListReplace(List *list, CompilerValue *index, Compil
 
 void LLVMCodeBuilder::beginIfStatement(CompilerValue *cond)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::BeginIf);
-    ins.args.push_back({ Compiler::StaticType::Bool, static_cast<LLVMRegister *>(cond) });
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, currentLoopScope());
+    ins->args.push_back({ Compiler::StaticType::Bool, static_cast<LLVMRegister *>(cond) });
     m_instructions.push_back(ins);
 }
 
 void LLVMCodeBuilder::beginElseBranch()
 {
-    m_instructions.push_back(LLVMInstruction(LLVMInstruction::Type::BeginElse));
+    m_instructions.push_back(std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, currentLoopScope()));
 }
 
 void LLVMCodeBuilder::endIf()
 {
-    m_instructions.push_back(LLVMInstruction(LLVMInstruction::Type::EndIf));
+    m_instructions.push_back(std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, currentLoopScope()));
 }
 
 void LLVMCodeBuilder::beginRepeatLoop(CompilerValue *count)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::BeginRepeatLoop);
-    ins.args.push_back({ Compiler::StaticType::Number, static_cast<LLVMRegister *>(count) });
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, currentLoopScope());
+    ins->args.push_back({ Compiler::StaticType::Number, static_cast<LLVMRegister *>(count) });
     m_instructions.push_back(ins);
+    pushLoopScope(false);
 }
 
 void LLVMCodeBuilder::beginWhileLoop(CompilerValue *cond)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::BeginWhileLoop);
-    ins.args.push_back({ Compiler::StaticType::Bool, static_cast<LLVMRegister *>(cond) });
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginWhileLoop, currentLoopScope());
+    ins->args.push_back({ Compiler::StaticType::Bool, static_cast<LLVMRegister *>(cond) });
     m_instructions.push_back(ins);
+    pushLoopScope(false);
 }
 
 void LLVMCodeBuilder::beginRepeatUntilLoop(CompilerValue *cond)
 {
-    LLVMInstruction ins(LLVMInstruction::Type::BeginRepeatUntilLoop);
-    ins.args.push_back({ Compiler::StaticType::Bool, static_cast<LLVMRegister *>(cond) });
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, currentLoopScope());
+    ins->args.push_back({ Compiler::StaticType::Bool, static_cast<LLVMRegister *>(cond) });
     m_instructions.push_back(ins);
+    pushLoopScope(false);
 }
 
 void LLVMCodeBuilder::beginLoopCondition()
 {
-    m_instructions.push_back({ LLVMInstruction::Type::BeginLoopCondition });
+    m_instructions.push_back(std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginLoopCondition, currentLoopScope()));
 }
 
 void LLVMCodeBuilder::endLoop()
 {
     if (!m_warp)
-        m_instructions.push_back(LLVMInstruction(LLVMInstruction::Type::Yield));
+        m_instructions.push_back(std::make_shared<LLVMInstruction>(LLVMInstruction::Type::Yield, currentLoopScope()));
 
-    m_instructions.push_back(LLVMInstruction(LLVMInstruction::Type::EndLoop));
+    m_instructions.push_back(std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, currentLoopScope()));
+    popLoopScope();
 }
 
 void LLVMCodeBuilder::yield()
 {
-    m_instructions.push_back({ LLVMInstruction::Type::Yield });
+    m_instructions.push_back(std::make_shared<LLVMInstruction>(LLVMInstruction::Type::Yield, currentLoopScope()));
+
+    if (m_loopScope >= 0)
+        m_loopScopes[m_loopScope]->containsYield = true;
 }
 
 void LLVMCodeBuilder::createStop()
 {
-    m_instructions.push_back({ LLVMInstruction::Type::Stop });
+    m_instructions.push_back(std::make_shared<LLVMInstruction>(LLVMInstruction::Type::Stop, currentLoopScope()));
 }
 
 void LLVMCodeBuilder::createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args)
@@ -1649,7 +1665,7 @@ void LLVMCodeBuilder::createProcedureCall(BlockPrototype *prototype, const Compi
     for (BlockPrototype::ArgType type : procedureArgs)
         types.push_back(getProcedureArgType(type));
 
-    LLVMInstruction ins(LLVMInstruction::Type::CallProcedure);
+    LLVMInstruction ins(LLVMInstruction::Type::CallProcedure, currentLoopScope());
     ins.procedurePrototype = prototype;
     createOp(ins, Compiler::StaticType::Void, types, args);
 }
@@ -1760,6 +1776,36 @@ void LLVMCodeBuilder::popScopeLevel()
 
     freeScopeHeap();
     m_heap.pop_back();
+}
+
+void LLVMCodeBuilder::pushLoopScope(bool buildPhase)
+{
+    if (buildPhase)
+        m_loopScope = m_loopScopeCounter++;
+    else {
+        auto scope = std::make_shared<LLVMLoopScope>();
+        m_loopScopes.push_back(scope);
+
+        if (m_loopScope >= 0) {
+            auto currentScope = m_loopScopes[m_loopScope];
+            currentScope->childScopes.push_back(scope);
+            scope->parentScope = currentScope;
+        }
+
+        m_loopScope = m_loopScopes.size() - 1;
+    }
+
+    m_loopScopeTree.push_back(m_loopScope);
+}
+
+void LLVMCodeBuilder::popLoopScope()
+{
+    m_loopScopeTree.pop_back();
+
+    if (m_loopScopeTree.empty()) {
+        m_loopScope = -1;
+    } else
+        m_loopScope = m_loopScopeTree.back();
 }
 
 std::string LLVMCodeBuilder::getMainFunctionName(BlockPrototype *procedurePrototype)
@@ -2147,6 +2193,16 @@ void LLVMCodeBuilder::updateListDataPtr(const LLVMListPtr &listPtr)
     m_builder.CreateStore(m_builder.getInt1(false), listPtr.dataPtrDirty);
 }
 
+LLVMRegister *LLVMCodeBuilder::createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args)
+{
+    return createOp({ type, currentLoopScope() }, retType, argType, args);
+}
+
+LLVMRegister *LLVMCodeBuilder::createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
+{
+    return createOp({ type, currentLoopScope() }, retType, argTypes, args);
+}
+
 LLVMRegister *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args)
 {
     std::vector<Compiler::StaticType> types;
@@ -2160,20 +2216,25 @@ LLVMRegister *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::St
 
 LLVMRegister *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
 {
-    m_instructions.push_back(ins);
-    LLVMInstruction &createdIns = m_instructions.back();
+    auto createdIns = std::make_shared<LLVMInstruction>(ins);
+    m_instructions.push_back(createdIns);
 
     for (size_t i = 0; i < args.size(); i++)
-        createdIns.args.push_back({ argTypes[i], static_cast<LLVMRegister *>(args[i]) });
+        createdIns->args.push_back({ argTypes[i], static_cast<LLVMRegister *>(args[i]) });
 
     if (retType != Compiler::StaticType::Void) {
         auto ret = std::make_shared<LLVMRegister>(retType);
         ret->isRawValue = true;
-        createdIns.functionReturnReg = ret.get();
+        createdIns->functionReturnReg = ret.get();
         return addReg(ret);
     }
 
     return nullptr;
+}
+
+std::shared_ptr<LLVMLoopScope> LLVMCodeBuilder::currentLoopScope() const
+{
+    return m_loopScope >= 0 ? m_loopScopes[m_loopScope] : nullptr;
 }
 
 void LLVMCodeBuilder::createValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType)
