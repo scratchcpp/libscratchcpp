@@ -632,6 +632,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 LLVMVariablePtr &varPtr = m_variablePtrs[step.workVariable];
                 varPtr.changed = true;
 
+                const bool safe = isVariableTypeSafe(insPtr, varPtr.type);
+
                 // Initialize stack variable on first assignment
                 if (!varPtr.onStack) {
                     varPtr.onStack = true;
@@ -652,6 +654,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typeField);
                 }
 
+                if (!safe)
+                    varPtr.type = Compiler::StaticType::Unknown;
+
                 createValueStore(arg.second, varPtr.stackPtr, type, varPtr.type);
                 varPtr.type = type;
                 m_scopeVariables.back()[&varPtr] = varPtr.type;
@@ -660,7 +665,11 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
             case LLVMInstruction::Type::ReadVariable: {
                 assert(step.args.size() == 0);
-                const LLVMVariablePtr &varPtr = m_variablePtrs[step.workVariable];
+                LLVMVariablePtr &varPtr = m_variablePtrs[step.workVariable];
+
+                if (!isVariableTypeSafe(insPtr, varPtr.type))
+                    varPtr.type = Compiler::StaticType::Unknown;
+
                 step.functionReturnReg->value = varPtr.onStack ? varPtr.stackPtr : varPtr.heapPtr;
                 step.functionReturnReg->setType(varPtr.type);
                 break;
@@ -2091,7 +2100,7 @@ llvm::Constant *LLVMCodeBuilder::castConstValue(const Value &value, Compiler::St
     }
 }
 
-Compiler::StaticType LLVMCodeBuilder::optimizeRegisterType(LLVMRegister *reg)
+Compiler::StaticType LLVMCodeBuilder::optimizeRegisterType(LLVMRegister *reg) const
 {
     Compiler::StaticType ret = reg->type();
 
@@ -2211,6 +2220,166 @@ void LLVMCodeBuilder::updateListDataPtr(const LLVMListPtr &listPtr)
     llvm::Value *dataPtr = m_builder.CreateSelect(dirty, m_builder.CreateCall(resolve_list_data(), listPtr.ptr), m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr));
     m_builder.CreateStore(dataPtr, listPtr.dataPtr);
     m_builder.CreateStore(m_builder.getInt1(false), listPtr.dataPtrDirty);
+}
+
+bool LLVMCodeBuilder::isVariableTypeSafe(std::shared_ptr<LLVMInstruction> ins, Compiler::StaticType expectedType) const
+{
+    std::unordered_set<LLVMInstruction *> processed;
+    return isVariableTypeSafe(ins, expectedType, processed);
+}
+
+bool LLVMCodeBuilder::isVariableTypeSafe(std::shared_ptr<LLVMInstruction> ins, Compiler::StaticType expectedType, std::unordered_set<LLVMInstruction *> &processed) const
+{
+    /*
+     * The main part of the loop type analyzer.
+     *
+     * This is a recursive function which is called when variable read
+     * instruction is created. It checks the last write to the
+     * variable in one of the loop scopes.
+     *
+     * If the last write operation writes a value with a different
+     * type, it will return false, otherwise true.
+     *
+     * If the last written value is from a variable, this function
+     * is called for it to check its type safety (that's why it is
+     * recursive).
+     *
+     * If the variable had a write operation before (in the same,
+     * parent or child loop scope), it is checked recursively.
+     */
+
+    if (!ins)
+        return false;
+
+    /*
+     * If we are processing something that has been already
+     * processed, give up to avoid infinite recursion.
+     *
+     * This can happen in edge cases like this:
+     * var = var
+     *
+     * or this:
+     * x = y
+     * y = x
+     *
+     * This code isn't considered valid, so don't bother
+     * optimizing.
+     */
+    if (processed.find(ins.get()) != processed.cend())
+        return false;
+
+    processed.insert(ins.get());
+
+    assert(std::find(m_instructions.begin(), m_instructions.end(), ins) != m_instructions.end());
+    const LLVMVariablePtr &varPtr = m_variablePtrs.at(ins->workVariable);
+    auto scope = ins->loopScope;
+
+    // If we aren't in a loop, we're safe
+    if (!scope)
+        return true;
+
+    // If the loop scope contains a suspend and this is a non-warp script, the type may change between suspend and resume
+    if (scope->containsYield && !m_warp)
+        return false;
+
+    std::shared_ptr<LLVMInstruction> write;
+
+    // Find this instruction
+    auto it = std::find(m_variableInstructions.begin(), m_variableInstructions.end(), ins);
+    assert(it != m_variableInstructions.end());
+
+    // Find previous write instruction in this, parent or child loop scope
+    size_t index = it - m_variableInstructions.begin();
+
+    if (index > 0) {
+        bool found = false;
+
+        do {
+            index--;
+            write = m_variableInstructions[index];
+            found = (write->loopScope && write->type == LLVMInstruction::Type::WriteVariable && write->workVariable == ins->workVariable);
+        } while (index > 0 && !found);
+
+        if (found) {
+            // Check if the write operation is in this or child scope
+            auto parentScope = write->loopScope;
+
+            while (parentScope && parentScope != scope)
+                parentScope = parentScope->parentScope;
+
+            if (!parentScope) {
+                // Check if the write operation is in any of the parent scopes
+                parentScope = scope;
+
+                do {
+                    parentScope = parentScope->parentScope;
+                } while (parentScope && parentScope != write->loopScope);
+            }
+
+            // If there was a write operation before this instruction (in this, parent or child scope), check it
+            if (parentScope) {
+                if (parentScope == scope)
+                    return isVariableWriteResultTypeSafe(write, expectedType, true, processed);
+                else
+                    return isVariableTypeSafe(write, expectedType, processed);
+            }
+        }
+    }
+
+    //  Get last write operation
+    write = nullptr;
+
+    // Find root loop scope
+    auto checkScope = scope;
+
+    while (checkScope->parentScope) {
+        checkScope = checkScope->parentScope;
+    }
+
+    // Find last loop scope (may be a parent or child scope)
+    while (checkScope) {
+        auto it = varPtr.loopVariableWrites.find(checkScope);
+
+        if (it != varPtr.loopVariableWrites.cend()) {
+            assert(!it->second.empty());
+            write = it->second.back();
+        }
+
+        if (checkScope->childScopes.empty())
+            checkScope = nullptr;
+        else
+            checkScope = checkScope->childScopes.back();
+    }
+
+    // If there aren't any write operations, we're safe
+    if (!write)
+        return true;
+
+    bool safe = true;
+
+    if (ins->type == LLVMInstruction::Type::WriteVariable)
+        safe = isVariableWriteResultTypeSafe(ins, expectedType, false, processed);
+
+    if (safe)
+        return isVariableWriteResultTypeSafe(write, expectedType, false, processed);
+    else
+        return false;
+}
+
+bool LLVMCodeBuilder::isVariableWriteResultTypeSafe(std::shared_ptr<LLVMInstruction> ins, Compiler::StaticType expectedType, bool ignoreSavedType, std::unordered_set<LLVMInstruction *> &processed)
+    const
+{
+    const LLVMVariablePtr &varPtr = m_variablePtrs.at(ins->workVariable);
+
+    // If the write operation writes the value of another variable, recursively check its type safety
+    // TODO: Check get list item instruction
+    auto argIns = ins->args[0].second->instruction;
+
+    if (argIns && argIns->type == LLVMInstruction::Type::ReadVariable)
+        return isVariableTypeSafe(argIns, expectedType, processed);
+
+    // Check written type
+    return optimizeRegisterType(ins->args[0].second) == expectedType && (varPtr.type == expectedType || ignoreSavedType);
 }
 
 LLVMRegister *LLVMCodeBuilder::createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args)
