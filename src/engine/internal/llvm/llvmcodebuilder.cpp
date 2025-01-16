@@ -1269,6 +1269,7 @@ CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
     ins->functionReturnReg = ret.get();
 
     m_instructions.push_back(ins);
+    m_variableInstructions.push_back(m_instructions.back());
     return addReg(ret, ins);
 }
 
@@ -1535,6 +1536,8 @@ void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *val
 
     if (m_variablePtrs.find(variable) == m_variablePtrs.cend())
         m_variablePtrs[variable] = LLVMVariablePtr();
+
+    m_variableInstructions.push_back(m_instructions.back());
 }
 
 void LLVMCodeBuilder::createListClear(List *list)
