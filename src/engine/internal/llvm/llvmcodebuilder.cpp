@@ -1548,6 +1548,11 @@ void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *val
     if (m_variablePtrs.find(variable) == m_variablePtrs.cend())
         m_variablePtrs[variable] = LLVMVariablePtr();
 
+    if (m_loopScope >= 0) {
+        auto scope = m_loopScopes[m_loopScope];
+        m_variablePtrs[variable].loopVariableWrites[scope].push_back(m_instructions.back());
+    }
+
     m_variableInstructions.push_back(m_instructions.back());
 }
 
