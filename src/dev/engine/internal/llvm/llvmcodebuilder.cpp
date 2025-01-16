@@ -1218,7 +1218,7 @@ CompilerValue *LLVMCodeBuilder::addFunctionCall(const std::string &functionName,
         reg->isRawValue = true;
         ins->functionReturnReg = reg.get();
         m_instructions.push_back(ins);
-        return addReg(reg);
+        return addReg(reg, ins);
     }
 
     m_instructions.push_back(ins);
@@ -1243,7 +1243,7 @@ CompilerConstant *LLVMCodeBuilder::addConstValue(const Value &value)
 {
     auto constReg = std::make_shared<LLVMConstantRegister>(TYPE_MAP[value.type()], value);
     auto reg = std::reinterpret_pointer_cast<LLVMRegister>(constReg);
-    return static_cast<CompilerConstant *>(static_cast<CompilerValue *>(addReg(reg)));
+    return static_cast<CompilerConstant *>(static_cast<CompilerValue *>(addReg(reg, nullptr)));
 }
 
 CompilerValue *LLVMCodeBuilder::addLoopIndex()
@@ -1269,7 +1269,7 @@ CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
     ins->functionReturnReg = ret.get();
 
     m_instructions.push_back(ins);
-    return addReg(ret);
+    return addReg(ret, ins);
 }
 
 CompilerValue *LLVMCodeBuilder::addListContents(List *list)
@@ -1298,7 +1298,7 @@ CompilerValue *LLVMCodeBuilder::addListItem(List *list, CompilerValue *index)
     ins->functionReturnReg = ret.get();
 
     m_instructions.push_back(ins);
-    return addReg(ret);
+    return addReg(ret, ins);
 }
 
 CompilerValue *LLVMCodeBuilder::addListItemIndex(List *list, CompilerValue *item)
@@ -1356,7 +1356,7 @@ CompilerValue *LLVMCodeBuilder::addProcedureArgument(const std::string &name)
     ins->procedureArgIndex = index;
 
     m_instructions.push_back(ins);
-    return addReg(ret);
+    return addReg(ret, ins);
 }
 
 CompilerValue *LLVMCodeBuilder::createAdd(CompilerValue *operand1, CompilerValue *operand2)
@@ -1857,8 +1857,9 @@ void LLVMCodeBuilder::verifyFunction(llvm::Function *func)
     }
 }
 
-LLVMRegister *LLVMCodeBuilder::addReg(std::shared_ptr<LLVMRegister> reg)
+LLVMRegister *LLVMCodeBuilder::addReg(std::shared_ptr<LLVMRegister> reg, std::shared_ptr<LLVMInstruction> ins)
 {
+    reg->instruction = ins;
     m_regs.push_back(reg);
     return reg.get();
 }
@@ -2226,7 +2227,7 @@ LLVMRegister *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::St
         auto ret = std::make_shared<LLVMRegister>(retType);
         ret->isRawValue = true;
         createdIns->functionReturnReg = ret.get();
-        return addReg(ret);
+        return addReg(ret, createdIns);
     }
 
     return nullptr;
