@@ -78,9 +78,10 @@ struct LLVMInstruction
             ProcedureArg
         };
 
-        LLVMInstruction(Type type, std::shared_ptr<LLVMLoopScope> loopScope) :
+        LLVMInstruction(Type type, std::shared_ptr<LLVMLoopScope> loopScope, bool loopCondition) :
             type(type),
-            loopScope(loopScope)
+            loopScope(loopScope),
+            loopCondition(loopCondition)
         {
         }
 
@@ -95,6 +96,7 @@ struct LLVMInstruction
         BlockPrototype *procedurePrototype = nullptr;
         size_t procedureArgIndex = 0;
         std::shared_ptr<LLVMLoopScope> loopScope;
+        bool loopCondition = false; // whether the instruction is part of a loop condition
 };
 
 } // namespace libscratchcpp

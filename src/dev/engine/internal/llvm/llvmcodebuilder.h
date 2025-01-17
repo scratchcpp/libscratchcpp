@@ -236,6 +236,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         std::vector<std::shared_ptr<LLVMLoopScope>> m_loopScopes;
         long m_loopScopeCounter = 0; // replacement for m_loopScopes size in build phase
         std::vector<long> m_loopScopeTree;
+        bool m_loopCondition = false; // whether we're currently compiling a loop condition
         std::vector<std::shared_ptr<LLVMInstruction>> m_variableInstructions;
         std::vector<std::vector<llvm::Value *>> m_heap; // scopes
 
