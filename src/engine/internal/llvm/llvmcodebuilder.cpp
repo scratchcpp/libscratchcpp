@@ -670,7 +670,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 if (!isVariableTypeSafe(insPtr, varPtr.type))
                     varPtr.type = Compiler::StaticType::Unknown;
 
-                step.functionReturnReg->value = varPtr.onStack ? varPtr.stackPtr : varPtr.heapPtr;
+                step.functionReturnReg->value = varPtr.onStack && !(step.loopCondition && !m_warp) ? varPtr.stackPtr : varPtr.heapPtr;
                 step.functionReturnReg->setType(varPtr.type);
                 break;
             }

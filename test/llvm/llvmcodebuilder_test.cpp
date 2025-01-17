@@ -2843,6 +2843,28 @@ TEST_F(LLVMCodeBuilderTest, VariablesAfterSuspend)
     v = m_builder->addVariableValue(globalVar.get());
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
 
+    v = m_builder->addConstValue(0);
+    m_builder->createVariableWrite(localVar.get(), v);
+
+    m_builder->beginLoopCondition();
+    v = m_builder->createCmpLT(m_builder->addVariableValue(localVar.get()), m_builder->addConstValue(3));
+    m_builder->beginWhileLoop(v);
+    m_builder->endLoop();
+
+    v = m_builder->addVariableValue(localVar.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = m_builder->addConstValue(0);
+    m_builder->createVariableWrite(localVar.get(), v);
+
+    m_builder->beginLoopCondition();
+    v = m_builder->createCmpEQ(m_builder->addVariableValue(localVar.get()), m_builder->addConstValue(2));
+    m_builder->beginRepeatUntilLoop(v);
+    m_builder->endLoop();
+
+    v = m_builder->addVariableValue(localVar.get());
+    m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
     std::string expected =
         "hello world\n"
         "-4.8\n";
@@ -2876,6 +2898,41 @@ TEST_F(LLVMCodeBuilderTest, VariablesAfterSuspend)
     testing::internal::CaptureStdout();
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "true\n");
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    localVar->setValue(1);
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "");
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    localVar->setValue("2");
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "");
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    localVar->setValue(3);
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "3\n");
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    localVar->setValue(1);
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "");
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    localVar->setValue(2);
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "2\n");
 }
 
 TEST_F(LLVMCodeBuilderTest, ListsAfterSuspend)
