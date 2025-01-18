@@ -238,6 +238,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         std::vector<long> m_loopScopeTree;
         bool m_loopCondition = false; // whether we're currently compiling a loop condition
         std::vector<std::shared_ptr<LLVMInstruction>> m_variableInstructions;
+        std::vector<std::shared_ptr<LLVMInstruction>> m_listInstructions;
         std::vector<std::vector<llvm::Value *>> m_heap; // scopes
 
         std::shared_ptr<ExecutableCode> m_output;

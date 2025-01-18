@@ -1319,6 +1319,7 @@ CompilerValue *LLVMCodeBuilder::addListItem(List *list, CompilerValue *index)
     ins->functionReturnReg = ret.get();
 
     m_instructions.push_back(ins);
+    m_listInstructions.push_back(m_instructions.back());
     return addReg(ret, ins);
 }
 
@@ -1330,7 +1331,9 @@ CompilerValue *LLVMCodeBuilder::addListItemIndex(List *list, CompilerValue *item
     if (m_listPtrs.find(list) == m_listPtrs.cend())
         m_listPtrs[list] = LLVMListPtr();
 
-    return createOp(ins, Compiler::StaticType::Number, Compiler::StaticType::Unknown, { item });
+    auto ret = createOp(ins, Compiler::StaticType::Number, Compiler::StaticType::Unknown, { item });
+    m_listInstructions.push_back(m_instructions.back());
+    return ret;
 }
 
 CompilerValue *LLVMCodeBuilder::addListContains(List *list, CompilerValue *item)
@@ -1341,7 +1344,9 @@ CompilerValue *LLVMCodeBuilder::addListContains(List *list, CompilerValue *item)
     if (m_listPtrs.find(list) == m_listPtrs.cend())
         m_listPtrs[list] = LLVMListPtr();
 
-    return createOp(ins, Compiler::StaticType::Bool, Compiler::StaticType::Unknown, { item });
+    auto ret = createOp(ins, Compiler::StaticType::Bool, Compiler::StaticType::Unknown, { item });
+    m_listInstructions.push_back(m_instructions.back());
+    return ret;
 }
 
 CompilerValue *LLVMCodeBuilder::addListSize(List *list)
@@ -1593,6 +1598,8 @@ void LLVMCodeBuilder::createListAppend(List *list, CompilerValue *item)
 
     if (m_listPtrs.find(list) == m_listPtrs.cend())
         m_listPtrs[list] = LLVMListPtr();
+
+    m_listInstructions.push_back(m_instructions.back());
 }
 
 void LLVMCodeBuilder::createListInsert(List *list, CompilerValue *index, CompilerValue *item)
@@ -1603,6 +1610,8 @@ void LLVMCodeBuilder::createListInsert(List *list, CompilerValue *index, Compile
 
     if (m_listPtrs.find(list) == m_listPtrs.cend())
         m_listPtrs[list] = LLVMListPtr();
+
+    m_listInstructions.push_back(m_instructions.back());
 }
 
 void LLVMCodeBuilder::createListReplace(List *list, CompilerValue *index, CompilerValue *item)
@@ -1613,6 +1622,8 @@ void LLVMCodeBuilder::createListReplace(List *list, CompilerValue *index, Compil
 
     if (m_listPtrs.find(list) == m_listPtrs.cend())
         m_listPtrs[list] = LLVMListPtr();
+
+    m_listInstructions.push_back(m_instructions.back());
 }
 
 void LLVMCodeBuilder::beginIfStatement(CompilerValue *cond)
