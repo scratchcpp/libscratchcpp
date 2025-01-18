@@ -1599,6 +1599,11 @@ void LLVMCodeBuilder::createListAppend(List *list, CompilerValue *item)
     if (m_listPtrs.find(list) == m_listPtrs.cend())
         m_listPtrs[list] = LLVMListPtr();
 
+    if (m_loopScope >= 0) {
+        auto scope = m_loopScopes[m_loopScope];
+        m_listPtrs[list].loopListWrites[scope].push_back(m_instructions.back());
+    }
+
     m_listInstructions.push_back(m_instructions.back());
 }
 
@@ -1611,6 +1616,11 @@ void LLVMCodeBuilder::createListInsert(List *list, CompilerValue *index, Compile
     if (m_listPtrs.find(list) == m_listPtrs.cend())
         m_listPtrs[list] = LLVMListPtr();
 
+    if (m_loopScope >= 0) {
+        auto scope = m_loopScopes[m_loopScope];
+        m_listPtrs[list].loopListWrites[scope].push_back(m_instructions.back());
+    }
+
     m_listInstructions.push_back(m_instructions.back());
 }
 
@@ -1622,6 +1632,11 @@ void LLVMCodeBuilder::createListReplace(List *list, CompilerValue *index, Compil
 
     if (m_listPtrs.find(list) == m_listPtrs.cend())
         m_listPtrs[list] = LLVMListPtr();
+
+    if (m_loopScope >= 0) {
+        auto scope = m_loopScopes[m_loopScope];
+        m_listPtrs[list].loopListWrites[scope].push_back(m_instructions.back());
+    }
 
     m_listInstructions.push_back(m_instructions.back());
 }
