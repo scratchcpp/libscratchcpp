@@ -728,7 +728,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 Compiler::StaticType type = optimizeRegisterType(arg.second);
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
-                const bool safe = isVarOrListTypeSafe(insPtr, listPtr.type);
                 auto &typeMap = m_scopeLists.back();
 
                 if (typeMap.find(&listPtr) == typeMap.cend()) {
@@ -739,7 +738,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     typeMap[&listPtr] = listPtr.type;
                 }
 
-                if (!safe)
+                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
                     listPtr.type = Compiler::StaticType::Unknown;
 
                 // Check if enough space is allocated
@@ -777,7 +776,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 Compiler::StaticType type = optimizeRegisterType(valueArg.second);
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
-                const bool safe = isVarOrListTypeSafe(insPtr, listPtr.type);
                 auto &typeMap = m_scopeLists.back();
 
                 if (typeMap.find(&listPtr) == typeMap.cend()) {
@@ -788,7 +786,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     typeMap[&listPtr] = listPtr.type;
                 }
 
-                if (!safe)
+                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
                     listPtr.type = Compiler::StaticType::Unknown;
 
                 llvm::Value *oldAllocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
@@ -2289,10 +2287,11 @@ void LLVMCodeBuilder::updateListDataPtr(const LLVMListPtr &listPtr)
 bool LLVMCodeBuilder::isVarOrListTypeSafe(std::shared_ptr<LLVMInstruction> ins, Compiler::StaticType expectedType) const
 {
     std::unordered_set<LLVMInstruction *> processed;
-    return isVarOrListTypeSafe(ins, expectedType, processed);
+    int counter = 0;
+    return isVarOrListTypeSafe(ins, expectedType, processed, counter);
 }
 
-bool LLVMCodeBuilder::isVarOrListTypeSafe(std::shared_ptr<LLVMInstruction> ins, Compiler::StaticType expectedType, std::unordered_set<LLVMInstruction *> &processed) const
+bool LLVMCodeBuilder::isVarOrListTypeSafe(std::shared_ptr<LLVMInstruction> ins, Compiler::StaticType expectedType, std::unordered_set<LLVMInstruction *> &log, int &c) const
 {
     /*
      * The main part of the loop type analyzer.
@@ -2318,22 +2317,20 @@ bool LLVMCodeBuilder::isVarOrListTypeSafe(std::shared_ptr<LLVMInstruction> ins, 
 
     /*
      * If we are processing something that has been already
-     * processed, give up to avoid infinite recursion.
-     *
-     * This can happen in edge cases like this:
-     * var = var
+     * processed, it means there's a case like this:
+     * x = x
      *
      * or this:
      * x = y
+     * ...
      * y = x
      *
-     * This code isn't considered valid, so don't bother
-     * optimizing.
+     * Increment counter to ignore last n write operations.
      */
-    if (processed.find(ins.get()) != processed.cend())
-        return false;
-
-    processed.insert(ins.get());
+    if (log.find(ins.get()) != log.cend())
+        c++;
+    else
+        log.insert(ins.get());
 
     assert(std::find(m_instructions.begin(), m_instructions.end(), ins) != m_instructions.end());
     const LLVMVariablePtr *varPtr = ins->workVariable ? &m_variablePtrs.at(ins->workVariable) : nullptr;
@@ -2388,17 +2385,14 @@ bool LLVMCodeBuilder::isVarOrListTypeSafe(std::shared_ptr<LLVMInstruction> ins, 
             // If there was a write operation before this instruction (in this, parent or child scope), check it
             if (parentScope) {
                 if (parentScope == scope)
-                    return isVarOrListWriteResultTypeSafe(write, expectedType, true, processed);
+                    return isVarOrListWriteResultTypeSafe(write, expectedType, true, log, c);
                 else
-                    return isVarOrListTypeSafe(write, expectedType, processed);
+                    return isVarOrListTypeSafe(write, expectedType, log, c);
             }
         }
     }
 
     const auto &loopWrites = varPtr ? varPtr->loopVariableWrites : listPtr->loopListWrites;
-
-    //  Get last write operation
-    write = nullptr;
 
     // Find root loop scope
     auto checkScope = scope;
@@ -2407,13 +2401,18 @@ bool LLVMCodeBuilder::isVarOrListTypeSafe(std::shared_ptr<LLVMInstruction> ins, 
         checkScope = checkScope->parentScope;
     }
 
-    // Find last loop scope (may be a parent or child scope)
+    // Find n-th last write operation based on counter (may be in a parent or child scope)
+    std::vector<std::shared_ptr<LLVMInstruction>> lastWrites;
+
     while (checkScope) {
         auto it = loopWrites.find(checkScope);
 
         if (it != loopWrites.cend()) {
             assert(!it->second.empty());
-            write = it->second.back();
+            const auto &writes = it->second;
+
+            for (auto w : writes)
+                lastWrites.push_back(w);
         }
 
         if (checkScope->childScopes.empty())
@@ -2422,22 +2421,24 @@ bool LLVMCodeBuilder::isVarOrListTypeSafe(std::shared_ptr<LLVMInstruction> ins, 
             checkScope = checkScope->childScopes.back();
     }
 
-    // If there aren't any write operations, we're safe
-    if (!write)
+    // If there aren't any write operations or all of them are ignored, we're safe
+    if (c >= lastWrites.size())
         return true;
+
+    write = lastWrites[lastWrites.size() - c - 1]; // Ignore last c writes
 
     bool safe = true;
 
     if (VAR_LIST_READ_INSTRUCTIONS.find(ins->type) == VAR_LIST_READ_INSTRUCTIONS.cend()) // write
-        safe = isVarOrListWriteResultTypeSafe(ins, expectedType, false, processed);
+        safe = isVarOrListWriteResultTypeSafe(ins, expectedType, false, log, c);
 
     if (safe)
-        return isVarOrListWriteResultTypeSafe(write, expectedType, false, processed);
+        return isVarOrListWriteResultTypeSafe(write, expectedType, false, log, c);
     else
         return false;
 }
 
-bool LLVMCodeBuilder::isVarOrListWriteResultTypeSafe(std::shared_ptr<LLVMInstruction> ins, Compiler::StaticType expectedType, bool ignoreSavedType, std::unordered_set<LLVMInstruction *> &processed)
+bool LLVMCodeBuilder::isVarOrListWriteResultTypeSafe(std::shared_ptr<LLVMInstruction> ins, Compiler::StaticType expectedType, bool ignoreSavedType, std::unordered_set<LLVMInstruction *> &log, int &c)
     const
 {
     const LLVMVariablePtr *varPtr = ins->workVariable ? &m_variablePtrs.at(ins->workVariable) : nullptr;
@@ -2449,7 +2450,7 @@ bool LLVMCodeBuilder::isVarOrListWriteResultTypeSafe(std::shared_ptr<LLVMInstruc
     auto argIns = arg->instruction;
 
     if (argIns && (argIns->type == LLVMInstruction::Type::ReadVariable || argIns->type == LLVMInstruction::Type::GetListItem))
-        return isVarOrListTypeSafe(argIns, expectedType, processed);
+        return isVarOrListTypeSafe(argIns, expectedType, log, c);
 
     // Check written type
     const bool typeMatches = (optimizeRegisterType(arg) == expectedType);
