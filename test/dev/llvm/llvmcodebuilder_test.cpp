@@ -4815,6 +4815,831 @@ TEST_F(LLVMCodeBuilderTest, LoopLists)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
+TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis1)
+{
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    createBuilder(&sprite, true);
+
+    m_builder->createListClear(localList.get());
+
+    CompilerValue *v = m_builder->addConstValue(5.25);
+    m_builder->createListAppend(localList.get(), v);
+
+    v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    {
+        // Type is unknown here because a string is added later
+        v = m_builder->createSub(m_builder->addListSize(localList.get()), m_builder->addConstValue(1));
+        v = m_builder->addListItem(localList.get(), v);
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListItemIndex(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListContains(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+        v = m_builder->addConstValue("test");
+        m_builder->createListAppend(localList.get(), v);
+    }
+    m_builder->endLoop();
+
+    std::string expected =
+        "5.25\n"
+        "0\n"
+        "1\n"
+        "0\n"
+        "0\n"
+        "1\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis2)
+{
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    createBuilder(&sprite, true);
+
+    m_builder->createListClear(localList.get());
+
+    CompilerValue *v = m_builder->addConstValue(5.25);
+    m_builder->createListAppend(localList.get(), v);
+
+    v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    {
+        // Type is known here because a number is assigned later
+        v = m_builder->addConstValue(0);
+        v = m_builder->addListItem(localList.get(), v);
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListItemIndex(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListContains(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+        v = m_builder->addConstValue(12.5);
+        m_builder->createListReplace(localList.get(), m_builder->addConstValue(0), v);
+    }
+    m_builder->endLoop();
+
+    std::string expected =
+        "5.25\n"
+        "0\n"
+        "1\n"
+        "12.5\n"
+        "-1\n"
+        "0\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis3)
+{
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    createBuilder(&sprite, true);
+
+    m_builder->createListClear(globalList.get());
+    m_builder->createListClear(localList.get());
+
+    CompilerValue *v = m_builder->addConstValue(0);
+    m_builder->createListAppend(globalList.get(), v);
+
+    v = m_builder->addConstValue(5.25);
+    m_builder->createListAppend(localList.get(), v);
+
+    v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    {
+        // Type is unknown here because a list item with unknown type is inserted (the item has unknown type because a string is assigned later)
+        v = m_builder->addConstValue(0);
+        v = m_builder->addListItem(localList.get(), v);
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListItemIndex(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListContains(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+        v = m_builder->addConstValue(2);
+        m_builder->beginRepeatLoop(v);
+        {
+            v = m_builder->addListItem(globalList.get(), m_builder->addConstValue(0));
+            m_builder->createListInsert(localList.get(), m_builder->addConstValue(0), v);
+
+            v = m_builder->addConstValue("test");
+            m_builder->createListReplace(globalList.get(), m_builder->addConstValue(0), v);
+        }
+        m_builder->endLoop();
+    }
+    m_builder->endLoop();
+
+    std::string expected =
+        "5.25\n"
+        "0\n"
+        "1\n"
+        "0\n"
+        "2\n"
+        "1\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis4)
+{
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    createBuilder(&sprite, true);
+
+    m_builder->createListClear(globalList.get());
+    m_builder->createListClear(localList.get());
+
+    CompilerValue *v = m_builder->addConstValue(0);
+    m_builder->createListAppend(globalList.get(), v);
+
+    v = m_builder->addConstValue(5.25);
+    m_builder->createListAppend(localList.get(), v);
+
+    v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    {
+        // Type is known here because a number list item is added later
+        v = m_builder->createSub(m_builder->addListSize(localList.get()), m_builder->addConstValue(1));
+        v = m_builder->addListItem(localList.get(), v);
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListItemIndex(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListContains(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+        v = m_builder->addConstValue(2);
+        m_builder->beginRepeatLoop(v);
+        {
+            v = m_builder->addListItem(globalList.get(), m_builder->addConstValue(0));
+            m_builder->createListAppend(localList.get(), v);
+
+            v = m_builder->addConstValue(12.5);
+            m_builder->createListInsert(globalList.get(), m_builder->addConstValue(0), v);
+        }
+        m_builder->endLoop();
+    }
+    m_builder->endLoop();
+
+    std::string expected =
+        "5.25\n"
+        "0\n"
+        "1\n"
+        "12.5\n"
+        "0\n"
+        "1\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis5)
+{
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    createBuilder(&sprite, true);
+
+    m_builder->createListClear(globalList.get());
+    m_builder->createListClear(localList.get());
+
+    CompilerValue *v = m_builder->addConstValue("test");
+    m_builder->createListAppend(globalList.get(), v);
+
+    v = m_builder->addConstValue(5.25);
+    m_builder->createListAppend(localList.get(), v);
+
+    v = m_builder->addConstValue(3);
+    m_builder->beginRepeatLoop(v);
+    {
+        // Type is unknown here because a string list item is assigned later which becomes a number later
+        v = m_builder->addConstValue(0);
+        v = m_builder->addListItem(localList.get(), v);
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListItemIndex(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListContains(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+        v = m_builder->addListItem(globalList.get(), m_builder->addConstValue(0));
+        m_builder->createListReplace(localList.get(), m_builder->addConstValue(0), v);
+
+        v = m_builder->addConstValue(12.5);
+        m_builder->createListReplace(globalList.get(), m_builder->addConstValue(0), v);
+    }
+    m_builder->endLoop();
+
+    std::string expected =
+        "5.25\n"
+        "0\n"
+        "1\n"
+        "0\n"
+        "-1\n"
+        "0\n"
+        "12.5\n"
+        "-1\n"
+        "0\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis6)
+{
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    createBuilder(&sprite, true);
+
+    m_builder->createListClear(localList.get());
+
+    CompilerValue *v = m_builder->addConstValue(5.25);
+    m_builder->createListAppend(localList.get(), v);
+
+    v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    {
+        // Type is unknown here because a list item with unknown type is added later (even though the list item has the original type assigned, it cannot be determined at compile time)
+        v = m_builder->createSub(m_builder->addListSize(localList.get()), m_builder->addConstValue(1));
+        v = m_builder->addListItem(localList.get(), v);
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListItemIndex(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListContains(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+        v = m_builder->addConstValue(2);
+        m_builder->beginRepeatLoop(v);
+        {
+            v = m_builder->addConstValue(10);
+            m_builder->createListReplace(globalList.get(), m_builder->addConstValue(0), v);
+
+            v = m_builder->addListItem(globalList.get(), m_builder->addConstValue(0));
+            m_builder->createListAppend(localList.get(), v);
+
+            v = m_builder->addConstValue("test");
+            m_builder->createListAppend(globalList.get(), v);
+        }
+        m_builder->endLoop();
+    }
+    m_builder->endLoop();
+
+    std::string expected =
+        "5.25\n"
+        "0\n"
+        "1\n"
+        "10\n"
+        "0\n"
+        "1\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis7)
+{
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    createBuilder(&sprite, true);
+
+    m_builder->createListClear(localList.get());
+
+    CompilerValue *v = m_builder->addConstValue(5.25);
+    m_builder->createListAppend(localList.get(), v);
+
+    v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    {
+        // Type is unknown here because a list item with unknown type is assigned later
+        v = m_builder->addConstValue(0);
+        v = m_builder->addListItem(localList.get(), v);
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListItemIndex(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListContains(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+        v = m_builder->addConstValue(2);
+        m_builder->beginRepeatLoop(v);
+        {
+            v = m_builder->addConstValue("test");
+            m_builder->createListInsert(globalList.get(), m_builder->addConstValue(0), v);
+
+            v = m_builder->addListItem(globalList.get(), m_builder->addConstValue(0));
+            m_builder->createListReplace(localList.get(), m_builder->addConstValue(0), v);
+
+            v = m_builder->addConstValue(10);
+            m_builder->createListReplace(globalList.get(), m_builder->addConstValue(0), v);
+        }
+        m_builder->endLoop();
+    }
+    m_builder->endLoop();
+
+    std::string expected =
+        "5.25\n"
+        "0\n"
+        "1\n"
+        "0\n"
+        "-1\n"
+        "0\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis8)
+{
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    createBuilder(&sprite, true);
+
+    m_builder->createListClear(localList.get());
+
+    CompilerValue *v = m_builder->addConstValue(5.25);
+    m_builder->createListAppend(localList.get(), v);
+
+    v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    {
+        // Type is unknown here because a list item with a unknown type is assigned later
+        v = m_builder->addConstValue(0);
+        v = m_builder->addListItem(localList.get(), v);
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListItemIndex(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListContains(localList.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+        v = m_builder->addConstValue(2);
+        m_builder->beginRepeatLoop(v);
+        {
+            v = m_builder->addConstValue("test");
+            m_builder->createListInsert(globalList.get(), m_builder->addConstValue(0), v);
+
+            v = m_builder->addListItem(globalList.get(), m_builder->addConstValue(0));
+            m_builder->createListReplace(localList.get(), m_builder->addConstValue(0), v);
+        }
+        m_builder->endLoop();
+    }
+    m_builder->endLoop();
+
+    std::string expected =
+        "5.25\n"
+        "0\n"
+        "1\n"
+        "0\n"
+        "-1\n"
+        "0\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis9)
+{
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+
+    createBuilder(&sprite, true);
+
+    m_builder->createListClear(localList.get());
+
+    CompilerValue *v = m_builder->addConstValue(5.25);
+    m_builder->createListAppend(localList.get(), v);
+
+    v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    {
+        v = m_builder->addConstValue(2);
+        m_builder->beginRepeatLoop(v);
+        {
+            v = m_builder->addListItem(globalList.get(), m_builder->addConstValue(0));
+            m_builder->createListReplace(localList.get(), m_builder->addConstValue(0), v);
+
+            v = m_builder->addConstValue(5);
+            m_builder->createListInsert(globalList.get(), m_builder->addConstValue(0), v);
+        }
+        m_builder->endLoop();
+
+        // Type is unknown here because a list item with unknown type is assigned before the read operation
+        v = m_builder->addListItem(localList.get(), m_builder->addConstValue(0));
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListItemIndex(localList.get(), m_builder->addConstValue(5));
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListContains(localList.get(), m_builder->addConstValue(5));
+        m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+        v = m_builder->addConstValue(2);
+        m_builder->beginRepeatLoop(v);
+        {
+            v = m_builder->addConstValue(10);
+            m_builder->createListInsert(globalList.get(), m_builder->addConstValue(0), v);
+
+            v = m_builder->addListItem(globalList.get(), m_builder->addConstValue(0));
+            m_builder->createListReplace(localList.get(), m_builder->addConstValue(0), v);
+
+            v = m_builder->addConstValue("test");
+            m_builder->createListInsert(globalList.get(), m_builder->addConstValue(0), v);
+        }
+        m_builder->endLoop();
+    }
+    m_builder->endLoop();
+
+    std::string expected =
+        "5\n"
+        "0\n"
+        "1\n"
+        "5\n"
+        "0\n"
+        "1\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis10)
+{
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+    localList->append(123);
+
+    createBuilder(&sprite, true);
+
+    CompilerValue *v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    {
+        v = m_builder->addConstValue("test");
+        m_builder->createListAppend(globalList.get(), v);
+
+        v = m_builder->addConstValue(3);
+        m_builder->beginRepeatLoop(v);
+        {
+            // Type is unknown here because a list item with unknown type is assigned later
+            v = m_builder->addListItem(localList.get(), m_builder->addConstValue(0));
+            m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+            v = m_builder->addListItemIndex(localList.get(), m_builder->addConstValue(123));
+            m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+            v = m_builder->addListContains(localList.get(), m_builder->addConstValue(123));
+            m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+            v = m_builder->addListItem(globalList.get(), m_builder->addConstValue(0));
+            m_builder->createListReplace(localList.get(), m_builder->addConstValue(0), v);
+
+            v = m_builder->addConstValue(12.5);
+            m_builder->createListReplace(globalList.get(), m_builder->addConstValue(0), v);
+        }
+        m_builder->endLoop();
+    }
+    m_builder->endLoop();
+
+    std::string expected =
+        "123\n"
+        "0\n"
+        "1\n"
+        "0\n"
+        "-1\n"
+        "0\n"
+        "12.5\n"
+        "-1\n"
+        "0\n"
+        "12.5\n"
+        "-1\n"
+        "0\n"
+        "12.5\n"
+        "-1\n"
+        "0\n"
+        "12.5\n"
+        "-1\n"
+        "0\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis11)
+{
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+    localList->append(123);
+    localList->append("10");
+
+    createBuilder(&sprite, true);
+
+    CompilerValue *v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    {
+        v = m_builder->addConstValue("test");
+        m_builder->createListAppend(globalList.get(), v);
+
+        v = m_builder->addConstValue(3);
+        m_builder->beginRepeatLoop(v);
+        {
+            // Type is unknown here because an item from the same list is assigned later, but the list has unknown type
+            v = m_builder->addListItem(localList.get(), m_builder->addConstValue(0));
+            m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+            v = m_builder->addListItemIndex(localList.get(), m_builder->addConstValue(123));
+            m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+            v = m_builder->addListContains(localList.get(), m_builder->addConstValue(123));
+            m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+            v = m_builder->addListItem(localList.get(), m_builder->addConstValue(1));
+            m_builder->createListReplace(localList.get(), m_builder->addConstValue(0), v);
+
+            v = m_builder->addConstValue(12.5);
+            m_builder->createListReplace(globalList.get(), m_builder->addConstValue(0), v);
+        }
+        m_builder->endLoop();
+    }
+    m_builder->endLoop();
+
+    std::string expected =
+        "123\n"
+        "0\n"
+        "1\n"
+        "10\n"
+        "-1\n"
+        "0\n"
+        "10\n"
+        "-1\n"
+        "0\n"
+        "10\n"
+        "-1\n"
+        "0\n"
+        "10\n"
+        "-1\n"
+        "0\n"
+        "10\n"
+        "-1\n"
+        "0\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis12)
+{
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto globalList = std::make_shared<List>("", "");
+    stage.addList(globalList);
+
+    auto localList = std::make_shared<List>("", "");
+    sprite.addList(localList);
+    localList->append(123);
+
+    createBuilder(&sprite, true);
+
+    CompilerValue *v = m_builder->addConstValue(2);
+    m_builder->beginRepeatLoop(v);
+    {
+        v = m_builder->addConstValue("test");
+        m_builder->createListAppend(globalList.get(), v);
+
+        v = m_builder->addConstValue(3);
+        m_builder->beginRepeatLoop(v);
+        {
+            // Type is unknown here because an item from another list is assigned later, but it has an item from this list assigned
+            // This case is not checked because the code isn't considered valid
+            v = m_builder->addListItem(localList.get(), m_builder->addConstValue(0));
+            m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+            v = m_builder->addListItemIndex(localList.get(), m_builder->addConstValue(123));
+            m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+            v = m_builder->addListContains(localList.get(), m_builder->addConstValue(123));
+            m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+            v = m_builder->addListItem(globalList.get(), m_builder->addConstValue(0));
+            m_builder->createListReplace(localList.get(), m_builder->addConstValue(0), v);
+
+            v = m_builder->addListItem(localList.get(), m_builder->addConstValue(0));
+            m_builder->createListReplace(globalList.get(), m_builder->addConstValue(0), v);
+        }
+        m_builder->endLoop();
+    }
+    m_builder->endLoop();
+
+    std::string expected =
+        "123\n"
+        "0\n"
+        "1\n"
+        "0\n"
+        "-1\n"
+        "0\n"
+        "0\n"
+        "-1\n"
+        "0\n"
+        "0\n"
+        "-1\n"
+        "0\n"
+        "0\n"
+        "-1\n"
+        "0\n"
+        "0\n"
+        "-1\n"
+        "0\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
 TEST_F(LLVMCodeBuilderTest, StopNoWarp)
 {
     Sprite sprite;
