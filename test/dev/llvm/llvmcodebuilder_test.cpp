@@ -5640,6 +5640,72 @@ TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis12)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
+TEST_F(LLVMCodeBuilderTest, VarAndListLoopTypeAnalysis)
+{
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto var = std::make_shared<Variable>("", "");
+    sprite.addVariable(var);
+
+    auto list = std::make_shared<List>("", "");
+    sprite.addList(list);
+
+    createBuilder(&sprite, true);
+
+    CompilerValue *v = m_builder->addConstValue(-2);
+    m_builder->createVariableWrite(var.get(), v);
+
+    m_builder->createListClear(list.get());
+
+    v = m_builder->addConstValue(5.25);
+    m_builder->createListAppend(list.get(), v);
+
+    v = m_builder->addConstValue(3);
+    m_builder->beginRepeatLoop(v);
+    {
+        // Type is unknown here because a variable value with unknown type is added later
+        v = m_builder->createSub(m_builder->addListSize(list.get()), m_builder->addConstValue(1));
+        v = m_builder->addListItem(list.get(), v);
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListItemIndex(list.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addListContains(list.get(), m_builder->addConstValue(5.25));
+        m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+        v = m_builder->addVariableValue(var.get());
+        m_builder->createListAppend(list.get(), v);
+
+        v = m_builder->addConstValue("test");
+        m_builder->createVariableWrite(var.get(), v);
+    }
+    m_builder->endLoop();
+
+    std::string expected =
+        "5.25\n"
+        "0\n"
+        "1\n"
+        "-2\n"
+        "0\n"
+        "1\n"
+        "0\n"
+        "0\n"
+        "1\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
 TEST_F(LLVMCodeBuilderTest, StopNoWarp)
 {
     Sprite sprite;
