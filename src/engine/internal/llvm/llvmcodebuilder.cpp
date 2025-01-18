@@ -2356,7 +2356,7 @@ bool LLVMCodeBuilder::isVarOrListTypeSafe(std::shared_ptr<LLVMInstruction> ins, 
     // Find previous write instruction in this, parent or child loop scope
     size_t index = it - instructions.begin();
 
-    if (index > 0) {
+    if (varPtr && index > 0) { // this is only needed for variables
         bool found = false;
 
         do {
@@ -2401,7 +2401,7 @@ bool LLVMCodeBuilder::isVarOrListTypeSafe(std::shared_ptr<LLVMInstruction> ins, 
         checkScope = checkScope->parentScope;
     }
 
-    // Find n-th last write operation based on counter (may be in a parent or child scope)
+    // Get all write operations in all loop scopes (from the root loop scope)
     std::vector<std::shared_ptr<LLVMInstruction>> lastWrites;
 
     while (checkScope) {
@@ -2425,7 +2425,18 @@ bool LLVMCodeBuilder::isVarOrListTypeSafe(std::shared_ptr<LLVMInstruction> ins, 
     if (c >= lastWrites.size())
         return true;
 
-    write = lastWrites[lastWrites.size() - c - 1]; // Ignore last c writes
+    if (varPtr)
+        write = lastWrites[lastWrites.size() - c - 1]; // Ignore last c writes
+    else {
+        // If this is a list instruction, check last write operations except current
+        for (long i = lastWrites.size() - c - 1; i >= 0; i--) { // Ignore last c writes
+            if (lastWrites[i] == ins)
+                continue;
+
+            if (!isVarOrListWriteResultTypeSafe(lastWrites[i], expectedType, false, log, c))
+                return false;
+        }
+    }
 
     bool safe = true;
 
@@ -2433,7 +2444,7 @@ bool LLVMCodeBuilder::isVarOrListTypeSafe(std::shared_ptr<LLVMInstruction> ins, 
         safe = isVarOrListWriteResultTypeSafe(ins, expectedType, false, log, c);
 
     if (safe)
-        return isVarOrListWriteResultTypeSafe(write, expectedType, false, log, c);
+        return write ? isVarOrListWriteResultTypeSafe(write, expectedType, false, log, c) : true;
     else
         return false;
 }

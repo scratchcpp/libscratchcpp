@@ -5149,15 +5149,19 @@ TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis6)
 
     createBuilder(&sprite, true);
 
+    m_builder->createListClear(globalList.get());
     m_builder->createListClear(localList.get());
 
-    CompilerValue *v = m_builder->addConstValue(5.25);
+    CompilerValue *v = m_builder->addConstValue(-156.07);
+    m_builder->createListAppend(globalList.get(), v);
+
+    v = m_builder->addConstValue(5.25);
     m_builder->createListAppend(localList.get(), v);
 
     v = m_builder->addConstValue(2);
     m_builder->beginRepeatLoop(v);
     {
-        // Type is unknown here because a list item with unknown type is added later (even though the list item has the original type assigned, it cannot be determined at compile time)
+        // Type is unknown here because a list item with unknown type is added later
         v = m_builder->createSub(m_builder->addListSize(localList.get()), m_builder->addConstValue(1));
         v = m_builder->addListItem(localList.get(), v);
         m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
@@ -5174,7 +5178,8 @@ TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis6)
             v = m_builder->addConstValue(10);
             m_builder->createListReplace(globalList.get(), m_builder->addConstValue(0), v);
 
-            v = m_builder->addListItem(globalList.get(), m_builder->addConstValue(0));
+            v = m_builder->createSub(m_builder->addListSize(globalList.get()), m_builder->addConstValue(1));
+            v = m_builder->addListItem(globalList.get(), v);
             m_builder->createListAppend(localList.get(), v);
 
             v = m_builder->addConstValue("test");
@@ -5188,7 +5193,7 @@ TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis6)
         "5.25\n"
         "0\n"
         "1\n"
-        "10\n"
+        "0\n"
         "0\n"
         "1\n";
 
