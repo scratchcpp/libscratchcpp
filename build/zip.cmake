@@ -7,3 +7,4 @@ add_library(zip SHARED
 )
 
 target_include_directories(zip PUBLIC ${ZIP_SRC})
+install(TARGETS zip DESTINATION lib)

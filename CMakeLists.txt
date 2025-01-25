@@ -21,6 +21,7 @@ add_library(scratchcpp SHARED)
 add_subdirectory(src)
 include_directories(src) # TODO: Remove this line
 include_directories(include)
+install(TARGETS scratchcpp DESTINATION lib)
 
 if (LIBSCRATCHCPP_COMPUTED_GOTO)
 	target_compile_definitions(scratchcpp PRIVATE ENABLE_COMPUTED_GOTO)
