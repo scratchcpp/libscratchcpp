@@ -95,26 +95,27 @@ else()
 endif()
 
 include(FetchContent)
-set(ZIP_SRC thirdparty/zip/src)
+
+# zip
+include(build/zip.cmake)
+target_link_libraries(scratchcpp PRIVATE zip)
+
+# utfcpp
 set(UTFCPP_SRC thirdparty/utfcpp/source)
-
-add_library(zip SHARED
-	${ZIP_SRC}/zip.c
-	${ZIP_SRC}/zip.h
-	${ZIP_SRC}/miniz.h
-)
-target_include_directories(scratchcpp PUBLIC ${ZIP_SRC})
-
 target_include_directories(scratchcpp PUBLIC ${UTFCPP_SRC})
+
+# spimpl
 include_directories(thirdparty/spimpl)
 
+# JSON
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
 FetchContent_MakeAvailable(json)
-
 target_link_libraries(scratchcpp PRIVATE nlohmann_json::nlohmann_json)
-target_link_libraries(scratchcpp PRIVATE zip)
+
+# Audio
 target_link_libraries(scratchcpp PRIVATE scratchcpp-audio)
 
+# Network
 if (LIBSCRATCHCPP_NETWORK_SUPPORT)
     FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/libcpr/cpr.git
                          GIT_TAG 225b7454877805f089b3895260438e929bd6d123) # 09-22-2024
@@ -123,18 +124,25 @@ if (LIBSCRATCHCPP_NETWORK_SUPPORT)
     target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_NETWORK_SUPPORT)
 endif()
 
+# LLVM
 if (LIBSCRATCHCPP_USE_LLVM)
     include(build/HunterPackages.cmake)
     include(build/LLVM.cmake)
     target_link_libraries(scratchcpp PRIVATE LLVM)
 endif()
 
+if(LIBSCRATCHCPP_PRINT_LLVM_IR)
+    target_compile_definitions(scratchcpp PRIVATE PRINT_LLVM_IR)
+endif()
+
+# Macros
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_LIBRARY)
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION="${PROJECT_VERSION}")
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION_MAJOR=${PROJECT_VERSION_MAJOR})
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION_MINOR=${PROJECT_VERSION_MINOR})
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION_PATCH=${PROJECT_VERSION_PATCH})
 
+# Unit tests
 if (LIBSCRATCHCPP_BUILD_UNIT_TESTS)
     enable_testing()
     add_subdirectory(test)
