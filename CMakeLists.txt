@@ -14,6 +14,7 @@ add_library(scratchcpp SHARED)
 add_subdirectory(src)
 include_directories(src) # TODO: Remove this line
 include_directories(include)
+install(TARGETS scratchcpp DESTINATION lib)
 
 target_sources(scratchcpp
   PUBLIC
