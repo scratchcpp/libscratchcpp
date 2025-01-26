@@ -20,6 +20,11 @@ std::string CustomBlocks::description() const
     return name();
 }
 
+Rgb CustomBlocks::color() const
+{
+    return rgb(255, 102, 128);
+}
+
 void CustomBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks

@@ -24,6 +24,11 @@ std::string libscratchcpp::EventBlocks::description() const
     return "Event blocks";
 }
 
+Rgb EventBlocks::color() const
+{
+    return rgb(255, 191, 0);
+}
+
 void EventBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "event_whentouchingobject", &compileWhenTouchingObject);

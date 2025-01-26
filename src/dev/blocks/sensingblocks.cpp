@@ -14,6 +14,11 @@ std::string SensingBlocks::description() const
     return name() + " blocks";
 }
 
+Rgb SensingBlocks::color() const
+{
+    return rgb(92, 177, 214);
+}
+
 void SensingBlocks::registerBlocks(IEngine *engine)
 {
 }

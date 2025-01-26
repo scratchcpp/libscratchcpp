@@ -14,6 +14,11 @@ std::string LooksBlocks::description() const
     return name() + " blocks";
 }
 
+Rgb LooksBlocks::color() const
+{
+    return rgb(153, 102, 255);
+}
+
 void LooksBlocks::registerBlocks(IEngine *engine)
 {
 }

@@ -14,6 +14,11 @@ std::string SoundBlocks::description() const
     return name() + " blocks";
 }
 
+Rgb SoundBlocks::color() const
+{
+    return rgb(207, 99, 207);
+}
+
 void SoundBlocks::registerBlocks(IEngine *engine)
 {
 }

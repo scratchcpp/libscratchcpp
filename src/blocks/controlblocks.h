@@ -43,6 +43,7 @@ class ControlBlocks : public IExtension
 
         std::string name() const override;
         std::string description() const override;
+        Rgb color() const override;
 
         void registerBlocks(IEngine *engine) override;
 

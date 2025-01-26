@@ -23,6 +23,11 @@ std::string ListBlocks::description() const
     return "List blocks";
 }
 
+Rgb ListBlocks::color() const
+{
+    return rgb(255, 102, 26);
+}
+
 void ListBlocks::registerBlocks(IEngine *engine)
 {
     // Blocks
