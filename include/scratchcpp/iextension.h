@@ -2,9 +2,7 @@
 
 #pragma once
 
-#include <string>
-
-#include "global.h"
+#include "value_functions.h"
 
 namespace libscratchcpp
 {
@@ -26,6 +24,9 @@ class LIBSCRATCHCPP_EXPORT IExtension
 
         /*! Returns the description of the extension. */
         virtual std::string description() const = 0;
+
+        /*! Returns the block color of the extension. */
+        virtual Rgb color() const = 0;
 
         /*! Override this method to register blocks. */
         virtual void registerBlocks(IEngine *engine) = 0;

@@ -21,6 +21,11 @@ std::string OperatorBlocks::description() const
     return "Operator blocks";
 }
 
+Rgb OperatorBlocks::color() const
+{
+    return rgb(89, 192, 89);
+}
+
 void OperatorBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "operator_add", &compileAdd);

@@ -26,6 +26,11 @@ std::string ControlBlocks::description() const
     return name() + " blocks";
 }
 
+Rgb ControlBlocks::color() const
+{
+    return rgb(255, 171, 25);
+}
+
 void ControlBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "control_forever", &compileForever);

@@ -21,6 +21,11 @@ std::string VariableBlocks::description() const
     return "Variable blocks";
 }
 
+Rgb VariableBlocks::color() const
+{
+    return rgb(255, 140, 26);
+}
+
 void VariableBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "data_variable", &compileVariable);

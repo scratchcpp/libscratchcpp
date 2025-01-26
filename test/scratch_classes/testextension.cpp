@@ -14,6 +14,11 @@ std::string TestExtension::description() const
     return "";
 }
 
+Rgb TestExtension::color() const
+{
+    return rgb(0, 0, 0);
+}
+
 void TestExtension::registerBlocks(IEngine *engine)
 {
 }
