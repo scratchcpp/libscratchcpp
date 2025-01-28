@@ -9,6 +9,7 @@ target_link_libraries(
   compiler_test
   GTest::gtest_main
   scratchcpp
+  zip
   nlohmann_json::nlohmann_json
 )
 
