@@ -382,6 +382,10 @@ extern "C"
             return ret;
         }
 
+        // snprintf() is locale-dependent
+        std::string oldLocale = std::setlocale(LC_NUMERIC, nullptr);
+        std::setlocale(LC_NUMERIC, "C");
+
         const int maxlen = 26; // should be enough for any number
         char *buffer = (char *)malloc((maxlen + 1) * sizeof(char));
 
@@ -428,6 +432,9 @@ extern "C"
                 }
             }
         }
+
+        // Restore old locale
+        std::setlocale(LC_NUMERIC, oldLocale.c_str());
 
         return buffer;
     }
