@@ -1342,6 +1342,9 @@ TEST(ValueTest, ToBool)
 
 TEST(ValueTest, ToString)
 {
+    std::string oldLocale = std::setlocale(LC_NUMERIC, nullptr);
+    std::setlocale(LC_NUMERIC, "sk_SK.UTF-8");
+
     std::vector<char *> cStrings;
     Value v = 2147483647;
     cStrings.push_back(value_toCString(&v.data()));
@@ -1614,6 +1617,8 @@ TEST(ValueTest, ToString)
 
     for (char *s : cStrings)
         free(s);
+
+    std::setlocale(LC_NUMERIC, oldLocale.c_str());
 }
 
 TEST(ValueTest, ToRgba)
@@ -2921,6 +2926,9 @@ TEST(ValueTest, DoubleIsInt)
 
 TEST(ValueTest, DoubleToCString)
 {
+    std::string oldLocale = std::setlocale(LC_NUMERIC, nullptr);
+    std::setlocale(LC_NUMERIC, "sk_SK.UTF-8");
+
     char *ret;
     ret = value_doubleToCString(0.0);
     ASSERT_EQ(strcmp(ret, "0"), 0);
@@ -3021,6 +3029,8 @@ TEST(ValueTest, DoubleToCString)
     ret = value_doubleToCString(std::numeric_limits<double>::quiet_NaN());
     ASSERT_EQ(strcmp(ret, "NaN"), 0);
     free(ret);
+
+    std::setlocale(LC_NUMERIC, oldLocale.c_str());
 }
 
 TEST(ValueTest, BoolToCString)
