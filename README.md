@@ -70,6 +70,10 @@ to create a GUI application that runs Scratch projects.
 The idea is to implement Scratch blocks in C++ to build a fast project player
 that is faster than the original Scratch VM.
 
+## IMPORTANT
+**The master branch currently doesn't have all features that are mentioned below**
+**because of the work on a new compiler. Please use the v0.13.x tags.**
+
 ## NOTE
 This library is still in development and it shouldn't be used
 to build complete Scratch project players yet.
