@@ -1,5 +1,6 @@
 #include <ctgmath>
 #include <cassert>
+#include <clocale>
 #include <utf8.h>
 
 #include "value_functions_p.h"
