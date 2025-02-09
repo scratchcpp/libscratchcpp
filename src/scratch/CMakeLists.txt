@@ -3,6 +3,8 @@ target_sources(scratchcpp
     value_functions.cpp
     value_functions_p.h
     string_functions.cpp
+    string_pool.cpp
+    string_pool_p.h
     drawable.cpp
     drawable_p.cpp
     drawable_p.h

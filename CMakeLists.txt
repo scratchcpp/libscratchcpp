@@ -40,6 +40,7 @@ target_sources(scratchcpp
     include/scratchcpp/value_functions.h
     include/scratchcpp/stringptr.h
     include/scratchcpp/string_functions.h
+    include/scratchcpp/string_pool.h
     include/scratchcpp/entity.h
     include/scratchcpp/variable.h
     include/scratchcpp/list.h

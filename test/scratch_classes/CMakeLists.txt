@@ -135,6 +135,20 @@ target_link_libraries(
 
 gtest_discover_tests(string_functions_test)
 
+# string_pool_test
+add_executable(
+  string_pool_test
+  string_pool_test.cpp
+)
+
+target_link_libraries(
+  string_pool_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(string_pool_test)
+
 # entity_test
 add_executable(
   entity_test
