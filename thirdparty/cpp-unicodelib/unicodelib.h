@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <cstdint>
 #include <cstring>
 #include <string>
 #include <unordered_map>
