@@ -2,6 +2,7 @@ target_sources(scratchcpp
   PRIVATE
     value_functions.cpp
     value_functions_p.h
+    string_functions.cpp
     drawable.cpp
     drawable_p.cpp
     drawable_p.h
