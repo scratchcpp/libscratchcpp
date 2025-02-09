@@ -89,3 +89,133 @@ TEST(StringFunctionsTest, AssignAlloc)
     ASSERT_TRUE(str1.data);
     ASSERT_EQ(str1.data[0], u'\0');
 }
+
+TEST(StringFunctionsTest, CompareCaseSensitive)
+{
+    StringPtr str1, str2;
+
+    string_assign_cstring(&str1, "abcd");
+    string_assign_cstring(&str2, "abcd");
+    ASSERT_EQ(string_compare_case_sensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "aBcd");
+    string_assign_cstring(&str2, "abCd");
+    ASSERT_LT(string_compare_case_sensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "Hello");
+    string_assign_cstring(&str2, "olleH");
+    ASSERT_LT(string_compare_case_sensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "olleH");
+    string_assign_cstring(&str2, "Hello");
+    ASSERT_GT(string_compare_case_sensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "AbCdEfGh");
+    string_assign_cstring(&str2, "EfGhIjKl");
+    ASSERT_LT(string_compare_case_sensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "EfGhIjKl");
+    string_assign_cstring(&str2, "AbCdEfGh");
+    ASSERT_GT(string_compare_case_sensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "Lorem ipsum");
+    string_assign_cstring(&str2, "dolor sit amet");
+    ASSERT_LT(string_compare_case_sensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "dolor sit amet");
+    string_assign_cstring(&str2, "Lorem ipsum");
+    ASSERT_GT(string_compare_case_sensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "Hello");
+    string_assign_cstring(&str2, "Hello world");
+    ASSERT_LT(string_compare_case_sensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "Hello world");
+    string_assign_cstring(&str2, "Hello");
+    ASSERT_GT(string_compare_case_sensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "Hello");
+    string_assign_cstring(&str2, "Hello world");
+    ASSERT_LT(string_compare_case_sensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "ábčď");
+    string_assign_cstring(&str2, "ábčď");
+    ASSERT_EQ(string_compare_case_sensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "ábčď");
+    string_assign_cstring(&str2, "ábČď");
+    ASSERT_GT(string_compare_case_sensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "test đ");
+    string_assign_cstring(&str2, "test Đ");
+    ASSERT_GT(string_compare_case_sensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "💀");
+    string_assign_cstring(&str2, "💀");
+    ASSERT_EQ(string_compare_case_sensitive(&str1, &str2), 0);
+}
+
+TEST(StringFunctionsTest, CompareCaseInsensitive)
+{
+    StringPtr str1, str2;
+
+    string_assign_cstring(&str1, "abcd");
+    string_assign_cstring(&str2, "abcd");
+    ASSERT_EQ(string_compare_case_insensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "aBcd");
+    string_assign_cstring(&str2, "abCd");
+    ASSERT_EQ(string_compare_case_insensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "Hello");
+    string_assign_cstring(&str2, "olleH");
+    ASSERT_LT(string_compare_case_insensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "olleH");
+    string_assign_cstring(&str2, "Hello");
+    ASSERT_GT(string_compare_case_insensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "AbCdEfGh");
+    string_assign_cstring(&str2, "EfGhIjKl");
+    ASSERT_LT(string_compare_case_insensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "EfGhIjKl");
+    string_assign_cstring(&str2, "AbCdEfGh");
+    ASSERT_GT(string_compare_case_insensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "Lorem ipsum");
+    string_assign_cstring(&str2, "dolor sit amet");
+    ASSERT_LT(string_compare_case_insensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "dolor sit amet");
+    string_assign_cstring(&str2, "Lorem ipsum");
+    ASSERT_GT(string_compare_case_insensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "Hello");
+    string_assign_cstring(&str2, "Hello world");
+    ASSERT_LT(string_compare_case_insensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "Hello world");
+    string_assign_cstring(&str2, "Hello");
+    ASSERT_GT(string_compare_case_insensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "Hello");
+    string_assign_cstring(&str2, "Hello world");
+    ASSERT_LT(string_compare_case_insensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "ábčď");
+    string_assign_cstring(&str2, "ábčď");
+    ASSERT_EQ(string_compare_case_insensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "ábčď");
+    string_assign_cstring(&str2, "ábČď");
+    ASSERT_EQ(string_compare_case_insensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "test đ");
+    string_assign_cstring(&str2, "test Đ");
+    ASSERT_EQ(string_compare_case_insensitive(&str1, &str2), 0);
+
+    string_assign_cstring(&str1, "💀");
+    string_assign_cstring(&str2, "💀");
+    ASSERT_EQ(string_compare_case_insensitive(&str1, &str2), 0);
+}

@@ -6,6 +6,8 @@
 #include <cstring>
 #include <cassert>
 #include <utf8.h>
+#include <unicodelib.h>
+#include <unicodelib_encodings.h>
 
 namespace libscratchcpp
 {
@@ -55,6 +57,44 @@ extern "C"
         string_alloc(str, converted.size());
         str->size = converted.size();
         memcpy(str->data, converted.data(), (converted.size() + 1) * sizeof(typeof(*str->data)));
+    }
+
+    int string_compare_case_sensitive(StringPtr *str1, StringPtr *str2)
+    {
+        if (str1->size != str2->size)
+            return str1->size < str2->size ? -1 : 1;
+
+        const size_t min_len = std::min(str1->size, str2->size);
+
+        for (size_t i = 0; i < min_len; i++) {
+            if (str1->data[i] != str2->data[i])
+                return str1->data[i] - str2->data[i];
+        }
+
+        return 0;
+    }
+
+    int string_compare_case_insensitive(StringPtr *str1, StringPtr *str2)
+    {
+        if (str1->size != str2->size)
+            return str1->size < str2->size ? -1 : 1;
+
+        const size_t min_len = std::min(str1->size, str2->size);
+        std::u32string cp1_str, cp2_str;
+        char32_t cp1, cp2;
+
+        for (size_t i = 0; i < min_len; ++i) {
+            unicode::utf16::decode(str1->data + i, 1, cp1_str);
+            unicode::utf16::decode(str2->data + i, 1, cp2_str);
+
+            cp1 = unicode::simple_lowercase_mapping(cp1_str.front());
+            cp2 = unicode::simple_lowercase_mapping(cp2_str.front());
+
+            if (cp1 != cp2)
+                return cp1 - cp2;
+        }
+
+        return 0;
     }
 }
 
