@@ -35,13 +35,6 @@ extern "C"
     /*! Assigns the given string to str. */
     void string_assign(StringPtr *str, const StringPtr *another)
     {
-        if (another->size == 0) {
-            str->size = 0;
-            string_alloc(str, 0);
-            str->data[0] = u'\0';
-            return;
-        }
-
         string_alloc(str, another->size);
         str->size = another->size;
         memcpy(str->data, another->data, (another->size + 1) * sizeof(typeof(*str->data)));

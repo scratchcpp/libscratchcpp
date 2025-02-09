@@ -69,4 +69,23 @@ TEST(StringFunctionsTest, AssignAlloc)
     ASSERT_TRUE(str2.data);
     ASSERT_NE(str2.data, str1.data);
     ASSERT_EQ(memcmp(str2.data, str1.data, (str2.size + 1) * sizeof(typeof(*str2.data))), 0);
+
+    string_assign_cstring(&str2, "");
+    ASSERT_EQ(str2.size, 0);
+    ASSERT_GE(str2.allocatedSize, 1);
+    ASSERT_TRUE(str2.data);
+    ASSERT_EQ(str2.data[0], u'\0');
+
+    string_assign_cstring(&str2, "test");
+    string_assign_cstring(&str2, nullptr);
+    ASSERT_EQ(str2.size, 0);
+    ASSERT_GE(str2.allocatedSize, 1);
+    ASSERT_TRUE(str2.data);
+    ASSERT_EQ(str2.data[0], u'\0');
+
+    string_assign(&str1, &str2);
+    ASSERT_EQ(str1.size, 0);
+    ASSERT_GE(str1.allocatedSize, 1);
+    ASSERT_TRUE(str1.data);
+    ASSERT_EQ(str1.data[0], u'\0');
 }
