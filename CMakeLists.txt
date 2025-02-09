@@ -80,6 +80,10 @@ target_link_libraries(scratchcpp PRIVATE zip)
 set(UTFCPP_SRC thirdparty/utfcpp/source)
 target_include_directories(scratchcpp PUBLIC ${UTFCPP_SRC})
 
+# cpp-unicodelib
+add_subdirectory(thirdparty/cpp-unicodelib)
+target_link_libraries(scratchcpp PRIVATE cpp-unicodelib)
+
 # spimpl
 include_directories(thirdparty/spimpl)
 
