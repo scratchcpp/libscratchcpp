@@ -26,6 +26,7 @@ static const StringPtr FALSE_STR("false");
 static const StringPtr INFINITY_STR("Infinity");
 static const StringPtr NEGATIVE_INFINITY_STR("-Infinity");
 static const StringPtr NAN_STR("NaN");
+static const StringPtr ZERO_STR("0");
 
 template<typename T>
 inline unsigned int value_intDigitCount(T v)
@@ -105,24 +106,6 @@ extern "C"
             return -static_cast<double>(ret); // for negative zero
         else
             return ret;
-    }
-
-    inline bool value_u16StringsEqual(std::u16string s1, std::u16string s2)
-    {
-        // TODO: Rewrite this
-        std::transform(s1.begin(), s1.end(), s1.begin(), ::tolower);
-        std::transform(s2.begin(), s2.end(), s2.begin(), ::tolower);
-        return (s1.compare(s2) == 0);
-    }
-
-    inline bool value_stringsEqual(const char *s1, const char *s2)
-    {
-        // TODO: Remove this?
-        std::string str1(s1);
-        std::string str2(s2);
-        std::transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
-        std::transform(str2.begin(), str2.end(), str2.begin(), ::tolower);
-        return (str1.compare(str2) == 0);
     }
 
     inline long value_hexToDec(const char16_t *s, int n, bool *ok)
@@ -349,12 +332,11 @@ extern "C"
         }
 
         // Special values
-        // TODO: Use a custom comparison function
-        if (value_u16StringsEqual(std::u16string(s), utf8::utf8to16(std::string("Infinity")))) {
+        if (string_compare_raw_case_sensitive(s, n, INFINITY_STR.data, INFINITY_STR.size) == 0) {
             if (ok)
                 *ok = true;
             return std::numeric_limits<double>::infinity();
-        } else if (value_u16StringsEqual(std::u16string(s), utf8::utf8to16(std::string("-Infinity")))) {
+        } else if (string_compare_raw_case_sensitive(s, n, NEGATIVE_INFINITY_STR.data, NEGATIVE_INFINITY_STR.size) == 0) {
             if (ok)
                 *ok = true;
             return -std::numeric_limits<double>::infinity();
@@ -500,12 +482,9 @@ extern "C"
         if (!ok) {
             // At least one argument can't be converted to a number
             // Scratch compares strings as case insensitive
-            // TODO: Use a custom comparison function
             StringPtr *s1 = value_toStringPtr(v1);
             StringPtr *s2 = value_toStringPtr(v2);
-            std::string str1 = utf8::utf16to8(std::u16string(s1->data));
-            std::string str2 = utf8::utf16to8(std::u16string(s2->data));
-            int ret = strcasecmp(str1.c_str(), str2.c_str());
+            int ret = string_compare_case_insensitive(s1, s2);
             string_pool_free(s1);
             string_pool_free(s2);
             return ret;
