@@ -121,6 +121,20 @@ target_link_libraries(
 
 gtest_discover_tests(value_test)
 
+# stringptr_test
+add_executable(
+  stringptr_test
+  stringptr_test.cpp
+)
+
+target_link_libraries(
+  stringptr_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(stringptr_test)
+
 # string_functions_test
 add_executable(
   string_functions_test

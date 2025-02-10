@@ -454,12 +454,10 @@ extern "C"
     const StringPtr *value_boolToStringPtr(bool v)
     {
         if (v) {
-            static const std::u16string str = utf8::utf8to16(std::string("true"));
-            static const StringPtr ret = { const_cast<char16_t *>(str.c_str()) };
+            static const StringPtr ret("true");
             return &ret;
         } else {
-            static const std::u16string str = utf8::utf8to16(std::string("false"));
-            static const StringPtr ret = { const_cast<char16_t *>(str.c_str()) };
+            static const StringPtr ret("false");
             return &ret;
         }
     }

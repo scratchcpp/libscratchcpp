@@ -8,10 +8,6 @@ using namespace libscratchcpp;
 TEST(StringFunctionsTest, AssignAlloc)
 {
     StringPtr str1;
-    ASSERT_FALSE(str1.data);
-    ASSERT_EQ(str1.size, 0);
-    ASSERT_EQ(str1.allocatedSize, 0);
-
     string_assign_cstring(&str1, "test");
     ASSERT_EQ(str1.size, 4);
     ASSERT_GE(str1.allocatedSize, 5);

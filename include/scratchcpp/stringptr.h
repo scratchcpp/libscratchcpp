@@ -3,6 +3,7 @@
 #pragma once
 
 #include "global.h"
+#include "string_functions.h"
 
 namespace libscratchcpp
 {
@@ -14,6 +15,7 @@ extern "C"
     {
             // NOTE: Constructors and destructors only work in C++ code and are not supposed to be used in LLVM IR
             StringPtr() = default;
+            StringPtr(const std::string &str) { string_assign_cstring(this, str.c_str()); }
             StringPtr(const StringPtr &) = delete;
 
             ~StringPtr()
