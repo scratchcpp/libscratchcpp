@@ -23,6 +23,9 @@ namespace libscratchcpp
 
 static const StringPtr TRUE_STR("true");
 static const StringPtr FALSE_STR("false");
+static const StringPtr INFINITY_STR("Infinity");
+static const StringPtr NEGATIVE_INFINITY_STR("-Infinity");
+static const StringPtr NAN_STR("NaN");
 
 template<typename T>
 inline unsigned int value_intDigitCount(T v)

@@ -374,16 +374,16 @@ extern "C"
         } else if (std::isinf(v)) {
             if (v > 0) {
                 StringPtr *ret = string_pool_new();
-                string_assign_cstring(ret, "Infinity");
+                string_assign(ret, &INFINITY_STR);
                 return ret;
             } else {
                 StringPtr *ret = string_pool_new();
-                string_assign_cstring(ret, "-Infinity");
+                string_assign(ret, &NEGATIVE_INFINITY_STR);
                 return ret;
             }
         } else if (std::isnan(v)) {
             StringPtr *ret = string_pool_new();
-            string_assign_cstring(ret, "NaN");
+            string_assign(ret, &NAN_STR);
             return ret;
         }
 
