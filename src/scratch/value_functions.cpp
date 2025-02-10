@@ -281,11 +281,11 @@ extern "C"
         else if (v->type == ValueType::Bool) {
             if (v->boolValue) {
                 StringPtr *ret = string_pool_new();
-                string_assign_cstring(ret, "true");
+                string_assign(ret, &TRUE_STR);
                 return ret;
             } else {
                 StringPtr *ret = string_pool_new();
-                string_assign_cstring(ret, "false");
+                string_assign(ret, &FALSE_STR);
                 return ret;
             }
         } else
@@ -453,13 +453,7 @@ extern "C"
      */
     const StringPtr *value_boolToStringPtr(bool v)
     {
-        if (v) {
-            static const StringPtr ret("true");
-            return &ret;
-        } else {
-            static const StringPtr ret("false");
-            return &ret;
-        }
+        return v ? &TRUE_STR : &FALSE_STR;
     }
 
     /*! Converts the given string to double. */

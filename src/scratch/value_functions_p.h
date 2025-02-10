@@ -21,6 +21,9 @@
 namespace libscratchcpp
 {
 
+static const StringPtr TRUE_STR("true");
+static const StringPtr FALSE_STR("false");
+
 template<typename T>
 inline unsigned int value_intDigitCount(T v)
 {
