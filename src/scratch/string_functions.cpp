@@ -59,33 +59,43 @@ extern "C"
         memcpy(str->data, converted.data(), (converted.size() + 1) * sizeof(typeof(*str->data)));
     }
 
-    int string_compare_case_sensitive(StringPtr *str1, StringPtr *str2)
+    inline int string_compare_raw_case_sensitive_inline(const char16_t *str1, size_t n1, const char16_t *str2, size_t n2)
     {
-        if (str1->size != str2->size)
-            return str1->size < str2->size ? -1 : 1;
+        if (n1 != n2)
+            return n1 < n2 ? -1 : 1;
 
-        const size_t min_len = std::min(str1->size, str2->size);
+        const size_t min_len = std::min(n1, n2);
 
         for (size_t i = 0; i < min_len; i++) {
-            if (str1->data[i] != str2->data[i])
-                return str1->data[i] - str2->data[i];
+            if (str1[i] != str2[i])
+                return str1[i] - str2[i];
         }
 
         return 0;
     }
 
-    int string_compare_case_insensitive(StringPtr *str1, StringPtr *str2)
+    int string_compare_raw_case_sensitive(const char16_t *str1, size_t n1, const char16_t *str2, size_t n2)
     {
-        if (str1->size != str2->size)
-            return str1->size < str2->size ? -1 : 1;
+        return string_compare_raw_case_sensitive_inline(str1, n1, str2, n2);
+    }
 
-        const size_t min_len = std::min(str1->size, str2->size);
+    int string_compare_case_sensitive(const StringPtr *str1, const StringPtr *str2)
+    {
+        return string_compare_raw_case_sensitive_inline(str1->data, str1->size, str2->data, str2->size);
+    }
+
+    inline int string_compare_raw_case_insensitive_inline(const char16_t *str1, size_t n1, const char16_t *str2, size_t n2)
+    {
+        if (n1 != n2)
+            return n1 < n2 ? -1 : 1;
+
+        const size_t min_len = std::min(n1, n2);
         std::u32string cp1_str, cp2_str;
         char32_t cp1, cp2;
 
         for (size_t i = 0; i < min_len; ++i) {
-            unicode::utf16::decode(str1->data + i, 1, cp1_str);
-            unicode::utf16::decode(str2->data + i, 1, cp2_str);
+            unicode::utf16::decode(str1 + i, 1, cp1_str);
+            unicode::utf16::decode(str2 + i, 1, cp2_str);
 
             cp1 = unicode::simple_lowercase_mapping(cp1_str.front());
             cp2 = unicode::simple_lowercase_mapping(cp2_str.front());
@@ -95,6 +105,16 @@ extern "C"
         }
 
         return 0;
+    }
+
+    int string_compare_raw_case_insensitive(const char16_t *str1, size_t n1, const char16_t *str2, size_t n2)
+    {
+        return string_compare_raw_case_insensitive_inline(str1, n1, str2, n2);
+    }
+
+    int string_compare_case_insensitive(const StringPtr *str1, const StringPtr *str2)
+    {
+        return string_compare_raw_case_insensitive_inline(str1->data, str1->size, str2->data, str2->size);
     }
 }
 
