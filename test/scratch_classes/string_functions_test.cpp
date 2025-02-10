@@ -145,6 +145,11 @@ TEST(StringFunctionsTest, CompareCaseSensitive)
     ASSERT_LT(string_compare_case_sensitive(&str1, &str2), 0);
     ASSERT_LT(string_compare_raw_case_sensitive(str1.data, str1.size, str2.data, str2.size), 0);
 
+    string_assign_cstring(&str1, "Infinity");
+    string_assign_cstring(&str2, "NaN");
+    ASSERT_LT(string_compare_case_sensitive(&str1, &str2), 0);
+    ASSERT_LT(string_compare_raw_case_sensitive(str1.data, str1.size, str2.data, str2.size), 0);
+
     string_assign_cstring(&str1, "ábčď");
     string_assign_cstring(&str2, "ábčď");
     ASSERT_EQ(string_compare_case_sensitive(&str1, &str2), 0);
@@ -202,13 +207,13 @@ TEST(StringFunctionsTest, CompareCaseInsensitive)
 
     string_assign_cstring(&str1, "Lorem ipsum");
     string_assign_cstring(&str2, "dolor sit amet");
-    ASSERT_LT(string_compare_case_insensitive(&str1, &str2), 0);
-    ASSERT_LT(string_compare_raw_case_insensitive(str1.data, str1.size, str2.data, str2.size), 0);
+    ASSERT_GT(string_compare_case_insensitive(&str1, &str2), 0);
+    ASSERT_GT(string_compare_raw_case_insensitive(str1.data, str1.size, str2.data, str2.size), 0);
 
     string_assign_cstring(&str1, "dolor sit amet");
     string_assign_cstring(&str2, "Lorem ipsum");
-    ASSERT_GT(string_compare_case_insensitive(&str1, &str2), 0);
-    ASSERT_GT(string_compare_raw_case_insensitive(str1.data, str1.size, str2.data, str2.size), 0);
+    ASSERT_LT(string_compare_case_insensitive(&str1, &str2), 0);
+    ASSERT_LT(string_compare_raw_case_insensitive(str1.data, str1.size, str2.data, str2.size), 0);
 
     string_assign_cstring(&str1, "Hello");
     string_assign_cstring(&str2, "Hello world");
@@ -222,6 +227,11 @@ TEST(StringFunctionsTest, CompareCaseInsensitive)
 
     string_assign_cstring(&str1, "Hello");
     string_assign_cstring(&str2, "Hello world");
+    ASSERT_LT(string_compare_case_insensitive(&str1, &str2), 0);
+    ASSERT_LT(string_compare_raw_case_insensitive(str1.data, str1.size, str2.data, str2.size), 0);
+
+    string_assign_cstring(&str1, "Infinity");
+    string_assign_cstring(&str2, "NaN");
     ASSERT_LT(string_compare_case_insensitive(&str1, &str2), 0);
     ASSERT_LT(string_compare_raw_case_insensitive(str1.data, str1.size, str2.data, str2.size), 0);
 
