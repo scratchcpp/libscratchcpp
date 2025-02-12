@@ -9,6 +9,7 @@ namespace libscratchcpp
 
 class List;
 struct ValueData;
+struct StringPtr;
 
 extern "C"
 {
@@ -24,7 +25,7 @@ extern "C"
     const size_t *list_alloc_size_ptr(List *list);
     size_t list_size(List *list);
 
-    char *list_to_string(List *list);
+    StringPtr *list_to_string(List *list);
 }
 
 } // namespace libscratchcpp

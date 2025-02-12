@@ -3,10 +3,13 @@
 #pragma once
 
 #include <string>
-#include <scratchcpp/veque.h>
 
 #include "value.h"
 #include "entity.h"
+#include "string_pool.h"
+#include "string_functions.h"
+#include "stringptr.h"
+#include "veque.h"
 
 namespace libscratchcpp
 {
@@ -143,21 +146,21 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
             return m_dataPtr->operator[](index);
         }
 
-        /*! Joins the list items with spaces or without any separator if there are only digits and stores the result in dst. */
-        inline void toString(std::string &dst) const
+        /*! Joins the list items with spaces or without any separator if there are only digits and returns the result as StringPtr. */
+        inline StringPtr *toStringPtr() const
         {
-            dst.clear();
-            veque::veque<std::string> strings;
+            veque::veque<StringPtr *> strings;
+            size_t size = 0;
             strings.reserve(m_size);
             bool digits = true;
             size_t i;
 
             for (i = 0; i < m_size; i++) {
                 const ValueData *item = &m_dataPtr->operator[](i);
-                strings.push_back(std::string());
-                value_toString(item, &strings.back());
+                strings.push_back(value_toStringPtr(item));
+                size += strings.back()->size;
 
-                if (value_isValidNumber(item) && !value_isBool(item) && !strings.back().empty()) {
+                if (value_isValidNumber(item) && !value_isBool(item) && strings.back()->size > 0) {
                     double doubleNum = value_toDouble(item);
                     long num = value_toLong(item);
 
@@ -176,41 +179,57 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
                 }
             }
 
-            std::string s;
+            StringPtr *ret = string_pool_new();
+            size_t offset = 0;
 
             if (digits) {
-                for (i = 0; i < strings.size(); i++)
-                    dst.append(strings[i]);
+                string_alloc(ret, size);
+
+                for (i = 0; i < strings.size(); i++) {
+                    memcpy(ret->data + offset, strings[i]->data, strings[i]->size * sizeof(char16_t));
+                    offset += strings[i]->size;
+                    string_pool_free(strings[i]);
+                }
 
                 for (; i < m_size; i++) {
-                    value_toString(&m_dataPtr->operator[](i), &s);
-                    dst.append(s);
+                    StringPtr *item = value_toStringPtr(&m_dataPtr->operator[](i));
+                    size += item->size + 1;
+                    string_alloc(ret, size);
+                    memcpy(ret->data + offset, item->data, item->size * sizeof(char16_t));
+                    offset += item->size;
+                    string_pool_free(item);
                 }
             } else {
+                size += strings.size() - 1;
+                string_alloc(ret, size);
+
                 for (i = 0; i < strings.size(); i++) {
-                    dst.append(strings[i]);
+                    memcpy(ret->data + offset, strings[i]->data, strings[i]->size * sizeof(char16_t));
+                    offset += strings[i]->size;
+                    string_pool_free(strings[i]);
 
                     if (i + 1 < m_size)
-                        dst.push_back(' ');
+                        ret->data[offset++] = u' ';
                 }
 
                 for (; i < m_size; i++) {
-                    value_toString(&m_dataPtr->operator[](i), &s);
-                    dst.append(s);
+                    StringPtr *item = value_toStringPtr(&m_dataPtr->operator[](i));
+                    size += item->size + 1;
+                    string_alloc(ret, size);
+                    memcpy(ret->data + offset, item->data, item->size * sizeof(char16_t));
+                    offset += item->size;
+                    string_pool_free(item);
 
                     if (i + 1 < m_size)
-                        dst.push_back(' ');
+                        ret->data[offset++] = u' ';
                 }
             }
-        }
 
-        /*! Same as the other method, but returns the result directly. */
-        inline std::string toString() const
-        {
-            std::string ret;
-            toString(ret);
+            ret->data[offset] = u'\0';
             return ret;
         }
+
+        std::string toString() const;
 
         std::shared_ptr<List> clone();
 
