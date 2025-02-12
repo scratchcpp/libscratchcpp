@@ -54,7 +54,7 @@ extern "C"
     LIBSCRATCHCPP_EXPORT void value_assign_bool(ValueData *v, bool boolValue);
     LIBSCRATCHCPP_EXPORT void value_assign_string(ValueData *v, const std::string &stringValue);
     LIBSCRATCHCPP_EXPORT void value_assign_cstring(ValueData *v, const char *stringValue);
-    LIBSCRATCHCPP_EXPORT void value_assign_stringptr(ValueData *v, const StringPtr *stringValue);
+    LIBSCRATCHCPP_EXPORT void value_assign_stringPtr(ValueData *v, const StringPtr *stringValue);
     LIBSCRATCHCPP_EXPORT void value_assign_copy(ValueData *v, const ValueData *another);
 
     LIBSCRATCHCPP_EXPORT bool value_isInfinity(const ValueData *v);

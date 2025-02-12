@@ -71,7 +71,7 @@ extern "C"
     }
 
     /*! Assigns string to the given value. */
-    void value_assign_stringptr(ValueData *v, const StringPtr *stringValue)
+    void value_assign_stringPtr(ValueData *v, const StringPtr *stringValue)
     {
         if (v->type != ValueType::String) {
             v->stringValue = string_pool_new();

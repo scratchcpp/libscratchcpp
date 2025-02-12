@@ -2879,7 +2879,7 @@ TEST(ValueTest, AssignStringPtr)
         Value v;
         StringPtr *str = string_pool_new();
         string_assign_cstring(str, "test");
-        value_assign_stringptr(&v.data(), str);
+        value_assign_stringPtr(&v.data(), str);
         ASSERT_EQ(v.toString(), "test");
         ASSERT_EQ(v.type(), ValueType::String);
     }
@@ -2888,7 +2888,7 @@ TEST(ValueTest, AssignStringPtr)
         Value v;
         StringPtr *str = string_pool_new();
         string_assign_cstring(str, "Infinity");
-        value_assign_stringptr(&v.data(), str);
+        value_assign_stringPtr(&v.data(), str);
         ASSERT_EQ(v.toString(), "Infinity");
         ASSERT_EQ(v.type(), ValueType::String);
     }
@@ -2897,7 +2897,7 @@ TEST(ValueTest, AssignStringPtr)
         Value v;
         StringPtr *str = string_pool_new();
         string_assign_cstring(str, "-Infinity");
-        value_assign_stringptr(&v.data(), str);
+        value_assign_stringPtr(&v.data(), str);
         ASSERT_EQ(v.toString(), "-Infinity");
         ASSERT_EQ(v.type(), ValueType::String);
     }
@@ -2906,7 +2906,7 @@ TEST(ValueTest, AssignStringPtr)
         Value v;
         StringPtr *str = string_pool_new();
         string_assign_cstring(str, "NaN");
-        value_assign_stringptr(&v.data(), str);
+        value_assign_stringPtr(&v.data(), str);
         ASSERT_EQ(v.toString(), "NaN");
         ASSERT_EQ(v.type(), ValueType::String);
     }
