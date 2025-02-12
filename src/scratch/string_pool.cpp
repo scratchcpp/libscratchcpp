@@ -81,7 +81,7 @@ void string_pool_remove_thread(Thread *thread)
     for (StringPtr *str : strings)
         freeStrings.insert(std::pair<size_t, StringPtr *>(str->allocatedSize, str));
 
-    strings.clear();
+    threadStrings.erase(thread);
 
     if (currentThread == thread)
         currentThread = nullptr;
