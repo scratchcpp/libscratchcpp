@@ -132,7 +132,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         LLVMRegister *addReg(std::shared_ptr<LLVMRegister> reg, std::shared_ptr<LLVMInstruction> ins);
 
         llvm::Value *addAlloca(llvm::Type *type);
-        void freeLater(llvm::Value *value);
+        void freeStringLater(llvm::Value *value);
         void freeScopeHeap();
         llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType);
         llvm::Value *castRawValue(LLVMRegister *reg, Compiler::StaticType targetType);
@@ -177,14 +177,14 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_value_assign_long();
         llvm::FunctionCallee resolve_value_assign_double();
         llvm::FunctionCallee resolve_value_assign_bool();
-        llvm::FunctionCallee resolve_value_assign_cstring();
+        llvm::FunctionCallee resolve_value_assign_stringPtr();
         llvm::FunctionCallee resolve_value_assign_special();
         llvm::FunctionCallee resolve_value_assign_copy();
         llvm::FunctionCallee resolve_value_toDouble();
         llvm::FunctionCallee resolve_value_toBool();
-        llvm::FunctionCallee resolve_value_toCString();
-        llvm::FunctionCallee resolve_value_doubleToCString();
-        llvm::FunctionCallee resolve_value_boolToCString();
+        llvm::FunctionCallee resolve_value_toStringPtr();
+        llvm::FunctionCallee resolve_value_doubleToStringPtr();
+        llvm::FunctionCallee resolve_value_boolToStringPtr();
         llvm::FunctionCallee resolve_value_stringToDouble();
         llvm::FunctionCallee resolve_value_stringToBool();
         llvm::FunctionCallee resolve_value_equals();
@@ -202,8 +202,10 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_llvm_random_double();
         llvm::FunctionCallee resolve_llvm_random_long();
         llvm::FunctionCallee resolve_llvm_random_bool();
-        llvm::FunctionCallee resolve_strcmp();
-        llvm::FunctionCallee resolve_strcasecmp();
+        llvm::FunctionCallee resolve_string_pool_new();
+        llvm::FunctionCallee resolve_string_pool_free();
+        llvm::FunctionCallee resolve_string_compare_case_sensitive();
+        llvm::FunctionCallee resolve_string_compare_case_insensitive();
 
         Target *m_target = nullptr;
 
@@ -222,6 +224,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Function *m_function = nullptr;
 
         llvm::StructType *m_valueDataType = nullptr;
+        llvm::StructType *m_stringPtrType = nullptr;
         llvm::FunctionType *m_resumeFuncType = nullptr;
 
         std::vector<std::shared_ptr<LLVMInstruction>> m_instructions;
@@ -239,7 +242,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         bool m_loopCondition = false; // whether we're currently compiling a loop condition
         std::vector<std::shared_ptr<LLVMInstruction>> m_variableInstructions;
         std::vector<std::shared_ptr<LLVMInstruction>> m_listInstructions;
-        std::vector<std::vector<llvm::Value *>> m_heap; // scopes
+        std::vector<std::vector<llvm::Value *>> m_stringHeap; // scopes
 
         std::shared_ptr<ExecutableCode> m_output;
 };
