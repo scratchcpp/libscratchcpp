@@ -84,10 +84,10 @@ extern "C"
     inline int string_compare_raw_case_insensitive_inline(const char16_t *str1, size_t n1, const char16_t *str2, size_t n2)
     {
         const size_t min_len = std::min(n1, n2);
-        std::u32string cp1_str, cp2_str;
         char32_t cp1, cp2;
 
         for (size_t i = 0; i < min_len; ++i) {
+            std::u32string cp1_str, cp2_str;
             unicode::utf16::decode(str1 + i, 1, cp1_str);
             unicode::utf16::decode(str2 + i, 1, cp2_str);
 

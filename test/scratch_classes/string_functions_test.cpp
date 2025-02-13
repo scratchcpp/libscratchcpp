@@ -95,6 +95,11 @@ TEST(StringFunctionsTest, CompareCaseSensitive)
     ASSERT_EQ(string_compare_case_sensitive(&str1, &str2), 0);
     ASSERT_EQ(string_compare_raw_case_sensitive(str1.data, str1.size, str2.data, str2.size), 0);
 
+    string_assign_cstring(&str1, "5.25");
+    string_assign_cstring(&str2, "5.26");
+    ASSERT_LT(string_compare_case_sensitive(&str1, &str2), 0);
+    ASSERT_LT(string_compare_raw_case_sensitive(str1.data, str1.size, str2.data, str2.size), 0);
+
     string_assign_cstring(&str1, "aBcd");
     string_assign_cstring(&str2, "abCd");
     ASSERT_LT(string_compare_case_sensitive(&str1, &str2), 0);
@@ -179,6 +184,11 @@ TEST(StringFunctionsTest, CompareCaseInsensitive)
     string_assign_cstring(&str2, "abcd");
     ASSERT_EQ(string_compare_case_insensitive(&str1, &str2), 0);
     ASSERT_EQ(string_compare_raw_case_insensitive(str1.data, str1.size, str2.data, str2.size), 0);
+
+    string_assign_cstring(&str1, "5.25");
+    string_assign_cstring(&str2, "5.26");
+    ASSERT_LT(string_compare_case_insensitive(&str1, &str2), 0);
+    ASSERT_LT(string_compare_raw_case_insensitive(str1.data, str1.size, str2.data, str2.size), 0);
 
     string_assign_cstring(&str1, "aBcd");
     string_assign_cstring(&str2, "abCd");
