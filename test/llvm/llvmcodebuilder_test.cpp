@@ -244,14 +244,10 @@ class LLVMCodeBuilderTest : public testing::Test
                     return v1 < v2;
 
                 case OpType::StrCmpEQCS:
-                    return v1.toString() == v2.toString();
+                    return string_compare_case_sensitive(value_toStringPtr(&v1.data()), value_toStringPtr(&v2.data())) == 0;
 
-                case OpType::StrCmpEQCI: {
-                    // TODO: Use a custom function for string comparison
-                    std::string str1 = v1.toString();
-                    std::string str2 = v2.toString();
-                    return strcasecmp(str1.c_str(), str2.c_str()) == 0;
-                }
+                case OpType::StrCmpEQCI:
+                    return string_compare_case_insensitive(value_toStringPtr(&v1.data()), value_toStringPtr(&v2.data())) == 0;
 
                 case OpType::And:
                     return v1.toBool() && v2.toBool();
