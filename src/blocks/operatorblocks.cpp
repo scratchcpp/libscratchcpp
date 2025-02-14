@@ -112,20 +112,20 @@ CompilerValue *OperatorBlocks::compileJoin(Compiler *compiler)
 {
     auto string1 = compiler->addInput("STRING1");
     auto string2 = compiler->addInput("STRING2");
-    return compiler->addFunctionCall("operator_join", Compiler::StaticType::String, { Compiler::StaticType::String, Compiler::StaticType::String }, { string1, string2 });
+    return compiler->createStringConcat(string1, string2);
 }
 
 CompilerValue *OperatorBlocks::compileLetterOf(Compiler *compiler)
 {
     auto letter = compiler->addInput("LETTER");
     auto string = compiler->addInput("STRING");
-    return compiler->addFunctionCall("operator_letter_of", Compiler::StaticType::String, { Compiler::StaticType::Number, Compiler::StaticType::String }, { letter, string });
+    return compiler->addStringChar(string, compiler->createSub(letter, compiler->addConstValue(1)));
 }
 
 CompilerValue *OperatorBlocks::compileLength(Compiler *compiler)
 {
     auto string = compiler->addInput("STRING");
-    return compiler->addFunctionCall("operator_length", Compiler::StaticType::Number, { Compiler::StaticType::String }, { string });
+    return compiler->addStringLength(string);
 }
 
 CompilerValue *OperatorBlocks::compileContains(Compiler *compiler)
@@ -181,36 +181,4 @@ CompilerValue *OperatorBlocks::compileMathOp(Compiler *compiler)
         return compiler->createExp10(compiler->addInput(numInput));
     else
         return compiler->addConstValue(Value());
-}
-
-extern "C" StringPtr *operator_join(const StringPtr *string1, const StringPtr *string2)
-{
-    StringPtr *ret = string_pool_new(true);
-    ret->size = string1->size + string2->size;
-    string_alloc(ret, ret->size);
-    memcpy(ret->data, string1->data, string1->size * sizeof(typeof(*string1->data)));
-    memcpy(ret->data + string1->size, string2->data, (string2->size + 1) * sizeof(typeof(*string2->data))); // +1: null-terminate
-    return ret;
-}
-
-extern "C" StringPtr *operator_letter_of(double letter, const StringPtr *string)
-{
-    StringPtr *ret = string_pool_new();
-
-    if (letter < 1 || letter > string->size) {
-        string_alloc(ret, 0);
-        ret->data[0] = u'\0';
-        return ret;
-    }
-
-    string_alloc(ret, 1);
-    ret->data[0] = string->data[static_cast<size_t>(letter - 1)];
-    ret->data[1] = u'\0';
-    ret->size = 1;
-    return ret;
-}
-
-extern "C" double operator_length(const StringPtr *string)
-{
-    return string->size;
 }
