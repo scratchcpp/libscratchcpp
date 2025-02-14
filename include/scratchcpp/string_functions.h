@@ -23,6 +23,12 @@ extern "C"
 
     LIBSCRATCHCPP_EXPORT int string_compare_raw_case_insensitive(const char16_t *str1, size_t n1, const char16_t *str2, size_t n2);
     LIBSCRATCHCPP_EXPORT int string_compare_case_insensitive(const StringPtr *str1, const StringPtr *str2);
+
+    LIBSCRATCHCPP_EXPORT bool string_contains_raw_case_sensitive(const char16_t *str, const char16_t *substr);
+    LIBSCRATCHCPP_EXPORT bool string_contains_case_sensitive(const StringPtr *str, const StringPtr *substr);
+
+    LIBSCRATCHCPP_EXPORT bool string_contains_raw_case_insensitive(const char16_t *str, const char16_t *substr);
+    LIBSCRATCHCPP_EXPORT bool string_contains_case_insensitive(const StringPtr *str, const StringPtr *substr);
 }
 
 } // namespace libscratchcpp

@@ -110,6 +110,76 @@ extern "C"
     {
         return string_compare_raw_case_insensitive_inline(str1->data, str1->size, str2->data, str2->size);
     }
+
+    inline bool string_contains_raw_case_sensitive_inline(const char16_t *str, const char16_t *substr)
+    {
+        size_t i = 0;
+
+        while (*str != u'\0') {
+            if (*str == substr[i]) {
+                i++;
+
+                if (substr[i] == u'\0')
+                    return true;
+            } else
+                i = 0;
+
+            str++;
+        }
+
+        return false;
+    }
+
+    /*! Returns true if the string contains the given substring (case sensitive). */
+    bool string_contains_raw_case_sensitive(const char16_t *str, const char16_t *substr)
+    {
+        return string_contains_raw_case_sensitive_inline(str, substr);
+    }
+
+    /*! Returns true if the string contains the given substring (case sensitive). */
+    bool string_contains_case_sensitive(const StringPtr *str, const StringPtr *substr)
+    {
+        return string_contains_raw_case_sensitive_inline(str->data, substr->data);
+    }
+
+    inline bool string_contains_raw_case_insensitive_inline(const char16_t *str, const char16_t *substr)
+    {
+        size_t i = 0;
+        char32_t cp1, cp2;
+
+        while (*str != u'\0') {
+            std::u32string cp1_str, cp2_str;
+            unicode::utf16::decode(str, 1, cp1_str);
+            unicode::utf16::decode(substr + i, 1, cp2_str);
+
+            cp1 = unicode::simple_lowercase_mapping(cp1_str.front());
+            cp2 = unicode::simple_lowercase_mapping(cp2_str.front());
+
+            if (cp1 == cp2) {
+                i++;
+
+                if (substr[i] == u'\0')
+                    return true;
+            } else
+                i = 0;
+
+            str++;
+        }
+
+        return false;
+    }
+
+    /*! Returns true if the string contains the given substring (case insensitive). */
+    bool string_contains_raw_case_insensitive(const char16_t *str, const char16_t *substr)
+    {
+        return string_contains_raw_case_insensitive_inline(str, substr);
+    }
+
+    /*! Returns true if the string contains the given substring (case insensitive). */
+    bool string_contains_case_insensitive(const StringPtr *str, const StringPtr *substr)
+    {
+        return string_contains_raw_case_insensitive_inline(str->data, substr->data);
+    }
 }
 
 } // namespace libscratchcpp

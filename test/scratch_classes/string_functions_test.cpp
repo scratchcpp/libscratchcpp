@@ -265,3 +265,133 @@ TEST(StringFunctionsTest, CompareCaseInsensitive)
     ASSERT_EQ(string_compare_case_insensitive(&str1, &str2), 0);
     ASSERT_EQ(string_compare_raw_case_insensitive(str1.data, str1.size, str2.data, str2.size), 0);
 }
+
+TEST(StringFunctionsTest, ContainsCaseSensitive)
+{
+    StringPtr str, substr;
+
+    string_assign_cstring(&str, "abc");
+    string_assign_cstring(&substr, "a");
+    ASSERT_TRUE(string_contains_case_sensitive(&str, &substr));
+    ASSERT_TRUE(string_contains_raw_case_sensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "abc");
+    string_assign_cstring(&substr, "e");
+    ASSERT_FALSE(string_contains_case_sensitive(&str, &substr));
+    ASSERT_FALSE(string_contains_raw_case_sensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "Hello world");
+    string_assign_cstring(&substr, "ello");
+    ASSERT_TRUE(string_contains_case_sensitive(&str, &substr));
+    ASSERT_TRUE(string_contains_raw_case_sensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "Hello world");
+    string_assign_cstring(&substr, "eLlo");
+    ASSERT_FALSE(string_contains_case_sensitive(&str, &substr));
+    ASSERT_FALSE(string_contains_raw_case_sensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "test ste");
+    string_assign_cstring(&substr, "ste");
+    ASSERT_TRUE(string_contains_case_sensitive(&str, &substr));
+    ASSERT_TRUE(string_contains_raw_case_sensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "Hello world");
+    string_assign_cstring(&substr, "olld");
+    ASSERT_FALSE(string_contains_case_sensitive(&str, &substr));
+    ASSERT_FALSE(string_contains_raw_case_sensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "ábČ");
+    string_assign_cstring(&substr, "á");
+    ASSERT_TRUE(string_contains_case_sensitive(&str, &substr));
+    ASSERT_TRUE(string_contains_raw_case_sensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "ábČ");
+    string_assign_cstring(&substr, "bČ");
+    ASSERT_TRUE(string_contains_case_sensitive(&str, &substr));
+    ASSERT_TRUE(string_contains_raw_case_sensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "ábČ");
+    string_assign_cstring(&substr, "bč");
+    ASSERT_FALSE(string_contains_case_sensitive(&str, &substr));
+    ASSERT_FALSE(string_contains_raw_case_sensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "ábČ");
+    string_assign_cstring(&substr, "ďá");
+    ASSERT_FALSE(string_contains_case_sensitive(&str, &substr));
+    ASSERT_FALSE(string_contains_raw_case_sensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "Lorem💀ipsum");
+    string_assign_cstring(&substr, "m💀");
+    ASSERT_TRUE(string_contains_case_sensitive(&str, &substr));
+    ASSERT_TRUE(string_contains_raw_case_sensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "Lorem ipsum");
+    string_assign_cstring(&substr, "💀");
+    ASSERT_FALSE(string_contains_case_sensitive(&str, &substr));
+    ASSERT_FALSE(string_contains_raw_case_sensitive(str.data, substr.data));
+}
+
+TEST(StringFunctionsTest, ContainsCaseInsensitive)
+{
+    StringPtr str, substr;
+
+    string_assign_cstring(&str, "abc");
+    string_assign_cstring(&substr, "a");
+    ASSERT_TRUE(string_contains_case_insensitive(&str, &substr));
+    ASSERT_TRUE(string_contains_raw_case_insensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "abc");
+    string_assign_cstring(&substr, "e");
+    ASSERT_FALSE(string_contains_case_insensitive(&str, &substr));
+    ASSERT_FALSE(string_contains_raw_case_insensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "Hello world");
+    string_assign_cstring(&substr, "ello");
+    ASSERT_TRUE(string_contains_case_insensitive(&str, &substr));
+    ASSERT_TRUE(string_contains_raw_case_insensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "Hello world");
+    string_assign_cstring(&substr, "eLlo");
+    ASSERT_TRUE(string_contains_case_insensitive(&str, &substr));
+    ASSERT_TRUE(string_contains_raw_case_insensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "test ste");
+    string_assign_cstring(&substr, "ste");
+    ASSERT_TRUE(string_contains_case_insensitive(&str, &substr));
+    ASSERT_TRUE(string_contains_raw_case_insensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "Hello world");
+    string_assign_cstring(&substr, "olld");
+    ASSERT_FALSE(string_contains_case_insensitive(&str, &substr));
+    ASSERT_FALSE(string_contains_raw_case_insensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "ábČ");
+    string_assign_cstring(&substr, "á");
+    ASSERT_TRUE(string_contains_case_insensitive(&str, &substr));
+    ASSERT_TRUE(string_contains_raw_case_insensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "ábČ");
+    string_assign_cstring(&substr, "bČ");
+    ASSERT_TRUE(string_contains_case_insensitive(&str, &substr));
+    ASSERT_TRUE(string_contains_raw_case_insensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "ábČ");
+    string_assign_cstring(&substr, "bč");
+    ASSERT_TRUE(string_contains_case_insensitive(&str, &substr));
+    ASSERT_TRUE(string_contains_raw_case_insensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "ábČ");
+    string_assign_cstring(&substr, "ďá");
+    ASSERT_FALSE(string_contains_case_insensitive(&str, &substr));
+    ASSERT_FALSE(string_contains_raw_case_insensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "Lorem💀ipsum");
+    string_assign_cstring(&substr, "m💀");
+    ASSERT_TRUE(string_contains_case_insensitive(&str, &substr));
+    ASSERT_TRUE(string_contains_raw_case_insensitive(str.data, substr.data));
+
+    string_assign_cstring(&str, "Lorem ipsum");
+    string_assign_cstring(&substr, "💀");
+    ASSERT_FALSE(string_contains_case_insensitive(&str, &substr));
+    ASSERT_FALSE(string_contains_raw_case_insensitive(str.data, substr.data));
+}
