@@ -180,14 +180,14 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
             }
 
             StringPtr *ret = string_pool_new();
-            size_t offset = 0;
+            ret->size = 0;
 
             if (digits) {
                 string_alloc(ret, size);
 
                 for (i = 0; i < strings.size(); i++) {
-                    memcpy(ret->data + offset, strings[i]->data, strings[i]->size * sizeof(char16_t));
-                    offset += strings[i]->size;
+                    memcpy(ret->data + ret->size, strings[i]->data, strings[i]->size * sizeof(char16_t));
+                    ret->size += strings[i]->size;
                     string_pool_free(strings[i]);
                 }
 
@@ -195,8 +195,8 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
                     StringPtr *item = value_toStringPtr(&m_dataPtr->operator[](i));
                     size += item->size + 1;
                     string_alloc(ret, size);
-                    memcpy(ret->data + offset, item->data, item->size * sizeof(char16_t));
-                    offset += item->size;
+                    memcpy(ret->data + ret->size, item->data, item->size * sizeof(char16_t));
+                    ret->size += item->size;
                     string_pool_free(item);
                 }
             } else {
@@ -204,28 +204,28 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
                 string_alloc(ret, size);
 
                 for (i = 0; i < strings.size(); i++) {
-                    memcpy(ret->data + offset, strings[i]->data, strings[i]->size * sizeof(char16_t));
-                    offset += strings[i]->size;
+                    memcpy(ret->data + ret->size, strings[i]->data, strings[i]->size * sizeof(char16_t));
+                    ret->size += strings[i]->size;
                     string_pool_free(strings[i]);
 
                     if (i + 1 < m_size)
-                        ret->data[offset++] = u' ';
+                        ret->data[ret->size++] = u' ';
                 }
 
                 for (; i < m_size; i++) {
                     StringPtr *item = value_toStringPtr(&m_dataPtr->operator[](i));
                     size += item->size + 1;
                     string_alloc(ret, size);
-                    memcpy(ret->data + offset, item->data, item->size * sizeof(char16_t));
-                    offset += item->size;
+                    memcpy(ret->data + ret->size, item->data, item->size * sizeof(char16_t));
+                    ret->size += item->size;
                     string_pool_free(item);
 
                     if (i + 1 < m_size)
-                        ret->data[offset++] = u' ';
+                        ret->data[ret->size++] = u' ';
                 }
             }
 
-            ret->data[offset] = u'\0';
+            ret->data[ret->size] = u'\0';
             return ret;
         }
 

@@ -281,17 +281,20 @@ TEST(ListTest, ToString)
     List list("", "test list");
     StringPtr *str = list.toStringPtr();
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "");
+    ASSERT_EQ(str->size, 0);
     ASSERT_EQ(list.toString(), "");
 
     list.append("");
     str = list.toStringPtr();
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "");
+    ASSERT_EQ(str->size, 0);
     ASSERT_EQ(list.toString(), "");
 
     list.append("");
     list.append("");
     str = list.toStringPtr();
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "  ");
+    ASSERT_EQ(str->size, 2);
     ASSERT_EQ(list.toString(), "  ");
 
     list.clear();
@@ -300,6 +303,7 @@ TEST(ListTest, ToString)
     list.append("item 3");
     str = list.toStringPtr();
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "item1 i t e m 2 item 3");
+    ASSERT_EQ(str->size, 22);
     ASSERT_EQ(list.toString(), "item1 i t e m 2 item 3");
 
     list.clear();
@@ -309,6 +313,7 @@ TEST(ListTest, ToString)
     list.append(" c ");
     str = list.toStringPtr();
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "  a   b  c ");
+    ASSERT_EQ(str->size, 11);
     ASSERT_EQ(list.toString(), "  a   b  c ");
 
     list.clear();
@@ -316,6 +321,7 @@ TEST(ListTest, ToString)
     list.append("ľ š");
     str = list.toStringPtr();
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "áä ľ š");
+    ASSERT_EQ(str->size, 6);
     ASSERT_EQ(list.toString(), "áä ľ š");
 
     list.clear();
@@ -324,6 +330,7 @@ TEST(ListTest, ToString)
     list.append(8);
     str = list.toStringPtr();
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "-2 5 8");
+    ASSERT_EQ(str->size, 6);
     ASSERT_EQ(list.toString(), "-2 5 8");
 
     list.clear();
@@ -332,6 +339,7 @@ TEST(ListTest, ToString)
     list.append(8);
     str = list.toStringPtr();
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "2 10 8");
+    ASSERT_EQ(str->size, 6);
     ASSERT_EQ(list.toString(), "2 10 8");
 
     list.clear();
@@ -340,6 +348,7 @@ TEST(ListTest, ToString)
     list.append(8);
     str = list.toStringPtr();
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "098");
+    ASSERT_EQ(str->size, 3);
     ASSERT_EQ(list.toString(), "098");
 
     list.clear();
@@ -347,6 +356,7 @@ TEST(ListTest, ToString)
     list.append("false");
     str = list.toStringPtr();
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "true false");
+    ASSERT_EQ(str->size, 10);
     ASSERT_EQ(list.toString(), "true false");
 
     list.clear();
@@ -354,6 +364,7 @@ TEST(ListTest, ToString)
     list.append(false);
     str = list.toStringPtr();
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "true false");
+    ASSERT_EQ(str->size, 10);
     ASSERT_EQ(list.toString(), "true false");
 }
 
