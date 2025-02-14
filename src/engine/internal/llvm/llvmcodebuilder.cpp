@@ -1590,7 +1590,7 @@ void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *val
 
     if (m_loopScope >= 0) {
         auto scope = m_loopScopes[m_loopScope];
-        m_variablePtrs[variable].loopVariableWrites[scope].push_back(m_instructions.back());
+        m_variablePtrs[variable].loopVariableWrites[scope.get()].push_back(m_instructions.back());
     }
 
     m_variableInstructions.push_back(m_instructions.back());
@@ -1627,7 +1627,7 @@ void LLVMCodeBuilder::createListAppend(List *list, CompilerValue *item)
 
     if (m_loopScope >= 0) {
         auto scope = m_loopScopes[m_loopScope];
-        m_listPtrs[list].loopListWrites[scope].push_back(m_instructions.back());
+        m_listPtrs[list].loopListWrites[scope.get()].push_back(m_instructions.back());
     }
 
     m_listInstructions.push_back(m_instructions.back());
@@ -1644,7 +1644,7 @@ void LLVMCodeBuilder::createListInsert(List *list, CompilerValue *index, Compile
 
     if (m_loopScope >= 0) {
         auto scope = m_loopScopes[m_loopScope];
-        m_listPtrs[list].loopListWrites[scope].push_back(m_instructions.back());
+        m_listPtrs[list].loopListWrites[scope.get()].push_back(m_instructions.back());
     }
 
     m_listInstructions.push_back(m_instructions.back());
@@ -1661,7 +1661,7 @@ void LLVMCodeBuilder::createListReplace(List *list, CompilerValue *index, Compil
 
     if (m_loopScope >= 0) {
         auto scope = m_loopScopes[m_loopScope];
-        m_listPtrs[list].loopListWrites[scope].push_back(m_instructions.back());
+        m_listPtrs[list].loopListWrites[scope.get()].push_back(m_instructions.back());
     }
 
     m_listInstructions.push_back(m_instructions.back());
@@ -1878,8 +1878,8 @@ void LLVMCodeBuilder::pushLoopScope(bool buildPhase)
 
         if (m_loopScope >= 0) {
             auto currentScope = m_loopScopes[m_loopScope];
-            currentScope->childScopes.push_back(scope);
-            scope->parentScope = currentScope;
+            currentScope->childScopes.push_back(scope.get());
+            scope->parentScope = currentScope.get();
         }
 
         m_loopScope = m_loopScopes.size() - 1;
@@ -2511,9 +2511,9 @@ LLVMRegister *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::St
     return nullptr;
 }
 
-std::shared_ptr<LLVMLoopScope> LLVMCodeBuilder::currentLoopScope() const
+LLVMLoopScope *LLVMCodeBuilder::currentLoopScope() const
 {
-    return m_loopScope >= 0 ? m_loopScopes[m_loopScope] : nullptr;
+    return m_loopScope >= 0 ? m_loopScopes[m_loopScope].get() : nullptr;
 }
 
 void LLVMCodeBuilder::createValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType)

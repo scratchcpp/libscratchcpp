@@ -11,8 +11,8 @@ namespace libscratchcpp
 struct LLVMLoopScope
 {
         bool containsYield = false;
-        std::shared_ptr<LLVMLoopScope> parentScope;
-        std::vector<std::shared_ptr<LLVMLoopScope>> childScopes;
+        LLVMLoopScope *parentScope = nullptr;
+        std::vector<LLVMLoopScope *> childScopes;
 };
 
 } // namespace libscratchcpp
