@@ -1,6 +1,7 @@
 #include <scratchcpp/list.h>
 #include <scratchcpp/target.h>
 #include <scratchcpp/monitor.h>
+#include <utf8.h>
 
 #include "../common.h"
 
@@ -188,10 +189,12 @@ TEST(ListTest, Clear)
 TEST(ListTest, Append)
 {
     List list("", "test list");
+    Value v1("ipsum");
+    Value v2("sit");
     list.append("Lorem");
-    list.append(Value("ipsum").data());
+    list.append(v1.data());
     list.append("dolor");
-    list.append(Value("sit").data());
+    list.append(v2.data());
     list.append("amet");
     ASSERT_EQ(list.toString(), "Lorem ipsum dolor sit amet");
 
@@ -276,26 +279,31 @@ TEST(ListTest, ArrayIndexOperator)
 TEST(ListTest, ToString)
 {
     List list("", "test list");
-    std::string s;
-    list.toString(s);
-    ASSERT_EQ(s, "");
+    StringPtr *str = list.toStringPtr();
+    ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "");
+    ASSERT_EQ(str->size, 0);
     ASSERT_EQ(list.toString(), "");
 
     list.append("");
-    list.toString(s);
-    ASSERT_EQ(s, "");
+    str = list.toStringPtr();
+    ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "");
+    ASSERT_EQ(str->size, 0);
     ASSERT_EQ(list.toString(), "");
 
     list.append("");
     list.append("");
+    str = list.toStringPtr();
+    ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "  ");
+    ASSERT_EQ(str->size, 2);
     ASSERT_EQ(list.toString(), "  ");
 
     list.clear();
     list.append("item1");
     list.append("i t e m 2");
     list.append("item 3");
-    list.toString(s);
-    ASSERT_EQ(s, "item1 i t e m 2 item 3");
+    str = list.toStringPtr();
+    ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "item1 i t e m 2 item 3");
+    ASSERT_EQ(str->size, 22);
     ASSERT_EQ(list.toString(), "item1 i t e m 2 item 3");
 
     list.clear();
@@ -303,53 +311,60 @@ TEST(ListTest, ToString)
     list.append("a ");
     list.append(" b");
     list.append(" c ");
-    list.toString(s);
-    ASSERT_EQ(s, "  a   b  c ");
+    str = list.toStringPtr();
+    ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "  a   b  c ");
+    ASSERT_EQ(str->size, 11);
     ASSERT_EQ(list.toString(), "  a   b  c ");
 
     list.clear();
     list.append("áä");
     list.append("ľ š");
-    list.toString(s);
-    ASSERT_EQ(s, "áä ľ š");
+    str = list.toStringPtr();
+    ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "áä ľ š");
+    ASSERT_EQ(str->size, 6);
     ASSERT_EQ(list.toString(), "áä ľ š");
 
     list.clear();
     list.append(-2);
     list.append(5);
     list.append(8);
-    list.toString(s);
-    ASSERT_EQ(s, "-2 5 8");
+    str = list.toStringPtr();
+    ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "-2 5 8");
+    ASSERT_EQ(str->size, 6);
     ASSERT_EQ(list.toString(), "-2 5 8");
 
     list.clear();
     list.append(2);
     list.append(10);
     list.append(8);
-    list.toString(s);
-    ASSERT_EQ(s, "2 10 8");
+    str = list.toStringPtr();
+    ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "2 10 8");
+    ASSERT_EQ(str->size, 6);
     ASSERT_EQ(list.toString(), "2 10 8");
 
     list.clear();
     list.append(0);
     list.append(9);
     list.append(8);
-    list.toString(s);
-    ASSERT_EQ(s, "098");
+    str = list.toStringPtr();
+    ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "098");
+    ASSERT_EQ(str->size, 3);
     ASSERT_EQ(list.toString(), "098");
 
     list.clear();
     list.append("true");
     list.append("false");
-    list.toString(s);
-    ASSERT_EQ(s, "true false");
+    str = list.toStringPtr();
+    ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "true false");
+    ASSERT_EQ(str->size, 10);
     ASSERT_EQ(list.toString(), "true false");
 
     list.clear();
     list.append(true);
     list.append(false);
-    list.toString(s);
-    ASSERT_EQ(s, "true false");
+    str = list.toStringPtr();
+    ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "true false");
+    ASSERT_EQ(str->size, 10);
     ASSERT_EQ(list.toString(), "true false");
 }
 

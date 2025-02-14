@@ -20,6 +20,7 @@ class LIBSCRATCHCPP_EXPORT Thread
     public:
         Thread(Target *target, IEngine *engine, Script *script);
         Thread(const Thread &) = delete;
+        ~Thread();
 
         Target *target() const;
         IEngine *engine() const;

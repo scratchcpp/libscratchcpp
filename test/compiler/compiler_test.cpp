@@ -173,6 +173,49 @@ TEST_F(CompilerTest, AddConstValue)
     compile(m_compiler.get(), block);
 }
 
+TEST_F(CompilerTest, AddStringChar)
+{
+
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        CompilerValue arg1(Compiler::StaticType::Unknown);
+        CompilerValue arg2(Compiler::StaticType::Unknown);
+        CompilerValue ret(Compiler::StaticType::Unknown);
+
+        EXPECT_CALL(*m_builder, addStringChar(&arg1, &arg2)).WillOnce(Return(&ret));
+        EXPECT_EQ(compiler->addStringChar(&arg1, &arg2), &ret);
+
+        EXPECT_CALL(*m_builder, addStringChar(&arg1, &arg2)).WillOnce(Return(nullptr));
+        EXPECT_EQ(compiler->addStringChar(&arg1, &arg2), nullptr);
+
+        return nullptr;
+    });
+
+    compile(m_compiler.get(), block);
+}
+
+TEST_F(CompilerTest, AddStringLength)
+{
+
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        CompilerValue arg(Compiler::StaticType::Unknown);
+        CompilerValue ret(Compiler::StaticType::Unknown);
+
+        EXPECT_CALL(*m_builder, addStringLength(&arg)).WillOnce(Return(&ret));
+        EXPECT_EQ(compiler->addStringLength(&arg), &ret);
+
+        EXPECT_CALL(*m_builder, addStringLength(&arg)).WillOnce(Return(nullptr));
+        EXPECT_EQ(compiler->addStringLength(&arg), nullptr);
+
+        return nullptr;
+    });
+
+    compile(m_compiler.get(), block);
+}
+
 TEST_F(CompilerTest, AddLoopIndex)
 {
 
@@ -950,6 +993,24 @@ TEST_F(CompilerTest, CreateExp10)
         CompilerValue ret(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, createExp10(&arg)).WillOnce(Return(&ret));
         EXPECT_EQ(compiler->createExp10(&arg), &ret);
+
+        return nullptr;
+    });
+
+    compile(m_compiler.get(), block);
+}
+
+TEST_F(CompilerTest, CreateStringConcat)
+{
+
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        CompilerValue arg1(Compiler::StaticType::Unknown);
+        CompilerValue arg2(Compiler::StaticType::Unknown);
+        CompilerValue ret(Compiler::StaticType::Unknown);
+        EXPECT_CALL(*m_builder, createStringConcat(&arg1, &arg2)).WillOnce(Return(&ret));
+        EXPECT_EQ(compiler->createStringConcat(&arg1, &arg2), &ret);
 
         return nullptr;
     });

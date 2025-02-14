@@ -121,6 +121,48 @@ target_link_libraries(
 
 gtest_discover_tests(value_test)
 
+# stringptr_test
+add_executable(
+  stringptr_test
+  stringptr_test.cpp
+)
+
+target_link_libraries(
+  stringptr_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(stringptr_test)
+
+# string_functions_test
+add_executable(
+  string_functions_test
+  string_functions_test.cpp
+)
+
+target_link_libraries(
+  string_functions_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(string_functions_test)
+
+# string_pool_test
+add_executable(
+  string_pool_test
+  string_pool_test.cpp
+)
+
+target_link_libraries(
+  string_pool_test
+  GTest::gtest_main
+  scratchcpp
+)
+
+gtest_discover_tests(string_pool_test)
+
 # entity_test
 add_executable(
   entity_test

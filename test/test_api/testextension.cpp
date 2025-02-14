@@ -4,6 +4,8 @@
 #include <scratchcpp/value.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/stringptr.h>
+#include <utf8.h>
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -94,7 +96,7 @@ extern "C" void test_simple()
     std::cout << "test" << std::endl;
 }
 
-extern "C" void test_print(const char *string)
+extern "C" void test_print(const StringPtr *string)
 {
-    std::cout << string << std::endl;
+    std::cout << utf8::utf16to8(std::u16string(string->data)) << std::endl;
 }

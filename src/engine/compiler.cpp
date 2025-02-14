@@ -151,6 +151,18 @@ CompilerConstant *Compiler::addConstValue(const Value &value)
     return static_cast<CompilerConstant *>(impl->builder->addConstValue(value));
 }
 
+/*! Adds the string character with the given index to the compiled code. */
+CompilerValue *Compiler::addStringChar(CompilerValue *string, CompilerValue *index)
+{
+    return impl->builder->addStringChar(string, index);
+}
+
+/*! Adds the length of the given string to the compiled code. */
+CompilerValue *Compiler::addStringLength(CompilerValue *string)
+{
+    return impl->builder->addStringLength(string);
+}
+
 /*! Adds the index of the current repeat loop to the compiled code. */
 CompilerValue *Compiler::addLoopIndex()
 {
@@ -442,6 +454,12 @@ CompilerValue *Compiler::createExp(CompilerValue *num)
 CompilerValue *Compiler::createExp10(CompilerValue *num)
 {
     return impl->builder->createExp10(num);
+}
+
+/*! Creates a string concatenation operation. */
+CompilerValue *Compiler::createStringConcat(CompilerValue *string1, CompilerValue *string2)
+{
+    return impl->builder->createStringConcat(string1, string2);
 }
 
 /*! Creates a select instruction (ternary operator). */

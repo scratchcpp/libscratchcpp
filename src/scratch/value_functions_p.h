@@ -3,20 +3,30 @@
 #pragma once
 
 #include <scratchcpp/value_functions.h>
+#include <scratchcpp/string_functions.h>
+#include <scratchcpp/string_pool.h>
+#include <scratchcpp/stringptr.h>
 #include <algorithm>
 #include <limits>
 #include <ctgmath>
-#include <iomanip>
 #include <charconv>
 #include <cassert>
+#include <utf8.h>
 
 #include "thirdparty/fast_float/fast_float.h"
 
 // Faster than std::isspace()
-#define IS_SPACE(x) (x == ' ' || x == '\f' || x == '\n' || x == '\r' || x == '\t' || x == '\v')
+#define IS_SPACE(x) (x == u' ' || x == u'\f' || x == u'\n' || x == u'\r' || x == u'\t' || x == u'\v')
 
 namespace libscratchcpp
 {
+
+static const StringPtr TRUE_STR("true");
+static const StringPtr FALSE_STR("false");
+static const StringPtr INFINITY_STR("Infinity");
+static const StringPtr NEGATIVE_INFINITY_STR("-Infinity");
+static const StringPtr NAN_STR("NaN");
+static const StringPtr ZERO_STR("0");
 
 template<typename T>
 inline unsigned int value_intDigitCount(T v)
@@ -63,19 +73,19 @@ extern "C"
         return v < 0 && std::isinf(v);
     }
 
-    inline double value_convert_int_str(const char *str, int n, bool *ok)
+    inline double value_convert_int_str(const char16_t *str, int n, bool *ok)
     {
         if (ok)
             *ok = false;
 
-        const char *begin = str;
-        const char *end = begin + n;
+        const char16_t *begin = str;
+        const char16_t *end = begin + n;
 
         bool isNegative = false;
         long ret = 0;
 
-        if (*str == '-' || *str == '+') {
-            isNegative = (*str == '-');
+        if (*str == u'-' || *str == u'+') {
+            isNegative = (*str == u'-');
             ++str;
 
             if (str == begin + n)
@@ -83,10 +93,10 @@ extern "C"
         }
 
         while (str < end) {
-            if (*str < '0' || *str > '9')
+            if (*str < u'0' || *str > u'9')
                 return 0;
 
-            ret = ret * 10 + (*str++ - '0');
+            ret = ret * 10 + (*str++ - u'0');
         }
 
         if (ok)
@@ -98,79 +108,23 @@ extern "C"
             return ret;
     }
 
-    inline size_t value_getSize(size_t x)
-    {
-        if (x == 0)
-            return 0;
-
-        size_t ret = 1;
-
-        while (ret < x)
-            ret *= 2;
-
-        return ret;
-    }
-
-    inline void value_initStr(ValueData *v, const char *s)
-    {
-        const size_t len = strlen(s);
-        v->stringSize = value_getSize(len + 1);
-        v->type = ValueType::String;
-        v->stringValue = (char *)malloc((v->stringSize * sizeof(char)));
-        memcpy(v->stringValue, s, len);
-        v->stringValue[len] = '\0';
-    }
-
-    inline void value_replaceStr(ValueData *v, const char *s)
-    {
-        const size_t len = strlen(s);
-        const size_t size = value_getSize(len + 1);
-
-        if (size == 0)
-            return;
-
-        if (size > v->stringSize || v->stringSize / size > 3) {
-            v->stringSize = size;
-            v->stringValue = (char *)realloc(v->stringValue, v->stringSize * sizeof(char));
-        }
-
-        memcpy(v->stringValue, s, len);
-        v->stringValue[len] = '\0';
-    }
-
-    inline bool value_u16StringsEqual(std::u16string s1, std::u16string s2)
-    {
-        std::transform(s1.begin(), s1.end(), s1.begin(), ::tolower);
-        std::transform(s2.begin(), s2.end(), s2.begin(), ::tolower);
-        return (s1.compare(s2) == 0);
-    }
-
-    inline bool value_stringsEqual(const char *s1, const char *s2)
-    {
-        std::string str1(s1);
-        std::string str2(s2);
-        std::transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
-        std::transform(str2.begin(), str2.end(), str2.begin(), ::tolower);
-        return (str1.compare(str2) == 0);
-    }
-
-    inline long value_hexToDec(const char *s, int n, bool *ok)
+    inline long value_hexToDec(const char16_t *s, int n, bool *ok)
     {
         if (ok)
             *ok = false;
 
         // Ignore dots, plus and minus signs
-        const char *p = s;
+        const char16_t *p = s;
 
         while (p < s + n) {
-            if (*p == '.' || *p == '+' || *p == '-')
+            if (*p == u'.' || *p == u'+' || *p == u'-')
                 return 0;
 
             p++;
         }
 
         long result = 0;
-        auto [ptr, ec] = std::from_chars(s, s + n, result, 16);
+        auto [ptr, ec] = fast_float::from_chars(s, s + n, result, 16);
 
         if (ec == std::errc{} && ptr == s + n) {
             if (ok)
@@ -181,73 +135,70 @@ extern "C"
             return 0;
     }
 
-    inline long value_octToDec(const char *s, int n, bool *ok)
+    inline long value_octToDec(const char16_t *s, int n, bool *ok)
     {
         if (ok)
             *ok = false;
 
         // Ignore plus and minus signs
-        const char *p = s;
+        const char16_t *p = s;
 
         while (p < s + n) {
-            if (*p == '+' || *p == '-')
+            if (*p == u'+' || *p == u'-')
                 return 0;
 
             p++;
         }
 
-        char *err;
-        const double ret = std::strtol(s, &err, 8);
+        long result = 0;
+        auto [ptr, ec] = fast_float::from_chars(s, s + n, result, 8);
 
-        if (*err != 0 && !std::isspace(*err))
-            return 0;
-        else {
+        if (ec == std::errc{} && ptr == s + n) {
             if (ok)
                 *ok = true;
 
-            return ret;
-        }
+            return result;
+        } else
+            return 0;
     }
 
-    inline double value_binToDec(const char *s, int n, bool *ok)
+    inline double value_binToDec(const char16_t *s, int n, bool *ok)
     {
         if (ok)
             *ok = false;
 
         // Ignore plus and minus signs
-        const char *p = s;
+        const char16_t *p = s;
 
         while (p < s + n) {
-            if (*p == '+' || *p == '-')
+            if (*p == u'+' || *p == u'-')
                 return 0;
 
             p++;
         }
 
-        char *err;
-        const double ret = std::strtol(s, &err, 2);
+        long result = 0;
+        auto [ptr, ec] = fast_float::from_chars(s, s + n, result, 2);
 
-        if (*err != 0 && !std::isspace(*err))
-            return 0;
-        else {
+        if (ec == std::errc{} && ptr == s + n) {
             if (ok)
                 *ok = true;
 
-            return ret;
-        }
+            return result;
+        } else
+            return 0;
     }
 
-    inline double value_stringToDoubleImpl(const char *s, bool *ok = nullptr)
+    inline double value_stringToDoubleImpl(const char16_t *s, size_t n, bool *ok = nullptr)
     {
         if (ok)
             *ok = false;
 
-        if (!s || *s == '\0')
+        if (!s || n == 0)
             return 0;
 
-        const size_t len = strlen(s);
-        const char *begin = s;
-        const char *end = s + len;
+        const char16_t *begin = s;
+        const char16_t *end = s + n;
 
         // Trim leading spaces
         while (begin < end && IS_SPACE(*begin))
@@ -271,32 +222,32 @@ extern "C"
             return ret;
         }
 
-        char *copy = nullptr;
+        char16_t *copy = nullptr;
 
         // If there's a leading plus sign, copy the string and replace the plus sign with zero (e. g. '+.15' -> '0.15')
         // If there's a leading minus sign with a dot, insert zero next to the minus sign (e. g. '-.15' -> '-0.15')
-        if (begin[0] == '+' || (begin[0] == '-' && end - begin > 1 && begin[1] == '.')) {
-            copy = new char[end - begin + 2];
+        if (begin[0] == u'+' || (begin[0] == u'-' && end - begin > 1 && begin[1] == u'.')) {
+            copy = new char16_t[end - begin + 2];
 
-            if (begin[0] == '-') {
-                copy[0] = '-';
-                copy[1] = '0';
-                memcpy(copy + 2, begin + 1, end - begin - 1);
-                copy[end - begin + 1] = '\0';
+            if (begin[0] == u'-') {
+                copy[0] = u'-';
+                copy[1] = u'0';
+                memcpy(copy + 2, begin + 1, (end - begin - 1) * sizeof(char16_t));
+                copy[end - begin + 1] = u'\0';
                 end = copy + (end - begin) + 1;
             } else {
-                memcpy(copy, begin, end - begin);
-                copy[0] = '0';
-                copy[end - begin] = '\0';
+                memcpy(copy, begin, (end - begin) * sizeof(char16_t));
+                copy[0] = u'0';
+                copy[end - begin] = u'\0';
                 end = copy + (end - begin);
             }
             begin = copy;
         } else {
             // If there's a leading dot, copy the string and insert zero prior to the dot (e. g. '.15' -> '0.15')
             if (begin[0] == '.') {
-                copy = new char[end - begin + 2];
-                copy[0] = '0';
-                memcpy(copy + 1, begin, end - begin);
+                copy = new char16_t[end - begin + 2];
+                copy[0] = u'0';
+                memcpy(copy + 1, begin, (end - begin) * sizeof(char16_t));
                 end = copy + (end - begin) + 1;
                 begin = copy;
             }
@@ -310,43 +261,42 @@ extern "C"
         }
 
         // Handle hex, oct and bin (currently ignored if the string was manipulated above)
-        if (!copy && end - begin > 2 && begin[0] == '0') {
-            const char prefix = begin[1];
-            const char *sub = begin + 2;
+        if (!copy && end - begin > 2 && begin[0] == u'0') {
+            const char16_t prefix = begin[1];
+            const char16_t *sub = begin + 2;
 
-            if (prefix == 'x' || prefix == 'X') {
+            if (prefix == u'x' || prefix == u'X') {
                 return value_hexToDec(sub, end - begin - 2, ok);
-            } else if (prefix == 'o' || prefix == 'O') {
+            } else if (prefix == u'o' || prefix == u'O') {
                 return value_octToDec(sub, end - begin - 2, ok);
-            } else if (prefix == 'b' || prefix == 'B') {
+            } else if (prefix == u'b' || prefix == u'B') {
                 return value_binToDec(sub, end - begin - 2, ok);
             }
         }
 
         // If there's a trailing dot, copy the string and append zero next to it (e. g. '1.' -> '1.0')
-        if (end[-1] == '.') {
+        if (end[-1] == u'.') {
             if (copy) {
-                char *tmpCopy = new char[end - begin + 2];
-                memcpy(tmpCopy, begin, end - begin);
+                char16_t *tmpCopy = new char16_t[end - begin + 1];
+                memcpy(tmpCopy, begin, (end - begin) * sizeof(char16_t));
                 delete[] copy;
                 copy = tmpCopy;
                 end = copy + (end - begin) + 1;
                 begin = copy;
             } else {
-                copy = new char[end - begin + 2];
-                memcpy(copy, begin, end - begin);
+                copy = new char16_t[end - begin + 1];
+                memcpy(copy, begin, (end - begin) * sizeof(char16_t));
                 end = copy + (end - begin) + 1;
                 begin = copy;
             }
 
-            copy[end - begin - 1] = '0';
-            copy[end - begin] = '\0';
+            copy[end - begin - 1] = u'0';
         }
 
         // Trim leading zeros
         bool trimmed = false;
 
-        while (begin < end && (*begin == '0') && !(begin + 1 < end && begin[1] == '.')) {
+        while (begin < end && (*begin == u'0') && !(begin + 1 < end && begin[1] == u'.')) {
             trimmed = true;
             ++begin;
         }
@@ -362,7 +312,7 @@ extern "C"
         }
 
         // Ignore cases like '0+5' or '0-5'
-        if (trimmed && (begin[0] == '+' || begin[0] == '-')) {
+        if (trimmed && (begin[0] == u'+' || begin[0] == u'-')) {
             if (copy)
                 delete[] copy;
 
@@ -382,11 +332,11 @@ extern "C"
         }
 
         // Special values
-        if (value_stringsEqual(s, "Infinity")) {
+        if (string_compare_raw_case_sensitive(s, n, INFINITY_STR.data, INFINITY_STR.size) == 0) {
             if (ok)
                 *ok = true;
             return std::numeric_limits<double>::infinity();
-        } else if (value_stringsEqual(s, "-Infinity")) {
+        } else if (string_compare_raw_case_sensitive(s, n, NEGATIVE_INFINITY_STR.data, NEGATIVE_INFINITY_STR.size) == 0) {
             if (ok)
                 *ok = true;
             return -std::numeric_limits<double>::infinity();
@@ -395,9 +345,9 @@ extern "C"
         return 0;
     }
 
-    inline long value_stringToLong(const char *s, bool *ok = nullptr)
+    inline long value_stringToLong(const StringPtr *s, bool *ok = nullptr)
     {
-        const double ret = value_stringToDoubleImpl(s, ok);
+        const double ret = value_stringToDoubleImpl(s->data, s->size, ok);
 
         if (std::isinf(ret))
             return 0;
@@ -405,12 +355,12 @@ extern "C"
         return ret;
     }
 
-    inline bool value_stringIsInt(const char *s, int n)
+    inline bool value_stringIsInt(const char16_t *s, int n)
     {
-        const char *p = s;
+        const char16_t *p = s;
 
         while (p < s + n) {
-            if (*p == '.' || *p == 'e' || *p == 'E')
+            if (*p == u'.' || *p == u'e' || *p == u'E')
                 return false;
 
             p++;
@@ -429,15 +379,15 @@ extern "C"
         return std::round(v * f) / f;
     }
 
-    inline int value_checkString(const char *str)
+    inline int value_checkString(const StringPtr *str)
     {
         bool ok;
 
-        if (value_stringIsInt(str, strlen(str))) {
+        if (value_stringIsInt(str->data, str->size)) {
             value_stringToLong(str, &ok);
             return ok ? 1 : 0;
         } else {
-            value_stringToDoubleImpl(str, &ok);
+            value_stringToDoubleImpl(str->data, str->size, &ok);
             return ok ? 2 : 0;
         }
     }
@@ -451,7 +401,7 @@ extern "C"
         // Since functions calling this already prioritize int, double and bool,
         // we can optimize by prioritizing the other types here.
         if (v->type == ValueType::String)
-            return value_stringToDoubleImpl(v->stringValue, ok);
+            return value_stringToDoubleImpl(v->stringValue->data, v->stringValue->size, ok);
         else if (v->type == ValueType::Number) {
             if (std::isnan(v->numberValue)) {
                 *ok = false;
@@ -532,11 +482,11 @@ extern "C"
         if (!ok) {
             // At least one argument can't be converted to a number
             // Scratch compares strings as case insensitive
-            char *s1 = value_toCString(v1);
-            char *s2 = value_toCString(v2);
-            int ret = strcasecmp(s1, s2);
-            free(s1);
-            free(s2);
+            StringPtr *s1 = value_toStringPtr(v1);
+            StringPtr *s2 = value_toStringPtr(v2);
+            int ret = string_compare_case_insensitive(s1, s2);
+            string_pool_free(s1);
+            string_pool_free(s2);
             return ret;
         }
 

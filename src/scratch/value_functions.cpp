@@ -1,3 +1,5 @@
+#include <scratchcpp/string_pool.h>
+#include <scratchcpp/stringptr.h>
 #include <ctgmath>
 #include <cassert>
 #include <clocale>
@@ -17,9 +19,8 @@ extern "C"
     {
         if (v->type == ValueType::String) {
             assert(v->stringValue);
-            free(v->stringValue);
+            string_pool_free(v->stringValue);
             v->stringValue = nullptr;
-            v->stringSize = 0;
         }
     }
 
@@ -61,12 +62,23 @@ extern "C"
     /*! Assigns C string to the given value. */
     void value_assign_cstring(ValueData *v, const char *stringValue)
     {
-        if (v->type == ValueType::String) {
-            value_replaceStr(v, stringValue);
-        } else {
-            value_free(v);
-            value_initStr(v, stringValue);
+        if (v->type != ValueType::String) {
+            v->stringValue = string_pool_new();
+            v->type = ValueType::String;
         }
+
+        string_assign_cstring(v->stringValue, stringValue);
+    }
+
+    /*! Assigns string to the given value. */
+    void value_assign_stringPtr(ValueData *v, const StringPtr *stringValue)
+    {
+        if (v->type != ValueType::String) {
+            v->stringValue = string_pool_new();
+            v->type = ValueType::String;
+        }
+
+        string_assign(v->stringValue, stringValue);
     }
 
     /*! Assigns another value to the given value. */
@@ -80,10 +92,11 @@ extern "C"
             v->boolValue = another->boolValue;
         } else if (another->type == ValueType::String) {
             if (v->type == ValueType::String)
-                value_replaceStr(v, another->stringValue);
+                string_assign(v->stringValue, another->stringValue);
             else {
-                value_free(v);
-                value_initStr(v, another->stringValue);
+                v->stringValue = string_pool_new();
+                string_assign(v->stringValue, another->stringValue);
+                v->type = ValueType::String;
             }
         }
 
@@ -99,7 +112,7 @@ extern "C"
             case ValueType::Number:
                 return value_isInf(v->numberValue);
             case ValueType::String:
-                return strcmp(v->stringValue, "Infinity") == 0;
+                return string_compare_case_sensitive(v->stringValue, &INFINITY_STR) == 0;
             default:
                 return false;
         }
@@ -112,7 +125,7 @@ extern "C"
             case ValueType::Number:
                 return value_isNegativeInf(v->numberValue);
             case ValueType::String:
-                return strcmp(v->stringValue, "-Infinity") == 0;
+                return string_compare_case_sensitive(v->stringValue, &NEGATIVE_INFINITY_STR) == 0;
             default:
                 return false;
         }
@@ -125,7 +138,7 @@ extern "C"
             case ValueType::Number:
                 return std::isnan(v->numberValue);
             case ValueType::String:
-                return strcmp(v->stringValue, "NaN") == 0;
+                return string_compare_case_sensitive(v->stringValue, &NAN_STR) == 0;
             default:
                 return false;
         }
@@ -151,7 +164,7 @@ extern "C"
             case ValueType::Bool:
                 return true;
             case ValueType::String:
-                return strlen(v->stringValue) == 0 || value_checkString(v->stringValue) > 0;
+                return v->stringValue->size == 0 || value_checkString(v->stringValue) > 0;
             default:
                 return false;
         }
@@ -245,103 +258,91 @@ extern "C"
     /*! Writes the string representation of the given value to dst. */
     void value_toString(const ValueData *v, std::string *dst)
     {
-        char *str = value_toCString(v);
-        dst->assign(str);
-        free(str);
+        StringPtr *str = value_toStringPtr(v);
+        dst->assign(utf8::utf16to8(std::u16string(str->data)));
+        string_pool_free(str);
     }
 
     /*!
      * Returns the string representation of the given value.
      * \note It is the caller's responsibility to free allocated memory.
      */
-    char *value_toCString(const ValueData *v)
+    StringPtr *value_toStringPtr(const ValueData *v)
     {
         if (v->type == ValueType::String) {
-            char *ret = (char *)malloc((strlen(v->stringValue) + 1) * sizeof(char));
-            strcpy(ret, v->stringValue);
+            StringPtr *ret = string_pool_new();
+            string_assign(ret, v->stringValue);
             return ret;
         } else if (v->type == ValueType::Number)
-            return value_doubleToCString(v->numberValue);
+            return value_doubleToStringPtr(v->numberValue);
         else if (v->type == ValueType::Bool) {
-            char *ret;
-
             if (v->boolValue) {
-                ret = (char *)malloc((4 + 1) * sizeof(char));
-                strcpy(ret, "true");
+                StringPtr *ret = string_pool_new();
+                string_assign(ret, &TRUE_STR);
+                return ret;
             } else {
-                ret = (char *)malloc((5 + 1) * sizeof(char));
-                strcpy(ret, "false");
+                StringPtr *ret = string_pool_new();
+                string_assign(ret, &FALSE_STR);
+                return ret;
             }
-
-            return ret;
-        } else {
-            char *ret = (char *)malloc(sizeof(char));
-            ret[0] = '\0';
-            return ret;
-        }
+        } else
+            return string_pool_new();
     }
 
     /*! Writes the UTF-16 representation of the given value to dst. */
     void value_toUtf16(const libscratchcpp::ValueData *v, std::u16string *dst)
     {
-        std::string s;
-        value_toString(v, &s);
-        dst->assign(utf8::utf8to16(s));
+        StringPtr *str = value_toStringPtr(v);
+        dst->assign(str->data);
+        string_pool_free(str);
     }
 
     /*! Returns the RGBA quadruplet from the given color value. */
     Rgb value_toRgba(const ValueData *v)
     {
         // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L92-L103
-        char *string = nullptr;
-        size_t stringLen = 0;
+        StringPtr *string = nullptr;
 
         if (v->type == ValueType::Number)
             return v->numberValue;
-        else if (v->type == ValueType::String) {
-            string = value_toCString(v);
-            stringLen = strlen(string);
-        } else if (v->type == ValueType::Bool)
+        else if (v->type == ValueType::String)
+            string = v->stringValue;
+        else if (v->type == ValueType::Bool)
             return v->boolValue;
 
-        if (stringLen > 0 && string[0] == '#') {
+        if (string->size > 0 && string->data[0] == u'#') {
             // https://github.com/scratchfoundation/scratch-vm/blob/a4f095db5e03e072ba222fe721eeeb543c9b9c15/src/util/color.js#L60-L69
             // (this implementation avoids regex)
 
             // Handle shorthand hex (e.g., "abc" -> "aabbcc")
-            char expandedHex[7] = { 0 };
-            char *ptr;
+            char16_t expandedHex[7] = { 0 };
+            char16_t *ptr;
 
-            if (stringLen == 4) {
-                expandedHex[0] = string[1];
-                expandedHex[1] = string[1];
-                expandedHex[2] = string[2];
-                expandedHex[3] = string[2];
-                expandedHex[4] = string[3];
-                expandedHex[5] = string[3];
+            if (string->size == 4) {
+                expandedHex[0] = string->data[1];
+                expandedHex[1] = string->data[1];
+                expandedHex[2] = string->data[2];
+                expandedHex[3] = string->data[2];
+                expandedHex[4] = string->data[3];
+                expandedHex[5] = string->data[3];
                 ptr = expandedHex;
-            } else if (stringLen == 7)
-                ptr = string + 1; // skip '#'
-            else {
-                free(string);
+            } else if (string->size == 7)
+                ptr = string->data + 1; // skip '#'
+            else
                 return rgb(0, 0, 0);
-            }
 
             // Convert hex components to integers
             int r, g, b;
 
-            if (std::sscanf(ptr, "%2x%2x%2x", &r, &g, &b) == 3) {
-                free(string);
-                return rgb(r, g, b);
-            }
+            // TODO: Do not use sscanf()
+            std::string str = utf8::utf16to8(std::u16string(ptr));
 
-            free(string);
-        } else if (stringLen > 0) {
+            if (std::sscanf(str.c_str(), "%2x%2x%2x", &r, &g, &b) == 3)
+                return rgb(r, g, b);
+        } else if (string->size > 0) {
             const double ret = value_stringToDouble(string);
-            free(string);
             return ret;
-        } else if (string)
-            free(string);
+        }
 
         return rgb(0, 0, 0);
     }
@@ -359,27 +360,27 @@ extern "C"
 
     /*!
      * Converts the given number to string.
-     * \note It is the caller's responsibility to free allocated memory.
+     * \note It is the caller's responsibility to free the string.
      */
-    char *value_doubleToCString(double v)
+    StringPtr *value_doubleToStringPtr(double v)
     {
         if (v == 0) {
-            char *ret = (char *)malloc((1 + 1) * sizeof(char));
-            strcpy(ret, "0");
+            StringPtr *ret = string_pool_new();
+            string_assign_cstring(ret, "0");
             return ret;
         } else if (std::isinf(v)) {
             if (v > 0) {
-                char *ret = (char *)malloc((8 + 1) * sizeof(char));
-                strcpy(ret, "Infinity");
+                StringPtr *ret = string_pool_new();
+                string_assign(ret, &INFINITY_STR);
                 return ret;
             } else {
-                char *ret = (char *)malloc((9 + 1) * sizeof(char));
-                strcpy(ret, "-Infinity");
+                StringPtr *ret = string_pool_new();
+                string_assign(ret, &NEGATIVE_INFINITY_STR);
                 return ret;
             }
         } else if (std::isnan(v)) {
-            char *ret = (char *)malloc((3 + 1) * sizeof(char));
-            strcpy(ret, "NaN");
+            StringPtr *ret = string_pool_new();
+            string_assign(ret, &NAN_STR);
             return ret;
         }
 
@@ -437,39 +438,36 @@ extern "C"
         // Restore old locale
         std::setlocale(LC_NUMERIC, oldLocale.c_str());
 
-        return buffer;
+        StringPtr *ret = string_pool_new();
+        string_assign_cstring(ret, buffer);
+        free(buffer);
+        return ret;
     }
 
     /*!
      * Converts the given boolean to string.
-     * \note Do not free allocated memory!
+     * \note Do not free the string!
      */
-    const char *value_boolToCString(bool v)
+    const StringPtr *value_boolToStringPtr(bool v)
     {
-        if (v) {
-            static const char *ret = "true";
-            return ret;
-        } else {
-            static const char *ret = "false";
-            return ret;
-        }
+        return v ? &TRUE_STR : &FALSE_STR;
     }
 
     /*! Converts the given string to double. */
-    double value_stringToDouble(const char *s)
+    double value_stringToDouble(const StringPtr *s)
     {
-        if (strcmp(s, "Infinity") == 0)
+        if (string_compare_case_sensitive(s, &INFINITY_STR) == 0)
             return std::numeric_limits<double>::infinity();
-        else if (strcmp(s, "-Infinity") == 0)
+        else if (string_compare_case_sensitive(s, &NEGATIVE_INFINITY_STR) == 0)
             return -std::numeric_limits<double>::infinity();
 
-        return value_stringToDoubleImpl(s);
+        return value_stringToDoubleImpl(s->data, s->size);
     }
 
     /*! Converts the given string to boolean. */
-    bool value_stringToBool(const char *s)
+    bool value_stringToBool(const StringPtr *s)
     {
-        return strlen(s) != 0 && !value_stringsEqual(s, "false") && strcmp(s, "0") != 0;
+        return s->size != 0 && string_compare_case_insensitive(s, &FALSE_STR) != 0 && string_compare_case_insensitive(s, &ZERO_STR) != 0;
     }
 
     /* operations */

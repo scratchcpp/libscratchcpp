@@ -56,6 +56,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
         CompilerValue *addTargetFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
         CompilerValue *addFunctionCallWithCtx(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
         CompilerConstant *addConstValue(const Value &value);
+        CompilerValue *addStringChar(CompilerValue *string, CompilerValue *index);
+        CompilerValue *addStringLength(CompilerValue *string);
         CompilerValue *addLoopIndex();
         CompilerValue *addLocalVariableValue(CompilerLocalVariable *variable);
         CompilerValue *addVariableValue(Variable *variable);
@@ -103,6 +105,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
         CompilerValue *createLog10(CompilerValue *num);
         CompilerValue *createExp(CompilerValue *num);
         CompilerValue *createExp10(CompilerValue *num);
+
+        CompilerValue *createStringConcat(CompilerValue *string1, CompilerValue *string2);
 
         CompilerValue *createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType);
 
