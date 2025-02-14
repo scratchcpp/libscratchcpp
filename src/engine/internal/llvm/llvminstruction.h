@@ -48,6 +48,7 @@ struct LLVMInstruction
             Exp,
             Exp10,
             StringConcat,
+            StringChar,
             Select,
             CreateLocalVariable,
             WriteLocalVariable,

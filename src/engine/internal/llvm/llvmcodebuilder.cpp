@@ -590,6 +590,45 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::StringChar: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *str = castValue(arg1.second, arg1.first);
+                llvm::Value *index = m_builder.CreateFPToSI(castValue(arg2.second, arg2.first), m_builder.getInt64Ty());
+                llvm::PointerType *charPointerType = m_builder.getInt16Ty()->getPointerTo();
+
+                // Get data ptr and size
+                llvm::Value *dataField = m_builder.CreateStructGEP(m_stringPtrType, str, 0);
+                llvm::Value *data = m_builder.CreateLoad(charPointerType, dataField);
+                llvm::Value *sizeField = m_builder.CreateStructGEP(m_stringPtrType, str, 1);
+                llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), sizeField);
+
+                // Check range, get character ptr
+                llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateICmpSGE(index, m_builder.getInt64(0)), m_builder.CreateICmpSLT(index, size));
+                llvm::Value *charPtr = m_builder.CreateGEP(m_builder.getInt16Ty(), data, index);
+
+                // Allocate string
+                llvm::Value *result = m_builder.CreateCall(resolve_string_pool_new(), m_builder.getInt1(true));
+                freeStringLater(result);
+                m_builder.CreateCall(resolve_string_alloc(), { result, m_builder.getInt64(1) }); // size 1 to avoid branching
+
+                // Get result data ptr
+                dataField = m_builder.CreateStructGEP(m_stringPtrType, result, 0);
+                data = m_builder.CreateLoad(charPointerType, dataField);
+
+                // Write result
+                llvm::Value *char1 = m_builder.CreateGEP(m_builder.getInt16Ty(), data, m_builder.getInt64(0));
+                llvm::Value *char2 = m_builder.CreateGEP(m_builder.getInt16Ty(), data, m_builder.getInt64(1));
+                sizeField = m_builder.CreateStructGEP(m_stringPtrType, result, 1);
+                m_builder.CreateStore(m_builder.CreateSelect(inRange, m_builder.CreateLoad(m_builder.getInt16Ty(), charPtr), m_builder.getInt16(0)), char1);
+                m_builder.CreateStore(m_builder.getInt16(0), char2);
+                m_builder.CreateStore(m_builder.CreateSelect(inRange, m_builder.getInt64(1), m_builder.getInt64(0)), sizeField);
+
+                step.functionReturnReg->value = result;
+                break;
+            }
+
             case LLVMInstruction::Type::Select: {
                 assert(step.args.size() == 3);
                 const auto &arg1 = step.args[0];
@@ -1333,6 +1372,11 @@ CompilerConstant *LLVMCodeBuilder::addConstValue(const Value &value)
     auto constReg = std::make_shared<LLVMConstantRegister>(TYPE_MAP[value.type()], value);
     auto reg = std::reinterpret_pointer_cast<LLVMRegister>(constReg);
     return static_cast<CompilerConstant *>(static_cast<CompilerValue *>(addReg(reg, nullptr)));
+}
+
+CompilerValue *LLVMCodeBuilder::addStringChar(CompilerValue *string, CompilerValue *index)
+{
+    return createOp(LLVMInstruction::Type::StringChar, Compiler::StaticType::String, { Compiler::StaticType::String, Compiler::StaticType::Number }, { string, index });
 }
 
 CompilerValue *LLVMCodeBuilder::addLoopIndex()

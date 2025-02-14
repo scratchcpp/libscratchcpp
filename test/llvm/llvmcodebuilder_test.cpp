@@ -57,7 +57,8 @@ class LLVMCodeBuilderTest : public testing::Test
             Log10,
             Exp,
             Exp10,
-            StringConcat
+            StringConcat,
+            StringChar
         };
 
         void SetUp() override
@@ -147,6 +148,9 @@ class LLVMCodeBuilderTest : public testing::Test
 
                 case OpType::StringConcat:
                     return m_builder->createStringConcat(arg1, arg2);
+
+                case OpType::StringChar:
+                    return m_builder->addStringChar(arg1, arg2);
 
                 default:
                     EXPECT_TRUE(false);
@@ -271,6 +275,22 @@ class LLVMCodeBuilderTest : public testing::Test
                     string_alloc(result, result->size);
                     memcpy(result->data, string1->data, string1->size * sizeof(typeof(*string1->data)));
                     memcpy(result->data + string1->size, string2->data, (string2->size + 1) * sizeof(typeof(*string2->data))); // +1: null-terminate
+
+                    ValueData data;
+                    value_assign_stringPtr(&data, result);
+                    return Value(data);
+                }
+
+                case OpType::StringChar: {
+                    const StringPtr *string = value_toStringPtr(&v1.data());
+                    const double index = v2.toDouble();
+                    const bool inRange = (index >= 0 && index < string->size);
+                    StringPtr *result = string_pool_new(true);
+
+                    string_alloc(result, 1);
+                    result->data[0] = inRange ? string->data[static_cast<size_t>(index)] : u'\0';
+                    result->data[1] = u'\0';
+                    result->size = inRange;
 
                     ValueData data;
                     value_assign_stringPtr(&data, result);
@@ -1724,6 +1744,17 @@ TEST_F(LLVMCodeBuilderTest, StringConcat)
     runOpTest(OpType::StringConcat, "Hello ", "world");
     runOpTest(OpType::StringConcat, "abc", "def");
     runOpTest(OpType::StringConcat, "ábč", "ďéfgh");
+}
+
+TEST_F(LLVMCodeBuilderTest, StringChar)
+{
+    runOpTest(OpType::StringChar, "Hello world", 1);
+    runOpTest(OpType::StringChar, "Hello world", 0);
+    runOpTest(OpType::StringChar, "Hello world", 11);
+    runOpTest(OpType::StringChar, "abc", 2);
+    runOpTest(OpType::StringChar, "abc", -1);
+    runOpTest(OpType::StringChar, "abc", 3);
+    runOpTest(OpType::StringChar, "ábč", 0);
 }
 
 TEST_F(LLVMCodeBuilderTest, LocalVariables)
