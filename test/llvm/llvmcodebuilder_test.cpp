@@ -56,7 +56,8 @@ class LLVMCodeBuilderTest : public testing::Test
             Ln,
             Log10,
             Exp,
-            Exp10
+            Exp10,
+            StringConcat
         };
 
         void SetUp() override
@@ -143,6 +144,9 @@ class LLVMCodeBuilderTest : public testing::Test
 
                 case OpType::Mod:
                     return m_builder->createMod(arg1, arg2);
+
+                case OpType::StringConcat:
+                    return m_builder->createStringConcat(arg1, arg2);
 
                 default:
                     EXPECT_TRUE(false);
@@ -257,6 +261,21 @@ class LLVMCodeBuilderTest : public testing::Test
 
                 case OpType::Mod:
                     return v1 % v2;
+
+                case OpType::StringConcat: {
+                    const StringPtr *string1 = value_toStringPtr(&v1.data());
+                    const StringPtr *string2 = value_toStringPtr(&v2.data());
+                    StringPtr *result = string_pool_new(true);
+
+                    result->size = string1->size + string2->size;
+                    string_alloc(result, result->size);
+                    memcpy(result->data, string1->data, string1->size * sizeof(typeof(*string1->data)));
+                    memcpy(result->data + string1->size, string2->data, (string2->size + 1) * sizeof(typeof(*string2->data))); // +1: null-terminate
+
+                    ValueData data;
+                    value_assign_stringPtr(&data, result);
+                    return Value(data);
+                }
 
                 default:
                     EXPECT_TRUE(false);
@@ -1698,6 +1717,13 @@ TEST_F(LLVMCodeBuilderTest, Exp10)
     runUnaryNumOpTest(OpType::Exp10, inf, inf);
     runUnaryNumOpTest(OpType::Exp10, -inf, 0.0);
     runUnaryNumOpTest(OpType::Exp10, nan, 1.0);
+}
+
+TEST_F(LLVMCodeBuilderTest, StringConcat)
+{
+    runOpTest(OpType::StringConcat, "Hello ", "world");
+    runOpTest(OpType::StringConcat, "abc", "def");
+    runOpTest(OpType::StringConcat, "ábč", "ďéfgh");
 }
 
 TEST_F(LLVMCodeBuilderTest, LocalVariables)

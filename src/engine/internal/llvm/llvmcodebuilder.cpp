@@ -547,6 +547,49 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::StringConcat: {
+                assert(step.args.size() == 2);
+                const auto &arg1 = step.args[0];
+                const auto &arg2 = step.args[1];
+                llvm::Value *str1 = castValue(arg1.second, arg1.first);
+                llvm::Value *str2 = castValue(arg2.second, arg2.first);
+                llvm::PointerType *charPointerType = m_builder.getInt16Ty()->getPointerTo();
+                llvm::Function *memcpyFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::memcpy_inline, { charPointerType, charPointerType, m_builder.getInt64Ty() });
+
+                // StringPtr *result = string_pool_new(true)
+                llvm::Value *result = m_builder.CreateCall(resolve_string_pool_new(), m_builder.getInt1(true));
+                freeStringLater(result);
+
+                // result->size = string1->size + string2->size
+                llvm::Value *sizeField1 = m_builder.CreateStructGEP(m_stringPtrType, str1, 1);
+                llvm::Value *sizeField2 = m_builder.CreateStructGEP(m_stringPtrType, str2, 1);
+                llvm::Value *size1 = m_builder.CreateLoad(m_builder.getInt64Ty(), sizeField1);
+                llvm::Value *size2 = m_builder.CreateLoad(m_builder.getInt64Ty(), sizeField2);
+                llvm::Value *resultSize = m_builder.CreateAdd(size1, size2);
+                llvm::Value *resultSizeField = m_builder.CreateStructGEP(m_stringPtrType, result, 1);
+                m_builder.CreateStore(resultSize, resultSizeField);
+
+                // string_alloc(result, result->size)
+                m_builder.CreateCall(resolve_string_alloc(), { result, resultSize });
+
+                // memcpy(result->data, string1->data, string1->size * sizeof(char16_t))
+                llvm::Value *dataField1 = m_builder.CreateStructGEP(m_stringPtrType, str1, 0);
+                llvm::Value *data1 = m_builder.CreateLoad(charPointerType, dataField1);
+                llvm::Value *resultDataField = m_builder.CreateStructGEP(m_stringPtrType, result, 0);
+                llvm::Value *writePtr = m_builder.CreateLoad(charPointerType, resultDataField);
+                m_builder.CreateCall(memcpyFunc, { writePtr, data1, m_builder.CreateMul(size1, m_builder.getInt64(2)), m_builder.getInt1(false) });
+
+                // memcpy(result->data + string1->size, string2->data, (string2->size + 1) * sizeof(char16_t))
+                // +1: null-terminate
+                llvm::Value *dataField2 = m_builder.CreateStructGEP(m_stringPtrType, str2, 0);
+                llvm::Value *data2 = m_builder.CreateLoad(charPointerType, dataField2);
+                writePtr = m_builder.CreateGEP(m_builder.getInt16Ty(), writePtr, size1);
+                m_builder.CreateCall(memcpyFunc, { writePtr, data2, m_builder.CreateMul(m_builder.CreateAdd(size2, m_builder.getInt64(1)), m_builder.getInt64(2)), m_builder.getInt1(false) });
+
+                step.functionReturnReg->value = result;
+                break;
+            }
+
             case LLVMInstruction::Type::Select: {
                 assert(step.args.size() == 3);
                 const auto &arg1 = step.args[0];
@@ -1554,6 +1597,11 @@ CompilerValue *LLVMCodeBuilder::createExp(CompilerValue *num)
 CompilerValue *LLVMCodeBuilder::createExp10(CompilerValue *num)
 {
     return createOp(LLVMInstruction::Type::Exp10, Compiler::StaticType::Number, Compiler::StaticType::Number, { num });
+}
+
+CompilerValue *LLVMCodeBuilder::createStringConcat(CompilerValue *string1, CompilerValue *string2)
+{
+    return createOp(LLVMInstruction::Type::StringConcat, Compiler::StaticType::String, Compiler::StaticType::String, { string1, string2 });
 }
 
 CompilerValue *LLVMCodeBuilder::createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType)
@@ -3215,6 +3263,11 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_string_pool_new()
 llvm::FunctionCallee LLVMCodeBuilder::resolve_string_pool_free()
 {
     return resolveFunction("string_pool_free", llvm::FunctionType::get(m_builder.getVoidTy(), { m_stringPtrType->getPointerTo() }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_string_alloc()
+{
+    return resolveFunction("string_alloc", llvm::FunctionType::get(m_builder.getVoidTy(), { m_stringPtrType->getPointerTo(), m_builder.getInt64Ty() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_string_compare_case_sensitive()

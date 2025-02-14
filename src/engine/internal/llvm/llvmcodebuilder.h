@@ -78,6 +78,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         CompilerValue *createExp(CompilerValue *num) override;
         CompilerValue *createExp10(CompilerValue *num) override;
 
+        CompilerValue *createStringConcat(CompilerValue *string1, CompilerValue *string2) override;
+
         CompilerValue *createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType) override;
 
         CompilerLocalVariable *createLocalVariable(Compiler::StaticType type) override;
@@ -204,6 +206,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_llvm_random_bool();
         llvm::FunctionCallee resolve_string_pool_new();
         llvm::FunctionCallee resolve_string_pool_free();
+        llvm::FunctionCallee resolve_string_alloc();
         llvm::FunctionCallee resolve_string_compare_case_sensitive();
         llvm::FunctionCallee resolve_string_compare_case_insensitive();
 

@@ -58,6 +58,8 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(CompilerValue *, createExp, (CompilerValue *), (override));
         MOCK_METHOD(CompilerValue *, createExp10, (CompilerValue *), (override));
 
+        MOCK_METHOD(CompilerValue *, createStringConcat, (CompilerValue *, CompilerValue *), (override));
+
         MOCK_METHOD(CompilerValue *, createSelect, (CompilerValue *, CompilerValue *, CompilerValue *, Compiler::StaticType), (override));
 
         MOCK_METHOD(CompilerLocalVariable *, createLocalVariable, (Compiler::StaticType), (override));

@@ -69,6 +69,8 @@ class ICodeBuilder
         virtual CompilerValue *createExp(CompilerValue *num) = 0;
         virtual CompilerValue *createExp10(CompilerValue *num) = 0;
 
+        virtual CompilerValue *createStringConcat(CompilerValue *string1, CompilerValue *string2) = 0;
+
         virtual CompilerValue *createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType) = 0;
 
         virtual CompilerLocalVariable *createLocalVariable(Compiler::StaticType type) = 0;
