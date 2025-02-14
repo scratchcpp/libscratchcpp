@@ -4,7 +4,7 @@ add_library(scratchcpp-audio STATIC)
 set(MINIAUDIO_SRC internal/thirdparty/miniaudio)
 
 if (LIBSCRATCHCPP_AUDIO_SUPPORT)
-    add_library(miniaudio STATIC
+    add_library(miniaudio SHARED
 	    ${MINIAUDIO_SRC}/miniaudio.c
 	    ${MINIAUDIO_SRC}/miniaudio.h
     )
