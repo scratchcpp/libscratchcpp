@@ -11,6 +11,9 @@
 #include <scratchcpp/istacktimer.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/stringptr.h>
+#include <scratchcpp/string_functions.h>
+#include <utf8.h>
 
 #include "controlblocks.h"
 
@@ -215,13 +218,15 @@ extern "C" void control_create_clone_by_index(ExecutionContext *ctx, double inde
         static_cast<Sprite *>(target)->clone();
 }
 
-extern "C" void control_create_clone(ExecutionContext *ctx, const char *spriteName)
+extern "C" void control_create_clone(ExecutionContext *ctx, const StringPtr *spriteName)
 {
-    if (strcmp(spriteName, "_myself_") == 0)
+    static const StringPtr myself("_myself_");
+    if (string_compare_case_sensitive(spriteName, &myself) == 0)
         control_create_clone_of_myself(ctx->thread()->target());
     else {
         IEngine *engine = ctx->engine();
-        auto index = engine->findTarget(spriteName);
+        // TODO: Use UTF-16 in engine
+        auto index = engine->findTarget(utf8::utf16to8(std::u16string(spriteName->data)));
         Target *target = engine->targetAt(index);
 
         if (!target->isStage())
