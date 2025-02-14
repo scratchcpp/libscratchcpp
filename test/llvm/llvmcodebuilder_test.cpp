@@ -58,7 +58,8 @@ class LLVMCodeBuilderTest : public testing::Test
             Exp,
             Exp10,
             StringConcat,
-            StringChar
+            StringChar,
+            StringLength
         };
 
         void SetUp() override
@@ -209,6 +210,9 @@ class LLVMCodeBuilderTest : public testing::Test
                 case OpType::Exp10:
                     return m_builder->createExp10(arg);
 
+                case OpType::StringLength:
+                    return m_builder->addStringLength(arg);
+
                 default:
                     EXPECT_TRUE(false);
                     return nullptr;
@@ -308,6 +312,9 @@ class LLVMCodeBuilderTest : public testing::Test
             switch (type) {
                 case OpType::Not:
                     return !v.toBool();
+
+                case OpType::StringLength:
+                    return v.toUtf16().size();
 
                 default:
                     EXPECT_TRUE(false);
@@ -1755,6 +1762,14 @@ TEST_F(LLVMCodeBuilderTest, StringChar)
     runOpTest(OpType::StringChar, "abc", -1);
     runOpTest(OpType::StringChar, "abc", 3);
     runOpTest(OpType::StringChar, "ábč", 0);
+}
+
+TEST_F(LLVMCodeBuilderTest, StringLength)
+{
+    runUnaryNumOpTest(OpType::StringLength, "Hello world", 11);
+    runUnaryNumOpTest(OpType::StringLength, "abc", 3);
+    runUnaryNumOpTest(OpType::StringLength, "abcdef", 6);
+    runUnaryNumOpTest(OpType::StringLength, "ábč", 3);
 }
 
 TEST_F(LLVMCodeBuilderTest, LocalVariables)

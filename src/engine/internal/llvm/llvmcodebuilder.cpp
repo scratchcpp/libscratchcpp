@@ -629,6 +629,16 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 break;
             }
 
+            case LLVMInstruction::Type::StringLength: {
+                assert(step.args.size() == 1);
+                const auto &arg = step.args[0];
+                llvm::Value *str = castValue(arg.second, arg.first);
+                llvm::Value *sizeField = m_builder.CreateStructGEP(m_stringPtrType, str, 1);
+                llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), sizeField);
+                step.functionReturnReg->value = m_builder.CreateSIToFP(size, m_builder.getDoubleTy());
+                break;
+            }
+
             case LLVMInstruction::Type::Select: {
                 assert(step.args.size() == 3);
                 const auto &arg1 = step.args[0];
@@ -1377,6 +1387,11 @@ CompilerConstant *LLVMCodeBuilder::addConstValue(const Value &value)
 CompilerValue *LLVMCodeBuilder::addStringChar(CompilerValue *string, CompilerValue *index)
 {
     return createOp(LLVMInstruction::Type::StringChar, Compiler::StaticType::String, { Compiler::StaticType::String, Compiler::StaticType::Number }, { string, index });
+}
+
+CompilerValue *LLVMCodeBuilder::addStringLength(CompilerValue *string)
+{
+    return createOp(LLVMInstruction::Type::StringLength, Compiler::StaticType::Number, Compiler::StaticType::String, { string });
 }
 
 CompilerValue *LLVMCodeBuilder::addLoopIndex()

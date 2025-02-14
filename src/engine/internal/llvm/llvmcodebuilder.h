@@ -34,6 +34,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         CompilerValue *addFunctionCallWithCtx(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
         CompilerConstant *addConstValue(const Value &value) override;
         CompilerValue *addStringChar(CompilerValue *string, CompilerValue *index) override;
+        CompilerValue *addStringLength(CompilerValue *string) override;
         CompilerValue *addLoopIndex() override;
         CompilerValue *addLocalVariableValue(CompilerLocalVariable *variable) override;
         CompilerValue *addVariableValue(Variable *variable) override;
