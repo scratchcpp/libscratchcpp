@@ -3209,7 +3209,7 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_bool()
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_string_pool_new()
 {
-    return resolveFunction("string_pool_new", llvm::FunctionType::get(m_stringPtrType->getPointerTo(), false));
+    return resolveFunction("string_pool_new", llvm::FunctionType::get(m_stringPtrType->getPointerTo(), { m_builder.getInt1Ty() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_string_pool_free()
