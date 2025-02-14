@@ -9,6 +9,8 @@
 namespace libscratchcpp
 {
 
+struct StringPtr;
+
 enum class LIBSCRATCHCPP_EXPORT ValueType
 {
     Number = 0,
@@ -26,11 +28,10 @@ extern "C"
             {
                     double numberValue;
                     bool boolValue;
-                    char *stringValue;
+                    StringPtr *stringValue;
             };
 
             ValueType type;
-            size_t stringSize; // allocated size, not length
     };
 }
 

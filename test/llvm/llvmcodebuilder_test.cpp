@@ -56,7 +56,10 @@ class LLVMCodeBuilderTest : public testing::Test
             Ln,
             Log10,
             Exp,
-            Exp10
+            Exp10,
+            StringConcat,
+            StringChar,
+            StringLength
         };
 
         void SetUp() override
@@ -144,6 +147,12 @@ class LLVMCodeBuilderTest : public testing::Test
                 case OpType::Mod:
                     return m_builder->createMod(arg1, arg2);
 
+                case OpType::StringConcat:
+                    return m_builder->createStringConcat(arg1, arg2);
+
+                case OpType::StringChar:
+                    return m_builder->addStringChar(arg1, arg2);
+
                 default:
                     EXPECT_TRUE(false);
                     return nullptr;
@@ -201,6 +210,9 @@ class LLVMCodeBuilderTest : public testing::Test
                 case OpType::Exp10:
                     return m_builder->createExp10(arg);
 
+                case OpType::StringLength:
+                    return m_builder->addStringLength(arg);
+
                 default:
                     EXPECT_TRUE(false);
                     return nullptr;
@@ -244,14 +256,10 @@ class LLVMCodeBuilderTest : public testing::Test
                     return v1 < v2;
 
                 case OpType::StrCmpEQCS:
-                    return v1.toString() == v2.toString();
+                    return string_compare_case_sensitive(value_toStringPtr(&v1.data()), value_toStringPtr(&v2.data())) == 0;
 
-                case OpType::StrCmpEQCI: {
-                    // TODO: Use a custom function for string comparison
-                    std::string str1 = v1.toString();
-                    std::string str2 = v2.toString();
-                    return strcasecmp(str1.c_str(), str2.c_str()) == 0;
-                }
+                case OpType::StrCmpEQCI:
+                    return string_compare_case_insensitive(value_toStringPtr(&v1.data()), value_toStringPtr(&v2.data())) == 0;
 
                 case OpType::And:
                     return v1.toBool() && v2.toBool();
@@ -261,6 +269,37 @@ class LLVMCodeBuilderTest : public testing::Test
 
                 case OpType::Mod:
                     return v1 % v2;
+
+                case OpType::StringConcat: {
+                    const StringPtr *string1 = value_toStringPtr(&v1.data());
+                    const StringPtr *string2 = value_toStringPtr(&v2.data());
+                    StringPtr *result = string_pool_new(true);
+
+                    result->size = string1->size + string2->size;
+                    string_alloc(result, result->size);
+                    memcpy(result->data, string1->data, string1->size * sizeof(typeof(*string1->data)));
+                    memcpy(result->data + string1->size, string2->data, (string2->size + 1) * sizeof(typeof(*string2->data))); // +1: null-terminate
+
+                    ValueData data;
+                    value_assign_stringPtr(&data, result);
+                    return Value(data);
+                }
+
+                case OpType::StringChar: {
+                    const StringPtr *string = value_toStringPtr(&v1.data());
+                    const double index = v2.toDouble();
+                    const bool inRange = (index >= 0 && index < string->size);
+                    StringPtr *result = string_pool_new(true);
+
+                    string_alloc(result, 1);
+                    result->data[0] = inRange ? string->data[static_cast<size_t>(index)] : u'\0';
+                    result->data[1] = u'\0';
+                    result->size = inRange;
+
+                    ValueData data;
+                    value_assign_stringPtr(&data, result);
+                    return Value(data);
+                }
 
                 default:
                     EXPECT_TRUE(false);
@@ -273,6 +312,9 @@ class LLVMCodeBuilderTest : public testing::Test
             switch (type) {
                 case OpType::Not:
                     return !v.toBool();
+
+                case OpType::StringLength:
+                    return v.toUtf16().size();
 
                 default:
                     EXPECT_TRUE(false);
@@ -1702,6 +1744,32 @@ TEST_F(LLVMCodeBuilderTest, Exp10)
     runUnaryNumOpTest(OpType::Exp10, inf, inf);
     runUnaryNumOpTest(OpType::Exp10, -inf, 0.0);
     runUnaryNumOpTest(OpType::Exp10, nan, 1.0);
+}
+
+TEST_F(LLVMCodeBuilderTest, StringConcat)
+{
+    runOpTest(OpType::StringConcat, "Hello ", "world");
+    runOpTest(OpType::StringConcat, "abc", "def");
+    runOpTest(OpType::StringConcat, "ábč", "ďéfgh");
+}
+
+TEST_F(LLVMCodeBuilderTest, StringChar)
+{
+    runOpTest(OpType::StringChar, "Hello world", 1);
+    runOpTest(OpType::StringChar, "Hello world", 0);
+    runOpTest(OpType::StringChar, "Hello world", 11);
+    runOpTest(OpType::StringChar, "abc", 2);
+    runOpTest(OpType::StringChar, "abc", -1);
+    runOpTest(OpType::StringChar, "abc", 3);
+    runOpTest(OpType::StringChar, "ábč", 0);
+}
+
+TEST_F(LLVMCodeBuilderTest, StringLength)
+{
+    runUnaryNumOpTest(OpType::StringLength, "Hello world", 11);
+    runUnaryNumOpTest(OpType::StringLength, "abc", 3);
+    runUnaryNumOpTest(OpType::StringLength, "abcdef", 6);
+    runUnaryNumOpTest(OpType::StringLength, "ábč", 3);
 }
 
 TEST_F(LLVMCodeBuilderTest, LocalVariables)

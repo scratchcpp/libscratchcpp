@@ -4,6 +4,10 @@
 #include <scratchcpp/value.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/stringptr.h>
+#include <scratchcpp/string_pool.h>
+#include <scratchcpp/string_functions.h>
+#include <utf8.h>
 #include <iostream>
 
 #include "util.h"
@@ -47,9 +51,9 @@ void registerBlocks(IEngine *engine, IExtension *extension)
     });
 }
 
-extern "C" void test_print(const char *str)
+extern "C" void test_print(const StringPtr *str)
 {
-    std::cout << str << std::endl;
+    std::cout << utf8::utf16to8(std::u16string(str->data)) << std::endl;
 }
 
 extern "C" bool test_condition()
@@ -57,10 +61,10 @@ extern "C" bool test_condition()
     return conditionReturnValue;
 }
 
-extern "C" char *test_const_string(const char *str)
+extern "C" StringPtr *test_const_string(const StringPtr *str)
 {
-    char *ret = (char *)malloc((strlen(str) + 1) * sizeof(char));
-    strcpy(ret, str);
+    StringPtr *ret = string_pool_new();
+    string_assign(ret, str);
     return ret;
 }
 

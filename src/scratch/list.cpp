@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/list.h>
-#include <algorithm>
+#include <utf8.h>
 
 #include "list_p.h"
 
@@ -56,6 +56,15 @@ Monitor *List::monitor() const
 void List::setMonitor(Monitor *monitor)
 {
     impl->monitor = monitor;
+}
+
+/*! Same as the other method, but returns the result as std::string. */
+std::string List::toString() const
+{
+    StringPtr *str = toStringPtr();
+    std::string ret = utf8::utf16to8(std::u16string(str->data));
+    string_pool_free(str);
+    return ret;
 }
 
 /*! Creates a copy of the list. */

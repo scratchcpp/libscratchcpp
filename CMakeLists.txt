@@ -38,6 +38,9 @@ target_sources(scratchcpp
     include/scratchcpp/value.h
     include/scratchcpp/valuedata.h
     include/scratchcpp/value_functions.h
+    include/scratchcpp/stringptr.h
+    include/scratchcpp/string_functions.h
+    include/scratchcpp/string_pool.h
     include/scratchcpp/entity.h
     include/scratchcpp/variable.h
     include/scratchcpp/list.h
@@ -76,6 +79,10 @@ target_link_libraries(scratchcpp PRIVATE zip)
 # utfcpp
 set(UTFCPP_SRC thirdparty/utfcpp/source)
 target_include_directories(scratchcpp PUBLIC ${UTFCPP_SRC})
+
+# cpp-unicodelib
+add_subdirectory(thirdparty/cpp-unicodelib)
+target_link_libraries(scratchcpp PRIVATE cpp-unicodelib)
 
 # spimpl
 include_directories(thirdparty/spimpl)

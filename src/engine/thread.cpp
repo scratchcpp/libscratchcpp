@@ -6,6 +6,7 @@
 #include <scratchcpp/executioncontext.h>
 
 #include "thread_p.h"
+#include "scratch/string_pool_p.h"
 
 using namespace libscratchcpp;
 
@@ -13,12 +14,20 @@ using namespace libscratchcpp;
 Thread::Thread(Target *target, IEngine *engine, Script *script) :
     impl(spimpl::make_unique_impl<ThreadPrivate>(target, engine, script))
 {
+    string_pool_add_thread(this);
+
     if (impl->script) {
         impl->code = impl->script->code();
 
         if (impl->code)
             impl->executionContext = impl->code->createExecutionContext(this);
     }
+}
+
+/*! Destroys Thread. */
+Thread::~Thread()
+{
+    string_pool_remove_thread(this);
 }
 
 /*! Returns the Target of the script. */
@@ -42,7 +51,9 @@ Script *Thread::script() const
 /*! Runs the script until it finishes or yields. */
 void Thread::run()
 {
+    string_pool_set_thread(this);
     impl->code->run(impl->executionContext.get());
+    string_pool_set_thread(nullptr);
 }
 
 /*! Stops the script. */

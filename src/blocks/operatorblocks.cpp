@@ -5,6 +5,9 @@
 #include <scratchcpp/compilerconstant.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/value.h>
+#include <scratchcpp/string_pool.h>
+#include <scratchcpp/string_functions.h>
+#include <scratchcpp/stringptr.h>
 #include <utf8.h>
 
 #include "operatorblocks.h"
@@ -129,7 +132,7 @@ CompilerValue *OperatorBlocks::compileContains(Compiler *compiler)
 {
     auto string1 = compiler->addInput("STRING1");
     auto string2 = compiler->addInput("STRING2");
-    return compiler->addFunctionCall("operator_contains", Compiler::StaticType::Bool, { Compiler::StaticType::String, Compiler::StaticType::String }, { string1, string2 });
+    return compiler->addFunctionCall("string_contains_case_insensitive", Compiler::StaticType::Bool, { Compiler::StaticType::String, Compiler::StaticType::String }, { string1, string2 });
 }
 
 CompilerValue *OperatorBlocks::compileMod(Compiler *compiler)
@@ -180,54 +183,34 @@ CompilerValue *OperatorBlocks::compileMathOp(Compiler *compiler)
         return compiler->addConstValue(Value());
 }
 
-extern "C" char *operator_join(const char *string1, const char *string2)
+extern "C" StringPtr *operator_join(const StringPtr *string1, const StringPtr *string2)
 {
-    const size_t len1 = strlen(string1);
-    const size_t len2 = strlen(string2);
-
-    char *ret = (char *)malloc((len1 + len2 + 1) * sizeof(char));
-    size_t i;
-
-    for (i = 0; i < len1; i++)
-        ret[i] = string1[i];
-
-    for (i = 0; i < len2 + 1; i++) // +1: null-terminate
-        ret[len1 + i] = string2[i];
-
+    StringPtr *ret = string_pool_new(true);
+    ret->size = string1->size + string2->size;
+    string_alloc(ret, ret->size);
+    memcpy(ret->data, string1->data, string1->size * sizeof(typeof(*string1->data)));
+    memcpy(ret->data + string1->size, string2->data, (string2->size + 1) * sizeof(typeof(*string2->data))); // +1: null-terminate
     return ret;
 }
 
-extern "C" char *operator_letter_of(double letter, const char *string)
+extern "C" StringPtr *operator_letter_of(double letter, const StringPtr *string)
 {
-    const size_t len = strlen(string);
+    StringPtr *ret = string_pool_new();
 
-    if (letter < 1 || letter > len) {
-        char *ret = (char *)malloc(sizeof(char));
-        ret[0] = '\0';
+    if (letter < 1 || letter > string->size) {
+        string_alloc(ret, 0);
+        ret->data[0] = u'\0';
         return ret;
     }
 
-    // TODO: Rewrite this
-    std::u16string u16 = utf8::utf8to16(std::string(string));
-    std::string str = utf8::utf16to8(std::u16string({ u16[(size_t)letter - 1] }));
-    char *ret = (char *)malloc((str.size() + 1) * sizeof(char));
-    strcpy(ret, str.c_str());
-
+    string_alloc(ret, 1);
+    ret->data[0] = string->data[static_cast<size_t>(letter - 1)];
+    ret->data[1] = u'\0';
+    ret->size = 1;
     return ret;
 }
 
-extern "C" double operator_length(const char *string)
+extern "C" double operator_length(const StringPtr *string)
 {
-    // TODO: Rewrite this
-    return utf8::utf8to16(std::string(string)).size();
-}
-
-extern "C" bool operator_contains(const char *string1, const char *string2)
-{
-    // TODO: Rewrite this
-    std::u16string u16string1 = utf8::utf8to16(std::string(string1));
-    std::u16string u16string2 = utf8::utf8to16(std::string(string2));
-    std::transform(u16string1.begin(), u16string1.end(), u16string1.begin(), ::tolower);
-    std::transform(u16string2.begin(), u16string2.end(), u16string2.begin(), ::tolower);
-    return (u16string1.find(u16string2) != std::u16string::npos);
+    return string->size;
 }

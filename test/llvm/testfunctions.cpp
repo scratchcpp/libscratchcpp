@@ -1,4 +1,8 @@
 #include <scratchcpp/value.h>
+#include <scratchcpp/string_functions.h>
+#include <scratchcpp/stringptr.h>
+#include <scratchcpp/string_pool.h>
+#include <utf8.h>
 #include <iostream>
 #include <targetmock.h>
 
@@ -30,10 +34,10 @@ extern "C"
         std::cout << "empty" << std::endl;
     }
 
-    void test_ctx_function(ExecutionContext *ctx, const char *arg)
+    void test_ctx_function(ExecutionContext *ctx, const StringPtr *arg)
     {
         std::cout << ctx << std::endl;
-        std::cout << arg << std::endl;
+        std::cout << utf8::utf16to8(std::u16string(arg->data)) << std::endl;
     }
 
     void test_function_no_args(Target *target)
@@ -42,45 +46,45 @@ extern "C"
         std::cout << "no_args" << std::endl;
     }
 
-    char *test_function_no_args_ret(Target *target)
+    StringPtr *test_function_no_args_ret(Target *target)
     {
         target->isStage();
         std::cout << "no_args_ret" << std::endl;
         Value v("no_args_output");
-        return value_toCString(&v.data());
+        return value_toStringPtr(&v.data());
     }
 
-    void test_function_1_arg(Target *target, const char *arg1)
+    void test_function_1_arg(Target *target, const StringPtr *arg1)
     {
         target->isStage();
-        std::cout << "1_arg " << arg1 << std::endl;
+        std::cout << "1_arg " << utf8::utf16to8(std::u16string(arg1->data)) << std::endl;
     }
 
-    char *test_function_1_arg_ret(Target *target, const char *arg1)
+    StringPtr *test_function_1_arg_ret(Target *target, const StringPtr *arg1)
     {
         target->isStage();
-        std::cout << "1_arg_ret " << arg1 << std::endl;
+        std::cout << "1_arg_ret " << utf8::utf16to8(std::u16string(arg1->data)) << std::endl;
         Value v("1_arg_output");
-        return value_toCString(&v.data());
+        return value_toStringPtr(&v.data());
     }
 
-    void test_function_3_args(Target *target, const char *arg1, const char *arg2, const char *arg3)
+    void test_function_3_args(Target *target, const StringPtr *arg1, const StringPtr *arg2, const StringPtr *arg3)
     {
         target->isStage();
-        std::cout << "3_args " << arg1 << " " << arg2 << " " << arg3 << std::endl;
+        std::cout << "3_args " << utf8::utf16to8(std::u16string(arg1->data)) << " " << utf8::utf16to8(std::u16string(arg2->data)) << " " << utf8::utf16to8(std::u16string(arg3->data)) << std::endl;
     }
 
-    char *test_function_3_args_ret(Target *target, const char *arg1, const char *arg2, const char *arg3)
+    StringPtr *test_function_3_args_ret(Target *target, const StringPtr *arg1, const StringPtr *arg2, const StringPtr *arg3)
     {
         target->isStage();
-        std::cout << "3_args " << arg1 << " " << arg2 << " " << arg3 << std::endl;
+        std::cout << "3_args " << utf8::utf16to8(std::u16string(arg1->data)) << " " << utf8::utf16to8(std::u16string(arg2->data)) << " " << utf8::utf16to8(std::u16string(arg3->data)) << std::endl;
         Value v("3_args_output");
-        return value_toCString(&v.data());
+        return value_toStringPtr(&v.data());
     }
 
-    bool test_equals(const char *a, const char *b)
+    bool test_equals(const StringPtr *a, const StringPtr *b)
     {
-        return strcmp(a, b) == 0;
+        return string_compare_case_sensitive(a, b) == 0;
     }
 
     void test_unreachable()
@@ -104,10 +108,11 @@ extern "C"
         return v;
     }
 
-    char *test_const_string(const char *v)
+    StringPtr *test_const_string(const StringPtr *v)
     {
-        Value value(v);
-        return value_toCString(&value.data());
+        StringPtr *ret = string_pool_new();
+        string_assign(ret, v);
+        return ret;
     }
 
     bool test_not(bool arg)
@@ -140,8 +145,8 @@ extern "C"
         std::cout << v << std::endl;
     }
 
-    void test_print_string(const char *v)
+    void test_print_string(const StringPtr *v)
     {
-        std::cout << v << std::endl;
+        std::cout << utf8::utf16to8(std::u16string(v->data)) << std::endl;
     }
 }

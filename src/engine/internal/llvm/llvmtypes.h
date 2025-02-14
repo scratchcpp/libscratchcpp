@@ -18,6 +18,7 @@ class LLVMTypes
 {
     public:
         static llvm::StructType *createValueDataType(llvm::IRBuilder<> *builder);
+        static llvm::StructType *createStringPtrType(llvm::IRBuilder<> *builder);
 };
 
 } // namespace libscratchcpp

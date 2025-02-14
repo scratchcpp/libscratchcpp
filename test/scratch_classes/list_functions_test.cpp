@@ -1,5 +1,6 @@
 #include <scratchcpp/list.h>
 #include <scratch/list_functions.h>
+#include <utf8.h>
 
 #include <gtest/gtest.h>
 
@@ -157,9 +158,8 @@ TEST(ListFunctionsTest, ToString)
         list.append("sit");
         list.append("amet");
 
-        char *str = list_to_string(&list);
-        ASSERT_TRUE(strcmp(str, "Lorem ipsum dolor sit amet") == 0);
-        free(str);
+        StringPtr *str = list_to_string(&list);
+        ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "Lorem ipsum dolor sit amet");
     }
 
     {
@@ -168,8 +168,7 @@ TEST(ListFunctionsTest, ToString)
         list.append(2);
         list.append(3);
 
-        char *str = list_to_string(&list);
-        ASSERT_TRUE(strcmp(str, "123") == 0);
-        free(str);
+        StringPtr *str = list_to_string(&list);
+        ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "123");
     }
 }

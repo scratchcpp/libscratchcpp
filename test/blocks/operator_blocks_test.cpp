@@ -375,8 +375,8 @@ TEST_F(OperatorBlocksTest, Join)
     List *valueList = builder.capturedValues();
     ValueData *values = valueList->data();
     ASSERT_EQ(valueList->size(), 2);
-    ASSERT_EQ(Value(values[0]), "abcdef");
-    ASSERT_EQ(Value(values[1]), "Hello world");
+    ASSERT_EQ(Value(values[0]).toString(), "abcdef");
+    ASSERT_EQ(Value(values[1]).toString(), "Hello world");
 }
 
 TEST_F(OperatorBlocksTest, LetterOf)
@@ -415,11 +415,11 @@ TEST_F(OperatorBlocksTest, LetterOf)
     List *valueList = builder.capturedValues();
     ValueData *values = valueList->data();
     ASSERT_EQ(valueList->size(), 5);
-    ASSERT_EQ(Value(values[0]), "b");
-    ASSERT_EQ(Value(values[1]), "w");
-    ASSERT_EQ(Value(values[2]), "");
-    ASSERT_EQ(Value(values[3]), "");
-    ASSERT_EQ(Value(values[4]), "Á");
+    ASSERT_EQ(Value(values[0]).toString(), "b");
+    ASSERT_EQ(Value(values[1]).toString(), "w");
+    ASSERT_EQ(Value(values[2]).toString(), "");
+    ASSERT_EQ(Value(values[3]).toString(), "");
+    ASSERT_EQ(Value(values[4]).toString(), "Á");
 }
 
 TEST_F(OperatorBlocksTest, Length)

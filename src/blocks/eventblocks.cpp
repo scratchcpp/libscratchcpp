@@ -9,6 +9,8 @@
 #include <scratchcpp/thread.h>
 #include <scratchcpp/compilerconstant.h>
 #include <scratchcpp/promise.h>
+#include <scratchcpp/stringptr.h>
+#include <utf8.h>
 
 #include "eventblocks.h"
 
@@ -125,11 +127,12 @@ CompilerValue *EventBlocks::compileWhenKeyPressed(Compiler *compiler)
     return nullptr;
 }
 
-extern "C" void event_broadcast(ExecutionContext *ctx, const char *name, bool wait)
+extern "C" void event_broadcast(ExecutionContext *ctx, const StringPtr *name, bool wait)
 {
     Thread *thread = ctx->thread();
     IEngine *engine = thread->engine();
-    std::vector<int> broadcasts = engine->findBroadcasts(name);
+    // TODO: Use UTF-16 in engine
+    std::vector<int> broadcasts = engine->findBroadcasts(utf8::utf16to8(std::u16string(name->data)));
 
     for (int index : broadcasts)
         engine->broadcast(index, thread, wait);

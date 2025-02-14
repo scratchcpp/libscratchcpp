@@ -53,13 +53,8 @@ extern "C"
         return list->size();
     }
 
-    char *list_to_string(List *list)
+    StringPtr *list_to_string(List *list)
     {
-        std::string str;
-        list->toString(str);
-
-        char *ret = (char *)malloc((str.size() + 1) * sizeof(char));
-        strncpy(ret, str.c_str(), str.size() + 1);
-        return ret;
+        return list->toStringPtr();
     }
 }

@@ -132,7 +132,7 @@ class LIBSCRATCHCPP_EXPORT Value
         };
 
         /*! Returns the UTF-16 representation of the value. */
-        std::u16string toUtf16()
+        std::u16string toUtf16() const
         {
             std::u16string ret;
             value_toUtf16(&m_data, &ret);
