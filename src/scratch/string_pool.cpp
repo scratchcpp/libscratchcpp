@@ -24,9 +24,10 @@ extern "C"
 {
     /*!
      * Use this instead of dynamically allocating StringPtr.
+     * \param[in] internal Whether the string should be deallocated when the current thread is removed (it's only used within the thread).
      * \note The returned string is uninitialized. Use e. g. string_assign_cstring() to initialize it.
      */
-    StringPtr *string_pool_new()
+    StringPtr *string_pool_new(bool internal)
     {
         if (freeStrings.empty()) {
             auto str = std::make_unique<StringPtr>();
@@ -34,7 +35,7 @@ extern "C"
             assert(strings.find(str) == strings.cend());
             strings.insert(std::move(str));
 
-            if (currentThread)
+            if (internal && currentThread)
                 threadStrings[currentThread].insert(ptr);
 
             return ptr;
@@ -45,7 +46,7 @@ extern "C"
         StringPtr *ptr = last->second;
         freeStrings.erase(last);
 
-        if (currentThread)
+        if (internal && currentThread)
             threadStrings[currentThread].insert(ptr);
 
         return ptr;
@@ -54,10 +55,8 @@ extern "C"
     /*! Invalidates the given StringPtr so that it can be used for new strings later. */
     void string_pool_free(StringPtr *str)
     {
-        if (currentThread) {
-            assert(threadStrings[currentThread].find(str) != threadStrings[currentThread].cend());
+        if (currentThread)
             threadStrings[currentThread].erase(str);
-        }
 
         freeStrings.insert(std::pair<size_t, StringPtr *>(str->allocatedSize, str));
     }
