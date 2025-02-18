@@ -21,6 +21,9 @@ class LIBSCRATCHCPP_EXPORT ExecutableCode
         /*! Runs the script until it finishes or yields. */
         virtual void run(ExecutionContext *context) = 0;
 
+        /*! Runs the hat predicate and returns its return value. */
+        virtual bool runPredicate(ExecutionContext *context) = 0;
+
         /*! Stops the code. isFinished() will return true. */
         virtual void kill(ExecutionContext *context) = 0;
 

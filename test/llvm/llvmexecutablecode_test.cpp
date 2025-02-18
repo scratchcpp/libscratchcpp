@@ -17,6 +17,8 @@
 
 using namespace libscratchcpp;
 
+using ::testing::Return;
+
 class LLVMExecutableCodeTest : public testing::Test
 {
     public:
@@ -34,11 +36,12 @@ class LLVMExecutableCodeTest : public testing::Test
 
         inline llvm::Constant *nullPointer() { return llvm::ConstantPointerNull::get(llvm::PointerType::get(llvm::Type::getInt8Ty(*m_llvmCtx), 0)); }
 
-        llvm::Function *beginMainFunction()
+        llvm::Function *beginMainFunction(bool predicate = false)
         {
             // void *f(ExecutionContext *, Target *, ValueData **, List **)
+            // bool f(...) (hat predicates)
             llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_llvmCtx), 0);
-            llvm::FunctionType *funcType = llvm::FunctionType::get(pointerType, { pointerType, pointerType, pointerType, pointerType }, false);
+            llvm::FunctionType *funcType = llvm::FunctionType::get(predicate ? m_builder->getInt1Ty() : pointerType, { pointerType, pointerType, pointerType, pointerType }, false);
             llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "f", m_module);
 
             llvm::BasicBlock *entry = llvm::BasicBlock::Create(*m_llvmCtx, "entry", func);
@@ -70,6 +73,17 @@ class LLVMExecutableCodeTest : public testing::Test
             m_builder->CreateCall(func, { mockPtr, mainFunc->getArg(0), mainFunc->getArg(1), mainFunc->getArg(2), mainFunc->getArg(3) });
         }
 
+        llvm::Value *addPredicateFunction(llvm::Function *mainFunc)
+        {
+            auto ptrType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_llvmCtx), 0);
+            auto func = m_module->getOrInsertFunction("test_predicate", llvm::FunctionType::get(m_builder->getInt1Ty(), { ptrType, ptrType, ptrType, ptrType, ptrType }, false));
+
+            llvm::Constant *mockInt = llvm::ConstantInt::get(llvm::Type::getInt64Ty(*m_llvmCtx), (uintptr_t)&m_mock, false);
+            llvm::Constant *mockPtr = llvm::ConstantExpr::getIntToPtr(mockInt, ptrType);
+
+            return m_builder->CreateCall(func, { mockPtr, mainFunc->getArg(0), mainFunc->getArg(1), mainFunc->getArg(2), mainFunc->getArg(3) });
+        }
+
         void addTestPrintFunction(llvm::Value *arg1, llvm::Value *arg2)
         {
             auto ptrType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_llvmCtx), 0);
@@ -95,13 +109,34 @@ TEST_F(LLVMExecutableCodeTest, CreateExecutionContext)
     llvm::Function *resumeFunc = beginResumeFunction();
     endFunction(m_builder->getInt1(true));
 
-    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str());
-    m_script->setCode(code);
-    Thread thread(&m_target, &m_engine, m_script.get());
-    auto ctx = code->createExecutionContext(&thread);
-    ASSERT_TRUE(ctx);
-    ASSERT_EQ(ctx->thread(), &thread);
-    ASSERT_TRUE(dynamic_cast<LLVMExecutionContext *>(ctx.get()));
+    {
+        auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), false);
+        m_script->setCode(code);
+        Thread thread(&m_target, &m_engine, m_script.get());
+        auto ctx = code->createExecutionContext(&thread);
+        ASSERT_TRUE(ctx);
+        ASSERT_EQ(ctx->thread(), &thread);
+        ASSERT_TRUE(dynamic_cast<LLVMExecutionContext *>(ctx.get()));
+    }
+}
+
+TEST_F(LLVMExecutableCodeTest, CreatePredicateExecutionContext)
+{
+    llvm::Function *mainFunc = beginMainFunction(true);
+    endFunction(m_builder->getInt1(false));
+
+    llvm::Function *resumeFunc = beginResumeFunction();
+    endFunction(m_builder->getInt1(true));
+
+    {
+        auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), true);
+        m_script->setCode(code);
+        Thread thread(&m_target, &m_engine, m_script.get());
+        auto ctx = code->createExecutionContext(&thread);
+        ASSERT_TRUE(ctx);
+        ASSERT_EQ(ctx->thread(), &thread);
+        ASSERT_TRUE(dynamic_cast<LLVMExecutionContext *>(ctx.get()));
+    }
 }
 
 TEST_F(LLVMExecutableCodeTest, MainFunction)
@@ -116,7 +151,7 @@ TEST_F(LLVMExecutableCodeTest, MainFunction)
     llvm::Function *resumeFunc = beginResumeFunction();
     endFunction(m_builder->getInt1(true));
 
-    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str());
+    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), false);
     m_script->setCode(code);
     Thread thread(&m_target, &m_engine, m_script.get());
     auto ctx = code->createExecutionContext(&thread);
@@ -160,6 +195,35 @@ TEST_F(LLVMExecutableCodeTest, MainFunction)
     ASSERT_FALSE(code->isFinished(ctx.get()));
 }
 
+TEST_F(LLVMExecutableCodeTest, PredicateFunction)
+{
+    m_target.addVariable(std::make_shared<Variable>("", ""));
+    m_target.addList(std::make_shared<List>("", ""));
+
+    llvm::Function *mainFunc = beginMainFunction(true);
+    endFunction(addPredicateFunction(mainFunc));
+
+    llvm::Function *resumeFunc = beginResumeFunction();
+    endFunction(m_builder->getInt1(true));
+
+    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), true);
+    m_script->setCode(code);
+    Thread thread(&m_target, &m_engine, m_script.get());
+    auto ctx = code->createExecutionContext(&thread);
+
+    EXPECT_CALL(m_mock, predicate(ctx.get(), &m_target, m_target.variableData(), m_target.listData())).WillOnce(Return(true));
+    ASSERT_TRUE(code->runPredicate(ctx.get()));
+
+    EXPECT_CALL(m_mock, predicate(ctx.get(), &m_target, m_target.variableData(), m_target.listData())).WillOnce(Return(true));
+    ASSERT_TRUE(code->runPredicate(ctx.get()));
+
+    EXPECT_CALL(m_mock, predicate(ctx.get(), &m_target, m_target.variableData(), m_target.listData())).WillOnce(Return(false));
+    ASSERT_FALSE(code->runPredicate(ctx.get()));
+
+    EXPECT_CALL(m_mock, predicate(ctx.get(), &m_target, m_target.variableData(), m_target.listData())).WillOnce(Return(false));
+    ASSERT_FALSE(code->runPredicate(ctx.get()));
+}
+
 TEST_F(LLVMExecutableCodeTest, Promise)
 {
     llvm::Function *mainFunc = beginMainFunction();
@@ -169,7 +233,7 @@ TEST_F(LLVMExecutableCodeTest, Promise)
     llvm::Function *resumeFunc = beginResumeFunction();
     endFunction(m_builder->getInt1(true));
 
-    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str());
+    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), false);
     m_script->setCode(code);
     Thread thread(&m_target, &m_engine, m_script.get());
     auto ctx = code->createExecutionContext(&thread);
