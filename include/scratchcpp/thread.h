@@ -27,6 +27,7 @@ class LIBSCRATCHCPP_EXPORT Thread
         Script *script() const;
 
         void run();
+        bool runPredicate();
         void kill();
         void reset();
 

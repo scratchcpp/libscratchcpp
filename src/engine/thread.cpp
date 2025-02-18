@@ -18,9 +18,13 @@ Thread::Thread(Target *target, IEngine *engine, Script *script) :
 
     if (impl->script) {
         impl->code = impl->script->code();
+        impl->hatPredicateCode = impl->script->hatPredicateCode();
 
         if (impl->code)
             impl->executionContext = impl->code->createExecutionContext(this);
+
+        if (impl->hatPredicateCode)
+            impl->hatPredicateExecutionContext = impl->hatPredicateCode->createExecutionContext(this);
     }
 }
 
@@ -54,6 +58,18 @@ void Thread::run()
     string_pool_set_thread(this);
     impl->code->run(impl->executionContext.get());
     string_pool_set_thread(nullptr);
+}
+
+/*! Runs the hat predicate and returns its return value. */
+bool Thread::runPredicate()
+{
+    if (!impl->hatPredicateCode)
+        return false;
+
+    string_pool_set_thread(this);
+    const bool ret = impl->hatPredicateCode->runPredicate(impl->hatPredicateExecutionContext.get());
+    string_pool_set_thread(nullptr);
+    return ret;
 }
 
 /*! Stops the script. */
