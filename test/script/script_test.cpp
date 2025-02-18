@@ -41,6 +41,16 @@ TEST_F(ScriptTest, Code)
     ASSERT_EQ(script.code(), code.get());
 }
 
+TEST_F(ScriptTest, HatPredicateCode)
+{
+    Script script(nullptr, nullptr, nullptr);
+    ASSERT_EQ(script.hatPredicateCode(), nullptr);
+
+    auto code = std::make_shared<ExecutableCodeMock>();
+    script.setHatPredicateCode(code);
+    ASSERT_EQ(script.hatPredicateCode(), code.get());
+}
+
 TEST_F(ScriptTest, Start)
 {
     Script script1(nullptr, nullptr, nullptr);

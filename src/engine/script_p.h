@@ -22,6 +22,7 @@ struct ScriptPrivate
         ScriptPrivate(const ScriptPrivate &) = delete;
 
         std::shared_ptr<ExecutableCode> code;
+        std::shared_ptr<ExecutableCode> hatPredicateCode;
 
         Target *target = nullptr;
         std::shared_ptr<Block> topBlock;
