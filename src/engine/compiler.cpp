@@ -44,7 +44,7 @@ std::shared_ptr<libscratchcpp::Block> Compiler::block() const
 }
 
 /*! Compiles the script starting with the given block. */
-std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBlock)
+std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBlock, bool isHatPredicate)
 {
     BlockPrototype *procedurePrototype = nullptr;
 
@@ -60,12 +60,31 @@ std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBl
         }
     }
 
-    impl->builder = impl->builderFactory->create(impl->ctx, procedurePrototype);
+    impl->builder = impl->builderFactory->create(impl->ctx, procedurePrototype, isHatPredicate);
     impl->substackTree.clear();
     impl->substackHit = false;
     impl->emptySubstack = false;
     impl->warp = false;
     impl->block = startBlock;
+
+    if (impl->block && isHatPredicate) {
+        auto f = impl->block->hatPredicateCompileFunction();
+
+        if (f) {
+            CompilerValue *ret = f(this);
+            assert(ret);
+
+            if (!ret)
+                std::cout << "warning: '" << impl->block->opcode() << "' hat predicate compile function doesn't return a valid value" << std::endl;
+        } else {
+            std::cout << "warning: unsupported hat predicate: " << impl->block->opcode() << std::endl;
+            impl->unsupportedBlocks.insert(impl->block->opcode());
+            addConstValue(false); // return false if unsupported
+        }
+
+        impl->block = nullptr;
+        return impl->builder->finalize();
+    }
 
     while (impl->block) {
         if (impl->block->compileFunction()) {
