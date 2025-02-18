@@ -18,6 +18,7 @@ class EventBlocks : public IExtension
 
     private:
         static CompilerValue *compileWhenTouchingObject(Compiler *compiler);
+        static CompilerValue *compileWhenTouchingObjectPredicate(Compiler *compiler);
         static CompilerValue *compileWhenFlagClicked(Compiler *compiler);
         static CompilerValue *compileWhenThisSpriteClicked(Compiler *compiler);
         static CompilerValue *compileWhenStageClicked(Compiler *compiler);
