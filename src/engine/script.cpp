@@ -63,10 +63,8 @@ bool Script::runHatPredicate(Target *target)
     if (!target || !impl->engine)
         return false;
 
-    // TODO: Implement this
-    // auto thread = std::make_shared<Thread>(target, impl->engine, this);
-
-    return false;
+    auto thread = std::make_shared<Thread>(target, impl->engine, this);
+    return thread->runPredicate();
 }
 
 /*! Starts the script (creates a thread). */
