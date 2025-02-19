@@ -274,6 +274,9 @@ void Engine::compile()
                     auto script = std::make_shared<Script>(target.get(), block, this);
                     m_scripts[block] = script;
                     script->setCode(compiler.compile(block));
+
+                    if (block->hatPredicateCompileFunction())
+                        script->setHatPredicateCode(compiler.compile(block, true));
                 } else {
                     std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
                     m_unsupportedBlocks.insert(block->opcode());

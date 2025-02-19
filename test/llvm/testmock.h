@@ -13,6 +13,7 @@ class TestMock
 {
     public:
         MOCK_METHOD(void, f, (ExecutionContext * ctx, Target *, ValueData **, List **));
+        MOCK_METHOD(bool, predicate, (ExecutionContext * ctx, Target *, ValueData **, List **));
 };
 
 } // namespace libscratchcpp

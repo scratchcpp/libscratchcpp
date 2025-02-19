@@ -8,6 +8,10 @@
 #include <scratchcpp/thread.h>
 #include <scratchcpp/executablecode.h>
 #include <enginemock.h>
+#include <targetmock.h>
+#include <audioinputmock.h>
+#include <audioloudnessmock.h>
+#include <timermock.h>
 
 #include "../common.h"
 #include "blocks/eventblocks.h"
@@ -33,12 +37,10 @@ class EventBlocksTest : public testing::Test
         EngineMock m_engineMock;
 };
 
-// TODO: Add test for when touching object hat predicate
-
 TEST_F(EventBlocksTest, WhenTouchingObject)
 {
     auto target = std::make_shared<Sprite>();
-    ScriptBuilder builder(m_extension.get(), m_engine, target);
+    ScriptBuilder builder(m_extension.get(), m_engine, target, false);
 
     builder.addBlock("event_whentouchingobject");
     builder.addDropdownInput("TOUCHINGOBJECTMENU", "Sprite1");
@@ -47,6 +49,121 @@ TEST_F(EventBlocksTest, WhenTouchingObject)
     Compiler compiler(&m_engineMock, target.get());
     EXPECT_CALL(m_engineMock, addWhenTouchingObjectScript(block));
     compiler.compile(block);
+}
+
+TEST_F(EventBlocksTest, WhenTouchingObjectPredicate)
+{
+    auto target = std::make_shared<TargetMock>();
+    target->setEngine(&m_engineMock);
+    Sprite sprite;
+
+    // "Sprite1"
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target, false);
+        builder.addBlock("event_whentouchingobject");
+        builder.addDropdownInput("TOUCHINGOBJECTMENU", "Sprite1");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block, true);
+        Script script(target.get(), block, &m_engineMock);
+        script.setHatPredicateCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        EXPECT_CALL(m_engineMock, findTarget("Sprite1")).WillOnce(Return(3));
+        EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&sprite));
+        EXPECT_CALL(*target, touchingClones).WillOnce(Return(false));
+        ASSERT_FALSE(thread.runPredicate());
+
+        EXPECT_CALL(m_engineMock, findTarget("Sprite1")).WillOnce(Return(3));
+        EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&sprite));
+        EXPECT_CALL(*target, touchingClones).WillOnce(Return(true));
+        ASSERT_TRUE(thread.runPredicate());
+    }
+
+    // "_mouse_"
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target, false);
+        builder.addBlock("event_whentouchingobject");
+        builder.addDropdownInput("TOUCHINGOBJECTMENU", "_mouse_");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block, true);
+        Script script(target.get(), block, &m_engineMock);
+        script.setHatPredicateCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(24.5));
+        EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(-16.04));
+        EXPECT_CALL(*target, touchingPoint(24.5, -16.04)).WillOnce(Return(false));
+        ASSERT_FALSE(thread.runPredicate());
+
+        EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(24.5));
+        EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(-16.04));
+        EXPECT_CALL(*target, touchingPoint(24.5, -16.04)).WillOnce(Return(true));
+        ASSERT_TRUE(thread.runPredicate());
+    }
+
+    // "_edge_"
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target, false);
+        builder.addBlock("event_whentouchingobject");
+        builder.addDropdownInput("TOUCHINGOBJECTMENU", "_edge_");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block, true);
+        Script script(target.get(), block, &m_engineMock);
+        script.setHatPredicateCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(10));
+        EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(10));
+        EXPECT_CALL(*target, boundingRect()).WillOnce(Return(Rect(-5, 5, 5, -5)));
+        ASSERT_FALSE(thread.runPredicate());
+
+        EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(0));
+        EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(0));
+        EXPECT_CALL(*target, boundingRect()).WillOnce(Return(Rect(-5, 5, 5, -5)));
+        ASSERT_TRUE(thread.runPredicate());
+    }
+
+    // "_stage_"
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target, false);
+        builder.addBlock("event_whentouchingobject");
+        builder.addDropdownInput("TOUCHINGOBJECTMENU", "");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block, true);
+        Script script(target.get(), block, &m_engineMock);
+        script.setHatPredicateCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        EXPECT_CALL(m_engineMock, findTarget("")).WillOnce(Return(-1));
+        EXPECT_CALL(m_engineMock, targetAt(-1)).WillOnce(Return(nullptr));
+        ASSERT_FALSE(thread.runPredicate());
+    }
+
+    // ""
+    {
+        ScriptBuilder builder(m_extension.get(), m_engine, target, false);
+        builder.addBlock("event_whentouchingobject");
+        builder.addDropdownInput("TOUCHINGOBJECTMENU", "");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block, true);
+        Script script(target.get(), block, &m_engineMock);
+        script.setHatPredicateCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        EXPECT_CALL(m_engineMock, findTarget("")).WillOnce(Return(-1));
+        EXPECT_CALL(m_engineMock, targetAt(-1)).WillOnce(Return(nullptr));
+        ASSERT_FALSE(thread.runPredicate());
+    }
 }
 
 TEST_F(EventBlocksTest, WhenFlagClicked)
@@ -119,12 +236,10 @@ TEST_F(EventBlocksTest, WhenBackdropSwitchesTo)
     compiler.compile(block);
 }
 
-// TODO: Add test for when greater than hat predicate
-
 TEST_F(EventBlocksTest, WhenGreaterThan)
 {
     auto target = std::make_shared<Sprite>();
-    ScriptBuilder builder(m_extension.get(), m_engine, target);
+    ScriptBuilder builder(m_extension.get(), m_engine, target, false);
 
     builder.addBlock("event_whengreaterthan");
     builder.addDropdownField("WHENGREATERTHANMENU", "LOUDNESS");
@@ -134,6 +249,61 @@ TEST_F(EventBlocksTest, WhenGreaterThan)
     Compiler compiler(&m_engineMock, target.get());
     EXPECT_CALL(m_engineMock, addWhenGreaterThanScript(block));
     compiler.compile(block);
+}
+
+TEST_F(EventBlocksTest, WhenGreaterThanPredicate)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target, false);
+
+    const std::vector<Value> values = { 22.7, 23, 23.5 };
+    const std::vector<bool> retValues = { true, false, false };
+
+    AudioInputMock audioInput;
+    auto audioLoudness = std::make_shared<AudioLoudnessMock>();
+    EventBlocks::audioInput = &audioInput;
+    EXPECT_CALL(audioInput, audioLoudness()).Times(3).WillRepeatedly(Return(audioLoudness));
+    EXPECT_CALL(*audioLoudness, getLoudness()).Times(3).WillRepeatedly(Return(23));
+
+    // when [loudness] > x
+    for (int i = 0; i < values.size(); i++) {
+        ScriptBuilder builder(m_extension.get(), m_engine, target, false);
+        builder.addBlock("event_whengreaterthan");
+        builder.addDropdownField("WHENGREATERTHANMENU", "LOUDNESS");
+        builder.addValueInput("VALUE", values[i]);
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block, true);
+        Script script(target.get(), block, &m_engineMock);
+        script.setHatPredicateCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        ASSERT_EQ(thread.runPredicate(), retValues[i]);
+    }
+
+    EventBlocks::audioInput = nullptr;
+
+    TimerMock timer;
+    EXPECT_CALL(m_engineMock, timer()).Times(3).WillRepeatedly(Return(&timer));
+    EXPECT_CALL(timer, value()).Times(3).WillRepeatedly(Return(23));
+
+    // when [timer] > x
+    for (int i = 0; i < values.size(); i++) {
+        ScriptBuilder builder(m_extension.get(), m_engine, target, false);
+        builder.addBlock("event_whengreaterthan");
+        builder.addDropdownField("WHENGREATERTHANMENU", "TIMER");
+        builder.addValueInput("VALUE", values[i]);
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, target.get());
+        auto code = compiler.compile(block, true);
+        Script script(target.get(), block, &m_engineMock);
+        script.setHatPredicateCode(code);
+        Thread thread(target.get(), &m_engineMock, &script);
+
+        ASSERT_EQ(thread.runPredicate(), retValues[i]);
+    }
 }
 
 TEST_F(EventBlocksTest, Broadcast)

@@ -31,6 +31,9 @@ class LIBSCRATCHCPP_EXPORT Script
         ExecutableCode *code() const;
         void setCode(std::shared_ptr<ExecutableCode> code);
 
+        ExecutableCode *hatPredicateCode() const;
+        void setHatPredicateCode(std::shared_ptr<ExecutableCode> code);
+
         bool runHatPredicate(Target *target);
 
         std::shared_ptr<Thread> start();

@@ -5,6 +5,7 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/executioncontext.h>
 #include <enginemock.h>
 #include <executablecodemock.h>
 
@@ -14,6 +15,7 @@ using namespace libscratchcpp;
 
 using ::testing::Return;
 using ::testing::ReturnRef;
+using ::testing::Invoke;
 using ::testing::_;
 
 class ScriptTest : public testing::Test
@@ -39,6 +41,38 @@ TEST_F(ScriptTest, Code)
     auto code = std::make_shared<ExecutableCodeMock>();
     script.setCode(code);
     ASSERT_EQ(script.code(), code.get());
+}
+
+TEST_F(ScriptTest, HatPredicateCode)
+{
+    Script script(nullptr, nullptr, nullptr);
+    ASSERT_EQ(script.hatPredicateCode(), nullptr);
+
+    auto code = std::make_shared<ExecutableCodeMock>();
+    script.setHatPredicateCode(code);
+    ASSERT_EQ(script.hatPredicateCode(), code.get());
+}
+
+TEST_F(ScriptTest, RunHatPredicate)
+{
+    Script script(nullptr, nullptr, &m_engine);
+    auto code = std::make_shared<ExecutableCodeMock>();
+    std::shared_ptr<ExecutionContext> ctx;
+    script.setHatPredicateCode(code);
+
+    EXPECT_CALL(*code, createExecutionContext(_)).WillRepeatedly(Invoke([&ctx](Thread *thread) {
+        ctx = std::make_shared<ExecutionContext>(thread);
+        return ctx;
+    }));
+
+    EXPECT_CALL(*code, runPredicate(_)).WillOnce(Return(true));
+    ASSERT_TRUE(script.runHatPredicate(&m_target));
+
+    EXPECT_CALL(*code, runPredicate(_)).WillOnce(Return(true));
+    ASSERT_TRUE(script.runHatPredicate(&m_target));
+
+    EXPECT_CALL(*code, runPredicate(_)).WillOnce(Return(false));
+    ASSERT_FALSE(script.runHatPredicate(&m_target));
 }
 
 TEST_F(ScriptTest, Start)

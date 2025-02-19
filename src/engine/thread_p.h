@@ -21,7 +21,9 @@ struct ThreadPrivate
         IEngine *engine = nullptr;
         Script *script = nullptr;
         ExecutableCode *code = nullptr;
+        ExecutableCode *hatPredicateCode = nullptr;
         std::shared_ptr<ExecutionContext> executionContext;
+        std::shared_ptr<ExecutionContext> hatPredicateExecutionContext;
 };
 
 } // namespace libscratchcpp

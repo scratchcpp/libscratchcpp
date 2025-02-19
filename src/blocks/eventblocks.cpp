@@ -3,6 +3,7 @@
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/block.h>
+#include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/broadcast.h>
 #include <scratchcpp/executioncontext.h>
@@ -10,9 +11,13 @@
 #include <scratchcpp/compilerconstant.h>
 #include <scratchcpp/promise.h>
 #include <scratchcpp/stringptr.h>
+#include <scratchcpp/sprite.h>
+#include <scratchcpp/itimer.h>
 #include <utf8.h>
 
 #include "eventblocks.h"
+#include "audio/audioinput.h"
+#include "audio/iaudioloudness.h"
 
 using namespace libscratchcpp;
 
@@ -33,6 +38,7 @@ Rgb EventBlocks::color() const
 
 void EventBlocks::registerBlocks(IEngine *engine)
 {
+    // Blocks
     engine->addCompileFunction(this, "event_whentouchingobject", &compileWhenTouchingObject);
     engine->addCompileFunction(this, "event_whenflagclicked", &compileWhenFlagClicked);
     engine->addCompileFunction(this, "event_whenthisspriteclicked", &compileWhenThisSpriteClicked);
@@ -43,12 +49,31 @@ void EventBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "event_broadcast", &compileBroadcast);
     engine->addCompileFunction(this, "event_broadcastandwait", &compileBroadcastAndWait);
     engine->addCompileFunction(this, "event_whenkeypressed", &compileWhenKeyPressed);
+
+    // Hat predicates
+    engine->addHatPredicateCompileFunction(this, "event_whentouchingobject", &compileWhenTouchingObjectPredicate);
+    engine->addHatPredicateCompileFunction(this, "event_whengreaterthan", &compileWhenGreaterThanPredicate);
 }
 
 CompilerValue *EventBlocks::compileWhenTouchingObject(Compiler *compiler)
 {
     compiler->engine()->addWhenTouchingObjectScript(compiler->block());
     return nullptr;
+}
+
+CompilerValue *EventBlocks::compileWhenTouchingObjectPredicate(Compiler *compiler)
+{
+    Input *input = compiler->input("TOUCHINGOBJECTMENU");
+    CompilerValue *name = nullptr;
+
+    if (input->pointsToDropdownMenu()) {
+        std::string value = input->selectedMenuItem();
+
+        name = compiler->addConstValue(value);
+    } else
+        name = compiler->addInput(input);
+
+    return compiler->addTargetFunctionCall("event_whentouchingobject_predicate", Compiler::StaticType::Bool, { Compiler::StaticType::String }, { name });
 }
 
 CompilerValue *EventBlocks::compileWhenFlagClicked(Compiler *compiler)
@@ -99,6 +124,27 @@ CompilerValue *EventBlocks::compileWhenGreaterThan(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *EventBlocks::compileWhenGreaterThanPredicate(Compiler *compiler)
+{
+    Field *field = compiler->field("WHENGREATERTHANMENU");
+    std::string predicate;
+
+    if (field) {
+        const std::string option = field->value().toString();
+
+        if (option == "LOUDNESS")
+            predicate = "event_whengreaterthan_loudness_predicate";
+        else if (option == "TIMER")
+            predicate = "event_whengreaterthan_timer_predicate";
+        else
+            return compiler->addConstValue(false);
+    } else
+        return compiler->addConstValue(false);
+
+    CompilerValue *value = compiler->addInput("VALUE");
+    return compiler->addFunctionCallWithCtx(predicate, Compiler::StaticType::Bool, { Compiler::StaticType::Number }, { value });
+}
+
 CompilerValue *EventBlocks::compileBroadcast(Compiler *compiler)
 {
     auto input = compiler->addInput("BROADCAST_INPUT");
@@ -125,6 +171,43 @@ CompilerValue *EventBlocks::compileWhenKeyPressed(Compiler *compiler)
         compiler->engine()->addKeyPressScript(block, field);
 
     return nullptr;
+}
+
+extern "C" bool event_whentouchingobject_predicate(Target *target, const StringPtr *name)
+{
+    static const StringPtr MOUSE_STR = StringPtr("_mouse_");
+    static const StringPtr EDGE_STR = StringPtr("_edge_");
+
+    IEngine *engine = target->engine();
+
+    if (string_compare_case_sensitive(name, &MOUSE_STR) == 0)
+        return target->touchingPoint(engine->mouseX(), engine->mouseY());
+    else if (string_compare_case_sensitive(name, &EDGE_STR) == 0)
+        return target->touchingEdge();
+    else {
+        // TODO: Use UTF-16 in engine
+        const std::string u8name = utf8::utf16to8(std::u16string(name->data));
+        Target *anotherTarget = engine->targetAt(engine->findTarget(u8name));
+
+        if (anotherTarget && !anotherTarget->isStage())
+            return target->touchingSprite(static_cast<Sprite *>(anotherTarget));
+        else
+            return false;
+    }
+}
+
+extern "C" bool event_whengreaterthan_loudness_predicate(ExecutionContext *ctx, double value)
+{
+    if (!EventBlocks::audioInput)
+        EventBlocks::audioInput = AudioInput::instance().get();
+
+    auto audioLoudness = EventBlocks::audioInput->audioLoudness();
+    return (audioLoudness->getLoudness() > value);
+}
+
+extern "C" bool event_whengreaterthan_timer_predicate(ExecutionContext *ctx, double value)
+{
+    return ctx->engine()->timer()->value() > value;
 }
 
 extern "C" void event_broadcast(ExecutionContext *ctx, const StringPtr *name, bool wait)

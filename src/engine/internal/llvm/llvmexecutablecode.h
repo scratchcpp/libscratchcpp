@@ -16,9 +16,10 @@ class LLVMExecutionContext;
 class LLVMExecutableCode : public ExecutableCode
 {
     public:
-        LLVMExecutableCode(LLVMCompilerContext *ctx, const std::string &mainFunctionName, const std::string &resumeFunctionName);
+        LLVMExecutableCode(LLVMCompilerContext *ctx, const std::string &mainFunctionName, const std::string &resumeFunctionName, bool isPredicate);
 
         void run(ExecutionContext *context) override;
+        bool runPredicate(ExecutionContext *context) override;
         void kill(libscratchcpp::ExecutionContext *context) override;
         void reset(ExecutionContext *context) override;
 
@@ -28,14 +29,18 @@ class LLVMExecutableCode : public ExecutableCode
 
     private:
         using MainFunctionType = void *(*)(ExecutionContext *, Target *, ValueData **, List **);
+        using PredicateFunctionType = bool (*)(ExecutionContext *, Target *, ValueData **, List **);
         using ResumeFunctionType = bool (*)(void *);
 
         static LLVMExecutionContext *getContext(ExecutionContext *context);
 
         LLVMCompilerContext *m_ctx = nullptr;
         std::string m_mainFunctionName;
+        std::string m_predicateFunctionName;
         std::string m_resumeFunctionName;
-        mutable MainFunctionType m_mainFunction = nullptr;
+        bool m_isPredicate = false;
+
+        mutable std::variant<MainFunctionType, PredicateFunctionType> m_mainFunction;
         mutable ResumeFunctionType m_resumeFunction = nullptr;
 };
 

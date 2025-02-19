@@ -50,6 +50,31 @@ TEST_F(ThreadTest, Run)
     m_thread->run();
 }
 
+TEST_F(ThreadTest, RunPredicate)
+{
+    ASSERT_FALSE(m_thread->runPredicate());
+
+    auto predicateCode = std::make_shared<ExecutableCodeMock>();
+    std::shared_ptr<ExecutionContext> predicateCtx;
+    m_script->setHatPredicateCode(predicateCode);
+    EXPECT_CALL(*m_code, createExecutionContext(_)).WillOnce(Invoke([this](Thread *thread) {
+        m_ctx = std::make_shared<ExecutionContext>(thread);
+        return m_ctx;
+    }));
+    EXPECT_CALL(*predicateCode, createExecutionContext(_)).WillOnce(Invoke([&predicateCtx](Thread *thread) {
+        predicateCtx = std::make_shared<ExecutionContext>(thread);
+        return predicateCtx;
+    }));
+
+    Thread thread(&m_target, &m_engine, m_script.get());
+
+    EXPECT_CALL(*predicateCode, runPredicate(predicateCtx.get())).WillOnce(Return(false));
+    ASSERT_FALSE(thread.runPredicate());
+
+    EXPECT_CALL(*predicateCode, runPredicate(predicateCtx.get())).WillOnce(Return(true));
+    ASSERT_TRUE(thread.runPredicate());
+}
+
 TEST_F(ThreadTest, Kill)
 {
     EXPECT_CALL(*m_code, kill(m_ctx.get()));

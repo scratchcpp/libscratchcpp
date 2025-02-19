@@ -21,6 +21,14 @@ extern "C"
             mock->f(ctx, target, varData, listData);
     }
 
+    bool test_predicate(TestMock *mock, ExecutionContext *ctx, Target *target, ValueData **varData, List **listData)
+    {
+        if (mock)
+            return mock->predicate(ctx, target, varData, listData);
+
+        return false;
+    }
+
     void test_print_function(ValueData *arg1, ValueData *arg2)
     {
         std::string s1, s2;

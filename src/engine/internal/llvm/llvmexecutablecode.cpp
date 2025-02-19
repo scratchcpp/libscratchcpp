@@ -16,10 +16,11 @@
 
 using namespace libscratchcpp;
 
-LLVMExecutableCode::LLVMExecutableCode(LLVMCompilerContext *ctx, const std::string &mainFunctionName, const std::string &resumeFunctionName) :
+LLVMExecutableCode::LLVMExecutableCode(LLVMCompilerContext *ctx, const std::string &mainFunctionName, const std::string &resumeFunctionName, bool isPredicate) :
     m_ctx(ctx),
     m_mainFunctionName(mainFunctionName),
-    m_resumeFunctionName(resumeFunctionName)
+    m_resumeFunctionName(resumeFunctionName),
+    m_isPredicate(isPredicate)
 {
     assert(m_ctx);
 
@@ -31,7 +32,7 @@ LLVMExecutableCode::LLVMExecutableCode(LLVMCompilerContext *ctx, const std::stri
 
 void LLVMExecutableCode::run(ExecutionContext *context)
 {
-    assert(m_mainFunction);
+    assert(std::holds_alternative<MainFunctionType>(m_mainFunction));
     assert(m_resumeFunction);
     LLVMExecutionContext *ctx = getContext(context);
 
@@ -56,13 +57,22 @@ void LLVMExecutableCode::run(ExecutionContext *context)
         ctx->setFinished(done);
     } else {
         Target *target = ctx->thread()->target();
-        void *handle = m_mainFunction(context, target, target->variableData(), target->listData());
+        MainFunctionType f = std::get<MainFunctionType>(m_mainFunction);
+        void *handle = f(context, target, target->variableData(), target->listData());
 
         if (!handle)
             ctx->setFinished(true);
 
         ctx->setCoroutineHandle(handle);
     }
+}
+
+bool LLVMExecutableCode::runPredicate(ExecutionContext *context)
+{
+    assert(std::holds_alternative<PredicateFunctionType>(m_mainFunction));
+    Target *target = context->thread()->target();
+    PredicateFunctionType f = std::get<PredicateFunctionType>(m_mainFunction);
+    return f(context, target, target->variableData(), target->listData());
 }
 
 void LLVMExecutableCode::kill(ExecutionContext *context)
@@ -91,7 +101,11 @@ std::shared_ptr<ExecutionContext> LLVMExecutableCode::createExecutionContext(Thr
     if (!m_ctx->jitInitialized())
         m_ctx->initJit();
 
-    m_mainFunction = m_ctx->lookupFunction<MainFunctionType>(m_mainFunctionName);
+    if (m_isPredicate)
+        m_mainFunction = m_ctx->lookupFunction<PredicateFunctionType>(m_mainFunctionName);
+    else
+        m_mainFunction = m_ctx->lookupFunction<MainFunctionType>(m_mainFunctionName);
+
     m_resumeFunction = m_ctx->lookupFunction<ResumeFunctionType>(m_resumeFunctionName);
     return std::make_shared<LLVMExecutionContext>(thread);
 }

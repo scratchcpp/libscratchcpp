@@ -67,12 +67,12 @@ class LLVMCodeBuilderTest : public testing::Test
             test_function(nullptr, nullptr, nullptr, nullptr, nullptr); // force dependency
         }
 
-        void createBuilder(Target *target, BlockPrototype *procedurePrototype)
+        void createBuilder(Target *target, BlockPrototype *procedurePrototype, bool isPredicate = false)
         {
             if (m_contexts.find(target) == m_contexts.cend() || !target)
                 m_contexts[target] = std::make_unique<LLVMCompilerContext>(&m_engine, target);
 
-            m_builder = std::make_unique<LLVMCodeBuilder>(m_contexts[target].get(), procedurePrototype);
+            m_builder = std::make_unique<LLVMCodeBuilder>(m_contexts[target].get(), procedurePrototype, isPredicate);
         }
 
         void createBuilder(Target *target, bool warp)
@@ -81,6 +81,8 @@ class LLVMCodeBuilderTest : public testing::Test
             m_procedurePrototype->setWarp(warp);
             createBuilder(target, m_procedurePrototype.get());
         }
+
+        void createPredicateBuilder(Target *target) { createBuilder(target, nullptr, true); }
 
         void createBuilder(bool warp) { createBuilder(nullptr, warp); }
 
@@ -5994,4 +5996,39 @@ TEST_F(LLVMCodeBuilderTest, Procedures)
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected2 + expected3);
     ASSERT_TRUE(code->isFinished(ctx.get()));
+}
+
+TEST_F(LLVMCodeBuilderTest, HatPredicates)
+{
+    Sprite sprite;
+
+    // Predicate 1
+    createPredicateBuilder(&sprite);
+
+    CompilerValue *v = m_builder->addConstValue(true);
+    m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool }, { v });
+
+    auto code1 = m_builder->finalize();
+
+    // Predicate 2
+    createPredicateBuilder(&sprite);
+
+    v = m_builder->addConstValue(false);
+    m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool }, { v });
+
+    auto code2 = m_builder->finalize();
+
+    Script script1(&sprite, nullptr, nullptr);
+    script1.setCode(code1);
+    Thread thread1(&sprite, nullptr, &script1);
+    auto ctx = code1->createExecutionContext(&thread1);
+
+    ASSERT_TRUE(code1->runPredicate(ctx.get()));
+
+    Script script2(&sprite, nullptr, nullptr);
+    script2.setCode(code2);
+    Thread thread2(&sprite, nullptr, &script2);
+    ctx = code2->createExecutionContext(&thread2);
+
+    ASSERT_FALSE(code2->runPredicate(ctx.get()));
 }
