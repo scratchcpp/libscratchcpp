@@ -12,9 +12,12 @@
 #include <scratchcpp/promise.h>
 #include <scratchcpp/stringptr.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/itimer.h>
 #include <utf8.h>
 
 #include "eventblocks.h"
+#include "audio/audioinput.h"
+#include "audio/iaudioloudness.h"
 
 using namespace libscratchcpp;
 
@@ -49,6 +52,7 @@ void EventBlocks::registerBlocks(IEngine *engine)
 
     // Hat predicates
     engine->addHatPredicateCompileFunction(this, "event_whentouchingobject", &compileWhenTouchingObjectPredicate);
+    engine->addHatPredicateCompileFunction(this, "event_whengreaterthan", &compileWhenGreaterThanPredicate);
 }
 
 CompilerValue *EventBlocks::compileWhenTouchingObject(Compiler *compiler)
@@ -120,6 +124,27 @@ CompilerValue *EventBlocks::compileWhenGreaterThan(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *EventBlocks::compileWhenGreaterThanPredicate(Compiler *compiler)
+{
+    Field *field = compiler->field("WHENGREATERTHANMENU");
+    std::string predicate;
+
+    if (field) {
+        const std::string option = field->value().toString();
+
+        if (option == "LOUDNESS")
+            predicate = "event_whengreaterthan_loudness_predicate";
+        else if (option == "TIMER")
+            predicate = "event_whengreaterthan_timer_predicate";
+        else
+            return compiler->addConstValue(false);
+    } else
+        return compiler->addConstValue(false);
+
+    CompilerValue *value = compiler->addInput("VALUE");
+    return compiler->addFunctionCallWithCtx(predicate, Compiler::StaticType::Bool, { Compiler::StaticType::Number }, { value });
+}
+
 CompilerValue *EventBlocks::compileBroadcast(Compiler *compiler)
 {
     auto input = compiler->addInput("BROADCAST_INPUT");
@@ -169,6 +194,20 @@ extern "C" bool event_whentouchingobject_predicate(Target *target, const StringP
         else
             return false;
     }
+}
+
+extern "C" bool event_whengreaterthan_loudness_predicate(ExecutionContext *ctx, double value)
+{
+    if (!EventBlocks::audioInput)
+        EventBlocks::audioInput = AudioInput::instance().get();
+
+    auto audioLoudness = EventBlocks::audioInput->audioLoudness();
+    return (audioLoudness->getLoudness() > value);
+}
+
+extern "C" bool event_whengreaterthan_timer_predicate(ExecutionContext *ctx, double value)
+{
+    return ctx->engine()->timer()->value() > value;
 }
 
 extern "C" void event_broadcast(ExecutionContext *ctx, const StringPtr *name, bool wait)

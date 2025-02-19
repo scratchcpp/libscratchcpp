@@ -7,6 +7,8 @@
 namespace libscratchcpp
 {
 
+class IAudioInput;
+
 class EventBlocks : public IExtension
 {
     public:
@@ -15,6 +17,8 @@ class EventBlocks : public IExtension
         Rgb color() const override;
 
         void registerBlocks(IEngine *engine) override;
+
+        static inline IAudioInput *audioInput = nullptr;
 
     private:
         static CompilerValue *compileWhenTouchingObject(Compiler *compiler);
@@ -25,6 +29,7 @@ class EventBlocks : public IExtension
         static CompilerValue *compileWhenBroadcastReceived(Compiler *compiler);
         static CompilerValue *compileWhenBackdropSwitchesTo(Compiler *compiler);
         static CompilerValue *compileWhenGreaterThan(Compiler *compiler);
+        static CompilerValue *compileWhenGreaterThanPredicate(Compiler *compiler);
         static CompilerValue *compileBroadcast(Compiler *compiler);
         static CompilerValue *compileBroadcastAndWait(Compiler *compiler);
         static CompilerValue *compileWhenKeyPressed(Compiler *compiler);
