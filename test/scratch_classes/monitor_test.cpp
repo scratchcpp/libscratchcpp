@@ -12,7 +12,6 @@
 using namespace libscratchcpp;
 
 using ::testing::Return;
-using ::testing::SaveArg;
 using ::testing::_;
 
 static const int PADDING = 5;
@@ -111,26 +110,20 @@ TEST(MonitorTest, Sprite)
     ASSERT_EQ(block->target(), nullptr);
 }
 
-/*TEST(MonitorTest, UpdateValue)
+TEST(MonitorTest, UpdateValue)
 {
     Monitor monitor("", "");
-    VirtualMachine vm1, vm2;
     monitor.updateValue(nullptr);
-    monitor.updateValue(&vm1);
+    monitor.updateValue("test");
 
     MonitorHandlerMock handler;
     EXPECT_CALL(handler, init);
     monitor.setInterface(&handler);
 
-    EXPECT_CALL(handler, onValueChanged(&vm1));
-    monitor.updateValue(&vm1);
-
-    EXPECT_CALL(handler, onValueChanged(nullptr));
-    monitor.updateValue(nullptr);
-
-    EXPECT_CALL(handler, onValueChanged(&vm2));
-    monitor.updateValue(&vm2);
-}*/
+    Value v = 123;
+    EXPECT_CALL(handler, onValueChanged(v));
+    monitor.updateValue(v);
+}
 
 TEST(MonitorTest, ChangeValue)
 {
@@ -141,20 +134,14 @@ TEST(MonitorTest, ChangeValue)
     EXPECT_CALL(handler, init);
     monitor.setInterface(&handler);
 
-    /*const VirtualMachine *vm = nullptr;
-    EXPECT_CALL(handler, onValueChanged(_)).WillOnce(SaveArg<0>(&vm));*/
-    monitor.changeValue(0.25);
-    /*ASSERT_TRUE(vm);
-    ASSERT_EQ(vm->registerCount(), 1);
-    ASSERT_EQ(vm->getInput(0, 1)->toDouble(), 0.25);*/
+    Value v = "test";
+    EXPECT_CALL(handler, onValueChanged(v));
+    monitor.changeValue(v);
 
     monitor.setValueChangeFunction([](Block *block, const Value &newValue) { std::cout << block->opcode() + " " + newValue.toString() << std::endl; });
-    // EXPECT_CALL(handler, onValueChanged(_)).WillOnce(SaveArg<0>(&vm));
+    EXPECT_CALL(handler, onValueChanged(v));
     testing::internal::CaptureStdout();
-    monitor.changeValue("test");
-    /*ASSERT_TRUE(vm);
-    ASSERT_EQ(vm->registerCount(), 1);
-    ASSERT_EQ(vm->getInput(0, 1)->toString(), "test");*/
+    monitor.changeValue(v);
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "test_block test\n");
 }
 
