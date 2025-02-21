@@ -13,10 +13,10 @@ std::shared_ptr<CodeBuilderFactory> CodeBuilderFactory::instance()
     return m_instance;
 }
 
-std::shared_ptr<ICodeBuilder> CodeBuilderFactory::create(CompilerContext *ctx, BlockPrototype *procedurePrototype, bool isPredicate) const
+std::shared_ptr<ICodeBuilder> CodeBuilderFactory::create(CompilerContext *ctx, BlockPrototype *procedurePrototype, Compiler::CodeType codeType) const
 {
     assert(dynamic_cast<LLVMCompilerContext *>(ctx));
-    return std::make_shared<LLVMCodeBuilder>(static_cast<LLVMCompilerContext *>(ctx), procedurePrototype, isPredicate);
+    return std::make_shared<LLVMCodeBuilder>(static_cast<LLVMCompilerContext *>(ctx), procedurePrototype, codeType);
 }
 
 std::shared_ptr<CompilerContext> CodeBuilderFactory::createCtx(IEngine *engine, Target *target) const

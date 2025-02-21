@@ -16,11 +16,11 @@
 
 using namespace libscratchcpp;
 
-LLVMExecutableCode::LLVMExecutableCode(LLVMCompilerContext *ctx, const std::string &mainFunctionName, const std::string &resumeFunctionName, bool isPredicate) :
+LLVMExecutableCode::LLVMExecutableCode(LLVMCompilerContext *ctx, const std::string &mainFunctionName, const std::string &resumeFunctionName, Compiler::CodeType codeType) :
     m_ctx(ctx),
     m_mainFunctionName(mainFunctionName),
     m_resumeFunctionName(resumeFunctionName),
-    m_isPredicate(isPredicate)
+    m_codeType(codeType)
 {
     assert(m_ctx);
 
@@ -101,10 +101,16 @@ std::shared_ptr<ExecutionContext> LLVMExecutableCode::createExecutionContext(Thr
     if (!m_ctx->jitInitialized())
         m_ctx->initJit();
 
-    if (m_isPredicate)
-        m_mainFunction = m_ctx->lookupFunction<PredicateFunctionType>(m_mainFunctionName);
-    else
-        m_mainFunction = m_ctx->lookupFunction<MainFunctionType>(m_mainFunctionName);
+    switch (m_codeType) {
+        case Compiler::CodeType::Script:
+            m_mainFunction = m_ctx->lookupFunction<MainFunctionType>(m_mainFunctionName);
+            break;
+
+            // TODO: Implement reporter code type
+        case Compiler::CodeType::HatPredicate:
+            m_mainFunction = m_ctx->lookupFunction<PredicateFunctionType>(m_mainFunctionName);
+            break;
+    }
 
     m_resumeFunction = m_ctx->lookupFunction<ResumeFunctionType>(m_resumeFunctionName);
     return std::make_shared<LLVMExecutionContext>(thread);

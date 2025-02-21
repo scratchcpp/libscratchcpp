@@ -25,7 +25,7 @@ class LLVMLoopScope;
 class LLVMCodeBuilder : public ICodeBuilder
 {
     public:
-        LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *procedurePrototype = nullptr, bool isPredicate = false);
+        LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *procedurePrototype = nullptr, Compiler::CodeType codeType = Compiler::CodeType::Script);
 
         std::shared_ptr<ExecutableCode> finalize() override;
 
@@ -239,7 +239,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         bool m_defaultWarp = false;
         bool m_warp = false;
         int m_defaultArgCount = 0;
-        bool m_isPredicate = false; // for hat predicates
+        Compiler::CodeType m_codeType = Compiler::CodeType::Script;
 
         long m_loopScope = -1; // index
         std::vector<std::shared_ptr<LLVMLoopScope>> m_loopScopes;

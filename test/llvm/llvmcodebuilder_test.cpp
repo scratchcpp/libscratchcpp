@@ -67,12 +67,12 @@ class LLVMCodeBuilderTest : public testing::Test
             test_function(nullptr, nullptr, nullptr, nullptr, nullptr); // force dependency
         }
 
-        void createBuilder(Target *target, BlockPrototype *procedurePrototype, bool isPredicate = false)
+        void createBuilder(Target *target, BlockPrototype *procedurePrototype, Compiler::CodeType codeType = Compiler::CodeType::Script)
         {
             if (m_contexts.find(target) == m_contexts.cend() || !target)
                 m_contexts[target] = std::make_unique<LLVMCompilerContext>(&m_engine, target);
 
-            m_builder = std::make_unique<LLVMCodeBuilder>(m_contexts[target].get(), procedurePrototype, isPredicate);
+            m_builder = std::make_unique<LLVMCodeBuilder>(m_contexts[target].get(), procedurePrototype, codeType);
         }
 
         void createBuilder(Target *target, bool warp)
@@ -82,7 +82,7 @@ class LLVMCodeBuilderTest : public testing::Test
             createBuilder(target, m_procedurePrototype.get());
         }
 
-        void createPredicateBuilder(Target *target) { createBuilder(target, nullptr, true); }
+        void createPredicateBuilder(Target *target) { createBuilder(target, nullptr, Compiler::CodeType::HatPredicate); }
 
         void createBuilder(bool warp) { createBuilder(nullptr, warp); }
 

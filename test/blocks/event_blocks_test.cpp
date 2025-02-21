@@ -65,7 +65,7 @@ TEST_F(EventBlocksTest, WhenTouchingObjectPredicate)
         auto block = builder.currentBlock();
 
         Compiler compiler(&m_engineMock, target.get());
-        auto code = compiler.compile(block, true);
+        auto code = compiler.compile(block, Compiler::CodeType::HatPredicate);
         Script script(target.get(), block, &m_engineMock);
         script.setHatPredicateCode(code);
         Thread thread(target.get(), &m_engineMock, &script);
@@ -89,7 +89,7 @@ TEST_F(EventBlocksTest, WhenTouchingObjectPredicate)
         auto block = builder.currentBlock();
 
         Compiler compiler(&m_engineMock, target.get());
-        auto code = compiler.compile(block, true);
+        auto code = compiler.compile(block, Compiler::CodeType::HatPredicate);
         Script script(target.get(), block, &m_engineMock);
         script.setHatPredicateCode(code);
         Thread thread(target.get(), &m_engineMock, &script);
@@ -113,7 +113,7 @@ TEST_F(EventBlocksTest, WhenTouchingObjectPredicate)
         auto block = builder.currentBlock();
 
         Compiler compiler(&m_engineMock, target.get());
-        auto code = compiler.compile(block, true);
+        auto code = compiler.compile(block, Compiler::CodeType::HatPredicate);
         Script script(target.get(), block, &m_engineMock);
         script.setHatPredicateCode(code);
         Thread thread(target.get(), &m_engineMock, &script);
@@ -137,7 +137,7 @@ TEST_F(EventBlocksTest, WhenTouchingObjectPredicate)
         auto block = builder.currentBlock();
 
         Compiler compiler(&m_engineMock, target.get());
-        auto code = compiler.compile(block, true);
+        auto code = compiler.compile(block, Compiler::CodeType::HatPredicate);
         Script script(target.get(), block, &m_engineMock);
         script.setHatPredicateCode(code);
         Thread thread(target.get(), &m_engineMock, &script);
@@ -155,7 +155,7 @@ TEST_F(EventBlocksTest, WhenTouchingObjectPredicate)
         auto block = builder.currentBlock();
 
         Compiler compiler(&m_engineMock, target.get());
-        auto code = compiler.compile(block, true);
+        auto code = compiler.compile(block, Compiler::CodeType::HatPredicate);
         Script script(target.get(), block, &m_engineMock);
         script.setHatPredicateCode(code);
         Thread thread(target.get(), &m_engineMock, &script);
@@ -274,7 +274,7 @@ TEST_F(EventBlocksTest, WhenGreaterThanPredicate)
         auto block = builder.currentBlock();
 
         Compiler compiler(&m_engineMock, target.get());
-        auto code = compiler.compile(block, true);
+        auto code = compiler.compile(block, Compiler::CodeType::HatPredicate);
         Script script(target.get(), block, &m_engineMock);
         script.setHatPredicateCode(code);
         Thread thread(target.get(), &m_engineMock, &script);
@@ -297,7 +297,7 @@ TEST_F(EventBlocksTest, WhenGreaterThanPredicate)
         auto block = builder.currentBlock();
 
         Compiler compiler(&m_engineMock, target.get());
-        auto code = compiler.compile(block, true);
+        auto code = compiler.compile(block, Compiler::CodeType::HatPredicate);
         Script script(target.get(), block, &m_engineMock);
         script.setHatPredicateCode(code);
         Thread thread(target.get(), &m_engineMock, &script);

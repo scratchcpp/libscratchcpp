@@ -110,7 +110,7 @@ TEST_F(LLVMExecutableCodeTest, CreateExecutionContext)
     endFunction(m_builder->getInt1(true));
 
     {
-        auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), false);
+        auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), Compiler::CodeType::Script);
         m_script->setCode(code);
         Thread thread(&m_target, &m_engine, m_script.get());
         auto ctx = code->createExecutionContext(&thread);
@@ -129,7 +129,7 @@ TEST_F(LLVMExecutableCodeTest, CreatePredicateExecutionContext)
     endFunction(m_builder->getInt1(true));
 
     {
-        auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), true);
+        auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), Compiler::CodeType::HatPredicate);
         m_script->setCode(code);
         Thread thread(&m_target, &m_engine, m_script.get());
         auto ctx = code->createExecutionContext(&thread);
@@ -151,7 +151,7 @@ TEST_F(LLVMExecutableCodeTest, MainFunction)
     llvm::Function *resumeFunc = beginResumeFunction();
     endFunction(m_builder->getInt1(true));
 
-    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), false);
+    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), Compiler::CodeType::Script);
     m_script->setCode(code);
     Thread thread(&m_target, &m_engine, m_script.get());
     auto ctx = code->createExecutionContext(&thread);
@@ -206,7 +206,7 @@ TEST_F(LLVMExecutableCodeTest, PredicateFunction)
     llvm::Function *resumeFunc = beginResumeFunction();
     endFunction(m_builder->getInt1(true));
 
-    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), true);
+    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), Compiler::CodeType::HatPredicate);
     m_script->setCode(code);
     Thread thread(&m_target, &m_engine, m_script.get());
     auto ctx = code->createExecutionContext(&thread);
@@ -233,7 +233,7 @@ TEST_F(LLVMExecutableCodeTest, Promise)
     llvm::Function *resumeFunc = beginResumeFunction();
     endFunction(m_builder->getInt1(true));
 
-    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), false);
+    auto code = std::make_shared<LLVMExecutableCode>(m_ctx.get(), mainFunc->getName().str(), resumeFunc->getName().str(), Compiler::CodeType::Script);
     m_script->setCode(code);
     Thread thread(&m_target, &m_engine, m_script.get());
     auto ctx = code->createExecutionContext(&thread);

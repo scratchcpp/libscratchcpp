@@ -276,7 +276,7 @@ void Engine::compile()
                     script->setCode(compiler.compile(block));
 
                     if (block->hatPredicateCompileFunction())
-                        script->setHatPredicateCode(compiler.compile(block, true));
+                        script->setHatPredicateCode(compiler.compile(block, Compiler::CodeType::HatPredicate));
                 } else {
                     std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
                     m_unsupportedBlocks.insert(block->opcode());

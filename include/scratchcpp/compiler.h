@@ -38,6 +38,13 @@ class LIBSCRATCHCPP_EXPORT Compiler
             Unknown
         };
 
+        enum class CodeType
+        {
+            Script,
+            Reporter,
+            HatPredicate
+        };
+
         using ArgTypes = std::vector<StaticType>;
         using Args = std::vector<CompilerValue *>;
 
@@ -49,7 +56,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         Target *target() const;
         std::shared_ptr<Block> block() const;
 
-        std::shared_ptr<ExecutableCode> compile(std::shared_ptr<Block> startBlock, bool isHatPredicate = false);
+        std::shared_ptr<ExecutableCode> compile(std::shared_ptr<Block> startBlock, CodeType codeType = CodeType::Script);
         void preoptimize();
 
         CompilerValue *addFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});

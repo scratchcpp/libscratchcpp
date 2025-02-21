@@ -46,12 +46,12 @@ class CompilerTest : public testing::Test
             m_testVar.reset();
         }
 
-        void compile(Compiler *compiler, std::shared_ptr<Block> block, BlockPrototype *procedurePrototype = nullptr, bool isHatPredicate = false)
+        void compile(Compiler *compiler, std::shared_ptr<Block> block, BlockPrototype *procedurePrototype = nullptr, Compiler::CodeType codeType = Compiler::CodeType::Script)
         {
             ASSERT_EQ(compiler->block(), nullptr);
-            EXPECT_CALL(m_builderFactory, create(m_ctx.get(), procedurePrototype, isHatPredicate)).WillOnce(Return(m_builder));
+            EXPECT_CALL(m_builderFactory, create(m_ctx.get(), procedurePrototype, codeType)).WillOnce(Return(m_builder));
             EXPECT_CALL(*m_builder, finalize()).WillOnce(Return(m_code));
-            ASSERT_EQ(compiler->compile(block, isHatPredicate), m_code);
+            ASSERT_EQ(compiler->compile(block, codeType), m_code);
             ASSERT_EQ(compiler->block(), nullptr);
         }
 
@@ -1780,18 +1780,18 @@ TEST_F(CompilerTest, UnsupportedBlocks)
 
     // Hat predicates
     auto block5 = std::make_shared<Block>("b5", "block5");
-    compile(m_compiler.get(), block5, nullptr, true);
+    compile(m_compiler.get(), block5, nullptr, Compiler::CodeType::HatPredicate);
 
     auto block6 = std::make_shared<Block>("b6", "block6");
     block6->setCompileFunction([](Compiler *) -> CompilerValue * { return nullptr; });
-    compile(m_compiler.get(), block6, nullptr, true);
+    compile(m_compiler.get(), block6, nullptr, Compiler::CodeType::HatPredicate);
 
     auto block7 = std::make_shared<Block>("b7", "block7");
     CompilerConstant ret(Compiler::StaticType::Bool, Value(true));
     block7->setCompileFunction([](Compiler *) -> CompilerValue * { return nullptr; });
     block7->setHatPredicateCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(true); });
     EXPECT_CALL(*m_builder, addConstValue(Value(true))).WillOnce(Return(&ret));
-    compile(m_compiler.get(), block7, nullptr, true);
+    compile(m_compiler.get(), block7, nullptr, Compiler::CodeType::HatPredicate);
 
     // Check
     ASSERT_EQ(m_compiler->unsupportedBlocks(), std::unordered_set<std::string>({ "block1", "block2", "value_block1", "value_block3", "value_block5", "block4", "block5", "block6" }));
@@ -1846,9 +1846,9 @@ TEST_F(CompilerTest, HatPredicate)
 
     // Script
     EXPECT_CALL(*m_builder, addConstValue(Value(true))).WillOnce(Return(&ret1));
-    compile(m_compiler.get(), block, nullptr, false);
+    compile(m_compiler.get(), block, nullptr, Compiler::CodeType::Script);
 
     // Hat predicate
     EXPECT_CALL(*m_builder, addConstValue(Value(false))).WillOnce(Return(&ret2));
-    compile(m_compiler.get(), block, nullptr, true);
+    compile(m_compiler.get(), block, nullptr, Compiler::CodeType::HatPredicate);
 }
