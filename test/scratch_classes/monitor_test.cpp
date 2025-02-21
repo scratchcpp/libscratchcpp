@@ -25,6 +25,7 @@ TEST(MonitorTest, Constructors)
     ASSERT_EQ(monitor.id(), "abc");
     ASSERT_EQ(monitor.opcode(), "test");
     ASSERT_TRUE(monitor.block());
+    ASSERT_TRUE(monitor.block()->isMonitorBlock());
     ASSERT_EQ(monitor.block()->opcode(), "test");
     ASSERT_TRUE(monitor.needsAutoPosition());
 }
