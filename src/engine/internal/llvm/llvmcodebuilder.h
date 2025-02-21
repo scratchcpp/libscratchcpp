@@ -170,6 +170,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index);
         llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, LLVMRegister *item);
         llvm::Value *createValue(LLVMRegister *reg);
+        llvm::Value *createNewValue(LLVMRegister *reg);
         llvm::Value *createComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
         llvm::Value *createStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, bool caseSensitive);
 
@@ -209,6 +210,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_string_pool_new();
         llvm::FunctionCallee resolve_string_pool_free();
         llvm::FunctionCallee resolve_string_alloc();
+        llvm::FunctionCallee resolve_string_assign();
         llvm::FunctionCallee resolve_string_compare_case_sensitive();
         llvm::FunctionCallee resolve_string_compare_case_insensitive();
 

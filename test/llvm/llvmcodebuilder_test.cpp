@@ -82,6 +82,8 @@ class LLVMCodeBuilderTest : public testing::Test
             createBuilder(target, m_procedurePrototype.get());
         }
 
+        void createReporterBuilder(Target *target) { createBuilder(target, nullptr, Compiler::CodeType::Reporter); }
+
         void createPredicateBuilder(Target *target) { createBuilder(target, nullptr, Compiler::CodeType::HatPredicate); }
 
         void createBuilder(bool warp) { createBuilder(nullptr, warp); }
@@ -6031,4 +6033,63 @@ TEST_F(LLVMCodeBuilderTest, HatPredicates)
     ctx = code2->createExecutionContext(&thread2);
 
     ASSERT_FALSE(code2->runPredicate(ctx.get()));
+}
+
+TEST_F(LLVMCodeBuilderTest, Reporters)
+{
+    Sprite sprite;
+    auto var = std::make_shared<Variable>("", "");
+    var->setValue("Hello world!");
+    sprite.addVariable(var);
+
+    // Reporter 1
+    createReporterBuilder(&sprite);
+
+    CompilerValue *v = m_builder->addConstValue(-45.23);
+    m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number }, { v });
+
+    auto code1 = m_builder->finalize();
+
+    // Reporter 2
+    createReporterBuilder(&sprite);
+
+    v = m_builder->addConstValue("test");
+    m_builder->addFunctionCall("test_const_string", Compiler::StaticType::String, { Compiler::StaticType::String }, { v });
+
+    auto code2 = m_builder->finalize();
+
+    // Reporter 3
+    createReporterBuilder(&sprite);
+    m_builder->addVariableValue(var.get());
+
+    auto code3 = m_builder->finalize();
+
+    Script script1(&sprite, nullptr, nullptr);
+    script1.setCode(code1);
+    Thread thread1(&sprite, nullptr, &script1);
+    auto ctx = code1->createExecutionContext(&thread1);
+
+    ValueData ret = code1->runReporter(ctx.get());
+    ASSERT_TRUE(value_isNumber(&ret));
+    ASSERT_EQ(value_toDouble(&ret), -45.23);
+    value_free(&ret);
+
+    Script script2(&sprite, nullptr, nullptr);
+    script2.setCode(code2);
+    Thread thread2(&sprite, nullptr, &script2);
+    ctx = code2->createExecutionContext(&thread2);
+
+    ret = code2->runReporter(ctx.get());
+    ASSERT_EQ(Value(ret).toString(), "test");
+    value_free(&ret);
+
+    Script script3(&sprite, nullptr, nullptr);
+    script3.setCode(code3);
+    Thread thread3(&sprite, nullptr, &script3);
+    ctx = code3->createExecutionContext(&thread3);
+
+    ret = code3->runReporter(ctx.get());
+    var->setValue("abc"); // the string should be copied
+    ASSERT_EQ(Value(ret).toString(), "Hello world!");
+    value_free(&ret);
 }

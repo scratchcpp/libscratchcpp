@@ -1327,7 +1327,13 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 coro->end();
             break;
 
-            // TODO: Implement reporter code type
+        case Compiler::CodeType::Reporter: {
+            // Use last instruction return value and create a ValueData instance
+            assert(!m_instructions.empty());
+            LLVMRegister *ret = m_instructions.back()->functionReturnReg;
+            m_builder.CreateRet(m_builder.CreateLoad(m_valueDataType, createNewValue(ret))); // return copy
+            break;
+        }
         case Compiler::CodeType::HatPredicate:
             // Use last instruction return value
             assert(!m_instructions.empty());
@@ -2031,7 +2037,10 @@ std::string LLVMCodeBuilder::getMainFunctionName(BlockPrototype *procedureProtot
             name = "script";
             break;
 
-            // TODO: Implement reporter code type
+        case Compiler::CodeType::Reporter:
+            name = "reporter";
+            break;
+
         case Compiler::CodeType::HatPredicate:
             name = "predicate";
             break;
@@ -2048,6 +2057,7 @@ std::string LLVMCodeBuilder::getResumeFunctionName(BlockPrototype *procedureProt
 llvm::FunctionType *LLVMCodeBuilder::getMainFunctionType(BlockPrototype *procedurePrototype)
 {
     // void *f(ExecutionContext *, Target *, ValueData **, List **, (warp arg), (procedure args...))
+    // ValueData f(...) (reporters)
     // bool f(...) (hat predicates)
     llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     std::vector<llvm::Type *> argTypes = { pointerType, pointerType, pointerType, pointerType };
@@ -2071,7 +2081,10 @@ llvm::FunctionType *LLVMCodeBuilder::getMainFunctionType(BlockPrototype *procedu
             retType = pointerType;
             break;
 
-            // TODO: Implement reporter code type
+        case Compiler::CodeType::Reporter:
+            retType = m_valueDataType;
+            break;
+
         case Compiler::CodeType::HatPredicate:
             retType = m_builder.getInt1Ty();
             break;
@@ -2902,6 +2915,43 @@ llvm::Value *LLVMCodeBuilder::createValue(LLVMRegister *reg)
         return reg->value;
 }
 
+llvm::Value *LLVMCodeBuilder::createNewValue(LLVMRegister *reg)
+{
+    // Same as createValue(), but creates a copy of the contents
+    // NOTE: It is the caller's responsibility to free the value.
+    if (reg->isConst())
+        return createValue(reg);
+    else if (reg->isRawValue) {
+        if (reg->type() == Compiler::StaticType::String) {
+            llvm::Value *value = castRawValue(reg, reg->type());
+            llvm::Value *ret = addAlloca(m_valueDataType);
+
+            // Allocate string
+            llvm::Value *result = m_builder.CreateCall(resolve_string_pool_new(), m_builder.getInt1(false)); // false: do not free after thread is dead
+            // NOTE: Do not free later
+
+            // Copy string
+            m_builder.CreateCall(resolve_string_assign(), { result, value });
+
+            // Store string pointer
+            llvm::Value *valueField = m_builder.CreateStructGEP(m_valueDataType, ret, 0);
+            m_builder.CreateStore(value, valueField);
+
+            // Store type
+            llvm::Value *typeField = m_builder.CreateStructGEP(m_valueDataType, ret, 1);
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), typeField);
+
+            return ret;
+        } else
+            return createValue(reg);
+    } else {
+        llvm::Value *ret = addAlloca(m_valueDataType);
+        m_builder.CreateCall(resolve_value_init(), { ret });
+        m_builder.CreateCall(resolve_value_assign_copy(), { ret, reg->value });
+        return ret;
+    }
+}
+
 llvm::Value *LLVMCodeBuilder::createComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
 {
     auto type1 = arg1->type();
@@ -3370,6 +3420,11 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_string_pool_free()
 llvm::FunctionCallee LLVMCodeBuilder::resolve_string_alloc()
 {
     return resolveFunction("string_alloc", llvm::FunctionType::get(m_builder.getVoidTy(), { m_stringPtrType->getPointerTo(), m_builder.getInt64Ty() }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_string_assign()
+{
+    return resolveFunction("string_assign", llvm::FunctionType::get(m_builder.getVoidTy(), { m_stringPtrType->getPointerTo(), m_stringPtrType->getPointerTo() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_string_compare_case_sensitive()
