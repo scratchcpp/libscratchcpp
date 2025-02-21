@@ -282,6 +282,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(sprite1->greenFlagBlocks()[0]->y(), 0);
         auto block = sprite1->greenFlagBlocks()[0]->next();
         ASSERT_TRUE(block);
+        ASSERT_FALSE(block->isMonitorBlock());
         ASSERT_EQ(block->parent(), sprite1->greenFlagBlocks()[0]);
         ASSERT_EQ(block->opcode(), "control_forever");
         ASSERT_FALSE(block->isTopLevelReporter());
