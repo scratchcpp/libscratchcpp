@@ -60,6 +60,15 @@ void Thread::run()
     string_pool_set_thread(nullptr);
 }
 
+/*! Runs the reporter and returns its return value. */
+ValueData Thread::runReporter()
+{
+    string_pool_set_thread(this);
+    ValueData ret = impl->code->runReporter(impl->executionContext.get());
+    string_pool_set_thread(nullptr);
+    return ret;
+}
+
 /*! Runs the hat predicate and returns its return value. */
 bool Thread::runPredicate()
 {
