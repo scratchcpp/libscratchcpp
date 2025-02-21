@@ -259,7 +259,7 @@ void Engine::compile()
     // Resolve entities by ID
     resolveIds();
 
-    // Compile scripts to bytecode
+    // Compile scripts
     for (auto target : m_targets) {
         std::cout << "Compiling scripts in target " << target->name() << "..." << std::endl;
         auto ctx = Compiler::createContext(this, target.get());
