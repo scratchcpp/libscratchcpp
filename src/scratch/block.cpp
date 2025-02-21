@@ -13,9 +13,9 @@
 using namespace libscratchcpp;
 
 /*! Constructs Block */
-Block::Block(const std::string &id, const std::string &opcode) :
+Block::Block(const std::string &id, const std::string &opcode, bool isMonitorBlock) :
     Entity(id),
-    impl(spimpl::make_unique_impl<BlockPrivate>(opcode))
+    impl(spimpl::make_unique_impl<BlockPrivate>(opcode, isMonitorBlock))
 {
 }
 
@@ -115,6 +115,12 @@ InputValue *Block::topLevelReporterInfo()
         return impl->topLevelReporterInfo.get();
     else
         return nullptr;
+}
+
+/*! Returns true if this block belongs to a monitor. */
+bool Block::isMonitorBlock() const
+{
+    return impl->isMonitorBlock;
 }
 
 /*! Returns the next block. */

@@ -18,7 +18,7 @@ class Comment;
 
 struct BlockPrivate
 {
-        BlockPrivate(const std::string &opcode);
+        BlockPrivate(const std::string &opcode, bool isMonitorBlock);
         BlockPrivate(const BlockPrivate &) = delete;
 
         std::string opcode;
@@ -43,6 +43,7 @@ struct BlockPrivate
         bool mutationHasNext = true;
         bool isTopLevelReporter = false;
         std::unique_ptr<InputValue> topLevelReporterInfo = nullptr;
+        bool isMonitorBlock = false;
 };
 
 } // namespace libscratchcpp

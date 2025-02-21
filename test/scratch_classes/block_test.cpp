@@ -33,9 +33,26 @@ class BlockTest : public testing::Test
 
 TEST_F(BlockTest, Constructors)
 {
-    Block block("abc", "motion_movesteps");
-    ASSERT_EQ(block.id(), "abc");
-    ASSERT_EQ(block.opcode(), "motion_movesteps");
+    {
+        Block block("abc", "motion_movesteps");
+        ASSERT_EQ(block.id(), "abc");
+        ASSERT_EQ(block.opcode(), "motion_movesteps");
+        ASSERT_FALSE(block.isMonitorBlock());
+    }
+
+    {
+        Block block("def", "data_listcontents", false);
+        ASSERT_EQ(block.id(), "def");
+        ASSERT_EQ(block.opcode(), "data_listcontents");
+        ASSERT_FALSE(block.isMonitorBlock());
+    }
+
+    {
+        Block block("ghi", "sensing_of", true);
+        ASSERT_EQ(block.id(), "ghi");
+        ASSERT_EQ(block.opcode(), "sensing_of");
+        ASSERT_TRUE(block.isMonitorBlock());
+    }
 }
 
 TEST_F(BlockTest, Next)
