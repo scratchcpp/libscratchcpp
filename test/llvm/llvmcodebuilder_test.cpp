@@ -6007,15 +6007,14 @@ TEST_F(LLVMCodeBuilderTest, HatPredicates)
     // Predicate 1
     createPredicateBuilder(&sprite);
 
-    CompilerValue *v = m_builder->addConstValue(true);
-    m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool }, { v });
+    m_builder->addConstValue(true);
 
     auto code1 = m_builder->finalize();
 
     // Predicate 2
     createPredicateBuilder(&sprite);
 
-    v = m_builder->addConstValue(false);
+    CompilerValue *v = m_builder->addConstValue(false);
     m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool }, { v });
 
     auto code2 = m_builder->finalize();
@@ -6045,15 +6044,14 @@ TEST_F(LLVMCodeBuilderTest, Reporters)
     // Reporter 1
     createReporterBuilder(&sprite);
 
-    CompilerValue *v = m_builder->addConstValue(-45.23);
-    m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number }, { v });
+    m_builder->addConstValue(-45.23);
 
     auto code1 = m_builder->finalize();
 
     // Reporter 2
     createReporterBuilder(&sprite);
 
-    v = m_builder->addConstValue("test");
+    CompilerValue *v = m_builder->addConstValue("test");
     m_builder->addFunctionCall("test_const_string", Compiler::StaticType::String, { Compiler::StaticType::String }, { v });
 
     auto code2 = m_builder->finalize();

@@ -1328,16 +1328,22 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             break;
 
         case Compiler::CodeType::Reporter: {
-            // Use last instruction return value and create a ValueData instance
-            assert(!m_instructions.empty());
-            LLVMRegister *ret = m_instructions.back()->functionReturnReg;
-            m_builder.CreateRet(m_builder.CreateLoad(m_valueDataType, createNewValue(ret))); // return copy
+            // Use last instruction return value (or last constant) and create a ValueData instance
+            assert(!m_instructions.empty() || m_lastConstValue);
+            LLVMRegister *ret = m_instructions.empty() ? m_lastConstValue : m_instructions.back()->functionReturnReg;
+            llvm::Value *copy = createNewValue(ret);
+            m_builder.CreateRet(m_builder.CreateLoad(m_valueDataType, copy));
             break;
         }
+
         case Compiler::CodeType::HatPredicate:
-            // Use last instruction return value
-            assert(!m_instructions.empty());
-            m_builder.CreateRet(m_instructions.back()->functionReturnReg->value);
+            // Use last instruction return value (or last constant)
+            assert(!m_instructions.empty() || m_lastConstValue);
+
+            if (m_instructions.empty())
+                m_builder.CreateRet(castValue(m_lastConstValue, Compiler::StaticType::Bool));
+            else
+                m_builder.CreateRet(castValue(m_instructions.back()->functionReturnReg, Compiler::StaticType::Bool));
             break;
     }
 
@@ -1403,6 +1409,7 @@ CompilerConstant *LLVMCodeBuilder::addConstValue(const Value &value)
 {
     auto constReg = std::make_shared<LLVMConstantRegister>(TYPE_MAP[value.type()], value);
     auto reg = std::reinterpret_pointer_cast<LLVMRegister>(constReg);
+    m_lastConstValue = reg.get();
     return static_cast<CompilerConstant *>(static_cast<CompilerValue *>(addReg(reg, nullptr)));
 }
 

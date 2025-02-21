@@ -237,6 +237,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         std::vector<std::shared_ptr<LLVMInstruction>> m_instructions;
         std::vector<std::shared_ptr<LLVMRegister>> m_regs;
         std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
+        LLVMRegister *m_lastConstValue = nullptr; // for reporters and hat predicates
         BlockPrototype *m_procedurePrototype = nullptr;
         bool m_defaultWarp = false;
         bool m_warp = false;
