@@ -3,6 +3,7 @@
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/compilerconstant.h>
+#include <scratchcpp/block.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/list.h>
 
@@ -27,6 +28,8 @@ Rgb ListBlocks::color() const
 
 void ListBlocks::registerBlocks(IEngine *engine)
 {
+    // Blocks
+    engine->addCompileFunction(this, "data_listcontents", &compileListContents);
     engine->addCompileFunction(this, "data_addtolist", &compileAddToList);
     engine->addCompileFunction(this, "data_deleteoflist", &compileDeleteOfList);
     engine->addCompileFunction(this, "data_deletealloflist", &compileDeleteAllOfList);
@@ -36,6 +39,24 @@ void ListBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "data_itemnumoflist", &compileItemNumOfList);
     engine->addCompileFunction(this, "data_lengthoflist", &compileLengthOfList);
     engine->addCompileFunction(this, "data_listcontainsitem", &compileListContainsItem);
+
+    // Monitor names
+    engine->addMonitorNameFunction(this, "data_listcontents", &listContentsMonitorName);
+}
+
+CompilerValue *ListBlocks::compileListContents(Compiler *compiler)
+{
+    auto list = compiler->field("LIST")->valuePtr();
+    assert(list);
+
+    // If this block is used in a list monitor, return the list pointer
+    if (compiler->block()->isMonitorBlock()) {
+        // TODO: Refactor this
+        // List monitors expect a reference to the list
+        // We don't have a list reference type, so cast the pointer to number
+        return compiler->addConstValue((uintptr_t)list.get());
+    } else
+        return compiler->addListContents(static_cast<List *>(list.get()));
 }
 
 CompilerValue *ListBlocks::compileAddToList(Compiler *compiler)
@@ -193,4 +214,20 @@ CompilerValue *ListBlocks::compileListContainsItem(Compiler *compiler)
     }
 
     return nullptr;
+}
+
+const std::string &ListBlocks::listContentsMonitorName(Block *block)
+{
+    static const std::string empty = "";
+    auto field = block->fieldAt(block->findField("LIST"));
+
+    if (!field)
+        return empty;
+
+    List *list = dynamic_cast<List *>(field->valuePtr().get());
+
+    if (list)
+        return list->name();
+    else
+        return empty;
 }

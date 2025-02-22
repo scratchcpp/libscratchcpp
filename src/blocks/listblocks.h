@@ -19,6 +19,7 @@ class ListBlocks : public IExtension
         void registerBlocks(IEngine *engine) override;
 
     private:
+        static CompilerValue *compileListContents(Compiler *compiler);
         static CompilerValue *compileAddToList(Compiler *compiler);
         static CompilerValue *getListIndex(Compiler *compiler, CompilerValue *input, List *list, CompilerValue *listSize);
         static CompilerValue *compileDeleteOfList(Compiler *compiler);
@@ -29,6 +30,8 @@ class ListBlocks : public IExtension
         static CompilerValue *compileItemNumOfList(Compiler *compiler);
         static CompilerValue *compileLengthOfList(Compiler *compiler);
         static CompilerValue *compileListContainsItem(Compiler *compiler);
+
+        static const std::string &listContentsMonitorName(Block *block);
 };
 
 } // namespace libscratchcpp
