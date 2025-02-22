@@ -2926,37 +2926,11 @@ llvm::Value *LLVMCodeBuilder::createNewValue(LLVMRegister *reg)
 {
     // Same as createValue(), but creates a copy of the contents
     // NOTE: It is the caller's responsibility to free the value.
-    if (reg->isConst())
-        return createValue(reg);
-    else if (reg->isRawValue) {
-        if (reg->type() == Compiler::StaticType::String) {
-            llvm::Value *value = castRawValue(reg, reg->type());
-            llvm::Value *ret = addAlloca(m_valueDataType);
-
-            // Allocate string
-            llvm::Value *result = m_builder.CreateCall(resolve_string_pool_new(), m_builder.getInt1(false)); // false: do not free after thread is dead
-            // NOTE: Do not free later
-
-            // Copy string
-            m_builder.CreateCall(resolve_string_assign(), { result, value });
-
-            // Store string pointer
-            llvm::Value *valueField = m_builder.CreateStructGEP(m_valueDataType, ret, 0);
-            m_builder.CreateStore(value, valueField);
-
-            // Store type
-            llvm::Value *typeField = m_builder.CreateStructGEP(m_valueDataType, ret, 1);
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), typeField);
-
-            return ret;
-        } else
-            return createValue(reg);
-    } else {
-        llvm::Value *ret = addAlloca(m_valueDataType);
-        m_builder.CreateCall(resolve_value_init(), { ret });
-        m_builder.CreateCall(resolve_value_assign_copy(), { ret, reg->value });
-        return ret;
-    }
+    llvm::Value *value = createValue(reg);
+    llvm::Value *ret = addAlloca(m_valueDataType);
+    m_builder.CreateCall(resolve_value_init(), { ret });
+    m_builder.CreateCall(resolve_value_assign_copy(), { ret, value });
+    return ret;
 }
 
 llvm::Value *LLVMCodeBuilder::createComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
