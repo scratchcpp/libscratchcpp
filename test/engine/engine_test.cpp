@@ -12,6 +12,8 @@
 #include <scratchcpp/script.h>
 #include <scratchcpp/thread.h>
 #include <scratchcpp/scratchconfiguration.h>
+#include <scratchcpp/compiler.h>
+#include <scratchcpp/compilerconstant.h>
 #include <scratch/sound_p.h>
 #include <timermock.h>
 #include <clockmock.h>
@@ -189,7 +191,7 @@ TEST(EngineTest, StopSignal)
     }
 }
 
-/*TEST(EngineTest, CompileAndExecuteMonitors)
+TEST(EngineTest, CompileAndExecuteMonitors)
 {
     Engine engine;
     auto stage = std::make_shared<Stage>();
@@ -209,8 +211,8 @@ TEST(EngineTest, StopSignal)
     EXPECT_CALL(*extension, onInit);
     ScratchConfiguration::registerExtension(extension);
     engine.setExtensions({ "MonitorTest" });
-    engine.addCompileFunction(extension.get(), m1->opcode(), [](Compiler *compiler) { compiler->addConstValue(5.4); });
-    engine.addCompileFunction(extension.get(), m2->opcode(), [](Compiler *compiler) { compiler->addConstValue("test"); });
+    engine.addCompileFunction(extension.get(), m1->opcode(), [](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(5.4); });
+    engine.addCompileFunction(extension.get(), m2->opcode(), [](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue("test"); });
 
     engine.addMonitorNameFunction(extension.get(), m1->opcode(), [](Block *block) -> const std::string & {
         static const std::string testStr = "test";
@@ -229,11 +231,9 @@ TEST(EngineTest, StopSignal)
     auto script3 = m3->script();
     ASSERT_TRUE(script1 && script2 && !script3);
 
-    ASSERT_EQ(script1->bytecodeVector(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
     ASSERT_EQ(script1->target(), stage.get());
     ASSERT_EQ(script1->topBlock(), m1->block());
 
-    ASSERT_EQ(script2->bytecodeVector(), std::vector<unsigned int>({ vm::OP_START, vm::OP_CONST, 0, vm::OP_EXEC, 0, vm::OP_HALT }));
     ASSERT_EQ(script2->target(), sprite.get());
     ASSERT_EQ(script2->topBlock(), m2->block());
 
@@ -255,16 +255,12 @@ TEST(EngineTest, StopSignal)
     m3->setInterface(&iface3);
 
     EXPECT_CALL(iface1, onValueChanged).Times(0);
-    EXPECT_CALL(iface2, onValueChanged(_)).WillOnce(WithArgs<0>(Invoke([](const VirtualMachine *vm) {
-        ASSERT_EQ(vm->registerCount(), 1);
-        ASSERT_EQ(vm->getInput(0, 1)->toString(), "test");
-        ASSERT_FALSE(vm->atEnd()); // the script shouldn't end because that would spam the console with leak warnings
-    })));
+    EXPECT_CALL(iface2, onValueChanged(_)).WillOnce(WithArgs<0>(Invoke([](const Value &value) { ASSERT_EQ(value.toString(), "test"); })));
     EXPECT_CALL(iface3, onValueChanged).Times(0);
     engine.updateMonitors();
 
     // Change the monitor values
-    testing::internal::CaptureStdout();
+    /*testing::internal::CaptureStdout();
     EXPECT_CALL(iface1, onValueChanged);
     m1->changeValue(0);
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "change 1!\n");
@@ -272,10 +268,10 @@ TEST(EngineTest, StopSignal)
     testing::internal::CaptureStdout();
     EXPECT_CALL(iface2, onValueChanged);
     m2->changeValue(0);
-    ASSERT_EQ(testing::internal::GetCapturedStdout(), "change 2!\n");
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "change 2!\n");*/
 
     ScratchConfiguration::removeExtension(extension);
-}*/
+}
 
 TEST(EngineTest, IsRunning)
 {
