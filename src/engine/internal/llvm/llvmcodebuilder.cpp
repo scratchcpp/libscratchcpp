@@ -3126,17 +3126,18 @@ llvm::Value *LLVMCodeBuilder::createStringComparison(LLVMRegister *arg1, LLVMReg
 
     if (arg1->isConst() && arg2->isConst()) {
         // If both operands are constant, perform the comparison at compile time
+        StringPtr *str1 = value_toStringPtr(&arg1->constValue().data());
+        StringPtr *str2 = value_toStringPtr(&arg2->constValue().data());
         bool result;
 
         if (caseSensitive)
-            result = arg1->constValue().toString() == arg2->constValue().toString();
+            result = string_compare_case_sensitive(str1, str2) == 0;
         else {
-            // TODO: Use a custom comparison function
-            std::string str1 = arg1->constValue().toString();
-            std::string str2 = arg2->constValue().toString();
-            result = strcasecmp(str1.c_str(), str2.c_str()) == 0;
+            result = string_compare_case_insensitive(str1, str2) == 0;
         }
 
+        string_pool_free(str1);
+        string_pool_free(str2);
         return m_builder.getInt1(result);
     } else {
         // Optimize number and string constant comparison
