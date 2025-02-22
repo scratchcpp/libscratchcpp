@@ -4,7 +4,8 @@
 
 using namespace libscratchcpp;
 
-BlockPrivate::BlockPrivate(const std::string &opcode) :
-    opcode(opcode)
+BlockPrivate::BlockPrivate(const std::string &opcode, bool isMonitorBlock) :
+    opcode(opcode),
+    isMonitorBlock(isMonitorBlock)
 {
 }

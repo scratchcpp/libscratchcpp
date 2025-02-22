@@ -115,16 +115,15 @@ const std::string &Monitor::opcode() const
     return impl->block->opcode();
 }
 
-// TODO: Add updateValue()
 /*!
  * Notifies the monitor's interface about value change.
  * The interaface is supposed to read it from the VirtualMachine.
  */
-/*void Monitor::updateValue(const VirtualMachine *vm)
+void Monitor::updateValue(const Value &value)
 {
     if (impl->iface)
-        impl->iface->onValueChanged(vm);
-}*/
+        impl->iface->onValueChanged(value);
+}
 
 /*!
  * Sets the function which is called to change the monitor's value.
@@ -145,10 +144,8 @@ void Monitor::changeValue(const Value &newValue)
     if (impl->changeFunc)
         impl->changeFunc(impl->block.get(), newValue);
 
-    if (impl->iface) {
-        // TODO: Implement this
-        // impl->iface->onValueChanged(...);
-    }
+    if (impl->iface)
+        impl->iface->onValueChanged(newValue);
 }
 
 /*! Returns the monitor's width. */

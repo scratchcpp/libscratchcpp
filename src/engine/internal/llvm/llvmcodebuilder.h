@@ -25,7 +25,7 @@ class LLVMLoopScope;
 class LLVMCodeBuilder : public ICodeBuilder
 {
     public:
-        LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *procedurePrototype = nullptr, bool isPredicate = false);
+        LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *procedurePrototype = nullptr, Compiler::CodeType codeType = Compiler::CodeType::Script);
 
         std::shared_ptr<ExecutableCode> finalize() override;
 
@@ -170,6 +170,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index);
         llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, LLVMRegister *item);
         llvm::Value *createValue(LLVMRegister *reg);
+        llvm::Value *createNewValue(LLVMRegister *reg);
         llvm::Value *createComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
         llvm::Value *createStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, bool caseSensitive);
 
@@ -209,6 +210,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_string_pool_new();
         llvm::FunctionCallee resolve_string_pool_free();
         llvm::FunctionCallee resolve_string_alloc();
+        llvm::FunctionCallee resolve_string_assign();
         llvm::FunctionCallee resolve_string_compare_case_sensitive();
         llvm::FunctionCallee resolve_string_compare_case_insensitive();
 
@@ -235,11 +237,12 @@ class LLVMCodeBuilder : public ICodeBuilder
         std::vector<std::shared_ptr<LLVMInstruction>> m_instructions;
         std::vector<std::shared_ptr<LLVMRegister>> m_regs;
         std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
+        LLVMRegister *m_lastConstValue = nullptr; // for reporters and hat predicates
         BlockPrototype *m_procedurePrototype = nullptr;
         bool m_defaultWarp = false;
         bool m_warp = false;
         int m_defaultArgCount = 0;
-        bool m_isPredicate = false; // for hat predicates
+        Compiler::CodeType m_codeType = Compiler::CodeType::Script;
 
         long m_loopScope = -1; // index
         std::vector<std::shared_ptr<LLVMLoopScope>> m_loopScopes;

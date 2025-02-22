@@ -18,7 +18,15 @@ extern "C"
     void test_function(TestMock *mock, ExecutionContext *ctx, Target *target, ValueData **varData, List **listData)
     {
         if (mock)
-            mock->f(ctx, target, varData, listData);
+            mock->script(ctx, target, varData, listData);
+    }
+
+    ValueData test_reporter(TestMock *mock, ExecutionContext *ctx, Target *target, ValueData **varData, List **listData)
+    {
+        if (mock)
+            return mock->reporter(ctx, target, varData, listData);
+
+        return ValueData();
     }
 
     bool test_predicate(TestMock *mock, ExecutionContext *ctx, Target *target, ValueData **varData, List **listData)

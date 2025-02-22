@@ -26,7 +26,7 @@ static std::unordered_map<ValueType, Compiler::StaticType>
 static const std::unordered_set<LLVMInstruction::Type>
     VAR_LIST_READ_INSTRUCTIONS = { LLVMInstruction::Type::ReadVariable, LLVMInstruction::Type::GetListItem, LLVMInstruction::Type::GetListItemIndex, LLVMInstruction::Type::ListContainsItem };
 
-LLVMCodeBuilder::LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *procedurePrototype, bool isPredicate) :
+LLVMCodeBuilder::LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *procedurePrototype, Compiler::CodeType codeType) :
     m_ctx(ctx),
     m_target(ctx->target()),
     m_llvmCtx(*ctx->llvmCtx()),
@@ -35,7 +35,7 @@ LLVMCodeBuilder::LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *proce
     m_procedurePrototype(procedurePrototype),
     m_defaultWarp(procedurePrototype ? procedurePrototype->warp() : false),
     m_warp(m_defaultWarp),
-    m_isPredicate(isPredicate)
+    m_codeType(codeType)
 {
     initTypes();
     createVariableMap();
@@ -56,8 +56,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
         if (it == m_instructions.end())
             m_warp = true;
 
-        // Do not create coroutine in hat predicates
-        if (m_isPredicate)
+        // Only create coroutines in scripts
+        if (m_codeType != Compiler::CodeType::Script)
             m_warp = true;
     }
 
@@ -1319,15 +1319,32 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     // End and verify the function
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
 
-    if (m_isPredicate) {
-        // Use last instruction return value
-        assert(!m_instructions.empty());
-        m_builder.CreateRet(m_instructions.back()->functionReturnReg->value);
-    } else {
-        if (m_warp)
-            m_builder.CreateRet(llvm::ConstantPointerNull::get(pointerType));
-        else
-            coro->end();
+    switch (m_codeType) {
+        case Compiler::CodeType::Script:
+            if (m_warp)
+                m_builder.CreateRet(llvm::ConstantPointerNull::get(pointerType));
+            else
+                coro->end();
+            break;
+
+        case Compiler::CodeType::Reporter: {
+            // Use last instruction return value (or last constant) and create a ValueData instance
+            assert(!m_instructions.empty() || m_lastConstValue);
+            LLVMRegister *ret = m_instructions.empty() ? m_lastConstValue : m_instructions.back()->functionReturnReg;
+            llvm::Value *copy = createNewValue(ret);
+            m_builder.CreateRet(m_builder.CreateLoad(m_valueDataType, copy));
+            break;
+        }
+
+        case Compiler::CodeType::HatPredicate:
+            // Use last instruction return value (or last constant)
+            assert(!m_instructions.empty() || m_lastConstValue);
+
+            if (m_instructions.empty())
+                m_builder.CreateRet(castValue(m_lastConstValue, Compiler::StaticType::Bool));
+            else
+                m_builder.CreateRet(castValue(m_instructions.back()->functionReturnReg, Compiler::StaticType::Bool));
+            break;
     }
 
     verifyFunction(m_function);
@@ -1349,7 +1366,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
     verifyFunction(resumeFunc);
 
-    return std::make_shared<LLVMExecutableCode>(m_ctx, m_function->getName().str(), resumeFunc->getName().str(), m_isPredicate);
+    return std::make_shared<LLVMExecutableCode>(m_ctx, m_function->getName().str(), resumeFunc->getName().str(), m_codeType);
 }
 
 CompilerValue *LLVMCodeBuilder::addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
@@ -1392,6 +1409,7 @@ CompilerConstant *LLVMCodeBuilder::addConstValue(const Value &value)
 {
     auto constReg = std::make_shared<LLVMConstantRegister>(TYPE_MAP[value.type()], value);
     auto reg = std::reinterpret_pointer_cast<LLVMRegister>(constReg);
+    m_lastConstValue = reg.get();
     return static_cast<CompilerConstant *>(static_cast<CompilerValue *>(addReg(reg, nullptr)));
 }
 
@@ -2019,7 +2037,23 @@ void LLVMCodeBuilder::popLoopScope()
 
 std::string LLVMCodeBuilder::getMainFunctionName(BlockPrototype *procedurePrototype)
 {
-    return procedurePrototype ? "proc." + procedurePrototype->procCode() : (m_isPredicate ? "predicate" : "script");
+    std::string name;
+
+    switch (m_codeType) {
+        case Compiler::CodeType::Script:
+            name = "script";
+            break;
+
+        case Compiler::CodeType::Reporter:
+            name = "reporter";
+            break;
+
+        case Compiler::CodeType::HatPredicate:
+            name = "predicate";
+            break;
+    }
+
+    return procedurePrototype ? "proc." + procedurePrototype->procCode() : name;
 }
 
 std::string LLVMCodeBuilder::getResumeFunctionName(BlockPrototype *procedurePrototype)
@@ -2030,6 +2064,7 @@ std::string LLVMCodeBuilder::getResumeFunctionName(BlockPrototype *procedureProt
 llvm::FunctionType *LLVMCodeBuilder::getMainFunctionType(BlockPrototype *procedurePrototype)
 {
     // void *f(ExecutionContext *, Target *, ValueData **, List **, (warp arg), (procedure args...))
+    // ValueData f(...) (reporters)
     // bool f(...) (hat predicates)
     llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     std::vector<llvm::Type *> argTypes = { pointerType, pointerType, pointerType, pointerType };
@@ -2046,7 +2081,23 @@ llvm::FunctionType *LLVMCodeBuilder::getMainFunctionType(BlockPrototype *procedu
         }
     }
 
-    return llvm::FunctionType::get(m_isPredicate ? m_builder.getInt1Ty() : pointerType, argTypes, false);
+    llvm::Type *retType = nullptr;
+
+    switch (m_codeType) {
+        case Compiler::CodeType::Script:
+            retType = pointerType;
+            break;
+
+        case Compiler::CodeType::Reporter:
+            retType = m_valueDataType;
+            break;
+
+        case Compiler::CodeType::HatPredicate:
+            retType = m_builder.getInt1Ty();
+            break;
+    }
+
+    return llvm::FunctionType::get(retType, argTypes, false);
 }
 
 llvm::Function *LLVMCodeBuilder::getOrCreateFunction(const std::string &name, llvm::FunctionType *type)
@@ -2871,6 +2922,17 @@ llvm::Value *LLVMCodeBuilder::createValue(LLVMRegister *reg)
         return reg->value;
 }
 
+llvm::Value *LLVMCodeBuilder::createNewValue(LLVMRegister *reg)
+{
+    // Same as createValue(), but creates a copy of the contents
+    // NOTE: It is the caller's responsibility to free the value.
+    llvm::Value *value = createValue(reg);
+    llvm::Value *ret = addAlloca(m_valueDataType);
+    m_builder.CreateCall(resolve_value_init(), { ret });
+    m_builder.CreateCall(resolve_value_assign_copy(), { ret, value });
+    return ret;
+}
+
 llvm::Value *LLVMCodeBuilder::createComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
 {
     auto type1 = arg1->type();
@@ -3339,6 +3401,11 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_string_pool_free()
 llvm::FunctionCallee LLVMCodeBuilder::resolve_string_alloc()
 {
     return resolveFunction("string_alloc", llvm::FunctionType::get(m_builder.getVoidTy(), { m_stringPtrType->getPointerTo(), m_builder.getInt64Ty() }, false));
+}
+
+llvm::FunctionCallee LLVMCodeBuilder::resolve_string_assign()
+{
+    return resolveFunction("string_assign", llvm::FunctionType::get(m_builder.getVoidTy(), { m_stringPtrType->getPointerTo(), m_stringPtrType->getPointerTo() }, false));
 }
 
 llvm::FunctionCallee LLVMCodeBuilder::resolve_string_compare_case_sensitive()

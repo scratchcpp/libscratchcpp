@@ -11,6 +11,7 @@ namespace libscratchcpp
 
 class ExecutionContext;
 class Thread;
+struct ValueData;
 
 /*! \brief The ExecutableCode class represents the code of a compiled Scratch script. */
 class LIBSCRATCHCPP_EXPORT ExecutableCode
@@ -20,6 +21,12 @@ class LIBSCRATCHCPP_EXPORT ExecutableCode
 
         /*! Runs the script until it finishes or yields. */
         virtual void run(ExecutionContext *context) = 0;
+
+        /*!
+         * Runs the reporter and returns its return value.
+         * \note Make sure to call value_free() to free the value.
+         */
+        virtual ValueData runReporter(ExecutionContext *context) = 0;
 
         /*! Runs the hat predicate and returns its return value. */
         virtual bool runPredicate(ExecutionContext *context) = 0;

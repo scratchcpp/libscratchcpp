@@ -13,6 +13,7 @@ struct StringPtr;
 extern "C"
 {
     void test_function(TestMock *mock, ExecutionContext *ctx, Target *target, ValueData **varData, List **listData);
+    ValueData test_reporter(TestMock *mock, ExecutionContext *ctx, Target *target, ValueData **varData, List **listData);
     bool test_predicate(TestMock *mock, ExecutionContext *ctx, Target *target, ValueData **varData, List **listData);
     void test_print_function(ValueData *arg1, ValueData *arg2);
 

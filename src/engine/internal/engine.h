@@ -237,6 +237,7 @@ class Engine : public IEngine
 
         std::vector<std::shared_ptr<Target>> m_targets;
         std::unordered_map<Target *, std::shared_ptr<CompilerContext>> m_compilerContexts;
+        std::unordered_map<Monitor *, std::shared_ptr<CompilerContext>> m_monitorCompilerContexts; // TODO: Use shared_ptr in (LLVM)ExecutableCode and remove these maps (might not be a good idea)
         std::vector<std::shared_ptr<Broadcast>> m_broadcasts;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_broadcastMap;
         std::unordered_map<Broadcast *, std::vector<Script *>> m_backdropBroadcastMap;

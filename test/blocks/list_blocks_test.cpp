@@ -8,10 +8,12 @@
 #include <scratchcpp/block.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
+#include <scratchcpp/monitor.h>
 #include <scratchcpp/executioncontext.h>
 #include <scratchcpp/executablecode.h>
 #include <enginemock.h>
 #include <randomgeneratormock.h>
+#include <monitorhandlermock.h>
 
 #include "../common.h"
 #include "util.h"
@@ -21,6 +23,8 @@ using namespace libscratchcpp;
 using namespace libscratchcpp::test;
 
 using ::testing::Return;
+using ::testing::Invoke;
+using ::testing::_;
 
 class ListBlocksTest : public testing::Test
 {
@@ -39,6 +43,81 @@ class ListBlocksTest : public testing::Test
         EngineMock m_engineMock;
         RandomGeneratorMock m_rng;
 };
+
+TEST_F(ListBlocksTest, ListContents)
+{
+    auto target = std::make_shared<Sprite>();
+    auto list1 = std::make_shared<List>("", "");
+    target->addList(list1);
+    auto list2 = std::make_shared<List>("", "");
+    target->addList(list2);
+
+    list1->append(1);
+    list1->append(2);
+    list1->append(4);
+
+    list2->append("Lorem");
+    list2->append("ipsum");
+    list2->append("dolor");
+    list2->append("sit");
+    list2->append("amet");
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("data_listcontents");
+    builder.addEntityField("LIST", list1);
+    builder.captureBlockReturnValue();
+
+    builder.addBlock("data_listcontents");
+    builder.addEntityField("LIST", list2);
+    builder.captureBlockReturnValue();
+
+    builder.build();
+
+    builder.run();
+    List *list = builder.capturedValues();
+    ValueData *data = list->data();
+    ASSERT_EQ(list->size(), 2);
+    ASSERT_EQ(Value(data[0]).toString(), "124");
+    ASSERT_EQ(Value(data[1]).toString(), "Lorem ipsum dolor sit amet");
+}
+
+TEST_F(ListBlocksTest, ListMonitor)
+{
+    auto target = std::make_shared<Sprite>();
+    auto list1 = std::make_shared<List>("", "list1");
+    target->addList(list1);
+    auto list2 = std::make_shared<List>("", "list2");
+    target->addList(list2);
+
+    MonitorHandlerMock iface1, iface2;
+    EXPECT_CALL(iface1, init);
+    EXPECT_CALL(iface2, init);
+
+    auto monitor1 = std::make_shared<Monitor>("monitor", "data_listcontents");
+    auto monitor2 = std::make_shared<Monitor>("monitor", "data_listcontents");
+    monitor1->block()->setTarget(target.get());
+    monitor1->setInterface(&iface1);
+    monitor2->block()->setTarget(target.get());
+    monitor2->setInterface(&iface2);
+    m_engine->setMonitors({ monitor1, monitor2 });
+
+    ScriptBuilder builder1(m_extension.get(), m_engine, target);
+    builder1.addBlock(monitor1->block());
+    builder1.addEntityField("LIST", list1);
+
+    ScriptBuilder builder2(m_extension.get(), m_engine, target);
+    builder2.addBlock(monitor2->block());
+    builder2.addEntityField("LIST", list2);
+
+    m_engine->compile();
+    ASSERT_EQ(monitor1->name(), list1->name());
+    ASSERT_EQ(monitor2->name(), list2->name());
+
+    EXPECT_CALL(iface1, onValueChanged(_)).WillOnce(Invoke([list1](const Value &value) { ASSERT_EQ(value.toDouble(), (uintptr_t)list1.get()); }));
+    EXPECT_CALL(iface2, onValueChanged(_)).WillOnce(Invoke([list2](const Value &value) { ASSERT_EQ(value.toDouble(), (uintptr_t)list2.get()); }));
+    m_engine->updateMonitors();
+}
 
 TEST_F(ListBlocksTest, AddToList)
 {

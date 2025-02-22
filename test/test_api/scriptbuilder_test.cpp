@@ -9,6 +9,7 @@
 #include <scratchcpp/field.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/broadcast.h>
 
 #include "../common.h"
 #include "testextension.h"
@@ -231,9 +232,9 @@ TEST_F(ScriptBuilderTest, AddEntityInput)
     m_builder->build();
 }
 
-TEST_F(ScriptBuilderTest, AddEntityField)
+TEST_F(ScriptBuilderTest, AddVariableEntityField)
 {
-    auto var = std::make_shared<Variable>("", "");
+    auto var = std::make_shared<Variable>("", "test var");
     m_target->addVariable(var);
 
     m_builder->addBlock("test_simple");
@@ -244,11 +245,46 @@ TEST_F(ScriptBuilderTest, AddEntityField)
     ASSERT_TRUE(block->inputs().empty());
     ASSERT_EQ(block->fields().size(), 1);
     ASSERT_EQ(block->fieldAt(0)->name(), "VARIABLE");
+    ASSERT_EQ(block->fieldAt(0)->value().toString(), "test var");
     ASSERT_EQ(block->fieldAt(0)->valuePtr(), var);
 
     m_builder->addBlock("test_simple");
     m_builder->addEntityField("VARIABLE", var);
     m_builder->build();
+}
+
+TEST_F(ScriptBuilderTest, AddListEntityField)
+{
+    auto list = std::make_shared<List>("", "hello world");
+    m_target->addList(list);
+
+    m_builder->addBlock("test_simple");
+    m_builder->addEntityField("LIST", list);
+    auto block = m_builder->currentBlock();
+    ASSERT_TRUE(block);
+    ASSERT_EQ(block->opcode(), "test_simple");
+    ASSERT_TRUE(block->inputs().empty());
+    ASSERT_EQ(block->fields().size(), 1);
+    ASSERT_EQ(block->fieldAt(0)->name(), "LIST");
+    ASSERT_EQ(block->fieldAt(0)->value().toString(), "hello world");
+    ASSERT_EQ(block->fieldAt(0)->valuePtr(), list);
+}
+
+TEST_F(ScriptBuilderTest, AddBroadcastEntityField)
+{
+    auto broadcast = std::make_shared<Broadcast>("", "test");
+    m_engine->setBroadcasts({ broadcast });
+
+    m_builder->addBlock("test_simple");
+    m_builder->addEntityField("MESSAGE", broadcast);
+    auto block = m_builder->currentBlock();
+    ASSERT_TRUE(block);
+    ASSERT_EQ(block->opcode(), "test_simple");
+    ASSERT_TRUE(block->inputs().empty());
+    ASSERT_EQ(block->fields().size(), 1);
+    ASSERT_EQ(block->fieldAt(0)->name(), "MESSAGE");
+    ASSERT_EQ(block->fieldAt(0)->value().toString(), "test");
+    ASSERT_EQ(block->fieldAt(0)->valuePtr(), broadcast);
 }
 
 TEST_F(ScriptBuilderTest, CaptureBlockReturnValue)

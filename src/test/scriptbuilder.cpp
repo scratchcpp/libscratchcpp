@@ -9,7 +9,9 @@
 #include <scratchcpp/executablecode.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/iengine.h>
+#include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/broadcast.h>
 
 #include "scriptbuilder_p.h"
 
@@ -198,7 +200,19 @@ void ScriptBuilder::addEntityField(const std::string &name, std::shared_ptr<Enti
         impl->entities.push_back(entity);
     }
 
-    auto field = std::make_shared<Field>(name, Value(), entity);
+    Value entityName = "";
+    auto var = std::dynamic_pointer_cast<Variable>(entity);
+    auto list = std::dynamic_pointer_cast<List>(entity);
+    auto broadcast = std::dynamic_pointer_cast<Broadcast>(entity);
+
+    if (var)
+        entityName = var->name();
+    else if (list)
+        entityName = list->name();
+    else if (broadcast)
+        entityName = broadcast->name();
+
+    auto field = std::make_shared<Field>(name, entityName, entity);
     impl->lastBlock->addField(field);
 }
 

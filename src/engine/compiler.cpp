@@ -44,7 +44,7 @@ std::shared_ptr<libscratchcpp::Block> Compiler::block() const
 }
 
 /*! Compiles the script starting with the given block. */
-std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBlock, bool isHatPredicate)
+std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBlock, CodeType codeType)
 {
     BlockPrototype *procedurePrototype = nullptr;
 
@@ -60,14 +60,14 @@ std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBl
         }
     }
 
-    impl->builder = impl->builderFactory->create(impl->ctx, procedurePrototype, isHatPredicate);
+    impl->builder = impl->builderFactory->create(impl->ctx, procedurePrototype, codeType);
     impl->substackTree.clear();
     impl->substackHit = false;
     impl->emptySubstack = false;
     impl->warp = false;
     impl->block = startBlock;
 
-    if (impl->block && isHatPredicate) {
+    if (impl->block && codeType == CodeType::HatPredicate) {
         auto f = impl->block->hatPredicateCompileFunction();
 
         if (f) {

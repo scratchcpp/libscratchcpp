@@ -2,6 +2,7 @@
 #include <scratchcpp/script.h>
 #include <scratchcpp/executioncontext.h>
 #include <scratchcpp/promise.h>
+#include <scratchcpp/value.h>
 #include <targetmock.h>
 #include <enginemock.h>
 #include <executablecodemock.h>
@@ -48,6 +49,13 @@ TEST_F(ThreadTest, Run)
 {
     EXPECT_CALL(*m_code, run(m_ctx.get()));
     m_thread->run();
+}
+
+TEST_F(ThreadTest, RunReporter)
+{
+    Value v = "test";
+    EXPECT_CALL(*m_code, runReporter(m_ctx.get())).WillOnce(Return(v.data()));
+    ASSERT_EQ(Value(m_thread->runReporter()).toString(), v.toString());
 }
 
 TEST_F(ThreadTest, RunPredicate)

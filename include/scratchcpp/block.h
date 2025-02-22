@@ -23,7 +23,7 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
     public:
         friend class Engine;
 
-        Block(const std::string &id, const std::string &opcode);
+        Block(const std::string &id, const std::string &opcode, bool isMonitorBlock = false);
         Block(const Block &) = delete;
 
         CompilerValue *compile(Compiler *compiler);
@@ -89,6 +89,8 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
         void setIsTopLevelReporter(bool isTopLevelReporter);
 
         InputValue *topLevelReporterInfo();
+
+        bool isMonitorBlock() const;
 
     private:
         void updateInputMap();

@@ -276,7 +276,7 @@ void Engine::compile()
                     script->setCode(compiler.compile(block));
 
                     if (block->hatPredicateCompileFunction())
-                        script->setHatPredicateCode(compiler.compile(block, true));
+                        script->setHatPredicateCode(compiler.compile(block, Compiler::CodeType::HatPredicate));
                 } else {
                     std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
                     m_unsupportedBlocks.insert(block->opcode());
@@ -468,10 +468,10 @@ void Engine::updateMonitors()
             auto script = monitor->script();
 
             if (script) {
-                // TODO: Implement this
-                /*auto thread = script->start();
-                thread->run();
-                monitor->updateValue(thread->vm());*/
+                auto thread = script->start();
+                ValueData value = thread->runReporter();
+                monitor->updateValue(Value(value));
+                value_free(&value);
             }
         }
     }
@@ -1851,7 +1851,35 @@ int Engine::resolveFieldValue(IExtension *extension, const std::string &value) c
 
 void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
 {
-    // TODO: Implement this
+    Target *target = monitor->sprite() ? static_cast<Target *>(monitor->sprite()) : stage();
+    auto block = monitor->block();
+    auto ext = blockExtension(block->opcode());
+
+    if (ext) {
+        auto ctx = Compiler::createContext(this, target);
+        Compiler compiler(ctx.get());
+        MonitorNameFunc nameFunc = resolveMonitorNameFunc(ext, block->opcode());
+
+        if (nameFunc)
+            monitor->setName(nameFunc(block.get()));
+
+        MonitorChangeFunc changeFunc = resolveMonitorChangeFunc(ext, block->opcode());
+        monitor->setValueChangeFunction(changeFunc);
+
+        auto script = std::make_shared<Script>(target, block, this);
+        monitor->setScript(script);
+        auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+        script->setCode(code);
+        m_monitorCompilerContexts[monitor.get()] = ctx;
+
+        const auto &unsupportedBlocks = compiler.unsupportedBlocks();
+
+        for (const std::string &opcode : unsupportedBlocks)
+            m_unsupportedBlocks.insert(opcode);
+    } else {
+        std::cout << "warning: unsupported monitor block: " << block->opcode() << std::endl;
+        m_unsupportedBlocks.insert(block->opcode());
+    }
 }
 
 void Engine::finalize()

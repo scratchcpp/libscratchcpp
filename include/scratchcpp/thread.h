@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "global.h"
+#include "valuedata.h"
 #include "spimpl.h"
 
 namespace libscratchcpp
@@ -27,6 +27,7 @@ class LIBSCRATCHCPP_EXPORT Thread
         Script *script() const;
 
         void run();
+        ValueData runReporter();
         bool runPredicate();
         void kill();
         void reset();
