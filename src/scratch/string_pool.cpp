@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <map>
 #include <cassert>
+#include <algorithm>
 
 namespace libscratchcpp
 {
@@ -58,6 +59,8 @@ extern "C"
         if (currentThread)
             threadStrings[currentThread].erase(str);
 
+        assert(std::find_if(freeStrings.begin(), freeStrings.end(), [str](const std::pair<size_t, StringPtr *> &p) { return p.second == str; }) == freeStrings.end());
+        assert(std::find_if(strings.begin(), strings.end(), [str](const std::unique_ptr<StringPtr> &p) { return p.get() == str; }) != strings.end());
         freeStrings.insert(std::pair<size_t, StringPtr *>(str->allocatedSize, str));
     }
 }
