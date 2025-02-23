@@ -1246,6 +1246,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             }
 
             case LLVMInstruction::Type::Stop: {
+                freeScopeHeap();
                 m_builder.CreateBr(endBranch);
                 llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
                 m_builder.SetInsertPoint(nextBranch);
@@ -1309,11 +1310,11 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
         }
     }
 
+    assert(m_stringHeap.size() == 1);
+    freeScopeHeap();
     m_builder.CreateBr(endBranch);
 
     m_builder.SetInsertPoint(endBranch);
-    assert(m_stringHeap.size() == 1);
-    freeScopeHeap();
     syncVariables(targetVariables);
 
     // End and verify the function
