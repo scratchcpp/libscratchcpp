@@ -4,11 +4,13 @@ add_library(scratchcpp-audio STATIC)
 set(MINIAUDIO_SRC internal/thirdparty/miniaudio)
 
 if (LIBSCRATCHCPP_AUDIO_SUPPORT)
-    add_library(miniaudio STATIC
+    add_library(miniaudio SHARED
 	    ${MINIAUDIO_SRC}/miniaudio.c
 	    ${MINIAUDIO_SRC}/miniaudio.h
     )
     target_include_directories(scratchcpp-audio PUBLIC ${CMAKE_CURRENT_LIST_DIR}/${MINIAUDIO_SRC})
+    install(TARGETS miniaudio DESTINATION lib)
+
     target_link_libraries(scratchcpp-audio PRIVATE miniaudio)
     target_compile_definitions(scratchcpp-audio PUBLIC LIBSCRATCHCPP_AUDIO_SUPPORT)
 endif()
