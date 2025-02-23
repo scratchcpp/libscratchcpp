@@ -284,9 +284,9 @@ class LLVMCodeBuilderTest : public testing::Test
                     memcpy(result->data, string1->data, string1->size * sizeof(typeof(*string1->data)));
                     memcpy(result->data + string1->size, string2->data, (string2->size + 1) * sizeof(typeof(*string2->data))); // +1: null-terminate
 
-                    ValueData data;
-                    value_assign_stringPtr(&data, result);
-                    return Value(data);
+                    Value ret;
+                    value_assign_stringPtr(&ret.data(), result);
+                    return ret;
                 }
 
                 case OpType::StringChar: {
@@ -300,9 +300,9 @@ class LLVMCodeBuilderTest : public testing::Test
                     result->data[1] = u'\0';
                     result->size = inRange;
 
-                    ValueData data;
-                    value_assign_stringPtr(&data, result);
-                    return Value(data);
+                    Value ret;
+                    value_assign_stringPtr(&ret.data(), result);
+                    return ret;
                 }
 
                 default:
