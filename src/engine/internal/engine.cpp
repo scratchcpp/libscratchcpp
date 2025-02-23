@@ -1876,6 +1876,9 @@ void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
 
         for (const std::string &opcode : unsupportedBlocks)
             m_unsupportedBlocks.insert(opcode);
+
+        // Preoptimize to avoid lag when updating monitors for the first time
+        compiler.preoptimize();
     } else {
         std::cout << "warning: unsupported monitor block: " << block->opcode() << std::endl;
         m_unsupportedBlocks.insert(block->opcode());
