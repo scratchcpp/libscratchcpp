@@ -15,6 +15,8 @@
 namespace libscratchcpp
 {
 
+static bool conditionReturnValue = false;
+
 void registerBlocks(IEngine *engine, IExtension *extension)
 {
     engine->addCompileFunction(extension, "test_print", [](Compiler *compiler) -> CompilerValue * {
@@ -49,6 +51,11 @@ void registerBlocks(IEngine *engine, IExtension *extension)
         compiler->createVariableWrite(var, compiler->addInput("VALUE"));
         return nullptr;
     });
+}
+
+void setConditionReturnValue(bool newValue)
+{
+    conditionReturnValue = newValue;
 }
 
 extern "C" void test_print(const StringPtr *str)

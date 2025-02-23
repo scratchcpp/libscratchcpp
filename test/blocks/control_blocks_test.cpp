@@ -462,7 +462,7 @@ TEST_F(ControlBlocksTest, WaitUntil)
         builder.addObscuredInput("CONDITION", block);
         builder.build();
 
-        conditionReturnValue = false;
+        setConditionReturnValue(false);
         m_engine->start();
 
         m_engine->step();
@@ -471,7 +471,7 @@ TEST_F(ControlBlocksTest, WaitUntil)
         m_engine->step();
         ASSERT_TRUE(m_engine->isRunning());
 
-        conditionReturnValue = true;
+        setConditionReturnValue(true);
         m_engine->step();
         m_engine->step();
         ASSERT_FALSE(m_engine->isRunning());
@@ -533,7 +533,7 @@ TEST_F(ControlBlocksTest, RepeatUntil)
         builder.addObscuredInput("CONDITION", block);
         builder.build();
 
-        conditionReturnValue = false;
+        setConditionReturnValue(false);
         m_engine->start();
 
         testing::internal::CaptureStdout();
@@ -541,7 +541,7 @@ TEST_F(ControlBlocksTest, RepeatUntil)
         ASSERT_EQ(testing::internal::GetCapturedStdout().substr(0, 10), "test\ntest\n");
         ASSERT_TRUE(m_engine->isRunning());
 
-        conditionReturnValue = true;
+        setConditionReturnValue(true);
         m_engine->step();
         m_engine->step();
         ASSERT_FALSE(m_engine->isRunning());
@@ -620,7 +620,7 @@ TEST_F(ControlBlocksTest, While)
         builder.addObscuredInput("CONDITION", block);
         builder.build();
 
-        conditionReturnValue = true;
+        setConditionReturnValue(true);
         m_engine->start();
 
         testing::internal::CaptureStdout();
@@ -628,7 +628,7 @@ TEST_F(ControlBlocksTest, While)
         ASSERT_EQ(testing::internal::GetCapturedStdout().substr(0, 10), "test\ntest\n");
         ASSERT_TRUE(m_engine->isRunning());
 
-        conditionReturnValue = false;
+        setConditionReturnValue(false);
         m_engine->step();
         m_engine->step();
         ASSERT_FALSE(m_engine->isRunning());
