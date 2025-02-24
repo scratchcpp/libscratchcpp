@@ -38,6 +38,7 @@ class LIBSCRATCHCPP_EXPORT Asset : public Entity
 
     protected:
         virtual void processData(unsigned int size, void *data) { }
+        virtual bool isClone() const { return false; }
 
     private:
         spimpl::unique_impl_ptr<AssetPrivate> impl;

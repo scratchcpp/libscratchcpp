@@ -43,6 +43,7 @@ class LIBSCRATCHCPP_EXPORT Sound : public Asset
 
     protected:
         void processData(unsigned int size, void *data) override;
+        virtual bool isClone() const override;
 
     private:
         void stopCloneSounds();
