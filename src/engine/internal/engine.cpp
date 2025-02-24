@@ -182,7 +182,7 @@ void Engine::resolveIds()
             block->setComment(comment);
 
             if (comment) {
-                comment->setBlock(block);
+                comment->setBlock(block.get());
                 assert(comment->blockId() == block->id());
             }
         }

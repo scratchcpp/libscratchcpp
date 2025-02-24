@@ -28,13 +28,13 @@ void Comment::setBlockId(const std::string id)
 }
 
 /*! Returns the block the comment is attached to. */
-std::shared_ptr<Block> Comment::block() const
+Block *Comment::block() const
 {
     return impl->block;
 }
 
 /*! Sets the block the comment is attached to. */
-void Comment::setBlock(std::shared_ptr<Block> block)
+void Comment::setBlock(Block *block)
 {
     impl->block = block;
 

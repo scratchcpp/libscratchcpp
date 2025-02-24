@@ -29,8 +29,8 @@ TEST(CommentTest, Block)
     ASSERT_TRUE(comment.blockId().empty());
 
     auto block = std::make_shared<Block>("abc", "");
-    comment.setBlock(block);
-    ASSERT_EQ(comment.block(), block);
+    comment.setBlock(block.get());
+    ASSERT_EQ(comment.block(), block.get());
     ASSERT_EQ(comment.blockId(), "abc");
 
     comment.setBlock(nullptr);

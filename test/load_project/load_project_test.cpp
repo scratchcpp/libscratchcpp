@@ -424,7 +424,7 @@ TEST(LoadProjectTest, LoadTestProject)
         auto commentBlock = sprite2->blockAt(sprite2->findBlock("e"));
         ASSERT_EQ(comment->id(), "w");
         ASSERT_EQ(comment->blockId(), "e");
-        ASSERT_EQ(comment->block(), commentBlock);
+        ASSERT_EQ(comment->block(), commentBlock.get());
         ASSERT_EQ(comment->x(), 247.3981475830078);
         ASSERT_EQ(comment->y(), 208);
         ASSERT_EQ(comment->width(), 189.62969970703125);

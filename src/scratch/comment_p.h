@@ -16,7 +16,7 @@ struct CommentPrivate
         CommentPrivate(const CommentPrivate &) = delete;
 
         std::string blockId;
-        std::shared_ptr<Block> block;
+        Block *block = nullptr;
         double x = 0;
         double y = 0;
         double width = 200;

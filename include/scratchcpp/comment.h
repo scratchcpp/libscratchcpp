@@ -20,8 +20,8 @@ class LIBSCRATCHCPP_EXPORT Comment : public Entity
         const std::string &blockId() const;
         void setBlockId(const std::string id);
 
-        std::shared_ptr<Block> block() const;
-        void setBlock(std::shared_ptr<Block> block);
+        Block *block() const;
+        void setBlock(Block *block);
 
         double x() const;
         void setX(double x);
