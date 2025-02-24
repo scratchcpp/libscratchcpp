@@ -22,7 +22,7 @@ class LLVMCoroutine
         llvm::Value *didSuspendVar() const;
 
         void createSuspend();
-        llvm::Value *createResume(llvm::Value *coroHandle);
+        llvm::Value *createResume(llvm::Function *function, llvm::Value *coroHandle);
         void end();
 
     private:

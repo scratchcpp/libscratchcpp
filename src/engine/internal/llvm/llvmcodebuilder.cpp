@@ -1363,7 +1363,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     if (m_warp)
         m_builder.CreateRet(m_builder.getInt1(true));
     else
-        m_builder.CreateRet(coro->createResume(resumeFunc->getArg(0)));
+        m_builder.CreateRet(coro->createResume(resumeFunc, resumeFunc->getArg(0)));
 
     verifyFunction(resumeFunc);
 
