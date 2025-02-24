@@ -21,6 +21,7 @@ struct AssetPrivate
         std::string fileName;
         void *data = nullptr;
         unsigned int dataSize = 0;
+        bool dataCloned = false;
         Target *target = nullptr;
 };
 

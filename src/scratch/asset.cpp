@@ -17,7 +17,7 @@ Asset::Asset(const std::string &name, const std::string &id, const std::string &
 /*! Destroys Asset. */
 Asset::~Asset()
 {
-    if (impl->data) {
+    if (impl->data && !impl->dataCloned) {
         free(impl->data);
         impl->data = nullptr;
     }
@@ -68,6 +68,7 @@ void Asset::setData(unsigned int size, void *data)
 
     impl->dataSize = size;
     impl->data = data;
+    impl->dataCloned = isClone();
     processData(size, data);
 }
 

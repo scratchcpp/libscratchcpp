@@ -116,6 +116,11 @@ void Sound::processData(unsigned int size, void *data)
         std::cerr << "Failed to load sound " << name() << std::endl;
 }
 
+bool Sound::isClone() const
+{
+    return impl->cloneRoot;
+}
+
 void Sound::stopCloneSounds()
 {
     Target *target = this->target();
