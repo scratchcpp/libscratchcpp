@@ -121,7 +121,9 @@ bool ProjectPrivate::tryLoad(IProjectReader *reader)
         // Load asset data
         for (size_t i = 0; i < assets.size(); i++) {
             const std::string &data = assetData[i];
-            assets[assetNames[i]]->setData(data.size(), static_cast<void *>(const_cast<char *>(data.c_str())));
+            char *ptr = (char *)malloc(data.size() * sizeof(char));
+            strncpy(ptr, data.data(), data.size());
+            assets[assetNames[i]]->setData(data.size(), ptr);
         }
 
     } else {

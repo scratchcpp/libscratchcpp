@@ -29,12 +29,24 @@ TEST(AssetTest, Data)
     TestAsset asset;
     ASSERT_EQ(asset.data(), nullptr);
 
-    static char data[5] = "abcd";
+    char *data = (char *)malloc(4 * sizeof(char));
+    strncpy(data, "abcd", 4);
+
     asset.setData(5, data);
     ASSERT_EQ(asset.data(), data);
     ASSERT_EQ(asset.size, 5);
     ASSERT_EQ(asset.processedData, data);
     ASSERT_EQ(asset.callCount, 1);
+
+    // Should deallocate in setData()
+    data = (char *)malloc(11 * sizeof(char));
+    strncpy(data, "Hello world!", 11);
+
+    asset.setData(5, data);
+    ASSERT_EQ(asset.data(), data);
+    ASSERT_EQ(asset.size, 5);
+    ASSERT_EQ(asset.processedData, data);
+    ASSERT_EQ(asset.callCount, 2);
 }
 
 TEST(AssetTest, Target)

@@ -19,7 +19,7 @@ class LIBSCRATCHCPP_EXPORT Asset : public Entity
         Asset(const std::string &name, const std::string &id, const std::string &format);
         Asset(const Asset &) = delete;
 
-        virtual ~Asset() { }
+        virtual ~Asset();
 
         void setId(const std::string &id);
 

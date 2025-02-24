@@ -19,7 +19,7 @@ struct AssetPrivate
         std::string name;
         std::string dataFormat;
         std::string fileName;
-        const void *data = nullptr;
+        void *data = nullptr;
         unsigned int dataSize = 0;
         Target *target = nullptr;
 };

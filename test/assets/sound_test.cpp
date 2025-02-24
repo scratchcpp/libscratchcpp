@@ -59,16 +59,20 @@ TEST_F(SoundTest, ProcessData)
     Sound sound("sound1", "a", "wav");
     sound.setRate(44100);
 
-    const char *data = "abc";
-    void *dataPtr = const_cast<void *>(static_cast<const void *>(data));
+    char *data = (char *)malloc(4 * sizeof(char));
+    strncpy(data, "abcd", 4);
 
     EXPECT_CALL(*m_player, isLoaded()).WillOnce(Return(false));
-    EXPECT_CALL(*m_player, load(3, dataPtr, 44100)).WillOnce(Return(true));
-    sound.setData(3, dataPtr);
+    EXPECT_CALL(*m_player, load(3, data, 44100)).WillOnce(Return(true));
+    sound.setData(3, data);
+
+    // Should deallocate in setData()
+    data = (char *)malloc(11 * sizeof(char));
+    strncpy(data, "Hello world!", 11);
 
     EXPECT_CALL(*m_player, isLoaded()).WillOnce(Return(true));
     EXPECT_CALL(*m_player, load).Times(0);
-    sound.setData(3, dataPtr);
+    sound.setData(3, data);
 }
 
 TEST_F(SoundTest, SetVolume)
@@ -151,12 +155,12 @@ TEST_F(SoundTest, Clone)
     sound->setRate(44100);
     sound->setSampleCount(10000);
 
-    const char *data = "abc";
-    void *dataPtr = const_cast<void *>(static_cast<const void *>(data));
+    char *data = (char *)malloc(4 * sizeof(char));
+    strncpy(data, "abcd", 4);
 
     EXPECT_CALL(*m_player, isLoaded()).WillOnce(Return(false));
-    EXPECT_CALL(*m_player, load(3, dataPtr, 44100)).WillOnce(Return(true));
-    sound->setData(3, dataPtr);
+    EXPECT_CALL(*m_player, load(3, data, 44100)).WillOnce(Return(true));
+    sound->setData(3, data);
 
     auto clonePlayer = std::make_shared<AudioPlayerMock>();
     EXPECT_CALL(m_playerFactory, createAudioPlayer()).WillOnce(Return(clonePlayer));

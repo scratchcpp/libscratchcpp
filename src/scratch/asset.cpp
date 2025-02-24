@@ -14,6 +14,15 @@ Asset::Asset(const std::string &name, const std::string &id, const std::string &
     impl->updateFileName(id);
 }
 
+/*! Destroys Asset. */
+Asset::~Asset()
+{
+    if (impl->data) {
+        free(impl->data);
+        impl->data = nullptr;
+    }
+}
+
 /*! Sets the ID (MD5 hash) of the asset file. */
 void Asset::setId(const std::string &id)
 {
@@ -51,9 +60,12 @@ unsigned int Asset::dataSize() const
     return impl->dataSize;
 }
 
-/*! Sets the asset data. */
+/*! Sets the asset data (will be deallocated when the object is destroyed). */
 void Asset::setData(unsigned int size, void *data)
 {
+    if (impl->data)
+        free(impl->data);
+
     impl->dataSize = size;
     impl->data = data;
     processData(size, data);
