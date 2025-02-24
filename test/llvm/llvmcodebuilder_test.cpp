@@ -70,8 +70,9 @@ class LLVMCodeBuilderTest : public testing::Test
         void createBuilder(Target *target, BlockPrototype *procedurePrototype, Compiler::CodeType codeType = Compiler::CodeType::Script)
         {
             if (m_contexts.find(target) == m_contexts.cend() || !target)
-                m_contexts[target] = std::make_unique<LLVMCompilerContext>(&m_engine, target);
+                m_contexts[target] = std::make_shared<LLVMCompilerContext>(&m_engine, target);
 
+            m_contextList.push_back(m_contexts[target]);
             m_builder = std::make_unique<LLVMCodeBuilder>(m_contexts[target].get(), procedurePrototype, codeType);
         }
 
@@ -433,7 +434,8 @@ class LLVMCodeBuilderTest : public testing::Test
             ASSERT_THAT(testing::internal::GetCapturedStdout(), Eq(expected)) << quotes << v.toString() << quotes;
         };
 
-        std::unordered_map<Target *, std::unique_ptr<LLVMCompilerContext>> m_contexts;
+        std::unordered_map<Target *, std::shared_ptr<LLVMCompilerContext>> m_contexts;
+        std::vector<std::shared_ptr<LLVMCompilerContext>> m_contextList;
         std::unique_ptr<LLVMCodeBuilder> m_builder;
         std::shared_ptr<BlockPrototype> m_procedurePrototype;
         EngineMock m_engine;
@@ -2853,6 +2855,34 @@ TEST_F(LLVMCodeBuilderTest, Yield)
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected2);
     ASSERT_TRUE(code->isFinished(ctx.get()));
+
+    // Terminate unfinished coroutine
+    EXPECT_CALL(m_target, isStage()).Times(3);
+    testing::internal::CaptureStdout();
+    code->reset(ctx.get());
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected1);
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    code->kill(ctx.get());
+    ASSERT_TRUE(code->isFinished(ctx.get()));
+
+    // Reset unfinished coroutine
+    EXPECT_CALL(m_target, isStage()).Times(3);
+    testing::internal::CaptureStdout();
+    code->reset(ctx.get());
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected1);
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    code->reset(ctx.get());
+
+    EXPECT_CALL(m_target, isStage()).Times(3);
+    testing::internal::CaptureStdout();
+    code->reset(ctx.get());
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected1);
+    ASSERT_FALSE(code->isFinished(ctx.get())); // leave unfinished coroutine
 
     // With warp
     createBuilder(true);

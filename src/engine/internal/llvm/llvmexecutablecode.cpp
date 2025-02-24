@@ -86,7 +86,9 @@ bool LLVMExecutableCode::runPredicate(ExecutionContext *context)
 void LLVMExecutableCode::kill(ExecutionContext *context)
 {
     LLVMExecutionContext *ctx = getContext(context);
-    ctx->setCoroutineHandle(nullptr);
+    // NOTE: Do not destroy coroutine, it will be destroyed later
+    // (really bad things happen when a coroutine destroys itself...)
+    // The code is finished and the coroutine won't be used again until reset() is called
     ctx->setFinished(true);
     ctx->setPromise(nullptr);
 }
@@ -94,7 +96,13 @@ void LLVMExecutableCode::kill(ExecutionContext *context)
 void LLVMExecutableCode::reset(ExecutionContext *context)
 {
     LLVMExecutionContext *ctx = getContext(context);
-    ctx->setCoroutineHandle(nullptr);
+
+    if (ctx->coroutineHandle()) {
+        // TODO: Can a script reset itself? (really bad things happen when a coroutine destroys itself...)
+        m_ctx->destroyCoroutine(ctx->coroutineHandle());
+        ctx->setCoroutineHandle(nullptr);
+    }
+
     ctx->setFinished(false);
     ctx->setPromise(nullptr);
 }
@@ -124,7 +132,7 @@ std::shared_ptr<ExecutionContext> LLVMExecutableCode::createExecutionContext(Thr
     }
 
     m_resumeFunction = m_ctx->lookupFunction<ResumeFunctionType>(m_resumeFunctionName);
-    return std::make_shared<LLVMExecutionContext>(thread);
+    return std::make_shared<LLVMExecutionContext>(m_ctx, thread);
 }
 
 LLVMExecutionContext *LLVMExecutableCode::getContext(ExecutionContext *context)
