@@ -260,7 +260,7 @@ TEST(EngineTest, CompileAndExecuteMonitors)
     engine.updateMonitors();
 
     // Change the monitor values
-    /*testing::internal::CaptureStdout();
+    testing::internal::CaptureStdout();
     EXPECT_CALL(iface1, onValueChanged);
     m1->changeValue(0);
     ASSERT_EQ(testing::internal::GetCapturedStdout(), "change 1!\n");
@@ -268,7 +268,7 @@ TEST(EngineTest, CompileAndExecuteMonitors)
     testing::internal::CaptureStdout();
     EXPECT_CALL(iface2, onValueChanged);
     m2->changeValue(0);
-    ASSERT_EQ(testing::internal::GetCapturedStdout(), "change 2!\n");*/
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "change 2!\n");
 
     ScratchConfiguration::removeExtension(extension);
 }
