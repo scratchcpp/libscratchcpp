@@ -28,6 +28,8 @@ class LLVMCompilerContext : public CompilerContext
         void initJit();
         bool jitInitialized() const;
 
+        void destroyCoroutine(void *handle);
+
         template<typename T>
         T lookupFunction(const std::string &name)
         {
@@ -42,13 +44,18 @@ class LLVMCompilerContext : public CompilerContext
         }
 
     private:
+        using DestroyCoroFuncType = void (*)(void *);
+
         void initTarget();
+        llvm::Function *createCoroDestroyFunction();
 
         std::unique_ptr<llvm::LLVMContext> m_llvmCtx;
         std::unique_ptr<llvm::Module> m_module;
         llvm::LLVMContext *m_llvmCtxPtr = nullptr;
         llvm::Module *m_modulePtr = nullptr;
         llvm::Expected<std::unique_ptr<llvm::orc::LLJIT>> m_jit;
+        llvm::Function *m_llvmCoroDestroyFunction = nullptr;
+        DestroyCoroFuncType m_coroDestroyFunction = nullptr;
         bool m_jitInitialized = false;
 };
 

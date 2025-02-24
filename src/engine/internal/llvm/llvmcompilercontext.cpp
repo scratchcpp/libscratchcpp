@@ -2,6 +2,7 @@
 
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Passes/PassBuilder.h>
+#include <llvm/IR/Verifier.h>
 
 #include <scratchcpp/target.h>
 #include <iostream>
@@ -16,7 +17,8 @@ LLVMCompilerContext::LLVMCompilerContext(IEngine *engine, Target *target) :
     m_module(std::make_unique<llvm::Module>(target ? target->name() : "", *m_llvmCtx)),
     m_llvmCtxPtr(m_llvmCtx.get()),
     m_modulePtr(m_module.get()),
-    m_jit((initTarget(), llvm::orc::LLJITBuilder().create()))
+    m_jit((initTarget(), llvm::orc::LLJITBuilder().create())),
+    m_llvmCoroDestroyFunction(createCoroDestroyFunction())
 {
     if (!m_jit) {
         llvm::errs() << "error: failed to create JIT: " << toString(m_jit.takeError()) << "\n";
@@ -46,6 +48,8 @@ void LLVMCompilerContext::initJit()
         return;
     }
 
+    assert(m_llvmCoroDestroyFunction);
+    const std::string coroDestroyFuncName = m_llvmCoroDestroyFunction->getName().str();
     m_jitInitialized = true;
     assert(m_llvmCtx);
     assert(m_module);
@@ -96,6 +100,10 @@ void LLVMCompilerContext::initJit()
 #endif
         lookupFunction<void *>(name);
     }
+
+    // Lookup coro_destroy()
+    m_coroDestroyFunction = lookupFunction<DestroyCoroFuncType>(coroDestroyFuncName);
+    assert(m_coroDestroyFunction);
 }
 
 bool LLVMCompilerContext::jitInitialized() const
@@ -103,9 +111,45 @@ bool LLVMCompilerContext::jitInitialized() const
     return m_jitInitialized;
 }
 
+void LLVMCompilerContext::destroyCoroutine(void *handle)
+{
+    if (!m_jitInitialized) {
+        std::cout << "error: JIT must be initialized to destroy coroutines" << std::endl;
+        assert(false);
+    }
+
+    assert(m_coroDestroyFunction);
+    m_coroDestroyFunction(handle);
+}
+
 void LLVMCompilerContext::initTarget()
 {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
+}
+
+llvm::Function *LLVMCompilerContext::createCoroDestroyFunction()
+{
+    llvm::IRBuilder<> builder(*m_llvmCtx);
+
+    // void coro_destroy(void *handle)
+    llvm::FunctionType *funcType = llvm::FunctionType::get(builder.getVoidTy(), builder.getVoidTy()->getPointerTo(), false);
+    llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "coro_destroy", m_module.get());
+    func->setComdat(m_module->getOrInsertComdat(func->getName()));
+    func->setDSOLocal(true);
+    func->addFnAttr(llvm::Attribute::NoInline);
+    func->addFnAttr(llvm::Attribute::OptimizeNone);
+
+    llvm::BasicBlock *entry = llvm::BasicBlock::Create(*m_llvmCtx, "entry", func);
+    builder.SetInsertPoint(entry);
+    builder.CreateCall(llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_destroy), { func->getArg(0) });
+    builder.CreateRetVoid();
+
+    if (llvm::verifyFunction(*func, &llvm::errs())) {
+        llvm::errs() << "error: coro_destroy() function verficiation failed!\n";
+        llvm::errs() << "module name: " << m_module->getName() << "\n";
+    }
+
+    return func;
 }
