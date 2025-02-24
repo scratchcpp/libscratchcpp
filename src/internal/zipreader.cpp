@@ -36,7 +36,7 @@ void ZipReader::close()
 size_t ZipReader::readFile(const std::string &fileName, void **buf)
 {
     if (!m_zip) {
-        buf = nullptr;
+        *buf = nullptr;
         return 0;
     }
 
