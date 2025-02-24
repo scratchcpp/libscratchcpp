@@ -51,8 +51,8 @@ TEST(InputValueTest, ValueBlock)
     ASSERT_EQ(value.valueBlockId(), "");
 
     auto block = std::make_shared<Block>("abc", "");
-    value.setValueBlock(block);
-    ASSERT_EQ(value.valueBlock(), block);
+    value.setValueBlock(block.get());
+    ASSERT_EQ(value.valueBlock(), block.get());
     ASSERT_EQ(value.valueBlockId(), "abc");
 
     value.setValueBlock(nullptr);
@@ -125,7 +125,7 @@ TEST(InputValueTest, Compile)
     auto block = std::make_shared<Block>("", "");
     EXPECT_CALL(builderFactory, create).WillOnce(Return(builder));
     EXPECT_CALL(*builder, finalize);
-    compiler.compile(block);
+    compiler.compile(block.get());
     CompilerPrivate::builderFactory = nullptr;
 
     auto input = std::make_shared<Input>("", Input::Type::Shadow);

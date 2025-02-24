@@ -124,7 +124,7 @@ bool Block::isMonitorBlock() const
 }
 
 /*! Returns the next block. */
-std::shared_ptr<Block> Block::next() const
+Block *Block::next() const
 {
     return impl->next;
 }
@@ -136,7 +136,7 @@ const std::string &Block::nextId() const
 }
 
 /*! Sets the next block. */
-void Block::setNext(std::shared_ptr<Block> block)
+void Block::setNext(Block *block)
 {
     impl->next = block;
 
@@ -154,7 +154,7 @@ void Block::setNextId(const std::string &nextId)
 }
 
 /*! Returns the parent block. */
-std::shared_ptr<Block> Block::parent() const
+Block *Block::parent() const
 {
     return impl->parent;
 }
@@ -166,7 +166,7 @@ const std::string &Block::parentId() const
 }
 
 /*! Sets the parent block. */
-void Block::setParent(std::shared_ptr<Block> block)
+void Block::setParent(Block *block)
 {
     impl->parent = block;
 

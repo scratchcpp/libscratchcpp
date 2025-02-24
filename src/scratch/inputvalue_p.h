@@ -14,7 +14,7 @@ struct InputValuePrivate
 
         InputValue::Type type;
         Value value;
-        std::shared_ptr<Block> valueBlock = nullptr;
+        Block *valueBlock = nullptr;
         std::string valueBlockId;
         std::shared_ptr<Entity> valuePtr = nullptr;
         std::string valueId;

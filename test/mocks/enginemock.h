@@ -6,7 +6,7 @@
 namespace libscratchcpp
 {
 
-using ScriptMap = std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>>;
+using ScriptMap = std::unordered_map<Block *, std::shared_ptr<Script>>;
 
 class EngineMock : public IEngine
 {
@@ -16,7 +16,7 @@ class EngineMock : public IEngine
 
         MOCK_METHOD(void, start, (), (override));
         MOCK_METHOD(void, stop, (), (override));
-        MOCK_METHOD(Thread *, startScript, (std::shared_ptr<Block>, Target *), (override));
+        MOCK_METHOD(Thread *, startScript, (Block *, Target *), (override));
         MOCK_METHOD(void, broadcast, (int, Thread *, bool), (override));
         MOCK_METHOD(void, broadcastByPtr, (Broadcast *, Thread *, bool), (override));
         MOCK_METHOD(void, startBackdropScripts, (Broadcast *, Thread *, bool), (override));
@@ -99,14 +99,14 @@ class EngineMock : public IEngine
         MOCK_METHOD(std::vector<int>, findBroadcasts, (const std::string &), (const, override));
         MOCK_METHOD(int, findBroadcastById, (const std::string &), (const, override));
 
-        MOCK_METHOD(void, addWhenTouchingObjectScript, (std::shared_ptr<Block>), (override));
-        MOCK_METHOD(void, addGreenFlagScript, (std::shared_ptr<Block>), (override));
-        MOCK_METHOD(void, addBroadcastScript, (std::shared_ptr<Block>, Field *, Broadcast *), (override));
-        MOCK_METHOD(void, addBackdropChangeScript, (std::shared_ptr<Block>, Field *), (override));
-        MOCK_METHOD(void, addCloneInitScript, (std::shared_ptr<Block>), (override));
-        MOCK_METHOD(void, addKeyPressScript, (std::shared_ptr<Block>, Field *), (override));
-        MOCK_METHOD(void, addTargetClickScript, (std::shared_ptr<Block>), (override));
-        MOCK_METHOD(void, addWhenGreaterThanScript, (std::shared_ptr<Block>), (override));
+        MOCK_METHOD(void, addWhenTouchingObjectScript, (Block *), (override));
+        MOCK_METHOD(void, addGreenFlagScript, (Block *), (override));
+        MOCK_METHOD(void, addBroadcastScript, (Block *, Field *, Broadcast *), (override));
+        MOCK_METHOD(void, addBackdropChangeScript, (Block *, Field *), (override));
+        MOCK_METHOD(void, addCloneInitScript, (Block *), (override));
+        MOCK_METHOD(void, addKeyPressScript, (Block *, Field *), (override));
+        MOCK_METHOD(void, addTargetClickScript, (Block *), (override));
+        MOCK_METHOD(void, addWhenGreaterThanScript, (Block *), (override));
 
         MOCK_METHOD(const std::vector<std::shared_ptr<Target>> &, targets, (), (const, override));
         MOCK_METHOD(void, setTargets, (const std::vector<std::shared_ptr<Target>> &), (override));

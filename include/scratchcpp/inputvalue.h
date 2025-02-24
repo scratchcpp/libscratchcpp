@@ -43,8 +43,8 @@ class LIBSCRATCHCPP_EXPORT InputValue
         const Value &value() const;
         void setValue(const Value &newValue);
 
-        const std::shared_ptr<Block> &valueBlock() const;
-        void setValueBlock(const std::shared_ptr<Block> &newValueBlock);
+        Block *valueBlock() const;
+        void setValueBlock(Block *newValueBlock);
 
         const std::string &valueBlockId() const;
         void setValueBlockId(const std::string &newValueBlockId);

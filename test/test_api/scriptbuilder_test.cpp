@@ -40,13 +40,12 @@ TEST_F(ScriptBuilderTest, AddBlock)
     ASSERT_EQ(m_builder->currentBlock(), nullptr);
 
     m_builder->addBlock("test_simple");
-    auto block = m_builder->currentBlock();
+    Block *block = m_builder->currentBlock();
     ASSERT_TRUE(block);
     ASSERT_EQ(block->opcode(), "test_simple");
     ASSERT_TRUE(block->compileFunction());
 
-    block = std::make_shared<Block>("", "test_simple");
-    m_builder->addBlock(block);
+    m_builder->addBlock(std::make_shared<Block>("", "test_simple"));
     block = m_builder->currentBlock();
     ASSERT_TRUE(block);
     ASSERT_EQ(block->opcode(), "test_simple");
@@ -124,11 +123,11 @@ TEST_F(ScriptBuilderTest, AddObscuredInputMultipleBlocks)
     m_builder->addBlock("test_substack");
     auto substack = std::make_shared<Block>("", "test_simple");
     auto block1 = std::make_shared<Block>("", "test_simple");
-    substack->setNext(block1);
-    block1->setParent(substack);
+    substack->setNext(block1.get());
+    block1->setParent(substack.get());
     auto block2 = std::make_shared<Block>("", "test_simple");
-    block1->setNext(block2);
-    block2->setParent(block1);
+    block1->setNext(block2.get());
+    block2->setParent(block1.get());
     m_builder->addObscuredInput("SUBSTACK", substack);
 
     m_builder->build();

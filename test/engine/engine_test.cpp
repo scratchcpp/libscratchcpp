@@ -232,10 +232,10 @@ TEST(EngineTest, CompileAndExecuteMonitors)
     ASSERT_TRUE(script1 && script2 && !script3);
 
     ASSERT_EQ(script1->target(), stage.get());
-    ASSERT_EQ(script1->topBlock(), m1->block());
+    ASSERT_EQ(script1->topBlock(), m1->block().get());
 
     ASSERT_EQ(script2->target(), sprite.get());
-    ASSERT_EQ(script2->topBlock(), m2->block());
+    ASSERT_EQ(script2->topBlock(), m2->block().get());
 
     ASSERT_EQ(m1->extension(), extension.get());
     ASSERT_EQ(m2->extension(), extension.get());

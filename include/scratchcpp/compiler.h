@@ -54,9 +54,9 @@ class LIBSCRATCHCPP_EXPORT Compiler
 
         IEngine *engine() const;
         Target *target() const;
-        std::shared_ptr<Block> block() const;
+        Block *block() const;
 
-        std::shared_ptr<ExecutableCode> compile(std::shared_ptr<Block> startBlock, CodeType codeType = CodeType::Script);
+        std::shared_ptr<ExecutableCode> compile(Block *startBlock, CodeType codeType = CodeType::Script);
         void preoptimize();
 
         CompilerValue *addFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
@@ -137,11 +137,11 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void beginLoopCondition();
         void endLoop();
 
-        void moveToIf(CompilerValue *cond, std::shared_ptr<Block> substack);
-        void moveToIfElse(CompilerValue *cond, std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2);
-        void moveToRepeatLoop(CompilerValue *count, std::shared_ptr<Block> substack);
-        void moveToWhileLoop(CompilerValue *cond, std::shared_ptr<Block> substack);
-        void moveToRepeatUntilLoop(CompilerValue *cond, std::shared_ptr<Block> substack);
+        void moveToIf(CompilerValue *cond, Block *substack);
+        void moveToIfElse(CompilerValue *cond, Block *substack1, Block *substack2);
+        void moveToRepeatLoop(CompilerValue *count, Block *substack);
+        void moveToWhileLoop(CompilerValue *cond, Block *substack);
+        void moveToRepeatUntilLoop(CompilerValue *cond, Block *substack);
         void warp();
 
         void createYield();

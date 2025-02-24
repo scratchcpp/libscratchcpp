@@ -35,10 +35,10 @@ struct CompilerPrivate
         std::shared_ptr<CompilerContext> ctxPtr; // for self-managed contexts
         CompilerContext *ctx = nullptr;
 
-        std::shared_ptr<Block> block;
+        Block *block = nullptr;
         int customIfStatementCount = 0;
         int customLoopCount = 0;
-        std::vector<std::pair<std::pair<std::shared_ptr<Block>, std::shared_ptr<Block>>, SubstackType>> substackTree;
+        std::vector<std::pair<std::pair<Block *, Block *>, SubstackType>> substackTree;
         bool substackHit = false;
         bool emptySubstack = false;
         bool warp = false;

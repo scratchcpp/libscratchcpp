@@ -66,8 +66,8 @@ TEST_F(BlockTest, Next)
     ASSERT_EQ(block.nextId(), "hello");
 
     auto nextBlock = std::make_shared<Block>("abc", "");
-    block.setNext(nextBlock);
-    ASSERT_EQ(block.next(), nextBlock);
+    block.setNext(nextBlock.get());
+    ASSERT_EQ(block.next(), nextBlock.get());
     ASSERT_EQ(block.nextId(), "abc");
 
     block.setNextId("def");
@@ -90,8 +90,8 @@ TEST_F(BlockTest, Parent)
     ASSERT_EQ(block.parentId(), "hello");
 
     auto parentBlock = std::make_shared<Block>("abc", "");
-    block.setParent(parentBlock);
-    ASSERT_EQ(block.parent(), parentBlock);
+    block.setParent(parentBlock.get());
+    ASSERT_EQ(block.parent(), parentBlock.get());
     ASSERT_EQ(block.parentId(), "abc");
 
     block.setParentId("def");
@@ -201,7 +201,7 @@ TEST_F(BlockTest, TopLevel)
     ASSERT_FALSE(block.topLevel());
 
     auto parentBlock = std::make_shared<Block>("abc", "");
-    block.setParent(parentBlock);
+    block.setParent(parentBlock.get());
     ASSERT_FALSE(block.topLevel());
 
     block.setParentId("def");

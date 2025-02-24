@@ -60,7 +60,7 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void stop() = 0;
 
         /*! Starts a script with the given top level block as the given Target (a sprite or the stage). */
-        virtual Thread *startScript(std::shared_ptr<Block> topLevelBlock, Target *) = 0;
+        virtual Thread *startScript(Block *topLevelBlock, Target *) = 0;
 
         /*! Starts the scripts of the broadcast with the given index. */
         virtual void broadcast(int index, Thread *sender, bool wait) = 0;
@@ -283,28 +283,28 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual int findBroadcastById(const std::string &broadcastId) const = 0;
 
         /* Registers the given "when touching object" script. */
-        virtual void addWhenTouchingObjectScript(std::shared_ptr<Block> hatBlock) = 0;
+        virtual void addWhenTouchingObjectScript(Block *hatBlock) = 0;
 
         /*! Registers the "green flag" script. */
-        virtual void addGreenFlagScript(std::shared_ptr<Block> hatBlock) = 0;
+        virtual void addGreenFlagScript(Block *hatBlock) = 0;
 
         /*! Registers the broadcast script. */
-        virtual void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Field *field, Broadcast *broadcast) = 0;
+        virtual void addBroadcastScript(Block *whenReceivedBlock, Field *field, Broadcast *broadcast) = 0;
 
         /*! Registers the backdrop change script. */
-        virtual void addBackdropChangeScript(std::shared_ptr<Block> hatBlock, Field *field) = 0;
+        virtual void addBackdropChangeScript(Block *hatBlock, Field *field) = 0;
 
         /* Registers the given "when I start as clone" script. */
-        virtual void addCloneInitScript(std::shared_ptr<Block> hatBlock) = 0;
+        virtual void addCloneInitScript(Block *hatBlock) = 0;
 
         /* Registers the given "when key pressed" script. */
-        virtual void addKeyPressScript(std::shared_ptr<Block> hatBlock, Field *field) = 0;
+        virtual void addKeyPressScript(Block *hatBlock, Field *field) = 0;
 
         /* Registers the given "when this sprite/stage clicked" script. */
-        virtual void addTargetClickScript(std::shared_ptr<Block> hatBlock) = 0;
+        virtual void addTargetClickScript(Block *hatBlock) = 0;
 
         /* Registers the given "when greater than" script. */
-        virtual void addWhenGreaterThanScript(std::shared_ptr<Block> hatBlock) = 0;
+        virtual void addWhenGreaterThanScript(Block *hatBlock) = 0;
 
         /*! Returns the list of targets. */
         virtual const std::vector<std::shared_ptr<Target>> &targets() const = 0;
@@ -377,7 +377,7 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void setExtensions(const std::vector<std::string> &newExtensions) = 0;
 
         /*! Returns the map of scripts (each top level block has a Script object). */
-        virtual const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &scripts() const = 0;
+        virtual const std::unordered_map<Block *, std::shared_ptr<Script>> &scripts() const = 0;
 
         /*! Returns the user agent of the last person to edit the project. */
         virtual const std::string &userAgent() const = 0;

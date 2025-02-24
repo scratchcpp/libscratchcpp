@@ -283,7 +283,7 @@ TEST(LoadProjectTest, LoadTestProject)
         auto block = sprite1->greenFlagBlocks()[0]->next();
         ASSERT_TRUE(block);
         ASSERT_FALSE(block->isMonitorBlock());
-        ASSERT_EQ(block->parent(), sprite1->greenFlagBlocks()[0]);
+        ASSERT_EQ(block->parent(), sprite1->greenFlagBlocks()[0].get());
         ASSERT_EQ(block->opcode(), "control_forever");
         ASSERT_FALSE(block->isTopLevelReporter());
         ASSERT_INPUT(block, "SUBSTACK");
@@ -462,7 +462,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(monitor->id(), "/oB5:^t}UfL_Moa]OVbD");
         ASSERT_EQ(monitor->mode(), Monitor::Mode::List);
         ASSERT_EQ(monitor->opcode(), "data_listcontents");
-        block = monitor->block();
+        block = monitor->block().get();
         ASSERT_EQ(block->fields().size(), 1);
         auto field = block->fieldAt(0);
         ASSERT_EQ(field->name(), "LIST");
@@ -481,7 +481,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(monitor->id(), "-!=?$nO,[RI{7!^_:x=?");
         ASSERT_EQ(monitor->mode(), Monitor::Mode::List);
         ASSERT_EQ(monitor->opcode(), "data_listcontents");
-        block = monitor->block();
+        block = monitor->block().get();
         ASSERT_EQ(block->fields().size(), 1);
         field = block->fieldAt(0);
         ASSERT_EQ(field->name(), "LIST");
@@ -500,7 +500,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(monitor->id(), "$FebBLy/KiSa19@:b-iA");
         ASSERT_EQ(monitor->mode(), Monitor::Mode::List);
         ASSERT_EQ(monitor->opcode(), "data_listcontents");
-        block = monitor->block();
+        block = monitor->block().get();
         ASSERT_EQ(block->fields().size(), 1);
         field = block->fieldAt(0);
         ASSERT_EQ(field->name(), "LIST");
@@ -519,7 +519,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(monitor->id(), "`jEk@4|i[#Fk?(8x)AV.-my variable");
         ASSERT_EQ(monitor->mode(), Monitor::Mode::Default);
         ASSERT_EQ(monitor->opcode(), "data_variable");
-        block = monitor->block();
+        block = monitor->block().get();
         ASSERT_EQ(block->fields().size(), 1);
         field = block->fieldAt(0);
         ASSERT_EQ(field->name(), "VARIABLE");
@@ -538,7 +538,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(monitor->id(), "eN~@jd#CfxXM(wA6qcyt");
         ASSERT_EQ(monitor->mode(), Monitor::Mode::Default);
         ASSERT_EQ(monitor->opcode(), "data_variable");
-        block = monitor->block();
+        block = monitor->block().get();
         ASSERT_EQ(block->fields().size(), 1);
         field = block->fieldAt(0);
         ASSERT_EQ(field->name(), "VARIABLE");
@@ -557,7 +557,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(monitor->id(), "g2][rYmi~u[wE@o$jckr");
         ASSERT_EQ(monitor->mode(), Monitor::Mode::Large);
         ASSERT_EQ(monitor->opcode(), "data_variable");
-        block = monitor->block();
+        block = monitor->block().get();
         ASSERT_EQ(block->fields().size(), 1);
         field = block->fieldAt(0);
         ASSERT_EQ(field->name(), "VARIABLE");
@@ -576,7 +576,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(monitor->id(), "loudness");
         ASSERT_EQ(monitor->mode(), Monitor::Mode::Default);
         ASSERT_EQ(monitor->opcode(), "sensing_loudness");
-        block = monitor->block();
+        block = monitor->block().get();
         ASSERT_TRUE(block->fields().empty());
         ASSERT_EQ(monitor->sprite(), nullptr);
         ASSERT_EQ(monitor->width(), 0);
@@ -590,7 +590,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(monitor->id(), "current_year");
         ASSERT_EQ(monitor->mode(), Monitor::Mode::Default);
         ASSERT_EQ(monitor->opcode(), "sensing_current");
-        block = monitor->block();
+        block = monitor->block().get();
         ASSERT_EQ(block->fields().size(), 1);
         field = block->fieldAt(0);
         ASSERT_EQ(field->name(), "CURRENTMENU");
@@ -607,7 +607,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(monitor->id(), "k^cUO5^Pcq!9lY|dxlg+");
         ASSERT_EQ(monitor->mode(), Monitor::Mode::Slider);
         ASSERT_EQ(monitor->opcode(), "data_variable");
-        block = monitor->block();
+        block = monitor->block().get();
         ASSERT_EQ(block->fields().size(), 1);
         field = block->fieldAt(0);
         ASSERT_EQ(field->name(), "VARIABLE");
@@ -626,7 +626,7 @@ TEST(LoadProjectTest, LoadTestProject)
         ASSERT_EQ(monitor->id(), "lWC9K6_lG+vq!)EX}npr");
         ASSERT_EQ(monitor->mode(), Monitor::Mode::Slider);
         ASSERT_EQ(monitor->opcode(), "data_variable");
-        block = monitor->block();
+        block = monitor->block().get();
         ASSERT_EQ(block->fields().size(), 1);
         field = block->fieldAt(0);
         ASSERT_EQ(field->name(), "VARIABLE");

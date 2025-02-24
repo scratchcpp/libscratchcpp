@@ -53,15 +53,15 @@ TEST(InputTest, ValueBlock)
     ASSERT_EQ(input.valueBlockId(), "");
 
     auto block = std::make_shared<Block>("abc", "");
-    input.setValueBlock(block);
-    ASSERT_EQ(input.valueBlock(), block);
+    input.setValueBlock(block.get());
+    ASSERT_EQ(input.valueBlock(), block.get());
     ASSERT_EQ(input.valueBlockId(), "abc");
 
     input.setValueBlockId("hello");
     ASSERT_EQ(input.valueBlockId(), "hello");
     ASSERT_EQ(input.valueBlock(), nullptr);
 
-    input.setValueBlock(block);
+    input.setValueBlock(block.get());
     input.setValueBlock(nullptr);
     ASSERT_EQ(input.valueBlock(), nullptr);
     ASSERT_EQ(input.valueBlockId(), "");
@@ -75,7 +75,7 @@ TEST(InputTest, SelectedMenuItem)
     ASSERT_TRUE(input1.selectedMenuItem().empty());
 
     auto block1 = std::make_shared<Block>("abc", "");
-    input1.setValueBlock(block1);
+    input1.setValueBlock(block1.get());
     ASSERT_FALSE(input1.pointsToDropdownMenu());
     ASSERT_TRUE(input1.selectedMenuItem().empty());
 
@@ -95,7 +95,7 @@ TEST(InputTest, SelectedMenuItem)
 
     auto block2 = std::make_shared<Block>("def", "");
     block2->setShadow(true);
-    input1.setValueBlock(block2);
+    input1.setValueBlock(block2.get());
 
     field1 = std::make_shared<Field>("OPTION1", "something");
     block2->addField(field1);
@@ -122,7 +122,7 @@ TEST(InputTest, SelectedMenuItem)
     ASSERT_TRUE(input2.selectedMenuItem().empty());
 
     auto block3 = std::make_shared<Block>("ghi", "");
-    input2.setValueBlock(block3);
+    input2.setValueBlock(block3.get());
     ASSERT_FALSE(input2.pointsToDropdownMenu());
     ASSERT_TRUE(input2.selectedMenuItem().empty());
 
@@ -135,7 +135,7 @@ TEST(InputTest, SelectedMenuItem)
     ASSERT_FALSE(input3.pointsToDropdownMenu());
     ASSERT_TRUE(input3.selectedMenuItem().empty());
 
-    input3.setValueBlock(block3);
+    input3.setValueBlock(block3.get());
     ASSERT_FALSE(input3.pointsToDropdownMenu());
     ASSERT_TRUE(input3.selectedMenuItem().empty());
 

@@ -34,7 +34,7 @@ class Engine : public IEngine
 
         void start() override;
         void stop() override;
-        Thread *startScript(std::shared_ptr<Block> topLevelBlock, Target *target) override;
+        Thread *startScript(Block *topLevelBlock, Target *target) override;
         void broadcast(int index, Thread *sender, bool wait) override;
         void broadcastByPtr(Broadcast *broadcast, Thread *sender, bool wait) override;
         void startBackdropScripts(Broadcast *broadcast, Thread *sender, bool wait) override;
@@ -118,14 +118,14 @@ class Engine : public IEngine
         std::vector<int> findBroadcasts(const std::string &broadcastName) const override;
         int findBroadcastById(const std::string &broadcastId) const override;
 
-        void addWhenTouchingObjectScript(std::shared_ptr<Block> hatBlock) override;
-        void addGreenFlagScript(std::shared_ptr<Block> hatBlock) override;
-        void addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Field *field, Broadcast *broadcast) override;
-        void addBackdropChangeScript(std::shared_ptr<Block> hatBlock, Field *field) override;
-        void addCloneInitScript(std::shared_ptr<Block> hatBlock) override;
-        void addKeyPressScript(std::shared_ptr<Block> hatBlock, Field *field) override;
-        void addTargetClickScript(std::shared_ptr<Block> hatBlock) override;
-        void addWhenGreaterThanScript(std::shared_ptr<Block> hatBlock) override;
+        void addWhenTouchingObjectScript(Block *hatBlock) override;
+        void addGreenFlagScript(Block *hatBlock) override;
+        void addBroadcastScript(Block *whenReceivedBlock, Field *field, Broadcast *broadcast) override;
+        void addBackdropChangeScript(Block *hatBlock, Field *field) override;
+        void addCloneInitScript(Block *hatBlock) override;
+        void addKeyPressScript(Block *hatBlock, Field *field) override;
+        void addTargetClickScript(Block *hatBlock) override;
+        void addWhenGreaterThanScript(Block *hatBlock) override;
 
         const std::vector<std::shared_ptr<Target>> &targets() const override;
         void setTargets(const std::vector<std::shared_ptr<Target>> &newTargets) override;
@@ -155,7 +155,7 @@ class Engine : public IEngine
         const std::vector<std::string> &extensions() const override;
         void setExtensions(const std::vector<std::string> &newExtensions) override;
 
-        const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &scripts() const override;
+        const std::unordered_map<Block *, std::shared_ptr<Script>> &scripts() const override;
 
         const std::string &userAgent() const override;
         void setUserAgent(const std::string &agent) override;
@@ -223,7 +223,7 @@ class Engine : public IEngine
 
         void addBroadcastPromise(Broadcast *broadcast, Thread *sender, bool wait);
 
-        std::shared_ptr<Thread> pushThread(std::shared_ptr<Block> block, Target *target);
+        std::shared_ptr<Thread> pushThread(Block *block, Target *target);
         void stopThread(Thread *thread);
         std::shared_ptr<Thread> restartThread(std::shared_ptr<Thread> thread);
 
@@ -248,7 +248,7 @@ class Engine : public IEngine
         std::vector<std::shared_ptr<Thread>> m_threads;
         std::vector<std::shared_ptr<Thread>> m_threadsToStop;
         std::shared_ptr<Thread> m_activeThread;
-        std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> m_scripts;
+        std::unordered_map<Block *, std::shared_ptr<Script>> m_scripts;
         std::recursive_mutex m_eventLoopMutex;
         std::string m_userAgent;
 

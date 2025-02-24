@@ -28,9 +28,9 @@ class ScriptTest : public testing::Test
 TEST_F(ScriptTest, Constructors)
 {
     auto block = std::make_shared<Block>("", "");
-    Script script(&m_target, block, &m_engine);
+    Script script(&m_target, block.get(), &m_engine);
     ASSERT_EQ(script.target(), &m_target);
-    ASSERT_EQ(script.topBlock(), block);
+    ASSERT_EQ(script.topBlock(), block.get());
 }
 
 TEST_F(ScriptTest, Code)

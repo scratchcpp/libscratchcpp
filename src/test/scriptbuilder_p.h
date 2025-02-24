@@ -27,7 +27,7 @@ class ScriptBuilderPrivate
 
         IEngine *engine = nullptr;
         std::shared_ptr<Target> target;
-        std::shared_ptr<Block> lastBlock;
+        Block *lastBlock = nullptr;
         std::vector<std::shared_ptr<Block>> blocks;
         std::vector<std::shared_ptr<Block>> inputBlocks;
         std::vector<std::shared_ptr<Entity>> entities;

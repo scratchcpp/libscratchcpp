@@ -82,13 +82,13 @@ void InputValue::setValue(const Value &newValue)
 }
 
 /*! Returns the block. \see Input::valueBlock() */
-const std::shared_ptr<Block> &InputValue::valueBlock() const
+Block *InputValue::valueBlock() const
 {
     return impl->valueBlock;
 }
 
 /*! Sets the block. \see Input::setValueBlock() */
-void InputValue::setValueBlock(const std::shared_ptr<Block> &newValueBlock)
+void InputValue::setValueBlock(Block *newValueBlock)
 {
     impl->valueBlock = newValueBlock;
 

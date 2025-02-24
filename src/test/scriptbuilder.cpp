@@ -57,7 +57,7 @@ ScriptBuilder::~ScriptBuilder()
 void ScriptBuilder::addBlock(std::shared_ptr<Block> block)
 {
     block->setId(nextId());
-    impl->lastBlock = block;
+    impl->lastBlock = block.get();
     addBlockToList(block);
 }
 
@@ -116,16 +116,16 @@ void ScriptBuilder::addObscuredInput(const std::string &name, std::shared_ptr<Bl
         auto next = block->next();
 
         if (parent && block != valueBlock)
-            parent->setNext(block);
+            parent->setNext(block.get());
 
         if (next)
-            next->setParent(block);
+            next->setParent(block.get());
 
-        block = next;
+        block = next ? next->shared_from_this() : nullptr;
     }
 
     auto input = std::make_shared<Input>(name, Input::Type::ObscuredShadow);
-    input->setValueBlock(valueBlock);
+    input->setValueBlock(valueBlock.get());
     impl->lastBlock->addInput(input);
 }
 
@@ -138,7 +138,7 @@ void ScriptBuilder::addNullObscuredInput(const std::string &name)
     auto input = std::make_shared<Input>(name, Input::Type::ObscuredShadow);
     auto block = std::make_shared<Block>(nextId(), "");
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(Value()); });
-    input->setValueBlock(block);
+    input->setValueBlock(block.get());
     impl->inputBlocks.push_back(block);
     impl->lastBlock->addInput(input);
 }
@@ -155,7 +155,7 @@ void ScriptBuilder::addDropdownInput(const std::string &name, const std::string 
     auto menu = std::make_shared<Block>(nextId(), impl->lastBlock->opcode() + "_menu");
     menu->setShadow(true);
     impl->inputBlocks.push_back(menu);
-    input->setValueBlock(menu);
+    input->setValueBlock(menu.get());
 
     auto field = std::make_shared<Field>(name, selectedValue);
     menu->addField(field);
@@ -221,7 +221,7 @@ void ScriptBuilder::addEntityField(const std::string &name, std::shared_ptr<Enti
  * The script is automatically built to set the compile function of the block.
  * \note This method is not intended for building scripts, use build() for that.
  */
-std::shared_ptr<Block> ScriptBuilder::currentBlock()
+Block *ScriptBuilder::currentBlock()
 {
     if (!impl->lastBlock)
         return nullptr;
@@ -253,8 +253,9 @@ std::shared_ptr<Block> ScriptBuilder::takeBlock()
     if (!impl->lastBlock)
         return nullptr;
 
-    auto block = impl->lastBlock;
+    auto block = impl->blocks.back();
     impl->blocks.pop_back();
+    impl->lastBlock = nullptr;
 
     if (!impl->blocks.empty())
         impl->blocks.back()->setNext(nullptr);
@@ -308,8 +309,8 @@ void ScriptBuilder::addBlockToList(std::shared_ptr<Block> block)
 {
     if (!impl->blocks.empty()) {
         auto lastBlock = impl->blocks.back();
-        lastBlock->setNext(block);
-        block->setParent(lastBlock);
+        lastBlock->setNext(block.get());
+        block->setParent(lastBlock.get());
     }
 
     impl->blocks.push_back(block);

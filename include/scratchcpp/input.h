@@ -40,9 +40,9 @@ class LIBSCRATCHCPP_EXPORT Input
         void setPrimaryValue(const Value &value);
         void setSecondaryValue(const Value &value);
 
-        std::shared_ptr<Block> valueBlock() const;
+        Block *valueBlock() const;
         const std::string &valueBlockId() const;
-        void setValueBlock(std::shared_ptr<Block> block);
+        void setValueBlock(Block *block);
         void setValueBlockId(const std::string &id);
 
         bool pointsToDropdownMenu() const;

@@ -18,7 +18,9 @@ class InputValue;
 class BlockPrivate;
 
 /*! \brief The Block class represents a Scratch block. */
-class LIBSCRATCHCPP_EXPORT Block : public Entity
+class LIBSCRATCHCPP_EXPORT Block
+    : public Entity
+    , public std::enable_shared_from_this<Block>
 {
     public:
         friend class Engine;
@@ -30,14 +32,14 @@ class LIBSCRATCHCPP_EXPORT Block : public Entity
 
         const std::string &opcode() const;
 
-        std::shared_ptr<Block> next() const;
+        Block *next() const;
         const std::string &nextId() const;
-        void setNext(std::shared_ptr<Block> block);
+        void setNext(Block *block);
         void setNextId(const std::string &nextId);
 
-        std::shared_ptr<Block> parent() const;
+        Block *parent() const;
         const std::string &parentId() const;
-        void setParent(std::shared_ptr<Block> block);
+        void setParent(Block *block);
         void setParentId(const std::string &id);
 
         const std::vector<std::shared_ptr<Input>> &inputs() const;

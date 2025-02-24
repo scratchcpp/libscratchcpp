@@ -46,7 +46,7 @@ class LIBSCRATCHCPP_EXPORT ScriptBuilder
         void addEntityInput(const std::string &name, const std::string &entityName, InputValue::Type entityType, std::shared_ptr<Entity> entity);
         void addEntityField(const std::string &name, std::shared_ptr<Entity> entity);
 
-        std::shared_ptr<Block> currentBlock();
+        Block *currentBlock();
         std::shared_ptr<Block> takeBlock();
 
         void build();

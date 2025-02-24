@@ -22,11 +22,11 @@ class ScriptPrivate;
 class LIBSCRATCHCPP_EXPORT Script
 {
     public:
-        Script(Target *target, std::shared_ptr<Block> topBlock, IEngine *engine);
+        Script(Target *target, Block *topBlock, IEngine *engine);
         Script(const Script &) = delete;
 
         Target *target() const;
-        std::shared_ptr<Block> topBlock() const;
+        Block *topBlock() const;
 
         ExecutableCode *code() const;
         void setCode(std::shared_ptr<ExecutableCode> code);

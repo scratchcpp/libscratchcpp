@@ -705,8 +705,8 @@ TEST_F(ControlBlocksTest, ForEach)
         substack->addInput(input);
 
         auto setVar = std::make_shared<Block>("", "test_set_var");
-        substack->setNext(setVar);
-        setVar->setParent(substack);
+        substack->setNext(setVar.get());
+        setVar->setParent(substack.get());
         auto field = std::make_shared<Field>("VARIABLE", "");
         setVar->addField(field);
         input = std::make_shared<Input>("VALUE", Input::Type::Shadow);
@@ -714,8 +714,8 @@ TEST_F(ControlBlocksTest, ForEach)
         setVar->addInput(input);
 
         auto printAgain = std::make_shared<Block>("", "test_print");
-        setVar->setNext(printAgain);
-        printAgain->setParent(setVar);
+        setVar->setNext(printAgain.get());
+        printAgain->setParent(setVar.get());
         input = std::make_shared<Input>("STRING", Input::Type::ObscuredShadow);
         printAgain->addInput(input);
 

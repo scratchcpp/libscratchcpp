@@ -46,7 +46,7 @@ class CompilerTest : public testing::Test
             m_testVar.reset();
         }
 
-        void compile(Compiler *compiler, std::shared_ptr<Block> block, BlockPrototype *procedurePrototype = nullptr, Compiler::CodeType codeType = Compiler::CodeType::Script)
+        void compile(Compiler *compiler, Block *block, BlockPrototype *procedurePrototype = nullptr, Compiler::CodeType codeType = Compiler::CodeType::Script)
         {
             ASSERT_EQ(compiler->block(), nullptr);
             EXPECT_CALL(m_builderFactory, create(m_ctx.get(), procedurePrototype, codeType)).WillOnce(Return(m_builder));
@@ -82,7 +82,7 @@ TEST_F(CompilerTest, AddFunctionCall)
     auto block = std::make_shared<Block>("a", "");
     m_compareBlock = block;
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
-        EXPECT_EQ(compiler->block(), m_compareBlock);
+        EXPECT_EQ(compiler->block(), m_compareBlock.get());
         CompilerValue arg1(Compiler::StaticType::Unknown);
         CompilerValue arg2(Compiler::StaticType::Unknown);
         Compiler::ArgTypes argTypes = { Compiler::StaticType::Number, Compiler::StaticType::Bool };
@@ -98,7 +98,7 @@ TEST_F(CompilerTest, AddFunctionCall)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddTargetFunctionCall)
@@ -107,7 +107,7 @@ TEST_F(CompilerTest, AddTargetFunctionCall)
     auto block = std::make_shared<Block>("a", "");
     m_compareBlock = block;
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
-        EXPECT_EQ(compiler->block(), m_compareBlock);
+        EXPECT_EQ(compiler->block(), m_compareBlock.get());
         CompilerValue arg1(Compiler::StaticType::Unknown);
         CompilerValue arg2(Compiler::StaticType::Unknown);
         Compiler::ArgTypes argTypes = { Compiler::StaticType::Number, Compiler::StaticType::Bool };
@@ -123,7 +123,7 @@ TEST_F(CompilerTest, AddTargetFunctionCall)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddFunctionCallWithCtx)
@@ -132,7 +132,7 @@ TEST_F(CompilerTest, AddFunctionCallWithCtx)
     auto block = std::make_shared<Block>("a", "");
     m_compareBlock = block;
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
-        EXPECT_EQ(compiler->block(), m_compareBlock);
+        EXPECT_EQ(compiler->block(), m_compareBlock.get());
         CompilerValue arg1(Compiler::StaticType::Unknown);
         CompilerValue arg2(Compiler::StaticType::Unknown);
         Compiler::ArgTypes argTypes = { Compiler::StaticType::Number, Compiler::StaticType::Bool };
@@ -148,7 +148,7 @@ TEST_F(CompilerTest, AddFunctionCallWithCtx)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddConstValue)
@@ -170,7 +170,7 @@ TEST_F(CompilerTest, AddConstValue)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddStringChar)
@@ -192,7 +192,7 @@ TEST_F(CompilerTest, AddStringChar)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddStringLength)
@@ -213,7 +213,7 @@ TEST_F(CompilerTest, AddStringLength)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddLoopIndex)
@@ -232,7 +232,7 @@ TEST_F(CompilerTest, AddLoopIndex)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddLocalVariableValue)
@@ -255,7 +255,7 @@ TEST_F(CompilerTest, AddLocalVariableValue)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddVariableValue)
@@ -275,7 +275,7 @@ TEST_F(CompilerTest, AddVariableValue)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddListContents)
@@ -295,7 +295,7 @@ TEST_F(CompilerTest, AddListContents)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddListItem)
@@ -316,7 +316,7 @@ TEST_F(CompilerTest, AddListItem)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddListItemIndex)
@@ -337,7 +337,7 @@ TEST_F(CompilerTest, AddListItemIndex)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddListSize)
@@ -357,7 +357,7 @@ TEST_F(CompilerTest, AddListSize)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddListContains)
@@ -378,7 +378,7 @@ TEST_F(CompilerTest, AddListContains)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddProcedureArgument)
@@ -397,7 +397,7 @@ TEST_F(CompilerTest, AddProcedureArgument)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, AddInput)
@@ -407,7 +407,7 @@ TEST_F(CompilerTest, AddInput)
     auto valueBlock = std::make_shared<Block>("b", "");
     m_compareBlock = valueBlock;
     valueBlock->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
-        EXPECT_EQ(compiler->block(), m_compareBlock);
+        EXPECT_EQ(compiler->block(), m_compareBlock.get());
         return compiler->addConstValue("value block");
     });
 
@@ -420,11 +420,11 @@ TEST_F(CompilerTest, AddInput)
     block->addInput(shadow);
 
     auto shadowBlock = std::make_shared<Input>("SHADOW_BLOCK", Input::Type::Shadow);
-    shadowBlock->setValueBlock(valueBlock);
+    shadowBlock->setValueBlock(valueBlock.get());
     block->addInput(shadowBlock);
 
     auto shadowMenu = std::make_shared<Input>("SHADOW_MENU", Input::Type::Shadow);
-    shadowMenu->setValueBlock(menu);
+    shadowMenu->setValueBlock(menu.get());
     block->addInput(shadowMenu);
 
     auto noShadow = std::make_shared<Input>("NO_SHADOW", Input::Type::NoShadow);
@@ -432,11 +432,11 @@ TEST_F(CompilerTest, AddInput)
     block->addInput(noShadow);
 
     auto noShadowBlock = std::make_shared<Input>("NO_SHADOW_BLOCK", Input::Type::NoShadow);
-    noShadowBlock->setValueBlock(valueBlock);
+    noShadowBlock->setValueBlock(valueBlock.get());
     block->addInput(noShadowBlock);
 
     auto noShadowMenu = std::make_shared<Input>("NO_SHADOW_MENU", Input::Type::Shadow);
-    noShadowMenu->setValueBlock(menu);
+    noShadowMenu->setValueBlock(menu.get());
     block->addInput(noShadowMenu);
 
     auto obscuredShadow = std::make_shared<Input>("OBSCURED_SHADOW", Input::Type::ObscuredShadow);
@@ -449,7 +449,7 @@ TEST_F(CompilerTest, AddInput)
     block->addInput(obscuredShadowVariable);
 
     auto obscuredShadowBlock = std::make_shared<Input>("OBSCURED_SHADOW_BLOCK", Input::Type::ObscuredShadow);
-    obscuredShadowBlock->setValueBlock(valueBlock);
+    obscuredShadowBlock->setValueBlock(valueBlock.get());
     block->addInput(obscuredShadowBlock);
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
@@ -488,7 +488,7 @@ TEST_F(CompilerTest, AddInput)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateAdd)
@@ -506,7 +506,7 @@ TEST_F(CompilerTest, CreateAdd)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateSub)
@@ -524,7 +524,7 @@ TEST_F(CompilerTest, CreateSub)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateMul)
@@ -542,7 +542,7 @@ TEST_F(CompilerTest, CreateMul)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateDiv)
@@ -560,7 +560,7 @@ TEST_F(CompilerTest, CreateDiv)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateRandom)
@@ -578,7 +578,7 @@ TEST_F(CompilerTest, CreateRandom)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateRandomInt)
@@ -596,7 +596,7 @@ TEST_F(CompilerTest, CreateRandomInt)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateCmpEQ)
@@ -614,7 +614,7 @@ TEST_F(CompilerTest, CreateCmpEQ)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateCmpGT)
@@ -632,7 +632,7 @@ TEST_F(CompilerTest, CreateCmpGT)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateCmpLT)
@@ -650,7 +650,7 @@ TEST_F(CompilerTest, CreateCmpLT)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateStrCmpEQ)
@@ -671,7 +671,7 @@ TEST_F(CompilerTest, CreateStrCmpEQ)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateAnd)
@@ -689,7 +689,7 @@ TEST_F(CompilerTest, CreateAnd)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateOr)
@@ -707,7 +707,7 @@ TEST_F(CompilerTest, CreateOr)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateNot)
@@ -724,7 +724,7 @@ TEST_F(CompilerTest, CreateNot)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateMod)
@@ -742,7 +742,7 @@ TEST_F(CompilerTest, CreateMod)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateRound)
@@ -759,7 +759,7 @@ TEST_F(CompilerTest, CreateRound)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateAbs)
@@ -776,7 +776,7 @@ TEST_F(CompilerTest, CreateAbs)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateFloor)
@@ -793,7 +793,7 @@ TEST_F(CompilerTest, CreateFloor)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateCeil)
@@ -810,7 +810,7 @@ TEST_F(CompilerTest, CreateCeil)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateSqrt)
@@ -827,7 +827,7 @@ TEST_F(CompilerTest, CreateSqrt)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateSin)
@@ -844,7 +844,7 @@ TEST_F(CompilerTest, CreateSin)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateCos)
@@ -861,7 +861,7 @@ TEST_F(CompilerTest, CreateCos)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateTan)
@@ -878,7 +878,7 @@ TEST_F(CompilerTest, CreateTan)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateAsin)
@@ -895,7 +895,7 @@ TEST_F(CompilerTest, CreateAsin)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateAcos)
@@ -912,7 +912,7 @@ TEST_F(CompilerTest, CreateAcos)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateAtan)
@@ -929,7 +929,7 @@ TEST_F(CompilerTest, CreateAtan)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateLn)
@@ -946,7 +946,7 @@ TEST_F(CompilerTest, CreateLn)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateLog10)
@@ -963,7 +963,7 @@ TEST_F(CompilerTest, CreateLog10)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateExp)
@@ -980,7 +980,7 @@ TEST_F(CompilerTest, CreateExp)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateExp10)
@@ -997,7 +997,7 @@ TEST_F(CompilerTest, CreateExp10)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateStringConcat)
@@ -1015,7 +1015,7 @@ TEST_F(CompilerTest, CreateStringConcat)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateSelect)
@@ -1038,7 +1038,7 @@ TEST_F(CompilerTest, CreateSelect)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateLocalVariable)
@@ -1060,7 +1060,7 @@ TEST_F(CompilerTest, CreateLocalVariable)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateLocalVariableWrite)
@@ -1078,7 +1078,7 @@ TEST_F(CompilerTest, CreateLocalVariableWrite)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateVariableWrite)
@@ -1095,7 +1095,7 @@ TEST_F(CompilerTest, CreateVariableWrite)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CustomIfStatement)
@@ -1120,7 +1120,7 @@ TEST_F(CompilerTest, CustomIfStatement)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CustomWhileLoop)
@@ -1138,7 +1138,7 @@ TEST_F(CompilerTest, CustomWhileLoop)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CustomRepeatUntilLoop)
@@ -1156,7 +1156,7 @@ TEST_F(CompilerTest, CustomRepeatUntilLoop)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, BeginLoopCondition)
@@ -1169,7 +1169,7 @@ TEST_F(CompilerTest, BeginLoopCondition)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, MoveToIf)
@@ -1177,8 +1177,8 @@ TEST_F(CompilerTest, MoveToIf)
 
     EXPECT_CALL(*m_builder, beginElseBranch).Times(0);
 
-    auto if1 = std::make_shared<Block>("", "if");
-    if1->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block if1("", "if");
+    if1.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginIfStatement).Times(0);
         EXPECT_CALL(*m_builder, endIf).Times(0);
@@ -1186,10 +1186,10 @@ TEST_F(CompilerTest, MoveToIf)
         return nullptr;
     });
 
-    auto if2 = std::make_shared<Block>("", "if");
-    if1->setNext(if2);
-    if2->setParent(if1);
-    if2->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block if2("", "if");
+    if1.setNext(&if2);
+    if2.setParent(&if1);
+    if2.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginIfStatement(&arg));
         EXPECT_CALL(*m_builder, addConstValue(Value()));
@@ -1198,22 +1198,22 @@ TEST_F(CompilerTest, MoveToIf)
         return nullptr;
     });
 
-    auto substack1 = std::make_shared<Block>("", "substack");
-    substack1->setParent(if2);
-    substack1->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(Value()); });
+    Block substack1("", "substack");
+    substack1.setParent(&if2);
+    substack1.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(Value()); });
 
     auto input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(substack1);
-    if2->addInput(input);
+    input->setValueBlock(&substack1);
+    if2.addInput(input);
 
-    compile(m_compiler.get(), if1);
+    compile(m_compiler.get(), &if1);
 }
 
 TEST_F(CompilerTest, MoveToIfElse)
 {
 
-    auto if1 = std::make_shared<Block>("", "if");
-    if1->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block if1("", "if");
+    if1.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginIfStatement).Times(0);
         EXPECT_CALL(*m_builder, beginElseBranch).Times(0);
@@ -1222,10 +1222,10 @@ TEST_F(CompilerTest, MoveToIfElse)
         return nullptr;
     });
 
-    auto if2 = std::make_shared<Block>("", "if");
-    if1->setNext(if2);
-    if2->setParent(if1);
-    if2->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block if2("", "if");
+    if1.setNext(&if2);
+    if2.setParent(&if1);
+    if2.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginIfStatement(&arg));
         EXPECT_CALL(*m_builder, addConstValue(Value(1)));
@@ -1236,26 +1236,26 @@ TEST_F(CompilerTest, MoveToIfElse)
         return nullptr;
     });
 
-    auto substack1 = std::make_shared<Block>("", "substack");
-    substack1->setParent(if2);
-    substack1->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(1); });
+    Block substack1("", "substack");
+    substack1.setParent(&if2);
+    substack1.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(1); });
 
-    auto substack2 = std::make_shared<Block>("", "substack");
-    substack2->setParent(if2);
-    substack2->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(2); });
+    Block substack2("", "substack");
+    substack2.setParent(&if2);
+    substack2.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(2); });
 
     auto input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(substack1);
-    if2->addInput(input);
+    input->setValueBlock(&substack1);
+    if2.addInput(input);
     input = std::make_shared<Input>("SUBSTACK2", Input::Type::NoShadow);
-    input->setValueBlock(substack2);
-    if2->addInput(input);
+    input->setValueBlock(&substack2);
+    if2.addInput(input);
 
     // Nested
-    auto if3 = std::make_shared<Block>("", "if");
-    if2->setNext(if3);
-    if3->setParent(if2);
-    if3->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block if3("", "if");
+    if2.setNext(&if3);
+    if3.setParent(&if2);
+    if3.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginIfStatement).Times(3);
         EXPECT_CALL(*m_builder, beginElseBranch()).Times(3);
@@ -1269,66 +1269,66 @@ TEST_F(CompilerTest, MoveToIfElse)
     });
 
     // if
-    auto ifSubstack1 = std::make_shared<Block>("", "if");
-    ifSubstack1->setParent(if3);
-    ifSubstack1->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block ifSubstack1("", "if");
+    ifSubstack1.setParent(&if3);
+    ifSubstack1.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         compiler->moveToIfElse(&arg, compiler->input("SUBSTACK")->valueBlock(), compiler->input("SUBSTACK2")->valueBlock());
         return nullptr;
     });
 
-    substack1 = std::make_shared<Block>("", "substack");
-    substack1->setParent(ifSubstack1);
-    substack1->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(1); });
+    Block substack3("", "substack");
+    substack3.setParent(&ifSubstack1);
+    substack3.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(1); });
 
-    substack2 = std::make_shared<Block>("", "substack");
-    substack2->setParent(ifSubstack1);
-    substack2->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(2); });
+    Block substack4("", "substack");
+    substack4.setParent(&ifSubstack1);
+    substack4.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(2); });
 
     input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(substack1);
-    ifSubstack1->addInput(input);
+    input->setValueBlock(&substack3);
+    ifSubstack1.addInput(input);
     input = std::make_shared<Input>("SUBSTACK2", Input::Type::NoShadow);
-    input->setValueBlock(substack2);
-    ifSubstack1->addInput(input);
+    input->setValueBlock(&substack4);
+    ifSubstack1.addInput(input);
 
     // else
-    auto ifSubstack2 = std::make_shared<Block>("", "if");
-    ifSubstack2->setParent(if3);
-    ifSubstack2->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block ifSubstack2("", "if");
+    ifSubstack2.setParent(&if3);
+    ifSubstack2.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         compiler->moveToIfElse(&arg, compiler->input("SUBSTACK")->valueBlock(), compiler->input("SUBSTACK2")->valueBlock());
         return nullptr;
     });
 
-    substack1 = std::make_shared<Block>("", "substack");
-    substack1->setParent(ifSubstack2);
-    substack1->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(3); });
+    Block substack5("", "substack");
+    substack5.setParent(&ifSubstack2);
+    substack5.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(3); });
 
-    substack2 = std::make_shared<Block>("", "substack");
-    substack2->setParent(ifSubstack2);
-    substack2->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(4); });
+    Block substack6("", "substack");
+    substack6.setParent(&ifSubstack2);
+    substack6.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(4); });
 
     input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(substack1);
-    ifSubstack2->addInput(input);
+    input->setValueBlock(&substack5);
+    ifSubstack2.addInput(input);
     input = std::make_shared<Input>("SUBSTACK2", Input::Type::NoShadow);
-    input->setValueBlock(substack2);
-    ifSubstack2->addInput(input);
+    input->setValueBlock(&substack6);
+    ifSubstack2.addInput(input);
 
     // End if
     input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(ifSubstack1);
-    if3->addInput(input);
+    input->setValueBlock(&ifSubstack1);
+    if3.addInput(input);
     input = std::make_shared<Input>("SUBSTACK2", Input::Type::NoShadow);
-    input->setValueBlock(ifSubstack2);
-    if3->addInput(input);
+    input->setValueBlock(&ifSubstack2);
+    if3.addInput(input);
 
     // Empty 'then' branch
-    auto if4 = std::make_shared<Block>("", "if");
-    if3->setNext(if4);
-    if4->setParent(if3);
-    if4->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block if4("", "if");
+    if3.setNext(&if4);
+    if4.setParent(&if3);
+    if4.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginIfStatement(&arg));
         EXPECT_CALL(*m_builder, beginElseBranch());
@@ -1338,19 +1338,19 @@ TEST_F(CompilerTest, MoveToIfElse)
         return nullptr;
     });
 
-    substack2 = std::make_shared<Block>("", "substack");
-    substack2->setParent(if4);
-    substack2->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(2); });
+    Block substack7("", "substack");
+    substack7.setParent(&if4);
+    substack7.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(2); });
 
     input = std::make_shared<Input>("SUBSTACK2", Input::Type::NoShadow);
-    input->setValueBlock(substack2);
-    if4->addInput(input);
+    input->setValueBlock(&substack7);
+    if4.addInput(input);
 
     // Empty 'else' branch
-    auto if5 = std::make_shared<Block>("", "if");
-    if4->setNext(if5);
-    if5->setParent(if4);
-    if5->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block if5("", "if");
+    if4.setNext(&if5);
+    if5.setParent(&if4);
+    if5.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginIfStatement(&arg));
         EXPECT_CALL(*m_builder, addConstValue(Value(1)));
@@ -1360,29 +1360,29 @@ TEST_F(CompilerTest, MoveToIfElse)
         return nullptr;
     });
 
-    substack1 = std::make_shared<Block>("", "substack");
-    substack1->setParent(if5);
-    substack1->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(1); });
+    Block substack8("", "substack");
+    substack8.setParent(&if5);
+    substack8.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(1); });
 
     input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(substack1);
-    if5->addInput(input);
+    input->setValueBlock(&substack8);
+    if5.addInput(input);
 
     // Code after the if statement
-    auto block = std::make_shared<Block>("", "");
-    block->setParent(if5);
-    if5->setNext(block);
-    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue("after"); });
+    Block block("", "");
+    block.setParent(&if5);
+    if5.setNext(&block);
+    block.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue("after"); });
 
     EXPECT_CALL(*m_builder, addConstValue(Value("after")));
-    compile(m_compiler.get(), if1);
+    compile(m_compiler.get(), &if1);
 }
 
 TEST_F(CompilerTest, MoveToRepeatLoop)
 {
 
-    auto l1 = std::make_shared<Block>("", "loop");
-    l1->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block l1("", "loop");
+    l1.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginRepeatLoop(&arg));
         EXPECT_CALL(*m_builder, endLoop());
@@ -1390,10 +1390,10 @@ TEST_F(CompilerTest, MoveToRepeatLoop)
         return nullptr;
     });
 
-    auto l2 = std::make_shared<Block>("", "loop");
-    l1->setNext(l2);
-    l2->setParent(l1);
-    l2->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block l2("", "loop");
+    l1.setNext(&l2);
+    l2.setParent(&l1);
+    l2.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginRepeatLoop(&arg));
         EXPECT_CALL(*m_builder, addConstValue(Value(2)));
@@ -1402,19 +1402,19 @@ TEST_F(CompilerTest, MoveToRepeatLoop)
         return nullptr;
     });
 
-    auto substack = std::make_shared<Block>("", "substack");
-    substack->setParent(l2);
-    substack->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(2); });
+    Block substack1("", "substack");
+    substack1.setParent(&l2);
+    substack1.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(2); });
 
     auto input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(substack);
-    l2->addInput(input);
+    input->setValueBlock(&substack1);
+    l2.addInput(input);
 
     // Nested
-    auto l3 = std::make_shared<Block>("", "loop");
-    l2->setNext(l3);
-    l3->setParent(l2);
-    l3->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block l3("", "loop");
+    l2.setNext(&l3);
+    l3.setParent(&l2);
+    l3.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginRepeatLoop).Times(2);
         EXPECT_CALL(*m_builder, endLoop()).Times(2);
@@ -1424,32 +1424,32 @@ TEST_F(CompilerTest, MoveToRepeatLoop)
     });
 
     // Begin loop
-    auto loopSubstack = std::make_shared<Block>("", "loop");
-    loopSubstack->setParent(l3);
-    loopSubstack->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block loopSubstack("", "loop");
+    loopSubstack.setParent(&l3);
+    loopSubstack.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         compiler->moveToRepeatLoop(&arg, compiler->input("SUBSTACK")->valueBlock());
         return nullptr;
     });
 
-    substack = std::make_shared<Block>("", "substack");
-    substack->setParent(loopSubstack);
-    substack->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(1); });
+    Block substack2("", "substack");
+    substack2.setParent(&loopSubstack);
+    substack2.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(1); });
 
     input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(substack);
-    loopSubstack->addInput(input);
+    input->setValueBlock(&substack2);
+    loopSubstack.addInput(input);
 
     // End loop
     input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(loopSubstack);
-    l3->addInput(input);
+    input->setValueBlock(&loopSubstack);
+    l3.addInput(input);
 
     // Empty loop body
-    auto l4 = std::make_shared<Block>("", "loop");
-    l3->setNext(l4);
-    l4->setParent(l3);
-    l4->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block l4("", "loop");
+    l3.setNext(&l4);
+    l4.setParent(&l3);
+    l4.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginRepeatLoop(&arg));
         EXPECT_CALL(*m_builder, endLoop());
@@ -1458,20 +1458,20 @@ TEST_F(CompilerTest, MoveToRepeatLoop)
     });
 
     // Code after the loop
-    auto block = std::make_shared<Block>("", "");
-    block->setParent(l4);
-    l4->setNext(block);
-    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue("after"); });
+    Block block("", "");
+    block.setParent(&l4);
+    l4.setNext(&block);
+    block.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue("after"); });
 
     EXPECT_CALL(*m_builder, addConstValue(Value("after")));
-    compile(m_compiler.get(), l1);
+    compile(m_compiler.get(), &l1);
 }
 
 TEST_F(CompilerTest, MoveToWhileLoop)
 {
 
-    auto l1 = std::make_shared<Block>("", "loop");
-    l1->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block l1("", "loop");
+    l1.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginWhileLoop(&arg));
         EXPECT_CALL(*m_builder, endLoop());
@@ -1479,10 +1479,10 @@ TEST_F(CompilerTest, MoveToWhileLoop)
         return nullptr;
     });
 
-    auto l2 = std::make_shared<Block>("", "loop");
-    l1->setNext(l2);
-    l2->setParent(l1);
-    l2->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block l2("", "loop");
+    l1.setNext(&l2);
+    l2.setParent(&l1);
+    l2.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginWhileLoop(&arg));
         EXPECT_CALL(*m_builder, addConstValue(Value(2)));
@@ -1491,19 +1491,19 @@ TEST_F(CompilerTest, MoveToWhileLoop)
         return nullptr;
     });
 
-    auto substack = std::make_shared<Block>("", "substack");
-    substack->setParent(l2);
-    substack->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(2); });
+    Block substack1("", "substack");
+    substack1.setParent(&l2);
+    substack1.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(2); });
 
     auto input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(substack);
-    l2->addInput(input);
+    input->setValueBlock(&substack1);
+    l2.addInput(input);
 
     // Nested
-    auto l3 = std::make_shared<Block>("", "loop");
-    l2->setNext(l3);
-    l3->setParent(l2);
-    l3->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block l3("", "loop");
+    l2.setNext(&l3);
+    l3.setParent(&l2);
+    l3.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginWhileLoop).Times(2);
         EXPECT_CALL(*m_builder, endLoop()).Times(2);
@@ -1513,32 +1513,32 @@ TEST_F(CompilerTest, MoveToWhileLoop)
     });
 
     // Begin loop
-    auto loopSubstack = std::make_shared<Block>("", "loop");
-    loopSubstack->setParent(l3);
-    loopSubstack->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block loopSubstack("", "loop");
+    loopSubstack.setParent(&l3);
+    loopSubstack.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         compiler->moveToWhileLoop(&arg, compiler->input("SUBSTACK")->valueBlock());
         return nullptr;
     });
 
-    substack = std::make_shared<Block>("", "substack");
-    substack->setParent(loopSubstack);
-    substack->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(1); });
+    Block substack2("", "substack");
+    substack2.setParent(&loopSubstack);
+    substack2.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(1); });
 
     input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(substack);
-    loopSubstack->addInput(input);
+    input->setValueBlock(&substack2);
+    loopSubstack.addInput(input);
 
     // End loop
     input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(loopSubstack);
-    l3->addInput(input);
+    input->setValueBlock(&loopSubstack);
+    l3.addInput(input);
 
     // Empty loop body
-    auto l4 = std::make_shared<Block>("", "loop");
-    l3->setNext(l4);
-    l4->setParent(l3);
-    l4->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block l4("", "loop");
+    l3.setNext(&l4);
+    l4.setParent(&l3);
+    l4.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginWhileLoop(&arg));
         EXPECT_CALL(*m_builder, endLoop());
@@ -1547,20 +1547,20 @@ TEST_F(CompilerTest, MoveToWhileLoop)
     });
 
     // Code after the loop
-    auto block = std::make_shared<Block>("", "");
-    block->setParent(l4);
-    l4->setNext(block);
-    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue("after"); });
+    Block block("", "");
+    block.setParent(&l4);
+    l4.setNext(&block);
+    block.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue("after"); });
 
     EXPECT_CALL(*m_builder, addConstValue(Value("after")));
-    compile(m_compiler.get(), l1);
+    compile(m_compiler.get(), &l1);
 }
 
 TEST_F(CompilerTest, MoveToRepeatUntilLoop)
 {
 
-    auto l1 = std::make_shared<Block>("", "loop");
-    l1->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block l1("", "loop");
+    l1.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginRepeatUntilLoop(&arg));
         EXPECT_CALL(*m_builder, endLoop());
@@ -1568,10 +1568,10 @@ TEST_F(CompilerTest, MoveToRepeatUntilLoop)
         return nullptr;
     });
 
-    auto l2 = std::make_shared<Block>("", "loop");
-    l1->setNext(l2);
-    l2->setParent(l1);
-    l2->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block l2("", "loop");
+    l1.setNext(&l2);
+    l2.setParent(&l1);
+    l2.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginRepeatUntilLoop(&arg));
         EXPECT_CALL(*m_builder, addConstValue(Value(2)));
@@ -1580,19 +1580,19 @@ TEST_F(CompilerTest, MoveToRepeatUntilLoop)
         return nullptr;
     });
 
-    auto substack = std::make_shared<Block>("", "substack");
-    substack->setParent(l2);
-    substack->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(2); });
+    Block substack1("", "substack");
+    substack1.setParent(&l2);
+    substack1.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(2); });
 
     auto input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(substack);
-    l2->addInput(input);
+    input->setValueBlock(&substack1);
+    l2.addInput(input);
 
     // Nested
-    auto l3 = std::make_shared<Block>("", "loop");
-    l2->setNext(l3);
-    l3->setParent(l2);
-    l3->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block l3("", "loop");
+    l2.setNext(&l3);
+    l3.setParent(&l2);
+    l3.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginRepeatUntilLoop).Times(2);
         EXPECT_CALL(*m_builder, endLoop()).Times(2);
@@ -1602,32 +1602,32 @@ TEST_F(CompilerTest, MoveToRepeatUntilLoop)
     });
 
     // Begin loop
-    auto loopSubstack = std::make_shared<Block>("", "loop");
-    loopSubstack->setParent(l3);
-    loopSubstack->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block loopSubstack("", "loop");
+    loopSubstack.setParent(&l3);
+    loopSubstack.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         compiler->moveToRepeatUntilLoop(&arg, compiler->input("SUBSTACK")->valueBlock());
         return nullptr;
     });
 
-    substack = std::make_shared<Block>("", "substack");
-    substack->setParent(loopSubstack);
-    substack->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(1); });
+    Block substack2("", "substack");
+    substack2.setParent(&loopSubstack);
+    substack2.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(1); });
 
     input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(substack);
-    loopSubstack->addInput(input);
+    input->setValueBlock(&substack2);
+    loopSubstack.addInput(input);
 
     // End loop
     input = std::make_shared<Input>("SUBSTACK", Input::Type::NoShadow);
-    input->setValueBlock(loopSubstack);
-    l3->addInput(input);
+    input->setValueBlock(&loopSubstack);
+    l3.addInput(input);
 
     // Empty loop body
-    auto l4 = std::make_shared<Block>("", "loop");
-    l3->setNext(l4);
-    l4->setParent(l3);
-    l4->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+    Block l4("", "loop");
+    l3.setNext(&l4);
+    l4.setParent(&l3);
+    l4.setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         CompilerValue arg(Compiler::StaticType::Unknown);
         EXPECT_CALL(*m_builder, beginRepeatUntilLoop(&arg));
         EXPECT_CALL(*m_builder, endLoop());
@@ -1636,13 +1636,13 @@ TEST_F(CompilerTest, MoveToRepeatUntilLoop)
     });
 
     // Code after the loop
-    auto block = std::make_shared<Block>("", "");
-    block->setParent(l4);
-    l4->setNext(block);
-    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue("after"); });
+    Block block("", "");
+    block.setParent(&l4);
+    l4.setNext(&block);
+    block.setCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue("after"); });
 
     EXPECT_CALL(*m_builder, addConstValue(Value("after")));
-    compile(m_compiler.get(), l1);
+    compile(m_compiler.get(), &l1);
 }
 
 TEST_F(CompilerTest, CreateYield)
@@ -1656,7 +1656,7 @@ TEST_F(CompilerTest, CreateYield)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateStop)
@@ -1670,7 +1670,7 @@ TEST_F(CompilerTest, CreateStop)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, CreateProcedureCall)
@@ -1689,7 +1689,7 @@ TEST_F(CompilerTest, CreateProcedureCall)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, Input)
@@ -1703,7 +1703,7 @@ TEST_F(CompilerTest, Input)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, Field)
@@ -1717,7 +1717,7 @@ TEST_F(CompilerTest, Field)
         return nullptr;
     });
 
-    compile(m_compiler.get(), block);
+    compile(m_compiler.get(), block.get());
 }
 
 TEST_F(CompilerTest, UnsupportedBlocks)
@@ -1737,27 +1737,27 @@ TEST_F(CompilerTest, UnsupportedBlocks)
     auto block1 = std::make_shared<Block>("b1", "block1");
 
     auto block2 = std::make_shared<Block>("b2", "block2");
-    block2->setParent(block1);
-    block1->setNext(block2);
+    block2->setParent(block1.get());
+    block1->setNext(block2.get());
 
     auto block3 = std::make_shared<Block>("b3", "block3");
     auto input1 = std::make_shared<Input>("INPUT1", Input::Type::Shadow);
-    input1->setValueBlock(valueBlock1);
+    input1->setValueBlock(valueBlock1.get());
     block3->addInput(input1);
     auto input2 = std::make_shared<Input>("INPUT2", Input::Type::Shadow);
-    input2->setValueBlock(valueBlock2);
+    input2->setValueBlock(valueBlock2.get());
     block3->addInput(input2);
     auto input3 = std::make_shared<Input>("INPUT3", Input::Type::NoShadow);
-    input3->setValueBlock(valueBlock3);
+    input3->setValueBlock(valueBlock3.get());
     block3->addInput(input3);
     auto input4 = std::make_shared<Input>("INPUT4", Input::Type::NoShadow);
-    input4->setValueBlock(valueBlock4);
+    input4->setValueBlock(valueBlock4.get());
     block3->addInput(input4);
     auto input5 = std::make_shared<Input>("INPUT5", Input::Type::ObscuredShadow);
-    input5->setValueBlock(valueBlock5);
+    input5->setValueBlock(valueBlock5.get());
     block3->addInput(input5);
     auto input6 = std::make_shared<Input>("INPUT6", Input::Type::ObscuredShadow);
-    input6->setValueBlock(valueBlock6);
+    input6->setValueBlock(valueBlock6.get());
     block3->addInput(input6);
     block3->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
         compiler->addInput("INPUT1");
@@ -1768,30 +1768,30 @@ TEST_F(CompilerTest, UnsupportedBlocks)
         compiler->addInput("INPUT6");
         return nullptr;
     });
-    block3->setParent(block2);
-    block2->setNext(block3);
+    block3->setParent(block2.get());
+    block2->setNext(block3.get());
 
     auto block4 = std::make_shared<Block>("b4", "block4");
-    block4->setParent(block3);
-    block3->setNext(block4);
+    block4->setParent(block3.get());
+    block3->setNext(block4.get());
 
     EXPECT_CALL(*m_builder, addConstValue).WillRepeatedly(Return(nullptr));
-    compile(m_compiler.get(), block1);
+    compile(m_compiler.get(), block1.get());
 
     // Hat predicates
     auto block5 = std::make_shared<Block>("b5", "block5");
-    compile(m_compiler.get(), block5, nullptr, Compiler::CodeType::HatPredicate);
+    compile(m_compiler.get(), block5.get(), nullptr, Compiler::CodeType::HatPredicate);
 
     auto block6 = std::make_shared<Block>("b6", "block6");
     block6->setCompileFunction([](Compiler *) -> CompilerValue * { return nullptr; });
-    compile(m_compiler.get(), block6, nullptr, Compiler::CodeType::HatPredicate);
+    compile(m_compiler.get(), block6.get(), nullptr, Compiler::CodeType::HatPredicate);
 
     auto block7 = std::make_shared<Block>("b7", "block7");
     CompilerConstant ret(Compiler::StaticType::Bool, Value(true));
     block7->setCompileFunction([](Compiler *) -> CompilerValue * { return nullptr; });
     block7->setHatPredicateCompileFunction([](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(true); });
     EXPECT_CALL(*m_builder, addConstValue(Value(true))).WillOnce(Return(&ret));
-    compile(m_compiler.get(), block7, nullptr, Compiler::CodeType::HatPredicate);
+    compile(m_compiler.get(), block7.get(), nullptr, Compiler::CodeType::HatPredicate);
 
     // Check
     ASSERT_EQ(m_compiler->unsupportedBlocks(), std::unordered_set<std::string>({ "block1", "block2", "value_block1", "value_block3", "value_block5", "block4", "block5", "block6" }));
@@ -1805,10 +1805,10 @@ TEST_F(CompilerTest, Procedure)
         customBlock->mutationPrototype()->setProcCode("");
 
         auto input = std::make_shared<Input>("custom_block", Input::Type::ObscuredShadow);
-        input->setValueBlock(customBlock);
+        input->setValueBlock(customBlock.get());
         block->addInput(input);
 
-        compile(m_compiler.get(), block, nullptr);
+        compile(m_compiler.get(), block.get(), nullptr);
     }
 
     {
@@ -1817,10 +1817,10 @@ TEST_F(CompilerTest, Procedure)
         customBlock->mutationPrototype()->setProcCode("test");
 
         auto input = std::make_shared<Input>("custom_block", Input::Type::ObscuredShadow);
-        input->setValueBlock(customBlock);
+        input->setValueBlock(customBlock.get());
         block->addInput(input);
 
-        compile(m_compiler.get(), block, customBlock->mutationPrototype());
+        compile(m_compiler.get(), block.get(), customBlock->mutationPrototype());
     }
 }
 
@@ -1846,9 +1846,9 @@ TEST_F(CompilerTest, HatPredicate)
 
     // Script
     EXPECT_CALL(*m_builder, addConstValue(Value(true))).WillOnce(Return(&ret1));
-    compile(m_compiler.get(), block, nullptr, Compiler::CodeType::Script);
+    compile(m_compiler.get(), block.get(), nullptr, Compiler::CodeType::Script);
 
     // Hat predicate
     EXPECT_CALL(*m_builder, addConstValue(Value(false))).WillOnce(Return(&ret2));
-    compile(m_compiler.get(), block, nullptr, Compiler::CodeType::HatPredicate);
+    compile(m_compiler.get(), block.get(), nullptr, Compiler::CodeType::HatPredicate);
 }

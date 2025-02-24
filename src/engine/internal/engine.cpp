@@ -106,8 +106,8 @@ void Engine::resolveIds()
         const auto &blocks = target->blocks();
         for (auto block : blocks) {
             IExtension *ext = blockExtension(block->opcode());
-            block->setNext(getBlock(block->nextId(), target.get()));
-            block->setParent(getBlock(block->parentId(), target.get()));
+            block->setNext(getBlock(block->nextId(), target.get()).get());
+            block->setParent(getBlock(block->parentId(), target.get()).get());
 
             if (ext) {
                 block->setCompileFunction(resolveBlockCompileFunc(ext, block->opcode()));
@@ -116,7 +116,7 @@ void Engine::resolveIds()
 
             const auto &inputs = block->inputs();
             for (const auto &input : inputs) {
-                input->setValueBlock(getBlock(input->valueBlockId(), target.get()));
+                input->setValueBlock(getBlock(input->valueBlockId(), target.get()).get());
 
                 if (ext)
                     input->setInputId(resolveInput(ext, input->name()));
@@ -271,12 +271,12 @@ void Engine::compile()
             if (block->topLevel() && !block->isTopLevelReporter() && !block->shadow()) {
                 auto ext = blockExtension(block->opcode());
                 if (ext) {
-                    auto script = std::make_shared<Script>(target.get(), block, this);
-                    m_scripts[block] = script;
-                    script->setCode(compiler.compile(block));
+                    auto script = std::make_shared<Script>(target.get(), block.get(), this);
+                    m_scripts[block.get()] = script;
+                    script->setCode(compiler.compile(block.get()));
 
                     if (block->hatPredicateCompileFunction())
-                        script->setHatPredicateCode(compiler.compile(block, Compiler::CodeType::HatPredicate));
+                        script->setHatPredicateCode(compiler.compile(block.get(), Compiler::CodeType::HatPredicate));
                 } else {
                     std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
                     m_unsupportedBlocks.insert(block->opcode());
@@ -364,7 +364,7 @@ void Engine::stop()
     m_stopped();
 }
 
-Thread *Engine::startScript(std::shared_ptr<Block> topLevelBlock, Target *target)
+Thread *Engine::startScript(Block *topLevelBlock, Target *target)
 {
     return pushThread(topLevelBlock, target).get();
 }
@@ -499,10 +499,10 @@ void Engine::step()
 
                 Target *target = hatBlock->target();
                 assert(target);
-                auto it = m_edgeActivatedHatValues.find(hatBlock.get());
+                auto it = m_edgeActivatedHatValues.find(hatBlock);
 
                 if (it == m_edgeActivatedHatValues.cend()) {
-                    m_edgeActivatedHatValues[hatBlock.get()] = {};
+                    m_edgeActivatedHatValues[hatBlock] = {};
                 } else {
                     auto &map = it->second;
                     auto it = map.find(target);
@@ -513,7 +513,7 @@ void Engine::step()
 
                 bool newValue = thread->script()->runHatPredicate(hatBlock->target());
                 bool edgeWasActivated = !oldValue && newValue; // changed from false true
-                m_edgeActivatedHatValues[hatBlock.get()][target] = newValue;
+                m_edgeActivatedHatValues[hatBlock][target] = newValue;
 
                 if (!edgeWasActivated)
                     stopThread(thread.get());
@@ -1036,18 +1036,18 @@ int Engine::findBroadcastById(const std::string &broadcastId) const
         return it - m_broadcasts.begin();
 }
 
-void Engine::addWhenTouchingObjectScript(std::shared_ptr<Block> hatBlock)
+void Engine::addWhenTouchingObjectScript(Block *hatBlock)
 {
     addHatToMap(m_whenTouchingObjectHats, m_scripts[hatBlock].get());
 }
 
-void Engine::addGreenFlagScript(std::shared_ptr<Block> hatBlock)
+void Engine::addGreenFlagScript(Block *hatBlock)
 {
     std::cout << "passed block: " << hatBlock << std::endl;
     addHatToMap(m_greenFlagHats, m_scripts[hatBlock].get());
 }
 
-void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Field *field, Broadcast *broadcast)
+void Engine::addBroadcastScript(Block *whenReceivedBlock, Field *field, Broadcast *broadcast)
 {
     assert(!broadcast->isBackdropBroadcast());
     Script *script = m_scripts[whenReceivedBlock].get();
@@ -1066,7 +1066,7 @@ void Engine::addBroadcastScript(std::shared_ptr<Block> whenReceivedBlock, Field 
     addHatField(script, HatField::BroadcastOption, field);
 }
 
-void Engine::addBackdropChangeScript(std::shared_ptr<Block> hatBlock, Field *field)
+void Engine::addBackdropChangeScript(Block *hatBlock, Field *field)
 {
     Stage *stage = this->stage();
 
@@ -1103,24 +1103,24 @@ void Engine::addBackdropChangeScript(std::shared_ptr<Block> hatBlock, Field *fie
     addHatField(script, HatField::Backdrop, field);
 }
 
-void Engine::addCloneInitScript(std::shared_ptr<Block> hatBlock)
+void Engine::addCloneInitScript(Block *hatBlock)
 {
     addHatToMap(m_cloneInitHats, m_scripts[hatBlock].get());
 }
 
-void Engine::addKeyPressScript(std::shared_ptr<Block> hatBlock, Field *field)
+void Engine::addKeyPressScript(Block *hatBlock, Field *field)
 {
     Script *script = m_scripts[hatBlock].get();
     addHatToMap(m_whenKeyPressedHats, script);
     addHatField(script, HatField::KeyOption, field);
 }
 
-void Engine::addTargetClickScript(std::shared_ptr<Block> hatBlock)
+void Engine::addTargetClickScript(Block *hatBlock)
 {
     addHatToMap(m_whenTargetClickedHats, m_scripts[hatBlock].get());
 }
 
-void Engine::addWhenGreaterThanScript(std::shared_ptr<Block> hatBlock)
+void Engine::addWhenGreaterThanScript(Block *hatBlock)
 {
     Script *script = m_scripts[hatBlock].get();
     addHatToMap(m_whenGreaterThanHats, script);
@@ -1434,7 +1434,7 @@ void Engine::setExtensions(const std::vector<std::string> &newExtensions)
     }
 }
 
-const std::unordered_map<std::shared_ptr<Block>, std::shared_ptr<Script>> &Engine::scripts() const
+const std::unordered_map<Block *, std::shared_ptr<Script>> &Engine::scripts() const
 {
     return m_scripts;
 }
@@ -1866,9 +1866,9 @@ void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
         MonitorChangeFunc changeFunc = resolveMonitorChangeFunc(ext, block->opcode());
         monitor->setValueChangeFunction(changeFunc);
 
-        auto script = std::make_shared<Script>(target, block, this);
+        auto script = std::make_shared<Script>(target, block.get(), this);
         monitor->setScript(script);
-        auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+        auto code = compiler.compile(block.get(), Compiler::CodeType::Reporter);
         script->setCode(code);
         m_monitorCompilerContexts[monitor.get()] = ctx;
 
@@ -1975,7 +1975,7 @@ void Engine::addBroadcastPromise(Broadcast *broadcast, Thread *sender, bool wait
         m_broadcastSenders[broadcast] = sender;
 }
 
-std::shared_ptr<Thread> Engine::pushThread(std::shared_ptr<Block> block, Target *target)
+std::shared_ptr<Thread> Engine::pushThread(Block *block, Target *target)
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/f1aa92fad79af17d9dd1c41eeeadca099339a9f1/src/engine/runtime.js#L1649-L1661
     if (!block) {

@@ -18,14 +18,14 @@ class List;
 
 struct ScriptPrivate
 {
-        ScriptPrivate(Target *target, std::shared_ptr<Block> topBlock, IEngine *engine);
+        ScriptPrivate(Target *target, Block *topBlock, IEngine *engine);
         ScriptPrivate(const ScriptPrivate &) = delete;
 
         std::shared_ptr<ExecutableCode> code;
         std::shared_ptr<ExecutableCode> hatPredicateCode;
 
         Target *target = nullptr;
-        std::shared_ptr<Block> topBlock;
+        Block *topBlock = nullptr;
         IEngine *engine = nullptr;
 };
 

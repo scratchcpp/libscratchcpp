@@ -65,7 +65,7 @@ void Input::setSecondaryValue(const Value &value)
 }
 
 /*! Returns the block which obscures the shadow. */
-std::shared_ptr<Block> Input::valueBlock() const
+Block *Input::valueBlock() const
 {
     return impl->primaryValue.valueBlock();
 }
@@ -84,7 +84,7 @@ const std::string &Input::valueBlockId() const
  * Sets the block which obscures the shadow or,
  * if there's a shadow, sets the block the input points to.
  */
-void Input::setValueBlock(std::shared_ptr<Block> block)
+void Input::setValueBlock(Block *block)
 {
     impl->primaryValue.setValueBlock(block);
 }

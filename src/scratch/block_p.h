@@ -24,9 +24,9 @@ struct BlockPrivate
         std::string opcode;
         BlockComp compileFunction = nullptr;
         HatPredicateCompileFunc hatPredicateCompileFunction = nullptr;
-        std::shared_ptr<Block> next = nullptr;
+        Block *next = nullptr;
         std::string nextId;
-        std::shared_ptr<Block> parent = nullptr;
+        Block *parent = nullptr;
         std::string parentId;
         std::vector<std::shared_ptr<Input>> inputs;
         std::unordered_map<int, Input *> inputMap;

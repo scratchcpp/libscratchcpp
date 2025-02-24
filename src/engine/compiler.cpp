@@ -38,13 +38,13 @@ Target *Compiler::target() const
 }
 
 /*! Returns currently compiled block. */
-std::shared_ptr<libscratchcpp::Block> Compiler::block() const
+Block *Compiler::block() const
 {
     return impl->block;
 }
 
 /*! Compiles the script starting with the given block. */
-std::shared_ptr<ExecutableCode> Compiler::compile(std::shared_ptr<Block> startBlock, CodeType codeType)
+std::shared_ptr<ExecutableCode> Compiler::compile(Block *startBlock, CodeType codeType)
 {
     BlockPrototype *procedurePrototype = nullptr;
 
@@ -607,7 +607,7 @@ void Compiler::endLoop()
 }
 
 /*! Jumps to the given if substack. */
-void Compiler::moveToIf(CompilerValue *cond, std::shared_ptr<Block> substack)
+void Compiler::moveToIf(CompilerValue *cond, Block *substack)
 {
     if (!substack)
         return; // ignore empty if statements
@@ -619,7 +619,7 @@ void Compiler::moveToIf(CompilerValue *cond, std::shared_ptr<Block> substack)
 }
 
 /*! Jumps to the given if/else substack. The second substack is used for the else branch. */
-void Compiler::moveToIfElse(CompilerValue *cond, std::shared_ptr<Block> substack1, std::shared_ptr<Block> substack2)
+void Compiler::moveToIfElse(CompilerValue *cond, Block *substack1, Block *substack2)
 {
     if (!substack1 && !substack2)
         return; // ignore empty if statements
@@ -634,7 +634,7 @@ void Compiler::moveToIfElse(CompilerValue *cond, std::shared_ptr<Block> substack
 }
 
 /*! Jumps to the given repeat loop substack. */
-void Compiler::moveToRepeatLoop(CompilerValue *count, std::shared_ptr<Block> substack)
+void Compiler::moveToRepeatLoop(CompilerValue *count, Block *substack)
 {
     impl->substackHit = true;
     impl->substackTree.push_back({ { impl->block, nullptr }, CompilerPrivate::SubstackType::Loop });
@@ -646,7 +646,7 @@ void Compiler::moveToRepeatLoop(CompilerValue *count, std::shared_ptr<Block> sub
 }
 
 /*! Jumps to the given while loop substack. */
-void Compiler::moveToWhileLoop(CompilerValue *cond, std::shared_ptr<Block> substack)
+void Compiler::moveToWhileLoop(CompilerValue *cond, Block *substack)
 {
     impl->substackHit = true;
     impl->substackTree.push_back({ { impl->block, nullptr }, CompilerPrivate::SubstackType::Loop });
@@ -658,7 +658,7 @@ void Compiler::moveToWhileLoop(CompilerValue *cond, std::shared_ptr<Block> subst
 }
 
 /*! Jumps to the given until loop substack. */
-void Compiler::moveToRepeatUntilLoop(CompilerValue *cond, std::shared_ptr<Block> substack)
+void Compiler::moveToRepeatUntilLoop(CompilerValue *cond, Block *substack)
 {
     impl->substackHit = true;
     impl->substackTree.push_back({ { impl->block, nullptr }, CompilerPrivate::SubstackType::Loop });
