@@ -10,6 +10,12 @@ option(LIBSCRATCHCPP_BUILD_UNIT_TESTS "Build unit tests" ON)
 option(LIBSCRATCHCPP_NETWORK_SUPPORT "Support for downloading projects" ON)
 option(LIBSCRATCHCPP_PRINT_LLVM_IR "Print LLVM IR of compiled Scratch scripts (for debugging)" OFF)
 
+if (CMAKE_BUILD_TYPE MATCHES "Debug")
+    set(SANITIZER_FLAGS "-fsanitize=undefined -fsanitize=address -fno-omit-frame-pointer")
+    set(CMAKE_CFLAGS ${CMAKE_CFLAGS} ${SANITIZER_FLAGS})
+    set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS})
+endif()
+
 add_library(scratchcpp SHARED)
 add_subdirectory(src)
 include_directories(src) # TODO: Remove this line
