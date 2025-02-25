@@ -980,7 +980,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size));
 
                 LLVMConstantRegister nullReg(listPtr.type == Compiler::StaticType::Unknown ? Compiler::StaticType::Number : listPtr.type, Value());
-                llvm::Value *null = createValue(static_cast<LLVMRegister *>(static_cast<CompilerValue *>(&nullReg)));
+                llvm::Value *null = createValue(static_cast<LLVMRegister *>(&nullReg));
 
                 index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
                 step.functionReturnReg->value = m_builder.CreateSelect(inRange, getListItem(listPtr, index), null);
@@ -1378,7 +1378,7 @@ CompilerValue *LLVMCodeBuilder::addFunctionCall(const std::string &functionName,
     ins->functionName = functionName;
 
     for (size_t i = 0; i < args.size(); i++)
-        ins->args.push_back({ argTypes[i], static_cast<LLVMRegister *>(args[i]) });
+        ins->args.push_back({ argTypes[i], dynamic_cast<LLVMRegister *>(args[i]) });
 
     if (returnType != Compiler::StaticType::Void) {
         auto reg = std::make_shared<LLVMRegister>(returnType);
@@ -1409,9 +1409,9 @@ CompilerValue *LLVMCodeBuilder::addFunctionCallWithCtx(const std::string &functi
 CompilerConstant *LLVMCodeBuilder::addConstValue(const Value &value)
 {
     auto constReg = std::make_shared<LLVMConstantRegister>(TYPE_MAP[value.type()], value);
-    auto reg = std::reinterpret_pointer_cast<LLVMRegister>(constReg);
+    auto reg = std::static_pointer_cast<LLVMRegister>(constReg);
     m_lastConstValue = reg.get();
-    return static_cast<CompilerConstant *>(static_cast<CompilerValue *>(addReg(reg, nullptr)));
+    return static_cast<CompilerConstant *>(static_cast<LLVMConstantRegister *>(addReg(reg, nullptr)));
 }
 
 CompilerValue *LLVMCodeBuilder::addStringChar(CompilerValue *string, CompilerValue *index)
@@ -1470,7 +1470,7 @@ CompilerValue *LLVMCodeBuilder::addListItem(List *list, CompilerValue *index)
     if (m_listPtrs.find(list) == m_listPtrs.cend())
         m_listPtrs[list] = LLVMListPtr();
 
-    ins->args.push_back({ Compiler::StaticType::Number, static_cast<LLVMRegister *>(index) });
+    ins->args.push_back({ Compiler::StaticType::Number, dynamic_cast<LLVMRegister *>(index) });
 
     auto ret = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     ret->isRawValue = false;
@@ -1807,7 +1807,7 @@ void LLVMCodeBuilder::createListReplace(List *list, CompilerValue *index, Compil
 void LLVMCodeBuilder::beginIfStatement(CompilerValue *cond)
 {
     auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, currentLoopScope(), m_loopCondition);
-    ins->args.push_back({ Compiler::StaticType::Bool, static_cast<LLVMRegister *>(cond) });
+    ins->args.push_back({ Compiler::StaticType::Bool, dynamic_cast<LLVMRegister *>(cond) });
     m_instructions.push_back(ins);
 }
 
@@ -1826,7 +1826,7 @@ void LLVMCodeBuilder::beginRepeatLoop(CompilerValue *count)
     assert(!m_loopCondition);
 
     auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, currentLoopScope(), m_loopCondition);
-    ins->args.push_back({ Compiler::StaticType::Number, static_cast<LLVMRegister *>(count) });
+    ins->args.push_back({ Compiler::StaticType::Number, dynamic_cast<LLVMRegister *>(count) });
     m_instructions.push_back(ins);
     pushLoopScope(false);
 }
@@ -1837,7 +1837,7 @@ void LLVMCodeBuilder::beginWhileLoop(CompilerValue *cond)
     m_loopCondition = false;
 
     auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginWhileLoop, currentLoopScope(), m_loopCondition);
-    ins->args.push_back({ Compiler::StaticType::Bool, static_cast<LLVMRegister *>(cond) });
+    ins->args.push_back({ Compiler::StaticType::Bool, dynamic_cast<LLVMRegister *>(cond) });
     m_instructions.push_back(ins);
     pushLoopScope(false);
 }
@@ -1848,7 +1848,7 @@ void LLVMCodeBuilder::beginRepeatUntilLoop(CompilerValue *cond)
     m_loopCondition = false;
 
     auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, currentLoopScope(), m_loopCondition);
-    ins->args.push_back({ Compiler::StaticType::Bool, static_cast<LLVMRegister *>(cond) });
+    ins->args.push_back({ Compiler::StaticType::Bool, dynamic_cast<LLVMRegister *>(cond) });
     m_instructions.push_back(ins);
     pushLoopScope(false);
 }
@@ -2687,7 +2687,7 @@ LLVMRegister *LLVMCodeBuilder::createOp(const LLVMInstruction &ins, Compiler::St
     m_instructions.push_back(createdIns);
 
     for (size_t i = 0; i < args.size(); i++)
-        createdIns->args.push_back({ argTypes[i], static_cast<LLVMRegister *>(args[i]) });
+        createdIns->args.push_back({ argTypes[i], dynamic_cast<LLVMRegister *>(args[i]) });
 
     if (retType != Compiler::StaticType::Void) {
         auto ret = std::make_shared<LLVMRegister>(retType);

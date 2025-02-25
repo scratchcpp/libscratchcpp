@@ -8,6 +8,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/blockprototype.h>
+#include <scratchcpp/compilerconstant.h>
 #include <engine/internal/llvm/llvmcodebuilder.h>
 #include <engine/internal/llvm/llvmcompilercontext.h>
 #include <gmock/gmock.h>

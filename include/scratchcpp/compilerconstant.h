@@ -10,7 +10,7 @@ namespace libscratchcpp
 class CompilerConstantPrivate;
 
 /*! \brief The CompilerConstant class represents a constant value in compiled code. */
-class LIBSCRATCHCPP_EXPORT CompilerConstant : public CompilerValue
+class LIBSCRATCHCPP_EXPORT CompilerConstant : public virtual CompilerValue
 {
     public:
         CompilerConstant(Compiler::StaticType type, const Value &value);
