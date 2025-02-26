@@ -10,16 +10,17 @@ namespace libscratchcpp
 {
 
 struct LLVMConstantRegister
-    : public LLVMRegisterBase
-    , public CompilerConstant
+    : public CompilerConstant
+    , public LLVMRegister
 {
         LLVMConstantRegister(Compiler::StaticType type, const Value &value) :
-            LLVMRegisterBase(),
-            CompilerConstant(type, value)
+            CompilerValue(type),
+            CompilerConstant(type, value),
+            LLVMRegister(type)
         {
         }
 
-        const Value &constValue() const override { return CompilerConstant::value(); }
+        const Value &constValue() const override final { return CompilerConstant::value(); }
 };
 
 } // namespace libscratchcpp

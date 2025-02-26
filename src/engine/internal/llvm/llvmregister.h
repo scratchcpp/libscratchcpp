@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include "llvmregisterbase.h"
+#include <scratchcpp/compilervalue.h>
+#include <scratchcpp/value.h>
 
 namespace llvm
 {
@@ -14,25 +15,24 @@ class Value;
 namespace libscratchcpp
 {
 
-struct LLVMRegister
-    : public LLVMRegisterBase
-    , public CompilerValue
+class LLVMInstruction;
+
+struct LLVMRegister : public virtual CompilerValue
 {
         LLVMRegister(Compiler::StaticType type) :
-            LLVMRegisterBase(),
             CompilerValue(type)
         {
         }
 
-        const Value &constValue() const override
+        virtual const Value &constValue() const
         {
-            if (isConst())
-                return static_cast<const CompilerConstant *>(static_cast<const CompilerValue *>(this))->value();
-            else {
-                static const Value null = Value();
-                return null;
-            }
+            static const Value null = Value();
+            return null;
         }
+
+        llvm::Value *value = nullptr;
+        bool isRawValue = false;
+        std::shared_ptr<LLVMInstruction> instruction;
 };
 
 } // namespace libscratchcpp
