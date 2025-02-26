@@ -20,6 +20,7 @@ class MotionBlocks : public IExtension
         static CompilerValue *compileMoveSteps(Compiler *compiler);
         static CompilerValue *compileTurnRight(Compiler *compiler);
         static CompilerValue *compileTurnLeft(Compiler *compiler);
+        static CompilerValue *compilePointInDirection(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

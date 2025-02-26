@@ -118,3 +118,33 @@ TEST_F(MotionBlocksTest, TurnLeft)
         builder.run();
     }
 }
+
+TEST_F(MotionBlocksTest, PointInDirection)
+{
+    {
+        auto sprite = std::make_shared<Sprite>();
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("motion_pointindirection");
+        builder.addValueInput("DIRECTION", -60.5);
+
+        sprite->setDirection(50.02);
+
+        builder.build();
+        builder.run();
+        ASSERT_EQ(sprite->direction(), -60.5);
+    }
+
+    m_engine->clear();
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("motion_pointindirection");
+        builder.addValueInput("DIRECTION", -60.5);
+
+        builder.build();
+        builder.run();
+    }
+}
