@@ -58,3 +58,33 @@ TEST_F(MotionBlocksTest, MoveSteps)
         builder.run();
     }
 }
+
+TEST_F(MotionBlocksTest, TurnRight)
+{
+    {
+        auto sprite = std::make_shared<Sprite>();
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("motion_turnright");
+        builder.addValueInput("DEGREES", 12.05);
+
+        sprite->setDirection(124.37);
+
+        builder.build();
+        builder.run();
+        ASSERT_EQ(std::round(sprite->direction() * 100) / 100, 136.42);
+    }
+
+    m_engine->clear();
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("motion_turnright");
+        builder.addValueInput("DEGREES", 12.05);
+
+        builder.build();
+        builder.run();
+    }
+}
