@@ -30,6 +30,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "motion_movesteps", &compileMoveSteps);
     engine->addCompileFunction(this, "motion_turnright", &compileTurnRight);
+    engine->addCompileFunction(this, "motion_turnleft", &compileTurnLeft);
 }
 
 CompilerValue *MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -52,6 +53,16 @@ CompilerValue *MotionBlocks::compileTurnRight(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *MotionBlocks::compileTurnLeft(Compiler *compiler)
+{
+    if (!compiler->target()->isStage()) {
+        CompilerValue *degrees = compiler->addInput("DEGREES");
+        compiler->addTargetFunctionCall("motion_turnleft", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { degrees });
+    }
+
+    return nullptr;
+}
+
 extern "C" void motion_movesteps(Sprite *sprite, double steps)
 {
     double dir = sprite->direction();
@@ -61,4 +72,9 @@ extern "C" void motion_movesteps(Sprite *sprite, double steps)
 extern "C" void motion_turnright(Sprite *sprite, double degrees)
 {
     sprite->setDirection(sprite->direction() + degrees);
+}
+
+extern "C" void motion_turnleft(Sprite *sprite, double degrees)
+{
+    sprite->setDirection(sprite->direction() - degrees);
 }
