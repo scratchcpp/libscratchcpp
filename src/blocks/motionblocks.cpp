@@ -1,8 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/iengine.h>
+#include <scratchcpp/compiler.h>
+#include <scratchcpp/sprite.h>
+#include <cmath>
+
 #include "motionblocks.h"
 
 using namespace libscratchcpp;
+
+static const double pi = std::acos(-1); // TODO: Use std::numbers::pi in C++20
 
 std::string MotionBlocks::name() const
 {
@@ -21,4 +28,21 @@ Rgb MotionBlocks::color() const
 
 void MotionBlocks::registerBlocks(IEngine *engine)
 {
+    engine->addCompileFunction(this, "motion_movesteps", &compileMoveSteps);
+}
+
+CompilerValue *MotionBlocks::compileMoveSteps(Compiler *compiler)
+{
+    if (!compiler->target()->isStage()) {
+        CompilerValue *steps = compiler->addInput("STEPS");
+        compiler->addTargetFunctionCall("motion_movesteps", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { steps });
+    }
+
+    return nullptr;
+}
+
+extern "C" void motion_movesteps(Sprite *sprite, double steps)
+{
+    double dir = sprite->direction();
+    sprite->setPosition(sprite->x() + std::sin(dir * pi / 180) * steps, sprite->y() + std::cos(dir * pi / 180) * steps);
 }

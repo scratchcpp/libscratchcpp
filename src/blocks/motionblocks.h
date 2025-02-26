@@ -15,6 +15,9 @@ class MotionBlocks : public IExtension
         Rgb color() const override;
 
         void registerBlocks(IEngine *engine) override;
+
+    private:
+        static CompilerValue *compileMoveSteps(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
