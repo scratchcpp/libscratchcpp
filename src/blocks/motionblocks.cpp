@@ -43,6 +43,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_pointindirection", &compilePointInDirection);
     engine->addCompileFunction(this, "motion_pointtowards", &compilePointTowards);
     engine->addCompileFunction(this, "motion_gotoxy", &compileGoToXY);
+    engine->addCompileFunction(this, "motion_goto", &compileGoTo);
 }
 
 CompilerValue *MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -120,6 +121,35 @@ CompilerValue *MotionBlocks::compileGoToXY(Compiler *compiler)
         CompilerValue *x = compiler->addInput("X");
         CompilerValue *y = compiler->addInput("Y");
         compiler->addTargetFunctionCall("motion_gotoxy", Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Number }, { x, y });
+    }
+
+    return nullptr;
+}
+
+CompilerValue *MotionBlocks::compileGoTo(Compiler *compiler)
+{
+    if (compiler->target()->isStage())
+        return nullptr;
+
+    Input *input = compiler->input("TO");
+
+    if (input->pointsToDropdownMenu()) {
+        std::string value = input->selectedMenuItem();
+
+        if (value == "_mouse_")
+            compiler->addTargetFunctionCall("motion_go_to_mouse");
+        else if (value == "_random_")
+            compiler->addFunctionCallWithCtx("motion_go_to_random_pos");
+        else {
+            int index = compiler->engine()->findTarget(value);
+            Target *anotherTarget = compiler->engine()->targetAt(index);
+
+            if (anotherTarget && !anotherTarget->isStage())
+                compiler->addTargetFunctionCall("motion_go_to_target_by_index", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { compiler->addConstValue(index) });
+        }
+    } else {
+        CompilerValue *to = compiler->addInput(input);
+        compiler->addFunctionCallWithCtx("motion_goto", Compiler::StaticType::Void, { Compiler::StaticType::String }, { to });
     }
 
     return nullptr;
@@ -212,4 +242,50 @@ extern "C" void motion_pointtowards(ExecutionContext *ctx, const StringPtr *towa
 extern "C" void motion_gotoxy(Sprite *sprite, double x, double y)
 {
     sprite->setPosition(x, y);
+}
+
+extern "C" void motion_go_to_mouse(Sprite *sprite)
+{
+    IEngine *engine = sprite->engine();
+    sprite->setPosition(engine->mouseX(), engine->mouseY());
+}
+
+extern "C" void motion_go_to_random_pos(ExecutionContext *ctx)
+{
+    Sprite *sprite = static_cast<Sprite *>(ctx->thread()->target());
+    IEngine *engine = ctx->engine();
+    const int stageWidth = engine->stageWidth();
+    const int stageHeight = engine->stageHeight();
+    IRandomGenerator *rng = ctx->rng();
+    sprite->setPosition(rng->randintDouble(-stageWidth / 2.0, stageWidth / 2.0), rng->randintDouble(-stageHeight / 2.0, stageHeight / 2.0));
+}
+
+extern "C" void motion_go_to_target_by_index(Sprite *sprite, double index)
+{
+    Sprite *anotherSprite = static_cast<Sprite *>(sprite->engine()->targetAt(index));
+    sprite->setPosition(anotherSprite->x(), anotherSprite->y());
+}
+
+extern "C" void motion_goto(ExecutionContext *ctx, const StringPtr *towards)
+{
+    static const StringPtr MOUSE_STR("_mouse_");
+    static const StringPtr RANDOM_STR("_random_");
+
+    Sprite *sprite = static_cast<Sprite *>(ctx->thread()->target());
+
+    if (string_compare_case_sensitive(towards, &MOUSE_STR) == 0)
+        motion_go_to_mouse(sprite);
+    else if (string_compare_case_sensitive(towards, &RANDOM_STR) == 0)
+        motion_go_to_random_pos(ctx);
+    else {
+        // TODO: Use UTF-16 in engine
+        std::string u8name = utf8::utf16to8(std::u16string(towards->data));
+        IEngine *engine = ctx->engine();
+        Target *anotherTarget = engine->targetAt(engine->findTarget(u8name));
+
+        if (anotherTarget && !anotherTarget->isStage()) {
+            Sprite *anotherSprite = static_cast<Sprite *>(anotherTarget);
+            sprite->setPosition(anotherSprite->x(), anotherSprite->y());
+        }
+    }
 }
