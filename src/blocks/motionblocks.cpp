@@ -42,6 +42,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_turnleft", &compileTurnLeft);
     engine->addCompileFunction(this, "motion_pointindirection", &compilePointInDirection);
     engine->addCompileFunction(this, "motion_pointtowards", &compilePointTowards);
+    engine->addCompileFunction(this, "motion_gotoxy", &compileGoToXY);
 }
 
 CompilerValue *MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -108,6 +109,17 @@ CompilerValue *MotionBlocks::compilePointTowards(Compiler *compiler)
     } else {
         CompilerValue *towards = compiler->addInput(input);
         compiler->addFunctionCallWithCtx("motion_pointtowards", Compiler::StaticType::Void, { Compiler::StaticType::String }, { towards });
+    }
+
+    return nullptr;
+}
+
+CompilerValue *MotionBlocks::compileGoToXY(Compiler *compiler)
+{
+    if (!compiler->target()->isStage()) {
+        CompilerValue *x = compiler->addInput("X");
+        CompilerValue *y = compiler->addInput("Y");
+        compiler->addTargetFunctionCall("motion_gotoxy", Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Number }, { x, y });
     }
 
     return nullptr;
@@ -195,4 +207,9 @@ extern "C" void motion_pointtowards(ExecutionContext *ctx, const StringPtr *towa
             motion_point_towards_pos(sprite, anotherSprite->x(), anotherSprite->y());
         }
     }
+}
+
+extern "C" void motion_gotoxy(Sprite *sprite, double x, double y)
+{
+    sprite->setPosition(x, y);
 }
