@@ -13,4 +13,5 @@ class StackTimerMock : public IStackTimer
 
         MOCK_METHOD(bool, stopped, (), (const, override));
         MOCK_METHOD(bool, elapsed, (), (const, override));
+        MOCK_METHOD(double, elapsedTime, (), (const, override));
 };

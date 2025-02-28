@@ -22,6 +22,7 @@ class StackTimer : public IStackTimer
 
         bool stopped() const override;
         bool elapsed() const override;
+        double elapsedTime() const override;
 
     private:
         std::chrono::steady_clock::time_point m_startTime;

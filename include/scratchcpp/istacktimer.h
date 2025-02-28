@@ -28,6 +28,9 @@ class LIBSCRATCHCPP_EXPORT IStackTimer
 
         /*! Returns true if the timer has elapsed. */
         virtual bool elapsed() const = 0;
+
+        /*! Returns the elapsed time in seconds. */
+        virtual double elapsedTime() const = 0;
 };
 
 } // namespace libscratchcpp
