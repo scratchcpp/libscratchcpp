@@ -9,6 +9,7 @@
 #include <scratchcpp/executioncontext.h>
 #include <scratchcpp/thread.h>
 #include <scratchcpp/irandomgenerator.h>
+#include <scratchcpp/istacktimer.h>
 #include <scratchcpp/stringptr.h>
 #include <scratchcpp/string_functions.h>
 #include <cmath>
@@ -44,6 +45,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_pointtowards", &compilePointTowards);
     engine->addCompileFunction(this, "motion_gotoxy", &compileGoToXY);
     engine->addCompileFunction(this, "motion_goto", &compileGoTo);
+    engine->addCompileFunction(this, "motion_glidesecstoxy", &compileGlideSecsToXY);
 }
 
 CompilerValue *MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -151,6 +153,27 @@ CompilerValue *MotionBlocks::compileGoTo(Compiler *compiler)
         CompilerValue *to = compiler->addInput(input);
         compiler->addFunctionCallWithCtx("motion_goto", Compiler::StaticType::Void, { Compiler::StaticType::String }, { to });
     }
+
+    return nullptr;
+}
+
+CompilerValue *MotionBlocks::compileGlideSecsToXY(Compiler *compiler)
+{
+    Target *target = compiler->target();
+    CompilerValue *duration = compiler->addInput("SECS");
+    CompilerValue *startX = target->isStage() ? compiler->addConstValue(0) : compiler->addTargetFunctionCall("motion_xposition", Compiler::StaticType::Number);
+    CompilerValue *startY = target->isStage() ? compiler->addConstValue(0) : compiler->addTargetFunctionCall("motion_yposition", Compiler::StaticType::Number);
+    CompilerValue *endX = compiler->addInput("X");
+    CompilerValue *endY = compiler->addInput("Y");
+
+    compiler->addFunctionCallWithCtx("motion_start_glide", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { duration });
+    compiler->createYield();
+
+    compiler->beginLoopCondition();
+    auto numType = Compiler::StaticType::Number;
+    CompilerValue *elapsed = compiler->addFunctionCallWithCtx("motion_glide", Compiler::StaticType::Bool, { numType, numType, numType, numType, numType }, { duration, startX, startY, endX, endY });
+    compiler->beginRepeatUntilLoop(elapsed);
+    compiler->endLoop();
 
     return nullptr;
 }
@@ -288,4 +311,45 @@ extern "C" void motion_goto(ExecutionContext *ctx, const StringPtr *towards)
             sprite->setPosition(anotherSprite->x(), anotherSprite->y());
         }
     }
+}
+
+extern "C" void motion_start_glide(ExecutionContext *ctx, double duration)
+{
+    ctx->stackTimer()->start(duration);
+}
+
+extern "C" bool motion_glide(ExecutionContext *ctx, double duration, double startX, double startY, double endX, double endY)
+{
+    IStackTimer *timer = ctx->stackTimer();
+    Target *target = ctx->thread()->target();
+    Sprite *sprite = nullptr;
+    double elapsedTime = timer->elapsedTime();
+
+    if (!target->isStage())
+        sprite = static_cast<Sprite *>(target);
+
+    if (elapsedTime >= duration) {
+        if (sprite)
+            sprite->setPosition(endX, endY);
+
+        return true;
+    } else {
+        if (sprite) {
+            double factor = elapsedTime / duration;
+            assert(factor >= 0 && factor < 1);
+            sprite->setPosition(startX + (endX - startX) * factor, startY + (endY - startY) * factor);
+        }
+
+        return false;
+    }
+}
+
+extern "C" double motion_xposition(Sprite *sprite)
+{
+    return sprite->x();
+}
+
+extern "C" double motion_yposition(Sprite *sprite)
+{
+    return sprite->y();
 }
