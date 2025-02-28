@@ -1022,7 +1022,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             }
 
             case LLVMInstruction::Type::Yield:
-                // TODO: Do not allow use after suspend (use after free)
                 createSuspend(coro.get(), warpArg, targetVariables);
                 break;
 
@@ -3167,7 +3166,6 @@ void LLVMCodeBuilder::createSuspend(LLVMCoroutine *coro, llvm::Value *warpArg, l
             m_builder.SetInsertPoint(suspendBranch);
         }
 
-        freeScopeHeap();
         syncVariables(targetVariables);
         coro->createSuspend();
         reloadVariables(targetVariables);
