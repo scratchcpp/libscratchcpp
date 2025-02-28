@@ -940,3 +940,661 @@ TEST_F(MotionBlocksTest, GlideSecsToXY)
         ASSERT_TRUE(code->isFinished(ctx.get()));
     }
 }
+
+TEST_F(MotionBlocksTest, GlideToMouse)
+{
+    {
+        auto sprite = std::make_shared<Sprite>();
+        sprite->setEngine(&m_engineMock);
+        sprite->setX(70.1);
+        sprite->setY(-100.025);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addDropdownInput("TO", "_mouse_");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, sprite.get());
+        auto code = compiler.compile(block);
+        Script script(sprite.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(sprite.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(timer, start(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(-45.12));
+        EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(-123.48));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(0.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+        ASSERT_EQ(std::round(sprite->x() * 100) / 100, 47.06);
+        ASSERT_EQ(std::round(sprite->y() * 100) / 100, -104.72);
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(1.75));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+        ASSERT_EQ(std::round(sprite->x() * 100) / 100, -10.55);
+        ASSERT_EQ(std::round(sprite->y() * 100) / 100, -116.44);
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(2.55));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+        ASSERT_EQ(sprite->x(), -45.12);
+        ASSERT_EQ(sprite->y(), -123.48);
+    }
+
+    {
+        auto sprite = std::make_shared<Sprite>();
+        sprite->setEngine(&m_engineMock);
+        sprite->setX(70.1);
+        sprite->setY(-100.025);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addValueInput("TO", "_mouse_");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, sprite.get());
+        auto code = compiler.compile(block);
+        Script script(sprite.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(sprite.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(timer, start(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(-45.12));
+        EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(-123.48));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(0.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+        ASSERT_EQ(std::round(sprite->x() * 100) / 100, 47.06);
+        ASSERT_EQ(std::round(sprite->y() * 100) / 100, -104.72);
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(1.75));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+        ASSERT_EQ(std::round(sprite->x() * 100) / 100, -10.55);
+        ASSERT_EQ(std::round(sprite->y() * 100) / 100, -116.44);
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(2.55));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+        ASSERT_EQ(sprite->x(), -45.12);
+        ASSERT_EQ(sprite->y(), -123.48);
+    }
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addDropdownInput("TO", "_mouse_");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, stage.get());
+        auto code = compiler.compile(block);
+        Script script(stage.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(stage.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
+
+        EXPECT_CALL(timer, start(2.5));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(1.3));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+    }
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addValueInput("TO", "_mouse_");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, stage.get());
+        auto code = compiler.compile(block);
+        Script script(stage.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(stage.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
+
+        EXPECT_CALL(timer, start(2.5));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(2.51));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+    }
+}
+
+TEST_F(MotionBlocksTest, GlideToRandomPosition)
+{
+    {
+        auto sprite = std::make_shared<Sprite>();
+        sprite->setEngine(&m_engineMock);
+        sprite->setX(70.1);
+        sprite->setY(-100.025);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addDropdownInput("TO", "_random_");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, sprite.get());
+        auto code = compiler.compile(block);
+        Script script(sprite.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(sprite.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        RandomGeneratorMock rng;
+        StackTimerMock timer;
+        ctx->setRng(&rng);
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(timer, start(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(640));
+        EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(500));
+        EXPECT_CALL(rng, randintDouble(-320, 320)).WillOnce(Return(-45.12));
+        EXPECT_CALL(rng, randintDouble(-250, 250)).WillOnce(Return(-123.48));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(0.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+        ASSERT_EQ(std::round(sprite->x() * 100) / 100, 47.06);
+        ASSERT_EQ(std::round(sprite->y() * 100) / 100, -104.72);
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(2.55));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+        ASSERT_EQ(sprite->x(), -45.12);
+        ASSERT_EQ(sprite->y(), -123.48);
+    }
+
+    {
+        auto sprite = std::make_shared<Sprite>();
+        sprite->setEngine(&m_engineMock);
+        sprite->setX(70.1);
+        sprite->setY(-100.025);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addValueInput("TO", "_random_");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, sprite.get());
+        auto code = compiler.compile(block);
+        Script script(sprite.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(sprite.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        RandomGeneratorMock rng;
+        StackTimerMock timer;
+        ctx->setRng(&rng);
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(timer, start(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(640));
+        EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(500));
+        EXPECT_CALL(rng, randintDouble(-320, 320)).WillOnce(Return(-45.12));
+        EXPECT_CALL(rng, randintDouble(-250, 250)).WillOnce(Return(-123.48));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(0.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+        ASSERT_EQ(std::round(sprite->x() * 100) / 100, 47.06);
+        ASSERT_EQ(std::round(sprite->y() * 100) / 100, -104.72);
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(2.55));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+        ASSERT_EQ(sprite->x(), -45.12);
+        ASSERT_EQ(sprite->y(), -123.48);
+    }
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addDropdownInput("TO", "_random_");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, stage.get());
+        auto code = compiler.compile(block);
+        Script script(stage.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(stage.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
+
+        EXPECT_CALL(timer, start(2.5));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(1.3));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+    }
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addValueInput("TO", "_random_");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, stage.get());
+        auto code = compiler.compile(block);
+        Script script(stage.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(stage.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
+
+        EXPECT_CALL(timer, start(2.5));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(2.51));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+    }
+}
+
+TEST_F(MotionBlocksTest, GlideToSprite)
+{
+    {
+        auto sprite = std::make_shared<Sprite>();
+        sprite->setName("abc");
+        sprite->setEngine(&m_engineMock);
+        sprite->setX(70.1);
+        sprite->setY(-100.025);
+
+        auto anotherSprite = std::make_shared<Sprite>();
+        anotherSprite->setName("def");
+        anotherSprite->setEngine(&m_engineMock);
+        anotherSprite->setX(-45.12);
+        anotherSprite->setY(-123.48);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addDropdownInput("TO", "def");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillOnce(Return(2));
+        EXPECT_CALL(m_engineMock, targetAt(2)).WillRepeatedly(Return(anotherSprite.get()));
+        Compiler compiler(&m_engineMock, sprite.get());
+        auto code = compiler.compile(block);
+        Script script(sprite.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(sprite.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(timer, start(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(0.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+        ASSERT_EQ(std::round(sprite->x() * 100) / 100, 47.06);
+        ASSERT_EQ(std::round(sprite->y() * 100) / 100, -104.72);
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(2.55));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+        ASSERT_EQ(sprite->x(), -45.12);
+        ASSERT_EQ(sprite->y(), -123.48);
+    }
+
+    {
+        auto sprite = std::make_shared<Sprite>();
+        sprite->setName("abc");
+        sprite->setEngine(&m_engineMock);
+        sprite->setX(70.1);
+        sprite->setY(-100.025);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addDropdownInput("TO", "def");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillOnce(Return(2));
+        EXPECT_CALL(m_engineMock, targetAt(2)).WillRepeatedly(Return(nullptr));
+        Compiler compiler(&m_engineMock, sprite.get());
+        auto code = compiler.compile(block);
+        Script script(sprite.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(sprite.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
+        EXPECT_CALL(timer, start).Times(0);
+
+        code->run(ctx.get());
+        ASSERT_EQ(sprite->x(), 70.1);
+        ASSERT_EQ(sprite->y(), -100.025);
+    }
+
+    EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+
+    {
+        auto sprite = std::make_shared<Sprite>();
+        sprite->setName("abc");
+        sprite->setEngine(&m_engineMock);
+        sprite->setX(70.1);
+        sprite->setY(-100.025);
+
+        auto stage = std::make_shared<Stage>();
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addDropdownInput("TO", "_stage_");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(0));
+        EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(stage.get()));
+        Compiler compiler(&m_engineMock, sprite.get());
+        auto code = compiler.compile(block);
+        Script script(sprite.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(sprite.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
+        EXPECT_CALL(timer, start).Times(0);
+
+        code->run(ctx.get());
+        ASSERT_EQ(sprite->x(), 70.1);
+        ASSERT_EQ(sprite->y(), -100.025);
+    }
+
+    EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+
+    {
+        auto sprite = std::make_shared<Sprite>();
+        sprite->setName("abc");
+        sprite->setEngine(&m_engineMock);
+        sprite->setX(70.1);
+        sprite->setY(-100.025);
+
+        auto anotherSprite = std::make_shared<Sprite>();
+        anotherSprite->setName("def");
+        anotherSprite->setEngine(&m_engineMock);
+        anotherSprite->setX(-45.12);
+        anotherSprite->setY(-123.48);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addValueInput("TO", "def");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, sprite.get());
+        auto code = compiler.compile(block);
+        Script script(sprite.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(sprite.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillRepeatedly(Return(5));
+        EXPECT_CALL(m_engineMock, targetAt(5)).WillRepeatedly(Return(anotherSprite.get()));
+
+        EXPECT_CALL(timer, start(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(0.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+        ASSERT_EQ(std::round(sprite->x() * 100) / 100, 47.06);
+        ASSERT_EQ(std::round(sprite->y() * 100) / 100, -104.72);
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(2.55));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+        ASSERT_EQ(sprite->x(), -45.12);
+        ASSERT_EQ(sprite->y(), -123.48);
+    }
+
+    {
+        auto sprite = std::make_shared<Sprite>();
+        sprite->setName("abc");
+        sprite->setEngine(&m_engineMock);
+        sprite->setX(70.1);
+        sprite->setY(-100.025);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addValueInput("TO", "def");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, sprite.get());
+        auto code = compiler.compile(block);
+        Script script(sprite.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(sprite.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
+        EXPECT_CALL(timer, start).Times(0);
+
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillOnce(Return(5));
+        EXPECT_CALL(m_engineMock, targetAt(5)).WillOnce(Return(nullptr));
+        code->run(ctx.get());
+        ASSERT_EQ(sprite->x(), 70.1);
+        ASSERT_EQ(sprite->y(), -100.025);
+    }
+
+    EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+
+    {
+        auto sprite = std::make_shared<Sprite>();
+        sprite->setName("abc");
+        sprite->setEngine(&m_engineMock);
+        sprite->setX(70.1);
+        sprite->setY(-100.025);
+
+        auto stage = std::make_shared<Stage>();
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addValueInput("TO", "_stage_");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, sprite.get());
+        auto code = compiler.compile(block);
+        Script script(sprite.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(sprite.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
+        EXPECT_CALL(timer, start).Times(0);
+
+        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(0));
+        EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(stage.get()));
+        code->run(ctx.get());
+        ASSERT_EQ(sprite->x(), 70.1);
+        ASSERT_EQ(sprite->y(), -100.025);
+    }
+
+    EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+
+    {
+        auto stage = std::make_shared<Stage>();
+
+        auto sprite = std::make_shared<Sprite>();
+        sprite->setName("Test");
+        sprite->setEngine(&m_engineMock);
+        sprite->setX(153.2);
+        sprite->setY(59.27);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addDropdownInput("TO", "Test");
+        auto block = builder.currentBlock();
+
+        EXPECT_CALL(m_engineMock, findTarget("Test")).WillOnce(Return(9));
+        EXPECT_CALL(m_engineMock, targetAt(9)).WillOnce(Return(sprite.get()));
+        Compiler compiler(&m_engineMock, stage.get());
+        auto code = compiler.compile(block);
+        Script script(stage.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(stage.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
+
+        EXPECT_CALL(timer, start(2.5));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(1.3));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+    }
+
+    {
+        auto stage = std::make_shared<Stage>();
+
+        auto sprite = std::make_shared<Sprite>();
+        sprite->setName("Test");
+        sprite->setEngine(&m_engineMock);
+        sprite->setX(153.2);
+        sprite->setY(59.27);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("motion_glideto");
+        builder.addValueInput("SECS", 2.5);
+        builder.addValueInput("TO", "Test");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, stage.get());
+        auto code = compiler.compile(block);
+        Script script(stage.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(stage.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
+
+        EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
+
+        EXPECT_CALL(m_engineMock, findTarget("Test")).WillOnce(Return(9));
+        EXPECT_CALL(m_engineMock, targetAt(9)).WillOnce(Return(sprite.get()));
+        EXPECT_CALL(timer, start(2.5));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(1.3));
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(timer, elapsedTime()).WillOnce(Return(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+    }
+}

@@ -46,6 +46,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_gotoxy", &compileGoToXY);
     engine->addCompileFunction(this, "motion_goto", &compileGoTo);
     engine->addCompileFunction(this, "motion_glidesecstoxy", &compileGlideSecsToXY);
+    engine->addCompileFunction(this, "motion_glideto", &compileGlideTo);
 }
 
 CompilerValue *MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -174,6 +175,73 @@ CompilerValue *MotionBlocks::compileGlideSecsToXY(Compiler *compiler)
     CompilerValue *elapsed = compiler->addFunctionCallWithCtx("motion_glide", Compiler::StaticType::Bool, { numType, numType, numType, numType, numType }, { duration, startX, startY, endX, endY });
     compiler->beginRepeatUntilLoop(elapsed);
     compiler->endLoop();
+
+    return nullptr;
+}
+
+CompilerValue *MotionBlocks::compileGlideTo(Compiler *compiler)
+{
+    Target *target = compiler->target();
+    CompilerValue *duration = compiler->addInput("SECS");
+    CompilerValue *startX = target->isStage() ? compiler->addConstValue(0) : compiler->addTargetFunctionCall("motion_xposition", Compiler::StaticType::Number);
+    CompilerValue *startY = target->isStage() ? compiler->addConstValue(0) : compiler->addTargetFunctionCall("motion_yposition", Compiler::StaticType::Number);
+    CompilerValue *endX = target->isStage() ? compiler->addConstValue(0) : nullptr;
+    CompilerValue *endY = target->isStage() ? compiler->addConstValue(0) : nullptr;
+
+    Input *input = compiler->input("TO");
+    bool ifStatement = false;
+
+    if (input->pointsToDropdownMenu()) {
+        std::string value = input->selectedMenuItem();
+
+        if (value == "_mouse_") {
+            if (!target->isStage()) {
+                endX = compiler->addFunctionCallWithCtx("motion_get_mouse_x", Compiler::StaticType::Number);
+                endY = compiler->addFunctionCallWithCtx("motion_get_mouse_y", Compiler::StaticType::Number);
+            }
+        } else if (value == "_random_") {
+            if (!target->isStage()) {
+                endX = compiler->addFunctionCallWithCtx("motion_get_random_x", Compiler::StaticType::Number);
+                endY = compiler->addFunctionCallWithCtx("motion_get_random_y", Compiler::StaticType::Number);
+            }
+        } else {
+            int index = compiler->engine()->findTarget(value);
+            Target *anotherTarget = compiler->engine()->targetAt(index);
+
+            if (anotherTarget && !anotherTarget->isStage()) {
+                if (!target->isStage()) {
+                    endX = compiler->addFunctionCallWithCtx("motion_get_sprite_x_by_index", Compiler::StaticType::Number, { Compiler::StaticType::Number }, { compiler->addConstValue(index) });
+                    endY = compiler->addFunctionCallWithCtx("motion_get_sprite_y_by_index", Compiler::StaticType::Number, { Compiler::StaticType::Number }, { compiler->addConstValue(index) });
+                }
+            } else
+                return nullptr;
+        }
+    } else {
+        CompilerValue *to = compiler->addInput(input);
+        CompilerValue *valid = compiler->addFunctionCallWithCtx("motion_is_target_valid", Compiler::StaticType::Bool, { Compiler::StaticType::String }, { to });
+        ifStatement = true;
+        compiler->beginIfStatement(valid);
+
+        if (!target->isStage()) {
+            endX = compiler->addFunctionCallWithCtx("motion_get_target_x", Compiler::StaticType::Number, { Compiler::StaticType::String }, { to });
+            endY = compiler->addFunctionCallWithCtx("motion_get_target_y", Compiler::StaticType::Number, { Compiler::StaticType::String }, { to });
+        }
+    }
+
+    assert(endX && endY);
+    assert(!target->isStage() || (target->isStage() && endX->isConst() && endY->isConst()));
+
+    compiler->addFunctionCallWithCtx("motion_start_glide", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { duration });
+    compiler->createYield();
+
+    compiler->beginLoopCondition();
+    auto numType = Compiler::StaticType::Number;
+    CompilerValue *elapsed = compiler->addFunctionCallWithCtx("motion_glide", Compiler::StaticType::Bool, { numType, numType, numType, numType, numType }, { duration, startX, startY, endX, endY });
+    compiler->beginRepeatUntilLoop(elapsed);
+    compiler->endLoop();
+
+    if (ifStatement)
+        compiler->endIf();
 
     return nullptr;
 }
@@ -341,6 +409,104 @@ extern "C" bool motion_glide(ExecutionContext *ctx, double duration, double star
         }
 
         return false;
+    }
+}
+
+extern "C" double motion_get_mouse_x(ExecutionContext *ctx)
+{
+    return ctx->engine()->mouseX();
+}
+
+extern "C" double motion_get_mouse_y(ExecutionContext *ctx)
+{
+    return ctx->engine()->mouseY();
+}
+
+extern "C" double motion_get_random_x(ExecutionContext *ctx)
+{
+    const int stageWidth = ctx->engine()->stageWidth();
+    return ctx->rng()->randintDouble(-stageWidth / 2.0, stageWidth / 2.0);
+}
+
+extern "C" double motion_get_random_y(ExecutionContext *ctx)
+{
+    const int stageHeight = ctx->engine()->stageHeight();
+    return ctx->rng()->randintDouble(-stageHeight / 2.0, stageHeight / 2.0);
+}
+
+extern "C" double motion_get_sprite_x_by_index(ExecutionContext *ctx, double index)
+{
+    assert(!ctx->engine()->targetAt(index)->isStage());
+    Sprite *sprite = static_cast<Sprite *>(ctx->engine()->targetAt(index));
+    return sprite->x();
+}
+
+extern "C" double motion_get_sprite_y_by_index(ExecutionContext *ctx, double index)
+{
+    assert(!ctx->engine()->targetAt(index)->isStage());
+    Sprite *sprite = static_cast<Sprite *>(ctx->engine()->targetAt(index));
+    return sprite->y();
+}
+
+extern "C" double motion_get_target_x(ExecutionContext *ctx, const StringPtr *name)
+{
+    static const StringPtr MOUSE_STR("_mouse_");
+    static const StringPtr RANDOM_STR("_random_");
+
+    if (string_compare_case_sensitive(name, &MOUSE_STR) == 0)
+        return ctx->engine()->mouseX();
+    else if (string_compare_case_sensitive(name, &RANDOM_STR) == 0)
+        return motion_get_random_x(ctx);
+    else {
+        // TODO: Use UTF-16 in engine
+        std::string u8name = utf8::utf16to8(std::u16string(name->data));
+        IEngine *engine = ctx->engine();
+        Target *target = engine->targetAt(engine->findTarget(u8name));
+
+        if (target && !target->isStage()) {
+            Sprite *sprite = static_cast<Sprite *>(target);
+            return sprite->x();
+        } else
+            return 0;
+    }
+}
+
+extern "C" double motion_get_target_y(ExecutionContext *ctx, const StringPtr *name)
+{
+    static const StringPtr MOUSE_STR("_mouse_");
+    static const StringPtr RANDOM_STR("_random_");
+
+    if (string_compare_case_sensitive(name, &MOUSE_STR) == 0)
+        return ctx->engine()->mouseY();
+    else if (string_compare_case_sensitive(name, &RANDOM_STR) == 0)
+        return motion_get_random_y(ctx);
+    else {
+        // TODO: Use UTF-16 in engine
+        std::string u8name = utf8::utf16to8(std::u16string(name->data));
+        IEngine *engine = ctx->engine();
+        Target *target = engine->targetAt(engine->findTarget(u8name));
+
+        if (target && !target->isStage()) {
+            Sprite *sprite = static_cast<Sprite *>(target);
+            return sprite->y();
+        } else
+            return 0;
+    }
+}
+
+extern "C" bool motion_is_target_valid(ExecutionContext *ctx, const StringPtr *name)
+{
+    static const StringPtr MOUSE_STR("_mouse_");
+    static const StringPtr RANDOM_STR("_random_");
+
+    if (string_compare_case_sensitive(name, &MOUSE_STR) == 0 || string_compare_case_sensitive(name, &RANDOM_STR) == 0)
+        return true;
+    else {
+        // TODO: Use UTF-16 in engine
+        std::string u8name = utf8::utf16to8(std::u16string(name->data));
+        IEngine *engine = ctx->engine();
+        Target *target = engine->targetAt(engine->findTarget(u8name));
+        return (target && !target->isStage());
     }
 }
 
