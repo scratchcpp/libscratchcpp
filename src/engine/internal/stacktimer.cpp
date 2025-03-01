@@ -43,3 +43,11 @@ bool StackTimer::elapsed() const
 
     return std::chrono::duration_cast<std::chrono::milliseconds>(m_clock->currentSteadyTime() - m_startTime).count() >= m_timeLimit;
 }
+
+double StackTimer::elapsedTime() const
+{
+    if (m_stopped)
+        return 0;
+
+    return std::chrono::duration_cast<std::chrono::milliseconds>(m_clock->currentSteadyTime() - m_startTime).count() / 1000.0;
+}
