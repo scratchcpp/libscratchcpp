@@ -31,6 +31,7 @@ class MotionBlocks : public IExtension
         static CompilerValue *compileChangeYBy(Compiler *compiler);
         static CompilerValue *compileSetY(Compiler *compiler);
         static CompilerValue *compileIfOnEdgeBounce(Compiler *compiler);
+        static CompilerValue *compileSetRotationStyle(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

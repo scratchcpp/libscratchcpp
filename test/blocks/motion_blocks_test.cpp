@@ -1822,3 +1822,83 @@ TEST_F(MotionBlocksTest, IfOnEdgeBounce)
         builder.run();
     }
 }
+
+TEST_F(MotionBlocksTest, SetRotationStyle)
+{
+    // left-right
+    {
+        auto sprite = std::make_shared<Sprite>();
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("motion_setrotationstyle");
+        builder.addDropdownField("STYLE", "left-right");
+
+        builder.build();
+        builder.run();
+        ASSERT_EQ(sprite->rotationStyle(), Sprite::RotationStyle::LeftRight);
+    }
+
+    m_engine->clear();
+
+    // don't rotate
+    {
+        auto sprite = std::make_shared<Sprite>();
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("motion_setrotationstyle");
+        builder.addDropdownField("STYLE", "don't rotate");
+
+        builder.build();
+        builder.run();
+        ASSERT_EQ(sprite->rotationStyle(), Sprite::RotationStyle::DoNotRotate);
+    }
+
+    m_engine->clear();
+
+    // all around
+    {
+        auto sprite = std::make_shared<Sprite>();
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("motion_setrotationstyle");
+        builder.addDropdownField("STYLE", "all around");
+        builder.build();
+
+        sprite->setRotationStyle(Sprite::RotationStyle::DoNotRotate);
+        builder.run();
+        ASSERT_EQ(sprite->rotationStyle(), Sprite::RotationStyle::AllAround);
+    }
+
+    m_engine->clear();
+
+    // invalid
+    {
+        auto sprite = std::make_shared<Sprite>();
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("motion_setrotationstyle");
+        builder.addDropdownField("STYLE", "invalid");
+        builder.build();
+
+        sprite->setRotationStyle(Sprite::RotationStyle::LeftRight);
+        builder.run();
+        ASSERT_EQ(sprite->rotationStyle(), Sprite::RotationStyle::LeftRight);
+
+        sprite->setRotationStyle(Sprite::RotationStyle::AllAround);
+        builder.run();
+        ASSERT_EQ(sprite->rotationStyle(), Sprite::RotationStyle::AllAround);
+    }
+
+    m_engine->clear();
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("motion_setrotationstyle");
+        builder.addDropdownField("STYLE", "all around");
+
+        builder.build();
+        builder.run();
+    }
+}

@@ -5,6 +5,7 @@
 #include <scratchcpp/compilerconstant.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/input.h>
+#include <scratchcpp/field.h>
 #include <scratchcpp/value.h>
 #include <scratchcpp/executioncontext.h>
 #include <scratchcpp/thread.h>
@@ -52,6 +53,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_changeyby", &compileChangeYBy);
     engine->addCompileFunction(this, "motion_sety", &compileSetY);
     engine->addCompileFunction(this, "motion_ifonedgebounce", &compileIfOnEdgeBounce);
+    engine->addCompileFunction(this, "motion_setrotationstyle", &compileSetRotationStyle);
 }
 
 CompilerValue *MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -295,6 +297,32 @@ CompilerValue *MotionBlocks::compileIfOnEdgeBounce(Compiler *compiler)
 {
     if (!compiler->target()->isStage())
         compiler->addTargetFunctionCall("motion_ifonedgebounce");
+
+    return nullptr;
+}
+
+CompilerValue *MotionBlocks::compileSetRotationStyle(Compiler *compiler)
+{
+    Target *target = compiler->target();
+
+    if (target->isStage())
+        return nullptr;
+
+    Sprite *sprite = static_cast<Sprite *>(target);
+    Field *field = compiler->field("STYLE");
+
+    if (!field)
+        return nullptr;
+
+    std::string option = field->value().toString();
+    sprite->setRotationStyle(field->value().toString());
+
+    if (option == "left-right")
+        compiler->addTargetFunctionCall("motion_set_left_right_style");
+    else if (option == "don't rotate")
+        compiler->addTargetFunctionCall("motion_set_do_not_rotate_style");
+    else if (option == "all around")
+        compiler->addTargetFunctionCall("motion_set_all_around_style");
 
     return nullptr;
 }
@@ -665,6 +693,21 @@ extern "C" void motion_ifonedgebounce(Sprite *sprite)
     double fencedX, fencedY;
     sprite->keepInFence(sprite->x(), sprite->y(), &fencedX, &fencedY);
     sprite->setPosition(fencedX, fencedY);
+}
+
+extern "C" void motion_set_left_right_style(Sprite *sprite)
+{
+    sprite->setRotationStyle(Sprite::RotationStyle::LeftRight);
+}
+
+extern "C" void motion_set_do_not_rotate_style(Sprite *sprite)
+{
+    sprite->setRotationStyle(Sprite::RotationStyle::DoNotRotate);
+}
+
+extern "C" void motion_set_all_around_style(Sprite *sprite)
+{
+    sprite->setRotationStyle(Sprite::RotationStyle::AllAround);
 }
 
 extern "C" double motion_xposition(Sprite *sprite)
