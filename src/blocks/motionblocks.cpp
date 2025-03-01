@@ -47,6 +47,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_goto", &compileGoTo);
     engine->addCompileFunction(this, "motion_glidesecstoxy", &compileGlideSecsToXY);
     engine->addCompileFunction(this, "motion_glideto", &compileGlideTo);
+    engine->addCompileFunction(this, "motion_changexby", &compileChangeXBy);
 }
 
 CompilerValue *MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -242,6 +243,16 @@ CompilerValue *MotionBlocks::compileGlideTo(Compiler *compiler)
 
     if (ifStatement)
         compiler->endIf();
+
+    return nullptr;
+}
+
+CompilerValue *MotionBlocks::compileChangeXBy(Compiler *compiler)
+{
+    if (!compiler->target()->isStage()) {
+        CompilerValue *dx = compiler->addInput("DX");
+        compiler->addTargetFunctionCall("motion_changexby", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { dx });
+    }
 
     return nullptr;
 }
@@ -508,6 +519,11 @@ extern "C" bool motion_is_target_valid(ExecutionContext *ctx, const StringPtr *n
         Target *target = engine->targetAt(engine->findTarget(u8name));
         return (target && !target->isStage());
     }
+}
+
+extern "C" void motion_changexby(Sprite *sprite, double dx)
+{
+    sprite->setX(sprite->x() + dx);
 }
 
 extern "C" double motion_xposition(Sprite *sprite)
