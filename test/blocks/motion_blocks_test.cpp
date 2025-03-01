@@ -224,7 +224,7 @@ TEST_F(MotionBlocksTest, PointTowardsMouse)
     }
 }
 
-TEST_F(MotionBlocksTest, PointTowardsRandomPosition)
+TEST_F(MotionBlocksTest, PointTowardsRandomDirection)
 {
     {
         auto sprite = std::make_shared<Sprite>();
@@ -247,12 +247,9 @@ TEST_F(MotionBlocksTest, PointTowardsRandomPosition)
         RandomGeneratorMock rng;
         ctx->setRng(&rng);
 
-        EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(640));
-        EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(500));
-        EXPECT_CALL(rng, randintDouble(-320, 320)).WillOnce(Return(95.2));
-        EXPECT_CALL(rng, randintDouble(-250, 250)).WillOnce(Return(-100.025));
+        EXPECT_CALL(rng, randint(-180, 179)).WillOnce(Return(95));
         code->run(ctx.get());
-        ASSERT_EQ(std::round(sprite->direction() * 100) / 100, 90);
+        ASSERT_EQ(sprite->direction(), 95);
     }
 
     {
@@ -276,12 +273,9 @@ TEST_F(MotionBlocksTest, PointTowardsRandomPosition)
         RandomGeneratorMock rng;
         ctx->setRng(&rng);
 
-        EXPECT_CALL(m_engineMock, stageWidth()).WillOnce(Return(640));
-        EXPECT_CALL(m_engineMock, stageHeight()).WillOnce(Return(500));
-        EXPECT_CALL(rng, randintDouble(-320, 320)).WillOnce(Return(-21.28));
-        EXPECT_CALL(rng, randintDouble(-250, 250)).WillOnce(Return(-100.025));
+        EXPECT_CALL(rng, randint(-180, 179)).WillOnce(Return(-42));
         code->run(ctx.get());
-        ASSERT_EQ(std::round(sprite->direction() * 100) / 100, -90);
+        ASSERT_EQ(sprite->direction(), -42);
     }
 
     {

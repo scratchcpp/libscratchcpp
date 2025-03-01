@@ -112,7 +112,7 @@ CompilerValue *MotionBlocks::compilePointTowards(Compiler *compiler)
         if (value == "_mouse_")
             compiler->addTargetFunctionCall("motion_point_towards_mouse");
         else if (value == "_random_")
-            compiler->addFunctionCallWithCtx("motion_point_towards_random_pos");
+            compiler->addFunctionCallWithCtx("motion_point_towards_random_direction");
         else {
             int index = compiler->engine()->findTarget(value);
             Target *anotherTarget = compiler->engine()->targetAt(index);
@@ -398,14 +398,11 @@ extern "C" void motion_point_towards_mouse(Sprite *sprite)
     motion_point_towards_pos(sprite, engine->mouseX(), engine->mouseY());
 }
 
-extern "C" void motion_point_towards_random_pos(ExecutionContext *ctx)
+extern "C" void motion_point_towards_random_direction(ExecutionContext *ctx)
 {
     Sprite *sprite = static_cast<Sprite *>(ctx->thread()->target());
-    IEngine *engine = ctx->engine();
-    const int stageWidth = engine->stageWidth();
-    const int stageHeight = engine->stageHeight();
     IRandomGenerator *rng = ctx->rng();
-    motion_point_towards_pos(sprite, rng->randintDouble(-stageWidth / 2.0, stageWidth / 2.0), rng->randintDouble(-stageHeight / 2.0, stageHeight / 2.0));
+    sprite->setDirection(rng->randint(-180, 179));
 }
 
 extern "C" void motion_point_towards_target_by_index(Sprite *sprite, double index)
@@ -424,7 +421,7 @@ extern "C" void motion_pointtowards(ExecutionContext *ctx, const StringPtr *towa
     if (string_compare_case_sensitive(towards, &MOUSE_STR) == 0)
         motion_point_towards_mouse(sprite);
     else if (string_compare_case_sensitive(towards, &RANDOM_STR) == 0)
-        motion_point_towards_random_pos(ctx);
+        motion_point_towards_random_direction(ctx);
     else {
         // TODO: Use UTF-16 in engine
         std::string u8name = utf8::utf16to8(std::u16string(towards->data));
