@@ -1979,3 +1979,41 @@ TEST_F(MotionBlocksTest, YPosition)
         ASSERT_EQ(Value(list->data()[0]).toDouble(), 0);
     }
 }
+
+TEST_F(MotionBlocksTest, Direction)
+{
+    {
+        auto sprite = std::make_shared<Sprite>();
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("motion_direction");
+        builder.captureBlockReturnValue();
+        builder.build();
+
+        sprite->setX(5.2);
+        sprite->setY(-0.25);
+        sprite->setDirection(-61.42);
+        builder.run();
+
+        List *list = builder.capturedValues();
+        ASSERT_EQ(list->size(), 1);
+        ASSERT_EQ(Value(list->data()[0]).toDouble(), -61.42);
+    }
+
+    m_engine->clear();
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("motion_direction");
+        builder.captureBlockReturnValue();
+
+        builder.build();
+        builder.run();
+
+        List *list = builder.capturedValues();
+        ASSERT_EQ(list->size(), 1);
+        ASSERT_EQ(Value(list->data()[0]).toDouble(), 90);
+    }
+}

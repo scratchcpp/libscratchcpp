@@ -56,6 +56,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_setrotationstyle", &compileSetRotationStyle);
     engine->addCompileFunction(this, "motion_xposition", &compileXPosition);
     engine->addCompileFunction(this, "motion_yposition", &compileYPosition);
+    engine->addCompileFunction(this, "motion_direction", &compileDirection);
 }
 
 CompilerValue *MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -343,6 +344,14 @@ CompilerValue *MotionBlocks::compileYPosition(Compiler *compiler)
         return compiler->addConstValue(0);
     else
         return compiler->addTargetFunctionCall("motion_yposition", Compiler::StaticType::Number);
+}
+
+CompilerValue *MotionBlocks::compileDirection(Compiler *compiler)
+{
+    if (compiler->target()->isStage())
+        return compiler->addConstValue(90);
+    else
+        return compiler->addTargetFunctionCall("motion_direction", Compiler::StaticType::Number);
 }
 
 extern "C" void motion_movesteps(Sprite *sprite, double steps)
@@ -736,4 +745,9 @@ extern "C" double motion_xposition(Sprite *sprite)
 extern "C" double motion_yposition(Sprite *sprite)
 {
     return sprite->y();
+}
+
+extern "C" double motion_direction(Sprite *sprite)
+{
+    return sprite->direction();
 }
