@@ -48,6 +48,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_glidesecstoxy", &compileGlideSecsToXY);
     engine->addCompileFunction(this, "motion_glideto", &compileGlideTo);
     engine->addCompileFunction(this, "motion_changexby", &compileChangeXBy);
+    engine->addCompileFunction(this, "motion_setx", &compileSetX);
 }
 
 CompilerValue *MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -252,6 +253,16 @@ CompilerValue *MotionBlocks::compileChangeXBy(Compiler *compiler)
     if (!compiler->target()->isStage()) {
         CompilerValue *dx = compiler->addInput("DX");
         compiler->addTargetFunctionCall("motion_changexby", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { dx });
+    }
+
+    return nullptr;
+}
+
+CompilerValue *MotionBlocks::compileSetX(Compiler *compiler)
+{
+    if (!compiler->target()->isStage()) {
+        CompilerValue *x = compiler->addInput("X");
+        compiler->addTargetFunctionCall("motion_setx", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { x });
     }
 
     return nullptr;
@@ -524,6 +535,11 @@ extern "C" bool motion_is_target_valid(ExecutionContext *ctx, const StringPtr *n
 extern "C" void motion_changexby(Sprite *sprite, double dx)
 {
     sprite->setX(sprite->x() + dx);
+}
+
+extern "C" void motion_setx(Sprite *sprite, double x)
+{
+    sprite->setX(x);
 }
 
 extern "C" double motion_xposition(Sprite *sprite)
