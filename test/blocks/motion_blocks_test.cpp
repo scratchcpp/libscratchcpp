@@ -1664,3 +1664,36 @@ TEST_F(MotionBlocksTest, SetX)
         builder.run();
     }
 }
+
+TEST_F(MotionBlocksTest, ChangeYBy)
+{
+    {
+        auto sprite = std::make_shared<Sprite>();
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("motion_changeyby");
+        builder.addValueInput("DY", 30.25);
+
+        sprite->setX(5.2);
+        sprite->setY(-0.25);
+        sprite->setDirection(-61.42);
+
+        builder.build();
+        builder.run();
+        ASSERT_EQ(sprite->x(), 5.2);
+        ASSERT_EQ(sprite->y(), 30);
+    }
+
+    m_engine->clear();
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("motion_changeyby");
+        builder.addValueInput("DY", 30.25);
+
+        builder.build();
+        builder.run();
+    }
+}
