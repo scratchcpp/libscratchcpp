@@ -55,6 +55,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_ifonedgebounce", &compileIfOnEdgeBounce);
     engine->addCompileFunction(this, "motion_setrotationstyle", &compileSetRotationStyle);
     engine->addCompileFunction(this, "motion_xposition", &compileXPosition);
+    engine->addCompileFunction(this, "motion_yposition", &compileYPosition);
 }
 
 CompilerValue *MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -334,6 +335,14 @@ CompilerValue *MotionBlocks::compileXPosition(Compiler *compiler)
         return compiler->addConstValue(0);
     else
         return compiler->addTargetFunctionCall("motion_xposition", Compiler::StaticType::Number);
+}
+
+CompilerValue *MotionBlocks::compileYPosition(Compiler *compiler)
+{
+    if (compiler->target()->isStage())
+        return compiler->addConstValue(0);
+    else
+        return compiler->addTargetFunctionCall("motion_yposition", Compiler::StaticType::Number);
 }
 
 extern "C" void motion_movesteps(Sprite *sprite, double steps)
