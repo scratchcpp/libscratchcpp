@@ -50,6 +50,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_changexby", &compileChangeXBy);
     engine->addCompileFunction(this, "motion_setx", &compileSetX);
     engine->addCompileFunction(this, "motion_changeyby", &compileChangeYBy);
+    engine->addCompileFunction(this, "motion_sety", &compileSetY);
 }
 
 CompilerValue *MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -274,6 +275,16 @@ CompilerValue *MotionBlocks::compileChangeYBy(Compiler *compiler)
     if (!compiler->target()->isStage()) {
         CompilerValue *dy = compiler->addInput("DY");
         compiler->addTargetFunctionCall("motion_changeyby", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { dy });
+    }
+
+    return nullptr;
+}
+
+CompilerValue *MotionBlocks::compileSetY(Compiler *compiler)
+{
+    if (!compiler->target()->isStage()) {
+        CompilerValue *y = compiler->addInput("Y");
+        compiler->addTargetFunctionCall("motion_sety", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { y });
     }
 
     return nullptr;
@@ -556,6 +567,11 @@ extern "C" void motion_setx(Sprite *sprite, double x)
 extern "C" void motion_changeyby(Sprite *sprite, double dy)
 {
     sprite->setY(sprite->y() + dy);
+}
+
+extern "C" void motion_sety(Sprite *sprite, double y)
+{
+    sprite->setY(y);
 }
 
 extern "C" double motion_xposition(Sprite *sprite)
