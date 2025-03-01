@@ -7,6 +7,7 @@
 #include <scratchcpp/thread.h>
 #include <scratchcpp/executablecode.h>
 #include <scratchcpp/executioncontext.h>
+#include <scratchcpp/list.h>
 #include <enginemock.h>
 #include <randomgeneratormock.h>
 #include <stacktimermock.h>
@@ -1900,5 +1901,43 @@ TEST_F(MotionBlocksTest, SetRotationStyle)
 
         builder.build();
         builder.run();
+    }
+}
+
+TEST_F(MotionBlocksTest, XPosition)
+{
+    {
+        auto sprite = std::make_shared<Sprite>();
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("motion_xposition");
+        builder.captureBlockReturnValue();
+        builder.build();
+
+        sprite->setX(5.2);
+        sprite->setY(-0.25);
+        sprite->setDirection(-61.42);
+        builder.run();
+
+        List *list = builder.capturedValues();
+        ASSERT_EQ(list->size(), 1);
+        ASSERT_EQ(Value(list->data()[0]).toDouble(), 5.2);
+    }
+
+    m_engine->clear();
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("motion_xposition");
+        builder.captureBlockReturnValue();
+
+        builder.build();
+        builder.run();
+
+        List *list = builder.capturedValues();
+        ASSERT_EQ(list->size(), 1);
+        ASSERT_EQ(Value(list->data()[0]).toDouble(), 0);
     }
 }
