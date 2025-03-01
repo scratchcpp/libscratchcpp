@@ -51,6 +51,7 @@ void MotionBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "motion_setx", &compileSetX);
     engine->addCompileFunction(this, "motion_changeyby", &compileChangeYBy);
     engine->addCompileFunction(this, "motion_sety", &compileSetY);
+    engine->addCompileFunction(this, "motion_ifonedgebounce", &compileIfOnEdgeBounce);
 }
 
 CompilerValue *MotionBlocks::compileMoveSteps(Compiler *compiler)
@@ -286,6 +287,14 @@ CompilerValue *MotionBlocks::compileSetY(Compiler *compiler)
         CompilerValue *y = compiler->addInput("Y");
         compiler->addTargetFunctionCall("motion_sety", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { y });
     }
+
+    return nullptr;
+}
+
+CompilerValue *MotionBlocks::compileIfOnEdgeBounce(Compiler *compiler)
+{
+    if (!compiler->target()->isStage())
+        compiler->addTargetFunctionCall("motion_ifonedgebounce");
 
     return nullptr;
 }
@@ -572,6 +581,90 @@ extern "C" void motion_changeyby(Sprite *sprite, double dy)
 extern "C" void motion_sety(Sprite *sprite, double y)
 {
     sprite->setY(y);
+}
+
+extern "C" void motion_ifonedgebounce(Sprite *sprite)
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/c37745e97e6d8a77ad1dc31a943ea728dd17ba78/src/blocks/scratch3_motion.js#L186-L240
+    IEngine *engine = sprite->engine();
+    Rect bounds = sprite->boundingRect();
+
+    // Measure distance to edges
+    // Values are zero when the sprite is beyond
+    double stageWidth = engine->stageWidth();
+    double stageHeight = engine->stageHeight();
+    double distLeft = std::max(0.0, (stageWidth / 2.0) + bounds.left());
+    double distTop = std::max(0.0, (stageHeight / 2.0) - bounds.top());
+    double distRight = std::max(0.0, (stageWidth / 2.0) - bounds.right());
+    double distBottom = std::max(0.0, (stageHeight / 2.0) + bounds.bottom());
+
+    // Find the nearest edge
+    // 1 - left
+    // 2 - top
+    // 3 - right
+    // 4 - bottom
+    unsigned short nearestEdge = 0;
+    double minDist = std::numeric_limits<double>::infinity();
+
+    if (distLeft < minDist) {
+        minDist = distLeft;
+        nearestEdge = 1;
+    }
+
+    if (distTop < minDist) {
+        minDist = distTop;
+        nearestEdge = 2;
+    }
+
+    if (distRight < minDist) {
+        minDist = distRight;
+        nearestEdge = 3;
+    }
+
+    if (distBottom < minDist) {
+        minDist = distBottom;
+        nearestEdge = 4;
+    }
+
+    if (minDist > 0)
+        return; // Not touching any edge
+
+    assert(nearestEdge != 0);
+
+    // Point away from the nearest edge
+    double radians = (90 - sprite->direction()) * pi / 180;
+    double dx = std::cos(radians);
+    double dy = -std::sin(radians);
+
+    switch (nearestEdge) {
+        case 1:
+            // Left
+            dx = std::max(0.2, std::abs(dx));
+            break;
+
+        case 2:
+            // Top
+            dy = std::max(0.2, std::abs(dy));
+            break;
+
+        case 3:
+            // Right
+            dx = 0 - std::max(0.2, std::abs(dx));
+            break;
+
+        case 4:
+            // Bottom
+            dy = 0 - std::max(0.2, std::abs(dy));
+            break;
+    }
+
+    double newDirection = (180 / pi) * (std::atan2(dy, dx)) + 90;
+    sprite->setDirection(newDirection);
+
+    // Keep within the stage
+    double fencedX, fencedY;
+    sprite->keepInFence(sprite->x(), sprite->y(), &fencedX, &fencedY);
+    sprite->setPosition(fencedX, fencedY);
 }
 
 extern "C" double motion_xposition(Sprite *sprite)

@@ -10,6 +10,7 @@
 #include <enginemock.h>
 #include <randomgeneratormock.h>
 #include <stacktimermock.h>
+#include <spritehandlermock.h>
 
 #include "../common.h"
 #include "blocks/motionblocks.h"
@@ -1725,6 +1726,97 @@ TEST_F(MotionBlocksTest, SetY)
 
         builder.addBlock("motion_sety");
         builder.addValueInput("Y", 30.25);
+
+        builder.build();
+        builder.run();
+    }
+}
+
+TEST_F(MotionBlocksTest, IfOnEdgeBounce)
+{
+    {
+        auto sprite = std::make_shared<Sprite>();
+        SpriteHandlerMock handler;
+        sprite->setInterface(&handler);
+        sprite->setEngine(&m_engineMock);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("motion_ifonedgebounce");
+        auto block = builder.currentBlock();
+
+        Compiler compiler(&m_engineMock, sprite.get());
+        auto code = compiler.compile(block);
+        Script script(sprite.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(sprite.get(), &m_engineMock, &script);
+
+        EXPECT_CALL(m_engineMock, stageWidth()).WillRepeatedly(Return(480));
+        EXPECT_CALL(m_engineMock, stageHeight()).WillRepeatedly(Return(360));
+        EXPECT_CALL(m_engineMock, spriteFencingEnabled()).WillRepeatedly(Return(false));
+
+        // No edge
+        EXPECT_CALL(handler, boundingRect()).WillOnce(Return(Rect(80, 80, 120, 40)));
+        sprite->setX(100);
+        sprite->setY(60);
+        sprite->setDirection(-45);
+        thread.run();
+
+        ASSERT_EQ(sprite->x(), 100);
+        ASSERT_EQ(sprite->y(), 60);
+        ASSERT_EQ(sprite->direction(), -45);
+
+        // Left edge
+        EXPECT_CALL(handler, boundingRect()).Times(2).WillRepeatedly(Return(Rect(-260, 80, -220, 40)));
+        sprite->setX(-240);
+        sprite->setY(60);
+        thread.reset();
+        thread.run();
+
+        ASSERT_EQ(sprite->x(), -220);
+        ASSERT_EQ(sprite->y(), 60);
+        ASSERT_EQ(std::round(sprite->direction() * 100) / 100, 45);
+
+        // Top edge
+        EXPECT_CALL(handler, boundingRect()).Times(2).WillRepeatedly(Return(Rect(80, 200, 120, 160)));
+        sprite->setX(100);
+        sprite->setY(180);
+        sprite->setDirection(45);
+        thread.reset();
+        thread.run();
+
+        ASSERT_EQ(sprite->x(), 100);
+        ASSERT_EQ(sprite->y(), 160);
+        ASSERT_EQ(sprite->direction(), 135);
+
+        // Right edge
+        EXPECT_CALL(handler, boundingRect()).Times(2).WillRepeatedly(Return(Rect(220, 80, 260, 40)));
+        sprite->setX(240);
+        sprite->setY(60);
+        thread.reset();
+        thread.run();
+
+        ASSERT_EQ(sprite->x(), 220);
+        ASSERT_EQ(sprite->y(), 60);
+        ASSERT_EQ(sprite->direction(), -135);
+
+        // Bottom edge
+        EXPECT_CALL(handler, boundingRect()).Times(2).WillRepeatedly(Return(Rect(-120, -160, -80, -200)));
+        sprite->setX(-100);
+        sprite->setY(-180);
+        thread.reset();
+        thread.run();
+
+        ASSERT_EQ(sprite->x(), -100);
+        ASSERT_EQ(sprite->y(), -160);
+        ASSERT_EQ(std::round(sprite->direction() * 100) / 100, -45);
+    }
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("motion_ifonedgebounce");
 
         builder.build();
         builder.run();
