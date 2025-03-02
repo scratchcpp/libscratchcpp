@@ -201,7 +201,6 @@ class Engine : public IEngine
         std::vector<std::shared_ptr<Thread>> stepThreads();
         void stepThread(std::shared_ptr<Thread> thread);
         void eventLoop(bool untilProjectStops = false);
-        void finalize();
         void deleteClones();
         void removeExecutableClones();
         void addVarOrListMonitor(std::shared_ptr<Monitor> monitor, Target *target);

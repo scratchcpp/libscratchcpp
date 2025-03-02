@@ -592,7 +592,6 @@ void Engine::run()
 {
     start();
     eventLoop(true);
-    finalize();
 }
 
 void Engine::runEventLoop()
@@ -733,7 +732,11 @@ void Engine::eventLoop(bool untilProjectStops)
             m_clock->sleep(sleepTime);
     }
 
-    finalize();
+    m_eventLoopMutex.lock();
+    m_threads.clear();
+    m_running = false;
+    m_redrawRequested = false;
+    m_eventLoopMutex.unlock();
 }
 
 bool Engine::isRunning() const
@@ -1883,15 +1886,6 @@ void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
         std::cout << "warning: unsupported monitor block: " << block->opcode() << std::endl;
         m_unsupportedBlocks.insert(block->opcode());
     }
-}
-
-void Engine::finalize()
-{
-    m_eventLoopMutex.lock();
-    m_threads.clear();
-    m_running = false;
-    m_redrawRequested = false;
-    m_eventLoopMutex.unlock();
 }
 
 void Engine::deleteClones()
