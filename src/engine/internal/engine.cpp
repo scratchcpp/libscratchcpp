@@ -735,6 +735,7 @@ void Engine::eventLoop(bool untilProjectStops)
     m_eventLoopMutex.lock();
     m_threads.clear();
     m_running = false;
+    m_frameActivity = false;
     m_redrawRequested = false;
     m_eventLoopMutex.unlock();
 }
