@@ -40,7 +40,7 @@ TEST(DrawableTest, LayerOrder)
     ASSERT_EQ(drawable.layerOrder(), 0);
 }
 
-TEST(TargetTest, Engine)
+TEST(DrawableTest, Engine)
 {
     Drawable drawable;
     ASSERT_EQ(drawable.engine(), nullptr);
