@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/iengine.h>
+#include <scratchcpp/target.h>
+#include <scratchcpp/textbubble.h>
 #include "looksblocks.h"
 
 using namespace libscratchcpp;
@@ -21,4 +24,16 @@ Rgb LooksBlocks::color() const
 
 void LooksBlocks::registerBlocks(IEngine *engine)
 {
+}
+
+void LooksBlocks::onInit(IEngine *engine)
+{
+    engine->stopped().connect([engine]() {
+        const auto &targets = engine->targets();
+
+        for (auto target : targets) {
+            target->bubble()->setText("");
+            target->clearGraphicsEffects();
+        }
+    });
 }

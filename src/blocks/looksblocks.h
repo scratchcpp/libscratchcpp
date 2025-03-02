@@ -15,6 +15,7 @@ class LooksBlocks : public IExtension
         Rgb color() const override;
 
         void registerBlocks(IEngine *engine) override;
+        void onInit(IEngine *engine) override;
 };
 
 } // namespace libscratchcpp
