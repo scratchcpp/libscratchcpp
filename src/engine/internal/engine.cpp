@@ -636,7 +636,6 @@ void Engine::run()
 {
     start();
     eventLoop(true);
-    finalize();
 }
 
 void Engine::runEventLoop()
@@ -777,7 +776,11 @@ void Engine::eventLoop(bool untilProjectStops)
             m_clock->sleep(sleepTime);
     }
 
-    finalize();
+    m_eventLoopMutex.lock();
+    m_threads.clear();
+    m_running = false;
+    m_redrawRequested = false;
+    m_eventLoopMutex.unlock();
 }
 
 bool Engine::isRunning() const
@@ -1960,15 +1963,6 @@ void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
     for (const std::string &opcode : unsupportedBlocks)
         m_unsupportedBlocks.insert(opcode);
 #endif // USE_LLVM
-}
-
-void Engine::finalize()
-{
-    m_eventLoopMutex.lock();
-    m_threads.clear();
-    m_running = false;
-    m_redrawRequested = false;
-    m_eventLoopMutex.unlock();
 }
 
 void Engine::deleteClones()
