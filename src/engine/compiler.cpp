@@ -259,9 +259,14 @@ CompilerValue *Compiler::addInput(Input *input)
                 impl->block = input->valueBlock();
 
                 if (impl->block) {
-                    if (impl->block->compileFunction())
+                    if (impl->block->compileFunction()) {
                         ret = impl->block->compile(this);
-                    else {
+
+                        if (!ret) {
+                            std::cout << "warning: the compile function of '" << impl->block->opcode() << "' returns null" << std::endl;
+                            ret = addConstValue(Value());
+                        }
+                    } else {
                         std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
                         impl->unsupportedBlocks.insert(impl->block->opcode());
                         ret = addConstValue(Value());
@@ -269,6 +274,7 @@ CompilerValue *Compiler::addInput(Input *input)
                 } else
                     ret = addConstValue(input->primaryValue()->value());
 
+                assert(ret);
                 impl->block = previousBlock;
                 return ret;
             }
@@ -280,16 +286,28 @@ CompilerValue *Compiler::addInput(Input *input)
             impl->block = input->valueBlock();
 
             if (impl->block) {
-                if (impl->block->compileFunction())
+                if (impl->block->compileFunction()) {
                     ret = impl->block->compile(this);
-                else {
+
+                    if (!ret) {
+                        std::cout << "warning: the compile function of '" << impl->block->opcode() << "' returns null" << std::endl;
+                        ret = addConstValue(Value());
+                    }
+                } else {
                     std::cout << "warning: unsupported reporter block: " << impl->block->opcode() << std::endl;
                     impl->unsupportedBlocks.insert(impl->block->opcode());
                     ret = addConstValue(Value());
                 }
-            } else
+            } else {
                 ret = input->primaryValue()->compile(this);
 
+                if (!ret) {
+                    std::cout << "warning: input '" << input->name() << "' compiles to null" << std::endl;
+                    ret = addConstValue(Value());
+                }
+            }
+
+            assert(ret);
             impl->block = previousBlock;
             return ret;
         }

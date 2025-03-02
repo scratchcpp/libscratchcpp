@@ -1775,7 +1775,8 @@ TEST_F(CompilerTest, UnsupportedBlocks)
     block4->setParent(block3.get());
     block3->setNext(block4.get());
 
-    EXPECT_CALL(*m_builder, addConstValue).WillRepeatedly(Return(nullptr));
+    CompilerConstant constValue(Compiler::StaticType::Number, 5);
+    EXPECT_CALL(*m_builder, addConstValue).WillRepeatedly(Return(&constValue));
     compile(m_compiler.get(), block1.get());
 
     // Hat predicates
