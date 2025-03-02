@@ -1486,8 +1486,10 @@ void Engine::setExtensions(const std::vector<std::string> &newExtensions)
     // Register blocks of default extensions
     const auto &defaultExtensions = Blocks::extensions();
 
-    for (auto ext : defaultExtensions)
+    for (auto ext : defaultExtensions) {
         ext->registerBlocks(this);
+        ext->onInit(this);
+    }
 
     // Register blocks of custom extensions
     for (auto ext : m_extensions) {
