@@ -40,6 +40,7 @@ TEST(TextBubbleTest, BubbleText)
     EngineMock engine;
     bubble.setEngine(&engine);
     EXPECT_CALL(engine, moveDrawableToFront(&bubble));
+    EXPECT_CALL(engine, requestRedraw());
     bubble.setText("world");
     ASSERT_EQ(bubble.text(), "world");
     bubble.setEngine(nullptr);

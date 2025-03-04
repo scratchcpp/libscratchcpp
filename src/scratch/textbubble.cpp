@@ -75,8 +75,10 @@ void TextBubble::setText(const std::string &text)
     if (!impl->text.empty()) {
         IEngine *eng = engine();
 
-        if (eng)
+        if (eng) {
             eng->moveDrawableToFront(this);
+            eng->requestRedraw();
+        }
     }
 }
 
