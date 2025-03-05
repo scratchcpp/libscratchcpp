@@ -27,6 +27,7 @@ class LooksBlocks : public IExtension
         static CompilerValue *compileSayForSecs(Compiler *compiler);
         static CompilerValue *compileSay(Compiler *compiler);
         static CompilerValue *compileThinkForSecs(Compiler *compiler);
+        static CompilerValue *compileThink(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

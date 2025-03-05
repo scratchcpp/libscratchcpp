@@ -173,18 +173,28 @@ TEST_F(LooksBlocksTest, SayAndThinkForSecs)
     }
 }
 
-TEST_F(LooksBlocksTest, Say)
+TEST_F(LooksBlocksTest, SayAndThink)
 {
-    auto sprite = std::make_shared<Sprite>();
-    sprite->setEngine(&m_engineMock);
-    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    std::vector<TextBubble::Type> types = { TextBubble::Type::Say, TextBubble::Type::Think };
+    std::vector<std::string> opcodes = { "looks_say", "looks_think" };
 
-    builder.addBlock("looks_say");
-    builder.addValueInput("MESSAGE", "Hello world");
+    for (int i = 0; i < types.size(); i++) {
+        TextBubble::Type type = types[i];
+        const std::string &opcode = opcodes[i];
 
-    builder.build();
-    builder.run();
-    ASSERT_EQ(sprite->bubble()->text(), "Hello world");
-    ASSERT_EQ(sprite->bubble()->type(), TextBubble::Type::Say);
-    ASSERT_EQ(sprite->bubble()->owner(), nullptr);
+        auto sprite = std::make_shared<Sprite>();
+        sprite->setEngine(&m_engineMock);
+        m_engine->clear();
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock(opcode);
+        builder.addValueInput("MESSAGE", "Hello world");
+
+        builder.build();
+        builder.run();
+        ASSERT_EQ(sprite->bubble()->text(), "Hello world");
+        ASSERT_EQ(sprite->bubble()->type(), type);
+        ASSERT_EQ(sprite->bubble()->owner(), nullptr);
+    }
 }
