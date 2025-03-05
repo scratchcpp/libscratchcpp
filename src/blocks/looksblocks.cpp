@@ -33,6 +33,7 @@ Rgb LooksBlocks::color() const
 void LooksBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "looks_sayforsecs", &compileSayForSecs);
+    engine->addCompileFunction(this, "looks_say", &compileSay);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -78,6 +79,14 @@ void LooksBlocks::compileSayOrThinkForSecs(Compiler *compiler, const std::string
 CompilerValue *LooksBlocks::compileSayForSecs(Compiler *compiler)
 {
     compileSayOrThinkForSecs(compiler, "looks_say");
+    return nullptr;
+}
+
+CompilerValue *LooksBlocks::compileSay(Compiler *compiler)
+{
+    auto message = compiler->addInput("MESSAGE");
+    auto saveThread = compiler->addConstValue(false);
+    compiler->addFunctionCallWithCtx("looks_say", Compiler::StaticType::Void, { Compiler::StaticType::String, Compiler::StaticType::Bool }, { message, saveThread });
     return nullptr;
 }
 
