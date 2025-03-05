@@ -162,3 +162,19 @@ TEST_F(LooksBlocksTest, SayForSecs)
     ASSERT_EQ(sprite->bubble()->text(), "test");
     ASSERT_EQ(sprite->bubble()->type(), TextBubble::Type::Say);
 }
+
+TEST_F(LooksBlocksTest, Say)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_say");
+    builder.addValueInput("MESSAGE", "Hello world");
+
+    builder.build();
+    builder.run();
+    ASSERT_EQ(sprite->bubble()->text(), "Hello world");
+    ASSERT_EQ(sprite->bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(sprite->bubble()->owner(), nullptr);
+}
