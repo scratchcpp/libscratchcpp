@@ -35,6 +35,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_sayforsecs", &compileSayForSecs);
     engine->addCompileFunction(this, "looks_say", &compileSay);
     engine->addCompileFunction(this, "looks_thinkforsecs", &compileThinkForSecs);
+    engine->addCompileFunction(this, "looks_think", &compileThink);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -94,6 +95,14 @@ CompilerValue *LooksBlocks::compileSay(Compiler *compiler)
 CompilerValue *LooksBlocks::compileThinkForSecs(Compiler *compiler)
 {
     compileSayOrThinkForSecs(compiler, "looks_think");
+    return nullptr;
+}
+
+CompilerValue *LooksBlocks::compileThink(Compiler *compiler)
+{
+    auto message = compiler->addInput("MESSAGE");
+    auto saveThread = compiler->addConstValue(false);
+    compiler->addFunctionCallWithCtx("looks_think", Compiler::StaticType::Void, { Compiler::StaticType::String, Compiler::StaticType::Bool }, { message, saveThread });
     return nullptr;
 }
 
