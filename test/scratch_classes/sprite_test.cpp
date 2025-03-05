@@ -904,4 +904,9 @@ TEST(SpriteTest, BubbleTextRedraw)
 
     EXPECT_CALL(engine, requestRedraw).Times(0);
     sprite.bubble()->setText("");
+
+    EXPECT_CALL(engine, requestRedraw());
+    sprite.setVisible(true);
+    EXPECT_CALL(engine, requestRedraw).Times(0);
+    sprite.bubble()->setText("");
 }
