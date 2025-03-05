@@ -34,6 +34,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "looks_sayforsecs", &compileSayForSecs);
     engine->addCompileFunction(this, "looks_say", &compileSay);
+    engine->addCompileFunction(this, "looks_thinkforsecs", &compileThinkForSecs);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -90,6 +91,12 @@ CompilerValue *LooksBlocks::compileSay(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *LooksBlocks::compileThinkForSecs(Compiler *compiler)
+{
+    compileSayOrThinkForSecs(compiler, "looks_think");
+    return nullptr;
+}
+
 extern "C" void looks_start_stack_timer(ExecutionContext *ctx, double duration)
 {
     ctx->stackTimer()->start(duration);
@@ -127,4 +134,9 @@ extern "C" bool looks_update_bubble(ExecutionContext *ctx)
 extern "C" void looks_say(ExecutionContext *ctx, const StringPtr *message, bool saveThread)
 {
     looks_show_bubble(ctx->thread(), TextBubble::Type::Say, message, saveThread);
+}
+
+extern "C" void looks_think(ExecutionContext *ctx, const StringPtr *message, bool saveThread)
+{
+    looks_show_bubble(ctx->thread(), TextBubble::Type::Think, message, saveThread);
 }
