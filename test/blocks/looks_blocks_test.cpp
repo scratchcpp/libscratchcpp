@@ -57,110 +57,120 @@ TEST_F(LooksBlocksTest, StopProject)
     ASSERT_EQ(sprite->graphicsEffectValue(&effect), 0);
 }
 
-TEST_F(LooksBlocksTest, SayForSecs)
+TEST_F(LooksBlocksTest, SayAndThinkForSecs)
 {
-    auto sprite = std::make_shared<Sprite>();
-    sprite->setEngine(&m_engineMock);
-    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    std::vector<TextBubble::Type> types = { TextBubble::Type::Say, TextBubble::Type::Think };
+    std::vector<std::string> opcodes = { "looks_sayforsecs", "looks_thinkforsecs" };
 
-    builder.addBlock("looks_sayforsecs");
-    builder.addValueInput("MESSAGE", "Hello world");
-    builder.addValueInput("SECS", 2.5);
-    auto block = builder.currentBlock();
+    for (int i = 0; i < types.size(); i++) {
+        TextBubble::Type type = types[i];
+        const std::string &opcode = opcodes[i];
 
-    Compiler compiler(&m_engineMock, sprite.get());
-    auto code = compiler.compile(block);
-    Script script(sprite.get(), block, &m_engineMock);
-    script.setCode(code);
-    Thread thread(sprite.get(), &m_engineMock, &script);
-    auto ctx = code->createExecutionContext(&thread);
-    StackTimerMock timer;
-    ctx->setStackTimer(&timer);
+        auto sprite = std::make_shared<Sprite>();
+        sprite->setEngine(&m_engineMock);
+        m_engine->clear();
 
-    EXPECT_CALL(timer, start(2.5));
-    EXPECT_CALL(m_engineMock, requestRedraw());
-    code->run(ctx.get());
-    ASSERT_FALSE(code->isFinished(ctx.get()));
-    ASSERT_EQ(sprite->bubble()->text(), "Hello world");
-    ASSERT_EQ(sprite->bubble()->type(), TextBubble::Type::Say);
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
 
-    EXPECT_CALL(timer, elapsed()).WillOnce(Return(false));
-    EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
-    code->run(ctx.get());
-    ASSERT_FALSE(code->isFinished(ctx.get()));
-    ASSERT_EQ(sprite->bubble()->text(), "Hello world");
-    ASSERT_EQ(sprite->bubble()->type(), TextBubble::Type::Say);
+        builder.addBlock(opcode);
+        builder.addValueInput("MESSAGE", "Hello world");
+        builder.addValueInput("SECS", 2.5);
+        auto block = builder.currentBlock();
 
-    EXPECT_CALL(timer, elapsed()).WillOnce(Return(true));
-    EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
-    code->run(ctx.get());
-    ASSERT_TRUE(code->isFinished(ctx.get()));
-    ASSERT_TRUE(sprite->bubble()->text().empty());
+        Compiler compiler(&m_engineMock, sprite.get());
+        auto code = compiler.compile(block);
+        Script script(sprite.get(), block, &m_engineMock);
+        script.setCode(code);
+        Thread thread(sprite.get(), &m_engineMock, &script);
+        auto ctx = code->createExecutionContext(&thread);
+        StackTimerMock timer;
+        ctx->setStackTimer(&timer);
 
-    // Change text while waiting
-    code->reset(ctx.get());
+        EXPECT_CALL(timer, start(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+        ASSERT_EQ(sprite->bubble()->text(), "Hello world");
+        ASSERT_EQ(sprite->bubble()->type(), type);
 
-    EXPECT_CALL(timer, start(2.5));
-    EXPECT_CALL(m_engineMock, requestRedraw());
-    code->run(ctx.get());
-    ASSERT_FALSE(code->isFinished(ctx.get()));
+        EXPECT_CALL(timer, elapsed()).WillOnce(Return(false));
+        EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+        ASSERT_EQ(sprite->bubble()->text(), "Hello world");
+        ASSERT_EQ(sprite->bubble()->type(), type);
 
-    EXPECT_CALL(m_engineMock, requestRedraw());
-    sprite->bubble()->setText("test");
+        EXPECT_CALL(timer, elapsed()).WillOnce(Return(true));
+        EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+        ASSERT_TRUE(sprite->bubble()->text().empty());
 
-    EXPECT_CALL(timer, elapsed()).WillOnce(Return(true));
-    EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
-    code->run(ctx.get());
-    ASSERT_TRUE(code->isFinished(ctx.get()));
-    ASSERT_EQ(sprite->bubble()->text(), "test");
-    ASSERT_EQ(sprite->bubble()->type(), TextBubble::Type::Say);
+        // Change text while waiting
+        code->reset(ctx.get());
 
-    code->reset(ctx.get());
+        EXPECT_CALL(timer, start(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
 
-    EXPECT_CALL(timer, start(2.5));
-    EXPECT_CALL(m_engineMock, requestRedraw());
-    code->run(ctx.get());
-    ASSERT_FALSE(code->isFinished(ctx.get()));
+        EXPECT_CALL(m_engineMock, requestRedraw());
+        sprite->bubble()->setText("test");
 
-    EXPECT_CALL(m_engineMock, requestRedraw());
-    sprite->bubble()->setText("Hello world");
+        EXPECT_CALL(timer, elapsed()).WillOnce(Return(true));
+        EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+        ASSERT_EQ(sprite->bubble()->text(), "test");
+        ASSERT_EQ(sprite->bubble()->type(), type);
 
-    EXPECT_CALL(timer, elapsed()).WillOnce(Return(true));
-    EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
-    code->run(ctx.get());
-    ASSERT_TRUE(code->isFinished(ctx.get()));
-    ASSERT_EQ(sprite->bubble()->text(), "Hello world");
-    ASSERT_EQ(sprite->bubble()->type(), TextBubble::Type::Say);
+        code->reset(ctx.get());
 
-    // Kill waiting thread
-    code->reset(ctx.get());
+        EXPECT_CALL(timer, start(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
 
-    EXPECT_CALL(timer, start(2.5));
-    EXPECT_CALL(m_engineMock, requestRedraw());
-    code->run(ctx.get());
-    ASSERT_FALSE(code->isFinished(ctx.get()));
+        EXPECT_CALL(m_engineMock, requestRedraw());
+        sprite->bubble()->setText("Hello world");
 
-    m_engine->threadAboutToStop()(&thread);
-    code->kill(ctx.get());
-    ASSERT_EQ(sprite->bubble()->owner(), nullptr);
-    ASSERT_TRUE(sprite->bubble()->text().empty());
+        EXPECT_CALL(timer, elapsed()).WillOnce(Return(true));
+        EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
+        code->run(ctx.get());
+        ASSERT_TRUE(code->isFinished(ctx.get()));
+        ASSERT_EQ(sprite->bubble()->text(), "Hello world");
+        ASSERT_EQ(sprite->bubble()->type(), type);
 
-    // Kill waiting thread after changing text
-    code->reset(ctx.get());
+        // Kill waiting thread
+        code->reset(ctx.get());
 
-    EXPECT_CALL(timer, start(2.5));
-    EXPECT_CALL(m_engineMock, requestRedraw());
-    code->run(ctx.get());
-    ASSERT_FALSE(code->isFinished(ctx.get()));
+        EXPECT_CALL(timer, start(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
 
-    EXPECT_CALL(m_engineMock, requestRedraw());
-    sprite->bubble()->setText("test");
+        m_engine->threadAboutToStop()(&thread);
+        code->kill(ctx.get());
+        ASSERT_EQ(sprite->bubble()->owner(), nullptr);
+        ASSERT_TRUE(sprite->bubble()->text().empty());
 
-    m_engine->threadAboutToStop()(&thread);
-    code->kill(ctx.get());
-    ASSERT_EQ(sprite->bubble()->owner(), nullptr);
-    ASSERT_EQ(sprite->bubble()->text(), "test");
-    ASSERT_EQ(sprite->bubble()->type(), TextBubble::Type::Say);
+        // Kill waiting thread after changing text
+        code->reset(ctx.get());
+
+        EXPECT_CALL(timer, start(2.5));
+        EXPECT_CALL(m_engineMock, requestRedraw());
+        code->run(ctx.get());
+        ASSERT_FALSE(code->isFinished(ctx.get()));
+
+        EXPECT_CALL(m_engineMock, requestRedraw());
+        sprite->bubble()->setText("test");
+
+        m_engine->threadAboutToStop()(&thread);
+        code->kill(ctx.get());
+        ASSERT_EQ(sprite->bubble()->owner(), nullptr);
+        ASSERT_EQ(sprite->bubble()->text(), "test");
+        ASSERT_EQ(sprite->bubble()->type(), type);
+    }
 }
 
 TEST_F(LooksBlocksTest, Say)
