@@ -1,4 +1,5 @@
 #include <scratchcpp/textbubble.h>
+#include <scratchcpp/thread.h>
 #include <enginemock.h>
 
 #include "../common.h"
@@ -33,15 +34,23 @@ TEST(TextBubbleTest, BubbleText)
 {
     TextBubble bubble;
     ASSERT_TRUE(bubble.text().empty());
+    ASSERT_EQ(bubble.owner(), nullptr);
 
     bubble.setText("hello");
     ASSERT_EQ(bubble.text(), "hello");
+    ASSERT_EQ(bubble.owner(), nullptr);
+
+    Thread thread(nullptr, nullptr, nullptr);
+    bubble.setText("test", &thread);
+    ASSERT_EQ(bubble.text(), "test");
+    ASSERT_EQ(bubble.owner(), &thread);
 
     EngineMock engine;
     bubble.setEngine(&engine);
     EXPECT_CALL(engine, moveDrawableToFront(&bubble));
     bubble.setText("world");
     ASSERT_EQ(bubble.text(), "world");
+    ASSERT_EQ(bubble.owner(), nullptr);
     bubble.setEngine(nullptr);
 
     // longstr.length = 384, should be limited to 330 in bubble text

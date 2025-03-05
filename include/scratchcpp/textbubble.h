@@ -8,6 +8,7 @@
 namespace libscratchcpp
 {
 
+class Thread;
 class TextBubblePrivate;
 
 /*! \brief The TextBubble class represents a text bubble created using say or think block. */
@@ -31,7 +32,10 @@ class LIBSCRATCHCPP_EXPORT TextBubble : public Drawable
 
         const std::string &text() const;
         virtual void setText(const std::string &text);
+        virtual void setText(const std::string &text, Thread *owner);
         sigslot::signal<const std::string &> &textChanged() const;
+
+        Thread *owner() const;
 
     private:
         spimpl::unique_impl_ptr<TextBubblePrivate> impl;

@@ -3,9 +3,14 @@
 #pragma once
 
 #include <scratchcpp/iextension.h>
+#include <scratchcpp/textbubble.h>
+#include <unordered_map>
 
 namespace libscratchcpp
 {
+
+class Target;
+class Thread;
 
 class LooksBlocks : public IExtension
 {
@@ -15,6 +20,14 @@ class LooksBlocks : public IExtension
         Rgb color() const override;
 
         void registerBlocks(IEngine *engine) override;
+        void onInit(IEngine *engine) override;
+
+    private:
+        static void compileSayOrThinkForSecs(Compiler *compiler, const std::string function);
+        static CompilerValue *compileSayForSecs(Compiler *compiler);
+        static CompilerValue *compileSay(Compiler *compiler);
+        static CompilerValue *compileThinkForSecs(Compiler *compiler);
+        static CompilerValue *compileThink(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
