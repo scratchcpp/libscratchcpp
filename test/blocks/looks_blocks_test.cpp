@@ -526,3 +526,31 @@ TEST_F(LooksBlocksTest, ClearGraphicEffects)
     ASSERT_EQ(sprite->graphicsEffectValue(effect2), 0);
     ASSERT_EQ(sprite->graphicsEffectValue(effect3), 0);
 }
+
+TEST_F(LooksBlocksTest, ChangeSizeBy)
+{
+    {
+        auto sprite = std::make_shared<Sprite>();
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+        builder.addBlock("looks_changesizeby");
+        builder.addValueInput("CHANGE", 2.5);
+        builder.build();
+
+        sprite->setEngine(nullptr);
+        sprite->setSize(45.62);
+        builder.run();
+        ASSERT_EQ(sprite->size(), 48.12);
+    }
+
+    m_engine->clear();
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+        builder.addBlock("looks_changesizeby");
+        builder.addValueInput("CHANGE", 2.5);
+
+        builder.build();
+        builder.run();
+    }
+}

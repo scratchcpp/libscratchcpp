@@ -50,6 +50,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_changeeffectby", &compileChangeEffectBy);
     engine->addCompileFunction(this, "looks_seteffectto", &compileSetEffectTo);
     engine->addCompileFunction(this, "looks_cleargraphiceffects", &compileClearGraphicEffects);
+    engine->addCompileFunction(this, "looks_changesizeby", &compileChangeSizeBy);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -205,6 +206,16 @@ CompilerValue *LooksBlocks::compileClearGraphicEffects(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *LooksBlocks::compileChangeSizeBy(Compiler *compiler)
+{
+    if (compiler->target()->isStage())
+        return nullptr;
+
+    auto change = compiler->addInput("CHANGE");
+    compiler->addTargetFunctionCall("looks_changesizeby", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { change });
+    return nullptr;
+}
+
 extern "C" void looks_start_stack_timer(ExecutionContext *ctx, double duration)
 {
     ctx->stackTimer()->start(duration);
@@ -273,4 +284,9 @@ extern "C" void looks_seteffectto(Target *target, double index, double value)
 extern "C" void looks_cleargraphiceffects(Target *target)
 {
     target->clearGraphicsEffects();
+}
+
+extern "C" void looks_changesizeby(Sprite *sprite, double change)
+{
+    sprite->setSize(sprite->size() + change);
 }
