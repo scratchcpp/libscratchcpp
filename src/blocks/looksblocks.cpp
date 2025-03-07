@@ -36,6 +36,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_say", &compileSay);
     engine->addCompileFunction(this, "looks_thinkforsecs", &compileThinkForSecs);
     engine->addCompileFunction(this, "looks_think", &compileThink);
+    engine->addCompileFunction(this, "looks_show", &compileShow);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -106,6 +107,14 @@ CompilerValue *LooksBlocks::compileThink(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *LooksBlocks::compileShow(Compiler *compiler)
+{
+    if (!compiler->target()->isStage())
+        compiler->addTargetFunctionCall("looks_show");
+
+    return nullptr;
+}
+
 extern "C" void looks_start_stack_timer(ExecutionContext *ctx, double duration)
 {
     ctx->stackTimer()->start(duration);
@@ -148,4 +157,9 @@ extern "C" void looks_say(ExecutionContext *ctx, const StringPtr *message, bool 
 extern "C" void looks_think(ExecutionContext *ctx, const StringPtr *message, bool saveThread)
 {
     looks_show_bubble(ctx->thread(), TextBubble::Type::Think, message, saveThread);
+}
+
+extern "C" void looks_show(Sprite *sprite)
+{
+    sprite->setVisible(true);
 }

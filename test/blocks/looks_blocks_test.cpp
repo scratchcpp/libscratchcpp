@@ -198,3 +198,34 @@ TEST_F(LooksBlocksTest, SayAndThink)
         ASSERT_EQ(sprite->bubble()->owner(), nullptr);
     }
 }
+
+TEST_F(LooksBlocksTest, Show)
+{
+    {
+        auto sprite = std::make_shared<Sprite>();
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("looks_show");
+        builder.build();
+
+        sprite->setVisible(false);
+
+        builder.run();
+        ASSERT_TRUE(sprite->visible());
+
+        builder.run();
+        ASSERT_TRUE(sprite->visible());
+    }
+
+    m_engine->clear();
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("looks_show");
+
+        builder.build();
+        builder.run();
+    }
+}
