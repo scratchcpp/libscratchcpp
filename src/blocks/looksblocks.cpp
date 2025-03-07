@@ -48,6 +48,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_show", &compileShow);
     engine->addCompileFunction(this, "looks_hide", &compileHide);
     engine->addCompileFunction(this, "looks_changeeffectby", &compileChangeEffectBy);
+    engine->addCompileFunction(this, "looks_seteffectto", &compileSetEffectTo);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -179,6 +180,24 @@ CompilerValue *LooksBlocks::compileChangeEffectBy(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *LooksBlocks::compileSetEffectTo(Compiler *compiler)
+{
+    Field *field = compiler->field("EFFECT");
+
+    if (!field)
+        return nullptr;
+
+    auto index = getEffectIndex(compiler->engine(), field->value().toString());
+
+    if (index != -1) {
+        auto indexValue = compiler->addConstValue(index);
+        auto value = compiler->addInput("VALUE");
+        compiler->addTargetFunctionCall("looks_seteffectto", Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Number }, { indexValue, value });
+    }
+
+    return nullptr;
+}
+
 extern "C" void looks_start_stack_timer(ExecutionContext *ctx, double duration)
 {
     ctx->stackTimer()->start(duration);
@@ -237,4 +256,9 @@ extern "C" void looks_changeeffectby(Target *target, double index, double change
 {
     IGraphicsEffect *effect = LooksBlocks::getEffect(target->engine(), index);
     target->setGraphicsEffectValue(effect, target->graphicsEffectValue(effect) + change);
+}
+
+extern "C" void looks_seteffectto(Target *target, double index, double value)
+{
+    target->setGraphicsEffectValue(LooksBlocks::getEffect(target->engine(), index), value);
 }
