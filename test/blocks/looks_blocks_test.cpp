@@ -7,6 +7,7 @@
 #include <scratchcpp/thread.h>
 #include <scratchcpp/executablecode.h>
 #include <scratchcpp/executioncontext.h>
+#include <scratchcpp/scratchconfiguration.h>
 #include <enginemock.h>
 #include <graphicseffectmock.h>
 #include <stacktimermock.h>
@@ -18,6 +19,8 @@ using namespace libscratchcpp;
 using namespace libscratchcpp::test;
 
 using ::testing::Return;
+using ::testing::ReturnArg;
+using ::testing::_;
 
 class LooksBlocksTest : public testing::Test
 {
@@ -28,6 +31,56 @@ class LooksBlocksTest : public testing::Test
             m_engine = m_project.engine().get();
             m_extension->registerBlocks(m_engine);
             m_extension->onInit(m_engine);
+
+            // Create and register fake graphic effects
+            auto colorEffect = std::make_shared<GraphicsEffectMock>();
+            auto fisheyeEffect = std::make_shared<GraphicsEffectMock>();
+            auto whirlEffect = std::make_shared<GraphicsEffectMock>();
+            auto pixelateEffect = std::make_shared<GraphicsEffectMock>();
+            auto mosaicEffect = std::make_shared<GraphicsEffectMock>();
+            auto brightnessEffect = std::make_shared<GraphicsEffectMock>();
+            auto ghostEffect = std::make_shared<GraphicsEffectMock>();
+
+            EXPECT_CALL(*colorEffect, name()).WillOnce(Return("COLOR"));
+            ScratchConfiguration::registerGraphicsEffect(colorEffect);
+
+            EXPECT_CALL(*fisheyeEffect, name()).WillOnce(Return("FISHEYE"));
+            ScratchConfiguration::registerGraphicsEffect(fisheyeEffect);
+
+            EXPECT_CALL(*whirlEffect, name()).WillOnce(Return("WHIRL"));
+            ScratchConfiguration::registerGraphicsEffect(whirlEffect);
+
+            EXPECT_CALL(*pixelateEffect, name()).WillOnce(Return("PIXELATE"));
+            ScratchConfiguration::registerGraphicsEffect(pixelateEffect);
+
+            EXPECT_CALL(*mosaicEffect, name()).WillOnce(Return("MOSAIC"));
+            ScratchConfiguration::registerGraphicsEffect(mosaicEffect);
+
+            EXPECT_CALL(*brightnessEffect, name()).WillOnce(Return("BRIGHTNESS"));
+            ScratchConfiguration::registerGraphicsEffect(brightnessEffect);
+
+            EXPECT_CALL(*ghostEffect, name()).WillOnce(Return("GHOST"));
+            ScratchConfiguration::registerGraphicsEffect(ghostEffect);
+
+            EXPECT_CALL(*colorEffect, clamp(_)).WillRepeatedly(ReturnArg<0>());
+            EXPECT_CALL(*fisheyeEffect, clamp(_)).WillRepeatedly(ReturnArg<0>());
+            EXPECT_CALL(*whirlEffect, clamp(_)).WillRepeatedly(ReturnArg<0>());
+            EXPECT_CALL(*pixelateEffect, clamp(_)).WillRepeatedly(ReturnArg<0>());
+            EXPECT_CALL(*mosaicEffect, clamp(_)).WillRepeatedly(ReturnArg<0>());
+            EXPECT_CALL(*brightnessEffect, clamp(_)).WillRepeatedly(ReturnArg<0>());
+            EXPECT_CALL(*ghostEffect, clamp(_)).WillRepeatedly(ReturnArg<0>());
+        }
+
+        void TearDown() override
+        {
+            // Remove fake graphic effects
+            ScratchConfiguration::removeGraphicsEffect("COLOR");
+            ScratchConfiguration::removeGraphicsEffect("FISHEYE");
+            ScratchConfiguration::removeGraphicsEffect("WHIRL");
+            ScratchConfiguration::removeGraphicsEffect("PIXELATE");
+            ScratchConfiguration::removeGraphicsEffect("MOSAIC");
+            ScratchConfiguration::removeGraphicsEffect("BRIGHTNESS");
+            ScratchConfiguration::removeGraphicsEffect("GHOST");
         }
 
         std::unique_ptr<IExtension> m_extension;
@@ -255,6 +308,97 @@ TEST_F(LooksBlocksTest, Hide)
         ScriptBuilder builder(m_extension.get(), m_engine, stage);
 
         builder.addBlock("looks_hide");
+
+        builder.build();
+        builder.run();
+    }
+}
+
+TEST_F(LooksBlocksTest, ChangeEffectBy)
+{
+    // Color
+    {
+        auto stage = std::make_shared<Stage>();
+        stage->setEngine(m_engine);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+        IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("COLOR");
+        ASSERT_TRUE(effect);
+
+        builder.addBlock("looks_changeeffectby");
+        builder.addDropdownField("EFFECT", "COLOR");
+        builder.addValueInput("CHANGE", 45.2);
+        auto block = builder.currentBlock();
+
+        Compiler compiler(m_engine, stage.get());
+        auto code = compiler.compile(block);
+        Script script(stage.get(), block, m_engine);
+        script.setCode(code);
+        Thread thread(stage.get(), m_engine, &script);
+
+        stage->setGraphicsEffectValue(effect, 86.84);
+        thread.run();
+        ASSERT_EQ(std::round(stage->graphicsEffectValue(effect) * 100) / 100, 132.04);
+    }
+
+    // Brightness
+    {
+        auto stage = std::make_shared<Stage>();
+        stage->setEngine(m_engine);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+        IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("BRIGHTNESS");
+        ASSERT_TRUE(effect);
+
+        builder.addBlock("looks_changeeffectby");
+        builder.addDropdownField("EFFECT", "BRIGHTNESS");
+        builder.addValueInput("CHANGE", 12.05);
+        auto block = builder.currentBlock();
+
+        Compiler compiler(m_engine, stage.get());
+        auto code = compiler.compile(block);
+        Script script(stage.get(), block, m_engine);
+        script.setCode(code);
+        Thread thread(stage.get(), m_engine, &script);
+
+        thread.run();
+        ASSERT_EQ(std::round(stage->graphicsEffectValue(effect) * 100) / 100, 12.05);
+    }
+
+    // Ghost
+    {
+        auto stage = std::make_shared<Stage>();
+        stage->setEngine(m_engine);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+        IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("GHOST");
+        ASSERT_TRUE(effect);
+
+        builder.addBlock("looks_changeeffectby");
+        builder.addDropdownField("EFFECT", "GHOST");
+        builder.addValueInput("CHANGE", -8.06);
+        auto block = builder.currentBlock();
+
+        Compiler compiler(m_engine, stage.get());
+        auto code = compiler.compile(block);
+        Script script(stage.get(), block, m_engine);
+        script.setCode(code);
+        Thread thread(stage.get(), m_engine, &script);
+
+        stage->setGraphicsEffectValue(effect, 13.12);
+        thread.run();
+        ASSERT_EQ(std::round(stage->graphicsEffectValue(effect) * 100) / 100, 5.06);
+    }
+
+    // Invalid
+    {
+        auto stage = std::make_shared<Stage>();
+        stage->setEngine(m_engine);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+        builder.addBlock("looks_changeeffectby");
+        builder.addDropdownField("EFFECT", "INVALID");
+        builder.addValueInput("CHANGE", 8.3);
 
         builder.build();
         builder.run();
