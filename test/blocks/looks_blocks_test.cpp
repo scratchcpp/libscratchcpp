@@ -229,3 +229,34 @@ TEST_F(LooksBlocksTest, Show)
         builder.run();
     }
 }
+
+TEST_F(LooksBlocksTest, Hide)
+{
+    {
+        auto sprite = std::make_shared<Sprite>();
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("looks_hide");
+        builder.build();
+
+        sprite->setVisible(true);
+
+        builder.run();
+        ASSERT_FALSE(sprite->visible());
+
+        builder.run();
+        ASSERT_FALSE(sprite->visible());
+    }
+
+    m_engine->clear();
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("looks_hide");
+
+        builder.build();
+        builder.run();
+    }
+}
