@@ -42,6 +42,7 @@ class LooksBlocks : public IExtension
         static CompilerValue *compileClearGraphicEffects(Compiler *compiler);
         static CompilerValue *compileChangeSizeBy(Compiler *compiler);
         static CompilerValue *compileSetSizeTo(Compiler *compiler);
+        static CompilerValue *compileSize(Compiler *compiler);
 
         IEngine *m_engine = nullptr;
         std::unordered_map<std::string, long> m_effectMap;

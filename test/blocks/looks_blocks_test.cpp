@@ -7,6 +7,7 @@
 #include <scratchcpp/thread.h>
 #include <scratchcpp/executablecode.h>
 #include <scratchcpp/executioncontext.h>
+#include <scratchcpp/list.h>
 #include <scratchcpp/scratchconfiguration.h>
 #include <enginemock.h>
 #include <graphicseffectmock.h>
@@ -580,5 +581,40 @@ TEST_F(LooksBlocksTest, SetSizeTo)
 
         builder.build();
         builder.run();
+    }
+}
+
+TEST_F(LooksBlocksTest, Size)
+{
+    {
+        auto sprite = std::make_shared<Sprite>();
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+        builder.addBlock("looks_size");
+        builder.captureBlockReturnValue();
+        builder.build();
+
+        sprite->setEngine(nullptr);
+        sprite->setSize(45.62);
+        builder.run();
+
+        List *list = builder.capturedValues();
+        ASSERT_EQ(list->size(), 1);
+        ASSERT_EQ(Value(list->data()[0]).toDouble(), 45.62);
+    }
+
+    m_engine->clear();
+
+    {
+        auto stage = std::make_shared<Stage>();
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+        builder.addBlock("looks_size");
+        builder.captureBlockReturnValue();
+
+        builder.build();
+        builder.run();
+
+        List *list = builder.capturedValues();
+        ASSERT_EQ(list->size(), 1);
+        ASSERT_EQ(Value(list->data()[0]).toDouble(), 100);
     }
 }
