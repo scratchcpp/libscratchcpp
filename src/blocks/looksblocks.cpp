@@ -49,6 +49,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_hide", &compileHide);
     engine->addCompileFunction(this, "looks_changeeffectby", &compileChangeEffectBy);
     engine->addCompileFunction(this, "looks_seteffectto", &compileSetEffectTo);
+    engine->addCompileFunction(this, "looks_cleargraphiceffects", &compileClearGraphicEffects);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -198,6 +199,12 @@ CompilerValue *LooksBlocks::compileSetEffectTo(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *LooksBlocks::compileClearGraphicEffects(Compiler *compiler)
+{
+    compiler->addTargetFunctionCall("looks_cleargraphiceffects");
+    return nullptr;
+}
+
 extern "C" void looks_start_stack_timer(ExecutionContext *ctx, double duration)
 {
     ctx->stackTimer()->start(duration);
@@ -261,4 +268,9 @@ extern "C" void looks_changeeffectby(Target *target, double index, double change
 extern "C" void looks_seteffectto(Target *target, double index, double value)
 {
     target->setGraphicsEffectValue(LooksBlocks::getEffect(target->engine(), index), value);
+}
+
+extern "C" void looks_cleargraphiceffects(Target *target)
+{
+    target->clearGraphicsEffects();
 }

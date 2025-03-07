@@ -39,6 +39,7 @@ class LooksBlocks : public IExtension
         static CompilerValue *compileHide(Compiler *compiler);
         static CompilerValue *compileChangeEffectBy(Compiler *compiler);
         static CompilerValue *compileSetEffectTo(Compiler *compiler);
+        static CompilerValue *compileClearGraphicEffects(Compiler *compiler);
 
         IEngine *m_engine = nullptr;
         std::unordered_map<std::string, long> m_effectMap;

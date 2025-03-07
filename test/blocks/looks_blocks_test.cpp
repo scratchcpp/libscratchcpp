@@ -495,3 +495,34 @@ TEST_F(LooksBlocksTest, SetEffectTo)
         builder.run();
     }
 }
+
+TEST_F(LooksBlocksTest, ClearGraphicEffects)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(m_engine);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    IGraphicsEffect *effect1 = ScratchConfiguration::getGraphicsEffect("WHIRL");
+    IGraphicsEffect *effect2 = ScratchConfiguration::getGraphicsEffect("GHOST");
+    IGraphicsEffect *effect3 = ScratchConfiguration::getGraphicsEffect("MOSAIC");
+    ASSERT_TRUE(effect1);
+    ASSERT_TRUE(effect2);
+    ASSERT_TRUE(effect3);
+
+    builder.addBlock("looks_cleargraphiceffects");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(m_engine, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, m_engine);
+    script.setCode(code);
+    Thread thread(sprite.get(), m_engine, &script);
+
+    sprite->setGraphicsEffectValue(effect1, 86.84);
+    sprite->setGraphicsEffectValue(effect2, -5.18);
+    sprite->setGraphicsEffectValue(effect3, 12.98);
+    thread.run();
+    ASSERT_EQ(sprite->graphicsEffectValue(effect1), 0);
+    ASSERT_EQ(sprite->graphicsEffectValue(effect2), 0);
+    ASSERT_EQ(sprite->graphicsEffectValue(effect3), 0);
+}
