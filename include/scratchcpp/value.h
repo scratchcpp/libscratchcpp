@@ -57,6 +57,13 @@ class LIBSCRATCHCPP_EXPORT Value
             value_assign_cstring(&m_data, stringValue);
         }
 
+        /*! Constructs a pointer Value. */
+        Value(const void *pointerValue)
+        {
+            value_init(&m_data);
+            value_assign_pointer(&m_data, pointerValue);
+        }
+
         /*! Constructs value from ValueData. */
         Value(const ValueData &v)
         {
@@ -111,6 +118,9 @@ class LIBSCRATCHCPP_EXPORT Value
         /*! Returns true if the value is a string. */
         bool isString() const { return value_isString(&m_data); }
 
+        /*! Returns true if the value is a pointer. */
+        bool isPointer() const { return value_isPointer(&m_data); }
+
         /*! Returns the int representation of the value. */
         int toInt() const { return value_toInt(&m_data); }
 
@@ -141,6 +151,9 @@ class LIBSCRATCHCPP_EXPORT Value
 
         /*! Converts the value to an RGBA quadruplet. */
         Rgb toRgba() const { return value_toRgba(&m_data); }
+
+        /*! Returns the pointer stored in the value or nullptr if it isn't a pointer. */
+        const void *toPointer() const { return value_toPointer(&m_data); };
 
         /*! Adds the given value to the value. */
         void add(const Value &v) { value_add(&m_data, &v.m_data, &m_data); }
@@ -185,6 +198,12 @@ class LIBSCRATCHCPP_EXPORT Value
         const Value &operator=(const char *v)
         {
             value_assign_cstring(&m_data, v);
+            return *this;
+        }
+
+        const Value &operator=(const void *v)
+        {
+            value_assign_pointer(&m_data, v);
             return *this;
         }
 

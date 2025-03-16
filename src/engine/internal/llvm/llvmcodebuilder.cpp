@@ -20,8 +20,12 @@
 
 using namespace libscratchcpp;
 
-static std::unordered_map<ValueType, Compiler::StaticType>
-    TYPE_MAP = { { ValueType::Number, Compiler::StaticType::Number }, { ValueType::Bool, Compiler::StaticType::Bool }, { ValueType::String, Compiler::StaticType::String } };
+static std::unordered_map<ValueType, Compiler::StaticType> TYPE_MAP = {
+    { ValueType::Number, Compiler::StaticType::Number },
+    { ValueType::Bool, Compiler::StaticType::Bool },
+    { ValueType::String, Compiler::StaticType::String },
+    { ValueType::Pointer, Compiler::StaticType::Pointer }
+};
 
 static const std::unordered_set<LLVMInstruction::Type>
     VAR_LIST_READ_INSTRUCTIONS = { LLVMInstruction::Type::ReadVariable, LLVMInstruction::Type::GetListItem, LLVMInstruction::Type::GetListItemIndex, LLVMInstruction::Type::ListContainsItem };
@@ -681,6 +685,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                     case Compiler::StaticType::String:
                         std::cerr << "error: local variables do not support string type" << std::endl;
+                        break;
+
+                    case Compiler::StaticType::Pointer:
+                        std::cerr << "error: local variables do not support pointer type" << std::endl;
                         break;
 
                     default:
@@ -2343,6 +2351,11 @@ llvm::Constant *LLVMCodeBuilder::castConstValue(const Value &value, Compiler::St
             return new llvm::GlobalVariable(*m_module, m_stringPtrType, true, llvm::GlobalValue::PrivateLinkage, stringStruct, "stringPtr");
         }
 
+        case Compiler::StaticType::Pointer: {
+            llvm::Constant *addr = m_builder.getInt64((uintptr_t)value.toPointer());
+            return llvm::ConstantExpr::getIntToPtr(addr, m_builder.getVoidTy()->getPointerTo());
+        }
+
         default:
             assert(false);
             return nullptr;
@@ -2374,6 +2387,9 @@ llvm::Type *LLVMCodeBuilder::getType(Compiler::StaticType type)
 
         case Compiler::StaticType::String:
             return m_stringPtrType->getPointerTo();
+
+        case Compiler::StaticType::Pointer:
+            return m_builder.getVoidTy()->getPointerTo();
 
         default:
             assert(false);
@@ -2883,6 +2899,7 @@ llvm::Value *LLVMCodeBuilder::createValue(LLVMRegister *reg)
                 break;
 
             case ValueType::String:
+            case ValueType::Pointer:
                 value = llvm::ConstantExpr::getPtrToInt(value, m_valueDataType->getElementType(0));
                 break;
 

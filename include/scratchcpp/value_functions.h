@@ -57,6 +57,7 @@ extern "C"
     LIBSCRATCHCPP_EXPORT void value_assign_string(ValueData *v, const std::string &stringValue);
     LIBSCRATCHCPP_EXPORT void value_assign_cstring(ValueData *v, const char *stringValue);
     LIBSCRATCHCPP_EXPORT void value_assign_stringPtr(ValueData *v, const StringPtr *stringValue);
+    LIBSCRATCHCPP_EXPORT void value_assign_pointer(ValueData *v, const void *pointerValue);
     LIBSCRATCHCPP_EXPORT void value_assign_copy(ValueData *v, const ValueData *another);
 
     LIBSCRATCHCPP_EXPORT bool value_isInfinity(const ValueData *v);
@@ -67,6 +68,7 @@ extern "C"
     LIBSCRATCHCPP_EXPORT bool value_isInt(const ValueData *v);
     LIBSCRATCHCPP_EXPORT bool value_isBool(const ValueData *v);
     LIBSCRATCHCPP_EXPORT bool value_isString(const ValueData *v);
+    LIBSCRATCHCPP_EXPORT bool value_isPointer(const ValueData *v);
 
     LIBSCRATCHCPP_EXPORT long value_toLong(const ValueData *v);
     LIBSCRATCHCPP_EXPORT int value_toInt(const ValueData *v);
@@ -76,6 +78,7 @@ extern "C"
     LIBSCRATCHCPP_EXPORT StringPtr *value_toStringPtr(const ValueData *v);
     LIBSCRATCHCPP_EXPORT void value_toUtf16(const ValueData *v, std::u16string *dst);
     LIBSCRATCHCPP_EXPORT Rgb value_toRgba(const ValueData *v);
+    LIBSCRATCHCPP_EXPORT const void *value_toPointer(const ValueData *v);
 
     LIBSCRATCHCPP_EXPORT bool value_doubleIsInt(double v);
 

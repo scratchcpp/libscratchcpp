@@ -15,7 +15,8 @@ enum class LIBSCRATCHCPP_EXPORT ValueType
 {
     Number = 0,
     Bool = 1,
-    String = 2
+    String = 2,
+    Pointer = 3
 };
 
 extern "C"
@@ -29,6 +30,7 @@ extern "C"
                     double numberValue;
                     bool boolValue;
                     StringPtr *stringValue;
+                    const void *pointerValue;
             };
 
             ValueType type;

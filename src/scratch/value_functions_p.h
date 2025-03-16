@@ -411,6 +411,8 @@ extern "C"
             return v->numberValue;
         } else if (v->type == ValueType::Bool)
             return v->boolValue;
+        else if (v->type == ValueType::Pointer)
+            return 0;
         else {
             assert(false); // this should never happen
             if (ok)
@@ -471,6 +473,8 @@ extern "C"
             return v1->numberValue - v2->numberValue;
         } else if (v1->type == ValueType::Bool && v2->type == ValueType::Bool)
             return v1->boolValue - v2->boolValue;
+        else if (v1->type == ValueType::Pointer && v2->type == ValueType::Pointer)
+            return (long long)v1->pointerValue - (long long)v2->pointerValue; // NOTE: We probably don't need GT/LT pointer comparison...
 
         bool ok;
         double n1 = value_getNumber(v1, &ok);

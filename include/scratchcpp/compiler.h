@@ -35,6 +35,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
             Number,
             Bool,
             String,
+            Pointer,
             Unknown
         };
 

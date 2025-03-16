@@ -507,6 +507,35 @@ TEST_F(LLVMCodeBuilderTest, FunctionCalls)
     }
 }
 
+TEST_F(LLVMCodeBuilderTest, FunctionCallsWithPointers)
+{
+    createBuilder(true);
+
+    int var = 12;
+    CompilerValue *v = m_builder->addConstValue(&var);
+    v = m_builder->addTargetFunctionCall("test_function_1_ptr_arg_ret", Compiler::StaticType::Pointer, { Compiler::StaticType::Pointer }, { v });
+
+    m_builder->addFunctionCall("test_print_pointer", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { v });
+
+    auto code = m_builder->finalize();
+    Script script(&m_target, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&m_target, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+
+    std::stringstream s;
+    s << &m_target;
+    std::string ptr = s.str();
+
+    const std::string expected = "1_arg_ret 12\n" + ptr + "\n";
+
+    EXPECT_CALL(m_target, isStage());
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+    ASSERT_TRUE(code->isFinished(ctx.get()));
+}
+
 TEST_F(LLVMCodeBuilderTest, ConstCasting)
 {
     createBuilder(true);
@@ -6093,32 +6122,54 @@ TEST_F(LLVMCodeBuilderTest, Reporters)
 
     auto code3 = m_builder->finalize();
 
-    Script script1(&sprite, nullptr, nullptr);
-    script1.setCode(code1);
-    Thread thread1(&sprite, nullptr, &script1);
-    auto ctx = code1->createExecutionContext(&thread1);
+    // Reporter 4
+    createReporterBuilder(&sprite);
+    int pointee;
+    m_builder->addConstValue(&pointee);
 
-    ValueData ret = code1->runReporter(ctx.get());
+    auto code4 = m_builder->finalize();
+
+    // Reporter 5
+    createReporterBuilder(&sprite);
+    v = m_builder->addConstValue(&pointee);
+    m_builder->addFunctionCall("test_const_pointer", Compiler::StaticType::Pointer, { Compiler::StaticType::Pointer }, { v });
+
+    auto code5 = m_builder->finalize();
+
+    auto runReporter = [&sprite](std::shared_ptr<ExecutableCode> code) {
+        Script script(&sprite, nullptr, nullptr);
+        script.setCode(code);
+        Thread thread1(&sprite, nullptr, &script);
+        auto ctx = code->createExecutionContext(&thread1);
+        return code->runReporter(ctx.get());
+    };
+
+    // 1
+    ValueData ret = runReporter(code1);
     ASSERT_TRUE(value_isNumber(&ret));
     ASSERT_EQ(value_toDouble(&ret), -45.23);
     value_free(&ret);
 
-    Script script2(&sprite, nullptr, nullptr);
-    script2.setCode(code2);
-    Thread thread2(&sprite, nullptr, &script2);
-    ctx = code2->createExecutionContext(&thread2);
-
-    ret = code2->runReporter(ctx.get());
+    // 2
+    ret = runReporter(code2);
     ASSERT_EQ(Value(ret).toString(), "test");
     value_free(&ret);
 
-    Script script3(&sprite, nullptr, nullptr);
-    script3.setCode(code3);
-    Thread thread3(&sprite, nullptr, &script3);
-    ctx = code3->createExecutionContext(&thread3);
-
-    ret = code3->runReporter(ctx.get());
+    // 3
+    ret = runReporter(code3);
     var->setValue("abc"); // the string should be copied
     ASSERT_EQ(Value(ret).toString(), "Hello world!");
+    value_free(&ret);
+
+    // 4
+    ret = runReporter(code4);
+    ASSERT_TRUE(value_isPointer(&ret));
+    ASSERT_EQ(value_toPointer(&ret), &pointee);
+    value_free(&ret);
+
+    // 5
+    ret = runReporter(code5);
+    ASSERT_TRUE(value_isPointer(&ret));
+    ASSERT_EQ(value_toPointer(&ret), &pointee);
     value_free(&ret);
 }
