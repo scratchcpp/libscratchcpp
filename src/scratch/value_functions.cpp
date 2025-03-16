@@ -81,6 +81,15 @@ extern "C"
         string_assign(v->stringValue, stringValue);
     }
 
+    /*! Assigns pointer to the given value. */
+    void value_assign_pointer(ValueData *v, const void *pointerValue)
+    {
+        value_free(v);
+
+        v->type = ValueType::Pointer;
+        v->pointerValue = pointerValue;
+    }
+
     /*! Assigns another value to the given value. */
     void value_assign_copy(ValueData *v, const libscratchcpp::ValueData *another)
     {
@@ -98,6 +107,9 @@ extern "C"
                 string_assign(v->stringValue, another->stringValue);
                 v->type = ValueType::String;
             }
+        } else if (another->type == ValueType::Pointer) {
+            value_free(v);
+            v->pointerValue = another->pointerValue;
         }
 
         v->type = another->type;
@@ -183,9 +195,18 @@ extern "C"
 
             case ValueType::String:
                 return value_checkString(v->stringValue) == 1;
+
+            case ValueType::Pointer:
+                return false;
         }
 
         return false;
+    }
+
+    /*! Returns true if the given value is a pointer. */
+    bool value_isPointer(const ValueData *v)
+    {
+        return v->type == ValueType::Pointer;
     }
 
     /*! Returns true if the given value is a boolean. */
@@ -250,6 +271,8 @@ extern "C"
             return v->numberValue != 0 && !std::isnan(v->numberValue);
         } else if (v->type == ValueType::String) {
             return value_stringToBool(v->stringValue);
+        } else if (v->type == ValueType::Pointer) {
+            return v->pointerValue;
         } else {
             return false;
         }
@@ -285,8 +308,11 @@ extern "C"
                 string_assign(ret, &FALSE_STR);
                 return ret;
             }
-        } else
-            return string_pool_new();
+        } else {
+            StringPtr *ret = string_pool_new();
+            string_assign(ret, &ZERO_STR);
+            return ret;
+        }
     }
 
     /*! Writes the UTF-16 representation of the given value to dst. */
@@ -309,6 +335,8 @@ extern "C"
             string = v->stringValue;
         else if (v->type == ValueType::Bool)
             return v->boolValue;
+        else
+            return 0;
 
         if (string->size > 0 && string->data[0] == u'#') {
             // https://github.com/scratchfoundation/scratch-vm/blob/a4f095db5e03e072ba222fe721eeeb543c9b9c15/src/util/color.js#L60-L69
@@ -345,6 +373,15 @@ extern "C"
         }
 
         return rgb(0, 0, 0);
+    }
+
+    /*! Returns the pointer stored in the given value or nullptr if it isn't a pointer. */
+    const void *value_toPointer(const ValueData *v)
+    {
+        if (v->type == ValueType::Pointer)
+            return v->pointerValue;
+        else
+            return nullptr;
     }
 
     /*! Returns true if the given number represents a round integer. */

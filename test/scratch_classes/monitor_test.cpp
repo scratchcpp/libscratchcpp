@@ -113,7 +113,6 @@ TEST(MonitorTest, Sprite)
 TEST(MonitorTest, UpdateValue)
 {
     Monitor monitor("", "");
-    monitor.updateValue(nullptr);
     monitor.updateValue("test");
 
     MonitorHandlerMock handler;
