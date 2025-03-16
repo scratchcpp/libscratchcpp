@@ -50,12 +50,9 @@ CompilerValue *ListBlocks::compileListContents(Compiler *compiler)
     assert(list);
 
     // If this block is used in a list monitor, return the list pointer
-    if (compiler->block()->isMonitorBlock()) {
-        // TODO: Refactor this
-        // List monitors expect a reference to the list
-        // We don't have a list reference type, so cast the pointer to number
-        return compiler->addConstValue((uintptr_t)list.get());
-    } else
+    if (compiler->block()->isMonitorBlock())
+        return compiler->addConstValue(list.get());
+    else
         return compiler->addListContents(static_cast<List *>(list.get()));
 }
 

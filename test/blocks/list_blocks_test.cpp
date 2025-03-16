@@ -114,8 +114,8 @@ TEST_F(ListBlocksTest, ListMonitor)
     ASSERT_EQ(monitor1->name(), list1->name());
     ASSERT_EQ(monitor2->name(), list2->name());
 
-    EXPECT_CALL(iface1, onValueChanged(_)).WillOnce(Invoke([list1](const Value &value) { ASSERT_EQ(value.toDouble(), (uintptr_t)list1.get()); }));
-    EXPECT_CALL(iface2, onValueChanged(_)).WillOnce(Invoke([list2](const Value &value) { ASSERT_EQ(value.toDouble(), (uintptr_t)list2.get()); }));
+    EXPECT_CALL(iface1, onValueChanged(_)).WillOnce(Invoke([list1](const Value &value) { ASSERT_EQ(value.toPointer(), list1.get()); }));
+    EXPECT_CALL(iface2, onValueChanged(_)).WillOnce(Invoke([list2](const Value &value) { ASSERT_EQ(value.toPointer(), list2.get()); }));
     m_engine->updateMonitors();
 }
 
