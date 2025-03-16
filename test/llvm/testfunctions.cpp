@@ -98,6 +98,13 @@ extern "C"
         return value_toStringPtr(&v.data());
     }
 
+    const void *test_function_1_ptr_arg_ret(Target *target, const int *arg1)
+    {
+        target->isStage();
+        std::cout << "1_arg_ret " << *arg1 << std::endl;
+        return target;
+    }
+
     bool test_equals(const StringPtr *a, const StringPtr *b)
     {
         return string_compare_case_sensitive(a, b) == 0;
@@ -129,6 +136,11 @@ extern "C"
         StringPtr *ret = string_pool_new();
         string_assign(ret, v);
         return ret;
+    }
+
+    const void *test_const_pointer(const void *v)
+    {
+        return v;
     }
 
     bool test_not(bool arg)
@@ -164,5 +176,10 @@ extern "C"
     void test_print_string(const StringPtr *v)
     {
         std::cout << utf8::utf16to8(std::u16string(v->data)) << std::endl;
+    }
+
+    void test_print_pointer(const void *v)
+    {
+        std::cout << v << std::endl;
     }
 }

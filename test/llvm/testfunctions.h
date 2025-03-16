@@ -27,12 +27,15 @@ extern "C"
     void test_function_3_args(Target *target, const StringPtr *arg1, const StringPtr *arg2, const StringPtr *arg3);
     StringPtr *test_function_3_args_ret(Target *target, const StringPtr *arg1, const StringPtr *arg2, const StringPtr *arg3);
 
+    const void *test_function_1_ptr_arg_ret(Target *target, const int *arg1);
+
     bool test_equals(const StringPtr *a, const StringPtr *b);
     bool test_lower_than(double a, double b);
     bool test_not(bool arg);
     double test_const_number(double v);
     bool test_const_bool(bool v);
     StringPtr *test_const_string(const StringPtr *v);
+    const void *test_const_pointer(const void *v);
 
     void test_unreachable();
 
@@ -43,6 +46,7 @@ extern "C"
     void test_print_number(double v);
     void test_print_bool(bool v);
     void test_print_string(const StringPtr *v);
+    void test_print_pointer(const void *v);
 }
 
 } // namespace libscratchcpp
