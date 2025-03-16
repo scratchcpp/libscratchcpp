@@ -118,7 +118,7 @@ CompilerValue *MotionBlocks::compilePointTowards(Compiler *compiler)
             Target *anotherTarget = compiler->engine()->targetAt(index);
 
             if (anotherTarget && !anotherTarget->isStage())
-                compiler->addTargetFunctionCall("motion_point_towards_target_by_index", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { compiler->addConstValue(index) });
+                compiler->addTargetFunctionCall("motion_point_towards_sprite", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { compiler->addConstValue(anotherTarget) });
         }
     } else {
         CompilerValue *towards = compiler->addInput(input);
@@ -158,7 +158,7 @@ CompilerValue *MotionBlocks::compileGoTo(Compiler *compiler)
             Target *anotherTarget = compiler->engine()->targetAt(index);
 
             if (anotherTarget && !anotherTarget->isStage())
-                compiler->addTargetFunctionCall("motion_go_to_target_by_index", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { compiler->addConstValue(index) });
+                compiler->addTargetFunctionCall("motion_go_to_sprite", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { compiler->addConstValue(anotherTarget) });
         }
     } else {
         CompilerValue *to = compiler->addInput(input);
@@ -220,8 +220,8 @@ CompilerValue *MotionBlocks::compileGlideTo(Compiler *compiler)
 
             if (anotherTarget && !anotherTarget->isStage()) {
                 if (!target->isStage()) {
-                    endX = compiler->addFunctionCallWithCtx("motion_get_sprite_x_by_index", Compiler::StaticType::Number, { Compiler::StaticType::Number }, { compiler->addConstValue(index) });
-                    endY = compiler->addFunctionCallWithCtx("motion_get_sprite_y_by_index", Compiler::StaticType::Number, { Compiler::StaticType::Number }, { compiler->addConstValue(index) });
+                    endX = compiler->addFunctionCallWithCtx("motion_get_sprite_x", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { compiler->addConstValue(anotherTarget) });
+                    endY = compiler->addFunctionCallWithCtx("motion_get_sprite_y", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { compiler->addConstValue(anotherTarget) });
                 }
             } else
                 return nullptr;
@@ -405,9 +405,8 @@ extern "C" void motion_point_towards_random_direction(ExecutionContext *ctx)
     sprite->setDirection(rng->randint(-180, 179));
 }
 
-extern "C" void motion_point_towards_target_by_index(Sprite *sprite, double index)
+extern "C" void motion_point_towards_sprite(Sprite *sprite, Sprite *anotherSprite)
 {
-    Sprite *anotherSprite = static_cast<Sprite *>(sprite->engine()->targetAt(index));
     motion_point_towards_pos(sprite, anotherSprite->x(), anotherSprite->y());
 }
 
@@ -456,9 +455,8 @@ extern "C" void motion_go_to_random_pos(ExecutionContext *ctx)
     sprite->setPosition(rng->randintDouble(-stageWidth / 2.0, stageWidth / 2.0), rng->randintDouble(-stageHeight / 2.0, stageHeight / 2.0));
 }
 
-extern "C" void motion_go_to_target_by_index(Sprite *sprite, double index)
+extern "C" void motion_go_to_sprite(Sprite *sprite, Sprite *anotherSprite)
 {
-    Sprite *anotherSprite = static_cast<Sprite *>(sprite->engine()->targetAt(index));
     sprite->setPosition(anotherSprite->x(), anotherSprite->y());
 }
 
@@ -539,17 +537,13 @@ extern "C" double motion_get_random_y(ExecutionContext *ctx)
     return ctx->rng()->randintDouble(-stageHeight / 2.0, stageHeight / 2.0);
 }
 
-extern "C" double motion_get_sprite_x_by_index(ExecutionContext *ctx, double index)
+extern "C" double motion_get_sprite_x(ExecutionContext *ctx, Sprite *sprite)
 {
-    assert(!ctx->engine()->targetAt(index)->isStage());
-    Sprite *sprite = static_cast<Sprite *>(ctx->engine()->targetAt(index));
     return sprite->x();
 }
 
-extern "C" double motion_get_sprite_y_by_index(ExecutionContext *ctx, double index)
+extern "C" double motion_get_sprite_y(ExecutionContext *ctx, Sprite *sprite)
 {
-    assert(!ctx->engine()->targetAt(index)->isStage());
-    Sprite *sprite = static_cast<Sprite *>(ctx->engine()->targetAt(index));
     return sprite->y();
 }
 
