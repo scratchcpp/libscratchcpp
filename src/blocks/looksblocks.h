@@ -16,8 +16,6 @@ class IGraphicsEffect;
 class LooksBlocks : public IExtension
 {
     public:
-        ~LooksBlocks();
-
         std::string name() const override;
         std::string description() const override;
         Rgb color() const override;
@@ -25,11 +23,9 @@ class LooksBlocks : public IExtension
         void registerBlocks(IEngine *engine) override;
         void onInit(IEngine *engine) override;
 
-        static inline IGraphicsEffect *getEffect(IEngine *engine, long index) { return m_instances[engine]->m_effects[index]; }
-
     private:
         static void compileSayOrThinkForSecs(Compiler *compiler, const std::string function);
-        static long getEffectIndex(IEngine *engine, const std::string &name);
+        static void compileSetOrChangeEffect(Compiler *compiler, const std::string &function, const std::string &effectName, CompilerValue *arg);
 
         static CompilerValue *compileSayForSecs(Compiler *compiler);
         static CompilerValue *compileSay(Compiler *compiler);
@@ -43,11 +39,6 @@ class LooksBlocks : public IExtension
         static CompilerValue *compileChangeSizeBy(Compiler *compiler);
         static CompilerValue *compileSetSizeTo(Compiler *compiler);
         static CompilerValue *compileSize(Compiler *compiler);
-
-        IEngine *m_engine = nullptr;
-        std::unordered_map<std::string, long> m_effectMap;
-        std::vector<IGraphicsEffect *> m_effects;
-        static inline std::unordered_map<IEngine *, LooksBlocks *> m_instances;
 };
 
 } // namespace libscratchcpp
