@@ -24,7 +24,7 @@ class LooksBlocks : public IExtension
         void onInit(IEngine *engine) override;
 
     private:
-        static void compileSayOrThinkForSecs(Compiler *compiler, const std::string function);
+        static void compileSayOrThinkForSecs(Compiler *compiler, const std::string &function);
         static void compileSetOrChangeEffect(Compiler *compiler, const std::string &function, const std::string &effectName, CompilerValue *arg);
 
         static CompilerValue *compileSayForSecs(Compiler *compiler);

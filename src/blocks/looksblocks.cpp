@@ -74,7 +74,7 @@ void LooksBlocks::onInit(IEngine *engine)
     });
 }
 
-void LooksBlocks::compileSayOrThinkForSecs(Compiler *compiler, const std::string function)
+void LooksBlocks::compileSayOrThinkForSecs(Compiler *compiler, const std::string &function)
 {
     auto message = compiler->addInput("MESSAGE");
     auto duration = compiler->addInput("SECS");
