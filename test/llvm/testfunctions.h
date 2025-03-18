@@ -47,6 +47,7 @@ extern "C"
     void test_print_bool(bool v);
     void test_print_string(const StringPtr *v);
     void test_print_pointer(const void *v);
+    void test_print_unknown(const ValueData *v);
 }
 
 } // namespace libscratchcpp
