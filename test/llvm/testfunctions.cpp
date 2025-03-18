@@ -182,4 +182,11 @@ extern "C"
     {
         std::cout << v << std::endl;
     }
+
+    void test_print_unknown(const ValueData *v)
+    {
+        std::string str;
+        value_toString(v, &str);
+        std::cout << str << std::endl;
+    }
 }

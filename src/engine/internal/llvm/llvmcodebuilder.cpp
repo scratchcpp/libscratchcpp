@@ -2169,8 +2169,12 @@ void LLVMCodeBuilder::freeScopeHeap()
 
 llvm::Value *LLVMCodeBuilder::castValue(LLVMRegister *reg, Compiler::StaticType targetType)
 {
-    if (reg->isConst())
-        return castConstValue(reg->constValue(), targetType);
+    if (reg->isConst()) {
+        if (targetType == Compiler::StaticType::Unknown)
+            return createValue(reg);
+        else
+            return castConstValue(reg->constValue(), targetType);
+    }
 
     if (reg->isRawValue)
         return castRawValue(reg, targetType);
@@ -2390,6 +2394,9 @@ llvm::Type *LLVMCodeBuilder::getType(Compiler::StaticType type)
 
         case Compiler::StaticType::Pointer:
             return m_builder.getVoidTy()->getPointerTo();
+
+        case Compiler::StaticType::Unknown:
+            return m_valueDataType->getPointerTo();
 
         default:
             assert(false);

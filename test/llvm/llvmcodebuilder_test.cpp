@@ -477,6 +477,24 @@ TEST_F(LLVMCodeBuilderTest, FunctionCalls)
             { Compiler::StaticType::String, Compiler::StaticType::String, Compiler::StaticType::String },
             { v, v1, v2 });
         m_builder->addTargetFunctionCall("test_function_1_arg", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+        v = m_builder->addConstValue(123);
+        v = m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number }, { v });
+        m_builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+        v = m_builder->addConstValue(true);
+        v = m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool }, { v });
+        m_builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+        v = m_builder->addConstValue(321.5);
+        m_builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
+
+        v = m_builder->addConstValue("test");
+        m_builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
+
+        v = m_builder->addConstValue(true);
+        m_builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
+
         auto code = m_builder->finalize();
         Script script(&m_target, nullptr, nullptr);
         script.setCode(code);
@@ -497,7 +515,12 @@ TEST_F(LLVMCodeBuilderTest, FunctionCalls)
             "1_arg_ret 1\n"
             "3_args 1_arg_output 2 3\n"
             "3_args test 4 5\n"
-            "1_arg 3_args_output\n";
+            "1_arg 3_args_output\n"
+            "123\n"
+            "1\n"
+            "321.5\n"
+            "test\n"
+            "true\n";
 
         EXPECT_CALL(m_target, isStage()).Times(7);
         testing::internal::CaptureStdout();
