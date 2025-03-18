@@ -49,6 +49,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_setsizeto", &compileSetSizeTo);
     engine->addCompileFunction(this, "looks_size", &compileSize);
     engine->addCompileFunction(this, "looks_switchcostumeto", &compileSwitchCostumeTo);
+    engine->addCompileFunction(this, "looks_nextcostume", &compileNextCostume);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -208,6 +209,12 @@ CompilerValue *LooksBlocks::compileSwitchCostumeTo(Compiler *compiler)
 {
     auto costume = compiler->addInput("COSTUME");
     compiler->addTargetFunctionCall("looks_switchcostumeto", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { costume });
+    return nullptr;
+}
+
+CompilerValue *LooksBlocks::compileNextCostume(Compiler *compiler)
+{
+    compiler->addTargetFunctionCall("looks_nextcostume");
     return nullptr;
 }
 
