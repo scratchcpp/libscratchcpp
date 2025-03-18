@@ -39,6 +39,7 @@ class LooksBlocks : public IExtension
         static CompilerValue *compileChangeSizeBy(Compiler *compiler);
         static CompilerValue *compileSetSizeTo(Compiler *compiler);
         static CompilerValue *compileSize(Compiler *compiler);
+        static CompilerValue *compileSwitchCostumeTo(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

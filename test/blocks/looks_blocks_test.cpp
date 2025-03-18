@@ -2,6 +2,7 @@
 #include <scratchcpp/test/scriptbuilder.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
+#include <scratchcpp/costume.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/script.h>
 #include <scratchcpp/thread.h>
@@ -616,5 +617,297 @@ TEST_F(LooksBlocksTest, Size)
         List *list = builder.capturedValues();
         ASSERT_EQ(list->size(), 1);
         ASSERT_EQ(Value(list->data()[0]).toDouble(), 100);
+    }
+}
+
+TEST_F(LooksBlocksTest, SwitchCostumeTo)
+{
+    // Valid
+    {
+        auto sprite = std::make_shared<Sprite>();
+        auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+        auto costume2 = std::make_shared<Costume>("costume2", "b", "png");
+        auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+        sprite->addCostume(costume1);
+        sprite->addCostume(costume2);
+        sprite->addCostume(testCostume);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("looks_switchcostumeto");
+        builder.addDropdownInput("COSTUME", "costume2");
+        builder.build();
+
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 1);
+    }
+
+    m_engine->clear();
+
+    // Invalid
+    {
+        auto sprite = std::make_shared<Sprite>();
+        auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+        auto costume2 = std::make_shared<Costume>("costume2", "b", "png");
+        auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+        sprite->addCostume(costume1);
+        sprite->addCostume(costume2);
+        sprite->addCostume(testCostume);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("looks_switchcostumeto");
+        builder.addDropdownInput("COSTUME", "invalid");
+        builder.build();
+
+        sprite->setCostumeIndex(1);
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 1);
+
+        sprite->setCostumeIndex(2);
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 2);
+    }
+
+    m_engine->clear();
+
+    // "next costume"
+    {
+        auto sprite = std::make_shared<Sprite>();
+        auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+        auto costume2 = std::make_shared<Costume>("costume2", "b", "png");
+        auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+        sprite->addCostume(costume1);
+        sprite->addCostume(costume2);
+        sprite->addCostume(testCostume);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("looks_switchcostumeto");
+        builder.addDropdownInput("COSTUME", "next costume");
+        builder.build();
+
+        sprite->setCostumeIndex(0);
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 1);
+
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 2);
+
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 0);
+    }
+
+    m_engine->clear();
+
+    // "next costume" (a costume with this name exists)
+    {
+        auto sprite = std::make_shared<Sprite>();
+        auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+        auto nextCostume = std::make_shared<Costume>("next costume", "b", "png");
+        auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+        sprite->addCostume(costume1);
+        sprite->addCostume(nextCostume);
+        sprite->addCostume(testCostume);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("looks_switchcostumeto");
+        builder.addDropdownInput("COSTUME", "next costume");
+        builder.build();
+
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 1);
+
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 1);
+    }
+
+    m_engine->clear();
+
+    // "previous costume"
+    {
+        auto sprite = std::make_shared<Sprite>();
+        auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+        auto costume2 = std::make_shared<Costume>("costume2", "b", "png");
+        auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+        sprite->addCostume(costume1);
+        sprite->addCostume(costume2);
+        sprite->addCostume(testCostume);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("looks_switchcostumeto");
+        builder.addDropdownInput("COSTUME", "previous costume");
+        builder.build();
+
+        sprite->setCostumeIndex(0);
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 2);
+
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 1);
+
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 0);
+    }
+
+    m_engine->clear();
+
+    // "previous costume" (a costume with this name exists)
+    {
+        auto sprite = std::make_shared<Sprite>();
+        auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+        auto previousCostume = std::make_shared<Costume>("previous costume", "b", "png");
+        auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+        sprite->addCostume(costume1);
+        sprite->addCostume(previousCostume);
+        sprite->addCostume(testCostume);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("looks_switchcostumeto");
+        builder.addDropdownInput("COSTUME", "previous costume");
+        builder.build();
+
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 1);
+
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 1);
+    }
+
+    m_engine->clear();
+
+    // Index (number)
+    {
+        auto sprite = std::make_shared<Sprite>();
+        auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+        auto numberCostume = std::make_shared<Costume>("3", "b", "png");
+        auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+        sprite->addCostume(costume1);
+        sprite->addCostume(numberCostume);
+        sprite->addCostume(testCostume);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("looks_switchcostumeto");
+        builder.addValueInput("COSTUME", 3);
+        builder.build();
+
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 2);
+    }
+
+    m_engine->clear();
+
+    {
+        auto sprite = std::make_shared<Sprite>();
+        auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+        auto numberCostume = std::make_shared<Costume>("3", "b", "png");
+        auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+        sprite->addCostume(costume1);
+        sprite->addCostume(numberCostume);
+        sprite->addCostume(testCostume);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("looks_switchcostumeto");
+        builder.addValueInput("COSTUME", 5);
+        builder.build();
+
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 1);
+    }
+
+    m_engine->clear();
+
+    {
+        auto sprite = std::make_shared<Sprite>();
+        auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+        auto numberCostume = std::make_shared<Costume>("3", "b", "png");
+        auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+        sprite->addCostume(costume1);
+        sprite->addCostume(numberCostume);
+        sprite->addCostume(testCostume);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("looks_switchcostumeto");
+        builder.addValueInput("COSTUME", -1);
+        builder.build();
+
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 1);
+    }
+
+    m_engine->clear();
+
+    // Index (string)
+    {
+        auto sprite = std::make_shared<Sprite>();
+        auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+        auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+        sprite->addCostume(costume1);
+        sprite->addCostume(testCostume);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("looks_switchcostumeto");
+        builder.addValueInput("COSTUME", "3");
+        builder.build();
+
+        sprite->setCostumeIndex(1);
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 0);
+    }
+
+    m_engine->clear();
+
+    {
+        auto sprite = std::make_shared<Sprite>();
+        auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+        auto numberCostume = std::make_shared<Costume>("3", "b", "png");
+        auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+        sprite->addCostume(costume1);
+        sprite->addCostume(numberCostume);
+        sprite->addCostume(testCostume);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+        builder.addBlock("looks_switchcostumeto");
+        builder.addValueInput("COSTUME", "+7.0");
+        builder.addBlock("looks_switchcostumeto");
+        builder.addValueInput("COSTUME", "");
+        builder.addBlock("looks_switchcostumeto");
+        builder.addValueInput("COSTUME", "   ");
+        builder.build();
+
+        sprite->setCostumeIndex(2);
+        builder.run();
+        ASSERT_EQ(sprite->costumeIndex(), 0);
+    }
+
+    m_engine->clear();
+
+    // Stage
+    {
+        auto stage = std::make_shared<Stage>();
+        auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+        auto costume2 = std::make_shared<Costume>("costume2", "b", "png");
+        auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+        stage->addCostume(costume1);
+        stage->addCostume(costume2);
+        stage->addCostume(testCostume);
+
+        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+        builder.addBlock("looks_switchcostumeto");
+        builder.addDropdownInput("COSTUME", "costume1");
+        builder.build();
+
+        stage->setCostumeIndex(2);
+        builder.run();
+        ASSERT_EQ(stage->costumeIndex(), 0);
     }
 }

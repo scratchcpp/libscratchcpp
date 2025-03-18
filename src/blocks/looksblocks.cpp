@@ -9,6 +9,7 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stringptr.h>
 #include <scratchcpp/value.h>
+#include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/igraphicseffect.h>
 #include <scratchcpp/scratchconfiguration.h>
@@ -47,6 +48,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_changesizeby", &compileChangeSizeBy);
     engine->addCompileFunction(this, "looks_setsizeto", &compileSetSizeTo);
     engine->addCompileFunction(this, "looks_size", &compileSize);
+    engine->addCompileFunction(this, "looks_switchcostumeto", &compileSwitchCostumeTo);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -202,6 +204,13 @@ CompilerValue *LooksBlocks::compileSize(Compiler *compiler)
         return compiler->addTargetFunctionCall("looks_size", Compiler::StaticType::Number);
 }
 
+CompilerValue *LooksBlocks::compileSwitchCostumeTo(Compiler *compiler)
+{
+    auto costume = compiler->addInput("COSTUME");
+    compiler->addTargetFunctionCall("looks_switchcostumeto", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { costume });
+    return nullptr;
+}
+
 extern "C" void looks_start_stack_timer(ExecutionContext *ctx, double duration)
 {
     ctx->stackTimer()->start(duration);
@@ -284,4 +293,60 @@ extern "C" void looks_setsizeto(Sprite *sprite, double size)
 extern "C" double looks_size(Sprite *sprite)
 {
     return sprite->size();
+}
+
+extern "C" void looks_set_costume_by_index(Target *target, long index)
+{
+    const size_t costumeCount = target->costumes().size();
+
+    if (index < 0)
+        index = (costumeCount + index % (-costumeCount)) % costumeCount;
+    else if (index >= costumeCount)
+        index = index % costumeCount;
+
+    target->setCostumeIndex(index);
+}
+
+extern "C" void looks_nextcostume(Target *target)
+{
+    looks_set_costume_by_index(target, target->costumeIndex() + 1);
+}
+
+extern "C" void looks_previouscostume(Target *target)
+{
+    looks_set_costume_by_index(target, target->costumeIndex() - 1);
+}
+
+extern "C" void looks_switchcostumeto(Target *target, const ValueData *costume)
+{
+    // https://github.com/scratchfoundation/scratch-vm/blob/8dbcc1fc8f8d8c4f1e40629fe8a388149d6dfd1c/src/blocks/scratch3_looks.js#L389-L413
+    if (!value_isString(costume)) {
+        // Numbers should be treated as costume indices, always
+        if (value_isNaN(costume) || value_isInfinity(costume) || value_isNegativeInfinity(costume))
+            target->setCostumeIndex(0);
+        else
+            looks_set_costume_by_index(target, value_toLong(costume) - 1);
+    } else {
+        // Strings should be treated as costume names, where possible
+        // TODO: Use UTF-16 in Target
+        // StringPtr *nameStr = value_toStringPtr(costume);
+        std::string nameStr;
+        value_toString(costume, &nameStr);
+        const int costumeIndex = target->findCostume(nameStr);
+
+        auto it = std::find_if(nameStr.begin(), nameStr.end(), [](char c) { return !std::isspace(c); });
+        bool isWhiteSpace = (it == nameStr.end());
+
+        if (costumeIndex != -1)
+            looks_set_costume_by_index(target, costumeIndex);
+        else if (nameStr == "next costume")
+            looks_nextcostume(target);
+        else if (nameStr == "previous costume") {
+            looks_previouscostume(target);
+            // Try to cast the string to a number (and treat it as a costume index)
+            // Pure whitespace should not be treated as a number
+            // Note: isNaN will cast the string to a number before checking if it's NaN
+        } else if (value_isValidNumber(costume) && !isWhiteSpace)
+            looks_set_costume_by_index(target, value_toLong(costume) - 1);
+    }
 }
