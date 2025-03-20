@@ -407,95 +407,92 @@ TEST_F(LooksBlocksTest, ChangeEffectBy)
     }
 }
 
-TEST_F(LooksBlocksTest, SetEffectTo)
+TEST_F(LooksBlocksTest, SetEffectTo_Fisheye)
 {
-    // Fisheye
-    {
-        auto stage = std::make_shared<Stage>();
-        stage->setEngine(m_engine);
+    auto stage = std::make_shared<Stage>();
+    stage->setEngine(m_engine);
 
-        ScriptBuilder builder(m_extension.get(), m_engine, stage);
-        IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("FISHEYE");
-        ASSERT_TRUE(effect);
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("FISHEYE");
+    ASSERT_TRUE(effect);
 
-        builder.addBlock("looks_seteffectto");
-        builder.addDropdownField("EFFECT", "FISHEYE");
-        builder.addValueInput("VALUE", 45.2);
-        auto block = builder.currentBlock();
+    builder.addBlock("looks_seteffectto");
+    builder.addDropdownField("EFFECT", "FISHEYE");
+    builder.addValueInput("VALUE", 45.2);
+    auto block = builder.currentBlock();
 
-        Compiler compiler(m_engine, stage.get());
-        auto code = compiler.compile(block);
-        Script script(stage.get(), block, m_engine);
-        script.setCode(code);
-        Thread thread(stage.get(), m_engine, &script);
+    Compiler compiler(m_engine, stage.get());
+    auto code = compiler.compile(block);
+    Script script(stage.get(), block, m_engine);
+    script.setCode(code);
+    Thread thread(stage.get(), m_engine, &script);
 
-        stage->setGraphicsEffectValue(effect, 86.84);
-        thread.run();
-        ASSERT_EQ(std::round(stage->graphicsEffectValue(effect) * 100) / 100, 45.2);
-    }
+    stage->setGraphicsEffectValue(effect, 86.84);
+    thread.run();
+    ASSERT_EQ(std::round(stage->graphicsEffectValue(effect) * 100) / 100, 45.2);
+}
 
-    // Pixelate
-    {
-        auto stage = std::make_shared<Stage>();
-        stage->setEngine(m_engine);
+TEST_F(LooksBlocksTest, SetEffectTo_Pixelate)
+{
+    auto stage = std::make_shared<Stage>();
+    stage->setEngine(m_engine);
 
-        ScriptBuilder builder(m_extension.get(), m_engine, stage);
-        IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("PIXELATE");
-        ASSERT_TRUE(effect);
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("PIXELATE");
+    ASSERT_TRUE(effect);
 
-        builder.addBlock("looks_seteffectto");
-        builder.addDropdownField("EFFECT", "PIXELATE");
-        builder.addValueInput("VALUE", 12.05);
-        auto block = builder.currentBlock();
+    builder.addBlock("looks_seteffectto");
+    builder.addDropdownField("EFFECT", "PIXELATE");
+    builder.addValueInput("VALUE", 12.05);
+    auto block = builder.currentBlock();
 
-        Compiler compiler(m_engine, stage.get());
-        auto code = compiler.compile(block);
-        Script script(stage.get(), block, m_engine);
-        script.setCode(code);
-        Thread thread(stage.get(), m_engine, &script);
+    Compiler compiler(m_engine, stage.get());
+    auto code = compiler.compile(block);
+    Script script(stage.get(), block, m_engine);
+    script.setCode(code);
+    Thread thread(stage.get(), m_engine, &script);
 
-        thread.run();
-        ASSERT_EQ(std::round(stage->graphicsEffectValue(effect) * 100) / 100, 12.05);
-    }
+    thread.run();
+    ASSERT_EQ(std::round(stage->graphicsEffectValue(effect) * 100) / 100, 12.05);
+}
 
-    // Mosaic
-    {
-        auto sprite = std::make_shared<Sprite>();
-        sprite->setEngine(m_engine);
+TEST_F(LooksBlocksTest, SetEffectTo_Mosaic)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(m_engine);
 
-        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
-        IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("MOSAIC");
-        ASSERT_TRUE(effect);
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("MOSAIC");
+    ASSERT_TRUE(effect);
 
-        builder.addBlock("looks_seteffectto");
-        builder.addDropdownField("EFFECT", "MOSAIC");
-        builder.addValueInput("VALUE", -8.06);
-        auto block = builder.currentBlock();
+    builder.addBlock("looks_seteffectto");
+    builder.addDropdownField("EFFECT", "MOSAIC");
+    builder.addValueInput("VALUE", -8.06);
+    auto block = builder.currentBlock();
 
-        Compiler compiler(m_engine, sprite.get());
-        auto code = compiler.compile(block);
-        Script script(sprite.get(), block, m_engine);
-        script.setCode(code);
-        Thread thread(sprite.get(), m_engine, &script);
+    Compiler compiler(m_engine, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, m_engine);
+    script.setCode(code);
+    Thread thread(sprite.get(), m_engine, &script);
 
-        sprite->setGraphicsEffectValue(effect, 13.12);
-        thread.run();
-        ASSERT_EQ(std::round(sprite->graphicsEffectValue(effect) * 100) / 100, -8.06);
-    }
+    sprite->setGraphicsEffectValue(effect, 13.12);
+    thread.run();
+    ASSERT_EQ(std::round(sprite->graphicsEffectValue(effect) * 100) / 100, -8.06);
+}
 
-    // Invalid
-    {
-        auto stage = std::make_shared<Stage>();
-        stage->setEngine(m_engine);
+TEST_F(LooksBlocksTest, SetEffectTo_Invalid)
+{
+    auto stage = std::make_shared<Stage>();
+    stage->setEngine(m_engine);
 
-        ScriptBuilder builder(m_extension.get(), m_engine, stage);
-        builder.addBlock("looks_seteffectto");
-        builder.addDropdownField("EFFECT", "INVALID");
-        builder.addValueInput("VALUE", 8.3);
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    builder.addBlock("looks_seteffectto");
+    builder.addDropdownField("EFFECT", "INVALID");
+    builder.addValueInput("VALUE", 8.3);
 
-        builder.build();
-        builder.run();
-    }
+    builder.build();
+    builder.run();
 }
 
 TEST_F(LooksBlocksTest, ClearGraphicEffects)
