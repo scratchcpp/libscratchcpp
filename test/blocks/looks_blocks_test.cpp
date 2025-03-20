@@ -585,39 +585,36 @@ TEST_F(LooksBlocksTest, SetSizeTo)
     }
 }
 
-TEST_F(LooksBlocksTest, Size)
+TEST_F(LooksBlocksTest, Size_Sprite)
 {
-    {
-        auto sprite = std::make_shared<Sprite>();
-        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
-        builder.addBlock("looks_size");
-        builder.captureBlockReturnValue();
-        builder.build();
+    auto sprite = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    builder.addBlock("looks_size");
+    builder.captureBlockReturnValue();
+    builder.build();
 
-        sprite->setEngine(nullptr);
-        sprite->setSize(45.62);
-        builder.run();
+    sprite->setEngine(nullptr);
+    sprite->setSize(45.62);
+    builder.run();
 
-        List *list = builder.capturedValues();
-        ASSERT_EQ(list->size(), 1);
-        ASSERT_EQ(Value(list->data()[0]).toDouble(), 45.62);
-    }
+    List *list = builder.capturedValues();
+    ASSERT_EQ(list->size(), 1);
+    ASSERT_EQ(Value(list->data()[0]).toDouble(), 45.62);
+}
 
-    m_engine->clear();
+TEST_F(LooksBlocksTest, Size_Stage)
+{
+    auto stage = std::make_shared<Stage>();
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    builder.addBlock("looks_size");
+    builder.captureBlockReturnValue();
 
-    {
-        auto stage = std::make_shared<Stage>();
-        ScriptBuilder builder(m_extension.get(), m_engine, stage);
-        builder.addBlock("looks_size");
-        builder.captureBlockReturnValue();
+    builder.build();
+    builder.run();
 
-        builder.build();
-        builder.run();
-
-        List *list = builder.capturedValues();
-        ASSERT_EQ(list->size(), 1);
-        ASSERT_EQ(Value(list->data()[0]).toDouble(), 100);
-    }
+    List *list = builder.capturedValues();
+    ASSERT_EQ(list->size(), 1);
+    ASSERT_EQ(Value(list->data()[0]).toDouble(), 100);
 }
 
 TEST_F(LooksBlocksTest, SwitchCostumeTo_CostumeName)
