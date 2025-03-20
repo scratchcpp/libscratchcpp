@@ -909,57 +909,54 @@ TEST_F(LooksBlocksTest, SwitchCostumeTo_Stage)
     ASSERT_EQ(stage->costumeIndex(), 0);
 }
 
-TEST_F(LooksBlocksTest, NextCostume)
+TEST_F(LooksBlocksTest, NextCostume_Sprite)
 {
-    {
-        auto sprite = std::make_shared<Sprite>();
-        auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
-        auto costume2 = std::make_shared<Costume>("costume2", "b", "png");
-        auto testCostume = std::make_shared<Costume>("test", "c", "svg");
-        sprite->addCostume(costume1);
-        sprite->addCostume(costume2);
-        sprite->addCostume(testCostume);
+    auto sprite = std::make_shared<Sprite>();
+    auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+    auto costume2 = std::make_shared<Costume>("costume2", "b", "png");
+    auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+    sprite->addCostume(costume1);
+    sprite->addCostume(costume2);
+    sprite->addCostume(testCostume);
 
-        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
 
-        builder.addBlock("looks_nextcostume");
-        builder.build();
+    builder.addBlock("looks_nextcostume");
+    builder.build();
 
-        sprite->setCostumeIndex(0);
-        builder.run();
-        ASSERT_EQ(sprite->costumeIndex(), 1);
+    sprite->setCostumeIndex(0);
+    builder.run();
+    ASSERT_EQ(sprite->costumeIndex(), 1);
 
-        builder.run();
-        ASSERT_EQ(sprite->costumeIndex(), 2);
+    builder.run();
+    ASSERT_EQ(sprite->costumeIndex(), 2);
 
-        builder.run();
-        ASSERT_EQ(sprite->costumeIndex(), 0);
-    }
+    builder.run();
+    ASSERT_EQ(sprite->costumeIndex(), 0);
+}
 
-    m_engine->clear();
+TEST_F(LooksBlocksTest, NextCostume_Stage)
+{
+    auto stage = std::make_shared<Stage>();
+    auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+    auto costume2 = std::make_shared<Costume>("costume2", "b", "png");
+    auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(costume1);
+    stage->addCostume(costume2);
+    stage->addCostume(testCostume);
 
-    {
-        auto stage = std::make_shared<Stage>();
-        auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
-        auto costume2 = std::make_shared<Costume>("costume2", "b", "png");
-        auto testCostume = std::make_shared<Costume>("test", "c", "svg");
-        stage->addCostume(costume1);
-        stage->addCostume(costume2);
-        stage->addCostume(testCostume);
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
 
-        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    builder.addBlock("looks_nextcostume");
+    builder.build();
 
-        builder.addBlock("looks_nextcostume");
-        builder.build();
+    stage->setCostumeIndex(0);
+    builder.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
 
-        stage->setCostumeIndex(0);
-        builder.run();
-        ASSERT_EQ(stage->costumeIndex(), 1);
+    builder.run();
+    ASSERT_EQ(stage->costumeIndex(), 2);
 
-        builder.run();
-        ASSERT_EQ(stage->costumeIndex(), 2);
-
-        builder.run();
-        ASSERT_EQ(stage->costumeIndex(), 0);
-    }
+    builder.run();
+    ASSERT_EQ(stage->costumeIndex(), 0);
 }
