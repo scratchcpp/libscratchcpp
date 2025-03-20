@@ -285,35 +285,32 @@ TEST_F(LooksBlocksTest, Show)
     }
 }
 
-TEST_F(LooksBlocksTest, Hide)
+TEST_F(LooksBlocksTest, Hide_Sprite)
 {
-    {
-        auto sprite = std::make_shared<Sprite>();
-        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    auto sprite = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
 
-        builder.addBlock("looks_hide");
-        builder.build();
+    builder.addBlock("looks_hide");
+    builder.build();
 
-        sprite->setVisible(true);
+    sprite->setVisible(true);
 
-        builder.run();
-        ASSERT_FALSE(sprite->visible());
+    builder.run();
+    ASSERT_FALSE(sprite->visible());
 
-        builder.run();
-        ASSERT_FALSE(sprite->visible());
-    }
+    builder.run();
+    ASSERT_FALSE(sprite->visible());
+}
 
-    m_engine->clear();
+TEST_F(LooksBlocksTest, Hide_Stage)
+{
+    auto stage = std::make_shared<Stage>();
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
 
-    {
-        auto stage = std::make_shared<Stage>();
-        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    builder.addBlock("looks_hide");
 
-        builder.addBlock("looks_hide");
-
-        builder.build();
-        builder.run();
-    }
+    builder.build();
+    builder.run();
 }
 
 TEST_F(LooksBlocksTest, ChangeEffectBy_Color)
