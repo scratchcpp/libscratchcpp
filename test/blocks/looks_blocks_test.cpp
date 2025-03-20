@@ -557,32 +557,29 @@ TEST_F(LooksBlocksTest, ChangeSizeBy)
     }
 }
 
-TEST_F(LooksBlocksTest, SetSizeTo)
+TEST_F(LooksBlocksTest, SetSizeTo_Sprite)
 {
-    {
-        auto sprite = std::make_shared<Sprite>();
-        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
-        builder.addBlock("looks_setsizeto");
-        builder.addValueInput("SIZE", 2.5);
-        builder.build();
+    auto sprite = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    builder.addBlock("looks_setsizeto");
+    builder.addValueInput("SIZE", 2.5);
+    builder.build();
 
-        sprite->setEngine(nullptr);
-        sprite->setSize(45.62);
-        builder.run();
-        ASSERT_EQ(sprite->size(), 2.5);
-    }
+    sprite->setEngine(nullptr);
+    sprite->setSize(45.62);
+    builder.run();
+    ASSERT_EQ(sprite->size(), 2.5);
+}
 
-    m_engine->clear();
+TEST_F(LooksBlocksTest, SetSizeTo_Stage)
+{
+    auto stage = std::make_shared<Stage>();
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    builder.addBlock("looks_setsizeto");
+    builder.addValueInput("SIZE", 2.5);
 
-    {
-        auto stage = std::make_shared<Stage>();
-        ScriptBuilder builder(m_extension.get(), m_engine, stage);
-        builder.addBlock("looks_setsizeto");
-        builder.addValueInput("SIZE", 2.5);
-
-        builder.build();
-        builder.run();
-    }
+    builder.build();
+    builder.run();
 }
 
 TEST_F(LooksBlocksTest, Size_Sprite)
