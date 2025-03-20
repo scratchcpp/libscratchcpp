@@ -599,6 +599,17 @@ TEST_F(LooksBlocksTest, Size_Stage)
     ASSERT_EQ(Value(list->data()[0]).toDouble(), 100);
 }
 
+TEST_F(LooksBlocksTest, SwitchCostumeTo_NoCostumes)
+{
+    auto sprite = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchcostumeto");
+    builder.addDropdownInput("COSTUME", "costume2");
+    builder.build();
+    builder.run();
+}
+
 TEST_F(LooksBlocksTest, SwitchCostumeTo_CostumeName)
 {
     auto sprite = std::make_shared<Sprite>();
