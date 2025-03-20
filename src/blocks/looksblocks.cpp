@@ -352,7 +352,6 @@ extern "C" void looks_switchcostumeto(Target *target, const ValueData *costume)
             looks_previouscostume(target);
             // Try to cast the string to a number (and treat it as a costume index)
             // Pure whitespace should not be treated as a number
-            // Note: isNaN will cast the string to a number before checking if it's NaN
         } else if (value_isValidNumber(costume) && !isWhiteSpace)
             looks_set_costume_by_index(target, value_toLong(costume) - 1);
     }
