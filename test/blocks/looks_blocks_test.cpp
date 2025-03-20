@@ -316,95 +316,92 @@ TEST_F(LooksBlocksTest, Hide)
     }
 }
 
-TEST_F(LooksBlocksTest, ChangeEffectBy)
+TEST_F(LooksBlocksTest, ChangeEffectBy_Color)
 {
-    // Color
-    {
-        auto stage = std::make_shared<Stage>();
-        stage->setEngine(m_engine);
+    auto stage = std::make_shared<Stage>();
+    stage->setEngine(m_engine);
 
-        ScriptBuilder builder(m_extension.get(), m_engine, stage);
-        IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("COLOR");
-        ASSERT_TRUE(effect);
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("COLOR");
+    ASSERT_TRUE(effect);
 
-        builder.addBlock("looks_changeeffectby");
-        builder.addDropdownField("EFFECT", "COLOR");
-        builder.addValueInput("CHANGE", 45.2);
-        auto block = builder.currentBlock();
+    builder.addBlock("looks_changeeffectby");
+    builder.addDropdownField("EFFECT", "COLOR");
+    builder.addValueInput("CHANGE", 45.2);
+    auto block = builder.currentBlock();
 
-        Compiler compiler(m_engine, stage.get());
-        auto code = compiler.compile(block);
-        Script script(stage.get(), block, m_engine);
-        script.setCode(code);
-        Thread thread(stage.get(), m_engine, &script);
+    Compiler compiler(m_engine, stage.get());
+    auto code = compiler.compile(block);
+    Script script(stage.get(), block, m_engine);
+    script.setCode(code);
+    Thread thread(stage.get(), m_engine, &script);
 
-        stage->setGraphicsEffectValue(effect, 86.84);
-        thread.run();
-        ASSERT_EQ(std::round(stage->graphicsEffectValue(effect) * 100) / 100, 132.04);
-    }
+    stage->setGraphicsEffectValue(effect, 86.84);
+    thread.run();
+    ASSERT_EQ(std::round(stage->graphicsEffectValue(effect) * 100) / 100, 132.04);
+}
 
-    // Brightness
-    {
-        auto stage = std::make_shared<Stage>();
-        stage->setEngine(m_engine);
+TEST_F(LooksBlocksTest, ChangeEffectBy_Brightness)
+{
+    auto stage = std::make_shared<Stage>();
+    stage->setEngine(m_engine);
 
-        ScriptBuilder builder(m_extension.get(), m_engine, stage);
-        IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("BRIGHTNESS");
-        ASSERT_TRUE(effect);
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("BRIGHTNESS");
+    ASSERT_TRUE(effect);
 
-        builder.addBlock("looks_changeeffectby");
-        builder.addDropdownField("EFFECT", "BRIGHTNESS");
-        builder.addValueInput("CHANGE", 12.05);
-        auto block = builder.currentBlock();
+    builder.addBlock("looks_changeeffectby");
+    builder.addDropdownField("EFFECT", "BRIGHTNESS");
+    builder.addValueInput("CHANGE", 12.05);
+    auto block = builder.currentBlock();
 
-        Compiler compiler(m_engine, stage.get());
-        auto code = compiler.compile(block);
-        Script script(stage.get(), block, m_engine);
-        script.setCode(code);
-        Thread thread(stage.get(), m_engine, &script);
+    Compiler compiler(m_engine, stage.get());
+    auto code = compiler.compile(block);
+    Script script(stage.get(), block, m_engine);
+    script.setCode(code);
+    Thread thread(stage.get(), m_engine, &script);
 
-        thread.run();
-        ASSERT_EQ(std::round(stage->graphicsEffectValue(effect) * 100) / 100, 12.05);
-    }
+    thread.run();
+    ASSERT_EQ(std::round(stage->graphicsEffectValue(effect) * 100) / 100, 12.05);
+}
 
-    // Ghost
-    {
-        auto stage = std::make_shared<Stage>();
-        stage->setEngine(m_engine);
+TEST_F(LooksBlocksTest, ChangeEffectBy_Ghost)
+{
+    auto stage = std::make_shared<Stage>();
+    stage->setEngine(m_engine);
 
-        ScriptBuilder builder(m_extension.get(), m_engine, stage);
-        IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("GHOST");
-        ASSERT_TRUE(effect);
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect("GHOST");
+    ASSERT_TRUE(effect);
 
-        builder.addBlock("looks_changeeffectby");
-        builder.addDropdownField("EFFECT", "GHOST");
-        builder.addValueInput("CHANGE", -8.06);
-        auto block = builder.currentBlock();
+    builder.addBlock("looks_changeeffectby");
+    builder.addDropdownField("EFFECT", "GHOST");
+    builder.addValueInput("CHANGE", -8.06);
+    auto block = builder.currentBlock();
 
-        Compiler compiler(m_engine, stage.get());
-        auto code = compiler.compile(block);
-        Script script(stage.get(), block, m_engine);
-        script.setCode(code);
-        Thread thread(stage.get(), m_engine, &script);
+    Compiler compiler(m_engine, stage.get());
+    auto code = compiler.compile(block);
+    Script script(stage.get(), block, m_engine);
+    script.setCode(code);
+    Thread thread(stage.get(), m_engine, &script);
 
-        stage->setGraphicsEffectValue(effect, 13.12);
-        thread.run();
-        ASSERT_EQ(std::round(stage->graphicsEffectValue(effect) * 100) / 100, 5.06);
-    }
+    stage->setGraphicsEffectValue(effect, 13.12);
+    thread.run();
+    ASSERT_EQ(std::round(stage->graphicsEffectValue(effect) * 100) / 100, 5.06);
+}
 
-    // Invalid
-    {
-        auto stage = std::make_shared<Stage>();
-        stage->setEngine(m_engine);
+TEST_F(LooksBlocksTest, ChangeEffectBy_Invalid)
+{
+    auto stage = std::make_shared<Stage>();
+    stage->setEngine(m_engine);
 
-        ScriptBuilder builder(m_extension.get(), m_engine, stage);
-        builder.addBlock("looks_changeeffectby");
-        builder.addDropdownField("EFFECT", "INVALID");
-        builder.addValueInput("CHANGE", 8.3);
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    builder.addBlock("looks_changeeffectby");
+    builder.addDropdownField("EFFECT", "INVALID");
+    builder.addValueInput("CHANGE", 8.3);
 
-        builder.build();
-        builder.run();
-    }
+    builder.build();
+    builder.run();
 }
 
 TEST_F(LooksBlocksTest, SetEffectTo_Fisheye)
