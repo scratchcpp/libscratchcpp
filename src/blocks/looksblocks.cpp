@@ -5,8 +5,11 @@
 #include <scratchcpp/compilerconstant.h>
 #include <scratchcpp/executioncontext.h>
 #include <scratchcpp/istacktimer.h>
+#include <scratchcpp/irandomgenerator.h>
 #include <scratchcpp/thread.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/costume.h>
 #include <scratchcpp/stringptr.h>
 #include <scratchcpp/value.h>
 #include <scratchcpp/input.h>
@@ -50,6 +53,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_size", &compileSize);
     engine->addCompileFunction(this, "looks_switchcostumeto", &compileSwitchCostumeTo);
     engine->addCompileFunction(this, "looks_nextcostume", &compileNextCostume);
+    engine->addCompileFunction(this, "looks_switchbackdropto", &compileSwitchBackdropTo);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -218,6 +222,16 @@ CompilerValue *LooksBlocks::compileNextCostume(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *LooksBlocks::compileSwitchBackdropTo(Compiler *compiler)
+{
+    auto backdrop = compiler->addInput("BACKDROP");
+    auto wait = compiler->addConstValue(false);
+    compiler->addFunctionCallWithCtx("looks_switchbackdropto", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { backdrop });
+    compiler->addFunctionCallWithCtx("looks_start_backdrop_scripts", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { wait });
+
+    return nullptr;
+}
+
 extern "C" void looks_start_stack_timer(ExecutionContext *ctx, double duration)
 {
     ctx->stackTimer()->start(duration);
@@ -324,6 +338,14 @@ extern "C" void looks_previouscostume(Target *target)
     looks_set_costume_by_index(target, target->costumeIndex() - 1);
 }
 
+void looks_randomcostume(Target *target, IRandomGenerator *rng)
+{
+    size_t count = target->costumes().size();
+
+    if (count > 1)
+        looks_set_costume_by_index(target, rng->randintExcept(0, count - 1, target->costumeIndex())); // exclude current costume
+}
+
 extern "C" void looks_switchcostumeto(Target *target, const ValueData *costume)
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/8dbcc1fc8f8d8c4f1e40629fe8a388149d6dfd1c/src/blocks/scratch3_looks.js#L389-L413
@@ -354,5 +376,52 @@ extern "C" void looks_switchcostumeto(Target *target, const ValueData *costume)
             // Pure whitespace should not be treated as a number
         } else if (value_isValidNumber(costume) && !isWhiteSpace)
             looks_set_costume_by_index(target, value_toLong(costume) - 1);
+    }
+}
+
+extern "C" void looks_start_backdrop_scripts(ExecutionContext *ctx, bool wait)
+{
+    IEngine *engine = ctx->engine();
+    Stage *stage = engine->stage();
+    Costume *backdrop = stage->currentCostume().get();
+
+    if (backdrop)
+        engine->startBackdropScripts(backdrop->broadcast(), ctx->thread(), wait);
+}
+
+extern "C" void looks_switchbackdropto(ExecutionContext *ctx, const ValueData *backdrop)
+{
+    Stage *stage = ctx->engine()->stage();
+
+    // https://github.com/scratchfoundation/scratch-vm/blob/8dbcc1fc8f8d8c4f1e40629fe8a388149d6dfd1c/src/blocks/scratch3_looks.js#L389-L413
+    if (!value_isString(backdrop)) {
+        // Numbers should be treated as costume indices, always
+        if (value_isNaN(backdrop) || value_isInfinity(backdrop) || value_isNegativeInfinity(backdrop))
+            stage->setCostumeIndex(0);
+        else
+            looks_set_costume_by_index(stage, value_toLong(backdrop) - 1);
+    } else {
+        // Strings should be treated as costume names, where possible
+        // TODO: Use UTF-16 in Target
+        // StringPtr *nameStr = value_toStringPtr(backdrop);
+        std::string nameStr;
+        value_toString(backdrop, &nameStr);
+        const int costumeIndex = stage->findCostume(nameStr);
+
+        auto it = std::find_if(nameStr.begin(), nameStr.end(), [](char c) { return !std::isspace(c); });
+        bool isWhiteSpace = (it == nameStr.end());
+
+        if (costumeIndex != -1)
+            looks_set_costume_by_index(stage, costumeIndex);
+        else if (nameStr == "next backdrop")
+            looks_nextcostume(stage);
+        else if (nameStr == "previous backdrop")
+            looks_previouscostume(stage);
+        else if (nameStr == "random backdrop") {
+            looks_randomcostume(stage, ctx->rng());
+            // Try to cast the string to a number (and treat it as a costume index)
+            // Pure whitespace should not be treated as a number
+        } else if (value_isValidNumber(backdrop) && !isWhiteSpace)
+            looks_set_costume_by_index(stage, value_toLong(backdrop) - 1);
     }
 }

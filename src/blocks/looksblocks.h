@@ -41,6 +41,7 @@ class LooksBlocks : public IExtension
         static CompilerValue *compileSize(Compiler *compiler);
         static CompilerValue *compileSwitchCostumeTo(Compiler *compiler);
         static CompilerValue *compileNextCostume(Compiler *compiler);
+        static CompilerValue *compileSwitchBackdropTo(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
