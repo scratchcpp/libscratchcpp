@@ -254,35 +254,32 @@ TEST_F(LooksBlocksTest, SayAndThink)
     }
 }
 
-TEST_F(LooksBlocksTest, Show)
+TEST_F(LooksBlocksTest, Show_Sprite)
 {
-    {
-        auto sprite = std::make_shared<Sprite>();
-        ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    auto sprite = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
 
-        builder.addBlock("looks_show");
-        builder.build();
+    builder.addBlock("looks_show");
+    builder.build();
 
-        sprite->setVisible(false);
+    sprite->setVisible(false);
 
-        builder.run();
-        ASSERT_TRUE(sprite->visible());
+    builder.run();
+    ASSERT_TRUE(sprite->visible());
 
-        builder.run();
-        ASSERT_TRUE(sprite->visible());
-    }
+    builder.run();
+    ASSERT_TRUE(sprite->visible());
+}
 
-    m_engine->clear();
+TEST_F(LooksBlocksTest, Show_Stage)
+{
+    auto stage = std::make_shared<Stage>();
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
 
-    {
-        auto stage = std::make_shared<Stage>();
-        ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    builder.addBlock("looks_show");
 
-        builder.addBlock("looks_show");
-
-        builder.build();
-        builder.run();
-    }
+    builder.build();
+    builder.run();
 }
 
 TEST_F(LooksBlocksTest, Hide_Sprite)
