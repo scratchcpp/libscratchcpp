@@ -804,6 +804,34 @@ TEST_F(LooksBlocksTest, SwitchCostumeTo_NegativeOutOfRangeNumberIndex)
     ASSERT_EQ(sprite->costumeIndex(), 1);
 }
 
+TEST_F(LooksBlocksTest, SwitchCostumeTo_InvalidNumberIndex)
+{
+    auto sprite = std::make_shared<Sprite>();
+    auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+    auto numberCostume = std::make_shared<Costume>("3", "b", "png");
+    auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+    sprite->addCostume(costume1);
+    sprite->addCostume(numberCostume);
+    sprite->addCostume(testCostume);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchcostumeto");
+    builder.addValueInput("COSTUME", std::numeric_limits<double>::quiet_NaN());
+    builder.addBlock("looks_switchcostumeto");
+    builder.addValueInput("COSTUME", std::numeric_limits<double>::infinity());
+    builder.addBlock("looks_switchcostumeto");
+    builder.addValueInput("COSTUME", -std::numeric_limits<double>::infinity());
+    builder.build();
+
+    builder.run();
+    ASSERT_EQ(sprite->costumeIndex(), 0);
+
+    sprite->setCostumeIndex(2);
+    builder.run();
+    ASSERT_EQ(sprite->costumeIndex(), 0);
+}
+
 TEST_F(LooksBlocksTest, SwitchCostumeTo_StringIndex)
 {
     auto sprite = std::make_shared<Sprite>();
