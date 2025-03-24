@@ -54,6 +54,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_switchcostumeto", &compileSwitchCostumeTo);
     engine->addCompileFunction(this, "looks_nextcostume", &compileNextCostume);
     engine->addCompileFunction(this, "looks_switchbackdropto", &compileSwitchBackdropTo);
+    engine->addCompileFunction(this, "looks_gotofrontback", &compileGoToFrontBack);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -228,6 +229,26 @@ CompilerValue *LooksBlocks::compileSwitchBackdropTo(Compiler *compiler)
     auto wait = compiler->addConstValue(false);
     compiler->addFunctionCallWithCtx("looks_switchbackdropto", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { backdrop });
     compiler->addFunctionCallWithCtx("looks_start_backdrop_scripts", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { wait });
+
+    return nullptr;
+}
+
+CompilerValue *LooksBlocks::compileGoToFrontBack(Compiler *compiler)
+{
+    if (compiler->target()->isStage())
+        return nullptr;
+
+    Field *field = compiler->field("FRONT_BACK");
+
+    if (!field)
+        return nullptr;
+
+    const std::string &option = field->value().toString();
+
+    if (option == "front")
+        compiler->addFunctionCallWithCtx("looks_move_to_front");
+    else if (option == "back")
+        compiler->addFunctionCallWithCtx("looks_move_to_back");
 
     return nullptr;
 }
@@ -424,4 +445,16 @@ extern "C" void looks_switchbackdropto(ExecutionContext *ctx, const ValueData *b
         } else if (value_isValidNumber(backdrop) && !isWhiteSpace)
             looks_set_costume_by_index(stage, value_toLong(backdrop) - 1);
     }
+}
+
+extern "C" void looks_move_to_front(ExecutionContext *ctx)
+{
+    Target *target = ctx->thread()->target();
+    ctx->engine()->moveDrawableToFront(target);
+}
+
+extern "C" void looks_move_to_back(ExecutionContext *ctx)
+{
+    Target *target = ctx->thread()->target();
+    ctx->engine()->moveDrawableToBack(target);
 }

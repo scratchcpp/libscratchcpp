@@ -1609,3 +1609,86 @@ TEST_F(LooksBlocksTest, SwitchBackdropTo_Stage)
     thread.run();
     ASSERT_EQ(stage->costumeIndex(), 0);
 }
+
+TEST_F(LooksBlocksTest, GoToFrontBack_MoveSpriteToFront)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+    auto sprite1 = std::make_shared<Sprite>();
+    auto sprite2 = std::make_shared<Sprite>();
+    auto sprite3 = std::make_shared<Sprite>();
+    m_engine->setTargets({ stage, sprite, sprite1, sprite2, sprite3 });
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_gotofrontback");
+    builder.addDropdownField("FRONT_BACK", "front");
+    builder.build();
+
+    m_engine->moveDrawableToBack(sprite.get());
+
+    builder.run();
+    std::initializer_list<int> layers = { sprite->layerOrder(), sprite1->layerOrder(), sprite2->layerOrder(), sprite3->layerOrder() };
+    ASSERT_EQ(sprite->layerOrder(), std::max(layers));
+
+    builder.run();
+    ASSERT_EQ(sprite->layerOrder(), std::max(layers));
+}
+
+TEST_F(LooksBlocksTest, GoToFrontBack_MoveSpriteToBack)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+    auto sprite1 = std::make_shared<Sprite>();
+    auto sprite2 = std::make_shared<Sprite>();
+    auto sprite3 = std::make_shared<Sprite>();
+    m_engine->setTargets({ stage, sprite, sprite1, sprite2, sprite3 });
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_gotofrontback");
+    builder.addDropdownField("FRONT_BACK", "back");
+    builder.build();
+
+    m_engine->moveDrawableToFront(sprite.get());
+
+    builder.run();
+    ASSERT_EQ(sprite->layerOrder(), 1);
+
+    builder.run();
+    ASSERT_EQ(sprite->layerOrder(), 1);
+}
+
+TEST_F(LooksBlocksTest, GoToFrontBack_MoveStageToFront)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+    auto sprite1 = std::make_shared<Sprite>();
+    auto sprite2 = std::make_shared<Sprite>();
+    auto sprite3 = std::make_shared<Sprite>();
+    m_engine->setTargets({ stage, sprite, sprite1, sprite2, sprite3 });
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+    builder.addBlock("looks_gotofrontback");
+    builder.addDropdownField("FRONT_BACK", "front");
+    builder.build();
+
+    builder.run();
+    ASSERT_EQ(stage->layerOrder(), 0);
+}
+
+TEST_F(LooksBlocksTest, GoToFrontBack_MoveStageToBack)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+    auto sprite1 = std::make_shared<Sprite>();
+    auto sprite2 = std::make_shared<Sprite>();
+    auto sprite3 = std::make_shared<Sprite>();
+    m_engine->setTargets({ stage, sprite, sprite1, sprite2, sprite3 });
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+    builder.addBlock("looks_gotofrontback");
+    builder.addDropdownField("FRONT_BACK", "back");
+    builder.build();
+
+    builder.run();
+    ASSERT_EQ(sprite->layerOrder(), 0);
+}
