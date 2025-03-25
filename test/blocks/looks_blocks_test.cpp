@@ -1692,3 +1692,153 @@ TEST_F(LooksBlocksTest, GoToFrontBack_MoveStageToBack)
     builder.run();
     ASSERT_EQ(sprite->layerOrder(), 0);
 }
+
+TEST_F(LooksBlocksTest, GoForwardBackwardLayers_MoveSpriteForwardPositive)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+    auto sprite1 = std::make_shared<Sprite>();
+    auto sprite2 = std::make_shared<Sprite>();
+    auto sprite3 = std::make_shared<Sprite>();
+    m_engine->setTargets({ stage, sprite, sprite1, sprite2, sprite3 });
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_goforwardbackwardlayers");
+    builder.addDropdownField("FORWARD_BACKWARD", "forward");
+    builder.addValueInput("NUM", 2);
+    builder.build();
+
+    // sprite, sprite1, sprite3, sprite2
+    m_engine->moveDrawableToFront(sprite1.get());
+    m_engine->moveDrawableToFront(sprite3.get());
+    m_engine->moveDrawableToFront(sprite2.get());
+    m_engine->moveDrawableToBack(sprite.get());
+
+    // sprite1, sprite3, sprite, sprite2
+    builder.run();
+    ASSERT_GT(sprite->layerOrder(), sprite1->layerOrder());
+    ASSERT_GT(sprite->layerOrder(), sprite3->layerOrder());
+    ASSERT_LT(sprite->layerOrder(), sprite2->layerOrder());
+}
+
+TEST_F(LooksBlocksTest, GoForwardBackwardLayers_MoveSpriteForwardNegative)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+    auto sprite1 = std::make_shared<Sprite>();
+    auto sprite2 = std::make_shared<Sprite>();
+    auto sprite3 = std::make_shared<Sprite>();
+    m_engine->setTargets({ stage, sprite, sprite1, sprite2, sprite3 });
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_goforwardbackwardlayers");
+    builder.addDropdownField("FORWARD_BACKWARD", "forward");
+    builder.addValueInput("NUM", -1);
+    builder.build();
+
+    // sprite1, sprite3, sprite2, sprite
+    m_engine->moveDrawableToFront(sprite1.get());
+    m_engine->moveDrawableToFront(sprite3.get());
+    m_engine->moveDrawableToFront(sprite2.get());
+    m_engine->moveDrawableToFront(sprite.get());
+
+    // sprite1, sprite3, sprite, sprite2
+    builder.run();
+    ASSERT_GT(sprite->layerOrder(), sprite1->layerOrder());
+    ASSERT_GT(sprite->layerOrder(), sprite3->layerOrder());
+    ASSERT_LT(sprite->layerOrder(), sprite2->layerOrder());
+}
+
+TEST_F(LooksBlocksTest, GoForwardBackwardLayers_MoveSpriteBackwardPositive)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+    auto sprite1 = std::make_shared<Sprite>();
+    auto sprite2 = std::make_shared<Sprite>();
+    auto sprite3 = std::make_shared<Sprite>();
+    m_engine->setTargets({ stage, sprite, sprite1, sprite2, sprite3 });
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_goforwardbackwardlayers");
+    builder.addDropdownField("FORWARD_BACKWARD", "backward");
+    builder.addValueInput("NUM", 1);
+    builder.build();
+
+    // sprite1, sprite3, sprite2, sprite
+    m_engine->moveDrawableToFront(sprite1.get());
+    m_engine->moveDrawableToFront(sprite3.get());
+    m_engine->moveDrawableToFront(sprite2.get());
+    m_engine->moveDrawableToFront(sprite.get());
+
+    // sprite1, sprite3, sprite, sprite2
+    builder.run();
+    ASSERT_GT(sprite->layerOrder(), sprite1->layerOrder());
+    ASSERT_GT(sprite->layerOrder(), sprite3->layerOrder());
+    ASSERT_LT(sprite->layerOrder(), sprite2->layerOrder());
+}
+
+TEST_F(LooksBlocksTest, GoForwardBackwardLayers_MoveSpriteBackwardNegative)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+    auto sprite1 = std::make_shared<Sprite>();
+    auto sprite2 = std::make_shared<Sprite>();
+    auto sprite3 = std::make_shared<Sprite>();
+    m_engine->setTargets({ stage, sprite, sprite1, sprite2, sprite3 });
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_goforwardbackwardlayers");
+    builder.addDropdownField("FORWARD_BACKWARD", "backward");
+    builder.addValueInput("NUM", -2);
+    builder.build();
+
+    // sprite, sprite1, sprite3, sprite2
+    m_engine->moveDrawableToFront(sprite1.get());
+    m_engine->moveDrawableToFront(sprite3.get());
+    m_engine->moveDrawableToFront(sprite2.get());
+    m_engine->moveDrawableToBack(sprite.get());
+
+    // sprite1, sprite3, sprite, sprite2
+    builder.run();
+    ASSERT_GT(sprite->layerOrder(), sprite1->layerOrder());
+    ASSERT_GT(sprite->layerOrder(), sprite3->layerOrder());
+    ASSERT_LT(sprite->layerOrder(), sprite2->layerOrder());
+}
+
+TEST_F(LooksBlocksTest, GoForwardBackwardLayers_MoveStageForward)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+    auto sprite1 = std::make_shared<Sprite>();
+    auto sprite2 = std::make_shared<Sprite>();
+    auto sprite3 = std::make_shared<Sprite>();
+    m_engine->setTargets({ stage, sprite, sprite1, sprite2, sprite3 });
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+    builder.addBlock("looks_goforwardbackwardlayers");
+    builder.addDropdownField("FORWARD_BACKWARD", "forward");
+    builder.addValueInput("NUM", 3);
+    builder.build();
+
+    builder.run();
+    ASSERT_EQ(stage->layerOrder(), 0);
+}
+
+TEST_F(LooksBlocksTest, GoForwardBackwardLayers_MoveStageBackward)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+    auto sprite1 = std::make_shared<Sprite>();
+    auto sprite2 = std::make_shared<Sprite>();
+    auto sprite3 = std::make_shared<Sprite>();
+    m_engine->setTargets({ stage, sprite, sprite1, sprite2, sprite3 });
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+    builder.addBlock("looks_goforwardbackwardlayers");
+    builder.addDropdownField("FORWARD_BACKWARD", "backward");
+    builder.addValueInput("NUM", 3);
+    builder.build();
+
+    builder.run();
+    ASSERT_EQ(stage->layerOrder(), 0);
+}

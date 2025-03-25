@@ -55,6 +55,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_nextcostume", &compileNextCostume);
     engine->addCompileFunction(this, "looks_switchbackdropto", &compileSwitchBackdropTo);
     engine->addCompileFunction(this, "looks_gotofrontback", &compileGoToFrontBack);
+    engine->addCompileFunction(this, "looks_goforwardbackwardlayers", &compileGoForwardBackwardLayers);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -249,6 +250,29 @@ CompilerValue *LooksBlocks::compileGoToFrontBack(Compiler *compiler)
         compiler->addFunctionCallWithCtx("looks_move_to_front");
     else if (option == "back")
         compiler->addFunctionCallWithCtx("looks_move_to_back");
+
+    return nullptr;
+}
+
+CompilerValue *LooksBlocks::compileGoForwardBackwardLayers(Compiler *compiler)
+{
+    if (compiler->target()->isStage())
+        return nullptr;
+
+    Field *field = compiler->field("FORWARD_BACKWARD");
+
+    if (!field)
+        return nullptr;
+
+    const std::string &option = field->value().toString();
+
+    if (option == "forward") {
+        auto layers = compiler->addInput("NUM");
+        compiler->addFunctionCallWithCtx("looks_move_forward_layers", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { layers });
+    } else if (option == "backward") {
+        auto layers = compiler->addInput("NUM");
+        compiler->addFunctionCallWithCtx("looks_move_backward_layers", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { layers });
+    }
 
     return nullptr;
 }
@@ -457,4 +481,16 @@ extern "C" void looks_move_to_back(ExecutionContext *ctx)
 {
     Target *target = ctx->thread()->target();
     ctx->engine()->moveDrawableToBack(target);
+}
+
+extern "C" void looks_move_forward_layers(ExecutionContext *ctx, double layers)
+{
+    Target *target = ctx->thread()->target();
+    ctx->engine()->moveDrawableForwardLayers(target, layers);
+}
+
+extern "C" void looks_move_backward_layers(ExecutionContext *ctx, double layers)
+{
+    Target *target = ctx->thread()->target();
+    ctx->engine()->moveDrawableBackwardLayers(target, layers);
 }
