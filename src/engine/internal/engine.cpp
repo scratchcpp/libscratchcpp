@@ -1262,16 +1262,26 @@ void Engine::moveDrawableForwardLayers(Drawable *drawable, int layers)
     if (it == m_sortedDrawables.end())
         return;
 
-    auto target = it + layers;
+    auto target = it;
+    int layersAbs = std::abs(layers);
 
-    if (target <= m_sortedDrawables.begin()) {
-        moveDrawableToBack(drawable);
-        return;
-    }
+    for (int i = 0; i < layersAbs; i++) {
+        if (target <= m_sortedDrawables.begin()) {
+            moveDrawableToBack(drawable);
+            return;
+        }
 
-    if (target >= m_sortedDrawables.end()) {
-        moveDrawableToFront(drawable);
-        return;
+        if (target >= m_sortedDrawables.end()) {
+            moveDrawableToFront(drawable);
+            return;
+        }
+
+        Drawable *currentDrawable;
+
+        do {
+            currentDrawable = *target;
+            target += layers / layersAbs;
+        } while (currentDrawable->isTextBubble() && static_cast<TextBubble *>(currentDrawable)->text().empty());
     }
 
     if (layers > 0)

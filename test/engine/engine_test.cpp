@@ -1321,6 +1321,11 @@ TEST(EngineTest, MoveDrawableForwardLayers)
     std::vector<Sprite *> sprites;
     createTargets(&engine, sprites);
 
+    const auto &targets = engine.targets();
+
+    for (auto target : targets)
+        target->bubble()->setText("test");
+
     engine.moveDrawableForwardLayers(sprites[4], 2);
     ASSERT_EQ(sprites[0]->layerOrder(), 1);
     ASSERT_EQ(sprites[1]->layerOrder(), 5);
@@ -1380,6 +1385,20 @@ TEST(EngineTest, MoveDrawableForwardLayers)
     ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 8);
     ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 9);
     ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
+
+    sprites[1]->bubble()->setText("");
+    sprites[3]->bubble()->setText("");
+    engine.moveDrawableForwardLayers(sprites[2], 8);
+    ASSERT_EQ(sprites[0]->layerOrder(), 1);
+    ASSERT_EQ(sprites[1]->layerOrder(), 4);
+    ASSERT_EQ(sprites[2]->layerOrder(), 11);
+    ASSERT_EQ(sprites[3]->layerOrder(), 3);
+    ASSERT_EQ(sprites[4]->layerOrder(), 2);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 6);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 10);
 }
 
 TEST(EngineTest, MoveDrawableBackwardLayers)
@@ -1387,6 +1406,11 @@ TEST(EngineTest, MoveDrawableBackwardLayers)
     Engine engine;
     std::vector<Sprite *> sprites;
     createTargets(&engine, sprites);
+
+    const auto &targets = engine.targets();
+
+    for (auto target : targets)
+        target->bubble()->setText("test");
 
     engine.moveDrawableBackwardLayers(sprites[4], -2);
     ASSERT_EQ(sprites[0]->layerOrder(), 1);
@@ -1447,6 +1471,20 @@ TEST(EngineTest, MoveDrawableBackwardLayers)
     ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 8);
     ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 9);
     ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 11);
+
+    sprites[1]->bubble()->setText("");
+    sprites[3]->bubble()->setText("");
+    engine.moveDrawableBackwardLayers(sprites[2], -8);
+    ASSERT_EQ(sprites[0]->layerOrder(), 1);
+    ASSERT_EQ(sprites[1]->layerOrder(), 4);
+    ASSERT_EQ(sprites[2]->layerOrder(), 11);
+    ASSERT_EQ(sprites[3]->layerOrder(), 3);
+    ASSERT_EQ(sprites[4]->layerOrder(), 2);
+    ASSERT_EQ(sprites[0]->bubble()->layerOrder(), 9);
+    ASSERT_EQ(sprites[1]->bubble()->layerOrder(), 6);
+    ASSERT_EQ(sprites[2]->bubble()->layerOrder(), 7);
+    ASSERT_EQ(sprites[3]->bubble()->layerOrder(), 8);
+    ASSERT_EQ(sprites[4]->bubble()->layerOrder(), 10);
 }
 
 TEST(EngineTest, MoveDrawableBehindOther)
