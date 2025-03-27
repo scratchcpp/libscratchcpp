@@ -11,6 +11,7 @@
 #include <scratchcpp/stage.h>
 #include <scratchcpp/costume.h>
 #include <scratchcpp/stringptr.h>
+#include <scratchcpp/string_pool.h>
 #include <scratchcpp/value.h>
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
@@ -56,6 +57,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_switchbackdropto", &compileSwitchBackdropTo);
     engine->addCompileFunction(this, "looks_gotofrontback", &compileGoToFrontBack);
     engine->addCompileFunction(this, "looks_goforwardbackwardlayers", &compileGoForwardBackwardLayers);
+    engine->addCompileFunction(this, "looks_backdropnumbername", &compileBackdropNumberName);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -277,6 +279,23 @@ CompilerValue *LooksBlocks::compileGoForwardBackwardLayers(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *LooksBlocks::compileBackdropNumberName(Compiler *compiler)
+{
+    Field *field = compiler->field("NUMBER_NAME");
+
+    if (!field)
+        return nullptr;
+
+    const std::string &option = field->value().toString();
+
+    if (option == "number")
+        return compiler->addFunctionCallWithCtx("looks_backdrop_number", Compiler::StaticType::Number);
+    else if (option == "name")
+        return compiler->addFunctionCallWithCtx("looks_backdrop_name", Compiler::StaticType::String);
+    else
+        return compiler->addConstValue(Value());
+}
+
 extern "C" void looks_start_stack_timer(ExecutionContext *ctx, double duration)
 {
     ctx->stackTimer()->start(duration);
@@ -493,4 +512,17 @@ extern "C" void looks_move_backward_layers(ExecutionContext *ctx, double layers)
 {
     Target *target = ctx->thread()->target();
     ctx->engine()->moveDrawableBackwardLayers(target, layers);
+}
+
+extern "C" double looks_backdrop_number(ExecutionContext *ctx)
+{
+    return ctx->engine()->stage()->costumeIndex() + 1;
+}
+
+extern "C" StringPtr *looks_backdrop_name(ExecutionContext *ctx)
+{
+    const std::string &name = ctx->engine()->stage()->currentCostume()->name();
+    StringPtr *ret = string_pool_new();
+    string_assign_cstring(ret, name.c_str());
+    return ret;
 }

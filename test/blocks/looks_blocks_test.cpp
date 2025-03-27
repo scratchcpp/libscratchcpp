@@ -1842,3 +1842,125 @@ TEST_F(LooksBlocksTest, GoForwardBackwardLayers_MoveStageBackward)
     builder.run();
     ASSERT_EQ(stage->layerOrder(), 0);
 }
+
+TEST_F(LooksBlocksTest, BackdropNumberName_SpriteBackdropNumber)
+{
+    auto sprite = std::make_shared<Sprite>();
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    m_engine->setTargets({ stage, sprite });
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_backdropnumbername");
+    builder.addDropdownField("NUMBER_NAME", "number");
+    builder.captureBlockReturnValue();
+    builder.build();
+
+    stage->setCostumeIndex(2);
+    builder.run();
+
+    stage->setCostumeIndex(0);
+    builder.run();
+
+    List *list = builder.capturedValues();
+    ASSERT_EQ(list->size(), 2);
+    ASSERT_EQ(Value(list->data()[0]).toDouble(), 3);
+    ASSERT_EQ(Value(list->data()[1]).toDouble(), 1);
+}
+
+TEST_F(LooksBlocksTest, BackdropNumberName_SpriteBackdropName)
+{
+    auto sprite = std::make_shared<Sprite>();
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    m_engine->setTargets({ stage, sprite });
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_backdropnumbername");
+    builder.addDropdownField("NUMBER_NAME", "name");
+    builder.captureBlockReturnValue();
+    builder.build();
+
+    stage->setCostumeIndex(2);
+    builder.run();
+
+    stage->setCostumeIndex(0);
+    builder.run();
+
+    List *list = builder.capturedValues();
+    ASSERT_EQ(list->size(), 2);
+    ASSERT_EQ(Value(list->data()[0]).toString(), "test");
+    ASSERT_EQ(Value(list->data()[1]).toString(), "backdrop1");
+}
+
+TEST_F(LooksBlocksTest, BackdropNumberName_StageBackdropNumber)
+{
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+    builder.addBlock("looks_backdropnumbername");
+    builder.addDropdownField("NUMBER_NAME", "number");
+    builder.captureBlockReturnValue();
+    builder.build();
+
+    stage->setCostumeIndex(2);
+    builder.run();
+
+    stage->setCostumeIndex(0);
+    builder.run();
+
+    List *list = builder.capturedValues();
+    ASSERT_EQ(list->size(), 2);
+    ASSERT_EQ(Value(list->data()[0]).toDouble(), 3);
+    ASSERT_EQ(Value(list->data()[1]).toDouble(), 1);
+}
+
+TEST_F(LooksBlocksTest, BackdropNumberName_StageBackdropName)
+{
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+    builder.addBlock("looks_backdropnumbername");
+    builder.addDropdownField("NUMBER_NAME", "name");
+    builder.captureBlockReturnValue();
+    builder.build();
+
+    stage->setCostumeIndex(2);
+    builder.run();
+
+    stage->setCostumeIndex(0);
+    builder.run();
+
+    List *list = builder.capturedValues();
+    ASSERT_EQ(list->size(), 2);
+    ASSERT_EQ(Value(list->data()[0]).toString(), "test");
+    ASSERT_EQ(Value(list->data()[1]).toString(), "backdrop1");
+}
