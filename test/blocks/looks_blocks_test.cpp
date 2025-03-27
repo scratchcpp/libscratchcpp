@@ -1964,3 +1964,119 @@ TEST_F(LooksBlocksTest, BackdropNumberName_StageBackdropName)
     ASSERT_EQ(Value(list->data()[0]).toString(), "test");
     ASSERT_EQ(Value(list->data()[1]).toString(), "backdrop1");
 }
+
+TEST_F(LooksBlocksTest, CostumeNumberName_SpriteCostumeNumber)
+{
+    auto sprite = std::make_shared<Sprite>();
+    auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+    auto costume2 = std::make_shared<Costume>("costume2", "b", "png");
+    auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+    sprite->addCostume(costume1);
+    sprite->addCostume(costume2);
+    sprite->addCostume(testCostume);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_costumenumbername");
+    builder.addDropdownField("NUMBER_NAME", "number");
+    builder.captureBlockReturnValue();
+    builder.build();
+
+    sprite->setCostumeIndex(2);
+    builder.run();
+
+    sprite->setCostumeIndex(0);
+    builder.run();
+
+    List *list = builder.capturedValues();
+    ASSERT_EQ(list->size(), 2);
+    ASSERT_EQ(Value(list->data()[0]).toDouble(), 3);
+    ASSERT_EQ(Value(list->data()[1]).toDouble(), 1);
+}
+
+TEST_F(LooksBlocksTest, CostumeNumberName_SpriteCostumeName)
+{
+    auto sprite = std::make_shared<Sprite>();
+    auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+    auto costume2 = std::make_shared<Costume>("costume2", "b", "png");
+    auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+    sprite->addCostume(costume1);
+    sprite->addCostume(costume2);
+    sprite->addCostume(testCostume);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_costumenumbername");
+    builder.addDropdownField("NUMBER_NAME", "name");
+    builder.captureBlockReturnValue();
+    builder.build();
+
+    sprite->setCostumeIndex(2);
+    builder.run();
+
+    sprite->setCostumeIndex(0);
+    builder.run();
+
+    List *list = builder.capturedValues();
+    ASSERT_EQ(list->size(), 2);
+    ASSERT_EQ(Value(list->data()[0]).toString(), "test");
+    ASSERT_EQ(Value(list->data()[1]).toString(), "costume1");
+}
+
+TEST_F(LooksBlocksTest, CostumeNumberName_StageCostumeNumber)
+{
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+    builder.addBlock("looks_costumenumbername");
+    builder.addDropdownField("NUMBER_NAME", "number");
+    builder.captureBlockReturnValue();
+    builder.build();
+
+    stage->setCostumeIndex(2);
+    builder.run();
+
+    stage->setCostumeIndex(0);
+    builder.run();
+
+    List *list = builder.capturedValues();
+    ASSERT_EQ(list->size(), 2);
+    ASSERT_EQ(Value(list->data()[0]).toDouble(), 3);
+    ASSERT_EQ(Value(list->data()[1]).toDouble(), 1);
+}
+
+TEST_F(LooksBlocksTest, CostumeNumberName_StageCostumeName)
+{
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+    builder.addBlock("looks_costumenumbername");
+    builder.addDropdownField("NUMBER_NAME", "name");
+    builder.captureBlockReturnValue();
+    builder.build();
+
+    stage->setCostumeIndex(2);
+    builder.run();
+
+    stage->setCostumeIndex(0);
+    builder.run();
+
+    List *list = builder.capturedValues();
+    ASSERT_EQ(list->size(), 2);
+    ASSERT_EQ(Value(list->data()[0]).toString(), "test");
+    ASSERT_EQ(Value(list->data()[1]).toString(), "backdrop1");
+}

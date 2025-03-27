@@ -58,6 +58,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_gotofrontback", &compileGoToFrontBack);
     engine->addCompileFunction(this, "looks_goforwardbackwardlayers", &compileGoForwardBackwardLayers);
     engine->addCompileFunction(this, "looks_backdropnumbername", &compileBackdropNumberName);
+    engine->addCompileFunction(this, "looks_costumenumbername", &compileCostumeNumberName);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -296,6 +297,23 @@ CompilerValue *LooksBlocks::compileBackdropNumberName(Compiler *compiler)
         return compiler->addConstValue(Value());
 }
 
+CompilerValue *LooksBlocks::compileCostumeNumberName(Compiler *compiler)
+{
+    Field *field = compiler->field("NUMBER_NAME");
+
+    if (!field)
+        return nullptr;
+
+    const std::string &option = field->value().toString();
+
+    if (option == "number")
+        return compiler->addTargetFunctionCall("looks_costume_number", Compiler::StaticType::Number);
+    else if (option == "name")
+        return compiler->addTargetFunctionCall("looks_costume_name", Compiler::StaticType::String);
+    else
+        return compiler->addConstValue(Value());
+}
+
 extern "C" void looks_start_stack_timer(ExecutionContext *ctx, double duration)
 {
     ctx->stackTimer()->start(duration);
@@ -522,6 +540,19 @@ extern "C" double looks_backdrop_number(ExecutionContext *ctx)
 extern "C" StringPtr *looks_backdrop_name(ExecutionContext *ctx)
 {
     const std::string &name = ctx->engine()->stage()->currentCostume()->name();
+    StringPtr *ret = string_pool_new();
+    string_assign_cstring(ret, name.c_str());
+    return ret;
+}
+
+extern "C" double looks_costume_number(Target *target)
+{
+    return target->costumeIndex() + 1;
+}
+
+extern "C" StringPtr *looks_costume_name(Target *target)
+{
+    const std::string &name = target->currentCostume()->name();
     StringPtr *ret = string_pool_new();
     string_assign_cstring(ret, name.c_str());
     return ret;
