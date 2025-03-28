@@ -488,11 +488,17 @@ TEST_F(LLVMCodeBuilderTest, FunctionCalls)
 
         v = m_builder->addConstValue(321.5);
         m_builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
+        v = m_builder->addFunctionCall("test_const_number", Compiler::StaticType::Number, { Compiler::StaticType::Number }, { v });
+        m_builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
 
         v = m_builder->addConstValue("test");
         m_builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
+        v = m_builder->addFunctionCall("test_const_string", Compiler::StaticType::String, { Compiler::StaticType::String }, { v });
+        m_builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
 
         v = m_builder->addConstValue(true);
+        m_builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
+        v = m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool }, { v });
         m_builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
 
         auto code = m_builder->finalize();
@@ -519,7 +525,10 @@ TEST_F(LLVMCodeBuilderTest, FunctionCalls)
             "123\n"
             "1\n"
             "321.5\n"
+            "321.5\n"
             "test\n"
+            "test\n"
+            "true\n"
             "true\n";
 
         EXPECT_CALL(m_target, isStage()).Times(7);
@@ -2090,6 +2099,56 @@ TEST_F(LLVMCodeBuilderTest, ReadVariable)
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, CastNonRawValueToUnknownType)
+{
+    Stage stage;
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+    EXPECT_CALL(m_engine, stage()).WillRepeatedly(Return(&stage));
+
+    auto var = std::make_shared<Variable>("", "", 87);
+    stage.addVariable(var);
+
+    createBuilder(&sprite, true);
+
+    // Unknown type
+    CompilerValue *v = m_builder->addVariableValue(var.get());
+    m_builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
+
+    // Number
+    v = m_builder->addConstValue(23.5);
+    m_builder->createVariableWrite(var.get(), v);
+    v = m_builder->addVariableValue(var.get());
+    m_builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
+
+    // String
+    v = m_builder->addConstValue("Hello world");
+    m_builder->createVariableWrite(var.get(), v);
+    v = m_builder->addVariableValue(var.get());
+    m_builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
+
+    // Bool
+    v = m_builder->addConstValue(true);
+    m_builder->createVariableWrite(var.get(), v);
+    v = m_builder->addVariableValue(var.get());
+    m_builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
+
+    std::string expected;
+    expected += var->value().toString() + '\n';
+    expected += "23.5\n";
+    expected += "Hello world\n";
+    expected += "true\n";
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
     Thread thread(&sprite, nullptr, &script);
     auto ctx = code->createExecutionContext(&thread);
     testing::internal::CaptureStdout();

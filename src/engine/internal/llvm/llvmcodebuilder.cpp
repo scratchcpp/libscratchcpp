@@ -2256,6 +2256,9 @@ llvm::Value *LLVMCodeBuilder::castValue(LLVMRegister *reg, Compiler::StaticType 
                     return nullptr;
             }
 
+        case Compiler::StaticType::Unknown:
+            return createValue(reg);
+
         default:
             assert(false);
             return nullptr;
@@ -2319,6 +2322,9 @@ llvm::Value *LLVMCodeBuilder::castRawValue(LLVMRegister *reg, Compiler::StaticTy
                     assert(false);
                     return nullptr;
             }
+
+        case Compiler::StaticType::Unknown:
+            return createValue(reg);
 
         default:
             assert(false);

@@ -54,9 +54,15 @@ const std::string &TextBubble::text() const
  */
 void TextBubble::setText(const std::string &text)
 {
+    setText(text, nullptr);
+}
+
+void TextBubble::setText(const std::string &text, Thread *owner)
+{
     // https://github.com/scratchfoundation/scratch-vm/blob/7313ce5199f8a3da7850085d0f7f6a3ca2c89bf6/src/blocks/scratch3_looks.js#L251-L257
     const Value v(text);
     std::string converted = text;
+    impl->owner = owner;
 
     // Non-integers should be rounded to 2 decimal places (no more, no less), unless they're small enough that rounding would display them as 0.00.
     if (v.isValidNumber()) {
@@ -84,4 +90,10 @@ void TextBubble::setText(const std::string &text)
 sigslot::signal<const std::string &> &TextBubble::textChanged() const
 {
     return impl->textChanged;
+}
+
+/*! Returns the thread which currently owns the text bubble. */
+Thread *TextBubble::owner() const
+{
+    return impl->owner;
 }
