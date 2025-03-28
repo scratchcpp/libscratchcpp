@@ -7,6 +7,7 @@
 #include <scratchcpp/istacktimer.h>
 #include <scratchcpp/irandomgenerator.h>
 #include <scratchcpp/thread.h>
+#include <scratchcpp/promise.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/costume.h>
@@ -59,6 +60,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_goforwardbackwardlayers", &compileGoForwardBackwardLayers);
     engine->addCompileFunction(this, "looks_backdropnumbername", &compileBackdropNumberName);
     engine->addCompileFunction(this, "looks_costumenumbername", &compileCostumeNumberName);
+    engine->addCompileFunction(this, "looks_switchbackdroptoandwait", &compileSwitchBackdropToAndWait);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -314,6 +316,21 @@ CompilerValue *LooksBlocks::compileCostumeNumberName(Compiler *compiler)
         return compiler->addConstValue(Value());
 }
 
+CompilerValue *LooksBlocks::compileSwitchBackdropToAndWait(Compiler *compiler)
+{
+    auto backdrop = compiler->addInput("BACKDROP");
+    auto wait = compiler->addConstValue(true);
+    compiler->addFunctionCallWithCtx("looks_switchbackdropto", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { backdrop });
+    compiler->addFunctionCallWithCtx("looks_start_backdrop_scripts", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { wait });
+
+    auto hasBackdrops = compiler->addFunctionCallWithCtx("looks_backdrop_promise", Compiler::StaticType::Bool);
+    compiler->beginIfStatement(hasBackdrops);
+    compiler->createYield();
+    compiler->endIf();
+
+    return nullptr;
+}
+
 extern "C" void looks_start_stack_timer(ExecutionContext *ctx, double duration)
 {
     ctx->stackTimer()->start(duration);
@@ -556,4 +573,14 @@ extern "C" StringPtr *looks_costume_name(Target *target)
     StringPtr *ret = string_pool_new();
     string_assign_cstring(ret, name.c_str());
     return ret;
+}
+
+extern "C" bool looks_backdrop_promise(ExecutionContext *ctx)
+{
+    if (ctx->engine()->stage()->costumes().size() > 0) {
+        ctx->setPromise(std::make_shared<Promise>());
+        return true;
+    }
+
+    return false;
 }

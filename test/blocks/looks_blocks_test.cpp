@@ -8,6 +8,7 @@
 #include <scratchcpp/thread.h>
 #include <scratchcpp/executablecode.h>
 #include <scratchcpp/executioncontext.h>
+#include <scratchcpp/promise.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/scratchconfiguration.h>
 #include <enginemock.h>
@@ -2079,4 +2080,735 @@ TEST_F(LooksBlocksTest, CostumeNumberName_StageCostumeName)
     ASSERT_EQ(list->size(), 2);
     ASSERT_EQ(Value(list->data()[0]).toString(), "test");
     ASSERT_EQ(Value(list->data()[1]).toString(), "backdrop1");
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_NoBackdrops)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addDropdownInput("BACKDROP", "backdrop2");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts).Times(0);
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_BackdropName)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addDropdownInput("BACKDROP", "backdrop2");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(backdrop2->broadcast(), &thread, true));
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
+
+    ASSERT_TRUE(thread.promise());
+    ASSERT_FALSE(thread.promise()->isResolved());
+    ASSERT_FALSE(thread.isFinished());
+    thread.promise()->resolve();
+
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_InvalidBackdropName)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addDropdownInput("BACKDROP", "invalid");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(backdrop2->broadcast(), &thread, true));
+    stage->setCostumeIndex(1);
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(testBackdrop->broadcast(), &thread, true));
+    stage->setCostumeIndex(2);
+    thread.reset();
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 2);
+
+    ASSERT_TRUE(thread.promise());
+    ASSERT_FALSE(thread.promise()->isResolved());
+    ASSERT_FALSE(thread.isFinished());
+    thread.promise()->resolve();
+
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_NextBackdrop)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addDropdownInput("BACKDROP", "next backdrop");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(backdrop2->broadcast(), &thread, true));
+    stage->setCostumeIndex(0);
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(testBackdrop->broadcast(), &thread, true));
+    thread.reset();
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 2);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(backdrop1->broadcast(), &thread, true));
+    thread.reset();
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 0);
+
+    ASSERT_TRUE(thread.promise());
+    ASSERT_FALSE(thread.promise()->isResolved());
+    ASSERT_FALSE(thread.isFinished());
+    thread.promise()->resolve();
+
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_NextBackdropExists)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto nextBackdrop = std::make_shared<Costume>("next backdrop", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(nextBackdrop);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addDropdownInput("BACKDROP", "next backdrop");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(nextBackdrop->broadcast(), &thread, true));
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(nextBackdrop->broadcast(), &thread, true));
+    thread.reset();
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
+
+    ASSERT_TRUE(thread.promise());
+    ASSERT_FALSE(thread.promise()->isResolved());
+    ASSERT_FALSE(thread.isFinished());
+    thread.promise()->resolve();
+
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_PreviousBackdrop)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addDropdownInput("BACKDROP", "previous backdrop");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(testBackdrop->broadcast(), &thread, true));
+    stage->setCostumeIndex(0);
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 2);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(backdrop2->broadcast(), &thread, true));
+    thread.reset();
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(backdrop1->broadcast(), &thread, true));
+    thread.reset();
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 0);
+
+    ASSERT_TRUE(thread.promise());
+    ASSERT_FALSE(thread.promise()->isResolved());
+    ASSERT_FALSE(thread.isFinished());
+    thread.promise()->resolve();
+
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_PreviousBackdropExists)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto previousBackdrop = std::make_shared<Costume>("previous backdrop", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(previousBackdrop);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addDropdownInput("BACKDROP", "previous backdrop");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(previousBackdrop->broadcast(), &thread, true));
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(previousBackdrop->broadcast(), &thread, true));
+    thread.reset();
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
+
+    ASSERT_TRUE(thread.promise());
+    ASSERT_FALSE(thread.promise()->isResolved());
+    ASSERT_FALSE(thread.isFinished());
+    thread.promise()->resolve();
+
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_RandomBackdrop)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addDropdownInput("BACKDROP", "random backdrop");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    RandomGeneratorMock rng;
+    ctx->setRng(&rng);
+
+    EXPECT_CALL(rng, randintExcept(0, 2, 1)).WillOnce(Return(0));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(backdrop1->broadcast(), &thread, true));
+    stage->setCostumeIndex(1);
+    code->run(ctx.get());
+    ASSERT_EQ(stage->costumeIndex(), 0);
+
+    EXPECT_CALL(rng, randintExcept(0, 2, 0)).WillOnce(Return(2));
+    EXPECT_CALL(m_engineMock, startBackdropScripts(testBackdrop->broadcast(), &thread, true));
+    code->reset(ctx.get());
+    code->run(ctx.get());
+    ASSERT_EQ(stage->costumeIndex(), 2);
+
+    ASSERT_TRUE(ctx->promise());
+    ASSERT_FALSE(ctx->promise()->isResolved());
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+    ctx->promise()->resolve();
+
+    code->run(ctx.get());
+    ASSERT_TRUE(code->isFinished(ctx.get()));
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_RandomBackdropExists)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto randomBackdrop = std::make_shared<Costume>("random backdrop", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(randomBackdrop);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addDropdownInput("BACKDROP", "random backdrop");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(randomBackdrop->broadcast(), &thread, true));
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(randomBackdrop->broadcast(), &thread, true));
+    thread.reset();
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
+
+    ASSERT_TRUE(thread.promise());
+    ASSERT_FALSE(thread.promise()->isResolved());
+    ASSERT_FALSE(thread.isFinished());
+    thread.promise()->resolve();
+
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_NumberIndex)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addValueInput("BACKDROP", 3);
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(testBackdrop->broadcast(), &thread, true));
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 2);
+
+    ASSERT_TRUE(thread.promise());
+    ASSERT_FALSE(thread.promise()->isResolved());
+    ASSERT_FALSE(thread.isFinished());
+    thread.promise()->resolve();
+
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_PositiveOutOfRangeNumberIndex)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto numberBackdrop = std::make_shared<Costume>("3", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(numberBackdrop);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addValueInput("BACKDROP", 5);
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(numberBackdrop->broadcast(), &thread, true));
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
+
+    ASSERT_TRUE(thread.promise());
+    ASSERT_FALSE(thread.promise()->isResolved());
+    ASSERT_FALSE(thread.isFinished());
+    thread.promise()->resolve();
+
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_NegativeOutOfRangeNumberIndex)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto numberBackdrop = std::make_shared<Costume>("3", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(numberBackdrop);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addValueInput("BACKDROP", -1);
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(numberBackdrop->broadcast(), &thread, true));
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
+
+    ASSERT_TRUE(thread.promise());
+    ASSERT_FALSE(thread.promise()->isResolved());
+    ASSERT_FALSE(thread.isFinished());
+    thread.promise()->resolve();
+
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_InvalidNumberIndex)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto numberBackdrop = std::make_shared<Costume>("3", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(numberBackdrop);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addValueInput("BACKDROP", std::numeric_limits<double>::quiet_NaN());
+    auto block = builder.currentBlock();
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addValueInput("BACKDROP", std::numeric_limits<double>::infinity());
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addValueInput("BACKDROP", -std::numeric_limits<double>::infinity());
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(backdrop1->broadcast(), &thread, true));
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 0);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(backdrop1->broadcast(), &thread, true));
+    stage->setCostumeIndex(2);
+    thread.reset();
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 0);
+
+    ASSERT_TRUE(thread.promise());
+    ASSERT_FALSE(thread.promise()->isResolved());
+    ASSERT_FALSE(thread.isFinished());
+    thread.promise()->resolve();
+
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_StringIndex)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addValueInput("BACKDROP", "3");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(backdrop1->broadcast(), &thread, true));
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 0);
+
+    ASSERT_TRUE(thread.promise());
+    ASSERT_FALSE(thread.promise()->isResolved());
+    ASSERT_FALSE(thread.isFinished());
+    thread.promise()->resolve();
+
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_StringIndexExists)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto numberBackdrop = std::make_shared<Costume>("3", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(numberBackdrop);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addValueInput("BACKDROP", "3");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(numberBackdrop->broadcast(), &thread, true));
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_OutOfRangeStringIndex)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto numberBackdrop = std::make_shared<Costume>("3", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(numberBackdrop);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addValueInput("BACKDROP", "+7.0");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(backdrop1->broadcast(), &thread, true));
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 0);
+
+    ASSERT_TRUE(thread.promise());
+    ASSERT_FALSE(thread.promise()->isResolved());
+    ASSERT_FALSE(thread.isFinished());
+    thread.promise()->resolve();
+
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_WhitespaceString)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(m_engine);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto numberBackdrop = std::make_shared<Costume>("3", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(numberBackdrop);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    m_engine->setTargets({ stage });
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addValueInput("BACKDROP", "");
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addValueInput("BACKDROP", "   ");
+    builder.build();
+
+    stage->setCostumeIndex(2);
+    builder.run();
+    ASSERT_EQ(stage->costumeIndex(), 2);
+}
+
+TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_Stage)
+{
+    auto stage = std::make_shared<Stage>();
+    stage->setEngine(&m_engineMock);
+
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(stage.get()));
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+    builder.addBlock("looks_switchbackdroptoandwait");
+    builder.addDropdownInput("BACKDROP", "backdrop1");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, stage.get());
+    auto code = compiler.compile(block);
+    Script script(stage.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(stage.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, startBackdropScripts(backdrop1->broadcast(), &thread, true));
+    stage->setCostumeIndex(2);
+    thread.run();
+    ASSERT_EQ(stage->costumeIndex(), 0);
+
+    ASSERT_TRUE(thread.promise());
+    ASSERT_FALSE(thread.promise()->isResolved());
+    ASSERT_FALSE(thread.isFinished());
+    thread.promise()->resolve();
+
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
 }

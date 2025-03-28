@@ -46,6 +46,7 @@ class LooksBlocks : public IExtension
         static CompilerValue *compileGoForwardBackwardLayers(Compiler *compiler);
         static CompilerValue *compileBackdropNumberName(Compiler *compiler);
         static CompilerValue *compileCostumeNumberName(Compiler *compiler);
+        static CompilerValue *compileSwitchBackdropToAndWait(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
