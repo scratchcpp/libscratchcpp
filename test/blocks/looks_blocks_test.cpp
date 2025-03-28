@@ -2812,3 +2812,67 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_Stage)
     thread.run();
     ASSERT_TRUE(thread.isFinished());
 }
+
+TEST_F(LooksBlocksTest, NextBackdrop_Sprite)
+{
+    auto sprite = std::make_shared<Sprite>();
+    auto costume1 = std::make_shared<Costume>("costume1", "a", "png");
+    auto testCostume = std::make_shared<Costume>("test", "c", "svg");
+    sprite->addCostume(costume1);
+    sprite->addCostume(testCostume);
+
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    m_engine->setTargets({ stage, sprite });
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("looks_nextbackdrop");
+    builder.build();
+
+    sprite->setCostumeIndex(0);
+    stage->setCostumeIndex(0);
+    builder.run();
+    ASSERT_EQ(sprite->costumeIndex(), 0);
+    ASSERT_EQ(stage->costumeIndex(), 1);
+
+    builder.run();
+    ASSERT_EQ(sprite->costumeIndex(), 0);
+    ASSERT_EQ(stage->costumeIndex(), 2);
+
+    builder.run();
+    ASSERT_EQ(sprite->costumeIndex(), 0);
+    ASSERT_EQ(stage->costumeIndex(), 0);
+}
+
+TEST_F(LooksBlocksTest, NextBackdrop_Stage)
+{
+    auto stage = std::make_shared<Stage>();
+    auto backdrop1 = std::make_shared<Costume>("backdrop1", "a", "png");
+    auto backdrop2 = std::make_shared<Costume>("backdrop2", "b", "png");
+    auto testBackdrop = std::make_shared<Costume>("test", "c", "svg");
+    stage->addCostume(backdrop1);
+    stage->addCostume(backdrop2);
+    stage->addCostume(testBackdrop);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+
+    builder.addBlock("looks_nextbackdrop");
+    builder.build();
+
+    stage->setCostumeIndex(0);
+    builder.run();
+    ASSERT_EQ(stage->costumeIndex(), 1);
+
+    builder.run();
+    ASSERT_EQ(stage->costumeIndex(), 2);
+
+    builder.run();
+    ASSERT_EQ(stage->costumeIndex(), 0);
+}

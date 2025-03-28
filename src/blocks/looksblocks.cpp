@@ -61,6 +61,7 @@ void LooksBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "looks_backdropnumbername", &compileBackdropNumberName);
     engine->addCompileFunction(this, "looks_costumenumbername", &compileCostumeNumberName);
     engine->addCompileFunction(this, "looks_switchbackdroptoandwait", &compileSwitchBackdropToAndWait);
+    engine->addCompileFunction(this, "looks_nextbackdrop", &compileNextBackdrop);
 }
 
 void LooksBlocks::onInit(IEngine *engine)
@@ -331,6 +332,12 @@ CompilerValue *LooksBlocks::compileSwitchBackdropToAndWait(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *LooksBlocks::compileNextBackdrop(Compiler *compiler)
+{
+    compiler->addFunctionCallWithCtx("looks_nextbackdrop");
+    return nullptr;
+}
+
 extern "C" void looks_start_stack_timer(ExecutionContext *ctx, double duration)
 {
     ctx->stackTimer()->start(duration);
@@ -583,4 +590,9 @@ extern "C" bool looks_backdrop_promise(ExecutionContext *ctx)
     }
 
     return false;
+}
+
+extern "C" void looks_nextbackdrop(ExecutionContext *ctx)
+{
+    looks_nextcostume(ctx->engine()->stage());
 }
