@@ -122,7 +122,7 @@ bool ProjectPrivate::tryLoad(IProjectReader *reader)
         for (size_t i = 0; i < assets.size(); i++) {
             const std::string &data = assetData[i];
             char *ptr = (char *)malloc(data.size() * sizeof(char));
-            strncpy(ptr, data.data(), data.size());
+            memcpy(ptr, data.data(), data.size() * sizeof(char));
             assets[assetNames[i]]->setData(data.size(), ptr);
         }
 
