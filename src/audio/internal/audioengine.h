@@ -15,6 +15,9 @@ namespace libscratchcpp
 class AudioEngine : public IAudioEngine
 {
     public:
+        AudioEngine();
+        ~AudioEngine();
+
         friend class IAudioEngine;
 
         static ma_engine *engine();
@@ -24,12 +27,7 @@ class AudioEngine : public IAudioEngine
         void setVolume(float volume) override;
 
     private:
-        AudioEngine();
-        ~AudioEngine();
-
         void init();
-
-        static AudioEngine instance;
 
         ma_engine *m_engine = nullptr;
         bool m_initialized = false;
