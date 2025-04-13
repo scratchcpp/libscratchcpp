@@ -76,7 +76,7 @@ bool ProjectPrivate::tryLoad(IProjectReader *reader)
 
         // Get asset file names
         std::vector<std::string> assetNames;
-        std::unordered_map<std::string, Asset *> assets;
+        std::unordered_map<std::string, std::vector<Asset *>> assets; // multiple assets can use the same file
         const auto &targets = reader->targets();
 
         for (auto target : targets) {
@@ -87,18 +87,18 @@ bool ProjectPrivate::tryLoad(IProjectReader *reader)
                 auto it = std::find(assetNames.begin(), assetNames.end(), costume->fileName());
                 if (it == assetNames.end()) {
                     assetNames.push_back(costume->fileName());
-                    assets[assetNames.back()] = costume.get();
+                    assets[assetNames.back()] = { costume.get() };
                 } else
-                    assets[*it] = costume.get();
+                    assets[*it].push_back(costume.get());
             }
 
             for (auto sound : sounds) {
                 auto it = std::find(assetNames.begin(), assetNames.end(), sound->fileName());
                 if (it == assetNames.end()) {
                     assetNames.push_back(sound->fileName());
-                    assets[assetNames.back()] = sound.get();
+                    assets[assetNames.back()] = { sound.get() };
                 } else
-                    assets[*it] = sound.get();
+                    assets[*it].push_back(sound.get());
             }
         }
 
@@ -120,10 +120,14 @@ bool ProjectPrivate::tryLoad(IProjectReader *reader)
 
         // Load asset data
         for (size_t i = 0; i < assets.size(); i++) {
-            const std::string &data = assetData[i];
-            char *ptr = (char *)malloc(data.size() * sizeof(char));
-            memcpy(ptr, data.data(), data.size() * sizeof(char));
-            assets[assetNames[i]]->setData(data.size(), ptr);
+            const std::vector<Asset *> &assetList = assets[assetNames[i]];
+
+            for (Asset *asset : assetList) {
+                const std::string &data = assetData[i];
+                char *ptr = (char *)malloc(data.size() * sizeof(char));
+                memcpy(ptr, data.data(), data.size() * sizeof(char));
+                asset->setData(data.size(), ptr);
+            }
         }
 
     } else {
