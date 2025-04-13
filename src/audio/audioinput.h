@@ -19,8 +19,6 @@ class AudioInput : public IAudioInput
         std::shared_ptr<IAudioLoudness> audioLoudness() const override;
 
     private:
-        static std::shared_ptr<IAudioInput> m_instance;
-
         mutable std::shared_ptr<IAudioLoudness> m_audioLoudness;
 };
 

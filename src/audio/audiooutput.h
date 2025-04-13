@@ -15,9 +15,6 @@ class AudioOutput : public IAudioOutput
         static std::shared_ptr<IAudioOutput> instance();
 
         std::shared_ptr<IAudioPlayer> createAudioPlayer() const override;
-
-    private:
-        static std::shared_ptr<IAudioOutput> m_instance;
 };
 
 } // namespace libscratchcpp

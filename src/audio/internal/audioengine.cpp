@@ -7,27 +7,27 @@
 
 using namespace libscratchcpp;
 
-AudioEngine AudioEngine::instance;
+static AudioEngine INSTANCE;
 
 IAudioEngine *IAudioEngine::instance()
 {
-    return &AudioEngine::instance;
+    return &INSTANCE;
 }
 
 ma_engine *AudioEngine::engine()
 {
-    if (!instance.m_initialized)
-        instance.init();
+    if (!INSTANCE.m_initialized)
+        INSTANCE.init();
 
-    return instance.m_initialized ? instance.m_engine : nullptr;
+    return INSTANCE.m_initialized ? INSTANCE.m_engine : nullptr;
 }
 
 bool AudioEngine::initialized()
 {
-    if (!instance.m_initialized)
-        instance.init();
+    if (!INSTANCE.m_initialized)
+        INSTANCE.init();
 
-    return instance.m_initialized;
+    return INSTANCE.m_initialized;
 }
 
 float AudioEngine::volume() const

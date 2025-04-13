@@ -10,7 +10,7 @@
 
 using namespace libscratchcpp;
 
-std::shared_ptr<IAudioInput> AudioInput::m_instance = std::make_shared<AudioInput>();
+static std::shared_ptr<IAudioInput> INSTANCE = std::make_shared<AudioInput>();
 
 AudioInput::AudioInput()
 {
@@ -18,7 +18,7 @@ AudioInput::AudioInput()
 
 std::shared_ptr<IAudioInput> AudioInput::instance()
 {
-    return m_instance;
+    return INSTANCE;
 }
 
 std::shared_ptr<IAudioLoudness> AudioInput::audioLoudness() const
