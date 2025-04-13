@@ -1,6 +1,6 @@
 option(LIBSCRATCHCPP_AUDIO_SUPPORT "Audio support" ON)
 
-add_library(scratchcpp-audio STATIC)
+add_library(scratchcpp-audio SHARED)
 set(MINIAUDIO_SRC internal/thirdparty/miniaudio)
 
 if (LIBSCRATCHCPP_AUDIO_SUPPORT)
@@ -11,7 +11,7 @@ if (LIBSCRATCHCPP_AUDIO_SUPPORT)
     target_include_directories(scratchcpp-audio PUBLIC ${CMAKE_CURRENT_LIST_DIR}/${MINIAUDIO_SRC})
     install(TARGETS miniaudio DESTINATION lib)
 
-    target_link_libraries(scratchcpp-audio PRIVATE miniaudio)
+    target_link_libraries(scratchcpp-audio PUBLIC miniaudio)
     target_compile_definitions(scratchcpp-audio PUBLIC LIBSCRATCHCPP_AUDIO_SUPPORT)
 endif()
 
@@ -49,3 +49,5 @@ else()
         internal/audioloudnessstub.h
     )
 endif()
+
+install(TARGETS scratchcpp-audio DESTINATION lib)
