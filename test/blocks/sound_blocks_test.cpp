@@ -26,6 +26,7 @@ class SoundBlocksTest : public testing::Test
             m_extension = std::make_unique<SoundBlocks>();
             m_engine = m_project.engine().get();
             m_extension->registerBlocks(m_engine);
+            m_extension->onInit(m_engine);
 
             SoundPrivate::audioOutput = &m_outputMock;
         }
@@ -424,6 +425,90 @@ TEST_F(SoundBlocksTest, PlayUntilDone_SoundName)
     ASSERT_FALSE(thread.isFinished());
 
     EXPECT_CALL(*player2, isPlaying()).WillOnce(Return(false));
+    thread.run();
+    ASSERT_TRUE(thread.isFinished());
+}
+
+TEST_F(SoundBlocksTest, PlayUntilDone_KillWaitingThread)
+{
+    auto sprite = std::make_shared<Sprite>();
+    auto player1 = std::make_shared<AudioPlayerMock>();
+    auto player2 = std::make_shared<AudioPlayerMock>();
+    auto player3 = std::make_shared<AudioPlayerMock>();
+
+    EXPECT_CALL(m_outputMock, createAudioPlayer()).WillOnce(Return(player1));
+    sprite->addSound(std::make_shared<Sound>("pop", "a", "wav"));
+
+    EXPECT_CALL(m_outputMock, createAudioPlayer()).WillOnce(Return(player2));
+    auto sound2 = std::make_shared<Sound>("meow", "b", "wav");
+    sprite->addSound(sound2);
+
+    EXPECT_CALL(m_outputMock, createAudioPlayer()).WillOnce(Return(player3));
+    sprite->addSound(std::make_shared<Sound>("test", "c", "mp3"));
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    builder.addBlock("sound_playuntildone");
+    builder.addDropdownInput("SOUND_MENU", "meow");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(*player1, start).Times(0);
+    EXPECT_CALL(*player2, start());
+    EXPECT_CALL(*player3, start).Times(0);
+    EXPECT_CALL(*player2, isPlaying()).WillRepeatedly(Return(true));
+    thread.run();
+    ASSERT_FALSE(thread.isFinished());
+    ASSERT_EQ(sound2->owner(), &thread);
+
+    EXPECT_CALL(*player2, stop());
+    m_engine->threadAboutToStop()(&thread);
+    thread.kill();
+    ASSERT_EQ(sound2->owner(), nullptr);
+}
+
+TEST_F(SoundBlocksTest, PlayUntilDone_StopWaitingSound)
+{
+    auto sprite = std::make_shared<Sprite>();
+    auto player1 = std::make_shared<AudioPlayerMock>();
+    auto player2 = std::make_shared<AudioPlayerMock>();
+    auto player3 = std::make_shared<AudioPlayerMock>();
+
+    EXPECT_CALL(m_outputMock, createAudioPlayer()).WillOnce(Return(player1));
+    sprite->addSound(std::make_shared<Sound>("pop", "a", "wav"));
+
+    EXPECT_CALL(m_outputMock, createAudioPlayer()).WillOnce(Return(player2));
+    auto sound2 = std::make_shared<Sound>("meow", "b", "wav");
+    sprite->addSound(sound2);
+
+    EXPECT_CALL(m_outputMock, createAudioPlayer()).WillOnce(Return(player3));
+    sprite->addSound(std::make_shared<Sound>("test", "c", "mp3"));
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    builder.addBlock("sound_playuntildone");
+    builder.addDropdownInput("SOUND_MENU", "meow");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(*player1, start).Times(0);
+    EXPECT_CALL(*player2, start());
+    EXPECT_CALL(*player3, start).Times(0);
+    EXPECT_CALL(*player2, isPlaying()).WillRepeatedly(Return(true));
+    thread.run();
+    ASSERT_FALSE(thread.isFinished());
+    ASSERT_EQ(sound2->owner(), &thread);
+
+    sound2->stop();
+    EXPECT_CALL(*player2, isPlaying()).Times(0);
     thread.run();
     ASSERT_TRUE(thread.isFinished());
 }

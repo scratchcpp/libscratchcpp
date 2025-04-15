@@ -17,6 +17,7 @@ class SoundBlocks : public IExtension
         Rgb color() const override;
 
         void registerBlocks(IEngine *engine) override;
+        void onInit(IEngine *engine) override;
 
     private:
         static CompilerValue *compilePlay(Compiler *compiler);

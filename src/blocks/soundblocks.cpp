@@ -2,7 +2,11 @@
 
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/compilerconstant.h>
 #include <scratchcpp/target.h>
+#include <scratchcpp/thread.h>
+#include <scratchcpp/value.h>
+#include <scratchcpp/executioncontext.h>
 #include <algorithm>
 
 #include "soundblocks.h"
@@ -30,22 +34,38 @@ void SoundBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sound_playuntildone", &compilePlayUntilDone);
 }
 
+void SoundBlocks::onInit(IEngine *engine)
+{
+    engine->threadAboutToStop().connect([](Thread *thread) {
+        Target *target = thread->target();
+        const auto &sounds = target->sounds();
+
+        for (auto sound : sounds) {
+            if (sound->owner() == thread) {
+                sound->stop();
+                break;
+            }
+        }
+    });
+}
+
 CompilerValue *SoundBlocks::compilePlay(Compiler *compiler)
 {
     auto sound = compiler->addInput("SOUND_MENU");
-    compiler->addTargetFunctionCall("sound_play", Compiler::StaticType::Pointer, { Compiler::StaticType::Unknown }, { sound });
+    auto storeOwner = compiler->addConstValue(false);
+    compiler->addFunctionCallWithCtx("sound_play", Compiler::StaticType::Pointer, { Compiler::StaticType::Unknown, Compiler::StaticType::Bool }, { sound, storeOwner });
     return nullptr;
 }
 
 CompilerValue *SoundBlocks::compilePlayUntilDone(Compiler *compiler)
 {
     auto sound = compiler->addInput("SOUND_MENU");
-    auto soundPtr = compiler->addTargetFunctionCall("sound_play", Compiler::StaticType::Pointer, { Compiler::StaticType::Unknown }, { sound });
+    auto storeOwner = compiler->addConstValue(true);
+    auto soundPtr = compiler->addFunctionCallWithCtx("sound_play", Compiler::StaticType::Pointer, { Compiler::StaticType::Unknown, Compiler::StaticType::Bool }, { sound, storeOwner });
 
     compiler->beginLoopCondition();
-    auto numType = Compiler::StaticType::Number;
-    auto playing = compiler->addFunctionCall("sound_is_playing", Compiler::StaticType::Bool, { Compiler::StaticType::Pointer }, { soundPtr });
-    compiler->beginWhileLoop(playing);
+    auto waiting = compiler->addFunctionCallWithCtx("sound_is_waiting", Compiler::StaticType::Bool, { Compiler::StaticType::Pointer }, { soundPtr });
+    compiler->beginWhileLoop(waiting);
     compiler->endLoop();
 
     return nullptr;
@@ -93,23 +113,25 @@ int sound_get_index(Target *target, const ValueData *sound)
     return -1;
 }
 
-extern "C" Sound *sound_play(Target *target, const ValueData *soundName)
+extern "C" Sound *sound_play(ExecutionContext *ctx, const ValueData *soundName, bool storeOwner)
 {
+    Thread *thread = ctx->thread();
+    Target *target = thread->target();
     int index = sound_get_index(target, soundName);
     auto sound = target->soundAt(index);
 
     if (sound) {
-        sound->start();
+        sound->start(storeOwner ? thread : nullptr);
         return sound.get();
     }
 
     return nullptr;
 }
 
-extern "C" bool sound_is_playing(Sound *sound)
+extern "C" bool sound_is_waiting(ExecutionContext *ctx, Sound *sound)
 {
     if (!sound)
         return false;
 
-    return sound->isPlaying();
+    return sound->owner() == ctx->thread() && sound->isPlaying();
 }
