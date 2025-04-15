@@ -7,6 +7,8 @@
 namespace libscratchcpp
 {
 
+class IAudioOutput;
+
 class SoundBlocks : public IExtension
 {
     public:
@@ -15,6 +17,9 @@ class SoundBlocks : public IExtension
         Rgb color() const override;
 
         void registerBlocks(IEngine *engine) override;
+
+    private:
+        static CompilerValue *compilePlay(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
