@@ -17,7 +17,6 @@ class AudioEngineStub : public IAudioEngine
         void setVolume(float volume) override;
 
     private:
-        static AudioEngineStub instance;
         float m_volume = 1.0f;
 };
 

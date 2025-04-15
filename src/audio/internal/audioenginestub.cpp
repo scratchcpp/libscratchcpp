@@ -4,11 +4,11 @@
 
 using namespace libscratchcpp;
 
-AudioEngineStub AudioEngineStub::instance;
+static AudioEngineStub INSTANCE;
 
 IAudioEngine *IAudioEngine::instance()
 {
-    return &AudioEngineStub::instance;
+    return &INSTANCE;
 }
 
 AudioEngineStub::AudioEngineStub()
