@@ -1,5 +1,6 @@
 #include <scratchcpp/sound.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/thread.h>
 #include <scratch/sound_p.h>
 #include <audiooutputmock.h>
 #include <audioplayermock.h>
@@ -128,12 +129,36 @@ TEST_F(SoundTest, Start)
     sound.start();
 }
 
+TEST_F(SoundTest, StartWithOwner)
+{
+    Sound sound("sound1", "a", "wav");
+    Thread thread(nullptr, nullptr, nullptr);
+
+    EXPECT_CALL(*m_player, start());
+    sound.start(&thread);
+    ASSERT_EQ(sound.owner(), &thread);
+}
+
 TEST_F(SoundTest, Stop)
 {
     Sound sound("sound1", "a", "wav");
 
     EXPECT_CALL(*m_player, stop());
     sound.stop();
+}
+
+TEST_F(SoundTest, StartAndStopWithOwner)
+{
+    Sound sound("sound1", "a", "wav");
+    Thread thread(nullptr, nullptr, nullptr);
+
+    EXPECT_CALL(*m_player, start());
+    sound.start(&thread);
+    ASSERT_EQ(sound.owner(), &thread);
+
+    EXPECT_CALL(*m_player, stop());
+    sound.stop();
+    ASSERT_EQ(sound.owner(), nullptr);
 }
 
 TEST_F(SoundTest, IsPlaying)
