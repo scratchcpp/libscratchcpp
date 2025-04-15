@@ -27,12 +27,27 @@ Rgb SoundBlocks::color() const
 void SoundBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "sound_play", &compilePlay);
+    engine->addCompileFunction(this, "sound_playuntildone", &compilePlayUntilDone);
 }
 
 CompilerValue *SoundBlocks::compilePlay(Compiler *compiler)
 {
     auto sound = compiler->addInput("SOUND_MENU");
-    compiler->addTargetFunctionCall("sound_play", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { sound });
+    compiler->addTargetFunctionCall("sound_play", Compiler::StaticType::Pointer, { Compiler::StaticType::Unknown }, { sound });
+    return nullptr;
+}
+
+CompilerValue *SoundBlocks::compilePlayUntilDone(Compiler *compiler)
+{
+    auto sound = compiler->addInput("SOUND_MENU");
+    auto soundPtr = compiler->addTargetFunctionCall("sound_play", Compiler::StaticType::Pointer, { Compiler::StaticType::Unknown }, { sound });
+
+    compiler->beginLoopCondition();
+    auto numType = Compiler::StaticType::Number;
+    auto playing = compiler->addFunctionCall("sound_is_playing", Compiler::StaticType::Bool, { Compiler::StaticType::Pointer }, { soundPtr });
+    compiler->beginWhileLoop(playing);
+    compiler->endLoop();
+
     return nullptr;
 }
 
@@ -78,11 +93,23 @@ int sound_get_index(Target *target, const ValueData *sound)
     return -1;
 }
 
-extern "C" void sound_play(Target *target, const ValueData *soundName)
+extern "C" Sound *sound_play(Target *target, const ValueData *soundName)
 {
     int index = sound_get_index(target, soundName);
     auto sound = target->soundAt(index);
 
-    if (sound)
+    if (sound) {
         sound->start();
+        return sound.get();
+    }
+
+    return nullptr;
+}
+
+extern "C" bool sound_is_playing(Sound *sound)
+{
+    if (!sound)
+        return false;
+
+    return sound->isPlaying();
 }

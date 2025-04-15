@@ -20,6 +20,7 @@ class SoundBlocks : public IExtension
 
     private:
         static CompilerValue *compilePlay(Compiler *compiler);
+        static CompilerValue *compilePlayUntilDone(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
