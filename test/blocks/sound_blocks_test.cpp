@@ -7,6 +7,7 @@
 #include <scratchcpp/test/scriptbuilder.h>
 #include <scratch/sound_p.h>
 #include <enginemock.h>
+#include <targetmock.h>
 #include <audiooutputmock.h>
 #include <audioplayermock.h>
 
@@ -883,5 +884,65 @@ TEST_F(SoundBlocksTest, StopAllSounds_Stage)
     Thread thread(stage.get(), &m_engineMock, &script);
 
     EXPECT_CALL(m_engineMock, stopSounds());
+    thread.run();
+}
+
+TEST_F(SoundBlocksTest, SetEffectTo_Invalid)
+{
+    auto target = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+    builder.addBlock("sound_seteffectto");
+    builder.addDropdownField("EFFECT", "abc");
+    builder.addValueInput("VALUE", 0);
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(*target, setSoundEffectValue).Times(0);
+    thread.run();
+}
+
+TEST_F(SoundBlocksTest, SetEffectTo_Pitch)
+{
+    auto target = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+    builder.addBlock("sound_seteffectto");
+    builder.addDropdownField("EFFECT", "PITCH");
+    builder.addValueInput("VALUE", 75.2);
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(*target, setSoundEffectValue(Sound::Effect::Pitch, 75.2));
+    thread.run();
+}
+
+TEST_F(SoundBlocksTest, SetEffectTo_Pan)
+{
+    auto target = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+    builder.addBlock("sound_seteffectto");
+    builder.addDropdownField("EFFECT", "PAN");
+    builder.addValueInput("VALUE", -23.8);
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(*target, setSoundEffectValue(Sound::Effect::Pan, -23.8));
     thread.run();
 }

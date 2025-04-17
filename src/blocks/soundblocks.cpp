@@ -3,6 +3,7 @@
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/compilerconstant.h>
+#include <scratchcpp/field.h>
 #include <scratchcpp/target.h>
 #include <scratchcpp/thread.h>
 #include <scratchcpp/value.h>
@@ -33,6 +34,7 @@ void SoundBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sound_play", &compilePlay);
     engine->addCompileFunction(this, "sound_playuntildone", &compilePlayUntilDone);
     engine->addCompileFunction(this, "sound_stopallsounds", &compileStopAllSounds);
+    engine->addCompileFunction(this, "sound_seteffectto", &compileSetEffectTo);
 }
 
 void SoundBlocks::onInit(IEngine *engine)
@@ -75,6 +77,26 @@ CompilerValue *SoundBlocks::compilePlayUntilDone(Compiler *compiler)
 CompilerValue *SoundBlocks::compileStopAllSounds(Compiler *compiler)
 {
     compiler->addFunctionCallWithCtx("sound_stopallsounds");
+    return nullptr;
+}
+
+CompilerValue *SoundBlocks::compileSetEffectTo(Compiler *compiler)
+{
+    Field *field = compiler->field("EFFECT");
+
+    if (!field)
+        return nullptr;
+
+    const std::string &option = field->value().toString();
+
+    if (option == "PITCH") {
+        auto value = compiler->addInput("VALUE");
+        compiler->addTargetFunctionCall("sound_set_pitch_effect", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { value });
+    } else if (option == "PAN") {
+        auto value = compiler->addInput("VALUE");
+        compiler->addTargetFunctionCall("sound_set_pan_effect", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { value });
+    }
+
     return nullptr;
 }
 
@@ -146,4 +168,14 @@ extern "C" bool sound_is_waiting(ExecutionContext *ctx, Sound *sound)
 extern "C" void sound_stopallsounds(ExecutionContext *ctx)
 {
     ctx->engine()->stopSounds();
+}
+
+extern "C" void sound_set_pitch_effect(Target *target, double value)
+{
+    target->setSoundEffectValue(Sound::Effect::Pitch, value);
+}
+
+extern "C" void sound_set_pan_effect(Target *target, double value)
+{
+    target->setSoundEffectValue(Sound::Effect::Pan, value);
 }
