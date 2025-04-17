@@ -849,3 +849,39 @@ TEST_F(SoundBlocksTest, PlayUntilDone_Stage)
     thread.run();
     ASSERT_TRUE(thread.isFinished());
 }
+
+TEST_F(SoundBlocksTest, StopAllSounds_Sprite)
+{
+    auto sprite = std::make_shared<Sprite>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    builder.addBlock("sound_stopallsounds");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, stopSounds());
+    thread.run();
+}
+
+TEST_F(SoundBlocksTest, StopAllSounds_Stage)
+{
+    auto stage = std::make_shared<Stage>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    builder.addBlock("sound_stopallsounds");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, stage.get());
+    auto code = compiler.compile(block);
+    Script script(stage.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(stage.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, stopSounds());
+    thread.run();
+}

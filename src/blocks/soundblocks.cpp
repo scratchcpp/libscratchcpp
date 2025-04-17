@@ -32,6 +32,7 @@ void SoundBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "sound_play", &compilePlay);
     engine->addCompileFunction(this, "sound_playuntildone", &compilePlayUntilDone);
+    engine->addCompileFunction(this, "sound_stopallsounds", &compileStopAllSounds);
 }
 
 void SoundBlocks::onInit(IEngine *engine)
@@ -68,6 +69,12 @@ CompilerValue *SoundBlocks::compilePlayUntilDone(Compiler *compiler)
     compiler->beginWhileLoop(waiting);
     compiler->endLoop();
 
+    return nullptr;
+}
+
+CompilerValue *SoundBlocks::compileStopAllSounds(Compiler *compiler)
+{
+    compiler->addFunctionCallWithCtx("sound_stopallsounds");
     return nullptr;
 }
 
@@ -134,4 +141,9 @@ extern "C" bool sound_is_waiting(ExecutionContext *ctx, Sound *sound)
         return false;
 
     return sound->owner() == ctx->thread() && sound->isPlaying();
+}
+
+extern "C" void sound_stopallsounds(ExecutionContext *ctx)
+{
+    ctx->engine()->stopSounds();
 }
