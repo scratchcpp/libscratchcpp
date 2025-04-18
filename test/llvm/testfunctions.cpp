@@ -2,6 +2,7 @@
 #include <scratchcpp/string_functions.h>
 #include <scratchcpp/stringptr.h>
 #include <scratchcpp/string_pool.h>
+#include <scratchcpp/variable.h>
 #include <utf8.h>
 #include <iostream>
 #include <targetmock.h>
@@ -188,5 +189,10 @@ extern "C"
         std::string str;
         value_toString(v, &str);
         std::cout << str << std::endl;
+    }
+
+    void test_print_first_local_variable(Target *target)
+    {
+        std::cout << target->variableAt(0)->value().toString() << std::endl;
     }
 }

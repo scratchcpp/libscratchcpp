@@ -161,6 +161,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 std::vector<llvm::Type *> types;
                 std::vector<llvm::Value *> args;
 
+                // Variables must be synchronized because the function can read them
+                syncVariables(targetVariables);
+
                 // Add execution context arg
                 if (step.functionCtxArg) {
                     types.push_back(llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0));

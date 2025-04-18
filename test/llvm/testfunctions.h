@@ -48,6 +48,8 @@ extern "C"
     void test_print_string(const StringPtr *v);
     void test_print_pointer(const void *v);
     void test_print_unknown(const ValueData *v);
+
+    void test_print_first_local_variable(Target *target);
 }
 
 } // namespace libscratchcpp

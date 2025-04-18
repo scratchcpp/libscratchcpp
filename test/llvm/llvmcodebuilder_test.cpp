@@ -2106,6 +2106,39 @@ TEST_F(LLVMCodeBuilderTest, ReadVariable)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
+TEST_F(LLVMCodeBuilderTest, SyncVariablesBeforeCallingFunction)
+{
+    Sprite sprite;
+    sprite.setEngine(&m_engine);
+
+    auto var = std::make_shared<Variable>("", "");
+    sprite.addVariable(var);
+
+    createBuilder(&sprite, true);
+
+    CompilerValue *v = m_builder->addConstValue("abc");
+    m_builder->createVariableWrite(var.get(), v);
+
+    v = m_builder->addConstValue(123);
+    m_builder->createVariableWrite(var.get(), v);
+
+    m_builder->addTargetFunctionCall("test_print_first_local_variable", Compiler::StaticType::Void, {}, {});
+
+    v = m_builder->addConstValue(456);
+    m_builder->createVariableWrite(var.get(), v);
+
+    auto code = m_builder->finalize();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "123\n");
+}
+
 TEST_F(LLVMCodeBuilderTest, CastNonRawValueToUnknownType)
 {
     Stage stage;
