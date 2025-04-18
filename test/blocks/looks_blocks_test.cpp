@@ -810,7 +810,7 @@ TEST_F(LooksBlocksTest, SwitchCostumeTo_NegativeOutOfRangeNumberIndex)
     ScriptBuilder builder(m_extension.get(), m_engine, sprite);
 
     builder.addBlock("looks_switchcostumeto");
-    builder.addValueInput("COSTUME", -1);
+    builder.addValueInput("COSTUME", -4);
     builder.build();
 
     builder.run();
@@ -1406,7 +1406,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropTo_NegativeOutOfRangeNumberIndex)
     ScriptBuilder builder(m_extension.get(), m_engine, sprite);
 
     builder.addBlock("looks_switchbackdropto");
-    builder.addValueInput("BACKDROP", -1);
+    builder.addValueInput("BACKDROP", -4);
     auto block = builder.currentBlock();
 
     Compiler compiler(&m_engineMock, sprite.get());
@@ -2568,7 +2568,7 @@ TEST_F(LooksBlocksTest, SwitchBackdropToAndWait_NegativeOutOfRangeNumberIndex)
     ScriptBuilder builder(m_extension.get(), m_engine, sprite);
 
     builder.addBlock("looks_switchbackdroptoandwait");
-    builder.addValueInput("BACKDROP", -1);
+    builder.addValueInput("BACKDROP", -4);
     auto block = builder.currentBlock();
 
     Compiler compiler(&m_engineMock, sprite.get());

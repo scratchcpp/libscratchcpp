@@ -424,7 +424,7 @@ extern "C" double looks_size(Sprite *sprite)
 
 extern "C" void looks_set_costume_by_index(Target *target, long index)
 {
-    const size_t costumeCount = target->costumes().size();
+    const int costumeCount = target->costumes().size();
 
     if (index < 0)
         index = (costumeCount + index % (-costumeCount)) % costumeCount;
