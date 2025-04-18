@@ -38,6 +38,7 @@ void SoundBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sound_changeeffectby", &compileChangeEffectBy);
     engine->addCompileFunction(this, "sound_cleareffects", &compileClearEffects);
     engine->addCompileFunction(this, "sound_changevolumeby", &compileChangeVolumeBy);
+    engine->addCompileFunction(this, "sound_setvolumeto", &compileSetVolumeTo);
 }
 
 void SoundBlocks::onInit(IEngine *engine)
@@ -133,6 +134,13 @@ CompilerValue *SoundBlocks::compileChangeVolumeBy(Compiler *compiler)
 {
     auto volume = compiler->addInput("VOLUME");
     compiler->addTargetFunctionCall("sound_changevolumeby", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { volume });
+    return nullptr;
+}
+
+CompilerValue *SoundBlocks::compileSetVolumeTo(Compiler *compiler)
+{
+    auto volume = compiler->addInput("VOLUME");
+    compiler->addTargetFunctionCall("sound_setvolumeto", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { volume });
     return nullptr;
 }
 
@@ -234,4 +242,9 @@ extern "C" void sound_cleareffects(Target *target)
 extern "C" void sound_changevolumeby(Target *target, double volume)
 {
     target->setVolume(target->volume() + volume);
+}
+
+extern "C" void sound_setvolumeto(Target *target, double volume)
+{
+    target->setVolume(volume);
 }

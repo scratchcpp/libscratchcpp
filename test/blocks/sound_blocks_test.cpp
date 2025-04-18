@@ -1058,3 +1058,33 @@ TEST_F(SoundBlocksTest, ChangeVolumeBy_Stage)
     builder.run();
     ASSERT_EQ(stage->volume(), 40.1);
 }
+
+TEST_F(SoundBlocksTest, SetVolumeTo_Sprite)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setVolume(18);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    builder.addBlock("sound_setvolumeto");
+    builder.addValueInput("VOLUME", 65.2);
+    builder.build();
+
+    sprite->setVolume(1.9);
+    builder.run();
+    ASSERT_EQ(sprite->volume(), 65.2);
+}
+
+TEST_F(SoundBlocksTest, SetVolumeTo_Stage)
+{
+    auto stage = std::make_shared<Stage>();
+    stage->setVolume(42);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    builder.addBlock("sound_setvolumeto");
+    builder.addValueInput("VOLUME", 38.4);
+    builder.build();
+
+    stage->setVolume(78.5);
+    builder.run();
+    ASSERT_EQ(stage->volume(), 38.4);
+}
