@@ -4,6 +4,7 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/script.h>
 #include <scratchcpp/thread.h>
+#include <scratchcpp/list.h>
 #include <scratchcpp/test/scriptbuilder.h>
 #include <scratch/sound_p.h>
 #include <enginemock.h>
@@ -1087,4 +1088,42 @@ TEST_F(SoundBlocksTest, SetVolumeTo_Stage)
     stage->setVolume(78.5);
     builder.run();
     ASSERT_EQ(stage->volume(), 38.4);
+}
+
+TEST_F(SoundBlocksTest, Volume_Sprite)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setVolume(50);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    builder.addBlock("sound_volume");
+    builder.captureBlockReturnValue();
+    builder.build();
+
+    sprite->setVolume(1.9);
+    builder.run();
+    ASSERT_EQ(sprite->volume(), 1.9);
+
+    List *list = builder.capturedValues();
+    ASSERT_EQ(list->size(), 1);
+    ASSERT_EQ(Value(list->data()[0]).toDouble(), 1.9);
+}
+
+TEST_F(SoundBlocksTest, Volume_Stage)
+{
+    auto stage = std::make_shared<Stage>();
+    stage->setVolume(75);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    builder.addBlock("sound_volume");
+    builder.captureBlockReturnValue();
+    builder.build();
+
+    stage->setVolume(43.7);
+    builder.run();
+    ASSERT_EQ(stage->volume(), 43.7);
+
+    List *list = builder.capturedValues();
+    ASSERT_EQ(list->size(), 1);
+    ASSERT_EQ(Value(list->data()[0]).toDouble(), 43.7);
 }

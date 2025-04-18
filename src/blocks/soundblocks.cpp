@@ -39,6 +39,7 @@ void SoundBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sound_cleareffects", &compileClearEffects);
     engine->addCompileFunction(this, "sound_changevolumeby", &compileChangeVolumeBy);
     engine->addCompileFunction(this, "sound_setvolumeto", &compileSetVolumeTo);
+    engine->addCompileFunction(this, "sound_volume", &compileVolume);
 }
 
 void SoundBlocks::onInit(IEngine *engine)
@@ -144,6 +145,11 @@ CompilerValue *SoundBlocks::compileSetVolumeTo(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *SoundBlocks::compileVolume(Compiler *compiler)
+{
+    return compiler->addTargetFunctionCall("sound_volume", Compiler::StaticType::Number);
+}
+
 int sound_wrap_clamp_index(Target *target, int index)
 {
     const long soundCount = target->sounds().size();
@@ -247,4 +253,9 @@ extern "C" void sound_changevolumeby(Target *target, double volume)
 extern "C" void sound_setvolumeto(Target *target, double volume)
 {
     target->setVolume(volume);
+}
+
+extern "C" double sound_volume(Target *target)
+{
+    return target->volume();
 }
