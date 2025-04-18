@@ -9,6 +9,7 @@
 namespace libscratchcpp
 {
 
+class Thread;
 class SoundPrivate;
 
 /*! \brief The Sound class represents a Scratch sound. */
@@ -34,12 +35,14 @@ class LIBSCRATCHCPP_EXPORT Sound : public Asset
         virtual void setVolume(double volume);
         virtual void setEffect(Effect effect, double value);
 
-        virtual void start();
+        virtual void start(Thread *owner = nullptr);
         virtual void stop();
 
         virtual bool isPlaying() const;
 
         std::shared_ptr<Sound> clone() const;
+
+        Thread *owner() const;
 
     protected:
         void processData(unsigned int size, void *data) override;

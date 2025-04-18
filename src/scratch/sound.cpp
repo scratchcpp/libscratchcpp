@@ -66,10 +66,11 @@ void Sound::setEffect(Effect effect, double value)
 }
 
 /*! Starts the playback of the sound. */
-void Sound::start()
+void Sound::start(Thread *owner)
 {
     // Stop sounds in clones (#538)
     stopCloneSounds();
+    impl->owner = owner;
     impl->player->start();
 }
 
@@ -78,6 +79,7 @@ void Sound::stop()
 {
     // Stop sounds in clones (#538)
     stopCloneSounds();
+    impl->owner = nullptr;
     impl->player->stop();
 }
 
@@ -105,6 +107,11 @@ std::shared_ptr<Sound> Sound::clone() const
     }
 
     return sound;
+}
+
+Thread *Sound::owner() const
+{
+    return impl->owner;
 }
 
 void Sound::processData(unsigned int size, void *data)
