@@ -1009,3 +1009,22 @@ TEST_F(SoundBlocksTest, ChangeEffectBy_Pan)
     EXPECT_CALL(*target, setSoundEffectValue(Sound::Effect::Pan, -11.3));
     thread.run();
 }
+
+TEST_F(SoundBlocksTest, ClearEffects)
+{
+    auto target = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+    builder.addBlock("sound_cleareffects");
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(*target, clearSoundEffects());
+    EXPECT_CALL(*target, setSoundEffectValue).Times(0);
+    thread.run();
+}

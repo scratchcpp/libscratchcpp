@@ -25,6 +25,7 @@ class SoundBlocks : public IExtension
         static CompilerValue *compileStopAllSounds(Compiler *compiler);
         static CompilerValue *compileSetEffectTo(Compiler *compiler);
         static CompilerValue *compileChangeEffectBy(Compiler *compiler);
+        static CompilerValue *compileClearEffects(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

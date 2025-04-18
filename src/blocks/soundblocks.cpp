@@ -36,6 +36,7 @@ void SoundBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sound_stopallsounds", &compileStopAllSounds);
     engine->addCompileFunction(this, "sound_seteffectto", &compileSetEffectTo);
     engine->addCompileFunction(this, "sound_changeeffectby", &compileChangeEffectBy);
+    engine->addCompileFunction(this, "sound_cleareffects", &compileClearEffects);
 }
 
 void SoundBlocks::onInit(IEngine *engine)
@@ -118,6 +119,12 @@ CompilerValue *SoundBlocks::compileChangeEffectBy(Compiler *compiler)
         compiler->addTargetFunctionCall("sound_change_pan_effect", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { value });
     }
 
+    return nullptr;
+}
+
+CompilerValue *SoundBlocks::compileClearEffects(Compiler *compiler)
+{
+    compiler->addTargetFunctionCall("sound_cleareffects");
     return nullptr;
 }
 
@@ -209,4 +216,9 @@ extern "C" void sound_change_pitch_effect(Target *target, double value)
 extern "C" void sound_change_pan_effect(Target *target, double value)
 {
     target->setSoundEffectValue(Sound::Effect::Pan, target->soundEffectValue(Sound::Effect::Pan) + value);
+}
+
+extern "C" void sound_cleareffects(Target *target)
+{
+    target->clearSoundEffects();
 }
