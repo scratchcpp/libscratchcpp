@@ -1028,3 +1028,33 @@ TEST_F(SoundBlocksTest, ClearEffects)
     EXPECT_CALL(*target, setSoundEffectValue).Times(0);
     thread.run();
 }
+
+TEST_F(SoundBlocksTest, ChangeVolumeBy_Sprite)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setVolume(42);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    builder.addBlock("sound_changevolumeby");
+    builder.addValueInput("VOLUME", 65.2);
+    builder.build();
+
+    sprite->setVolume(1.9);
+    builder.run();
+    ASSERT_EQ(std::round(sprite->volume() * 100) / 100, 67.1);
+}
+
+TEST_F(SoundBlocksTest, ChangeVolumeBy_Stage)
+{
+    auto stage = std::make_shared<Stage>();
+    stage->setVolume(18);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    builder.addBlock("sound_changevolumeby");
+    builder.addValueInput("VOLUME", -38.4);
+    builder.build();
+
+    stage->setVolume(78.5);
+    builder.run();
+    ASSERT_EQ(stage->volume(), 40.1);
+}
