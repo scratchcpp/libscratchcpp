@@ -946,3 +946,66 @@ TEST_F(SoundBlocksTest, SetEffectTo_Pan)
     EXPECT_CALL(*target, setSoundEffectValue(Sound::Effect::Pan, -23.8));
     thread.run();
 }
+
+TEST_F(SoundBlocksTest, ChangeEffectBy_Invalid)
+{
+    auto target = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+    builder.addBlock("sound_changeeffectby");
+    builder.addDropdownField("EFFECT", "abc");
+    builder.addValueInput("VALUE", 1);
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(*target, soundEffectValue).Times(0);
+    EXPECT_CALL(*target, setSoundEffectValue).Times(0);
+    thread.run();
+}
+
+TEST_F(SoundBlocksTest, ChangeEffectBy_Pitch)
+{
+    auto target = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+    builder.addBlock("sound_changeeffectby");
+    builder.addDropdownField("EFFECT", "PITCH");
+    builder.addValueInput("VALUE", 75.2);
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(*target, soundEffectValue(Sound::Effect::Pitch)).WillOnce(Return(-28.6));
+    EXPECT_CALL(*target, setSoundEffectValue(Sound::Effect::Pitch, 46.6));
+    thread.run();
+}
+
+TEST_F(SoundBlocksTest, ChangeEffectBy_Pan)
+{
+    auto target = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+    builder.addBlock("sound_changeeffectby");
+    builder.addDropdownField("EFFECT", "PAN");
+    builder.addValueInput("VALUE", -23.8);
+    auto block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(*target, soundEffectValue(Sound::Effect::Pan)).WillOnce(Return(12.5));
+    EXPECT_CALL(*target, setSoundEffectValue(Sound::Effect::Pan, -11.3));
+    thread.run();
+}
