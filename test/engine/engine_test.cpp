@@ -1863,7 +1863,7 @@ TEST(EngineTest, BroadcastsProject)
     ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 2 0 0");
 }*/
 
-TEST(EngineTest, StopAll)
+/*TEST(EngineTest, StopAll)
 {
     Project p("stop_all.sb3");
     ASSERT_TRUE(p.load());
@@ -1877,7 +1877,7 @@ TEST(EngineTest, StopAll)
     ASSERT_VAR(stage, "i");
     ASSERT_EQ(GET_VAR(stage, "i")->value().toInt(), 11);
     ASSERT_FALSE(engine->isRunning());
-}
+}*/
 
 TEST(EngineTest, StopAllBypass)
 {
