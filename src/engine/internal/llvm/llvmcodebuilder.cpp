@@ -153,7 +153,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     pushScopeLevel();
 
     // Execute recorded steps
-    for (const auto insPtr : m_instructionList) {
+    for (LLVMInstruction *insPtr = m_instructions.first(); insPtr; insPtr = insPtr->next) {
         const LLVMInstruction &step = *insPtr;
 
         switch (step.type) {
@@ -743,7 +743,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 LLVMVariablePtr &varPtr = m_variablePtrs[step.workVariable];
                 varPtr.changed = true;
 
-                const bool safe = isVarOrListTypeSafe(insPtr.get(), varPtr.type);
+                const bool safe = isVarOrListTypeSafe(insPtr, varPtr.type);
 
                 // Initialize stack variable on first assignment
                 if (!varPtr.onStack) {
@@ -778,7 +778,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 0);
                 LLVMVariablePtr &varPtr = m_variablePtrs[step.workVariable];
 
-                if (!isVarOrListTypeSafe(insPtr.get(), varPtr.type))
+                if (!isVarOrListTypeSafe(insPtr, varPtr.type))
                     varPtr.type = Compiler::StaticType::Unknown;
 
                 step.functionReturnReg->value = varPtr.onStack && !(step.loopCondition && !m_warp) ? varPtr.stackPtr : varPtr.heapPtr;
@@ -806,7 +806,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg = step.args[0];
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
-                if (!isVarOrListTypeSafe(insPtr.get(), listPtr.type))
+                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
                     listPtr.type = Compiler::StaticType::Unknown;
 
                 // Range check
@@ -846,7 +846,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     typeMap[&listPtr] = listPtr.type;
                 }
 
-                if (!isVarOrListTypeSafe(insPtr.get(), listPtr.type))
+                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
                     listPtr.type = Compiler::StaticType::Unknown;
 
                 // Check if enough space is allocated
@@ -894,7 +894,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     typeMap[&listPtr] = listPtr.type;
                 }
 
-                if (!isVarOrListTypeSafe(insPtr.get(), listPtr.type))
+                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
                     listPtr.type = Compiler::StaticType::Unknown;
 
                 llvm::Value *oldAllocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
@@ -933,7 +933,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 Compiler::StaticType type = optimizeRegisterType(valueArg.second);
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
-                if (!isVarOrListTypeSafe(insPtr.get(), listPtr.type))
+                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
                     listPtr.type = Compiler::StaticType::Unknown;
 
                 // Range check
@@ -981,7 +981,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg = step.args[0];
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
-                if (!isVarOrListTypeSafe(insPtr.get(), listPtr.type))
+                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
                     listPtr.type = Compiler::StaticType::Unknown;
 
                 llvm::Value *min = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
@@ -1012,7 +1012,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg = step.args[0];
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
-                if (!isVarOrListTypeSafe(insPtr.get(), listPtr.type))
+                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
                     listPtr.type = Compiler::StaticType::Unknown;
 
                 step.functionReturnReg->value = m_builder.CreateSIToFP(getListItemIndex(listPtr, arg.second), m_builder.getDoubleTy());
@@ -1024,7 +1024,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg = step.args[0];
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
-                if (!isVarOrListTypeSafe(insPtr.get(), listPtr.type))
+                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
                     listPtr.type = Compiler::StaticType::Unknown;
 
                 llvm::Value *index = getListItemIndex(listPtr, arg.second);
