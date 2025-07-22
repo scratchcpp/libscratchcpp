@@ -19,6 +19,7 @@ add_executable(
   llvmexecutioncontext_test.cpp
   llvmexecutablecode_test.cpp
   llvmcodebuilder_test.cpp
+  llvminstructionlist_test.cpp
 )
 
 target_link_libraries(

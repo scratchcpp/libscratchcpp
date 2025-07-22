@@ -100,6 +100,10 @@ struct LLVMInstruction
         size_t procedureArgIndex = 0;
         LLVMLoopScope *loopScope = nullptr;
         bool loopCondition = false; // whether the instruction is part of a loop condition
+
+        // Linked list
+        LLVMInstruction *previous = nullptr;
+        LLVMInstruction *next = nullptr;
 };
 
 } // namespace libscratchcpp
