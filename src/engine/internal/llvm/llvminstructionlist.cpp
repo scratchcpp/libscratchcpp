@@ -17,6 +17,20 @@ LLVMInstruction *LLVMInstructionList::last() const
     return m_last.get();
 }
 
+bool LLVMInstructionList::containsInstruction(LLVMInstruction *ins) const
+{
+    LLVMInstruction *ptr = m_first.get();
+
+    while (ptr) {
+        if (ptr == ins)
+            return true;
+
+        ptr = ptr->next;
+    }
+
+    return false;
+}
+
 void LLVMInstructionList::addInstruction(std::shared_ptr<LLVMInstruction> ins)
 {
     if (!(m_first && m_last)) {

@@ -18,6 +18,7 @@ class LLVMInstructionList
         LLVMInstruction *first() const;
         LLVMInstruction *last() const;
 
+        bool containsInstruction(LLVMInstruction *ins) const;
         void addInstruction(std::shared_ptr<LLVMInstruction> ins);
 
     private:
