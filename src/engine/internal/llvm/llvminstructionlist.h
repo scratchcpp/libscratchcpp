@@ -19,6 +19,8 @@ class LLVMInstructionList
         LLVMInstruction *first() const;
         LLVMInstruction *last() const;
 
+        bool empty() const { return !first(); }
+
         bool containsInstruction(LLVMInstruction *ins) const;
         bool containsInstruction(std::function<bool(const LLVMInstruction *)> func) const;
 

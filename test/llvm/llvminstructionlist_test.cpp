@@ -17,6 +17,12 @@ TEST(LLVMInstructionListTest, EmptyList_Last)
     ASSERT_EQ(list.last(), nullptr);
 }
 
+TEST(LLVMInstructionListTest, EmptyList_Empty)
+{
+    LLVMInstructionList list;
+    ASSERT_TRUE(list.empty());
+}
+
 TEST(LLVMInstructionListTest, EmptyList_ContainsNull)
 {
     LLVMInstructionList list;
@@ -188,6 +194,15 @@ TEST(LLVMInstructionListTest, AddSingleInstruction_Last)
     ASSERT_EQ(list.last(), ins.get());
 }
 
+TEST(LLVMInstructionListTest, AddSingleInstruction_Empty)
+{
+    LLVMInstructionList list;
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(ins);
+
+    ASSERT_FALSE(list.empty());
+}
+
 TEST(LLVMInstructionListTest, AddSingleInstruction_Previous)
 {
     LLVMInstructionList list;
@@ -236,6 +251,22 @@ TEST(LLVMInstructionListTest, AddMultipleInstructions_Last)
     list.addInstruction(ins3);
 
     ASSERT_EQ(list.last(), ins3.get());
+}
+
+TEST(LLVMInstructionListTest, AddMultipleInstructions_Empty)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(ins3);
+
+    ASSERT_FALSE(list.empty());
 }
 
 TEST(LLVMInstructionListTest, AddMultipleInstructions_PreviousOfFirst)
