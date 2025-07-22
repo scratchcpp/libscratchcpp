@@ -104,6 +104,7 @@ struct LLVMInstruction
         // Linked list
         LLVMInstruction *previous = nullptr;
         LLVMInstruction *next = nullptr;
+        std::shared_ptr<LLVMInstruction> _next; // ensure items are not deleted
 };
 
 } // namespace libscratchcpp

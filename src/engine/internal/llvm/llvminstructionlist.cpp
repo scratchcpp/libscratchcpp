@@ -55,8 +55,10 @@ void LLVMInstructionList::addInstruction(std::shared_ptr<LLVMInstruction> ins)
 
         ins->previous = nullptr;
         ins->next = nullptr;
+        ins->_next = nullptr;
     } else {
         m_last->next = ins.get();
+        m_last->_next = ins;
         ins->previous = m_last.get();
         m_last = ins;
     }
