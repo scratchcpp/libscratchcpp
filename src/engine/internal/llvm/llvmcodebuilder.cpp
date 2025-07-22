@@ -1742,7 +1742,7 @@ void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *val
 
     if (m_loopScope >= 0) {
         auto scope = m_loopScopes[m_loopScope];
-        m_variablePtrs[variable].loopVariableWrites[scope.get()].push_back(m_instructionList.back());
+        m_variablePtrs[variable].loopVariableWrites[scope.get()].push_back(m_instructions.last());
     }
 
     m_variableInstructions.push_back(m_instructions.last());
@@ -1779,7 +1779,7 @@ void LLVMCodeBuilder::createListAppend(List *list, CompilerValue *item)
 
     if (m_loopScope >= 0) {
         auto scope = m_loopScopes[m_loopScope];
-        m_listPtrs[list].loopListWrites[scope.get()].push_back(m_instructionList.back());
+        m_listPtrs[list].loopListWrites[scope.get()].push_back(m_instructions.last());
     }
 
     m_listInstructions.push_back(m_instructions.last());
@@ -1796,7 +1796,7 @@ void LLVMCodeBuilder::createListInsert(List *list, CompilerValue *index, Compile
 
     if (m_loopScope >= 0) {
         auto scope = m_loopScopes[m_loopScope];
-        m_listPtrs[list].loopListWrites[scope.get()].push_back(m_instructionList.back());
+        m_listPtrs[list].loopListWrites[scope.get()].push_back(m_instructions.last());
     }
 
     m_listInstructions.push_back(m_instructions.last());
@@ -1813,7 +1813,7 @@ void LLVMCodeBuilder::createListReplace(List *list, CompilerValue *index, Compil
 
     if (m_loopScope >= 0) {
         auto scope = m_loopScopes[m_loopScope];
-        m_listPtrs[list].loopListWrites[scope.get()].push_back(m_instructionList.back());
+        m_listPtrs[list].loopListWrites[scope.get()].push_back(m_instructions.last());
     }
 
     m_listInstructions.push_back(m_instructions.last());
@@ -2656,7 +2656,7 @@ bool LLVMCodeBuilder::isVarOrListTypeSafe(LLVMInstruction *ins, Compiler::Static
             const auto &writes = it->second;
 
             for (auto w : writes)
-                lastWrites.push_back(w.get());
+                lastWrites.push_back(w);
         }
 
         if (checkScope->childScopes.empty())
