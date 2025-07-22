@@ -234,7 +234,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::StructType *m_stringPtrType = nullptr;
         llvm::FunctionType *m_resumeFuncType = nullptr;
 
-        [[deprecated]] std::vector<std::shared_ptr<LLVMInstruction>> m_instructions; // TODO: Remove this
+        [[deprecated]] std::vector<std::shared_ptr<LLVMInstruction>> m_instructionList; // TODO: Remove this
         std::vector<std::shared_ptr<LLVMRegister>> m_regs;
         std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
         LLVMRegister *m_lastConstValue = nullptr; // for reporters and hat predicates
