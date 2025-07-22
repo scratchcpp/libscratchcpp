@@ -11,6 +11,7 @@
 
 #include "../icodebuilder.h"
 #include "llvminstruction.h"
+#include "llvminstructionlist.h"
 #include "llvmcoroutine.h"
 #include "llvmvariableptr.h"
 #include "llvmlistptr.h"
@@ -235,6 +236,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionType *m_resumeFuncType = nullptr;
 
         [[deprecated]] std::vector<std::shared_ptr<LLVMInstruction>> m_instructionList; // TODO: Remove this
+        LLVMInstructionList m_instructions;
         std::vector<std::shared_ptr<LLVMRegister>> m_regs;
         std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
         LLVMRegister *m_lastConstValue = nullptr; // for reporters and hat predicates
