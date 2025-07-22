@@ -154,9 +154,9 @@ class LLVMCodeBuilder : public ICodeBuilder
         void reloadVariables(llvm::Value *targetVariables);
         void reloadLists();
         void updateListDataPtr(const LLVMListPtr &listPtr);
-        bool isVarOrListTypeSafe(std::shared_ptr<LLVMInstruction> ins, Compiler::StaticType expectedType) const;
-        bool isVarOrListTypeSafe(std::shared_ptr<LLVMInstruction> ins, Compiler::StaticType expectedType, std::unordered_set<LLVMInstruction *> &log, int &c) const;
-        bool isVarOrListWriteResultTypeSafe(std::shared_ptr<LLVMInstruction> ins, Compiler::StaticType expectedType, bool ignoreSavedType, std::unordered_set<LLVMInstruction *> &log, int &c) const;
+        bool isVarOrListTypeSafe(LLVMInstruction *ins, Compiler::StaticType expectedType) const;
+        bool isVarOrListTypeSafe(LLVMInstruction *ins, Compiler::StaticType expectedType, std::unordered_set<LLVMInstruction *> &log, int &c) const;
+        bool isVarOrListWriteResultTypeSafe(LLVMInstruction *ins, Compiler::StaticType expectedType, bool ignoreSavedType, std::unordered_set<LLVMInstruction *> &log, int &c) const;
 
         LLVMRegister *createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
         LLVMRegister *createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
@@ -251,8 +251,8 @@ class LLVMCodeBuilder : public ICodeBuilder
         long m_loopScopeCounter = 0; // replacement for m_loopScopes size in build phase
         std::vector<long> m_loopScopeTree;
         bool m_loopCondition = false; // whether we're currently compiling a loop condition
-        std::vector<std::shared_ptr<LLVMInstruction>> m_variableInstructions;
-        std::vector<std::shared_ptr<LLVMInstruction>> m_listInstructions;
+        std::vector<LLVMInstruction *> m_variableInstructions;
+        std::vector<LLVMInstruction *> m_listInstructions;
         std::vector<std::vector<llvm::Value *>> m_stringHeap; // scopes
 
         std::shared_ptr<ExecutableCode> m_output;
