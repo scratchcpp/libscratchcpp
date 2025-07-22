@@ -3,6 +3,7 @@
 #pragma once
 
 #include <memory>
+#include <functional>
 
 namespace libscratchcpp
 {
@@ -19,6 +20,8 @@ class LLVMInstructionList
         LLVMInstruction *last() const;
 
         bool containsInstruction(LLVMInstruction *ins) const;
+        bool containsInstruction(std::function<bool(const LLVMInstruction *)> func) const;
+
         void addInstruction(std::shared_ptr<LLVMInstruction> ins);
 
     private:
