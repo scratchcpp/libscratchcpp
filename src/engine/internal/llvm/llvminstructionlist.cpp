@@ -7,12 +7,12 @@
 
 using namespace libscratchcpp;
 
-LLVMInstruction *LLVMInstructionList::first()
+LLVMInstruction *LLVMInstructionList::first() const
 {
     return m_first.get();
 }
 
-LLVMInstruction *LLVMInstructionList::last()
+LLVMInstruction *LLVMInstructionList::last() const
 {
     return m_last.get();
 }

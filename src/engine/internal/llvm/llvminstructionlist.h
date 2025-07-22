@@ -15,8 +15,8 @@ class LLVMInstructionList
         LLVMInstructionList() = default;
         LLVMInstructionList(const LLVMInstructionList &) = delete;
 
-        LLVMInstruction *first();
-        LLVMInstruction *last();
+        LLVMInstruction *first() const;
+        LLVMInstruction *last() const;
 
         void addInstruction(std::shared_ptr<LLVMInstruction> ins);
 
