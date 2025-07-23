@@ -15,6 +15,10 @@ class LLVMLoopAnalyzer
         bool variableTypeChanges(LLVMVariablePtr *varPtr, LLVMInstruction *loopBody, Compiler::StaticType preLoopType) const;
 
     private:
+        bool variableTypeChangesFromEnd(LLVMVariablePtr *varPtr, LLVMInstruction *loopEnd, Compiler::StaticType preLoopType) const;
+        bool isLoopStart(LLVMInstruction *ins) const;
+        bool isLoopEnd(LLVMInstruction *ins) const;
+
         Compiler::StaticType optimizeRegisterType(LLVMRegister *reg) const;
         bool typesMatch(LLVMInstruction *ins, Compiler::StaticType expectedType) const;
 };

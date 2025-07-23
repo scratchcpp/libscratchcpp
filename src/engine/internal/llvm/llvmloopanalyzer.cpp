@@ -6,6 +6,9 @@
 
 using namespace libscratchcpp;
 
+static const std::unordered_set<LLVMInstruction::Type>
+    BEGIN_LOOP_INSTRUCTIONS = { LLVMInstruction::Type::BeginRepeatLoop, LLVMInstruction::Type::BeginWhileLoop, LLVMInstruction::Type::BeginRepeatUntilLoop };
+
 bool LLVMLoopAnalyzer::variableTypeChanges(LLVMVariablePtr *varPtr, LLVMInstruction *loopBody, Compiler::StaticType preLoopType) const
 {
     if (!varPtr || !loopBody)
@@ -14,23 +17,80 @@ bool LLVMLoopAnalyzer::variableTypeChanges(LLVMVariablePtr *varPtr, LLVMInstruct
     if (preLoopType == Compiler::StaticType::Unknown)
         return true;
 
-    // Find the last write instruction
-    LLVMInstruction *lastVarWrite = nullptr;
-    LLVMInstruction *ins = loopBody;
+    // Find loop end
+    LLVMInstruction *ins = loopBody->next;
+    int loopLevel = 0;
 
-    while (ins && ins->type != LLVMInstruction::Type::EndLoop) {
-        // TODO: Handle nested loops
-        if (ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == varPtr->var)
-            lastVarWrite = ins;
+    while (ins && !(isLoopEnd(ins) && loopLevel == 0)) {
+        if (isLoopStart(ins))
+            loopLevel++;
+        else if (isLoopEnd(ins)) {
+            assert(loopLevel > 0);
+            loopLevel--;
+        }
 
         ins = ins->next;
     }
 
     // Loops must always have an end instruction
-    assert(ins);
+    if (!ins) {
+        assert(false);
+        return true;
+    }
 
-    // Check the last write instruction, if any
-    return lastVarWrite ? !typesMatch(lastVarWrite, preLoopType) : false;
+    return variableTypeChangesFromEnd(varPtr, ins, preLoopType);
+}
+
+bool LLVMLoopAnalyzer::variableTypeChangesFromEnd(LLVMVariablePtr *varPtr, LLVMInstruction *loopEnd, Compiler::StaticType preLoopType) const
+{
+    // Find the last write instruction
+    LLVMInstruction *ins = loopEnd->previous;
+
+    while (ins && !isLoopStart(ins)) {
+        if (isLoopEnd(ins)) {
+            // Nested loop
+            if (variableTypeChangesFromEnd(varPtr, ins, preLoopType))
+                return true;
+
+            // Skip the loop
+            int loopLevel = 0;
+            ins = ins->previous;
+
+            while (ins && !(isLoopStart(ins) && loopLevel == 0)) {
+                if (isLoopStart(ins)) {
+                    assert(loopLevel > 0);
+                    loopLevel--;
+                }
+
+                if (isLoopEnd(ins))
+                    loopLevel++;
+
+                ins = ins->previous;
+            };
+
+            if (!ins) {
+                assert(false);
+                return true;
+            }
+        } else if (ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == varPtr->var) {
+            // Variable write instruction
+            return !typesMatch(ins, preLoopType);
+        }
+
+        ins = ins->previous;
+    }
+
+    return false;
+}
+
+bool LLVMLoopAnalyzer::isLoopStart(LLVMInstruction *ins) const
+{
+    return (BEGIN_LOOP_INSTRUCTIONS.find(ins->type) != BEGIN_LOOP_INSTRUCTIONS.cend());
+}
+
+bool LLVMLoopAnalyzer::isLoopEnd(LLVMInstruction *ins) const
+{
+    return (ins->type == LLVMInstruction::Type::EndLoop);
 }
 
 Compiler::StaticType LLVMLoopAnalyzer::optimizeRegisterType(LLVMRegister *reg) const

@@ -37,19 +37,31 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, EmptyLoop)
 {
     LLVMLoopAnalyzer analyzer;
     LLVMVariablePtr varPtr;
-    LLVMInstruction ins(LLVMInstruction::Type::EndLoop, nullptr, false);
+    LLVMInstructionList list;
 
-    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, &ins, Compiler::StaticType::Number));
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Number));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, EmptyLoopUnknownType)
 {
     LLVMLoopAnalyzer analyzer;
     LLVMVariablePtr varPtr;
-    LLVMInstruction ins(LLVMInstruction::Type::EndLoop, nullptr, false);
+    LLVMInstructionList list;
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
 
     // Always returns true for unknown type
-    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, &ins, Compiler::StaticType::Unknown));
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Unknown));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, NoWriteOperations)
@@ -58,13 +70,16 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, NoWriteOperations)
     LLVMInstructionList list;
     LLVMVariablePtr varPtr;
 
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
     auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
     list.addInstruction(funcCall);
 
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, funcCall.get(), Compiler::StaticType::Number));
+    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Number));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteSameTypeNumber)
@@ -75,6 +90,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteSameTypeNumber)
     Variable var("", "");
     varPtr.var = &var;
 
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 1.25);
     setVar->workVariable = &var;
@@ -84,7 +102,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteSameTypeNumber)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::Number));
+    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Number));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteSameTypeBool)
@@ -95,6 +113,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteSameTypeBool)
     Variable var("", "");
     varPtr.var = &var;
 
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMConstantRegister value(Compiler::StaticType::Bool, true);
     setVar->workVariable = &var;
@@ -104,7 +125,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteSameTypeBool)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::Bool));
+    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Bool));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteSameTypeString)
@@ -115,6 +136,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteSameTypeString)
     Variable var("", "");
     varPtr.var = &var;
 
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "test");
     setVar->workVariable = &var;
@@ -124,7 +148,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteSameTypeString)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::String));
+    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::String));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteStringOptimization)
@@ -134,6 +158,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteStringOptimization)
     LLVMVariablePtr varPtr;
     Variable var("", "");
     varPtr.var = &var;
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
 
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "1.25");
@@ -145,7 +172,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteStringOptimization)
     list.addInstruction(end);
 
     // Although string is assigned, it's constant and represents a number
-    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::Number));
+    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Number));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteMultipleVariables)
@@ -156,6 +183,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteMultipleVariables)
     Variable var1("", "");
     Variable var2("", "");
     varPtr.var = &var1;
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
 
     // Set var1
     auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
@@ -174,7 +204,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteMultipleVariables)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, setVar1.get(), Compiler::StaticType::Number));
+    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Number));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteFromUnknownType)
@@ -184,6 +214,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteFromUnknownType)
     LLVMVariablePtr varPtr;
     Variable var("", "");
     varPtr.var = &var;
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
 
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMRegister value(Compiler::StaticType::Unknown);
@@ -195,7 +228,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteFromUnknownType)
     list.addInstruction(end);
 
     // Always returns true for unknown type
-    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::Number));
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Number));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteToUnknownType)
@@ -205,6 +238,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteToUnknownType)
     LLVMVariablePtr varPtr;
     Variable var("", "");
     varPtr.var = &var;
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
 
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 5);
@@ -216,7 +252,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteToUnknownType)
     list.addInstruction(end);
 
     // Always returns true for unknown type
-    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::Unknown));
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Unknown));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteUnknownToUnknownType)
@@ -226,6 +262,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteUnknownToUnknownType)
     LLVMVariablePtr varPtr;
     Variable var("", "");
     varPtr.var = &var;
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
 
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMRegister value(Compiler::StaticType::Unknown);
@@ -237,7 +276,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteUnknownToUnknownType)
     list.addInstruction(end);
 
     // Always returns true for unknown type
-    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::Unknown));
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Unknown));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeNumberToString)
@@ -248,6 +287,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeNumberToStrin
     Variable var("", "");
     varPtr.var = &var;
 
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "test");
     setVar->workVariable = &var;
@@ -257,7 +299,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeNumberToStrin
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::Number));
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Number));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeStringToNumber)
@@ -268,6 +310,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeStringToNumbe
     Variable var("", "");
     varPtr.var = &var;
 
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 5.8);
     setVar->workVariable = &var;
@@ -277,7 +322,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeStringToNumbe
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::String));
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::String));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeNumberToBool)
@@ -288,6 +333,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeNumberToBool)
     Variable var("", "");
     varPtr.var = &var;
 
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMConstantRegister value(Compiler::StaticType::Bool, true);
     setVar->workVariable = &var;
@@ -297,7 +345,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeNumberToBool)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::Number));
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Number));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeBoolToNumber)
@@ -308,6 +356,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeBoolToNumber)
     Variable var("", "");
     varPtr.var = &var;
 
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 1);
     setVar->workVariable = &var;
@@ -317,7 +368,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeBoolToNumber)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::Bool));
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Bool));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeBoolToString)
@@ -328,6 +379,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeBoolToString)
     Variable var("", "");
     varPtr.var = &var;
 
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "abc");
     setVar->workVariable = &var;
@@ -337,7 +391,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeBoolToString)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::Bool));
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Bool));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeStringToBool)
@@ -348,6 +402,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeStringToBool)
     Variable var("", "");
     varPtr.var = &var;
 
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMConstantRegister value(Compiler::StaticType::Bool, false);
     setVar->workVariable = &var;
@@ -357,7 +414,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, SingleWriteDifferentTypeStringToBool)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::String));
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::String));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesSameTypeNumber)
@@ -367,6 +424,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesSameTypeNumber)
     LLVMVariablePtr varPtr;
     Variable var("", "");
     varPtr.var = &var;
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
 
     // First write: string "abc" (incompatible with Number)
     auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
@@ -386,7 +446,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesSameTypeNumber)
     list.addInstruction(end);
 
     // Should return false because final assignment is compatible with pre-loop Number type
-    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, setVar1.get(), Compiler::StaticType::Number));
+    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Number));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesSameTypeString)
@@ -396,6 +456,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesSameTypeString)
     LLVMVariablePtr varPtr;
     Variable var("", "");
     varPtr.var = &var;
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
 
     // First write: number 42 (incompatible with String)
     auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
@@ -415,7 +478,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesSameTypeString)
     list.addInstruction(end);
 
     // Should return false because final assignment is compatible with pre-loop String type
-    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, setVar1.get(), Compiler::StaticType::String));
+    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::String));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesSameTypeUnknown)
@@ -425,6 +488,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesSameTypeUnknown)
     LLVMVariablePtr varPtr;
     Variable var("", "");
     varPtr.var = &var;
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
 
     // First write: unknown type
     auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
@@ -444,7 +510,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesSameTypeUnknown)
     list.addInstruction(end);
 
     // Should return false because final assignment is compatible with pre-loop String type
-    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, setVar1.get(), Compiler::StaticType::String));
+    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::String));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesWithStringOptimization)
@@ -454,6 +520,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesWithStringOptimization)
     LLVMVariablePtr varPtr;
     Variable var("", "");
     varPtr.var = &var;
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
 
     // First write: string "abc" (incompatible with Number)
     auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
@@ -473,7 +542,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesWithStringOptimization)
     list.addInstruction(end);
 
     // Should return false because final assignment is optimized to Number type
-    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, setVar1.get(), Compiler::StaticType::Number));
+    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Number));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesNumberToString)
@@ -483,6 +552,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesNumberToString)
     LLVMVariablePtr varPtr;
     Variable var("", "");
     varPtr.var = &var;
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
 
     // First write: number 42 (compatible with Number)
     auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
@@ -502,7 +574,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesNumberToString)
     list.addInstruction(end);
 
     // Should return true because final assignment is incompatible with pre-loop Number type
-    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, setVar1.get(), Compiler::StaticType::Number));
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Number));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesBoolToNumber)
@@ -513,6 +585,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesBoolToNumber)
     Variable var("", "");
     varPtr.var = &var;
 
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 42.5);
     setVar->workVariable = &var;
@@ -522,7 +597,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesBoolToNumber)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::Bool));
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Bool));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesBoolToString)
@@ -533,6 +608,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesBoolToString)
     Variable var("", "");
     varPtr.var = &var;
 
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "hello");
     setVar->workVariable = &var;
@@ -542,7 +620,7 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesBoolToString)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::Bool));
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Bool));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesBoolToStringNumberOptimization)
@@ -552,6 +630,9 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesBoolToStringNumberOptim
     LLVMVariablePtr varPtr;
     Variable var("", "");
     varPtr.var = &var;
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
 
     auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "3.14");
@@ -563,8 +644,339 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleWritesBoolToStringNumberOptim
     list.addInstruction(end);
 
     // String "3.14" gets optimized to Number, which is still different from Bool
-    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, setVar.get(), Compiler::StaticType::Bool));
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, start.get(), Compiler::StaticType::Bool));
 }
 
-// TODO: Handle nested loops
+TEST(LLVMLoopAnalyzer_VariableTypeChanges, NestedLoopWithTypeChange)
+{
+    LLVMLoopAnalyzer analyzer;
+    LLVMInstructionList list;
+    LLVMVariablePtr varPtr;
+    Variable var("", "");
+    varPtr.var = &var;
+
+    // Outer loop begin
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(outerLoop);
+
+    // Variable write inside outer loop
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
+    setVar1->workVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    // Inner loop begin
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(innerLoop);
+
+    // Variable write inside inner loop
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::String, "test");
+    setVar2->workVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    // Inner loop end
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(innerEnd);
+
+    // Outer loop end
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(outerEnd);
+
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, outerLoop.get(), Compiler::StaticType::Number));
+}
+
+TEST(LLVMLoopAnalyzer_VariableTypeChanges, NestedLoopWithoutTypeChange)
+{
+    LLVMLoopAnalyzer analyzer;
+    LLVMInstructionList list;
+    LLVMVariablePtr varPtr;
+    Variable var("", "");
+    varPtr.var = &var;
+
+    // Outer loop begin
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginWhileLoop, nullptr, false);
+    list.addInstruction(outerLoop);
+
+    // Variable write inside outer loop
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
+    setVar1->workVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    // Inner loop begin
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(innerLoop);
+
+    // Variable write inside inner loop
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 2.5);
+    setVar2->workVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    // Inner loop end
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(innerEnd);
+
+    // Outer loop end
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(outerEnd);
+
+    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, outerLoop.get(), Compiler::StaticType::Number));
+}
+
+TEST(LLVMLoopAnalyzer_VariableTypeChanges, NestedLoopTypeChangesButResets)
+{
+    LLVMLoopAnalyzer analyzer;
+    LLVMInstructionList list;
+    LLVMVariablePtr varPtr;
+    Variable var("", "");
+    varPtr.var = &var;
+
+    // Outer loop begin
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(outerLoop);
+
+    // Variable write inside outer loop
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
+    setVar1->workVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    // Inner loop begin
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, nullptr, false);
+    list.addInstruction(innerLoop);
+
+    // Variable write inside inner loop
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::String, "test");
+    setVar2->workVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    // Inner loop end
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(innerEnd);
+
+    // Variable write after inner loop - resets type
+    auto setVar3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value3(Compiler::StaticType::Number, 2);
+    setVar3->workVariable = &var;
+    setVar3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
+    list.addInstruction(setVar3);
+
+    // Outer loop end
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(outerEnd);
+
+    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, outerLoop.get(), Compiler::StaticType::Number));
+}
+
+TEST(LLVMLoopAnalyzer_VariableTypeChanges, NestedLoopTypeChangesAndDoesNotReset)
+{
+    LLVMLoopAnalyzer analyzer;
+    LLVMInstructionList list;
+    LLVMVariablePtr varPtr;
+    Variable var("", "");
+    varPtr.var = &var;
+
+    // Outer loop begin
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(outerLoop);
+
+    // Variable write inside outer loop
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
+    setVar1->workVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    // Inner loop begin
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginWhileLoop, nullptr, false);
+    list.addInstruction(innerLoop);
+
+    // Variable write inside inner loop
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::String, "test");
+    setVar2->workVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    // Inner loop end
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(innerEnd);
+
+    // Variable write after inner loop - keeps the different type
+    auto setVar3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value3(Compiler::StaticType::String, "abc");
+    setVar3->workVariable = &var;
+    setVar3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
+    list.addInstruction(setVar3);
+
+    // Outer loop end
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(outerEnd);
+
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, outerLoop.get(), Compiler::StaticType::Number));
+}
+
+TEST(LLVMLoopAnalyzer_VariableTypeChanges, NestedLoopWithTypeChangeBeforeLoop)
+{
+    LLVMLoopAnalyzer analyzer;
+    LLVMInstructionList list;
+    LLVMVariablePtr varPtr;
+    Variable var("", "");
+    varPtr.var = &var;
+
+    // Outer loop begin
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, nullptr, false);
+    list.addInstruction(outerLoop);
+
+    // Variable write inside outer loop
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "test");
+    setVar1->workVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    // Inner loop begin
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(innerLoop);
+
+    // Variable write inside inner loop
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 5);
+    setVar2->workVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    // Inner loop end
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(innerEnd);
+
+    // Outer loop end
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(outerEnd);
+
+    // Returns true because loops can be skipped
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, outerLoop.get(), Compiler::StaticType::Number));
+}
+
+TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleNestedLoopsWithTypeChange)
+{
+    LLVMLoopAnalyzer analyzer;
+    LLVMInstructionList list;
+    LLVMVariablePtr varPtr;
+    Variable var("", "");
+    varPtr.var = &var;
+
+    // Outer loop begin
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(outerLoop);
+
+    // Variable write inside outer loop
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
+    setVar1->workVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    // Inner loop 1 begin
+    auto innerLoop1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(innerLoop1);
+
+    // Variable write inside inner loop 1
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 2.75);
+    setVar2->workVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    // Inner loop 2 begin
+    auto innerLoop2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(innerLoop2);
+
+    // Variable write inside inner loop 2
+    auto setVar3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value3(Compiler::StaticType::String, "abc");
+    setVar3->workVariable = &var;
+    setVar3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
+    list.addInstruction(setVar3);
+
+    // Inner loop 2 end
+    auto innerEnd2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(innerEnd2);
+
+    // Inner loop 1 end
+    auto innerEnd1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(innerEnd1);
+
+    // Outer loop end
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(outerEnd);
+
+    ASSERT_TRUE(analyzer.variableTypeChanges(&varPtr, outerLoop.get(), Compiler::StaticType::Number));
+}
+
+TEST(LLVMLoopAnalyzer_VariableTypeChanges, MultipleNestedLoopsWithTypeChangeButTypeReset)
+{
+    LLVMLoopAnalyzer analyzer;
+    LLVMInstructionList list;
+    LLVMVariablePtr varPtr;
+    Variable var("", "");
+    varPtr.var = &var;
+
+    // Outer loop begin
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(outerLoop);
+
+    // Variable write inside outer loop
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
+    setVar1->workVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    // Inner loop 1 begin
+    auto innerLoop1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(innerLoop1);
+
+    // Inner loop 2 begin
+    auto innerLoop2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(innerLoop2);
+
+    // Variable write inside inner loop 2
+    auto setVar3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value3(Compiler::StaticType::String, "abc");
+    setVar3->workVariable = &var;
+    setVar3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
+    list.addInstruction(setVar3);
+
+    // Inner loop 2 end
+    auto innerEnd2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(innerEnd2);
+
+    // Variable write inside inner loop 1 - resets type
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 2.75);
+    setVar2->workVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    // Inner loop 1 end
+    auto innerEnd1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(innerEnd1);
+
+    // Outer loop end
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(outerEnd);
+
+    ASSERT_FALSE(analyzer.variableTypeChanges(&varPtr, outerLoop.get(), Compiler::StaticType::Number));
+}
+
 // TODO: Handle cross-variable dependencies
