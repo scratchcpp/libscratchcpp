@@ -20,6 +20,7 @@ add_executable(
   llvmexecutablecode_test.cpp
   llvmcodebuilder_test.cpp
   llvminstructionlist_test.cpp
+  loop_analyzer/variabletypechanges_test.cpp
 )
 
 target_link_libraries(
