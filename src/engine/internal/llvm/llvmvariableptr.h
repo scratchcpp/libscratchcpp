@@ -20,6 +20,7 @@ class LLVMInstruction;
 
 struct LLVMVariablePtr
 {
+        Variable *var = nullptr;
         llvm::Value *stackPtr = nullptr;
         llvm::Value *heapPtr = nullptr;
         Compiler::StaticType type = Compiler::StaticType::Unknown;

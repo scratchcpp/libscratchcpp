@@ -1448,8 +1448,10 @@ CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
     auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, currentLoopScope(), m_loopCondition);
     ins->workVariable = variable;
 
-    if (m_variablePtrs.find(variable) == m_variablePtrs.cend())
+    if (m_variablePtrs.find(variable) == m_variablePtrs.cend()) {
         m_variablePtrs[variable] = LLVMVariablePtr();
+        m_variablePtrs[variable].var = variable;
+    }
 
     auto ret = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     ret->isRawValue = false;
@@ -1731,8 +1733,10 @@ void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *val
     ins.workVariable = variable;
     createOp(ins, Compiler::StaticType::Void, Compiler::StaticType::Unknown, { value });
 
-    if (m_variablePtrs.find(variable) == m_variablePtrs.cend())
+    if (m_variablePtrs.find(variable) == m_variablePtrs.cend()) {
         m_variablePtrs[variable] = LLVMVariablePtr();
+        m_variablePtrs[variable].var = variable;
+    }
 
     if (m_loopScope >= 0) {
         auto scope = m_loopScopes[m_loopScope];
