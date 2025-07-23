@@ -47,23 +47,23 @@ bool LLVMLoopAnalyzer::variableTypeChangesFromEnd(LLVMVariablePtr *varPtr, LLVMI
     LLVMInstruction *ins = loopEnd->previous;
 
     while (ins && !isLoopStart(ins)) {
-        if (isLoopEnd(ins)) {
-            // Nested loop
+        if (isLoopEnd(ins) || isIfEnd(ins) || isElse(ins)) {
+            // Nested loop or if statement
             if (variableTypeChangesFromEnd(varPtr, ins, preLoopType))
                 return true;
 
-            // Skip the loop
-            int loopLevel = 0;
+            // Skip the loop or if statement
+            int level = 0;
             ins = ins->previous;
 
-            while (ins && !(isLoopStart(ins) && loopLevel == 0)) {
-                if (isLoopStart(ins)) {
-                    assert(loopLevel > 0);
-                    loopLevel--;
+            while (ins && !((isLoopStart(ins) || isIfStart(ins) || isElse(ins)) && level == 0)) {
+                if (isLoopStart(ins) || isIfStart(ins)) {
+                    assert(level > 0);
+                    level--;
                 }
 
-                if (isLoopEnd(ins))
-                    loopLevel++;
+                if (isLoopEnd(ins) || isIfEnd(ins) || isElse(ins))
+                    level++;
 
                 ins = ins->previous;
             };
@@ -91,6 +91,21 @@ bool LLVMLoopAnalyzer::isLoopStart(LLVMInstruction *ins) const
 bool LLVMLoopAnalyzer::isLoopEnd(LLVMInstruction *ins) const
 {
     return (ins->type == LLVMInstruction::Type::EndLoop);
+}
+
+bool LLVMLoopAnalyzer::isIfStart(LLVMInstruction *ins) const
+{
+    return (ins->type == LLVMInstruction::Type::BeginIf);
+}
+
+bool LLVMLoopAnalyzer::isElse(LLVMInstruction *ins) const
+{
+    return (ins->type == LLVMInstruction::Type::BeginElse);
+}
+
+bool LLVMLoopAnalyzer::isIfEnd(LLVMInstruction *ins) const
+{
+    return (ins->type == LLVMInstruction::Type::EndIf);
 }
 
 Compiler::StaticType LLVMLoopAnalyzer::optimizeRegisterType(LLVMRegister *reg) const
