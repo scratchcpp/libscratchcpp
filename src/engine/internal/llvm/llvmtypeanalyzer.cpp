@@ -56,9 +56,6 @@ bool LLVMTypeAnalyzer::variableTypeChangesInLoop(LLVMVariablePtr *varPtr, LLVMIn
     if (!varPtr || !loopBody)
         return false;
 
-    if (preLoopType == Compiler::StaticType::Unknown)
-        return true;
-
     // Find loop end
     LLVMInstruction *ins = loopBody->next;
     int loopLevel = 0;
@@ -180,5 +177,9 @@ bool LLVMTypeAnalyzer::typesMatch(LLVMInstruction *ins, Compiler::StaticType exp
     /*if (argIns && (argIns->type == LLVMInstruction::Type::ReadVariable || argIns->type == LLVMInstruction::Type::GetListItem))
         return isVarOrListTypeSafe(argIns.get(), expectedType, log, c);*/
 
-    return (writeValueType(ins) == expectedType);
+    if (expectedType == Compiler::StaticType::Unknown) {
+        // Equal unknown types are not considered a match
+        return false;
+    } else
+        return (writeValueType(ins) == expectedType);
 }

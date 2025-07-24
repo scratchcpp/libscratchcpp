@@ -65,8 +65,7 @@ TEST(LLVMTypeAnalyzer_VariableTypeChangesInLoop, EmptyLoopUnknownType)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    // Always returns true for unknown type
-    ASSERT_TRUE(analyzer.variableTypeChangesInLoop(&varPtr, start.get(), Compiler::StaticType::Unknown));
+    ASSERT_FALSE(analyzer.variableTypeChangesInLoop(&varPtr, start.get(), Compiler::StaticType::Unknown));
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeChangesInLoop, NoWriteOperations)
@@ -232,7 +231,6 @@ TEST(LLVMTypeAnalyzer_VariableTypeChangesInLoop, SingleWriteFromUnknownType)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    // Always returns true for unknown type
     ASSERT_TRUE(analyzer.variableTypeChangesInLoop(&varPtr, start.get(), Compiler::StaticType::Number));
 }
 
@@ -256,7 +254,6 @@ TEST(LLVMTypeAnalyzer_VariableTypeChangesInLoop, SingleWriteToUnknownType)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    // Always returns true for unknown type
     ASSERT_TRUE(analyzer.variableTypeChangesInLoop(&varPtr, start.get(), Compiler::StaticType::Unknown));
 }
 
@@ -280,7 +277,6 @@ TEST(LLVMTypeAnalyzer_VariableTypeChangesInLoop, SingleWriteUnknownToUnknownType
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    // Always returns true for unknown type
     ASSERT_TRUE(analyzer.variableTypeChangesInLoop(&varPtr, start.get(), Compiler::StaticType::Unknown));
 }
 
