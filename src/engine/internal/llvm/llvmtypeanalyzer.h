@@ -12,6 +12,7 @@ struct LLVMRegister;
 class LLVMTypeAnalyzer
 {
     public:
+        Compiler::StaticType variableType(LLVMVariablePtr *varPtr, LLVMInstruction *pos, Compiler::StaticType previousType) const;
         bool variableTypeChangesInLoop(LLVMVariablePtr *varPtr, LLVMInstruction *loopBody, Compiler::StaticType preLoopType) const;
 
     private:

@@ -21,6 +21,7 @@ add_executable(
   llvmcodebuilder_test.cpp
   llvminstructionlist_test.cpp
   type_analyzer/variabletypechangesinloop_test.cpp
+  type_analyzer/variabletype_test.cpp
 )
 
 target_link_libraries(

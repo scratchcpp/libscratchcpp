@@ -9,6 +9,48 @@ using namespace libscratchcpp;
 static const std::unordered_set<LLVMInstruction::Type>
     BEGIN_LOOP_INSTRUCTIONS = { LLVMInstruction::Type::BeginRepeatLoop, LLVMInstruction::Type::BeginWhileLoop, LLVMInstruction::Type::BeginRepeatUntilLoop };
 
+Compiler::StaticType LLVMTypeAnalyzer::variableType(LLVMVariablePtr *varPtr, LLVMInstruction *pos, Compiler::StaticType previousType) const
+{
+    if (!varPtr || !pos)
+        return Compiler::StaticType::Unknown;
+
+    // Check the last write operation before the instruction
+    LLVMInstruction *ins = pos;
+    LLVMInstruction *write = nullptr;
+    LLVMInstruction *loopStart = nullptr;
+    int level = 0;
+
+    while (ins) {
+        if (isLoopEnd(ins))
+            level++;
+        else if (isLoopStart(ins)) {
+            level--;
+
+            if (!loopStart)
+                loopStart = ins;
+        } else if (ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == varPtr->var) {
+            if (level <= 0) { // ignore nested loops (they're handled later)
+                write = ins;
+                break;
+            }
+        }
+
+        ins = ins->previous;
+    }
+
+    if (loopStart) {
+        // Analyze the first loop that was found
+        if (variableTypeChangesInLoop(varPtr, loopStart, previousType))
+            return write ? writeValueType(write) : Compiler::StaticType::Unknown;
+    } else if (write) {
+        // There wasn't any loop found, so we can just check the last write operation
+        return writeValueType(write);
+    }
+
+    // No write operation found
+    return previousType;
+}
+
 bool LLVMTypeAnalyzer::variableTypeChangesInLoop(LLVMVariablePtr *varPtr, LLVMInstruction *loopBody, Compiler::StaticType preLoopType) const
 {
     if (!varPtr || !loopBody)
