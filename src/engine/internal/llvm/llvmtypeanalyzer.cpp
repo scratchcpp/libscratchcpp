@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "llvmloopanalyzer.h"
+#include "llvmtypeanalyzer.h"
 #include "llvminstruction.h"
 #include "llvmvariableptr.h"
 
@@ -9,7 +9,7 @@ using namespace libscratchcpp;
 static const std::unordered_set<LLVMInstruction::Type>
     BEGIN_LOOP_INSTRUCTIONS = { LLVMInstruction::Type::BeginRepeatLoop, LLVMInstruction::Type::BeginWhileLoop, LLVMInstruction::Type::BeginRepeatUntilLoop };
 
-bool LLVMLoopAnalyzer::variableTypeChanges(LLVMVariablePtr *varPtr, LLVMInstruction *loopBody, Compiler::StaticType preLoopType) const
+bool LLVMTypeAnalyzer::variableTypeChangesInLoop(LLVMVariablePtr *varPtr, LLVMInstruction *loopBody, Compiler::StaticType preLoopType) const
 {
     if (!varPtr || !loopBody)
         return false;
@@ -38,10 +38,10 @@ bool LLVMLoopAnalyzer::variableTypeChanges(LLVMVariablePtr *varPtr, LLVMInstruct
         return true;
     }
 
-    return variableTypeChangesFromEnd(varPtr, ins, preLoopType);
+    return variableTypeChangesInLoopFromEnd(varPtr, ins, preLoopType);
 }
 
-bool LLVMLoopAnalyzer::variableTypeChangesFromEnd(LLVMVariablePtr *varPtr, LLVMInstruction *loopEnd, Compiler::StaticType preLoopType) const
+bool LLVMTypeAnalyzer::variableTypeChangesInLoopFromEnd(LLVMVariablePtr *varPtr, LLVMInstruction *loopEnd, Compiler::StaticType preLoopType) const
 {
     // Find the last write instruction
     LLVMInstruction *ins = loopEnd->previous;
@@ -49,7 +49,7 @@ bool LLVMLoopAnalyzer::variableTypeChangesFromEnd(LLVMVariablePtr *varPtr, LLVMI
     while (ins && !isLoopStart(ins)) {
         if (isLoopEnd(ins) || isIfEnd(ins) || isElse(ins)) {
             // Nested loop or if statement
-            if (variableTypeChangesFromEnd(varPtr, ins, preLoopType))
+            if (variableTypeChangesInLoopFromEnd(varPtr, ins, preLoopType))
                 return true;
 
             // Skip the loop or if statement
@@ -83,32 +83,32 @@ bool LLVMLoopAnalyzer::variableTypeChangesFromEnd(LLVMVariablePtr *varPtr, LLVMI
     return false;
 }
 
-bool LLVMLoopAnalyzer::isLoopStart(LLVMInstruction *ins) const
+bool LLVMTypeAnalyzer::isLoopStart(LLVMInstruction *ins) const
 {
     return (BEGIN_LOOP_INSTRUCTIONS.find(ins->type) != BEGIN_LOOP_INSTRUCTIONS.cend());
 }
 
-bool LLVMLoopAnalyzer::isLoopEnd(LLVMInstruction *ins) const
+bool LLVMTypeAnalyzer::isLoopEnd(LLVMInstruction *ins) const
 {
     return (ins->type == LLVMInstruction::Type::EndLoop);
 }
 
-bool LLVMLoopAnalyzer::isIfStart(LLVMInstruction *ins) const
+bool LLVMTypeAnalyzer::isIfStart(LLVMInstruction *ins) const
 {
     return (ins->type == LLVMInstruction::Type::BeginIf);
 }
 
-bool LLVMLoopAnalyzer::isElse(LLVMInstruction *ins) const
+bool LLVMTypeAnalyzer::isElse(LLVMInstruction *ins) const
 {
     return (ins->type == LLVMInstruction::Type::BeginElse);
 }
 
-bool LLVMLoopAnalyzer::isIfEnd(LLVMInstruction *ins) const
+bool LLVMTypeAnalyzer::isIfEnd(LLVMInstruction *ins) const
 {
     return (ins->type == LLVMInstruction::Type::EndIf);
 }
 
-Compiler::StaticType LLVMLoopAnalyzer::optimizeRegisterType(LLVMRegister *reg) const
+Compiler::StaticType LLVMTypeAnalyzer::optimizeRegisterType(LLVMRegister *reg) const
 {
     // TODO: Move this method out if it's used in LLVMCodeBuilder too
     assert(reg);
@@ -122,7 +122,7 @@ Compiler::StaticType LLVMLoopAnalyzer::optimizeRegisterType(LLVMRegister *reg) c
     return ret;
 }
 
-Compiler::StaticType LLVMLoopAnalyzer::writeValueType(LLVMInstruction *ins) const
+Compiler::StaticType LLVMTypeAnalyzer::writeValueType(LLVMInstruction *ins) const
 {
     assert(ins);
     assert(!ins->args.empty());
@@ -130,7 +130,7 @@ Compiler::StaticType LLVMLoopAnalyzer::writeValueType(LLVMInstruction *ins) cons
     return optimizeRegisterType(arg);
 }
 
-bool LLVMLoopAnalyzer::typesMatch(LLVMInstruction *ins, Compiler::StaticType expectedType) const
+bool LLVMTypeAnalyzer::typesMatch(LLVMInstruction *ins, Compiler::StaticType expectedType) const
 {
     // auto argIns = arg->instruction;
 

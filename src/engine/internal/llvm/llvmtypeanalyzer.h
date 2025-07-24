@@ -9,13 +9,13 @@ struct LLVMVariablePtr;
 struct LLVMInstruction;
 struct LLVMRegister;
 
-class LLVMLoopAnalyzer
+class LLVMTypeAnalyzer
 {
     public:
-        bool variableTypeChanges(LLVMVariablePtr *varPtr, LLVMInstruction *loopBody, Compiler::StaticType preLoopType) const;
+        bool variableTypeChangesInLoop(LLVMVariablePtr *varPtr, LLVMInstruction *loopBody, Compiler::StaticType preLoopType) const;
 
     private:
-        bool variableTypeChangesFromEnd(LLVMVariablePtr *varPtr, LLVMInstruction *loopEnd, Compiler::StaticType preLoopType) const;
+        bool variableTypeChangesInLoopFromEnd(LLVMVariablePtr *varPtr, LLVMInstruction *loopEnd, Compiler::StaticType preLoopType) const;
         bool isLoopStart(LLVMInstruction *ins) const;
         bool isLoopEnd(LLVMInstruction *ins) const;
         bool isIfStart(LLVMInstruction *ins) const;
