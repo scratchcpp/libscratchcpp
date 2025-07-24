@@ -17,13 +17,18 @@ TEST(LLVMLoopAnalyzer_VariableTypeChanges, NullParams)
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, NullVariable)
 {
     LLVMLoopAnalyzer analyzer;
+    LLVMInstructionList list;
 
-    LLVMInstruction funcCall(LLVMInstruction::Type::FunctionCall, nullptr, false);
-    LLVMInstruction end(LLVMInstruction::Type::EndLoop, nullptr, false);
-    funcCall.next = &end;
-    end.previous = &funcCall;
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
 
-    ASSERT_FALSE(analyzer.variableTypeChanges(nullptr, &funcCall, Compiler::StaticType::Number));
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(funcCall);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    ASSERT_FALSE(analyzer.variableTypeChanges(nullptr, start.get(), Compiler::StaticType::Number));
 }
 
 TEST(LLVMLoopAnalyzer_VariableTypeChanges, NullLoopBody)
