@@ -23,6 +23,7 @@ class LLVMLoopAnalyzer
         bool isIfEnd(LLVMInstruction *ins) const;
 
         Compiler::StaticType optimizeRegisterType(LLVMRegister *reg) const;
+        Compiler::StaticType writeValueType(LLVMInstruction *ins) const;
         bool typesMatch(LLVMInstruction *ins, Compiler::StaticType expectedType) const;
 };
 

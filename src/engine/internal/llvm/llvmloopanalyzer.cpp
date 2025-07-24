@@ -122,16 +122,21 @@ Compiler::StaticType LLVMLoopAnalyzer::optimizeRegisterType(LLVMRegister *reg) c
     return ret;
 }
 
-bool LLVMLoopAnalyzer::typesMatch(LLVMInstruction *ins, Compiler::StaticType expectedType) const
+Compiler::StaticType LLVMLoopAnalyzer::writeValueType(LLVMInstruction *ins) const
 {
     assert(ins);
     assert(!ins->args.empty());
     const auto arg = ins->args.back().second; // value is always the last argument in variable/list write instructions
-    auto argIns = arg->instruction;
+    return optimizeRegisterType(arg);
+}
+
+bool LLVMLoopAnalyzer::typesMatch(LLVMInstruction *ins, Compiler::StaticType expectedType) const
+{
+    // auto argIns = arg->instruction;
 
     // TODO: Handle cross-variable dependencies
     /*if (argIns && (argIns->type == LLVMInstruction::Type::ReadVariable || argIns->type == LLVMInstruction::Type::GetListItem))
         return isVarOrListTypeSafe(argIns.get(), expectedType, log, c);*/
 
-    return (optimizeRegisterType(arg) == expectedType);
+    return (writeValueType(ins) == expectedType);
 }
