@@ -17,19 +17,23 @@ Compiler::StaticType LLVMTypeAnalyzer::variableType(LLVMVariablePtr *varPtr, LLV
     // Check the last write operation before the instruction
     LLVMInstruction *ins = pos;
     LLVMInstruction *write = nullptr;
-    LLVMInstruction *loopStart = nullptr;
+    LLVMInstruction *firstBranch = nullptr;
+    LLVMInstruction *firstElseBranch = nullptr;
     int level = 0;
 
     while (ins) {
-        if (isLoopEnd(ins))
+        if (isLoopEnd(ins) || isIfEnd(ins))
             level++;
-        else if (isLoopStart(ins)) {
+        else if (isLoopStart(ins) || isIfStart(ins)) {
             level--;
-
-            if (!loopStart)
-                loopStart = ins;
+            firstBranch = ins;
+        } else if (isElse(ins)) {
+            // Skip if branch if coming from else
+            firstElseBranch = ins;
+            ins = skipBranch(ins);
+            continue;
         } else if (ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == varPtr->var) {
-            if (level <= 0) { // ignore nested loops (they're handled later)
+            if (level <= 0) { // ignore nested branches (they're handled by the branch analyzer)
                 write = ins;
                 break;
             }
@@ -38,12 +42,20 @@ Compiler::StaticType LLVMTypeAnalyzer::variableType(LLVMVariablePtr *varPtr, LLV
         ins = ins->previous;
     }
 
-    if (loopStart) {
-        // Analyze the first loop that was found
-        if (variableTypeChangesInBranch(varPtr, loopStart, previousType))
-            return write ? writeValueType(write) : Compiler::StaticType::Unknown;
+    if (firstBranch) {
+        // Analyze the first branch and else branch
+        if (write)
+            previousType = writeValueType(write); // write operation overrides previous type
+
+        Compiler::StaticType firstBranchType = variableTypeAfterBranch(varPtr, firstBranch, previousType);
+        Compiler::StaticType elseBranchType = variableTypeAfterBranch(varPtr, firstElseBranch, previousType);
+
+        if (typesMatch(firstBranchType, elseBranchType))
+            return firstBranchType;
+        else
+            return Compiler::StaticType::Unknown;
     } else if (write) {
-        // There wasn't any loop found, so we can just check the last write operation
+        // There wasn't any branch found, so we can just check the last write operation
         return writeValueType(write);
     }
 
@@ -82,6 +94,72 @@ bool LLVMTypeAnalyzer::variableTypeChangesInBranch(LLVMVariablePtr *varPtr, LLVM
     return variableTypeChangesInBranchFromEnd(varPtr, ins, previousType);
 }
 
+Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranch(LLVMVariablePtr *varPtr, LLVMInstruction *start, Compiler::StaticType previousType) const
+{
+    if (!varPtr || !start)
+        return previousType;
+
+    assert(isLoopStart(start) || isIfStart(start) || isElse(start));
+
+    // Find loop/if statement end or else branch
+    LLVMInstruction *ins = start->next;
+    int level = 0;
+
+    while (ins && !((isLoopEnd(ins) || isIfEnd(ins) || isElse(ins)) && level == 0)) {
+        if (isLoopStart(ins) || isIfStart(ins))
+            level++;
+        else if (isLoopEnd(ins) || isIfEnd(ins)) {
+            assert(level > 0);
+            level--;
+        }
+
+        ins = ins->next;
+    }
+
+    if (!ins) {
+        assert(false);
+        return Compiler::StaticType::Unknown;
+    }
+
+    // Process the branch from end
+    return variableTypeAfterBranchFromEnd(varPtr, ins, previousType);
+}
+
+Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(LLVMVariablePtr *varPtr, LLVMInstruction *end, Compiler::StaticType previousType) const
+{
+    // Find the last write instruction
+    LLVMInstruction *ins = end->previous;
+
+    while (ins && !isLoopStart(ins) && !isIfStart(ins)) {
+        if (isLoopEnd(ins) || isIfEnd(ins) || isElse(ins)) {
+            // Process the nested loop or if statement
+            Compiler::StaticType ret = variableTypeAfterBranchFromEnd(varPtr, ins, previousType);
+
+            if (!typesMatch(ret, previousType))
+                return ret;
+
+            ins = skipBranch(ins);
+
+            if (isElse(ins)) {
+                // Process if branch (the else branch is already processed)
+                ret = variableTypeAfterBranchFromEnd(varPtr, ins, previousType);
+
+                if (!typesMatch(ret, previousType))
+                    return ret;
+
+                ins = skipBranch(ins);
+            }
+        } else if (ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == varPtr->var) {
+            // Variable write instruction
+            return writeValueType(ins);
+        }
+
+        ins = ins->previous;
+    }
+
+    return previousType;
+}
+
 bool LLVMTypeAnalyzer::variableTypeChangesInBranchFromEnd(LLVMVariablePtr *varPtr, LLVMInstruction *end, Compiler::StaticType previousType) const
 {
     // Find the last write instruction
@@ -104,7 +182,7 @@ bool LLVMTypeAnalyzer::variableTypeChangesInBranchFromEnd(LLVMVariablePtr *varPt
             }
         } else if (ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == varPtr->var) {
             // Variable write instruction
-            return !typesMatch(ins, previousType);
+            return !writeTypesMatch(ins, previousType);
         }
 
         ins = ins->previous;
@@ -185,7 +263,13 @@ Compiler::StaticType LLVMTypeAnalyzer::writeValueType(LLVMInstruction *ins) cons
     return optimizeRegisterType(arg);
 }
 
-bool LLVMTypeAnalyzer::typesMatch(LLVMInstruction *ins, Compiler::StaticType expectedType) const
+bool LLVMTypeAnalyzer::typesMatch(Compiler::StaticType a, Compiler::StaticType b) const
+{
+    // Equal unknown types are not considered a match
+    return (a == b) && (a != Compiler::StaticType::Unknown);
+}
+
+bool LLVMTypeAnalyzer::writeTypesMatch(LLVMInstruction *ins, Compiler::StaticType expectedType) const
 {
     // auto argIns = arg->instruction;
 
@@ -193,6 +277,7 @@ bool LLVMTypeAnalyzer::typesMatch(LLVMInstruction *ins, Compiler::StaticType exp
     /*if (argIns && (argIns->type == LLVMInstruction::Type::ReadVariable || argIns->type == LLVMInstruction::Type::GetListItem))
         return isVarOrListTypeSafe(argIns.get(), expectedType, log, c);*/
 
+    return typesMatch(writeValueType(ins), expectedType);
     if (expectedType == Compiler::StaticType::Unknown) {
         // Equal unknown types are not considered a match
         return false;
