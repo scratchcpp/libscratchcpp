@@ -695,7 +695,7 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesBoolToNumber)
 
     // Second write: number 4.25 (incompatible with Bool pre-loop type)
     auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
-    LLVMConstantRegister value2(Compiler::StaticType::String, 4.25);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 4.25);
     setVar2->workVariable = &var;
     setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     list.addInstruction(setVar2);
