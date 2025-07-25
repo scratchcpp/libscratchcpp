@@ -1308,6 +1308,150 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NestedLoopWithTypeChangeBeforeLoo
     ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
 }
 
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoopWithTypeChangeBeforeLoop_TypeChangeInIfBranch)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    LLVMVariablePtr varPtr;
+    Variable var("", "");
+    varPtr.var = &var;
+
+    // Outer loop begin
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, nullptr, false);
+    list.addInstruction(outerLoop);
+
+    // Variable write inside outer loop
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "test");
+    setVar1->workVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    // Inner if statement begin
+    auto innerIf = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    list.addInstruction(innerIf);
+
+    // Variable write inside inner if statement if branch
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 5);
+    setVar2->workVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    // Inner if statement else branch begin
+    auto innerElse = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    list.addInstruction(innerElse);
+
+    // Inner if statement end
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    list.addInstruction(innerEnd);
+
+    // Outer loop end
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(outerEnd);
+
+    // Returns unknown type because if statements can be skipped
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoopWithTypeChangeBeforeLoop_TypeChangeInElseBranch)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    LLVMVariablePtr varPtr;
+    Variable var("", "");
+    varPtr.var = &var;
+
+    // Outer loop begin
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, nullptr, false);
+    list.addInstruction(outerLoop);
+
+    // Variable write inside outer loop
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "test");
+    setVar1->workVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    // Inner if statement begin
+    auto innerIf = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    list.addInstruction(innerIf);
+
+    // Inner if statement else branch begin
+    auto innerElse = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    list.addInstruction(innerElse);
+
+    // Variable write inside inner if statement else branch
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 5);
+    setVar2->workVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    // Inner if statement end
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    list.addInstruction(innerEnd);
+
+    // Outer loop end
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(outerEnd);
+
+    // Returns unknown type because if statements can be skipped
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoopWithTypeChangeBeforeLoop_TypeChangeInBothBranches)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    LLVMVariablePtr varPtr;
+    Variable var("", "");
+    varPtr.var = &var;
+
+    // Outer loop begin
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, nullptr, false);
+    list.addInstruction(outerLoop);
+
+    // Variable write inside outer loop
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "test");
+    setVar1->workVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    // Inner if statement begin
+    auto innerIf = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    list.addInstruction(innerIf);
+
+    auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value(Compiler::StaticType::Number, 5);
+    setVar->workVariable = &var;
+    setVar->args.push_back({ Compiler::StaticType::Unknown, &value });
+    list.addInstruction(setVar);
+
+    // Inner if statement else branch begin
+    auto innerElse = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    list.addInstruction(innerElse);
+
+    // Variable write inside inner if statement else branch
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 5);
+    setVar2->workVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    // Inner if statement end
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    list.addInstruction(innerEnd);
+
+    // Outer loop end
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(outerEnd);
+
+    // Returns number type because the type always changes to number
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+}
+
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleNestedLoopsWithTypeChange)
 {
     LLVMTypeAnalyzer analyzer;
