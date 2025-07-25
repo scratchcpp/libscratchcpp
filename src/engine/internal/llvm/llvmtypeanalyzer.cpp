@@ -63,37 +63,6 @@ Compiler::StaticType LLVMTypeAnalyzer::variableType(LLVMVariablePtr *varPtr, LLV
     return previousType;
 }
 
-bool LLVMTypeAnalyzer::variableTypeChangesInBranch(LLVMVariablePtr *varPtr, LLVMInstruction *start, Compiler::StaticType previousType) const
-{
-    if (!varPtr || !start)
-        return false;
-
-    assert(isLoopStart(start) || isIfStart(start) || isElse(start));
-
-    // Find loop/if statement end or else branch
-    LLVMInstruction *ins = start->next;
-    int level = 0;
-
-    while (ins && !((isLoopEnd(ins) || isIfEnd(ins) || isElse(ins)) && level == 0)) {
-        if (isLoopStart(ins) || isIfStart(ins))
-            level++;
-        else if (isLoopEnd(ins) || isIfEnd(ins)) {
-            assert(level > 0);
-            level--;
-        }
-
-        ins = ins->next;
-    }
-
-    if (!ins) {
-        assert(false);
-        return true;
-    }
-
-    // Process the branch from end
-    return variableTypeChangesInBranchFromEnd(varPtr, ins, previousType);
-}
-
 Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranch(LLVMVariablePtr *varPtr, LLVMInstruction *start, Compiler::StaticType previousType) const
 {
     if (!varPtr || !start)
@@ -129,14 +98,17 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(LLVMVariab
 {
     // Find the last write instruction
     LLVMInstruction *ins = end->previous;
+    bool typeMightReset = false;
 
     while (ins && !isLoopStart(ins) && !isIfStart(ins)) {
         if (isLoopEnd(ins) || isIfEnd(ins) || isElse(ins)) {
             // Process the nested loop or if statement
             Compiler::StaticType ret = variableTypeAfterBranchFromEnd(varPtr, ins, previousType);
 
-            if (!typesMatch(ret, previousType))
-                return ret;
+            if (typesMatch(ret, previousType))
+                typeMightReset = true;
+            else
+                return Compiler::StaticType::Unknown;
 
             ins = skipBranch(ins);
 
@@ -144,51 +116,27 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(LLVMVariab
                 // Process if branch (the else branch is already processed)
                 ret = variableTypeAfterBranchFromEnd(varPtr, ins, previousType);
 
-                if (!typesMatch(ret, previousType))
-                    return ret;
+                if (typesMatch(ret, previousType))
+                    typeMightReset = true;
+                else
+                    return Compiler::StaticType::Unknown;
 
                 ins = skipBranch(ins);
             }
         } else if (ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == varPtr->var) {
             // Variable write instruction
-            return writeValueType(ins);
+            Compiler::StaticType writeType = writeValueType(ins);
+
+            if (typesMatch(writeType, previousType))
+                return writeType;
+            else
+                return typeMightReset ? Compiler::StaticType::Unknown : writeType;
         }
 
         ins = ins->previous;
     }
 
     return previousType;
-}
-
-bool LLVMTypeAnalyzer::variableTypeChangesInBranchFromEnd(LLVMVariablePtr *varPtr, LLVMInstruction *end, Compiler::StaticType previousType) const
-{
-    // Find the last write instruction
-    LLVMInstruction *ins = end->previous;
-
-    while (ins && !isLoopStart(ins) && !isIfStart(ins)) {
-        if (isLoopEnd(ins) || isIfEnd(ins) || isElse(ins)) {
-            // Process the nested loop or if statement
-            if (variableTypeChangesInBranchFromEnd(varPtr, ins, previousType))
-                return true;
-
-            ins = skipBranch(ins);
-
-            if (isElse(ins)) {
-                // Process if branch (the else branch is already processed)
-                if (variableTypeChangesInBranchFromEnd(varPtr, ins, previousType))
-                    return true;
-
-                ins = skipBranch(ins);
-            }
-        } else if (ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == varPtr->var) {
-            // Variable write instruction
-            return !writeTypesMatch(ins, previousType);
-        }
-
-        ins = ins->previous;
-    }
-
-    return false;
 }
 
 LLVMInstruction *LLVMTypeAnalyzer::skipBranch(LLVMInstruction *pos) const

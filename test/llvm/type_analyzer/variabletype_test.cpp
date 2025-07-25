@@ -1763,7 +1763,7 @@ TEST(LLVMTypeAnalyzer_VariableType, SameTypeIfElseInLoopWithTypeChange)
     list.addInstruction(funcCall);
 
     // The type always changes to string
-    ASSERT_EQ(analyzer.variableType(&varPtr, funcCall.get(), Compiler::StaticType::Number), Compiler::StaticType::String);
+    ASSERT_EQ(analyzer.variableType(&varPtr, funcCall.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
 }
 
 // TODO: Handle cross-variable dependencies

@@ -20,7 +20,7 @@ add_executable(
   llvmexecutablecode_test.cpp
   llvmcodebuilder_test.cpp
   llvminstructionlist_test.cpp
-  type_analyzer/variabletypechangesinbranch_test.cpp
+  type_analyzer/variabletypeafterbranch_test.cpp
   type_analyzer/variabletype_test.cpp
 )
 
