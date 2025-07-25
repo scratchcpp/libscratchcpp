@@ -13,10 +13,11 @@ class LLVMTypeAnalyzer
 {
     public:
         Compiler::StaticType variableType(LLVMVariablePtr *varPtr, LLVMInstruction *pos, Compiler::StaticType previousType) const;
-        bool variableTypeChangesInLoop(LLVMVariablePtr *varPtr, LLVMInstruction *loopBody, Compiler::StaticType preLoopType) const;
+        bool variableTypeChangesInBranch(LLVMVariablePtr *varPtr, LLVMInstruction *start, Compiler::StaticType previousType) const;
 
     private:
-        bool variableTypeChangesInLoopFromEnd(LLVMVariablePtr *varPtr, LLVMInstruction *loopEnd, Compiler::StaticType preLoopType) const;
+        bool variableTypeChangesInBranchFromEnd(LLVMVariablePtr *varPtr, LLVMInstruction *end, Compiler::StaticType previousType) const;
+        LLVMInstruction *skipBranch(LLVMInstruction *pos) const;
         bool isLoopStart(LLVMInstruction *ins) const;
         bool isLoopEnd(LLVMInstruction *ins) const;
         bool isIfStart(LLVMInstruction *ins) const;
