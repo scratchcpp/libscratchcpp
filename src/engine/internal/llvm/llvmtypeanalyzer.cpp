@@ -235,9 +235,4 @@ bool LLVMTypeAnalyzer::writeTypesMatch(LLVMInstruction *ins, Compiler::StaticTyp
         return isVarOrListTypeSafe(argIns.get(), expectedType, log, c);*/
 
     return typesMatch(writeValueType(ins), expectedType);
-    if (expectedType == Compiler::StaticType::Unknown) {
-        // Equal unknown types are not considered a match
-        return false;
-    } else
-        return (writeValueType(ins) == expectedType);
 }
