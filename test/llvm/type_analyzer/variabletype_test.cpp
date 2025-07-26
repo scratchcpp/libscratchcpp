@@ -783,7 +783,7 @@ TEST(LLVMTypeAnalyzer_VariableType, OverrideUnknownTypeBeforeLoop)
     ASSERT_EQ(analyzer.variableType(&varPtr, funcCall.get(), Compiler::StaticType::Unknown), Compiler::StaticType::Number);
 }
 
-TEST(LLVMTypeAnalyzer_VariableTypeChangesInBranch, WriteSameTypeInIfStatement)
+TEST(LLVMTypeAnalyzer_VariableType, WriteSameTypeInIfStatement)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
@@ -809,7 +809,7 @@ TEST(LLVMTypeAnalyzer_VariableTypeChangesInBranch, WriteSameTypeInIfStatement)
     ASSERT_EQ(analyzer.variableType(&varPtr, funcCall.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
-TEST(LLVMTypeAnalyzer_VariableTypeChangesInBranch, WriteDifferentTypeInIfStatement)
+TEST(LLVMTypeAnalyzer_VariableType, WriteDifferentTypeInIfStatement)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
