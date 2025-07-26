@@ -290,7 +290,7 @@ Compiler::StaticType LLVMTypeAnalyzer::writeValueType(LLVMInstruction *ins, Inst
             // If this is a variable read instruction, recursively get the variable type
             return variableType(arg->instruction->workVariable, arg->instruction.get(), Compiler::StaticType::Unknown, visitedInstructions);
         } else {
-            // TODO: Use the instruction return register
+            // The write argument already has the instruction return type
             return optimizeRegisterType(arg);
         }
     } else

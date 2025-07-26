@@ -2289,3 +2289,227 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SelfAssignmentWithTypeChange_Afte
     // Should return number because it's assigned later in the loop
     ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
 }
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, InstructionReturnType_AddNumbers)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // Create add instruction: 5 + 3
+    auto addInstruction = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::Add, nullptr, false);
+    LLVMConstantRegister operand1(Compiler::StaticType::Number, 5);
+    LLVMConstantRegister operand2(Compiler::StaticType::Number, 3);
+    addInstruction->args.push_back({ Compiler::StaticType::Number, &operand1 });
+    addInstruction->args.push_back({ Compiler::StaticType::Number, &operand2 });
+
+    // Set up return register for add instruction
+    LLVMRegister addResult(Compiler::StaticType::Number);
+    addResult.isRawValue = true;
+    addResult.instruction = addInstruction;
+    addInstruction->functionReturnReg = &addResult;
+    list.addInstruction(addInstruction);
+
+    // Assign add result to variable: var1 = (5 + 3)
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &addResult });
+    list.addInstruction(setVar1);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // var1 should have Number type from add instruction return
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, InstructionReturnType_StringConcat)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // Create string concatenation instruction: "hello" + "world"
+    auto concatInstruction = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::StringConcat, nullptr, false);
+    LLVMConstantRegister str1(Compiler::StaticType::String, "hello");
+    LLVMConstantRegister str2(Compiler::StaticType::String, "world");
+    concatInstruction->args.push_back({ Compiler::StaticType::String, &str1 });
+    concatInstruction->args.push_back({ Compiler::StaticType::String, &str2 });
+
+    // Set up return register for concat instruction
+    LLVMRegister concatResult(Compiler::StaticType::String);
+    concatResult.isRawValue = true;
+    concatResult.instruction = concatInstruction;
+    concatInstruction->functionReturnReg = &concatResult;
+    list.addInstruction(concatInstruction);
+
+    // Assign concat result to variable: var1 = ("hello" + "world")
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &concatResult });
+    list.addInstruction(setVar1);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // var1 should have String type from concat instruction return
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::Number), Compiler::StaticType::String);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, InstructionReturnType_MathFunction)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // Create sqrt instruction: sqrt(16)
+    auto sqrtInstruction = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::Sqrt, nullptr, false);
+    LLVMConstantRegister operand(Compiler::StaticType::Number, 16);
+    sqrtInstruction->args.push_back({ Compiler::StaticType::Number, &operand });
+
+    // Set up return register for sqrt instruction
+    LLVMRegister sqrtResult(Compiler::StaticType::Number);
+    sqrtResult.isRawValue = true;
+    sqrtResult.instruction = sqrtInstruction;
+    sqrtInstruction->functionReturnReg = &sqrtResult;
+    list.addInstruction(sqrtInstruction);
+
+    // Assign sqrt result to variable: var1 = sqrt(16)
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &sqrtResult });
+    list.addInstruction(setVar1);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // var1 should have Number type from sqrt instruction return
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, InstructionReturnType_Comparison)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // Create comparison instruction: 5 > 3
+    auto cmpInstruction = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::CmpGT, nullptr, false);
+    LLVMConstantRegister operand1(Compiler::StaticType::Number, 5);
+    LLVMConstantRegister operand2(Compiler::StaticType::Number, 3);
+    cmpInstruction->args.push_back({ Compiler::StaticType::Number, &operand1 });
+    cmpInstruction->args.push_back({ Compiler::StaticType::Number, &operand2 });
+
+    // Set up return register for comparison instruction
+    LLVMRegister cmpResult(Compiler::StaticType::Bool);
+    cmpResult.isRawValue = true;
+    cmpResult.instruction = cmpInstruction;
+    cmpInstruction->functionReturnReg = &cmpResult;
+    list.addInstruction(cmpInstruction);
+
+    // Assign comparison result to variable: var1 = (5 > 3)
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &cmpResult });
+    list.addInstruction(setVar1);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // var1 should have Bool type from comparison instruction return
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Bool);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, InstructionReturnType_FunctionCall)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // Create function call instruction
+    auto funcInstruction = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    funcInstruction->functionName = "some_reporter_function";
+    LLVMConstantRegister arg(Compiler::StaticType::Number, 42);
+    funcInstruction->args.push_back({ Compiler::StaticType::Number, &arg });
+
+    // Set up return register for function call
+    LLVMRegister funcResult(Compiler::StaticType::String);
+    funcResult.isRawValue = true;
+    funcResult.instruction = funcInstruction;
+    funcInstruction->functionReturnReg = &funcResult;
+    list.addInstruction(funcInstruction);
+
+    // Assign function result to variable: var1 = some_reporter_function(42)
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &funcResult });
+    list.addInstruction(setVar1);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // var1 should have String type from function call return
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::Number), Compiler::StaticType::String);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, InstructionReturnType_ChainedOperations)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // First operation: 5 + 3
+    auto addInstruction = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::Add, nullptr, false);
+    LLVMConstantRegister operand1(Compiler::StaticType::Number, 5);
+    LLVMConstantRegister operand2(Compiler::StaticType::Number, 3);
+    addInstruction->args.push_back({ Compiler::StaticType::Number, &operand1 });
+    addInstruction->args.push_back({ Compiler::StaticType::Number, &operand2 });
+
+    LLVMRegister addResult(Compiler::StaticType::Number);
+    addResult.isRawValue = true;
+    addResult.instruction = addInstruction;
+    addInstruction->functionReturnReg = &addResult;
+    list.addInstruction(addInstruction);
+
+    // Second operation: (5 + 3) * 2
+    auto mulInstruction = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::Mul, nullptr, false);
+    LLVMConstantRegister multiplier(Compiler::StaticType::Number, 2);
+    mulInstruction->args.push_back({ Compiler::StaticType::Unknown, &addResult });
+    mulInstruction->args.push_back({ Compiler::StaticType::Number, &multiplier });
+
+    LLVMRegister mulResult(Compiler::StaticType::Number);
+    mulResult.isRawValue = true;
+    mulResult.instruction = mulInstruction;
+    mulInstruction->functionReturnReg = &mulResult;
+    list.addInstruction(mulInstruction);
+
+    // Assign final result to variable: var1 = ((5 + 3) * 2)
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &mulResult });
+    list.addInstruction(setVar1);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // var1 should have Number type from chained operations
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
+}
