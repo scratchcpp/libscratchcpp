@@ -5,25 +5,24 @@
 namespace libscratchcpp
 {
 
-struct LLVMVariablePtr;
 struct LLVMInstruction;
 struct LLVMRegister;
 
 class LLVMTypeAnalyzer
 {
     public:
-        Compiler::StaticType variableType(LLVMVariablePtr *varPtr, LLVMInstruction *pos, Compiler::StaticType previousType) const;
-        Compiler::StaticType variableTypeAfterBranch(LLVMVariablePtr *varPtr, LLVMInstruction *start, Compiler::StaticType previousType) const;
+        Compiler::StaticType variableType(Variable *var, LLVMInstruction *pos, Compiler::StaticType previousType) const;
+        Compiler::StaticType variableTypeAfterBranch(Variable *var, LLVMInstruction *start, Compiler::StaticType previousType) const;
 
     private:
-        Compiler::StaticType variableTypeAfterBranchFromEnd(LLVMVariablePtr *varPtr, LLVMInstruction *end, Compiler::StaticType previousType, bool &write) const;
+        Compiler::StaticType variableTypeAfterBranchFromEnd(Variable *var, LLVMInstruction *end, Compiler::StaticType previousType, bool &write) const;
         LLVMInstruction *skipBranch(LLVMInstruction *pos) const;
         bool isLoopStart(LLVMInstruction *ins) const;
         bool isLoopEnd(LLVMInstruction *ins) const;
         bool isIfStart(LLVMInstruction *ins) const;
         bool isElse(LLVMInstruction *ins) const;
         bool isIfEnd(LLVMInstruction *ins) const;
-        bool isVariableWrite(LLVMInstruction *ins, LLVMVariablePtr *varPtr) const;
+        bool isVariableWrite(LLVMInstruction *ins, Variable *var) const;
 
         Compiler::StaticType optimizeRegisterType(LLVMRegister *reg) const;
         Compiler::StaticType writeValueType(LLVMInstruction *ins) const;

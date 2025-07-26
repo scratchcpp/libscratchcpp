@@ -1,6 +1,5 @@
 #include <scratchcpp/variable.h>
 #include <engine/internal/llvm/llvmtypeanalyzer.h>
-#include <engine/internal/llvm/llvmvariableptr.h>
 #include <engine/internal/llvm/llvminstruction.h>
 #include <engine/internal/llvm/llvminstructionlist.h>
 #include <engine/internal/llvm/llvmconstantregister.h>
@@ -34,14 +33,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NullVariable)
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NullStartInstruction)
 {
     LLVMTypeAnalyzer analyzer;
-    LLVMVariablePtr varPtr;
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, nullptr, Compiler::StaticType::Number), Compiler::StaticType::Number);
+    Variable var("", "");
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, nullptr, Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, EmptyLoop)
 {
     LLVMTypeAnalyzer analyzer;
-    LLVMVariablePtr varPtr;
+    Variable var("", "");
     LLVMInstructionList list;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
@@ -50,13 +49,13 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, EmptyLoop)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, EmptyIfStatement)
 {
     LLVMTypeAnalyzer analyzer;
-    LLVMVariablePtr varPtr;
+    Variable var("", "");
     LLVMInstructionList list;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
@@ -65,13 +64,13 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, EmptyIfStatement)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, EmptyIfElseStatement_IfBranch)
 {
     LLVMTypeAnalyzer analyzer;
-    LLVMVariablePtr varPtr;
+    Variable var("", "");
     LLVMInstructionList list;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
@@ -83,13 +82,13 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, EmptyIfElseStatement_IfBranch)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, EmptyIfElseStatement_ElseBranch)
 {
     LLVMTypeAnalyzer analyzer;
-    LLVMVariablePtr varPtr;
+    Variable var("", "");
     LLVMInstructionList list;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
@@ -101,13 +100,13 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, EmptyIfElseStatement_ElseBranch)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, elseStart.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, elseStart.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, EmptyLoopUnknownType)
 {
     LLVMTypeAnalyzer analyzer;
-    LLVMVariablePtr varPtr;
+    Variable var("", "");
     LLVMInstructionList list;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
@@ -116,14 +115,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, EmptyLoopUnknownType)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Unknown), Compiler::StaticType::Unknown);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Unknown), Compiler::StaticType::Unknown);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NoWriteOperations)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
+    Variable var("", "");
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -134,16 +133,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NoWriteOperations)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteSameTypeNumber)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -157,16 +154,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteSameTypeNumber)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteSameTypeBool)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -180,16 +175,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteSameTypeBool)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::Bool);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::Bool);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteSameTypeString)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -203,16 +196,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteSameTypeString)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::String), Compiler::StaticType::String);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::String), Compiler::StaticType::String);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteStringOptimization)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -227,17 +218,15 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteStringOptimization)
     list.addInstruction(end);
 
     // Although string is assigned, it's constant and represents a number
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteMultipleVariables)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var1("", "");
     Variable var2("", "");
-    varPtr.var = &var1;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -259,16 +248,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteMultipleVariables)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteFromUnknownType)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -282,16 +269,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteFromUnknownType)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteToUnknownType)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -305,16 +290,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteToUnknownType)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Unknown), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Unknown), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteUnknownToUnknownType)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -328,16 +311,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteUnknownToUnknownType)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Unknown), Compiler::StaticType::Unknown);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Unknown), Compiler::StaticType::Unknown);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteDifferentTypeNumberToString)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -351,16 +332,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteDifferentTypeNumberToS
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::String);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::String);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteDifferentTypeStringToNumber)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -374,16 +353,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteDifferentTypeStringToN
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteDifferentTypeNumberToBool)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -397,16 +374,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteDifferentTypeNumberToB
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Bool);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Bool);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteDifferentTypeBoolToNumber)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -420,16 +395,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteDifferentTypeBoolToNum
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteDifferentTypeBoolToString)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -443,16 +416,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteDifferentTypeBoolToStr
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::String);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::String);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteDifferentTypeStringToBool)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -466,16 +437,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteDifferentTypeStringToB
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::String), Compiler::StaticType::Bool);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::String), Compiler::StaticType::Bool);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteSameType_IfStatement)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
     list.addInstruction(start);
@@ -489,16 +458,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteSameType_IfStatement)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteDifferentType_IfStatement)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
     list.addInstruction(start);
@@ -512,16 +479,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SingleWriteDifferentType_IfStatem
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesSameTypeNumber)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -544,16 +509,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesSameTypeNumber)
     list.addInstruction(end);
 
     // Should return false because final assignment is compatible with pre-loop Number type
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesSameTypeString)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -576,16 +539,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesSameTypeString)
     list.addInstruction(end);
 
     // Should return false because final assignment is compatible with pre-loop String type
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::String), Compiler::StaticType::String);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::String), Compiler::StaticType::String);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesSameTypeUnknown)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -608,16 +569,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesSameTypeUnknown)
     list.addInstruction(end);
 
     // Should return false because final assignment is compatible with pre-loop String type
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::String), Compiler::StaticType::String);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::String), Compiler::StaticType::String);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesWithStringOptimization)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -640,16 +599,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesWithStringOptimizat
     list.addInstruction(end);
 
     // Should return false because final assignment is optimized to Number type
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesNumberToString)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -672,16 +629,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesNumberToString)
     list.addInstruction(end);
 
     // Should return true because final assignment is incompatible with pre-loop Number type
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::String);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::String);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesBoolToNumber)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -703,16 +658,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesBoolToNumber)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesBoolToString)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -734,16 +687,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesBoolToString)
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::String);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::String);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesSameType_IfStatement)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
     list.addInstruction(start);
@@ -766,16 +717,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesSameType_IfStatemen
     list.addInstruction(end);
 
     // Should return false because final assignment is compatible with Number type
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesSameType_IfBranch)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
     list.addInstruction(start);
@@ -808,16 +757,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesSameType_IfBranch)
     list.addInstruction(end);
 
     // Should return false because final assignment is compatible with Number type
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesSameType_ElseBranch)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
     list.addInstruction(start);
@@ -850,16 +797,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesSameType_ElseBranch
     list.addInstruction(end);
 
     // Should return false because final assignment is compatible with Number type
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, elseStart.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, elseStart.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesDifferentTypes_IfStatement)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
     list.addInstruction(start);
@@ -881,16 +826,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesDifferentTypes_IfSt
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::String);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::String);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesDifferentTypes_IfBranch)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
     list.addInstruction(start);
@@ -922,16 +865,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesDifferentTypes_IfBr
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::String);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::String);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesDifferentTypes_ElseBranch)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
     list.addInstruction(start);
@@ -963,16 +904,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleWritesDifferentTypes_Else
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, elseStart.get(), Compiler::StaticType::Bool), Compiler::StaticType::String);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, elseStart.get(), Compiler::StaticType::Bool), Compiler::StaticType::String);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoop_TypeChangeInIfBranch)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -1004,16 +943,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoop_TypeChangeInIfB
     list.addInstruction(end);
 
     // Returns unknown type because the type-changing branch might or might not run
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoop_TypeChangeInElseBranch)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -1045,16 +982,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoop_TypeChangeInEls
     list.addInstruction(end);
 
     // Returns unknown type because the type-changing branch might or might not run
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoop_IfElseWithoutTypeChange)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
     list.addInstruction(start);
@@ -1085,16 +1020,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoop_IfElseWithoutTy
     auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(end);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NestedLoopWithTypeChange)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     // Outer loop begin
     auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
@@ -1126,16 +1059,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NestedLoopWithTypeChange)
     auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(outerEnd);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NestedLoopWithoutTypeChange)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     // Outer loop begin
     auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginWhileLoop, nullptr, false);
@@ -1167,16 +1098,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NestedLoopWithoutTypeChange)
     auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(outerEnd);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NestedLoopTypeChangesButResets)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     // Outer loop begin
     auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
@@ -1215,16 +1144,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NestedLoopTypeChangesButResets)
     auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(outerEnd);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NestedLoopTypeChangesAndDoesNotReset)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     // Outer loop begin
     auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
@@ -1263,16 +1190,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NestedLoopTypeChangesAndDoesNotRe
     auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(outerEnd);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::String);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::String);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NestedLoopWithTypeChangeBeforeLoop)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     // Outer loop begin
     auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, nullptr, false);
@@ -1305,16 +1230,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, NestedLoopWithTypeChangeBeforeLoo
     list.addInstruction(outerEnd);
 
     // Returns unknown type because loops can be skipped
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoopWithTypeChangeBeforeLoop_TypeChangeInIfBranch)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     // Outer loop begin
     auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, nullptr, false);
@@ -1351,16 +1274,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoopWithTypeChangeBe
     list.addInstruction(outerEnd);
 
     // Returns unknown type because if statements can be skipped
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoopWithTypeChangeBeforeLoop_TypeChangeInElseBranch)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     // Outer loop begin
     auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, nullptr, false);
@@ -1397,16 +1318,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoopWithTypeChangeBe
     list.addInstruction(outerEnd);
 
     // Returns unknown type because if statements can be skipped
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoopWithTypeChangeBeforeLoop_TypeChangeInBothBranches)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     // Outer loop begin
     auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, nullptr, false);
@@ -1449,16 +1368,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, IfStatementInLoopWithTypeChangeBe
     list.addInstruction(outerEnd);
 
     // Returns number type because the type always changes to number
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleNestedLoopsWithTypeChange)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     // Outer loop begin
     auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
@@ -1505,16 +1422,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleNestedLoopsWithTypeChange
     auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(outerEnd);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleNestedLoopsWithTypeChangeButTypeReset)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     // Outer loop begin
     auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
@@ -1561,16 +1476,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleNestedLoopsWithTypeChange
     auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
     list.addInstruction(outerEnd);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, outerLoop.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleNestedIfStatementsWithTypeChange_IfBranch)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     // Outer if statement begin
     auto outerIf = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
@@ -1628,16 +1541,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleNestedIfStatementsWithTyp
     auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
     list.addInstruction(outerEnd);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerIf.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, outerIf.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleNestedIfStatementsWithTypeChange_ElseBranch)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     // Outer if statement begin
     auto outerIf = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
@@ -1695,16 +1606,14 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleNestedIfStatementsWithTyp
     auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
     list.addInstruction(outerEnd);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerIf.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, outerIf.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
 }
 
 TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleNestedIfStatementsWithoutTypeChange)
 {
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList list;
-    LLVMVariablePtr varPtr;
     Variable var("", "");
-    varPtr.var = &var;
 
     // Outer if statement begin
     auto outerIf = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
@@ -1762,7 +1671,7 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleNestedIfStatementsWithout
     auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
     list.addInstruction(outerEnd);
 
-    ASSERT_EQ(analyzer.variableTypeAfterBranch(&varPtr, outerIf.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, outerIf.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
 // TODO: Handle cross-variable dependencies
