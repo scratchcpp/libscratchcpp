@@ -19,12 +19,16 @@ Compiler::StaticType LLVMTypeAnalyzer::variableType(LLVMVariablePtr *varPtr, LLV
     LLVMInstruction *write = nullptr;
     LLVMInstruction *firstBranch = nullptr;
     LLVMInstruction *firstElseBranch = nullptr;
+    LLVMInstruction *ourBranch = nullptr;
     int level = 0;
 
     while (ins) {
         if (isLoopEnd(ins) || isIfEnd(ins))
             level++;
         else if (isLoopStart(ins) || isIfStart(ins)) {
+            if (!ourBranch && level == 0)
+                ourBranch = ins;
+
             level--;
             firstBranch = ins;
         } else if (isElse(ins)) {
@@ -44,11 +48,18 @@ Compiler::StaticType LLVMTypeAnalyzer::variableType(LLVMVariablePtr *varPtr, LLV
 
     if (firstBranch) {
         // Analyze the first branch and else branch
+        bool ignoreWriteAfterPos = (isIfStart(firstBranch) && firstBranch == ourBranch);
+
         if (write)
             previousType = writeValueType(write); // write operation overrides previous type
 
-        Compiler::StaticType firstBranchType = variableTypeAfterBranch(varPtr, firstBranch, previousType);
-        Compiler::StaticType elseBranchType = variableTypeAfterBranch(varPtr, firstElseBranch, previousType);
+        Compiler::StaticType firstBranchType = previousType;
+        Compiler::StaticType elseBranchType = previousType;
+
+        if (!ignoreWriteAfterPos) {
+            firstBranchType = variableTypeAfterBranch(varPtr, firstBranch, previousType);
+            elseBranchType = variableTypeAfterBranch(varPtr, firstElseBranch, previousType);
+        }
 
         if (typesMatch(firstBranchType, elseBranchType))
             return firstBranchType;
