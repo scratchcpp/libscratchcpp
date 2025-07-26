@@ -36,7 +36,7 @@ Compiler::StaticType LLVMTypeAnalyzer::variableType(LLVMVariablePtr *varPtr, LLV
             firstElseBranch = ins;
             ins = skipBranch(ins);
             continue;
-        } else if (ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == varPtr->var) {
+        } else if (isVariableWrite(ins, varPtr)) {
             if (level <= 0) { // ignore nested branches (they're handled by the branch analyzer)
                 write = ins;
                 break;
@@ -141,7 +141,7 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(LLVMVariab
 
                 ins = skipBranch(ins);
             }
-        } else if (ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == varPtr->var) {
+        } else if (isVariableWrite(ins, varPtr)) {
             // Variable write instruction
             Compiler::StaticType writeType = writeValueType(ins);
             write = true;
@@ -207,6 +207,11 @@ bool LLVMTypeAnalyzer::isElse(LLVMInstruction *ins) const
 bool LLVMTypeAnalyzer::isIfEnd(LLVMInstruction *ins) const
 {
     return (ins->type == LLVMInstruction::Type::EndIf);
+}
+
+bool LLVMTypeAnalyzer::isVariableWrite(LLVMInstruction *ins, LLVMVariablePtr *varPtr) const
+{
+    return (ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == varPtr->var);
 }
 
 Compiler::StaticType LLVMTypeAnalyzer::optimizeRegisterType(LLVMRegister *reg) const

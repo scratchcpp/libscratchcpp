@@ -23,6 +23,7 @@ class LLVMTypeAnalyzer
         bool isIfStart(LLVMInstruction *ins) const;
         bool isElse(LLVMInstruction *ins) const;
         bool isIfEnd(LLVMInstruction *ins) const;
+        bool isVariableWrite(LLVMInstruction *ins, LLVMVariablePtr *varPtr) const;
 
         Compiler::StaticType optimizeRegisterType(LLVMRegister *reg) const;
         Compiler::StaticType writeValueType(LLVMInstruction *ins) const;
