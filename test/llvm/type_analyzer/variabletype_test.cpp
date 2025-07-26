@@ -1766,4 +1766,390 @@ TEST(LLVMTypeAnalyzer_VariableType, SameTypeIfElseInLoopWithTypeChange)
     ASSERT_EQ(analyzer.variableType(&var, funcCall.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
 }
 
-// TODO: Handle cross-variable dependencies
+TEST(LLVMTypeAnalyzer_VariableType, CrossVariableDependency_SimpleAssignment)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", "");
+
+    // First write: var2 = "test" (String type)
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "test");
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar2);
+
+    // Second write: var1 = var2 (cross-variable dependency)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    // Query position after the assignment
+    auto queryPos = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(queryPos);
+
+    // var1 should have String type due to cross-variable dependency
+    ASSERT_EQ(analyzer.variableType(&var1, queryPos.get(), Compiler::StaticType::Number), Compiler::StaticType::String);
+}
+
+TEST(LLVMTypeAnalyzer_VariableType, CrossVariableDependency_TypeMismatch)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", "");
+
+    // First write: var2 = "test" (String type)
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "test");
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar2);
+
+    // Second write: var1 = var2 (cross-variable dependency with type mismatch)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    // Query position after the assignment
+    auto queryPos = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(queryPos);
+
+    // var1 should have String type (different from Number previousType)
+    ASSERT_EQ(analyzer.variableType(&var1, queryPos.get(), Compiler::StaticType::Number), Compiler::StaticType::String);
+}
+
+TEST(LLVMTypeAnalyzer_VariableType, CrossVariableDependency_QueryBeforeAssignment)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", "");
+
+    // Query position before any assignments
+    auto queryPos = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(queryPos);
+
+    // First write: var2 = "test" (String type) - after query position
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "test");
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar2);
+
+    // Second write: var1 = var2 (cross-variable dependency) - after query position
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    // var1 should have the previous type since assignments are after query position
+    ASSERT_EQ(analyzer.variableType(&var1, queryPos.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_VariableType, CrossVariableDependency_ChainedAssignments)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", ""), var3("", "");
+
+    // First write: var3 = 42 (Number type)
+    auto setVar3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
+    setVar3->workVariable = &var3;
+    setVar3->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar3);
+
+    // Second write: var2 = var3 (cross-variable dependency)
+    auto readVar3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar3);
+    readVar3->workVariable = &var3;
+
+    LLVMRegister var3Value(Compiler::StaticType::Unknown);
+    var3Value.isRawValue = false;
+    var3Value.instruction = readVar3;
+    readVar3->functionReturnReg = &var3Value;
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &var3Value });
+    list.addInstruction(setVar2);
+
+    // Third write: var1 = var2 (chained cross-variable dependency)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    // Query position after all assignments
+    auto queryPos = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(queryPos);
+
+    // var1 should have Number type through the chain var1 = var2 = var3 = 42
+    ASSERT_EQ(analyzer.variableType(&var1, queryPos.get(), Compiler::StaticType::Bool), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_VariableType, CrossVariableDependency_CircularReference)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", "");
+
+    // First write: var1 = var2 (circular dependency setup)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    // Second write: var2 = var1 (completes circular dependency)
+    auto readVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar1);
+    readVar1->workVariable = &var1;
+
+    LLVMRegister var1Value(Compiler::StaticType::Unknown);
+    var1Value.isRawValue = false;
+    var1Value.instruction = readVar1;
+    readVar1->functionReturnReg = &var1Value;
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &var1Value });
+    list.addInstruction(setVar2);
+
+    // Query position after circular assignments
+    auto queryPos = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(queryPos);
+
+    // Should return Unknown due to circular dependency
+    ASSERT_EQ(analyzer.variableType(&var1, queryPos.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_VariableType, CrossVariableDependency_InIfStatement_QueryInside)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    list.addInstruction(start);
+
+    // First write: var2 = 3.14 (Number type)
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 3.14);
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar2);
+
+    // Second write: var1 = var2 (cross-variable dependency in if statement)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    // Query position inside if statement after assignments
+    auto queryPos = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(queryPos);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    list.addInstruction(end);
+
+    // var1 should have Number type from cross-variable dependency
+    ASSERT_EQ(analyzer.variableType(&var1, queryPos.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_VariableType, CrossVariableDependency_InIfStatement_QueryOutside)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    list.addInstruction(start);
+
+    // First write: var2 = 3.14 (Number type)
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 3.14);
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar2);
+
+    // Second write: var1 = var2 (cross-variable dependency in if statement)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    list.addInstruction(end);
+
+    // Query position outside if statement after it ends
+    auto queryPos = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(queryPos);
+
+    // var1 should return Unknown because the write is inside an if statement that may not execute
+    ASSERT_EQ(analyzer.variableType(&var1, queryPos.get(), Compiler::StaticType::String), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_VariableType, SelfAssignment)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", "");
+
+    // No-op: var1 = var1
+    auto readVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar1);
+    readVar1->workVariable = &var1;
+
+    LLVMRegister var1Value(Compiler::StaticType::Unknown);
+    var1Value.isRawValue = false;
+    var1Value.instruction = readVar1;
+    readVar1->functionReturnReg = &var1Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var1Value });
+    list.addInstruction(setVar1);
+
+    // Query position after self-assignment
+    auto queryPos = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(queryPos);
+
+    // Should return the previous type because the write is a no-op
+    ASSERT_EQ(analyzer.variableType(&var1, queryPos.get(), Compiler::StaticType::String), Compiler::StaticType::String);
+}
+
+TEST(LLVMTypeAnalyzer_VariableType, SelfAssignmentWithTypeChange_Before)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", "");
+
+    // First write: var1 = 3.14 (Number type)
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 3.14);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    // No-op: var1 = var1
+    auto readVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar1);
+    readVar1->workVariable = &var1;
+
+    LLVMRegister var1Value(Compiler::StaticType::Unknown);
+    var1Value.isRawValue = false;
+    var1Value.instruction = readVar1;
+    readVar1->functionReturnReg = &var1Value;
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar2->workVariable = &var1;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &var1Value });
+    list.addInstruction(setVar2);
+
+    // Query position after self-assignment
+    auto queryPos = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(queryPos);
+
+    // Should return the previous type (number) because the write is a no-op
+    ASSERT_EQ(analyzer.variableType(&var1, queryPos.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_VariableType, SelfAssignmentWithTypeChange_After)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", "");
+
+    // No-op: var1 = var1
+    auto readVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar1);
+    readVar1->workVariable = &var1;
+
+    LLVMRegister var1Value(Compiler::StaticType::Unknown);
+    var1Value.isRawValue = false;
+    var1Value.instruction = readVar1;
+    readVar1->functionReturnReg = &var1Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var1Value });
+    list.addInstruction(setVar1);
+
+    // var1 = 3.14 (Number type)
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 3.14);
+    setVar2->workVariable = &var1;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    // Query position after real assignment
+    auto queryPos = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(queryPos);
+
+    // Should return number because it's assigned after the no-op
+    ASSERT_EQ(analyzer.variableType(&var1, queryPos.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
+}

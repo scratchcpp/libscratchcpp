@@ -1674,4 +1674,618 @@ TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, MultipleNestedIfStatementsWithout
     ASSERT_EQ(analyzer.variableTypeAfterBranch(&var, outerIf.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
 }
 
-// TODO: Handle cross-variable dependencies
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, CrossVariableDependency_SimpleAssignment)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // First write: var2 = "test" (String type)
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "test");
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar2);
+
+    // Second write: var1 = var2 (cross-variable dependency)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // var1 should have String type due to cross-variable dependency
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::String), Compiler::StaticType::String);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, CrossVariableDependency_TypeMismatch)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // First write: var2 = "test" (String type)
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "test");
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar2);
+
+    // Second write: var1 = var2 (cross-variable dependency with type mismatch)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // var1 should have String type (incompatible with Number pre-loop type)
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::Number), Compiler::StaticType::String);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, CrossVariableDependency_SimpleAssignmentBeforeTypeChange)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // var1 = var2
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    // var2 = 5.2 (type resets to number)
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 5.2);
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // Although the type of var2 is changed to number, it's unknown before the first iteration
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, CrossVariableDependency_ChainedAssignments)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", ""), var3("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // First write: var3 = 42 (Number type)
+    auto setVar3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
+    setVar3->workVariable = &var3;
+    setVar3->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar3);
+
+    // Second write: var2 = var3 (cross-variable dependency)
+    auto readVar3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar3);
+    readVar3->workVariable = &var3;
+
+    LLVMRegister var3Value(Compiler::StaticType::Unknown);
+    var3Value.isRawValue = false;
+    var3Value.instruction = readVar3;
+    readVar3->functionReturnReg = &var3Value;
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &var3Value });
+    list.addInstruction(setVar2);
+
+    // Third write: var1 = var2 (chained cross-variable dependency)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // var1 should have Number type through the chain var1 = var2 = var3 = 42
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::Bool), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, CrossVariableDependency_CircularReference)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // First write: var1 = var2 (circular dependency setup)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    // Second write: var2 = var1 (completes circular dependency)
+    auto readVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar1);
+    readVar1->workVariable = &var1;
+
+    LLVMRegister var1Value(Compiler::StaticType::Unknown);
+    var1Value.isRawValue = false;
+    var1Value.instruction = readVar1;
+    readVar1->functionReturnReg = &var1Value;
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &var1Value });
+    list.addInstruction(setVar2);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // Should return Unknown due to circular dependency
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, CrossVariableDependency_CircularReference_KnownTypes)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // var1 is a number
+    auto setupVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
+    setupVar1->workVariable = &var1;
+    setupVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setupVar1);
+
+    // var2 is a number
+    auto setupVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 42);
+    setupVar2->workVariable = &var2;
+    setupVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setupVar2);
+
+    // First write: var1 = var2 (circular dependency setup)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    // Second write: var2 = var1 (completes circular dependency)
+    auto readVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar1);
+    readVar1->workVariable = &var1;
+
+    LLVMRegister var1Value(Compiler::StaticType::Unknown);
+    var1Value.isRawValue = false;
+    var1Value.instruction = readVar1;
+    readVar1->functionReturnReg = &var1Value;
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &var1Value });
+    list.addInstruction(setVar2);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // Although there is a circular dependency, the types of both variables are known
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, CrossVariableDependency_CircularReference_FirstAssignedTypeKnown)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // var1: unknown type
+
+    // var2 is a number
+    auto setupVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 42);
+    setupVar2->workVariable = &var2;
+    setupVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setupVar2);
+
+    // First write: var1 = var2 (circular dependency setup)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    // Second write: var2 = var1 (completes circular dependency)
+    auto readVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar1);
+    readVar1->workVariable = &var1;
+
+    LLVMRegister var1Value(Compiler::StaticType::Unknown);
+    var1Value.isRawValue = false;
+    var1Value.instruction = readVar1;
+    readVar1->functionReturnReg = &var1Value;
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &var1Value });
+    list.addInstruction(setVar2);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // Although there is a circular dependency, the type of var2 is known and this variable is assigned to var1
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, CrossVariableDependency_CircularReference_AssignedTypeUnknown)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // var1 is a number
+    auto setupVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
+    setupVar1->workVariable = &var1;
+    setupVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setupVar1);
+
+    // var2: unknown type
+
+    // First write: var1 = var2 (circular dependency setup)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    // Second write: var2 = var1 (completes circular dependency)
+    auto readVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar1);
+    readVar1->workVariable = &var1;
+
+    LLVMRegister var1Value(Compiler::StaticType::Unknown);
+    var1Value.isRawValue = false;
+    var1Value.instruction = readVar1;
+    readVar1->functionReturnReg = &var1Value;
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &var1Value });
+    list.addInstruction(setVar2);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // The type of var2 is not known and this variable is assigned to var1
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::String), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, CrossVariableDependency_ChainedCircularReference)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", ""), var3("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // First write: var1 = var2 (circular dependency setup)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    // Second write: var2 = var3
+    auto readVar3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar3);
+    readVar3->workVariable = &var3;
+
+    LLVMRegister var3Value(Compiler::StaticType::Unknown);
+    var3Value.isRawValue = false;
+    var3Value.instruction = readVar3;
+    readVar3->functionReturnReg = &var3Value;
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &var3Value });
+    list.addInstruction(setVar2);
+
+    // Third write: var3 = var1 (completes circular dependency)
+    auto readVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar1);
+    readVar1->workVariable = &var1;
+
+    LLVMRegister var1Value(Compiler::StaticType::Unknown);
+    var1Value.isRawValue = false;
+    var1Value.instruction = readVar1;
+    readVar1->functionReturnReg = &var1Value;
+
+    auto setVar3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar3->workVariable = &var3;
+    setVar3->args.push_back({ Compiler::StaticType::Unknown, &var1Value });
+    list.addInstruction(setVar3);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // Should return Unknown due to circular dependency
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, CrossVariableDependency_InIfStatement)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", ""), var2("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    list.addInstruction(start);
+
+    // First write: var2 = 3.14 (Number type)
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 3.14);
+    setVar2->workVariable = &var2;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar2);
+
+    // Second write: var1 = var2 (cross-variable dependency in if statement)
+    auto readVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar2);
+    readVar2->workVariable = &var2;
+
+    LLVMRegister var2Value(Compiler::StaticType::Unknown);
+    var2Value.isRawValue = false;
+    var2Value.instruction = readVar2;
+    readVar2->functionReturnReg = &var2Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
+    list.addInstruction(setVar1);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    list.addInstruction(end);
+
+    // var1 should have Number type from cross-variable dependency
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SelfAssignment)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // Start if statement
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    list.addInstruction(ifStart);
+
+    // No-op: var1 = var1
+    auto readVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar1);
+    readVar1->workVariable = &var1;
+
+    LLVMRegister var1Value(Compiler::StaticType::Unknown);
+    var1Value.isRawValue = false;
+    var1Value.instruction = readVar1;
+    readVar1->functionReturnReg = &var1Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var1Value });
+    list.addInstruction(setVar1);
+
+    // End if statement
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    list.addInstruction(ifEnd);
+
+    // End loop
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // Should return the previous type because the write is a no-op
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::String), Compiler::StaticType::String);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SelfAssignmentWithTypeChange_Before)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // First write: var1 = 3.14 (Number type)
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 3.14);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    // Start if statement
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    list.addInstruction(ifStart);
+
+    // No-op: var1 = var1
+    auto readVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar1);
+    readVar1->workVariable = &var1;
+
+    LLVMRegister var1Value(Compiler::StaticType::Unknown);
+    var1Value.isRawValue = false;
+    var1Value.instruction = readVar1;
+    readVar1->functionReturnReg = &var1Value;
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar2->workVariable = &var1;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &var1Value });
+    list.addInstruction(setVar2);
+
+    // End if statement
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    list.addInstruction(ifEnd);
+
+    // End loop
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // Should return the previous type (number) because the write is a no-op
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_VariableTypeAfterBranch, SelfAssignmentWithTypeChange_After)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var1("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(start);
+
+    // Start if statement
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    list.addInstruction(ifStart);
+
+    // No-op: var1 = var1
+    auto readVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, nullptr, false);
+    list.addInstruction(readVar1);
+    readVar1->workVariable = &var1;
+
+    LLVMRegister var1Value(Compiler::StaticType::Unknown);
+    var1Value.isRawValue = false;
+    var1Value.instruction = readVar1;
+    readVar1->functionReturnReg = &var1Value;
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    setVar1->workVariable = &var1;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &var1Value });
+    list.addInstruction(setVar1);
+
+    // End if statement
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    list.addInstruction(ifEnd);
+
+    // var1 = 3.14 (Number type)
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 3.14);
+    setVar2->workVariable = &var1;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    // End loop
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(end);
+
+    // Should return number because it's assigned later in the loop
+    ASSERT_EQ(analyzer.variableTypeAfterBranch(&var1, start.get(), Compiler::StaticType::String), Compiler::StaticType::Number);
+}
