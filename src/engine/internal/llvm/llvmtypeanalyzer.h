@@ -21,6 +21,7 @@ class LLVMTypeAnalyzer
         Compiler::StaticType variableTypeAfterBranch(Variable *var, LLVMInstruction *start, Compiler::StaticType previousType, InstructionSet &visitedInstructions) const;
         Compiler::StaticType variableTypeAfterBranchFromEnd(Variable *var, LLVMInstruction *end, Compiler::StaticType previousType, bool &write, InstructionSet &visitedInstructions) const;
 
+        LLVMInstruction *branchEnd(LLVMInstruction *start) const;
         LLVMInstruction *skipBranch(LLVMInstruction *pos) const;
 
         bool isLoopStart(LLVMInstruction *ins) const;

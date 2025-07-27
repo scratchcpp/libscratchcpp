@@ -107,31 +107,14 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranch(Variable *var, LL
     if (!var || !start)
         return previousType;
 
-    assert(isLoopStart(start) || isIfStart(start) || isElse(start));
+    LLVMInstruction *end = branchEnd(start);
 
-    // Find loop/if statement end or else branch
-    LLVMInstruction *ins = start->next;
-    int level = 0;
-
-    while (ins && !((isLoopEnd(ins) || isIfEnd(ins) || isElse(ins)) && level == 0)) {
-        if (isLoopStart(ins) || isIfStart(ins))
-            level++;
-        else if (isLoopEnd(ins) || isIfEnd(ins)) {
-            assert(level > 0);
-            level--;
-        }
-
-        ins = ins->next;
-    }
-
-    if (!ins) {
-        assert(false);
+    if (!end)
         return Compiler::StaticType::Unknown;
-    }
 
     // Process the branch from end
     bool write = false; // only used internally (the compiler doesn't need this)
-    return variableTypeAfterBranchFromEnd(var, ins, previousType, write, visitedInstructions);
+    return variableTypeAfterBranchFromEnd(var, end, previousType, write, visitedInstructions);
 }
 
 Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(Variable *var, LLVMInstruction *end, Compiler::StaticType previousType, bool &write, InstructionSet &visitedInstructions) const
@@ -185,6 +168,30 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(Variable *
 
     write = false;
     return previousType;
+}
+
+LLVMInstruction *LLVMTypeAnalyzer::branchEnd(LLVMInstruction *start) const
+{
+    assert(start);
+    assert(isLoopStart(start) || isIfStart(start) || isElse(start));
+
+    // Find loop/if statement end or else branch
+    LLVMInstruction *ins = start->next;
+    int level = 0;
+
+    while (ins && !((isLoopEnd(ins) || isIfEnd(ins) || isElse(ins)) && level == 0)) {
+        if (isLoopStart(ins) || isIfStart(ins))
+            level++;
+        else if (isLoopEnd(ins) || isIfEnd(ins)) {
+            assert(level > 0);
+            level--;
+        }
+
+        ins = ins->next;
+    }
+
+    assert(ins);
+    return ins;
 }
 
 LLVMInstruction *LLVMTypeAnalyzer::skipBranch(LLVMInstruction *pos) const
