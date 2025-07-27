@@ -62,7 +62,7 @@ Compiler::StaticType LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstructi
         } else if (isElse(ins)) {
             // Skip if branch if coming from else
             firstElseBranch = ins;
-            ins = skipBranch(ins);
+            ins = branchStart(ins);
             continue;
         } else if (isVariableWrite(ins, var) && !isWriteNoOp(ins)) {
             if (level <= 0) { // ignore nested branches (they're handled by the branch analyzer)
@@ -134,7 +134,7 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(Variable *
             } else
                 return Compiler::StaticType::Unknown;
 
-            ins = skipBranch(ins);
+            ins = branchStart(ins);
 
             if (isElse(ins)) {
                 // Process if branch (the else branch is already processed)
@@ -150,7 +150,7 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(Variable *
                 } else
                     return Compiler::StaticType::Unknown;
 
-                ins = skipBranch(ins);
+                ins = branchStart(ins);
             }
         } else if (isVariableWrite(ins, var) && !isWriteNoOp(ins)) {
             // Variable write instruction
@@ -194,29 +194,33 @@ LLVMInstruction *LLVMTypeAnalyzer::branchEnd(LLVMInstruction *start) const
     return ins;
 }
 
-LLVMInstruction *LLVMTypeAnalyzer::skipBranch(LLVMInstruction *pos) const
+LLVMInstruction *LLVMTypeAnalyzer::branchStart(LLVMInstruction *end) const
 {
-    int level = 0;
-    pos = pos->previous;
+    assert(end);
+    assert(isLoopEnd(end) || isIfEnd(end) || isElse(end));
 
-    while (pos && !((isLoopStart(pos) || isIfStart(pos)) && level == 0)) {
-        if (isLoopStart(pos) || isIfStart(pos)) {
+    // Find loop/if statement/else branch start
+    LLVMInstruction *ins = end->previous;
+    int level = 0;
+
+    while (ins && !((isLoopStart(ins) || isIfStart(ins)) && level == 0)) {
+        if (isLoopStart(ins) || isIfStart(ins)) {
             assert(level > 0);
             level--;
         }
 
-        if (isLoopEnd(pos) || isIfEnd(pos) || isElse(pos)) {
-            if (isElse(pos) && level == 0)
+        if (isLoopEnd(ins) || isIfEnd(ins) || isElse(ins)) {
+            if (isElse(ins) && level == 0)
                 break;
 
             level++;
         }
 
-        pos = pos->previous;
+        ins = ins->previous;
     };
 
-    assert(pos);
-    return pos;
+    assert(ins);
+    return ins;
 }
 
 bool LLVMTypeAnalyzer::isLoopStart(LLVMInstruction *ins) const

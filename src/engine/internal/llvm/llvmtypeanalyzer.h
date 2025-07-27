@@ -22,7 +22,7 @@ class LLVMTypeAnalyzer
         Compiler::StaticType variableTypeAfterBranchFromEnd(Variable *var, LLVMInstruction *end, Compiler::StaticType previousType, bool &write, InstructionSet &visitedInstructions) const;
 
         LLVMInstruction *branchEnd(LLVMInstruction *start) const;
-        LLVMInstruction *skipBranch(LLVMInstruction *pos) const;
+        LLVMInstruction *branchStart(LLVMInstruction *end) const;
 
         bool isLoopStart(LLVMInstruction *ins) const;
         bool isLoopEnd(LLVMInstruction *ins) const;
