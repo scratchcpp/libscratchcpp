@@ -14,6 +14,8 @@ class LLVMTypeAnalyzer
         Compiler::StaticType variableType(Variable *var, LLVMInstruction *pos, Compiler::StaticType previousType) const;
         Compiler::StaticType variableTypeAfterBranch(Variable *var, LLVMInstruction *start, Compiler::StaticType previousType) const;
 
+        Compiler::StaticType listTypeAfterBranch(List *list, LLVMInstruction *start, Compiler::StaticType previousType, bool isEmpty) const;
+
     private:
         using InstructionSet = std::unordered_set<LLVMInstruction *>;
 
@@ -29,8 +31,11 @@ class LLVMTypeAnalyzer
         bool isIfStart(LLVMInstruction *ins) const;
         bool isElse(LLVMInstruction *ins) const;
         bool isIfEnd(LLVMInstruction *ins) const;
+
         bool isVariableRead(LLVMInstruction *ins) const;
         bool isVariableWrite(LLVMInstruction *ins, Variable *var) const;
+
+        bool isListWrite(LLVMInstruction *ins, List *list) const;
 
         Compiler::StaticType optimizeRegisterType(LLVMRegister *reg) const;
         bool isWriteNoOp(LLVMInstruction *ins) const;

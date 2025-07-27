@@ -8,6 +8,8 @@ using namespace libscratchcpp;
 static const std::unordered_set<LLVMInstruction::Type>
     BEGIN_LOOP_INSTRUCTIONS = { LLVMInstruction::Type::BeginRepeatLoop, LLVMInstruction::Type::BeginWhileLoop, LLVMInstruction::Type::BeginRepeatUntilLoop };
 
+static const std::unordered_set<LLVMInstruction::Type> LIST_WRITE_INSTRUCTIONS = { LLVMInstruction::Type::AppendToList, LLVMInstruction::Type::InsertToList, LLVMInstruction::Type::ListReplace };
+
 Compiler::StaticType LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstruction *pos, Compiler::StaticType previousType) const
 {
     InstructionSet visitedInstructions;
@@ -18,6 +20,68 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranch(Variable *var, LL
 {
     InstructionSet visitedInstructions;
     return variableTypeAfterBranch(var, start, previousType, visitedInstructions);
+}
+
+Compiler::StaticType LLVMTypeAnalyzer::listTypeAfterBranch(List *list, LLVMInstruction *start, Compiler::StaticType previousType, bool isEmpty) const
+{
+    if (!list || !start)
+        return previousType;
+
+    assert(isLoopStart(start) || isIfStart(start) || isElse(start));
+
+    InstructionSet visitedInstructions; // TODO: Handle cross-variable/list dependencies
+
+    LLVMInstruction *ins = start->next;
+    LLVMInstruction *lastWrite = nullptr;
+    Compiler::StaticType lastWriteType = Compiler::StaticType::Unknown;
+    int level = 0;
+
+    while (ins && !((isLoopEnd(ins) || isIfEnd(ins) || isElse(ins)) && level == 0)) {
+        if (isLoopStart(ins) || isIfStart(ins))
+            level++;
+        else if (isLoopEnd(ins) || isIfEnd(ins)) {
+            assert(level > 0);
+            level--;
+        } else if (isListWrite(ins, list)) {
+            // List write instruction
+            Compiler::StaticType writeType = writeValueType(ins, visitedInstructions);
+
+            // For non-empty lists, we can just check the write type
+            if (!isEmpty && !typesMatch(writeType, previousType)) {
+                return Compiler::StaticType::Unknown;
+            }
+
+            // In empty lists, writes of the same type determine the final type
+            if (isEmpty) {
+                if (lastWrite) {
+                    // There was a write before which means it might determine the final type
+                    if (!typesMatch(writeType, lastWriteType))
+                        return Compiler::StaticType::Unknown;
+                } else {
+                    // This is the first write found, it might determine the final type
+                    lastWrite = ins;
+                    lastWriteType = writeType;
+                }
+            }
+        }
+
+        ins = ins->next;
+    }
+
+    assert(ins);
+
+    if (isEmpty) {
+        if (lastWrite) {
+            // Only writes of the same type modify the list
+            return lastWriteType;
+        } else {
+            // No writes to empty list found, keep the previous type
+            return previousType;
+        }
+    } else {
+        // No type conflicts found for non-empty list
+        return previousType;
+    }
 }
 
 Compiler::StaticType LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstruction *pos, Compiler::StaticType previousType, InstructionSet &visitedInstructions) const
@@ -256,6 +320,11 @@ bool LLVMTypeAnalyzer::isVariableRead(LLVMInstruction *ins) const
 bool LLVMTypeAnalyzer::isVariableWrite(LLVMInstruction *ins, Variable *var) const
 {
     return (ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == var);
+}
+
+bool LLVMTypeAnalyzer::isListWrite(LLVMInstruction *ins, List *list) const
+{
+    return (LIST_WRITE_INSTRUCTIONS.find(ins->type) != LIST_WRITE_INSTRUCTIONS.cend() && ins->workList == list);
 }
 
 Compiler::StaticType LLVMTypeAnalyzer::optimizeRegisterType(LLVMRegister *reg) const

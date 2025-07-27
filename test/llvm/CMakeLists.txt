@@ -22,6 +22,7 @@ add_executable(
   llvminstructionlist_test.cpp
   type_analyzer/variabletypeafterbranch_test.cpp
   type_analyzer/variabletype_test.cpp
+  type_analyzer/listtypeafterbranch_test.cpp
 )
 
 target_link_libraries(
