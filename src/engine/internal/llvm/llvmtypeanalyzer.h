@@ -23,6 +23,8 @@ class LLVMTypeAnalyzer
         Compiler::StaticType variableTypeAfterBranch(Variable *var, LLVMInstruction *start, Compiler::StaticType previousType, InstructionSet &visitedInstructions) const;
         Compiler::StaticType variableTypeAfterBranchFromEnd(Variable *var, LLVMInstruction *end, Compiler::StaticType previousType, bool &write, InstructionSet &visitedInstructions) const;
 
+        Compiler::StaticType listTypeAfterBranch(List *list, LLVMInstruction *start, Compiler::StaticType previousType, bool isEmpty, bool &write) const;
+
         LLVMInstruction *branchEnd(LLVMInstruction *start) const;
         LLVMInstruction *branchStart(LLVMInstruction *end) const;
 

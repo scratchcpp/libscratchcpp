@@ -27,61 +27,8 @@ Compiler::StaticType LLVMTypeAnalyzer::listTypeAfterBranch(List *list, LLVMInstr
     if (!list || !start)
         return previousType;
 
-    assert(isLoopStart(start) || isIfStart(start) || isElse(start));
-
-    InstructionSet visitedInstructions; // TODO: Handle cross-variable/list dependencies
-
-    LLVMInstruction *ins = start->next;
-    LLVMInstruction *lastWrite = nullptr;
-    Compiler::StaticType lastWriteType = Compiler::StaticType::Unknown;
-    int level = 0;
-
-    while (ins && !((isLoopEnd(ins) || isIfEnd(ins) || isElse(ins)) && level == 0)) {
-        if (isLoopStart(ins) || isIfStart(ins))
-            level++;
-        else if (isLoopEnd(ins) || isIfEnd(ins)) {
-            assert(level > 0);
-            level--;
-        } else if (isListWrite(ins, list)) {
-            // List write instruction
-            Compiler::StaticType writeType = writeValueType(ins, visitedInstructions);
-
-            // For non-empty lists, we can just check the write type
-            if (!isEmpty && !typesMatch(writeType, previousType)) {
-                return Compiler::StaticType::Unknown;
-            }
-
-            // In empty lists, writes of the same type determine the final type
-            if (isEmpty) {
-                if (lastWrite) {
-                    // There was a write before which means it might determine the final type
-                    if (!typesMatch(writeType, lastWriteType))
-                        return Compiler::StaticType::Unknown;
-                } else {
-                    // This is the first write found, it might determine the final type
-                    lastWrite = ins;
-                    lastWriteType = writeType;
-                }
-            }
-        }
-
-        ins = ins->next;
-    }
-
-    assert(ins);
-
-    if (isEmpty) {
-        if (lastWrite) {
-            // Only writes of the same type modify the list
-            return lastWriteType;
-        } else {
-            // No writes to empty list found, keep the previous type
-            return previousType;
-        }
-    } else {
-        // No type conflicts found for non-empty list
-        return previousType;
-    }
+    bool write = false; // only used internally (the compiler doesn't need this)
+    return listTypeAfterBranch(list, start, previousType, isEmpty, write);
 }
 
 Compiler::StaticType LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstruction *pos, Compiler::StaticType previousType, InstructionSet &visitedInstructions) const
@@ -231,6 +178,61 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(Variable *
     }
 
     write = false;
+    return previousType;
+}
+
+Compiler::StaticType LLVMTypeAnalyzer::listTypeAfterBranch(List *list, LLVMInstruction *start, Compiler::StaticType previousType, bool isEmpty, bool &write) const
+{
+    assert(isLoopStart(start) || isIfStart(start) || isElse(start));
+
+    InstructionSet visitedInstructions; // TODO: Handle cross-variable/list dependencies
+
+    LLVMInstruction *ins = start->next;
+    write = false;
+
+    while (ins && !(isLoopEnd(ins) || isIfEnd(ins) || isElse(ins))) {
+        if (isLoopStart(ins) || isIfStart(ins)) {
+            do {
+                Compiler::StaticType type = listTypeAfterBranch(list, ins, previousType, isEmpty, write);
+
+                // If there was a write, the list is no longer empty
+                if (write) {
+                    isEmpty = false;
+
+                    // The write could change the type
+                    if (!typesMatch(type, previousType))
+                        return Compiler::StaticType::Unknown;
+                }
+
+                // Skip the branch
+                ins = branchEnd(ins);
+            } while (isElse(ins)); // handle else branch
+        } else if (isListWrite(ins, list)) {
+            // List write instruction
+            Compiler::StaticType writeType = writeValueType(ins, visitedInstructions);
+            write = true;
+
+            if (isEmpty) {
+                // In empty lists, writes of the same type determine the final type
+                // This is the first write found, it might determine the final type
+                previousType = writeType;
+
+                // The list is no longer empty
+                isEmpty = false;
+            } else if (!typesMatch(writeType, previousType)) {
+                // For non-empty lists, we can just check the write type
+                return Compiler::StaticType::Unknown;
+            }
+        } else if (ins->type == LLVMInstruction::Type::ClearList && ins->workList == list) {
+            // The list is now empty
+            isEmpty = true;
+            write = false; // the write variable is only used to check if the list is still empty
+        }
+
+        ins = ins->next;
+    }
+
+    assert(ins);
     return previousType;
 }
 
