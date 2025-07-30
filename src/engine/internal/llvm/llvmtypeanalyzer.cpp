@@ -269,18 +269,14 @@ LLVMInstruction *LLVMTypeAnalyzer::branchStart(LLVMInstruction *end) const
     LLVMInstruction *ins = end->previous;
     int level = 0;
 
-    while (ins && !((isLoopStart(ins) || isIfStart(ins)) && level == 0)) {
+    while (ins && !((isLoopStart(ins) || isIfStart(ins) || isElse(ins)) && level == 0)) {
         if (isLoopStart(ins) || isIfStart(ins)) {
             assert(level > 0);
             level--;
         }
 
-        if (isLoopEnd(ins) || isIfEnd(ins) || isElse(ins)) {
-            if (isElse(ins) && level == 0)
-                break;
-
+        if (isLoopEnd(ins) || isIfEnd(ins))
             level++;
-        }
 
         ins = ins->previous;
     };
