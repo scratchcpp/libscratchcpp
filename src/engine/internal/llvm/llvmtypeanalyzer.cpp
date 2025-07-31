@@ -148,8 +148,8 @@ Compiler::StaticType LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstructi
     // Check the last write operation before the instruction
     LLVMInstruction *ins = pos;
     LLVMInstruction *write = nullptr;
-    LLVMInstruction *firstBranch = nullptr;
-    LLVMInstruction *firstElseBranch = nullptr;
+    std::pair<LLVMInstruction *, int> firstBranch = { nullptr, 0 };
+    std::pair<LLVMInstruction *, int> firstElseBranch = { nullptr, 0 };
     LLVMInstruction *ourBranch = nullptr;
     int level = 0;
 
@@ -160,11 +160,15 @@ Compiler::StaticType LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstructi
             if (!ourBranch && level == 0)
                 ourBranch = ins;
 
+            if (!firstBranch.first || level < firstBranch.second)
+                firstBranch = { ins, level };
+
             level--;
-            firstBranch = ins;
         } else if (isElse(ins)) {
             // Skip if branch if coming from else
-            firstElseBranch = ins;
+            if (!firstElseBranch.first || level < firstElseBranch.second)
+                firstElseBranch = { ins, level };
+
             ins = branchStart(ins);
             continue;
         } else if (isVariableWrite(ins, var) && !isWriteNoOp(ins)) {
@@ -177,9 +181,9 @@ Compiler::StaticType LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstructi
         ins = ins->previous;
     }
 
-    if (firstBranch) {
+    if (firstBranch.first) {
         // Analyze the first branch and else branch
-        bool ignoreWriteAfterPos = (isIfStart(firstBranch) && firstBranch == ourBranch);
+        bool ignoreWriteAfterPos = (isIfStart(firstBranch.first) && firstBranch.first == ourBranch);
 
         if (write)
             previousType = writeValueType(write, visitedInstructions); // write operation overrides previous type
@@ -188,8 +192,8 @@ Compiler::StaticType LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstructi
         Compiler::StaticType elseBranchType = previousType;
 
         if (!ignoreWriteAfterPos) {
-            firstBranchType = variableTypeAfterBranch(var, firstBranch, previousType, visitedInstructions);
-            elseBranchType = variableTypeAfterBranch(var, firstElseBranch, previousType, visitedInstructions);
+            firstBranchType = variableTypeAfterBranch(var, firstBranch.first, previousType, visitedInstructions);
+            elseBranchType = variableTypeAfterBranch(var, firstElseBranch.first, previousType, visitedInstructions);
         }
 
         if (typesMatch(firstBranchType, elseBranchType))

@@ -1296,6 +1296,133 @@ TEST(LLVMTypeAnalyzer_VariableType, IfElseWithEqualTypes_DifferentTypes)
     ASSERT_EQ(analyzer.variableType(&var, funcCall.get(), Compiler::StaticType::Number), Compiler::StaticType::String);
 }
 
+TEST(LLVMTypeAnalyzer_VariableType, IfStatementAfterLoop_SameTypes)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(loopStart);
+
+    // First write - does not change type
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
+    setVar1->workVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(loopEnd);
+
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    list.addInstruction(ifStart);
+
+    // Second write - does not change type
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 2);
+    setVar2->workVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    list.addInstruction(ifEnd);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(funcCall);
+
+    ASSERT_EQ(analyzer.variableType(&var, funcCall.get(), Compiler::StaticType::Number), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_VariableType, IfStatementAfterLoop_DifferentTypes)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    list.addInstruction(loopStart);
+
+    // First write - does not change type
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
+    setVar1->workVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    list.addInstruction(loopEnd);
+
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    list.addInstruction(ifStart);
+
+    // Second write - changes type
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::String, "test");
+    setVar2->workVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    list.addInstruction(ifEnd);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(funcCall);
+
+    ASSERT_EQ(analyzer.variableType(&var, funcCall.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_VariableType, TwoIfStatements_DifferentTypes)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    list.addInstruction(ifStart);
+
+    // First write - does not change type
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
+    setVar1->workVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    list.addInstruction(elseStart);
+
+    // Second write - does not change type
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 4);
+    setVar2->workVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    list.addInstruction(ifEnd);
+
+    ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    list.addInstruction(ifStart);
+
+    elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    list.addInstruction(elseStart);
+
+    // Third write - changes type (in else branch)
+    auto setVar3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value3(Compiler::StaticType::String, "test");
+    setVar3->workVariable = &var;
+    setVar3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
+    list.addInstruction(setVar3);
+
+    ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    list.addInstruction(ifEnd);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    list.addInstruction(funcCall);
+
+    ASSERT_EQ(analyzer.variableType(&var, funcCall.get(), Compiler::StaticType::Number), Compiler::StaticType::Unknown);
+}
+
 TEST(LLVMTypeAnalyzer_VariableType, NestedLoopWithTypeChange_Before)
 {
     LLVMTypeAnalyzer analyzer;
