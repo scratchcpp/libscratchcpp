@@ -23,6 +23,7 @@ add_executable(
   type_analyzer/variabletypeafterbranch_test.cpp
   type_analyzer/variabletype_test.cpp
   type_analyzer/listtypeafterbranch_test.cpp
+  type_analyzer/listtype_test.cpp
 )
 
 target_link_libraries(
