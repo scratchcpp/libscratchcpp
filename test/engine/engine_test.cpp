@@ -396,7 +396,7 @@ TEST(EngineTest, Fps)
     ASSERT_EQ(engine.fps(), 250);
 }
 
-/*TEST(EngineTest, FpsProject)
+TEST(EngineTest, FpsProject)
 {
     Project p("2_frames.sb3");
     ASSERT_TRUE(p.load());
@@ -466,7 +466,7 @@ TEST(EngineTest, Fps)
     EXPECT_CALL(clock, sleep).Times(0);
     EXPECT_CALL(redrawMock, redraw());
     p.run();
-}*/
+}
 
 TEST(EngineTest, TurboModeEnabled)
 {
@@ -480,7 +480,7 @@ TEST(EngineTest, TurboModeEnabled)
     ASSERT_FALSE(engine.turboModeEnabled());
 }
 
-/*TEST(EngineTest, ExecutionOrder)
+TEST(EngineTest, ExecutionOrder)
 {
     Project p("execution_order.sb3");
     ASSERT_TRUE(p.load());
@@ -509,7 +509,7 @@ TEST(EngineTest, TurboModeEnabled)
     ASSERT_EQ(Value((*list)[10]).toString(), "Sprite1 2 msg");
     ASSERT_EQ(Value((*list)[11]).toString(), "Sprite1 3 msg");
     ASSERT_EQ(Value((*list)[12]).toString(), "Stage msg");
-}*/
+}
 
 TEST(EngineTest, KeyState)
 {
@@ -1745,7 +1745,7 @@ void questionFunction(const std::string &)
         else
             ASSERT_EQ(Value((*list)[i]).toString(), "12");
     }
-}
+}*/
 
 TEST(EngineTest, CloneLimit)
 {
@@ -1861,7 +1861,7 @@ TEST(EngineTest, BroadcastsProject)
     ASSERT_EQ(GET_VAR(stage, "test4")->value().toInt(), 10);
     ASSERT_VAR(stage, "test5");
     ASSERT_EQ(GET_VAR(stage, "test5")->value().toString(), "2 2 0 0");
-}*/
+}
 
 TEST(EngineTest, StopAll)
 {
@@ -2064,7 +2064,7 @@ TEST(EngineTest, NoRefreshWhenCallingRunningBroadcast)
     ASSERT_TRUE(GET_VAR(stage, "passed2")->value().toBool());
 }
 
-/*TEST(EngineTest, NoStopWhenCallingRunningBroadcastFromCustomBlock)
+TEST(EngineTest, NoStopWhenCallingRunningBroadcastFromCustomBlock)
 {
     // Regtest for #257
     Project p("regtest_projects/277_custom_block_call_running_broadcast_stop.sb3");
@@ -2081,7 +2081,7 @@ TEST(EngineTest, NoRefreshWhenCallingRunningBroadcast)
 
     ASSERT_VAR(stage, "passed2");
     ASSERT_TRUE(GET_VAR(stage, "passed2")->value().toBool());
-}*/
+}
 
 TEST(EngineTest, ResetRunningHats)
 {
