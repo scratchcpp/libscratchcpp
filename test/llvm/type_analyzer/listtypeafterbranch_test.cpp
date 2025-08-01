@@ -2371,3 +2371,308 @@ TEST(LLVMTypeAnalyzer_ListTypeAfterBranch, ClearListInLoop_AppendToEmptyListAndC
     // Should return String because the list remains empty after the if statement
     ASSERT_EQ(analyzer.listTypeAfterBranch(&list, start.get(), Compiler::StaticType::Number, true), Compiler::StaticType::String);
 }
+
+TEST(LLVMTypeAnalyzer_ListTypeAfterBranch, CrossListDependency_ReadFromTypedList)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List sourceList("", "");
+    List targetList("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    instructionList.addInstruction(start);
+
+    // Clear sourceList
+    auto clear = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clear->workList = &sourceList;
+    instructionList.addInstruction(clear);
+
+    // Set sourceList type
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
+    appendList1->workList = &sourceList;
+    appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    instructionList.addInstruction(appendList1);
+
+    // Read from sourceList
+    auto getItem = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    LLVMConstantRegister index(Compiler::StaticType::Number, 0);
+    getItem->workList = &sourceList;
+    getItem->args.push_back({ Compiler::StaticType::Number, &index });
+    auto itemRegister = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    itemRegister->instruction = getItem;
+    itemRegister->isRawValue = false;
+    getItem->functionReturnReg = itemRegister.get();
+    instructionList.addInstruction(getItem);
+
+    // Append the read value to targetList
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendList2->workList = &targetList;
+    appendList2->args.push_back({ Compiler::StaticType::Unknown, itemRegister.get() });
+    instructionList.addInstruction(appendList2);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    instructionList.addInstruction(end);
+
+    // Target list type depends on source list type
+    ASSERT_EQ(analyzer.listTypeAfterBranch(&targetList, start.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_ListTypeAfterBranch, CrossListDependency_ReadFromUnknownList)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List sourceList("", "");
+    List targetList("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    instructionList.addInstruction(start);
+
+    // Read from sourceList
+    auto getItem = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    LLVMConstantRegister index(Compiler::StaticType::Number, 0);
+    getItem->workList = &sourceList;
+    getItem->args.push_back({ Compiler::StaticType::Number, &index });
+    auto itemRegister = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    itemRegister->instruction = getItem;
+    itemRegister->isRawValue = false;
+    getItem->functionReturnReg = itemRegister.get();
+    instructionList.addInstruction(getItem);
+
+    // Append the read value to targetList
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendList->workList = &targetList;
+    appendList->args.push_back({ Compiler::StaticType::Unknown, itemRegister.get() });
+    instructionList.addInstruction(appendList);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    instructionList.addInstruction(end);
+
+    ASSERT_EQ(analyzer.listTypeAfterBranch(&targetList, start.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_ListTypeAfterBranch, CrossListDependency_ChainedReads_KnownType)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List list1("", "");
+    List list2("", "");
+    List list3("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    instructionList.addInstruction(start);
+
+    // Clear list1
+    auto clear = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clear->workList = &list1;
+    instructionList.addInstruction(clear);
+
+    // Clear list2
+    clear = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clear->workList = &list2;
+    instructionList.addInstruction(clear);
+
+    // Set list1 type
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
+    appendList1->workList = &list1;
+    appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    instructionList.addInstruction(appendList1);
+
+    // Read from list1
+    auto getItem1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    LLVMConstantRegister index1(Compiler::StaticType::Number, 0);
+    getItem1->workList = &list1;
+    getItem1->args.push_back({ Compiler::StaticType::Number, &index1 });
+    auto itemRegister1 = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    itemRegister1->instruction = getItem1;
+    itemRegister1->isRawValue = false;
+    getItem1->functionReturnReg = itemRegister1.get();
+    instructionList.addInstruction(getItem1);
+
+    // Append to list2
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendList2->workList = &list2;
+    appendList2->args.push_back({ Compiler::StaticType::Unknown, itemRegister1.get() });
+    instructionList.addInstruction(appendList2);
+
+    // Read from list2
+    auto getItem2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    LLVMConstantRegister index2(Compiler::StaticType::Number, 0);
+    getItem2->workList = &list2;
+    getItem2->args.push_back({ Compiler::StaticType::Number, &index2 });
+    auto itemRegister2 = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    itemRegister2->instruction = getItem2;
+    itemRegister2->isRawValue = false;
+    getItem2->functionReturnReg = itemRegister2.get();
+    instructionList.addInstruction(getItem2);
+
+    // Append to list3
+    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendList3->workList = &list3;
+    appendList3->args.push_back({ Compiler::StaticType::Unknown, itemRegister2.get() });
+    instructionList.addInstruction(appendList3);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    instructionList.addInstruction(end);
+
+    ASSERT_EQ(analyzer.listTypeAfterBranch(&list3, start.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_ListTypeAfterBranch, CrossListDependency_ChainedReads_UnknownType)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List list1("", "");
+    List list2("", "");
+    List list3("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    instructionList.addInstruction(start);
+
+    // Read from list1
+    auto getItem1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    LLVMConstantRegister index1(Compiler::StaticType::Number, 0);
+    getItem1->workList = &list1;
+    getItem1->args.push_back({ Compiler::StaticType::Number, &index1 });
+    auto itemRegister1 = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    itemRegister1->instruction = getItem1;
+    itemRegister1->isRawValue = false;
+    getItem1->functionReturnReg = itemRegister1.get();
+    instructionList.addInstruction(getItem1);
+
+    // Append to list2
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendList2->workList = &list2;
+    appendList2->args.push_back({ Compiler::StaticType::Unknown, itemRegister1.get() });
+    instructionList.addInstruction(appendList2);
+
+    // Read from list2
+    auto getItem2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    LLVMConstantRegister index2(Compiler::StaticType::Number, 0);
+    getItem2->workList = &list2;
+    getItem2->args.push_back({ Compiler::StaticType::Number, &index2 });
+    auto itemRegister2 = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    itemRegister2->instruction = getItem2;
+    itemRegister2->isRawValue = false;
+    getItem2->functionReturnReg = itemRegister2.get();
+    instructionList.addInstruction(getItem2);
+
+    // Append to list3
+    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendList3->workList = &list3;
+    appendList3->args.push_back({ Compiler::StaticType::Unknown, itemRegister2.get() });
+    instructionList.addInstruction(appendList3);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    instructionList.addInstruction(end);
+
+    // list3 should have Unknown type due to chained cross-list dependencies
+    ASSERT_EQ(analyzer.listTypeAfterBranch(&list3, start.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_ListTypeAfterBranch, CrossListDependency_ConditionalRead)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List sourceList("", "");
+    List targetList("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    instructionList.addInstruction(start);
+
+    // If statement
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    instructionList.addInstruction(ifStart);
+
+    // Read from sourceList in if branch
+    auto getItem = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    LLVMConstantRegister index(Compiler::StaticType::Number, 0);
+    getItem->workList = &sourceList;
+    getItem->args.push_back({ Compiler::StaticType::Number, &index });
+    auto itemRegister = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    itemRegister->instruction = getItem;
+    itemRegister->isRawValue = false;
+    getItem->functionReturnReg = itemRegister.get();
+    instructionList.addInstruction(getItem);
+
+    // Append to targetList
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendList->workList = &targetList;
+    appendList->args.push_back({ Compiler::StaticType::Unknown, itemRegister.get() });
+    instructionList.addInstruction(appendList);
+
+    // Else branch
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    instructionList.addInstruction(elseStart);
+
+    // Direct append of constant value
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister directValue(Compiler::StaticType::Number, 42);
+    appendList2->workList = &targetList;
+    appendList2->args.push_back({ Compiler::StaticType::Unknown, &directValue });
+    instructionList.addInstruction(appendList2);
+
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    instructionList.addInstruction(ifEnd);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    instructionList.addInstruction(end);
+
+    // Should return Unknown due to cross-list dependency and conditional execution
+    ASSERT_EQ(analyzer.listTypeAfterBranch(&targetList, start.get(), Compiler::StaticType::String, true), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_ListTypeAfterBranch, CrossListDependency_ReadWithInsertAndReplace)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List sourceList("", "");
+    List targetList("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    instructionList.addInstruction(start);
+
+    // Read from sourceList
+    auto getItem = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    LLVMConstantRegister index(Compiler::StaticType::Number, 0);
+    getItem->workList = &sourceList;
+    getItem->args.push_back({ Compiler::StaticType::Number, &index });
+    auto itemRegister = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    itemRegister->instruction = getItem;
+    itemRegister->isRawValue = false;
+    getItem->functionReturnReg = itemRegister.get();
+    instructionList.addInstruction(getItem);
+
+    // Insert the read value to targetList
+    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, nullptr, false);
+    LLVMConstantRegister insertIndex(Compiler::StaticType::Number, 0);
+    insertList->workList = &targetList;
+    insertList->args.push_back({ Compiler::StaticType::Number, &insertIndex });
+    insertList->args.push_back({ Compiler::StaticType::Unknown, itemRegister.get() });
+    instructionList.addInstruction(insertList);
+
+    // Replace with another read from the same list
+    auto getItem2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    LLVMConstantRegister index2(Compiler::StaticType::Number, 1);
+    getItem2->workList = &sourceList;
+    getItem2->args.push_back({ Compiler::StaticType::Number, &index2 });
+    auto itemRegister2 = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    itemRegister2->instruction = getItem2;
+    itemRegister2->isRawValue = false;
+    getItem2->functionReturnReg = itemRegister2.get();
+    instructionList.addInstruction(getItem2);
+
+    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, nullptr, false);
+    LLVMConstantRegister replaceIndex(Compiler::StaticType::Number, 0);
+    replaceList->workList = &targetList;
+    replaceList->args.push_back({ Compiler::StaticType::Number, &replaceIndex });
+    replaceList->args.push_back({ Compiler::StaticType::Unknown, itemRegister2.get() });
+    instructionList.addInstruction(replaceList);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    instructionList.addInstruction(end);
+
+    // Should have Unknown type due to cross-list dependencies
+    ASSERT_EQ(analyzer.listTypeAfterBranch(&targetList, start.get(), Compiler::StaticType::String, true), Compiler::StaticType::Unknown);
+}

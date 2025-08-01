@@ -13,7 +13,8 @@ static const std::unordered_set<LLVMInstruction::Type> LIST_WRITE_INSTRUCTIONS =
 Compiler::StaticType LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstruction *pos, Compiler::StaticType previousType) const
 {
     InstructionSet visitedInstructions;
-    return variableType(var, pos, previousType, visitedInstructions);
+    std::unordered_map<List *, Compiler::StaticType> listTypes;
+    return variableType(var, pos, previousType, listTypes, visitedInstructions);
 }
 
 Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranch(Variable *var, LLVMInstruction *start, Compiler::StaticType previousType) const
@@ -24,106 +25,22 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranch(Variable *var, LL
 
 Compiler::StaticType LLVMTypeAnalyzer::listType(List *list, LLVMInstruction *pos, Compiler::StaticType previousType, bool isEmpty) const
 {
-    if (!list || !pos)
-        return Compiler::StaticType::Unknown;
-
-    InstructionSet visitedInstructions; // TODO: Handle cross-variable/list dependencies
-
-    LLVMInstruction *ins = pos;
-    LLVMInstruction *previous = nullptr;
-    std::pair<LLVMInstruction *, int> firstBranch = { nullptr, 0 };
-    std::pair<LLVMInstruction *, int> lastClear = { nullptr, 0 };
-    int level = 0;
-
-    // Find a start instruction (list clear in the top level or the first instruction)
-    while (ins) {
-        if (isLoopEnd(ins) || isIfEnd(ins))
-            level++;
-        else if (isLoopStart(ins) || isIfStart(ins) || isElse(ins)) {
-            if (!isElse(ins))
-                level--;
-
-            if (!firstBranch.first || level < firstBranch.second)
-                firstBranch = { ins, level };
-        } else if (isListClear(ins, list)) {
-            if (!lastClear.first || level < lastClear.second)
-                lastClear = { ins, level };
-        }
-
-        previous = ins;
-        ins = ins->previous;
-    }
-
-    if (firstBranch.first) {
-        assert(firstBranch.second == level);
-
-        // The first branch must be above the query point level
-        if (firstBranch.second == 0)
-            firstBranch.first = nullptr;
-    }
-
-    // Clear must be in the top level
-    if (lastClear.second != level)
-        lastClear.first = nullptr;
-
-    if (lastClear.first) {
-        ins = lastClear.first;
-        isEmpty = true;
-    } else
-        ins = previous;
-
-    // Process from the start instruction
-    while (ins && ins != pos) {
-        if (isLoopStart(ins) || isIfStart(ins)) {
-            do {
-                bool write;
-                Compiler::StaticType type = listTypeAfterBranch(list, ins, previousType, isEmpty, pos, write);
-
-                // If this branch contains the query point, return the final type
-                if (ins == firstBranch.first) {
-                    if (isEmpty || typesMatch(type, previousType))
-                        return type;
-                    else
-                        return Compiler::StaticType::Unknown;
-                }
-
-                // If there was a write, the list is no longer empty
-                if (write) {
-                    isEmpty = false;
-
-                    // The write could change the type
-                    if (!typesMatch(type, previousType))
-                        previousType = type;
-                }
-
-                // Skip the branch
-                ins = branchEnd(ins);
-            } while (isElse(ins)); // handle else branch
-        } else if (isListWrite(ins, list)) {
-            // List write instruction
-            Compiler::StaticType writeType = writeValueType(ins, visitedInstructions);
-
-            if (!handleListWrite(writeType, previousType, isEmpty))
-                return Compiler::StaticType::Unknown;
-        }
-
-        ins = ins->next;
-    }
-
-    assert(ins);
-    return previousType;
+    InstructionSet visitedInstructions;
+    std::unordered_map<List *, Compiler::StaticType> listTypes;
+    return listType(list, pos, previousType, isEmpty, listTypes, visitedInstructions);
 }
 
 Compiler::StaticType LLVMTypeAnalyzer::listTypeAfterBranch(List *list, LLVMInstruction *start, Compiler::StaticType previousType, bool isEmpty) const
 {
-    if (!list || !start)
-        return previousType;
-
     bool write = false; // only used internally (the compiler doesn't need this)
-    return listTypeAfterBranch(list, start, previousType, isEmpty, nullptr, write);
+    InstructionSet visitedInstructions;
+    std::unordered_map<List *, Compiler::StaticType> listTypes;
+    return listTypeAfterBranch(list, start, previousType, isEmpty, nullptr, write, listTypes, visitedInstructions);
 }
 
-Compiler::StaticType LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstruction *pos, Compiler::StaticType previousType, InstructionSet &visitedInstructions) const
+Compiler::StaticType
+LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstruction *pos, Compiler::StaticType previousType, std::unordered_map<List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions)
+    const
 {
     if (!var || !pos)
         return Compiler::StaticType::Unknown;
@@ -186,7 +103,7 @@ Compiler::StaticType LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstructi
         bool ignoreWriteAfterPos = (isIfStart(firstBranch.first) && firstBranch.first == ourBranch);
 
         if (write)
-            previousType = writeValueType(write, visitedInstructions); // write operation overrides previous type
+            previousType = writeValueType(write, listTypes, visitedInstructions); // write operation overrides previous type
 
         Compiler::StaticType firstBranchType = previousType;
         Compiler::StaticType elseBranchType = previousType;
@@ -202,7 +119,7 @@ Compiler::StaticType LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstructi
             return Compiler::StaticType::Unknown;
     } else if (write) {
         // There wasn't any branch found, so we can just check the last write operation
-        return writeValueType(write, visitedInstructions);
+        return writeValueType(write, listTypes, visitedInstructions);
     }
 
     // No write operation found
@@ -221,10 +138,17 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranch(Variable *var, LL
 
     // Process the branch from end
     bool write = false; // only used internally (the compiler doesn't need this)
-    return variableTypeAfterBranchFromEnd(var, end, previousType, write, visitedInstructions);
+    std::unordered_map<List *, Compiler::StaticType> listTypes;
+    return variableTypeAfterBranchFromEnd(var, end, previousType, write, listTypes, visitedInstructions);
 }
 
-Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(Variable *var, LLVMInstruction *end, Compiler::StaticType previousType, bool &write, InstructionSet &visitedInstructions) const
+Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(
+    Variable *var,
+    LLVMInstruction *end,
+    Compiler::StaticType previousType,
+    bool &write,
+    std::unordered_map<List *, Compiler::StaticType> listTypes,
+    InstructionSet &visitedInstructions) const
 {
     // Find the last write instruction
     LLVMInstruction *ins = end->previous;
@@ -233,7 +157,7 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(Variable *
     while (ins && !isLoopStart(ins) && !isIfStart(ins)) {
         if (isLoopEnd(ins) || isIfEnd(ins) || isElse(ins)) {
             // Process the nested loop or if statement
-            Compiler::StaticType ret = variableTypeAfterBranchFromEnd(var, ins, previousType, write, visitedInstructions);
+            Compiler::StaticType ret = variableTypeAfterBranchFromEnd(var, ins, previousType, write, listTypes, visitedInstructions);
 
             if (typesMatch(ret, previousType)) {
                 if (write)
@@ -245,7 +169,7 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(Variable *
 
             if (isElse(ins)) {
                 // Process if branch (the else branch is already processed)
-                ret = variableTypeAfterBranchFromEnd(var, ins, previousType, write, visitedInstructions);
+                ret = variableTypeAfterBranchFromEnd(var, ins, previousType, write, listTypes, visitedInstructions);
 
                 if (typesMatch(ret, previousType)) {
                     if (write) {
@@ -261,7 +185,7 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(Variable *
             }
         } else if (isVariableWrite(ins, var) && !isWriteNoOp(ins)) {
             // Variable write instruction
-            Compiler::StaticType writeType = writeValueType(ins, visitedInstructions);
+            Compiler::StaticType writeType = writeValueType(ins, listTypes, visitedInstructions);
             write = true;
 
             if (typesMatch(writeType, previousType))
@@ -277,23 +201,134 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(Variable *
     return previousType;
 }
 
-Compiler::StaticType LLVMTypeAnalyzer::listTypeAfterBranch(List *list, LLVMInstruction *start, Compiler::StaticType previousType, bool isEmpty, LLVMInstruction *query, bool &write) const
+Compiler::StaticType LLVMTypeAnalyzer::
+    listType(List *list, LLVMInstruction *pos, Compiler::StaticType previousType, bool isEmpty, std::unordered_map<List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions) const
 {
+    if (!list || !pos)
+        return Compiler::StaticType::Unknown;
+
+    /*
+     * If the given instruction has already been processed,
+     * it means there's a circular dependency with an unknown type.
+     * See variableType()
+     */
+    if (visitedInstructions.find(pos) != visitedInstructions.cend()) {
+        // Circular dependencies are rare (and bad) so don't optimize them
+        // TODO: The (previousType != Compiler::StaticType::Unknown) case isn't handled in tests
+        // Add a test case for it if you find it...
+        assert(previousType == Compiler::StaticType::Unknown);
+        return /*Compiler::StaticType::Unknown*/ previousType;
+    }
+
+    visitedInstructions.insert(pos);
+    listTypes[list] = previousType;
+
+    LLVMInstruction *ins = pos;
+    LLVMInstruction *previous = nullptr;
+    std::pair<LLVMInstruction *, int> firstBranch = { nullptr, 0 };
+    std::pair<LLVMInstruction *, int> lastClear = { nullptr, 0 };
+    int level = 0;
+
+    // Find a start instruction (list clear in the top level or the first instruction)
+    while (ins) {
+        if (isLoopEnd(ins) || isIfEnd(ins))
+            level++;
+        else if (isLoopStart(ins) || isIfStart(ins) || isElse(ins)) {
+            if (!isElse(ins))
+                level--;
+
+            if (!firstBranch.first || level < firstBranch.second)
+                firstBranch = { ins, level };
+        } else if (isListClear(ins, list)) {
+            if (!lastClear.first || level < lastClear.second)
+                lastClear = { ins, level };
+        }
+
+        previous = ins;
+        ins = ins->previous;
+    }
+
+    if (firstBranch.first) {
+        assert(firstBranch.second == level);
+
+        // The first branch must be above the query point level
+        if (firstBranch.second == 0)
+            firstBranch.first = nullptr;
+    }
+
+    // Clear must be in the top level
+    if (lastClear.second != level)
+        lastClear.first = nullptr;
+
+    if (lastClear.first) {
+        ins = lastClear.first;
+        isEmpty = true;
+    } else
+        ins = previous;
+
+    // Process from the start instruction
+    while (ins && ins != pos) {
+        if (isLoopStart(ins) || isIfStart(ins)) {
+            do {
+                bool write;
+                Compiler::StaticType type = listTypeAfterBranch(list, ins, previousType, isEmpty, pos, write, listTypes, visitedInstructions);
+
+                // If this branch contains the query point, return the final type
+                if (ins == firstBranch.first)
+                    return type;
+
+                // If there was a write, the list is no longer empty
+                if (write) {
+                    isEmpty = false;
+
+                    // The write could change the type
+                    if (!typesMatch(type, previousType))
+                        previousType = type;
+                }
+
+                // Skip the branch
+                ins = branchEnd(ins);
+            } while (isElse(ins)); // handle else branch
+        } else if (isListWrite(ins, list)) {
+            // List write instruction
+            Compiler::StaticType writeType = writeValueType(ins, listTypes, visitedInstructions);
+
+            if (!handleListWrite(writeType, previousType, isEmpty))
+                return Compiler::StaticType::Unknown;
+        }
+
+        ins = ins->next;
+    }
+
+    assert(ins);
+    return previousType;
+}
+
+Compiler::StaticType LLVMTypeAnalyzer::listTypeAfterBranch(
+    List *list,
+    LLVMInstruction *start,
+    Compiler::StaticType previousType,
+    bool isEmpty,
+    LLVMInstruction *query,
+    bool &write,
+    std::unordered_map<List *, Compiler::StaticType> listTypes,
+    InstructionSet &visitedInstructions) const
+{
+    write = false;
+
+    if (!list || !start)
+        return previousType;
+
     assert(isLoopStart(start) || isIfStart(start) || isElse(start));
 
-    InstructionSet visitedInstructions; // TODO: Handle cross-variable/list dependencies
-
-    // Query point is only relevant in if statemenets because writes after them don't affect the result
-    if (isLoopStart(start))
-        query = nullptr;
-
+    bool isLoop = isLoopStart(start);
+    bool clearBeforeQueryPoint = false;
     LLVMInstruction *ins = start->next;
-    write = false;
 
     while (ins && !(isLoopEnd(ins) || isIfEnd(ins) || isElse(ins))) {
         if (isLoopStart(ins) || isIfStart(ins)) {
             do {
-                Compiler::StaticType type = listTypeAfterBranch(list, ins, previousType, isEmpty, query, write);
+                Compiler::StaticType type = listTypeAfterBranch(list, ins, previousType, isEmpty, query, write, listTypes, visitedInstructions);
 
                 // If there was a write, the list is no longer empty
                 if (write) {
@@ -309,7 +344,7 @@ Compiler::StaticType LLVMTypeAnalyzer::listTypeAfterBranch(List *list, LLVMInstr
             } while (isElse(ins)); // handle else branch
         } else if (isListWrite(ins, list)) {
             // List write instruction
-            Compiler::StaticType writeType = writeValueType(ins, visitedInstructions);
+            Compiler::StaticType writeType = writeValueType(ins, listTypes, visitedInstructions);
             write = true;
 
             if (!handleListWrite(writeType, previousType, isEmpty))
@@ -317,9 +352,14 @@ Compiler::StaticType LLVMTypeAnalyzer::listTypeAfterBranch(List *list, LLVMInstr
         } else if (isListClear(ins, list)) {
             // The list is now empty
             isEmpty = true;
+            clearBeforeQueryPoint = true;
             write = false; // the write variable is only used to check if the list is still empty
-        } else if (ins == query)
-            break;
+        } else if (ins == query) {
+            if (!isLoop || clearBeforeQueryPoint)
+                break;
+
+            clearBeforeQueryPoint = false;
+        }
 
         ins = ins->next;
     }
@@ -429,6 +469,11 @@ bool LLVMTypeAnalyzer::isVariableWrite(LLVMInstruction *ins, Variable *var) cons
     return (ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == var);
 }
 
+bool LLVMTypeAnalyzer::isListRead(LLVMInstruction *ins) const
+{
+    return (ins->type == LLVMInstruction::Type::GetListItem);
+}
+
 bool LLVMTypeAnalyzer::isListWrite(LLVMInstruction *ins, List *list) const
 {
     return (LIST_WRITE_INSTRUCTIONS.find(ins->type) != LIST_WRITE_INSTRUCTIONS.cend() && ins->workList == list);
@@ -470,7 +515,7 @@ bool LLVMTypeAnalyzer::isWriteNoOp(LLVMInstruction *ins) const
     return false;
 }
 
-Compiler::StaticType LLVMTypeAnalyzer::writeValueType(LLVMInstruction *ins, InstructionSet &visitedInstructions) const
+Compiler::StaticType LLVMTypeAnalyzer::writeValueType(LLVMInstruction *ins, std::unordered_map<List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions) const
 {
     assert(ins);
     assert(!ins->args.empty());
@@ -480,7 +525,17 @@ Compiler::StaticType LLVMTypeAnalyzer::writeValueType(LLVMInstruction *ins, Inst
         // TODO: Handle list item
         if (isVariableRead(arg->instruction.get())) {
             // If this is a variable read instruction, recursively get the variable type
-            return variableType(arg->instruction->workVariable, arg->instruction.get(), Compiler::StaticType::Unknown, visitedInstructions);
+            return variableType(arg->instruction->workVariable, arg->instruction.get(), Compiler::StaticType::Unknown, listTypes, visitedInstructions);
+        } else if (isListRead(arg->instruction.get())) {
+            // If this is a list read instruction, recursively get the list type
+            Compiler::StaticType type = Compiler::StaticType::Unknown;
+            auto it = listTypes.find(arg->instruction->workList);
+
+            if (it != listTypes.cend())
+                type = it->second;
+
+            // NOTE: The isEmpty parameter is useless here
+            return listType(arg->instruction->workList, arg->instruction.get(), type, false, listTypes, visitedInstructions);
         } else {
             // The write argument already has the instruction return type
             return optimizeRegisterType(arg);
@@ -495,7 +550,7 @@ bool LLVMTypeAnalyzer::typesMatch(Compiler::StaticType a, Compiler::StaticType b
     return (a == b) && (a != Compiler::StaticType::Unknown);
 }
 
-bool LLVMTypeAnalyzer::writeTypesMatch(LLVMInstruction *ins, Compiler::StaticType expectedType, InstructionSet &visitedInstructions) const
+bool LLVMTypeAnalyzer::writeTypesMatch(LLVMInstruction *ins, Compiler::StaticType expectedType, std::unordered_map<List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions) const
 {
-    return typesMatch(writeValueType(ins, visitedInstructions), expectedType);
+    return typesMatch(writeValueType(ins, listTypes, visitedInstructions), expectedType);
 }

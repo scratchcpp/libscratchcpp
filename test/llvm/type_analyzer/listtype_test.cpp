@@ -2651,6 +2651,44 @@ TEST(LLVMTypeAnalyzer_ListType, ComplexMixedOperations_InLoop)
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::String, true), Compiler::StaticType::Unknown);
 }
 
+TEST(LLVMTypeAnalyzer_ListType, MultipleClearsInLoop)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List list("", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    instructionList.addInstruction(start);
+
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &list;
+    instructionList.addInstruction(clearList);
+
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "test");
+    appendList1->workList = &list;
+    appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    instructionList.addInstruction(appendList1);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    instructionList.addInstruction(funcCall);
+
+    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &list;
+    instructionList.addInstruction(clearList);
+
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 5);
+    appendList2->workList = &list;
+    appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    instructionList.addInstruction(appendList2);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    instructionList.addInstruction(end);
+
+    ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Bool, false), Compiler::StaticType::String);
+}
+
 TEST(LLVMTypeAnalyzer_ListType, ClearAndRebuild_WithDifferentTypes)
 {
     LLVMTypeAnalyzer analyzer;
@@ -3370,4 +3408,600 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_AppendToEmptyListAndClearInElseB
 
     // Should return String because the list remains empty after the if statement
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::String);
+}
+
+TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_SimpleRead_NonEmpty)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List sourceList("source", "");
+    List targetList("target", "");
+
+    // Establish source list type
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &sourceList;
+    instructionList.addInstruction(clearList);
+
+    auto appendSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister sourceValue(Compiler::StaticType::String, "hello");
+    appendSource->workList = &sourceList;
+    appendSource->args.push_back({ Compiler::StaticType::Unknown, &sourceValue });
+    instructionList.addInstruction(appendSource);
+
+    // Read from source list and write to target list
+    auto readSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readSourceReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readSourceReg->instruction = readSource;
+    readSourceReg->isRawValue = false;
+    readSource->functionReturnReg = readSourceReg.get();
+    LLVMConstantRegister index(Compiler::StaticType::Number, 0);
+    readSource->workList = &sourceList;
+    readSource->args.push_back({ Compiler::StaticType::Number, &index });
+    instructionList.addInstruction(readSource);
+
+    auto appendTarget = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendTarget->workList = &targetList;
+    appendTarget->args.push_back({ Compiler::StaticType::Unknown, readSourceReg.get() });
+    instructionList.addInstruction(appendTarget);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    instructionList.addInstruction(funcCall);
+
+    ASSERT_EQ(analyzer.listType(&targetList, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_SimpleRead_Empty)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List sourceList("source", "");
+    List targetList("target", "");
+
+    // Establish source list type
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &sourceList;
+    instructionList.addInstruction(clearList);
+
+    auto appendSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister sourceValue(Compiler::StaticType::Bool, true);
+    appendSource->workList = &sourceList;
+    appendSource->args.push_back({ Compiler::StaticType::Unknown, &sourceValue });
+    instructionList.addInstruction(appendSource);
+
+    // Read from source list and write to target list
+    auto readSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readSourceReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readSourceReg->instruction = readSource;
+    readSourceReg->isRawValue = false;
+    readSource->functionReturnReg = readSourceReg.get();
+    LLVMConstantRegister index(Compiler::StaticType::Number, 0);
+    readSource->workList = &sourceList;
+    readSource->args.push_back({ Compiler::StaticType::Number, &index });
+    instructionList.addInstruction(readSource);
+
+    auto appendTarget = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendTarget->workList = &targetList;
+    appendTarget->args.push_back({ Compiler::StaticType::Unknown, readSourceReg.get() });
+    instructionList.addInstruction(appendTarget);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    instructionList.addInstruction(funcCall);
+
+    ASSERT_EQ(analyzer.listType(&targetList, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Bool);
+}
+
+TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_InLoop_TypeConflict)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List sourceList("source", "");
+    List targetList("target", "");
+
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    instructionList.addInstruction(loopStart);
+
+    // Clear source list
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &sourceList;
+    instructionList.addInstruction(clearList);
+
+    // First iteration: append string to source
+    auto appendSource1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister sourceValue1(Compiler::StaticType::String, "text");
+    appendSource1->workList = &sourceList;
+    appendSource1->args.push_back({ Compiler::StaticType::Unknown, &sourceValue1 });
+    instructionList.addInstruction(appendSource1);
+
+    // Read from source and write to target
+    auto readSource1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readSource1Reg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readSource1Reg->instruction = readSource1;
+    readSource1Reg->isRawValue = false;
+    readSource1->functionReturnReg = readSource1Reg.get();
+    LLVMConstantRegister index1(Compiler::StaticType::Number, 0);
+    readSource1->workList = &sourceList;
+    readSource1->args.push_back({ Compiler::StaticType::Number, &index1 });
+    instructionList.addInstruction(readSource1);
+
+    auto appendTarget1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendTarget1->workList = &targetList;
+    appendTarget1->args.push_back({ Compiler::StaticType::Unknown, readSource1Reg.get() });
+    instructionList.addInstruction(appendTarget1);
+
+    // Second iteration: append number to source (creates type conflict)
+    auto appendSource2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister sourceValue2(Compiler::StaticType::Number, 42);
+    appendSource2->workList = &sourceList;
+    appendSource2->args.push_back({ Compiler::StaticType::Unknown, &sourceValue2 });
+    instructionList.addInstruction(appendSource2);
+
+    // Read from source and write to target
+    auto readSource2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readSource2Reg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readSource2Reg->instruction = readSource2;
+    readSource2Reg->isRawValue = false;
+    readSource2->functionReturnReg = readSource2Reg.get();
+    LLVMConstantRegister index2(Compiler::StaticType::Number, 1);
+    readSource2->workList = &sourceList;
+    readSource2->args.push_back({ Compiler::StaticType::Number, &index2 });
+    instructionList.addInstruction(readSource2);
+
+    auto appendTarget2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendTarget2->workList = &targetList;
+    appendTarget2->args.push_back({ Compiler::StaticType::Unknown, readSource2Reg.get() });
+    instructionList.addInstruction(appendTarget2);
+
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    instructionList.addInstruction(loopEnd);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    instructionList.addInstruction(funcCall);
+
+    ASSERT_EQ(analyzer.listType(&targetList, funcCall.get(), Compiler::StaticType::String, true), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_InLoop_ConsistentType_NonEmptySource)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List sourceList("source", "");
+    List targetList("target", "");
+
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    instructionList.addInstruction(loopStart);
+
+    // Append number to source
+    auto appendSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister sourceValue(Compiler::StaticType::Number, 3.14);
+    appendSource->workList = &sourceList;
+    appendSource->args.push_back({ Compiler::StaticType::Unknown, &sourceValue });
+    instructionList.addInstruction(appendSource);
+
+    // Read from source and write to target
+    auto readSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readSourceReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readSourceReg->instruction = readSource;
+    readSourceReg->isRawValue = false;
+    readSource->functionReturnReg = readSourceReg.get();
+    LLVMConstantRegister index(Compiler::StaticType::Number, 0);
+    readSource->workList = &sourceList;
+    readSource->args.push_back({ Compiler::StaticType::Number, &index });
+    instructionList.addInstruction(readSource);
+
+    auto appendTarget = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendTarget->workList = &targetList;
+    appendTarget->args.push_back({ Compiler::StaticType::Unknown, readSourceReg.get() });
+    instructionList.addInstruction(appendTarget);
+
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    instructionList.addInstruction(loopEnd);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    instructionList.addInstruction(funcCall);
+
+    ASSERT_EQ(analyzer.listType(&targetList, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_InLoop_ConsistentType_EmptySource)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List sourceList("source", "");
+    List targetList("target", "");
+
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &sourceList;
+    instructionList.addInstruction(clearList);
+
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    instructionList.addInstruction(loopStart);
+
+    // Append number to source
+    auto appendSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister sourceValue(Compiler::StaticType::Number, 3.14);
+    appendSource->workList = &sourceList;
+    appendSource->args.push_back({ Compiler::StaticType::Unknown, &sourceValue });
+    instructionList.addInstruction(appendSource);
+
+    // Read from source and write to target
+    auto readSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readSourceReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readSourceReg->instruction = readSource;
+    readSourceReg->isRawValue = false;
+    readSource->functionReturnReg = readSourceReg.get();
+    LLVMConstantRegister index(Compiler::StaticType::Number, 0);
+    readSource->workList = &sourceList;
+    readSource->args.push_back({ Compiler::StaticType::Number, &index });
+    instructionList.addInstruction(readSource);
+
+    auto appendTarget = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendTarget->workList = &targetList;
+    appendTarget->args.push_back({ Compiler::StaticType::Unknown, readSourceReg.get() });
+    instructionList.addInstruction(appendTarget);
+
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    instructionList.addInstruction(loopEnd);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    instructionList.addInstruction(funcCall);
+
+    ASSERT_EQ(analyzer.listType(&targetList, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_TypeSafety)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List listA("listA", "");
+    List listB("listB", "");
+
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &listA;
+    instructionList.addInstruction(clearList);
+
+    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &listB;
+    instructionList.addInstruction(clearList);
+
+    // Initialize listA with a number
+    auto appendA1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister valueA1(Compiler::StaticType::Number, 10);
+    appendA1->workList = &listA;
+    appendA1->args.push_back({ Compiler::StaticType::Unknown, &valueA1 });
+    instructionList.addInstruction(appendA1);
+
+    // Read from listA and write to listB
+    auto readA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readAReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readAReg->instruction = readA;
+    readAReg->isRawValue = false;
+    readA->functionReturnReg = readAReg.get();
+    LLVMConstantRegister indexA(Compiler::StaticType::Number, 0);
+    readA->workList = &listA;
+    readA->args.push_back({ Compiler::StaticType::Number, &indexA });
+    instructionList.addInstruction(readA);
+
+    auto appendB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendB->workList = &listB;
+    appendB->args.push_back({ Compiler::StaticType::Unknown, readAReg.get() });
+    instructionList.addInstruction(appendB);
+
+    // Read from listB and write back to listA (circular dependency)
+    auto readB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readBReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readBReg->instruction = readB;
+    readBReg->isRawValue = false;
+    readB->functionReturnReg = readBReg.get();
+    LLVMConstantRegister indexB(Compiler::StaticType::Number, 0);
+    readB->workList = &listB;
+    readB->args.push_back({ Compiler::StaticType::Number, &indexB });
+    instructionList.addInstruction(readB);
+
+    auto appendA2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendA2->workList = &listA;
+    appendA2->args.push_back({ Compiler::StaticType::Unknown, readBReg.get() });
+    instructionList.addInstruction(appendA2);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    instructionList.addInstruction(funcCall);
+
+    ASSERT_EQ(analyzer.listType(&listA, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_TypeSafety_InLoop)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List listA("listA", "");
+    List listB("listB", "");
+
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    instructionList.addInstruction(start);
+
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &listA;
+    instructionList.addInstruction(clearList);
+
+    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &listB;
+    instructionList.addInstruction(clearList);
+
+    // Initialize listA with a number
+    auto appendA1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister valueA1(Compiler::StaticType::Number, 10);
+    appendA1->workList = &listA;
+    appendA1->args.push_back({ Compiler::StaticType::Unknown, &valueA1 });
+    instructionList.addInstruction(appendA1);
+
+    // Read from listA and write to listB
+    auto readA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readAReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readAReg->instruction = readA;
+    readAReg->isRawValue = false;
+    readA->functionReturnReg = readAReg.get();
+    LLVMConstantRegister indexA(Compiler::StaticType::Number, 0);
+    readA->workList = &listA;
+    readA->args.push_back({ Compiler::StaticType::Number, &indexA });
+    instructionList.addInstruction(readA);
+
+    auto appendB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendB->workList = &listB;
+    appendB->args.push_back({ Compiler::StaticType::Unknown, readAReg.get() });
+    instructionList.addInstruction(appendB);
+
+    // Read from listB and write back to listA (circular dependency)
+    auto readB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readBReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readBReg->instruction = readB;
+    readBReg->isRawValue = false;
+    readB->functionReturnReg = readBReg.get();
+    LLVMConstantRegister indexB(Compiler::StaticType::Number, 0);
+    readB->workList = &listB;
+    readB->args.push_back({ Compiler::StaticType::Number, &indexB });
+    instructionList.addInstruction(readB);
+
+    auto appendA2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendA2->workList = &listA;
+    appendA2->args.push_back({ Compiler::StaticType::Unknown, readBReg.get() });
+    instructionList.addInstruction(appendA2);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    instructionList.addInstruction(funcCall);
+
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    instructionList.addInstruction(end);
+
+    ASSERT_EQ(analyzer.listType(&listA, funcCall.get(), Compiler::StaticType::String, false), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_TypeConflict)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List listA("listA", "");
+    List listB("listB", "");
+
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &listA;
+    instructionList.addInstruction(clearList);
+
+    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &listB;
+    instructionList.addInstruction(clearList);
+
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    instructionList.addInstruction(loopStart);
+
+    // Initialize listA with a number
+    auto appendA1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister valueA1(Compiler::StaticType::Number, 10);
+    appendA1->workList = &listA;
+    appendA1->args.push_back({ Compiler::StaticType::Unknown, &valueA1 });
+    instructionList.addInstruction(appendA1);
+
+    // Read from listA and write to listB
+    auto readA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readAReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readAReg->instruction = readA;
+    readAReg->isRawValue = false;
+    readA->functionReturnReg = readAReg.get();
+    LLVMConstantRegister indexA(Compiler::StaticType::Number, 0);
+    readA->workList = &listA;
+    readA->args.push_back({ Compiler::StaticType::Number, &indexA });
+    instructionList.addInstruction(readA);
+
+    auto appendB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendB->workList = &listB;
+    appendB->args.push_back({ Compiler::StaticType::Unknown, readAReg.get() });
+    instructionList.addInstruction(appendB);
+
+    // Create type conflict by appending string to listB
+    auto appendB2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister valueB2(Compiler::StaticType::String, "conflict");
+    appendB2->workList = &listB;
+    appendB2->args.push_back({ Compiler::StaticType::Unknown, &valueB2 });
+    instructionList.addInstruction(appendB2);
+
+    // Read from listB and write back to listA (circular dependency with type conflict)
+    auto readB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readBReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readBReg->instruction = readB;
+    readBReg->isRawValue = false;
+    readB->functionReturnReg = readBReg.get();
+    LLVMConstantRegister indexB(Compiler::StaticType::Number, 0);
+    readB->workList = &listB;
+    readB->args.push_back({ Compiler::StaticType::Number, &indexB });
+    instructionList.addInstruction(readB);
+
+    auto appendA2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendA2->workList = &listA;
+    appendA2->args.push_back({ Compiler::StaticType::Unknown, readBReg.get() });
+    instructionList.addInstruction(appendA2);
+
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    instructionList.addInstruction(loopEnd);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    instructionList.addInstruction(funcCall);
+
+    // Should return Unknown due to circular dependency with type conflicts
+    ASSERT_EQ(analyzer.listType(&listA, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_SingleList_KnownType_Empty)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List list("", "");
+
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &list;
+    instructionList.addInstruction(clearList);
+
+    // Initialize list with a number
+    auto append1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 10);
+    append1->workList = &list;
+    append1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    instructionList.addInstruction(append1);
+
+    // Read from list and write to list
+    auto read = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readReg->instruction = read;
+    readReg->isRawValue = false;
+    read->functionReturnReg = readReg.get();
+    LLVMConstantRegister index(Compiler::StaticType::Number, 0);
+    read->workList = &list;
+    read->args.push_back({ Compiler::StaticType::Number, &index });
+    instructionList.addInstruction(read);
+
+    auto append2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    append2->workList = &list;
+    append2->args.push_back({ Compiler::StaticType::Unknown, readReg.get() });
+    instructionList.addInstruction(append2);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    instructionList.addInstruction(funcCall);
+
+    ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::String, false), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_SingleList_KnownType_NonEmpty)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List list("", "");
+
+    // Read from list and write to list
+    auto read = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readReg->instruction = read;
+    readReg->isRawValue = false;
+    read->functionReturnReg = readReg.get();
+    LLVMConstantRegister index(Compiler::StaticType::Number, 0);
+    read->workList = &list;
+    read->args.push_back({ Compiler::StaticType::Number, &index });
+    instructionList.addInstruction(read);
+
+    auto append2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    append2->workList = &list;
+    append2->args.push_back({ Compiler::StaticType::Unknown, readReg.get() });
+    instructionList.addInstruction(append2);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    instructionList.addInstruction(funcCall);
+
+    ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
+}
+
+TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_SingleList_UnknownType)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List list("", "");
+
+    // Read from list and write to list
+    auto read = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readReg->instruction = read;
+    readReg->isRawValue = false;
+    read->functionReturnReg = readReg.get();
+    LLVMConstantRegister index(Compiler::StaticType::Number, 0);
+    read->workList = &list;
+    read->args.push_back({ Compiler::StaticType::Number, &index });
+    instructionList.addInstruction(read);
+
+    auto append2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    append2->workList = &list;
+    append2->args.push_back({ Compiler::StaticType::Unknown, readReg.get() });
+    instructionList.addInstruction(append2);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    instructionList.addInstruction(funcCall);
+
+    ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Unknown, false), Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_ChainedReads_TypePropagation)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List listA("listA", "");
+    List listB("listB", "");
+    List listC("listC", "");
+
+    // Clear lists
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &listA;
+    instructionList.addInstruction(clearList);
+
+    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList->workList = &listB;
+    instructionList.addInstruction(clearList);
+
+    // Initialize listA with a boolean
+    auto appendA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister valueA(Compiler::StaticType::Bool, false);
+    appendA->workList = &listA;
+    appendA->args.push_back({ Compiler::StaticType::Unknown, &valueA });
+    instructionList.addInstruction(appendA);
+
+    // Read from listA and write to listB
+    auto readA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readAReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readAReg->instruction = readA;
+    readAReg->isRawValue = false;
+    readA->functionReturnReg = readAReg.get();
+    LLVMConstantRegister indexA(Compiler::StaticType::Number, 0);
+    readA->workList = &listA;
+    readA->args.push_back({ Compiler::StaticType::Number, &indexA });
+    instructionList.addInstruction(readA);
+
+    auto appendB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendB->workList = &listB;
+    appendB->args.push_back({ Compiler::StaticType::Unknown, readAReg.get() });
+    instructionList.addInstruction(appendB);
+
+    // Read from listB and write to listC
+    auto readB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readBReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
+    readBReg->instruction = readB;
+    readBReg->isRawValue = false;
+    readB->functionReturnReg = readBReg.get();
+    LLVMConstantRegister indexB(Compiler::StaticType::Number, 0);
+    readB->workList = &listB;
+    readB->args.push_back({ Compiler::StaticType::Number, &indexB });
+    instructionList.addInstruction(readB);
+
+    auto appendC = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    appendC->workList = &listC;
+    appendC->args.push_back({ Compiler::StaticType::Unknown, readBReg.get() });
+    instructionList.addInstruction(appendC);
+
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    instructionList.addInstruction(funcCall);
+
+    // Type should propagate through the chain: A -> B -> C
+    ASSERT_EQ(analyzer.listType(&listC, funcCall.get(), Compiler::StaticType::String, true), Compiler::StaticType::Bool);
 }
