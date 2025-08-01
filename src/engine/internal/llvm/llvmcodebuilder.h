@@ -15,6 +15,7 @@
 #include "llvmcoroutine.h"
 #include "llvmvariableptr.h"
 #include "llvmlistptr.h"
+#include "llvmtypeanalyzer.h"
 
 namespace libscratchcpp
 {
@@ -154,9 +155,6 @@ class LLVMCodeBuilder : public ICodeBuilder
         void reloadVariables(llvm::Value *targetVariables);
         void reloadLists();
         void updateListDataPtr(const LLVMListPtr &listPtr);
-        bool isVarOrListTypeSafe(LLVMInstruction *ins, Compiler::StaticType expectedType) const;
-        bool isVarOrListTypeSafe(LLVMInstruction *ins, Compiler::StaticType expectedType, std::unordered_set<LLVMInstruction *> &log, int &c) const;
-        bool isVarOrListWriteResultTypeSafe(LLVMInstruction *ins, Compiler::StaticType expectedType, bool ignoreSavedType, std::unordered_set<LLVMInstruction *> &log, int &c) const;
 
         LLVMRegister *createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
         LLVMRegister *createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
@@ -169,7 +167,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createValueCopy(llvm::Value *source, llvm::Value *target);
         void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
         llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index);
-        llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, LLVMRegister *item);
+        llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, Compiler::StaticType listType, LLVMRegister *item);
         llvm::Value *createValue(LLVMRegister *reg);
         llvm::Value *createNewValue(LLVMRegister *reg);
         llvm::Value *createComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
@@ -219,17 +217,16 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         std::unordered_map<Variable *, size_t> m_targetVariableMap;
         std::unordered_map<Variable *, LLVMVariablePtr> m_variablePtrs;
-        std::vector<std::unordered_map<LLVMVariablePtr *, Compiler::StaticType>> m_scopeVariables;
 
         std::unordered_map<List *, size_t> m_targetListMap;
         std::unordered_map<List *, LLVMListPtr> m_listPtrs;
-        std::vector<std::unordered_map<LLVMListPtr *, Compiler::StaticType>> m_scopeLists;
 
         LLVMCompilerContext *m_ctx;
         llvm::LLVMContext &m_llvmCtx;
         llvm::Module *m_module = nullptr;
         llvm::IRBuilder<> m_builder;
         llvm::Function *m_function = nullptr;
+        LLVMTypeAnalyzer m_typeAnalyzer;
 
         llvm::StructType *m_valueDataType = nullptr;
         llvm::StructType *m_stringPtrType = nullptr;

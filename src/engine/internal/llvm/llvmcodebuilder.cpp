@@ -116,7 +116,11 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
         // All variables are currently created on the stack and synced later (seems to be faster)
         // NOTE: Strings are NOT copied, only the pointer is copied
-        varPtr.stackPtr = m_builder.CreateAlloca(m_valueDataType);
+        // TODO: Restore this feature
+        // varPtr.stackPtr = m_builder.CreateAlloca(m_valueDataType);
+        varPtr.stackPtr = varPtr.heapPtr;
+        varPtr.onStack = false;
+        continue;
 
         // If there are no write operations outside loops, initialize the stack variable now
         Variable *variable = var;
@@ -147,8 +151,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
     assert(m_loopScope == -1);
     m_loopScope = -1;
-    m_scopeVariables.clear();
-    m_scopeLists.clear();
     pushScopeLevel();
 
     // Execute recorded steps
@@ -738,14 +740,18 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 assert(m_variablePtrs.find(step.workVariable) != m_variablePtrs.cend());
                 const auto &arg = step.args[0];
-                Compiler::StaticType type = optimizeRegisterType(arg.second);
+                Compiler::StaticType argType = optimizeRegisterType(arg.second);
                 LLVMVariablePtr &varPtr = m_variablePtrs[step.workVariable];
-                varPtr.changed = true;
+                varPtr.changed = true; // TODO: Handle loops and if statements
 
-                const bool safe = isVarOrListTypeSafe(insPtr, varPtr.type);
+                Compiler::StaticType varType = Compiler::StaticType::Unknown;
+
+                if (m_warp)
+                    varType = m_typeAnalyzer.variableType(step.workVariable, &step, Compiler::StaticType::Unknown);
 
                 // Initialize stack variable on first assignment
-                if (!varPtr.onStack) {
+                // TODO: Use stack in the top level (outside loops and if statements)
+                /*if (!varPtr.onStack) {
                     varPtr.onStack = true;
                     varPtr.type = type; // don't care about unknown type on first assignment
 
@@ -762,26 +768,22 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                     llvm::Value *typeField = m_builder.CreateStructGEP(m_valueDataType, varPtr.stackPtr, 1);
                     m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typeField);
-                }
+                }*/
 
-                if (!safe)
-                    varPtr.type = Compiler::StaticType::Unknown;
-
-                createValueStore(arg.second, varPtr.stackPtr, type, varPtr.type);
-                varPtr.type = type;
-                m_scopeVariables.back()[&varPtr] = varPtr.type;
+                createValueStore(arg.second, varPtr.stackPtr, argType, varType);
                 break;
             }
 
             case LLVMInstruction::Type::ReadVariable: {
                 assert(step.args.size() == 0);
                 LLVMVariablePtr &varPtr = m_variablePtrs[step.workVariable];
+                Compiler::StaticType type = Compiler::StaticType::Unknown;
 
-                if (!isVarOrListTypeSafe(insPtr, varPtr.type))
-                    varPtr.type = Compiler::StaticType::Unknown;
+                if (m_warp)
+                    type = m_typeAnalyzer.variableType(step.workVariable, &step, Compiler::StaticType::Unknown);
 
                 step.functionReturnReg->value = varPtr.onStack && !(step.loopCondition && !m_warp) ? varPtr.stackPtr : varPtr.heapPtr;
-                step.functionReturnReg->setType(varPtr.type);
+                step.functionReturnReg->setType(type);
                 break;
             }
 
@@ -795,8 +797,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *dataPtrDirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
                 llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
                 m_builder.CreateStore(m_builder.CreateOr(dataPtrDirty, m_builder.CreateICmpNE(allocatedSize, oldAllocatedSize)), listPtr.dataPtrDirty);
-
-                m_scopeLists.back().erase(&listPtr);
                 break;
             }
 
@@ -804,9 +804,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(step.args.size() == 1);
                 const auto &arg = step.args[0];
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
-
-                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
-                    listPtr.type = Compiler::StaticType::Unknown;
 
                 // Range check
                 llvm::Value *min = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
@@ -835,18 +832,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 Compiler::StaticType type = optimizeRegisterType(arg.second);
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
-                auto &typeMap = m_scopeLists.back();
+                Compiler::StaticType listType = Compiler::StaticType::Unknown;
 
-                if (typeMap.find(&listPtr) == typeMap.cend()) {
-                    listPtr.type = type;
-                    typeMap[&listPtr] = listPtr.type;
-                } else if (listPtr.type != type) {
-                    listPtr.type = Compiler::StaticType::Unknown;
-                    typeMap[&listPtr] = listPtr.type;
-                }
-
-                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
-                    listPtr.type = Compiler::StaticType::Unknown;
+                if (m_warp)
+                    listType = m_typeAnalyzer.listType(step.workList, &step, Compiler::StaticType::Unknown, false);
 
                 // Check if enough space is allocated
                 llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
@@ -860,14 +849,14 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // If there's enough space, use the allocated memory
                 m_builder.SetInsertPoint(ifBlock);
                 llvm::Value *itemPtr = getListItem(listPtr, size);
-                createReusedValueStore(arg.second, itemPtr, type, listPtr.type);
+                createReusedValueStore(arg.second, itemPtr, type, listType);
                 m_builder.CreateStore(m_builder.CreateAdd(size, m_builder.getInt64(1)), listPtr.sizePtr);
                 m_builder.CreateBr(nextBlock);
 
                 // Otherwise call appendEmpty()
                 m_builder.SetInsertPoint(elseBlock);
                 itemPtr = m_builder.CreateCall(resolve_list_append_empty(), listPtr.ptr);
-                createReusedValueStore(arg.second, itemPtr, type, listPtr.type);
+                createReusedValueStore(arg.second, itemPtr, type, listType);
                 m_builder.CreateStore(m_builder.getInt1(true), listPtr.dataPtrDirty);
                 m_builder.CreateBr(nextBlock);
 
@@ -883,18 +872,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 Compiler::StaticType type = optimizeRegisterType(valueArg.second);
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
-                auto &typeMap = m_scopeLists.back();
+                Compiler::StaticType listType = Compiler::StaticType::Unknown;
 
-                if (typeMap.find(&listPtr) == typeMap.cend()) {
-                    listPtr.type = type;
-                    typeMap[&listPtr] = listPtr.type;
-                } else if (listPtr.type != type) {
-                    listPtr.type = Compiler::StaticType::Unknown;
-                    typeMap[&listPtr] = listPtr.type;
-                }
-
-                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
-                    listPtr.type = Compiler::StaticType::Unknown;
+                if (m_warp)
+                    listType = m_typeAnalyzer.listType(step.workList, &step, Compiler::StaticType::Unknown, false);
 
                 llvm::Value *oldAllocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
 
@@ -912,7 +893,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.SetInsertPoint(insertBlock);
                 index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
                 llvm::Value *itemPtr = m_builder.CreateCall(resolve_list_insert_empty(), { listPtr.ptr, index });
-                createReusedValueStore(valueArg.second, itemPtr, type, listPtr.type);
+                createReusedValueStore(valueArg.second, itemPtr, type, listType);
 
                 // Check if the allocated size changed
                 llvm::Value *dataPtrDirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
@@ -932,8 +913,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 Compiler::StaticType type = optimizeRegisterType(valueArg.second);
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
-                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
-                    listPtr.type = Compiler::StaticType::Unknown;
+                Compiler::StaticType listType = Compiler::StaticType::Unknown;
+
+                if (m_warp)
+                    listType = m_typeAnalyzer.listType(step.workList, &step, Compiler::StaticType::Unknown, false);
 
                 // Range check
                 llvm::Value *min = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
@@ -949,18 +932,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.SetInsertPoint(replaceBlock);
                 index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
                 llvm::Value *itemPtr = getListItem(listPtr, index);
-                createValueStore(valueArg.second, itemPtr, type, listPtr.type);
+                createValueStore(valueArg.second, itemPtr, type, listType);
                 m_builder.CreateBr(nextBlock);
-
-                auto &typeMap = m_scopeLists.back();
-
-                if (typeMap.find(&listPtr) == typeMap.cend()) {
-                    listPtr.type = type;
-                    typeMap[&listPtr] = listPtr.type;
-                } else if (listPtr.type != type) {
-                    listPtr.type = Compiler::StaticType::Unknown;
-                    typeMap[&listPtr] = listPtr.type;
-                }
 
                 m_builder.SetInsertPoint(nextBlock);
                 break;
@@ -980,8 +953,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg = step.args[0];
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
-                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
-                    listPtr.type = Compiler::StaticType::Unknown;
+                Compiler::StaticType listType = Compiler::StaticType::Unknown;
+
+                if (m_warp)
+                    listType = m_typeAnalyzer.listType(step.workList, &step, Compiler::StaticType::Unknown, false);
 
                 llvm::Value *min = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
                 llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
@@ -989,12 +964,12 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *index = castValue(arg.second, arg.first);
                 llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size));
 
-                LLVMConstantRegister nullReg(listPtr.type == Compiler::StaticType::Unknown ? Compiler::StaticType::Number : listPtr.type, Value());
+                LLVMConstantRegister nullReg(listType == Compiler::StaticType::Unknown ? Compiler::StaticType::Number : listType, Value());
                 llvm::Value *null = createValue(static_cast<LLVMRegister *>(&nullReg));
 
                 index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
                 step.functionReturnReg->value = m_builder.CreateSelect(inRange, getListItem(listPtr, index), null);
-                step.functionReturnReg->setType(listPtr.type);
+                step.functionReturnReg->setType(listType);
                 break;
             }
 
@@ -1011,10 +986,12 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg = step.args[0];
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
-                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
-                    listPtr.type = Compiler::StaticType::Unknown;
+                Compiler::StaticType listType = Compiler::StaticType::Unknown;
 
-                step.functionReturnReg->value = m_builder.CreateSIToFP(getListItemIndex(listPtr, arg.second), m_builder.getDoubleTy());
+                if (m_warp)
+                    listType = m_typeAnalyzer.listType(step.workList, &step, Compiler::StaticType::Unknown, false);
+
+                step.functionReturnReg->value = m_builder.CreateSIToFP(getListItemIndex(listPtr, listType, arg.second), m_builder.getDoubleTy());
                 break;
             }
 
@@ -1023,10 +1000,12 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg = step.args[0];
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
 
-                if (!isVarOrListTypeSafe(insPtr, listPtr.type))
-                    listPtr.type = Compiler::StaticType::Unknown;
+                Compiler::StaticType listType = Compiler::StaticType::Unknown;
 
-                llvm::Value *index = getListItemIndex(listPtr, arg.second);
+                if (m_warp)
+                    listType = m_typeAnalyzer.listType(step.workList, &step, Compiler::StaticType::Unknown, false);
+
+                llvm::Value *index = getListItemIndex(listPtr, listType, arg.second);
                 step.functionReturnReg->value = m_builder.CreateICmpSGT(index, llvm::ConstantInt::get(m_builder.getInt64Ty(), -1, true));
                 break;
             }
@@ -1057,15 +1036,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             case LLVMInstruction::Type::BeginElse: {
                 assert(!ifStatements.empty());
                 LLVMIfStatement &statement = ifStatements.back();
-
-                // Restore types from parent scope
-                std::unordered_map<LLVMVariablePtr *, Compiler::StaticType> parentScopeVariables = m_scopeVariables[m_scopeVariables.size() - 2]; // no reference!
-                popScopeLevel();
-
-                for (auto &[ptr, type] : parentScopeVariables)
-                    ptr->type = type;
-
-                pushScopeLevel();
 
                 // Jump to the branch after the if statement
                 assert(!statement.afterIf);
@@ -1985,41 +1955,11 @@ void LLVMCodeBuilder::createListMap()
 
 void LLVMCodeBuilder::pushScopeLevel()
 {
-    m_scopeVariables.push_back({});
-
-    if (m_scopeLists.empty()) {
-        std::unordered_map<LLVMListPtr *, Compiler::StaticType> listTypes;
-
-        for (auto &[list, listPtr] : m_listPtrs)
-            listTypes[&listPtr] = Compiler::StaticType::Unknown;
-
-        m_scopeLists.push_back(listTypes);
-    } else
-        m_scopeLists.push_back(m_scopeLists.back());
-
     m_stringHeap.push_back({});
 }
 
 void LLVMCodeBuilder::popScopeLevel()
 {
-    for (size_t i = 0; i < m_scopeVariables.size() - 1; i++) {
-        for (auto &[ptr, type] : m_scopeVariables[i]) {
-            if (ptr->type != type)
-                ptr->type = Compiler::StaticType::Unknown;
-        }
-    }
-
-    m_scopeVariables.pop_back();
-
-    for (size_t i = 0; i < m_scopeLists.size() - 1; i++) {
-        for (auto &[ptr, type] : m_scopeLists[i]) {
-            if (ptr->type != type)
-                ptr->type = Compiler::StaticType::Unknown;
-        }
-    }
-
-    m_scopeLists.pop_back();
-
     freeScopeHeap();
     m_stringHeap.pop_back();
 }
@@ -2485,20 +2425,14 @@ void LLVMCodeBuilder::reloadVariables(llvm::Value *targetVariables)
     for (auto &[var, varPtr] : m_variablePtrs) {
         varPtr.onStack = false;
         varPtr.changed = false;
-        varPtr.type = Compiler::StaticType::Unknown;
     }
 }
 
 void LLVMCodeBuilder::reloadLists()
 {
-    // Reset list data dirty and list types
-    auto &typeMap = m_scopeLists.back();
-
-    for (auto &[list, listPtr] : m_listPtrs) {
+    // Reset list data dirty
+    for (auto &[list, listPtr] : m_listPtrs)
         m_builder.CreateStore(m_builder.getInt1(true), listPtr.dataPtrDirty);
-        listPtr.type = Compiler::StaticType::Unknown;
-        typeMap[&listPtr] = listPtr.type;
-    }
 }
 
 void LLVMCodeBuilder::updateListDataPtr(const LLVMListPtr &listPtr)
@@ -2509,193 +2443,6 @@ void LLVMCodeBuilder::updateListDataPtr(const LLVMListPtr &listPtr)
     llvm::Value *dataPtr = m_builder.CreateSelect(dirty, m_builder.CreateCall(resolve_list_data(), listPtr.ptr), m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr));
     m_builder.CreateStore(dataPtr, listPtr.dataPtr);
     m_builder.CreateStore(m_builder.getInt1(false), listPtr.dataPtrDirty);
-}
-
-bool LLVMCodeBuilder::isVarOrListTypeSafe(LLVMInstruction *ins, Compiler::StaticType expectedType) const
-{
-    std::unordered_set<LLVMInstruction *> processed;
-    int counter = 0;
-    return isVarOrListTypeSafe(ins, expectedType, processed, counter);
-}
-
-bool LLVMCodeBuilder::isVarOrListTypeSafe(LLVMInstruction *ins, Compiler::StaticType expectedType, std::unordered_set<LLVMInstruction *> &log, int &c) const
-{
-    /*
-     * The main part of the loop type analyzer.
-     *
-     * This is a recursive function which is called when variable
-     * or list instruction is created. It checks the last write to
-     * the variable or list in one of the loop scopes.
-     *
-     * If the last write operation writes a value with a different
-     * type, it will return false, otherwise true.
-     *
-     * If the last written value is from a variable or list, this
-     * function is called for it to check its type safety (that's
-     * why it is recursive).
-     *
-     * If the variable or list had a write operation before (in
-     * the same, parent or child loop scope), it is checked
-     * recursively.
-     */
-
-    if (!ins)
-        return false;
-
-    /*
-     * If we are processing something that has been already
-     * processed, it means there's a case like this:
-     * x = x
-     *
-     * or this:
-     * x = y
-     * ...
-     * y = x
-     *
-     * Increment counter to ignore last n write operations.
-     */
-    if (log.find(ins) != log.cend())
-        c++;
-    else
-        log.insert(ins);
-
-    assert(m_instructions.containsInstruction(ins));
-    const LLVMVariablePtr *varPtr = ins->workVariable ? &m_variablePtrs.at(ins->workVariable) : nullptr;
-    const LLVMListPtr *listPtr = ins->workList ? &m_listPtrs.at(ins->workList) : nullptr;
-    assert((varPtr || listPtr) && !(varPtr && listPtr));
-    auto scope = ins->loopScope;
-
-    // If we aren't in a loop, we're safe
-    if (!scope)
-        return true;
-
-    // If the loop scope contains a suspend and this is a non-warp script, the type may change between suspend and resume
-    if (scope->containsYield && !m_warp)
-        return false;
-
-    LLVMInstruction *write = nullptr;
-    const auto &instructions = varPtr ? m_variableInstructions : m_listInstructions;
-
-    // Find this instruction
-    auto it = std::find(instructions.begin(), instructions.end(), ins);
-    assert(it != instructions.end());
-
-    // Find previous write instruction in this, parent or child loop scope
-    size_t index = it - instructions.begin();
-
-    if (varPtr && index > 0) { // this is only needed for variables
-        bool found = false;
-
-        do {
-            index--;
-            write = instructions[index];
-            const bool isWrite = (VAR_LIST_READ_INSTRUCTIONS.find(write->type) == VAR_LIST_READ_INSTRUCTIONS.cend());
-            found = (write->loopScope && isWrite && write->workVariable == ins->workVariable);
-        } while (index > 0 && !found);
-
-        if (found) {
-            // Check if the write operation is in this or child scope
-            auto parentScope = write->loopScope;
-
-            while (parentScope && parentScope != scope)
-                parentScope = parentScope->parentScope;
-
-            if (!parentScope) {
-                // Check if the write operation is in any of the parent scopes
-                parentScope = scope;
-
-                do {
-                    parentScope = parentScope->parentScope;
-                } while (parentScope && parentScope != write->loopScope);
-            }
-
-            // If there was a write operation before this instruction (in this, parent or child scope), check it
-            if (parentScope) {
-                if (parentScope == scope)
-                    return isVarOrListWriteResultTypeSafe(write, expectedType, true, log, c);
-                else
-                    return isVarOrListTypeSafe(write, expectedType, log, c);
-            }
-        }
-    }
-
-    const auto &loopWrites = varPtr ? varPtr->loopVariableWrites : listPtr->loopListWrites;
-
-    // Find root loop scope
-    auto checkScope = scope;
-
-    while (checkScope->parentScope) {
-        checkScope = checkScope->parentScope;
-    }
-
-    // Get all write operations in all loop scopes (from the root loop scope)
-    std::vector<LLVMInstruction *> lastWrites;
-
-    while (checkScope) {
-        auto it = loopWrites.find(checkScope);
-
-        if (it != loopWrites.cend()) {
-            assert(!it->second.empty());
-            const auto &writes = it->second;
-
-            for (auto w : writes)
-                lastWrites.push_back(w);
-        }
-
-        if (checkScope->childScopes.empty())
-            checkScope = nullptr;
-        else
-            checkScope = checkScope->childScopes.back();
-    }
-
-    // If there aren't any write operations or all of them are ignored, we're safe
-    if (c >= lastWrites.size())
-        return true;
-
-    if (varPtr)
-        write = lastWrites[lastWrites.size() - c - 1]; // Ignore last c writes
-    else {
-        // If this is a list instruction, check last write operations except current
-        for (long i = lastWrites.size() - c - 1; i >= 0; i--) { // Ignore last c writes
-            if (lastWrites[i] == ins)
-                continue;
-
-            if (!isVarOrListWriteResultTypeSafe(lastWrites[i], expectedType, false, log, c))
-                return false;
-        }
-    }
-
-    bool safe = true;
-
-    if (VAR_LIST_READ_INSTRUCTIONS.find(ins->type) == VAR_LIST_READ_INSTRUCTIONS.cend()) // write
-        safe = isVarOrListWriteResultTypeSafe(ins, expectedType, false, log, c);
-
-    if (safe)
-        return write ? isVarOrListWriteResultTypeSafe(write, expectedType, false, log, c) : true;
-    else
-        return false;
-}
-
-bool LLVMCodeBuilder::isVarOrListWriteResultTypeSafe(LLVMInstruction *ins, Compiler::StaticType expectedType, bool ignoreSavedType, std::unordered_set<LLVMInstruction *> &log, int &c) const
-{
-    const LLVMVariablePtr *varPtr = ins->workVariable ? &m_variablePtrs.at(ins->workVariable) : nullptr;
-    const LLVMListPtr *listPtr = ins->workList ? &m_listPtrs.at(ins->workList) : nullptr;
-    assert((varPtr || listPtr) && !(varPtr && listPtr));
-
-    // If the write operation writes the value of another variable, recursively check its type safety
-    const auto arg = ins->args.back().second; // value is always the last argument
-    auto argIns = arg->instruction;
-
-    if (argIns && (argIns->type == LLVMInstruction::Type::ReadVariable || argIns->type == LLVMInstruction::Type::GetListItem))
-        return isVarOrListTypeSafe(argIns.get(), expectedType, log, c);
-
-    // Check written type
-    const bool typeMatches = (optimizeRegisterType(arg) == expectedType);
-
-    if (varPtr)
-        return typeMatches && (varPtr->type == expectedType || ignoreSavedType);
-    else
-        return typeMatches && (listPtr->type == expectedType || ignoreSavedType);
 }
 
 LLVMRegister *LLVMCodeBuilder::createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args)
@@ -2854,7 +2601,7 @@ llvm::Value *LLVMCodeBuilder::getListItem(const LLVMListPtr &listPtr, llvm::Valu
     return m_builder.CreateGEP(m_valueDataType, m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr), index);
 }
 
-llvm::Value *LLVMCodeBuilder::getListItemIndex(const LLVMListPtr &listPtr, LLVMRegister *item)
+llvm::Value *LLVMCodeBuilder::getListItemIndex(const LLVMListPtr &listPtr, Compiler::StaticType listType, LLVMRegister *item)
 {
     llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
     llvm::BasicBlock *condBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
@@ -2876,7 +2623,7 @@ llvm::Value *LLVMCodeBuilder::getListItemIndex(const LLVMListPtr &listPtr, LLVMR
 
     // if (list[index] == item)
     m_builder.SetInsertPoint(bodyBlock);
-    LLVMRegister currentItem(listPtr.type);
+    LLVMRegister currentItem(listType);
     currentItem.isRawValue = false;
     currentItem.value = getListItem(listPtr, m_builder.CreateLoad(m_builder.getInt64Ty(), index));
     llvm::Value *cmp = createComparison(&currentItem, item, Comparison::EQ);
