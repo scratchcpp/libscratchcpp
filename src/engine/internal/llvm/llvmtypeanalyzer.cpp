@@ -66,7 +66,7 @@ Compiler::StaticType LLVMTypeAnalyzer::variableType(
     visitedInstructions.insert(pos);
 
     // Check the last write operation before the instruction
-    const LLVMInstruction *ins = pos;
+    const LLVMInstruction *ins = pos->previous;
     const LLVMInstruction *write = nullptr;
     std::pair<const LLVMInstruction *, int> firstBranch = { nullptr, 0 };
     std::pair<const LLVMInstruction *, int> firstElseBranch = { nullptr, 0 };

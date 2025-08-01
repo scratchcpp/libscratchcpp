@@ -79,6 +79,21 @@ TEST(LLVMTypeAnalyzer_ListType, NoWriteOperationsUnknownType_Empty)
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Unknown, true), Compiler::StaticType::Unknown);
 }
 
+TEST(LLVMTypeAnalyzer_ListType, QueryPointIsWrite)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList instructionList;
+    List list("", "");
+
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    LLVMConstantRegister value(Compiler::StaticType::Number, 1.25);
+    appendList->workList = &list;
+    appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
+    instructionList.addInstruction(appendList);
+
+    ASSERT_EQ(analyzer.listType(&list, appendList.get(), Compiler::StaticType::String, false), Compiler::StaticType::String);
+}
+
 TEST(LLVMTypeAnalyzer_ListType, Loop_SingleWriteSameTypeNumber_Before_NonEmpty)
 {
     LLVMTypeAnalyzer analyzer;

@@ -55,6 +55,21 @@ TEST(LLVMTypeAnalyzer_VariableType, NoWriteOperationsUnknownType)
     ASSERT_EQ(analyzer.variableType(&var, funcCall.get(), Compiler::StaticType::Unknown), Compiler::StaticType::Unknown);
 }
 
+TEST(LLVMTypeAnalyzer_VariableType, QueryPointIsWrite)
+{
+    LLVMTypeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, nullptr, false);
+    LLVMConstantRegister value(Compiler::StaticType::Number, 1.25);
+    setVar->workVariable = &var;
+    setVar->args.push_back({ Compiler::StaticType::Unknown, &value });
+    list.addInstruction(setVar);
+
+    ASSERT_EQ(analyzer.variableType(&var, setVar.get(), Compiler::StaticType::Unknown), Compiler::StaticType::Unknown);
+}
+
 TEST(LLVMTypeAnalyzer_VariableType, Loop_SingleWriteSameTypeNumber_Before)
 {
     LLVMTypeAnalyzer analyzer;
