@@ -10,37 +10,40 @@ static const std::unordered_set<LLVMInstruction::Type>
 
 static const std::unordered_set<LLVMInstruction::Type> LIST_WRITE_INSTRUCTIONS = { LLVMInstruction::Type::AppendToList, LLVMInstruction::Type::InsertToList, LLVMInstruction::Type::ListReplace };
 
-Compiler::StaticType LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstruction *pos, Compiler::StaticType previousType) const
+Compiler::StaticType LLVMTypeAnalyzer::variableType(const Variable *var, const LLVMInstruction *pos, Compiler::StaticType previousType) const
 {
     InstructionSet visitedInstructions;
-    std::unordered_map<List *, Compiler::StaticType> listTypes;
+    std::unordered_map<const List *, Compiler::StaticType> listTypes;
     return variableType(var, pos, previousType, listTypes, visitedInstructions);
 }
 
-Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranch(Variable *var, LLVMInstruction *start, Compiler::StaticType previousType) const
+Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranch(const Variable *var, const LLVMInstruction *start, Compiler::StaticType previousType) const
 {
     InstructionSet visitedInstructions;
     return variableTypeAfterBranch(var, start, previousType, visitedInstructions);
 }
 
-Compiler::StaticType LLVMTypeAnalyzer::listType(List *list, LLVMInstruction *pos, Compiler::StaticType previousType, bool isEmpty) const
+Compiler::StaticType LLVMTypeAnalyzer::listType(const List *list, const LLVMInstruction *pos, Compiler::StaticType previousType, bool isEmpty) const
 {
     InstructionSet visitedInstructions;
-    std::unordered_map<List *, Compiler::StaticType> listTypes;
+    std::unordered_map<const List *, Compiler::StaticType> listTypes;
     return listType(list, pos, previousType, isEmpty, listTypes, visitedInstructions);
 }
 
-Compiler::StaticType LLVMTypeAnalyzer::listTypeAfterBranch(List *list, LLVMInstruction *start, Compiler::StaticType previousType, bool isEmpty) const
+Compiler::StaticType LLVMTypeAnalyzer::listTypeAfterBranch(const List *list, const LLVMInstruction *start, Compiler::StaticType previousType, bool isEmpty) const
 {
     bool write = false; // only used internally (the compiler doesn't need this)
     InstructionSet visitedInstructions;
-    std::unordered_map<List *, Compiler::StaticType> listTypes;
+    std::unordered_map<const List *, Compiler::StaticType> listTypes;
     return listTypeAfterBranch(list, start, previousType, isEmpty, nullptr, write, listTypes, visitedInstructions);
 }
 
-Compiler::StaticType
-LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstruction *pos, Compiler::StaticType previousType, std::unordered_map<List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions)
-    const
+Compiler::StaticType LLVMTypeAnalyzer::variableType(
+    const Variable *var,
+    const LLVMInstruction *pos,
+    Compiler::StaticType previousType,
+    std::unordered_map<const List *, Compiler::StaticType> listTypes,
+    InstructionSet &visitedInstructions) const
 {
     if (!var || !pos)
         return Compiler::StaticType::Unknown;
@@ -63,11 +66,11 @@ LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstruction *pos, Compiler::St
     visitedInstructions.insert(pos);
 
     // Check the last write operation before the instruction
-    LLVMInstruction *ins = pos;
-    LLVMInstruction *write = nullptr;
-    std::pair<LLVMInstruction *, int> firstBranch = { nullptr, 0 };
-    std::pair<LLVMInstruction *, int> firstElseBranch = { nullptr, 0 };
-    LLVMInstruction *ourBranch = nullptr;
+    const LLVMInstruction *ins = pos;
+    const LLVMInstruction *write = nullptr;
+    std::pair<const LLVMInstruction *, int> firstBranch = { nullptr, 0 };
+    std::pair<const LLVMInstruction *, int> firstElseBranch = { nullptr, 0 };
+    const LLVMInstruction *ourBranch = nullptr;
     int level = 0;
 
     while (ins) {
@@ -126,32 +129,32 @@ LLVMTypeAnalyzer::variableType(Variable *var, LLVMInstruction *pos, Compiler::St
     return previousType;
 }
 
-Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranch(Variable *var, LLVMInstruction *start, Compiler::StaticType previousType, InstructionSet &visitedInstructions) const
+Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranch(const Variable *var, const LLVMInstruction *start, Compiler::StaticType previousType, InstructionSet &visitedInstructions) const
 {
     if (!var || !start)
         return previousType;
 
-    LLVMInstruction *end = branchEnd(start);
+    const LLVMInstruction *end = branchEnd(start);
 
     if (!end)
         return Compiler::StaticType::Unknown;
 
     // Process the branch from end
     bool write = false; // only used internally (the compiler doesn't need this)
-    std::unordered_map<List *, Compiler::StaticType> listTypes;
+    std::unordered_map<const List *, Compiler::StaticType> listTypes;
     return variableTypeAfterBranchFromEnd(var, end, previousType, write, listTypes, visitedInstructions);
 }
 
 Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(
-    Variable *var,
-    LLVMInstruction *end,
+    const Variable *var,
+    const LLVMInstruction *end,
     Compiler::StaticType previousType,
     bool &write,
-    std::unordered_map<List *, Compiler::StaticType> listTypes,
+    std::unordered_map<const List *, Compiler::StaticType> listTypes,
     InstructionSet &visitedInstructions) const
 {
     // Find the last write instruction
-    LLVMInstruction *ins = end->previous;
+    const LLVMInstruction *ins = end->previous;
     bool typeMightReset = false;
 
     while (ins && !isLoopStart(ins) && !isIfStart(ins)) {
@@ -201,8 +204,13 @@ Compiler::StaticType LLVMTypeAnalyzer::variableTypeAfterBranchFromEnd(
     return previousType;
 }
 
-Compiler::StaticType LLVMTypeAnalyzer::
-    listType(List *list, LLVMInstruction *pos, Compiler::StaticType previousType, bool isEmpty, std::unordered_map<List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions) const
+Compiler::StaticType LLVMTypeAnalyzer::listType(
+    const List *list,
+    const LLVMInstruction *pos,
+    Compiler::StaticType previousType,
+    bool isEmpty,
+    std::unordered_map<const List *, Compiler::StaticType> listTypes,
+    InstructionSet &visitedInstructions) const
 {
     if (!list || !pos)
         return Compiler::StaticType::Unknown;
@@ -223,10 +231,10 @@ Compiler::StaticType LLVMTypeAnalyzer::
     visitedInstructions.insert(pos);
     listTypes[list] = previousType;
 
-    LLVMInstruction *ins = pos;
-    LLVMInstruction *previous = nullptr;
-    std::pair<LLVMInstruction *, int> firstBranch = { nullptr, 0 };
-    std::pair<LLVMInstruction *, int> lastClear = { nullptr, 0 };
+    const LLVMInstruction *ins = pos;
+    const LLVMInstruction *previous = nullptr;
+    std::pair<const LLVMInstruction *, int> firstBranch = { nullptr, 0 };
+    std::pair<const LLVMInstruction *, int> lastClear = { nullptr, 0 };
     int level = 0;
 
     // Find a start instruction (list clear in the top level or the first instruction)
@@ -305,13 +313,13 @@ Compiler::StaticType LLVMTypeAnalyzer::
 }
 
 Compiler::StaticType LLVMTypeAnalyzer::listTypeAfterBranch(
-    List *list,
-    LLVMInstruction *start,
+    const List *list,
+    const LLVMInstruction *start,
     Compiler::StaticType previousType,
     bool isEmpty,
-    LLVMInstruction *query,
+    const LLVMInstruction *query,
     bool &write,
-    std::unordered_map<List *, Compiler::StaticType> listTypes,
+    std::unordered_map<const List *, Compiler::StaticType> listTypes,
     InstructionSet &visitedInstructions) const
 {
     write = false;
@@ -323,7 +331,7 @@ Compiler::StaticType LLVMTypeAnalyzer::listTypeAfterBranch(
 
     bool isLoop = isLoopStart(start);
     bool clearBeforeQueryPoint = false;
-    LLVMInstruction *ins = start->next;
+    const LLVMInstruction *ins = start->next;
 
     while (ins && !(isLoopEnd(ins) || isIfEnd(ins) || isElse(ins))) {
         if (isLoopStart(ins) || isIfStart(ins)) {
@@ -385,7 +393,7 @@ bool LLVMTypeAnalyzer::handleListWrite(Compiler::StaticType writeType, Compiler:
     return true;
 }
 
-LLVMInstruction *LLVMTypeAnalyzer::branchEnd(LLVMInstruction *start) const
+const LLVMInstruction *LLVMTypeAnalyzer::branchEnd(const LLVMInstruction *start) const
 {
     assert(start);
     assert(isLoopStart(start) || isIfStart(start) || isElse(start));
@@ -409,7 +417,7 @@ LLVMInstruction *LLVMTypeAnalyzer::branchEnd(LLVMInstruction *start) const
     return ins;
 }
 
-LLVMInstruction *LLVMTypeAnalyzer::branchStart(LLVMInstruction *end) const
+const LLVMInstruction *LLVMTypeAnalyzer::branchStart(const LLVMInstruction *end) const
 {
     assert(end);
     assert(isLoopEnd(end) || isIfEnd(end) || isElse(end));
@@ -434,52 +442,52 @@ LLVMInstruction *LLVMTypeAnalyzer::branchStart(LLVMInstruction *end) const
     return ins;
 }
 
-bool LLVMTypeAnalyzer::isLoopStart(LLVMInstruction *ins) const
+bool LLVMTypeAnalyzer::isLoopStart(const LLVMInstruction *ins) const
 {
     return (BEGIN_LOOP_INSTRUCTIONS.find(ins->type) != BEGIN_LOOP_INSTRUCTIONS.cend());
 }
 
-bool LLVMTypeAnalyzer::isLoopEnd(LLVMInstruction *ins) const
+bool LLVMTypeAnalyzer::isLoopEnd(const LLVMInstruction *ins) const
 {
     return (ins->type == LLVMInstruction::Type::EndLoop);
 }
 
-bool LLVMTypeAnalyzer::isIfStart(LLVMInstruction *ins) const
+bool LLVMTypeAnalyzer::isIfStart(const LLVMInstruction *ins) const
 {
     return (ins->type == LLVMInstruction::Type::BeginIf);
 }
 
-bool LLVMTypeAnalyzer::isElse(LLVMInstruction *ins) const
+bool LLVMTypeAnalyzer::isElse(const LLVMInstruction *ins) const
 {
     return (ins->type == LLVMInstruction::Type::BeginElse);
 }
 
-bool LLVMTypeAnalyzer::isIfEnd(LLVMInstruction *ins) const
+bool LLVMTypeAnalyzer::isIfEnd(const LLVMInstruction *ins) const
 {
     return (ins->type == LLVMInstruction::Type::EndIf);
 }
 
-bool LLVMTypeAnalyzer::isVariableRead(LLVMInstruction *ins) const
+bool LLVMTypeAnalyzer::isVariableRead(const LLVMInstruction *ins) const
 {
     return (ins->type == LLVMInstruction::Type::ReadVariable);
 }
 
-bool LLVMTypeAnalyzer::isVariableWrite(LLVMInstruction *ins, Variable *var) const
+bool LLVMTypeAnalyzer::isVariableWrite(const LLVMInstruction *ins, const Variable *var) const
 {
     return (ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == var);
 }
 
-bool LLVMTypeAnalyzer::isListRead(LLVMInstruction *ins) const
+bool LLVMTypeAnalyzer::isListRead(const LLVMInstruction *ins) const
 {
     return (ins->type == LLVMInstruction::Type::GetListItem);
 }
 
-bool LLVMTypeAnalyzer::isListWrite(LLVMInstruction *ins, List *list) const
+bool LLVMTypeAnalyzer::isListWrite(const LLVMInstruction *ins, const List *list) const
 {
     return (LIST_WRITE_INSTRUCTIONS.find(ins->type) != LIST_WRITE_INSTRUCTIONS.cend() && ins->workList == list);
 }
 
-bool LLVMTypeAnalyzer::isListClear(LLVMInstruction *ins, List *list) const
+bool LLVMTypeAnalyzer::isListClear(const LLVMInstruction *ins, const List *list) const
 {
     return (ins->type == LLVMInstruction::Type::ClearList && ins->workList == list);
 }
@@ -498,7 +506,7 @@ Compiler::StaticType LLVMTypeAnalyzer::optimizeRegisterType(LLVMRegister *reg) c
     return ret;
 }
 
-bool LLVMTypeAnalyzer::isWriteNoOp(LLVMInstruction *ins) const
+bool LLVMTypeAnalyzer::isWriteNoOp(const LLVMInstruction *ins) const
 {
     assert(ins);
     assert(!ins->args.empty());
@@ -515,7 +523,7 @@ bool LLVMTypeAnalyzer::isWriteNoOp(LLVMInstruction *ins) const
     return false;
 }
 
-Compiler::StaticType LLVMTypeAnalyzer::writeValueType(LLVMInstruction *ins, std::unordered_map<List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions) const
+Compiler::StaticType LLVMTypeAnalyzer::writeValueType(const LLVMInstruction *ins, std::unordered_map<const List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions) const
 {
     assert(ins);
     assert(!ins->args.empty());
@@ -550,7 +558,8 @@ bool LLVMTypeAnalyzer::typesMatch(Compiler::StaticType a, Compiler::StaticType b
     return (a == b) && (a != Compiler::StaticType::Unknown);
 }
 
-bool LLVMTypeAnalyzer::writeTypesMatch(LLVMInstruction *ins, Compiler::StaticType expectedType, std::unordered_map<List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions) const
+bool LLVMTypeAnalyzer::
+    writeTypesMatch(const LLVMInstruction *ins, Compiler::StaticType expectedType, std::unordered_map<const List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions) const
 {
     return typesMatch(writeValueType(ins, listTypes, visitedInstructions), expectedType);
 }

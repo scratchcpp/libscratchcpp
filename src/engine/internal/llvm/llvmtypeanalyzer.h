@@ -12,65 +12,74 @@ struct LLVMRegister;
 class LLVMTypeAnalyzer
 {
     public:
-        Compiler::StaticType variableType(Variable *var, LLVMInstruction *pos, Compiler::StaticType previousType) const;
-        Compiler::StaticType variableTypeAfterBranch(Variable *var, LLVMInstruction *start, Compiler::StaticType previousType) const;
+        Compiler::StaticType variableType(const Variable *var, const LLVMInstruction *pos, Compiler::StaticType previousType) const;
+        Compiler::StaticType variableTypeAfterBranch(const Variable *var, const LLVMInstruction *start, Compiler::StaticType previousType) const;
 
-        Compiler::StaticType listType(List *list, LLVMInstruction *pos, Compiler::StaticType previousType, bool isEmpty) const;
-        Compiler::StaticType listTypeAfterBranch(List *list, LLVMInstruction *start, Compiler::StaticType previousType, bool isEmpty) const;
+        Compiler::StaticType listType(const List *list, const LLVMInstruction *pos, Compiler::StaticType previousType, bool isEmpty) const;
+        Compiler::StaticType listTypeAfterBranch(const List *list, const LLVMInstruction *start, Compiler::StaticType previousType, bool isEmpty) const;
 
     private:
-        using InstructionSet = std::unordered_set<LLVMInstruction *>;
+        using InstructionSet = std::unordered_set<const LLVMInstruction *>;
 
-        Compiler::StaticType
-        variableType(Variable *var, LLVMInstruction *pos, Compiler::StaticType previousType, std::unordered_map<List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions) const;
-
-        Compiler::StaticType variableTypeAfterBranch(Variable *var, LLVMInstruction *start, Compiler::StaticType previousType, InstructionSet &visitedInstructions) const;
-
-        Compiler::StaticType variableTypeAfterBranchFromEnd(
-            Variable *var,
-            LLVMInstruction *end,
+        Compiler::StaticType variableType(
+            const Variable *var,
+            const LLVMInstruction *pos,
             Compiler::StaticType previousType,
-            bool &write,
-            std::unordered_map<List *, Compiler::StaticType> listTypes,
+            std::unordered_map<const List *, Compiler::StaticType> listTypes,
             InstructionSet &visitedInstructions) const;
 
-        Compiler::StaticType
-        listType(List *list, LLVMInstruction *pos, Compiler::StaticType previousType, bool isEmpty, std::unordered_map<List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions)
-            const;
+        Compiler::StaticType variableTypeAfterBranch(const Variable *var, const LLVMInstruction *start, Compiler::StaticType previousType, InstructionSet &visitedInstructions) const;
 
-        Compiler::StaticType listTypeAfterBranch(
-            List *list,
-            LLVMInstruction *start,
+        Compiler::StaticType variableTypeAfterBranchFromEnd(
+            const Variable *var,
+            const LLVMInstruction *end,
+            Compiler::StaticType previousType,
+            bool &write,
+            std::unordered_map<const List *, Compiler::StaticType> listTypes,
+            InstructionSet &visitedInstructions) const;
+
+        Compiler::StaticType listType(
+            const List *list,
+            const LLVMInstruction *pos,
             Compiler::StaticType previousType,
             bool isEmpty,
-            LLVMInstruction *query,
+            std::unordered_map<const List *, Compiler::StaticType> listTypes,
+            InstructionSet &visitedInstructions) const;
+
+        Compiler::StaticType listTypeAfterBranch(
+            const List *list,
+            const LLVMInstruction *start,
+            Compiler::StaticType previousType,
+            bool isEmpty,
+            const LLVMInstruction *query,
             bool &write,
-            std::unordered_map<List *, Compiler::StaticType> listTypes,
+            std::unordered_map<const List *, Compiler::StaticType> listTypes,
             InstructionSet &visitedInstructions) const;
 
         bool handleListWrite(Compiler::StaticType writeType, Compiler::StaticType &previousType, bool &isEmpty) const;
 
-        LLVMInstruction *branchEnd(LLVMInstruction *start) const;
-        LLVMInstruction *branchStart(LLVMInstruction *end) const;
+        const LLVMInstruction *branchEnd(const LLVMInstruction *start) const;
+        const LLVMInstruction *branchStart(const LLVMInstruction *end) const;
 
-        bool isLoopStart(LLVMInstruction *ins) const;
-        bool isLoopEnd(LLVMInstruction *ins) const;
-        bool isIfStart(LLVMInstruction *ins) const;
-        bool isElse(LLVMInstruction *ins) const;
-        bool isIfEnd(LLVMInstruction *ins) const;
+        bool isLoopStart(const LLVMInstruction *ins) const;
+        bool isLoopEnd(const LLVMInstruction *ins) const;
+        bool isIfStart(const LLVMInstruction *ins) const;
+        bool isElse(const LLVMInstruction *ins) const;
+        bool isIfEnd(const LLVMInstruction *ins) const;
 
-        bool isVariableRead(LLVMInstruction *ins) const;
-        bool isVariableWrite(LLVMInstruction *ins, Variable *var) const;
+        bool isVariableRead(const LLVMInstruction *ins) const;
+        bool isVariableWrite(const LLVMInstruction *ins, const Variable *var) const;
 
-        bool isListRead(LLVMInstruction *ins) const;
-        bool isListWrite(LLVMInstruction *ins, List *list) const;
-        bool isListClear(LLVMInstruction *ins, List *list) const;
+        bool isListRead(const LLVMInstruction *ins) const;
+        bool isListWrite(const LLVMInstruction *ins, const List *list) const;
+        bool isListClear(const LLVMInstruction *ins, const List *list) const;
 
         Compiler::StaticType optimizeRegisterType(LLVMRegister *reg) const;
-        bool isWriteNoOp(LLVMInstruction *ins) const;
-        Compiler::StaticType writeValueType(LLVMInstruction *ins, std::unordered_map<List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions) const;
+        bool isWriteNoOp(const LLVMInstruction *ins) const;
+        Compiler::StaticType writeValueType(const LLVMInstruction *ins, std::unordered_map<const List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions) const;
         bool typesMatch(Compiler::StaticType a, Compiler::StaticType b) const;
-        bool writeTypesMatch(LLVMInstruction *ins, Compiler::StaticType expectedType, std::unordered_map<List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions) const;
+        bool
+        writeTypesMatch(const LLVMInstruction *ins, Compiler::StaticType expectedType, std::unordered_map<const List *, Compiler::StaticType> listTypes, InstructionSet &visitedInstructions) const;
 };
 
 } // namespace libscratchcpp
