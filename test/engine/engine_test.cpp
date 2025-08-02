@@ -2238,7 +2238,7 @@ TEST(EngineTest, DuplicateVariableOrListIDs)
     ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
 }
 
-/*TEST(EngineTest, BroadcastStopsWaitBlocks)
+TEST(EngineTest, BroadcastStopsWaitBlocks)
 {
     // Regtest for #563
     Project p("regtest_projects/563_broadcast_stops_wait_blocks.sb3");
@@ -2272,4 +2272,4 @@ TEST(EngineTest, BroadcastAndWaitCaseInsensitive)
 
     ASSERT_VAR(stage, "passed");
     ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
-}*/
+}
