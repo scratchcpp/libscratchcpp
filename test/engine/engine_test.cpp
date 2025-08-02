@@ -1702,7 +1702,7 @@ void questionFunction(const std::string &)
 {
 }
 
-/*TEST(EngineTest, Clones)
+TEST(EngineTest, Clones)
 {
     Project p("clones.sb3");
     ASSERT_TRUE(p.load());
@@ -1745,7 +1745,7 @@ void questionFunction(const std::string &)
         else
             ASSERT_EQ(Value((*list)[i]).toString(), "12");
     }
-}*/
+}
 
 TEST(EngineTest, CloneLimit)
 {
