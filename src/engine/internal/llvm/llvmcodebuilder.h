@@ -130,7 +130,6 @@ class LLVMCodeBuilder : public ICodeBuilder
         void popLoopScope();
 
         std::string getMainFunctionName(BlockPrototype *procedurePrototype);
-        std::string getResumeFunctionName(BlockPrototype *procedurePrototype);
         llvm::FunctionType *getMainFunctionType(BlockPrototype *procedurePrototype);
         llvm::Function *getOrCreateFunction(const std::string &name, llvm::FunctionType *type);
         void verifyFunction(llvm::Function *func);
@@ -230,7 +229,6 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         llvm::StructType *m_valueDataType = nullptr;
         llvm::StructType *m_stringPtrType = nullptr;
-        llvm::FunctionType *m_resumeFuncType = nullptr;
 
         LLVMInstructionList m_instructions;
         std::vector<std::shared_ptr<LLVMRegister>> m_regs;

@@ -1268,8 +1268,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                     m_builder.SetInsertPoint(suspendBranch);
                     createSuspend(coro.get(), warpArg, targetVariables);
-                    name = getResumeFunctionName(step.procedurePrototype);
-                    llvm::Value *done = m_builder.CreateCall(resolveFunction(name, m_resumeFuncType), { handle });
+                    llvm::Value *done = m_builder.CreateCall(m_ctx->coroutineResumeFunction(), { handle });
                     m_builder.CreateCondBr(done, nextBranch, suspendBranch);
 
                     m_builder.SetInsertPoint(nextBranch);
@@ -1329,24 +1328,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
     verifyFunction(m_function);
 
-    // Create resume function
-    // bool resume(void *)
-    funcName = getResumeFunctionName(m_procedurePrototype);
-    llvm::Function *resumeFunc = getOrCreateFunction(funcName, m_resumeFuncType);
-    resumeFunc->addFnAttr(llvm::Attribute::NoInline);
-    resumeFunc->addFnAttr(llvm::Attribute::OptimizeNone);
-
-    entry = llvm::BasicBlock::Create(m_llvmCtx, "entry", resumeFunc);
-    m_builder.SetInsertPoint(entry);
-
-    if (m_warp)
-        m_builder.CreateRet(m_builder.getInt1(true));
-    else
-        m_builder.CreateRet(coro->createResume(resumeFunc, resumeFunc->getArg(0)));
-
-    verifyFunction(resumeFunc);
-
-    return std::make_shared<LLVMExecutableCode>(m_ctx, m_function->getName().str(), resumeFunc->getName().str(), m_codeType);
+    return std::make_shared<LLVMExecutableCode>(m_ctx, m_function->getName().str(), m_ctx->coroutineResumeFunction()->getName().str(), m_codeType);
 }
 
 CompilerValue *LLVMCodeBuilder::addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
@@ -1890,7 +1872,6 @@ void LLVMCodeBuilder::initTypes()
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
     m_valueDataType = LLVMTypes::createValueDataType(&m_builder);
     m_stringPtrType = LLVMTypes::createStringPtrType(&m_builder);
-    m_resumeFuncType = llvm::FunctionType::get(m_builder.getInt1Ty(), pointerType, false);
 }
 
 void LLVMCodeBuilder::createVariableMap()
@@ -2013,11 +1994,6 @@ std::string LLVMCodeBuilder::getMainFunctionName(BlockPrototype *procedureProtot
     }
 
     return procedurePrototype ? "proc." + procedurePrototype->procCode() : name;
-}
-
-std::string LLVMCodeBuilder::getResumeFunctionName(BlockPrototype *procedurePrototype)
-{
-    return procedurePrototype ? "resume.proc." + procedurePrototype->procCode() : "resume.script";
 }
 
 llvm::FunctionType *LLVMCodeBuilder::getMainFunctionType(BlockPrototype *procedurePrototype)

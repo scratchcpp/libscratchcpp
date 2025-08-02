@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "llvmcompilercontext.h"
+#include "llvmcoroutine.h"
 
 using namespace libscratchcpp;
 
@@ -18,6 +19,7 @@ LLVMCompilerContext::LLVMCompilerContext(IEngine *engine, Target *target) :
     m_llvmCtxPtr(m_llvmCtx.get()),
     m_modulePtr(m_module.get()),
     m_jit((initTarget(), llvm::orc::LLJITBuilder().create())),
+    m_llvmCoroResumeFunction(createCoroResumeFunction()),
     m_llvmCoroDestroyFunction(createCoroDestroyFunction())
 {
     if (!m_jit) {
@@ -111,6 +113,11 @@ bool LLVMCompilerContext::jitInitialized() const
     return m_jitInitialized;
 }
 
+llvm::Function *LLVMCompilerContext::coroutineResumeFunction() const
+{
+    return m_llvmCoroResumeFunction;
+}
+
 void LLVMCompilerContext::destroyCoroutine(void *handle)
 {
     if (!m_jitInitialized) {
@@ -127,6 +134,26 @@ void LLVMCompilerContext::initTarget()
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
+}
+
+llvm::Function *LLVMCompilerContext::createCoroResumeFunction()
+{
+    llvm::IRBuilder<> builder(*m_llvmCtx);
+
+    // bool coro_resume(void *handle)
+    llvm::FunctionType *funcType = llvm::FunctionType::get(builder.getInt1Ty(), builder.getVoidTy()->getPointerTo(), false);
+    llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "coro_resume", m_module.get());
+    func->setComdat(m_module->getOrInsertComdat(func->getName()));
+    func->setDSOLocal(true);
+    func->addFnAttr(llvm::Attribute::NoInline);
+    func->addFnAttr(llvm::Attribute::OptimizeNone);
+
+    llvm::BasicBlock *entry = llvm::BasicBlock::Create(*m_llvmCtx, "entry", func);
+    builder.SetInsertPoint(entry);
+    builder.CreateRet(LLVMCoroutine::createResume(m_module.get(), &builder, func, func->getArg(0)));
+
+    verifyFunction(func);
+    return func;
 }
 
 llvm::Function *LLVMCompilerContext::createCoroDestroyFunction()
@@ -146,10 +173,14 @@ llvm::Function *LLVMCompilerContext::createCoroDestroyFunction()
     builder.CreateCall(llvm::Intrinsic::getDeclaration(m_module.get(), llvm::Intrinsic::coro_destroy), { func->getArg(0) });
     builder.CreateRetVoid();
 
-    if (llvm::verifyFunction(*func, &llvm::errs())) {
-        llvm::errs() << "error: coro_destroy() function verficiation failed!\n";
+    verifyFunction(func);
+    return func;
+}
+
+void LLVMCompilerContext::verifyFunction(llvm::Function *function)
+{
+    if (llvm::verifyFunction(*function, &llvm::errs())) {
+        llvm::errs() << "error: " << function->getName() << "function verficiation failed!\n";
         llvm::errs() << "module name: " << m_module->getName() << "\n";
     }
-
-    return func;
 }
