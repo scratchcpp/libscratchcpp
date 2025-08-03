@@ -5,8 +5,17 @@
 #include <targetmock.h>
 #include <randomgeneratormock.h>
 
-#define ASSERT_NUM_OP1(utils, type, rawArg, v) ASSERT_EQ(utils.getOpResult(type, rawArg, v).toDouble(), m_utils.getExpectedOpResult(type, v).toDouble());
-#define ASSERT_NUM_OP2(utils, type, rawArgs, v1, v2) ASSERT_EQ(utils.getOpResult(type, rawArgs, v1, v2).toDouble(), m_utils.getExpectedOpResult(type, v1, v2).toDouble());
+#define ASSERT_NUM_OP1(utils, type, rawArg, v)                                                                                                                                                         \
+    Value result = utils.getOpResult(type, rawArg, v);                                                                                                                                                 \
+    Value expected = utils.getExpectedOpResult(type, v);                                                                                                                                               \
+    ASSERT_EQ(result.isNaN(), expected.isNaN());                                                                                                                                                       \
+    ASSERT_EQ(result.toDouble(), expected.toDouble());
+
+#define ASSERT_NUM_OP2(utils, type, rawArgs, v1, v2)                                                                                                                                                   \
+    Value result = utils.getOpResult(type, rawArgs, v1, v2);                                                                                                                                           \
+    Value expected = utils.getExpectedOpResult(type, v1, v2);                                                                                                                                          \
+    ASSERT_EQ(result.isNaN(), expected.isNaN());                                                                                                                                                       \
+    ASSERT_EQ(result.toDouble(), expected.toDouble());
 
 #define ASSERT_BOOL_OP1(utils, type, rawArg, v) ASSERT_EQ(utils.getOpResult(type, rawArg, v).toBool(), m_utils.getExpectedOpResult(type, v).toBool());
 #define ASSERT_BOOL_OP2(utils, type, rawArgs, v1, v2) ASSERT_EQ(utils.getOpResult(type, rawArgs, v1, v2).toBool(), m_utils.getExpectedOpResult(type, v1, v2).toBool());
