@@ -15,7 +15,6 @@
 #include "llvmconstantregister.h"
 #include "llvmifstatement.h"
 #include "llvmloop.h"
-#include "llvmtypes.h"
 #include "llvmloopscope.h"
 
 using namespace libscratchcpp;
@@ -1851,8 +1850,8 @@ void LLVMCodeBuilder::createProcedureCall(BlockPrototype *prototype, const Compi
 void LLVMCodeBuilder::initTypes()
 {
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    m_valueDataType = LLVMTypes::createValueDataType(m_llvmCtx);
-    m_stringPtrType = LLVMTypes::createStringPtrType(m_llvmCtx);
+    m_valueDataType = m_ctx->valueDataType();
+    m_stringPtrType = m_ctx->stringPtrType();
 }
 
 void LLVMCodeBuilder::createVariableMap()

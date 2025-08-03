@@ -31,6 +31,9 @@ class LLVMCompilerContext : public CompilerContext
         llvm::Function *coroutineResumeFunction() const;
         void destroyCoroutine(void *handle);
 
+        llvm::StructType *valueDataType() const;
+        llvm::StructType *stringPtrType() const;
+
         template<typename T>
         T lookupFunction(const std::string &name)
         {
@@ -49,6 +52,7 @@ class LLVMCompilerContext : public CompilerContext
         using DestroyCoroFuncType = void (*)(void *);
 
         void initTarget();
+
         llvm::Function *createCoroResumeFunction();
         llvm::Function *createCoroDestroyFunction();
 
@@ -65,6 +69,9 @@ class LLVMCompilerContext : public CompilerContext
 
         llvm::Function *m_llvmCoroDestroyFunction = nullptr;
         DestroyCoroFuncType m_coroDestroyFunction = nullptr;
+
+        llvm::StructType *m_valueDataType = nullptr;
+        llvm::StructType *m_stringPtrType = nullptr;
 };
 
 } // namespace libscratchcpp
