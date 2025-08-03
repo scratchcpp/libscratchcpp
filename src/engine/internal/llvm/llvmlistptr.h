@@ -24,7 +24,6 @@ struct LLVMListPtr
         llvm::Value *dataPtr = nullptr;
         llvm::Value *sizePtr = nullptr;
         llvm::Value *allocatedSizePtr = nullptr;
-        llvm::Value *dataPtrDirty = nullptr;
 
         // Used in build phase to check the type safety of lists in loops
         std::unordered_map<LLVMLoopScope *, std::vector<LLVMInstruction *>> loopListWrites; // loop scope, write instructions

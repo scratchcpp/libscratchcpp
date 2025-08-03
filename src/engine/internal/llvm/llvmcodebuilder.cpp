@@ -139,14 +139,11 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     for (auto &[list, listPtr] : m_listPtrs) {
         listPtr.ptr = getListPtr(targetLists, list);
 
-        listPtr.dataPtr = m_builder.CreateAlloca(m_valueDataType->getPointerTo());
-        m_builder.CreateStore(m_builder.CreateCall(resolve_list_data(), listPtr.ptr), listPtr.dataPtr);
+        listPtr.dataPtr = m_builder.CreateAlloca(m_valueDataType->getPointerTo()->getPointerTo());
+        m_builder.CreateStore(m_builder.CreateCall(resolve_list_data_ptr(), listPtr.ptr), listPtr.dataPtr);
 
         listPtr.sizePtr = m_builder.CreateCall(resolve_list_size_ptr(), listPtr.ptr);
         listPtr.allocatedSizePtr = m_builder.CreateCall(resolve_list_alloc_size_ptr(), listPtr.ptr);
-
-        listPtr.dataPtrDirty = m_builder.CreateAlloca(m_builder.getInt1Ty());
-        m_builder.CreateStore(m_builder.getInt1(false), listPtr.dataPtrDirty);
     }
 
     assert(m_loopScope == -1);
@@ -790,13 +787,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             case LLVMInstruction::Type::ClearList: {
                 assert(step.args.size() == 0);
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
-                llvm::Value *oldAllocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
                 m_builder.CreateCall(resolve_list_clear(), listPtr.ptr);
-
-                // Clearing may deallocate, so check if the allocated size changed
-                llvm::Value *dataPtrDirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
-                llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
-                m_builder.CreateStore(m_builder.CreateOr(dataPtrDirty, m_builder.CreateICmpNE(allocatedSize, oldAllocatedSize)), listPtr.dataPtrDirty);
                 break;
             }
 
@@ -819,7 +810,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.SetInsertPoint(removeBlock);
                 index = m_builder.CreateFPToUI(castValue(arg.second, arg.first), m_builder.getInt64Ty());
                 m_builder.CreateCall(resolve_list_remove(), { listPtr.ptr, index });
-                // NOTE: Removing doesn't deallocate (see List::removeAt()), so there's no need to update the data pointer
                 m_builder.CreateBr(nextBlock);
 
                 m_builder.SetInsertPoint(nextBlock);
@@ -857,7 +847,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.SetInsertPoint(elseBlock);
                 itemPtr = m_builder.CreateCall(resolve_list_append_empty(), listPtr.ptr);
                 createReusedValueStore(arg.second, itemPtr, type, listType);
-                m_builder.CreateStore(m_builder.getInt1(true), listPtr.dataPtrDirty);
                 m_builder.CreateBr(nextBlock);
 
                 m_builder.SetInsertPoint(nextBlock);
@@ -877,8 +866,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 if (m_warp)
                     listType = m_typeAnalyzer.listType(step.workList, &step, Compiler::StaticType::Unknown, false);
 
-                llvm::Value *oldAllocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
-
                 // Range check
                 llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
                 llvm::Value *min = llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0));
@@ -894,11 +881,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
                 llvm::Value *itemPtr = m_builder.CreateCall(resolve_list_insert_empty(), { listPtr.ptr, index });
                 createReusedValueStore(valueArg.second, itemPtr, type, listType);
-
-                // Check if the allocated size changed
-                llvm::Value *dataPtrDirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
-                llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
-                m_builder.CreateStore(m_builder.CreateOr(dataPtrDirty, m_builder.CreateICmpNE(allocatedSize, oldAllocatedSize)), listPtr.dataPtrDirty);
 
                 m_builder.CreateBr(nextBlock);
 
@@ -1275,7 +1257,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 }
 
                 reloadVariables(targetVariables);
-                reloadLists();
                 break;
             }
 
@@ -2384,6 +2365,11 @@ llvm::Value *LLVMCodeBuilder::getListPtr(llvm::Value *targetLists, List *list)
     return m_builder.CreateIntToPtr(addr, m_valueDataType->getPointerTo());
 }
 
+llvm::Value *LLVMCodeBuilder::getListDataPtr(const LLVMListPtr &listPtr)
+{
+    return m_builder.CreateLoad(m_valueDataType->getPointerTo(), m_builder.CreateLoad(m_valueDataType->getPointerTo()->getPointerTo(), listPtr.dataPtr));
+}
+
 void LLVMCodeBuilder::syncVariables(llvm::Value *targetVariables)
 {
     // Copy stack variables to the actual variables
@@ -2402,23 +2388,6 @@ void LLVMCodeBuilder::reloadVariables(llvm::Value *targetVariables)
         varPtr.onStack = false;
         varPtr.changed = false;
     }
-}
-
-void LLVMCodeBuilder::reloadLists()
-{
-    // Reset list data dirty
-    for (auto &[list, listPtr] : m_listPtrs)
-        m_builder.CreateStore(m_builder.getInt1(true), listPtr.dataPtrDirty);
-}
-
-void LLVMCodeBuilder::updateListDataPtr(const LLVMListPtr &listPtr)
-{
-    // dataPtr = dirty ? list_data(list) : dataPtr
-    // dirty = false
-    llvm::Value *dirty = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.dataPtrDirty);
-    llvm::Value *dataPtr = m_builder.CreateSelect(dirty, m_builder.CreateCall(resolve_list_data(), listPtr.ptr), m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr));
-    m_builder.CreateStore(dataPtr, listPtr.dataPtr);
-    m_builder.CreateStore(m_builder.getInt1(false), listPtr.dataPtrDirty);
 }
 
 LLVMRegister *LLVMCodeBuilder::createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args)
@@ -2573,8 +2542,7 @@ void LLVMCodeBuilder::copyStructField(llvm::Value *source, llvm::Value *target, 
 
 llvm::Value *LLVMCodeBuilder::getListItem(const LLVMListPtr &listPtr, llvm::Value *index)
 {
-    updateListDataPtr(listPtr);
-    return m_builder.CreateGEP(m_valueDataType, m_builder.CreateLoad(m_valueDataType->getPointerTo(), listPtr.dataPtr), index);
+    return m_builder.CreateGEP(m_valueDataType, getListDataPtr(listPtr), index);
 }
 
 llvm::Value *LLVMCodeBuilder::getListItemIndex(const LLVMListPtr &listPtr, Compiler::StaticType listType, LLVMRegister *item)
@@ -2932,7 +2900,6 @@ void LLVMCodeBuilder::createSuspend(LLVMCoroutine *coro, llvm::Value *warpArg, l
         syncVariables(targetVariables);
         coro->createSuspend();
         reloadVariables(targetVariables);
-        reloadLists();
 
         if (warpArg) {
             m_builder.CreateBr(nextBranch);
@@ -3090,10 +3057,10 @@ llvm::FunctionCallee LLVMCodeBuilder::resolve_list_insert_empty()
     return resolveFunction("list_insert_empty", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr, m_builder.getInt64Ty() }, false));
 }
 
-llvm::FunctionCallee LLVMCodeBuilder::resolve_list_data()
+llvm::FunctionCallee LLVMCodeBuilder::resolve_list_data_ptr()
 {
     llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    llvm::FunctionCallee callee = resolveFunction("list_data", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr }, false));
+    llvm::FunctionCallee callee = resolveFunction("list_data_ptr", llvm::FunctionType::get(m_valueDataType->getPointerTo()->getPointerTo(), { listPtr }, false));
     llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
     func->addFnAttr(llvm::Attribute::ReadOnly);
     return callee;

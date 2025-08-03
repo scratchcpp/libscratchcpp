@@ -150,10 +150,9 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         llvm::Value *getVariablePtr(llvm::Value *targetVariables, Variable *variable);
         llvm::Value *getListPtr(llvm::Value *targetLists, List *list);
+        llvm::Value *getListDataPtr(const LLVMListPtr &listPtr);
         void syncVariables(llvm::Value *targetVariables);
         void reloadVariables(llvm::Value *targetVariables);
-        void reloadLists();
-        void updateListDataPtr(const LLVMListPtr &listPtr);
 
         LLVMRegister *createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
         LLVMRegister *createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
@@ -197,7 +196,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::FunctionCallee resolve_list_remove();
         llvm::FunctionCallee resolve_list_append_empty();
         llvm::FunctionCallee resolve_list_insert_empty();
-        llvm::FunctionCallee resolve_list_data();
+        llvm::FunctionCallee resolve_list_data_ptr();
         llvm::FunctionCallee resolve_list_size_ptr();
         llvm::FunctionCallee resolve_list_alloc_size_ptr();
         llvm::FunctionCallee resolve_list_to_string();
