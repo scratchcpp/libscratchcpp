@@ -100,6 +100,19 @@ TEST(ListFunctionsTest, Data)
     ASSERT_EQ(data, list.data());
 }
 
+TEST(ListFunctionsTest, DataPtr)
+{
+    List list("", "");
+    list.append("Lorem");
+    list.append("ipsum");
+    list.append("dolor");
+    list.append("sit");
+    list.append("amet");
+
+    ValueData *const *dataPtr = list_data_ptr(&list);
+    ASSERT_EQ(dataPtr, list.dataPtr());
+}
+
 TEST(ListFunctionsTest, SizePtr)
 {
     List list("", "");
