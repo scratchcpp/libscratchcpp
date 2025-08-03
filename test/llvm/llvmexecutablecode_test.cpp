@@ -30,7 +30,7 @@ class LLVMExecutableCodeTest : public testing::Test
             m_module = m_ctx->module();
             m_llvmCtx = m_ctx->llvmCtx();
             m_builder = std::make_unique<llvm::IRBuilder<>>(*m_llvmCtx);
-            m_valueDataType = LLVMTypes::createValueDataType(m_builder.get());
+            m_valueDataType = LLVMTypes::createValueDataType(*m_llvmCtx);
             test_function(nullptr, nullptr, nullptr, nullptr, nullptr); // force dependency
 
             m_script = std::make_unique<Script>(&m_target, nullptr, &m_engine);
