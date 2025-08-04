@@ -28,6 +28,7 @@ class LLVMBuildUtils
         void init(llvm::Function *function, BlockPrototype *procedurePrototype, bool warp);
         void end();
 
+        LLVMCompilerContext *compilerCtx() const;
         llvm::LLVMContext &llvmCtx();
         llvm::Module *module() const;
         llvm::IRBuilder<> &builder();

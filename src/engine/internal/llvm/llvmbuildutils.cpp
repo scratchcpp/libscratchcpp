@@ -94,6 +94,11 @@ void LLVMBuildUtils::end()
     freeScopeHeap();
 }
 
+LLVMCompilerContext *LLVMBuildUtils::compilerCtx() const
+{
+    return m_ctx;
+}
+
 llvm::LLVMContext &LLVMBuildUtils::llvmCtx()
 {
     return m_llvmCtx;
