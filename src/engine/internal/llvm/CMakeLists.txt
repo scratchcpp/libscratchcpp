@@ -28,3 +28,5 @@ target_sources(scratchcpp
     llvmexecutioncontext.cpp
     llvmexecutioncontext.h
 )
+
+add_subdirectory(instructions)
