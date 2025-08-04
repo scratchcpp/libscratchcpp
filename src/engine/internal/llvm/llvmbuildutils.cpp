@@ -83,6 +83,11 @@ void LLVMBuildUtils::end()
     freeScopeHeap();
 }
 
+llvm::IRBuilder<> &LLVMBuildUtils::builder()
+{
+    return m_builder;
+}
+
 LLVMFunctions &LLVMBuildUtils::functions()
 {
     return m_functions;

@@ -28,6 +28,7 @@ class LLVMBuildUtils
         void init(llvm::Function *function, llvm::Value *targetVariables, llvm::Value *targetLists);
         void end();
 
+        llvm::IRBuilder<> &builder();
         LLVMFunctions &functions();
 
         void createVariablePtr(Variable *variable);
