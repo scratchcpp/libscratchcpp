@@ -10,6 +10,7 @@
 #include <llvm/IR/IRBuilder.h>
 
 #include "../icodebuilder.h"
+#include "llvmbuildutils.h"
 #include "llvminstruction.h"
 #include "llvminstructionlist.h"
 #include "llvmcoroutine.h"
@@ -114,18 +115,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args) override;
 
     private:
-        enum class Comparison
-        {
-            EQ,
-            GT,
-            LT
-        };
-
         void initTypes();
-        void createVariableMap();
-        void createListMap();
-        void pushScopeLevel();
-        void popScopeLevel();
 
         std::string getMainFunctionName(BlockPrototype *procedurePrototype);
         llvm::FunctionType *getMainFunctionType(BlockPrototype *procedurePrototype);
@@ -134,56 +124,23 @@ class LLVMCodeBuilder : public ICodeBuilder
 
         LLVMRegister *addReg(std::shared_ptr<LLVMRegister> reg, std::shared_ptr<LLVMInstruction> ins);
 
-        llvm::Value *addAlloca(llvm::Type *type);
-        void freeStringLater(llvm::Value *value);
-        void freeScopeHeap();
-        llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType);
-        llvm::Value *castRawValue(LLVMRegister *reg, Compiler::StaticType targetType);
-        llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType);
-        Compiler::StaticType optimizeRegisterType(LLVMRegister *reg) const;
-        llvm::Type *getType(Compiler::StaticType type);
         Compiler::StaticType getProcedureArgType(BlockPrototype::ArgType type);
-        llvm::Value *isNaN(llvm::Value *num);
-        llvm::Value *removeNaN(llvm::Value *num);
-
-        llvm::Value *getVariablePtr(llvm::Value *targetVariables, Variable *variable);
-        llvm::Value *getListPtr(llvm::Value *targetLists, List *list);
-        llvm::Value *getListDataPtr(const LLVMListPtr &listPtr);
-        void syncVariables(llvm::Value *targetVariables);
-        void reloadVariables(llvm::Value *targetVariables);
 
         LLVMRegister *createOp(LLVMInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
         LLVMRegister *createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
         LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
         LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
 
-        void createValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
-        void createReusedValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
-        void createValueCopy(llvm::Value *source, llvm::Value *target);
-        void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
-        llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index);
-        llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, Compiler::StaticType listType, LLVMRegister *item);
-        llvm::Value *createValue(LLVMRegister *reg);
-        llvm::Value *createNewValue(LLVMRegister *reg);
-        llvm::Value *createComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
-        llvm::Value *createStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, bool caseSensitive);
-
         void createSuspend(LLVMCoroutine *coro, llvm::Value *warpArg, llvm::Value *targetVariables);
 
         Target *m_target = nullptr;
-
-        std::unordered_map<Variable *, size_t> m_targetVariableMap;
-        std::unordered_map<Variable *, LLVMVariablePtr> m_variablePtrs;
-
-        std::unordered_map<List *, size_t> m_targetListMap;
-        std::unordered_map<List *, LLVMListPtr> m_listPtrs;
 
         LLVMCompilerContext *m_ctx;
         llvm::LLVMContext &m_llvmCtx;
         llvm::Module *m_module = nullptr;
         llvm::IRBuilder<> m_builder;
         llvm::Function *m_function = nullptr;
-        LLVMFunctions m_functions;
+        LLVMBuildUtils m_utils;
         LLVMTypeAnalyzer m_typeAnalyzer;
 
         llvm::StructType *m_valueDataType = nullptr;
@@ -200,9 +157,6 @@ class LLVMCodeBuilder : public ICodeBuilder
         Compiler::CodeType m_codeType = Compiler::CodeType::Script;
 
         bool m_loopCondition = false; // whether we're currently compiling a loop condition
-        std::vector<LLVMInstruction *> m_variableInstructions;
-        std::vector<LLVMInstruction *> m_listInstructions;
-        std::vector<std::vector<llvm::Value *>> m_stringHeap; // scopes
 };
 
 } // namespace libscratchcpp

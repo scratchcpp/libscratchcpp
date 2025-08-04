@@ -1,5 +1,7 @@
 target_sources(scratchcpp
   PRIVATE
+    llvmbuildutils.cpp
+    llvmbuildutils.h
     llvmcodebuilder.cpp
     llvmcodebuilder.h
     llvmregister.h
