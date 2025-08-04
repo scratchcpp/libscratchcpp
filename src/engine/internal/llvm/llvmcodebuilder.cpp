@@ -98,8 +98,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
     m_utils.init(m_function, targetVariables, targetLists);
 
-    // Execute recorded steps
-    for (LLVMInstruction *ins = m_instructions.first(); ins; ins = ins->next) {
+    // Execute recorded instructions
+    LLVMInstruction *ins = m_instructions.first();
+
+    while (ins) {
         switch (ins->type) {
             case LLVMInstruction::Type::FunctionCall: {
                 std::vector<llvm::Type *> types;
@@ -136,6 +138,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                         m_utils.freeStringLater(ins->functionReturnReg->value);
                 }
 
+                ins = ins->next;
                 break;
             }
 
@@ -146,6 +149,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *num1 = m_utils.removeNaN(m_utils.castValue(arg1.second, arg1.first));
                 llvm::Value *num2 = m_utils.removeNaN(m_utils.castValue(arg2.second, arg2.first));
                 ins->functionReturnReg->value = m_builder.CreateFAdd(num1, num2);
+
+                ins = ins->next;
                 break;
             }
 
@@ -156,6 +161,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *num1 = m_utils.removeNaN(m_utils.castValue(arg1.second, arg1.first));
                 llvm::Value *num2 = m_utils.removeNaN(m_utils.castValue(arg2.second, arg2.first));
                 ins->functionReturnReg->value = m_builder.CreateFSub(num1, num2);
+
+                ins = ins->next;
                 break;
             }
 
@@ -166,6 +173,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *num1 = m_utils.removeNaN(m_utils.castValue(arg1.second, arg1.first));
                 llvm::Value *num2 = m_utils.removeNaN(m_utils.castValue(arg2.second, arg2.first));
                 ins->functionReturnReg->value = m_builder.CreateFMul(num1, num2);
+
+                ins = ins->next;
                 break;
             }
 
@@ -176,6 +185,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *num1 = m_utils.removeNaN(m_utils.castValue(arg1.second, arg1.first));
                 llvm::Value *num2 = m_utils.removeNaN(m_utils.castValue(arg2.second, arg2.first));
                 ins->functionReturnReg->value = m_builder.CreateFDiv(num1, num2);
+
+                ins = ins->next;
                 break;
             }
 
@@ -210,6 +221,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     }
                 }
 
+                ins = ins->next;
                 break;
             }
 
@@ -220,6 +232,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *from = m_builder.CreateFPToSI(m_utils.castValue(arg1.second, arg1.first), m_builder.getInt64Ty());
                 llvm::Value *to = m_builder.CreateFPToSI(m_utils.castValue(arg2.second, arg2.first), m_builder.getInt64Ty());
                 ins->functionReturnReg->value = m_builder.CreateCall(m_utils.functions().resolve_llvm_random_long(), { executionContextPtr, from, to });
+
+                ins = ins->next;
                 break;
             }
 
@@ -228,6 +242,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg1 = ins->args[0].second;
                 const auto &arg2 = ins->args[1].second;
                 ins->functionReturnReg->value = m_utils.createComparison(arg1, arg2, LLVMBuildUtils::Comparison::EQ);
+
+                ins = ins->next;
                 break;
             }
 
@@ -236,6 +252,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg1 = ins->args[0].second;
                 const auto &arg2 = ins->args[1].second;
                 ins->functionReturnReg->value = m_utils.createComparison(arg1, arg2, LLVMBuildUtils::Comparison::GT);
+
+                ins = ins->next;
                 break;
             }
 
@@ -244,6 +262,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg1 = ins->args[0].second;
                 const auto &arg2 = ins->args[1].second;
                 ins->functionReturnReg->value = m_utils.createComparison(arg1, arg2, LLVMBuildUtils::Comparison::LT);
+
+                ins = ins->next;
                 break;
             }
 
@@ -252,6 +272,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg1 = ins->args[0].second;
                 const auto &arg2 = ins->args[1].second;
                 ins->functionReturnReg->value = m_utils.createStringComparison(arg1, arg2, true);
+
+                ins = ins->next;
                 break;
             }
 
@@ -260,6 +282,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg1 = ins->args[0].second;
                 const auto &arg2 = ins->args[1].second;
                 ins->functionReturnReg->value = m_utils.createStringComparison(arg1, arg2, false);
+
+                ins = ins->next;
                 break;
             }
 
@@ -270,6 +294,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *bool1 = m_utils.castValue(arg1.second, arg1.first);
                 llvm::Value *bool2 = m_utils.castValue(arg2.second, arg2.first);
                 ins->functionReturnReg->value = m_builder.CreateAnd(bool1, bool2);
+
+                ins = ins->next;
                 break;
             }
 
@@ -280,6 +306,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *bool1 = m_utils.castValue(arg1.second, arg1.first);
                 llvm::Value *bool2 = m_utils.castValue(arg2.second, arg2.first);
                 ins->functionReturnReg->value = m_builder.CreateOr(bool1, bool2);
+
+                ins = ins->next;
                 break;
             }
 
@@ -288,6 +316,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg = ins->args[0];
                 llvm::Value *value = m_utils.castValue(arg.second, arg.first);
                 ins->functionReturnReg->value = m_builder.CreateNot(value);
+
+                ins = ins->next;
                 break;
             }
 
@@ -302,6 +332,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *value = m_builder.CreateFRem(num1, num2);                                // rem(a, b)
                 llvm::Value *cond = m_builder.CreateFCmpOLT(m_builder.CreateFDiv(value, num2), zero); // rem(a, b) / b < 0.0                                                            // rem(a, b)
                 ins->functionReturnReg->value = m_builder.CreateSelect(cond, m_builder.CreateFAdd(value, num2), value);
+
+                ins = ins->next;
                 break;
             }
 
@@ -319,6 +351,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *negativeCond = m_builder.CreateFCmpOGE(num, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(-0.5)));                               // num >= -0.5
                 llvm::Value *negativeRound = m_builder.CreateCall(floorFunc, m_builder.CreateFAdd(num, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.5)))); // floor(x + 0.5)
                 ins->functionReturnReg->value = m_builder.CreateSelect(notNegative, roundNum, m_builder.CreateSelect(negativeCond, negativeZero, negativeRound));
+
+                ins = ins->next;
                 break;
             }
 
@@ -328,6 +362,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Function *absFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::fabs, m_builder.getDoubleTy());
                 llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
                 ins->functionReturnReg->value = m_builder.CreateCall(absFunc, num);
+
+                ins = ins->next;
                 break;
             }
 
@@ -337,6 +373,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Function *floorFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::floor, m_builder.getDoubleTy());
                 llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
                 ins->functionReturnReg->value = m_builder.CreateCall(floorFunc, num);
+
+                ins = ins->next;
                 break;
             }
 
@@ -346,6 +384,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Function *ceilFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::ceil, m_builder.getDoubleTy());
                 llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
                 ins->functionReturnReg->value = m_builder.CreateCall(ceilFunc, num);
+
+                ins = ins->next;
                 break;
             }
 
@@ -358,6 +398,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Function *sqrtFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::sqrt, m_builder.getDoubleTy());
                 llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
                 ins->functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateCall(sqrtFunc, num), zero);
+
+                ins = ins->next;
                 break;
             }
 
@@ -376,6 +418,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *sinResult = m_builder.CreateCall(sinFunc, m_builder.CreateFDiv(m_builder.CreateFMul(num, pi), piDeg)); // sin(x * pi / 180)
                 llvm::Value *rounded = m_builder.CreateCall(roundFunc, m_builder.CreateFMul(sinResult, factor));                    // round(sin(x * 180) * 1e10)
                 ins->functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateFDiv(rounded, factor), zero);
+
+                ins = ins->next;
                 break;
             }
 
@@ -392,6 +436,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *cosResult = m_builder.CreateCall(cosFunc, m_builder.CreateFDiv(m_builder.CreateFMul(num, pi), piDeg)); // cos(x * pi / 180)
                 llvm::Value *rounded = m_builder.CreateCall(roundFunc, m_builder.CreateFMul(cosResult, factor));                    // round(cos(x * 180) * 1e10)
                 ins->functionReturnReg->value = m_builder.CreateFDiv(rounded, factor);
+
+                ins = ins->next;
                 break;
             }
 
@@ -424,6 +470,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *result = m_builder.CreateFAdd(m_builder.CreateFDiv(rounded, factor), zero);                            // round(tan(x * pi / 180.0) * 1e10) / 1e10 + 0.0
                 llvm::Value *inner = m_builder.CreateSelect(m_builder.CreateOr(isUndefined3, isUndefined4), negInf, result);
                 ins->functionReturnReg->value = m_builder.CreateSelect(m_builder.CreateOr(isUndefined1, isUndefined2), posInf, inner);
+
+                ins = ins->next;
                 break;
             }
 
@@ -438,6 +486,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Function *asinFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::asin, m_builder.getDoubleTy());
                 llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
                 ins->functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(asinFunc, num), piDeg), pi), zero);
+
+                ins = ins->next;
                 break;
             }
 
@@ -450,6 +500,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Function *acosFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::acos, m_builder.getDoubleTy());
                 llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
                 ins->functionReturnReg->value = m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(acosFunc, num), piDeg), pi);
+
+                ins = ins->next;
                 break;
             }
 
@@ -462,6 +514,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Function *atanFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::atan, m_builder.getDoubleTy());
                 llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
                 ins->functionReturnReg->value = m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(atanFunc, num), piDeg), pi);
+
+                ins = ins->next;
                 break;
             }
 
@@ -472,6 +526,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Function *logFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::log, m_builder.getDoubleTy());
                 llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
                 ins->functionReturnReg->value = m_builder.CreateCall(logFunc, num);
+
+                ins = ins->next;
                 break;
             }
 
@@ -482,6 +538,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Function *log10Func = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::log10, m_builder.getDoubleTy());
                 llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
                 ins->functionReturnReg->value = m_builder.CreateCall(log10Func, num);
+
+                ins = ins->next;
                 break;
             }
 
@@ -492,6 +550,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Function *expFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::exp, m_builder.getDoubleTy());
                 llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
                 ins->functionReturnReg->value = m_builder.CreateCall(expFunc, num);
+
+                ins = ins->next;
                 break;
             }
 
@@ -502,6 +562,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Function *expFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::exp10, m_builder.getDoubleTy());
                 llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
                 ins->functionReturnReg->value = m_builder.CreateCall(expFunc, num);
+
+                ins = ins->next;
                 break;
             }
 
@@ -545,6 +607,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.CreateCall(memcpyFunc, { writePtr, data2, m_builder.CreateMul(m_builder.CreateAdd(size2, m_builder.getInt64(1)), m_builder.getInt64(2)), m_builder.getInt1(false) });
 
                 ins->functionReturnReg->value = result;
+
+                ins = ins->next;
                 break;
             }
 
@@ -584,6 +648,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.CreateStore(m_builder.CreateSelect(inRange, m_builder.getInt64(1), m_builder.getInt64(0)), sizeField);
 
                 ins->functionReturnReg->value = result;
+
+                ins = ins->next;
                 break;
             }
 
@@ -594,6 +660,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *sizeField = m_builder.CreateStructGEP(m_stringPtrType, str, 1);
                 llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), sizeField);
                 ins->functionReturnReg->value = m_builder.CreateSIToFP(size, m_builder.getDoubleTy());
+
+                ins = ins->next;
                 break;
             }
 
@@ -616,6 +684,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 }
 
                 ins->functionReturnReg->value = m_builder.CreateSelect(cond, trueValue, falseValue);
+
+                ins = ins->next;
                 break;
             }
 
@@ -646,6 +716,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 }
 
                 ins->functionReturnReg->value = m_utils.addAlloca(type);
+
+                ins = ins->next;
                 break;
             }
 
@@ -655,6 +727,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg2 = ins->args[1];
                 llvm::Value *converted = m_utils.castValue(arg2.second, arg2.first);
                 m_builder.CreateStore(converted, arg1.second->value);
+
+                ins = ins->next;
                 break;
             }
 
@@ -678,6 +752,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 }
 
                 ins->functionReturnReg->value = m_builder.CreateLoad(type, arg.second->value);
+
+                ins = ins->next;
                 break;
             }
 
@@ -715,6 +791,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 }*/
 
                 m_utils.createValueStore(arg.second, varPtr.stackPtr, argType, varType);
+
+                ins = ins->next;
                 break;
             }
 
@@ -728,6 +806,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 ins->functionReturnReg->value = varPtr.onStack && !(ins->loopCondition && !m_warp) ? varPtr.stackPtr : varPtr.heapPtr;
                 ins->functionReturnReg->setType(type);
+
+                ins = ins->next;
                 break;
             }
 
@@ -735,6 +815,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(ins->args.size() == 0);
                 LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
                 m_builder.CreateCall(m_utils.functions().resolve_list_clear(), listPtr.ptr);
+
+                ins = ins->next;
                 break;
             }
 
@@ -760,6 +842,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.CreateBr(nextBlock);
 
                 m_builder.SetInsertPoint(nextBlock);
+
+                ins = ins->next;
                 break;
             }
 
@@ -798,6 +882,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 m_builder.SetInsertPoint(nextBlock);
 
+                ins = ins->next;
                 break;
             }
 
@@ -832,6 +917,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.CreateBr(nextBlock);
 
                 m_builder.SetInsertPoint(nextBlock);
+
+                ins = ins->next;
                 break;
             }
 
@@ -865,6 +952,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.CreateBr(nextBlock);
 
                 m_builder.SetInsertPoint(nextBlock);
+
+                ins = ins->next;
                 break;
             }
 
@@ -874,6 +963,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *ptr = m_builder.CreateCall(m_utils.functions().resolve_list_to_string(), listPtr.ptr);
                 m_utils.freeStringLater(ptr);
                 ins->functionReturnReg->value = ptr;
+
+                ins = ins->next;
                 break;
             }
 
@@ -899,6 +990,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
                 ins->functionReturnReg->value = m_builder.CreateSelect(inRange, m_utils.getListItem(listPtr, index), null);
                 ins->functionReturnReg->setType(listType);
+
+                ins = ins->next;
                 break;
             }
 
@@ -907,6 +1000,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
                 llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
                 ins->functionReturnReg->value = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
+
+                ins = ins->next;
                 break;
             }
 
@@ -921,6 +1016,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     listType = m_typeAnalyzer.listType(ins->workList, ins, Compiler::StaticType::Unknown, false);
 
                 ins->functionReturnReg->value = m_builder.CreateSIToFP(m_utils.getListItemIndex(listPtr, listType, arg.second), m_builder.getDoubleTy());
+
+                ins = ins->next;
                 break;
             }
 
@@ -936,11 +1033,15 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 llvm::Value *index = m_utils.getListItemIndex(listPtr, listType, arg.second);
                 ins->functionReturnReg->value = m_builder.CreateICmpSGT(index, llvm::ConstantInt::get(m_builder.getInt64Ty(), -1, true));
+
+                ins = ins->next;
                 break;
             }
 
             case LLVMInstruction::Type::Yield:
                 createSuspend(coro.get(), warpArg, targetVariables);
+
+                ins = ins->next;
                 break;
 
             case LLVMInstruction::Type::BeginIf: {
@@ -959,6 +1060,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 ifStatements.push_back(statement);
                 m_utils.pushScopeLevel();
+
+                ins = ins->next;
                 break;
             }
 
@@ -982,6 +1085,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 // Switch to the else branch
                 m_builder.SetInsertPoint(statement.elseBranch);
+
+                ins = ins->next;
                 break;
             }
 
@@ -1008,6 +1113,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 ifStatements.pop_back();
                 m_utils.popScopeLevel();
+
+                ins = ins->next;
                 break;
             }
 
@@ -1063,6 +1170,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 loops.push_back(loop);
                 m_utils.pushScopeLevel();
+
+                ins = ins->next;
                 break;
             }
 
@@ -1071,6 +1180,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 LLVMLoop &loop = loops.back();
                 llvm::Value *index = m_builder.CreateLoad(m_builder.getInt64Ty(), loop.index);
                 ins->functionReturnReg->value = m_builder.CreateUIToFP(index, m_builder.getDoubleTy());
+
+                ins = ins->next;
                 break;
             }
 
@@ -1092,6 +1203,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // Switch to body branch
                 m_builder.SetInsertPoint(body);
                 m_utils.pushScopeLevel();
+
+                ins = ins->next;
                 break;
             }
 
@@ -1113,6 +1226,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // Switch to body branch
                 m_builder.SetInsertPoint(body);
                 m_utils.pushScopeLevel();
+
+                ins = ins->next;
                 break;
             }
 
@@ -1123,6 +1238,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.CreateBr(loop.conditionBranch);
                 m_builder.SetInsertPoint(loop.conditionBranch);
                 loops.push_back(loop);
+
+                ins = ins->next;
                 break;
             }
 
@@ -1146,6 +1263,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 loops.pop_back();
                 m_utils.popScopeLevel();
+
+                ins = ins->next;
                 break;
             }
 
@@ -1154,6 +1273,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.CreateBr(endBranch);
                 llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
                 m_builder.SetInsertPoint(nextBranch);
+
+                ins = ins->next;
                 break;
             }
 
@@ -1200,6 +1321,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 }
 
                 m_utils.reloadVariables(targetVariables);
+
+                ins = ins->next;
                 break;
             }
 
@@ -1207,6 +1330,8 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(m_procedurePrototype);
                 llvm::Value *arg = m_function->getArg(m_defaultArgCount + 1 + ins->procedureArgIndex); // omit warp arg
                 ins->functionReturnReg->value = arg;
+
+                ins = ins->next;
                 break;
             }
         }
