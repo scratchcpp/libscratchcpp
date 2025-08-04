@@ -6,3 +6,25 @@ target_sources(scratchcpp
     instructiongroup.h
     processresult.h
 )
+
+target_sources(scratchcpp
+  PRIVATE
+    functions.cpp
+    functions.h
+    math.cpp
+    math.h
+    comparison.cpp
+    comparison.h
+    string.cpp
+    string.h
+    logic.cpp
+    logic.h
+    control.cpp
+    control.h
+    variables.cpp
+    variables.h
+    lists.cpp
+    lists.h
+    procedures.cpp
+    procedures.h
+)
