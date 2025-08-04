@@ -16,6 +16,7 @@ target_sources(scratchcpp
     llvmtypes.cpp
     llvmtypes.h
     llvmfunctions.cpp
+    llvmfunctions.h
     llvmloopscope.h
     llvmtypeanalyzer.cpp
     llvmtypeanalyzer.h

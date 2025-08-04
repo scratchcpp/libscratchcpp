@@ -35,6 +35,7 @@ LLVMCodeBuilder::LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *proce
     m_llvmCtx(*ctx->llvmCtx()),
     m_module(ctx->module()),
     m_builder(m_llvmCtx),
+    m_functions(ctx, &m_builder),
     m_procedurePrototype(procedurePrototype),
     m_defaultWarp(procedurePrototype ? procedurePrototype->warp() : false),
     m_warp(m_defaultWarp),
@@ -139,10 +140,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
         listPtr.ptr = getListPtr(targetLists, list);
 
         listPtr.dataPtr = m_builder.CreateAlloca(m_valueDataType->getPointerTo()->getPointerTo());
-        m_builder.CreateStore(m_builder.CreateCall(resolve_list_data_ptr(), listPtr.ptr), listPtr.dataPtr);
+        m_builder.CreateStore(m_builder.CreateCall(m_functions.resolve_list_data_ptr(), listPtr.ptr), listPtr.dataPtr);
 
-        listPtr.sizePtr = m_builder.CreateCall(resolve_list_size_ptr(), listPtr.ptr);
-        listPtr.allocatedSizePtr = m_builder.CreateCall(resolve_list_alloc_size_ptr(), listPtr.ptr);
+        listPtr.sizePtr = m_builder.CreateCall(m_functions.resolve_list_size_ptr(), listPtr.ptr);
+        listPtr.allocatedSizePtr = m_builder.CreateCall(m_functions.resolve_list_alloc_size_ptr(), listPtr.ptr);
     }
 
     assert(m_loopScope == -1);
@@ -180,7 +181,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 }
 
                 llvm::Type *retType = getType(step.functionReturnReg ? step.functionReturnReg->type() : Compiler::StaticType::Void);
-                llvm::Value *ret = m_builder.CreateCall(resolveFunction(step.functionName, llvm::FunctionType::get(retType, types, false)), args);
+                llvm::Value *ret = m_builder.CreateCall(m_functions.resolveFunction(step.functionName, llvm::FunctionType::get(retType, types, false)), args);
 
                 if (step.functionReturnReg) {
                     step.functionReturnReg->value = ret;
@@ -242,7 +243,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 if (reg1->type() == Compiler::StaticType::Bool && reg2->type() == Compiler::StaticType::Bool) {
                     llvm::Value *bool1 = castValue(arg1.second, Compiler::StaticType::Bool);
                     llvm::Value *bool2 = castValue(arg2.second, Compiler::StaticType::Bool);
-                    step.functionReturnReg->value = m_builder.CreateCall(resolve_llvm_random_bool(), { executionContextPtr, bool1, bool2 });
+                    step.functionReturnReg->value = m_builder.CreateCall(m_functions.resolve_llvm_random_bool(), { executionContextPtr, bool1, bool2 });
                 } else {
                     llvm::Constant *inf = llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), false);
                     llvm::Value *num1 = removeNaN(castValue(arg1.second, Compiler::StaticType::Number));
@@ -253,11 +254,11 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                     // NOTE: The random function will be called even in edge cases where it isn't needed, but they're rare, so it shouldn't be an issue
                     if (reg1->type() == Compiler::StaticType::Number && reg2->type() == Compiler::StaticType::Number)
-                        step.functionReturnReg->value = m_builder.CreateSelect(isInfOrNaN, sum, m_builder.CreateCall(resolve_llvm_random_double(), { executionContextPtr, num1, num2 }));
+                        step.functionReturnReg->value = m_builder.CreateSelect(isInfOrNaN, sum, m_builder.CreateCall(m_functions.resolve_llvm_random_double(), { executionContextPtr, num1, num2 }));
                     else {
                         llvm::Value *value1 = createValue(reg1);
                         llvm::Value *value2 = createValue(reg2);
-                        step.functionReturnReg->value = m_builder.CreateSelect(isInfOrNaN, sum, m_builder.CreateCall(resolve_llvm_random(), { executionContextPtr, value1, value2 }));
+                        step.functionReturnReg->value = m_builder.CreateSelect(isInfOrNaN, sum, m_builder.CreateCall(m_functions.resolve_llvm_random(), { executionContextPtr, value1, value2 }));
                     }
                 }
 
@@ -270,7 +271,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg2 = step.args[1];
                 llvm::Value *from = m_builder.CreateFPToSI(castValue(arg1.second, arg1.first), m_builder.getInt64Ty());
                 llvm::Value *to = m_builder.CreateFPToSI(castValue(arg2.second, arg2.first), m_builder.getInt64Ty());
-                step.functionReturnReg->value = m_builder.CreateCall(resolve_llvm_random_long(), { executionContextPtr, from, to });
+                step.functionReturnReg->value = m_builder.CreateCall(m_functions.resolve_llvm_random_long(), { executionContextPtr, from, to });
                 break;
             }
 
@@ -566,7 +567,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Function *memcpyFunc = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::memcpy_inline, { charPointerType, charPointerType, m_builder.getInt64Ty() });
 
                 // StringPtr *result = string_pool_new(true)
-                llvm::Value *result = m_builder.CreateCall(resolve_string_pool_new(), m_builder.getInt1(true));
+                llvm::Value *result = m_builder.CreateCall(m_functions.resolve_string_pool_new(), m_builder.getInt1(true));
                 freeStringLater(result);
 
                 // result->size = string1->size + string2->size
@@ -579,7 +580,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 m_builder.CreateStore(resultSize, resultSizeField);
 
                 // string_alloc(result, result->size)
-                m_builder.CreateCall(resolve_string_alloc(), { result, resultSize });
+                m_builder.CreateCall(m_functions.resolve_string_alloc(), { result, resultSize });
 
                 // memcpy(result->data, string1->data, string1->size * sizeof(char16_t))
                 llvm::Value *dataField1 = m_builder.CreateStructGEP(m_stringPtrType, str1, 0);
@@ -618,9 +619,9 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 llvm::Value *charPtr = m_builder.CreateGEP(m_builder.getInt16Ty(), data, index);
 
                 // Allocate string
-                llvm::Value *result = m_builder.CreateCall(resolve_string_pool_new(), m_builder.getInt1(true));
+                llvm::Value *result = m_builder.CreateCall(m_functions.resolve_string_pool_new(), m_builder.getInt1(true));
                 freeStringLater(result);
-                m_builder.CreateCall(resolve_string_alloc(), { result, m_builder.getInt64(1) }); // size 1 to avoid branching
+                m_builder.CreateCall(m_functions.resolve_string_alloc(), { result, m_builder.getInt64(1) }); // size 1 to avoid branching
 
                 // Get result data ptr
                 dataField = m_builder.CreateStructGEP(m_stringPtrType, result, 0);
@@ -786,7 +787,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             case LLVMInstruction::Type::ClearList: {
                 assert(step.args.size() == 0);
                 LLVMListPtr &listPtr = m_listPtrs[step.workList];
-                m_builder.CreateCall(resolve_list_clear(), listPtr.ptr);
+                m_builder.CreateCall(m_functions.resolve_list_clear(), listPtr.ptr);
                 break;
             }
 
@@ -808,7 +809,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // Remove
                 m_builder.SetInsertPoint(removeBlock);
                 index = m_builder.CreateFPToUI(castValue(arg.second, arg.first), m_builder.getInt64Ty());
-                m_builder.CreateCall(resolve_list_remove(), { listPtr.ptr, index });
+                m_builder.CreateCall(m_functions.resolve_list_remove(), { listPtr.ptr, index });
                 m_builder.CreateBr(nextBlock);
 
                 m_builder.SetInsertPoint(nextBlock);
@@ -844,7 +845,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
 
                 // Otherwise call appendEmpty()
                 m_builder.SetInsertPoint(elseBlock);
-                itemPtr = m_builder.CreateCall(resolve_list_append_empty(), listPtr.ptr);
+                itemPtr = m_builder.CreateCall(m_functions.resolve_list_append_empty(), listPtr.ptr);
                 createReusedValueStore(arg.second, itemPtr, type, listType);
                 m_builder.CreateBr(nextBlock);
 
@@ -878,7 +879,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 // Insert
                 m_builder.SetInsertPoint(insertBlock);
                 index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
-                llvm::Value *itemPtr = m_builder.CreateCall(resolve_list_insert_empty(), { listPtr.ptr, index });
+                llvm::Value *itemPtr = m_builder.CreateCall(m_functions.resolve_list_insert_empty(), { listPtr.ptr, index });
                 createReusedValueStore(valueArg.second, itemPtr, type, listType);
 
                 m_builder.CreateBr(nextBlock);
@@ -923,7 +924,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             case LLVMInstruction::Type::GetListContents: {
                 assert(step.args.size() == 0);
                 const LLVMListPtr &listPtr = m_listPtrs[step.workList];
-                llvm::Value *ptr = m_builder.CreateCall(resolve_list_to_string(), listPtr.ptr);
+                llvm::Value *ptr = m_builder.CreateCall(m_functions.resolve_list_to_string(), listPtr.ptr);
                 freeStringLater(ptr);
                 step.functionReturnReg->value = ptr;
                 break;
@@ -1240,7 +1241,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                         args.push_back(castValue(arg.second, arg.first));
                 }
 
-                llvm::Value *handle = m_builder.CreateCall(resolveFunction(name, type), args);
+                llvm::Value *handle = m_builder.CreateCall(m_functions.resolveFunction(name, type), args);
 
                 if (!m_warp && !step.procedurePrototype->warp()) {
                     llvm::BasicBlock *suspendBranch = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
@@ -2069,7 +2070,7 @@ void LLVMCodeBuilder::freeScopeHeap()
     auto &heap = m_stringHeap.back();
 
     for (llvm::Value *ptr : heap)
-        m_builder.CreateCall(resolve_string_pool_free(), { ptr });
+        m_builder.CreateCall(m_functions.resolve_string_pool_free(), { ptr });
 
     heap.clear();
 }
@@ -2107,7 +2108,7 @@ llvm::Value *LLVMCodeBuilder::castValue(LLVMRegister *reg, Compiler::StaticType 
                 case Compiler::StaticType::String:
                 case Compiler::StaticType::Unknown: {
                     // Convert to double
-                    return m_builder.CreateCall(resolve_value_toDouble(), reg->value);
+                    return m_builder.CreateCall(m_functions.resolve_value_toDouble(), reg->value);
                 }
 
                 default:
@@ -2133,7 +2134,7 @@ llvm::Value *LLVMCodeBuilder::castValue(LLVMRegister *reg, Compiler::StaticType 
                 case Compiler::StaticType::String:
                 case Compiler::StaticType::Unknown:
                     // Convert to bool
-                    return m_builder.CreateCall(resolve_value_toBool(), reg->value);
+                    return m_builder.CreateCall(m_functions.resolve_value_toBool(), reg->value);
 
                 default:
                     assert(false);
@@ -2147,7 +2148,7 @@ llvm::Value *LLVMCodeBuilder::castValue(LLVMRegister *reg, Compiler::StaticType 
                 case Compiler::StaticType::Unknown: {
                     // Cast to string
                     // TODO: Use value_stringToDouble() and value_stringToBool()
-                    llvm::Value *ptr = m_builder.CreateCall(resolve_value_toStringPtr(), reg->value);
+                    llvm::Value *ptr = m_builder.CreateCall(m_functions.resolve_value_toStringPtr(), reg->value);
                     freeStringLater(ptr);
                     return ptr;
                 }
@@ -2186,7 +2187,7 @@ llvm::Value *LLVMCodeBuilder::castRawValue(LLVMRegister *reg, Compiler::StaticTy
 
                 case Compiler::StaticType::String: {
                     // Convert string to double
-                    return m_builder.CreateCall(resolve_value_stringToDouble(), reg->value);
+                    return m_builder.CreateCall(m_functions.resolve_value_stringToDouble(), reg->value);
                 }
 
                 default:
@@ -2202,7 +2203,7 @@ llvm::Value *LLVMCodeBuilder::castRawValue(LLVMRegister *reg, Compiler::StaticTy
 
                 case Compiler::StaticType::String:
                     // Convert string to bool
-                    return m_builder.CreateCall(resolve_value_stringToBool(), reg->value);
+                    return m_builder.CreateCall(m_functions.resolve_value_stringToBool(), reg->value);
 
                 default:
                     assert(false);
@@ -2213,14 +2214,14 @@ llvm::Value *LLVMCodeBuilder::castRawValue(LLVMRegister *reg, Compiler::StaticTy
             switch (reg->type()) {
                 case Compiler::StaticType::Number: {
                     // Convert double to string
-                    llvm::Value *ptr = m_builder.CreateCall(resolve_value_doubleToStringPtr(), reg->value);
+                    llvm::Value *ptr = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), reg->value);
                     freeStringLater(ptr);
                     return ptr;
                 }
 
                 case Compiler::StaticType::Bool: {
                     // Convert bool to string
-                    llvm::Value *ptr = m_builder.CreateCall(resolve_value_boolToStringPtr(), reg->value);
+                    llvm::Value *ptr = m_builder.CreateCall(m_functions.resolve_value_boolToStringPtr(), reg->value);
                     // NOTE: Dot not deallocate later
                     return ptr;
                 }
@@ -2463,7 +2464,7 @@ void LLVMCodeBuilder::createValueStore(LLVMRegister *reg, llvm::Value *targetPtr
                 }
 
                 default:
-                    m_builder.CreateCall(resolve_value_assign_double(), { targetPtr, converted });
+                    m_builder.CreateCall(m_functions.resolve_value_assign_double(), { targetPtr, converted });
                     break;
             }
 
@@ -2489,18 +2490,18 @@ void LLVMCodeBuilder::createValueStore(LLVMRegister *reg, llvm::Value *targetPtr
                 }
 
                 default:
-                    m_builder.CreateCall(resolve_value_assign_bool(), { targetPtr, converted });
+                    m_builder.CreateCall(m_functions.resolve_value_assign_bool(), { targetPtr, converted });
                     break;
             }
 
             break;
 
         case Compiler::StaticType::String:
-            m_builder.CreateCall(resolve_value_assign_stringPtr(), { targetPtr, converted });
+            m_builder.CreateCall(m_functions.resolve_value_assign_stringPtr(), { targetPtr, converted });
             break;
 
         case Compiler::StaticType::Unknown:
-            m_builder.CreateCall(resolve_value_assign_copy(), { targetPtr, reg->value });
+            m_builder.CreateCall(m_functions.resolve_value_assign_copy(), { targetPtr, reg->value });
             break;
 
         default:
@@ -2658,8 +2659,8 @@ llvm::Value *LLVMCodeBuilder::createNewValue(LLVMRegister *reg)
     // NOTE: It is the caller's responsibility to free the value.
     llvm::Value *value = createValue(reg);
     llvm::Value *ret = addAlloca(m_valueDataType);
-    m_builder.CreateCall(resolve_value_init(), { ret });
-    m_builder.CreateCall(resolve_value_assign_copy(), { ret, value });
+    m_builder.CreateCall(m_functions.resolve_value_init(), { ret });
+    m_builder.CreateCall(m_functions.resolve_value_assign_copy(), { ret, value });
     return ret;
 }
 
@@ -2728,13 +2729,13 @@ llvm::Value *LLVMCodeBuilder::createComparison(LLVMRegister *arg1, LLVMRegister 
 
             switch (type) {
                 case Comparison::EQ:
-                    return m_builder.CreateCall(resolve_value_equals(), { value1, value2 });
+                    return m_builder.CreateCall(m_functions.resolve_value_equals(), { value1, value2 });
 
                 case Comparison::GT:
-                    return m_builder.CreateCall(resolve_value_greater(), { value1, value2 });
+                    return m_builder.CreateCall(m_functions.resolve_value_greater(), { value1, value2 });
 
                 case Comparison::LT:
-                    return m_builder.CreateCall(resolve_value_lower(), { value1, value2 });
+                    return m_builder.CreateCall(m_functions.resolve_value_lower(), { value1, value2 });
 
                 default:
                     assert(false);
@@ -2823,7 +2824,7 @@ llvm::Value *LLVMCodeBuilder::createComparison(LLVMRegister *arg1, LLVMRegister 
 
                 case Compiler::StaticType::String: {
                     // Compare two strings
-                    llvm::Value *cmpRet = m_builder.CreateCall(resolve_string_compare_case_insensitive(), { value1, value2 });
+                    llvm::Value *cmpRet = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { value1, value2 });
 
                     switch (type) {
                         case Comparison::EQ:
@@ -2879,7 +2880,7 @@ llvm::Value *LLVMCodeBuilder::createStringComparison(LLVMRegister *arg1, LLVMReg
         // Explicitly cast to string
         llvm::Value *string1 = castValue(arg1, Compiler::StaticType::String);
         llvm::Value *string2 = castValue(arg2, Compiler::StaticType::String);
-        llvm::Value *cmp = m_builder.CreateCall(caseSensitive ? resolve_string_compare_case_sensitive() : resolve_string_compare_case_insensitive(), { string1, string2 });
+        llvm::Value *cmp = m_builder.CreateCall(caseSensitive ? m_functions.resolve_string_compare_case_sensitive() : m_functions.resolve_string_compare_case_insensitive(), { string1, string2 });
         return m_builder.CreateICmpEQ(cmp, m_builder.getInt32(0));
     }
 }
@@ -2905,252 +2906,4 @@ void LLVMCodeBuilder::createSuspend(LLVMCoroutine *coro, llvm::Value *warpArg, l
             m_builder.SetInsertPoint(nextBranch);
         }
     }
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolveFunction(const std::string name, llvm::FunctionType *type)
-{
-    return m_module->getOrInsertFunction(name, type);
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_init()
-{
-    return resolveFunction("value_init", llvm::FunctionType::get(m_builder.getVoidTy(), m_valueDataType->getPointerTo(), false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_free()
-{
-    return resolveFunction("value_free", llvm::FunctionType::get(m_builder.getVoidTy(), m_valueDataType->getPointerTo(), false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_long()
-{
-    return resolveFunction("value_assign_long", llvm::FunctionType::get(m_builder.getVoidTy(), { m_valueDataType->getPointerTo(), m_builder.getInt64Ty() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_double()
-{
-    return resolveFunction("value_assign_double", llvm::FunctionType::get(m_builder.getVoidTy(), { m_valueDataType->getPointerTo(), m_builder.getDoubleTy() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_bool()
-{
-    return resolveFunction("value_assign_bool", llvm::FunctionType::get(m_builder.getVoidTy(), { m_valueDataType->getPointerTo(), m_builder.getInt1Ty() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_stringPtr()
-{
-    return resolveFunction("value_assign_stringPtr", llvm::FunctionType::get(m_builder.getVoidTy(), { m_valueDataType->getPointerTo(), m_stringPtrType->getPointerTo() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_special()
-{
-    return resolveFunction("value_assign_special", llvm::FunctionType::get(m_builder.getVoidTy(), { m_valueDataType->getPointerTo(), m_builder.getInt32Ty() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_assign_copy()
-{
-    return resolveFunction("value_assign_copy", llvm::FunctionType::get(m_builder.getVoidTy(), { m_valueDataType->getPointerTo(), m_valueDataType->getPointerTo() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_toDouble()
-{
-    llvm::FunctionCallee callee = resolveFunction("value_toDouble", llvm::FunctionType::get(m_builder.getDoubleTy(), m_valueDataType->getPointerTo(), false));
-    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
-    return callee;
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_toBool()
-{
-    llvm::FunctionCallee callee = resolveFunction("value_toBool", llvm::FunctionType::get(m_builder.getInt1Ty(), m_valueDataType->getPointerTo(), false));
-    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
-    return callee;
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_toStringPtr()
-{
-    // NOTE: This function can't be marked read-only because it allocates on the heap
-    return resolveFunction("value_toStringPtr", llvm::FunctionType::get(m_stringPtrType->getPointerTo(), m_valueDataType->getPointerTo(), false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_doubleToStringPtr()
-{
-    // NOTE: This function can't be marked read-only because it allocates on the heap
-    return resolveFunction("value_doubleToStringPtr", llvm::FunctionType::get(m_stringPtrType->getPointerTo(), m_builder.getDoubleTy(), false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_boolToStringPtr()
-{
-    // NOTE: This function can be marked read-only because it does NOT allocate on the heap ("true" and "false" constants)
-    llvm::FunctionCallee callee = resolveFunction("value_boolToStringPtr", llvm::FunctionType::get(m_stringPtrType->getPointerTo(), m_builder.getInt1Ty(), false));
-    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
-    return callee;
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_stringToDouble()
-{
-    llvm::FunctionCallee callee = resolveFunction("value_stringToDouble", llvm::FunctionType::get(m_builder.getDoubleTy(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), false));
-    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
-    return callee;
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_stringToBool()
-{
-    llvm::FunctionCallee callee = resolveFunction("value_stringToBool", llvm::FunctionType::get(m_builder.getInt1Ty(), llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0), false));
-    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
-    return callee;
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_equals()
-{
-    llvm::Type *valuePtr = m_valueDataType->getPointerTo();
-    llvm::FunctionCallee callee = resolveFunction("value_equals", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
-    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
-    return callee;
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_greater()
-{
-    llvm::Type *valuePtr = m_valueDataType->getPointerTo();
-    llvm::FunctionCallee callee = resolveFunction("value_greater", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
-    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
-    return callee;
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_value_lower()
-{
-    llvm::Type *valuePtr = m_valueDataType->getPointerTo();
-    llvm::FunctionCallee callee = resolveFunction("value_lower", llvm::FunctionType::get(m_builder.getInt1Ty(), { valuePtr, valuePtr }, false));
-    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
-    return callee;
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_list_clear()
-{
-    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    return resolveFunction("list_clear", llvm::FunctionType::get(m_builder.getVoidTy(), { listPtr }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_list_remove()
-{
-    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    return resolveFunction("list_remove", llvm::FunctionType::get(m_builder.getVoidTy(), { listPtr, m_builder.getInt64Ty() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_list_append_empty()
-{
-    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    return resolveFunction("list_append_empty", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_list_insert_empty()
-{
-    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    return resolveFunction("list_insert_empty", llvm::FunctionType::get(m_valueDataType->getPointerTo(), { listPtr, m_builder.getInt64Ty() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_list_data_ptr()
-{
-    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    llvm::FunctionCallee callee = resolveFunction("list_data_ptr", llvm::FunctionType::get(m_valueDataType->getPointerTo()->getPointerTo(), { listPtr }, false));
-    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
-    return callee;
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_list_size_ptr()
-{
-    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    llvm::FunctionCallee callee = resolveFunction("list_size_ptr", llvm::FunctionType::get(m_builder.getInt64Ty()->getPointerTo()->getPointerTo(), { listPtr }, false));
-    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
-    return callee;
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_list_alloc_size_ptr()
-{
-    llvm::Type *listPtr = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    llvm::FunctionCallee callee = resolveFunction("list_alloc_size_ptr", llvm::FunctionType::get(m_builder.getInt64Ty()->getPointerTo()->getPointerTo(), { listPtr }, false));
-    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
-    return callee;
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_list_to_string()
-{
-    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    llvm::FunctionCallee callee = resolveFunction("list_to_string", llvm::FunctionType::get(m_stringPtrType->getPointerTo(), { pointerType }, false));
-    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
-    return callee;
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random()
-{
-    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    llvm::Type *valuePtr = m_valueDataType->getPointerTo();
-    return resolveFunction("llvm_random", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, valuePtr, valuePtr }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_double()
-{
-    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    return resolveFunction("llvm_random_double", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, m_builder.getDoubleTy(), m_builder.getDoubleTy() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_long()
-{
-    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    return resolveFunction("llvm_random_long", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, m_builder.getInt64Ty(), m_builder.getInt64Ty() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_llvm_random_bool()
-{
-    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
-    return resolveFunction("llvm_random_bool", llvm::FunctionType::get(m_builder.getDoubleTy(), { pointerType, m_builder.getInt1Ty(), m_builder.getInt1Ty() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_string_pool_new()
-{
-    return resolveFunction("string_pool_new", llvm::FunctionType::get(m_stringPtrType->getPointerTo(), { m_builder.getInt1Ty() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_string_pool_free()
-{
-    return resolveFunction("string_pool_free", llvm::FunctionType::get(m_builder.getVoidTy(), { m_stringPtrType->getPointerTo() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_string_alloc()
-{
-    return resolveFunction("string_alloc", llvm::FunctionType::get(m_builder.getVoidTy(), { m_stringPtrType->getPointerTo(), m_builder.getInt64Ty() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_string_assign()
-{
-    return resolveFunction("string_assign", llvm::FunctionType::get(m_builder.getVoidTy(), { m_stringPtrType->getPointerTo(), m_stringPtrType->getPointerTo() }, false));
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_string_compare_case_sensitive()
-{
-    llvm::Type *stringPtr = m_stringPtrType->getPointerTo();
-    llvm::FunctionCallee callee = resolveFunction("string_compare_case_sensitive", llvm::FunctionType::get(m_builder.getInt32Ty(), { stringPtr, stringPtr }, false));
-    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
-    return callee;
-}
-
-llvm::FunctionCallee LLVMCodeBuilder::resolve_string_compare_case_insensitive()
-{
-    llvm::Type *stringPtr = m_stringPtrType->getPointerTo();
-    llvm::FunctionCallee callee = resolveFunction("string_compare_case_insensitive", llvm::FunctionType::get(m_builder.getInt32Ty(), { stringPtr, stringPtr }, false));
-    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
-    return callee;
 }
