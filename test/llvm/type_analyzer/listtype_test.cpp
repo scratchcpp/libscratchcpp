@@ -18,7 +18,7 @@ TEST(LLVMTypeAnalyzer_ListType, NullList)
     LLVMTypeAnalyzer analyzer;
     LLVMInstructionList instructionList;
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(nullptr, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
@@ -37,7 +37,7 @@ TEST(LLVMTypeAnalyzer_ListType, NoWriteOperationsKnownType_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
@@ -49,7 +49,7 @@ TEST(LLVMTypeAnalyzer_ListType, NoWriteOperationsKnownType_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Number);
@@ -61,7 +61,7 @@ TEST(LLVMTypeAnalyzer_ListType, NoWriteOperationsUnknownType_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Unknown, false), Compiler::StaticType::Unknown);
@@ -73,7 +73,7 @@ TEST(LLVMTypeAnalyzer_ListType, NoWriteOperationsUnknownType_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Unknown, true), Compiler::StaticType::Unknown);
@@ -85,7 +85,7 @@ TEST(LLVMTypeAnalyzer_ListType, QueryPointIsWrite)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 1.25);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
@@ -100,19 +100,19 @@ TEST(LLVMTypeAnalyzer_ListType, Loop_SingleWriteSameTypeNumber_Before_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 1.25);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
@@ -124,19 +124,19 @@ TEST(LLVMTypeAnalyzer_ListType, Loop_SingleWriteSameTypeNumber_Before_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 1.25);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Number);
@@ -148,19 +148,19 @@ TEST(LLVMTypeAnalyzer_ListType, Loop_SingleWriteStringOptimization_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "1.25");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     // String "1.25" gets optimized to Number type
@@ -174,27 +174,27 @@ TEST(LLVMTypeAnalyzer_ListType, Loop_SingleWriteMultipleLists)
     List list1("", "");
     List list2("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // Append to list1
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 6);
     appendList1->workList = &list1;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Append to list2
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list2;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&list1, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
@@ -206,19 +206,19 @@ TEST(LLVMTypeAnalyzer_ListType, Loop_SingleWriteFromUnknownType_Before_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMRegister value(Compiler::StaticType::Unknown);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
@@ -230,19 +230,19 @@ TEST(LLVMTypeAnalyzer_ListType, Loop_SingleWriteFromUnknownType_Before_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMRegister value(Compiler::StaticType::Unknown);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Unknown);
@@ -254,19 +254,19 @@ TEST(LLVMTypeAnalyzer_ListType, Loop_SingleWriteToUnknownType_Before_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 5);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     // The type is known because a number is appended before the point
@@ -279,19 +279,19 @@ TEST(LLVMTypeAnalyzer_ListType, Loop_SingleWriteToUnknownType_Before_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 5);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Unknown, false), Compiler::StaticType::Unknown);
@@ -303,19 +303,19 @@ TEST(LLVMTypeAnalyzer_ListType, Loop_SingleWriteDifferentTypeNumberToString_Befo
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "test");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::String);
@@ -327,19 +327,19 @@ TEST(LLVMTypeAnalyzer_ListType, Loop_SingleWriteDifferentTypeNumberToString_Befo
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "test");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
@@ -351,19 +351,19 @@ TEST(LLVMTypeAnalyzer_ListType, Loop_SingleWriteDifferentTypeBoolToNumber_Before
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 1);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Bool, true), Compiler::StaticType::Number);
@@ -375,25 +375,25 @@ TEST(LLVMTypeAnalyzer_ListType, Loop_SingleWriteDifferentType_BeforeAndAfter)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::String, "test");
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
@@ -405,19 +405,19 @@ TEST(LLVMTypeAnalyzer_ListType, IfStatement_SingleWriteDifferentType_Before)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "test");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
@@ -429,19 +429,19 @@ TEST(LLVMTypeAnalyzer_ListType, IfStatement_SingleWriteDifferentType_After_IfBra
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(start);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "test");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(end);
 
     // Since this isn't a loop, the write after the point doesn't affect the type
@@ -454,22 +454,22 @@ TEST(LLVMTypeAnalyzer_ListType, IfStatement_SingleWriteDifferentType_After_ElseB
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(start);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "test");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(end);
 
     // Since this isn't a loop, the write after the point doesn't affect the type
@@ -482,19 +482,19 @@ TEST(LLVMTypeAnalyzer_ListType, WriteSameTypeInLoop_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 1.25);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
@@ -506,19 +506,19 @@ TEST(LLVMTypeAnalyzer_ListType, WriteSameTypeInLoop_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 1.25);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Number);
@@ -530,19 +530,19 @@ TEST(LLVMTypeAnalyzer_ListType, WriteDifferentTypeInLoop_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "test");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Type is not known because the loop might not run at all
@@ -555,19 +555,19 @@ TEST(LLVMTypeAnalyzer_ListType, WriteDifferentTypeInLoop_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "test");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Type is String because empty list can establish new type
@@ -580,25 +580,25 @@ TEST(LLVMTypeAnalyzer_ListType, ChangeTypeBeforeLoop_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 1.25);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 1.25);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::String, false), Compiler::StaticType::Unknown);
@@ -610,25 +610,25 @@ TEST(LLVMTypeAnalyzer_ListType, OverrideUnknownTypeBeforeLoop_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 1.25);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 1.25);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Unknown, true), Compiler::StaticType::Number);
@@ -640,19 +640,19 @@ TEST(LLVMTypeAnalyzer_ListType, WriteSameTypeInIfStatement_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 1.25);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
@@ -664,19 +664,19 @@ TEST(LLVMTypeAnalyzer_ListType, WriteDifferentTypeInIfStatement_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(start);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 5.8);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Type is not known because the if statement might not run at all
@@ -689,34 +689,34 @@ TEST(LLVMTypeAnalyzer_ListType, OverrideDifferentTypeBeforeIfElseStatement_Empty
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 1.25);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(start);
 
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 1.25);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
-    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value3(Compiler::StaticType::Number, 2.5);
     appendList3->workList = &list;
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     instructionList.addInstruction(appendList3);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::String, true), Compiler::StaticType::Number);
@@ -728,34 +728,34 @@ TEST(LLVMTypeAnalyzer_ListType, OverrideUnknownTypeBeforeIfElseStatement_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 1.25);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(start);
 
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 1.25);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
-    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value3(Compiler::StaticType::Number, 2.5);
     appendList3->workList = &list;
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     instructionList.addInstruction(appendList3);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Unknown, true), Compiler::StaticType::Number);
@@ -768,20 +768,20 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleWritesSameTypeNumber_NonEmpty)
     List list("", "");
 
     // First write: string "abc" (incompatible with Number)
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::String, "abc");
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Second write: number 5.25 (incompatible with previous String)
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 5.25);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Unknown type because of type conflict
@@ -795,20 +795,20 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleWritesSameTypeString_Empty)
     List list("", "");
 
     // First write: number 42 (establishes Number type for empty list)
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Second write: string "hello" (incompatible with Number)
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "hello");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Unknown type because of type conflict
@@ -822,20 +822,20 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleWritesSameTypeUnknown_Empty)
     List list("", "");
 
     // First write: unknown type
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMRegister value1(Compiler::StaticType::Unknown);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Second write: string "hello"
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "hello");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Unknown type because first write is unknown
@@ -849,20 +849,20 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleWritesWithStringOptimization_Empty)
     List list("", "");
 
     // First write: number 5
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Second write: string "3.14" (optimized to Number)
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "3.14");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Number type because the string gets optimized to number
@@ -876,20 +876,20 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleWritesNumberToString_NonEmpty)
     List list("", "");
 
     // First write: number 42 (compatible with Number)
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Second write: string "hello" (incompatible with Number)
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "hello");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Unknown type because of type conflict
@@ -903,20 +903,20 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleWritesNumberToString_Empty)
     List list("", "");
 
     // First write: number 42 (establishes Number type for empty list)
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Second write: string "hello" (incompatible with Number)
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "hello");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Unknown type because of type conflict
@@ -929,13 +929,13 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleWritesBoolToNumber_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 42.5);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Unknown type because Number conflicts with Bool
@@ -948,13 +948,13 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleWritesBoolToNumber_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 42.5);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Number type because empty list establishes new type
@@ -967,13 +967,13 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleWritesBoolToString_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "hello");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Unknown type because String conflicts with Bool
@@ -986,13 +986,13 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleWritesBoolToString_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "hello");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return String type because empty list establishes new type
@@ -1005,13 +1005,13 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleWritesBoolToStringNumberOptimization_Non
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "3.14");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // String "3.14" gets optimized to Number, which conflicts with Bool
@@ -1024,13 +1024,13 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleWritesBoolToStringNumberOptimization_Emp
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "3.14");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // String "3.14" gets optimized to Number type
@@ -1043,30 +1043,30 @@ TEST(LLVMTypeAnalyzer_ListType, TypeChangeInIfBranch_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // First write - changes type
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::String, "test");
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Second write - does not change type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 42);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Returns unknown type because both branches might run
@@ -1079,30 +1079,30 @@ TEST(LLVMTypeAnalyzer_ListType, TypeChangeInIfBranch_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // First write - changes type
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::String, "test");
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Second write - different type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 42);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Returns unknown type because different types in branches
@@ -1115,30 +1115,30 @@ TEST(LLVMTypeAnalyzer_ListType, TypeChangeInElseBranch_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // First write - does not change type
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Second write - changes type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Returns unknown type because both branches might run
@@ -1151,30 +1151,30 @@ TEST(LLVMTypeAnalyzer_ListType, TypeChangeInElseBranch_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // First write - establishes Number type
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Second write - establishes String type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Returns unknown type because different types in branches
@@ -1187,30 +1187,30 @@ TEST(LLVMTypeAnalyzer_ListType, IfElseWithEqualTypes_SameType_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // First write - does not change type
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Second write - does not change type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 1.25);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
@@ -1222,30 +1222,30 @@ TEST(LLVMTypeAnalyzer_ListType, IfElseWithEqualTypes_SameType_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // First write - establishes Number type
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Second write - establishes same Number type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 1.25);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Number);
@@ -1257,30 +1257,30 @@ TEST(LLVMTypeAnalyzer_ListType, IfElseWithEqualTypes_DifferentTypes_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // First write - changes type to string
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::String, "Lorem");
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Second write - changes type to string
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "ipsum");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
@@ -1292,30 +1292,30 @@ TEST(LLVMTypeAnalyzer_ListType, IfElseWithEqualTypes_DifferentTypes_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // First write - establishes String type
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::String, "Lorem");
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Second write - establishes same String type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "ipsum");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::String);
@@ -1327,33 +1327,33 @@ TEST(LLVMTypeAnalyzer_ListType, IfStatementAfterLoop_SameTypes_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(loopStart);
 
     // First write - does not change type
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(loopEnd);
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // Second write - does not change type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 2);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
@@ -1365,33 +1365,33 @@ TEST(LLVMTypeAnalyzer_ListType, IfStatementAfterLoop_SameTypes_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(loopStart);
 
     // First write - establishes type for empty list
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(loopEnd);
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // Second write - same type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 2);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Number);
@@ -1403,33 +1403,33 @@ TEST(LLVMTypeAnalyzer_ListType, IfStatementAfterLoop_DifferentTypes_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(loopStart);
 
     // First write - does not change type
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(loopEnd);
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // Second write - changes type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
@@ -1441,33 +1441,33 @@ TEST(LLVMTypeAnalyzer_ListType, IfStatementAfterLoop_DifferentTypes_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(loopStart);
 
     // First write - establishes Number type for empty list
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(loopEnd);
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // Second write - adds string
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Unknown);
@@ -1479,46 +1479,46 @@ TEST(LLVMTypeAnalyzer_ListType, TwoIfStatements_DifferentTypes_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // First write - does not change type
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Second write - does not change type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 4);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
-    elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Third write - adds string (in else branch)
-    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value3(Compiler::StaticType::String, "test");
     appendList3->workList = &list;
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     instructionList.addInstruction(appendList3);
 
-    ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
@@ -1530,46 +1530,46 @@ TEST(LLVMTypeAnalyzer_ListType, TwoIfStatements_DifferentTypes_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // First write - establishes Number type
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Second write - same Number type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 4);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
-    elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Third write - adds String (in else branch)
-    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value3(Compiler::StaticType::String, "test");
     appendList3->workList = &list;
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     instructionList.addInstruction(appendList3);
 
-    ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Unknown);
@@ -1582,36 +1582,36 @@ TEST(LLVMTypeAnalyzer_ListType, NestedLoopWithTypeChange_Before_NonEmpty)
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner loop begin
-    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop);
 
     // List write inside inner loop
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner loop end
-    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
@@ -1624,36 +1624,36 @@ TEST(LLVMTypeAnalyzer_ListType, NestedLoopWithTypeChange_Before_Empty)
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner loop begin
-    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop);
 
     // List write inside inner loop
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner loop end
-    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Unknown);
@@ -1666,36 +1666,36 @@ TEST(LLVMTypeAnalyzer_ListType, NestedLoopWithTypeChange_BeforeInner_NonEmpty)
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Inner loop begin
-    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop);
 
     // List write inside inner loop
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner loop end
-    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     // Returns Unknown because a string might be added
@@ -1709,36 +1709,36 @@ TEST(LLVMTypeAnalyzer_ListType, NestedLoopWithTypeChange_BeforeInner_Empty)
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Inner loop begin
-    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop);
 
     // List write inside inner loop
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner loop end
-    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     // Returns Unknown because a string might be added
@@ -1752,36 +1752,36 @@ TEST(LLVMTypeAnalyzer_ListType, NestedLoopWithTypeChange_AfterWriteInsideInner_N
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner loop begin
-    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop);
 
     // List write inside inner loop
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Inner loop end
-    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     // Returns Unknown because a string might be added
@@ -1795,36 +1795,36 @@ TEST(LLVMTypeAnalyzer_ListType, NestedLoopWithTypeChange_AfterWriteInsideInner_E
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner loop begin
-    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop);
 
     // List write inside inner loop
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Inner loop end
-    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     // Returns Unknown because a string might be added
@@ -1838,36 +1838,36 @@ TEST(LLVMTypeAnalyzer_ListType, NestedLoopWithTypeChange_After_NonEmpty)
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner loop begin
-    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop);
 
     // List write inside inner loop
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner loop end
-    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     // Type is not known because the inner loop might not run at all
@@ -1881,36 +1881,36 @@ TEST(LLVMTypeAnalyzer_ListType, NestedLoopWithTypeChange_After_Empty)
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner loop begin
-    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop);
 
     // List write inside inner loop
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner loop end
-    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     // Type is not known because the inner loop might not run at all
@@ -1924,36 +1924,36 @@ TEST(LLVMTypeAnalyzer_ListType, NestedLoopWithoutTypeChange_NonEmpty)
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginWhileLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginWhileLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner loop begin
-    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop);
 
     // List write inside inner loop
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 2.5);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner loop end
-    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
@@ -1966,36 +1966,36 @@ TEST(LLVMTypeAnalyzer_ListType, NestedLoopWithoutTypeChange_Empty)
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginWhileLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginWhileLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner loop begin
-    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop);
 
     // List write inside inner loop
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 2.5);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner loop end
-    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Number);
@@ -2008,43 +2008,43 @@ TEST(LLVMTypeAnalyzer_ListType, NestedLoopTypeChangesMultipleTimes_NonEmpty)
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner loop begin
-    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, nullptr, false);
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, false);
     instructionList.addInstruction(innerLoop);
 
     // List write inside inner loop
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner loop end
-    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd);
 
     // List write after inner loop
-    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value3(Compiler::StaticType::Number, 2);
     appendList3->workList = &list;
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     instructionList.addInstruction(appendList3);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
@@ -2057,43 +2057,43 @@ TEST(LLVMTypeAnalyzer_ListType, NestedLoopTypeChangesMultipleTimes_Empty)
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner loop begin
-    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, nullptr, false);
+    auto innerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, false);
     instructionList.addInstruction(innerLoop);
 
     // List write inside inner loop
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner loop end
-    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd);
 
     // List write after inner loop
-    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value3(Compiler::StaticType::Number, 2);
     appendList3->workList = &list;
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     instructionList.addInstruction(appendList3);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Unknown);
@@ -2106,51 +2106,51 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleNestedLoopsWithTypeChange_NonEmpty)
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner loop 1 begin
-    auto innerLoop1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop1);
 
     // List write inside inner loop 1
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 2.75);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner loop 2 begin
-    auto innerLoop2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop2);
 
     // List write inside inner loop 2
-    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value3(Compiler::StaticType::String, "abc");
     appendList3->workList = &list;
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     instructionList.addInstruction(appendList3);
 
     // Inner loop 2 end
-    auto innerEnd2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd2);
 
     // Inner loop 1 end
-    auto innerEnd1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd1);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
@@ -2163,51 +2163,51 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleNestedLoopsWithTypeChange_Empty)
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner loop 1 begin
-    auto innerLoop1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop1);
 
     // List write inside inner loop 1
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 2.75);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner loop 2 begin
-    auto innerLoop2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop2);
 
     // List write inside inner loop 2
-    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value3(Compiler::StaticType::String, "abc");
     appendList3->workList = &list;
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     instructionList.addInstruction(appendList3);
 
     // Inner loop 2 end
-    auto innerEnd2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd2);
 
     // Inner loop 1 end
-    auto innerEnd1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd1);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Unknown);
@@ -2220,51 +2220,51 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleNestedLoopsWithMultipleTypeChanges_NonEm
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner loop 1 begin
-    auto innerLoop1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop1);
 
     // Inner loop 2 begin
-    auto innerLoop2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop2);
 
     // List write inside inner loop 2
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "abc");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner loop 2 end
-    auto innerEnd2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd2);
 
     // List write inside inner loop 1
-    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value3(Compiler::StaticType::Number, 2.75);
     appendList3->workList = &list;
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     instructionList.addInstruction(appendList3);
 
     // Inner loop 1 end
-    auto innerEnd1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd1);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
@@ -2277,51 +2277,51 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleNestedLoopsWithMultipleTypeChanges_Empty
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // List write inside outer loop
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner loop 1 begin
-    auto innerLoop1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop1);
 
     // Inner loop 2 begin
-    auto innerLoop2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto innerLoop2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(innerLoop2);
 
     // List write inside inner loop 2
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "abc");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner loop 2 end
-    auto innerEnd2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd2);
 
     // List write inside inner loop 1
-    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value3(Compiler::StaticType::Number, 2.75);
     appendList3->workList = &list;
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     instructionList.addInstruction(appendList3);
 
     // Inner loop 1 end
-    auto innerEnd1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto innerEnd1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(innerEnd1);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Unknown);
@@ -2334,40 +2334,40 @@ TEST(LLVMTypeAnalyzer_ListType, SameTypeIfElseInLoopWithTypeChange_NonEmpty)
     List list("", "");
 
     // Outer loop begin
-    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto outerLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(outerLoop);
 
     // Inner if statement begin
-    auto innerIf = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto innerIf = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(innerIf);
 
     // List write inside inner if statement if branch
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::String, "abc");
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Inner if statement else branch
-    auto innerElse = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto innerElse = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(innerElse);
 
     // List write inside inner if statement else branch
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "def");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
     // Inner if statement end
-    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto innerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(innerEnd);
 
     // Outer loop end
-    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto outerEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(outerEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // A type conflict always occurs
@@ -2380,7 +2380,7 @@ TEST(LLVMTypeAnalyzer_ListType, InsertToList_SameType_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, nullptr, false);
+    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, false);
     LLVMConstantRegister index(Compiler::StaticType::Number, 1);
     LLVMConstantRegister value(Compiler::StaticType::Number, 42.5);
     insertList->workList = &list;
@@ -2388,7 +2388,7 @@ TEST(LLVMTypeAnalyzer_ListType, InsertToList_SameType_NonEmpty)
     insertList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(insertList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
@@ -2400,7 +2400,7 @@ TEST(LLVMTypeAnalyzer_ListType, InsertToList_DifferentType_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, nullptr, false);
+    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, false);
     LLVMConstantRegister index(Compiler::StaticType::Number, 0);
     LLVMConstantRegister value(Compiler::StaticType::String, "hello");
     insertList->workList = &list;
@@ -2408,7 +2408,7 @@ TEST(LLVMTypeAnalyzer_ListType, InsertToList_DifferentType_Empty)
     insertList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(insertList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::String);
@@ -2420,10 +2420,10 @@ TEST(LLVMTypeAnalyzer_ListType, InsertToList_InLoop_TypeConflict)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto insertList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, nullptr, false);
+    auto insertList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, false);
     LLVMConstantRegister index1(Compiler::StaticType::Number, 0);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 123);
     insertList1->workList = &list;
@@ -2431,10 +2431,10 @@ TEST(LLVMTypeAnalyzer_ListType, InsertToList_InLoop_TypeConflict)
     insertList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(insertList1);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto insertList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, nullptr, false);
+    auto insertList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, false);
     LLVMConstantRegister index2(Compiler::StaticType::Number, 1);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     insertList2->workList = &list;
@@ -2442,7 +2442,7 @@ TEST(LLVMTypeAnalyzer_ListType, InsertToList_InLoop_TypeConflict)
     insertList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(insertList2);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Unknown);
@@ -2454,7 +2454,7 @@ TEST(LLVMTypeAnalyzer_ListType, ListReplace_SameType_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, nullptr, false);
+    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, false);
     LLVMConstantRegister index(Compiler::StaticType::Number, 0);
     LLVMConstantRegister value(Compiler::StaticType::String, "replaced");
     replaceList->workList = &list;
@@ -2462,7 +2462,7 @@ TEST(LLVMTypeAnalyzer_ListType, ListReplace_SameType_NonEmpty)
     replaceList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(replaceList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::String, false), Compiler::StaticType::String);
@@ -2474,7 +2474,7 @@ TEST(LLVMTypeAnalyzer_ListType, ListReplace_DifferentType_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, nullptr, false);
+    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, false);
     LLVMConstantRegister index(Compiler::StaticType::Number, 0);
     LLVMConstantRegister value(Compiler::StaticType::Bool, true);
     replaceList->workList = &list;
@@ -2482,7 +2482,7 @@ TEST(LLVMTypeAnalyzer_ListType, ListReplace_DifferentType_NonEmpty)
     replaceList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(replaceList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::String, false), Compiler::StaticType::Unknown);
@@ -2494,7 +2494,7 @@ TEST(LLVMTypeAnalyzer_ListType, ListReplace_WithStringOptimization)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, nullptr, false);
+    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, false);
     LLVMConstantRegister index(Compiler::StaticType::Number, 0);
     LLVMConstantRegister value(Compiler::StaticType::String, "42.75");
     replaceList->workList = &list;
@@ -2502,7 +2502,7 @@ TEST(LLVMTypeAnalyzer_ListType, ListReplace_WithStringOptimization)
     replaceList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(replaceList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // String "42.75" gets optimized to Number type
@@ -2516,14 +2516,14 @@ TEST(LLVMTypeAnalyzer_ListType, MixedWriteOperations_TypeConflict)
     List list("", "");
 
     // Append a number
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList);
 
     // Insert a string
-    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, nullptr, false);
+    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, false);
     LLVMConstantRegister index(Compiler::StaticType::Number, 0);
     LLVMConstantRegister value2(Compiler::StaticType::String, "hello");
     insertList->workList = &list;
@@ -2532,7 +2532,7 @@ TEST(LLVMTypeAnalyzer_ListType, MixedWriteOperations_TypeConflict)
     instructionList.addInstruction(insertList);
 
     // Replace with a boolean
-    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, nullptr, false);
+    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, false);
     LLVMConstantRegister index2(Compiler::StaticType::Number, 1);
     LLVMConstantRegister value3(Compiler::StaticType::Bool, true);
     replaceList->workList = &list;
@@ -2540,7 +2540,7 @@ TEST(LLVMTypeAnalyzer_ListType, MixedWriteOperations_TypeConflict)
     replaceList->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     instructionList.addInstruction(replaceList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should be Unknown due to multiple type conflicts
@@ -2554,14 +2554,14 @@ TEST(LLVMTypeAnalyzer_ListType, MixedWriteOperations_SameType)
     List list("", "");
 
     // Append a string
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::String, "hello");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList);
 
     // Insert another string
-    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, nullptr, false);
+    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, false);
     LLVMConstantRegister index(Compiler::StaticType::Number, 0);
     LLVMConstantRegister value2(Compiler::StaticType::String, "world");
     insertList->workList = &list;
@@ -2570,7 +2570,7 @@ TEST(LLVMTypeAnalyzer_ListType, MixedWriteOperations_SameType)
     instructionList.addInstruction(insertList);
 
     // Replace with another string
-    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, nullptr, false);
+    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, false);
     LLVMConstantRegister index2(Compiler::StaticType::Number, 1);
     LLVMConstantRegister value3(Compiler::StaticType::String, "test");
     replaceList->workList = &list;
@@ -2578,7 +2578,7 @@ TEST(LLVMTypeAnalyzer_ListType, MixedWriteOperations_SameType)
     replaceList->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     instructionList.addInstruction(replaceList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should be String type since all operations use strings
@@ -2592,14 +2592,14 @@ TEST(LLVMTypeAnalyzer_ListType, ComplexMixedOperations)
     List list("", "");
 
     // Append a number
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 123);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList);
 
     // Insert another number
-    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, nullptr, false);
+    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, false);
     LLVMConstantRegister index1(Compiler::StaticType::Number, 0);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 456);
     insertList->workList = &list;
@@ -2607,11 +2607,11 @@ TEST(LLVMTypeAnalyzer_ListType, ComplexMixedOperations)
     insertList->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(insertList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Replace with a string (creates type conflict)
-    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, nullptr, false);
+    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, false);
     LLVMConstantRegister index2(Compiler::StaticType::Number, 0);
     LLVMConstantRegister value3(Compiler::StaticType::String, "conflict");
     replaceList->workList = &list;
@@ -2629,18 +2629,18 @@ TEST(LLVMTypeAnalyzer_ListType, ComplexMixedOperations_InLoop)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // Append a number
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 123);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList);
 
     // Insert another number
-    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, nullptr, false);
+    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, false);
     LLVMConstantRegister index1(Compiler::StaticType::Number, 0);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 456);
     insertList->workList = &list;
@@ -2648,11 +2648,11 @@ TEST(LLVMTypeAnalyzer_ListType, ComplexMixedOperations_InLoop)
     insertList->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(insertList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Replace with a string (creates type conflict)
-    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, nullptr, false);
+    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, false);
     LLVMConstantRegister index2(Compiler::StaticType::Number, 0);
     LLVMConstantRegister value3(Compiler::StaticType::String, "conflict");
     replaceList->workList = &list;
@@ -2660,7 +2660,7 @@ TEST(LLVMTypeAnalyzer_ListType, ComplexMixedOperations_InLoop)
     replaceList->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     instructionList.addInstruction(replaceList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::String, true), Compiler::StaticType::Unknown);
@@ -2672,33 +2672,33 @@ TEST(LLVMTypeAnalyzer_ListType, MultipleClearsInLoop)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::String, "test");
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 5);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Bool, false), Compiler::StaticType::String);
@@ -2711,19 +2711,19 @@ TEST(LLVMTypeAnalyzer_ListType, ClearAndRebuild_WithDifferentTypes)
     List list("", "");
 
     // Initial append
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::String, "initial");
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Clear the list
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
     // Rebuild with different operations and types
-    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, nullptr, false);
+    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, false);
     LLVMConstantRegister index(Compiler::StaticType::Number, 0);
     LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
     insertList->workList = &list;
@@ -2731,7 +2731,7 @@ TEST(LLVMTypeAnalyzer_ListType, ClearAndRebuild_WithDifferentTypes)
     insertList->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(insertList);
 
-    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, nullptr, false);
+    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, false);
     LLVMConstantRegister index2(Compiler::StaticType::Number, 0);
     LLVMConstantRegister value3(Compiler::StaticType::Bool, false);
     replaceList->workList = &list;
@@ -2739,7 +2739,7 @@ TEST(LLVMTypeAnalyzer_ListType, ClearAndRebuild_WithDifferentTypes)
     replaceList->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     instructionList.addInstruction(replaceList);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should be Bool type since clear resets and all subsequent operations use booleans
@@ -2752,25 +2752,25 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_NewTypeAfterClear_Empty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // Clear the list in the middle of the loop
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
     // Append after clear - this should set the new type
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "test");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return String because the list was empty and append sets the type
@@ -2783,25 +2783,25 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_NewTypeAfterClear_NonEmpty)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // Clear the list in the middle of the loop
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
     // Append after clear - this should set the new type
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "test");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return String because clear makes the list empty, then append sets the type
@@ -2814,32 +2814,32 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_MultipleAppendsAfterClear)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // Clear the list
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
     // First append after clear
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Second append after clear (same type)
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 3.14);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Number because all appends after clear are the same type
@@ -2852,32 +2852,32 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_TypeConflictAfterClear)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // Clear the list
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
     // First append after clear
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Second append after clear (different type - creates conflict)
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Unknown because of type conflict after clear
@@ -2890,16 +2890,16 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_WithInsertAndReplace)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // Clear the list
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
     // Insert after clear
-    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, nullptr, false);
+    auto insertList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::InsertToList, false);
     LLVMConstantRegister insertIndex(Compiler::StaticType::Number, 0);
     LLVMConstantRegister insertValue(Compiler::StaticType::Bool, true);
     insertList->workList = &list;
@@ -2908,7 +2908,7 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_WithInsertAndReplace)
     instructionList.addInstruction(insertList);
 
     // Replace after insert
-    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, nullptr, false);
+    auto replaceList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ListReplace, false);
     LLVMConstantRegister replaceIndex(Compiler::StaticType::Number, 0);
     LLVMConstantRegister replaceValue(Compiler::StaticType::Bool, false);
     replaceList->workList = &list;
@@ -2916,10 +2916,10 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_WithInsertAndReplace)
     replaceList->args.push_back({ Compiler::StaticType::Unknown, &replaceValue });
     instructionList.addInstruction(replaceList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Bool because all operations after clear use Bool type
@@ -2932,43 +2932,43 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_ConditionalClear)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // If statement
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // Clear the list conditionally
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
     // Append after clear
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::String, "cleared");
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Else branch
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Append without clearing
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 42);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Unknown due to type conflict between branches
@@ -2981,33 +2981,33 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_AppendAfterClearingInIfBranch_Di
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // If statement
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // Clear the list
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
     // End if statement
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
     // Append
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "test");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Unknown because the clearing branch might or might not run
@@ -3020,33 +3020,33 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_AppendAfterClearingInIfBranch_Sa
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // If statement
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // Clear the list
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
     // End if statement
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
     // Append
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 42);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Number because there are no type conflicts
@@ -3059,37 +3059,37 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_AppendAfterClearingInElseBranch_
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // If statement
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // Else branch
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Clear the list
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
     // End if statement
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
     // Append
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::String, "test");
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Unknown because the clearing branch might or might not run
@@ -3102,37 +3102,37 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_AppendAfterClearingInElseBranch_
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // If statement
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // Else branch
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Clear the list
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
     // End if statement
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
     // Append
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Number, 42);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Number because there are no type conflicts
@@ -3145,37 +3145,37 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_MultipleClearsAndWrites)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // First clear
-    auto clearList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList1->workList = &list;
     instructionList.addInstruction(clearList1);
 
     // Append after first clear
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::String, "first");
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Second clear
-    auto clearList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList2->workList = &list;
     instructionList.addInstruction(clearList2);
 
     // Append after second clear (different type)
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::Number, 42);
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Number because the last clear+append sequence determines the final type
@@ -3188,18 +3188,18 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_ClearWithoutSubsequentWrite)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // Clear the list but don't write anything after
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return previous type since no writes occurred after clear
@@ -3212,31 +3212,31 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_ClearInNestedIf)
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
     // Nested if statement
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // Clear and write in nested if
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
-    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value(Compiler::StaticType::Bool, true);
     appendList->workList = &list;
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     instructionList.addInstruction(appendList);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Unknown because the type-changing branch might or might not run
@@ -3249,38 +3249,38 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_AppendToEmptyListAndClearInIfBra
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // Append in if branch
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Clear the list in if branch
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
     // Append after if statement - should change type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return String because the list remains empty after the if statement
@@ -3293,38 +3293,38 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_AppendToEmptyListAndClearInIfBra
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
     // Append in if branch
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Bool, true);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Clear the list in if branch
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
     // Append after if statement - should change type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return String because the list remains empty after the if statement
@@ -3337,41 +3337,41 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_AppendToEmptyListAndClearInElseB
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Append in else branch
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Clear the list in else branch
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
     // Append after if statement - should change type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return String because the list remains empty after the if statement
@@ -3384,41 +3384,41 @@ TEST(LLVMTypeAnalyzer_ListType, ClearListInLoop_AppendToEmptyListAndClearInElseB
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, nullptr, false);
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
     instructionList.addInstruction(ifStart);
 
-    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, nullptr, false);
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
     instructionList.addInstruction(elseStart);
 
     // Append in else branch
-    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Bool, true);
     appendList1->workList = &list;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(appendList1);
 
     // Clear the list in else branch
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
-    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, nullptr, false);
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     instructionList.addInstruction(ifEnd);
 
     // Append after if statement - should change type
-    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value2(Compiler::StaticType::String, "test");
     appendList2->workList = &list;
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     instructionList.addInstruction(appendList2);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return String because the list remains empty after the if statement
@@ -3433,18 +3433,18 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_SimpleRead_NonEmpty)
     List targetList("target", "");
 
     // Establish source list type
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &sourceList;
     instructionList.addInstruction(clearList);
 
-    auto appendSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister sourceValue(Compiler::StaticType::String, "hello");
     appendSource->workList = &sourceList;
     appendSource->args.push_back({ Compiler::StaticType::Unknown, &sourceValue });
     instructionList.addInstruction(appendSource);
 
     // Read from source list and write to target list
-    auto readSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readSourceReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readSourceReg->instruction = readSource;
     readSourceReg->isRawValue = false;
@@ -3454,12 +3454,12 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_SimpleRead_NonEmpty)
     readSource->args.push_back({ Compiler::StaticType::Number, &index });
     instructionList.addInstruction(readSource);
 
-    auto appendTarget = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendTarget = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     appendTarget->workList = &targetList;
     appendTarget->args.push_back({ Compiler::StaticType::Unknown, readSourceReg.get() });
     instructionList.addInstruction(appendTarget);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&targetList, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
@@ -3473,18 +3473,18 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_SimpleRead_Empty)
     List targetList("target", "");
 
     // Establish source list type
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &sourceList;
     instructionList.addInstruction(clearList);
 
-    auto appendSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister sourceValue(Compiler::StaticType::Bool, true);
     appendSource->workList = &sourceList;
     appendSource->args.push_back({ Compiler::StaticType::Unknown, &sourceValue });
     instructionList.addInstruction(appendSource);
 
     // Read from source list and write to target list
-    auto readSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readSourceReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readSourceReg->instruction = readSource;
     readSourceReg->isRawValue = false;
@@ -3494,12 +3494,12 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_SimpleRead_Empty)
     readSource->args.push_back({ Compiler::StaticType::Number, &index });
     instructionList.addInstruction(readSource);
 
-    auto appendTarget = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendTarget = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     appendTarget->workList = &targetList;
     appendTarget->args.push_back({ Compiler::StaticType::Unknown, readSourceReg.get() });
     instructionList.addInstruction(appendTarget);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&targetList, funcCall.get(), Compiler::StaticType::Number, true), Compiler::StaticType::Bool);
@@ -3512,23 +3512,23 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_InLoop_TypeConflict)
     List sourceList("source", "");
     List targetList("target", "");
 
-    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(loopStart);
 
     // Clear source list
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &sourceList;
     instructionList.addInstruction(clearList);
 
     // First iteration: append string to source
-    auto appendSource1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendSource1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister sourceValue1(Compiler::StaticType::String, "text");
     appendSource1->workList = &sourceList;
     appendSource1->args.push_back({ Compiler::StaticType::Unknown, &sourceValue1 });
     instructionList.addInstruction(appendSource1);
 
     // Read from source and write to target
-    auto readSource1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readSource1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readSource1Reg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readSource1Reg->instruction = readSource1;
     readSource1Reg->isRawValue = false;
@@ -3538,20 +3538,20 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_InLoop_TypeConflict)
     readSource1->args.push_back({ Compiler::StaticType::Number, &index1 });
     instructionList.addInstruction(readSource1);
 
-    auto appendTarget1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendTarget1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     appendTarget1->workList = &targetList;
     appendTarget1->args.push_back({ Compiler::StaticType::Unknown, readSource1Reg.get() });
     instructionList.addInstruction(appendTarget1);
 
     // Second iteration: append number to source (creates type conflict)
-    auto appendSource2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendSource2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister sourceValue2(Compiler::StaticType::Number, 42);
     appendSource2->workList = &sourceList;
     appendSource2->args.push_back({ Compiler::StaticType::Unknown, &sourceValue2 });
     instructionList.addInstruction(appendSource2);
 
     // Read from source and write to target
-    auto readSource2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readSource2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readSource2Reg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readSource2Reg->instruction = readSource2;
     readSource2Reg->isRawValue = false;
@@ -3561,15 +3561,15 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_InLoop_TypeConflict)
     readSource2->args.push_back({ Compiler::StaticType::Number, &index2 });
     instructionList.addInstruction(readSource2);
 
-    auto appendTarget2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendTarget2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     appendTarget2->workList = &targetList;
     appendTarget2->args.push_back({ Compiler::StaticType::Unknown, readSource2Reg.get() });
     instructionList.addInstruction(appendTarget2);
 
-    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(loopEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&targetList, funcCall.get(), Compiler::StaticType::String, true), Compiler::StaticType::Unknown);
@@ -3582,18 +3582,18 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_InLoop_ConsistentType_NonEmp
     List sourceList("source", "");
     List targetList("target", "");
 
-    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(loopStart);
 
     // Append number to source
-    auto appendSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister sourceValue(Compiler::StaticType::Number, 3.14);
     appendSource->workList = &sourceList;
     appendSource->args.push_back({ Compiler::StaticType::Unknown, &sourceValue });
     instructionList.addInstruction(appendSource);
 
     // Read from source and write to target
-    auto readSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readSourceReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readSourceReg->instruction = readSource;
     readSourceReg->isRawValue = false;
@@ -3603,15 +3603,15 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_InLoop_ConsistentType_NonEmp
     readSource->args.push_back({ Compiler::StaticType::Number, &index });
     instructionList.addInstruction(readSource);
 
-    auto appendTarget = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendTarget = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     appendTarget->workList = &targetList;
     appendTarget->args.push_back({ Compiler::StaticType::Unknown, readSourceReg.get() });
     instructionList.addInstruction(appendTarget);
 
-    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(loopEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&targetList, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Unknown);
@@ -3624,22 +3624,22 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_InLoop_ConsistentType_EmptyS
     List sourceList("source", "");
     List targetList("target", "");
 
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &sourceList;
     instructionList.addInstruction(clearList);
 
-    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(loopStart);
 
     // Append number to source
-    auto appendSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister sourceValue(Compiler::StaticType::Number, 3.14);
     appendSource->workList = &sourceList;
     appendSource->args.push_back({ Compiler::StaticType::Unknown, &sourceValue });
     instructionList.addInstruction(appendSource);
 
     // Read from source and write to target
-    auto readSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readSource = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readSourceReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readSourceReg->instruction = readSource;
     readSourceReg->isRawValue = false;
@@ -3649,15 +3649,15 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_InLoop_ConsistentType_EmptyS
     readSource->args.push_back({ Compiler::StaticType::Number, &index });
     instructionList.addInstruction(readSource);
 
-    auto appendTarget = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendTarget = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     appendTarget->workList = &targetList;
     appendTarget->args.push_back({ Compiler::StaticType::Unknown, readSourceReg.get() });
     instructionList.addInstruction(appendTarget);
 
-    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(loopEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&targetList, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
@@ -3670,23 +3670,23 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_TypeSafety)
     List listA("listA", "");
     List listB("listB", "");
 
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &listA;
     instructionList.addInstruction(clearList);
 
-    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &listB;
     instructionList.addInstruction(clearList);
 
     // Initialize listA with a number
-    auto appendA1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendA1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister valueA1(Compiler::StaticType::Number, 10);
     appendA1->workList = &listA;
     appendA1->args.push_back({ Compiler::StaticType::Unknown, &valueA1 });
     instructionList.addInstruction(appendA1);
 
     // Read from listA and write to listB
-    auto readA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readAReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readAReg->instruction = readA;
     readAReg->isRawValue = false;
@@ -3696,13 +3696,13 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_TypeSafety)
     readA->args.push_back({ Compiler::StaticType::Number, &indexA });
     instructionList.addInstruction(readA);
 
-    auto appendB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     appendB->workList = &listB;
     appendB->args.push_back({ Compiler::StaticType::Unknown, readAReg.get() });
     instructionList.addInstruction(appendB);
 
     // Read from listB and write back to listA (circular dependency)
-    auto readB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readBReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readBReg->instruction = readB;
     readBReg->isRawValue = false;
@@ -3712,12 +3712,12 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_TypeSafety)
     readB->args.push_back({ Compiler::StaticType::Number, &indexB });
     instructionList.addInstruction(readB);
 
-    auto appendA2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendA2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     appendA2->workList = &listA;
     appendA2->args.push_back({ Compiler::StaticType::Unknown, readBReg.get() });
     instructionList.addInstruction(appendA2);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&listA, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
@@ -3730,26 +3730,26 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_TypeSafety_InLoop)
     List listA("listA", "");
     List listB("listB", "");
 
-    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto start = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(start);
 
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &listA;
     instructionList.addInstruction(clearList);
 
-    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &listB;
     instructionList.addInstruction(clearList);
 
     // Initialize listA with a number
-    auto appendA1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendA1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister valueA1(Compiler::StaticType::Number, 10);
     appendA1->workList = &listA;
     appendA1->args.push_back({ Compiler::StaticType::Unknown, &valueA1 });
     instructionList.addInstruction(appendA1);
 
     // Read from listA and write to listB
-    auto readA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readAReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readAReg->instruction = readA;
     readAReg->isRawValue = false;
@@ -3759,13 +3759,13 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_TypeSafety_InLoop)
     readA->args.push_back({ Compiler::StaticType::Number, &indexA });
     instructionList.addInstruction(readA);
 
-    auto appendB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     appendB->workList = &listB;
     appendB->args.push_back({ Compiler::StaticType::Unknown, readAReg.get() });
     instructionList.addInstruction(appendB);
 
     // Read from listB and write back to listA (circular dependency)
-    auto readB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readBReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readBReg->instruction = readB;
     readBReg->isRawValue = false;
@@ -3775,15 +3775,15 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_TypeSafety_InLoop)
     readB->args.push_back({ Compiler::StaticType::Number, &indexB });
     instructionList.addInstruction(readB);
 
-    auto appendA2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendA2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     appendA2->workList = &listA;
     appendA2->args.push_back({ Compiler::StaticType::Unknown, readBReg.get() });
     instructionList.addInstruction(appendA2);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
-    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto end = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(end);
 
     ASSERT_EQ(analyzer.listType(&listA, funcCall.get(), Compiler::StaticType::String, false), Compiler::StaticType::Number);
@@ -3796,26 +3796,26 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_TypeConflict)
     List listA("listA", "");
     List listB("listB", "");
 
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &listA;
     instructionList.addInstruction(clearList);
 
-    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &listB;
     instructionList.addInstruction(clearList);
 
-    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, nullptr, false);
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     instructionList.addInstruction(loopStart);
 
     // Initialize listA with a number
-    auto appendA1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendA1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister valueA1(Compiler::StaticType::Number, 10);
     appendA1->workList = &listA;
     appendA1->args.push_back({ Compiler::StaticType::Unknown, &valueA1 });
     instructionList.addInstruction(appendA1);
 
     // Read from listA and write to listB
-    auto readA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readAReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readAReg->instruction = readA;
     readAReg->isRawValue = false;
@@ -3825,20 +3825,20 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_TypeConflict)
     readA->args.push_back({ Compiler::StaticType::Number, &indexA });
     instructionList.addInstruction(readA);
 
-    auto appendB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     appendB->workList = &listB;
     appendB->args.push_back({ Compiler::StaticType::Unknown, readAReg.get() });
     instructionList.addInstruction(appendB);
 
     // Create type conflict by appending string to listB
-    auto appendB2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendB2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister valueB2(Compiler::StaticType::String, "conflict");
     appendB2->workList = &listB;
     appendB2->args.push_back({ Compiler::StaticType::Unknown, &valueB2 });
     instructionList.addInstruction(appendB2);
 
     // Read from listB and write back to listA (circular dependency with type conflict)
-    auto readB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readBReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readBReg->instruction = readB;
     readBReg->isRawValue = false;
@@ -3848,15 +3848,15 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_TypeConflict)
     readB->args.push_back({ Compiler::StaticType::Number, &indexB });
     instructionList.addInstruction(readB);
 
-    auto appendA2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendA2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     appendA2->workList = &listA;
     appendA2->args.push_back({ Compiler::StaticType::Unknown, readBReg.get() });
     instructionList.addInstruction(appendA2);
 
-    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, nullptr, false);
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     instructionList.addInstruction(loopEnd);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Should return Unknown due to circular dependency with type conflicts
@@ -3869,19 +3869,19 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_SingleList_KnownTyp
     LLVMInstructionList instructionList;
     List list("", "");
 
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &list;
     instructionList.addInstruction(clearList);
 
     // Initialize list with a number
-    auto append1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto append1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 10);
     append1->workList = &list;
     append1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     instructionList.addInstruction(append1);
 
     // Read from list and write to list
-    auto read = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto read = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readReg->instruction = read;
     readReg->isRawValue = false;
@@ -3891,12 +3891,12 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_SingleList_KnownTyp
     read->args.push_back({ Compiler::StaticType::Number, &index });
     instructionList.addInstruction(read);
 
-    auto append2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto append2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     append2->workList = &list;
     append2->args.push_back({ Compiler::StaticType::Unknown, readReg.get() });
     instructionList.addInstruction(append2);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::String, false), Compiler::StaticType::Number);
@@ -3909,7 +3909,7 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_SingleList_KnownTyp
     List list("", "");
 
     // Read from list and write to list
-    auto read = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto read = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readReg->instruction = read;
     readReg->isRawValue = false;
@@ -3919,12 +3919,12 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_SingleList_KnownTyp
     read->args.push_back({ Compiler::StaticType::Number, &index });
     instructionList.addInstruction(read);
 
-    auto append2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto append2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     append2->workList = &list;
     append2->args.push_back({ Compiler::StaticType::Unknown, readReg.get() });
     instructionList.addInstruction(append2);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Number, false), Compiler::StaticType::Number);
@@ -3937,7 +3937,7 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_SingleList_UnknownT
     List list("", "");
 
     // Read from list and write to list
-    auto read = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto read = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readReg->instruction = read;
     readReg->isRawValue = false;
@@ -3947,12 +3947,12 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_Circular_SingleList_UnknownT
     read->args.push_back({ Compiler::StaticType::Number, &index });
     instructionList.addInstruction(read);
 
-    auto append2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto append2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     append2->workList = &list;
     append2->args.push_back({ Compiler::StaticType::Unknown, readReg.get() });
     instructionList.addInstruction(append2);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     ASSERT_EQ(analyzer.listType(&list, funcCall.get(), Compiler::StaticType::Unknown, false), Compiler::StaticType::Unknown);
@@ -3967,23 +3967,23 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_ChainedReads_TypePropagation
     List listC("listC", "");
 
     // Clear lists
-    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &listA;
     instructionList.addInstruction(clearList);
 
-    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, nullptr, false);
+    clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
     clearList->workList = &listB;
     instructionList.addInstruction(clearList);
 
     // Initialize listA with a boolean
-    auto appendA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister valueA(Compiler::StaticType::Bool, false);
     appendA->workList = &listA;
     appendA->args.push_back({ Compiler::StaticType::Unknown, &valueA });
     instructionList.addInstruction(appendA);
 
     // Read from listA and write to listB
-    auto readA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readA = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readAReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readAReg->instruction = readA;
     readAReg->isRawValue = false;
@@ -3993,13 +3993,13 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_ChainedReads_TypePropagation
     readA->args.push_back({ Compiler::StaticType::Number, &indexA });
     instructionList.addInstruction(readA);
 
-    auto appendB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     appendB->workList = &listB;
     appendB->args.push_back({ Compiler::StaticType::Unknown, readAReg.get() });
     instructionList.addInstruction(appendB);
 
     // Read from listB and write to listC
-    auto readB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, nullptr, false);
+    auto readB = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
     auto readBReg = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     readBReg->instruction = readB;
     readBReg->isRawValue = false;
@@ -4009,12 +4009,12 @@ TEST(LLVMTypeAnalyzer_ListType, CrossListDependency_ChainedReads_TypePropagation
     readB->args.push_back({ Compiler::StaticType::Number, &indexB });
     instructionList.addInstruction(readB);
 
-    auto appendC = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, nullptr, false);
+    auto appendC = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     appendC->workList = &listC;
     appendC->args.push_back({ Compiler::StaticType::Unknown, readBReg.get() });
     instructionList.addInstruction(appendC);
 
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, nullptr, false);
+    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     instructionList.addInstruction(funcCall);
 
     // Type should propagate through the chain: A -> B -> C

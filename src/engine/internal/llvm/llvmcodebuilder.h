@@ -23,7 +23,6 @@ namespace libscratchcpp
 
 class LLVMCompilerContext;
 class LLVMConstantRegister;
-class LLVMLoopScope;
 
 class LLVMCodeBuilder : public ICodeBuilder
 {
@@ -127,8 +126,6 @@ class LLVMCodeBuilder : public ICodeBuilder
         void createListMap();
         void pushScopeLevel();
         void popScopeLevel();
-        void pushLoopScope(bool buildPhase);
-        void popLoopScope();
 
         std::string getMainFunctionName(BlockPrototype *procedurePrototype);
         llvm::FunctionType *getMainFunctionType(BlockPrototype *procedurePrototype);
@@ -159,7 +156,6 @@ class LLVMCodeBuilder : public ICodeBuilder
         LLVMRegister *createOp(LLVMInstruction::Type type, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
         LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
         LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
-        LLVMLoopScope *currentLoopScope() const;
 
         void createValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
         void createReusedValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
@@ -203,16 +199,10 @@ class LLVMCodeBuilder : public ICodeBuilder
         int m_defaultArgCount = 0;
         Compiler::CodeType m_codeType = Compiler::CodeType::Script;
 
-        long m_loopScope = -1; // index
-        std::vector<std::shared_ptr<LLVMLoopScope>> m_loopScopes;
-        long m_loopScopeCounter = 0; // replacement for m_loopScopes size in build phase
-        std::vector<long> m_loopScopeTree;
         bool m_loopCondition = false; // whether we're currently compiling a loop condition
         std::vector<LLVMInstruction *> m_variableInstructions;
         std::vector<LLVMInstruction *> m_listInstructions;
         std::vector<std::vector<llvm::Value *>> m_stringHeap; // scopes
-
-        std::shared_ptr<ExecutableCode> m_output;
 };
 
 } // namespace libscratchcpp

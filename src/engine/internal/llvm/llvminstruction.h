@@ -10,7 +10,6 @@ namespace libscratchcpp
 {
 
 class BlockPrototype;
-class LLVMLoopScope;
 
 struct LLVMInstruction
 {
@@ -81,9 +80,8 @@ struct LLVMInstruction
             ProcedureArg
         };
 
-        LLVMInstruction(Type type, LLVMLoopScope *loopScope, bool loopCondition) :
+        LLVMInstruction(Type type, bool loopCondition) :
             type(type),
-            loopScope(loopScope),
             loopCondition(loopCondition)
         {
         }
@@ -98,7 +96,6 @@ struct LLVMInstruction
         List *workList = nullptr;         // for lists
         BlockPrototype *procedurePrototype = nullptr;
         size_t procedureArgIndex = 0;
-        LLVMLoopScope *loopScope = nullptr;
         bool loopCondition = false; // whether the instruction is part of a loop condition
 
         // Linked list

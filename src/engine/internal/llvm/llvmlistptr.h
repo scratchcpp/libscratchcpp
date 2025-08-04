@@ -3,7 +3,6 @@
 #pragma once
 
 #include <scratchcpp/compiler.h>
-#include <unordered_map>
 
 namespace llvm
 {
@@ -15,7 +14,6 @@ class Value;
 namespace libscratchcpp
 {
 
-class LLVMLoopScope;
 class LLVMInstruction;
 
 struct LLVMListPtr
@@ -24,9 +22,6 @@ struct LLVMListPtr
         llvm::Value *dataPtr = nullptr;
         llvm::Value *sizePtr = nullptr;
         llvm::Value *allocatedSizePtr = nullptr;
-
-        // Used in build phase to check the type safety of lists in loops
-        std::unordered_map<LLVMLoopScope *, std::vector<LLVMInstruction *>> loopListWrites; // loop scope, write instructions
 };
 
 } // namespace libscratchcpp
