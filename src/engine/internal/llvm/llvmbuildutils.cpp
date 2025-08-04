@@ -114,6 +114,11 @@ llvm::IRBuilder<> &LLVMBuildUtils::builder()
     return m_builder;
 }
 
+llvm::Function *LLVMBuildUtils::function() const
+{
+    return m_function;
+}
+
 LLVMFunctions &LLVMBuildUtils::functions()
 {
     return m_functions;

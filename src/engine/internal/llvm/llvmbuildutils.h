@@ -33,6 +33,7 @@ class LLVMBuildUtils
         llvm::LLVMContext &llvmCtx();
         llvm::Module *module() const;
         llvm::IRBuilder<> &builder();
+        llvm::Function *function() const;
         LLVMFunctions &functions();
         LLVMTypeAnalyzer &typeAnalyzer();
 
