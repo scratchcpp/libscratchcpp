@@ -31,6 +31,9 @@ class LLVMBuildUtils
         llvm::IRBuilder<> &builder();
         LLVMFunctions &functions();
 
+        llvm::Value *targetVariables();
+        llvm::Value *targetLists();
+
         void createVariablePtr(Variable *variable);
         void createListPtr(List *list);
 
@@ -90,9 +93,11 @@ class LLVMBuildUtils
         llvm::StructType *m_valueDataType = nullptr;
         llvm::StructType *m_stringPtrType = nullptr;
 
+        llvm::Value *m_targetVariables = nullptr;
         std::unordered_map<Variable *, size_t> m_targetVariableMap;
         std::unordered_map<Variable *, LLVMVariablePtr> m_variablePtrs;
 
+        llvm::Value *m_targetLists = nullptr;
         std::unordered_map<List *, size_t> m_targetListMap;
         std::unordered_map<List *, LLVMListPtr> m_listPtrs;
 

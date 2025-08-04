@@ -33,6 +33,8 @@ LLVMBuildUtils::LLVMBuildUtils(LLVMCompilerContext *ctx, llvm::IRBuilder<> &buil
 void LLVMBuildUtils::init(llvm::Function *function, llvm::Value *targetVariables, llvm::Value *targetLists)
 {
     m_function = function;
+    m_targetVariables = targetVariables;
+    m_targetLists = targetLists;
     m_stringHeap.clear();
     pushScopeLevel();
 
@@ -91,6 +93,16 @@ llvm::IRBuilder<> &LLVMBuildUtils::builder()
 LLVMFunctions &LLVMBuildUtils::functions()
 {
     return m_functions;
+}
+
+llvm::Value *LLVMBuildUtils::targetVariables()
+{
+    return m_targetVariables;
+}
+
+llvm::Value *LLVMBuildUtils::targetLists()
+{
+    return m_targetLists;
 }
 
 void LLVMBuildUtils::createVariablePtr(Variable *variable)
