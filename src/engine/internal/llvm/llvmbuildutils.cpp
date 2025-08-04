@@ -99,6 +99,11 @@ llvm::LLVMContext &LLVMBuildUtils::llvmCtx()
     return m_llvmCtx;
 }
 
+llvm::Module *LLVMBuildUtils::module() const
+{
+    return m_ctx->module();
+}
+
 llvm::IRBuilder<> &LLVMBuildUtils::builder()
 {
     return m_builder;

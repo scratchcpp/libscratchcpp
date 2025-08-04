@@ -29,6 +29,7 @@ class LLVMBuildUtils
         void end();
 
         llvm::LLVMContext &llvmCtx();
+        llvm::Module *module() const;
         llvm::IRBuilder<> &builder();
         LLVMFunctions &functions();
 
