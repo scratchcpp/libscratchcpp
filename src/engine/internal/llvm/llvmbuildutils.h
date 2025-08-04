@@ -25,14 +25,21 @@ class LLVMBuildUtils
 
         LLVMBuildUtils(LLVMCompilerContext *ctx, llvm::IRBuilder<> &builder);
 
-        void init(llvm::Function *function, llvm::Value *targetVariables, llvm::Value *targetLists);
+        void init(llvm::Function *function, BlockPrototype *procedurePrototype, bool warp);
         void end();
 
+        llvm::LLVMContext &llvmCtx();
         llvm::IRBuilder<> &builder();
         LLVMFunctions &functions();
 
+        BlockPrototype *procedurePrototype() const;
+        bool warp() const;
+
+        llvm::Value *executionContextPtr();
+        llvm::Value *targetPtr();
         llvm::Value *targetVariables();
         llvm::Value *targetLists();
+        llvm::Value *warpArg();
 
         void createVariablePtr(Variable *variable);
         void createListPtr(List *list);
@@ -93,11 +100,18 @@ class LLVMBuildUtils
         llvm::StructType *m_valueDataType = nullptr;
         llvm::StructType *m_stringPtrType = nullptr;
 
+        BlockPrototype *m_procedurePrototype = nullptr;
+        bool m_warp = false;
+
+        llvm::Value *m_executionContextPtr = nullptr;
+        llvm::Value *m_targetPtr = nullptr;
         llvm::Value *m_targetVariables = nullptr;
+        llvm::Value *m_targetLists = nullptr;
+        llvm::Value *m_warpArg = nullptr;
+
         std::unordered_map<Variable *, size_t> m_targetVariableMap;
         std::unordered_map<Variable *, LLVMVariablePtr> m_variablePtrs;
 
-        llvm::Value *m_targetLists = nullptr;
         std::unordered_map<List *, size_t> m_targetListMap;
         std::unordered_map<List *, LLVMListPtr> m_listPtrs;
 

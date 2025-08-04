@@ -30,17 +30,26 @@ LLVMBuildUtils::LLVMBuildUtils(LLVMCompilerContext *ctx, llvm::IRBuilder<> &buil
     createListMap();
 }
 
-void LLVMBuildUtils::init(llvm::Function *function, llvm::Value *targetVariables, llvm::Value *targetLists)
+void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePrototype, bool warp)
 {
     m_function = function;
-    m_targetVariables = targetVariables;
-    m_targetLists = targetLists;
+    m_procedurePrototype = procedurePrototype;
+
+    m_executionContextPtr = m_function->getArg(0);
+    m_targetPtr = m_function->getArg(1);
+    m_targetVariables = m_function->getArg(2);
+    m_targetLists = m_function->getArg(3);
+    m_warpArg = m_procedurePrototype ? m_function->getArg(4) : nullptr;
+
+    if (m_procedurePrototype && m_warp)
+        m_function->addFnAttr(llvm::Attribute::InlineHint);
+
     m_stringHeap.clear();
     pushScopeLevel();
 
     // Create variable pointers
     for (auto &[var, varPtr] : m_variablePtrs) {
-        llvm::Value *ptr = getVariablePtr(targetVariables, var);
+        llvm::Value *ptr = getVariablePtr(m_targetVariables, var);
 
         // Direct access
         varPtr.heapPtr = ptr;
@@ -69,7 +78,7 @@ void LLVMBuildUtils::init(llvm::Function *function, llvm::Value *targetVariables
 
     // Create list pointers
     for (auto &[list, listPtr] : m_listPtrs) {
-        listPtr.ptr = getListPtr(targetLists, list);
+        listPtr.ptr = getListPtr(m_targetLists, list);
 
         listPtr.dataPtr = m_builder.CreateAlloca(m_valueDataType->getPointerTo()->getPointerTo());
         m_builder.CreateStore(m_builder.CreateCall(m_functions.resolve_list_data_ptr(), listPtr.ptr), listPtr.dataPtr);
@@ -85,6 +94,11 @@ void LLVMBuildUtils::end()
     freeScopeHeap();
 }
 
+llvm::LLVMContext &LLVMBuildUtils::llvmCtx()
+{
+    return m_llvmCtx;
+}
+
 llvm::IRBuilder<> &LLVMBuildUtils::builder()
 {
     return m_builder;
@@ -95,6 +109,26 @@ LLVMFunctions &LLVMBuildUtils::functions()
     return m_functions;
 }
 
+BlockPrototype *LLVMBuildUtils::procedurePrototype() const
+{
+    return m_procedurePrototype;
+}
+
+bool LLVMBuildUtils::warp() const
+{
+    return m_warp;
+}
+
+llvm::Value *LLVMBuildUtils::executionContextPtr()
+{
+    return m_executionContextPtr;
+}
+
+llvm::Value *LLVMBuildUtils::targetPtr()
+{
+    return m_targetPtr;
+}
+
 llvm::Value *LLVMBuildUtils::targetVariables()
 {
     return m_targetVariables;
@@ -103,6 +137,11 @@ llvm::Value *LLVMBuildUtils::targetVariables()
 llvm::Value *LLVMBuildUtils::targetLists()
 {
     return m_targetLists;
+}
+
+llvm::Value *LLVMBuildUtils::warpArg()
+{
+    return m_warpArg;
 }
 
 void LLVMBuildUtils::createVariablePtr(Variable *variable)

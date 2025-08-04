@@ -71,18 +71,6 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     else
         m_function = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, funcName, m_module);
 
-    llvm::Value *executionContextPtr = m_function->getArg(0);
-    llvm::Value *targetPtr = m_function->getArg(1);
-    llvm::Value *targetVariables = m_function->getArg(2);
-    llvm::Value *targetLists = m_function->getArg(3);
-    llvm::Value *warpArg = nullptr;
-
-    if (m_procedurePrototype)
-        warpArg = m_function->getArg(4);
-
-    if (m_procedurePrototype && m_warp)
-        m_function->addFnAttr(llvm::Attribute::InlineHint);
-
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_llvmCtx, "entry", m_function);
     llvm::BasicBlock *endBranch = llvm::BasicBlock::Create(m_llvmCtx, "end", m_function);
     m_builder.SetInsertPoint(entry);
@@ -96,7 +84,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     std::vector<LLVMIfStatement> ifStatements;
     std::vector<LLVMLoop> loops;
 
-    m_utils.init(m_function, targetVariables, targetLists);
+    m_utils.init(m_function, m_procedurePrototype, m_warp);
 
     // Execute recorded instructions
     LLVMInstruction *ins = m_instructions.first();
@@ -108,18 +96,18 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 std::vector<llvm::Value *> args;
 
                 // Variables must be synchronized because the function can read them
-                m_utils.syncVariables(targetVariables);
+                m_utils.syncVariables(m_utils.targetVariables());
 
                 // Add execution context arg
                 if (ins->functionCtxArg) {
                     types.push_back(llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0));
-                    args.push_back(executionContextPtr);
+                    args.push_back(m_utils.executionContextPtr());
                 }
 
                 // Add target pointer arg
                 if (ins->functionTargetArg) {
                     types.push_back(llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0));
-                    args.push_back(targetPtr);
+                    args.push_back(m_utils.targetPtr());
                 }
 
                 // Args
@@ -200,7 +188,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 if (reg1->type() == Compiler::StaticType::Bool && reg2->type() == Compiler::StaticType::Bool) {
                     llvm::Value *bool1 = m_utils.castValue(arg1.second, Compiler::StaticType::Bool);
                     llvm::Value *bool2 = m_utils.castValue(arg2.second, Compiler::StaticType::Bool);
-                    ins->functionReturnReg->value = m_builder.CreateCall(m_utils.functions().resolve_llvm_random_bool(), { executionContextPtr, bool1, bool2 });
+                    ins->functionReturnReg->value = m_builder.CreateCall(m_utils.functions().resolve_llvm_random_bool(), { m_utils.executionContextPtr(), bool1, bool2 });
                 } else {
                     llvm::Constant *inf = llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), false);
                     llvm::Value *num1 = m_utils.removeNaN(m_utils.castValue(arg1.second, Compiler::StaticType::Number));
@@ -212,12 +200,12 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     // NOTE: The random function will be called even in edge cases where it isn't needed, but they're rare, so it shouldn't be an issue
                     if (reg1->type() == Compiler::StaticType::Number && reg2->type() == Compiler::StaticType::Number)
                         ins->functionReturnReg->value =
-                            m_builder.CreateSelect(isInfOrNaN, sum, m_builder.CreateCall(m_utils.functions().resolve_llvm_random_double(), { executionContextPtr, num1, num2 }));
+                            m_builder.CreateSelect(isInfOrNaN, sum, m_builder.CreateCall(m_utils.functions().resolve_llvm_random_double(), { m_utils.executionContextPtr(), num1, num2 }));
                     else {
                         llvm::Value *value1 = m_utils.createValue(reg1);
                         llvm::Value *value2 = m_utils.createValue(reg2);
                         ins->functionReturnReg->value =
-                            m_builder.CreateSelect(isInfOrNaN, sum, m_builder.CreateCall(m_utils.functions().resolve_llvm_random(), { executionContextPtr, value1, value2 }));
+                            m_builder.CreateSelect(isInfOrNaN, sum, m_builder.CreateCall(m_utils.functions().resolve_llvm_random(), { m_utils.executionContextPtr(), value1, value2 }));
                     }
                 }
 
@@ -231,7 +219,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 const auto &arg2 = ins->args[1];
                 llvm::Value *from = m_builder.CreateFPToSI(m_utils.castValue(arg1.second, arg1.first), m_builder.getInt64Ty());
                 llvm::Value *to = m_builder.CreateFPToSI(m_utils.castValue(arg2.second, arg2.first), m_builder.getInt64Ty());
-                ins->functionReturnReg->value = m_builder.CreateCall(m_utils.functions().resolve_llvm_random_long(), { executionContextPtr, from, to });
+                ins->functionReturnReg->value = m_builder.CreateCall(m_utils.functions().resolve_llvm_random_long(), { m_utils.executionContextPtr(), from, to });
 
                 ins = ins->next;
                 break;
@@ -1039,7 +1027,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
             }
 
             case LLVMInstruction::Type::Yield:
-                createSuspend(coro.get(), warpArg, targetVariables);
+                createSuspend(coro.get(), m_utils.warpArg(), m_utils.targetVariables());
 
                 ins = ins->next;
                 break;
@@ -1282,7 +1270,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 assert(ins->procedurePrototype);
                 assert(ins->args.size() == ins->procedurePrototype->argumentTypes().size());
                 m_utils.freeScopeHeap();
-                m_utils.syncVariables(targetVariables);
+                m_utils.syncVariables(m_utils.targetVariables());
 
                 std::string name = getMainFunctionName(ins->procedurePrototype);
                 llvm::FunctionType *type = getMainFunctionType(ins->procedurePrototype);
@@ -1295,7 +1283,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                 if (m_warp)
                     args.push_back(m_builder.getInt1(true));
                 else
-                    args.push_back(m_procedurePrototype ? warpArg : m_builder.getInt1(false));
+                    args.push_back(m_utils.procedurePrototype() ? m_utils.warpArg() : m_builder.getInt1(false));
 
                 // Add procedure args
                 for (const auto &arg : ins->args) {
@@ -1313,14 +1301,14 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
                     m_builder.CreateCondBr(m_builder.CreateIsNull(handle), nextBranch, suspendBranch);
 
                     m_builder.SetInsertPoint(suspendBranch);
-                    createSuspend(coro.get(), warpArg, targetVariables);
+                    createSuspend(coro.get(), m_utils.warpArg(), m_utils.targetVariables());
                     llvm::Value *done = m_builder.CreateCall(m_ctx->coroutineResumeFunction(), { handle });
                     m_builder.CreateCondBr(done, nextBranch, suspendBranch);
 
                     m_builder.SetInsertPoint(nextBranch);
                 }
 
-                m_utils.reloadVariables(targetVariables);
+                m_utils.reloadVariables(m_utils.targetVariables());
 
                 ins = ins->next;
                 break;
@@ -1341,7 +1329,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
     m_builder.CreateBr(endBranch);
 
     m_builder.SetInsertPoint(endBranch);
-    m_utils.syncVariables(targetVariables);
+    m_utils.syncVariables(m_utils.targetVariables());
 
     // End and verify the function
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
