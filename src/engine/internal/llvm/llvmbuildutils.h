@@ -7,6 +7,7 @@
 #include "llvmfunctions.h"
 #include "llvmvariableptr.h"
 #include "llvmlistptr.h"
+#include "llvmtypeanalyzer.h"
 
 namespace libscratchcpp
 {
@@ -33,6 +34,7 @@ class LLVMBuildUtils
         llvm::Module *module() const;
         llvm::IRBuilder<> &builder();
         LLVMFunctions &functions();
+        LLVMTypeAnalyzer &typeAnalyzer();
 
         BlockPrototype *procedurePrototype() const;
         bool warp() const;
@@ -96,6 +98,7 @@ class LLVMBuildUtils
         llvm::LLVMContext &m_llvmCtx;
         llvm::IRBuilder<> &m_builder;
         LLVMFunctions m_functions;
+        LLVMTypeAnalyzer m_typeAnalyzer;
         Target *m_target = nullptr;
         llvm::Function *m_function = nullptr;
 
