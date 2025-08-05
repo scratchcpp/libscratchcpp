@@ -6,6 +6,8 @@
 #include <scratchcpp/block.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/target.h>
+#include <scratchcpp/monitor.h>
 
 #include "listblocks.h"
 
@@ -39,6 +41,7 @@ void ListBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "data_itemnumoflist", &compileItemNumOfList);
     engine->addCompileFunction(this, "data_lengthoflist", &compileLengthOfList);
     engine->addCompileFunction(this, "data_listcontainsitem", &compileListContainsItem);
+    engine->addCompileFunction(this, "data_showlist", &compileShowList);
 
     // Monitor names
     engine->addMonitorNameFunction(this, "data_listcontents", &listContentsMonitorName);
@@ -213,6 +216,19 @@ CompilerValue *ListBlocks::compileListContainsItem(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *ListBlocks::compileShowList(Compiler *compiler)
+{
+    Field *field = compiler->field("LIST");
+    assert(field);
+    List *list = static_cast<List *>(field->valuePtr().get());
+    assert(list);
+
+    CompilerConstant *listPtr = compiler->addConstValue(list);
+    compiler->addTargetFunctionCall("data_showlist", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { listPtr });
+
+    return nullptr;
+}
+
 const std::string &ListBlocks::listContentsMonitorName(Block *block)
 {
     static const std::string empty = "";
@@ -227,4 +243,21 @@ const std::string &ListBlocks::listContentsMonitorName(Block *block)
         return list->name();
     else
         return empty;
+}
+
+extern "C" void data_showlist(Target *target, List *list)
+{
+    Monitor *monitor = list->monitor();
+
+    if (!monitor) {
+        /*
+         * We need shared_ptr.
+         * Since this case doesn't occur frequently,
+         * we can look up the list by ID.
+         */
+        auto index = target->findListById(list->id());
+        monitor = target->engine()->createListMonitor(target->listAt(index), "data_listcontents", "LIST", -1, &ListBlocks::compileListContents);
+    }
+
+    monitor->setVisible(true);
 }

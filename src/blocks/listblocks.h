@@ -18,8 +18,10 @@ class ListBlocks : public IExtension
 
         void registerBlocks(IEngine *engine) override;
 
-    private:
+        // NOTE: Must be public because of monitor show/hide blocks
         static CompilerValue *compileListContents(Compiler *compiler);
+
+    private:
         static CompilerValue *compileAddToList(Compiler *compiler);
         static CompilerValue *getListIndex(Compiler *compiler, CompilerValue *input, List *list, CompilerValue *listSize);
         static CompilerValue *compileDeleteOfList(Compiler *compiler);
@@ -30,6 +32,7 @@ class ListBlocks : public IExtension
         static CompilerValue *compileItemNumOfList(Compiler *compiler);
         static CompilerValue *compileLengthOfList(Compiler *compiler);
         static CompilerValue *compileListContainsItem(Compiler *compiler);
+        static CompilerValue *compileShowList(Compiler *compiler);
 
         static const std::string &listContentsMonitorName(Block *block);
 };
