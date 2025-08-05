@@ -7,6 +7,8 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/variable.h>
+#include <scratchcpp/target.h>
+#include <scratchcpp/monitor.h>
 
 #include "variableblocks.h"
 
@@ -33,6 +35,7 @@ void VariableBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "data_variable", &compileVariable);
     engine->addCompileFunction(this, "data_setvariableto", &compileSetVariableTo);
     engine->addCompileFunction(this, "data_changevariableby", &compileChangeVariableBy);
+    engine->addCompileFunction(this, "data_showvariable", &compileShowVariable);
 
     // Monitor names
     engine->addMonitorNameFunction(this, "data_variable", &variableMonitorName);
@@ -79,6 +82,19 @@ CompilerValue *VariableBlocks::compileChangeVariableBy(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *VariableBlocks::compileShowVariable(Compiler *compiler)
+{
+    Field *field = compiler->field("VARIABLE");
+    assert(field);
+    Variable *var = static_cast<Variable *>(field->valuePtr().get());
+    assert(var);
+
+    CompilerConstant *varPtr = compiler->addConstValue(var);
+    compiler->addTargetFunctionCall("data_showvariable", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { varPtr });
+
+    return nullptr;
+}
+
 const std::string &VariableBlocks::variableMonitorName(Block *block)
 {
     static const std::string empty = "";
@@ -107,4 +123,21 @@ void VariableBlocks::changeVariableMonitorValue(Block *block, const Value &newVa
 
     if (var)
         var->setValue(newValue);
+}
+
+extern "C" void data_showvariable(Target *target, Variable *variable)
+{
+    Monitor *monitor = variable->monitor();
+
+    if (!monitor) {
+        /*
+         * We need shared_ptr.
+         * Since this case doesn't occur frequently,
+         * we can look up the variable by ID.
+         */
+        auto index = target->findVariableById(variable->id());
+        monitor = target->engine()->createVariableMonitor(target->variableAt(index), "data_variable", "VARIABLE", -1, &VariableBlocks::compileVariable);
+    }
+
+    monitor->setVisible(true);
 }
