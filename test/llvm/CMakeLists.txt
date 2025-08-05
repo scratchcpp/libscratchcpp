@@ -16,9 +16,50 @@ target_link_libraries(
 add_executable(
   llvm_test
   main.cpp
+  llvmtestutils.cpp
+  llvmtestutils.h
   llvmexecutioncontext_test.cpp
   llvmexecutablecode_test.cpp
   llvmcodebuilder_test.cpp
+  llvminstructionlist_test.cpp
+  operators/equal_comparison_test.cpp
+  operators/greater_than_test.cpp
+  operators/less_than_test.cpp
+  operators/math/add_test.cpp
+  operators/math/subtract_test.cpp
+  operators/math/multiply_test.cpp
+  operators/math/divide_test.cpp
+  operators/math/random_test.cpp
+  operators/math/random_int_test.cpp
+  operators/math/mod_test.cpp
+  operators/math/abs_test.cpp
+  operators/math/round_test.cpp
+  operators/math/floor_test.cpp
+  operators/math/ceil_test.cpp
+  operators/math/sqrt_test.cpp
+  operators/math/sin_test.cpp
+  operators/math/cos_test.cpp
+  operators/math/tan_test.cpp
+  operators/math/asin_test.cpp
+  operators/math/acos_test.cpp
+  operators/math/atan_test.cpp
+  operators/math/ln_test.cpp
+  operators/math/log10_test.cpp
+  operators/math/exp_test.cpp
+  operators/math/exp10_test.cpp
+  operators/logic/and_test.cpp
+  operators/logic/or_test.cpp
+  operators/logic/not_test.cpp
+  operators/string/string_equal_case_sensitive_test.cpp
+  operators/string/string_equal_case_insensitive_test.cpp
+  operators/string/string_concat_test.cpp
+  operators/string/string_char_test.cpp
+  operators/string/string_length_test.cpp
+  type_analyzer/variabletypeafterbranch_test.cpp
+  type_analyzer/variabletype_test.cpp
+  type_analyzer/listtypeafterbranch_test.cpp
+  type_analyzer/listtype_test.cpp
+  type_analyzer/mixed_test.cpp
 )
 
 target_link_libraries(

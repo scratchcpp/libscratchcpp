@@ -105,32 +105,32 @@ void LLVMCoroutine::createSuspend()
     m_builder->SetInsertPoint(resumeBranch);
 }
 
-llvm::Value *LLVMCoroutine::createResume(llvm::Function *function, llvm::Value *coroHandle)
+llvm::Value *LLVMCoroutine::createResume(llvm::Module *module, llvm::IRBuilder<> *builder, llvm::Function *function, llvm::Value *coroHandle)
 {
-    llvm::LLVMContext &ctx = m_builder->getContext();
-    llvm::Function *coroDone = llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::coro_done);
+    llvm::LLVMContext &ctx = builder->getContext();
+    llvm::Function *coroDone = llvm::Intrinsic::getDeclaration(module, llvm::Intrinsic::coro_done);
 
-    llvm::Value *ret = m_builder->CreateAlloca(m_builder->getInt1Ty());
-    llvm::Value *done = m_builder->CreateCall(coroDone, { coroHandle });
-    done = m_builder->CreateCall(coroDone, { coroHandle });
+    llvm::Value *ret = builder->CreateAlloca(builder->getInt1Ty());
+    llvm::Value *done = builder->CreateCall(coroDone, { coroHandle });
+    done = builder->CreateCall(coroDone, { coroHandle });
 
     llvm::BasicBlock *destroyBranch = llvm::BasicBlock::Create(ctx, "", function);
     llvm::BasicBlock *resumeBranch = llvm::BasicBlock::Create(ctx, "", function);
     llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(ctx, "", function);
-    m_builder->CreateCondBr(done, destroyBranch, resumeBranch);
+    builder->CreateCondBr(done, destroyBranch, resumeBranch);
 
-    m_builder->SetInsertPoint(destroyBranch);
-    m_builder->CreateCall(llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::coro_destroy), { coroHandle });
-    m_builder->CreateBr(nextBranch);
+    builder->SetInsertPoint(destroyBranch);
+    builder->CreateCall(llvm::Intrinsic::getDeclaration(module, llvm::Intrinsic::coro_destroy), { coroHandle });
+    builder->CreateBr(nextBranch);
 
-    m_builder->SetInsertPoint(resumeBranch);
-    m_builder->CreateCall(llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::coro_resume), { coroHandle });
-    done = m_builder->CreateCall(coroDone, { coroHandle });
-    m_builder->CreateStore(done, ret);
-    m_builder->CreateCondBr(done, destroyBranch, nextBranch);
+    builder->SetInsertPoint(resumeBranch);
+    builder->CreateCall(llvm::Intrinsic::getDeclaration(module, llvm::Intrinsic::coro_resume), { coroHandle });
+    done = builder->CreateCall(coroDone, { coroHandle });
+    builder->CreateStore(done, ret);
+    builder->CreateCondBr(done, destroyBranch, nextBranch);
 
-    m_builder->SetInsertPoint(nextBranch);
-    return m_builder->CreateLoad(m_builder->getInt1Ty(), ret);
+    builder->SetInsertPoint(nextBranch);
+    return builder->CreateLoad(builder->getInt1Ty(), ret);
 }
 
 void LLVMCoroutine::end()

@@ -1,0 +1,366 @@
+#include <scratchcpp/thread.h>
+#include <engine/internal/llvm/llvminstructionlist.h>
+#include <engine/internal/llvm/llvminstruction.h>
+#include <gtest/gtest.h>
+
+using namespace libscratchcpp;
+
+TEST(LLVMInstructionListTest, EmptyList_First)
+{
+    LLVMInstructionList list;
+    ASSERT_EQ(list.first(), nullptr);
+}
+
+TEST(LLVMInstructionListTest, EmptyList_Last)
+{
+    LLVMInstructionList list;
+    ASSERT_EQ(list.last(), nullptr);
+}
+
+TEST(LLVMInstructionListTest, EmptyList_Empty)
+{
+    LLVMInstructionList list;
+    ASSERT_TRUE(list.empty());
+}
+
+TEST(LLVMInstructionListTest, EmptyList_ContainsNull)
+{
+    LLVMInstructionList list;
+    ASSERT_FALSE(list.containsInstruction(nullptr));
+}
+
+TEST(LLVMInstructionListTest, EmptyList_ContainsFunc)
+{
+    LLVMInstructionList list;
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    ASSERT_FALSE(list.containsInstruction([](const LLVMInstruction *) { return true; }));
+}
+
+TEST(LLVMInstructionListTest, EmptyList_Contains)
+{
+    LLVMInstructionList list;
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    ASSERT_FALSE(list.containsInstruction(ins.get()));
+}
+
+TEST(LLVMInstructionListTest, SingleInstructionList_ContainsExistent)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    ASSERT_TRUE(list.containsInstruction(ins1.get()));
+}
+
+TEST(LLVMInstructionListTest, SingleInstructionList_ContainsNonExistent)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    ASSERT_FALSE(list.containsInstruction(ins.get()));
+}
+
+TEST(LLVMInstructionListTest, SingleInstructionList_ContainsNull)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    ASSERT_FALSE(list.containsInstruction(nullptr));
+}
+
+TEST(LLVMInstructionListTest, SingleInstructionList_ContainsFuncTrue)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    ASSERT_TRUE(list.containsInstruction([](const LLVMInstruction *) { return true; }));
+}
+
+TEST(LLVMInstructionListTest, SingleInstructionList_ContainsFuncFalse)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    ASSERT_FALSE(list.containsInstruction([](const LLVMInstruction *) { return false; }));
+}
+
+TEST(LLVMInstructionListTest, MultipleInstructionList_ContainsExistent)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins3);
+
+    ASSERT_TRUE(list.containsInstruction(ins2.get()));
+}
+
+TEST(LLVMInstructionListTest, MultipleInstructionList_ContainsNonExistent)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins3);
+
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    ASSERT_FALSE(list.containsInstruction(ins.get()));
+}
+
+TEST(LLVMInstructionListTest, MultipleInstructionList_ContainsNull)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins3);
+
+    ASSERT_FALSE(list.containsInstruction(nullptr));
+}
+
+TEST(LLVMInstructionListTest, MultipleInstructionList_ContainsExistentFunc)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::Stop, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins3);
+
+    ASSERT_TRUE(list.containsInstruction([](const LLVMInstruction *ins) { return ins->type == LLVMInstruction::Type::Stop; }));
+}
+
+TEST(LLVMInstructionListTest, MultipleInstructionList_ContainsNonExistentFunc)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins3);
+
+    ASSERT_FALSE(list.containsInstruction([](const LLVMInstruction *ins) { return ins->type == LLVMInstruction::Type::Stop; }));
+}
+
+TEST(LLVMInstructionListTest, AddSingleInstruction_First)
+{
+    LLVMInstructionList list;
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins);
+
+    ASSERT_EQ(list.first(), ins.get());
+}
+
+TEST(LLVMInstructionListTest, AddSingleInstruction_Last)
+{
+    LLVMInstructionList list;
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins);
+
+    ASSERT_EQ(list.last(), ins.get());
+}
+
+TEST(LLVMInstructionListTest, AddSingleInstruction_Empty)
+{
+    LLVMInstructionList list;
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins);
+
+    ASSERT_FALSE(list.empty());
+}
+
+TEST(LLVMInstructionListTest, AddSingleInstruction_Previous)
+{
+    LLVMInstructionList list;
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins);
+
+    ASSERT_EQ(ins->previous, nullptr);
+}
+
+TEST(LLVMInstructionListTest, AddSingleInstruction_Next)
+{
+    LLVMInstructionList list;
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins);
+
+    ASSERT_EQ(ins->next, nullptr);
+}
+
+TEST(LLVMInstructionListTest, AddMultipleInstructions_First)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins3);
+
+    ASSERT_EQ(list.first(), ins1.get());
+}
+
+TEST(LLVMInstructionListTest, AddMultipleInstructions_Last)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins3);
+
+    ASSERT_EQ(list.last(), ins3.get());
+}
+
+TEST(LLVMInstructionListTest, AddMultipleInstructions_Empty)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins3);
+
+    ASSERT_FALSE(list.empty());
+}
+
+TEST(LLVMInstructionListTest, AddMultipleInstructions_PreviousOfFirst)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins3);
+
+    ASSERT_EQ(ins1->previous, nullptr);
+}
+
+TEST(LLVMInstructionListTest, AddMultipleInstructions_NextOfFirst)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins3);
+
+    ASSERT_EQ(ins1->next, ins2.get());
+}
+
+TEST(LLVMInstructionListTest, AddMultipleInstructions_PreviousOfMiddle)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins3);
+
+    ASSERT_EQ(ins2->previous, ins1.get());
+}
+
+TEST(LLVMInstructionListTest, AddMultipleInstructions_NextOfMiddle)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins3);
+
+    ASSERT_EQ(ins2->next, ins3.get());
+}
+
+TEST(LLVMInstructionListTest, AddMultipleInstructions_PreviousOfLast)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins3);
+
+    ASSERT_EQ(ins3->previous, ins2.get());
+}
+
+TEST(LLVMInstructionListTest, AddMultipleInstructions_NextOfLast)
+{
+    LLVMInstructionList list;
+
+    auto ins1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins1);
+
+    auto ins2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins2);
+
+    auto ins3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
+    list.addInstruction(ins3);
+
+    ASSERT_EQ(ins3->next, nullptr);
+}

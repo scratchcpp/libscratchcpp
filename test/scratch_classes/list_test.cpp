@@ -58,6 +58,23 @@ TEST(ListTest, Data)
     ASSERT_EQ(&data[4], &list[4]);
 }
 
+TEST(ListTest, DataPtr)
+{
+    List list("", "");
+    list.append("Lorem");
+    list.append("ipsum");
+    list.append("dolor");
+    list.append("sit");
+    list.append("amet");
+
+    ValueData *data = *list.dataPtr();
+    ASSERT_EQ(&data[0], &list[0]);
+    ASSERT_EQ(&data[1], &list[1]);
+    ASSERT_EQ(&data[2], &list[2]);
+    ASSERT_EQ(&data[3], &list[3]);
+    ASSERT_EQ(&data[4], &list[4]);
+}
+
 TEST(ListTest, SizePtr)
 {
     List list("", "test list");

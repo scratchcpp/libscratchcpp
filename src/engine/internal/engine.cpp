@@ -528,8 +528,8 @@ void Engine::step()
     m_frameActivity = !m_threads.empty();
 
     // Resolve stopped broadcast scripts
-    std::vector<Broadcast *> resolved;
-    std::vector<Thread *> resolvedThreads;
+    std::unordered_map<Broadcast *, Thread *> stoppedBroadcasts; // sender thread
+    std::unordered_map<Thread *, bool> runningStatus;            // sender thread
 
     for (const auto &[broadcast, senderThread] : m_broadcastSenders) {
         std::unordered_map<Broadcast *, std::vector<Script *>> *broadcastMap = nullptr;
@@ -544,43 +544,40 @@ void Engine::step()
             broadcastMap = &m_broadcastMap;
         }
 
-        bool found = false;
+        bool isRunning = false;
 
         if (broadcastMap->find(broadcast) != broadcastMap->cend()) {
             const auto &scripts = (*broadcastMap)[broadcast];
 
             for (auto script : scripts) {
                 if (std::find_if(m_threads.begin(), m_threads.end(), [script](std::shared_ptr<Thread> thread) { return thread->script() == script; }) != m_threads.end()) {
-                    found = true;
+                    isRunning = true;
                     break;
                 }
             }
         }
 
-        if (found) {
-            // If a broadcast with the same name but different case
-            // was considered stopped before, restore the promise.
-            if (std::find(resolvedThreads.begin(), resolvedThreads.end(), senderThread) != resolvedThreads.end()) {
-                senderThread->promise();
-                resolvedThreads.erase(std::remove(resolvedThreads.begin(), resolvedThreads.end(), senderThread), resolvedThreads.end());
-            }
-        } else {
-            Thread *th = senderThread;
+        if (runningStatus.find(senderThread) == runningStatus.cend() || isRunning)
+            runningStatus[senderThread] = isRunning;
 
-            if (std::find_if(m_threads.begin(), m_threads.end(), [th](std::shared_ptr<Thread> thread) { return thread.get() == th; }) != m_threads.end()) {
-                auto promise = th->promise();
-
-                if (promise)
-                    promise->resolve();
-            }
-
-            resolved.push_back(broadcast);
-            resolvedThreads.push_back(th);
-        }
+        if (!isRunning)
+            stoppedBroadcasts[broadcast] = senderThread;
     }
 
-    for (Broadcast *broadcast : resolved)
+    for (const auto &[broadcast, senderThread] : stoppedBroadcasts) {
         m_broadcastSenders.erase(broadcast);
+
+        // Resolve broadcast promise
+        Thread *th = senderThread;
+
+        if (std::find_if(m_threads.begin(), m_threads.end(), [th](std::shared_ptr<Thread> thread) { return thread.get() == th; }) != m_threads.end()) {
+            auto promise = th->promise().get();
+
+            // Resolve only if all broadcasts of the same name but different case are stopped
+            if (promise && !runningStatus[senderThread])
+                promise->resolve();
+        }
+    }
 
     m_redrawRequested = false;
 

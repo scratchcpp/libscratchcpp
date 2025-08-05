@@ -38,6 +38,11 @@ extern "C"
         return list->data();
     }
 
+    ValueData *const *list_data_ptr(List *list)
+    {
+        return list->dataPtr();
+    }
+
     size_t *list_size_ptr(List *list)
     {
         return list->sizePtr();

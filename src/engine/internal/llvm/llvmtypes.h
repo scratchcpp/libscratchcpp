@@ -17,8 +17,8 @@ namespace libscratchcpp
 class LLVMTypes
 {
     public:
-        static llvm::StructType *createValueDataType(llvm::IRBuilder<> *builder);
-        static llvm::StructType *createStringPtrType(llvm::IRBuilder<> *builder);
+        static llvm::StructType *createValueDataType(llvm::LLVMContext &ctx);
+        static llvm::StructType *createStringPtrType(llvm::LLVMContext &ctx);
 };
 
 } // namespace libscratchcpp

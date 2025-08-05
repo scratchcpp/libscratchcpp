@@ -83,7 +83,7 @@ std::shared_ptr<ExecutableCode> Compiler::compile(Block *startBlock, CodeType co
         }
 
         impl->block = nullptr;
-        return impl->builder->finalize();
+        return impl->builder->build();
     }
 
     while (impl->block) {
@@ -122,7 +122,7 @@ std::shared_ptr<ExecutableCode> Compiler::compile(Block *startBlock, CodeType co
             impl->substackEnd();
     }
 
-    return impl->builder->finalize();
+    return impl->builder->build();
 }
 
 /*!

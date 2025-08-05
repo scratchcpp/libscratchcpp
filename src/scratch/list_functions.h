@@ -21,6 +21,7 @@ extern "C"
 
     ValueData *list_get_item(List *list, size_t index);
     ValueData *list_data(List *list);
+    ValueData *const *list_data_ptr(List *list);
     size_t *list_size_ptr(List *list);
     const size_t *list_alloc_size_ptr(List *list);
     size_t list_size(List *list);

@@ -41,7 +41,13 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
         void setMonitor(Monitor *monitor);
 
         /*! Returns a pointer to the raw list data. */
-        inline ValueData *data() const { return m_dataPtr->data(); }
+        inline ValueData *data() const { return m_rawDataPtr; }
+
+        /*!
+         * Returns a pointer to pointer to the raw list data.
+         * \note This is used internally by compiled code for various optimizations.
+         */
+        inline ValueData *const *dataPtr() const { return &m_rawDataPtr; }
 
         /*!
          * Returns a pointer to the list size.
@@ -247,6 +253,8 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
                 value_free(&m_dataPtr->back());
                 m_dataPtr->erase(m_dataPtr->end());
             }
+
+            m_rawDataPtr = m_dataPtr->data();
         }
 
         inline size_t getAllocSize(size_t x)
@@ -264,6 +272,7 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
 
         spimpl::unique_impl_ptr<ListPrivate> impl;
         veque::veque<ValueData> *m_dataPtr = nullptr; // NOTE: accessing through pointer is faster! (from benchmarks)
+        ValueData *m_rawDataPtr = nullptr;
         size_t m_size = 0;
 };
 

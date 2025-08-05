@@ -6,12 +6,10 @@
 
 using namespace libscratchcpp;
 
-llvm::StructType *LLVMTypes::createValueDataType(llvm::IRBuilder<> *builder)
+llvm::StructType *LLVMTypes::createValueDataType(llvm::LLVMContext &ctx)
 {
-    llvm::LLVMContext &ctx = builder->getContext();
-
     // Create the ValueData struct
-    llvm::Type *unionType = builder->getInt64Ty(); // 64 bits is the largest size
+    llvm::Type *unionType = llvm::Type::getInt64Ty(ctx); // 64 bits is the largest size
 
     llvm::Type *valueType = llvm::Type::getInt32Ty(ctx); // Assuming ValueType is a 32-bit enum
     llvm::Type *padding = llvm::Type::getInt32Ty(ctx);   // Padding for alignment
@@ -22,10 +20,8 @@ llvm::StructType *LLVMTypes::createValueDataType(llvm::IRBuilder<> *builder)
     return ret;
 }
 
-llvm::StructType *LLVMTypes::createStringPtrType(llvm::IRBuilder<> *builder)
+llvm::StructType *LLVMTypes::createStringPtrType(llvm::LLVMContext &ctx)
 {
-    llvm::LLVMContext &ctx = builder->getContext();
-
     // Create the StringPtr struct
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(ctx), 0);
     llvm::Type *sizeType = llvm::Type::getInt64Ty(ctx);

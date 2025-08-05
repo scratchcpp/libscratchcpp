@@ -28,7 +28,11 @@ class LLVMCompilerContext : public CompilerContext
         void initJit();
         bool jitInitialized() const;
 
+        llvm::Function *coroutineResumeFunction() const;
         void destroyCoroutine(void *handle);
+
+        llvm::StructType *valueDataType() const;
+        llvm::StructType *stringPtrType() const;
 
         template<typename T>
         T lookupFunction(const std::string &name)
@@ -44,19 +48,30 @@ class LLVMCompilerContext : public CompilerContext
         }
 
     private:
+        using ResumeCoroFuncType = bool (*)(void *);
         using DestroyCoroFuncType = void (*)(void *);
 
         void initTarget();
+
+        llvm::Function *createCoroResumeFunction();
         llvm::Function *createCoroDestroyFunction();
+
+        void verifyFunction(llvm::Function *function);
 
         std::unique_ptr<llvm::LLVMContext> m_llvmCtx;
         std::unique_ptr<llvm::Module> m_module;
         llvm::LLVMContext *m_llvmCtxPtr = nullptr;
         llvm::Module *m_modulePtr = nullptr;
         llvm::Expected<std::unique_ptr<llvm::orc::LLJIT>> m_jit;
+        bool m_jitInitialized = false;
+
+        llvm::Function *m_llvmCoroResumeFunction = nullptr;
+
         llvm::Function *m_llvmCoroDestroyFunction = nullptr;
         DestroyCoroFuncType m_coroDestroyFunction = nullptr;
-        bool m_jitInitialized = false;
+
+        llvm::StructType *m_valueDataType = nullptr;
+        llvm::StructType *m_stringPtrType = nullptr;
 };
 
 } // namespace libscratchcpp
