@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#pragma once
+
 #include <scratchcpp/compiler.h>
 #include <unordered_map>
 
