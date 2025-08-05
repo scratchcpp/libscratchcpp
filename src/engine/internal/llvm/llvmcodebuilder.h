@@ -16,8 +16,8 @@
 #include "llvmcoroutine.h"
 #include "llvmvariableptr.h"
 #include "llvmlistptr.h"
-#include "llvmtypeanalyzer.h"
 #include "llvmfunctions.h"
+#include "instructions/instructionbuilder.h"
 
 namespace libscratchcpp
 {
@@ -117,8 +117,6 @@ class LLVMCodeBuilder : public ICodeBuilder
     private:
         void initTypes();
 
-        std::string getMainFunctionName(BlockPrototype *procedurePrototype);
-        llvm::FunctionType *getMainFunctionType(BlockPrototype *procedurePrototype);
         llvm::Function *getOrCreateFunction(const std::string &name, llvm::FunctionType *type);
         void verifyFunction(llvm::Function *func);
 
@@ -131,8 +129,6 @@ class LLVMCodeBuilder : public ICodeBuilder
         LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
         LLVMRegister *createOp(const LLVMInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
 
-        void createSuspend(LLVMCoroutine *coro, llvm::Value *warpArg, llvm::Value *targetVariables);
-
         Target *m_target = nullptr;
 
         LLVMCompilerContext *m_ctx;
@@ -141,7 +137,6 @@ class LLVMCodeBuilder : public ICodeBuilder
         llvm::IRBuilder<> m_builder;
         llvm::Function *m_function = nullptr;
         LLVMBuildUtils m_utils;
-        LLVMTypeAnalyzer m_typeAnalyzer;
 
         llvm::StructType *m_valueDataType = nullptr;
         llvm::StructType *m_stringPtrType = nullptr;
@@ -153,10 +148,11 @@ class LLVMCodeBuilder : public ICodeBuilder
         BlockPrototype *m_procedurePrototype = nullptr;
         bool m_defaultWarp = false;
         bool m_warp = false;
-        int m_defaultArgCount = 0;
         Compiler::CodeType m_codeType = Compiler::CodeType::Script;
 
         bool m_loopCondition = false; // whether we're currently compiling a loop condition
+
+        llvmins::InstructionBuilder m_instructionBuilder;
 };
 
 } // namespace libscratchcpp

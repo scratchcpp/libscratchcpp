@@ -13,6 +13,10 @@ class Procedures : public InstructionGroup
         using InstructionGroup::InstructionGroup;
 
         ProcessResult process(LLVMInstruction *ins) override;
+
+    private:
+        LLVMInstruction *buildCallProcedure(LLVMInstruction *ins);
+        LLVMInstruction *buildProcedureArg(LLVMInstruction *ins);
 };
 
 } // namespace libscratchcpp::llvmins

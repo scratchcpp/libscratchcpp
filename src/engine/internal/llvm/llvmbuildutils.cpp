@@ -3,11 +3,14 @@
 #include <scratchcpp/target.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/blockprototype.h>
+#include <scratchcpp/compiler.h>
 
 #include "llvmbuildutils.h"
 #include "llvmfunctions.h"
 #include "llvmcompilercontext.h"
 #include "llvmregister.h"
+#include "llvminstruction.h"
 
 using namespace libscratchcpp;
 
@@ -18,12 +21,13 @@ static std::unordered_map<ValueType, Compiler::StaticType> TYPE_MAP = {
     { ValueType::Pointer, Compiler::StaticType::Pointer }
 };
 
-LLVMBuildUtils::LLVMBuildUtils(LLVMCompilerContext *ctx, llvm::IRBuilder<> &builder) :
+LLVMBuildUtils::LLVMBuildUtils(LLVMCompilerContext *ctx, llvm::IRBuilder<> &builder, Compiler::CodeType codeType) :
     m_ctx(ctx),
     m_llvmCtx(*ctx->llvmCtx()),
     m_builder(builder),
     m_functions(ctx, &builder),
-    m_target(ctx->target())
+    m_target(ctx->target()),
+    m_codeType(codeType)
 {
     initTypes();
     createVariableMap();
@@ -34,6 +38,7 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
 {
     m_function = function;
     m_procedurePrototype = procedurePrototype;
+    m_warp = warp;
 
     m_executionContextPtr = m_function->getArg(0);
     m_targetPtr = m_function->getArg(1);
@@ -46,6 +51,10 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
 
     m_stringHeap.clear();
     pushScopeLevel();
+
+    // Init coroutine
+    if (!m_warp)
+        m_coroutine = std::make_unique<LLVMCoroutine>(m_ctx->module(), &m_builder, m_function);
 
     // Create variable pointers
     for (auto &[var, varPtr] : m_variablePtrs) {
@@ -86,12 +95,51 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
         listPtr.sizePtr = m_builder.CreateCall(m_functions.resolve_list_size_ptr(), listPtr.ptr);
         listPtr.allocatedSizePtr = m_builder.CreateCall(m_functions.resolve_list_alloc_size_ptr(), listPtr.ptr);
     }
+
+    // Create end branch
+    m_endBranch = llvm::BasicBlock::Create(m_llvmCtx, "end", m_function);
 }
 
-void LLVMBuildUtils::end()
+void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastConstant)
 {
     assert(m_stringHeap.size() == 1);
     freeScopeHeap();
+
+    m_builder.CreateBr(m_endBranch);
+
+    m_builder.SetInsertPoint(m_endBranch);
+    syncVariables(m_targetVariables);
+
+    // End the script function
+    llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
+
+    switch (m_codeType) {
+        case Compiler::CodeType::Script:
+            if (m_warp)
+                m_builder.CreateRet(llvm::ConstantPointerNull::get(pointerType));
+            else
+                m_coroutine->end();
+            break;
+
+        case Compiler::CodeType::Reporter: {
+            // Use last instruction return value (or last constant) and create a ValueData instance
+            assert(lastInstruction || lastConstant);
+            LLVMRegister *ret = lastInstruction ? lastInstruction->functionReturnReg : lastConstant;
+            llvm::Value *copy = createNewValue(ret);
+            m_builder.CreateRet(m_builder.CreateLoad(m_valueDataType, copy));
+            break;
+        }
+
+        case Compiler::CodeType::HatPredicate:
+            // Use last instruction return value (or last constant)
+            assert(lastInstruction || lastConstant);
+
+            if (lastInstruction)
+                m_builder.CreateRet(castValue(lastInstruction->functionReturnReg, Compiler::StaticType::Bool));
+            else
+                m_builder.CreateRet(castValue(lastConstant, Compiler::StaticType::Bool));
+            break;
+    }
 }
 
 LLVMCompilerContext *LLVMBuildUtils::compilerCtx() const
@@ -129,6 +177,71 @@ LLVMTypeAnalyzer &LLVMBuildUtils::typeAnalyzer()
     return m_typeAnalyzer;
 }
 
+std::string LLVMBuildUtils::scriptFunctionName(BlockPrototype *procedurePrototype)
+{
+    std::string name;
+
+    switch (m_codeType) {
+        case Compiler::CodeType::Script:
+            name = "script";
+            break;
+
+        case Compiler::CodeType::Reporter:
+            name = "reporter";
+            break;
+
+        case Compiler::CodeType::HatPredicate:
+            name = "predicate";
+            break;
+    }
+
+    return procedurePrototype ? "proc." + procedurePrototype->procCode() : name;
+}
+
+llvm::FunctionType *LLVMBuildUtils::scriptFunctionType(BlockPrototype *procedurePrototype)
+{
+    // void *f(ExecutionContext *, Target *, ValueData **, List **, (warp arg), (procedure args...))
+    // ValueData f(...) (reporters)
+    // bool f(...) (hat predicates)
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
+    std::vector<llvm::Type *> argTypes = { pointerType, pointerType, pointerType, pointerType };
+
+    if (procedurePrototype) {
+        argTypes.push_back(m_builder.getInt1Ty()); // warp arg (only in procedures)
+        const auto &types = procedurePrototype->argumentTypes();
+
+        for (BlockPrototype::ArgType type : types) {
+            if (type == BlockPrototype::ArgType::Bool)
+                argTypes.push_back(m_builder.getInt1Ty());
+            else
+                argTypes.push_back(m_valueDataType->getPointerTo());
+        }
+    }
+
+    llvm::Type *retType = nullptr;
+
+    switch (m_codeType) {
+        case Compiler::CodeType::Script:
+            retType = pointerType;
+            break;
+
+        case Compiler::CodeType::Reporter:
+            retType = m_valueDataType;
+            break;
+
+        case Compiler::CodeType::HatPredicate:
+            retType = m_builder.getInt1Ty();
+            break;
+    }
+
+    return llvm::FunctionType::get(retType, argTypes, false);
+}
+
+llvm::BasicBlock *LLVMBuildUtils::endBranch() const
+{
+    return m_endBranch;
+}
+
 BlockPrototype *LLVMBuildUtils::procedurePrototype() const
 {
     return m_procedurePrototype;
@@ -162,6 +275,11 @@ llvm::Value *LLVMBuildUtils::targetLists()
 llvm::Value *LLVMBuildUtils::warpArg()
 {
     return m_warpArg;
+}
+
+LLVMCoroutine *LLVMBuildUtils::coroutine() const
+{
+    return m_coroutine.get();
 }
 
 void LLVMBuildUtils::createVariablePtr(Variable *variable)
@@ -241,6 +359,16 @@ void LLVMBuildUtils::freeScopeHeap()
         m_builder.CreateCall(m_functions.resolve_string_pool_free(), { ptr });
 
     heap.clear();
+}
+
+std::vector<LLVMIfStatement> &LLVMBuildUtils::ifStatements()
+{
+    return m_ifStatements;
+}
+
+std::vector<LLVMLoop> &LLVMBuildUtils::loops()
+{
+    return m_loops;
 }
 
 Compiler::StaticType LLVMBuildUtils::optimizeRegisterType(LLVMRegister *reg)
@@ -839,6 +967,30 @@ llvm::Value *LLVMBuildUtils::createStringComparison(LLVMRegister *arg1, LLVMRegi
         llvm::Value *string2 = castValue(arg2, Compiler::StaticType::String);
         llvm::Value *cmp = m_builder.CreateCall(caseSensitive ? m_functions.resolve_string_compare_case_sensitive() : m_functions.resolve_string_compare_case_insensitive(), { string1, string2 });
         return m_builder.CreateICmpEQ(cmp, m_builder.getInt32(0));
+    }
+}
+
+void LLVMBuildUtils::createSuspend()
+{
+    if (m_coroutine) {
+        assert(!m_warp);
+        llvm::BasicBlock *suspendBranch, *nextBranch;
+
+        if (m_warpArg) {
+            suspendBranch = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+            nextBranch = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+            m_builder.CreateCondBr(m_warpArg, nextBranch, suspendBranch);
+            m_builder.SetInsertPoint(suspendBranch);
+        }
+
+        syncVariables(m_targetVariables);
+        m_coroutine->createSuspend();
+        reloadVariables(m_targetVariables);
+
+        if (m_warpArg) {
+            m_builder.CreateBr(nextBranch);
+            m_builder.SetInsertPoint(nextBranch);
+        }
     }
 }
 

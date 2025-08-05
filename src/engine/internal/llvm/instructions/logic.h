@@ -13,6 +13,11 @@ class Logic : public InstructionGroup
         using InstructionGroup::InstructionGroup;
 
         ProcessResult process(LLVMInstruction *ins) override;
+
+    private:
+        LLVMInstruction *buildAnd(LLVMInstruction *ins);
+        LLVMInstruction *buildOr(LLVMInstruction *ins);
+        LLVMInstruction *buildNot(LLVMInstruction *ins);
 };
 
 } // namespace libscratchcpp::llvmins

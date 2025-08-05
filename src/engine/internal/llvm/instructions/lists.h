@@ -13,6 +13,18 @@ class Lists : public InstructionGroup
         using InstructionGroup::InstructionGroup;
 
         ProcessResult process(LLVMInstruction *ins) override;
+
+    private:
+        LLVMInstruction *buildClearList(LLVMInstruction *ins);
+        LLVMInstruction *buildRemoveListItem(LLVMInstruction *ins);
+        LLVMInstruction *buildAppendToList(LLVMInstruction *ins);
+        LLVMInstruction *buildInsertToList(LLVMInstruction *ins);
+        LLVMInstruction *buildListReplace(LLVMInstruction *ins);
+        LLVMInstruction *buildGetListContents(LLVMInstruction *ins);
+        LLVMInstruction *buildGetListItem(LLVMInstruction *ins);
+        LLVMInstruction *buildGetListSize(LLVMInstruction *ins);
+        LLVMInstruction *buildGetListItemIndex(LLVMInstruction *ins);
+        LLVMInstruction *buildListContainsItem(LLVMInstruction *ins);
 };
 
 } // namespace libscratchcpp::llvmins

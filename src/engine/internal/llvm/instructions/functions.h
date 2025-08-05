@@ -13,6 +13,9 @@ class Functions : public InstructionGroup
         using InstructionGroup::InstructionGroup;
 
         ProcessResult process(LLVMInstruction *ins) override;
+
+    private:
+        LLVMInstruction *buildFunctionCall(LLVMInstruction *ins);
 };
 
 } // namespace libscratchcpp::llvmins
