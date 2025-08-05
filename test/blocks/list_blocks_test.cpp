@@ -778,12 +778,10 @@ TEST_F(ListBlocksTest, ShowList_Local_FromClone)
     ScriptBuilder builder1(m_extension.get(), m_engine, clone);
     builder1.addBlock("data_showlist");
     builder1.addEntityField("LIST", list1);
-    Block *hat1 = builder1.currentBlock()->parent();
 
     ScriptBuilder builder2(m_extension.get(), m_engine, clone);
     builder2.addBlock("data_showlist");
     builder2.addEntityField("LIST", list2);
-    Block *hat2 = builder2.currentBlock()->parent();
 
     ScriptBuilder::buildMultiple({ &builder1, &builder2 });
 

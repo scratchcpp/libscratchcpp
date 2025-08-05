@@ -338,12 +338,10 @@ TEST_F(VariableBlocksTest, ShowVariable_Local_FromClone)
     ScriptBuilder builder1(m_extension.get(), m_engine, clone);
     builder1.addBlock("data_showvariable");
     builder1.addEntityField("VARIABLE", var1);
-    Block *hat1 = builder1.currentBlock()->parent();
 
     ScriptBuilder builder2(m_extension.get(), m_engine, clone);
     builder2.addBlock("data_showvariable");
     builder2.addEntityField("VARIABLE", var2);
-    Block *hat2 = builder2.currentBlock()->parent();
 
     ScriptBuilder::buildMultiple({ &builder1, &builder2 });
 
@@ -533,12 +531,10 @@ TEST_F(VariableBlocksTest, HideVariable_Local_FromClone)
     ScriptBuilder builder1(m_extension.get(), m_engine, clone);
     builder1.addBlock("data_hidevariable");
     builder1.addEntityField("VARIABLE", var1);
-    Block *hat1 = builder1.currentBlock()->parent();
 
     ScriptBuilder builder2(m_extension.get(), m_engine, clone);
     builder2.addBlock("data_hidevariable");
     builder2.addEntityField("VARIABLE", var2);
-    Block *hat2 = builder2.currentBlock()->parent();
 
     ScriptBuilder::buildMultiple({ &builder1, &builder2 });
 
