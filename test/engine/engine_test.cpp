@@ -1569,11 +1569,9 @@ TEST(EngineTest, CreateMissingMonitors)
 {
     static constexpr const char *VARIABLE_OPCODE = "data_variable";
     static constexpr const char *VARIABLE_FIELD_NAME = "VARIABLE";
-    static constexpr int VARIABLE_FIELD_ID = 1;
 
     static constexpr const char *LIST_OPCODE = "data_listcontents";
     static constexpr const char *LIST_FIELD_NAME = "LIST";
-    static constexpr int LIST_FIELD_ID = 2;
 
     auto var1 = std::make_shared<Variable>("a", "var1");
     auto var2 = std::make_shared<Variable>("b", "var2");
@@ -1609,7 +1607,6 @@ TEST(EngineTest, CreateMissingMonitors)
 
         auto field = block->fieldAt(0);
         ASSERT_EQ(field->name(), VARIABLE_FIELD_NAME);
-        ASSERT_EQ(field->fieldId(), VARIABLE_FIELD_ID);
         ASSERT_EQ(field->value(), var->name());
         ASSERT_EQ(field->valuePtr(), var);
 
@@ -1632,7 +1629,6 @@ TEST(EngineTest, CreateMissingMonitors)
 
         auto field = block->fieldAt(0);
         ASSERT_EQ(field->name(), LIST_FIELD_NAME);
-        ASSERT_EQ(field->fieldId(), LIST_FIELD_ID);
         ASSERT_EQ(field->value(), list->name());
         ASSERT_EQ(field->valuePtr(), list);
 
@@ -1653,10 +1649,10 @@ TEST(EngineTest, CreateMissingMonitors)
         ASSERT_EQ(monitors[1], m2);
         ASSERT_EQ(monitors[2], m3);
 
-        engine.createVariableMonitor(var2, VARIABLE_OPCODE, VARIABLE_FIELD_NAME, VARIABLE_FIELD_ID, nullptr);
-        engine.createListMonitor(list1, LIST_OPCODE, LIST_FIELD_NAME, LIST_FIELD_ID, nullptr);
-        engine.createVariableMonitor(var4, VARIABLE_OPCODE, VARIABLE_FIELD_NAME, VARIABLE_FIELD_ID, nullptr);
-        engine.createVariableMonitor(var5, VARIABLE_OPCODE, VARIABLE_FIELD_NAME, VARIABLE_FIELD_ID, nullptr);
+        engine.createVariableMonitor(var2, VARIABLE_OPCODE, VARIABLE_FIELD_NAME);
+        engine.createListMonitor(list1, LIST_OPCODE, LIST_FIELD_NAME);
+        engine.createVariableMonitor(var4, VARIABLE_OPCODE, VARIABLE_FIELD_NAME);
+        engine.createVariableMonitor(var5, VARIABLE_OPCODE, VARIABLE_FIELD_NAME);
 
         ASSERT_EQ(monitors.size(), 7);
         checkVariableMonitor(monitors[3], var2);
@@ -1684,10 +1680,10 @@ TEST(EngineTest, CreateMissingMonitors)
         Monitor *m4, *m5, *m6, *m7;
         EXPECT_CALL(addMonitorMock, monitorAdded(_)).WillOnce(SaveArg<0>(&m4)).WillOnce(SaveArg<0>(&m5)).WillOnce(SaveArg<0>(&m6)).WillOnce(SaveArg<0>(&m7));
 
-        engine.createVariableMonitor(var2, VARIABLE_OPCODE, VARIABLE_FIELD_NAME, VARIABLE_FIELD_ID, nullptr);
-        engine.createListMonitor(list1, LIST_OPCODE, LIST_FIELD_NAME, LIST_FIELD_ID, nullptr);
-        engine.createVariableMonitor(var4, VARIABLE_OPCODE, VARIABLE_FIELD_NAME, VARIABLE_FIELD_ID, nullptr);
-        engine.createVariableMonitor(var5, VARIABLE_OPCODE, VARIABLE_FIELD_NAME, VARIABLE_FIELD_ID, nullptr);
+        engine.createVariableMonitor(var2, VARIABLE_OPCODE, VARIABLE_FIELD_NAME);
+        engine.createListMonitor(list1, LIST_OPCODE, LIST_FIELD_NAME);
+        engine.createVariableMonitor(var4, VARIABLE_OPCODE, VARIABLE_FIELD_NAME);
+        engine.createVariableMonitor(var5, VARIABLE_OPCODE, VARIABLE_FIELD_NAME);
 
         const auto &monitors = engine.monitors();
         ASSERT_EQ(monitors.size(), 7);

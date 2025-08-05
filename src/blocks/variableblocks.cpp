@@ -150,7 +150,7 @@ extern "C" void data_showvariable(Target *target, Variable *variable)
          * we can look up the variable by ID.
          */
         auto index = target->findVariableById(variable->id());
-        monitor = target->engine()->createVariableMonitor(target->variableAt(index), "data_variable", "VARIABLE", -1, &VariableBlocks::compileVariable);
+        monitor = target->engine()->createVariableMonitor(target->variableAt(index), "data_variable", "VARIABLE");
     }
 
     monitor->setVisible(true);

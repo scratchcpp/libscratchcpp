@@ -18,10 +18,8 @@ class ListBlocks : public IExtension
 
         void registerBlocks(IEngine *engine) override;
 
-        // NOTE: Must be public because of monitor show/hide blocks
-        static CompilerValue *compileListContents(Compiler *compiler);
-
     private:
+        static CompilerValue *compileListContents(Compiler *compiler);
         static CompilerValue *compileAddToList(Compiler *compiler);
         static CompilerValue *getListIndex(Compiler *compiler, CompilerValue *input, List *list, CompilerValue *listSize);
         static CompilerValue *compileDeleteOfList(Compiler *compiler);

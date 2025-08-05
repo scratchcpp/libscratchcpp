@@ -270,7 +270,7 @@ extern "C" void data_showlist(Target *target, List *list)
          * we can look up the list by ID.
          */
         auto index = target->findListById(list->id());
-        monitor = target->engine()->createListMonitor(target->listAt(index), "data_listcontents", "LIST", -1, &ListBlocks::compileListContents);
+        monitor = target->engine()->createListMonitor(target->listAt(index), "data_listcontents", "LIST");
     }
 
     monitor->setVisible(true);

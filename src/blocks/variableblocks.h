@@ -16,10 +16,8 @@ class VariableBlocks : public IExtension
 
         void registerBlocks(IEngine *engine) override;
 
-        // NOTE: Must be public for show/hide monitor blocks
-        static CompilerValue *compileVariable(Compiler *compiler);
-
     private:
+        static CompilerValue *compileVariable(Compiler *compiler);
         static CompilerValue *compileSetVariableTo(Compiler *compiler);
         static CompilerValue *compileChangeVariableBy(Compiler *compiler);
         static CompilerValue *compileShowVariable(Compiler *compiler);

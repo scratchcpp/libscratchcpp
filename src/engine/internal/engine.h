@@ -143,8 +143,8 @@ class Engine : public IEngine
 
         const std::vector<std::shared_ptr<Monitor>> &monitors() const override;
         void setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitors) override;
-        Monitor *createVariableMonitor(std::shared_ptr<Variable> var, const std::string &opcode, const std::string &varFieldName, int varFieldId, BlockComp compileFunction) override;
-        Monitor *createListMonitor(std::shared_ptr<List> list, const std::string &opcode, const std::string &listFieldName, int listFieldId, BlockComp compileFunction) override;
+        Monitor *createVariableMonitor(std::shared_ptr<Variable> var, const std::string &opcode, const std::string &varFieldName) override;
+        Monitor *createListMonitor(std::shared_ptr<List> list, const std::string &opcode, const std::string &listFieldName) override;
         sigslot::signal<Monitor *> &monitorAdded() override;
         sigslot::signal<Monitor *, IMonitorHandler *> &monitorRemoved() override;
 

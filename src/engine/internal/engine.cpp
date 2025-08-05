@@ -1359,14 +1359,16 @@ void Engine::setMonitors(const std::vector<std::shared_ptr<Monitor>> &newMonitor
     }
 }
 
-Monitor *Engine::createVariableMonitor(std::shared_ptr<Variable> var, const std::string &opcode, const std::string &varFieldName, int varFieldId, BlockComp compileFunction)
+Monitor *Engine::createVariableMonitor(std::shared_ptr<Variable> var, const std::string &opcode, const std::string &varFieldName)
 {
     if (var->monitor())
         return var->monitor();
     else {
+        IExtension *ext = blockExtension(opcode);
+        BlockComp compileFunction = resolveBlockCompileFunc(ext, opcode);
+
         auto monitor = std::make_shared<Monitor>(var->id(), opcode);
         auto field = std::make_shared<Field>(varFieldName, var->name(), var);
-        field->setFieldId(varFieldId);
         monitor->block()->addField(field);
         monitor->block()->setCompileFunction(compileFunction);
 
@@ -1377,14 +1379,16 @@ Monitor *Engine::createVariableMonitor(std::shared_ptr<Variable> var, const std:
     }
 }
 
-Monitor *Engine::createListMonitor(std::shared_ptr<List> list, const std::string &opcode, const std::string &listFieldName, int listFieldId, BlockComp compileFunction)
+Monitor *Engine::createListMonitor(std::shared_ptr<List> list, const std::string &opcode, const std::string &listFieldName)
 {
     if (list->monitor())
         return list->monitor();
     else {
+        IExtension *ext = blockExtension(opcode);
+        BlockComp compileFunction = resolveBlockCompileFunc(ext, opcode);
+
         auto monitor = std::make_shared<Monitor>(list->id(), opcode);
         auto field = std::make_shared<Field>(listFieldName, list->name(), list);
-        field->setFieldId(listFieldId);
         monitor->block()->addField(field);
         monitor->block()->setCompileFunction(compileFunction);
         monitor->setMode(Monitor::Mode::List);
