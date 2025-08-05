@@ -12,6 +12,7 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <scratchcpp/broadcast.h>
+#include <scratchcpp/thread.h>
 
 #include "scriptbuilder_p.h"
 
@@ -37,6 +38,7 @@ ScriptBuilder::ScriptBuilder(IExtension *extension, IEngine *engine, std::shared
             return nullptr;
         });
         addBlockToList(block);
+        impl->hatBlock = block.get();
     }
 
     // Add compile function for return value capture block
@@ -275,7 +277,11 @@ void ScriptBuilder::build()
 /*! Runs the built script. */
 void ScriptBuilder::run()
 {
-    impl->engine->run();
+    impl->engine->startScript(impl->hatBlock, impl->target.get());
+
+    do {
+        impl->engine->step();
+    } while (impl->engine->isRunning());
 }
 
 /*! Returns the list of captured block return values. */
