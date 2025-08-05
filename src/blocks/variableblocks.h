@@ -23,6 +23,7 @@ class VariableBlocks : public IExtension
         static CompilerValue *compileSetVariableTo(Compiler *compiler);
         static CompilerValue *compileChangeVariableBy(Compiler *compiler);
         static CompilerValue *compileShowVariable(Compiler *compiler);
+        static CompilerValue *compileHideVariable(Compiler *compiler);
 
         static const std::string &variableMonitorName(Block *block);
         static void changeVariableMonitorValue(Block *block, const Value &newValue);

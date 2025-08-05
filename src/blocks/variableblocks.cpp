@@ -36,6 +36,7 @@ void VariableBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "data_setvariableto", &compileSetVariableTo);
     engine->addCompileFunction(this, "data_changevariableby", &compileChangeVariableBy);
     engine->addCompileFunction(this, "data_showvariable", &compileShowVariable);
+    engine->addCompileFunction(this, "data_hidevariable", &compileHideVariable);
 
     // Monitor names
     engine->addMonitorNameFunction(this, "data_variable", &variableMonitorName);
@@ -95,6 +96,19 @@ CompilerValue *VariableBlocks::compileShowVariable(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *VariableBlocks::compileHideVariable(Compiler *compiler)
+{
+    Field *field = compiler->field("VARIABLE");
+    assert(field);
+    Variable *var = static_cast<Variable *>(field->valuePtr().get());
+    assert(var);
+
+    CompilerConstant *varPtr = compiler->addConstValue(var);
+    compiler->addTargetFunctionCall("data_hidevariable", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { varPtr });
+
+    return nullptr;
+}
+
 const std::string &VariableBlocks::variableMonitorName(Block *block)
 {
     static const std::string empty = "";
@@ -140,4 +154,12 @@ extern "C" void data_showvariable(Target *target, Variable *variable)
     }
 
     monitor->setVisible(true);
+}
+
+extern "C" void data_hidevariable(Target *target, Variable *variable)
+{
+    Monitor *monitor = variable->monitor();
+
+    if (monitor)
+        monitor->setVisible(false);
 }
