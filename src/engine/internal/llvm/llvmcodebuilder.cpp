@@ -37,7 +37,7 @@ LLVMCodeBuilder::LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *proce
     initTypes();
 }
 
-std::shared_ptr<ExecutableCode> LLVMCodeBuilder::finalize()
+std::shared_ptr<ExecutableCode> LLVMCodeBuilder::build()
 {
     if (!m_warp) {
         // Do not create coroutine if there are no yield instructions nor non-warp procedure calls

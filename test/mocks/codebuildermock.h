@@ -8,7 +8,7 @@ using namespace libscratchcpp;
 class CodeBuilderMock : public ICodeBuilder
 {
     public:
-        MOCK_METHOD(std::shared_ptr<ExecutableCode>, finalize, (), (override));
+        MOCK_METHOD(std::shared_ptr<ExecutableCode>, build, (), (override));
         MOCK_METHOD(CompilerValue *, addFunctionCall, (const std::string &, Compiler::StaticType, const Compiler::ArgTypes &, const Compiler::Args &), (override));
         MOCK_METHOD(CompilerValue *, addTargetFunctionCall, (const std::string &, Compiler::StaticType, const Compiler::ArgTypes &, const Compiler::Args &), (override));
         MOCK_METHOD(CompilerValue *, addFunctionCallWithCtx, (const std::string &, Compiler::StaticType, const Compiler::ArgTypes &, const Compiler::Args &), (override));

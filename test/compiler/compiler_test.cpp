@@ -50,7 +50,7 @@ class CompilerTest : public testing::Test
         {
             ASSERT_EQ(compiler->block(), nullptr);
             EXPECT_CALL(m_builderFactory, create(m_ctx.get(), procedurePrototype, codeType)).WillOnce(Return(m_builder));
-            EXPECT_CALL(*m_builder, finalize()).WillOnce(Return(m_code));
+            EXPECT_CALL(*m_builder, build()).WillOnce(Return(m_code));
             ASSERT_EQ(compiler->compile(block, codeType), m_code);
             ASSERT_EQ(compiler->block(), nullptr);
         }

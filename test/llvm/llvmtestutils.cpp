@@ -85,7 +85,7 @@ Value LLVMTestUtils::getOpResult(OpType type, bool rawArg, const Value &v)
         addOp(type, arg);
     }
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&m_target, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&m_target, nullptr, &script);
@@ -113,7 +113,7 @@ Value LLVMTestUtils::getOpResult(OpType type, bool rawArgs, const Value &v1, con
         addOp(type, arg1, arg2);
     }
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&m_target, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&m_target, nullptr, &script);

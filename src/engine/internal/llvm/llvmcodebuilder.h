@@ -30,7 +30,7 @@ class LLVMCodeBuilder : public ICodeBuilder
     public:
         LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *procedurePrototype = nullptr, Compiler::CodeType codeType = Compiler::CodeType::Script);
 
-        std::shared_ptr<ExecutableCode> finalize() override;
+        std::shared_ptr<ExecutableCode> build() override;
 
         CompilerValue *addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
         CompilerValue *addTargetFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;

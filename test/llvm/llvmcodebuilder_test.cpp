@@ -137,7 +137,7 @@ TEST_F(LLVMCodeBuilderTest, FunctionCalls)
         v = m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool }, { v });
         m_builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
 
-        auto code = m_builder->finalize();
+        auto code = m_builder->build();
         Script script(&m_target, nullptr, nullptr);
         script.setCode(code);
         Thread thread(&m_target, nullptr, &script);
@@ -185,7 +185,7 @@ TEST_F(LLVMCodeBuilderTest, FunctionCallsWithPointers)
 
     m_builder->addFunctionCall("test_print_pointer", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { v });
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&m_target, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&m_target, nullptr, &script);
@@ -228,7 +228,7 @@ TEST_F(LLVMCodeBuilderTest, ConstCasting)
     v = m_builder->addConstValue("hello world");
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&m_target, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&m_target, nullptr, &script);
@@ -317,7 +317,7 @@ TEST_F(LLVMCodeBuilderTest, RawValueCasting)
     v = callConstFuncForType(ValueType::String, v);
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&m_target, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&m_target, nullptr, &script);
@@ -390,7 +390,7 @@ TEST_F(LLVMCodeBuilderTest, LocalVariables)
         "true\n"
         "false\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&sprite, nullptr, &script);
@@ -447,7 +447,7 @@ TEST_F(LLVMCodeBuilderTest, WriteVariable)
     v = callConstFuncForType(ValueType::Bool, v);
     m_builder->createVariableWrite(localVar3.get(), v);
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -539,7 +539,7 @@ TEST_F(LLVMCodeBuilderTest, Select)
         "test\n"
         "true\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -599,7 +599,7 @@ TEST_F(LLVMCodeBuilderTest, ReadVariable)
     expected += localVar2->value().toString() + '\n';
     expected += localVar3->value().toString() + '\n';
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -631,7 +631,7 @@ TEST_F(LLVMCodeBuilderTest, SyncVariablesBeforeCallingFunction)
     v = m_builder->addConstValue(456);
     m_builder->createVariableWrite(var.get(), v);
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
 
@@ -683,7 +683,7 @@ TEST_F(LLVMCodeBuilderTest, CastNonRawValueToUnknownType)
     expected += "Hello world\n";
     expected += "true\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&sprite, nullptr, &script);
@@ -753,7 +753,7 @@ TEST_F(LLVMCodeBuilderTest, ClearList)
     m_builder->createListClear(localList1.get());
     m_builder->createListClear(localList2.get());
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -815,7 +815,7 @@ TEST_F(LLVMCodeBuilderTest, RemoveFromList)
     v = m_builder->addConstValue(4);
     m_builder->createListRemove(localList.get(), v);
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -874,7 +874,7 @@ TEST_F(LLVMCodeBuilderTest, AppendToList)
     v = m_builder->addConstValue("hello world");
     m_builder->createListAppend(localList.get(), v);
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -951,7 +951,7 @@ TEST_F(LLVMCodeBuilderTest, InsertToList)
     v2 = m_builder->addConstValue(123);
     m_builder->createListInsert(localList.get(), v1, v2);
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -1018,7 +1018,7 @@ TEST_F(LLVMCodeBuilderTest, ListReplace)
     v2 = m_builder->addConstValue(123);
     m_builder->createListReplace(localList.get(), v1, v2);
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -1067,7 +1067,7 @@ TEST_F(LLVMCodeBuilderTest, GetListContents)
         "123\n"
         "Lorem ipsum dolor sit\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -1192,7 +1192,7 @@ TEST_F(LLVMCodeBuilderTest, GetListItem)
         "0\n"
         "0\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -1242,7 +1242,7 @@ TEST_F(LLVMCodeBuilderTest, GetListSize)
         "3\n"
         "4\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -1336,7 +1336,7 @@ TEST_F(LLVMCodeBuilderTest, GetListItemIndex)
         "-1\n"
         "-1\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -1430,7 +1430,7 @@ TEST_F(LLVMCodeBuilderTest, ListContainsItem)
         "false\n"
         "false\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -1476,7 +1476,7 @@ TEST_F(LLVMCodeBuilderTest, Yield)
     createBuilder(false);
     build();
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&m_target, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&m_target, nullptr, &script);
@@ -1536,7 +1536,7 @@ TEST_F(LLVMCodeBuilderTest, Yield)
     // With warp
     createBuilder(true);
     build();
-    code = m_builder->finalize();
+    code = m_builder->build();
     ctx = code->createExecutionContext(&thread);
 
     static const std::string expected =
@@ -1620,7 +1620,7 @@ TEST_F(LLVMCodeBuilderTest, VariablesAfterSuspend)
         "hello world\n"
         "-4.8\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -1761,7 +1761,7 @@ TEST_F(LLVMCodeBuilderTest, ListsAfterSuspend)
         "-5.48\n"
         "hello\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -1942,7 +1942,7 @@ TEST_F(LLVMCodeBuilderTest, IfStatement)
     }
     m_builder->endIf();
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&m_target, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&m_target, nullptr, &script);
@@ -2059,7 +2059,7 @@ TEST_F(LLVMCodeBuilderTest, IfStatementVariables)
         "true\n"
         "true\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -2199,7 +2199,7 @@ TEST_F(LLVMCodeBuilderTest, IfStatementLists)
         "hello\n"
         "false\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -2282,7 +2282,7 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     // str should still be allocated
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { str });
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&m_target, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&m_target, nullptr, &script);
@@ -2330,7 +2330,7 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
     m_builder->endLoop();
 
-    code = m_builder->finalize();
+    code = m_builder->build();
     ctx = code->createExecutionContext(&thread);
 
     static const std::string expected1 = "no_args\n";
@@ -2356,7 +2356,7 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     m_builder->beginRepeatLoop(v);
     m_builder->endLoop();
 
-    code = m_builder->finalize();
+    code = m_builder->build();
     ctx = code->createExecutionContext(&thread);
     code->run(ctx.get());
     ASSERT_TRUE(code->isFinished(ctx.get()));
@@ -2369,7 +2369,7 @@ TEST_F(LLVMCodeBuilderTest, RepeatLoop)
     m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
     m_builder->endLoop();
 
-    code = m_builder->finalize();
+    code = m_builder->build();
     ctx = code->createExecutionContext(&thread);
 
     for (int i = 0; i < 10; i++) {
@@ -2442,7 +2442,7 @@ TEST_F(LLVMCodeBuilderTest, WhileLoop)
     }
     m_builder->endLoop();
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&m_target, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&m_target, nullptr, &script);
@@ -2470,7 +2470,7 @@ TEST_F(LLVMCodeBuilderTest, WhileLoop)
     m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
     m_builder->endLoop();
 
-    code = m_builder->finalize();
+    code = m_builder->build();
     ctx = code->createExecutionContext(&thread);
 
     static const std::string expected1 = "no_args\n";
@@ -2550,7 +2550,7 @@ TEST_F(LLVMCodeBuilderTest, RepeatUntilLoop)
     }
     m_builder->endLoop();
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&m_target, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&m_target, nullptr, &script);
@@ -2578,7 +2578,7 @@ TEST_F(LLVMCodeBuilderTest, RepeatUntilLoop)
     m_builder->addTargetFunctionCall("test_function_no_args", Compiler::StaticType::Void, {}, {});
     m_builder->endLoop();
 
-    code = m_builder->finalize();
+    code = m_builder->build();
     ctx = code->createExecutionContext(&thread);
 
     static const std::string expected1 = "no_args\n";
@@ -2715,7 +2715,7 @@ TEST_F(LLVMCodeBuilderTest, LoopVariables)
         "true\n"
         "true\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -2761,7 +2761,7 @@ TEST_F(LLVMCodeBuilderTest, VariableLoopTypeAnalysis)
         "5.25\n"
         "0\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&sprite, nullptr, &script);
@@ -2953,7 +2953,7 @@ TEST_F(LLVMCodeBuilderTest, LoopLists)
         "world\n"
         "false\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     ;
@@ -3012,7 +3012,7 @@ TEST_F(LLVMCodeBuilderTest, ListLoopTypeAnalysis)
         "0\n"
         "1\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&sprite, nullptr, &script);
@@ -3037,7 +3037,7 @@ TEST_F(LLVMCodeBuilderTest, StopNoWarp)
 
     std::string expected = "";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&sprite, nullptr, &script);
@@ -3061,7 +3061,7 @@ TEST_F(LLVMCodeBuilderTest, StopWarp)
 
     std::string expected = "";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&sprite, nullptr, &script);
@@ -3081,7 +3081,7 @@ TEST_F(LLVMCodeBuilderTest, StopAndReturn)
 
     std::string expected = "no_args\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&sprite, nullptr, &script);
@@ -3101,7 +3101,7 @@ TEST_F(LLVMCodeBuilderTest, MultipleScripts)
     CompilerValue *v = m_builder->addConstValue("script1");
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
 
-    auto code1 = m_builder->finalize();
+    auto code1 = m_builder->build();
 
     // Script 2
     createBuilder(&sprite, nullptr);
@@ -3109,7 +3109,7 @@ TEST_F(LLVMCodeBuilderTest, MultipleScripts)
     v = m_builder->addConstValue("script2");
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
 
-    auto code2 = m_builder->finalize();
+    auto code2 = m_builder->build();
 
     Script script1(&sprite, nullptr, nullptr);
     script1.setCode(code1);
@@ -3168,7 +3168,7 @@ TEST_F(LLVMCodeBuilderTest, Procedures)
     v = m_builder->addProcedureArgument("invalid");
     m_builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
 
-    m_builder->finalize();
+    m_builder->build();
 
     // Procedure 2
     BlockPrototype prototype2;
@@ -3181,7 +3181,7 @@ TEST_F(LLVMCodeBuilderTest, Procedures)
     m_builder->createProcedureCall(&prototype1, { m_builder->addConstValue(-652.3), m_builder->addConstValue(false), m_builder->addConstValue(true) });
     m_builder->endLoop();
 
-    m_builder->finalize();
+    m_builder->build();
 
     // Script
     createBuilder(&sprite, false);
@@ -3217,7 +3217,7 @@ TEST_F(LLVMCodeBuilderTest, Procedures)
         "0\n"
         "0\n";
 
-    auto code = m_builder->finalize();
+    auto code = m_builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
     Thread thread(&sprite, nullptr, &script);
@@ -3248,7 +3248,7 @@ TEST_F(LLVMCodeBuilderTest, HatPredicates)
 
     m_builder->addConstValue(true);
 
-    auto code1 = m_builder->finalize();
+    auto code1 = m_builder->build();
 
     // Predicate 2
     createPredicateBuilder(&sprite);
@@ -3256,7 +3256,7 @@ TEST_F(LLVMCodeBuilderTest, HatPredicates)
     CompilerValue *v = m_builder->addConstValue(false);
     m_builder->addFunctionCall("test_const_bool", Compiler::StaticType::Bool, { Compiler::StaticType::Bool }, { v });
 
-    auto code2 = m_builder->finalize();
+    auto code2 = m_builder->build();
 
     Script script1(&sprite, nullptr, nullptr);
     script1.setCode(code1);
@@ -3285,7 +3285,7 @@ TEST_F(LLVMCodeBuilderTest, Reporters)
 
     m_builder->addConstValue(-45.23);
 
-    auto code1 = m_builder->finalize();
+    auto code1 = m_builder->build();
 
     // Reporter 2
     createReporterBuilder(&sprite);
@@ -3293,27 +3293,27 @@ TEST_F(LLVMCodeBuilderTest, Reporters)
     CompilerValue *v = m_builder->addConstValue("test");
     m_builder->addFunctionCall("test_const_string", Compiler::StaticType::String, { Compiler::StaticType::String }, { v });
 
-    auto code2 = m_builder->finalize();
+    auto code2 = m_builder->build();
 
     // Reporter 3
     createReporterBuilder(&sprite);
     m_builder->addVariableValue(var.get());
 
-    auto code3 = m_builder->finalize();
+    auto code3 = m_builder->build();
 
     // Reporter 4
     createReporterBuilder(&sprite);
     int pointee;
     m_builder->addConstValue(&pointee);
 
-    auto code4 = m_builder->finalize();
+    auto code4 = m_builder->build();
 
     // Reporter 5
     createReporterBuilder(&sprite);
     v = m_builder->addConstValue(&pointee);
     m_builder->addFunctionCall("test_const_pointer", Compiler::StaticType::Pointer, { Compiler::StaticType::Pointer }, { v });
 
-    auto code5 = m_builder->finalize();
+    auto code5 = m_builder->build();
 
     auto runReporter = [&sprite](std::shared_ptr<ExecutableCode> code) {
         Script script(&sprite, nullptr, nullptr);
