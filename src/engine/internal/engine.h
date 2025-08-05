@@ -108,9 +108,6 @@ class Engine : public IEngine
         void addMonitorNameFunction(IExtension *extension, const std::string &opcode, MonitorNameFunc f) override;
         void addMonitorChangeFunction(IExtension *extension, const std::string &opcode, MonitorChangeFunc f) override;
         void addHatBlock(IExtension *extension, const std::string &opcode) override;
-        void addInput(IExtension *extension, const std::string &name, int id) override;
-        void addField(IExtension *extension, const std::string &name, int id) override;
-        void addFieldValue(IExtension *extension, const std::string &value, int id) override;
 
         const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const override;
         void setBroadcasts(const std::vector<std::shared_ptr<Broadcast>> &broadcasts) override;
@@ -192,9 +189,6 @@ class Engine : public IEngine
         HatPredicateCompileFunc resolveHatPredicateCompileFunc(IExtension *extension, const std::string &opcode) const;
         MonitorNameFunc resolveMonitorNameFunc(IExtension *extension, const std::string &opcode) const;
         MonitorChangeFunc resolveMonitorChangeFunc(IExtension *extension, const std::string &opcode) const;
-        int resolveInput(IExtension *extension, const std::string &name) const;
-        int resolveField(IExtension *extension, const std::string &name) const;
-        int resolveFieldValue(IExtension *extension, const std::string &value) const;
 
         void compileMonitor(std::shared_ptr<Monitor> monitor);
 
@@ -255,9 +249,6 @@ class Engine : public IEngine
         std::unordered_map<IExtension *, std::unordered_map<std::string, HatPredicateCompileFunc>> m_hatPredicateCompileFunctions;
         std::unordered_map<IExtension *, std::unordered_map<std::string, MonitorNameFunc>> m_monitorNameFunctions;
         std::unordered_map<IExtension *, std::unordered_map<std::string, MonitorChangeFunc>> m_monitorChangeFunctions;
-        std::unordered_map<IExtension *, std::unordered_map<std::string, int>> m_inputs;
-        std::unordered_map<IExtension *, std::unordered_map<std::string, int>> m_fields;
-        std::unordered_map<IExtension *, std::unordered_map<std::string, int>> m_fieldValues;
 
         std::unordered_map<Target *, std::vector<Script *>> m_whenTouchingObjectHats;
         std::unordered_map<Target *, std::vector<Script *>> m_greenFlagHats;

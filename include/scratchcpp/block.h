@@ -23,8 +23,6 @@ class LIBSCRATCHCPP_EXPORT Block
     , public std::enable_shared_from_this<Block>
 {
     public:
-        friend class Engine;
-
         Block(const std::string &id, const std::string &opcode, bool isMonitorBlock = false);
         Block(const Block &) = delete;
 
@@ -46,13 +44,11 @@ class LIBSCRATCHCPP_EXPORT Block
         int addInput(std::shared_ptr<Input> input);
         std::shared_ptr<Input> inputAt(int index) const;
         int findInput(const std::string &inputName) const;
-        Input *findInputById(int id) const;
 
         const std::vector<std::shared_ptr<Field>> &fields() const;
         int addField(std::shared_ptr<Field> field);
         std::shared_ptr<Field> fieldAt(int index) const;
         int findField(const std::string &fieldName) const;
-        Field *findFieldById(int id) const;
 
         bool shadow() const;
         void setShadow(bool newShadow);
@@ -95,9 +91,6 @@ class LIBSCRATCHCPP_EXPORT Block
         bool isMonitorBlock() const;
 
     private:
-        void updateInputMap();
-        void updateFieldMap();
-
         spimpl::unique_impl_ptr<BlockPrivate> impl;
 };
 

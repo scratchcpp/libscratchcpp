@@ -31,18 +31,6 @@ const std::string &Field::name() const
     return impl->name;
 }
 
-/*! Returns the ID of the field. */
-int Field::fieldId() const
-{
-    return impl->fieldId;
-}
-
-/*! Sets the ID of the field. */
-void Field::setFieldId(int newFieldId)
-{
-    impl->fieldId = newFieldId;
-}
-
 /*! Returns the value of the field. */
 const Value &Field::value() const
 {
@@ -70,22 +58,4 @@ void Field::setValuePtr(const std::shared_ptr<Entity> &newValuePtr)
 const std::string &Field::valueId() const
 {
     return impl->valueId;
-}
-
-/*!
- * Returns the ID that was assigned to the value.
- *  \see IEngine::addFieldValue()
- */
-int Field::specialValueId() const
-{
-    return impl->specialValueId;
-}
-
-/*!
- * Assigns an ID to the value.
- *  \see IEngine::addFieldValue()
- */
-void Field::setSpecialValueId(int newSpecialValueId)
-{
-    impl->specialValueId = newSpecialValueId;
 }

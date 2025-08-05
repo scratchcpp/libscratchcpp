@@ -29,9 +29,6 @@ class LIBSCRATCHCPP_EXPORT Input
 
         const std::string &name() const;
 
-        int inputId() const;
-        void setInputId(int newInputId);
-
         Type type() const;
 
         InputValue *primaryValue();

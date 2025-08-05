@@ -29,9 +29,7 @@ struct BlockPrivate
         Block *parent = nullptr;
         std::string parentId;
         std::vector<std::shared_ptr<Input>> inputs;
-        std::unordered_map<int, Input *> inputMap;
         std::vector<std::shared_ptr<Field>> fields;
-        std::unordered_map<int, Field *> fieldMap;
         bool shadow = false;
         int x = 0;
         int y = 0;

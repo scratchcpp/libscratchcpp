@@ -26,18 +26,12 @@ class LIBSCRATCHCPP_EXPORT Field
 
         const std::string &name() const;
 
-        int fieldId() const;
-        void setFieldId(int newFieldId);
-
         const Value &value() const;
 
         std::shared_ptr<Entity> valuePtr() const;
         void setValuePtr(const std::shared_ptr<Entity> &newValuePtr);
 
         const std::string &valueId() const;
-
-        int specialValueId() const;
-        void setSpecialValueId(int newSpecialValueId);
 
     private:
         spimpl::unique_impl_ptr<FieldPrivate> impl;

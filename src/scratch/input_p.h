@@ -14,7 +14,6 @@ struct InputPrivate
         InputPrivate(const InputValue &) = delete;
 
         std::string name;
-        int inputId = -1;
         Input::Type type;
         InputValue primaryValue;
         InputValue secondaryValue;

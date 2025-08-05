@@ -249,24 +249,6 @@ class LIBSCRATCHCPP_EXPORT IEngine
          */
         virtual void addHatBlock(IExtension *extension, const std::string &opcode) = 0;
 
-        /*!
-         * Call this from IExtension#registerBlocks() to add an input to a block section.
-         * \see <a href="extensions.html">Extensions</a>
-         */
-        virtual void addInput(IExtension *extension, const std::string &name, int id) = 0;
-
-        /*!
-         * Call this from IExtension#registerBlocks() to add a field to a block section.
-         * \see <a href="extensions.html">Extensions</a>
-         */
-        virtual void addField(IExtension *extension, const std::string &name, int id) = 0;
-
-        /*!
-         * Call this from IExtension#registerBlocks() to add a field value to a block section.
-         * \see <a href="extensions.html">Extensions</a>
-         */
-        virtual void addFieldValue(IExtension *extension, const std::string &value, int id) = 0;
-
         /*! Returns the list of broadcasts. */
         virtual const std::vector<std::shared_ptr<Broadcast>> &broadcasts() const = 0;
 

@@ -89,9 +89,6 @@ class EngineMock : public IEngine
         MOCK_METHOD(void, addMonitorNameFunction, (IExtension *, const std::string &, MonitorNameFunc), (override));
         MOCK_METHOD(void, addMonitorChangeFunction, (IExtension *, const std::string &, MonitorChangeFunc), (override));
         MOCK_METHOD(void, addHatBlock, (IExtension *, const std::string &), (override));
-        MOCK_METHOD(void, addInput, (IExtension *, const std::string &, int), (override));
-        MOCK_METHOD(void, addField, (IExtension *, const std::string &, int), (override));
-        MOCK_METHOD(void, addFieldValue, (IExtension *, const std::string &, int), (override));
 
         MOCK_METHOD(const std::vector<std::shared_ptr<Broadcast>> &, broadcasts, (), (const, override));
         MOCK_METHOD(void, setBroadcasts, (const std::vector<std::shared_ptr<Broadcast>> &), (override));

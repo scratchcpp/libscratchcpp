@@ -198,8 +198,6 @@ int Block::addInput(std::shared_ptr<Input> input)
         return it - impl->inputs.begin();
 
     impl->inputs.push_back(input);
-    impl->inputMap[input->inputId()] = input.get();
-
     return impl->inputs.size() - 1;
 }
 
@@ -223,27 +221,6 @@ int Block::findInput(const std::string &inputName) const
         return it - impl->inputs.begin();
 }
 
-/*! Returns the input with the given ID. */
-Input *Block::findInputById(int id) const
-{
-    if (impl->inputMap.count(id) == 1)
-        return impl->inputMap.at(id);
-    else {
-        auto it = std::find_if(impl->inputs.begin(), impl->inputs.end(), [id](std::shared_ptr<Input> input) { return input->inputId() == id; });
-
-        if (it != impl->inputs.end())
-            return it->get();
-    }
-    return nullptr;
-}
-
-void Block::updateInputMap()
-{
-    impl->inputMap.clear();
-    for (auto input : impl->inputs)
-        impl->inputMap[input->inputId()] = input.get();
-}
-
 /*! Returns the list of fields. */
 const std::vector<std::shared_ptr<Field>> &Block::fields() const
 {
@@ -259,8 +236,6 @@ int Block::addField(std::shared_ptr<Field> field)
         return it - impl->fields.begin();
 
     impl->fields.push_back(field);
-    impl->fieldMap[field->fieldId()] = field.get();
-
     return impl->fields.size() - 1;
 }
 
@@ -282,27 +257,6 @@ int Block::findField(const std::string &fieldName) const
         return -1;
     else
         return it - impl->fields.begin();
-}
-
-/*! Returns the index of the field with the given ID. */
-Field *Block::findFieldById(int id) const
-{
-    if (impl->fieldMap.count(id) == 1)
-        return impl->fieldMap.at(id);
-    else {
-        auto it = std::find_if(impl->fields.begin(), impl->fields.end(), [id](std::shared_ptr<Field> field) { return field->fieldId() == id; });
-
-        if (it != impl->fields.end())
-            return it->get();
-    }
-    return nullptr;
-}
-
-void Block::updateFieldMap()
-{
-    impl->fieldMap.clear();
-    for (auto field : impl->fields)
-        impl->fieldMap[field->fieldId()] = field.get();
 }
 
 /*! Returns true if this is a shadow block. */

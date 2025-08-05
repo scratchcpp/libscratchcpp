@@ -49,15 +49,6 @@ TEST_F(FieldTest, Constructors)
     ASSERT_EQ(field4.valueId(), "list");
 }
 
-TEST_F(FieldTest, FieldId)
-{
-    Field field("", Value());
-    ASSERT_EQ(field.fieldId(), -1);
-
-    field.setFieldId(2);
-    ASSERT_EQ(field.fieldId(), 2);
-}
-
 TEST_F(FieldTest, ValuePtr)
 {
     Field field("", Value());
@@ -69,13 +60,4 @@ TEST_F(FieldTest, ValuePtr)
     field.setValuePtr(nullptr);
     ASSERT_EQ(field.valuePtr(), nullptr);
     ASSERT_EQ(field.valueId(), "");
-}
-
-TEST_F(FieldTest, SpecialValueId)
-{
-    Field field("", Value());
-    ASSERT_EQ(field.specialValueId(), -1);
-
-    field.setSpecialValueId(5);
-    ASSERT_EQ(field.specialValueId(), 5);
 }

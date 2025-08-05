@@ -106,13 +106,8 @@ TEST_F(BlockTest, Parent)
 TEST_F(BlockTest, Inputs)
 {
     auto i1 = std::make_shared<Input>("VALUE1", Input::Type::Shadow);
-    i1->setInputId(11);
-
     auto i2 = std::make_shared<Input>("VALUE2", Input::Type::Shadow);
-    i2->setInputId(12);
-
     auto i3 = std::make_shared<Input>("VALUE3", Input::Type::Shadow);
-    i3->setInputId(15);
 
     Block block("", "");
     ASSERT_EQ(block.addInput(i1), 0);
@@ -131,28 +126,13 @@ TEST_F(BlockTest, Inputs)
     ASSERT_EQ(block.findInput("VALUE1"), 0);
     ASSERT_EQ(block.findInput("VALUE2"), 1);
     ASSERT_EQ(block.findInput("VALUE3"), 2);
-
-    ASSERT_EQ(block.findInputById(5), nullptr);
-    ASSERT_EQ(block.findInputById(11), i1.get());
-    ASSERT_EQ(block.findInputById(12), i2.get());
-    ASSERT_EQ(block.findInputById(15), i3.get());
-
-    auto i4 = std::make_shared<Input>("VALUE4", Input::Type::Shadow);
-    block.addInput(i4);
-    i4->setInputId(20);
-    ASSERT_EQ(block.findInputById(20), i4.get());
 }
 
 TEST_F(BlockTest, Fields)
 {
     auto f1 = std::make_shared<Field>("VARIABLE1", Value());
-    f1->setFieldId(11);
-
     auto f2 = std::make_shared<Field>("VARIABLE2", Value());
-    f2->setFieldId(12);
-
     auto f3 = std::make_shared<Field>("VARIABLE3", Value());
-    f3->setFieldId(15);
 
     Block block("", "");
     ASSERT_EQ(block.addField(f1), 0);
@@ -171,16 +151,6 @@ TEST_F(BlockTest, Fields)
     ASSERT_EQ(block.findField("VARIABLE1"), 0);
     ASSERT_EQ(block.findField("VARIABLE2"), 1);
     ASSERT_EQ(block.findField("VARIABLE3"), 2);
-
-    ASSERT_EQ(block.findFieldById(5), nullptr);
-    ASSERT_EQ(block.findFieldById(11), f1.get());
-    ASSERT_EQ(block.findFieldById(12), f2.get());
-    ASSERT_EQ(block.findFieldById(15), f3.get());
-
-    auto f4 = std::make_shared<Field>("VARIABLE4", Value());
-    block.addField(f4);
-    f4->setFieldId(20);
-    ASSERT_EQ(block.findFieldById(20), f4.get());
 }
 
 TEST_F(BlockTest, Shadow)

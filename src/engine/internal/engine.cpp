@@ -118,9 +118,6 @@ void Engine::resolveIds()
             for (const auto &input : inputs) {
                 input->setValueBlock(getBlock(input->valueBlockId(), target.get()).get());
 
-                if (ext)
-                    input->setInputId(resolveInput(ext, input->name()));
-
                 InputValue *value = input->primaryValue();
                 std::string id = value->valueId(); // no reference!
                 value->setValuePtr(getEntity(id, target.get()));
@@ -150,13 +147,6 @@ void Engine::resolveIds()
                 std::string id = field->valueId(); // no reference!
                 field->setValuePtr(getEntity(id, target.get()));
 
-                if (ext) {
-                    field->setFieldId(resolveField(ext, field->name()));
-
-                    if (!field->valuePtr())
-                        field->setSpecialValueId(resolveFieldValue(ext, field->value().toString()));
-                }
-
                 // TODO: Move field information out of Engine
                 if (!field->valuePtr()) {
                     if (field->name() == "VARIABLE") {
@@ -174,9 +164,6 @@ void Engine::resolveIds()
                     }
                 }
             }
-
-            block->updateInputMap();
-            block->updateFieldMap();
 
             auto comment = getComment(block->commentId(), target.get());
             block->setComment(comment);
@@ -210,13 +197,6 @@ void Engine::resolveIds()
         for (auto field : fields) {
             field->setValuePtr(getEntity(field->valueId(), target));
 
-            if (ext) {
-                field->setFieldId(resolveField(ext, field->name()));
-
-                if (!field->valuePtr())
-                    field->setSpecialValueId(resolveFieldValue(ext, field->value().toString()));
-            }
-
             // TODO: Move field information out of Engine
             if (field->name() == "VARIABLE") {
                 std::string name = field->value().toString();
@@ -248,9 +228,6 @@ void Engine::resolveIds()
                 list->setMonitor(monitor.get());
             }
         }
-
-        block->updateInputMap();
-        block->updateFieldMap();
     }
 }
 
@@ -969,30 +946,6 @@ void Engine::addHatBlock(IExtension *extension, const std::string &opcode)
         m_compileFunctions[extension] = {};
 
     m_compileFunctions[extension][opcode] = [](Compiler *compiler) -> CompilerValue * { return nullptr; };
-}
-
-void Engine::addInput(IExtension *extension, const std::string &name, int id)
-{
-    if (m_inputs.find(extension) == m_inputs.cend())
-        m_inputs[extension] = {};
-
-    m_inputs[extension][name] = id;
-}
-
-void Engine::addField(IExtension *extension, const std::string &name, int id)
-{
-    if (m_fields.find(extension) == m_fields.cend())
-        m_fields[extension] = {};
-
-    m_fields[extension][name] = id;
-}
-
-void Engine::addFieldValue(IExtension *extension, const std::string &value, int id)
-{
-    if (m_fieldValues.find(extension) == m_fieldValues.cend())
-        m_fieldValues[extension] = {};
-
-    m_fieldValues[extension][value] = id;
 }
 
 const std::vector<std::shared_ptr<Broadcast>> &Engine::broadcasts() const
@@ -1733,9 +1686,6 @@ void Engine::clearExtensionData()
     m_hatPredicateCompileFunctions.clear();
     m_monitorNameFunctions.clear();
     m_monitorChangeFunctions.clear();
-    m_inputs.clear();
-    m_fields.clear();
-    m_fieldValues.clear();
 }
 
 IExtension *Engine::blockExtension(const std::string &opcode) const
@@ -1816,57 +1766,6 @@ MonitorChangeFunc Engine::resolveMonitorChangeFunc(IExtension *extension, const 
     }
 
     return nullptr;
-}
-
-int Engine::resolveInput(IExtension *extension, const std::string &name) const
-{
-    if (!extension)
-        return -1;
-
-    auto it = m_inputs.find(extension);
-
-    if (it != m_inputs.cend()) {
-        auto dataIt = it->second.find(name);
-
-        if (dataIt != it->second.cend())
-            return dataIt->second;
-    }
-
-    return -1;
-}
-
-int Engine::resolveField(IExtension *extension, const std::string &name) const
-{
-    if (!extension)
-        return -1;
-
-    auto it = m_fields.find(extension);
-
-    if (it != m_fields.cend()) {
-        auto dataIt = it->second.find(name);
-
-        if (dataIt != it->second.cend())
-            return dataIt->second;
-    }
-
-    return -1;
-}
-
-int Engine::resolveFieldValue(IExtension *extension, const std::string &value) const
-{
-    if (!extension)
-        return -1;
-
-    auto it = m_fieldValues.find(extension);
-
-    if (it != m_fieldValues.cend()) {
-        auto dataIt = it->second.find(value);
-
-        if (dataIt != it->second.cend())
-            return dataIt->second;
-    }
-
-    return -1;
 }
 
 void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)

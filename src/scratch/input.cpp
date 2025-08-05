@@ -22,18 +22,6 @@ const std::string &Input::name() const
     return impl->name;
 }
 
-/*! Returns the ID of the input. */
-int Input::inputId() const
-{
-    return impl->inputId;
-}
-
-/*! Sets the ID of the input. */
-void Input::setInputId(int newInputId)
-{
-    impl->inputId = newInputId;
-}
-
 /*! Returns the type of the input. */
 Input::Type Input::type() const
 {

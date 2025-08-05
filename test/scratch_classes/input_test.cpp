@@ -19,15 +19,6 @@ TEST(InputTest, Constructors)
     ASSERT_EQ(input2.type(), Input::Type::NoShadow);
 }
 
-TEST(InputTest, InputId)
-{
-    Input input("", Input::Type::Shadow);
-    ASSERT_EQ(input.inputId(), -1);
-
-    input.setInputId(3);
-    ASSERT_EQ(input.inputId(), 3);
-}
-
 TEST(InputTest, PrimaryValue)
 {
     Input input("", Input::Type::Shadow);
