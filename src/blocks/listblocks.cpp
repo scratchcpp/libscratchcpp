@@ -42,6 +42,7 @@ void ListBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "data_lengthoflist", &compileLengthOfList);
     engine->addCompileFunction(this, "data_listcontainsitem", &compileListContainsItem);
     engine->addCompileFunction(this, "data_showlist", &compileShowList);
+    engine->addCompileFunction(this, "data_hidelist", &compileHideList);
 
     // Monitor names
     engine->addMonitorNameFunction(this, "data_listcontents", &listContentsMonitorName);
@@ -229,6 +230,19 @@ CompilerValue *ListBlocks::compileShowList(Compiler *compiler)
     return nullptr;
 }
 
+CompilerValue *ListBlocks::compileHideList(Compiler *compiler)
+{
+    Field *field = compiler->field("LIST");
+    assert(field);
+    List *list = static_cast<List *>(field->valuePtr().get());
+    assert(list);
+
+    CompilerConstant *listPtr = compiler->addConstValue(list);
+    compiler->addTargetFunctionCall("data_hidelist", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { listPtr });
+
+    return nullptr;
+}
+
 const std::string &ListBlocks::listContentsMonitorName(Block *block)
 {
     static const std::string empty = "";
@@ -260,4 +274,12 @@ extern "C" void data_showlist(Target *target, List *list)
     }
 
     monitor->setVisible(true);
+}
+
+extern "C" void data_hidelist(Target *target, List *list)
+{
+    Monitor *monitor = list->monitor();
+
+    if (monitor)
+        monitor->setVisible(false);
 }

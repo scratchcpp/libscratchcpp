@@ -797,3 +797,216 @@ TEST_F(ListBlocksTest, ShowList_Local_FromClone)
     ASSERT_FALSE(clone->listAt(0)->monitor());
     ASSERT_FALSE(clone->listAt(1)->monitor());
 }
+
+TEST_F(ListBlocksTest, HideList_Global_Existent)
+{
+    auto stage = std::make_shared<Stage>();
+    auto list1 = std::make_shared<List>("a", "list1");
+    list1->append("item1");
+    list1->append("item2");
+    stage->addList(list1);
+    auto list2 = std::make_shared<List>("b", "list2");
+    list2->append("Hello");
+    list2->append("world");
+    stage->addList(list2);
+
+    auto monitor1 = std::make_shared<Monitor>("monitor", "data_listcontents");
+    monitor1->block()->addField(std::make_shared<Field>("LIST", list1->name(), list1));
+    monitor1->setVisible(true);
+
+    auto monitor2 = std::make_shared<Monitor>("monitor", "data_listcontents");
+    monitor2->block()->addField(std::make_shared<Field>("LIST", list2->name(), list2));
+    monitor2->setVisible(false);
+
+    m_engine->setMonitors({ monitor1, monitor2 });
+    list1->setMonitor(monitor1.get());
+    list2->setMonitor(monitor2.get());
+
+    m_engine->setTargets({ stage });
+
+    ScriptBuilder builder1(m_extension.get(), m_engine, stage);
+    builder1.addBlock("data_hidelist");
+    builder1.addEntityField("LIST", list1);
+
+    ScriptBuilder builder2(m_extension.get(), m_engine, stage);
+    builder2.addBlock("data_hidelist");
+    builder2.addEntityField("LIST", list2);
+
+    ScriptBuilder::buildMultiple({ &builder1, &builder2 });
+
+    builder1.run();
+    ASSERT_FALSE(monitor1->visible());
+    ASSERT_FALSE(monitor2->visible());
+
+    builder2.run();
+    ASSERT_FALSE(monitor1->visible());
+    ASSERT_FALSE(monitor2->visible());
+}
+
+TEST_F(ListBlocksTest, HideList_Global_Nonexistent)
+{
+    auto stage = std::make_shared<Stage>();
+    auto list1 = std::make_shared<List>("a", "list1");
+    list1->append("item1");
+    list1->append("item2");
+    stage->addList(list1);
+    auto list2 = std::make_shared<List>("b", "list2");
+    list2->append("Hello");
+    list2->append("world");
+    stage->addList(list2);
+
+    m_engine->setTargets({ stage });
+
+    ScriptBuilder builder1(m_extension.get(), m_engine, stage);
+    builder1.addBlock("data_hidelist");
+    builder1.addEntityField("LIST", list1);
+
+    ScriptBuilder builder2(m_extension.get(), m_engine, stage);
+    builder2.addBlock("data_hidelist");
+    builder2.addEntityField("LIST", list2);
+
+    ScriptBuilder::buildMultiple({ &builder1, &builder2 });
+
+    // Missing monitors should NOT be created
+    builder1.run();
+    ASSERT_FALSE(list1->monitor());
+
+    builder2.run();
+    ASSERT_FALSE(list2->monitor());
+}
+
+TEST_F(ListBlocksTest, HideList_Local_Existent)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+
+    auto list1 = std::make_shared<List>("a", "list1");
+    list1->append("item1");
+    list1->append("item2");
+    sprite->addList(list1);
+    auto list2 = std::make_shared<List>("b", "list2");
+    list2->append("Hello");
+    list2->append("world");
+    sprite->addList(list2);
+
+    auto monitor1 = std::make_shared<Monitor>("monitor", "data_listcontents");
+    monitor1->block()->addField(std::make_shared<Field>("LIST", list1->name(), list1));
+    monitor1->setVisible(true);
+
+    auto monitor2 = std::make_shared<Monitor>("monitor", "data_listcontents");
+    monitor2->block()->addField(std::make_shared<Field>("LIST", list2->name(), list2));
+    monitor2->setVisible(false);
+
+    m_engine->setMonitors({ monitor1, monitor2 });
+    list1->setMonitor(monitor1.get());
+    list2->setMonitor(monitor2.get());
+
+    m_engine->setTargets({ stage, sprite });
+
+    ScriptBuilder builder1(m_extension.get(), m_engine, sprite);
+    builder1.addBlock("data_hidelist");
+    builder1.addEntityField("LIST", list1);
+
+    ScriptBuilder builder2(m_extension.get(), m_engine, sprite);
+    builder2.addBlock("data_hidelist");
+    builder2.addEntityField("LIST", list2);
+
+    ScriptBuilder::buildMultiple({ &builder1, &builder2 });
+
+    builder1.run();
+    ASSERT_FALSE(monitor1->visible());
+    ASSERT_FALSE(monitor2->visible());
+
+    builder2.run();
+    ASSERT_FALSE(monitor1->visible());
+    ASSERT_FALSE(monitor2->visible());
+}
+
+TEST_F(ListBlocksTest, HideList_Local_Nonexistent)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+
+    auto list1 = std::make_shared<List>("a", "list1");
+    list1->append("item1");
+    list1->append("item2");
+    sprite->addList(list1);
+    auto list2 = std::make_shared<List>("b", "list2");
+    list2->append("Hello");
+    list2->append("world");
+    sprite->addList(list2);
+
+    m_engine->setTargets({ stage, sprite });
+
+    ScriptBuilder builder1(m_extension.get(), m_engine, sprite);
+    builder1.addBlock("data_hidelist");
+    builder1.addEntityField("LIST", list1);
+
+    ScriptBuilder builder2(m_extension.get(), m_engine, sprite);
+    builder2.addBlock("data_hidelist");
+    builder2.addEntityField("LIST", list2);
+
+    ScriptBuilder::buildMultiple({ &builder1, &builder2 });
+    m_engine->run();
+
+    // Missing monitors should NOT be created
+    builder1.run();
+    ASSERT_FALSE(list1->monitor());
+
+    builder2.run();
+    ASSERT_FALSE(list2->monitor());
+}
+
+TEST_F(ListBlocksTest, HideList_Local_FromClone)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+
+    auto list1 = std::make_shared<List>("a", "list1");
+    list1->append("item1");
+    list1->append("item2");
+    sprite->addList(list1);
+    auto list2 = std::make_shared<List>("b", "list2");
+    list2->append("Hello");
+    list2->append("world");
+    sprite->addList(list2);
+
+    auto monitor1 = std::make_shared<Monitor>("monitor", "data_listcontents");
+    monitor1->block()->addField(std::make_shared<Field>("LIST", list1->name(), list1));
+    monitor1->setVisible(true);
+
+    auto monitor2 = std::make_shared<Monitor>("monitor", "data_listcontents");
+    monitor2->block()->addField(std::make_shared<Field>("LIST", list2->name(), list2));
+    monitor2->setVisible(false);
+
+    m_engine->setMonitors({ monitor1, monitor2 });
+    list1->setMonitor(monitor1.get());
+    list2->setMonitor(monitor2.get());
+
+    sprite->setEngine(m_engine);
+    auto clone = sprite->clone();
+
+    m_engine->setTargets({ stage, sprite, clone });
+
+    ScriptBuilder builder1(m_extension.get(), m_engine, clone);
+    builder1.addBlock("data_hidelist");
+    builder1.addEntityField("LIST", list1);
+
+    ScriptBuilder builder2(m_extension.get(), m_engine, clone);
+    builder2.addBlock("data_hidelist");
+    builder2.addEntityField("LIST", list2);
+
+    ScriptBuilder::buildMultiple({ &builder1, &builder2 });
+
+    // The clone root lists should be used
+    builder1.run();
+    ASSERT_FALSE(monitor1->visible());
+    ASSERT_FALSE(monitor2->visible());
+
+    builder2.run();
+    ASSERT_FALSE(monitor1->visible());
+    ASSERT_FALSE(monitor2->visible());
+
+    ASSERT_FALSE(clone->listAt(0)->monitor());
+    ASSERT_FALSE(clone->listAt(1)->monitor());
+}

@@ -33,6 +33,7 @@ class ListBlocks : public IExtension
         static CompilerValue *compileLengthOfList(Compiler *compiler);
         static CompilerValue *compileListContainsItem(Compiler *compiler);
         static CompilerValue *compileShowList(Compiler *compiler);
+        static CompilerValue *compileHideList(Compiler *compiler);
 
         static const std::string &listContentsMonitorName(Block *block);
 };
