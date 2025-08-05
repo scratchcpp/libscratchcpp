@@ -86,6 +86,8 @@ class LLVMTestUtils
         Value getExpectedOpResult(OpType type, const Value &v);
         Value getExpectedOpResult(OpType type, const Value &v1, const Value &v2);
 
+        EngineMock &engine();
+        TargetMock &target();
         const RandomGeneratorMock &rng() const;
 
     private:

@@ -199,6 +199,16 @@ Value LLVMTestUtils::getExpectedOpResult(OpType type, const Value &v1, const Val
     }
 }
 
+EngineMock &LLVMTestUtils::engine()
+{
+    return m_engine;
+}
+
+TargetMock &LLVMTestUtils::target()
+{
+    return m_target;
+}
+
 const RandomGeneratorMock &LLVMTestUtils::rng() const
 {
     return m_rng;
