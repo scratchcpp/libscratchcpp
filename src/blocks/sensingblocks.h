@@ -15,6 +15,9 @@ class SensingBlocks : public IExtension
         Rgb color() const override;
 
         void registerBlocks(IEngine *engine) override;
+
+    private:
+        static CompilerValue *compileTouchingObject(Compiler *compiler);
 };
 
 } // namespace libscratchcpp
