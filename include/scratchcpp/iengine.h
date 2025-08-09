@@ -24,6 +24,7 @@ class Stage;
 class Variable;
 class List;
 class Script;
+class StringPtr;
 class Thread;
 class ITimer;
 class KeyEvent;
@@ -181,6 +182,12 @@ class LIBSCRATCHCPP_EXPORT IEngine
 
         /*! Call this when a target is clicked. */
         virtual void clickTarget(Target *target) = 0;
+
+        /*!
+         * Returns the answer received from the user.
+         * \see questionAnswered()
+         */
+        virtual const StringPtr *answer() const = 0;
 
         /*! Returns the stage width. */
         virtual unsigned int stageWidth() const = 0;
