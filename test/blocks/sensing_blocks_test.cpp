@@ -5,6 +5,7 @@
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/script.h>
 #include <scratchcpp/thread.h>
+#include <scratchcpp/textbubble.h>
 #include <scratchcpp/test/scriptbuilder.h>
 #include <enginemock.h>
 #include <targetmock.h>
@@ -17,17 +18,27 @@ using namespace libscratchcpp;
 using namespace libscratchcpp::test;
 
 using ::testing::Return;
+using ::testing::ReturnRef;
 
 class SensingBlocksTest : public testing::Test
 {
     public:
+        struct QuestionSpy
+        {
+                MOCK_METHOD(void, asked, (const std::string &), ());
+                MOCK_METHOD(void, aborted, (), ());
+        };
+
         void SetUp() override
         {
             m_extension = std::make_unique<SensingBlocks>();
             m_engine = m_project.engine().get();
             m_extension->registerBlocks(m_engine);
+            m_extension->onInit(m_engine);
             registerBlocks(m_engine, m_extension.get());
         }
+
+        void TearDown() override { SensingBlocks::clearQuestions(); }
 
         std::unique_ptr<IExtension> m_extension;
         Project m_project;
@@ -741,4 +752,426 @@ TEST_F(SensingBlocksTest, DistanceTo_Invalid_Runtime)
     ValueData value = thread.runReporter();
     ASSERT_EQ(value_toDouble(&value), 10000.0);
     value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, AskAndWait_VisibleSprite)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    // Build
+    ScriptBuilder builder1(m_extension.get(), m_engine, sprite);
+    builder1.addBlock("sensing_askandwait");
+    builder1.addValueInput("QUESTION", "test");
+    Block *block1 = builder1.currentBlock();
+
+    Compiler compiler1(&m_engineMock, sprite.get());
+    auto code1 = compiler1.compile(block1);
+    Script script1(sprite.get(), block1, &m_engineMock);
+    script1.setCode(code1);
+    Thread thread1(sprite.get(), &m_engineMock, &script1);
+
+    ScriptBuilder builder2(m_extension.get(), m_engine, sprite);
+    builder2.addBlock("sensing_answer");
+    Block *block2 = builder2.currentBlock();
+
+    Compiler compiler2(m_engine, sprite.get());
+    auto code2 = compiler2.compile(block2, Compiler::CodeType::Reporter);
+    Script script2(sprite.get(), block2, m_engine);
+    script2.setCode(code2);
+    Thread thread2(sprite.get(), m_engine, &script2);
+
+    // Run
+    QuestionSpy spy;
+    auto asked = std::bind(&QuestionSpy::asked, &spy, std::placeholders::_1);
+    sigslot::signal<const std::string &> askedSignal;
+    askedSignal.connect(asked);
+
+    sprite->bubble()->setType(TextBubble::Type::Think);
+    sprite->setVisible(true);
+
+    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
+    EXPECT_CALL(spy, asked("")); // visible => empty question
+    thread1.run();
+    ASSERT_EQ(sprite->bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(sprite->bubble()->text(), "test");
+
+    ValueData value = thread2.runReporter();
+    std::string str;
+    value_toString(&value, &str);
+    value_free(&value);
+    ASSERT_EQ(str, ""); // not answered yet
+
+    ASSERT_FALSE(thread1.isFinished());
+
+    // Answer
+    m_engine->questionAnswered()("test answer");
+    ASSERT_TRUE(sprite->bubble()->text().empty());
+
+    value = thread2.runReporter();
+    value_toString(&value, &str);
+    value_free(&value);
+    ASSERT_EQ(str, "test answer");
+
+    thread1.run();
+    ASSERT_TRUE(thread1.isFinished());
+}
+
+TEST_F(SensingBlocksTest, AskAndWait_VisibleSpriteBefore)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    // Build
+    ScriptBuilder builder1(m_extension.get(), m_engine, sprite);
+    builder1.addBlock("sensing_askandwait");
+    builder1.addValueInput("QUESTION", "test");
+    Block *block1 = builder1.currentBlock();
+
+    Compiler compiler1(&m_engineMock, sprite.get());
+    auto code1 = compiler1.compile(block1);
+    Script script1(sprite.get(), block1, &m_engineMock);
+    script1.setCode(code1);
+    Thread thread1(sprite.get(), &m_engineMock, &script1);
+
+    ScriptBuilder builder2(m_extension.get(), m_engine, sprite);
+    builder2.addBlock("sensing_answer");
+    Block *block2 = builder2.currentBlock();
+
+    Compiler compiler2(m_engine, sprite.get());
+    auto code2 = compiler2.compile(block2, Compiler::CodeType::Reporter);
+    Script script2(sprite.get(), block2, m_engine);
+    script2.setCode(code2);
+    Thread thread2(sprite.get(), m_engine, &script2);
+
+    // Run
+    QuestionSpy spy;
+    auto asked = std::bind(&QuestionSpy::asked, &spy, std::placeholders::_1);
+    sigslot::signal<const std::string &> askedSignal;
+    askedSignal.connect(asked);
+
+    sprite->bubble()->setType(TextBubble::Type::Think);
+    sprite->setVisible(true);
+
+    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
+    EXPECT_CALL(spy, asked("")); // visible => empty question
+    thread1.run();
+    ASSERT_EQ(sprite->bubble()->type(), TextBubble::Type::Say);
+    ASSERT_EQ(sprite->bubble()->text(), "test");
+
+    ASSERT_FALSE(thread1.isFinished());
+
+    // Answer
+    sprite->setVisible(false);
+    m_engine->questionAnswered()("test answer");
+    ASSERT_TRUE(sprite->bubble()->text().empty()); // sprite was visible when asked
+
+    ValueData value = thread2.runReporter();
+    std::string str;
+    value_toString(&value, &str);
+    value_free(&value);
+    ASSERT_EQ(str, "test answer");
+
+    thread1.run();
+    ASSERT_TRUE(thread1.isFinished());
+}
+
+TEST_F(SensingBlocksTest, AskAndWait_InvisibleSprite)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    // Build
+    ScriptBuilder builder1(m_extension.get(), m_engine, sprite);
+    builder1.addBlock("sensing_askandwait");
+    builder1.addValueInput("QUESTION", "test");
+    Block *block1 = builder1.currentBlock();
+
+    Compiler compiler1(&m_engineMock, sprite.get());
+    auto code1 = compiler1.compile(block1);
+    Script script1(sprite.get(), block1, &m_engineMock);
+    script1.setCode(code1);
+    Thread thread1(sprite.get(), &m_engineMock, &script1);
+
+    ScriptBuilder builder2(m_extension.get(), m_engine, sprite);
+    builder2.addBlock("sensing_answer");
+    Block *block2 = builder2.currentBlock();
+
+    Compiler compiler2(m_engine, sprite.get());
+    auto code2 = compiler2.compile(block2, Compiler::CodeType::Reporter);
+    Script script2(sprite.get(), block2, m_engine);
+    script2.setCode(code2);
+    Thread thread2(sprite.get(), m_engine, &script2);
+
+    // Run
+    QuestionSpy spy;
+    auto asked = std::bind(&QuestionSpy::asked, &spy, std::placeholders::_1);
+    sigslot::signal<const std::string &> askedSignal;
+    askedSignal.connect(asked);
+
+    sprite->bubble()->setType(TextBubble::Type::Think);
+    sprite->bubble()->setText("hello");
+    sprite->setVisible(false);
+
+    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
+    EXPECT_CALL(spy, asked("test"));
+    thread1.run();
+    ASSERT_EQ(sprite->bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(sprite->bubble()->text(), "hello");
+
+    ASSERT_FALSE(thread1.isFinished());
+
+    // Answer
+    m_engine->questionAnswered()("test answer");
+    ASSERT_EQ(sprite->bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(sprite->bubble()->text(), "hello");
+
+    ValueData value = thread2.runReporter();
+    std::string str;
+    value_toString(&value, &str);
+    value_free(&value);
+    ASSERT_EQ(str, "test answer");
+
+    thread1.run();
+    ASSERT_TRUE(thread1.isFinished());
+}
+
+TEST_F(SensingBlocksTest, AskAndWait_InvisibleSpriteBefore)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    // Build
+    ScriptBuilder builder1(m_extension.get(), m_engine, sprite);
+    builder1.addBlock("sensing_askandwait");
+    builder1.addValueInput("QUESTION", "test");
+    Block *block1 = builder1.currentBlock();
+
+    Compiler compiler1(&m_engineMock, sprite.get());
+    auto code1 = compiler1.compile(block1);
+    Script script1(sprite.get(), block1, &m_engineMock);
+    script1.setCode(code1);
+    Thread thread1(sprite.get(), &m_engineMock, &script1);
+
+    ScriptBuilder builder2(m_extension.get(), m_engine, sprite);
+    builder2.addBlock("sensing_answer");
+    Block *block2 = builder2.currentBlock();
+
+    Compiler compiler2(m_engine, sprite.get());
+    auto code2 = compiler2.compile(block2, Compiler::CodeType::Reporter);
+    Script script2(sprite.get(), block2, m_engine);
+    script2.setCode(code2);
+    Thread thread2(sprite.get(), m_engine, &script2);
+
+    // Run
+    QuestionSpy spy;
+    auto asked = std::bind(&QuestionSpy::asked, &spy, std::placeholders::_1);
+    sigslot::signal<const std::string &> askedSignal;
+    askedSignal.connect(asked);
+
+    sprite->bubble()->setType(TextBubble::Type::Think);
+    sprite->bubble()->setText("hello");
+    sprite->setVisible(false);
+
+    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
+    EXPECT_CALL(spy, asked("test"));
+    thread1.run();
+    ASSERT_EQ(sprite->bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(sprite->bubble()->text(), "hello");
+
+    ASSERT_FALSE(thread1.isFinished());
+
+    // Answer
+    sprite->setVisible(true);
+    m_engine->questionAnswered()("test answer");
+    ASSERT_EQ(sprite->bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(sprite->bubble()->text(), "hello"); // sprite was invisible when asked
+
+    ValueData value = thread2.runReporter();
+    std::string str;
+    value_toString(&value, &str);
+    ASSERT_EQ(str, "test answer");
+    value_free(&value);
+
+    thread1.run();
+    ASSERT_TRUE(thread1.isFinished());
+}
+
+TEST_F(SensingBlocksTest, AskAndWait_Stage)
+{
+    auto stage = std::make_shared<Stage>();
+    stage->setEngine(&m_engineMock);
+
+    // Build
+    ScriptBuilder builder1(m_extension.get(), m_engine, stage);
+    builder1.addBlock("sensing_askandwait");
+    builder1.addValueInput("QUESTION", "test");
+    Block *block1 = builder1.currentBlock();
+
+    Compiler compiler1(&m_engineMock, stage.get());
+    auto code1 = compiler1.compile(block1);
+    Script script1(stage.get(), block1, &m_engineMock);
+    script1.setCode(code1);
+    Thread thread1(stage.get(), &m_engineMock, &script1);
+
+    ScriptBuilder builder2(m_extension.get(), m_engine, stage);
+    builder2.addBlock("sensing_answer");
+    Block *block2 = builder2.currentBlock();
+
+    Compiler compiler2(m_engine, stage.get());
+    auto code2 = compiler2.compile(block2, Compiler::CodeType::Reporter);
+    Script script2(stage.get(), block2, m_engine);
+    script2.setCode(code2);
+    Thread thread2(stage.get(), m_engine, &script2);
+
+    ASSERT_FALSE(thread1.isFinished());
+
+    // Run
+    QuestionSpy spy;
+    auto asked = std::bind(&QuestionSpy::asked, &spy, std::placeholders::_1);
+    sigslot::signal<const std::string &> askedSignal;
+    askedSignal.connect(asked);
+
+    stage->bubble()->setType(TextBubble::Type::Think);
+    stage->bubble()->setText("hello");
+
+    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
+    EXPECT_CALL(spy, asked("test"));
+    thread1.run();
+    ASSERT_EQ(stage->bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(stage->bubble()->text(), "hello");
+
+    // Answer
+    m_engine->questionAnswered()("test answer");
+    ASSERT_EQ(stage->bubble()->type(), TextBubble::Type::Think);
+    ASSERT_EQ(stage->bubble()->text(), "hello");
+
+    ValueData value = thread2.runReporter();
+    std::string str;
+    value_toString(&value, &str);
+    value_free(&value);
+    ASSERT_EQ(str, "test answer");
+
+    thread1.run();
+    ASSERT_TRUE(thread1.isFinished());
+}
+
+TEST_F(SensingBlocksTest, AskAndWait_MultipleQuestions)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    // Build
+    ScriptBuilder builder1(m_extension.get(), m_engine, sprite);
+
+    builder1.addBlock("sensing_askandwait");
+    builder1.addValueInput("QUESTION", "test1");
+    Block *block1 = builder1.currentBlock();
+
+    builder1.addBlock("sensing_askandwait");
+    builder1.addValueInput("QUESTION", "test2");
+    builder1.currentBlock(); // force build
+
+    Compiler compiler1(&m_engineMock, sprite.get());
+    auto code1 = compiler1.compile(block1);
+    Script script1(sprite.get(), block1, &m_engineMock);
+    script1.setCode(code1);
+    Thread thread1(sprite.get(), &m_engineMock, &script1);
+
+    ScriptBuilder builder2(m_extension.get(), m_engine, sprite);
+    builder2.addBlock("sensing_answer");
+    Block *block2 = builder2.currentBlock();
+
+    Compiler compiler2(m_engine, sprite.get());
+    auto code2 = compiler2.compile(block2, Compiler::CodeType::Reporter);
+    Script script2(sprite.get(), block2, m_engine);
+    script2.setCode(code2);
+    Thread thread2(sprite.get(), m_engine, &script2);
+
+    // Run
+    QuestionSpy spy;
+    auto asked = std::bind(&QuestionSpy::asked, &spy, std::placeholders::_1);
+    sigslot::signal<const std::string &> askedSignal;
+    askedSignal.connect(asked);
+
+    sprite->setVisible(false);
+
+    // Ask (1/2)
+    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
+    EXPECT_CALL(spy, asked("test1"));
+    thread1.run();
+    ASSERT_FALSE(thread1.isFinished());
+
+    // Answer (1/2)
+    m_engine->questionAnswered()("test answer 1");
+
+    ValueData value = thread2.runReporter();
+    std::string str;
+    value_toString(&value, &str);
+    value_free(&value);
+    ASSERT_EQ(str, "test answer 1");
+
+    // Ask (2/2)
+    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
+    EXPECT_CALL(spy, asked("test2"));
+    thread1.run();
+    ASSERT_FALSE(thread1.isFinished());
+
+    // Answer (2/2)
+    m_engine->questionAnswered()("test answer 2");
+
+    value = thread2.runReporter();
+    value_toString(&value, &str);
+    value_free(&value);
+    ASSERT_EQ(str, "test answer 2");
+
+    EXPECT_CALL(m_engineMock, questionAsked).Times(0);
+    thread1.run();
+    ASSERT_TRUE(thread1.isFinished());
+}
+
+TEST_F(SensingBlocksTest, AskAndWait_KillThread)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    // Build
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    builder.addBlock("sensing_askandwait");
+    builder.addValueInput("QUESTION", "test");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread1(sprite.get(), &m_engineMock, &script);
+
+    // Run
+    QuestionSpy spy;
+    auto asked = std::bind(&QuestionSpy::asked, &spy, std::placeholders::_1);
+    sigslot::signal<const std::string &> askedSignal;
+    askedSignal.connect(asked);
+
+    sprite->bubble()->setText("hello");
+    sprite->setVisible(false);
+
+    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
+    EXPECT_CALL(spy, asked);
+    thread1.run();
+
+    // Kill
+    auto aborted = std::bind(&QuestionSpy::aborted, &spy);
+    m_engine->questionAborted().connect(aborted);
+
+    EXPECT_CALL(spy, aborted());
+    m_engine->threadAboutToStop()(&thread1);
+    thread1.kill();
+    ASSERT_TRUE(sprite->bubble()->text().empty());
+
+    // Running the script again should work because the question has been removed
+    EXPECT_CALL(m_engineMock, questionAsked()).WillOnce(ReturnRef(askedSignal));
+    EXPECT_CALL(spy, asked);
+    Thread thread2(sprite.get(), &m_engineMock, &script);
+    thread2.run();
 }
