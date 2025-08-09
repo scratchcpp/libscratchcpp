@@ -114,6 +114,7 @@ if (LIBSCRATCHCPP_ENABLE_SENSING_BLOCKS)
       GTest::gmock_main
       scratchcpp
       scratchcpp_mocks
+      block_test_deps
     )
 
     gtest_discover_tests(sensing_blocks_test)

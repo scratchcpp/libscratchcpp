@@ -50,12 +50,20 @@ Engine::Engine() :
     m_clock(Clock::instance().get()),
     m_audioEngine(IAudioEngine::instance())
 {
+    m_answer = string_pool_new();
+    string_assign_cstring(m_answer, "");
+
+    m_questionAnswered.connect([this](const std::string &answer) {
+        // Update answer
+        string_assign_cstring(m_answer, answer.c_str());
+    });
 }
 
 Engine::~Engine()
 {
     m_clones.clear();
     m_sortedDrawables.clear();
+    string_pool_free(m_answer);
 }
 
 void Engine::clear()
@@ -846,6 +854,11 @@ void Engine::clickTarget(Target *target)
 
         startHats(HatType::TargetClicked, {}, target);
     }
+}
+
+const StringPtr *Engine::answer() const
+{
+    return m_answer;
 }
 
 unsigned int Engine::stageWidth() const

@@ -84,6 +84,8 @@ class Engine : public IEngine
 
         void clickTarget(Target *target) override;
 
+        const StringPtr *answer() const override;
+
         unsigned int stageWidth() const override;
         void setStageWidth(unsigned int width) override;
 
@@ -273,6 +275,7 @@ class Engine : public IEngine
         double m_mouseX = 0;
         double m_mouseY = 0;
         bool m_mousePressed = false;
+        StringPtr *m_answer = nullptr;
         unsigned int m_stageWidth = 480;
         unsigned int m_stageHeight = 360;
         int m_cloneLimit = 300;
