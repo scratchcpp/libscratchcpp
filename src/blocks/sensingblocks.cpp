@@ -52,7 +52,7 @@ CompilerValue *SensingBlocks::compileTouchingObject(Compiler *compiler)
         else if (value != "_stage_") {
             Target *target = engine->targetAt(engine->findTarget(value));
 
-            if (target && !target->isStage()) {
+            if (target) {
                 CompilerValue *targetPtr = compiler->addConstValue(target);
                 return compiler->addTargetFunctionCall("sensing_touching_sprite", Compiler::StaticType::Bool, { Compiler::StaticType::Pointer }, { targetPtr });
             }
