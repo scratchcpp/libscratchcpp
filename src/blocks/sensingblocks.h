@@ -20,6 +20,7 @@ class SensingBlocks : public IExtension
         static CompilerValue *compileTouchingObject(Compiler *compiler);
         static CompilerValue *compileTouchingColor(Compiler *compiler);
         static CompilerValue *compileColorIsTouchingColor(Compiler *compiler);
+        static CompilerValue *compileDistanceTo(Compiler *compiler);
 };
 
 } // namespace libscratchcpp

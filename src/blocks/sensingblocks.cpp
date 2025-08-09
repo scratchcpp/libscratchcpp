@@ -34,6 +34,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_touchingobject", &compileTouchingObject);
     engine->addCompileFunction(this, "sensing_touchingcolor", &compileTouchingColor);
     engine->addCompileFunction(this, "sensing_coloristouchingcolor", &compileColorIsTouchingColor);
+    engine->addCompileFunction(this, "sensing_distanceto", &compileDistanceTo);
 }
 
 CompilerValue *SensingBlocks::compileTouchingObject(Compiler *compiler)
@@ -75,6 +76,35 @@ CompilerValue *SensingBlocks::compileColorIsTouchingColor(Compiler *compiler)
     CompilerValue *color = compiler->addInput("COLOR");
     CompilerValue *color2 = compiler->addInput("COLOR2");
     return compiler->addTargetFunctionCall("sensing_coloristouchingcolor", Compiler::StaticType::Bool, { Compiler::StaticType::Unknown, Compiler::StaticType::Unknown }, { color, color2 });
+}
+
+CompilerValue *SensingBlocks::compileDistanceTo(Compiler *compiler)
+{
+    if (compiler->target()->isStage())
+        return compiler->addConstValue(10000.0);
+
+    IEngine *engine = compiler->engine();
+    Input *input = compiler->input("DISTANCETOMENU");
+
+    if (input->pointsToDropdownMenu()) {
+        std::string value = input->selectedMenuItem();
+
+        if (value == "_mouse_")
+            return compiler->addTargetFunctionCall("sensing_distance_to_mouse", Compiler::StaticType::Number);
+        else if (value != "_stage_") {
+            Target *target = engine->targetAt(engine->findTarget(value));
+
+            if (target) {
+                CompilerValue *targetPtr = compiler->addConstValue(target);
+                return compiler->addTargetFunctionCall("sensing_distance_to_sprite", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+            }
+        }
+    } else {
+        CompilerValue *object = compiler->addInput(input);
+        return compiler->addTargetFunctionCall("sensing_distanceto", Compiler::StaticType::Number, { Compiler::StaticType::String }, { object });
+    }
+
+    return compiler->addConstValue(10000.0);
 }
 
 extern "C" bool sensing_touching_mouse(Target *target)
@@ -124,4 +154,40 @@ extern "C" bool sensing_touchingcolor(Target *target, const ValueData *color)
 extern "C" bool sensing_coloristouchingcolor(Target *target, const ValueData *color, const ValueData *color2)
 {
     return target->touchingColor(value_toRgba(color), value_toRgba(color2));
+}
+
+static inline double sensing_distance(double x0, double y0, double x1, double y1)
+{
+    return std::sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
+}
+
+extern "C" double sensing_distance_to_mouse(Sprite *sprite)
+{
+    IEngine *engine = sprite->engine();
+    return sensing_distance(sprite->x(), sprite->y(), engine->mouseX(), engine->mouseY());
+}
+
+extern "C" double sensing_distance_to_sprite(Sprite *sprite, Sprite *targetSprite)
+{
+    return sensing_distance(sprite->x(), sprite->y(), targetSprite->x(), targetSprite->y());
+}
+
+extern "C" double sensing_distanceto(Sprite *sprite, const StringPtr *object)
+{
+    static const StringPtr MOUSE_STR("_mouse_");
+    static const StringPtr STAGE_STR("_stage_");
+
+    if (string_compare_case_sensitive(object, &MOUSE_STR) == 0)
+        return sensing_distance_to_mouse(sprite);
+    else if (string_compare_case_sensitive(object, &STAGE_STR) != 0) {
+        IEngine *engine = sprite->engine();
+        // TODO: Use UTF-16 in engine
+        std::string u8name = utf8::utf16to8(std::u16string(object->data));
+        Target *objTarget = engine->targetAt(engine->findTarget(u8name));
+
+        if (objTarget)
+            return sensing_distance_to_sprite(sprite, static_cast<Sprite *>(objTarget));
+    }
+
+    return 10000.0;
 }
