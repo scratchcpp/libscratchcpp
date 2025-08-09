@@ -421,3 +421,59 @@ TEST_F(SensingBlocksTest, TouchingColor_Number)
     ASSERT_FALSE(value_toBool(&value));
     value_free(&value);
 }
+
+TEST_F(SensingBlocksTest, ColorIsTouchingColor_StringNumber)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_coloristouchingcolor");
+    builder.addValueInput("COLOR", "#00ffff");
+    builder.addValueInput("COLOR2", rgb(255, 54, 23));
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(*targetMock, touchingColor(rgb(0, 255, 255), rgb(255, 54, 23))).WillOnce(Return(true));
+    ValueData value = thread.runReporter();
+    ASSERT_TRUE(value_toBool(&value));
+    value_free(&value);
+
+    EXPECT_CALL(*targetMock, touchingColor(rgb(0, 255, 255), rgb(255, 54, 23))).WillOnce(Return(false));
+    value = thread.runReporter();
+    ASSERT_FALSE(value_toBool(&value));
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, ColorIsTouchingColor_NumberString)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_coloristouchingcolor");
+    builder.addValueInput("COLOR", rgb(255, 54, 23));
+    builder.addValueInput("COLOR2", "#00ffff");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(*targetMock, touchingColor(rgb(255, 54, 23), rgb(0, 255, 255))).WillOnce(Return(true));
+    ValueData value = thread.runReporter();
+    ASSERT_TRUE(value_toBool(&value));
+    value_free(&value);
+
+    EXPECT_CALL(*targetMock, touchingColor(rgb(255, 54, 23), rgb(0, 255, 255))).WillOnce(Return(false));
+    value = thread.runReporter();
+    ASSERT_FALSE(value_toBool(&value));
+    value_free(&value);
+}

@@ -33,6 +33,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "sensing_touchingobject", &compileTouchingObject);
     engine->addCompileFunction(this, "sensing_touchingcolor", &compileTouchingColor);
+    engine->addCompileFunction(this, "sensing_coloristouchingcolor", &compileColorIsTouchingColor);
 }
 
 CompilerValue *SensingBlocks::compileTouchingObject(Compiler *compiler)
@@ -67,6 +68,13 @@ CompilerValue *SensingBlocks::compileTouchingColor(Compiler *compiler)
 {
     CompilerValue *color = compiler->addInput("COLOR");
     return compiler->addTargetFunctionCall("sensing_touchingcolor", Compiler::StaticType::Bool, { Compiler::StaticType::Unknown }, { color });
+}
+
+CompilerValue *SensingBlocks::compileColorIsTouchingColor(Compiler *compiler)
+{
+    CompilerValue *color = compiler->addInput("COLOR");
+    CompilerValue *color2 = compiler->addInput("COLOR2");
+    return compiler->addTargetFunctionCall("sensing_coloristouchingcolor", Compiler::StaticType::Bool, { Compiler::StaticType::Unknown, Compiler::StaticType::Unknown }, { color, color2 });
 }
 
 extern "C" bool sensing_touching_mouse(Target *target)
@@ -111,4 +119,9 @@ extern "C" bool sensing_touchingobject(Target *target, const StringPtr *object)
 extern "C" bool sensing_touchingcolor(Target *target, const ValueData *color)
 {
     return target->touchingColor(value_toRgba(color));
+}
+
+extern "C" bool sensing_coloristouchingcolor(Target *target, const ValueData *color, const ValueData *color2)
+{
+    return target->touchingColor(value_toRgba(color), value_toRgba(color2));
 }
