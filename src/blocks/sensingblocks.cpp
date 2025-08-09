@@ -32,6 +32,7 @@ Rgb SensingBlocks::color() const
 void SensingBlocks::registerBlocks(IEngine *engine)
 {
     engine->addCompileFunction(this, "sensing_touchingobject", &compileTouchingObject);
+    engine->addCompileFunction(this, "sensing_touchingcolor", &compileTouchingColor);
 }
 
 CompilerValue *SensingBlocks::compileTouchingObject(Compiler *compiler)
@@ -60,6 +61,12 @@ CompilerValue *SensingBlocks::compileTouchingObject(Compiler *compiler)
     }
 
     return compiler->addConstValue(false);
+}
+
+CompilerValue *SensingBlocks::compileTouchingColor(Compiler *compiler)
+{
+    CompilerValue *color = compiler->addInput("COLOR");
+    return compiler->addTargetFunctionCall("sensing_touchingcolor", Compiler::StaticType::Bool, { Compiler::StaticType::Unknown }, { color });
 }
 
 extern "C" bool sensing_touching_mouse(Target *target)
@@ -99,4 +106,9 @@ extern "C" bool sensing_touchingobject(Target *target, const StringPtr *object)
     }
 
     return false;
+}
+
+extern "C" bool sensing_touchingcolor(Target *target, const ValueData *color)
+{
+    return target->touchingColor(value_toRgba(color));
 }
