@@ -17,6 +17,8 @@
 #include <utf8.h>
 
 #include "sensingblocks.h"
+#include "audio/audioinput.h"
+#include "audio/iaudioloudness.h"
 
 using namespace libscratchcpp;
 
@@ -48,6 +50,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_mousex", &compileMouseX);
     engine->addCompileFunction(this, "sensing_mousey", &compileMouseY);
     engine->addCompileFunction(this, "sensing_setdragmode", &compileSetDragMode);
+    engine->addCompileFunction(this, "sensing_loudness", &compileLoudness);
 }
 
 void SensingBlocks::onInit(IEngine *engine)
@@ -207,6 +210,11 @@ CompilerValue *SensingBlocks::compileSetDragMode(Compiler *compiler)
 
     compiler->addTargetFunctionCall("sensing_setdragmode", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { draggable });
     return nullptr;
+}
+
+CompilerValue *SensingBlocks::compileLoudness(Compiler *compiler)
+{
+    return compiler->addFunctionCall("sensing_loudness", Compiler::StaticType::Number);
 }
 
 void SensingBlocks::onAnswer(const std::string &answer)
@@ -389,4 +397,13 @@ extern "C" double sensing_mousey(ExecutionContext *ctx)
 extern "C" void sensing_setdragmode(Sprite *sprite, bool draggable)
 {
     sprite->setDraggable(draggable);
+}
+
+extern "C" double sensing_loudness()
+{
+    if (!SensingBlocks::audioInput)
+        SensingBlocks::audioInput = AudioInput::instance().get();
+
+    auto audioLoudness = SensingBlocks::audioInput->audioLoudness();
+    return audioLoudness->getLoudness();
 }

@@ -9,6 +9,8 @@
 #include <scratchcpp/test/scriptbuilder.h>
 #include <enginemock.h>
 #include <targetmock.h>
+#include <audioinputmock.h>
+#include <audioloudnessmock.h>
 
 #include "../common.h"
 #include "blocks/sensingblocks.h"
@@ -36,14 +38,26 @@ class SensingBlocksTest : public testing::Test
             m_extension->registerBlocks(m_engine);
             m_extension->onInit(m_engine);
             registerBlocks(m_engine, m_extension.get());
+
+            m_audioLoudness = std::make_shared<AudioLoudnessMock>();
+            SensingBlocks::audioInput = &m_audioInput;
+            EXPECT_CALL(m_audioInput, audioLoudness()).WillRepeatedly(Return(m_audioLoudness));
         }
 
-        void TearDown() override { SensingBlocks::clearQuestions(); }
+        void TearDown() override
+        {
+            SensingBlocks::clearQuestions();
+            SensingBlocks::audioInput = nullptr;
+        }
 
         std::unique_ptr<IExtension> m_extension;
         Project m_project;
         IEngine *m_engine = nullptr;
         EngineMock m_engineMock;
+        std::shared_ptr<AudioLoudnessMock> m_audioLoudness;
+
+    private:
+        AudioInputMock m_audioInput;
 };
 
 TEST_F(SensingBlocksTest, TouchingObject_Sprite_CompileTime)
@@ -1361,4 +1375,24 @@ TEST_F(SensingBlocksTest, SetDragMode_Stage)
     builder.build();
 
     builder.run();
+}
+
+TEST_F(SensingBlocksTest, Loudness)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_loudness");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(*m_audioLoudness, getLoudness()).WillOnce(Return(62));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 62);
+    value_free(&value);
 }

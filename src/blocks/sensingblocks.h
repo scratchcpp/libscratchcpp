@@ -9,6 +9,7 @@
 namespace libscratchcpp
 {
 
+class IAudioInput;
 class ExecutionContext;
 class Thread;
 
@@ -24,6 +25,8 @@ class SensingBlocks : public IExtension
 
         static void clearQuestions();
         static void askQuestion(ExecutionContext *ctx, const StringPtr *question);
+
+        static inline IAudioInput *audioInput = nullptr;
 
     private:
         struct Question
@@ -53,6 +56,7 @@ class SensingBlocks : public IExtension
         static CompilerValue *compileMouseX(Compiler *compiler);
         static CompilerValue *compileMouseY(Compiler *compiler);
         static CompilerValue *compileSetDragMode(Compiler *compiler);
+        static CompilerValue *compileLoudness(Compiler *compiler);
 
         static void onAnswer(const std::string &answer);
         static void enqueueAsk(const std::string &question, Thread *thread);
