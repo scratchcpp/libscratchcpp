@@ -19,7 +19,7 @@ jobs:
         submodules: true
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLIBSCRATCHCPP_BUILD_UNIT_TESTS=ON -DLIBSCRATCHCPP_AUDIO_SUPPORT=OFF -DLIBSCRATCHCPP_NETWORK_SUPPORT=OFF
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLIBSCRATCHCPP_BUILD_UNIT_TESTS=ON -DLIBSCRATCHCPP_ENABLE_SANITIZER=ON -DLIBSCRATCHCPP_AUDIO_SUPPORT=OFF -DLIBSCRATCHCPP_NETWORK_SUPPORT=OFF
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j$(nproc --all)
