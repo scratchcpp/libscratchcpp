@@ -13,6 +13,7 @@
 #include <audioinputmock.h>
 #include <audioloudnessmock.h>
 #include <timermock.h>
+#include <clockmock.h>
 
 #include "../common.h"
 #include "blocks/sensingblocks.h"
@@ -44,12 +45,15 @@ class SensingBlocksTest : public testing::Test
             m_audioLoudness = std::make_shared<AudioLoudnessMock>();
             SensingBlocks::audioInput = &m_audioInput;
             EXPECT_CALL(m_audioInput, audioLoudness()).WillRepeatedly(Return(m_audioLoudness));
+
+            SensingBlocks::clock = &m_clock;
         }
 
         void TearDown() override
         {
             SensingBlocks::clearQuestions();
             SensingBlocks::audioInput = nullptr;
+            SensingBlocks::clock = nullptr;
         }
 
         std::unique_ptr<IExtension> m_extension;
@@ -57,6 +61,7 @@ class SensingBlocksTest : public testing::Test
         IEngine *m_engine = nullptr;
         EngineMock m_engineMock;
         std::shared_ptr<AudioLoudnessMock> m_audioLoudness;
+        ClockMock m_clock;
 
     private:
         AudioInputMock m_audioInput;
@@ -2743,5 +2748,27 @@ TEST_F(SensingBlocksTest, Current_Invalid)
 
     ValueData value = thread.runReporter();
     ASSERT_EQ(value_toDouble(&value), 0.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, DaysSince2000)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_dayssince2000");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    std::chrono::system_clock::time_point time(std::chrono::milliseconds(1011243120562)); // Jan 17 2002 04:52:00
+    EXPECT_CALL(m_clock, currentSystemTime()).WillOnce(Return(time));
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 747.20278428240817);
     value_free(&value);
 }

@@ -23,6 +23,7 @@
 #include "sensingblocks.h"
 #include "audio/audioinput.h"
 #include "audio/iaudioloudness.h"
+#include "engine/internal/clock.h"
 
 using namespace libscratchcpp;
 
@@ -60,6 +61,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_resettimer", &compileResetTimer);
     engine->addCompileFunction(this, "sensing_of", &compileOf);
     engine->addCompileFunction(this, "sensing_current", &compileCurrent);
+    engine->addCompileFunction(this, "sensing_dayssince2000", &compileDaysSince2000);
 }
 
 void SensingBlocks::onInit(IEngine *engine)
@@ -365,6 +367,11 @@ CompilerValue *SensingBlocks::compileCurrent(Compiler *compiler)
         return compiler->addFunctionCall("sensing_current_second", Compiler::StaticType::Number);
     else
         return compiler->addConstValue(Value());
+}
+
+CompilerValue *SensingBlocks::compileDaysSince2000(Compiler *compiler)
+{
+    return compiler->addFunctionCall("sensing_dayssince2000", Compiler::StaticType::Number);
 }
 
 void SensingBlocks::onAnswer(const std::string &answer)
@@ -774,4 +781,13 @@ extern "C" double sensing_current_second()
     time_t now = time(0);
     tm *ltm = localtime(&now);
     return ltm->tm_sec;
+}
+
+extern "C" double sensing_dayssince2000()
+{
+    if (!SensingBlocks::clock)
+        SensingBlocks::clock = Clock::instance().get();
+
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(SensingBlocks::clock->currentSystemTime().time_since_epoch()).count();
+    return ms / 86400000.0 - 10957.0;
 }

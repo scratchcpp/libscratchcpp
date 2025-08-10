@@ -10,6 +10,7 @@ namespace libscratchcpp
 {
 
 class IAudioInput;
+class IClock;
 class ExecutionContext;
 class Thread;
 
@@ -27,6 +28,7 @@ class SensingBlocks : public IExtension
         static void askQuestion(ExecutionContext *ctx, const StringPtr *question);
 
         static inline IAudioInput *audioInput = nullptr;
+        static inline IClock *clock = nullptr;
 
     private:
         struct Question
@@ -62,6 +64,7 @@ class SensingBlocks : public IExtension
         static CompilerValue *compileResetTimer(Compiler *compiler);
         static CompilerValue *compileOf(Compiler *compiler);
         static CompilerValue *compileCurrent(Compiler *compiler);
+        static CompilerValue *compileDaysSince2000(Compiler *compiler);
 
         static void onAnswer(const std::string &answer);
         static void enqueueAsk(const std::string &question, Thread *thread);
