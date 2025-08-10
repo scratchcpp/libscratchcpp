@@ -43,6 +43,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_askandwait", &compileAskAndWait);
     engine->addCompileFunction(this, "sensing_answer", &compileAnswer);
     engine->addCompileFunction(this, "sensing_keypressed", &compileKeyPressed);
+    engine->addCompileFunction(this, "sensing_mousedown", &compileMouseDown);
 }
 
 void SensingBlocks::onInit(IEngine *engine)
@@ -165,6 +166,11 @@ CompilerValue *SensingBlocks::compileKeyPressed(Compiler *compiler)
 {
     CompilerValue *key = compiler->addInput("KEY_OPTION");
     return compiler->addFunctionCallWithCtx("sensing_keypressed", Compiler::StaticType::Bool, { Compiler::StaticType::String }, { key });
+}
+
+CompilerValue *SensingBlocks::compileMouseDown(Compiler *compiler)
+{
+    return compiler->addFunctionCallWithCtx("sensing_mousedown", Compiler::StaticType::Bool);
 }
 
 void SensingBlocks::onAnswer(const std::string &answer)
@@ -327,4 +333,9 @@ extern "C" bool sensing_keypressed(ExecutionContext *ctx, const StringPtr *key)
     // TODO: Use UTF-16 in engine
     std::string u8name = utf8::utf16to8(std::u16string(key->data));
     return ctx->engine()->keyPressed(u8name);
+}
+
+extern "C" bool sensing_mousedown(ExecutionContext *ctx)
+{
+    return ctx->engine()->mousePressed();
 }

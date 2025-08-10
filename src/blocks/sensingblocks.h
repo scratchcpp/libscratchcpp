@@ -49,6 +49,7 @@ class SensingBlocks : public IExtension
         static CompilerValue *compileAskAndWait(Compiler *compiler);
         static CompilerValue *compileAnswer(Compiler *compiler);
         static CompilerValue *compileKeyPressed(Compiler *compiler);
+        static CompilerValue *compileMouseDown(Compiler *compiler);
 
         static void onAnswer(const std::string &answer);
         static void enqueueAsk(const std::string &question, Thread *thread);
