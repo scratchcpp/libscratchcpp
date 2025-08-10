@@ -3301,3 +3301,28 @@ TEST_F(LLVMCodeBuilderTest, Reporters)
     ASSERT_EQ(value_toPointer(&ret), &pointee);
     value_free(&ret);
 }
+
+TEST_F(LLVMCodeBuilderTest, UnknownTypeReporter)
+{
+    Sprite sprite;
+    auto var = std::make_shared<Variable>("", "");
+    var->setValue("Hello world!");
+    sprite.addVariable(var);
+
+    LLVMCodeBuilder *builder = m_utils.createReporterBuilder(&sprite);
+
+    CompilerValue *num = builder->addConstValue(5.2);
+    builder->addFunctionCall("test_const_unknown", Compiler::StaticType::Unknown, { Compiler::StaticType::Unknown }, { num });
+
+    auto code = builder->build();
+
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread1(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread1);
+
+    ValueData ret = code->runReporter(ctx.get());
+    ASSERT_TRUE(value_isNumber(&ret));
+    ASSERT_EQ(value_toDouble(&ret), 5.2);
+    value_free(&ret);
+}

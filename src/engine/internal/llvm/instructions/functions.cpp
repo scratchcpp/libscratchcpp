@@ -46,15 +46,19 @@ LLVMInstruction *Functions::buildFunctionCall(LLVMInstruction *ins)
 
     // Args
     for (auto &arg : ins->args) {
-        types.push_back(m_utils.getType(arg.first));
+        types.push_back(m_utils.getType(arg.first, false));
         args.push_back(m_utils.castValue(arg.second, arg.first));
     }
 
-    llvm::Type *retType = m_utils.getType(ins->functionReturnReg ? ins->functionReturnReg->type() : Compiler::StaticType::Void);
+    llvm::Type *retType = m_utils.getType(ins->functionReturnReg ? ins->functionReturnReg->type() : Compiler::StaticType::Void, true);
     llvm::Value *ret = m_builder.CreateCall(m_utils.functions().resolveFunction(ins->functionName, llvm::FunctionType::get(retType, types, false)), args);
 
     if (ins->functionReturnReg) {
-        ins->functionReturnReg->value = ret;
+        if (ins->functionReturnReg->type() == Compiler::StaticType::Unknown) {
+            ins->functionReturnReg->value = m_utils.addAlloca(retType);
+            m_builder.CreateStore(ret, ins->functionReturnReg->value);
+        } else
+            ins->functionReturnReg->value = ret;
 
         if (ins->functionReturnReg->type() == Compiler::StaticType::String)
             m_utils.freeStringLater(ins->functionReturnReg->value);

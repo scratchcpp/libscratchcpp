@@ -139,6 +139,14 @@ extern "C"
         return ret;
     }
 
+    ValueData test_const_unknown(const ValueData *v)
+    {
+        ValueData ret;
+        value_init(&ret);
+        value_assign_copy(&ret, v);
+        return ret;
+    }
+
     const void *test_const_pointer(const void *v)
     {
         return v;
