@@ -42,6 +42,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_distanceto", &compileDistanceTo);
     engine->addCompileFunction(this, "sensing_askandwait", &compileAskAndWait);
     engine->addCompileFunction(this, "sensing_answer", &compileAnswer);
+    engine->addCompileFunction(this, "sensing_keypressed", &compileKeyPressed);
 }
 
 void SensingBlocks::onInit(IEngine *engine)
@@ -158,6 +159,12 @@ CompilerValue *SensingBlocks::compileAskAndWait(Compiler *compiler)
 CompilerValue *SensingBlocks::compileAnswer(Compiler *compiler)
 {
     return compiler->addFunctionCallWithCtx("sensing_answer", Compiler::StaticType::String);
+}
+
+CompilerValue *SensingBlocks::compileKeyPressed(Compiler *compiler)
+{
+    CompilerValue *key = compiler->addInput("KEY_OPTION");
+    return compiler->addFunctionCallWithCtx("sensing_keypressed", Compiler::StaticType::Bool, { Compiler::StaticType::String }, { key });
 }
 
 void SensingBlocks::onAnswer(const std::string &answer)
@@ -313,4 +320,11 @@ extern "C" StringPtr *sensing_answer(ExecutionContext *ctx)
     StringPtr *ret = string_pool_new();
     string_assign(ret, ctx->engine()->answer());
     return ret;
+}
+
+extern "C" bool sensing_keypressed(ExecutionContext *ctx, const StringPtr *key)
+{
+    // TODO: Use UTF-16 in engine
+    std::string u8name = utf8::utf16to8(std::u16string(key->data));
+    return ctx->engine()->keyPressed(u8name);
 }

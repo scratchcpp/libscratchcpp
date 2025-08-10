@@ -1175,3 +1175,57 @@ TEST_F(SensingBlocksTest, AskAndWait_KillThread)
     Thread thread2(sprite.get(), &m_engineMock, &script);
     thread2.run();
 }
+
+TEST_F(SensingBlocksTest, KeyPressed_Space)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_keypressed");
+    builder.addDropdownInput("KEY_OPTION", "space");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, keyPressed("space")).WillOnce(Return(true));
+    ValueData value = thread.runReporter();
+    ASSERT_TRUE(value_toBool(&value));
+    value_free(&value);
+
+    EXPECT_CALL(m_engineMock, keyPressed("space")).WillOnce(Return(false));
+    value = thread.runReporter();
+    ASSERT_FALSE(value_toBool(&value));
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, KeyPressed_M)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_keypressed");
+    builder.addDropdownInput("KEY_OPTION", "m");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, keyPressed("m")).WillOnce(Return(true));
+    ValueData value = thread.runReporter();
+    ASSERT_TRUE(value_toBool(&value));
+    value_free(&value);
+
+    EXPECT_CALL(m_engineMock, keyPressed("m")).WillOnce(Return(false));
+    value = thread.runReporter();
+    ASSERT_FALSE(value_toBool(&value));
+    value_free(&value);
+}
