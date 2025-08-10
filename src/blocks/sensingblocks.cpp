@@ -51,6 +51,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_mousey", &compileMouseY);
     engine->addCompileFunction(this, "sensing_setdragmode", &compileSetDragMode);
     engine->addCompileFunction(this, "sensing_loudness", &compileLoudness);
+    engine->addCompileFunction(this, "sensing_loud", &compileLoud);
 }
 
 void SensingBlocks::onInit(IEngine *engine)
@@ -215,6 +216,13 @@ CompilerValue *SensingBlocks::compileSetDragMode(Compiler *compiler)
 CompilerValue *SensingBlocks::compileLoudness(Compiler *compiler)
 {
     return compiler->addFunctionCall("sensing_loudness", Compiler::StaticType::Number);
+}
+
+CompilerValue *SensingBlocks::compileLoud(Compiler *compiler)
+{
+    CompilerValue *treshold = compiler->addConstValue(10);
+    CompilerValue *loudness = compiler->addFunctionCall("sensing_loudness", Compiler::StaticType::Number);
+    return compiler->createCmpGT(loudness, treshold);
 }
 
 void SensingBlocks::onAnswer(const std::string &answer)

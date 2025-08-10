@@ -57,6 +57,7 @@ class SensingBlocks : public IExtension
         static CompilerValue *compileMouseY(Compiler *compiler);
         static CompilerValue *compileSetDragMode(Compiler *compiler);
         static CompilerValue *compileLoudness(Compiler *compiler);
+        static CompilerValue *compileLoud(Compiler *compiler);
 
         static void onAnswer(const std::string &answer);
         static void enqueueAsk(const std::string &question, Thread *thread);
