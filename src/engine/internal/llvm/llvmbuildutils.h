@@ -80,7 +80,7 @@ class LLVMBuildUtils
 
         llvm::Value *addAlloca(llvm::Type *type);
         llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType);
-        llvm::Type *getType(Compiler::StaticType type);
+        llvm::Type *getType(Compiler::StaticType type, bool isReturnType);
         llvm::Value *isNaN(llvm::Value *num);
         llvm::Value *removeNaN(llvm::Value *num);
 

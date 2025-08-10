@@ -496,7 +496,7 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
     }
 }
 
-llvm::Type *LLVMBuildUtils::getType(Compiler::StaticType type)
+llvm::Type *LLVMBuildUtils::getType(Compiler::StaticType type, bool isReturnType)
 {
     switch (type) {
         case Compiler::StaticType::Void:
@@ -515,7 +515,10 @@ llvm::Type *LLVMBuildUtils::getType(Compiler::StaticType type)
             return m_builder.getVoidTy()->getPointerTo();
 
         case Compiler::StaticType::Unknown:
-            return m_valueDataType->getPointerTo();
+            if (isReturnType)
+                return m_valueDataType;
+            else
+                return m_valueDataType->getPointerTo();
 
         default:
             assert(false);

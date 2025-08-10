@@ -66,6 +66,8 @@ class EngineMock : public IEngine
 
         MOCK_METHOD(void, clickTarget, (Target * target), (override));
 
+        MOCK_METHOD(const StringPtr *, answer, (), (const, override));
+
         MOCK_METHOD(unsigned int, stageWidth, (), (const, override));
         MOCK_METHOD(void, setStageWidth, (unsigned int), (override));
 

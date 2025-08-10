@@ -1694,8 +1694,19 @@ TEST(EngineTest, CreateMissingMonitors)
     }
 }
 
-void questionFunction(const std::string &)
+TEST(EngineTest, Answer)
 {
+    Engine engine;
+    const StringPtr empty("");
+    const StringPtr test("test");
+    const StringPtr *answer = engine.answer();
+
+    ASSERT_TRUE(answer);
+    ASSERT_EQ(string_compare_case_sensitive(answer, &empty), 0);
+
+    engine.questionAnswered()("test");
+    answer = engine.answer();
+    ASSERT_EQ(string_compare_case_sensitive(answer, &test), 0);
 }
 
 TEST(EngineTest, Clones)
