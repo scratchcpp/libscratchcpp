@@ -59,6 +59,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_timer", &compileTimer);
     engine->addCompileFunction(this, "sensing_resettimer", &compileResetTimer);
     engine->addCompileFunction(this, "sensing_of", &compileOf);
+    engine->addCompileFunction(this, "sensing_current", &compileCurrent);
 }
 
 void SensingBlocks::onInit(IEngine *engine)
@@ -340,6 +341,30 @@ CompilerValue *SensingBlocks::compileOf(Compiler *compiler)
     }
 
     return compiler->addConstValue(0.0);
+}
+
+CompilerValue *SensingBlocks::compileCurrent(Compiler *compiler)
+{
+    Field *field = compiler->field("CURRENTMENU");
+    assert(field);
+    std::string option = field->value().toString();
+
+    if (option == "YEAR")
+        return compiler->addFunctionCall("sensing_current_year", Compiler::StaticType::Number);
+    else if (option == "MONTH")
+        return compiler->addFunctionCall("sensing_current_month", Compiler::StaticType::Number);
+    else if (option == "DATE")
+        return compiler->addFunctionCall("sensing_current_date", Compiler::StaticType::Number);
+    else if (option == "DAYOFWEEK")
+        return compiler->addFunctionCall("sensing_current_day_of_week", Compiler::StaticType::Number);
+    else if (option == "HOUR")
+        return compiler->addFunctionCall("sensing_current_hour", Compiler::StaticType::Number);
+    else if (option == "MINUTE")
+        return compiler->addFunctionCall("sensing_current_minute", Compiler::StaticType::Number);
+    else if (option == "SECOND")
+        return compiler->addFunctionCall("sensing_current_second", Compiler::StaticType::Number);
+    else
+        return compiler->addConstValue(Value());
 }
 
 void SensingBlocks::onAnswer(const std::string &answer)
@@ -700,4 +725,53 @@ extern "C" ValueData sensing_variable_of_target(Target *target, const StringPtr 
     ValueData ret;
     value_init(&ret);
     return ret;
+}
+
+extern "C" double sensing_current_year()
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    return ltm->tm_year + 1900;
+}
+
+extern "C" double sensing_current_month()
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    return ltm->tm_mon + 1;
+}
+
+extern "C" double sensing_current_date()
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    return ltm->tm_mday;
+}
+
+extern "C" double sensing_current_day_of_week()
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    return ltm->tm_wday + 1;
+}
+
+extern "C" double sensing_current_hour()
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    return ltm->tm_hour;
+}
+
+extern "C" double sensing_current_minute()
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    return ltm->tm_min;
+}
+
+extern "C" double sensing_current_second()
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    return ltm->tm_sec;
 }

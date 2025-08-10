@@ -61,6 +61,7 @@ class SensingBlocks : public IExtension
         static CompilerValue *compileTimer(Compiler *compiler);
         static CompilerValue *compileResetTimer(Compiler *compiler);
         static CompilerValue *compileOf(Compiler *compiler);
+        static CompilerValue *compileCurrent(Compiler *compiler);
 
         static void onAnswer(const std::string &answer);
         static void enqueueAsk(const std::string &question, Thread *thread);

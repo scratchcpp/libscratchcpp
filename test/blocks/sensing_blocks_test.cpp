@@ -2571,3 +2571,177 @@ TEST_F(SensingBlocksTest, Of_PreferPropertiesOverVariables_Runtime)
     ASSERT_EQ(value_toDouble(&value), -78.25);
     value_free(&value);
 }
+
+TEST_F(SensingBlocksTest, Current_Year)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_current");
+    builder.addDropdownField("CURRENTMENU", "YEAR");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    ASSERT_EQ(value_toDouble(&value), ltm->tm_year + 1900);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Current_Month)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_current");
+    builder.addDropdownField("CURRENTMENU", "MONTH");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    ASSERT_EQ(value_toDouble(&value), ltm->tm_mon + 1);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Current_Date)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_current");
+    builder.addDropdownField("CURRENTMENU", "DATE");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    ASSERT_EQ(value_toDouble(&value), ltm->tm_mday);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Current_DayOfWeek)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_current");
+    builder.addDropdownField("CURRENTMENU", "DAYOFWEEK");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    ASSERT_EQ(value_toDouble(&value), ltm->tm_wday + 1);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Current_Hour)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_current");
+    builder.addDropdownField("CURRENTMENU", "HOUR");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    ASSERT_EQ(value_toDouble(&value), ltm->tm_hour);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Current_Minute)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_current");
+    builder.addDropdownField("CURRENTMENU", "MINUTE");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    ASSERT_EQ(value_toDouble(&value), ltm->tm_min);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Current_Second)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_current");
+    builder.addDropdownField("CURRENTMENU", "SECOND");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    ASSERT_EQ(value_toDouble(&value), ltm->tm_sec);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Current_Invalid)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_current");
+    builder.addDropdownField("CURRENTMENU", "TEST");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 0.0);
+    value_free(&value);
+}
