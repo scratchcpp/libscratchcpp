@@ -1297,3 +1297,68 @@ TEST_F(SensingBlocksTest, MouseY)
     ASSERT_EQ(value_toDouble(&value), -78.21);
     value_free(&value);
 }
+
+TEST_F(SensingBlocksTest, SetDragMode_Draggable)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setDraggable(false);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    builder.addBlock("sensing_setdragmode");
+    builder.addDropdownField("DRAG_MODE", "draggable");
+    builder.build();
+
+    builder.run();
+    ASSERT_TRUE(sprite->draggable());
+
+    builder.run();
+    ASSERT_TRUE(sprite->draggable());
+}
+
+TEST_F(SensingBlocksTest, SetDragMode_NotDraggable)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setDraggable(true);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    builder.addBlock("sensing_setdragmode");
+    builder.addDropdownField("DRAG_MODE", "not draggable");
+    builder.build();
+
+    builder.run();
+    ASSERT_FALSE(sprite->draggable());
+
+    builder.run();
+    ASSERT_FALSE(sprite->draggable());
+}
+
+TEST_F(SensingBlocksTest, SetDragMode_Invalid)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setDraggable(true);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+    builder.addBlock("sensing_setdragmode");
+    builder.addDropdownField("DRAG_MODE", "lorem ipsum");
+    builder.build();
+
+    builder.run();
+    ASSERT_TRUE(sprite->draggable());
+
+    sprite->setDraggable(false);
+
+    builder.run();
+    ASSERT_FALSE(sprite->draggable());
+}
+
+TEST_F(SensingBlocksTest, SetDragMode_Stage)
+{
+    auto stage = std::make_shared<Stage>();
+
+    ScriptBuilder builder(m_extension.get(), m_engine, stage);
+    builder.addBlock("sensing_setdragmode");
+    builder.addDropdownField("DRAG_MODE", "draggable");
+    builder.build();
+
+    builder.run();
+}

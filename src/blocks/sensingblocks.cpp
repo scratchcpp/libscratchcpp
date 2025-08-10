@@ -8,6 +8,7 @@
 #include <scratchcpp/executioncontext.h>
 #include <scratchcpp/value.h>
 #include <scratchcpp/input.h>
+#include <scratchcpp/field.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/textbubble.h>
 #include <scratchcpp/stringptr.h>
@@ -46,6 +47,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_mousedown", &compileMouseDown);
     engine->addCompileFunction(this, "sensing_mousex", &compileMouseX);
     engine->addCompileFunction(this, "sensing_mousey", &compileMouseY);
+    engine->addCompileFunction(this, "sensing_setdragmode", &compileSetDragMode);
 }
 
 void SensingBlocks::onInit(IEngine *engine)
@@ -183,6 +185,28 @@ CompilerValue *SensingBlocks::compileMouseX(Compiler *compiler)
 CompilerValue *SensingBlocks::compileMouseY(Compiler *compiler)
 {
     return compiler->addFunctionCallWithCtx("sensing_mousey", Compiler::StaticType::Number);
+}
+
+CompilerValue *SensingBlocks::compileSetDragMode(Compiler *compiler)
+{
+    if (compiler->target()->isStage())
+        return nullptr;
+
+    Field *field = compiler->field("DRAG_MODE");
+    assert(field);
+
+    std::string mode = field->value().toString();
+    CompilerValue *draggable = nullptr;
+
+    if (mode == "draggable")
+        draggable = compiler->addConstValue(true);
+    else if (mode == "not draggable")
+        draggable = compiler->addConstValue(false);
+    else
+        return nullptr;
+
+    compiler->addTargetFunctionCall("sensing_setdragmode", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { draggable });
+    return nullptr;
 }
 
 void SensingBlocks::onAnswer(const std::string &answer)
@@ -360,4 +384,9 @@ extern "C" double sensing_mousex(ExecutionContext *ctx)
 extern "C" double sensing_mousey(ExecutionContext *ctx)
 {
     return ctx->engine()->mouseY();
+}
+
+extern "C" void sensing_setdragmode(Sprite *sprite, bool draggable)
+{
+    sprite->setDraggable(draggable);
 }
