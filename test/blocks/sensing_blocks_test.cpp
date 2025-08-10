@@ -1255,3 +1255,24 @@ TEST_F(SensingBlocksTest, MouseDown)
     ASSERT_FALSE(value_toBool(&value));
     value_free(&value);
 }
+
+TEST_F(SensingBlocksTest, MouseX)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_mousex");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, mouseX()).WillOnce(Return(53.7));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 53.7);
+    value_free(&value);
+}

@@ -44,6 +44,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_answer", &compileAnswer);
     engine->addCompileFunction(this, "sensing_keypressed", &compileKeyPressed);
     engine->addCompileFunction(this, "sensing_mousedown", &compileMouseDown);
+    engine->addCompileFunction(this, "sensing_mousex", &compileMouseX);
 }
 
 void SensingBlocks::onInit(IEngine *engine)
@@ -171,6 +172,11 @@ CompilerValue *SensingBlocks::compileKeyPressed(Compiler *compiler)
 CompilerValue *SensingBlocks::compileMouseDown(Compiler *compiler)
 {
     return compiler->addFunctionCallWithCtx("sensing_mousedown", Compiler::StaticType::Bool);
+}
+
+CompilerValue *SensingBlocks::compileMouseX(Compiler *compiler)
+{
+    return compiler->addFunctionCallWithCtx("sensing_mousex", Compiler::StaticType::Number);
 }
 
 void SensingBlocks::onAnswer(const std::string &answer)
@@ -338,4 +344,9 @@ extern "C" bool sensing_keypressed(ExecutionContext *ctx, const StringPtr *key)
 extern "C" bool sensing_mousedown(ExecutionContext *ctx)
 {
     return ctx->engine()->mousePressed();
+}
+
+extern "C" double sensing_mousex(ExecutionContext *ctx)
+{
+    return ctx->engine()->mouseX();
 }
