@@ -1276,3 +1276,24 @@ TEST_F(SensingBlocksTest, MouseX)
     ASSERT_EQ(value_toDouble(&value), 53.7);
     value_free(&value);
 }
+
+TEST_F(SensingBlocksTest, MouseY)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_mousey");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, mouseY()).WillOnce(Return(-78.21));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), -78.21);
+    value_free(&value);
+}
