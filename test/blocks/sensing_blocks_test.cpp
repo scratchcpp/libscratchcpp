@@ -1480,3 +1480,24 @@ TEST_F(SensingBlocksTest, Timer)
     ASSERT_EQ(value_toDouble(&value), 23.4);
     value_free(&value);
 }
+
+TEST_F(SensingBlocksTest, ResetTimer)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+
+    TimerMock timer;
+    EXPECT_CALL(m_engineMock, timer()).WillOnce(Return(&timer));
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_resettimer");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(timer, reset());
+    thread.run();
+}

@@ -54,6 +54,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_loudness", &compileLoudness);
     engine->addCompileFunction(this, "sensing_loud", &compileLoud);
     engine->addCompileFunction(this, "sensing_timer", &compileTimer);
+    engine->addCompileFunction(this, "sensing_resettimer", &compileResetTimer);
 }
 
 void SensingBlocks::onInit(IEngine *engine)
@@ -232,6 +233,14 @@ CompilerValue *SensingBlocks::compileTimer(Compiler *compiler)
     ITimer *timer = compiler->engine()->timer();
     CompilerValue *timerPtr = compiler->addConstValue(timer);
     return compiler->addFunctionCall("sensing_timer", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { timerPtr });
+}
+
+CompilerValue *SensingBlocks::compileResetTimer(Compiler *compiler)
+{
+    ITimer *timer = compiler->engine()->timer();
+    CompilerValue *timerPtr = compiler->addConstValue(timer);
+    compiler->addFunctionCall("sensing_resettimer", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { timerPtr });
+    return nullptr;
 }
 
 void SensingBlocks::onAnswer(const std::string &answer)
@@ -428,4 +437,9 @@ extern "C" double sensing_loudness()
 extern "C" double sensing_timer(ITimer *timer)
 {
     return timer->value();
+}
+
+extern "C" void sensing_resettimer(ITimer *timer)
+{
+    timer->reset();
 }
