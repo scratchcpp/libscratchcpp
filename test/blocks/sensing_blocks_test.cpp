@@ -1,7 +1,8 @@
 #include <scratchcpp/project.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
-#include <scratchcpp/list.h>
+#include <scratchcpp/costume.h>
+#include <scratchcpp/variable.h>
 #include <scratchcpp/compiler.h>
 #include <scratchcpp/script.h>
 #include <scratchcpp/thread.h>
@@ -1500,4 +1501,1073 @@ TEST_F(SensingBlocksTest, ResetTimer)
 
     EXPECT_CALL(timer, reset());
     thread.run();
+}
+
+TEST_F(SensingBlocksTest, Of_XPositionOfSprite_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+    targetSprite.setX(65.41);
+    targetSprite.setY(-56.28);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "x position");
+    builder.addDropdownInput("OBJECT", "Sprite2");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 65.41);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_XPositionOfSprite_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+    targetSprite.setX(65.41);
+    targetSprite.setY(-56.28);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "Sprite2");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "x position");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 65.41);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_YPositionOfSprite_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+    targetSprite.setX(65.41);
+    targetSprite.setY(-56.28);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "y position");
+    builder.addDropdownInput("OBJECT", "Sprite2");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), -56.28);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_YPositionOfSprite_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+    targetSprite.setX(65.41);
+    targetSprite.setY(-56.28);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "Sprite2");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "y position");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), -56.28);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_DirectionOfSprite_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+    targetSprite.setDirection(73.8);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "direction");
+    builder.addDropdownInput("OBJECT", "Sprite2");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 73.8);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_DirectionOfSprite_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+    targetSprite.setDirection(73.8);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "Sprite2");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "direction");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 73.8);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_CostumeNumberOfSprite_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+    targetSprite.addCostume(std::make_shared<Costume>("costume1", "a", "png"));
+    targetSprite.addCostume(std::make_shared<Costume>("costume2", "b", "svg"));
+    targetSprite.setCostumeIndex(1);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "costume #");
+    builder.addDropdownInput("OBJECT", "Sprite2");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 2.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_CostumeNumberOfSprite_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+    targetSprite.addCostume(std::make_shared<Costume>("costume1", "a", "png"));
+    targetSprite.addCostume(std::make_shared<Costume>("costume2", "b", "svg"));
+    targetSprite.setCostumeIndex(1);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "Sprite2");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "costume #");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 2.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_CostumeNameOfSprite_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+    targetSprite.addCostume(std::make_shared<Costume>("costume1", "a", "png"));
+    targetSprite.addCostume(std::make_shared<Costume>("costume2", "b", "svg"));
+    targetSprite.setCostumeIndex(1);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "costume name");
+    builder.addDropdownInput("OBJECT", "Sprite2");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    std::string str;
+    value_toString(&value, &str);
+    value_free(&value);
+    ASSERT_EQ(str, "costume2");
+}
+
+TEST_F(SensingBlocksTest, Of_CostumeNameOfSprite_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+    targetSprite.addCostume(std::make_shared<Costume>("costume1", "a", "png"));
+    targetSprite.addCostume(std::make_shared<Costume>("costume2", "b", "svg"));
+    targetSprite.setCostumeIndex(1);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "Sprite2");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "costume name");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
+    ValueData value = thread.runReporter();
+    std::string str;
+    value_toString(&value, &str);
+    value_free(&value);
+    ASSERT_EQ(str, "costume2");
+}
+
+TEST_F(SensingBlocksTest, Of_SizeOfSprite_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+    targetSprite.setSize(47.32);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "size");
+    builder.addDropdownInput("OBJECT", "Sprite2");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 47.32);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_SizeOfSprite_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+    targetSprite.setSize(47.32);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "Sprite2");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "size");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 47.32);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_VolumeOfTarget_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    TargetMock target;
+    target.setVolume(89.46);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "volume");
+    builder.addDropdownInput("OBJECT", "test");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&target));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 89.46);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_VolumeOfTarget_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    TargetMock target;
+    target.setVolume(89.46);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "test");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "volume");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&target));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 89.46);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_VariableOfTarget_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    TargetMock target;
+    auto v1 = std::make_shared<Variable>("v1", "var1", 64.13);
+    auto v2 = std::make_shared<Variable>("v2", "var2", 98);
+    auto v3 = std::make_shared<Variable>("v3", "var3", -0.85);
+    target.addVariable(v1);
+    target.addVariable(v2);
+    target.addVariable(v3);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "var2");
+    builder.addDropdownInput("OBJECT", "test");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&target));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 98.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_VariableOfTarget_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    TargetMock target;
+    auto v1 = std::make_shared<Variable>("v1", "var1", 64.13);
+    auto v2 = std::make_shared<Variable>("v2", "var2", 98);
+    auto v3 = std::make_shared<Variable>("v3", "var3", -0.85);
+    target.addVariable(v1);
+    target.addVariable(v2);
+    target.addVariable(v3);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "test");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "var2");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&target));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 98.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_BackdropNumberOfStage_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Stage stage;
+    stage.addCostume(std::make_shared<Costume>("backdrop1", "a", "png"));
+    stage.addCostume(std::make_shared<Costume>("backdrop2", "b", "svg"));
+    stage.addCostume(std::make_shared<Costume>("backdrop3", "b", "svg"));
+    stage.setCostumeIndex(2);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "backdrop #");
+    builder.addDropdownInput("OBJECT", "_stage_");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 3.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_BackdropNumberOfStage_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Stage stage;
+    stage.addCostume(std::make_shared<Costume>("backdrop1", "a", "png"));
+    stage.addCostume(std::make_shared<Costume>("backdrop2", "b", "svg"));
+    stage.addCostume(std::make_shared<Costume>("backdrop3", "b", "svg"));
+    stage.setCostumeIndex(2);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "_stage_");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "backdrop #");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 3.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_BackdropNameOfStage_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Stage stage;
+    stage.addCostume(std::make_shared<Costume>("backdrop1", "a", "png"));
+    stage.addCostume(std::make_shared<Costume>("backdrop2", "b", "svg"));
+    stage.addCostume(std::make_shared<Costume>("backdrop3", "b", "svg"));
+    stage.setCostumeIndex(2);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "backdrop name");
+    builder.addDropdownInput("OBJECT", "_stage_");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    std::string str;
+    value_toString(&value, &str);
+    value_free(&value);
+    ASSERT_EQ(str, "backdrop3");
+}
+
+TEST_F(SensingBlocksTest, Of_BackdropNameOfStage_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Stage stage;
+    stage.addCostume(std::make_shared<Costume>("backdrop1", "a", "png"));
+    stage.addCostume(std::make_shared<Costume>("backdrop2", "b", "svg"));
+    stage.addCostume(std::make_shared<Costume>("backdrop3", "b", "svg"));
+    stage.setCostumeIndex(2);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "_stage_");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "backdrop name");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
+    ValueData value = thread.runReporter();
+    std::string str;
+    value_toString(&value, &str);
+    value_free(&value);
+    ASSERT_EQ(str, "backdrop3");
+}
+
+TEST_F(SensingBlocksTest, Of_InvalidTarget_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "volume");
+    builder.addDropdownInput("OBJECT", "test");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(-1));
+    EXPECT_CALL(m_engineMock, targetAt(-1)).WillRepeatedly(Return(nullptr));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 0.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_InvalidTarget_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "test");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "volume");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(-1));
+    EXPECT_CALL(m_engineMock, targetAt(-1)).WillRepeatedly(Return(nullptr));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 0.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_InvalidProperty_Sprite_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "test");
+    builder.addDropdownInput("OBJECT", "Sprite2");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&targetSprite));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 0.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_InvalidProperty_Sprite_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "Sprite2");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "test");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&targetSprite));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 0.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_InvalidProperty_Stage_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Stage stage;
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "test");
+    builder.addDropdownInput("OBJECT", "Sprite2");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&stage));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 0.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_InvalidProperty_Stage_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Stage stage;
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "Sprite2");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "test");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&stage));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 0.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_Invalid_XPositionOfStage_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Stage stage;
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "x position");
+    builder.addDropdownInput("OBJECT", "_stage_");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 0.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_Invalid_DirectionOfStage_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Stage stage;
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "_stage_");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "direction");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 0.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_Invalid_CostumeNumberOfStage_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Stage stage;
+    stage.addCostume(std::make_shared<Costume>("backdrop1", "a", "png"));
+    stage.addCostume(std::make_shared<Costume>("backdrop2", "b", "svg"));
+    stage.addCostume(std::make_shared<Costume>("backdrop3", "b", "svg"));
+    stage.setCostumeIndex(2);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "costume #");
+    builder.addDropdownInput("OBJECT", "_stage_");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 0.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_Invalid_CostumeNameOfStage_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Stage stage;
+    stage.addCostume(std::make_shared<Costume>("backdrop1", "a", "png"));
+    stage.addCostume(std::make_shared<Costume>("backdrop2", "b", "svg"));
+    stage.addCostume(std::make_shared<Costume>("backdrop3", "b", "svg"));
+    stage.setCostumeIndex(2);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "_stage_");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "costume name");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
+    EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
+    ValueData value = thread.runReporter();
+    std::string str;
+    value_toString(&value, &str);
+    value_free(&value);
+    ASSERT_EQ(str, "0");
+}
+
+TEST_F(SensingBlocksTest, Of_Invalid_BackdropNameOfSprite_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+    targetSprite.addCostume(std::make_shared<Costume>("costume1", "a", "png"));
+    targetSprite.addCostume(std::make_shared<Costume>("costume2", "b", "svg"));
+    targetSprite.setCostumeIndex(1);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "backdrop name");
+    builder.addDropdownInput("OBJECT", "Sprite2");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    std::string str;
+    value_toString(&value, &str);
+    value_free(&value);
+    ASSERT_EQ(str, "0");
+}
+
+TEST_F(SensingBlocksTest, Of_Invalid_BackdropNumberOfSprite_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite targetSprite;
+    targetSprite.addCostume(std::make_shared<Costume>("costume1", "a", "png"));
+    targetSprite.addCostume(std::make_shared<Costume>("costume2", "b", "svg"));
+    targetSprite.setCostumeIndex(1);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "Sprite2");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "backdrop #");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 0.0);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_PreferPropertiesOverVariables_CompileTime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite sprite;
+    auto v1 = std::make_shared<Variable>("v1", "var1", 64.13);
+    auto v2 = std::make_shared<Variable>("v2", "var2", 98);
+    auto v3 = std::make_shared<Variable>("v3", "x position", -0.85);
+    sprite.addVariable(v1);
+    sprite.addVariable(v2);
+    sprite.addVariable(v3);
+
+    sprite.setX(-78.25);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "x position");
+    builder.addDropdownInput("OBJECT", "test");
+    Block *block = builder.currentBlock();
+
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(7));
+    EXPECT_CALL(m_engineMock, targetAt(7)).WillOnce(Return(&sprite));
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), -78.25);
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Of_PreferPropertiesOverVariables_Runtime)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+    targetMock->setEngine(&m_engineMock);
+
+    Sprite sprite;
+    auto v1 = std::make_shared<Variable>("v1", "var1", 64.13);
+    auto v2 = std::make_shared<Variable>("v2", "var2", 98);
+    auto v3 = std::make_shared<Variable>("v3", "x position", -0.85);
+    sprite.addVariable(v1);
+    sprite.addVariable(v2);
+    sprite.addVariable(v3);
+
+    sprite.setX(-78.25);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+
+    builder.addBlock("test_const_string");
+    builder.addValueInput("STRING", "test");
+    auto valueBlock = builder.takeBlock();
+
+    builder.addBlock("sensing_of");
+    builder.addDropdownField("PROPERTY", "x position");
+    builder.addObscuredInput("OBJECT", valueBlock);
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&sprite));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), -78.25);
+    value_free(&value);
 }

@@ -10,7 +10,10 @@
 #include <scratchcpp/input.h>
 #include <scratchcpp/field.h>
 #include <scratchcpp/sprite.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/costume.h>
 #include <scratchcpp/textbubble.h>
+#include <scratchcpp/variable.h>
 #include <scratchcpp/stringptr.h>
 #include <scratchcpp/string_functions.h>
 #include <scratchcpp/string_pool.h>
@@ -55,6 +58,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_loud", &compileLoud);
     engine->addCompileFunction(this, "sensing_timer", &compileTimer);
     engine->addCompileFunction(this, "sensing_resettimer", &compileResetTimer);
+    engine->addCompileFunction(this, "sensing_of", &compileOf);
 }
 
 void SensingBlocks::onInit(IEngine *engine)
@@ -241,6 +245,101 @@ CompilerValue *SensingBlocks::compileResetTimer(Compiler *compiler)
     CompilerValue *timerPtr = compiler->addConstValue(timer);
     compiler->addFunctionCall("sensing_resettimer", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { timerPtr });
     return nullptr;
+}
+
+CompilerValue *SensingBlocks::compileOf(Compiler *compiler)
+{
+    IEngine *engine = compiler->engine();
+    Input *input = compiler->input("OBJECT");
+    Field *field = compiler->field("PROPERTY");
+    assert(input);
+    assert(field);
+
+    std::string property = field->value().toString();
+
+    if (input->pointsToDropdownMenu()) {
+        // Compile time
+        std::string value = input->selectedMenuItem();
+        Target *target = nullptr;
+        CompilerValue *targetPtr = nullptr;
+
+        if (value == "_stage_") {
+            // Stage properties
+            target = engine->stage();
+            targetPtr = compiler->addConstValue(target);
+
+            if (property == "backdrop #")
+                return compiler->addFunctionCall("sensing_costume_number_of_target", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+            else if (property == "backdrop name")
+                return compiler->addFunctionCall("sensing_costume_name_of_target", Compiler::StaticType::String, { Compiler::StaticType::Pointer }, { targetPtr });
+        } else {
+            // Sprite properties
+            target = engine->targetAt(engine->findTarget(value));
+
+            if (target) {
+                targetPtr = compiler->addConstValue(target);
+
+                if (property == "x position")
+                    return compiler->addFunctionCall("sensing_x_position_of_sprite", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+                else if (property == "y position")
+                    return compiler->addFunctionCall("sensing_y_position_of_sprite", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+                else if (property == "direction")
+                    return compiler->addFunctionCall("sensing_direction_of_sprite", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+                else if (property == "costume #")
+                    return compiler->addFunctionCall("sensing_costume_number_of_target", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+                else if (property == "costume name")
+                    return compiler->addFunctionCall("sensing_costume_name_of_target", Compiler::StaticType::String, { Compiler::StaticType::Pointer }, { targetPtr });
+                else if (property == "size")
+                    return compiler->addFunctionCall("sensing_size_of_sprite", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+            }
+        }
+
+        // Common properties
+        if (target && targetPtr) {
+            if (property == "volume")
+                return compiler->addFunctionCall("sensing_volume_of_target", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+            else {
+                auto var = target->variableAt(target->findVariable(property));
+
+                if (var)
+                    return compiler->addVariableValue(var.get());
+            }
+        }
+    } else {
+        // Runtime
+        CompilerValue *targetName = compiler->addInput(input);
+        CompilerValue *targetPtr = compiler->addFunctionCallWithCtx("sensing_get_target", Compiler::StaticType::Pointer, { Compiler::StaticType::String }, { targetName });
+
+        // Stage properties
+        if (property == "backdrop #") {
+            return compiler->addFunctionCall("sensing_backdrop_number_of_stage_with_check", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+        } else if (property == "backdrop name")
+            return compiler->addFunctionCall("sensing_backdrop_name_of_stage_with_check", Compiler::StaticType::String, { Compiler::StaticType::Pointer }, { targetPtr });
+
+        // Sprite properties
+        if (property == "x position")
+            return compiler->addFunctionCall("sensing_x_position_of_sprite_with_check", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+        else if (property == "y position")
+            return compiler->addFunctionCall("sensing_y_position_of_sprite_with_check", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+        else if (property == "direction")
+            return compiler->addFunctionCall("sensing_direction_of_sprite_with_check", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+        else if (property == "costume #")
+            return compiler->addFunctionCall("sensing_costume_number_of_sprite_with_check", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+        else if (property == "costume name")
+            return compiler->addFunctionCall("sensing_costume_name_of_sprite_with_check", Compiler::StaticType::String, { Compiler::StaticType::Pointer }, { targetPtr });
+        else if (property == "size")
+            return compiler->addFunctionCall("sensing_size_of_sprite_with_check", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+
+        // Common properties
+        if (property == "volume")
+            return compiler->addFunctionCall("sensing_volume_of_target_with_check", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
+        else {
+            CompilerValue *varName = compiler->addConstValue(property);
+            return compiler->addFunctionCall("sensing_variable_of_target", Compiler::StaticType::Unknown, { Compiler::StaticType::Pointer, Compiler::StaticType::String }, { targetPtr, varName });
+        }
+    }
+
+    return compiler->addConstValue(0.0);
 }
 
 void SensingBlocks::onAnswer(const std::string &answer)
@@ -442,4 +541,163 @@ extern "C" double sensing_timer(ITimer *timer)
 extern "C" void sensing_resettimer(ITimer *timer)
 {
     timer->reset();
+}
+
+extern "C" double sensing_x_position_of_sprite(Sprite *sprite)
+{
+    return sprite->x();
+}
+
+extern "C" double sensing_y_position_of_sprite(Sprite *sprite)
+{
+    return sprite->y();
+}
+
+extern "C" double sensing_direction_of_sprite(Sprite *sprite)
+{
+    return sprite->direction();
+}
+
+extern "C" double sensing_costume_number_of_target(Target *target)
+{
+    return target->costumeIndex() + 1;
+}
+
+extern "C" StringPtr *sensing_costume_name_of_target(Target *target)
+{
+    const std::string &name = target->currentCostume()->name();
+    StringPtr *ret = string_pool_new();
+    string_assign_cstring(ret, name.c_str());
+    return ret;
+}
+
+extern "C" double sensing_size_of_sprite(Sprite *sprite)
+{
+    return sprite->size();
+}
+
+extern "C" double sensing_volume_of_target(Target *target)
+{
+    return target->volume();
+}
+
+extern "C" Target *sensing_get_target(ExecutionContext *ctx, const StringPtr *name)
+{
+    // TODO: Use UTF-16 in engine
+    std::string u8name = utf8::utf16to8(std::u16string(name->data));
+    IEngine *engine = ctx->engine();
+    return engine->targetAt(engine->findTarget(u8name));
+}
+
+extern "C" double sensing_x_position_of_sprite_with_check(Target *target)
+{
+    if (target && !target->isStage()) {
+        Sprite *sprite = static_cast<Sprite *>(target);
+        return sprite->x();
+    }
+
+    return 0.0;
+}
+
+extern "C" double sensing_y_position_of_sprite_with_check(Target *target)
+{
+    if (target && !target->isStage()) {
+        Sprite *sprite = static_cast<Sprite *>(target);
+        return sprite->y();
+    }
+
+    return 0.0;
+}
+
+extern "C" double sensing_direction_of_sprite_with_check(Target *target)
+{
+    if (target && !target->isStage()) {
+        Sprite *sprite = static_cast<Sprite *>(target);
+        return sprite->direction();
+    }
+
+    return 0.0;
+}
+
+extern "C" double sensing_costume_number_of_sprite_with_check(Target *target)
+{
+    if (target && !target->isStage())
+        return target->costumeIndex() + 1;
+
+    return 0.0;
+}
+
+extern "C" StringPtr *sensing_costume_name_of_sprite_with_check(Target *target)
+{
+    StringPtr *ret = string_pool_new();
+
+    if (target && !target->isStage()) {
+        const std::string &name = target->currentCostume()->name();
+        string_assign_cstring(ret, name.c_str());
+    } else
+        string_assign_cstring(ret, "0");
+
+    return ret;
+}
+
+extern "C" double sensing_size_of_sprite_with_check(Target *target)
+{
+    if (target && !target->isStage()) {
+        Sprite *sprite = static_cast<Sprite *>(target);
+        return sprite->size();
+    }
+
+    return 0.0;
+}
+
+extern "C" double sensing_backdrop_number_of_stage_with_check(Target *target)
+{
+    if (target && target->isStage())
+        return target->costumeIndex() + 1;
+
+    return 0.0;
+}
+
+extern "C" StringPtr *sensing_backdrop_name_of_stage_with_check(Target *target)
+{
+    StringPtr *ret = string_pool_new();
+
+    if (target && target->isStage()) {
+        const std::string &name = target->currentCostume()->name();
+        string_assign_cstring(ret, name.c_str());
+    } else
+        string_assign_cstring(ret, "");
+
+    return ret;
+}
+
+extern "C" double sensing_volume_of_target_with_check(Target *target)
+{
+    if (target)
+        return target->volume();
+
+    return 0.0;
+}
+
+extern "C" ValueData sensing_variable_of_target(Target *target, const StringPtr *varName)
+{
+    if (target) {
+        // TODO: Use UTF-16 in... Target?
+        std::string u8name = utf8::utf16to8(std::u16string(varName->data));
+        int varIndex = target->findVariable(u8name);
+        if (varIndex >= 0) {
+            auto var = target->variableAt(varIndex);
+
+            if (var) {
+                ValueData ret;
+                value_init(&ret);
+                value_assign_copy(&ret, &var->value().data());
+                return ret;
+            }
+        }
+    }
+
+    ValueData ret;
+    value_init(&ret);
+    return ret;
 }
