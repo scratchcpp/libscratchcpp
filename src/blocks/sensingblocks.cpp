@@ -14,6 +14,7 @@
 #include <scratchcpp/stringptr.h>
 #include <scratchcpp/string_functions.h>
 #include <scratchcpp/string_pool.h>
+#include <scratchcpp/itimer.h>
 #include <utf8.h>
 
 #include "sensingblocks.h"
@@ -52,6 +53,7 @@ void SensingBlocks::registerBlocks(IEngine *engine)
     engine->addCompileFunction(this, "sensing_setdragmode", &compileSetDragMode);
     engine->addCompileFunction(this, "sensing_loudness", &compileLoudness);
     engine->addCompileFunction(this, "sensing_loud", &compileLoud);
+    engine->addCompileFunction(this, "sensing_timer", &compileTimer);
 }
 
 void SensingBlocks::onInit(IEngine *engine)
@@ -223,6 +225,13 @@ CompilerValue *SensingBlocks::compileLoud(Compiler *compiler)
     CompilerValue *treshold = compiler->addConstValue(10);
     CompilerValue *loudness = compiler->addFunctionCall("sensing_loudness", Compiler::StaticType::Number);
     return compiler->createCmpGT(loudness, treshold);
+}
+
+CompilerValue *SensingBlocks::compileTimer(Compiler *compiler)
+{
+    ITimer *timer = compiler->engine()->timer();
+    CompilerValue *timerPtr = compiler->addConstValue(timer);
+    return compiler->addFunctionCall("sensing_timer", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { timerPtr });
 }
 
 void SensingBlocks::onAnswer(const std::string &answer)
@@ -414,4 +423,9 @@ extern "C" double sensing_loudness()
 
     auto audioLoudness = SensingBlocks::audioInput->audioLoudness();
     return audioLoudness->getLoudness();
+}
+
+extern "C" double sensing_timer(ITimer *timer)
+{
+    return timer->value();
 }

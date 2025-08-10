@@ -11,6 +11,7 @@
 #include <targetmock.h>
 #include <audioinputmock.h>
 #include <audioloudnessmock.h>
+#include <timermock.h>
 
 #include "../common.h"
 #include "blocks/sensingblocks.h"
@@ -1454,5 +1455,28 @@ TEST_F(SensingBlocksTest, Loud_Above)
     EXPECT_CALL(*m_audioLoudness, getLoudness()).WillOnce(Return(11));
     ValueData value = thread.runReporter();
     ASSERT_TRUE(value_toBool(&value));
+    value_free(&value);
+}
+
+TEST_F(SensingBlocksTest, Timer)
+{
+    auto targetMock = std::make_shared<TargetMock>();
+
+    TimerMock timer;
+    EXPECT_CALL(m_engineMock, timer()).WillOnce(Return(&timer));
+
+    ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
+    builder.addBlock("sensing_timer");
+    Block *block = builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, targetMock.get());
+    auto code = compiler.compile(block, Compiler::CodeType::Reporter);
+    Script script(targetMock.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(targetMock.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(timer, value()).WillOnce(Return(23.4));
+    ValueData value = thread.runReporter();
+    ASSERT_EQ(value_toDouble(&value), 23.4);
     value_free(&value);
 }
