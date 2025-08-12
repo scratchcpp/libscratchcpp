@@ -172,11 +172,6 @@ LLVMFunctions &LLVMBuildUtils::functions()
     return m_functions;
 }
 
-LLVMTypeAnalyzer &LLVMBuildUtils::typeAnalyzer()
-{
-    return m_typeAnalyzer;
-}
-
 std::string LLVMBuildUtils::scriptFunctionName(BlockPrototype *procedurePrototype)
 {
     std::string name;

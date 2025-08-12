@@ -115,8 +115,8 @@ LLVMInstruction *Variables::buildWriteVariable(LLVMInstruction *ins)
 
     Compiler::StaticType varType = Compiler::StaticType::Unknown;
 
-    if (m_utils.warp())
-        varType = m_utils.typeAnalyzer().variableType(ins->workVariable, ins, Compiler::StaticType::Unknown);
+    /*if (m_utils.warp())
+        varType = m_utils.typeAnalyzer().variableType(ins->workVariable, ins, Compiler::StaticType::Unknown);*/
 
     // Initialize stack variable on first assignment
     // TODO: Use stack in the top level (outside loops and if statements)
@@ -149,8 +149,8 @@ LLVMInstruction *Variables::buildReadVariable(LLVMInstruction *ins)
     LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->workVariable);
     Compiler::StaticType type = Compiler::StaticType::Unknown;
 
-    if (m_utils.warp())
-        type = m_utils.typeAnalyzer().variableType(ins->workVariable, ins, Compiler::StaticType::Unknown);
+    /*if (m_utils.warp())
+        type = m_utils.typeAnalyzer().variableType(ins->workVariable, ins, Compiler::StaticType::Unknown);*/
 
     ins->functionReturnReg->value = varPtr.onStack && !(ins->loopCondition && !m_utils.warp()) ? varPtr.stackPtr : varPtr.heapPtr;
     ins->functionReturnReg->setType(type);

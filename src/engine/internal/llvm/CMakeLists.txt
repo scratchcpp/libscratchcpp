@@ -19,8 +19,6 @@ target_sources(scratchcpp
     llvmtypes.h
     llvmfunctions.cpp
     llvmfunctions.h
-    llvmtypeanalyzer.cpp
-    llvmtypeanalyzer.h
     llvmcompilercontext.cpp
     llvmcompilercontext.h
     llvmexecutablecode.cpp

@@ -7,7 +7,6 @@
 #include "llvmfunctions.h"
 #include "llvmvariableptr.h"
 #include "llvmlistptr.h"
-#include "llvmtypeanalyzer.h"
 #include "llvmcoroutine.h"
 #include "llvmifstatement.h"
 #include "llvmloop.h"
@@ -39,7 +38,6 @@ class LLVMBuildUtils
         llvm::IRBuilder<> &builder();
         llvm::Function *function() const;
         LLVMFunctions &functions();
-        LLVMTypeAnalyzer &typeAnalyzer();
 
         std::string scriptFunctionName(BlockPrototype *procedurePrototype);
         llvm::FunctionType *scriptFunctionType(BlockPrototype *procedurePrototype);
@@ -115,7 +113,6 @@ class LLVMBuildUtils
         llvm::LLVMContext &m_llvmCtx;
         llvm::IRBuilder<> &m_builder;
         LLVMFunctions m_functions;
-        LLVMTypeAnalyzer m_typeAnalyzer;
         Target *m_target = nullptr;
         llvm::Function *m_function = nullptr;
 

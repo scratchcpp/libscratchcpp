@@ -55,11 +55,6 @@ add_executable(
   operators/string/string_concat_test.cpp
   operators/string/string_char_test.cpp
   operators/string/string_length_test.cpp
-  type_analyzer/variabletypeafterbranch_test.cpp
-  type_analyzer/variabletype_test.cpp
-  type_analyzer/listtypeafterbranch_test.cpp
-  type_analyzer/listtype_test.cpp
-  type_analyzer/mixed_test.cpp
 )
 
 target_link_libraries(
