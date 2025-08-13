@@ -156,7 +156,7 @@ CompilerValue *LLVMCodeBuilder::addLocalVariableValue(CompilerLocalVariable *var
 CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
 {
     auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, m_loopCondition);
-    ins->workVariable = variable;
+    ins->targetVariable = variable;
     m_utils.createVariablePtr(variable);
 
     auto ret = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
@@ -170,7 +170,7 @@ CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
 CompilerValue *LLVMCodeBuilder::addListContents(List *list)
 {
     LLVMInstruction ins(LLVMInstruction::Type::GetListContents, m_loopCondition);
-    ins.workList = list;
+    ins.targetList = list;
     m_utils.createListPtr(list);
 
     return createOp(ins, Compiler::StaticType::String);
@@ -179,7 +179,7 @@ CompilerValue *LLVMCodeBuilder::addListContents(List *list)
 CompilerValue *LLVMCodeBuilder::addListItem(List *list, CompilerValue *index)
 {
     auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, m_loopCondition);
-    ins->workList = list;
+    ins->targetList = list;
     m_utils.createListPtr(list);
 
     ins->args.push_back({ Compiler::StaticType::Number, dynamic_cast<LLVMRegister *>(index) });
@@ -195,7 +195,7 @@ CompilerValue *LLVMCodeBuilder::addListItem(List *list, CompilerValue *index)
 CompilerValue *LLVMCodeBuilder::addListItemIndex(List *list, CompilerValue *item)
 {
     LLVMInstruction ins(LLVMInstruction::Type::GetListItemIndex, m_loopCondition);
-    ins.workList = list;
+    ins.targetList = list;
     m_utils.createListPtr(list);
 
     auto ret = createOp(ins, Compiler::StaticType::Number, Compiler::StaticType::Unknown, { item });
@@ -205,7 +205,7 @@ CompilerValue *LLVMCodeBuilder::addListItemIndex(List *list, CompilerValue *item
 CompilerValue *LLVMCodeBuilder::addListContains(List *list, CompilerValue *item)
 {
     LLVMInstruction ins(LLVMInstruction::Type::ListContainsItem, m_loopCondition);
-    ins.workList = list;
+    ins.targetList = list;
     m_utils.createListPtr(list);
 
     auto ret = createOp(ins, Compiler::StaticType::Bool, Compiler::StaticType::Unknown, { item });
@@ -215,7 +215,7 @@ CompilerValue *LLVMCodeBuilder::addListContains(List *list, CompilerValue *item)
 CompilerValue *LLVMCodeBuilder::addListSize(List *list)
 {
     LLVMInstruction ins(LLVMInstruction::Type::GetListSize, m_loopCondition);
-    ins.workList = list;
+    ins.targetList = list;
     m_utils.createListPtr(list);
 
     return createOp(ins, Compiler::StaticType::Number);
@@ -422,7 +422,7 @@ void LLVMCodeBuilder::createLocalVariableWrite(CompilerLocalVariable *variable, 
 void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *value)
 {
     LLVMInstruction ins(LLVMInstruction::Type::WriteVariable, m_loopCondition);
-    ins.workVariable = variable;
+    ins.targetVariable = variable;
     createOp(ins, Compiler::StaticType::Void, Compiler::StaticType::Unknown, { value });
     m_utils.createVariablePtr(variable);
 }
@@ -430,7 +430,7 @@ void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *val
 void LLVMCodeBuilder::createListClear(List *list)
 {
     LLVMInstruction ins(LLVMInstruction::Type::ClearList, m_loopCondition);
-    ins.workList = list;
+    ins.targetList = list;
     createOp(ins, Compiler::StaticType::Void);
     m_utils.createListPtr(list);
 }
@@ -438,7 +438,7 @@ void LLVMCodeBuilder::createListClear(List *list)
 void LLVMCodeBuilder::createListRemove(List *list, CompilerValue *index)
 {
     LLVMInstruction ins(LLVMInstruction::Type::RemoveListItem, m_loopCondition);
-    ins.workList = list;
+    ins.targetList = list;
     createOp(ins, Compiler::StaticType::Void, Compiler::StaticType::Number, { index });
     m_utils.createListPtr(list);
 }
@@ -446,7 +446,7 @@ void LLVMCodeBuilder::createListRemove(List *list, CompilerValue *index)
 void LLVMCodeBuilder::createListAppend(List *list, CompilerValue *item)
 {
     LLVMInstruction ins(LLVMInstruction::Type::AppendToList, m_loopCondition);
-    ins.workList = list;
+    ins.targetList = list;
     createOp(ins, Compiler::StaticType::Void, Compiler::StaticType::Unknown, { item });
     m_utils.createListPtr(list);
 }
@@ -454,7 +454,7 @@ void LLVMCodeBuilder::createListAppend(List *list, CompilerValue *item)
 void LLVMCodeBuilder::createListInsert(List *list, CompilerValue *index, CompilerValue *item)
 {
     LLVMInstruction ins(LLVMInstruction::Type::InsertToList, m_loopCondition);
-    ins.workList = list;
+    ins.targetList = list;
     createOp(ins, Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Unknown }, { index, item });
     m_utils.createListPtr(list);
 }
@@ -462,7 +462,7 @@ void LLVMCodeBuilder::createListInsert(List *list, CompilerValue *index, Compile
 void LLVMCodeBuilder::createListReplace(List *list, CompilerValue *index, CompilerValue *item)
 {
     LLVMInstruction ins(LLVMInstruction::Type::ListReplace, m_loopCondition);
-    ins.workList = list;
+    ins.targetList = list;
     createOp(ins, Compiler::StaticType::Void, { Compiler::StaticType::Number, Compiler::StaticType::Unknown }, { index, item });
     m_utils.createListPtr(list);
 }

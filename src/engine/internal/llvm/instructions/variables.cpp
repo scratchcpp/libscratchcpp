@@ -110,7 +110,7 @@ LLVMInstruction *Variables::buildWriteVariable(LLVMInstruction *ins)
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
     Compiler::StaticType argType = m_utils.optimizeRegisterType(arg.second);
-    LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->workVariable);
+    LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->targetVariable);
     varPtr.changed = true; // TODO: Handle loops and if statements
 
     // Initialize stack variable on first assignment
@@ -141,7 +141,7 @@ LLVMInstruction *Variables::buildWriteVariable(LLVMInstruction *ins)
 LLVMInstruction *Variables::buildReadVariable(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 0);
-    LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->workVariable);
+    LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->targetVariable);
 
     ins->functionReturnReg->value = varPtr.onStack && !(ins->loopCondition && !m_utils.warp()) ? varPtr.stackPtr : varPtr.heapPtr;
     return ins->next;

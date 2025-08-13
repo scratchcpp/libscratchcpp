@@ -64,7 +64,7 @@ ProcessResult Lists::process(LLVMInstruction *ins)
 LLVMInstruction *Lists::buildClearList(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 0);
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
     m_builder.CreateCall(m_utils.functions().resolve_list_clear(), listPtr.ptr);
 
     return ins->next;
@@ -77,7 +77,7 @@ LLVMInstruction *Lists::buildRemoveListItem(LLVMInstruction *ins)
 
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     // Range check
     llvm::Value *min = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
@@ -107,7 +107,7 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
     Compiler::StaticType type = m_utils.optimizeRegisterType(arg.second);
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     Compiler::StaticType listType = ins->targetType;
 
@@ -146,7 +146,7 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
     const auto &indexArg = ins->args[0];
     const auto &valueArg = ins->args[1];
     Compiler::StaticType type = m_utils.optimizeRegisterType(valueArg.second);
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     Compiler::StaticType listType = ins->targetType;
 
@@ -181,7 +181,7 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
     const auto &indexArg = ins->args[0];
     const auto &valueArg = ins->args[1];
     Compiler::StaticType type = m_utils.optimizeRegisterType(valueArg.second);
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     Compiler::StaticType listType = ins->targetType;
 
@@ -209,7 +209,7 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
 LLVMInstruction *Lists::buildGetListContents(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 0);
-    const LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    const LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
     llvm::Value *ptr = m_builder.CreateCall(m_utils.functions().resolve_list_to_string(), listPtr.ptr);
     m_utils.freeStringLater(ptr);
     ins->functionReturnReg->value = ptr;
@@ -221,7 +221,7 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     Compiler::StaticType listType = ins->functionReturnReg->type();
 
@@ -243,7 +243,7 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
 LLVMInstruction *Lists::buildGetListSize(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 0);
-    const LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    const LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
     llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
     ins->functionReturnReg->value = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
 
@@ -254,7 +254,7 @@ LLVMInstruction *Lists::buildGetListItemIndex(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     Compiler::StaticType listType = ins->targetType;
 
@@ -266,7 +266,7 @@ LLVMInstruction *Lists::buildListContainsItem(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     Compiler::StaticType listType = ins->targetType;
 

@@ -74,7 +74,7 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
         /*Variable *variable = var;
         // TODO: Loop scope was used here, replace it with some "inside loop" flag if needed
         auto it = std::find_if(m_variableInstructions.begin(), m_variableInstructions.end(), [variable](const LLVMInstruction *ins) {
-            return ins->type == LLVMInstruction::Type::WriteVariable && ins->workVariable == variable && !ins->loopScope;
+            return ins->type == LLVMInstruction::Type::WriteVariable && ins->targetVariable == variable && !ins->loopScope;
         });
 
         if (it == m_variableInstructions.end()) {
