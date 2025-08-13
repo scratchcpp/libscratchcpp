@@ -26,6 +26,7 @@ install(TARGETS scratchcpp DESTINATION lib)
 target_sources(scratchcpp
   PUBLIC
     include/scratchcpp/global.h
+    include/scratchcpp/enum_bitmask.h
     include/scratchcpp/project.h
     include/scratchcpp/scratchconfiguration.h
     include/scratchcpp/iengine.h
