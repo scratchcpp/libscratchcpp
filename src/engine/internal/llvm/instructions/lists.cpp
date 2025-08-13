@@ -109,10 +109,7 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
     Compiler::StaticType type = m_utils.optimizeRegisterType(arg.second);
     LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
 
-    Compiler::StaticType listType = Compiler::StaticType::Unknown;
-
-    /*if (m_utils.warp())
-        listType = m_utils.typeAnalyzer().listType(ins->workList, ins, Compiler::StaticType::Unknown, false);*/
+    Compiler::StaticType listType = ins->targetType;
 
     // Check if enough space is allocated
     llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
@@ -151,10 +148,7 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
     Compiler::StaticType type = m_utils.optimizeRegisterType(valueArg.second);
     LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
 
-    Compiler::StaticType listType = Compiler::StaticType::Unknown;
-
-    /*if (m_utils.warp())
-        listType = m_utils.typeAnalyzer().listType(ins->workList, ins, Compiler::StaticType::Unknown, false);*/
+    Compiler::StaticType listType = ins->targetType;
 
     // Range check
     llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
@@ -189,10 +183,7 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
     Compiler::StaticType type = m_utils.optimizeRegisterType(valueArg.second);
     LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
 
-    Compiler::StaticType listType = Compiler::StaticType::Unknown;
-
-    /*if (m_utils.warp())
-        listType = m_utils.typeAnalyzer().listType(ins->workList, ins, Compiler::StaticType::Unknown, false);*/
+    Compiler::StaticType listType = ins->targetType;
 
     // Range check
     llvm::Value *min = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
@@ -232,10 +223,7 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
     const auto &arg = ins->args[0];
     LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
 
-    Compiler::StaticType listType = Compiler::StaticType::Unknown;
-
-    /*if (m_utils.warp())
-        listType = m_utils.typeAnalyzer().listType(ins->workList, ins, Compiler::StaticType::Unknown, false);*/
+    Compiler::StaticType listType = ins->functionReturnReg->type();
 
     llvm::Value *min = llvm::ConstantFP::get(m_utils.llvmCtx(), llvm::APFloat(0.0));
     llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
@@ -248,7 +236,6 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
 
     index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
     ins->functionReturnReg->value = m_builder.CreateSelect(inRange, m_utils.getListItem(listPtr, index), null);
-    ins->functionReturnReg->setType(listType);
 
     return ins->next;
 }
@@ -269,10 +256,7 @@ LLVMInstruction *Lists::buildGetListItemIndex(LLVMInstruction *ins)
     const auto &arg = ins->args[0];
     LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
 
-    Compiler::StaticType listType = Compiler::StaticType::Unknown;
-
-    /*if (m_utils.warp())
-        listType = m_utils.typeAnalyzer().listType(ins->workList, ins, Compiler::StaticType::Unknown, false);*/
+    Compiler::StaticType listType = ins->targetType;
 
     ins->functionReturnReg->value = m_builder.CreateSIToFP(m_utils.getListItemIndex(listPtr, listType, arg.second), m_builder.getDoubleTy());
     return ins->next;
@@ -284,10 +268,7 @@ LLVMInstruction *Lists::buildListContainsItem(LLVMInstruction *ins)
     const auto &arg = ins->args[0];
     LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
 
-    Compiler::StaticType listType = Compiler::StaticType::Unknown;
-
-    /*if (m_utils.warp())
-        listType = m_utils.typeAnalyzer().listType(ins->workList, ins, Compiler::StaticType::Unknown, false);*/
+    Compiler::StaticType listType = ins->targetType;
 
     llvm::Value *index = m_utils.getListItemIndex(listPtr, listType, arg.second);
     ins->functionReturnReg->value = m_builder.CreateICmpSGT(index, llvm::ConstantInt::get(m_builder.getInt64Ty(), -1, true));
