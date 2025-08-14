@@ -73,7 +73,7 @@ class LLVMBuildUtils
         std::vector<LLVMIfStatement> &ifStatements();
         std::vector<LLVMLoop> &loops();
 
-        static Compiler::StaticType optimizeRegisterType(LLVMRegister *reg);
+        static Compiler::StaticType optimizeRegisterType(const LLVMRegister *reg);
         static Compiler::StaticType mapType(ValueType type);
 
         llvm::Value *addAlloca(llvm::Type *type);

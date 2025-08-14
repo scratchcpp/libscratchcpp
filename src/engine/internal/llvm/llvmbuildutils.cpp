@@ -366,7 +366,7 @@ std::vector<LLVMLoop> &LLVMBuildUtils::loops()
     return m_loops;
 }
 
-Compiler::StaticType LLVMBuildUtils::optimizeRegisterType(LLVMRegister *reg)
+Compiler::StaticType LLVMBuildUtils::optimizeRegisterType(const LLVMRegister *reg)
 {
     Compiler::StaticType ret = reg->type();
 
