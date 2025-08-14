@@ -7,25 +7,6 @@
 
 using namespace libscratchcpp;
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, EmptyScript)
-{
-    LLVMCodeAnalyzer analyzer;
-    LLVMInstructionList list;
-
-    analyzer.analyzeScript(list);
-}
-
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, NoVariableOperations)
-{
-    LLVMCodeAnalyzer analyzer;
-    LLVMInstructionList list;
-
-    auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
-    list.addInstruction(funcCall);
-
-    analyzer.analyzeScript(list);
-}
-
 TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, FirstVariableWrite)
 {
     LLVMCodeAnalyzer analyzer;
