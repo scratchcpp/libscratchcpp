@@ -761,6 +761,10 @@ TEST_F(LLVMCodeBuilderTest, Select)
     v = builder->createSelect(v, builder->addConstValue("abc"), builder->addConstValue(true), Compiler::StaticType::Unknown);
     builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
 
+    v = builder->addConstValue(true);
+    v = builder->createSelect(v, builder->addConstValue("abc"), builder->addConstValue(true), Compiler::StaticType::String | Compiler::StaticType::Bool);
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
     static const std::string expected =
         "5.8\n"
         "-17.42\n"
@@ -773,7 +777,8 @@ TEST_F(LLVMCodeBuilderTest, Select)
         "1\n"
         "0\n"
         "test\n"
-        "true\n";
+        "true\n"
+        "abc\n";
 
     auto code = builder->build();
     Script script(&sprite, nullptr, nullptr);

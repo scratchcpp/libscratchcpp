@@ -399,10 +399,7 @@ CompilerValue *LLVMCodeBuilder::createStringConcat(CompilerValue *string1, Compi
 CompilerValue *LLVMCodeBuilder::createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType)
 {
     LLVMRegister *ret = createOp(LLVMInstruction::Type::Select, valueType, { Compiler::StaticType::Bool, valueType, valueType }, { cond, trueValue, falseValue });
-
-    if (valueType == Compiler::StaticType::Unknown)
-        ret->isRawValue = false;
-
+    ret->isRawValue = m_utils.isSingleType(valueType);
     return ret;
 }
 
