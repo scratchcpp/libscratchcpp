@@ -1014,7 +1014,7 @@ llvm::Value *LLVMBuildUtils::createComparison(LLVMRegister *arg1, LLVMRegister *
                 return m_builder.getInt1(false);
         }
 
-        if (type1 != type2 || type1 == Compiler::StaticType::Unknown || type2 == Compiler::StaticType::Unknown) {
+        if (type1 != type2 || !isSingleType(type1) || !isSingleType(type2)) {
             // If the types are different or at least one of them
             // is unknown, we must use value functions
             llvm::Value *value1 = createValue(arg1);
