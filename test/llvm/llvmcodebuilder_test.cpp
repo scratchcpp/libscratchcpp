@@ -196,6 +196,30 @@ TEST_F(LLVMCodeBuilderTest, ConstCasting)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
+TEST_F(LLVMCodeBuilderTest, ConstCasting_ToMixedTypes)
+{
+    LLVMCodeBuilder *builder = m_utils.createBuilder(true);
+
+    CompilerValue *v = builder->addConstValue(true);
+    builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Number | Compiler::StaticType::Bool }, { v });
+    v = builder->addConstValue(-24.156);
+    builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Number | Compiler::StaticType::Bool }, { v });
+
+    auto code = builder->build();
+    Script script(&m_utils.target(), nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&m_utils.target(), nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+
+    static const std::string expected =
+        "true\n"
+        "-24.156\n";
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
 TEST_F(LLVMCodeBuilderTest, RawValueCasting)
 {
     LLVMCodeBuilder *builder = m_utils.createBuilder(true);

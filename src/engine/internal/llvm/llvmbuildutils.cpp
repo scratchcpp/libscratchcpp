@@ -402,7 +402,7 @@ llvm::Value *LLVMBuildUtils::addAlloca(llvm::Type *type)
 llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType targetType)
 {
     if (reg->isConst()) {
-        if (targetType == Compiler::StaticType::Unknown)
+        if (!isSingleType(targetType))
             return createValue(reg);
         else
             return castConstValue(reg->constValue(), targetType);
