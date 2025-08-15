@@ -292,6 +292,294 @@ TEST_F(LLVMCodeBuilderTest, RawValueCasting)
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
 }
 
+TEST_F(LLVMCodeBuilderTest, ValueCasting_FromNumberBool)
+{
+    LLVMCodeBuilder *builder = m_utils.createBuilder(true);
+
+    // Number | Bool -> number
+    CompilerValue *v = builder->addConstValue(5.2);
+    v = m_utils.callConstFuncForType(ValueType::Number, v, Compiler::StaticType::Number | Compiler::StaticType::Bool);
+    builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = builder->addConstValue(true);
+    v = m_utils.callConstFuncForType(ValueType::Bool, v, Compiler::StaticType::Number | Compiler::StaticType::Bool);
+    builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    // Number | Bool -> bool
+    v = builder->addConstValue(-24.156);
+    v = m_utils.callConstFuncForType(ValueType::Number, v, Compiler::StaticType::Number | Compiler::StaticType::Bool);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    v = builder->addConstValue(0);
+    v = m_utils.callConstFuncForType(ValueType::Number, v, Compiler::StaticType::Number | Compiler::StaticType::Bool);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    v = builder->addConstValue(true);
+    v = m_utils.callConstFuncForType(ValueType::Bool, v, Compiler::StaticType::Number | Compiler::StaticType::Bool);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    // Number | Bool -> string
+    v = builder->addConstValue(4.5);
+    v = m_utils.callConstFuncForType(ValueType::Number, v, Compiler::StaticType::Number | Compiler::StaticType::Bool);
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = builder->addConstValue(true);
+    v = m_utils.callConstFuncForType(ValueType::Bool, v, Compiler::StaticType::Number | Compiler::StaticType::Bool);
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    auto code = builder->build();
+    Script script(&m_utils.target(), nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&m_utils.target(), nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+
+    static const std::string expected =
+        "5.2\n"
+        "1\n"
+        "1\n"
+        "0\n"
+        "1\n"
+        "4.5\n"
+        "true\n";
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ValueCasting_FromNumberString)
+{
+    LLVMCodeBuilder *builder = m_utils.createBuilder(true);
+
+    // Number | String -> number
+    CompilerValue *v = builder->addConstValue(42.5);
+    v = m_utils.callConstFuncForType(ValueType::Number, v, Compiler::StaticType::Number | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = builder->addConstValue("123.45");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Number | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = builder->addConstValue("not_a_number");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Number | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    // Number | String -> bool
+    v = builder->addConstValue(0);
+    v = m_utils.callConstFuncForType(ValueType::Number, v, Compiler::StaticType::Number | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    v = builder->addConstValue(-15.7);
+    v = m_utils.callConstFuncForType(ValueType::Number, v, Compiler::StaticType::Number | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    v = builder->addConstValue("false");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Number | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    v = builder->addConstValue("hello");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Number | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    // Number | String -> string
+    v = builder->addConstValue(4.5);
+    v = m_utils.callConstFuncForType(ValueType::Number, v, Compiler::StaticType::Number | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = builder->addConstValue("world");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Number | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    auto code = builder->build();
+    Script script(&m_utils.target(), nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&m_utils.target(), nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+
+    static const std::string expected =
+        "42.5\n"
+        "123.45\n"
+        "0\n"
+        "0\n"
+        "1\n"
+        "0\n"
+        "1\n"
+        "4.5\n"
+        "world\n";
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ValueCasting_FromBoolString)
+{
+    LLVMCodeBuilder *builder = m_utils.createBuilder(true);
+
+    // Bool | String -> number
+    CompilerValue *v = builder->addConstValue(true);
+    v = m_utils.callConstFuncForType(ValueType::Bool, v, Compiler::StaticType::Bool | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = builder->addConstValue(false);
+    v = m_utils.callConstFuncForType(ValueType::Bool, v, Compiler::StaticType::Bool | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = builder->addConstValue("456.78");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Bool | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = builder->addConstValue("invalid");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Bool | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    // Bool | String -> bool
+    v = builder->addConstValue(true);
+    v = m_utils.callConstFuncForType(ValueType::Bool, v, Compiler::StaticType::Bool | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    v = builder->addConstValue(false);
+    v = m_utils.callConstFuncForType(ValueType::Bool, v, Compiler::StaticType::Bool | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    v = builder->addConstValue("false");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Bool | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    v = builder->addConstValue("anything");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Bool | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    // Bool | String -> string
+    v = builder->addConstValue(true);
+    v = m_utils.callConstFuncForType(ValueType::Bool, v, Compiler::StaticType::Bool | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = builder->addConstValue(false);
+    v = m_utils.callConstFuncForType(ValueType::Bool, v, Compiler::StaticType::Bool | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = builder->addConstValue("test_string");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Bool | Compiler::StaticType::String);
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    auto code = builder->build();
+    Script script(&m_utils.target(), nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&m_utils.target(), nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+
+    static const std::string expected =
+        "1\n"
+        "0\n"
+        "456.78\n"
+        "0\n"
+        "1\n"
+        "0\n"
+        "0\n"
+        "1\n"
+        "true\n"
+        "false\n"
+        "test_string\n";
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
+TEST_F(LLVMCodeBuilderTest, ValueCasting_FromUnknown)
+{
+    LLVMCodeBuilder *builder = m_utils.createBuilder(true);
+
+    // Unknown -> number
+    CompilerValue *v = builder->addConstValue(42.5);
+    v = m_utils.callConstFuncForType(ValueType::Number, v, Compiler::StaticType::Unknown);
+    builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = builder->addConstValue("123.45");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Unknown);
+    builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = builder->addConstValue(true);
+    v = m_utils.callConstFuncForType(ValueType::Bool, v, Compiler::StaticType::Unknown);
+    builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    v = builder->addConstValue("not_a_number");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Unknown);
+    builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
+
+    // Unknown -> bool
+    v = builder->addConstValue(0);
+    v = m_utils.callConstFuncForType(ValueType::Number, v, Compiler::StaticType::Unknown);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    v = builder->addConstValue(-15.7);
+    v = m_utils.callConstFuncForType(ValueType::Number, v, Compiler::StaticType::Unknown);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    v = builder->addConstValue(true);
+    v = m_utils.callConstFuncForType(ValueType::Bool, v, Compiler::StaticType::Unknown);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    v = builder->addConstValue("false");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Unknown);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    v = builder->addConstValue("hello");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Unknown);
+    builder->addFunctionCall("test_print_bool", Compiler::StaticType::Void, { Compiler::StaticType::Bool }, { v });
+
+    // Unknown -> string
+    v = builder->addConstValue(4.5);
+    v = m_utils.callConstFuncForType(ValueType::Number, v, Compiler::StaticType::Unknown);
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = builder->addConstValue(false);
+    v = m_utils.callConstFuncForType(ValueType::Bool, v, Compiler::StaticType::Unknown);
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    v = builder->addConstValue("world");
+    v = m_utils.callConstFuncForType(ValueType::String, v, Compiler::StaticType::Unknown);
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    // Unknown -> unknown (passthrough)
+    v = builder->addConstValue(321.5);
+    builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
+
+    v = builder->addConstValue("test");
+    builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
+
+    v = builder->addConstValue(true);
+    builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
+
+    auto code = builder->build();
+    Script script(&m_utils.target(), nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&m_utils.target(), nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+
+    static const std::string expected =
+        "42.5\n"
+        "123.45\n"
+        "1\n"
+        "0\n"
+        "0\n"
+        "1\n"
+        "1\n"
+        "0\n"
+        "1\n"
+        "4.5\n"
+        "false\n"
+        "world\n"
+        "321.5\n"
+        "test\n"
+        "true\n";
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
 TEST_F(LLVMCodeBuilderTest, LocalVariables)
 {
     Stage stage;

@@ -152,6 +152,30 @@ extern "C"
         return v;
     }
 
+    ValueData test_const_number_unknown(double v)
+    {
+        ValueData ret;
+        value_init(&ret);
+        value_assign_double(&ret, v);
+        return ret;
+    }
+
+    ValueData test_const_bool_unknown(bool v)
+    {
+        ValueData ret;
+        value_init(&ret);
+        value_assign_bool(&ret, v);
+        return ret;
+    }
+
+    ValueData test_const_string_unknown(const StringPtr *v)
+    {
+        ValueData ret;
+        value_init(&ret);
+        value_assign_stringPtr(&ret, v);
+        return ret;
+    }
+
     bool test_not(bool arg)
     {
         return !arg;
