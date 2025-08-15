@@ -383,6 +383,12 @@ Compiler::StaticType LLVMBuildUtils::mapType(ValueType type)
     return TYPE_MAP[type];
 }
 
+bool LLVMBuildUtils::isSingleType(Compiler::StaticType type)
+{
+    // Check if the type is a power of 2 (only one bit set)
+    return (type & (static_cast<Compiler::StaticType>(static_cast<int>(type) - 1))) == static_cast<Compiler::StaticType>(0);
+}
+
 llvm::Value *LLVMBuildUtils::addAlloca(llvm::Type *type)
 {
     // Add an alloca to the entry block because allocas must be there (to avoid stack overflow)
@@ -509,15 +515,12 @@ llvm::Type *LLVMBuildUtils::getType(Compiler::StaticType type, bool isReturnType
         case Compiler::StaticType::Pointer:
             return m_builder.getVoidTy()->getPointerTo();
 
-        case Compiler::StaticType::Unknown:
+        default:
+            // Multiple types
             if (isReturnType)
                 return m_valueDataType;
             else
                 return m_valueDataType->getPointerTo();
-
-        default:
-            assert(false);
-            return nullptr;
     }
 }
 

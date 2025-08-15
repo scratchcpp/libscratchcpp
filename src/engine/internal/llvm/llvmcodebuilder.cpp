@@ -101,7 +101,7 @@ CompilerValue *LLVMCodeBuilder::addFunctionCall(const std::string &functionName,
     if (returnType != Compiler::StaticType::Void) {
         auto reg = std::make_shared<LLVMRegister>(returnType);
 
-        if (returnType != Compiler::StaticType::Unknown)
+        if (m_utils.isSingleType(returnType))
             reg->isRawValue = true;
 
         ins->functionReturnReg = reg.get();
