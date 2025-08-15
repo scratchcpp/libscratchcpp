@@ -10,6 +10,8 @@ using namespace libscratchcpp;
 static const std::unordered_set<LLVMInstruction::Type>
     BEGIN_LOOP_INSTRUCTIONS = { LLVMInstruction::Type::BeginRepeatLoop, LLVMInstruction::Type::BeginWhileLoop, LLVMInstruction::Type::BeginRepeatUntilLoop };
 
+static const std::unordered_set<LLVMInstruction::Type> LIST_WRITE_INSTRUCTIONS = { LLVMInstruction::Type::AppendToList, LLVMInstruction::Type::InsertToList, LLVMInstruction::Type::ListReplace };
+
 void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
 {
     std::unordered_set<LLVMInstruction *> typeAssignedInstructions;
@@ -28,6 +30,7 @@ void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
             auto branch = std::make_unique<Branch>();
             branch->start = ins;
             branch->variableTypes = currentBranch->variableTypes;
+            branch->listTypes = currentBranch->listTypes;
             currentBranch = branch.get();
             branches.push_back(std::move(branch));
         } else if (isElse(ins)) {
@@ -39,6 +42,7 @@ void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
             currentBranch = currentBranch->elseBranch.get();
             currentBranch->start = ins;
             currentBranch->variableTypes = previousBranch->variableTypes;
+            currentBranch->listTypes = previousBranch->listTypes;
         } else if (isIfEnd(ins) || isLoopEnd(ins)) {
             if (isLoopEnd(ins) && currentBranch->typeChanges) {
                 // Next iteration
@@ -52,11 +56,16 @@ void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
                 assert(primaryBranch);
 
                 if (primaryBranch && primaryBranch->elseBranch) {
-                    // The previous types can be ignored in if/else statements
-                    overrideBranchTypes(primaryBranch, previousBranch);
-                    mergeBranchTypes(primaryBranch->elseBranch.get(), previousBranch);
-                } else
-                    mergeBranchTypes(primaryBranch, previousBranch);
+                    // The previous variable types can be ignored in if/else statements
+                    overrideVariableTypes(primaryBranch, previousBranch);
+                    mergeListTypes(primaryBranch, previousBranch);
+
+                    mergeVariableTypes(primaryBranch->elseBranch.get(), previousBranch);
+                    mergeListTypes(primaryBranch->elseBranch.get(), previousBranch);
+                } else {
+                    mergeVariableTypes(primaryBranch, previousBranch);
+                    mergeListTypes(primaryBranch, previousBranch);
+                }
 
                 // Remove the branch
                 branches.pop_back();
@@ -71,6 +80,24 @@ void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
         } else if (isVariableRead(ins)) {
             // Type before the read
             updateVariableType(currentBranch, ins, typeAssignedInstructions, false);
+
+            // Store the type in the return register
+            ins->functionReturnReg->setType(ins->targetType);
+        } else if (isListClear(ins)) {
+            // Type before the read
+            updateListType(currentBranch, ins, typeAssignedInstructions, true);
+
+            // Clear the list type
+            currentBranch->listTypes[ins->targetList] = Compiler::StaticType::Void;
+        } else if (isListWrite(ins)) {
+            // Type before the write
+            updateListType(currentBranch, ins, typeAssignedInstructions, true);
+
+            // Type after the write
+            currentBranch->listTypes[ins->targetList] |= writeType(ins);
+        } else if (isListRead(ins)) {
+            // Type before the read
+            updateListType(currentBranch, ins, typeAssignedInstructions, false);
 
             // Store the type in the return register
             ins->functionReturnReg->setType(ins->targetType);
@@ -110,9 +137,37 @@ void LLVMCodeAnalyzer::updateVariableType(Branch *branch, LLVMInstruction *ins, 
     }
 }
 
-void LLVMCodeAnalyzer::mergeBranchTypes(Branch *branch, Branch *previousBranch) const
+void LLVMCodeAnalyzer::updateListType(Branch *branch, LLVMInstruction *ins, std::unordered_set<LLVMInstruction *> &typeAssignedInstructions, bool isWrite) const
 {
-    // Variables
+    auto it = branch->listTypes.find(ins->targetList);
+
+    if (it == branch->listTypes.cend()) {
+        if (typeAssignedInstructions.find(ins) == typeAssignedInstructions.cend()) {
+            if (isWrite)
+                branch->typeChanges = true;
+
+            typeAssignedInstructions.insert(ins);
+            ins->targetType = Compiler::StaticType::Unknown;
+            branch->listTypes[ins->targetList] = ins->targetType;
+        }
+    } else {
+        if (typeAssignedInstructions.find(ins) == typeAssignedInstructions.cend()) {
+            if (isWrite)
+                branch->typeChanges = true;
+
+            ins->targetType = it->second;
+            typeAssignedInstructions.insert(ins);
+        } else {
+            if (isWrite && ((ins->targetType | it->second) != ins->targetType))
+                branch->typeChanges = true;
+
+            ins->targetType |= it->second;
+        }
+    }
+}
+
+void LLVMCodeAnalyzer::mergeVariableTypes(Branch *branch, Branch *previousBranch) const
+{
     for (const auto &[var, type] : branch->variableTypes) {
         auto it = previousBranch->variableTypes.find(var);
 
@@ -123,11 +178,22 @@ void LLVMCodeAnalyzer::mergeBranchTypes(Branch *branch, Branch *previousBranch) 
     }
 }
 
-void LLVMCodeAnalyzer::overrideBranchTypes(Branch *branch, Branch *previousBranch) const
+void LLVMCodeAnalyzer::overrideVariableTypes(Branch *branch, Branch *previousBranch) const
 {
-    // Variables
     for (const auto &[var, type] : branch->variableTypes)
         previousBranch->variableTypes[var] = type;
+}
+
+void LLVMCodeAnalyzer::mergeListTypes(Branch *branch, Branch *previousBranch) const
+{
+    for (const auto &[list, type] : branch->listTypes) {
+        auto it = previousBranch->listTypes.find(list);
+
+        if (it == previousBranch->listTypes.cend())
+            previousBranch->listTypes[list] = type;
+        else
+            it->second |= type;
+    }
 }
 
 bool LLVMCodeAnalyzer::isLoopStart(const LLVMInstruction *ins) const
@@ -165,6 +231,21 @@ bool LLVMCodeAnalyzer::isVariableWrite(const LLVMInstruction *ins) const
     return (ins->type == LLVMInstruction::Type::WriteVariable);
 }
 
+bool LLVMCodeAnalyzer::isListRead(const LLVMInstruction *ins) const
+{
+    return (ins->type == LLVMInstruction::Type::GetListItem);
+}
+
+bool LLVMCodeAnalyzer::isListWrite(const LLVMInstruction *ins) const
+{
+    return (LIST_WRITE_INSTRUCTIONS.find(ins->type) != LIST_WRITE_INSTRUCTIONS.cend());
+}
+
+bool LLVMCodeAnalyzer::isListClear(const LLVMInstruction *ins) const
+{
+    return (ins->type == LLVMInstruction::Type::ClearList);
+}
+
 Compiler::StaticType LLVMCodeAnalyzer::writeType(LLVMInstruction *ins) const
 {
     assert(ins);
@@ -173,9 +254,8 @@ Compiler::StaticType LLVMCodeAnalyzer::writeType(LLVMInstruction *ins) const
     const LLVMRegister *argReg = arg.second;
 
     if (argReg->instruction) {
-        // TODO: Handle list item
-        if (isVariableRead(argReg->instruction.get())) {
-            // Store the variable type in the value argument
+        if (isVariableRead(argReg->instruction.get()) || isListRead(argReg->instruction.get())) {
+            // Store the variable/list type in the value argument
             arg.first = argReg->instruction->functionReturnReg->type();
         }
     }

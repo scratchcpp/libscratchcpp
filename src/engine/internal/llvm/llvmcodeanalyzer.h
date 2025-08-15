@@ -22,13 +22,17 @@ class LLVMCodeAnalyzer
                 LLVMInstruction *start = nullptr;
                 bool typeChanges = false;
                 std::unordered_map<Variable *, Compiler::StaticType> variableTypes;
+                std::unordered_map<List *, Compiler::StaticType> listTypes;
 
                 std::unique_ptr<Branch> elseBranch;
         };
 
         void updateVariableType(Branch *branch, LLVMInstruction *ins, std::unordered_set<LLVMInstruction *> &typeAssignedInstructions, bool isWrite) const;
-        void mergeBranchTypes(Branch *branch, Branch *previousBranch) const;
-        void overrideBranchTypes(Branch *branch, Branch *previousBranch) const;
+        void updateListType(Branch *branch, LLVMInstruction *ins, std::unordered_set<LLVMInstruction *> &typeAssignedInstructions, bool isWrite) const;
+
+        void mergeVariableTypes(Branch *branch, Branch *previousBranch) const;
+        void overrideVariableTypes(Branch *branch, Branch *previousBranch) const;
+        void mergeListTypes(Branch *branch, Branch *previousBranch) const;
 
         bool isLoopStart(const LLVMInstruction *ins) const;
         bool isLoopEnd(const LLVMInstruction *ins) const;
@@ -38,6 +42,10 @@ class LLVMCodeAnalyzer
 
         bool isVariableRead(const LLVMInstruction *ins) const;
         bool isVariableWrite(const LLVMInstruction *ins) const;
+
+        bool isListRead(const LLVMInstruction *ins) const;
+        bool isListWrite(const LLVMInstruction *ins) const;
+        bool isListClear(const LLVMInstruction *ins) const;
 
         Compiler::StaticType writeType(LLVMInstruction *ins) const;
 };

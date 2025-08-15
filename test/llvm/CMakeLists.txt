@@ -23,6 +23,7 @@ add_executable(
   llvmcodebuilder_test.cpp
   llvminstructionlist_test.cpp
   code_analyzer/variable_type_analysis.cpp
+  code_analyzer/list_type_analysis.cpp
   code_analyzer/mixed_type_analysis.cpp
   operators/equal_comparison_test.cpp
   operators/greater_than_test.cpp
