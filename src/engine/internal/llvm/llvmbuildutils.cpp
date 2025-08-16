@@ -624,7 +624,7 @@ llvm::Value *LLVMBuildUtils::removeNaN(llvm::Value *num)
     return m_builder.CreateSelect(isNaN(num), llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)), num);
 }
 
-void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType)
+void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType destType, Compiler::StaticType targetType)
 {
     llvm::Value *converted = nullptr;
 
@@ -636,37 +636,37 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *targetPtr,
 
     switch (targetType) {
         case Compiler::StaticType::Number:
-            switch (sourceType) {
+            switch (destType) {
                 case Compiler::StaticType::Number: {
                     // Write number to number directly
-                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
                     m_builder.CreateStore(converted, ptr);
                     break;
                 }
 
                 case Compiler::StaticType::Bool: {
                     // Write number to bool value directly and change type
-                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
-                    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 1);
+                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
+                    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
                     m_builder.CreateStore(converted, ptr);
                     m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typePtr);
                     break;
                 }
 
                 default:
-                    m_builder.CreateCall(m_functions.resolve_value_assign_double(), { targetPtr, converted });
+                    m_builder.CreateCall(m_functions.resolve_value_assign_double(), { destPtr, converted });
                     break;
             }
 
             break;
 
         case Compiler::StaticType::Bool:
-            switch (sourceType) {
+            switch (destType) {
                 case Compiler::StaticType::Number: {
                     // Write bool to number value directly and change type
-                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
                     m_builder.CreateStore(converted, ptr);
-                    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 1);
+                    llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
                     m_builder.CreateStore(converted, ptr);
                     m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typePtr);
                     break;
@@ -674,24 +674,24 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *targetPtr,
 
                 case Compiler::StaticType::Bool: {
                     // Write bool to bool directly
-                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
+                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
                     m_builder.CreateStore(converted, ptr);
                     break;
                 }
 
                 default:
-                    m_builder.CreateCall(m_functions.resolve_value_assign_bool(), { targetPtr, converted });
+                    m_builder.CreateCall(m_functions.resolve_value_assign_bool(), { destPtr, converted });
                     break;
             }
 
             break;
 
         case Compiler::StaticType::String:
-            m_builder.CreateCall(m_functions.resolve_value_assign_stringPtr(), { targetPtr, converted });
+            m_builder.CreateCall(m_functions.resolve_value_assign_stringPtr(), { destPtr, converted });
             break;
 
         case Compiler::StaticType::Unknown:
-            m_builder.CreateCall(m_functions.resolve_value_assign_copy(), { targetPtr, reg->value });
+            m_builder.CreateCall(m_functions.resolve_value_assign_copy(), { destPtr, reg->value });
             break;
 
         default:
@@ -700,17 +700,17 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *targetPtr,
     }
 }
 
-void LLVMBuildUtils::createReusedValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType)
+void LLVMBuildUtils::createReusedValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType destType, Compiler::StaticType targetType)
 {
     // Same as createValueStore(), but ensures that type is updated
-    createValueStore(reg, targetPtr, sourceType, targetType);
+    createValueStore(reg, destPtr, destType, targetType);
 
     auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [targetType](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == targetType; });
     const ValueType mappedType = it == TYPE_MAP.cend() ? ValueType::Number : it->first; // unknown type can be ignored
 
-    if ((targetType == Compiler::StaticType::Number || targetType == Compiler::StaticType::Bool) && targetType == sourceType) {
+    if ((targetType == Compiler::StaticType::Number || targetType == Compiler::StaticType::Bool) && targetType == destType) {
         // Update type when writing number to number and bool to bool
-        llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 1);
+        llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
         m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typePtr);
     }
 }
