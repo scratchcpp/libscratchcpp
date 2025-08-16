@@ -86,6 +86,7 @@ class LLVMBuildUtils
         void createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType destType, Compiler::StaticType targetType);
         void createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType targetType);
 
+        llvm::Value *getListSize(const LLVMListPtr &listPtr);
         llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index);
         llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, Compiler::StaticType listType, LLVMRegister *item);
         llvm::Value *createValue(LLVMRegister *reg);

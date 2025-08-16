@@ -67,6 +67,11 @@ LLVMInstruction *Lists::buildClearList(LLVMInstruction *ins)
         assert(ins->args.size() == 0);
         LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
         m_builder.CreateCall(m_utils.functions().resolve_list_clear(), listPtr.ptr);
+
+        if (listPtr.size) {
+            // Update size
+            m_builder.CreateStore(m_builder.getInt64(0), listPtr.size);
+        }
     }
 
     return ins->next;
@@ -88,7 +93,7 @@ LLVMInstruction *Lists::buildRemoveListItem(LLVMInstruction *ins)
 
     // Range check
     llvm::Value *min = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
-    llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+    llvm::Value *size = m_utils.getListSize(listPtr);
     size = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
     llvm::Value *index = m_utils.castValue(arg.second, arg.first);
     llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size));
@@ -100,6 +105,14 @@ LLVMInstruction *Lists::buildRemoveListItem(LLVMInstruction *ins)
     m_builder.SetInsertPoint(removeBlock);
     index = m_builder.CreateFPToUI(m_utils.castValue(arg.second, arg.first), m_builder.getInt64Ty());
     m_builder.CreateCall(m_utils.functions().resolve_list_remove(), { listPtr.ptr, index });
+
+    if (listPtr.size) {
+        // Update size
+        llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.size);
+        size = m_builder.CreateSub(size, m_builder.getInt64(1));
+        m_builder.CreateStore(size, listPtr.size);
+    }
+
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
@@ -118,7 +131,7 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
 
     // Check if enough space is allocated
     llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
-    llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+    llvm::Value *size = m_utils.getListSize(listPtr);
     llvm::Value *isAllocated = m_builder.CreateICmpUGT(allocatedSize, size);
     llvm::BasicBlock *ifBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
     llvm::BasicBlock *elseBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
@@ -129,7 +142,7 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
     m_builder.SetInsertPoint(ifBlock);
     llvm::Value *itemPtr = m_utils.getListItem(listPtr, size);
     m_utils.createValueStore(arg.second, itemPtr, type);
-    m_builder.CreateStore(m_builder.CreateAdd(size, m_builder.getInt64(1)), listPtr.sizePtr);
+    m_builder.CreateStore(m_builder.CreateAdd(size, m_builder.getInt64(1)), listPtr.sizePtr); // update size stored in *sizePtr
     m_builder.CreateBr(nextBlock);
 
     // Otherwise call appendEmpty()
@@ -140,6 +153,14 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
+
+    if (listPtr.size) {
+        // Update local size
+        llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.size);
+        size = m_builder.CreateAdd(size, m_builder.getInt64(1));
+        m_builder.CreateStore(size, listPtr.size);
+    }
+
     return ins->next;
 }
 
@@ -155,7 +176,7 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     // Range check
-    llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+    llvm::Value *size = m_utils.getListSize(listPtr);
     llvm::Value *min = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
     size = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
     llvm::Value *index = m_utils.castValue(indexArg.second, indexArg.first);
@@ -169,6 +190,13 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
     index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
     llvm::Value *itemPtr = m_builder.CreateCall(m_utils.functions().resolve_list_insert_empty(), { listPtr.ptr, index });
     m_utils.createValueStore(valueArg.second, itemPtr, type);
+
+    if (listPtr.size) {
+        // Update size
+        llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.size);
+        size = m_builder.CreateAdd(size, m_builder.getInt64(1));
+        m_builder.CreateStore(size, listPtr.size);
+    }
 
     m_builder.CreateBr(nextBlock);
 
@@ -195,7 +223,7 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
 
     // Range check
     llvm::Value *min = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
-    llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+    llvm::Value *size = m_utils.getListSize(listPtr);
     size = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
     llvm::Value *index = m_utils.castValue(indexArg.second, indexArg.first);
     llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size));
@@ -238,10 +266,8 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
     const auto &arg = ins->args[0];
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
-    Compiler::StaticType listType = ins->functionReturnReg->type();
-
     llvm::Value *min = llvm::ConstantFP::get(m_utils.llvmCtx(), llvm::APFloat(0.0));
-    llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+    llvm::Value *size = m_utils.getListSize(listPtr);
     size = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
     llvm::Value *index = m_utils.castValue(arg.second, arg.first);
     llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size));
@@ -259,7 +285,7 @@ LLVMInstruction *Lists::buildGetListSize(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 0);
     const LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
-    llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+    llvm::Value *size = m_utils.getListSize(listPtr);
     ins->functionReturnReg->value = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
 
     return ins->next;

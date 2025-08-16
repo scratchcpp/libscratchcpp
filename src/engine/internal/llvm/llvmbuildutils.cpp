@@ -94,6 +94,14 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
 
         listPtr.sizePtr = m_builder.CreateCall(m_functions.resolve_list_size_ptr(), listPtr.ptr);
         listPtr.allocatedSizePtr = m_builder.CreateCall(m_functions.resolve_list_alloc_size_ptr(), listPtr.ptr);
+
+        if (m_warp) {
+            // Store list size locally to allow some optimizations
+            listPtr.size = m_builder.CreateAlloca(m_builder.getInt64Ty(), nullptr, list->name() + ".size");
+
+            llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+            m_builder.CreateStore(size, listPtr.size);
+        }
     }
 
     // Create end branch
@@ -882,6 +890,11 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
     createValueStore(reg, destPtr, Compiler::StaticType::Unknown, targetType);
 }
 
+llvm::Value *LLVMBuildUtils::getListSize(const LLVMListPtr &listPtr)
+{
+    return m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.size ? listPtr.size : listPtr.sizePtr);
+}
+
 llvm::Value *LLVMBuildUtils::getListItem(const LLVMListPtr &listPtr, llvm::Value *index)
 {
     return m_builder.CreateGEP(m_valueDataType, getListDataPtr(listPtr), index);
@@ -889,7 +902,7 @@ llvm::Value *LLVMBuildUtils::getListItem(const LLVMListPtr &listPtr, llvm::Value
 
 llvm::Value *LLVMBuildUtils::getListItemIndex(const LLVMListPtr &listPtr, Compiler::StaticType listType, LLVMRegister *item)
 {
-    llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+    llvm::Value *size = getListSize(listPtr);
     llvm::BasicBlock *condBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
     llvm::BasicBlock *bodyBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
     llvm::BasicBlock *cmpIfBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
