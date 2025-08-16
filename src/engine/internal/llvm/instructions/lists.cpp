@@ -246,7 +246,7 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
     llvm::Value *index = m_utils.castValue(arg.second, arg.first);
     llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size));
 
-    LLVMConstantRegister nullReg(listType, Value());
+    LLVMConstantRegister nullReg(Compiler::StaticType::String, "");
     llvm::Value *null = m_utils.createValue(static_cast<LLVMRegister *>(&nullReg));
 
     index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());

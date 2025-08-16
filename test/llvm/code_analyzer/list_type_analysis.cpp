@@ -1002,8 +1002,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListDependency_SingleType)
     // targetList first write has no previous type
     ASSERT_EQ(appendList1_1->targetType, Compiler::StaticType::Void);
 
-    // targetList second write has Number type
-    ASSERT_EQ(appendList1_2->targetType, Compiler::StaticType::Number);
+    // targetList second write has Number | String type (get list item can always return string)
+    ASSERT_EQ(appendList1_2->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
 TEST(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListDependency_MultipleTypes)
@@ -1063,8 +1063,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListDependency_MultipleTypes)
     // targetList first write has no previous type
     ASSERT_EQ(appendList3->targetType, Compiler::StaticType::Void);
 
-    // targetList second write has Number or Bool type
-    ASSERT_EQ(appendList4->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
+    // targetList second write has Number or Bool type + String (get list item can always return string)
+    ASSERT_EQ(appendList4->targetType, Compiler::StaticType::Unknown);
 }
 
 TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ChainedAssignmentsInLoop)
@@ -1243,8 +1243,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ListReadReturnRegType)
 
     analyzer.analyzeScript(list);
 
-    // sourceList read return register has Number type
-    ASSERT_EQ(sourceValue.type(), Compiler::StaticType::Number);
+    // sourceList read return register has Number | String type (get list item can always return string)
+    ASSERT_EQ(sourceValue.type(), Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
 TEST(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListWriteArgType)
@@ -1285,6 +1285,6 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListWriteArgType)
 
     analyzer.analyzeScript(list);
 
-    // last write argument has Number type
-    ASSERT_EQ(appendList1_1->args.back().first, Compiler::StaticType::Number);
+    // last write argument has Number | String type (get list item can always return string)
+    ASSERT_EQ(appendList1_1->args.back().first, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
