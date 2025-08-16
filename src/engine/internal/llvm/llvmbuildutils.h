@@ -63,6 +63,7 @@ class LLVMBuildUtils
 
         void syncVariables(llvm::Value *targetVariables);
         void reloadVariables(llvm::Value *targetVariables);
+        void reloadLists();
 
         void pushScopeLevel();
         void popScopeLevel();

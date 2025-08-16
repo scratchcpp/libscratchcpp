@@ -81,6 +81,7 @@ LLVMInstruction *Procedures::buildCallProcedure(LLVMInstruction *ins)
     }
 
     m_utils.reloadVariables(m_utils.targetVariables());
+    m_utils.reloadLists();
     return ins->next;
 }
 

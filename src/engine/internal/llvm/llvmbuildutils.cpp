@@ -329,6 +329,17 @@ void LLVMBuildUtils::reloadVariables(llvm::Value *targetVariables)
     }
 }
 
+void LLVMBuildUtils::reloadLists()
+{
+    // Load list size info
+    if (m_warp) {
+        for (auto &[list, listPtr] : m_listPtrs) {
+            llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
+            m_builder.CreateStore(size, listPtr.size);
+        }
+    }
+}
+
 void LLVMBuildUtils::pushScopeLevel()
 {
     m_stringHeap.push_back({});
@@ -1256,6 +1267,7 @@ void LLVMBuildUtils::createSuspend()
         syncVariables(m_targetVariables);
         m_coroutine->createSuspend();
         reloadVariables(m_targetVariables);
+        reloadLists();
 
         if (m_warpArg) {
             m_builder.CreateBr(nextBranch);
