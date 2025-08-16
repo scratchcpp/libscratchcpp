@@ -63,20 +63,27 @@ ProcessResult Lists::process(LLVMInstruction *ins)
 
 LLVMInstruction *Lists::buildClearList(LLVMInstruction *ins)
 {
-    assert(ins->args.size() == 0);
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
-    m_builder.CreateCall(m_utils.functions().resolve_list_clear(), listPtr.ptr);
+    if (ins->targetType != Compiler::StaticType::Void) { // do not clear a list that is already empty
+        assert(ins->args.size() == 0);
+        LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
+        m_builder.CreateCall(m_utils.functions().resolve_list_clear(), listPtr.ptr);
+    }
 
     return ins->next;
 }
 
 LLVMInstruction *Lists::buildRemoveListItem(LLVMInstruction *ins)
 {
+    // No-op in empty lists
+    if (ins->targetType == Compiler::StaticType::Void)
+        return ins->next;
+
     llvm::LLVMContext &llvmCtx = m_utils.llvmCtx();
     llvm::Function *function = m_utils.function();
 
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
+
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     // Range check
@@ -171,6 +178,10 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
 
 LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
 {
+    // No-op in empty lists
+    if (ins->targetType == Compiler::StaticType::Void)
+        return ins->next;
+
     llvm::LLVMContext &llvmCtx = m_utils.llvmCtx();
     llvm::Function *function = m_utils.function();
 
@@ -216,6 +227,13 @@ LLVMInstruction *Lists::buildGetListContents(LLVMInstruction *ins)
 
 LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
 {
+    // Return empty string for empty lists
+    if (ins->targetType == Compiler::StaticType::Void) {
+        LLVMConstantRegister nullReg(Compiler::StaticType::String, "");
+        ins->functionReturnReg->value = m_utils.createValue(static_cast<LLVMRegister *>(&nullReg));
+        return ins->next;
+    }
+
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
