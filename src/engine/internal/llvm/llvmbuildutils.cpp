@@ -413,21 +413,28 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
 
     assert(reg->type() != Compiler::StaticType::Void && targetType != Compiler::StaticType::Void);
 
+    llvm::Value *typePtr = nullptr;
+    llvm::Value *loadedType = nullptr;
+    llvm::BasicBlock *mergeBlock = nullptr;
+    llvm::BasicBlock *defaultBlock = nullptr;
+    llvm::SwitchInst *sw = nullptr;
+    std::vector<std::pair<llvm::BasicBlock *, llvm::Value *>> results;
+
+    if (isSingleType(targetType)) {
+        // Handle multiple source type cases with runtime switch
+        typePtr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 1);
+        loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
+
+        mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
+        defaultBlock = llvm::BasicBlock::Create(m_llvmCtx, "default", m_function);
+
+        sw = m_builder.CreateSwitch(loadedType, defaultBlock, 4);
+    }
+
+    Compiler::StaticType type = reg->type();
+
     switch (targetType) {
         case Compiler::StaticType::Number: {
-            Compiler::StaticType type = reg->type();
-
-            // Handle multiple type cases with runtime switch
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 1);
-            llvm::Value *loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
-
-            llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
-            llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(m_llvmCtx, "default", m_function);
-
-            llvm::SwitchInst *sw = m_builder.CreateSwitch(loadedType, defaultBlock, 4);
-
-            std::vector<std::pair<llvm::BasicBlock *, llvm::Value *>> results;
-
             // Number case
             if ((type & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
                 llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "number", m_function);
@@ -466,36 +473,10 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
                 results.push_back({ stringBlock, stringResult });
             }
 
-            // Default case
-            m_builder.SetInsertPoint(defaultBlock);
-
-            // All possible types are covered, mark as unreachable
-            m_builder.CreateUnreachable();
-
-            // Create phi node to merge results
-            m_builder.SetInsertPoint(mergeBlock);
-            llvm::PHINode *result = m_builder.CreatePHI(m_builder.getDoubleTy(), results.size());
-
-            for (auto &pair : results)
-                result->addIncoming(pair.second, pair.first);
-
-            return result;
+            break;
         }
 
         case Compiler::StaticType::Bool: {
-            Compiler::StaticType type = reg->type();
-
-            // Handle multiple type cases with runtime switch
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 1);
-            llvm::Value *loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
-
-            llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
-            llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(m_llvmCtx, "default", m_function);
-
-            llvm::SwitchInst *sw = m_builder.CreateSwitch(loadedType, defaultBlock, 4);
-
-            std::vector<std::pair<llvm::BasicBlock *, llvm::Value *>> results;
-
             // Number case
             if ((type & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
                 llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "number", m_function);
@@ -534,36 +515,10 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
                 results.push_back({ stringBlock, stringResult });
             }
 
-            // Default case
-            m_builder.SetInsertPoint(defaultBlock);
-
-            // All possible types are covered, mark as unreachable
-            m_builder.CreateUnreachable();
-
-            // Create phi node to merge results
-            m_builder.SetInsertPoint(mergeBlock);
-            llvm::PHINode *result = m_builder.CreatePHI(m_builder.getInt1Ty(), results.size());
-
-            for (auto &pair : results)
-                result->addIncoming(pair.second, pair.first);
-
-            return result;
+            break;
         }
 
         case Compiler::StaticType::String: {
-            Compiler::StaticType type = reg->type();
-
-            // Handle multiple type cases with runtime switch
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 1);
-            llvm::Value *loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
-
-            llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
-            llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(m_llvmCtx, "default", m_function);
-
-            llvm::SwitchInst *sw = m_builder.CreateSwitch(loadedType, defaultBlock, 4);
-
-            std::vector<std::pair<llvm::BasicBlock *, llvm::Value *>> results;
-
             // Number case
             if ((type & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
                 llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "number", m_function);
@@ -607,27 +562,28 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
                 results.push_back({ stringBlock, stringResult });
             }
 
-            // Default case
-            m_builder.SetInsertPoint(defaultBlock);
-
-            // All possible types are covered, mark as unreachable
-            m_builder.CreateUnreachable();
-
-            // Create phi node to merge results
-            m_builder.SetInsertPoint(mergeBlock);
-            llvm::PHINode *result = m_builder.CreatePHI(m_stringPtrType->getPointerTo(), results.size());
-
-            for (auto &pair : results)
-                result->addIncoming(pair.second, pair.first);
-
-            freeStringLater(result);
-            return result;
+            break;
         }
 
         default:
             // Multiple types
             return createValue(reg);
     }
+
+    // Default case
+    m_builder.SetInsertPoint(defaultBlock);
+
+    // All possible types are covered, mark as unreachable
+    m_builder.CreateUnreachable();
+
+    // Create phi node to merge results
+    m_builder.SetInsertPoint(mergeBlock);
+    llvm::PHINode *result = m_builder.CreatePHI(getType(targetType, false), results.size());
+
+    for (auto &pair : results)
+        result->addIncoming(pair.second, pair.first);
+
+    return result;
 }
 
 llvm::Type *LLVMBuildUtils::getType(Compiler::StaticType type, bool isReturnType)
