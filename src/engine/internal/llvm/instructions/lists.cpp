@@ -123,14 +123,14 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
     // If there's enough space, use the allocated memory
     m_builder.SetInsertPoint(ifBlock);
     llvm::Value *itemPtr = m_utils.getListItem(listPtr, size);
-    m_utils.createReusedValueStore(arg.second, itemPtr, type, listType);
+    m_utils.createReusedValueStore(arg.second, itemPtr, listType, type);
     m_builder.CreateStore(m_builder.CreateAdd(size, m_builder.getInt64(1)), listPtr.sizePtr);
     m_builder.CreateBr(nextBlock);
 
     // Otherwise call appendEmpty()
     m_builder.SetInsertPoint(elseBlock);
     itemPtr = m_builder.CreateCall(m_utils.functions().resolve_list_append_empty(), listPtr.ptr);
-    m_utils.createReusedValueStore(arg.second, itemPtr, type, listType);
+    m_utils.createReusedValueStore(arg.second, itemPtr, listType, type);
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
@@ -164,7 +164,7 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
     m_builder.SetInsertPoint(insertBlock);
     index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
     llvm::Value *itemPtr = m_builder.CreateCall(m_utils.functions().resolve_list_insert_empty(), { listPtr.ptr, index });
-    m_utils.createReusedValueStore(valueArg.second, itemPtr, type, listType);
+    m_utils.createReusedValueStore(valueArg.second, itemPtr, listType, type);
 
     m_builder.CreateBr(nextBlock);
 
@@ -199,7 +199,7 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
     m_builder.SetInsertPoint(replaceBlock);
     index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
     llvm::Value *itemPtr = m_utils.getListItem(listPtr, index);
-    m_utils.createValueStore(valueArg.second, itemPtr, type, listType);
+    m_utils.createValueStore(valueArg.second, itemPtr, listType, type);
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);

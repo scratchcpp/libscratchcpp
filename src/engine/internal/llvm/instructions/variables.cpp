@@ -134,7 +134,7 @@ LLVMInstruction *Variables::buildWriteVariable(LLVMInstruction *ins)
                         m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typeField);
                     }*/
 
-    m_utils.createValueStore(arg.second, varPtr.stackPtr, argType, ins->targetType);
+    m_utils.createValueStore(arg.second, varPtr.stackPtr, ins->targetType, argType);
     return ins->next;
 }
 

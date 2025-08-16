@@ -628,15 +628,15 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *targetPtr,
 {
     llvm::Value *converted = nullptr;
 
-    if (sourceType != Compiler::StaticType::Unknown)
-        converted = castValue(reg, sourceType);
+    if (targetType != Compiler::StaticType::Unknown)
+        converted = castValue(reg, targetType);
 
-    auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [sourceType](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == sourceType; });
+    auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [targetType](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == targetType; });
     const ValueType mappedType = it == TYPE_MAP.cend() ? ValueType::Number : it->first; // unknown type can be ignored
 
-    switch (sourceType) {
+    switch (targetType) {
         case Compiler::StaticType::Number:
-            switch (targetType) {
+            switch (sourceType) {
                 case Compiler::StaticType::Number: {
                     // Write number to number directly
                     llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
@@ -661,7 +661,7 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *targetPtr,
             break;
 
         case Compiler::StaticType::Bool:
-            switch (targetType) {
+            switch (sourceType) {
                 case Compiler::StaticType::Number: {
                     // Write bool to number value directly and change type
                     llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 0);
@@ -705,10 +705,10 @@ void LLVMBuildUtils::createReusedValueStore(LLVMRegister *reg, llvm::Value *targ
     // Same as createValueStore(), but ensures that type is updated
     createValueStore(reg, targetPtr, sourceType, targetType);
 
-    auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [sourceType](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == sourceType; });
+    auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [targetType](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == targetType; });
     const ValueType mappedType = it == TYPE_MAP.cend() ? ValueType::Number : it->first; // unknown type can be ignored
 
-    if ((sourceType == Compiler::StaticType::Number || sourceType == Compiler::StaticType::Bool) && sourceType == targetType) {
+    if ((targetType == Compiler::StaticType::Number || targetType == Compiler::StaticType::Bool) && targetType == sourceType) {
         // Update type when writing number to number and bool to bool
         llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, targetPtr, 1);
         m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typePtr);
