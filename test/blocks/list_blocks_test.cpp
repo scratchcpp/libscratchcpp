@@ -422,14 +422,14 @@ TEST_F(ListBlocksTest, ItemOfList)
     static const std::string expected =
         "dolor\n"
         "true\n"
-        "0\n"
-        "0\n"
+        "\n"
+        "\n"
         "true\n"
         "123\n"
         "Lorem\n"
-        "0\n"
-        "0\n"
-        "0\n";
+        "\n"
+        "\n"
+        "\n";
 
     EXPECT_CALL(m_rng, randint(1, 5)).WillOnce(Return(4)).WillOnce(Return(1));
     testing::internal::CaptureStdout();

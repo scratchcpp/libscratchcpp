@@ -1449,20 +1449,30 @@ TEST_F(LLVMCodeBuilderTest, GetListItem)
     v = builder->addListItem(localList3.get(), v);
     builder->addFunctionCall("test_print_number", Compiler::StaticType::Void, { Compiler::StaticType::Number }, { v });
 
+    // Establish number type
+    builder->createListClear(localList3.get());
+    builder->createListAppend(localList3.get(), builder->addConstValue(1.5));
+
+    // Out-of-range index should still return empty string
+    v = builder->addConstValue(2);
+    v = builder->addListItem(localList3.get(), v);
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
     static const std::string expected =
         "3\n"
         "1\n"
-        "0\n"
-        "0\n"
+        "\n"
+        "\n"
         "Lorem\n"
         "dolor\n"
         "sit\n"
+        "\n"
+        "\n"
         "0\n"
         "0\n"
         "0\n"
         "0\n"
-        "0\n"
-        "0\n";
+        "\n";
 
     auto code = builder->build();
     Script script(&sprite, nullptr, nullptr);
@@ -1477,7 +1487,7 @@ TEST_F(LLVMCodeBuilderTest, GetListItem)
     ASSERT_EQ(globalList->toString(), "1 test 3");
     ASSERT_EQ(localList1->toString(), "Lorem ipsum dolor sit");
     ASSERT_EQ(localList2->toString(), "-564.121 4257.4");
-    ASSERT_EQ(localList3->toString(), "true false");
+    ASSERT_EQ(localList3->toString(), "1.5");
 }
 
 TEST_F(LLVMCodeBuilderTest, GetListSize)

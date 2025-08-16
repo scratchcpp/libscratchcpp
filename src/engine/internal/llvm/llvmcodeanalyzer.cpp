@@ -100,7 +100,8 @@ void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
             updateListType(currentBranch, ins, typeAssignedInstructions, false);
 
             // Store the type in the return register
-            ins->functionReturnReg->setType(ins->targetType);
+            // NOTE: Get list item returns empty string if index is out of range
+            ins->functionReturnReg->setType(ins->targetType | Compiler::StaticType::String);
         }
 
         ins = ins->next;

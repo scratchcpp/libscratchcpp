@@ -121,8 +121,8 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, ListToVariable_SimpleTransfer)
     // Variable write should see Unknown (first write)
     ASSERT_EQ(writeVar->targetType, Compiler::StaticType::Unknown);
 
-    // Return register should have Bool type
-    ASSERT_EQ(readListReg.type(), Compiler::StaticType::Bool);
+    // Return register should have Bool | String type (get list item can always return string)
+    ASSERT_EQ(readListReg.type(), Compiler::StaticType::Bool | Compiler::StaticType::String);
 }
 
 TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, CircularVarListDependency)
@@ -502,5 +502,5 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, ComplexChain_VarToListToVar_TypePropaga
     ASSERT_EQ(appendList->targetType, Compiler::StaticType::Void);
     ASSERT_EQ(readList->targetType, Compiler::StaticType::Number);
     ASSERT_EQ(writeTargetVar->targetType, Compiler::StaticType::Unknown);
-    ASSERT_EQ(readListReg.type(), Compiler::StaticType::Number);
+    ASSERT_EQ(readListReg.type(), Compiler::StaticType::Number | Compiler::StaticType::String); // get list item can always return string
 }
