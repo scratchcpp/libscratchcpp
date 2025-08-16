@@ -677,9 +677,11 @@ TEST_F(LLVMCodeBuilderTest, WriteVariable)
     auto localVar1 = std::make_shared<Variable>("", "");
     auto localVar2 = std::make_shared<Variable>("", "");
     auto localVar3 = std::make_shared<Variable>("", "");
+    auto localVar4 = std::make_shared<Variable>("", "");
     sprite.addVariable(localVar1);
     sprite.addVariable(localVar2);
     sprite.addVariable(localVar3);
+    sprite.addVariable(localVar4);
 
     LLVMCodeBuilder *builder = m_utils.createBuilder(&sprite, true);
 
@@ -707,6 +709,10 @@ TEST_F(LLVMCodeBuilderTest, WriteVariable)
     v = m_utils.callConstFuncForType(ValueType::Bool, v);
     builder->createVariableWrite(localVar3.get(), v);
 
+    v = builder->addConstValue(45.23);
+    v = m_utils.callConstFuncForType(ValueType::Number, v, Compiler::StaticType::Number | Compiler::StaticType::String);
+    builder->createVariableWrite(localVar4.get(), v);
+
     auto code = builder->build();
     Script script(&sprite, nullptr, nullptr);
     script.setCode(code);
@@ -721,6 +727,7 @@ TEST_F(LLVMCodeBuilderTest, WriteVariable)
     ASSERT_EQ(localVar1->value(), "hello world");
     ASSERT_EQ(localVar2->value(), false);
     ASSERT_EQ(localVar3->value(), true);
+    ASSERT_EQ(localVar4->value(), 45.23);
 }
 
 TEST_F(LLVMCodeBuilderTest, Select)

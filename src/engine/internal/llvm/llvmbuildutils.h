@@ -84,7 +84,7 @@ class LLVMBuildUtils
         llvm::Value *removeNaN(llvm::Value *num);
 
         void createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType destType, Compiler::StaticType targetType);
-        void createReusedValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType destType, Compiler::StaticType targetType);
+        void createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType targetType);
 
         llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index);
         llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, Compiler::StaticType listType, LLVMRegister *item);

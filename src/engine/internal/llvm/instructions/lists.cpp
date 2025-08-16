@@ -109,8 +109,6 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
     Compiler::StaticType type = m_utils.optimizeRegisterType(arg.second);
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
-    Compiler::StaticType listType = ins->targetType;
-
     // Check if enough space is allocated
     llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
     llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
@@ -123,14 +121,15 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
     // If there's enough space, use the allocated memory
     m_builder.SetInsertPoint(ifBlock);
     llvm::Value *itemPtr = m_utils.getListItem(listPtr, size);
-    m_utils.createReusedValueStore(arg.second, itemPtr, listType, type);
+    m_utils.createValueStore(arg.second, itemPtr, type);
     m_builder.CreateStore(m_builder.CreateAdd(size, m_builder.getInt64(1)), listPtr.sizePtr);
     m_builder.CreateBr(nextBlock);
 
     // Otherwise call appendEmpty()
     m_builder.SetInsertPoint(elseBlock);
     itemPtr = m_builder.CreateCall(m_utils.functions().resolve_list_append_empty(), listPtr.ptr);
-    m_utils.createReusedValueStore(arg.second, itemPtr, listType, type);
+    // NOTE: Items created using appendEmpty() are always numbers
+    m_utils.createValueStore(arg.second, itemPtr, Compiler::StaticType::Number, type);
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
@@ -148,8 +147,6 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
     Compiler::StaticType type = m_utils.optimizeRegisterType(valueArg.second);
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
-    Compiler::StaticType listType = ins->targetType;
-
     // Range check
     llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
     llvm::Value *min = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
@@ -164,7 +161,7 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
     m_builder.SetInsertPoint(insertBlock);
     index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
     llvm::Value *itemPtr = m_builder.CreateCall(m_utils.functions().resolve_list_insert_empty(), { listPtr.ptr, index });
-    m_utils.createReusedValueStore(valueArg.second, itemPtr, listType, type);
+    m_utils.createValueStore(valueArg.second, itemPtr, type);
 
     m_builder.CreateBr(nextBlock);
 
