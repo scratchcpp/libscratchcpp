@@ -54,11 +54,12 @@ LLVMInstruction *Functions::buildFunctionCall(LLVMInstruction *ins)
     llvm::Value *ret = m_builder.CreateCall(m_utils.functions().resolveFunction(ins->functionName, llvm::FunctionType::get(retType, types, false)), args);
 
     if (ins->functionReturnReg) {
-        if (ins->functionReturnReg->type() == Compiler::StaticType::Unknown) {
+        if (m_utils.isSingleType(ins->functionReturnReg->type()))
+            ins->functionReturnReg->value = ret;
+        else {
             ins->functionReturnReg->value = m_utils.addAlloca(retType);
             m_builder.CreateStore(ret, ins->functionReturnReg->value);
-        } else
-            ins->functionReturnReg->value = ret;
+        }
 
         if (ins->functionReturnReg->type() == Compiler::StaticType::String)
             m_utils.freeStringLater(ins->functionReturnReg->value);

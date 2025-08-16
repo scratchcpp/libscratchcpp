@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(LIBSCRATCHCPP_BUILD_UNIT_TESTS "Build unit tests" ON)
 option(LIBSCRATCHCPP_NETWORK_SUPPORT "Support for downloading projects" ON)
 option(LIBSCRATCHCPP_PRINT_LLVM_IR "Print LLVM IR of compiled Scratch scripts (for debugging)" OFF)
+option(LIBSCRATCHCPP_ENABLE_CODE_ANALYZER "Analyze Scratch scripts to enable various optimizations" ON)
 option(LIBSCRATCHCPP_ENABLE_SANITIZER "Enable sanitizer to detect memory issues" OFF)
 
 if (LIBSCRATCHCPP_ENABLE_SANITIZER)
@@ -26,6 +27,7 @@ install(TARGETS scratchcpp DESTINATION lib)
 target_sources(scratchcpp
   PUBLIC
     include/scratchcpp/global.h
+    include/scratchcpp/enum_bitmask.h
     include/scratchcpp/project.h
     include/scratchcpp/scratchconfiguration.h
     include/scratchcpp/iengine.h
@@ -118,6 +120,10 @@ target_link_libraries(scratchcpp PRIVATE LLVM)
 
 if(LIBSCRATCHCPP_PRINT_LLVM_IR)
     target_compile_definitions(scratchcpp PRIVATE PRINT_LLVM_IR)
+endif()
+
+if(LIBSCRATCHCPP_ENABLE_CODE_ANALYZER)
+    target_compile_definitions(scratchcpp PRIVATE ENABLE_CODE_ANALYZER)
 endif()
 
 # Macros

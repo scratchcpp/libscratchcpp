@@ -2,6 +2,8 @@ target_sources(scratchcpp
   PRIVATE
     llvmbuildutils.cpp
     llvmbuildutils.h
+    llvmcodeanalyzer.cpp
+    llvmcodeanalyzer.h
     llvmcodebuilder.cpp
     llvmcodebuilder.h
     llvmregister.h
@@ -19,8 +21,6 @@ target_sources(scratchcpp
     llvmtypes.h
     llvmfunctions.cpp
     llvmfunctions.h
-    llvmtypeanalyzer.cpp
-    llvmtypeanalyzer.h
     llvmcompilercontext.cpp
     llvmcompilercontext.h
     llvmexecutablecode.cpp

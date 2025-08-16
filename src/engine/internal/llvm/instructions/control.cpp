@@ -79,12 +79,12 @@ LLVMInstruction *Control::buildSelect(LLVMInstruction *ins)
     llvm::Value *trueValue;
     llvm::Value *falseValue;
 
-    if (type == Compiler::StaticType::Unknown) {
-        trueValue = m_utils.createValue(arg2.second);
-        falseValue = m_utils.createValue(arg3.second);
-    } else {
+    if (m_utils.isSingleType(type)) {
         trueValue = m_utils.castValue(arg2.second, type);
         falseValue = m_utils.castValue(arg3.second, type);
+    } else {
+        trueValue = m_utils.createValue(arg2.second);
+        falseValue = m_utils.createValue(arg3.second);
     }
 
     ins->functionReturnReg->value = m_builder.CreateSelect(cond, trueValue, falseValue);

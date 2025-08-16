@@ -59,10 +59,10 @@ LLVMInstruction *Procedures::buildCallProcedure(LLVMInstruction *ins)
 
     // Add procedure args
     for (const auto &arg : ins->args) {
-        if (arg.first == Compiler::StaticType::Unknown)
-            args.push_back(m_utils.createValue(arg.second));
-        else
+        if (m_utils.isSingleType(arg.first))
             args.push_back(m_utils.castValue(arg.second, arg.first));
+        else
+            args.push_back(m_utils.createValue(arg.second));
     }
 
     llvm::Value *handle = m_builder.CreateCall(m_utils.functions().resolveFunction(name, type), args);
