@@ -416,306 +416,212 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
     switch (targetType) {
         case Compiler::StaticType::Number: {
             Compiler::StaticType type = reg->type();
-            bool singleType = isSingleType(type);
 
-            if (singleType) {
-                // Handle single type cases directly
-                switch (type) {
-                    case Compiler::StaticType::Number: {
-                        // Read number directly
-                        llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                        return m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-                    }
+            // Handle multiple type cases with runtime switch
+            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 1);
+            llvm::Value *loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
 
-                    case Compiler::StaticType::Bool: {
-                        // Read boolean and cast to double
-                        llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                        llvm::Value *boolValue = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-                        return m_builder.CreateUIToFP(boolValue, m_builder.getDoubleTy());
-                    }
+            llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
+            llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(m_llvmCtx, "default", m_function);
 
-                    case Compiler::StaticType::String: {
-                        // Convert to double
-                        llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                        llvm::Value *stringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
-                        return m_builder.CreateCall(m_functions.resolve_value_stringToDouble(), stringPtr);
-                    }
+            llvm::SwitchInst *sw = m_builder.CreateSwitch(loadedType, defaultBlock, 4);
 
-                    default:
-                        assert(false);
-                        return nullptr;
-                }
-            } else {
-                // Handle multiple type cases with runtime switch
-                llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 1);
-                llvm::Value *loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
+            std::vector<std::pair<llvm::BasicBlock *, llvm::Value *>> results;
 
-                llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
-                llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(m_llvmCtx, "default", m_function);
+            // Number case
+            if ((type & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
+                llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "number", m_function);
+                sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), numberBlock);
 
-                llvm::SwitchInst *sw = m_builder.CreateSwitch(loadedType, defaultBlock, 4);
-
-                std::vector<std::pair<llvm::BasicBlock *, llvm::Value *>> results;
-
-                // Number case
-                if ((type & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
-                    llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "number", m_function);
-                    sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), numberBlock);
-
-                    m_builder.SetInsertPoint(numberBlock);
-                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                    llvm::Value *numberResult = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-                    m_builder.CreateBr(mergeBlock);
-                    results.push_back({ numberBlock, numberResult });
-                }
-
-                // Bool case
-                if ((type & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
-                    llvm::BasicBlock *boolBlock = llvm::BasicBlock::Create(m_llvmCtx, "bool", m_function);
-                    sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), boolBlock);
-
-                    m_builder.SetInsertPoint(boolBlock);
-                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                    llvm::Value *boolValue = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-                    llvm::Value *boolResult = m_builder.CreateUIToFP(boolValue, m_builder.getDoubleTy());
-                    m_builder.CreateBr(mergeBlock);
-                    results.push_back({ boolBlock, boolResult });
-                }
-
-                // String case
-                if ((type & Compiler::StaticType::String) == Compiler::StaticType::String) {
-                    llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_llvmCtx, "string", m_function);
-                    sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), stringBlock);
-
-                    m_builder.SetInsertPoint(stringBlock);
-                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                    llvm::Value *stringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
-                    llvm::Value *stringResult = m_builder.CreateCall(m_functions.resolve_value_stringToDouble(), stringPtr);
-                    m_builder.CreateBr(mergeBlock);
-                    results.push_back({ stringBlock, stringResult });
-                }
-
-                // Default case
-                m_builder.SetInsertPoint(defaultBlock);
-
-                // All possible types are covered, mark as unreachable
-                m_builder.CreateUnreachable();
-
-                // Create phi node to merge results
-                m_builder.SetInsertPoint(mergeBlock);
-                llvm::PHINode *result = m_builder.CreatePHI(m_builder.getDoubleTy(), results.size());
-
-                for (auto &pair : results)
-                    result->addIncoming(pair.second, pair.first);
-
-                return result;
+                m_builder.SetInsertPoint(numberBlock);
+                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
+                llvm::Value *numberResult = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
+                m_builder.CreateBr(mergeBlock);
+                results.push_back({ numberBlock, numberResult });
             }
+
+            // Bool case
+            if ((type & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
+                llvm::BasicBlock *boolBlock = llvm::BasicBlock::Create(m_llvmCtx, "bool", m_function);
+                sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), boolBlock);
+
+                m_builder.SetInsertPoint(boolBlock);
+                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
+                llvm::Value *boolValue = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
+                llvm::Value *boolResult = m_builder.CreateUIToFP(boolValue, m_builder.getDoubleTy());
+                m_builder.CreateBr(mergeBlock);
+                results.push_back({ boolBlock, boolResult });
+            }
+
+            // String case
+            if ((type & Compiler::StaticType::String) == Compiler::StaticType::String) {
+                llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_llvmCtx, "string", m_function);
+                sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), stringBlock);
+
+                m_builder.SetInsertPoint(stringBlock);
+                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
+                llvm::Value *stringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
+                llvm::Value *stringResult = m_builder.CreateCall(m_functions.resolve_value_stringToDouble(), stringPtr);
+                m_builder.CreateBr(mergeBlock);
+                results.push_back({ stringBlock, stringResult });
+            }
+
+            // Default case
+            m_builder.SetInsertPoint(defaultBlock);
+
+            // All possible types are covered, mark as unreachable
+            m_builder.CreateUnreachable();
+
+            // Create phi node to merge results
+            m_builder.SetInsertPoint(mergeBlock);
+            llvm::PHINode *result = m_builder.CreatePHI(m_builder.getDoubleTy(), results.size());
+
+            for (auto &pair : results)
+                result->addIncoming(pair.second, pair.first);
+
+            return result;
         }
 
         case Compiler::StaticType::Bool: {
             Compiler::StaticType type = reg->type();
-            bool singleType = isSingleType(type);
 
-            if (singleType) {
-                // Handle single type cases directly
-                switch (type) {
-                    case Compiler::StaticType::Number: {
-                        // True if != 0
-                        llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                        llvm::Value *numberValue = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-                        return m_builder.CreateFCmpONE(numberValue, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)));
-                    }
+            // Handle multiple type cases with runtime switch
+            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 1);
+            llvm::Value *loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
 
-                    case Compiler::StaticType::Bool: {
-                        // Read boolean directly
-                        llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                        return m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-                    }
+            llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
+            llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(m_llvmCtx, "default", m_function);
 
-                    case Compiler::StaticType::String: {
-                        // Convert to bool
-                        llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                        llvm::Value *stringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
-                        return m_builder.CreateCall(m_functions.resolve_value_stringToBool(), stringPtr);
-                    }
+            llvm::SwitchInst *sw = m_builder.CreateSwitch(loadedType, defaultBlock, 4);
 
-                    default:
-                        assert(false);
-                        return nullptr;
-                }
-            } else {
-                // Handle multiple type cases with runtime switch
-                llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 1);
-                llvm::Value *loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
+            std::vector<std::pair<llvm::BasicBlock *, llvm::Value *>> results;
 
-                llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
-                llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(m_llvmCtx, "default", m_function);
+            // Number case
+            if ((type & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
+                llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "number", m_function);
+                sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), numberBlock);
 
-                llvm::SwitchInst *sw = m_builder.CreateSwitch(loadedType, defaultBlock, 4);
-
-                std::vector<std::pair<llvm::BasicBlock *, llvm::Value *>> results;
-
-                // Number case
-                if ((type & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
-                    llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "number", m_function);
-                    sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), numberBlock);
-
-                    m_builder.SetInsertPoint(numberBlock);
-                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                    llvm::Value *numberValue = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-                    llvm::Value *numberResult = m_builder.CreateFCmpONE(numberValue, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)));
-                    m_builder.CreateBr(mergeBlock);
-                    results.push_back({ numberBlock, numberResult });
-                }
-
-                // Bool case
-                if ((type & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
-                    llvm::BasicBlock *boolBlock = llvm::BasicBlock::Create(m_llvmCtx, "bool", m_function);
-                    sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), boolBlock);
-
-                    m_builder.SetInsertPoint(boolBlock);
-                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                    llvm::Value *boolResult = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-                    m_builder.CreateBr(mergeBlock);
-                    results.push_back({ boolBlock, boolResult });
-                }
-
-                // String case
-                if ((type & Compiler::StaticType::String) == Compiler::StaticType::String) {
-                    llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_llvmCtx, "string", m_function);
-                    sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), stringBlock);
-
-                    m_builder.SetInsertPoint(stringBlock);
-                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                    llvm::Value *stringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
-                    llvm::Value *stringResult = m_builder.CreateCall(m_functions.resolve_value_stringToBool(), stringPtr);
-                    m_builder.CreateBr(mergeBlock);
-                    results.push_back({ stringBlock, stringResult });
-                }
-
-                // Default case
-                m_builder.SetInsertPoint(defaultBlock);
-
-                // All possible types are covered, mark as unreachable
-                m_builder.CreateUnreachable();
-
-                // Create phi node to merge results
-                m_builder.SetInsertPoint(mergeBlock);
-                llvm::PHINode *result = m_builder.CreatePHI(m_builder.getInt1Ty(), results.size());
-
-                for (auto &pair : results)
-                    result->addIncoming(pair.second, pair.first);
-
-                return result;
+                m_builder.SetInsertPoint(numberBlock);
+                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
+                llvm::Value *numberValue = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
+                llvm::Value *numberResult = m_builder.CreateFCmpONE(numberValue, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)));
+                m_builder.CreateBr(mergeBlock);
+                results.push_back({ numberBlock, numberResult });
             }
+
+            // Bool case
+            if ((type & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
+                llvm::BasicBlock *boolBlock = llvm::BasicBlock::Create(m_llvmCtx, "bool", m_function);
+                sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), boolBlock);
+
+                m_builder.SetInsertPoint(boolBlock);
+                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
+                llvm::Value *boolResult = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
+                m_builder.CreateBr(mergeBlock);
+                results.push_back({ boolBlock, boolResult });
+            }
+
+            // String case
+            if ((type & Compiler::StaticType::String) == Compiler::StaticType::String) {
+                llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_llvmCtx, "string", m_function);
+                sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), stringBlock);
+
+                m_builder.SetInsertPoint(stringBlock);
+                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
+                llvm::Value *stringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
+                llvm::Value *stringResult = m_builder.CreateCall(m_functions.resolve_value_stringToBool(), stringPtr);
+                m_builder.CreateBr(mergeBlock);
+                results.push_back({ stringBlock, stringResult });
+            }
+
+            // Default case
+            m_builder.SetInsertPoint(defaultBlock);
+
+            // All possible types are covered, mark as unreachable
+            m_builder.CreateUnreachable();
+
+            // Create phi node to merge results
+            m_builder.SetInsertPoint(mergeBlock);
+            llvm::PHINode *result = m_builder.CreatePHI(m_builder.getInt1Ty(), results.size());
+
+            for (auto &pair : results)
+                result->addIncoming(pair.second, pair.first);
+
+            return result;
         }
 
         case Compiler::StaticType::String: {
             Compiler::StaticType type = reg->type();
-            bool singleType = isSingleType(type);
 
-            if (singleType) {
-                // Handle single type cases directly
-                switch (type) {
-                    case Compiler::StaticType::Number: {
-                        // Cast double to string
-                        llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                        llvm::Value *value = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-                        llvm::Value *stringPtr = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), value);
-                        freeStringLater(stringPtr);
-                        return stringPtr;
-                    }
+            // Handle multiple type cases with runtime switch
+            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 1);
+            llvm::Value *loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
 
-                    case Compiler::StaticType::Bool: {
-                        // Cast bool to string
-                        llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                        llvm::Value *value = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-                        llvm::Value *stringPtr = m_builder.CreateCall(m_functions.resolve_value_boolToStringPtr(), value);
-                        // NOTE: Dot not deallocate later
-                        return stringPtr;
-                    }
+            llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
+            llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(m_llvmCtx, "default", m_function);
 
-                    case Compiler::StaticType::String: {
-                        // Read string pointer directly
-                        llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                        return m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
-                    }
+            llvm::SwitchInst *sw = m_builder.CreateSwitch(loadedType, defaultBlock, 4);
 
-                    default:
-                        assert(false);
-                        return nullptr;
-                }
-            } else {
-                // Handle multiple type cases with runtime switch
-                llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 1);
-                llvm::Value *loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
+            std::vector<std::pair<llvm::BasicBlock *, llvm::Value *>> results;
 
-                llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
-                llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(m_llvmCtx, "default", m_function);
+            // Number case
+            if ((type & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
+                llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "number", m_function);
+                sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), numberBlock);
 
-                llvm::SwitchInst *sw = m_builder.CreateSwitch(loadedType, defaultBlock, 4);
-
-                std::vector<std::pair<llvm::BasicBlock *, llvm::Value *>> results;
-
-                // Number case
-                if ((type & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
-                    llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "number", m_function);
-                    sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), numberBlock);
-
-                    m_builder.SetInsertPoint(numberBlock);
-                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                    llvm::Value *value = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-                    llvm::Value *numberResult = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), value);
-                    m_builder.CreateBr(mergeBlock);
-                    results.push_back({ numberBlock, numberResult });
-                }
-
-                // Bool case
-                if ((type & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
-                    llvm::BasicBlock *boolBlock = llvm::BasicBlock::Create(m_llvmCtx, "bool", m_function);
-                    sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), boolBlock);
-
-                    // Since the value is deallocated later, we need to create a copy
-                    m_builder.SetInsertPoint(boolBlock);
-                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                    llvm::Value *value = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-                    llvm::Value *stringPtr = m_builder.CreateCall(m_functions.resolve_value_boolToStringPtr(), value);
-                    llvm::Value *boolResult = m_builder.CreateCall(m_functions.resolve_string_pool_new(), m_builder.getInt1(true));
-                    m_builder.CreateCall(m_functions.resolve_string_assign(), { boolResult, stringPtr });
-                    m_builder.CreateBr(mergeBlock);
-                    results.push_back({ boolBlock, boolResult });
-                }
-
-                // String case
-                if ((type & Compiler::StaticType::String) == Compiler::StaticType::String) {
-                    llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_llvmCtx, "string", m_function);
-                    sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), stringBlock);
-
-                    m_builder.SetInsertPoint(stringBlock);
-                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                    llvm::Value *stringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
-                    llvm::Value *stringResult = m_builder.CreateCall(m_functions.resolve_string_pool_new(), m_builder.getInt1(true));
-                    m_builder.CreateCall(m_functions.resolve_string_assign(), { stringResult, stringPtr });
-                    m_builder.CreateBr(mergeBlock);
-                    results.push_back({ stringBlock, stringResult });
-                }
-
-                // Default case
-                m_builder.SetInsertPoint(defaultBlock);
-
-                // All possible types are covered, mark as unreachable
-                m_builder.CreateUnreachable();
-
-                // Create phi node to merge results
-                m_builder.SetInsertPoint(mergeBlock);
-                llvm::PHINode *result = m_builder.CreatePHI(m_stringPtrType->getPointerTo(), results.size());
-
-                for (auto &pair : results)
-                    result->addIncoming(pair.second, pair.first);
-
-                freeStringLater(result);
-                return result;
+                m_builder.SetInsertPoint(numberBlock);
+                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
+                llvm::Value *value = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
+                llvm::Value *numberResult = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), value);
+                m_builder.CreateBr(mergeBlock);
+                results.push_back({ numberBlock, numberResult });
             }
+
+            // Bool case
+            if ((type & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
+                llvm::BasicBlock *boolBlock = llvm::BasicBlock::Create(m_llvmCtx, "bool", m_function);
+                sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), boolBlock);
+
+                // Since the value is deallocated later, we need to create a copy
+                m_builder.SetInsertPoint(boolBlock);
+                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
+                llvm::Value *value = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
+                llvm::Value *stringPtr = m_builder.CreateCall(m_functions.resolve_value_boolToStringPtr(), value);
+                llvm::Value *boolResult = m_builder.CreateCall(m_functions.resolve_string_pool_new(), m_builder.getInt1(true));
+                m_builder.CreateCall(m_functions.resolve_string_assign(), { boolResult, stringPtr });
+                m_builder.CreateBr(mergeBlock);
+                results.push_back({ boolBlock, boolResult });
+            }
+
+            // String case
+            if ((type & Compiler::StaticType::String) == Compiler::StaticType::String) {
+                llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_llvmCtx, "string", m_function);
+                sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), stringBlock);
+
+                m_builder.SetInsertPoint(stringBlock);
+                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
+                llvm::Value *stringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
+                llvm::Value *stringResult = m_builder.CreateCall(m_functions.resolve_string_pool_new(), m_builder.getInt1(true));
+                m_builder.CreateCall(m_functions.resolve_string_assign(), { stringResult, stringPtr });
+                m_builder.CreateBr(mergeBlock);
+                results.push_back({ stringBlock, stringResult });
+            }
+
+            // Default case
+            m_builder.SetInsertPoint(defaultBlock);
+
+            // All possible types are covered, mark as unreachable
+            m_builder.CreateUnreachable();
+
+            // Create phi node to merge results
+            m_builder.SetInsertPoint(mergeBlock);
+            llvm::PHINode *result = m_builder.CreatePHI(m_stringPtrType->getPointerTo(), results.size());
+
+            for (auto &pair : results)
+                result->addIncoming(pair.second, pair.first);
+
+            freeStringLater(result);
+            return result;
         }
 
         default:
