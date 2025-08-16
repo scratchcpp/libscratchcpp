@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "global.h"
+#include "enum_bitmask.h"
 #include "spimpl.h"
 
 namespace libscratchcpp
@@ -31,12 +32,12 @@ class LIBSCRATCHCPP_EXPORT Compiler
     public:
         enum class StaticType
         {
-            Void,
-            Number,
-            Bool,
-            String,
-            Pointer,
-            Unknown
+            Void = 0,
+            Number = 1 << 0,
+            Bool = 1 << 1,
+            String = 1 << 2,
+            Pointer = 1 << 3,
+            Unknown = Number | Bool | String
         };
 
         enum class CodeType
@@ -160,5 +161,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
     private:
         spimpl::unique_impl_ptr<CompilerPrivate> impl;
 };
+
+constexpr bool enable_enum_bitmask(Compiler::StaticType);
 
 } // namespace libscratchcpp

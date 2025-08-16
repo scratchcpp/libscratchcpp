@@ -72,6 +72,25 @@ CompilerValue *LLVMTestUtils::callConstFuncForType(ValueType type, CompilerValue
     }
 }
 
+CompilerValue *LLVMTestUtils::callConstFuncForType(ValueType type, CompilerValue *arg, Compiler::StaticType returnType)
+{
+    switch (type) {
+        case ValueType::Number:
+            return m_builder->addFunctionCall("test_const_number_unknown", returnType, { Compiler::StaticType::Number }, { arg });
+
+        case ValueType::Bool:
+            return m_builder->addFunctionCall("test_const_bool_unknown", returnType, { Compiler::StaticType::Bool }, { arg });
+
+        case ValueType::String:
+            return m_builder->addFunctionCall("test_const_string_unknown", returnType, { Compiler::StaticType::String }, { arg });
+
+        default:
+            EXPECT_TRUE(false);
+    }
+
+    return nullptr;
+}
+
 Value LLVMTestUtils::getOpResult(OpType type, bool rawArg, const Value &v)
 {
     createReporterBuilder(nullptr);

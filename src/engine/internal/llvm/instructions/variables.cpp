@@ -110,13 +110,8 @@ LLVMInstruction *Variables::buildWriteVariable(LLVMInstruction *ins)
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
     Compiler::StaticType argType = m_utils.optimizeRegisterType(arg.second);
-    LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->workVariable);
+    LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->targetVariable);
     varPtr.changed = true; // TODO: Handle loops and if statements
-
-    Compiler::StaticType varType = Compiler::StaticType::Unknown;
-
-    if (m_utils.warp())
-        varType = m_utils.typeAnalyzer().variableType(ins->workVariable, ins, Compiler::StaticType::Unknown);
 
     // Initialize stack variable on first assignment
     // TODO: Use stack in the top level (outside loops and if statements)
@@ -139,20 +134,15 @@ LLVMInstruction *Variables::buildWriteVariable(LLVMInstruction *ins)
                         m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typeField);
                     }*/
 
-    m_utils.createValueStore(arg.second, varPtr.stackPtr, argType, varType);
+    m_utils.createValueStore(arg.second, varPtr.stackPtr, ins->targetType, argType);
     return ins->next;
 }
 
 LLVMInstruction *Variables::buildReadVariable(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 0);
-    LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->workVariable);
-    Compiler::StaticType type = Compiler::StaticType::Unknown;
-
-    if (m_utils.warp())
-        type = m_utils.typeAnalyzer().variableType(ins->workVariable, ins, Compiler::StaticType::Unknown);
+    LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->targetVariable);
 
     ins->functionReturnReg->value = varPtr.onStack && !(ins->loopCondition && !m_utils.warp()) ? varPtr.stackPtr : varPtr.heapPtr;
-    ins->functionReturnReg->setType(type);
     return ins->next;
 }

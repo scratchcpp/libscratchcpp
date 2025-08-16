@@ -79,6 +79,7 @@ class LLVMTestUtils
         LLVMCodeBuilder *createPredicateBuilder(Target *target);
 
         CompilerValue *callConstFuncForType(ValueType type, CompilerValue *arg);
+        CompilerValue *callConstFuncForType(ValueType type, CompilerValue *arg, Compiler::StaticType returnType);
 
         Value getOpResult(OpType type, bool rawArg, const Value &v);
         Value getOpResult(OpType type, bool rawArgs, const Value &v1, const Value &v2);

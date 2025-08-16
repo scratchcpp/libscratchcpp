@@ -63,21 +63,28 @@ ProcessResult Lists::process(LLVMInstruction *ins)
 
 LLVMInstruction *Lists::buildClearList(LLVMInstruction *ins)
 {
-    assert(ins->args.size() == 0);
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
-    m_builder.CreateCall(m_utils.functions().resolve_list_clear(), listPtr.ptr);
+    if (ins->targetType != Compiler::StaticType::Void) { // do not clear a list that is already empty
+        assert(ins->args.size() == 0);
+        LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
+        m_builder.CreateCall(m_utils.functions().resolve_list_clear(), listPtr.ptr);
+    }
 
     return ins->next;
 }
 
 LLVMInstruction *Lists::buildRemoveListItem(LLVMInstruction *ins)
 {
+    // No-op in empty lists
+    if (ins->targetType == Compiler::StaticType::Void)
+        return ins->next;
+
     llvm::LLVMContext &llvmCtx = m_utils.llvmCtx();
     llvm::Function *function = m_utils.function();
 
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     // Range check
     llvm::Value *min = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
@@ -107,12 +114,7 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
     Compiler::StaticType type = m_utils.optimizeRegisterType(arg.second);
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
-
-    Compiler::StaticType listType = Compiler::StaticType::Unknown;
-
-    if (m_utils.warp())
-        listType = m_utils.typeAnalyzer().listType(ins->workList, ins, Compiler::StaticType::Unknown, false);
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     // Check if enough space is allocated
     llvm::Value *allocatedSize = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.allocatedSizePtr);
@@ -126,14 +128,15 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
     // If there's enough space, use the allocated memory
     m_builder.SetInsertPoint(ifBlock);
     llvm::Value *itemPtr = m_utils.getListItem(listPtr, size);
-    m_utils.createReusedValueStore(arg.second, itemPtr, type, listType);
+    m_utils.createValueStore(arg.second, itemPtr, type);
     m_builder.CreateStore(m_builder.CreateAdd(size, m_builder.getInt64(1)), listPtr.sizePtr);
     m_builder.CreateBr(nextBlock);
 
     // Otherwise call appendEmpty()
     m_builder.SetInsertPoint(elseBlock);
     itemPtr = m_builder.CreateCall(m_utils.functions().resolve_list_append_empty(), listPtr.ptr);
-    m_utils.createReusedValueStore(arg.second, itemPtr, type, listType);
+    // NOTE: Items created using appendEmpty() are always numbers
+    m_utils.createValueStore(arg.second, itemPtr, Compiler::StaticType::Number, type);
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
@@ -149,12 +152,7 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
     const auto &indexArg = ins->args[0];
     const auto &valueArg = ins->args[1];
     Compiler::StaticType type = m_utils.optimizeRegisterType(valueArg.second);
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
-
-    Compiler::StaticType listType = Compiler::StaticType::Unknown;
-
-    if (m_utils.warp())
-        listType = m_utils.typeAnalyzer().listType(ins->workList, ins, Compiler::StaticType::Unknown, false);
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     // Range check
     llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
@@ -170,7 +168,7 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
     m_builder.SetInsertPoint(insertBlock);
     index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
     llvm::Value *itemPtr = m_builder.CreateCall(m_utils.functions().resolve_list_insert_empty(), { listPtr.ptr, index });
-    m_utils.createReusedValueStore(valueArg.second, itemPtr, type, listType);
+    m_utils.createValueStore(valueArg.second, itemPtr, type);
 
     m_builder.CreateBr(nextBlock);
 
@@ -180,6 +178,10 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
 
 LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
 {
+    // No-op in empty lists
+    if (ins->targetType == Compiler::StaticType::Void)
+        return ins->next;
+
     llvm::LLVMContext &llvmCtx = m_utils.llvmCtx();
     llvm::Function *function = m_utils.function();
 
@@ -187,12 +189,9 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
     const auto &indexArg = ins->args[0];
     const auto &valueArg = ins->args[1];
     Compiler::StaticType type = m_utils.optimizeRegisterType(valueArg.second);
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
-    Compiler::StaticType listType = Compiler::StaticType::Unknown;
-
-    if (m_utils.warp())
-        listType = m_utils.typeAnalyzer().listType(ins->workList, ins, Compiler::StaticType::Unknown, false);
+    Compiler::StaticType listType = ins->targetType;
 
     // Range check
     llvm::Value *min = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
@@ -208,7 +207,7 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
     m_builder.SetInsertPoint(replaceBlock);
     index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
     llvm::Value *itemPtr = m_utils.getListItem(listPtr, index);
-    m_utils.createValueStore(valueArg.second, itemPtr, type, listType);
+    m_utils.createValueStore(valueArg.second, itemPtr, listType, type);
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
@@ -218,7 +217,7 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
 LLVMInstruction *Lists::buildGetListContents(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 0);
-    const LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    const LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
     llvm::Value *ptr = m_builder.CreateCall(m_utils.functions().resolve_list_to_string(), listPtr.ptr);
     m_utils.freeStringLater(ptr);
     ins->functionReturnReg->value = ptr;
@@ -228,14 +227,18 @@ LLVMInstruction *Lists::buildGetListContents(LLVMInstruction *ins)
 
 LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
 {
+    // Return empty string for empty lists
+    if (ins->targetType == Compiler::StaticType::Void) {
+        LLVMConstantRegister nullReg(Compiler::StaticType::String, "");
+        ins->functionReturnReg->value = m_utils.createValue(static_cast<LLVMRegister *>(&nullReg));
+        return ins->next;
+    }
+
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
-    Compiler::StaticType listType = Compiler::StaticType::Unknown;
-
-    if (m_utils.warp())
-        listType = m_utils.typeAnalyzer().listType(ins->workList, ins, Compiler::StaticType::Unknown, false);
+    Compiler::StaticType listType = ins->functionReturnReg->type();
 
     llvm::Value *min = llvm::ConstantFP::get(m_utils.llvmCtx(), llvm::APFloat(0.0));
     llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
@@ -243,12 +246,11 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
     llvm::Value *index = m_utils.castValue(arg.second, arg.first);
     llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size));
 
-    LLVMConstantRegister nullReg(listType == Compiler::StaticType::Unknown ? Compiler::StaticType::Number : listType, Value());
+    LLVMConstantRegister nullReg(Compiler::StaticType::String, "");
     llvm::Value *null = m_utils.createValue(static_cast<LLVMRegister *>(&nullReg));
 
     index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
     ins->functionReturnReg->value = m_builder.CreateSelect(inRange, m_utils.getListItem(listPtr, index), null);
-    ins->functionReturnReg->setType(listType);
 
     return ins->next;
 }
@@ -256,7 +258,7 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
 LLVMInstruction *Lists::buildGetListSize(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 0);
-    const LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    const LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
     llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
     ins->functionReturnReg->value = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
 
@@ -267,12 +269,9 @@ LLVMInstruction *Lists::buildGetListItemIndex(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
-    Compiler::StaticType listType = Compiler::StaticType::Unknown;
-
-    if (m_utils.warp())
-        listType = m_utils.typeAnalyzer().listType(ins->workList, ins, Compiler::StaticType::Unknown, false);
+    Compiler::StaticType listType = ins->targetType;
 
     ins->functionReturnReg->value = m_builder.CreateSIToFP(m_utils.getListItemIndex(listPtr, listType, arg.second), m_builder.getDoubleTy());
     return ins->next;
@@ -282,12 +281,9 @@ LLVMInstruction *Lists::buildListContainsItem(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
-    LLVMListPtr &listPtr = m_utils.listPtr(ins->workList);
+    LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
-    Compiler::StaticType listType = Compiler::StaticType::Unknown;
-
-    if (m_utils.warp())
-        listType = m_utils.typeAnalyzer().listType(ins->workList, ins, Compiler::StaticType::Unknown, false);
+    Compiler::StaticType listType = ins->targetType;
 
     llvm::Value *index = m_utils.getListItemIndex(listPtr, listType, arg.second);
     ins->functionReturnReg->value = m_builder.CreateICmpSGT(index, llvm::ConstantInt::get(m_builder.getInt64Ty(), -1, true));

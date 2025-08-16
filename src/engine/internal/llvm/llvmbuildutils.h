@@ -7,7 +7,6 @@
 #include "llvmfunctions.h"
 #include "llvmvariableptr.h"
 #include "llvmlistptr.h"
-#include "llvmtypeanalyzer.h"
 #include "llvmcoroutine.h"
 #include "llvmifstatement.h"
 #include "llvmloop.h"
@@ -39,7 +38,6 @@ class LLVMBuildUtils
         llvm::IRBuilder<> &builder();
         llvm::Function *function() const;
         LLVMFunctions &functions();
-        LLVMTypeAnalyzer &typeAnalyzer();
 
         std::string scriptFunctionName(BlockPrototype *procedurePrototype);
         llvm::FunctionType *scriptFunctionType(BlockPrototype *procedurePrototype);
@@ -75,8 +73,9 @@ class LLVMBuildUtils
         std::vector<LLVMIfStatement> &ifStatements();
         std::vector<LLVMLoop> &loops();
 
-        static Compiler::StaticType optimizeRegisterType(LLVMRegister *reg);
+        static Compiler::StaticType optimizeRegisterType(const LLVMRegister *reg);
         static Compiler::StaticType mapType(ValueType type);
+        static bool isSingleType(Compiler::StaticType type);
 
         llvm::Value *addAlloca(llvm::Type *type);
         llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType);
@@ -84,8 +83,8 @@ class LLVMBuildUtils
         llvm::Value *isNaN(llvm::Value *num);
         llvm::Value *removeNaN(llvm::Value *num);
 
-        void createValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
-        void createReusedValueStore(LLVMRegister *reg, llvm::Value *targetPtr, Compiler::StaticType sourceType, Compiler::StaticType targetType);
+        void createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType destType, Compiler::StaticType targetType);
+        void createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType targetType);
 
         llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index);
         llvm::Value *getListItemIndex(const LLVMListPtr &listPtr, Compiler::StaticType listType, LLVMRegister *item);
@@ -115,7 +114,6 @@ class LLVMBuildUtils
         llvm::LLVMContext &m_llvmCtx;
         llvm::IRBuilder<> &m_builder;
         LLVMFunctions m_functions;
-        LLVMTypeAnalyzer m_typeAnalyzer;
         Target *m_target = nullptr;
         llvm::Function *m_function = nullptr;
 

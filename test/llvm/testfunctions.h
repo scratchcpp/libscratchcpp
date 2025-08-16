@@ -32,10 +32,16 @@ extern "C"
     bool test_equals(const StringPtr *a, const StringPtr *b);
     bool test_lower_than(double a, double b);
     bool test_not(bool arg);
+
     double test_const_number(double v);
     bool test_const_bool(bool v);
     StringPtr *test_const_string(const StringPtr *v);
+    ValueData test_const_unknown(const ValueData *v);
     const void *test_const_pointer(const void *v);
+
+    ValueData test_const_number_unknown(double v);
+    ValueData test_const_bool_unknown(bool v);
+    ValueData test_const_string_unknown(const StringPtr *v);
 
     void test_unreachable();
 

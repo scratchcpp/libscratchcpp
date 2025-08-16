@@ -18,6 +18,7 @@ struct LLVMConstantRegister
             CompilerConstant(type, value),
             LLVMRegister(type)
         {
+            isRawValue = true; // all constants can be read directly
         }
 
         const Value &constValue() const override final { return CompilerConstant::value(); }
