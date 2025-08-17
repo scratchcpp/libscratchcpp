@@ -76,6 +76,7 @@ class LLVMBuildUtils
 
         static Compiler::StaticType optimizeRegisterType(const LLVMRegister *reg);
         static Compiler::StaticType mapType(ValueType type);
+        static ValueType mapType(Compiler::StaticType type);
         static bool isSingleType(Compiler::StaticType type);
 
         llvm::Value *addAlloca(llvm::Type *type);

@@ -4,6 +4,7 @@
 #include "../llvminstruction.h"
 #include "../llvmbuildutils.h"
 #include "../llvmconstantregister.h"
+#include "../llvmcompilercontext.h"
 
 using namespace libscratchcpp;
 using namespace libscratchcpp::llvmins;
@@ -71,6 +72,11 @@ LLVMInstruction *Lists::buildClearList(LLVMInstruction *ins)
         if (listPtr.size) {
             // Update size
             m_builder.CreateStore(m_builder.getInt64(0), listPtr.size);
+        }
+
+        if (listPtr.type) {
+            // Update type
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Void)), listPtr.type);
         }
     }
 
@@ -161,6 +167,7 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
         m_builder.CreateStore(size, listPtr.size);
     }
 
+    createListTypeUpdate(listPtr, arg.second);
     return ins->next;
 }
 
@@ -198,6 +205,7 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
         m_builder.CreateStore(size, listPtr.size);
     }
 
+    createListTypeUpdate(listPtr, valueArg.second);
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
@@ -236,6 +244,7 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
     index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
     llvm::Value *itemPtr = m_utils.getListItem(listPtr, index);
     m_utils.createValueStore(valueArg.second, itemPtr, listType, type);
+    createListTypeUpdate(listPtr, valueArg.second);
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
@@ -276,7 +285,29 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
     llvm::Value *null = m_utils.createValue(static_cast<LLVMRegister *>(&nullReg));
 
     index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
-    ins->functionReturnReg->value = m_builder.CreateSelect(inRange, m_utils.getListItem(listPtr, index), null);
+    llvm::Value *itemPtr = m_builder.CreateSelect(inRange, m_utils.getListItem(listPtr, index), null);
+
+    ins->functionReturnReg->value = itemPtr;
+
+    if (listPtr.type) {
+        // Load the runtime list type information
+        llvm::Value *listTypeFlags = m_builder.CreateLoad(m_builder.getInt32Ty(), listPtr.type);
+
+        // The result is an empty string if index is out of range
+        llvm::Value *withString = m_builder.CreateOr(listTypeFlags, m_builder.getInt32(static_cast<uint32_t>(ValueType::String)));
+        listTypeFlags = m_builder.CreateSelect(inRange, listTypeFlags, withString);
+
+        // Load the actual item type from ValueData
+        llvm::Value *itemTypePtr = m_builder.CreateStructGEP(m_utils.compilerCtx()->valueDataType(), itemPtr, 1);
+        llvm::Value *actualItemType = m_builder.CreateLoad(m_builder.getInt32Ty(), itemTypePtr);
+
+        // Create assumption that the actual type is contained in the list type flags
+        llvm::Value *typeIsValid = m_builder.CreateICmpEQ(m_builder.CreateAnd(listTypeFlags, actualItemType), actualItemType);
+
+        // Tell LLVM to assume this is true
+        llvm::Function *assumeIntrinsic = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::assume);
+        m_builder.CreateCall(assumeIntrinsic, typeIsValid);
+    }
 
     return ins->next;
 }
@@ -315,4 +346,22 @@ LLVMInstruction *Lists::buildListContainsItem(LLVMInstruction *ins)
     ins->functionReturnReg->value = m_builder.CreateICmpSGT(index, llvm::ConstantInt::get(m_builder.getInt64Ty(), -1, true));
 
     return ins->next;
+}
+
+void Lists::createListTypeUpdate(const LLVMListPtr &listPtr, const LLVMRegister *newValue)
+{
+    if (listPtr.type) {
+        // Update type
+        llvm::Value *currentType = m_builder.CreateLoad(m_builder.getInt32Ty(), listPtr.type);
+        llvm::Value *newTypeFlag;
+
+        if (newValue->isRawValue)
+            newTypeFlag = m_builder.getInt32(static_cast<uint32_t>(m_utils.mapType(newValue->type())));
+        else {
+            llvm::Value *typeField = m_builder.CreateStructGEP(m_utils.compilerCtx()->valueDataType(), newValue->value, 1);
+            newTypeFlag = m_builder.CreateLoad(m_builder.getInt32Ty(), typeField);
+        }
+
+        m_builder.CreateStore(m_builder.CreateOr(currentType, newTypeFlag), listPtr.type);
+    }
 }

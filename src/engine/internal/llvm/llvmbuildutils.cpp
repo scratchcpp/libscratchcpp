@@ -21,6 +21,13 @@ static std::unordered_map<ValueType, Compiler::StaticType> TYPE_MAP = {
     { ValueType::Pointer, Compiler::StaticType::Pointer }
 };
 
+static std::unordered_map<Compiler::StaticType, ValueType> REVERSE_TYPE_MAP = {
+    { Compiler::StaticType::Number, ValueType::Number },
+    { Compiler::StaticType::Bool, ValueType::Bool },
+    { Compiler::StaticType::String, ValueType::String },
+    { Compiler::StaticType::Pointer, ValueType::Pointer }
+};
+
 LLVMBuildUtils::LLVMBuildUtils(LLVMCompilerContext *ctx, llvm::IRBuilder<> &builder, Compiler::CodeType codeType) :
     m_ctx(ctx),
     m_llvmCtx(*ctx->llvmCtx()),
@@ -87,6 +94,10 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
 
             llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
             m_builder.CreateStore(size, listPtr.size);
+
+            // Store list type locally to leave static type analysis to LLVM
+            listPtr.type = m_builder.CreateAlloca(m_builder.getInt32Ty(), nullptr, list->name() + ".type");
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number | ValueType::Bool | ValueType::String)), listPtr.type);
         }
     }
 
@@ -391,6 +402,12 @@ Compiler::StaticType LLVMBuildUtils::mapType(ValueType type)
 {
     assert(TYPE_MAP.find(type) != TYPE_MAP.cend());
     return TYPE_MAP[type];
+}
+
+ValueType LLVMBuildUtils::mapType(Compiler::StaticType type)
+{
+    assert(REVERSE_TYPE_MAP.find(type) != REVERSE_TYPE_MAP.cend());
+    return REVERSE_TYPE_MAP[type];
 }
 
 bool LLVMBuildUtils::isSingleType(Compiler::StaticType type)

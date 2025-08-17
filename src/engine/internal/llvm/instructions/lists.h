@@ -4,7 +4,13 @@
 
 #include "instructiongroup.h"
 
-namespace libscratchcpp::llvmins
+namespace libscratchcpp
+{
+
+class LLVMListPtr;
+class LLVMRegister;
+
+namespace llvmins
 {
 
 class Lists : public InstructionGroup
@@ -25,6 +31,10 @@ class Lists : public InstructionGroup
         LLVMInstruction *buildGetListSize(LLVMInstruction *ins);
         LLVMInstruction *buildGetListItemIndex(LLVMInstruction *ins);
         LLVMInstruction *buildListContainsItem(LLVMInstruction *ins);
+
+        void createListTypeUpdate(const LLVMListPtr &listPtr, const LLVMRegister *newValue);
 };
 
-} // namespace libscratchcpp::llvmins
+} // namespace llvmins
+
+} // namespace libscratchcpp
