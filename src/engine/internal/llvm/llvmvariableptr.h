@@ -21,7 +21,6 @@ struct LLVMVariablePtr
         llvm::Value *stackPtr = nullptr;
         llvm::Value *heapPtr = nullptr;
         bool onStack = false;
-        bool changed = false;
 };
 
 } // namespace libscratchcpp

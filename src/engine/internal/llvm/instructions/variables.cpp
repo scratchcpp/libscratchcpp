@@ -111,30 +111,8 @@ LLVMInstruction *Variables::buildWriteVariable(LLVMInstruction *ins)
     const auto &arg = ins->args[0];
     Compiler::StaticType argType = m_utils.optimizeRegisterType(arg.second);
     LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->targetVariable);
-    varPtr.changed = true; // TODO: Handle loops and if statements
 
-    // Initialize stack variable on first assignment
-    // TODO: Use stack in the top level (outside loops and if statements)
-    /*if (!varPtr.onStack) {
-        varPtr.onStack = true;
-        varPtr.type = type; // don't care about unknown type on first assignment
-
-                      ValueType mappedType;
-
-                        if (type == Compiler::StaticType::String || type == Compiler::StaticType::Unknown) {
-                            // Value functions are used for these types, so don't break them
-                            mappedType = ValueType::Number;
-                        } else {
-                            auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [type](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == type; });
-                            assert(it != TYPE_MAP.cend());
-                            mappedType = it->first;
-                        }
-
-                        llvm::Value *typeField = m_builder.CreateStructGEP(m_valueDataType, varPtr.stackPtr, 1);
-                        m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(mappedType)), typeField);
-                    }*/
-
-    m_utils.createValueStore(arg.second, varPtr.stackPtr, ins->targetType, argType);
+    m_utils.createValueStore(arg.second, varPtr.onStack ? varPtr.stackPtr : varPtr.heapPtr, ins->targetType, argType);
     return ins->next;
 }
 
@@ -143,6 +121,6 @@ LLVMInstruction *Variables::buildReadVariable(LLVMInstruction *ins)
     assert(ins->args.size() == 0);
     LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->targetVariable);
 
-    ins->functionReturnReg->value = varPtr.onStack && !(ins->loopCondition && !m_utils.warp()) ? varPtr.stackPtr : varPtr.heapPtr;
+    ins->functionReturnReg->value = varPtr.onStack ? varPtr.stackPtr : varPtr.heapPtr;
     return ins->next;
 }

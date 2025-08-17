@@ -63,26 +63,12 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
         // Direct access
         varPtr.heapPtr = ptr;
 
-        // All variables are currently created on the stack and synced later (seems to be faster)
+        // In warp scripts, all variables are created on the stack and synced later (seems to be faster)
         // NOTE: Strings are NOT copied, only the pointer is copied
-        // TODO: Restore this feature
-        // varPtr.stackPtr = m_builder.CreateAlloca(m_valueDataType);
-        varPtr.stackPtr = varPtr.heapPtr;
-        varPtr.onStack = false;
+        varPtr.onStack = m_warp;
 
-        // If there are no write operations outside loops, initialize the stack variable now
-        /*Variable *variable = var;
-        // TODO: Loop scope was used here, replace it with some "inside loop" flag if needed
-        auto it = std::find_if(m_variableInstructions.begin(), m_variableInstructions.end(), [variable](const LLVMInstruction *ins) {
-            return ins->type == LLVMInstruction::Type::WriteVariable && ins->targetVariable == variable && !ins->loopScope;
-        });
-
-        if (it == m_variableInstructions.end()) {
-            createValueCopy(ptr, varPtr.stackPtr);
-            varPtr.onStack = true;
-        } else
-            varPtr.onStack = false; // use heap before the first assignment
-        */
+        if (varPtr.onStack)
+            varPtr.stackPtr = m_builder.CreateAlloca(m_valueDataType);
     }
 
     // Create list pointers
@@ -103,6 +89,9 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
             m_builder.CreateStore(size, listPtr.size);
         }
     }
+
+    reloadVariables(m_targetVariables);
+    reloadLists();
 
     // Create end branch
     m_endBranch = llvm::BasicBlock::Create(m_llvmCtx, "end", m_function);
@@ -313,19 +302,21 @@ void LLVMBuildUtils::syncVariables(llvm::Value *targetVariables)
 {
     // Copy stack variables to the actual variables
     for (auto &[var, varPtr] : m_variablePtrs) {
-        if (varPtr.onStack && varPtr.changed)
+        if (varPtr.onStack)
             createValueCopy(varPtr.stackPtr, getVariablePtr(targetVariables, var));
-
-        varPtr.changed = false;
     }
 }
 
 void LLVMBuildUtils::reloadVariables(llvm::Value *targetVariables)
 {
-    // Reset variables to use heap
-    for (auto &[var, varPtr] : m_variablePtrs) {
-        varPtr.onStack = false;
-        varPtr.changed = false;
+    // Load variables to stack
+    if (m_warp) {
+        for (auto &[var, varPtr] : m_variablePtrs) {
+            if (varPtr.onStack) {
+                llvm::Value *ptr = getVariablePtr(m_targetVariables, var);
+                createValueCopy(ptr, varPtr.stackPtr);
+            }
+        }
     }
 }
 
