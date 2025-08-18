@@ -290,17 +290,40 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
     llvm::Value *size = m_utils.getListSize(listPtr);
     size = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
     llvm::Value *index = m_utils.castValue(arg.second, arg.first);
-    llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size), "inRange");
+    llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size), "getListItem.indexInRange");
 
-    LLVMConstantRegister nullReg(Compiler::StaticType::String, "");
-    llvm::Value *null = m_utils.createValue(static_cast<LLVMRegister *>(&nullReg));
+    llvm::BasicBlock *inRangeBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "getListItem.inRange", m_utils.function());
+    llvm::BasicBlock *outOfRangeBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "getListItem.outOfRange", m_utils.function());
+    llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "getListItem.next", m_utils.function());
+    m_builder.CreateCondBr(inRange, inRangeBlock, outOfRangeBlock);
 
+    // In range
+    m_builder.SetInsertPoint(inRangeBlock);
     index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
+    llvm::Value *itemPtr = m_utils.getListItem(listPtr, index);
+    llvm::Value *itemType = m_builder.CreateLoad(m_builder.getInt32Ty(), m_utils.getValueTypePtr(itemPtr));
+    m_builder.CreateBr(nextBlock);
 
-    llvm::Value *itemPtr = m_builder.CreateSelect(inRange, m_utils.getListItem(listPtr, index), null);
-    llvm::Value *typeVar = createListTypeVar(listPtr, itemPtr, inRange);
+    // Out of range
+    m_builder.SetInsertPoint(outOfRangeBlock);
+    LLVMConstantRegister emptyStringReg(Compiler::StaticType::String, "");
+    llvm::Value *emptyString = m_utils.createValue(static_cast<LLVMRegister *>(&emptyStringReg));
+    llvm::Value *stringType = m_builder.getInt32(static_cast<uint32_t>(ValueType::String));
+    m_builder.CreateBr(nextBlock);
 
-    ins->functionReturnReg->value = itemPtr;
+    m_builder.SetInsertPoint(nextBlock);
+
+    // Result
+    llvm::PHINode *result = m_builder.CreatePHI(itemPtr->getType(), 2, "getListItem.result");
+    result->addIncoming(itemPtr, inRangeBlock);
+    result->addIncoming(emptyString, outOfRangeBlock);
+
+    llvm::PHINode *itemTypeResult = m_builder.CreatePHI(m_builder.getInt32Ty(), 2, "getListItem.itemType");
+    itemTypeResult->addIncoming(itemType, inRangeBlock);
+    itemTypeResult->addIncoming(stringType, outOfRangeBlock);
+
+    llvm::Value *typeVar = createListTypeVar(listPtr, itemTypeResult);
+    ins->functionReturnReg->value = result;
     ins->functionReturnReg->typeVar = typeVar;
     createListTypeAssumption(listPtr, typeVar, ins->targetType, inRange);
 
@@ -396,36 +419,10 @@ void Lists::createListTypeUpdate(const LLVMListPtr &listPtr, const LLVMRegister 
     }
 }
 
-llvm::Value *Lists::createListTypeVar(const LLVMListPtr &listPtr, llvm::Value *itemPtr, llvm::Value *inRange)
+llvm::Value *Lists::createListTypeVar(const LLVMListPtr &listPtr, llvm::Value *type)
 {
     llvm::Value *typeVar = m_utils.addAlloca(m_builder.getInt32Ty());
-    llvm::BasicBlock *inRangeBlock = nullptr;
-    llvm::BasicBlock *outOfRangeBlock = nullptr;
-    llvm::BasicBlock *nextBlock = nullptr;
-
-    if (inRange) {
-        inRangeBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "", m_utils.function());
-        outOfRangeBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "", m_utils.function());
-        nextBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "", m_utils.function());
-
-        m_builder.CreateCondBr(inRange, inRangeBlock, outOfRangeBlock);
-        m_builder.SetInsertPoint(inRangeBlock);
-    }
-
-    llvm::Value *type = m_builder.CreateLoad(m_builder.getInt32Ty(), m_utils.getValueTypePtr(itemPtr));
     m_builder.CreateStore(type, typeVar);
-
-    if (inRange) {
-        m_builder.CreateBr(nextBlock);
-        m_builder.SetInsertPoint(outOfRangeBlock);
-
-        llvm::Value *type = m_builder.getInt32(static_cast<uint32_t>(ValueType::String));
-        m_builder.CreateStore(type, typeVar);
-        m_builder.CreateBr(nextBlock);
-
-        m_builder.SetInsertPoint(nextBlock);
-    }
-
     return typeVar;
 }
 
