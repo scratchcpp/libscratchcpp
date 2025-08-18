@@ -112,7 +112,7 @@ LLVMInstruction *Variables::buildWriteVariable(LLVMInstruction *ins)
     Compiler::StaticType argType = m_utils.optimizeRegisterType(arg.second);
     LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->targetVariable);
 
-    m_utils.createValueStore(arg.second, varPtr.onStack ? varPtr.stackPtr : varPtr.heapPtr, ins->targetType, argType);
+    m_utils.createValueStore(varPtr.stackPtr, m_utils.getValueTypePtr(varPtr.stackPtr), arg.second, ins->targetType, argType);
     return ins->next;
 }
 
@@ -121,6 +121,6 @@ LLVMInstruction *Variables::buildReadVariable(LLVMInstruction *ins)
     assert(ins->args.size() == 0);
     LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->targetVariable);
 
-    ins->functionReturnReg->value = varPtr.onStack ? varPtr.stackPtr : varPtr.heapPtr;
+    ins->functionReturnReg->value = varPtr.stackPtr;
     return ins->next;
 }

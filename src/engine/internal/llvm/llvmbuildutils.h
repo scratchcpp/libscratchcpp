@@ -61,8 +61,8 @@ class LLVMBuildUtils
         LLVMVariablePtr &variablePtr(Variable *variable);
         LLVMListPtr &listPtr(List *list);
 
-        void syncVariables(llvm::Value *targetVariables);
-        void reloadVariables(llvm::Value *targetVariables);
+        void syncVariables();
+        void reloadVariables();
         void reloadLists();
 
         void pushScopeLevel();
@@ -85,8 +85,11 @@ class LLVMBuildUtils
         llvm::Value *isNaN(llvm::Value *num);
         llvm::Value *removeNaN(llvm::Value *num);
 
-        void createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType destType, Compiler::StaticType targetType);
-        void createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType targetType);
+        void createValueStore(llvm::Value *destPtr, llvm::Value *destTypePtr, LLVMRegister *reg, Compiler::StaticType destType, Compiler::StaticType targetType);
+        void createValueStore(llvm::Value *destPtr, llvm::Value *destTypePtr, LLVMRegister *reg, Compiler::StaticType targetType);
+
+        llvm::Value *getValueTypePtr(llvm::Value *value);
+        llvm::Value *getValueTypePtr(LLVMRegister *reg);
 
         llvm::Value *getListSize(const LLVMListPtr &listPtr);
         llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index);

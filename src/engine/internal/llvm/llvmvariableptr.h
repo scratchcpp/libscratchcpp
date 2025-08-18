@@ -18,9 +18,8 @@ class LLVMInstruction;
 
 struct LLVMVariablePtr
 {
-        llvm::Value *stackPtr = nullptr;
         llvm::Value *heapPtr = nullptr;
-        bool onStack = false;
+        llvm::Value *stackPtr = nullptr;
 };
 
 } // namespace libscratchcpp
