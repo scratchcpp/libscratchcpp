@@ -74,9 +74,11 @@ LLVMInstruction *Lists::buildClearList(LLVMInstruction *ins)
             m_builder.CreateStore(m_builder.getInt64(0), listPtr.size);
         }
 
-        if (listPtr.type) {
-            // Update type
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Void)), listPtr.type);
+        if (listPtr.hasNumber && listPtr.hasBool && listPtr.hasString) {
+            // Reset type info
+            m_builder.CreateStore(m_builder.getInt1(false), listPtr.hasNumber);
+            m_builder.CreateStore(m_builder.getInt1(false), listPtr.hasBool);
+            m_builder.CreateStore(m_builder.getInt1(false), listPtr.hasString);
         }
     }
 
@@ -167,7 +169,7 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
         m_builder.CreateStore(size, listPtr.size);
     }
 
-    createListTypeUpdate(listPtr, arg.second);
+    createListTypeUpdate(listPtr, arg.second, type);
     return ins->next;
 }
 
@@ -205,7 +207,7 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
         m_builder.CreateStore(size, listPtr.size);
     }
 
-    createListTypeUpdate(listPtr, valueArg.second);
+    createListTypeUpdate(listPtr, valueArg.second, type);
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
@@ -244,12 +246,16 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
     index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
 
     llvm::Value *itemPtr = m_utils.getListItem(listPtr, index);
-    llvm::Value *itemType = m_builder.CreateLoad(m_builder.getInt32Ty(), m_utils.getValueTypePtr(itemPtr));
-    llvm::Value *typeVar = createListTypeVar(listPtr, itemType);
-    createListTypeAssumption(listPtr, itemType, typeVar);
+    // llvm::Value *typeVar = createListTypeVar(listPtr, itemPtr);
+    //   createListTypeAssumption(listPtr, typeVar, ins->targetType);
 
-    m_utils.createValueStore(itemPtr, m_utils.getValueTypePtr(itemPtr), valueArg.second, listType, type);
-    createListTypeUpdate(listPtr, valueArg.second);
+    /*llvm::Value *typeVar = m_utils.addAlloca(m_builder.getInt32Ty());
+    llvm::Value *t = m_builder.CreateLoad(m_builder.getInt32Ty(), m_utils.getValueTypePtr(itemPtr));
+    m_builder.CreateStore(t, typeVar);*/
+    llvm::Value *typeVar = m_utils.getValueTypePtr(itemPtr);
+
+    m_utils.createValueStore(itemPtr, typeVar, valueArg.second, listType, type);
+    createListTypeUpdate(listPtr, valueArg.second, type);
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
@@ -292,13 +298,11 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
     index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
 
     llvm::Value *itemPtr = m_builder.CreateSelect(inRange, m_utils.getListItem(listPtr, index), null);
-    llvm::Value *stringType = m_builder.getInt32(static_cast<uint32_t>(ValueType::String));
-    llvm::Value *type = m_builder.CreateSelect(inRange, m_builder.CreateLoad(m_builder.getInt32Ty(), m_utils.getValueTypePtr(itemPtr)), stringType);
-    llvm::Value *typeVar = createListTypeVar(listPtr, type);
+    llvm::Value *typeVar = createListTypeVar(listPtr, itemPtr, inRange);
 
     ins->functionReturnReg->value = itemPtr;
     ins->functionReturnReg->typeVar = typeVar;
-    createListTypeAssumption(listPtr, type, typeVar, inRange);
+    createListTypeAssumption(listPtr, typeVar, ins->targetType, inRange);
 
     return ins->next;
 }
@@ -339,50 +343,176 @@ LLVMInstruction *Lists::buildListContainsItem(LLVMInstruction *ins)
     return ins->next;
 }
 
-void Lists::createListTypeUpdate(const LLVMListPtr &listPtr, const LLVMRegister *newValue)
+void Lists::createListTypeUpdate(const LLVMListPtr &listPtr, const LLVMRegister *newValue, Compiler::StaticType newValueType)
 {
-    if (listPtr.type) {
-        // Update type
-        llvm::Value *currentType = m_builder.CreateLoad(m_builder.getInt32Ty(), listPtr.type);
-        llvm::Value *newTypeFlag;
+    if (listPtr.hasNumber && listPtr.hasBool && listPtr.hasString) {
+        // Get the new type
+        llvm::Value *newType;
 
         if (newValue->isRawValue)
-            newTypeFlag = m_builder.getInt32(static_cast<uint32_t>(m_utils.mapType(newValue->type())));
+            newType = m_builder.getInt32(static_cast<uint32_t>(m_utils.mapType(newValue->type())));
         else {
             llvm::Value *typeField = m_builder.CreateStructGEP(m_utils.compilerCtx()->valueDataType(), newValue->value, 1);
-            newTypeFlag = m_builder.CreateLoad(m_builder.getInt32Ty(), typeField);
+            newType = m_builder.CreateLoad(m_builder.getInt32Ty(), typeField);
         }
 
-        m_builder.CreateStore(m_builder.CreateOr(currentType, newTypeFlag), listPtr.type);
+        // Set the appropriate type flag
+        llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "updateListType.default", m_utils.function());
+        llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "updateListType.merge", m_utils.function());
+        llvm::SwitchInst *sw = m_builder.CreateSwitch(newType, defaultBlock, 4);
+
+        // Number case
+        if ((newValueType & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
+            llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "updateListType.number", m_utils.function());
+            sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), numberBlock);
+            m_builder.SetInsertPoint(numberBlock);
+            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasNumber);
+            m_builder.CreateBr(mergeBlock);
+        }
+
+        // Bool case
+        if ((newValueType & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
+            llvm::BasicBlock *boolBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "updateListType.bool", m_utils.function());
+            sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), boolBlock);
+            m_builder.SetInsertPoint(boolBlock);
+            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasBool);
+            m_builder.CreateBr(mergeBlock);
+        }
+
+        // String case
+        if ((newValueType & Compiler::StaticType::String) == Compiler::StaticType::String) {
+            llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "updateListType.string", m_utils.function());
+            sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), stringBlock);
+            m_builder.SetInsertPoint(stringBlock);
+            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasString);
+            m_builder.CreateBr(mergeBlock);
+        }
+
+        // Default case
+        m_builder.SetInsertPoint(defaultBlock);
+        m_builder.CreateBr(mergeBlock);
+
+        m_builder.SetInsertPoint(mergeBlock);
     }
 }
 
-llvm::Value *Lists::createListTypeVar(const LLVMListPtr &listPtr, llvm::Value *itemType)
+llvm::Value *Lists::createListTypeVar(const LLVMListPtr &listPtr, llvm::Value *itemPtr, llvm::Value *inRange)
 {
     llvm::Value *typeVar = m_utils.addAlloca(m_builder.getInt32Ty());
-    m_builder.CreateStore(itemType, typeVar);
+    llvm::BasicBlock *inRangeBlock = nullptr;
+    llvm::BasicBlock *outOfRangeBlock = nullptr;
+    llvm::BasicBlock *nextBlock = nullptr;
+
+    if (inRange) {
+        inRangeBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "", m_utils.function());
+        outOfRangeBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "", m_utils.function());
+        nextBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "", m_utils.function());
+
+        m_builder.CreateCondBr(inRange, inRangeBlock, outOfRangeBlock);
+        m_builder.SetInsertPoint(inRangeBlock);
+    }
+
+    llvm::Value *type = m_builder.CreateLoad(m_builder.getInt32Ty(), m_utils.getValueTypePtr(itemPtr));
+    m_builder.CreateStore(type, typeVar);
+
+    if (inRange) {
+        m_builder.CreateBr(nextBlock);
+        m_builder.SetInsertPoint(outOfRangeBlock);
+
+        llvm::Value *type = m_builder.getInt32(static_cast<uint32_t>(ValueType::String));
+        m_builder.CreateStore(type, typeVar);
+        m_builder.CreateBr(nextBlock);
+
+        m_builder.SetInsertPoint(nextBlock);
+    }
+
     return typeVar;
 }
 
-void Lists::createListTypeAssumption(const LLVMListPtr &listPtr, llvm::Value *itemType, llvm::Value *typeVar, llvm::Value *inRange)
+void Lists::createListTypeAssumption(const LLVMListPtr &listPtr, llvm::Value *typeVar, Compiler::StaticType staticType, llvm::Value *inRange)
 {
-    if (listPtr.type) {
+    if (listPtr.hasNumber && listPtr.hasBool && listPtr.hasString) {
         llvm::Function *assumeIntrinsic = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::assume);
 
-        // Load the runtime list type information
-        llvm::Value *listTypeFlags = m_builder.CreateLoad(m_builder.getInt32Ty(), listPtr.type);
+        // Load the compile time list type information
+        bool staticHasNumber = (staticType & Compiler::StaticType::Number) == Compiler::StaticType::Number;
+        bool staticHasBool = (staticType & Compiler::StaticType::Bool) == Compiler::StaticType::Bool;
+        bool staticHasString = (staticType & Compiler::StaticType::String) == Compiler::StaticType::String;
 
-        // Create assumption that the item type is contained in the list type flags
-        llvm::Value *typeIsValid = m_builder.CreateICmpEQ(m_builder.CreateAnd(listTypeFlags, itemType), itemType);
+        // Load the runtime list type information
+        llvm::Value *hasNumber;
+
+        if (staticHasNumber)
+            hasNumber = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.hasNumber);
+        else
+            hasNumber = m_builder.getInt1(false);
+
+        llvm::Value *hasBool;
+
+        if (staticHasBool)
+            hasBool = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.hasBool);
+        else
+            hasBool = m_builder.getInt1(false);
+
+        llvm::Value *hasString;
+
+        if (staticHasString)
+            hasString = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.hasString);
+        else
+            hasString = m_builder.getInt1(false);
+
+        llvm::Value *type = m_builder.CreateLoad(m_builder.getInt32Ty(), typeVar);
+
+        llvm::Value *numberType = m_builder.getInt32(static_cast<uint32_t>(ValueType::Number));
+        llvm::Value *boolType = m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool));
+        llvm::Value *stringType = m_builder.getInt32(static_cast<uint32_t>(ValueType::String));
+
+        // Number
+        llvm::BasicBlock *noNumberBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "listTypeAssumption.noNumber", m_utils.function());
+        llvm::BasicBlock *afterNoNumberBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "listTypeAssumption.afterNoNumber", m_utils.function());
+        m_builder.CreateCondBr(hasNumber, afterNoNumberBlock, noNumberBlock);
+
+        m_builder.SetInsertPoint(noNumberBlock);
+        llvm::Value *isNotNumber = m_builder.CreateICmpNE(type, numberType);
+        m_builder.CreateCall(assumeIntrinsic, isNotNumber);
+        m_builder.CreateBr(afterNoNumberBlock);
+
+        m_builder.SetInsertPoint(afterNoNumberBlock);
+
+        // Bool
+        llvm::BasicBlock *noBoolBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "listTypeAssumption.noBool", m_utils.function());
+        llvm::BasicBlock *afterNoBoolBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "listTypeAssumption.afterNoBool", m_utils.function());
+        m_builder.CreateCondBr(hasBool, afterNoBoolBlock, noBoolBlock);
+
+        m_builder.SetInsertPoint(noBoolBlock);
+        llvm::Value *isNotBool = m_builder.CreateICmpNE(type, boolType);
+        m_builder.CreateCall(assumeIntrinsic, isNotBool);
+        m_builder.CreateBr(afterNoBoolBlock);
+
+        m_builder.SetInsertPoint(afterNoBoolBlock);
+
+        // String
+        llvm::BasicBlock *noStringBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "listTypeAssumption.noString", m_utils.function());
+        llvm::BasicBlock *afterNoStringBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "listTypeAssumption.afterNoString", m_utils.function());
+
+        if (inRange)
+            m_builder.CreateCondBr(m_builder.CreateAnd(m_builder.CreateNot(hasString), inRange), noStringBlock, afterNoStringBlock);
+        else
+            m_builder.CreateCondBr(hasString, afterNoStringBlock, noStringBlock);
+
+        m_builder.SetInsertPoint(noStringBlock);
+        llvm::Value *isNotString = m_builder.CreateICmpNE(type, stringType);
+        m_builder.CreateCall(assumeIntrinsic, isNotString);
+        m_builder.CreateBr(afterNoStringBlock);
+
+        m_builder.SetInsertPoint(afterNoStringBlock);
 
         if (inRange) {
             llvm::Value *stringType = m_builder.getInt32(static_cast<uint32_t>(ValueType::String));
-            llvm::Value *canNotBeString = m_builder.CreateICmpNE(m_builder.CreateAnd(listTypeFlags, stringType), stringType);
-            llvm::Value *isString = m_builder.CreateICmpEQ(itemType, stringType);
+            llvm::Value *canNotBeString = m_builder.CreateNot(hasString);
+            llvm::Value *isString = m_builder.CreateICmpEQ(type, stringType);
             llvm::Value *impossible = m_builder.CreateAnd(m_builder.CreateAnd(inRange, canNotBeString), isString);
-            typeIsValid = m_builder.CreateAnd(typeIsValid, m_builder.CreateNot(impossible));
+            m_builder.CreateCall(assumeIntrinsic, m_builder.CreateNot(impossible));
         }
-
-        m_builder.CreateCall(assumeIntrinsic, typeIsValid);
     }
 }

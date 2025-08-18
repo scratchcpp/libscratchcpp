@@ -89,9 +89,10 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
             llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
             m_builder.CreateStore(size, listPtr.size);
 
-            // Store list type locally to leave static type analysis to LLVM
-            listPtr.type = m_builder.CreateAlloca(m_builder.getInt32Ty(), nullptr, list->name() + ".type");
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number | ValueType::Bool | ValueType::String)), listPtr.type);
+            // Store list type info locally to leave static type analysis to LLVM
+            listPtr.hasNumber = m_builder.CreateAlloca(m_builder.getInt1Ty(), nullptr, list->name() + ".hasNumber");
+            listPtr.hasBool = m_builder.CreateAlloca(m_builder.getInt1Ty(), nullptr, list->name() + ".hasBool");
+            listPtr.hasString = m_builder.CreateAlloca(m_builder.getInt1Ty(), nullptr, list->name() + ".hasString");
         }
     }
 
@@ -321,11 +322,15 @@ void LLVMBuildUtils::reloadVariables()
 
 void LLVMBuildUtils::reloadLists()
 {
-    // Load list size info
+    // Load list size and type info
     if (m_warp) {
         for (auto &[list, listPtr] : m_listPtrs) {
             llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
             m_builder.CreateStore(size, listPtr.size);
+
+            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasNumber);
+            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasBool);
+            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasString);
         }
     }
 }
