@@ -100,19 +100,17 @@ LLVMInstruction *Lists::buildRemoveListItem(LLVMInstruction *ins)
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     // Range check
-    llvm::Value *min = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
-    llvm::Value *size = m_utils.getListSize(listPtr);
-    size = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
-    llvm::Value *index = m_utils.castValue(arg.second, arg.first);
-    llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size));
+    llvm::Value *indexDouble = m_utils.castValue(arg.second, arg.first);
+    llvm::Value *indexInt = getIndex(listPtr, indexDouble);
+    llvm::Value *inRange = createSizeRangeCheck(listPtr, indexInt, "removeListItem.indexInRange");
+
     llvm::BasicBlock *removeBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
     llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
     m_builder.CreateCondBr(inRange, removeBlock, nextBlock);
 
     // Remove
     m_builder.SetInsertPoint(removeBlock);
-    index = m_builder.CreateFPToUI(m_utils.castValue(arg.second, arg.first), m_builder.getInt64Ty());
-    m_builder.CreateCall(m_utils.functions().resolve_list_remove(), { listPtr.ptr, index });
+    m_builder.CreateCall(m_utils.functions().resolve_list_remove(), { listPtr.ptr, indexInt });
 
     if (listPtr.size) {
         // Update size
@@ -185,19 +183,17 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     // Range check
-    llvm::Value *size = m_utils.getListSize(listPtr);
-    llvm::Value *min = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
-    size = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
-    llvm::Value *index = m_utils.castValue(indexArg.second, indexArg.first);
-    llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLE(index, size));
+    llvm::Value *indexDouble = m_utils.castValue(indexArg.second, indexArg.first);
+    llvm::Value *indexInt = getIndex(listPtr, indexDouble);
+    llvm::Value *inRange = createSizeRangeCheck(listPtr, indexInt, "insertToList.indexInRange");
+
     llvm::BasicBlock *insertBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
     llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
     m_builder.CreateCondBr(inRange, insertBlock, nextBlock);
 
     // Insert
     m_builder.SetInsertPoint(insertBlock);
-    index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
-    llvm::Value *itemPtr = m_builder.CreateCall(m_utils.functions().resolve_list_insert_empty(), { listPtr.ptr, index });
+    llvm::Value *itemPtr = m_builder.CreateCall(m_utils.functions().resolve_list_insert_empty(), { listPtr.ptr, indexInt });
     m_utils.createValueStore(itemPtr, m_utils.getValueTypePtr(itemPtr), valueArg.second, type);
 
     if (listPtr.size) {
@@ -232,20 +228,18 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
     Compiler::StaticType listType = ins->targetType;
 
     // Range check
-    llvm::Value *min = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
-    llvm::Value *size = m_utils.getListSize(listPtr);
-    size = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
-    llvm::Value *index = m_utils.castValue(indexArg.second, indexArg.first);
-    llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size));
+    llvm::Value *indexDouble = m_utils.castValue(indexArg.second, indexArg.first);
+    llvm::Value *indexInt = getIndex(listPtr, indexDouble);
+    llvm::Value *inRange = createSizeRangeCheck(listPtr, indexInt, "listReplace.indexInRange");
+
     llvm::BasicBlock *replaceBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
     llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
     m_builder.CreateCondBr(inRange, replaceBlock, nextBlock);
 
     // Replace
     m_builder.SetInsertPoint(replaceBlock);
-    index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
 
-    llvm::Value *itemPtr = m_utils.getListItem(listPtr, index);
+    llvm::Value *itemPtr = m_utils.getListItem(listPtr, indexInt);
     // llvm::Value *typeVar = createListTypeVar(listPtr, itemPtr);
     //   createListTypeAssumption(listPtr, typeVar, ins->targetType);
 
@@ -275,6 +269,9 @@ LLVMInstruction *Lists::buildGetListContents(LLVMInstruction *ins)
 
 LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
 {
+    llvm::LLVMContext &llvmCtx = m_utils.llvmCtx();
+    llvm::Function *function = m_utils.function();
+
     // Return empty string for empty lists
     if (ins->targetType == Compiler::StaticType::Void) {
         LLVMConstantRegister nullReg(Compiler::StaticType::String, "");
@@ -286,21 +283,19 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
     const auto &arg = ins->args[0];
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
-    llvm::Value *min = llvm::ConstantFP::get(m_utils.llvmCtx(), llvm::APFloat(0.0));
-    llvm::Value *size = m_utils.getListSize(listPtr);
-    size = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
-    llvm::Value *index = m_utils.castValue(arg.second, arg.first);
-    llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateFCmpOGE(index, min), m_builder.CreateFCmpOLT(index, size), "getListItem.indexInRange");
+    // Range check
+    llvm::Value *indexDouble = m_utils.castValue(arg.second, arg.first);
+    llvm::Value *indexInt = getIndex(listPtr, indexDouble);
+    llvm::Value *inRange = createSizeRangeCheck(listPtr, indexInt, "getListItem.indexInRange");
 
-    llvm::BasicBlock *inRangeBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "getListItem.inRange", m_utils.function());
-    llvm::BasicBlock *outOfRangeBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "getListItem.outOfRange", m_utils.function());
-    llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "getListItem.next", m_utils.function());
+    llvm::BasicBlock *inRangeBlock = llvm::BasicBlock::Create(llvmCtx, "getListItem.inRange", function);
+    llvm::BasicBlock *outOfRangeBlock = llvm::BasicBlock::Create(llvmCtx, "getListItem.outOfRange", function);
+    llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(llvmCtx, "getListItem.next", function);
     m_builder.CreateCondBr(inRange, inRangeBlock, outOfRangeBlock);
 
     // In range
     m_builder.SetInsertPoint(inRangeBlock);
-    index = m_builder.CreateFPToUI(index, m_builder.getInt64Ty());
-    llvm::Value *itemPtr = m_utils.getListItem(listPtr, index);
+    llvm::Value *itemPtr = m_utils.getListItem(listPtr, indexInt);
     llvm::Value *itemType = m_builder.CreateLoad(m_builder.getInt32Ty(), m_utils.getValueTypePtr(itemPtr));
     m_builder.CreateBr(nextBlock);
 
@@ -364,6 +359,19 @@ LLVMInstruction *Lists::buildListContainsItem(LLVMInstruction *ins)
     ins->functionReturnReg->value = m_builder.CreateICmpSGT(index, llvm::ConstantInt::get(m_builder.getInt64Ty(), -1, true));
 
     return ins->next;
+}
+
+llvm::Value *Lists::getIndex(const LLVMListPtr &listPtr, llvm::Value *indexDouble)
+{
+    llvm::Value *zero = llvm::ConstantFP::get(m_utils.llvmCtx(), llvm::APFloat(0.0));
+    llvm::Value *isNegative = m_builder.CreateFCmpOLT(indexDouble, zero, "listIndex.isNegative");
+    return m_builder.CreateSelect(isNegative, llvm::ConstantInt::get(m_builder.getInt64Ty(), INT64_MAX), m_builder.CreateFPToUI(indexDouble, m_builder.getInt64Ty(), "listIndex.int"));
+}
+
+llvm::Value *Lists::createSizeRangeCheck(const LLVMListPtr &listPtr, llvm::Value *indexInt, const std::string &name)
+{
+    llvm::Value *size = m_utils.getListSize(listPtr);
+    return m_builder.CreateICmpULT(indexInt, size, name);
 }
 
 void Lists::createListTypeUpdate(const LLVMListPtr &listPtr, const LLVMRegister *newValue, Compiler::StaticType newValueType)
