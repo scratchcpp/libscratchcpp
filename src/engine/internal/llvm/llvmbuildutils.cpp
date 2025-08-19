@@ -323,11 +323,13 @@ void LLVMBuildUtils::reloadVariables()
 void LLVMBuildUtils::reloadLists()
 {
     // Load list size and type info
-    if (m_warp) {
-        for (auto &[list, listPtr] : m_listPtrs) {
+    for (auto &[list, listPtr] : m_listPtrs) {
+        if (listPtr.size) {
             llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
             m_builder.CreateStore(size, listPtr.size);
+        }
 
+        if (listPtr.hasNumber && listPtr.hasBool && listPtr.hasString) {
             m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasNumber);
             m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasBool);
             m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasString);
