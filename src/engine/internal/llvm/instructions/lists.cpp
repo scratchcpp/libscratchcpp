@@ -239,15 +239,17 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
     m_builder.SetInsertPoint(replaceBlock);
 
     llvm::Value *itemPtr = m_utils.getListItem(listPtr, indexInt);
-    // llvm::Value *typeVar = createListTypeVar(listPtr, itemPtr);
-    //   createListTypeAssumption(listPtr, typeVar, ins->targetType);
+    llvm::Value *typePtr = m_utils.getValueTypePtr(itemPtr);
+    llvm::Value *loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
+    llvm::Value *typeVar = createListTypeVar(listPtr, loadedType);
 
-    /*llvm::Value *typeVar = m_utils.addAlloca(m_builder.getInt32Ty());
-    llvm::Value *t = m_builder.CreateLoad(m_builder.getInt32Ty(), m_utils.getValueTypePtr(itemPtr));
-    m_builder.CreateStore(t, typeVar);*/
-    llvm::Value *typeVar = m_utils.getValueTypePtr(itemPtr);
-
+    createListTypeAssumption(listPtr, typeVar, ins->targetType);
     m_utils.createValueStore(itemPtr, typeVar, valueArg.second, listType, type);
+
+    // Value store may change type, make sure to update it
+    loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typeVar);
+    m_builder.CreateStore(loadedType, typePtr);
+
     createListTypeUpdate(listPtr, valueArg.second, type);
     m_builder.CreateBr(nextBlock);
 
@@ -469,6 +471,9 @@ void Lists::createListTypeAssumption(const LLVMListPtr &listPtr, llvm::Value *ty
             hasString = m_builder.getInt1(false);
 
         llvm::Value *type = m_builder.CreateLoad(m_builder.getInt32Ty(), typeVar);
+
+        if (!inRange)
+            inRange = m_builder.getInt1(true);
 
         llvm::Value *numberType = m_builder.getInt32(static_cast<uint32_t>(ValueType::Number));
         llvm::Value *boolType = m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool));

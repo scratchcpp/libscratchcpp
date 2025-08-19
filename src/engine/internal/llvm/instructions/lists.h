@@ -39,7 +39,7 @@ class Lists : public InstructionGroup
 
         void createListTypeUpdate(const LLVMListPtr &listPtr, const LLVMRegister *newValue, Compiler::StaticType newValueType);
         llvm::Value *createListTypeVar(const LLVMListPtr &listPtr, llvm::Value *type);
-        void createListTypeAssumption(const LLVMListPtr &listPtr, llvm::Value *typeVar, Compiler::StaticType staticType, llvm::Value *inRange);
+        void createListTypeAssumption(const LLVMListPtr &listPtr, llvm::Value *typeVar, Compiler::StaticType staticType, llvm::Value *inRange = nullptr);
 };
 
 } // namespace llvmins
