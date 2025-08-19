@@ -387,43 +387,40 @@ void Lists::createListTypeUpdate(const LLVMListPtr &listPtr, const LLVMRegister 
             newType = m_builder.CreateLoad(m_builder.getInt32Ty(), typeField);
         }
 
-        // Set the appropriate type flag
-        llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "updateListType.default", m_utils.function());
-        llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "updateListType.merge", m_utils.function());
-        llvm::SwitchInst *sw = m_builder.CreateSwitch(newType, defaultBlock, 4);
+        bool staticHasNumber = (newValueType & Compiler::StaticType::Number) == Compiler::StaticType::Number;
+        bool staticHasBool = (newValueType & Compiler::StaticType::Bool) == Compiler::StaticType::Bool;
+        bool staticHasString = (newValueType & Compiler::StaticType::String) == Compiler::StaticType::String;
 
-        // Number case
-        if ((newValueType & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
-            llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "updateListType.number", m_utils.function());
-            sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), numberBlock);
-            m_builder.SetInsertPoint(numberBlock);
-            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasNumber);
-            m_builder.CreateBr(mergeBlock);
-        }
+        llvm::Value *isNumber;
 
-        // Bool case
-        if ((newValueType & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
-            llvm::BasicBlock *boolBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "updateListType.bool", m_utils.function());
-            sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), boolBlock);
-            m_builder.SetInsertPoint(boolBlock);
-            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasBool);
-            m_builder.CreateBr(mergeBlock);
-        }
+        if (staticHasNumber)
+            isNumber = m_builder.CreateICmpEQ(newType, m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)));
+        else
+            isNumber = m_builder.getInt1(false);
 
-        // String case
-        if ((newValueType & Compiler::StaticType::String) == Compiler::StaticType::String) {
-            llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "updateListType.string", m_utils.function());
-            sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), stringBlock);
-            m_builder.SetInsertPoint(stringBlock);
-            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasString);
-            m_builder.CreateBr(mergeBlock);
-        }
+        llvm::Value *isBool;
 
-        // Default case
-        m_builder.SetInsertPoint(defaultBlock);
-        m_builder.CreateBr(mergeBlock);
+        if (staticHasBool)
+            isBool = m_builder.CreateICmpEQ(newType, m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)));
+        else
+            isBool = m_builder.getInt1(false);
 
-        m_builder.SetInsertPoint(mergeBlock);
+        llvm::Value *isString;
+
+        if (staticHasString)
+            isString = m_builder.CreateICmpEQ(newType, m_builder.getInt32(static_cast<uint32_t>(ValueType::String)));
+        else
+            isString = m_builder.getInt1(false);
+
+        // Update flags
+        llvm::Value *previous = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.hasNumber);
+        m_builder.CreateStore(m_builder.CreateOr(previous, isNumber), listPtr.hasNumber);
+
+        previous = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.hasBool);
+        m_builder.CreateStore(m_builder.CreateOr(previous, isBool), listPtr.hasBool);
+
+        previous = m_builder.CreateLoad(m_builder.getInt1Ty(), listPtr.hasString);
+        m_builder.CreateStore(m_builder.CreateOr(previous, isString), listPtr.hasString);
     }
 }
 
