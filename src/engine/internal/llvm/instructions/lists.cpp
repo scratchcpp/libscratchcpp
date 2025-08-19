@@ -373,7 +373,7 @@ void Lists::createListTypeUpdate(const LLVMListPtr &listPtr, const LLVMRegister 
         llvm::Value *newType;
 
         if (newValue->isRawValue)
-            newType = m_builder.getInt32(static_cast<uint32_t>(m_utils.mapType(newValue->type())));
+            newType = m_builder.getInt32(static_cast<uint32_t>(m_utils.mapType(newValueType)));
         else {
             llvm::Value *typeField = m_builder.CreateStructGEP(m_utils.compilerCtx()->valueDataType(), newValue->value, 1);
             newType = m_builder.CreateLoad(m_builder.getInt32Ty(), typeField);
