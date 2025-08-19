@@ -154,8 +154,7 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
     // Otherwise call appendEmpty()
     m_builder.SetInsertPoint(elseBlock);
     itemPtr = m_builder.CreateCall(m_utils.functions().resolve_list_append_empty(), listPtr.ptr);
-    // NOTE: Items created using appendEmpty() are always numbers
-    m_utils.createValueStore(itemPtr, m_utils.getValueTypePtr(itemPtr), arg.second, Compiler::StaticType::Number, type);
+    m_utils.createValueStore(itemPtr, m_utils.getValueTypePtr(itemPtr), arg.second, type);
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
