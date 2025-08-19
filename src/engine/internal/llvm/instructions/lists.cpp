@@ -474,52 +474,60 @@ void Lists::createListTypeAssumption(const LLVMListPtr &listPtr, llvm::Value *ty
         llvm::Value *boolType = m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool));
         llvm::Value *stringType = m_builder.getInt32(static_cast<uint32_t>(ValueType::String));
 
-        // Number
-        llvm::BasicBlock *noNumberBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "listTypeAssumption.noNumber", m_utils.function());
-        llvm::BasicBlock *afterNoNumberBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "listTypeAssumption.afterNoNumber", m_utils.function());
-        m_builder.CreateCondBr(hasNumber, afterNoNumberBlock, noNumberBlock);
+        // Create assumptions
+        llvm::BasicBlock *outOfRangeBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "outOfRange", m_utils.function());
+        llvm::BasicBlock *inRangeBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "inRange", m_utils.function());
+        llvm::BasicBlock *afterBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "afterAssume", m_utils.function());
 
-        m_builder.SetInsertPoint(noNumberBlock);
-        llvm::Value *isNotNumber = m_builder.CreateICmpNE(type, numberType);
-        m_builder.CreateCall(assumeIntrinsic, isNotNumber);
-        m_builder.CreateBr(afterNoNumberBlock);
+        m_builder.CreateCondBr(inRange, inRangeBlock, outOfRangeBlock);
 
-        m_builder.SetInsertPoint(afterNoNumberBlock);
+        // In-range assumptions
+        m_builder.SetInsertPoint(inRangeBlock);
 
-        // Bool
-        llvm::BasicBlock *noBoolBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "listTypeAssumption.noBool", m_utils.function());
-        llvm::BasicBlock *afterNoBoolBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "listTypeAssumption.afterNoBool", m_utils.function());
-        m_builder.CreateCondBr(hasBool, afterNoBoolBlock, noBoolBlock);
+        auto assume = [&](llvm::Value *cond) { m_builder.CreateCall(assumeIntrinsic, cond); };
 
-        m_builder.SetInsertPoint(noBoolBlock);
-        llvm::Value *isNotBool = m_builder.CreateICmpNE(type, boolType);
-        m_builder.CreateCall(assumeIntrinsic, isNotBool);
-        m_builder.CreateBr(afterNoBoolBlock);
+        llvm::Value *notNumber = m_builder.CreateNot(hasNumber);
+        llvm::Value *notBool = m_builder.CreateNot(hasBool);
+        llvm::Value *notString = m_builder.CreateNot(hasString);
 
-        m_builder.SetInsertPoint(afterNoBoolBlock);
+        // if (!hasBool && !hasString) type == Number
+        llvm::Value *cond1 = m_builder.CreateAnd(notBool, notString);
+        llvm::Value *assume1 = m_builder.CreateICmpEQ(type, numberType);
+        assume(m_builder.CreateSelect(cond1, assume1, m_builder.getInt1(true)));
 
-        // String
-        llvm::BasicBlock *noStringBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "listTypeAssumption.noString", m_utils.function());
-        llvm::BasicBlock *afterNoStringBlock = llvm::BasicBlock::Create(m_utils.llvmCtx(), "listTypeAssumption.afterNoString", m_utils.function());
+        // else if (!hasNumber && !hasString) type == Bool
+        llvm::Value *cond2 = m_builder.CreateAnd(notNumber, notString);
+        llvm::Value *assume2 = m_builder.CreateICmpEQ(type, boolType);
+        assume(m_builder.CreateSelect(cond2, assume2, m_builder.getInt1(true)));
 
-        if (inRange)
-            m_builder.CreateCondBr(m_builder.CreateAnd(m_builder.CreateNot(hasString), inRange), noStringBlock, afterNoStringBlock);
-        else
-            m_builder.CreateCondBr(hasString, afterNoStringBlock, noStringBlock);
+        // else if (!hasNumber && !hasBool) type == String
+        llvm::Value *cond3 = m_builder.CreateAnd(notNumber, notBool);
+        llvm::Value *assume3 = m_builder.CreateICmpEQ(type, stringType);
+        assume(m_builder.CreateSelect(cond3, assume3, m_builder.getInt1(true)));
 
-        m_builder.SetInsertPoint(noStringBlock);
-        llvm::Value *isNotString = m_builder.CreateICmpNE(type, stringType);
-        m_builder.CreateCall(assumeIntrinsic, isNotString);
-        m_builder.CreateBr(afterNoStringBlock);
+        // else if (!hasBool) type == Number || type == String
+        llvm::Value *cond4 = notBool;
+        llvm::Value *assume4 = m_builder.CreateOr(m_builder.CreateICmpEQ(type, numberType), m_builder.CreateICmpEQ(type, stringType));
+        assume(m_builder.CreateSelect(cond4, assume4, m_builder.getInt1(true)));
 
-        m_builder.SetInsertPoint(afterNoStringBlock);
+        // else if (!hasNumber) type == Bool || type == String
+        llvm::Value *cond5 = notNumber;
+        llvm::Value *assume5 = m_builder.CreateOr(m_builder.CreateICmpEQ(type, boolType), m_builder.CreateICmpEQ(type, stringType));
+        assume(m_builder.CreateSelect(cond5, assume5, m_builder.getInt1(true)));
 
-        if (inRange) {
-            llvm::Value *stringType = m_builder.getInt32(static_cast<uint32_t>(ValueType::String));
-            llvm::Value *canNotBeString = m_builder.CreateNot(hasString);
-            llvm::Value *isString = m_builder.CreateICmpEQ(type, stringType);
-            llvm::Value *impossible = m_builder.CreateAnd(m_builder.CreateAnd(inRange, canNotBeString), isString);
-            m_builder.CreateCall(assumeIntrinsic, m_builder.CreateNot(impossible));
-        }
+        // else if (!hasString) type == Number || type == Bool
+        llvm::Value *cond6 = notString;
+        llvm::Value *assume6 = m_builder.CreateOr(m_builder.CreateICmpEQ(type, numberType), m_builder.CreateICmpEQ(type, boolType));
+        assume(m_builder.CreateSelect(cond6, assume6, m_builder.getInt1(true)));
+
+        m_builder.CreateBr(afterBlock);
+
+        // Out-of-range: always string
+        m_builder.SetInsertPoint(outOfRangeBlock);
+        llvm::Value *isString = m_builder.CreateICmpEQ(type, stringType);
+        assume(isString);
+        m_builder.CreateBr(afterBlock);
+
+        m_builder.SetInsertPoint(afterBlock);
     }
 }
