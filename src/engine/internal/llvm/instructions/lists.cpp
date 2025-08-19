@@ -364,7 +364,9 @@ llvm::Value *Lists::getIndex(const LLVMListPtr &listPtr, llvm::Value *indexDoubl
 {
     llvm::Value *zero = llvm::ConstantFP::get(m_utils.llvmCtx(), llvm::APFloat(0.0));
     llvm::Value *isNegative = m_builder.CreateFCmpOLT(indexDouble, zero, "listIndex.isNegative");
-    return m_builder.CreateSelect(isNegative, llvm::ConstantInt::get(m_builder.getInt64Ty(), INT64_MAX), m_builder.CreateFPToUI(indexDouble, m_builder.getInt64Ty(), "listIndex.int"));
+    llvm::Value *intMax = llvm::ConstantInt::get(m_builder.getInt64Ty(), INT64_MAX);
+    llvm::Value *intIndex = m_builder.CreateFPToUI(indexDouble, m_builder.getInt64Ty(), "listIndex.int");
+    return m_builder.CreateSelect(isNegative, intMax, intIndex);
 }
 
 llvm::Value *Lists::createSizeRangeCheck(const LLVMListPtr &listPtr, llvm::Value *indexInt, const std::string &name, bool includeSize)
