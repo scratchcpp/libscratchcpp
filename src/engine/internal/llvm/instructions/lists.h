@@ -35,7 +35,7 @@ class Lists : public InstructionGroup
         LLVMInstruction *buildListContainsItem(LLVMInstruction *ins);
 
         llvm::Value *getIndex(const LLVMListPtr &listPtr, llvm::Value *indexDouble);
-        llvm::Value *createSizeRangeCheck(const LLVMListPtr &listPtr, llvm::Value *indexInt, const std::string &name);
+        llvm::Value *createSizeRangeCheck(const LLVMListPtr &listPtr, llvm::Value *indexInt, const std::string &name, bool includeSize = false);
 
         void createListTypeUpdate(const LLVMListPtr &listPtr, const LLVMRegister *newValue, Compiler::StaticType newValueType);
         llvm::Value *createListTypeVar(const LLVMListPtr &listPtr, llvm::Value *type);

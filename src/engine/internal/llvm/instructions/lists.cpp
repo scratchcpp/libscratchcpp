@@ -184,7 +184,7 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
     // Range check
     llvm::Value *indexDouble = m_utils.castValue(indexArg.second, indexArg.first);
     llvm::Value *indexInt = getIndex(listPtr, indexDouble);
-    llvm::Value *inRange = createSizeRangeCheck(listPtr, indexInt, "insertToList.indexInRange");
+    llvm::Value *inRange = createSizeRangeCheck(listPtr, indexInt, "insertToList.indexInRange", true);
 
     llvm::BasicBlock *insertBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
     llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
@@ -367,10 +367,14 @@ llvm::Value *Lists::getIndex(const LLVMListPtr &listPtr, llvm::Value *indexDoubl
     return m_builder.CreateSelect(isNegative, llvm::ConstantInt::get(m_builder.getInt64Ty(), INT64_MAX), m_builder.CreateFPToUI(indexDouble, m_builder.getInt64Ty(), "listIndex.int"));
 }
 
-llvm::Value *Lists::createSizeRangeCheck(const LLVMListPtr &listPtr, llvm::Value *indexInt, const std::string &name)
+llvm::Value *Lists::createSizeRangeCheck(const LLVMListPtr &listPtr, llvm::Value *indexInt, const std::string &name, bool includeSize)
 {
     llvm::Value *size = m_utils.getListSize(listPtr);
-    return m_builder.CreateICmpULT(indexInt, size, name);
+
+    if (includeSize)
+        return m_builder.CreateICmpULE(indexInt, size, name);
+    else
+        return m_builder.CreateICmpULT(indexInt, size, name);
 }
 
 void Lists::createListTypeUpdate(const LLVMListPtr &listPtr, const LLVMRegister *newValue, Compiler::StaticType newValueType)
