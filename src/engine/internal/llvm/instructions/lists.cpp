@@ -364,21 +364,32 @@ LLVMInstruction *Lists::buildListContainsItem(LLVMInstruction *ins)
 
 llvm::Value *Lists::getIndex(const LLVMListPtr &listPtr, llvm::Value *indexDouble)
 {
+    llvm::Function *expectIntrinsic = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::expect, m_builder.getInt64Ty());
+
     llvm::Value *zero = llvm::ConstantFP::get(m_utils.llvmCtx(), llvm::APFloat(0.0));
     llvm::Value *isNegative = m_builder.CreateFCmpOLT(indexDouble, zero, "listIndex.isNegative");
     llvm::Value *intMax = llvm::ConstantInt::get(m_builder.getInt64Ty(), INT64_MAX);
     llvm::Value *intIndex = m_builder.CreateFPToUI(indexDouble, m_builder.getInt64Ty(), "listIndex.int");
-    return m_builder.CreateSelect(isNegative, intMax, intIndex);
+
+    // Tell the optimizer that negative indices are uncommon
+    llvm::Value *index = m_builder.CreateSelect(isNegative, intMax, intIndex);
+    return m_builder.CreateCall(expectIntrinsic, { index, intIndex });
 }
 
 llvm::Value *Lists::createSizeRangeCheck(const LLVMListPtr &listPtr, llvm::Value *indexInt, const std::string &name, bool includeSize)
 {
+    llvm::Function *expectIntrinsic = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::expect, m_builder.getInt1Ty());
+
     llvm::Value *size = m_utils.getListSize(listPtr);
+    llvm::Value *inRange;
 
     if (includeSize)
-        return m_builder.CreateICmpULE(indexInt, size, name);
+        inRange = m_builder.CreateICmpULE(indexInt, size, name);
     else
-        return m_builder.CreateICmpULT(indexInt, size, name);
+        inRange = m_builder.CreateICmpULT(indexInt, size, name);
+
+    // Tell the optimizer that indices in range are more common
+    return m_builder.CreateCall(expectIntrinsic, { inRange, m_builder.getInt1(true) });
 }
 
 void Lists::createListTypeUpdate(const LLVMListPtr &listPtr, const LLVMRegister *newValue, Compiler::StaticType newValueType)
