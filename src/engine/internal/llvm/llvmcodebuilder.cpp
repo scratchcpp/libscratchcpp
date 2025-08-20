@@ -552,6 +552,12 @@ void LLVMCodeBuilder::createStop()
     m_instructions.addInstruction(ins);
 }
 
+void LLVMCodeBuilder::createStopWithoutSync()
+{
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::StopWithoutSync, m_loopCondition);
+    m_instructions.addInstruction(ins);
+}
+
 void LLVMCodeBuilder::createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args)
 {
     assert(prototype);

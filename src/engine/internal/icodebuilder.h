@@ -99,6 +99,7 @@ class ICodeBuilder
         virtual void yield() = 0;
 
         virtual void createStop() = 0;
+        virtual void createStopWithoutSync() = 0;
 
         virtual void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args) = 0;
 };

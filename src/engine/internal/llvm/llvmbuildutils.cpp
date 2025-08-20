@@ -108,10 +108,15 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
     assert(m_stringHeap.size() == 1);
     freeScopeHeap();
 
+    // Sync
+    llvm::BasicBlock *syncBranch = llvm::BasicBlock::Create(m_llvmCtx, "sync", m_function);
+    m_builder.CreateBr(syncBranch);
+
+    m_builder.SetInsertPoint(syncBranch);
+    syncVariables();
     m_builder.CreateBr(m_endBranch);
 
     m_builder.SetInsertPoint(m_endBranch);
-    syncVariables();
 
     // End the script function
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);

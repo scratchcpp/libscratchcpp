@@ -112,6 +112,7 @@ class LLVMCodeBuilder : public ICodeBuilder
         void yield() override;
 
         void createStop() override;
+        void createStopWithoutSync() override;
 
         void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args) override;
 
