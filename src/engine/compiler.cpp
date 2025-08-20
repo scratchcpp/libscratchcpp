@@ -136,7 +136,7 @@ void Compiler::preoptimize()
 
 /*!
  * Adds a call to the given function.\n
- * For example: extern "C" bool some_block(double arg1, const char *arg2)
+ * For example: extern "C" bool some_block(double arg1, const StringPtr *arg2)
  */
 CompilerValue *Compiler::addFunctionCall(const std::string &functionName, StaticType returnType, const ArgTypes &argTypes, const Args &args)
 {
@@ -146,7 +146,7 @@ CompilerValue *Compiler::addFunctionCall(const std::string &functionName, Static
 
 /*!
  * Adds a call to the given function with a target parameter.\n
- * For example: extern "C" bool some_block(Target *target, double arg1, const char *arg2)
+ * For example: extern "C" bool some_block(Target *target, double arg1, const StringPtr *arg2)
  */
 CompilerValue *Compiler::addTargetFunctionCall(const std::string &functionName, StaticType returnType, const ArgTypes &argTypes, const Args &args)
 {
@@ -156,7 +156,7 @@ CompilerValue *Compiler::addTargetFunctionCall(const std::string &functionName, 
 
 /*!
  * Adds a call to the given function with an execution context parameter.\n
- * For example: extern "C" bool some_block(ExecutionContext *ctx, double arg1, const char *arg2)
+ * For example: extern "C" bool some_block(ExecutionContext *ctx, double arg1, const StringPtr *arg2)
  */
 CompilerValue *Compiler::addFunctionCallWithCtx(const std::string &functionName, StaticType returnType, const ArgTypes &argTypes, const Args &args)
 {
