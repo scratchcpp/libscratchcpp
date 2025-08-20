@@ -180,7 +180,7 @@ CompilerValue *ControlBlocks::compileDeleteThisClone(Compiler *compiler)
 {
     CompilerValue *deleted = compiler->addTargetFunctionCall("control_delete_this_clone", Compiler::StaticType::Bool);
     compiler->beginIfStatement(deleted);
-    compiler->createStop();
+    compiler->createStopWithoutSync(); // sync happens before the function call
     compiler->endIf();
     return nullptr;
 }
