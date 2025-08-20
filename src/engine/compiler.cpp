@@ -705,6 +705,16 @@ void Compiler::createStop()
     impl->builder->createStop();
 }
 
+/*!
+ * Creates a stop script without synchronization instruction.\n
+ * Use this if synchronization is not possible at the stop point.
+ * \note Only use this when everything is synchronized, e. g. after a function call.
+ */
+void Compiler::createStopWithoutSync()
+{
+    impl->builder->createStopWithoutSync();
+}
+
 /*! Creates a call to the procedure with the given prototype. */
 void Compiler::createProcedureCall(BlockPrototype *prototype, const libscratchcpp::Compiler::Args &args)
 {

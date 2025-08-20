@@ -148,6 +148,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
 
         void createYield();
         void createStop();
+        void createStopWithoutSync();
 
         void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args);
 
