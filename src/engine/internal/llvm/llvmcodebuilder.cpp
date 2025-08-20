@@ -55,7 +55,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::build()
     if (m_warp) {
 #ifdef ENABLE_CODE_ANALYZER
         // Analyze the script (type analysis, optimizations, etc.)
-        // NOTE: Do this only for non-warp scripts
+        // NOTE: Do this only for warp scripts
         m_codeAnalyzer.analyzeScript(m_instructions);
 #endif
     }
