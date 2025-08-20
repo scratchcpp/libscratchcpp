@@ -23,6 +23,10 @@ struct LLVMListPtr
         llvm::Value *sizePtr = nullptr;
         llvm::Value *allocatedSizePtr = nullptr;
         llvm::Value *size = nullptr;
+
+        llvm::Value *hasNumber = nullptr;
+        llvm::Value *hasBool = nullptr;
+        llvm::Value *hasString = nullptr;
 };
 
 } // namespace libscratchcpp

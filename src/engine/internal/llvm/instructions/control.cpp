@@ -60,6 +60,10 @@ ProcessResult Control::process(LLVMInstruction *ins)
             ret.next = buildStop(ins);
             break;
 
+        case LLVMInstruction::Type::StopWithoutSync:
+            ret.next = buildStopWithoutSync(ins);
+            break;
+
         default:
             ret.match = false;
             break;
@@ -336,6 +340,12 @@ LLVMInstruction *Control::buildEndLoop(LLVMInstruction *ins)
 }
 
 LLVMInstruction *Control::buildStop(LLVMInstruction *ins)
+{
+    m_utils.syncVariables();
+    return buildStopWithoutSync(ins);
+}
+
+LLVMInstruction *Control::buildStopWithoutSync(LLVMInstruction *ins)
 {
     m_utils.freeScopeHeap();
     m_builder.CreateBr(m_utils.endBranch());

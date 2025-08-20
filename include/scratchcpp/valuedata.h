@@ -5,6 +5,7 @@
 #include <string>
 
 #include "global.h"
+#include "enum_bitmask.h"
 
 namespace libscratchcpp
 {
@@ -13,11 +14,14 @@ struct StringPtr;
 
 enum class LIBSCRATCHCPP_EXPORT ValueType
 {
-    Number = 0,
-    Bool = 1,
-    String = 2,
-    Pointer = 3
+    Void = 0,
+    Number = 1 << 0,
+    Bool = 1 << 1,
+    String = 1 << 2,
+    Pointer = 1 << 3
 };
+
+constexpr bool enable_enum_bitmask(ValueType);
 
 extern "C"
 {

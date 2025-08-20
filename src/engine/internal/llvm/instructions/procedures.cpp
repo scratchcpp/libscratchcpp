@@ -39,7 +39,7 @@ LLVMInstruction *Procedures::buildCallProcedure(LLVMInstruction *ins)
     assert(ins->procedurePrototype);
     assert(ins->args.size() == ins->procedurePrototype->argumentTypes().size());
     m_utils.freeScopeHeap();
-    m_utils.syncVariables(m_utils.targetVariables());
+    m_utils.syncVariables();
 
     std::string name = m_utils.scriptFunctionName(ins->procedurePrototype);
     llvm::FunctionType *type = m_utils.scriptFunctionType(ins->procedurePrototype);
@@ -80,7 +80,7 @@ LLVMInstruction *Procedures::buildCallProcedure(LLVMInstruction *ins)
         m_builder.SetInsertPoint(nextBranch);
     }
 
-    m_utils.reloadVariables(m_utils.targetVariables());
+    m_utils.reloadVariables();
     m_utils.reloadLists();
     return ins->next;
 }

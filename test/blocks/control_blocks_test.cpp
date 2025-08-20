@@ -1064,44 +1064,95 @@ TEST_F(ControlBlocksTest, CreateCloneOfStage)
     }
 }
 
-TEST_F(ControlBlocksTest, DeleteThisClone)
+TEST_F(ControlBlocksTest, DeleteThisClone_Clone)
 {
-    Sprite sprite;
-    sprite.setEngine(&m_engineMock);
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto var = std::make_shared<Variable>("", "");
+    sprite->addVariable(var);
 
     std::shared_ptr<Sprite> clone;
     EXPECT_CALL(m_engineMock, cloneLimit()).WillRepeatedly(Return(-1));
     EXPECT_CALL(m_engineMock, initClone(_)).WillOnce(SaveArg<0>(&clone));
-    EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, &sprite));
+    EXPECT_CALL(m_engineMock, moveDrawableBehindOther(_, sprite.get()));
     EXPECT_CALL(m_engineMock, requestRedraw());
-    sprite.clone();
+    sprite->clone();
     ASSERT_TRUE(clone);
 
-    ScriptBuilder builder(m_extension.get(), m_engine, clone);
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
 
     builder.addBlock("control_delete_this_clone");
     auto block = builder.currentBlock();
 
-    Compiler compiler(&m_engineMock, clone.get());
+    builder.addBlock("test_set_var");
+    builder.addEntityField("VARIABLE", var);
+    builder.addValueInput("VALUE", true);
+    builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
     auto code = compiler.compile(block);
-    Script script(clone.get(), block, &m_engineMock);
+    Script script(sprite.get(), block, &m_engineMock);
     script.setCode(code);
     Thread thread(clone.get(), &m_engineMock, &script);
 
     EXPECT_CALL(m_engineMock, stopTarget(clone.get(), nullptr));
     EXPECT_CALL(m_engineMock, deinitClone(clone));
     thread.run();
+
+    // The script should stop (variable value is false)
+    ASSERT_FALSE(clone->variableAt(0)->value().toBool());
 }
 
-TEST_F(ControlBlocksTest, DeleteThisCloneStage)
+TEST_F(ControlBlocksTest, DeleteThisClone_NotCloneSprite)
+{
+    auto sprite = std::make_shared<Sprite>();
+    sprite->setEngine(&m_engineMock);
+
+    auto var = std::make_shared<Variable>("", "");
+    sprite->addVariable(var);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, sprite);
+
+    builder.addBlock("control_delete_this_clone");
+    auto block = builder.currentBlock();
+
+    builder.addBlock("test_set_var");
+    builder.addEntityField("VARIABLE", var);
+    builder.addValueInput("VALUE", true);
+    builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, sprite.get());
+    auto code = compiler.compile(block);
+    Script script(sprite.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(sprite.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, stopTarget).Times(0);
+    EXPECT_CALL(m_engineMock, deinitClone).Times(0);
+    thread.run();
+
+    // The script should NOT stop (variable value is true)
+    ASSERT_TRUE(var->value().toBool());
+}
+
+TEST_F(ControlBlocksTest, DeleteThisClone_Stage)
 {
     auto target = std::make_shared<Stage>();
     target->setEngine(&m_engineMock);
+
+    auto var = std::make_shared<Variable>("", "");
+    target->addVariable(var);
 
     ScriptBuilder builder(m_extension.get(), m_engine, target);
 
     builder.addBlock("control_delete_this_clone");
     auto block = builder.currentBlock();
+
+    builder.addBlock("test_set_var");
+    builder.addEntityField("VARIABLE", var);
+    builder.addValueInput("VALUE", true);
+    builder.currentBlock();
 
     Compiler compiler(&m_engineMock, target.get());
     auto code = compiler.compile(block);
@@ -1112,4 +1163,7 @@ TEST_F(ControlBlocksTest, DeleteThisCloneStage)
     EXPECT_CALL(m_engineMock, stopTarget).Times(0);
     EXPECT_CALL(m_engineMock, deinitClone).Times(0);
     thread.run();
+
+    // The script should NOT stop (variable value is true)
+    ASSERT_TRUE(var->value().toBool());
 }

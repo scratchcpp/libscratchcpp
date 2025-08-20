@@ -1673,6 +1673,20 @@ TEST_F(CompilerTest, CreateStop)
     compile(m_compiler.get(), block.get());
 }
 
+TEST_F(CompilerTest, CreateStopWithoutSync)
+{
+
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        EXPECT_CALL(*m_builder, createStopWithoutSync());
+        compiler->createStopWithoutSync();
+        return nullptr;
+    });
+
+    compile(m_compiler.get(), block.get());
+}
+
 TEST_F(CompilerTest, CreateProcedureCall)
 {
 

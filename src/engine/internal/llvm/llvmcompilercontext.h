@@ -4,6 +4,7 @@
 
 #include <llvm/IR/Module.h>
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
+#include <llvm/Passes/OptimizationLevel.h>
 
 #include <scratchcpp/compilercontext.h>
 
@@ -52,6 +53,8 @@ class LLVMCompilerContext : public CompilerContext
         using DestroyCoroFuncType = void (*)(void *);
 
         void initTarget();
+        void createTargetMachine();
+        void optimize(llvm::OptimizationLevel optLevel);
 
         llvm::Function *createCoroResumeFunction();
         llvm::Function *createCoroDestroyFunction();
@@ -62,6 +65,7 @@ class LLVMCompilerContext : public CompilerContext
         std::unique_ptr<llvm::Module> m_module;
         llvm::LLVMContext *m_llvmCtxPtr = nullptr;
         llvm::Module *m_modulePtr = nullptr;
+        std::unique_ptr<llvm::TargetMachine> m_targetMachine;
         llvm::Expected<std::unique_ptr<llvm::orc::LLJIT>> m_jit;
         bool m_jitInitialized = false;
 

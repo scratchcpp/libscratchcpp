@@ -21,6 +21,13 @@ static std::unordered_map<ValueType, Compiler::StaticType> TYPE_MAP = {
     { ValueType::Pointer, Compiler::StaticType::Pointer }
 };
 
+static std::unordered_map<Compiler::StaticType, ValueType> REVERSE_TYPE_MAP = {
+    { Compiler::StaticType::Number, ValueType::Number },
+    { Compiler::StaticType::Bool, ValueType::Bool },
+    { Compiler::StaticType::String, ValueType::String },
+    { Compiler::StaticType::Pointer, ValueType::Pointer }
+};
+
 LLVMBuildUtils::LLVMBuildUtils(LLVMCompilerContext *ctx, llvm::IRBuilder<> &builder, Compiler::CodeType codeType) :
     m_ctx(ctx),
     m_llvmCtx(*ctx->llvmCtx()),
@@ -59,30 +66,10 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
     // Create variable pointers
     for (auto &[var, varPtr] : m_variablePtrs) {
         llvm::Value *ptr = getVariablePtr(m_targetVariables, var);
-
-        // Direct access
         varPtr.heapPtr = ptr;
 
-        // All variables are currently created on the stack and synced later (seems to be faster)
-        // NOTE: Strings are NOT copied, only the pointer is copied
-        // TODO: Restore this feature
-        // varPtr.stackPtr = m_builder.CreateAlloca(m_valueDataType);
-        varPtr.stackPtr = varPtr.heapPtr;
-        varPtr.onStack = false;
-
-        // If there are no write operations outside loops, initialize the stack variable now
-        /*Variable *variable = var;
-        // TODO: Loop scope was used here, replace it with some "inside loop" flag if needed
-        auto it = std::find_if(m_variableInstructions.begin(), m_variableInstructions.end(), [variable](const LLVMInstruction *ins) {
-            return ins->type == LLVMInstruction::Type::WriteVariable && ins->targetVariable == variable && !ins->loopScope;
-        });
-
-        if (it == m_variableInstructions.end()) {
-            createValueCopy(ptr, varPtr.stackPtr);
-            varPtr.onStack = true;
-        } else
-            varPtr.onStack = false; // use heap before the first assignment
-        */
+        // Store variables locally to enable optimizations
+        varPtr.stackPtr = m_builder.CreateAlloca(m_valueDataType);
     }
 
     // Create list pointers
@@ -101,8 +88,16 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
 
             llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
             m_builder.CreateStore(size, listPtr.size);
+
+            // Store list type info locally to leave static type analysis to LLVM
+            listPtr.hasNumber = m_builder.CreateAlloca(m_builder.getInt1Ty(), nullptr, list->name() + ".hasNumber");
+            listPtr.hasBool = m_builder.CreateAlloca(m_builder.getInt1Ty(), nullptr, list->name() + ".hasBool");
+            listPtr.hasString = m_builder.CreateAlloca(m_builder.getInt1Ty(), nullptr, list->name() + ".hasString");
         }
     }
+
+    reloadVariables();
+    reloadLists();
 
     // Create end branch
     m_endBranch = llvm::BasicBlock::Create(m_llvmCtx, "end", m_function);
@@ -113,10 +108,15 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
     assert(m_stringHeap.size() == 1);
     freeScopeHeap();
 
+    // Sync
+    llvm::BasicBlock *syncBranch = llvm::BasicBlock::Create(m_llvmCtx, "sync", m_function);
+    m_builder.CreateBr(syncBranch);
+
+    m_builder.SetInsertPoint(syncBranch);
+    syncVariables();
     m_builder.CreateBr(m_endBranch);
 
     m_builder.SetInsertPoint(m_endBranch);
-    syncVariables(m_targetVariables);
 
     // End the script function
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
@@ -309,33 +309,35 @@ LLVMListPtr &LLVMBuildUtils::listPtr(List *list)
     return m_listPtrs[list];
 }
 
-void LLVMBuildUtils::syncVariables(llvm::Value *targetVariables)
+void LLVMBuildUtils::syncVariables()
 {
     // Copy stack variables to the actual variables
-    for (auto &[var, varPtr] : m_variablePtrs) {
-        if (varPtr.onStack && varPtr.changed)
-            createValueCopy(varPtr.stackPtr, getVariablePtr(targetVariables, var));
-
-        varPtr.changed = false;
-    }
+    for (auto &[var, varPtr] : m_variablePtrs)
+        createValueCopy(varPtr.stackPtr, getVariablePtr(m_targetVariables, var));
 }
 
-void LLVMBuildUtils::reloadVariables(llvm::Value *targetVariables)
+void LLVMBuildUtils::reloadVariables()
 {
-    // Reset variables to use heap
+    // Load variables to stack
     for (auto &[var, varPtr] : m_variablePtrs) {
-        varPtr.onStack = false;
-        varPtr.changed = false;
+        llvm::Value *ptr = getVariablePtr(m_targetVariables, var);
+        createValueCopy(ptr, varPtr.stackPtr);
     }
 }
 
 void LLVMBuildUtils::reloadLists()
 {
-    // Load list size info
-    if (m_warp) {
-        for (auto &[list, listPtr] : m_listPtrs) {
+    // Load list size and type info
+    for (auto &[list, listPtr] : m_listPtrs) {
+        if (listPtr.size) {
             llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
             m_builder.CreateStore(size, listPtr.size);
+        }
+
+        if (listPtr.hasNumber && listPtr.hasBool && listPtr.hasString) {
+            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasNumber);
+            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasBool);
+            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasString);
         }
     }
 }
@@ -402,6 +404,12 @@ Compiler::StaticType LLVMBuildUtils::mapType(ValueType type)
     return TYPE_MAP[type];
 }
 
+ValueType LLVMBuildUtils::mapType(Compiler::StaticType type)
+{
+    assert(REVERSE_TYPE_MAP.find(type) != REVERSE_TYPE_MAP.cend());
+    return REVERSE_TYPE_MAP[type];
+}
+
 bool LLVMBuildUtils::isSingleType(Compiler::StaticType type)
 {
     // Check if the type is a power of 2 (only one bit set)
@@ -441,7 +449,7 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
 
     if (isSingleType(targetType)) {
         // Handle multiple source type cases with runtime switch
-        typePtr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 1);
+        typePtr = getValueTypePtr(reg);
         loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
 
         mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
@@ -643,7 +651,7 @@ llvm::Value *LLVMBuildUtils::removeNaN(llvm::Value *num)
     return m_builder.CreateSelect(isNaN(num), llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)), num);
 }
 
-void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType destType, Compiler::StaticType targetType)
+void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTypePtr, LLVMRegister *reg, Compiler::StaticType destType, Compiler::StaticType targetType)
 {
     llvm::Value *targetPtr = nullptr;
     const bool targetTypeIsSingle = isSingleType(targetType);
@@ -662,11 +670,10 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
         loadedTargetType = m_builder.getInt32(static_cast<uint32_t>(mappedType));
     else {
         assert(!reg->isConst());
-        llvm::Value *targetTypePtr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 1);
+        llvm::Value *targetTypePtr = getValueTypePtr(reg);
         loadedTargetType = m_builder.CreateLoad(m_builder.getInt32Ty(), targetTypePtr);
     }
 
-    llvm::Value *destTypePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
     llvm::Value *loadedDestType = m_builder.CreateLoad(m_builder.getInt32Ty(), destTypePtr);
 
     llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
@@ -715,8 +722,7 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
             // Write bool to number value directly and change type
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
             m_builder.CreateStore(targetPtr, ptr);
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), typePtr);
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), destTypePtr);
             m_builder.CreateBr(mergeBlock);
         }
 
@@ -736,8 +742,7 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
             llvm::Value *destStringPtr = m_builder.CreateCall(m_functions.resolve_string_pool_new(), m_builder.getInt1(false));
 
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), typePtr);
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), destTypePtr);
             m_builder.CreateStore(destStringPtr, ptr);
             m_builder.CreateCall(m_functions.resolve_string_assign(), { destStringPtr, targetPtr });
 
@@ -767,9 +772,8 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
 
             // Write number to bool value directly and change type
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
             m_builder.CreateStore(targetPtr, ptr);
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), typePtr);
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), destTypePtr);
             m_builder.CreateBr(mergeBlock);
         }
 
@@ -807,8 +811,7 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
             llvm::Value *destStringPtr = m_builder.CreateCall(m_functions.resolve_string_pool_new(), m_builder.getInt1(false));
 
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), typePtr);
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), destTypePtr);
             m_builder.CreateStore(destStringPtr, ptr);
             m_builder.CreateCall(m_functions.resolve_string_assign(), { destStringPtr, targetPtr });
 
@@ -841,8 +844,7 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
             llvm::Value *destStringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
             m_builder.CreateCall(m_functions.resolve_string_pool_free(), destStringPtr);
             m_builder.CreateStore(targetPtr, ptr);
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), typePtr);
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), destTypePtr);
             m_builder.CreateBr(mergeBlock);
         }
 
@@ -863,8 +865,7 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
             llvm::Value *destStringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
             m_builder.CreateCall(m_functions.resolve_string_pool_free(), destStringPtr);
             m_builder.CreateStore(targetPtr, ptr);
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), typePtr);
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), destTypePtr);
             m_builder.CreateBr(mergeBlock);
         }
 
@@ -895,10 +896,23 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
     m_builder.SetInsertPoint(mergeBlock);
 }
 
-void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType targetType)
+void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTypePtr, LLVMRegister *reg, Compiler::StaticType targetType)
 {
     // Same as createValueStore(), but the destination type is unknown at compile time
-    createValueStore(reg, destPtr, Compiler::StaticType::Unknown, targetType);
+    createValueStore(destPtr, destTypePtr, reg, Compiler::StaticType::Unknown, targetType);
+}
+
+llvm::Value *LLVMBuildUtils::getValueTypePtr(llvm::Value *value)
+{
+    return m_builder.CreateStructGEP(m_valueDataType, value, 1);
+}
+
+llvm::Value *LLVMBuildUtils::getValueTypePtr(LLVMRegister *reg)
+{
+    if (reg->typeVar)
+        return reg->typeVar;
+    else
+        return getValueTypePtr(reg->value);
 }
 
 llvm::Value *LLVMBuildUtils::getListSize(const LLVMListPtr &listPtr)
@@ -1010,7 +1024,7 @@ llvm::Value *LLVMBuildUtils::createValue(LLVMRegister *reg)
         }
 
         // Store type
-        llvm::Value *typeField = m_builder.CreateStructGEP(m_valueDataType, ret, 1);
+        llvm::Value *typeField = getValueTypePtr(ret);
         ValueType type = it->first;
         m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(type)), typeField);
 
@@ -1264,9 +1278,9 @@ void LLVMBuildUtils::createSuspend()
             m_builder.SetInsertPoint(suspendBranch);
         }
 
-        syncVariables(m_targetVariables);
+        syncVariables();
         m_coroutine->createSuspend();
-        reloadVariables(m_targetVariables);
+        reloadVariables();
         reloadLists();
 
         if (m_warpArg) {

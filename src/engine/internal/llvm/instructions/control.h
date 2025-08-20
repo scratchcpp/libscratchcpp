@@ -27,6 +27,7 @@ class Control : public InstructionGroup
         LLVMInstruction *buildBeginLoopCondition(LLVMInstruction *ins);
         LLVMInstruction *buildEndLoop(LLVMInstruction *ins);
         LLVMInstruction *buildStop(LLVMInstruction *ins);
+        LLVMInstruction *buildStopWithoutSync(LLVMInstruction *ins);
 };
 
 } // namespace libscratchcpp::llvmins

@@ -30,7 +30,7 @@ LLVMInstruction *Functions::buildFunctionCall(LLVMInstruction *ins)
     std::vector<llvm::Value *> args;
 
     // Variables must be synchronized because the function can read them
-    m_utils.syncVariables(m_utils.targetVariables());
+    m_utils.syncVariables();
 
     // Add execution context arg
     if (ins->functionCtxArg) {

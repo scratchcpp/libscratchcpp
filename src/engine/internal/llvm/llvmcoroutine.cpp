@@ -112,7 +112,7 @@ llvm::Value *LLVMCoroutine::createResume(llvm::Module *module, llvm::IRBuilder<>
 
     llvm::Value *ret = builder->CreateAlloca(builder->getInt1Ty());
     llvm::Value *done = builder->CreateCall(coroDone, { coroHandle });
-    done = builder->CreateCall(coroDone, { coroHandle });
+    builder->CreateStore(done, ret);
 
     llvm::BasicBlock *destroyBranch = llvm::BasicBlock::Create(ctx, "", function);
     llvm::BasicBlock *resumeBranch = llvm::BasicBlock::Create(ctx, "", function);
