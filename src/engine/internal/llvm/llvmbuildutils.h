@@ -27,9 +27,15 @@ class LLVMBuildUtils
             LT
         };
 
+        enum class NumberType
+        {
+            Int,
+            Double
+        };
+
         LLVMBuildUtils(LLVMCompilerContext *ctx, llvm::IRBuilder<> &builder, Compiler::CodeType codeType);
 
-        void init(llvm::Function *function, BlockPrototype *procedurePrototype, bool warp);
+        void init(llvm::Function *function, BlockPrototype *procedurePrototype, bool warp, const std::vector<std::shared_ptr<LLVMRegister>> &regs);
         void end(LLVMInstruction *lastInstruction, LLVMRegister *lastConstant);
 
         LLVMCompilerContext *compilerCtx() const;
@@ -80,13 +86,21 @@ class LLVMBuildUtils
         static bool isSingleType(Compiler::StaticType type);
 
         llvm::Value *addAlloca(llvm::Type *type);
-        llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType);
+        llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType, NumberType targetNumType = NumberType::Double);
         llvm::Type *getType(Compiler::StaticType type, bool isReturnType);
         llvm::Value *isNaN(llvm::Value *num);
         llvm::Value *removeNaN(llvm::Value *num);
 
-        void createValueStore(llvm::Value *destPtr, llvm::Value *destTypePtr, LLVMRegister *reg, Compiler::StaticType destType, Compiler::StaticType targetType);
-        void createValueStore(llvm::Value *destPtr, llvm::Value *destTypePtr, LLVMRegister *reg, Compiler::StaticType targetType);
+        void createValueStore(
+            llvm::Value *destPtr,
+            llvm::Value *destTypePtr,
+            llvm::Value *destIsIntVar,
+            llvm::Value *destIntVar,
+            LLVMRegister *reg,
+            Compiler::StaticType destType,
+            Compiler::StaticType targetType);
+
+        void createValueStore(llvm::Value *destPtr, llvm::Value *destTypePtr, llvm::Value *destIsIntVar, llvm::Value *destIntVar, LLVMRegister *reg, Compiler::StaticType targetType);
 
         llvm::Value *getValueTypePtr(llvm::Value *value);
         llvm::Value *getValueTypePtr(LLVMRegister *reg);
@@ -106,8 +120,8 @@ class LLVMBuildUtils
         void createVariableMap();
         void createListMap();
 
-        llvm::Value *castRawValue(LLVMRegister *reg, Compiler::StaticType targetType);
-        llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType);
+        llvm::Value *castRawValue(LLVMRegister *reg, Compiler::StaticType targetType, NumberType targetNumType);
+        llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType, NumberType targetNumType);
 
         void createValueCopy(llvm::Value *source, llvm::Value *target);
         void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);

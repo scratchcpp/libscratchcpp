@@ -100,9 +100,8 @@ LLVMInstruction *Lists::buildRemoveListItem(LLVMInstruction *ins)
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     // Range check
-    llvm::Value *indexDouble = m_utils.castValue(arg.second, arg.first);
-    llvm::Value *indexInt = getIndex(listPtr, indexDouble);
-    llvm::Value *inRange = createSizeRangeCheck(listPtr, indexInt, "removeListItem.indexInRange");
+    llvm::Value *index = m_utils.castValue(arg.second, Compiler::StaticType::Number, LLVMBuildUtils::NumberType::Int);
+    llvm::Value *inRange = createIndexRangeCheck(listPtr, index, "removeListItem.indexInRange");
 
     llvm::BasicBlock *removeBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
     llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
@@ -110,7 +109,7 @@ LLVMInstruction *Lists::buildRemoveListItem(LLVMInstruction *ins)
 
     // Remove
     m_builder.SetInsertPoint(removeBlock);
-    m_builder.CreateCall(m_utils.functions().resolve_list_remove(), { listPtr.ptr, indexInt });
+    m_builder.CreateCall(m_utils.functions().resolve_list_remove(), { listPtr.ptr, index });
 
     if (listPtr.size) {
         // Update size
@@ -144,17 +143,21 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
     llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
     m_builder.CreateCondBr(isAllocated, ifBlock, elseBlock);
 
+    // TODO: Add integer support for lists
+    llvm::Value *isIntVar = m_utils.addAlloca(m_builder.getInt1Ty());
+    llvm::Value *intVar = m_utils.addAlloca(m_builder.getInt64Ty());
+
     // If there's enough space, use the allocated memory
     m_builder.SetInsertPoint(ifBlock);
     llvm::Value *itemPtr = m_utils.getListItem(listPtr, size);
-    m_utils.createValueStore(itemPtr, m_utils.getValueTypePtr(itemPtr), arg.second, type);
+    m_utils.createValueStore(itemPtr, m_utils.getValueTypePtr(itemPtr), isIntVar, intVar, arg.second, type);
     m_builder.CreateStore(m_builder.CreateAdd(size, m_builder.getInt64(1)), listPtr.sizePtr); // update size stored in *sizePtr
     m_builder.CreateBr(nextBlock);
 
     // Otherwise call appendEmpty()
     m_builder.SetInsertPoint(elseBlock);
     itemPtr = m_builder.CreateCall(m_utils.functions().resolve_list_append_empty(), listPtr.ptr);
-    m_utils.createValueStore(itemPtr, m_utils.getValueTypePtr(itemPtr), arg.second, type);
+    m_utils.createValueStore(itemPtr, m_utils.getValueTypePtr(itemPtr), isIntVar, intVar, arg.second, type);
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
@@ -182,18 +185,21 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     // Range check
-    llvm::Value *indexDouble = m_utils.castValue(indexArg.second, indexArg.first);
-    llvm::Value *indexInt = getIndex(listPtr, indexDouble);
-    llvm::Value *inRange = createSizeRangeCheck(listPtr, indexInt, "insertToList.indexInRange", true);
+    llvm::Value *index = m_utils.castValue(indexArg.second, Compiler::StaticType::Number, LLVMBuildUtils::NumberType::Int);
+    llvm::Value *inRange = createIndexRangeCheck(listPtr, index, "insertToList.indexInRange", true);
 
     llvm::BasicBlock *insertBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
     llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
     m_builder.CreateCondBr(inRange, insertBlock, nextBlock);
 
+    // TODO: Add integer support for lists
+    llvm::Value *isIntVar = m_utils.addAlloca(m_builder.getInt1Ty());
+    llvm::Value *intVar = m_utils.addAlloca(m_builder.getInt64Ty());
+
     // Insert
     m_builder.SetInsertPoint(insertBlock);
-    llvm::Value *itemPtr = m_builder.CreateCall(m_utils.functions().resolve_list_insert_empty(), { listPtr.ptr, indexInt });
-    m_utils.createValueStore(itemPtr, m_utils.getValueTypePtr(itemPtr), valueArg.second, type);
+    llvm::Value *itemPtr = m_builder.CreateCall(m_utils.functions().resolve_list_insert_empty(), { listPtr.ptr, index });
+    m_utils.createValueStore(itemPtr, m_utils.getValueTypePtr(itemPtr), isIntVar, intVar, valueArg.second, type);
 
     if (listPtr.size) {
         // Update size
@@ -227,9 +233,8 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
     Compiler::StaticType listType = ins->targetType;
 
     // Range check
-    llvm::Value *indexDouble = m_utils.castValue(indexArg.second, indexArg.first);
-    llvm::Value *indexInt = getIndex(listPtr, indexDouble);
-    llvm::Value *inRange = createSizeRangeCheck(listPtr, indexInt, "listReplace.indexInRange");
+    llvm::Value *index = m_utils.castValue(indexArg.second, Compiler::StaticType::Number, LLVMBuildUtils::NumberType::Int);
+    llvm::Value *inRange = createIndexRangeCheck(listPtr, index, "listReplace.indexInRange");
 
     llvm::BasicBlock *replaceBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
     llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(llvmCtx, "", function);
@@ -238,13 +243,17 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
     // Replace
     m_builder.SetInsertPoint(replaceBlock);
 
-    llvm::Value *itemPtr = m_utils.getListItem(listPtr, indexInt);
+    llvm::Value *itemPtr = m_utils.getListItem(listPtr, index);
     llvm::Value *typePtr = m_utils.getValueTypePtr(itemPtr);
     llvm::Value *loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
     llvm::Value *typeVar = createListTypeVar(listPtr, loadedType);
 
+    // TODO: Add integer support for lists
+    llvm::Value *isIntVar = m_utils.addAlloca(m_builder.getInt1Ty());
+    llvm::Value *intVar = m_utils.addAlloca(m_builder.getInt64Ty());
+
     createListTypeAssumption(listPtr, typeVar, ins->targetType);
-    m_utils.createValueStore(itemPtr, typeVar, valueArg.second, listType, type);
+    m_utils.createValueStore(itemPtr, typeVar, isIntVar, intVar, valueArg.second, listType, type);
 
     // Value store may change type, make sure to update it
     loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typeVar);
@@ -285,9 +294,8 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     // Range check
-    llvm::Value *indexDouble = m_utils.castValue(arg.second, arg.first);
-    llvm::Value *indexInt = getIndex(listPtr, indexDouble);
-    llvm::Value *inRange = createSizeRangeCheck(listPtr, indexInt, "getListItem.indexInRange");
+    llvm::Value *index = m_utils.castValue(arg.second, Compiler::StaticType::Number, LLVMBuildUtils::NumberType::Int);
+    llvm::Value *inRange = createIndexRangeCheck(listPtr, index, "getListItem.indexInRange");
 
     llvm::BasicBlock *inRangeBlock = llvm::BasicBlock::Create(llvmCtx, "getListItem.inRange", function);
     llvm::BasicBlock *outOfRangeBlock = llvm::BasicBlock::Create(llvmCtx, "getListItem.outOfRange", function);
@@ -296,7 +304,7 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
 
     // In range
     m_builder.SetInsertPoint(inRangeBlock);
-    llvm::Value *itemPtr = m_utils.getListItem(listPtr, indexInt);
+    llvm::Value *itemPtr = m_utils.getListItem(listPtr, index);
     llvm::Value *itemType = m_builder.CreateLoad(m_builder.getInt32Ty(), m_utils.getValueTypePtr(itemPtr));
     m_builder.CreateBr(nextBlock);
 
@@ -332,6 +340,8 @@ LLVMInstruction *Lists::buildGetListSize(LLVMInstruction *ins)
     const LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
     llvm::Value *size = m_utils.getListSize(listPtr);
     ins->functionReturnReg->value = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
+    ins->functionReturnReg->isInt = m_builder.getInt1(true);
+    ins->functionReturnReg->intValue = size;
 
     return ins->next;
 }
@@ -362,31 +372,14 @@ LLVMInstruction *Lists::buildListContainsItem(LLVMInstruction *ins)
     return ins->next;
 }
 
-llvm::Value *Lists::getIndex(const LLVMListPtr &listPtr, llvm::Value *indexDouble)
-{
-    llvm::Function *expectIntrinsic = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::expect, m_builder.getInt64Ty());
-
-    llvm::Value *zero = llvm::ConstantFP::get(m_utils.llvmCtx(), llvm::APFloat(0.0));
-    llvm::Value *isNegative = m_builder.CreateFCmpOLT(indexDouble, zero, "listIndex.isNegative");
-    llvm::Value *intMax = llvm::ConstantInt::get(m_builder.getInt64Ty(), INT64_MAX);
-    llvm::Value *intIndex = m_builder.CreateFPToUI(indexDouble, m_builder.getInt64Ty(), "listIndex.int");
-
-    // Tell the optimizer that negative indices are uncommon
-    llvm::Value *index = m_builder.CreateSelect(isNegative, intMax, intIndex);
-    return m_builder.CreateCall(expectIntrinsic, { index, intIndex });
-}
-
-llvm::Value *Lists::createSizeRangeCheck(const LLVMListPtr &listPtr, llvm::Value *indexInt, const std::string &name, bool includeSize)
+llvm::Value *Lists::createIndexRangeCheck(const LLVMListPtr &listPtr, llvm::Value *index, const std::string &name, bool includeSize)
 {
     llvm::Function *expectIntrinsic = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::expect, m_builder.getInt1Ty());
 
+    llvm::Value *min = llvm::ConstantInt::get(m_builder.getInt64Ty(), 0, true);
     llvm::Value *size = m_utils.getListSize(listPtr);
-    llvm::Value *inRange;
-
-    if (includeSize)
-        inRange = m_builder.CreateICmpULE(indexInt, size, name);
-    else
-        inRange = m_builder.CreateICmpULT(indexInt, size, name);
+    llvm::Value *sizeCheck = includeSize ? m_builder.CreateICmpSLE(index, size) : m_builder.CreateICmpSLT(index, size);
+    llvm::Value *inRange = m_builder.CreateAnd(m_builder.CreateICmpSGE(index, min), sizeCheck, name);
 
     // Tell the optimizer that indices in range are more common
     return m_builder.CreateCall(expectIntrinsic, { inRange, m_builder.getInt1(true) });

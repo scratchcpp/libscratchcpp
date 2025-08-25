@@ -20,6 +20,9 @@ struct LLVMVariablePtr
 {
         llvm::Value *heapPtr = nullptr;
         llvm::Value *stackPtr = nullptr;
+
+        llvm::Value *isInt = nullptr;
+        llvm::Value *intValue = nullptr;
 };
 
 } // namespace libscratchcpp

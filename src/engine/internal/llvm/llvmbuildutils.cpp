@@ -41,7 +41,7 @@ LLVMBuildUtils::LLVMBuildUtils(LLVMCompilerContext *ctx, llvm::IRBuilder<> &buil
     createListMap();
 }
 
-void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePrototype, bool warp)
+void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePrototype, bool warp, const std::vector<std::shared_ptr<LLVMRegister>> &regs)
 {
     m_function = function;
     m_procedurePrototype = procedurePrototype;
@@ -63,6 +63,13 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
     if (!m_warp)
         m_coroutine = std::make_unique<LLVMCoroutine>(m_ctx->module(), &m_builder, m_function);
 
+    // Init registers
+    for (auto reg : regs) {
+        bool isIntConst = (reg->isConst() && optimizeRegisterType(reg.get()) == Compiler::StaticType::Number && reg->constValue().toDouble() == std::floor(reg->constValue().toDouble()));
+        reg->isInt = m_builder.getInt1(isIntConst);
+        reg->intValue = llvm::ConstantInt::get(m_builder.getInt64Ty(), reg->constValue().toDouble(), true);
+    }
+
     // Create variable pointers
     for (auto &[var, varPtr] : m_variablePtrs) {
         llvm::Value *ptr = getVariablePtr(m_targetVariables, var);
@@ -70,6 +77,12 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
 
         // Store variables locally to enable optimizations
         varPtr.stackPtr = m_builder.CreateAlloca(m_valueDataType);
+
+        // Integer support
+        varPtr.isInt = m_builder.CreateAlloca(m_builder.getInt1Ty(), nullptr, var->name() + ".isInt");
+        varPtr.intValue = m_builder.CreateAlloca(m_builder.getInt64Ty(), nullptr, var->name() + ".intValue");
+        m_builder.CreateStore(m_builder.getInt1(false), varPtr.isInt);
+        m_builder.CreateStore(llvm::ConstantInt::get(m_builder.getInt64Ty(), 0, true), varPtr.isInt);
     }
 
     // Create list pointers
@@ -322,6 +335,7 @@ void LLVMBuildUtils::reloadVariables()
     for (auto &[var, varPtr] : m_variablePtrs) {
         llvm::Value *ptr = getVariablePtr(m_targetVariables, var);
         createValueCopy(ptr, varPtr.stackPtr);
+        m_builder.CreateStore(m_builder.getInt1(false), varPtr.isInt);
     }
 }
 
@@ -426,17 +440,17 @@ llvm::Value *LLVMBuildUtils::addAlloca(llvm::Type *type)
     return ret;
 }
 
-llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType targetType)
+llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType targetType, NumberType targetNumType)
 {
     if (reg->isConst()) {
         if (!isSingleType(targetType))
             return createValue(reg);
         else
-            return castConstValue(reg->constValue(), targetType);
+            return castConstValue(reg->constValue(), targetType, targetNumType);
     }
 
     if (reg->isRawValue)
-        return castRawValue(reg, targetType);
+        return castRawValue(reg, targetType, targetNumType);
 
     assert(reg->type() != Compiler::StaticType::Void && targetType != Compiler::StaticType::Void);
 
@@ -468,8 +482,20 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
                 sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), numberBlock);
 
                 m_builder.SetInsertPoint(numberBlock);
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                llvm::Value *numberResult = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
+                llvm::Value *numberResult;
+
+                if (targetNumType == NumberType::Int) {
+                    // double/int -> int
+                    llvm::Value *doubleInt = m_builder.CreateFPToSI(reg->intValue, m_builder.getInt64Ty());
+                    numberResult = m_builder.CreateSelect(reg->isInt, reg->intValue, doubleInt);
+                } else {
+                    // double/int -> double
+                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
+                    llvm::Value *doubleValue = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
+                    llvm::Value *intDouble = m_builder.CreateSIToFP(reg->intValue, m_builder.getDoubleTy());
+                    numberResult = m_builder.CreateSelect(reg->isInt, intDouble, doubleValue);
+                }
+
                 m_builder.CreateBr(mergeBlock);
                 results.push_back({ numberBlock, numberResult });
             }
@@ -482,7 +508,16 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
                 m_builder.SetInsertPoint(boolBlock);
                 llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
                 llvm::Value *boolValue = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-                llvm::Value *boolResult = m_builder.CreateUIToFP(boolValue, m_builder.getDoubleTy());
+                llvm::Value *boolResult;
+
+                if (targetNumType == NumberType::Int) {
+                    // bool -> int
+                    boolResult = m_builder.CreateZExt(boolValue, m_builder.getInt64Ty());
+                } else {
+                    // bool -> double
+                    boolResult = m_builder.CreateUIToFP(boolValue, m_builder.getDoubleTy());
+                }
+
                 m_builder.CreateBr(mergeBlock);
                 results.push_back({ boolBlock, boolResult });
             }
@@ -496,6 +531,10 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
                 llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
                 llvm::Value *stringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
                 llvm::Value *stringResult = m_builder.CreateCall(m_functions.resolve_value_stringToDouble(), stringPtr);
+
+                if (targetNumType == NumberType::Int)
+                    stringResult = m_builder.CreateFPToSI(stringResult, m_builder.getInt64Ty());
+
                 m_builder.CreateBr(mergeBlock);
                 results.push_back({ stringBlock, stringResult });
             }
@@ -512,7 +551,11 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
                 m_builder.SetInsertPoint(numberBlock);
                 llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
                 llvm::Value *numberValue = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-                llvm::Value *numberResult = m_builder.CreateFCmpONE(numberValue, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)));
+
+                llvm::Value *intResult = m_builder.CreateICmpNE(reg->intValue, llvm::ConstantInt::get(m_builder.getInt64Ty(), 0, true));
+                llvm::Value *doubleResult = m_builder.CreateFCmpONE(numberValue, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)));
+                llvm::Value *numberResult = m_builder.CreateSelect(reg->isInt, intResult, doubleResult);
+
                 m_builder.CreateBr(mergeBlock);
                 results.push_back({ numberBlock, numberResult });
             }
@@ -553,7 +596,11 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
 
                 m_builder.SetInsertPoint(numberBlock);
                 llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                llvm::Value *value = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
+                llvm::Value *doubleValue = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
+
+                llvm::Value *intCast = m_builder.CreateSIToFP(reg->intValue, m_builder.getDoubleTy());
+                llvm::Value *value = m_builder.CreateSelect(reg->isInt, intCast, doubleValue);
+
                 llvm::Value *numberResult = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), value);
                 m_builder.CreateBr(mergeBlock);
                 results.push_back({ numberBlock, numberResult });
@@ -605,7 +652,12 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
 
     // Create phi node to merge results
     m_builder.SetInsertPoint(mergeBlock);
-    llvm::PHINode *result = m_builder.CreatePHI(getType(targetType, false), results.size());
+    llvm::Type *phiType = getType(targetType, false);
+
+    if (targetType == Compiler::StaticType::Number && targetNumType == NumberType::Int)
+        phiType = m_builder.getInt64Ty();
+
+    llvm::PHINode *result = m_builder.CreatePHI(phiType, results.size());
 
     for (auto &pair : results)
         result->addIncoming(pair.second, pair.first);
@@ -642,6 +694,7 @@ llvm::Type *LLVMBuildUtils::getType(Compiler::StaticType type, bool isReturnType
 
 llvm::Value *LLVMBuildUtils::isNaN(llvm::Value *num)
 {
+    assert(num->getType() == m_builder.getDoubleTy());
     return m_builder.CreateFCmpUNO(num, num);
 }
 
@@ -651,13 +704,17 @@ llvm::Value *LLVMBuildUtils::removeNaN(llvm::Value *num)
     return m_builder.CreateSelect(isNaN(num), llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)), num);
 }
 
-void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTypePtr, LLVMRegister *reg, Compiler::StaticType destType, Compiler::StaticType targetType)
+void LLVMBuildUtils::createValueStore(
+    llvm::Value *destPtr,
+    llvm::Value *destTypePtr,
+    llvm::Value *destIsIntVar,
+    llvm::Value *destIntVar,
+    LLVMRegister *reg,
+    Compiler::StaticType destType,
+    Compiler::StaticType targetType)
 {
-    llvm::Value *targetPtr = nullptr;
-    const bool targetTypeIsSingle = isSingleType(targetType);
-
-    if (targetTypeIsSingle)
-        targetPtr = castValue(reg, targetType);
+    assert(destIsIntVar->getType()->isPointerTy());
+    assert(destIntVar->getType()->isPointerTy());
 
     auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [targetType](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == targetType; });
     const ValueType mappedType = it == TYPE_MAP.cend() ? ValueType::Number : it->first; // unknown type can be ignored
@@ -696,14 +753,15 @@ void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTyp
             m_builder.SetInsertPoint(numberBlock);
 
             // Load number
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-            }
+            llvm::Value *doubleValue = castValue(reg, Compiler::StaticType::Number, NumberType::Double);
 
             // Write number to number directly
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
-            m_builder.CreateStore(targetPtr, ptr);
+            m_builder.CreateStore(doubleValue, ptr);
+
+            m_builder.CreateStore(reg->isInt, destIsIntVar);
+            m_builder.CreateStore(reg->intValue, destIntVar);
+
             m_builder.CreateBr(mergeBlock);
         }
 
@@ -714,10 +772,7 @@ void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTyp
             m_builder.SetInsertPoint(boolBlock);
 
             // Load bool
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-            }
+            llvm::Value *targetPtr = castValue(reg, Compiler::StaticType::Bool);
 
             // Write bool to number value directly and change type
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
@@ -733,10 +788,7 @@ void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTyp
             m_builder.SetInsertPoint(stringBlock);
 
             // Load string pointer
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
-            }
+            llvm::Value *targetPtr = castValue(reg, Compiler::StaticType::String);
 
             // Create a new string, change type and assign
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
@@ -765,15 +817,16 @@ void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTyp
             m_builder.SetInsertPoint(numberBlock);
 
             // Load number
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-            }
+            llvm::Value *doubleValue = castValue(reg, Compiler::StaticType::Number, NumberType::Double);
 
             // Write number to bool value directly and change type
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
-            m_builder.CreateStore(targetPtr, ptr);
+            m_builder.CreateStore(doubleValue, ptr);
             m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), destTypePtr);
+
+            m_builder.CreateStore(reg->isInt, destIsIntVar);
+            m_builder.CreateStore(reg->intValue, destIntVar);
+
             m_builder.CreateBr(mergeBlock);
         }
 
@@ -784,10 +837,7 @@ void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTyp
             m_builder.SetInsertPoint(boolBlock);
 
             // Load bool
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-            }
+            llvm::Value *targetPtr = castValue(reg, Compiler::StaticType::Bool);
 
             // Write bool to bool directly
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
@@ -802,10 +852,7 @@ void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTyp
             m_builder.SetInsertPoint(stringBlock);
 
             // Load string pointer
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
-            }
+            llvm::Value *targetPtr = castValue(reg, Compiler::StaticType::String);
 
             // Create a new string, change type and assign
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
@@ -834,17 +881,18 @@ void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTyp
             m_builder.SetInsertPoint(numberBlock);
 
             // Load number
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-            }
+            llvm::Value *doubleValue = castValue(reg, Compiler::StaticType::Number, NumberType::Double);
 
             // Free the string, write the number and change type
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
             llvm::Value *destStringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
             m_builder.CreateCall(m_functions.resolve_string_pool_free(), destStringPtr);
-            m_builder.CreateStore(targetPtr, ptr);
+            m_builder.CreateStore(doubleValue, ptr);
             m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), destTypePtr);
+
+            m_builder.CreateStore(reg->isInt, destIsIntVar);
+            m_builder.CreateStore(reg->intValue, destIntVar);
+
             m_builder.CreateBr(mergeBlock);
         }
 
@@ -855,10 +903,7 @@ void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTyp
             m_builder.SetInsertPoint(boolBlock);
 
             // Load bool
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-            }
+            llvm::Value *targetPtr = castValue(reg, Compiler::StaticType::Bool);
 
             // Free the string, write the bool and change type
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
@@ -876,10 +921,7 @@ void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTyp
             m_builder.SetInsertPoint(stringBlock);
 
             // Load string pointer
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
-            }
+            llvm::Value *targetPtr = castValue(reg, Compiler::StaticType::String);
 
             // Assign string directly
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
@@ -896,10 +938,10 @@ void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTyp
     m_builder.SetInsertPoint(mergeBlock);
 }
 
-void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTypePtr, LLVMRegister *reg, Compiler::StaticType targetType)
+void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTypePtr, llvm::Value *destIsIntVar, llvm::Value *destIntVar, LLVMRegister *reg, Compiler::StaticType targetType)
 {
     // Same as createValueStore(), but the destination type is unknown at compile time
-    createValueStore(destPtr, destTypePtr, reg, Compiler::StaticType::Unknown, targetType);
+    createValueStore(destPtr, destTypePtr, destIsIntVar, destIntVar, reg, Compiler::StaticType::Unknown, targetType);
 }
 
 llvm::Value *LLVMBuildUtils::getValueTypePtr(llvm::Value *value)
@@ -979,7 +1021,7 @@ llvm::Value *LLVMBuildUtils::createValue(LLVMRegister *reg)
 {
     if (reg->isConst()) {
         // Create a constant ValueData instance and store it
-        llvm::Constant *value = castConstValue(reg->constValue(), TYPE_MAP[reg->constValue().type()]);
+        llvm::Constant *value = castConstValue(reg->constValue(), TYPE_MAP[reg->constValue().type()], NumberType::Double);
         llvm::Value *ret = addAlloca(m_valueDataType);
 
         switch (reg->constValue().type()) {
@@ -1009,7 +1051,7 @@ llvm::Value *LLVMBuildUtils::createValue(LLVMRegister *reg)
 
         return ret;
     } else if (reg->isRawValue) {
-        llvm::Value *value = castRawValue(reg, reg->type());
+        llvm::Value *value = castRawValue(reg, reg->type(), NumberType::Double);
         llvm::Value *ret = addAlloca(m_valueDataType);
 
         // Store value
@@ -1356,21 +1398,34 @@ void LLVMBuildUtils::createListMap()
     }
 }
 
-llvm::Value *LLVMBuildUtils::castRawValue(LLVMRegister *reg, Compiler::StaticType targetType)
+llvm::Value *LLVMBuildUtils::castRawValue(LLVMRegister *reg, Compiler::StaticType targetType, NumberType targetNumType)
 {
-    if (reg->type() == targetType)
-        return reg->value;
+    if (reg->type() == targetType) {
+        if (targetType == Compiler::StaticType::Number && targetNumType == NumberType::Int) {
+            llvm::Value *cast = m_builder.CreateFPToSI(reg->value, m_builder.getInt64Ty());
+            return m_builder.CreateSelect(reg->isInt, reg->intValue, cast);
+        } else
+            return reg->value;
+    }
 
     switch (targetType) {
         case Compiler::StaticType::Number:
             switch (reg->type()) {
                 case Compiler::StaticType::Bool:
-                    // Cast bool to double
-                    return m_builder.CreateUIToFP(reg->value, m_builder.getDoubleTy());
+                    // Cast bool to double/int
+                    if (targetNumType == NumberType::Int)
+                        return m_builder.CreateZExt(reg->value, m_builder.getInt64Ty());
+                    else
+                        return m_builder.CreateUIToFP(reg->value, m_builder.getDoubleTy());
 
                 case Compiler::StaticType::String: {
-                    // Convert string to double
-                    return m_builder.CreateCall(m_functions.resolve_value_stringToDouble(), reg->value);
+                    // Convert string to double/int
+                    llvm::Value *doubleValue = m_builder.CreateCall(m_functions.resolve_value_stringToDouble(), reg->value);
+
+                    if (targetNumType == NumberType::Int)
+                        return m_builder.CreateFPToSI(doubleValue, m_builder.getInt64Ty());
+                    else
+                        return doubleValue;
                 }
 
                 default:
@@ -1380,9 +1435,12 @@ llvm::Value *LLVMBuildUtils::castRawValue(LLVMRegister *reg, Compiler::StaticTyp
 
         case Compiler::StaticType::Bool:
             switch (reg->type()) {
-                case Compiler::StaticType::Number:
-                    // Cast double to bool (true if != 0)
-                    return m_builder.CreateFCmpONE(reg->value, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)));
+                case Compiler::StaticType::Number: {
+                    // Cast double/int to bool (true if != 0)
+                    llvm::Value *intResult = m_builder.CreateICmpNE(reg->intValue, llvm::ConstantInt::get(m_builder.getInt64Ty(), 0, true));
+                    llvm::Value *doubleResult = m_builder.CreateFCmpONE(reg->value, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)));
+                    return m_builder.CreateSelect(reg->isInt, intResult, doubleResult);
+                }
 
                 case Compiler::StaticType::String:
                     // Convert string to bool
@@ -1396,8 +1454,10 @@ llvm::Value *LLVMBuildUtils::castRawValue(LLVMRegister *reg, Compiler::StaticTyp
         case Compiler::StaticType::String:
             switch (reg->type()) {
                 case Compiler::StaticType::Number: {
-                    // Convert double to string
-                    llvm::Value *ptr = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), reg->value);
+                    // Convert double/int to string
+                    llvm::Value *intCast = m_builder.CreateSIToFP(reg->intValue, m_builder.getDoubleTy());
+                    llvm::Value *doubleValue = m_builder.CreateSelect(reg->isInt, intCast, reg->value);
+                    llvm::Value *ptr = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), doubleValue);
                     freeStringLater(ptr);
                     return ptr;
                 }
@@ -1423,12 +1483,17 @@ llvm::Value *LLVMBuildUtils::castRawValue(LLVMRegister *reg, Compiler::StaticTyp
     }
 }
 
-llvm::Constant *LLVMBuildUtils::castConstValue(const Value &value, Compiler::StaticType targetType)
+llvm::Constant *LLVMBuildUtils::castConstValue(const Value &value, Compiler::StaticType targetType, NumberType targetNumType)
 {
     switch (targetType) {
         case Compiler::StaticType::Number: {
             const double nan = std::numeric_limits<double>::quiet_NaN();
-            return llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(value.isNaN() ? nan : value.toDouble()));
+            const double num = value.toDouble();
+
+            if (targetNumType == NumberType::Int)
+                return llvm::ConstantInt::get(m_builder.getInt64Ty(), num, true);
+            else
+                return llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(value.isNaN() ? nan : num));
         }
 
         case Compiler::StaticType::Bool:

@@ -80,7 +80,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::build()
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_llvmCtx, "entry", m_function);
     m_builder.SetInsertPoint(entry);
 
-    m_utils.init(m_function, m_procedurePrototype, m_warp);
+    m_utils.init(m_function, m_procedurePrototype, m_warp, m_regs);
 
     // Build recorded instructions
     LLVMInstruction *ins = m_instructions.first();
