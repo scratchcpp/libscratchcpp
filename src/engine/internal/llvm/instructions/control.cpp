@@ -92,6 +92,8 @@ LLVMInstruction *Control::buildSelect(LLVMInstruction *ins)
     }
 
     ins->functionReturnReg->value = m_builder.CreateSelect(cond, trueValue, falseValue);
+    ins->functionReturnReg->isInt = m_builder.CreateSelect(cond, arg2.second->isInt, arg3.second->isInt);
+    ins->functionReturnReg->intValue = m_builder.CreateSelect(cond, arg2.second->intValue, arg3.second->intValue);
     return ins->next;
 }
 
@@ -245,6 +247,8 @@ LLVMInstruction *Control::buildLoopIndex(LLVMInstruction *ins)
     LLVMLoop &loop = m_utils.loops().back();
     llvm::Value *index = m_builder.CreateLoad(m_builder.getInt64Ty(), loop.index);
     ins->functionReturnReg->value = m_builder.CreateUIToFP(index, m_builder.getDoubleTy());
+    ins->functionReturnReg->intValue = index;
+    ins->functionReturnReg->isInt = m_builder.getInt1(true);
 
     return ins->next;
 }
