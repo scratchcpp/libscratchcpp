@@ -3,6 +3,7 @@
 #include "variables.h"
 #include "../llvminstruction.h"
 #include "../llvmbuildutils.h"
+#include "../llvmconstantregister.h"
 
 using namespace libscratchcpp;
 using namespace libscratchcpp::llvmins;
@@ -43,31 +44,9 @@ ProcessResult Variables::process(LLVMInstruction *ins)
 LLVMInstruction *Variables::buildCreateLocalVariable(LLVMInstruction *ins)
 {
     assert(ins->args.empty());
-    llvm::Type *type = nullptr;
 
-    switch (ins->functionReturnReg->type()) {
-        case Compiler::StaticType::Number:
-            type = m_builder.getDoubleTy();
-            break;
-
-        case Compiler::StaticType::Bool:
-            type = m_builder.getInt1Ty();
-            break;
-
-        case Compiler::StaticType::String:
-            std::cerr << "error: local variables do not support string type" << std::endl;
-            break;
-
-        case Compiler::StaticType::Pointer:
-            std::cerr << "error: local variables do not support pointer type" << std::endl;
-            break;
-
-        default:
-            assert(false);
-            break;
-    }
-
-    ins->functionReturnReg->value = m_utils.addAlloca(type);
+    LLVMConstantRegister null(ins->functionReturnReg->type(), Value());
+    ins->functionReturnReg->value = m_utils.createValue(&null);
     return ins->next;
 }
 
@@ -76,8 +55,14 @@ LLVMInstruction *Variables::buildWriteLocalVariable(LLVMInstruction *ins)
     assert(ins->args.size() == 2);
     const auto &arg1 = ins->args[0];
     const auto &arg2 = ins->args[1];
-    llvm::Value *converted = m_utils.castValue(arg2.second, arg2.first);
-    m_builder.CreateStore(converted, arg1.second->value);
+    llvm::Value *typeVar = m_utils.addAlloca(m_builder.getInt32Ty());
+    m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(m_utils.mapType(arg2.first))), typeVar);
+
+    // TODO: Add integer support for local variables
+    llvm::Value *isIntVar = m_utils.addAlloca(m_builder.getInt1Ty());
+    llvm::Value *intVar = m_utils.addAlloca(m_builder.getInt64Ty());
+
+    m_utils.createValueStore(arg1.second->value, typeVar, isIntVar, intVar, arg2.second, arg2.first, arg2.first);
     return ins->next;
 }
 
@@ -85,23 +70,7 @@ LLVMInstruction *Variables::buildReadLocalVariable(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
     const auto &arg = ins->args[0];
-    llvm::Type *type = nullptr;
-
-    switch (ins->functionReturnReg->type()) {
-        case Compiler::StaticType::Number:
-            type = m_builder.getDoubleTy();
-            break;
-
-        case Compiler::StaticType::Bool:
-            type = m_builder.getInt1Ty();
-            break;
-
-        default:
-            assert(false);
-            break;
-    }
-
-    ins->functionReturnReg->value = m_builder.CreateLoad(type, arg.second->value);
+    ins->functionReturnReg->value = m_utils.castValue(arg.second, ins->functionReturnReg->type());
     return ins->next;
 }
 

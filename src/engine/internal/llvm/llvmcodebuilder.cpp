@@ -158,7 +158,16 @@ CompilerValue *LLVMCodeBuilder::addLoopIndex()
 
 CompilerValue *LLVMCodeBuilder::addLocalVariableValue(CompilerLocalVariable *variable)
 {
-    return createOp(LLVMInstruction::Type::ReadLocalVariable, variable->type(), variable->type(), { variable->ptr() });
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadLocalVariable, m_loopCondition);
+
+    ins->args.push_back({ variable->type(), dynamic_cast<LLVMRegister *>(variable->ptr()) });
+
+    auto ret = std::make_shared<LLVMRegister>(variable->type());
+    ret->isRawValue = false;
+    ins->functionReturnReg = ret.get();
+
+    m_instructions.addInstruction(ins);
+    return addReg(ret, ins);
 }
 
 CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
