@@ -5,6 +5,7 @@
 #include <scratchcpp/valuedata.h>
 
 #include "llvmfunctions.h"
+#include "llvmlocalvariableinfo.h"
 #include "llvmvariableptr.h"
 #include "llvmlistptr.h"
 #include "llvmcoroutine.h"
@@ -61,9 +62,11 @@ class LLVMBuildUtils
 
         LLVMCoroutine *coroutine() const;
 
+        void createLocalVariableInfo(CompilerLocalVariable *variable);
         void createVariablePtr(Variable *variable);
         void createListPtr(List *list);
 
+        LLVMLocalVariableInfo &localVariableInfo(CompilerLocalVariable *variable);
         LLVMVariablePtr &variablePtr(Variable *variable);
         LLVMListPtr &listPtr(List *list);
 
@@ -153,6 +156,8 @@ class LLVMBuildUtils
         llvm::Value *m_warpArg = nullptr;
 
         std::unique_ptr<LLVMCoroutine> m_coroutine;
+
+        std::unordered_map<CompilerLocalVariable *, LLVMLocalVariableInfo> m_localVariables;
 
         std::unordered_map<Variable *, size_t> m_targetVariableMap;
         std::unordered_map<Variable *, LLVMVariablePtr> m_variablePtrs;

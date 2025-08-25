@@ -159,6 +159,7 @@ CompilerValue *LLVMCodeBuilder::addLoopIndex()
 CompilerValue *LLVMCodeBuilder::addLocalVariableValue(CompilerLocalVariable *variable)
 {
     auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadLocalVariable, m_loopCondition);
+    ins->localVarInfo = &m_utils.localVariableInfo(variable);
 
     ins->args.push_back({ variable->type(), dynamic_cast<LLVMRegister *>(variable->ptr()) });
 
@@ -425,12 +426,15 @@ CompilerLocalVariable *LLVMCodeBuilder::createLocalVariable(Compiler::StaticType
     CompilerValue *ptr = createOp(LLVMInstruction::Type::CreateLocalVariable, type);
     auto var = std::make_shared<CompilerLocalVariable>(ptr);
     m_localVars.push_back(var);
+    m_utils.createLocalVariableInfo(var.get());
+    m_instructions.last()->localVarInfo = &m_utils.localVariableInfo(var.get());
     return var.get();
 }
 
 void LLVMCodeBuilder::createLocalVariableWrite(CompilerLocalVariable *variable, CompilerValue *value)
 {
     createOp(LLVMInstruction::Type::WriteLocalVariable, Compiler::StaticType::Void, variable->type(), { variable->ptr(), value });
+    m_instructions.last()->localVarInfo = &m_utils.localVariableInfo(variable);
 }
 
 void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *value)

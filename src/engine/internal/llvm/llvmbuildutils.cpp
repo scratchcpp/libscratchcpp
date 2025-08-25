@@ -298,6 +298,12 @@ LLVMCoroutine *LLVMBuildUtils::coroutine() const
     return m_coroutine.get();
 }
 
+void LLVMBuildUtils::createLocalVariableInfo(CompilerLocalVariable *variable)
+{
+    if (m_localVariables.find(variable) == m_localVariables.cend())
+        m_localVariables[variable] = LLVMLocalVariableInfo();
+}
+
 void LLVMBuildUtils::createVariablePtr(Variable *variable)
 {
     if (m_variablePtrs.find(variable) == m_variablePtrs.cend())
@@ -308,6 +314,12 @@ void LLVMBuildUtils::createListPtr(List *list)
 {
     if (m_listPtrs.find(list) == m_listPtrs.cend())
         m_listPtrs[list] = LLVMListPtr();
+}
+
+LLVMLocalVariableInfo &LLVMBuildUtils::localVariableInfo(CompilerLocalVariable *variable)
+{
+    assert(m_localVariables.find(variable) != m_localVariables.cend());
+    return m_localVariables[variable];
 }
 
 LLVMVariablePtr &LLVMBuildUtils::variablePtr(Variable *variable)
