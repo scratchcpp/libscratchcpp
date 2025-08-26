@@ -15,6 +15,7 @@ class InstructionBuilder
         LLVMInstruction *process(LLVMInstruction *ins);
 
     private:
+        LLVMBuildUtils &m_utils;
         std::vector<std::shared_ptr<InstructionGroup>> m_groups;
 };
 

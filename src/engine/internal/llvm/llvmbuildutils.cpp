@@ -65,8 +65,12 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
 
     // Init registers
     for (auto reg : regs) {
+#ifdef LLVM_INTEGER_SUPPORT
         bool isIntConst = (reg->isConst() && optimizeRegisterType(reg.get()) == Compiler::StaticType::Number && reg->constValue().toDouble() == std::floor(reg->constValue().toDouble()));
         reg->isInt = m_builder.getInt1(isIntConst);
+#else
+        reg->isInt = m_builder.getInt1(false);
+#endif
         reg->intValue = llvm::ConstantInt::get(m_builder.getInt64Ty(), reg->constValue().toDouble(), true);
     }
 
