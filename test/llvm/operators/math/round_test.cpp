@@ -19,6 +19,16 @@ TEST_F(LLVMRoundTest, FourPointZero_Const)
     ASSERT_EQ(m_utils.getOpResult(LLVMTestUtils::OpType::Round, true, 4.0).toDouble(), 4.0);
 }
 
+TEST_F(LLVMRoundTest, NegativeFourPointZero)
+{
+    ASSERT_EQ(m_utils.getOpResult(LLVMTestUtils::OpType::Round, false, -4.0).toDouble(), -4.0);
+}
+
+TEST_F(LLVMRoundTest, NegativeFourPointZero_Const)
+{
+    ASSERT_EQ(m_utils.getOpResult(LLVMTestUtils::OpType::Round, true, -4.0).toDouble(), -4.0);
+}
+
 TEST_F(LLVMRoundTest, ThreePointTwo)
 {
     ASSERT_EQ(m_utils.getOpResult(LLVMTestUtils::OpType::Round, false, 3.2).toDouble(), 3.0);
