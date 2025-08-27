@@ -182,6 +182,39 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearListOperation)
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Void);
 }
 
+TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ProcedureCall)
+{
+    LLVMCodeAnalyzer analyzer;
+    LLVMInstructionList list;
+    List targetList("", "");
+
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
+    clearList->targetList = &targetList;
+    list.addInstruction(clearList);
+
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "hello");
+    appendList1->targetList = &targetList;
+    appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(appendList1);
+
+    auto procCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::CallProcedure, false);
+    list.addInstruction(procCall);
+
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 5.2);
+    appendList2->targetList = &targetList;
+    appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(appendList2);
+
+    analyzer.analyzeScript(list);
+
+    ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
+
+    // Type unknown due to procedure call
+    ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Unknown);
+}
+
 TEST(LLVMCodeAnalyzer_ListTypeAnalysis, MixedWriteOperationsSameType_AfterClear)
 {
     LLVMCodeAnalyzer analyzer;

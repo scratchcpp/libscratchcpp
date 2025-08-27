@@ -47,6 +47,8 @@ class LLVMCodeAnalyzer
         bool isListWrite(const LLVMInstruction *ins) const;
         bool isListClear(const LLVMInstruction *ins) const;
 
+        bool isProcedureCall(const LLVMInstruction *ins) const;
+
         Compiler::StaticType writeType(LLVMInstruction *ins) const;
 };
 

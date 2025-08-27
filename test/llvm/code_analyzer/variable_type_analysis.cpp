@@ -191,6 +191,41 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, RepeatUntilLoop)
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
 }
 
+TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, ProcedureCallInLoop)
+{
+    LLVMCodeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 1.25);
+    setVar1->targetVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
+    list.addInstruction(loopStart);
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 5);
+    setVar2->targetVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    auto procCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::CallProcedure, false);
+    list.addInstruction(procCall);
+
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
+    list.addInstruction(loopEnd);
+
+    analyzer.analyzeScript(list);
+
+    ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
+
+    // Type unknown due to procedure call
+    ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Unknown);
+}
+
 TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopMultipleWrites_UnknownType)
 {
     LLVMCodeAnalyzer analyzer;

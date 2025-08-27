@@ -102,6 +102,29 @@ void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
             // Store the type in the return register
             // NOTE: Get list item returns empty string if index is out of range
             ins->functionReturnReg->setType(ins->targetType | Compiler::StaticType::String);
+        } else if (isProcedureCall(ins)) {
+            // Variables/lists may change in procedures
+            for (auto &[var, type] : currentBranch->variableTypes) {
+                if (type != Compiler::StaticType::Unknown) {
+                    type = Compiler::StaticType::Unknown;
+
+                    if (typeAssignedInstructions.find(ins) == typeAssignedInstructions.cend())
+                        currentBranch->typeChanges = true;
+                }
+            }
+
+            for (auto &[list, type] : currentBranch->listTypes) {
+                if (type != Compiler::StaticType::Unknown) {
+                    type = Compiler::StaticType::Unknown;
+
+                    if (typeAssignedInstructions.find(ins) == typeAssignedInstructions.cend()) {
+                        typeAssignedInstructions.insert(ins);
+                        currentBranch->typeChanges = true;
+                    }
+                }
+            }
+
+            typeAssignedInstructions.insert(ins);
         }
 
         ins = ins->next;
@@ -245,6 +268,11 @@ bool LLVMCodeAnalyzer::isListWrite(const LLVMInstruction *ins) const
 bool LLVMCodeAnalyzer::isListClear(const LLVMInstruction *ins) const
 {
     return (ins->type == LLVMInstruction::Type::ClearList);
+}
+
+bool LLVMCodeAnalyzer::isProcedureCall(const LLVMInstruction *ins) const
+{
+    return (ins->type == LLVMInstruction::Type::CallProcedure);
 }
 
 Compiler::StaticType LLVMCodeAnalyzer::writeType(LLVMInstruction *ins) const
