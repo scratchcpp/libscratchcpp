@@ -88,6 +88,7 @@ LLVMInstruction *Variables::buildWriteVariable(LLVMInstruction *ins)
     LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->targetVariable);
 
     m_utils.createValueStore(varPtr.stackPtr, m_utils.getValueTypePtr(varPtr.stackPtr), varPtr.isInt, varPtr.intValue, arg.second, ins->targetType, argType);
+    m_builder.CreateStore(m_builder.getInt1(true), varPtr.changed);
     return ins->next;
 }
 

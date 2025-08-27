@@ -81,6 +81,7 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
 
         // Store variables locally to enable optimizations
         varPtr.stackPtr = m_builder.CreateAlloca(m_valueDataType);
+        varPtr.changed = m_builder.CreateAlloca(m_builder.getInt1Ty());
 
         // Integer support
         varPtr.isInt = m_builder.CreateAlloca(m_builder.getInt1Ty(), nullptr, var->name() + ".isInt");
@@ -341,8 +342,18 @@ LLVMListPtr &LLVMBuildUtils::listPtr(List *list)
 void LLVMBuildUtils::syncVariables()
 {
     // Copy stack variables to the actual variables
-    for (auto &[var, varPtr] : m_variablePtrs)
+    for (auto &[var, varPtr] : m_variablePtrs) {
+        llvm::BasicBlock *copyBlock = llvm::BasicBlock::Create(m_llvmCtx, "syncVar", m_function);
+        llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "syncVar.next", m_function);
+        m_builder.CreateCondBr(m_builder.CreateLoad(m_builder.getInt1Ty(), varPtr.changed), copyBlock, nextBlock);
+
+        m_builder.SetInsertPoint(copyBlock);
         createValueCopy(varPtr.stackPtr, getVariablePtr(m_targetVariables, var));
+        m_builder.CreateStore(m_builder.getInt1(false), varPtr.changed);
+        m_builder.CreateBr(nextBlock);
+
+        m_builder.SetInsertPoint(nextBlock);
+    }
 }
 
 void LLVMBuildUtils::reloadVariables()
@@ -352,6 +363,7 @@ void LLVMBuildUtils::reloadVariables()
         llvm::Value *ptr = getVariablePtr(m_targetVariables, var);
         createValueCopy(ptr, varPtr.stackPtr);
         m_builder.CreateStore(m_builder.getInt1(false), varPtr.isInt);
+        m_builder.CreateStore(m_builder.getInt1(false), varPtr.changed);
     }
 }
 
