@@ -131,6 +131,16 @@ class LLVMBuildUtils
         void createValueCopy(llvm::Value *source, llvm::Value *target);
         void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
 
+        Comparison swapComparisonArgs(Comparison type);
+
+        llvm::Value *createNumberAndNumberComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
+        llvm::Value *createBoolAndBoolComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
+        llvm::Value *createStringAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
+
+        llvm::Value *createNumberAndBoolComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
+        llvm::Value *createNumberAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
+        llvm::Value *createBoolAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
+
         llvm::Value *getVariablePtr(llvm::Value *targetVariables, Variable *variable);
         llvm::Value *getListPtr(llvm::Value *targetLists, List *list);
         llvm::Value *getListDataPtr(const LLVMListPtr &listPtr);

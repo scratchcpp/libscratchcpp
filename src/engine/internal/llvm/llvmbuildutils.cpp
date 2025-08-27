@@ -1121,26 +1121,6 @@ llvm::Value *LLVMBuildUtils::createComparison(LLVMRegister *arg1, LLVMRegister *
 
         return m_builder.getInt1(result);
     } else {
-        // Optimize comparison of constant with number/bool
-        if (arg1->isConst() && arg1->constValue().isValidNumber() && (type2 == Compiler::StaticType::Number || type2 == Compiler::StaticType::Bool))
-            type1 = Compiler::StaticType::Number;
-
-        if (arg2->isConst() && arg2->constValue().isValidNumber() && (type1 == Compiler::StaticType::Number || type1 == Compiler::StaticType::Bool))
-            type2 = Compiler::StaticType::Number;
-
-        // Optimize number and bool comparison
-        int optNumberBool = 0;
-
-        if (type1 == Compiler::StaticType::Number && type2 == Compiler::StaticType::Bool) {
-            type2 = Compiler::StaticType::Number;
-            optNumberBool = 2; // operand 2 was bool
-        }
-
-        if (type1 == Compiler::StaticType::Bool && type2 == Compiler::StaticType::Number) {
-            type1 = Compiler::StaticType::Number;
-            optNumberBool = 1; // operand 1 was bool
-        }
-
         // Optimize number and string constant comparison
         // TODO: GT and LT comparison can be optimized here (e. g. by checking the string constant characters and comparing with numbers and .+-e)
         if (type == Comparison::EQ) {
@@ -1149,132 +1129,162 @@ llvm::Value *LLVMBuildUtils::createComparison(LLVMRegister *arg1, LLVMRegister *
                 return m_builder.getInt1(false);
         }
 
-        if (type1 != type2 || !isSingleType(type1) || !isSingleType(type2)) {
-            // If the types are different or at least one of them
-            // is unknown, we must use value functions
-            llvm::Value *value1 = createValue(arg1);
-            llvm::Value *value2 = createValue(arg2);
+        // Handle multiple type cases with runtime switch
+        llvm::Value *loadedType1 = loadRegisterType(arg1, type1);
+        llvm::Value *loadedType2 = loadRegisterType(arg2, type2);
 
-            switch (type) {
-                case Comparison::EQ:
-                    return m_builder.CreateCall(m_functions.resolve_value_equals(), { value1, value2 });
+        llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
+        llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(m_llvmCtx, "default", m_function);
+        std::vector<std::pair<llvm::BasicBlock *, llvm::Value *>> results;
 
-                case Comparison::GT:
-                    return m_builder.CreateCall(m_functions.resolve_value_greater(), { value1, value2 });
+        llvm::SwitchInst *sw1 = m_builder.CreateSwitch(loadedType1, defaultBlock, 4);
 
-                case Comparison::LT:
-                    return m_builder.CreateCall(m_functions.resolve_value_lower(), { value1, value2 });
+        if ((type1 & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
+            llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+            sw1->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), numberBlock);
+            m_builder.SetInsertPoint(numberBlock);
 
-                default:
-                    assert(false);
-                    return nullptr;
+            llvm::SwitchInst *sw2 = m_builder.CreateSwitch(loadedType2, defaultBlock, 4);
+
+            if ((type2 & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
+                // Number and number comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "numberAndNumberComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), block);
+                m_builder.SetInsertPoint(block);
+
+                llvm::Value *result = createNumberAndNumberComparison(arg1, arg2, type);
+
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
             }
-        } else {
-            // Compare raw values
-            llvm::Value *value1 = castValue(arg1, type1);
-            llvm::Value *value2 = castValue(arg2, type2);
-            assert(type1 == type2);
 
-            switch (type1) {
-                case Compiler::StaticType::Number: {
-                    // Compare two numbers
-                    switch (type) {
-                        case Comparison::EQ: {
-                            llvm::Value *nan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
-                            llvm::Value *cmp = m_builder.CreateFCmpOEQ(value1, value2);
-                            return m_builder.CreateSelect(nan, m_builder.getInt1(true), cmp);
-                        }
+            if ((type2 & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
+                // Number and bool comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "numberAndBoolComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), block);
+                m_builder.SetInsertPoint(block);
 
-                        case Comparison::GT: {
-                            llvm::Value *bothNan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
-                            llvm::Value *cmp = m_builder.CreateFCmpOGT(value1, value2);
-                            llvm::Value *nan;
-                            llvm::Value *nanCmp;
+                llvm::Value *result = createNumberAndBoolComparison(arg1, arg2, type);
 
-                            if (optNumberBool == 1) {
-                                nan = isNaN(value2);
-                                nanCmp = castValue(arg1, Compiler::StaticType::Bool);
-                            } else if (optNumberBool == 2) {
-                                nan = isNaN(value1);
-                                nanCmp = m_builder.CreateNot(castValue(arg2, Compiler::StaticType::Bool));
-                            } else {
-                                nan = isNaN(value1);
-                                nanCmp = m_builder.CreateFCmpUGT(value1, value2);
-                            }
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
+            }
 
-                            return m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, cmp));
-                        }
+            if ((type2 & Compiler::StaticType::String) == Compiler::StaticType::String) {
+                // Number and string comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "numberAndStringComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), block);
+                m_builder.SetInsertPoint(block);
 
-                        case Comparison::LT: {
-                            llvm::Value *bothNan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
-                            llvm::Value *cmp = m_builder.CreateFCmpOLT(value1, value2);
-                            llvm::Value *nan;
-                            llvm::Value *nanCmp;
+                llvm::Value *result = createNumberAndStringComparison(arg1, arg2, type);
 
-                            if (optNumberBool == 1) {
-                                nan = isNaN(value2);
-                                nanCmp = m_builder.CreateNot(castValue(arg1, Compiler::StaticType::Bool));
-                            } else if (optNumberBool == 2) {
-                                nan = isNaN(value1);
-                                nanCmp = castValue(arg2, Compiler::StaticType::Bool);
-                            } else {
-                                nan = isNaN(value2);
-                                nanCmp = m_builder.CreateFCmpULT(value1, value2);
-                            }
-
-                            return m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, cmp));
-                        }
-
-                        default:
-                            assert(false);
-                            return nullptr;
-                    }
-                }
-
-                case Compiler::StaticType::Bool:
-                    // Compare two booleans
-                    switch (type) {
-                        case Comparison::EQ:
-                            return m_builder.CreateICmpEQ(value1, value2);
-
-                        case Comparison::GT:
-                            // value1 && !value2
-                            return m_builder.CreateAnd(value1, m_builder.CreateNot(value2));
-
-                        case Comparison::LT:
-                            // value2 && !value1
-                            return m_builder.CreateAnd(value2, m_builder.CreateNot(value1));
-
-                        default:
-                            assert(false);
-                            return nullptr;
-                    }
-
-                case Compiler::StaticType::String: {
-                    // Compare two strings
-                    llvm::Value *cmpRet = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { value1, value2 });
-
-                    switch (type) {
-                        case Comparison::EQ:
-                            return m_builder.CreateICmpEQ(cmpRet, m_builder.getInt32(0));
-
-                        case Comparison::GT:
-                            return m_builder.CreateICmpSGT(cmpRet, m_builder.getInt32(0));
-
-                        case Comparison::LT:
-                            return m_builder.CreateICmpSLT(cmpRet, m_builder.getInt32(0));
-
-                        default:
-                            assert(false);
-                            return nullptr;
-                    }
-                }
-
-                default:
-                    assert(false);
-                    return nullptr;
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
             }
         }
+
+        if ((type1 & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
+            llvm::BasicBlock *boolBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+            sw1->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), boolBlock);
+            m_builder.SetInsertPoint(boolBlock);
+
+            llvm::SwitchInst *sw2 = m_builder.CreateSwitch(loadedType2, defaultBlock, 4);
+
+            if ((type2 & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
+                // Bool and number comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "boolAndNumberComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), block);
+                m_builder.SetInsertPoint(block);
+
+                llvm::Value *result = createNumberAndBoolComparison(arg2, arg1, swapComparisonArgs(type));
+
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
+            }
+
+            if ((type2 & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
+                // Bool and bool comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "boolAndBoolComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), block);
+                m_builder.SetInsertPoint(block);
+
+                llvm::Value *result = createBoolAndBoolComparison(arg1, arg2, type);
+
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
+            }
+
+            if ((type2 & Compiler::StaticType::String) == Compiler::StaticType::String) {
+                // Bool and string comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "boolAndStringComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), block);
+                m_builder.SetInsertPoint(block);
+
+                llvm::Value *result = createBoolAndStringComparison(arg1, arg2, type);
+
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
+            }
+        }
+
+        if ((type1 & Compiler::StaticType::String) == Compiler::StaticType::String) {
+            llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+            sw1->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), stringBlock);
+            m_builder.SetInsertPoint(stringBlock);
+
+            llvm::SwitchInst *sw2 = m_builder.CreateSwitch(loadedType2, defaultBlock, 4);
+
+            if ((type2 & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
+                // String and number comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "stringAndNumberComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), block);
+                m_builder.SetInsertPoint(block);
+
+                llvm::Value *result = createNumberAndStringComparison(arg2, arg1, swapComparisonArgs(type));
+
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
+            }
+
+            if ((type2 & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
+                // String and bool comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "stringAndBoolComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), block);
+                m_builder.SetInsertPoint(block);
+
+                llvm::Value *result = createBoolAndStringComparison(arg2, arg1, swapComparisonArgs(type));
+
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
+            }
+
+            if ((type2 & Compiler::StaticType::String) == Compiler::StaticType::String) {
+                // String and string comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "stringAndStringComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), block);
+                m_builder.SetInsertPoint(block);
+
+                llvm::Value *result = createStringAndStringComparison(arg1, arg2, type);
+
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
+            }
+        }
+
+        // Default case
+        m_builder.SetInsertPoint(defaultBlock);
+
+        // All possible types are covered, mark as unreachable
+        m_builder.CreateUnreachable();
+
+        // Create phi node to merge results
+        m_builder.SetInsertPoint(mergeBlock);
+        llvm::PHINode *result = m_builder.CreatePHI(m_builder.getInt1Ty(), results.size());
+
+        for (auto &pair : results)
+            result->addIncoming(pair.second, pair.first);
+
+        return result;
     }
 }
 
@@ -1560,6 +1570,314 @@ void LLVMBuildUtils::copyStructField(llvm::Value *source, llvm::Value *target, i
     llvm::Value *sourceField = m_builder.CreateStructGEP(structType, source, index);
     llvm::Value *targetField = m_builder.CreateStructGEP(structType, target, index);
     m_builder.CreateStore(m_builder.CreateLoad(fieldType, sourceField), targetField);
+}
+
+LLVMBuildUtils::Comparison LLVMBuildUtils::swapComparisonArgs(Comparison type)
+{
+    switch (type) {
+        case Comparison::GT:
+            return Comparison::LT;
+
+        case Comparison::LT:
+            return Comparison::GT;
+
+        default:
+            return Comparison::EQ;
+    }
+}
+
+llvm::Value *LLVMBuildUtils::createNumberAndNumberComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
+{
+    // TODO: Add integer support
+    llvm::Value *value1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Double);
+    llvm::Value *value2 = castValue(arg2, Compiler::StaticType::Number, NumberType::Double);
+
+    switch (type) {
+        case Comparison::EQ: {
+            llvm::Value *bothNan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
+            llvm::Value *cmp = m_builder.CreateFCmpOEQ(value1, value2);
+            return m_builder.CreateOr(bothNan, cmp);
+        }
+
+        case Comparison::GT: {
+            llvm::Value *bothNan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
+            llvm::Value *cmp = m_builder.CreateFCmpOGT(value1, value2);
+            llvm::Value *nan = isNaN(value1);
+            llvm::Value *nanCmp = m_builder.CreateFCmpUGT(value1, value2);
+            return m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, cmp));
+        }
+
+        case Comparison::LT: {
+            llvm::Value *bothNan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
+            llvm::Value *cmp = m_builder.CreateFCmpOLT(value1, value2);
+            llvm::Value *nan = isNaN(value2);
+            llvm::Value *nanCmp = m_builder.CreateFCmpULT(value1, value2);
+            return m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, cmp));
+        }
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+}
+
+llvm::Value *LLVMBuildUtils::createBoolAndBoolComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
+{
+    llvm::Value *value1 = castValue(arg1, Compiler::StaticType::Bool);
+    llvm::Value *value2 = castValue(arg2, Compiler::StaticType::Bool);
+
+    switch (type) {
+        case Comparison::EQ:
+            return m_builder.CreateICmpEQ(value1, value2);
+
+        case Comparison::GT:
+            // value1 && !value2
+            return m_builder.CreateAnd(value1, m_builder.CreateNot(value2));
+
+        case Comparison::LT:
+            // value2 && !value1
+            return m_builder.CreateAnd(value2, m_builder.CreateNot(value1));
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+}
+
+llvm::Value *LLVMBuildUtils::createStringAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
+{
+    llvm::Value *value1 = castValue(arg1, Compiler::StaticType::String);
+    llvm::Value *value2 = castValue(arg2, Compiler::StaticType::String);
+
+    llvm::Value *cmp = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { value1, value2 });
+    llvm::Value *zero = llvm::ConstantInt::get(m_builder.getInt32Ty(), 0, true);
+
+    switch (type) {
+        case Comparison::EQ:
+            return m_builder.CreateICmpEQ(cmp, zero);
+
+        case Comparison::GT:
+            return m_builder.CreateICmpSGT(cmp, zero);
+
+        case Comparison::LT:
+            return m_builder.CreateICmpSLT(cmp, zero);
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+}
+
+llvm::Value *LLVMBuildUtils::createNumberAndBoolComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
+{
+    // TODO: Add integer support
+    llvm::Value *value1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Double);
+    llvm::Value *value2 = castValue(arg2, Compiler::StaticType::Bool);
+
+    llvm::Value *doubleValue = m_builder.CreateUIToFP(value2, m_builder.getDoubleTy());
+
+    switch (type) {
+        case Comparison::EQ:
+            return m_builder.CreateFCmpOEQ(value1, doubleValue);
+
+        case Comparison::GT: {
+            llvm::Value *cmp = m_builder.CreateFCmpOGT(value1, doubleValue);
+            llvm::Value *nan = isNaN(value1);
+            llvm::Value *nanCmp = m_builder.CreateFCmpUGT(value1, doubleValue);
+            return m_builder.CreateSelect(nan, nanCmp, cmp);
+        }
+
+        case Comparison::LT:
+            return m_builder.CreateFCmpOLT(value1, doubleValue);
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+}
+
+llvm::Value *LLVMBuildUtils::createNumberAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
+{
+    // TODO: Add integer support
+    llvm::Value *value1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Double);
+    llvm::Value *value2 = castValue(arg2, Compiler::StaticType::String);
+
+    // If the number is NaN, skip the string to double conversion
+    llvm::Value *nan = isNaN(value1);
+
+    llvm::BasicBlock *nanBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    llvm::BasicBlock *stringCastBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    m_builder.CreateCondBr(nan, nanBlock, stringCastBlock);
+
+    m_builder.SetInsertPoint(nanBlock);
+    m_builder.CreateBr(nextBlock);
+
+    m_builder.SetInsertPoint(stringCastBlock);
+    llvm::Value *okPtr = addAlloca(m_builder.getInt1Ty());
+    llvm::Value *doubleValue = m_builder.CreateCall(m_functions.resolve_value_stringToDoubleWithCheck(), { value2, okPtr });
+    llvm::Value *ok = m_builder.CreateLoad(m_builder.getInt1Ty(), okPtr);
+    m_builder.CreateBr(nextBlock);
+
+    m_builder.SetInsertPoint(nextBlock);
+
+    llvm::PHINode *doubleValuePhi = m_builder.CreatePHI(m_builder.getDoubleTy(), 2);
+    doubleValuePhi->addIncoming(llvm::ConstantFP::get(m_builder.getDoubleTy(), 0.0), nanBlock);
+    doubleValuePhi->addIncoming(doubleValue, stringCastBlock);
+
+    llvm::PHINode *okPhi = m_builder.CreatePHI(m_builder.getInt1Ty(), 2);
+    okPhi->addIncoming(m_builder.getInt1(false), nanBlock);
+    okPhi->addIncoming(ok, stringCastBlock);
+
+    // If both arguments are valid numbers, compare them as numbers, otherwise as strings
+    llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    m_builder.CreateCondBr(okPhi, numberBlock, stringBlock);
+
+    // Number comparison
+    m_builder.SetInsertPoint(numberBlock);
+    llvm::Value *numberCmp;
+
+    switch (type) {
+        case Comparison::EQ:
+            numberCmp = m_builder.CreateFCmpOEQ(value1, doubleValuePhi);
+            break;
+
+        case Comparison::GT:
+            numberCmp = m_builder.CreateFCmpOGT(value1, doubleValuePhi);
+            break;
+
+        case Comparison::LT:
+            numberCmp = m_builder.CreateFCmpOLT(value1, doubleValuePhi);
+            break;
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+
+    m_builder.CreateBr(nextBlock);
+
+    // String comparison
+    m_builder.SetInsertPoint(stringBlock);
+    llvm::Value *stringValue = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), { value1 });
+    llvm::Value *cmp = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { stringValue, value2 });
+    m_builder.CreateCall(m_functions.resolve_string_pool_free(), { stringValue }); // free the string immediately
+
+    llvm::Value *zero = llvm::ConstantInt::get(m_builder.getInt32Ty(), 0, true);
+    llvm::Value *stringCmp;
+
+    switch (type) {
+        case Comparison::EQ:
+            stringCmp = m_builder.CreateICmpEQ(cmp, zero);
+            break;
+
+        case Comparison::GT:
+            stringCmp = m_builder.CreateICmpSGT(cmp, zero);
+            break;
+
+        case Comparison::LT:
+            stringCmp = m_builder.CreateICmpSLT(cmp, zero);
+            break;
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+
+    m_builder.CreateBr(nextBlock);
+
+    // Merge the results
+    m_builder.SetInsertPoint(nextBlock);
+
+    llvm::PHINode *result = m_builder.CreatePHI(m_builder.getInt1Ty(), 2);
+    result->addIncoming(numberCmp, numberBlock);
+    result->addIncoming(stringCmp, stringBlock);
+
+    return result;
+}
+
+llvm::Value *LLVMBuildUtils::createBoolAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
+{
+    llvm::Value *value1 = castValue(arg1, Compiler::StaticType::Bool);
+    llvm::Value *value2 = castValue(arg2, Compiler::StaticType::String);
+
+    // NOTE: Bools are always valid numbers
+
+    // Convert the string to double
+    llvm::Value *okPtr = addAlloca(m_builder.getInt1Ty());
+    llvm::Value *doubleValue2 = m_builder.CreateCall(m_functions.resolve_value_stringToDoubleWithCheck(), { value2, okPtr });
+    llvm::Value *ok = m_builder.CreateLoad(m_builder.getInt1Ty(), okPtr);
+
+    // If the string is a valid number, compare the arguments as numbers, otherwise as strings
+    llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    m_builder.CreateCondBr(ok, numberBlock, stringBlock);
+
+    // Number comparison
+    m_builder.SetInsertPoint(numberBlock);
+    llvm::Value *doubleValue1 = m_builder.CreateUIToFP(value1, m_builder.getDoubleTy());
+    llvm::Value *numberCmp;
+
+    switch (type) {
+        case Comparison::EQ:
+            numberCmp = m_builder.CreateFCmpOEQ(doubleValue1, doubleValue2);
+            break;
+
+        case Comparison::GT:
+            numberCmp = m_builder.CreateFCmpOGT(doubleValue1, doubleValue2);
+            break;
+
+        case Comparison::LT:
+            numberCmp = m_builder.CreateFCmpOLT(doubleValue1, doubleValue2);
+            break;
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+
+    m_builder.CreateBr(nextBlock);
+
+    // String comparison
+    m_builder.SetInsertPoint(stringBlock);
+    llvm::Value *stringValue = m_builder.CreateCall(m_functions.resolve_value_boolToStringPtr(), { value1 });
+    llvm::Value *cmp = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { stringValue, value2 });
+    // NOTE: Do not free the string!
+
+    llvm::Value *zero = llvm::ConstantInt::get(m_builder.getInt32Ty(), 0, true);
+    llvm::Value *stringCmp;
+
+    switch (type) {
+        case Comparison::EQ:
+            stringCmp = m_builder.CreateICmpEQ(cmp, zero);
+            break;
+
+        case Comparison::GT:
+            stringCmp = m_builder.CreateICmpSGT(cmp, zero);
+            break;
+
+        case Comparison::LT:
+            stringCmp = m_builder.CreateICmpSLT(cmp, zero);
+            break;
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+
+    m_builder.CreateBr(nextBlock);
+
+    // Merge the results
+    m_builder.SetInsertPoint(nextBlock);
+
+    llvm::PHINode *result = m_builder.CreatePHI(m_builder.getInt1Ty(), 2);
+    result->addIncoming(numberCmp, numberBlock);
+    result->addIncoming(stringCmp, stringBlock);
+
+    return result;
 }
 
 llvm::Value *LLVMBuildUtils::getVariablePtr(llvm::Value *targetVariables, Variable *variable)

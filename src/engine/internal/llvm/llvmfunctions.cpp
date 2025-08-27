@@ -132,6 +132,15 @@ llvm::FunctionCallee LLVMFunctions::resolve_value_stringToDouble()
     return callee;
 }
 
+llvm::FunctionCallee LLVMFunctions::resolve_value_stringToDoubleWithCheck()
+{
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_ctx->llvmCtx()), 0);
+    llvm::FunctionCallee callee = resolveFunction("value_stringToDoubleWithCheck", llvm::FunctionType::get(m_builder->getDoubleTy(), { pointerType, m_builder->getInt1Ty()->getPointerTo() }, false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
+}
+
 llvm::FunctionCallee LLVMFunctions::resolve_value_stringToBool()
 {
     llvm::FunctionCallee callee = resolveFunction("value_stringToBool", llvm::FunctionType::get(m_builder->getInt1Ty(), llvm::PointerType::get(llvm::Type::getInt8Ty(*m_ctx->llvmCtx()), 0), false));

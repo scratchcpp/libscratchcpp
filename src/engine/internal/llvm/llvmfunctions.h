@@ -30,6 +30,7 @@ class LLVMFunctions
         llvm::FunctionCallee resolve_value_doubleToStringPtr();
         llvm::FunctionCallee resolve_value_boolToStringPtr();
         llvm::FunctionCallee resolve_value_stringToDouble();
+        llvm::FunctionCallee resolve_value_stringToDoubleWithCheck();
         llvm::FunctionCallee resolve_value_stringToBool();
         llvm::FunctionCallee resolve_value_equals();
         llvm::FunctionCallee resolve_value_greater();
