@@ -123,6 +123,8 @@ class LLVMBuildUtils
         void createVariableMap();
         void createListMap();
 
+        llvm::Value *loadRegisterType(LLVMRegister *reg, Compiler::StaticType type);
+
         llvm::Value *castRawValue(LLVMRegister *reg, Compiler::StaticType targetType, NumberType targetNumType);
         llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType, NumberType targetNumType);
 

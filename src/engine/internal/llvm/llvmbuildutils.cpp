@@ -732,21 +732,8 @@ void LLVMBuildUtils::createValueStore(
     assert(destIsIntVar->getType()->isPointerTy());
     assert(destIntVar->getType()->isPointerTy());
 
-    auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [targetType](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == targetType; });
-    const ValueType mappedType = it == TYPE_MAP.cend() ? ValueType::Number : it->first; // unknown type can be ignored
-    assert(!(reg->isRawValue && it == TYPE_MAP.cend()));
-
     // Handle multiple type cases with runtime switch
-    llvm::Value *loadedTargetType = nullptr;
-
-    if (reg->isRawValue)
-        loadedTargetType = m_builder.getInt32(static_cast<uint32_t>(mappedType));
-    else {
-        assert(!reg->isConst());
-        llvm::Value *targetTypePtr = getValueTypePtr(reg);
-        loadedTargetType = m_builder.CreateLoad(m_builder.getInt32Ty(), targetTypePtr);
-    }
-
+    llvm::Value *loadedTargetType = loadRegisterType(reg, targetType);
     llvm::Value *loadedDestType = m_builder.CreateLoad(m_builder.getInt32Ty(), destTypePtr);
 
     llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
@@ -1411,6 +1398,17 @@ void LLVMBuildUtils::createListMap()
             m_targetListMap[list] = j;
         else
             assert(false);
+    }
+}
+
+llvm::Value *LLVMBuildUtils::loadRegisterType(LLVMRegister *reg, Compiler::StaticType type)
+{
+    if (reg->isRawValue)
+        return m_builder.getInt32(static_cast<uint32_t>(mapType(type)));
+    else {
+        assert(!reg->isConst());
+        llvm::Value *typePtr = getValueTypePtr(reg);
+        return m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
     }
 }
 
