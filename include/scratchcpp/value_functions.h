@@ -85,6 +85,7 @@ extern "C"
     LIBSCRATCHCPP_EXPORT StringPtr *value_doubleToStringPtr(double v);
     LIBSCRATCHCPP_EXPORT const StringPtr *value_boolToStringPtr(bool v);
     LIBSCRATCHCPP_EXPORT double value_stringToDouble(const StringPtr *s);
+    LIBSCRATCHCPP_EXPORT double value_stringToDoubleWithCheck(const StringPtr *s, bool *ok);
     LIBSCRATCHCPP_EXPORT bool value_stringToBool(const StringPtr *s);
 
     LIBSCRATCHCPP_EXPORT void value_add(const ValueData *v1, const ValueData *v2, ValueData *dst);
