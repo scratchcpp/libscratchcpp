@@ -629,6 +629,147 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteBeforeIfElse)
     ASSERT_EQ(setVar3->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
+TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfStatement_IfBranch)
+{
+    LLVMCodeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
+    list.addInstruction(ifStart);
+
+    auto setVarInIfStatement = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister valueInIfStatement(Compiler::StaticType::Number, 42);
+    setVarInIfStatement->targetVariable = &var;
+    setVarInIfStatement->args.push_back({ Compiler::StaticType::Unknown, &valueInIfStatement });
+    list.addInstruction(setVarInIfStatement);
+
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
+    list.addInstruction(ifEnd);
+
+    auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value(Compiler::StaticType::Bool, false);
+    setVar->targetVariable = &var;
+    setVar->args.push_back({ Compiler::StaticType::Unknown, &value });
+    list.addInstruction(setVar);
+
+    analyzer.analyzeScript(list);
+
+    ASSERT_EQ(setVarInIfStatement->targetType, Compiler::StaticType::Unknown);
+
+    // The type is Unknown because the if statement might not run at all
+    ASSERT_EQ(setVar->targetType, Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfStatement_ElseBranch)
+{
+    LLVMCodeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
+    list.addInstruction(ifStart);
+
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
+    list.addInstruction(elseStart);
+
+    auto setVarInIfStatement = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister valueInIfStatement(Compiler::StaticType::Number, 42);
+    setVarInIfStatement->targetVariable = &var;
+    setVarInIfStatement->args.push_back({ Compiler::StaticType::Unknown, &valueInIfStatement });
+    list.addInstruction(setVarInIfStatement);
+
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
+    list.addInstruction(ifEnd);
+
+    auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value(Compiler::StaticType::Bool, false);
+    setVar->targetVariable = &var;
+    setVar->args.push_back({ Compiler::StaticType::Unknown, &value });
+    list.addInstruction(setVar);
+
+    analyzer.analyzeScript(list);
+
+    ASSERT_EQ(setVarInIfStatement->targetType, Compiler::StaticType::Unknown);
+
+    // The type is Unknown because the if statement might not run at all
+    ASSERT_EQ(setVar->targetType, Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfElse)
+{
+    LLVMCodeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
+    list.addInstruction(ifStart);
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 42);
+    setVar1->targetVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
+    list.addInstruction(elseStart);
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value2(Compiler::StaticType::String, "test");
+    setVar2->targetVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
+    list.addInstruction(ifEnd);
+
+    auto setVar3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value3(Compiler::StaticType::Bool, true);
+    setVar3->targetVariable = &var;
+    setVar3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
+    list.addInstruction(setVar3);
+
+    analyzer.analyzeScript(list);
+
+    ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
+    ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Unknown);
+
+    // The type is Number | String because any of the branches may run
+    ASSERT_EQ(setVar3->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
+}
+
+TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInLoop)
+{
+    LLVMCodeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
+    list.addInstruction(loopStart);
+
+    auto setVarInLoop = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister valueInLoop(Compiler::StaticType::Number, 42);
+    setVarInLoop->targetVariable = &var;
+    setVarInLoop->args.push_back({ Compiler::StaticType::Unknown, &valueInLoop });
+    list.addInstruction(setVarInLoop);
+
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
+    list.addInstruction(loopEnd);
+
+    auto setVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value(Compiler::StaticType::Bool, false);
+    setVar->targetVariable = &var;
+    setVar->args.push_back({ Compiler::StaticType::Unknown, &value });
+    list.addInstruction(setVar);
+
+    analyzer.analyzeScript(list);
+
+    ASSERT_EQ(setVarInLoop->targetType, Compiler::StaticType::Unknown);
+
+    // The type is Unknown because the loop might not run at all
+    ASSERT_EQ(setVar->targetType, Compiler::StaticType::Unknown);
+}
+
 TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, ComplexNestedControlFlow)
 {
     LLVMCodeAnalyzer analyzer;

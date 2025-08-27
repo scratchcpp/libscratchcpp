@@ -58,13 +58,13 @@ void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
                 if (primaryBranch && primaryBranch->elseBranch) {
                     // The previous variable types can be ignored in if/else statements
                     overrideVariableTypes(primaryBranch, previousBranch);
-                    mergeListTypes(primaryBranch, previousBranch);
+                    mergeListTypes(primaryBranch, previousBranch, false);
 
                     mergeVariableTypes(primaryBranch->elseBranch.get(), previousBranch);
-                    mergeListTypes(primaryBranch->elseBranch.get(), previousBranch);
+                    mergeListTypes(primaryBranch->elseBranch.get(), previousBranch, true);
                 } else {
                     mergeVariableTypes(primaryBranch, previousBranch);
-                    mergeListTypes(primaryBranch, previousBranch);
+                    mergeListTypes(primaryBranch, previousBranch, true);
                 }
 
                 // Remove the branch
@@ -196,7 +196,7 @@ void LLVMCodeAnalyzer::mergeVariableTypes(Branch *branch, Branch *previousBranch
         auto it = previousBranch->variableTypes.find(var);
 
         if (it == previousBranch->variableTypes.cend())
-            previousBranch->variableTypes[var] = type;
+            previousBranch->variableTypes[var] = Compiler::StaticType::Unknown;
         else
             it->second |= type;
     }
@@ -208,13 +208,13 @@ void LLVMCodeAnalyzer::overrideVariableTypes(Branch *branch, Branch *previousBra
         previousBranch->variableTypes[var] = type;
 }
 
-void LLVMCodeAnalyzer::mergeListTypes(Branch *branch, Branch *previousBranch) const
+void LLVMCodeAnalyzer::mergeListTypes(Branch *branch, Branch *previousBranch, bool firstUnknown) const
 {
     for (const auto &[list, type] : branch->listTypes) {
         auto it = previousBranch->listTypes.find(list);
 
         if (it == previousBranch->listTypes.cend())
-            previousBranch->listTypes[list] = type;
+            previousBranch->listTypes[list] = firstUnknown ? Compiler::StaticType::Unknown : type;
         else
             it->second |= type;
     }

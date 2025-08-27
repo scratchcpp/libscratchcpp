@@ -351,6 +351,167 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, LoopSingleWrite_AfterClear)
     ASSERT_EQ(appendList->targetType, Compiler::StaticType::Number);
 }
 
+TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfStatement_IfBranch)
+{
+    LLVMCodeAnalyzer analyzer;
+    LLVMInstructionList list;
+    List targetList("", "");
+
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
+    list.addInstruction(ifStart);
+
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
+    clearList->targetList = &targetList;
+    list.addInstruction(clearList);
+
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 1.25);
+    appendList1->targetList = &targetList;
+    appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(appendList1);
+
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
+    list.addInstruction(ifEnd);
+
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
+    appendList2->targetList = &targetList;
+    appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(appendList2);
+
+    analyzer.analyzeScript(list);
+
+    ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
+
+    // The type is Unknown because the if statement might not run at all
+    ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfStatement_ElseBranch)
+{
+    LLVMCodeAnalyzer analyzer;
+    LLVMInstructionList list;
+    List targetList("", "");
+
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
+    list.addInstruction(ifStart);
+
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
+    list.addInstruction(elseStart);
+
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
+    clearList->targetList = &targetList;
+    list.addInstruction(clearList);
+
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 1.25);
+    appendList1->targetList = &targetList;
+    appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(appendList1);
+
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
+    list.addInstruction(ifEnd);
+
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
+    appendList2->targetList = &targetList;
+    appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(appendList2);
+
+    analyzer.analyzeScript(list);
+
+    ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
+
+    // The type is Unknown because the if statement might not run at all
+    ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Unknown);
+}
+
+TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfElse)
+{
+    LLVMCodeAnalyzer analyzer;
+    LLVMInstructionList list;
+    List targetList("", "");
+
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
+    list.addInstruction(ifStart);
+
+    auto clearList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
+    clearList1->targetList = &targetList;
+    list.addInstruction(clearList1);
+
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 1.25);
+    appendList1->targetList = &targetList;
+    appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(appendList1);
+
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
+    list.addInstruction(elseStart);
+
+    auto clearList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
+    clearList2->targetList = &targetList;
+    list.addInstruction(clearList2);
+
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value2(Compiler::StaticType::String, "hello");
+    appendList2->targetList = &targetList;
+    appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(appendList2);
+
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
+    list.addInstruction(ifEnd);
+
+    auto appendList3 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value3(Compiler::StaticType::Bool, true);
+    appendList3->targetList = &targetList;
+    appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
+    list.addInstruction(appendList3);
+
+    analyzer.analyzeScript(list);
+
+    ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
+    ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Void);
+
+    // The type is Number | String because any of the branches may run
+    ASSERT_EQ(appendList3->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
+}
+
+TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInLoop)
+{
+    LLVMCodeAnalyzer analyzer;
+    LLVMInstructionList list;
+    List targetList("", "");
+
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
+    list.addInstruction(loopStart);
+
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
+    clearList->targetList = &targetList;
+    list.addInstruction(clearList);
+
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 1.25);
+    appendList1->targetList = &targetList;
+    appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(appendList1);
+
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
+    list.addInstruction(loopEnd);
+
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
+    appendList2->targetList = &targetList;
+    appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(appendList2);
+
+    analyzer.analyzeScript(list);
+
+    ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
+
+    // The type is Unknown because the loop might not run at all
+    ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Unknown);
+}
+
 TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAfterWriteInLoop)
 {
     LLVMCodeAnalyzer analyzer;
