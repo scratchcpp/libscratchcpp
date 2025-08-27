@@ -991,10 +991,13 @@ llvm::Value *LLVMBuildUtils::getListItemIndex(const LLVMListPtr &listPtr, Compil
     m_builder.CreateCondBr(cond, bodyBlock, notFoundBlock);
 
     // if (list[index] == item)
+    // TODO: Add integer support for lists
     m_builder.SetInsertPoint(bodyBlock);
     LLVMRegister currentItem(listType);
     currentItem.isRawValue = false;
     currentItem.value = getListItem(listPtr, m_builder.CreateLoad(m_builder.getInt64Ty(), index));
+    currentItem.isInt = m_builder.getInt1(false);
+    currentItem.intValue = llvm::ConstantInt::get(m_builder.getInt64Ty(), 0, true);
     llvm::Value *cmp = createComparison(&currentItem, item, Comparison::EQ);
     m_builder.CreateCondBr(cmp, cmpIfBlock, cmpElseBlock);
 
