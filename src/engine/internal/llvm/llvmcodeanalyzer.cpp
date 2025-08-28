@@ -7,8 +7,8 @@
 
 using namespace libscratchcpp;
 
-static const std::unordered_set<LLVMInstruction::Type>
-    BEGIN_LOOP_INSTRUCTIONS = { LLVMInstruction::Type::BeginRepeatLoop, LLVMInstruction::Type::BeginWhileLoop, LLVMInstruction::Type::BeginRepeatUntilLoop };
+// NOTE: The loop condition in repeat until and while loops is considered a part of the loop body
+static const std::unordered_set<LLVMInstruction::Type> BEGIN_LOOP_INSTRUCTIONS = { LLVMInstruction::Type::BeginRepeatLoop, LLVMInstruction::Type::BeginLoopCondition };
 
 static const std::unordered_set<LLVMInstruction::Type> LIST_WRITE_INSTRUCTIONS = { LLVMInstruction::Type::AppendToList, LLVMInstruction::Type::InsertToList, LLVMInstruction::Type::ListReplace };
 

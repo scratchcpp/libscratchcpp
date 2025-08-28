@@ -529,7 +529,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAfterWriteInLoop)
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(appendList);
 
-    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginWhileLoop, false);
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
     list.addInstruction(loopStart);
 
     auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
@@ -567,25 +567,38 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, WhileLoop)
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(appendList);
 
+    auto loopCond = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginLoopCondition, false);
+    list.addInstruction(loopCond);
+
+    // Read an item in loop condition
+    auto getItem = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
+    LLVMConstantRegister index(Compiler::StaticType::Number, 0);
+    getItem->targetList = &targetList;
+    getItem->args.push_back({ Compiler::StaticType::Number, &index });
+    list.addInstruction(getItem);
+
+    LLVMRegister sourceValue(Compiler::StaticType::Unknown);
+    sourceValue.isRawValue = false;
+    sourceValue.instruction = getItem;
+    getItem->functionReturnReg = &sourceValue;
+
     auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginWhileLoop, false);
     list.addInstruction(loopStart);
 
+    // Change the type in the loop
     auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->targetList = &targetList;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     list.addInstruction(appendList1);
 
-    auto clearList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
-    clearList2->targetList = &targetList;
-    list.addInstruction(clearList2);
-
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
     analyzer.analyzeScript(list);
 
-    ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Bool);
+    ASSERT_EQ(getItem->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
+    ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
 }
 
 TEST(LLVMCodeAnalyzer_ListTypeAnalysis, RepeatUntilLoop)
@@ -605,25 +618,38 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, RepeatUntilLoop)
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(appendList);
 
+    auto loopCond = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginLoopCondition, false);
+    list.addInstruction(loopCond);
+
+    // Read an item in loop condition
+    auto getItem = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::GetListItem, false);
+    LLVMConstantRegister index(Compiler::StaticType::Number, 0);
+    getItem->targetList = &targetList;
+    getItem->args.push_back({ Compiler::StaticType::Number, &index });
+    list.addInstruction(getItem);
+
+    LLVMRegister sourceValue(Compiler::StaticType::Unknown);
+    sourceValue.isRawValue = false;
+    sourceValue.instruction = getItem;
+    getItem->functionReturnReg = &sourceValue;
+
     auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, false);
     list.addInstruction(loopStart);
 
+    // Change the type in the loop
     auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     appendList1->targetList = &targetList;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     list.addInstruction(appendList1);
 
-    auto clearList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
-    clearList2->targetList = &targetList;
-    list.addInstruction(clearList2);
-
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
     analyzer.analyzeScript(list);
 
-    ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Bool);
+    ASSERT_EQ(getItem->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
+    ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
 }
 
 TEST(LLVMCodeAnalyzer_ListTypeAnalysis, LoopMultipleWrites_UnknownType)

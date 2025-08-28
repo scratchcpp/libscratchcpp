@@ -144,9 +144,23 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WhileLoop)
     setVar->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(setVar);
 
+    auto loopCond = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginLoopCondition, false);
+    list.addInstruction(loopCond);
+
+    // Read the variable in loop condition
+    auto readVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, true);
+    readVar->targetVariable = &var;
+    list.addInstruction(readVar);
+
+    LLVMRegister varValue(Compiler::StaticType::Unknown);
+    varValue.isRawValue = false;
+    varValue.instruction = readVar;
+    readVar->functionReturnReg = &varValue;
+
     auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginWhileLoop, false);
     list.addInstruction(loopStart);
 
+    // Change the type in the loop
     auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     setVar1->targetVariable = &var;
@@ -158,6 +172,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WhileLoop)
 
     analyzer.analyzeScript(list);
 
+    ASSERT_EQ(readVar->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
 }
 
@@ -174,9 +189,23 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, RepeatUntilLoop)
     setVar->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(setVar);
 
+    auto loopCond = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginLoopCondition, false);
+    list.addInstruction(loopCond);
+
+    // Read the variable in loop condition
+    auto readVar = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadVariable, true);
+    readVar->targetVariable = &var;
+    list.addInstruction(readVar);
+
+    LLVMRegister varValue(Compiler::StaticType::Unknown);
+    varValue.isRawValue = false;
+    varValue.instruction = readVar;
+    readVar->functionReturnReg = &varValue;
+
     auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatUntilLoop, false);
     list.addInstruction(loopStart);
 
+    // Change the type in the loop
     auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
     LLVMConstantRegister value1(Compiler::StaticType::Number, 5);
     setVar1->targetVariable = &var;
@@ -188,6 +217,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, RepeatUntilLoop)
 
     analyzer.analyzeScript(list);
 
+    ASSERT_EQ(readVar->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
 }
 
