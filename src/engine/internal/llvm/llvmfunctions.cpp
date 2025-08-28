@@ -104,14 +104,18 @@ llvm::FunctionCallee LLVMFunctions::resolve_value_toBool()
 
 llvm::FunctionCallee LLVMFunctions::resolve_value_toStringPtr()
 {
-    // NOTE: This function can't be marked read-only because it allocates on the heap
-    return resolveFunction("value_toStringPtr", llvm::FunctionType::get(m_stringPtrType->getPointerTo(), m_valueDataType->getPointerTo(), false));
+    llvm::FunctionCallee callee = resolveFunction("value_toStringPtr", llvm::FunctionType::get(m_builder->getVoidTy(), { m_valueDataType->getPointerTo(), m_stringPtrType->getPointerTo() }, false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMFunctions::resolve_value_doubleToStringPtr()
 {
-    // NOTE: This function can't be marked read-only because it allocates on the heap
-    return resolveFunction("value_doubleToStringPtr", llvm::FunctionType::get(m_stringPtrType->getPointerTo(), m_builder->getDoubleTy(), false));
+    llvm::FunctionCallee callee = resolveFunction("value_doubleToStringPtr", llvm::FunctionType::get(m_builder->getVoidTy(), { m_builder->getDoubleTy(), m_stringPtrType->getPointerTo() }, false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMFunctions::resolve_value_boolToStringPtr()

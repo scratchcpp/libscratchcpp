@@ -486,8 +486,11 @@ extern "C"
         if (!ok) {
             // At least one argument can't be converted to a number
             // Scratch compares strings as case insensitive
-            StringPtr *s1 = value_toStringPtr(v1);
-            StringPtr *s2 = value_toStringPtr(v2);
+            StringPtr *s1 = string_pool_new();
+            StringPtr *s2 = string_pool_new();
+            value_toStringPtr(v1, s1);
+            value_toStringPtr(v2, s2);
+
             int ret = string_compare_case_insensitive(s1, s2);
             string_pool_free(s1);
             string_pool_free(s2);

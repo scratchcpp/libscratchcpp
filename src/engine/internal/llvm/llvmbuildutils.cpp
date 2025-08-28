@@ -629,7 +629,8 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
                 llvm::Value *intCast = m_builder.CreateSIToFP(reg->intValue, m_builder.getDoubleTy());
                 llvm::Value *value = m_builder.CreateSelect(reg->isInt, intCast, doubleValue);
 
-                llvm::Value *numberResult = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), value);
+                llvm::Value *numberResult = m_builder.CreateCall(m_functions.resolve_string_pool_new(), { m_builder.getInt1(true) });
+                m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), { value, numberResult });
                 m_builder.CreateBr(mergeBlock);
                 results.push_back({ numberBlock, numberResult });
             }
@@ -1307,8 +1308,11 @@ llvm::Value *LLVMBuildUtils::createStringComparison(LLVMRegister *arg1, LLVMRegi
 
     if (arg1->isConst() && arg2->isConst()) {
         // If both operands are constant, perform the comparison at compile time
-        StringPtr *str1 = value_toStringPtr(&arg1->constValue().data());
-        StringPtr *str2 = value_toStringPtr(&arg2->constValue().data());
+        StringPtr *str1 = string_pool_new();
+        StringPtr *str2 = string_pool_new();
+        value_toStringPtr(&arg1->constValue().data(), str1);
+        value_toStringPtr(&arg2->constValue().data(), str2);
+
         bool result;
 
         if (caseSensitive)
@@ -1496,7 +1500,8 @@ llvm::Value *LLVMBuildUtils::castRawValue(LLVMRegister *reg, Compiler::StaticTyp
                     // Convert double/int to string
                     llvm::Value *intCast = m_builder.CreateSIToFP(reg->intValue, m_builder.getDoubleTy());
                     llvm::Value *doubleValue = m_builder.CreateSelect(reg->isInt, intCast, reg->value);
-                    llvm::Value *ptr = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), doubleValue);
+                    llvm::Value *ptr = m_builder.CreateCall(m_functions.resolve_string_pool_new(), { m_builder.getInt1(true) });
+                    m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), { doubleValue, ptr });
                     freeStringLater(ptr);
                     return ptr;
                 }
@@ -1791,7 +1796,8 @@ llvm::Value *LLVMBuildUtils::createNumberAndStringComparison(LLVMRegister *arg1,
 
     // String comparison
     m_builder.SetInsertPoint(stringBlock);
-    llvm::Value *stringValue = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), { value1 });
+    llvm::Value *stringValue = m_builder.CreateCall(m_functions.resolve_string_pool_new(), { m_builder.getInt1(true) });
+    m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), { value1, stringValue });
     llvm::Value *cmp = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { stringValue, value2 });
     m_builder.CreateCall(m_functions.resolve_string_pool_free(), { stringValue }); // free the string immediately
 

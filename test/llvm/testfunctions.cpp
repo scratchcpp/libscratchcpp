@@ -68,7 +68,9 @@ extern "C"
         target->isStage();
         std::cout << "no_args_ret" << std::endl;
         Value v("no_args_output");
-        return value_toStringPtr(&v.data());
+        StringPtr *ret = string_pool_new();
+        value_toStringPtr(&v.data(), ret);
+        return ret;
     }
 
     void test_function_1_arg(Target *target, const StringPtr *arg1)
@@ -82,7 +84,9 @@ extern "C"
         target->isStage();
         std::cout << "1_arg_ret " << utf8::utf16to8(std::u16string(arg1->data)) << std::endl;
         Value v("1_arg_output");
-        return value_toStringPtr(&v.data());
+        StringPtr *ret = string_pool_new();
+        value_toStringPtr(&v.data(), ret);
+        return ret;
     }
 
     void test_function_3_args(Target *target, const StringPtr *arg1, const StringPtr *arg2, const StringPtr *arg3)
@@ -96,7 +100,9 @@ extern "C"
         target->isStage();
         std::cout << "3_args " << utf8::utf16to8(std::u16string(arg1->data)) << " " << utf8::utf16to8(std::u16string(arg2->data)) << " " << utf8::utf16to8(std::u16string(arg3->data)) << std::endl;
         Value v("3_args_output");
-        return value_toStringPtr(&v.data());
+        StringPtr *ret = string_pool_new();
+        value_toStringPtr(&v.data(), ret);
+        return ret;
     }
 
     const void *test_function_1_ptr_arg_ret(Target *target, const int *arg1)

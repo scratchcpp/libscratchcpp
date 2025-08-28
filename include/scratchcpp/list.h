@@ -163,7 +163,9 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
 
             for (i = 0; i < m_size; i++) {
                 const ValueData *item = &m_dataPtr->operator[](i);
-                strings.push_back(value_toStringPtr(item));
+                StringPtr *str = string_pool_new();
+                value_toStringPtr(item, str);
+                strings.push_back(str);
                 size += strings.back()->size;
 
                 if (value_isValidNumber(item) && !value_isBool(item) && strings.back()->size > 0) {
@@ -198,7 +200,8 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
                 }
 
                 for (; i < m_size; i++) {
-                    StringPtr *item = value_toStringPtr(&m_dataPtr->operator[](i));
+                    StringPtr *item = string_pool_new();
+                    value_toStringPtr(&m_dataPtr->operator[](i), item);
                     size += item->size + 1;
                     string_alloc(ret, size);
                     memcpy(ret->data + ret->size, item->data, item->size * sizeof(char16_t));
@@ -219,7 +222,8 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
                 }
 
                 for (; i < m_size; i++) {
-                    StringPtr *item = value_toStringPtr(&m_dataPtr->operator[](i));
+                    StringPtr *item = string_pool_new();
+                    value_toStringPtr(&m_dataPtr->operator[](i), item);
                     size += item->size + 1;
                     string_alloc(ret, size);
                     memcpy(ret->data + ret->size, item->data, item->size * sizeof(char16_t));
