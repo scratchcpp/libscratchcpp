@@ -264,84 +264,77 @@ TEST_F(ControlBlocksTest, IfElse)
     }
 }
 
-TEST_F(ControlBlocksTest, Stop)
+TEST_F(ControlBlocksTest, Stop_All)
 {
     auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    // Stop all
-    {
-        ScriptBuilder builder(m_extension.get(), m_engine, target);
+    builder.addBlock("control_stop");
+    builder.addDropdownField("STOP_OPTION", "all");
+    auto block = builder.currentBlock();
 
-        builder.addBlock("control_stop");
-        builder.addDropdownField("STOP_OPTION", "all");
-        auto block = builder.currentBlock();
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
 
-        Compiler compiler(&m_engineMock, target.get());
-        auto code = compiler.compile(block);
-        Script script(target.get(), block, &m_engineMock);
-        script.setCode(code);
-        Thread thread(target.get(), &m_engineMock, &script);
+    EXPECT_CALL(m_engineMock, stop());
+    thread.run();
+}
 
-        EXPECT_CALL(m_engineMock, stop());
-        thread.run();
-    }
+TEST_F(ControlBlocksTest, Stop_ThisScript)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-    m_engine->clear();
-    target = std::make_shared<Sprite>();
+    builder.addBlock("control_stop");
+    builder.addDropdownField("STOP_OPTION", "this script");
+    builder.addBlock("test_print_test");
 
-    // Stop this script
-    {
-        ScriptBuilder builder(m_extension.get(), m_engine, target);
+    builder.build();
 
-        builder.addBlock("control_stop");
-        builder.addDropdownField("STOP_OPTION", "this script");
-        builder.addBlock("test_print_test");
+    testing::internal::CaptureStdout();
+    builder.run();
+    ASSERT_TRUE(testing::internal::GetCapturedStdout().empty());
+}
 
-        builder.build();
+TEST_F(ControlBlocksTest, Stop_OtherScriptsInSprite)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-        testing::internal::CaptureStdout();
-        builder.run();
-        ASSERT_TRUE(testing::internal::GetCapturedStdout().empty());
-    }
+    builder.addBlock("control_stop");
+    builder.addDropdownField("STOP_OPTION", "other scripts in sprite");
+    auto block = builder.currentBlock();
 
-    m_engine->clear();
-    target = std::make_shared<Sprite>();
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
 
-    // Stop other scripts in sprite
-    {
-        ScriptBuilder builder(m_extension.get(), m_engine, target);
+    EXPECT_CALL(m_engineMock, stopTarget(target.get(), &thread));
+    thread.run();
+}
 
-        builder.addBlock("control_stop");
-        builder.addDropdownField("STOP_OPTION", "other scripts in sprite");
-        auto block = builder.currentBlock();
+TEST_F(ControlBlocksTest, Stop_OtherScriptsInStage)
+{
+    auto target = std::make_shared<Sprite>();
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
 
-        Compiler compiler(&m_engineMock, target.get());
-        auto code = compiler.compile(block);
-        Script script(target.get(), block, &m_engineMock);
-        script.setCode(code);
-        Thread thread(target.get(), &m_engineMock, &script);
+    builder.addBlock("control_stop");
+    builder.addDropdownField("STOP_OPTION", "other scripts in stage");
+    auto block = builder.currentBlock();
 
-        EXPECT_CALL(m_engineMock, stopTarget(target.get(), &thread));
-        thread.run();
-    }
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
 
-    // Stop other scripts in stage
-    {
-        ScriptBuilder builder(m_extension.get(), m_engine, target);
-
-        builder.addBlock("control_stop");
-        builder.addDropdownField("STOP_OPTION", "other scripts in stage");
-        auto block = builder.currentBlock();
-
-        Compiler compiler(&m_engineMock, target.get());
-        auto code = compiler.compile(block);
-        Script script(target.get(), block, &m_engineMock);
-        script.setCode(code);
-        Thread thread(target.get(), &m_engineMock, &script);
-
-        EXPECT_CALL(m_engineMock, stopTarget(target.get(), &thread));
-        thread.run();
-    }
+    EXPECT_CALL(m_engineMock, stopTarget(target.get(), &thread));
+    thread.run();
 }
 
 TEST_F(ControlBlocksTest, Wait)
