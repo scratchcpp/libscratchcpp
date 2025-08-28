@@ -63,7 +63,7 @@ extern "C"
     void value_assign_cstring(ValueData *v, const char *stringValue)
     {
         if (v->type != ValueType::String) {
-            v->stringValue = string_pool_new();
+            v->stringValue = string_pool_new(false);
             v->type = ValueType::String;
         }
 
@@ -74,7 +74,7 @@ extern "C"
     void value_assign_stringPtr(ValueData *v, const StringPtr *stringValue)
     {
         if (v->type != ValueType::String) {
-            v->stringValue = string_pool_new();
+            v->stringValue = string_pool_new(false);
             v->type = ValueType::String;
         }
 
@@ -103,7 +103,7 @@ extern "C"
             if (v->type == ValueType::String)
                 string_assign(v->stringValue, another->stringValue);
             else {
-                v->stringValue = string_pool_new();
+                v->stringValue = string_pool_new(false);
                 string_assign(v->stringValue, another->stringValue);
                 v->type = ValueType::String;
             }
