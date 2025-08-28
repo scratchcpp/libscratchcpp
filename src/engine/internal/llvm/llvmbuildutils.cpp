@@ -1600,31 +1600,39 @@ LLVMBuildUtils::Comparison LLVMBuildUtils::swapComparisonArgs(Comparison type)
 
 llvm::Value *LLVMBuildUtils::createNumberAndNumberComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
 {
-    // TODO: Add integer support
-    llvm::Value *value1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Double);
-    llvm::Value *value2 = castValue(arg2, Compiler::StaticType::Number, NumberType::Double);
+    llvm::Value *double1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Double);
+    llvm::Value *double2 = castValue(arg2, Compiler::StaticType::Number, NumberType::Double);
+
+    llvm::Value *int1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Int);
+    llvm::Value *int2 = castValue(arg2, Compiler::StaticType::Number, NumberType::Int);
+
+    llvm::Value *isInt = m_builder.CreateAnd(arg1->isInt, arg2->isInt);
+    llvm::Value *bothNan = m_builder.CreateAnd(isNaN(double1), isNaN(double2)); // NaN == NaN
 
     switch (type) {
         case Comparison::EQ: {
-            llvm::Value *bothNan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
-            llvm::Value *cmp = m_builder.CreateFCmpOEQ(value1, value2);
-            return m_builder.CreateOr(bothNan, cmp);
+            llvm::Value *fcmp = m_builder.CreateFCmpOEQ(double1, double2);
+            llvm::Value *doubleResult = m_builder.CreateOr(bothNan, fcmp);
+            llvm::Value *icmp = m_builder.CreateICmpEQ(int1, int2);
+            return m_builder.CreateSelect(isInt, icmp, doubleResult);
         }
 
         case Comparison::GT: {
-            llvm::Value *bothNan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
-            llvm::Value *cmp = m_builder.CreateFCmpOGT(value1, value2);
-            llvm::Value *nan = isNaN(value1);
-            llvm::Value *nanCmp = m_builder.CreateFCmpUGT(value1, value2);
-            return m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, cmp));
+            llvm::Value *fcmp = m_builder.CreateFCmpOGT(double1, double2);
+            llvm::Value *nan = isNaN(double1);
+            llvm::Value *nanCmp = m_builder.CreateFCmpUGT(double1, double2);
+            llvm::Value *doubleResult = m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, fcmp));
+            llvm::Value *icmp = m_builder.CreateICmpSGT(int1, int2);
+            return m_builder.CreateSelect(isInt, icmp, doubleResult);
         }
 
         case Comparison::LT: {
-            llvm::Value *bothNan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
-            llvm::Value *cmp = m_builder.CreateFCmpOLT(value1, value2);
-            llvm::Value *nan = isNaN(value2);
-            llvm::Value *nanCmp = m_builder.CreateFCmpULT(value1, value2);
-            return m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, cmp));
+            llvm::Value *fcmp = m_builder.CreateFCmpOLT(double1, double2);
+            llvm::Value *nan = isNaN(double2);
+            llvm::Value *nanCmp = m_builder.CreateFCmpULT(double1, double2);
+            llvm::Value *doubleResult = m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, fcmp));
+            llvm::Value *icmp = m_builder.CreateICmpSLT(int1, int2);
+            return m_builder.CreateSelect(isInt, icmp, doubleResult);
         }
 
         default:
@@ -1682,25 +1690,36 @@ llvm::Value *LLVMBuildUtils::createStringAndStringComparison(LLVMRegister *arg1,
 
 llvm::Value *LLVMBuildUtils::createNumberAndBoolComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
 {
-    // TODO: Add integer support
-    llvm::Value *value1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Double);
-    llvm::Value *value2 = castValue(arg2, Compiler::StaticType::Bool);
+    llvm::Value *doubleValue1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Double);
+    llvm::Value *intValue1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Int);
 
-    llvm::Value *doubleValue = m_builder.CreateUIToFP(value2, m_builder.getDoubleTy());
+    llvm::Value *boolValue2 = castValue(arg2, Compiler::StaticType::Bool);
+    llvm::Value *intValue2 = castValue(arg2, Compiler::StaticType::Number, NumberType::Int);
+
+    llvm::Value *doubleValue2 = m_builder.CreateUIToFP(boolValue2, m_builder.getDoubleTy());
+    llvm::Value *isInt = arg1->isInt;
 
     switch (type) {
-        case Comparison::EQ:
-            return m_builder.CreateFCmpOEQ(value1, doubleValue);
-
-        case Comparison::GT: {
-            llvm::Value *cmp = m_builder.CreateFCmpOGT(value1, doubleValue);
-            llvm::Value *nan = isNaN(value1);
-            llvm::Value *nanCmp = m_builder.CreateFCmpUGT(value1, doubleValue);
-            return m_builder.CreateSelect(nan, nanCmp, cmp);
+        case Comparison::EQ: {
+            llvm::Value *fcmp = m_builder.CreateFCmpOEQ(doubleValue1, doubleValue2);
+            llvm::Value *icmp = m_builder.CreateICmpEQ(intValue1, intValue2);
+            return m_builder.CreateSelect(isInt, icmp, fcmp);
         }
 
-        case Comparison::LT:
-            return m_builder.CreateFCmpOLT(value1, doubleValue);
+        case Comparison::GT: {
+            llvm::Value *fcmp = m_builder.CreateFCmpOGT(doubleValue1, doubleValue2);
+            llvm::Value *nan = isNaN(doubleValue1);
+            llvm::Value *nanCmp = m_builder.CreateFCmpUGT(doubleValue1, doubleValue2);
+            llvm::Value *doubleResult = m_builder.CreateSelect(nan, nanCmp, fcmp);
+            llvm::Value *icmp = m_builder.CreateICmpSGT(intValue1, intValue2);
+            return m_builder.CreateSelect(isInt, icmp, doubleResult);
+        }
+
+        case Comparison::LT: {
+            llvm::Value *fcmp = m_builder.CreateFCmpOLT(doubleValue1, doubleValue2);
+            llvm::Value *icmp = m_builder.CreateICmpSLT(intValue1, intValue2);
+            return m_builder.CreateSelect(isInt, icmp, fcmp);
+        }
 
         default:
             assert(false);
@@ -1710,12 +1729,11 @@ llvm::Value *LLVMBuildUtils::createNumberAndBoolComparison(LLVMRegister *arg1, L
 
 llvm::Value *LLVMBuildUtils::createNumberAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
 {
-    // TODO: Add integer support
     llvm::Value *value1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Double);
     llvm::Value *value2 = castValue(arg2, Compiler::StaticType::String);
 
     // If the number is NaN, skip the string to double conversion
-    llvm::Value *nan = isNaN(value1);
+    llvm::Value *nan = m_builder.CreateAnd(m_builder.CreateNot(arg1->isInt), isNaN(value1));
 
     llvm::BasicBlock *nanBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
     llvm::BasicBlock *stringCastBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
