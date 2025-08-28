@@ -434,8 +434,15 @@ Compiler::StaticType LLVMBuildUtils::optimizeRegisterType(const LLVMRegister *re
     Compiler::StaticType ret = reg->type();
 
     // Optimize string constants that represent numbers
-    if (reg->isConst() && reg->type() == Compiler::StaticType::String && reg->constValue().isValidNumber())
-        ret = Compiler::StaticType::Number;
+    if (reg->isConst() && reg->type() == Compiler::StaticType::String) {
+        const Value &value = reg->constValue();
+        Value numberValue(value.toDouble());
+
+        // Apply this optimization only if the number matches the string
+        // TODO: Exclude unsafe constants
+        if (value.isValidNumber() && numberValue.toString() == value.toString())
+            ret = Compiler::StaticType::Number;
+    }
 
     return ret;
 }

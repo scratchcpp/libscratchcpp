@@ -107,6 +107,31 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, StringOptimization)
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Number);
 }
 
+TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, StringOptimization_DifferentString)
+{
+    LLVMCodeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "1.0");
+    setVar1->targetVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
+    setVar2->targetVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    analyzer.analyzeScript(list);
+
+    ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
+    // String "1.0" does NOT get optimized to Number because it would convert to "1"
+    ASSERT_EQ(setVar2->targetType, Compiler::StaticType::String);
+}
+
 TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopSingleWrite)
 {
     LLVMCodeAnalyzer analyzer;
