@@ -283,6 +283,39 @@ TEST_F(ControlBlocksTest, Stop_All)
     thread.run();
 }
 
+TEST_F(ControlBlocksTest, Stop_All_StopsCallingScript)
+{
+    auto target = std::make_shared<Sprite>();
+    auto var = std::make_shared<Variable>("", "");
+    target->addVariable(var);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("control_stop");
+    builder.addDropdownField("STOP_OPTION", "all");
+    auto block = builder.currentBlock();
+
+    builder.addBlock("test_set_var");
+    builder.addEntityField("VARIABLE", var);
+    builder.addValueInput("VALUE", true);
+    builder.currentBlock();
+
+    builder.addBlock("test_print_test");
+    builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, stop());
+    thread.run();
+
+    // The script should stop (variable value is false)
+    ASSERT_FALSE(var->value().toBool());
+}
+
 TEST_F(ControlBlocksTest, Stop_ThisScript)
 {
     auto target = std::make_shared<Sprite>();
@@ -318,6 +351,36 @@ TEST_F(ControlBlocksTest, Stop_OtherScriptsInSprite)
     thread.run();
 }
 
+TEST_F(ControlBlocksTest, Stop_OtherScriptsInSprite_DoesNotStopCallingScript)
+{
+    auto target = std::make_shared<Sprite>();
+    auto var = std::make_shared<Variable>("", "");
+    target->addVariable(var);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("control_stop");
+    builder.addDropdownField("STOP_OPTION", "other scripts in sprite");
+    auto block = builder.currentBlock();
+
+    builder.addBlock("test_set_var");
+    builder.addEntityField("VARIABLE", var);
+    builder.addValueInput("VALUE", true);
+    builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, stopTarget(target.get(), &thread));
+    thread.run();
+
+    // The script should NOT stop (variable value is true)
+    ASSERT_TRUE(var->value().toBool());
+}
+
 TEST_F(ControlBlocksTest, Stop_OtherScriptsInStage)
 {
     auto target = std::make_shared<Sprite>();
@@ -335,6 +398,36 @@ TEST_F(ControlBlocksTest, Stop_OtherScriptsInStage)
 
     EXPECT_CALL(m_engineMock, stopTarget(target.get(), &thread));
     thread.run();
+}
+
+TEST_F(ControlBlocksTest, Stop_OtherScriptsInStage_DoesNotStopCallingScript)
+{
+    auto target = std::make_shared<Sprite>();
+    auto var = std::make_shared<Variable>("", "");
+    target->addVariable(var);
+
+    ScriptBuilder builder(m_extension.get(), m_engine, target);
+
+    builder.addBlock("control_stop");
+    builder.addDropdownField("STOP_OPTION", "other scripts in stage");
+    auto block = builder.currentBlock();
+
+    builder.addBlock("test_set_var");
+    builder.addEntityField("VARIABLE", var);
+    builder.addValueInput("VALUE", true);
+    builder.currentBlock();
+
+    Compiler compiler(&m_engineMock, target.get());
+    auto code = compiler.compile(block);
+    Script script(target.get(), block, &m_engineMock);
+    script.setCode(code);
+    Thread thread(target.get(), &m_engineMock, &script);
+
+    EXPECT_CALL(m_engineMock, stopTarget(target.get(), &thread));
+    thread.run();
+
+    // The script should NOT stop (variable value is true)
+    ASSERT_TRUE(var->value().toBool());
 }
 
 TEST_F(ControlBlocksTest, Wait)

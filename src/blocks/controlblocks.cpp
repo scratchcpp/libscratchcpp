@@ -88,9 +88,10 @@ CompilerValue *ControlBlocks::compileStop(Compiler *compiler)
     if (option) {
         std::string str = option->value().toString();
 
-        if (str == "all")
+        if (str == "all") {
             compiler->addFunctionCallWithCtx("control_stop_all", Compiler::StaticType::Void);
-        else if (str == "this script")
+            compiler->createStop();
+        } else if (str == "this script")
             compiler->createStop();
         else if (str == "other scripts in sprite" || str == "other scripts in stage")
             compiler->addFunctionCallWithCtx("control_stop_other_scripts_in_target", Compiler::StaticType::Void);
