@@ -5,6 +5,7 @@
 #include <scratchcpp/valuedata.h>
 
 #include "llvmfunctions.h"
+#include "llvmlocalvariableinfo.h"
 #include "llvmvariableptr.h"
 #include "llvmlistptr.h"
 #include "llvmcoroutine.h"
@@ -27,9 +28,15 @@ class LLVMBuildUtils
             LT
         };
 
+        enum class NumberType
+        {
+            Int,
+            Double
+        };
+
         LLVMBuildUtils(LLVMCompilerContext *ctx, llvm::IRBuilder<> &builder, Compiler::CodeType codeType);
 
-        void init(llvm::Function *function, BlockPrototype *procedurePrototype, bool warp);
+        void init(llvm::Function *function, BlockPrototype *procedurePrototype, bool warp, const std::vector<std::shared_ptr<LLVMRegister>> &regs);
         void end(LLVMInstruction *lastInstruction, LLVMRegister *lastConstant);
 
         LLVMCompilerContext *compilerCtx() const;
@@ -55,14 +62,16 @@ class LLVMBuildUtils
 
         LLVMCoroutine *coroutine() const;
 
+        void createLocalVariableInfo(CompilerLocalVariable *variable);
         void createVariablePtr(Variable *variable);
         void createListPtr(List *list);
 
+        LLVMLocalVariableInfo &localVariableInfo(CompilerLocalVariable *variable);
         LLVMVariablePtr &variablePtr(Variable *variable);
         LLVMListPtr &listPtr(List *list);
 
-        void syncVariables(llvm::Value *targetVariables);
-        void reloadVariables(llvm::Value *targetVariables);
+        void syncVariables();
+        void reloadVariables();
         void reloadLists();
 
         void pushScopeLevel();
@@ -76,16 +85,28 @@ class LLVMBuildUtils
 
         static Compiler::StaticType optimizeRegisterType(const LLVMRegister *reg);
         static Compiler::StaticType mapType(ValueType type);
+        static ValueType mapType(Compiler::StaticType type);
         static bool isSingleType(Compiler::StaticType type);
 
         llvm::Value *addAlloca(llvm::Type *type);
-        llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType);
+        llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType, NumberType targetNumType = NumberType::Double);
         llvm::Type *getType(Compiler::StaticType type, bool isReturnType);
         llvm::Value *isNaN(llvm::Value *num);
         llvm::Value *removeNaN(llvm::Value *num);
 
-        void createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType destType, Compiler::StaticType targetType);
-        void createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType targetType);
+        void createValueStore(
+            llvm::Value *destPtr,
+            llvm::Value *destTypePtr,
+            llvm::Value *destIsIntVar,
+            llvm::Value *destIntVar,
+            LLVMRegister *reg,
+            Compiler::StaticType destType,
+            Compiler::StaticType targetType);
+
+        void createValueStore(llvm::Value *destPtr, llvm::Value *destTypePtr, llvm::Value *destIsIntVar, llvm::Value *destIntVar, LLVMRegister *reg, Compiler::StaticType targetType);
+
+        llvm::Value *getValueTypePtr(llvm::Value *value);
+        llvm::Value *getValueTypePtr(LLVMRegister *reg);
 
         llvm::Value *getListSize(const LLVMListPtr &listPtr);
         llvm::Value *getListItem(const LLVMListPtr &listPtr, llvm::Value *index);
@@ -102,11 +123,23 @@ class LLVMBuildUtils
         void createVariableMap();
         void createListMap();
 
-        llvm::Value *castRawValue(LLVMRegister *reg, Compiler::StaticType targetType);
-        llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType);
+        llvm::Value *loadRegisterType(LLVMRegister *reg, Compiler::StaticType type);
+
+        llvm::Value *castRawValue(LLVMRegister *reg, Compiler::StaticType targetType, NumberType targetNumType);
+        llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType, NumberType targetNumType);
 
         void createValueCopy(llvm::Value *source, llvm::Value *target);
         void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
+
+        Comparison swapComparisonArgs(Comparison type);
+
+        llvm::Value *createNumberAndNumberComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
+        llvm::Value *createBoolAndBoolComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
+        llvm::Value *createStringAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
+
+        llvm::Value *createNumberAndBoolComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
+        llvm::Value *createNumberAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
+        llvm::Value *createBoolAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
 
         llvm::Value *getVariablePtr(llvm::Value *targetVariables, Variable *variable);
         llvm::Value *getListPtr(llvm::Value *targetLists, List *list);
@@ -135,6 +168,8 @@ class LLVMBuildUtils
         llvm::Value *m_warpArg = nullptr;
 
         std::unique_ptr<LLVMCoroutine> m_coroutine;
+
+        std::unordered_map<CompilerLocalVariable *, LLVMLocalVariableInfo> m_localVariables;
 
         std::unordered_map<Variable *, size_t> m_targetVariableMap;
         std::unordered_map<Variable *, LLVMVariablePtr> m_variablePtrs;

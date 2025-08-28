@@ -178,7 +178,10 @@ CompilerValue *ControlBlocks::compileCreateCloneOf(Compiler *compiler)
 
 CompilerValue *ControlBlocks::compileDeleteThisClone(Compiler *compiler)
 {
-    compiler->addTargetFunctionCall("control_delete_this_clone");
+    CompilerValue *deleted = compiler->addTargetFunctionCall("control_delete_this_clone", Compiler::StaticType::Bool);
+    compiler->beginIfStatement(deleted);
+    compiler->createStopWithoutSync(); // sync happens before the function call
+    compiler->endIf();
     return nullptr;
 }
 
@@ -234,10 +237,17 @@ extern "C" void control_create_clone(ExecutionContext *ctx, const StringPtr *spr
     }
 }
 
-extern "C" void control_delete_this_clone(Target *target)
+extern "C" bool control_delete_this_clone(Target *target)
 {
     if (!target->isStage()) {
-        target->engine()->stopTarget(target, nullptr);
-        static_cast<Sprite *>(target)->deleteClone();
+        Sprite *sprite = static_cast<Sprite *>(target);
+
+        if (sprite->isClone()) {
+            target->engine()->stopTarget(target, nullptr);
+            sprite->deleteClone();
+            return true;
+        }
     }
+
+    return false;
 }

@@ -55,7 +55,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::build()
     if (m_warp) {
 #ifdef ENABLE_CODE_ANALYZER
         // Analyze the script (type analysis, optimizations, etc.)
-        // NOTE: Do this only for non-warp scripts
+        // NOTE: Do this only for warp scripts
         m_codeAnalyzer.analyzeScript(m_instructions);
 #endif
     }
@@ -80,7 +80,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::build()
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_llvmCtx, "entry", m_function);
     m_builder.SetInsertPoint(entry);
 
-    m_utils.init(m_function, m_procedurePrototype, m_warp);
+    m_utils.init(m_function, m_procedurePrototype, m_warp, m_regs);
 
     // Build recorded instructions
     LLVMInstruction *ins = m_instructions.first();
@@ -158,7 +158,17 @@ CompilerValue *LLVMCodeBuilder::addLoopIndex()
 
 CompilerValue *LLVMCodeBuilder::addLocalVariableValue(CompilerLocalVariable *variable)
 {
-    return createOp(LLVMInstruction::Type::ReadLocalVariable, variable->type(), variable->type(), { variable->ptr() });
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ReadLocalVariable, m_loopCondition);
+    ins->localVarInfo = &m_utils.localVariableInfo(variable);
+
+    ins->args.push_back({ variable->type(), dynamic_cast<LLVMRegister *>(variable->ptr()) });
+
+    auto ret = std::make_shared<LLVMRegister>(variable->type());
+    ret->isRawValue = false;
+    ins->functionReturnReg = ret.get();
+
+    m_instructions.addInstruction(ins);
+    return addReg(ret, ins);
 }
 
 CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
@@ -416,12 +426,15 @@ CompilerLocalVariable *LLVMCodeBuilder::createLocalVariable(Compiler::StaticType
     CompilerValue *ptr = createOp(LLVMInstruction::Type::CreateLocalVariable, type);
     auto var = std::make_shared<CompilerLocalVariable>(ptr);
     m_localVars.push_back(var);
+    m_utils.createLocalVariableInfo(var.get());
+    m_instructions.last()->localVarInfo = &m_utils.localVariableInfo(var.get());
     return var.get();
 }
 
 void LLVMCodeBuilder::createLocalVariableWrite(CompilerLocalVariable *variable, CompilerValue *value)
 {
     createOp(LLVMInstruction::Type::WriteLocalVariable, Compiler::StaticType::Void, variable->type(), { variable->ptr(), value });
+    m_instructions.last()->localVarInfo = &m_utils.localVariableInfo(variable);
 }
 
 void LLVMCodeBuilder::createVariableWrite(Variable *variable, CompilerValue *value)
@@ -549,6 +562,12 @@ void LLVMCodeBuilder::yield()
 void LLVMCodeBuilder::createStop()
 {
     auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::Stop, m_loopCondition);
+    m_instructions.addInstruction(ins);
+}
+
+void LLVMCodeBuilder::createStopWithoutSync()
+{
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::StopWithoutSync, m_loopCondition);
     m_instructions.addInstruction(ins);
 }
 

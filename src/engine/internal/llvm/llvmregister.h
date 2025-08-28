@@ -31,7 +31,13 @@ struct LLVMRegister : public virtual CompilerValue
         }
 
         llvm::Value *value = nullptr;
+        llvm::Value *typeVar = nullptr;
+
+        llvm::Value *isInt = nullptr;
+        llvm::Value *intValue = nullptr;
+
         bool isRawValue = false;
+
         std::shared_ptr<LLVMInstruction> instruction;
 };
 

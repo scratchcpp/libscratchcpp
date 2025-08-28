@@ -15,6 +15,7 @@ target_sources(scratchcpp
     llvmloop.h
     llvmcoroutine.cpp
     llvmcoroutine.h
+    llvmlocalvariableinfo.h
     llvmvariableptr.h
     llvmlistptr.h
     llvmtypes.cpp

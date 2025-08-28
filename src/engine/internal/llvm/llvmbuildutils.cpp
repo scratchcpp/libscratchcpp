@@ -21,6 +21,13 @@ static std::unordered_map<ValueType, Compiler::StaticType> TYPE_MAP = {
     { ValueType::Pointer, Compiler::StaticType::Pointer }
 };
 
+static std::unordered_map<Compiler::StaticType, ValueType> REVERSE_TYPE_MAP = {
+    { Compiler::StaticType::Number, ValueType::Number },
+    { Compiler::StaticType::Bool, ValueType::Bool },
+    { Compiler::StaticType::String, ValueType::String },
+    { Compiler::StaticType::Pointer, ValueType::Pointer }
+};
+
 LLVMBuildUtils::LLVMBuildUtils(LLVMCompilerContext *ctx, llvm::IRBuilder<> &builder, Compiler::CodeType codeType) :
     m_ctx(ctx),
     m_llvmCtx(*ctx->llvmCtx()),
@@ -34,7 +41,7 @@ LLVMBuildUtils::LLVMBuildUtils(LLVMCompilerContext *ctx, llvm::IRBuilder<> &buil
     createListMap();
 }
 
-void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePrototype, bool warp)
+void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePrototype, bool warp, const std::vector<std::shared_ptr<LLVMRegister>> &regs)
 {
     m_function = function;
     m_procedurePrototype = procedurePrototype;
@@ -56,33 +63,31 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
     if (!m_warp)
         m_coroutine = std::make_unique<LLVMCoroutine>(m_ctx->module(), &m_builder, m_function);
 
+    // Init registers
+    for (auto reg : regs) {
+#ifdef LLVM_INTEGER_SUPPORT
+        bool isIntConst = (reg->isConst() && optimizeRegisterType(reg.get()) == Compiler::StaticType::Number && reg->constValue().toDouble() == std::floor(reg->constValue().toDouble()));
+        reg->isInt = m_builder.getInt1(isIntConst);
+#else
+        reg->isInt = m_builder.getInt1(false);
+#endif
+        reg->intValue = llvm::ConstantInt::get(m_builder.getInt64Ty(), reg->constValue().toDouble(), true);
+    }
+
     // Create variable pointers
     for (auto &[var, varPtr] : m_variablePtrs) {
         llvm::Value *ptr = getVariablePtr(m_targetVariables, var);
-
-        // Direct access
         varPtr.heapPtr = ptr;
 
-        // All variables are currently created on the stack and synced later (seems to be faster)
-        // NOTE: Strings are NOT copied, only the pointer is copied
-        // TODO: Restore this feature
-        // varPtr.stackPtr = m_builder.CreateAlloca(m_valueDataType);
-        varPtr.stackPtr = varPtr.heapPtr;
-        varPtr.onStack = false;
+        // Store variables locally to enable optimizations
+        varPtr.stackPtr = m_builder.CreateAlloca(m_valueDataType);
+        varPtr.changed = m_builder.CreateAlloca(m_builder.getInt1Ty());
 
-        // If there are no write operations outside loops, initialize the stack variable now
-        /*Variable *variable = var;
-        // TODO: Loop scope was used here, replace it with some "inside loop" flag if needed
-        auto it = std::find_if(m_variableInstructions.begin(), m_variableInstructions.end(), [variable](const LLVMInstruction *ins) {
-            return ins->type == LLVMInstruction::Type::WriteVariable && ins->targetVariable == variable && !ins->loopScope;
-        });
-
-        if (it == m_variableInstructions.end()) {
-            createValueCopy(ptr, varPtr.stackPtr);
-            varPtr.onStack = true;
-        } else
-            varPtr.onStack = false; // use heap before the first assignment
-        */
+        // Integer support
+        varPtr.isInt = m_builder.CreateAlloca(m_builder.getInt1Ty(), nullptr, var->name() + ".isInt");
+        varPtr.intValue = m_builder.CreateAlloca(m_builder.getInt64Ty(), nullptr, var->name() + ".intValue");
+        m_builder.CreateStore(m_builder.getInt1(false), varPtr.isInt);
+        m_builder.CreateStore(llvm::ConstantInt::get(m_builder.getInt64Ty(), 0, true), varPtr.isInt);
     }
 
     // Create list pointers
@@ -101,8 +106,16 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
 
             llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
             m_builder.CreateStore(size, listPtr.size);
+
+            // Store list type info locally to leave static type analysis to LLVM
+            listPtr.hasNumber = m_builder.CreateAlloca(m_builder.getInt1Ty(), nullptr, list->name() + ".hasNumber");
+            listPtr.hasBool = m_builder.CreateAlloca(m_builder.getInt1Ty(), nullptr, list->name() + ".hasBool");
+            listPtr.hasString = m_builder.CreateAlloca(m_builder.getInt1Ty(), nullptr, list->name() + ".hasString");
         }
     }
+
+    reloadVariables();
+    reloadLists();
 
     // Create end branch
     m_endBranch = llvm::BasicBlock::Create(m_llvmCtx, "end", m_function);
@@ -113,10 +126,15 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
     assert(m_stringHeap.size() == 1);
     freeScopeHeap();
 
+    // Sync
+    llvm::BasicBlock *syncBranch = llvm::BasicBlock::Create(m_llvmCtx, "sync", m_function);
+    m_builder.CreateBr(syncBranch);
+
+    m_builder.SetInsertPoint(syncBranch);
+    syncVariables();
     m_builder.CreateBr(m_endBranch);
 
     m_builder.SetInsertPoint(m_endBranch);
-    syncVariables(m_targetVariables);
 
     // End the script function
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
@@ -285,6 +303,12 @@ LLVMCoroutine *LLVMBuildUtils::coroutine() const
     return m_coroutine.get();
 }
 
+void LLVMBuildUtils::createLocalVariableInfo(CompilerLocalVariable *variable)
+{
+    if (m_localVariables.find(variable) == m_localVariables.cend())
+        m_localVariables[variable] = LLVMLocalVariableInfo();
+}
+
 void LLVMBuildUtils::createVariablePtr(Variable *variable)
 {
     if (m_variablePtrs.find(variable) == m_variablePtrs.cend())
@@ -295,6 +319,12 @@ void LLVMBuildUtils::createListPtr(List *list)
 {
     if (m_listPtrs.find(list) == m_listPtrs.cend())
         m_listPtrs[list] = LLVMListPtr();
+}
+
+LLVMLocalVariableInfo &LLVMBuildUtils::localVariableInfo(CompilerLocalVariable *variable)
+{
+    assert(m_localVariables.find(variable) != m_localVariables.cend());
+    return m_localVariables[variable];
 }
 
 LLVMVariablePtr &LLVMBuildUtils::variablePtr(Variable *variable)
@@ -309,33 +339,47 @@ LLVMListPtr &LLVMBuildUtils::listPtr(List *list)
     return m_listPtrs[list];
 }
 
-void LLVMBuildUtils::syncVariables(llvm::Value *targetVariables)
+void LLVMBuildUtils::syncVariables()
 {
     // Copy stack variables to the actual variables
     for (auto &[var, varPtr] : m_variablePtrs) {
-        if (varPtr.onStack && varPtr.changed)
-            createValueCopy(varPtr.stackPtr, getVariablePtr(targetVariables, var));
+        llvm::BasicBlock *copyBlock = llvm::BasicBlock::Create(m_llvmCtx, "syncVar", m_function);
+        llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "syncVar.next", m_function);
+        m_builder.CreateCondBr(m_builder.CreateLoad(m_builder.getInt1Ty(), varPtr.changed), copyBlock, nextBlock);
 
-        varPtr.changed = false;
+        m_builder.SetInsertPoint(copyBlock);
+        createValueCopy(varPtr.stackPtr, getVariablePtr(m_targetVariables, var));
+        m_builder.CreateStore(m_builder.getInt1(false), varPtr.changed);
+        m_builder.CreateBr(nextBlock);
+
+        m_builder.SetInsertPoint(nextBlock);
     }
 }
 
-void LLVMBuildUtils::reloadVariables(llvm::Value *targetVariables)
+void LLVMBuildUtils::reloadVariables()
 {
-    // Reset variables to use heap
+    // Load variables to stack
     for (auto &[var, varPtr] : m_variablePtrs) {
-        varPtr.onStack = false;
-        varPtr.changed = false;
+        llvm::Value *ptr = getVariablePtr(m_targetVariables, var);
+        createValueCopy(ptr, varPtr.stackPtr);
+        m_builder.CreateStore(m_builder.getInt1(false), varPtr.isInt);
+        m_builder.CreateStore(m_builder.getInt1(false), varPtr.changed);
     }
 }
 
 void LLVMBuildUtils::reloadLists()
 {
-    // Load list size info
-    if (m_warp) {
-        for (auto &[list, listPtr] : m_listPtrs) {
+    // Load list size and type info
+    for (auto &[list, listPtr] : m_listPtrs) {
+        if (listPtr.size) {
             llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), listPtr.sizePtr);
             m_builder.CreateStore(size, listPtr.size);
+        }
+
+        if (listPtr.hasNumber && listPtr.hasBool && listPtr.hasString) {
+            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasNumber);
+            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasBool);
+            m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasString);
         }
     }
 }
@@ -402,6 +446,12 @@ Compiler::StaticType LLVMBuildUtils::mapType(ValueType type)
     return TYPE_MAP[type];
 }
 
+ValueType LLVMBuildUtils::mapType(Compiler::StaticType type)
+{
+    assert(REVERSE_TYPE_MAP.find(type) != REVERSE_TYPE_MAP.cend());
+    return REVERSE_TYPE_MAP[type];
+}
+
 bool LLVMBuildUtils::isSingleType(Compiler::StaticType type)
 {
     // Check if the type is a power of 2 (only one bit set)
@@ -418,17 +468,17 @@ llvm::Value *LLVMBuildUtils::addAlloca(llvm::Type *type)
     return ret;
 }
 
-llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType targetType)
+llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType targetType, NumberType targetNumType)
 {
     if (reg->isConst()) {
         if (!isSingleType(targetType))
             return createValue(reg);
         else
-            return castConstValue(reg->constValue(), targetType);
+            return castConstValue(reg->constValue(), targetType, targetNumType);
     }
 
     if (reg->isRawValue)
-        return castRawValue(reg, targetType);
+        return castRawValue(reg, targetType, targetNumType);
 
     assert(reg->type() != Compiler::StaticType::Void && targetType != Compiler::StaticType::Void);
 
@@ -441,7 +491,7 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
 
     if (isSingleType(targetType)) {
         // Handle multiple source type cases with runtime switch
-        typePtr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 1);
+        typePtr = getValueTypePtr(reg);
         loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
 
         mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
@@ -460,8 +510,20 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
                 sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), numberBlock);
 
                 m_builder.SetInsertPoint(numberBlock);
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                llvm::Value *numberResult = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
+                llvm::Value *numberResult;
+
+                if (targetNumType == NumberType::Int) {
+                    // double/int -> int
+                    llvm::Value *doubleInt = m_builder.CreateFPToSI(reg->intValue, m_builder.getInt64Ty());
+                    numberResult = m_builder.CreateSelect(reg->isInt, reg->intValue, doubleInt);
+                } else {
+                    // double/int -> double
+                    llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
+                    llvm::Value *doubleValue = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
+                    llvm::Value *intDouble = m_builder.CreateSIToFP(reg->intValue, m_builder.getDoubleTy());
+                    numberResult = m_builder.CreateSelect(reg->isInt, intDouble, doubleValue);
+                }
+
                 m_builder.CreateBr(mergeBlock);
                 results.push_back({ numberBlock, numberResult });
             }
@@ -474,7 +536,16 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
                 m_builder.SetInsertPoint(boolBlock);
                 llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
                 llvm::Value *boolValue = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-                llvm::Value *boolResult = m_builder.CreateUIToFP(boolValue, m_builder.getDoubleTy());
+                llvm::Value *boolResult;
+
+                if (targetNumType == NumberType::Int) {
+                    // bool -> int
+                    boolResult = m_builder.CreateZExt(boolValue, m_builder.getInt64Ty());
+                } else {
+                    // bool -> double
+                    boolResult = m_builder.CreateUIToFP(boolValue, m_builder.getDoubleTy());
+                }
+
                 m_builder.CreateBr(mergeBlock);
                 results.push_back({ boolBlock, boolResult });
             }
@@ -488,6 +559,10 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
                 llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
                 llvm::Value *stringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
                 llvm::Value *stringResult = m_builder.CreateCall(m_functions.resolve_value_stringToDouble(), stringPtr);
+
+                if (targetNumType == NumberType::Int)
+                    stringResult = m_builder.CreateFPToSI(stringResult, m_builder.getInt64Ty());
+
                 m_builder.CreateBr(mergeBlock);
                 results.push_back({ stringBlock, stringResult });
             }
@@ -504,7 +579,11 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
                 m_builder.SetInsertPoint(numberBlock);
                 llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
                 llvm::Value *numberValue = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-                llvm::Value *numberResult = m_builder.CreateFCmpONE(numberValue, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)));
+
+                llvm::Value *intResult = m_builder.CreateICmpNE(reg->intValue, llvm::ConstantInt::get(m_builder.getInt64Ty(), 0, true));
+                llvm::Value *doubleResult = m_builder.CreateFCmpONE(numberValue, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)));
+                llvm::Value *numberResult = m_builder.CreateSelect(reg->isInt, intResult, doubleResult);
+
                 m_builder.CreateBr(mergeBlock);
                 results.push_back({ numberBlock, numberResult });
             }
@@ -545,7 +624,11 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
 
                 m_builder.SetInsertPoint(numberBlock);
                 llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                llvm::Value *value = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
+                llvm::Value *doubleValue = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
+
+                llvm::Value *intCast = m_builder.CreateSIToFP(reg->intValue, m_builder.getDoubleTy());
+                llvm::Value *value = m_builder.CreateSelect(reg->isInt, intCast, doubleValue);
+
                 llvm::Value *numberResult = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), value);
                 m_builder.CreateBr(mergeBlock);
                 results.push_back({ numberBlock, numberResult });
@@ -597,7 +680,12 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
 
     // Create phi node to merge results
     m_builder.SetInsertPoint(mergeBlock);
-    llvm::PHINode *result = m_builder.CreatePHI(getType(targetType, false), results.size());
+    llvm::Type *phiType = getType(targetType, false);
+
+    if (targetType == Compiler::StaticType::Number && targetNumType == NumberType::Int)
+        phiType = m_builder.getInt64Ty();
+
+    llvm::PHINode *result = m_builder.CreatePHI(phiType, results.size());
 
     for (auto &pair : results)
         result->addIncoming(pair.second, pair.first);
@@ -634,6 +722,7 @@ llvm::Type *LLVMBuildUtils::getType(Compiler::StaticType type, bool isReturnType
 
 llvm::Value *LLVMBuildUtils::isNaN(llvm::Value *num)
 {
+    assert(num->getType() == m_builder.getDoubleTy());
     return m_builder.CreateFCmpUNO(num, num);
 }
 
@@ -643,30 +732,20 @@ llvm::Value *LLVMBuildUtils::removeNaN(llvm::Value *num)
     return m_builder.CreateSelect(isNaN(num), llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)), num);
 }
 
-void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType destType, Compiler::StaticType targetType)
+void LLVMBuildUtils::createValueStore(
+    llvm::Value *destPtr,
+    llvm::Value *destTypePtr,
+    llvm::Value *destIsIntVar,
+    llvm::Value *destIntVar,
+    LLVMRegister *reg,
+    Compiler::StaticType destType,
+    Compiler::StaticType targetType)
 {
-    llvm::Value *targetPtr = nullptr;
-    const bool targetTypeIsSingle = isSingleType(targetType);
-
-    if (targetTypeIsSingle)
-        targetPtr = castValue(reg, targetType);
-
-    auto it = std::find_if(TYPE_MAP.begin(), TYPE_MAP.end(), [targetType](const std::pair<ValueType, Compiler::StaticType> &pair) { return pair.second == targetType; });
-    const ValueType mappedType = it == TYPE_MAP.cend() ? ValueType::Number : it->first; // unknown type can be ignored
-    assert(!(reg->isRawValue && it == TYPE_MAP.cend()));
+    assert(destIsIntVar->getType()->isPointerTy());
+    assert(destIntVar->getType()->isPointerTy());
 
     // Handle multiple type cases with runtime switch
-    llvm::Value *loadedTargetType = nullptr;
-
-    if (reg->isRawValue)
-        loadedTargetType = m_builder.getInt32(static_cast<uint32_t>(mappedType));
-    else {
-        assert(!reg->isConst());
-        llvm::Value *targetTypePtr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 1);
-        loadedTargetType = m_builder.CreateLoad(m_builder.getInt32Ty(), targetTypePtr);
-    }
-
-    llvm::Value *destTypePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
+    llvm::Value *loadedTargetType = loadRegisterType(reg, targetType);
     llvm::Value *loadedDestType = m_builder.CreateLoad(m_builder.getInt32Ty(), destTypePtr);
 
     llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
@@ -689,14 +768,15 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
             m_builder.SetInsertPoint(numberBlock);
 
             // Load number
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-            }
+            llvm::Value *doubleValue = castValue(reg, Compiler::StaticType::Number, NumberType::Double);
 
             // Write number to number directly
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
-            m_builder.CreateStore(targetPtr, ptr);
+            m_builder.CreateStore(doubleValue, ptr);
+
+            m_builder.CreateStore(reg->isInt, destIsIntVar);
+            m_builder.CreateStore(reg->intValue, destIntVar);
+
             m_builder.CreateBr(mergeBlock);
         }
 
@@ -707,16 +787,12 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
             m_builder.SetInsertPoint(boolBlock);
 
             // Load bool
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-            }
+            llvm::Value *targetPtr = castValue(reg, Compiler::StaticType::Bool);
 
             // Write bool to number value directly and change type
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
             m_builder.CreateStore(targetPtr, ptr);
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), typePtr);
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), destTypePtr);
             m_builder.CreateBr(mergeBlock);
         }
 
@@ -727,17 +803,13 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
             m_builder.SetInsertPoint(stringBlock);
 
             // Load string pointer
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
-            }
+            llvm::Value *targetPtr = castValue(reg, Compiler::StaticType::String);
 
             // Create a new string, change type and assign
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
             llvm::Value *destStringPtr = m_builder.CreateCall(m_functions.resolve_string_pool_new(), m_builder.getInt1(false));
 
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), typePtr);
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), destTypePtr);
             m_builder.CreateStore(destStringPtr, ptr);
             m_builder.CreateCall(m_functions.resolve_string_assign(), { destStringPtr, targetPtr });
 
@@ -760,16 +832,16 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
             m_builder.SetInsertPoint(numberBlock);
 
             // Load number
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-            }
+            llvm::Value *doubleValue = castValue(reg, Compiler::StaticType::Number, NumberType::Double);
 
             // Write number to bool value directly and change type
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
-            m_builder.CreateStore(targetPtr, ptr);
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), typePtr);
+            m_builder.CreateStore(doubleValue, ptr);
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), destTypePtr);
+
+            m_builder.CreateStore(reg->isInt, destIsIntVar);
+            m_builder.CreateStore(reg->intValue, destIntVar);
+
             m_builder.CreateBr(mergeBlock);
         }
 
@@ -780,10 +852,7 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
             m_builder.SetInsertPoint(boolBlock);
 
             // Load bool
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-            }
+            llvm::Value *targetPtr = castValue(reg, Compiler::StaticType::Bool);
 
             // Write bool to bool directly
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
@@ -798,17 +867,13 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
             m_builder.SetInsertPoint(stringBlock);
 
             // Load string pointer
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
-            }
+            llvm::Value *targetPtr = castValue(reg, Compiler::StaticType::String);
 
             // Create a new string, change type and assign
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
             llvm::Value *destStringPtr = m_builder.CreateCall(m_functions.resolve_string_pool_new(), m_builder.getInt1(false));
 
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), typePtr);
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), destTypePtr);
             m_builder.CreateStore(destStringPtr, ptr);
             m_builder.CreateCall(m_functions.resolve_string_assign(), { destStringPtr, targetPtr });
 
@@ -831,18 +896,18 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
             m_builder.SetInsertPoint(numberBlock);
 
             // Load number
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
-            }
+            llvm::Value *doubleValue = castValue(reg, Compiler::StaticType::Number, NumberType::Double);
 
             // Free the string, write the number and change type
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
             llvm::Value *destStringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
             m_builder.CreateCall(m_functions.resolve_string_pool_free(), destStringPtr);
-            m_builder.CreateStore(targetPtr, ptr);
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), typePtr);
+            m_builder.CreateStore(doubleValue, ptr);
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), destTypePtr);
+
+            m_builder.CreateStore(reg->isInt, destIsIntVar);
+            m_builder.CreateStore(reg->intValue, destIntVar);
+
             m_builder.CreateBr(mergeBlock);
         }
 
@@ -853,18 +918,14 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
             m_builder.SetInsertPoint(boolBlock);
 
             // Load bool
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-            }
+            llvm::Value *targetPtr = castValue(reg, Compiler::StaticType::Bool);
 
             // Free the string, write the bool and change type
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
             llvm::Value *destStringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
             m_builder.CreateCall(m_functions.resolve_string_pool_free(), destStringPtr);
             m_builder.CreateStore(targetPtr, ptr);
-            llvm::Value *typePtr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 1);
-            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), typePtr);
+            m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), destTypePtr);
             m_builder.CreateBr(mergeBlock);
         }
 
@@ -875,10 +936,7 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
             m_builder.SetInsertPoint(stringBlock);
 
             // Load string pointer
-            if (!targetTypeIsSingle) {
-                llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                targetPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
-            }
+            llvm::Value *targetPtr = castValue(reg, Compiler::StaticType::String);
 
             // Assign string directly
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
@@ -895,10 +953,23 @@ void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, C
     m_builder.SetInsertPoint(mergeBlock);
 }
 
-void LLVMBuildUtils::createValueStore(LLVMRegister *reg, llvm::Value *destPtr, Compiler::StaticType targetType)
+void LLVMBuildUtils::createValueStore(llvm::Value *destPtr, llvm::Value *destTypePtr, llvm::Value *destIsIntVar, llvm::Value *destIntVar, LLVMRegister *reg, Compiler::StaticType targetType)
 {
     // Same as createValueStore(), but the destination type is unknown at compile time
-    createValueStore(reg, destPtr, Compiler::StaticType::Unknown, targetType);
+    createValueStore(destPtr, destTypePtr, destIsIntVar, destIntVar, reg, Compiler::StaticType::Unknown, targetType);
+}
+
+llvm::Value *LLVMBuildUtils::getValueTypePtr(llvm::Value *value)
+{
+    return m_builder.CreateStructGEP(m_valueDataType, value, 1);
+}
+
+llvm::Value *LLVMBuildUtils::getValueTypePtr(LLVMRegister *reg)
+{
+    if (reg->typeVar)
+        return reg->typeVar;
+    else
+        return getValueTypePtr(reg->value);
 }
 
 llvm::Value *LLVMBuildUtils::getListSize(const LLVMListPtr &listPtr)
@@ -932,10 +1003,13 @@ llvm::Value *LLVMBuildUtils::getListItemIndex(const LLVMListPtr &listPtr, Compil
     m_builder.CreateCondBr(cond, bodyBlock, notFoundBlock);
 
     // if (list[index] == item)
+    // TODO: Add integer support for lists
     m_builder.SetInsertPoint(bodyBlock);
     LLVMRegister currentItem(listType);
     currentItem.isRawValue = false;
     currentItem.value = getListItem(listPtr, m_builder.CreateLoad(m_builder.getInt64Ty(), index));
+    currentItem.isInt = m_builder.getInt1(false);
+    currentItem.intValue = llvm::ConstantInt::get(m_builder.getInt64Ty(), 0, true);
     llvm::Value *cmp = createComparison(&currentItem, item, Comparison::EQ);
     m_builder.CreateCondBr(cmp, cmpIfBlock, cmpElseBlock);
 
@@ -965,7 +1039,7 @@ llvm::Value *LLVMBuildUtils::createValue(LLVMRegister *reg)
 {
     if (reg->isConst()) {
         // Create a constant ValueData instance and store it
-        llvm::Constant *value = castConstValue(reg->constValue(), TYPE_MAP[reg->constValue().type()]);
+        llvm::Constant *value = castConstValue(reg->constValue(), TYPE_MAP[reg->constValue().type()], NumberType::Double);
         llvm::Value *ret = addAlloca(m_valueDataType);
 
         switch (reg->constValue().type()) {
@@ -995,7 +1069,7 @@ llvm::Value *LLVMBuildUtils::createValue(LLVMRegister *reg)
 
         return ret;
     } else if (reg->isRawValue) {
-        llvm::Value *value = castRawValue(reg, reg->type());
+        llvm::Value *value = castRawValue(reg, reg->type(), NumberType::Double);
         llvm::Value *ret = addAlloca(m_valueDataType);
 
         // Store value
@@ -1010,7 +1084,7 @@ llvm::Value *LLVMBuildUtils::createValue(LLVMRegister *reg)
         }
 
         // Store type
-        llvm::Value *typeField = m_builder.CreateStructGEP(m_valueDataType, ret, 1);
+        llvm::Value *typeField = getValueTypePtr(ret);
         ValueType type = it->first;
         m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(type)), typeField);
 
@@ -1059,26 +1133,6 @@ llvm::Value *LLVMBuildUtils::createComparison(LLVMRegister *arg1, LLVMRegister *
 
         return m_builder.getInt1(result);
     } else {
-        // Optimize comparison of constant with number/bool
-        if (arg1->isConst() && arg1->constValue().isValidNumber() && (type2 == Compiler::StaticType::Number || type2 == Compiler::StaticType::Bool))
-            type1 = Compiler::StaticType::Number;
-
-        if (arg2->isConst() && arg2->constValue().isValidNumber() && (type1 == Compiler::StaticType::Number || type1 == Compiler::StaticType::Bool))
-            type2 = Compiler::StaticType::Number;
-
-        // Optimize number and bool comparison
-        int optNumberBool = 0;
-
-        if (type1 == Compiler::StaticType::Number && type2 == Compiler::StaticType::Bool) {
-            type2 = Compiler::StaticType::Number;
-            optNumberBool = 2; // operand 2 was bool
-        }
-
-        if (type1 == Compiler::StaticType::Bool && type2 == Compiler::StaticType::Number) {
-            type1 = Compiler::StaticType::Number;
-            optNumberBool = 1; // operand 1 was bool
-        }
-
         // Optimize number and string constant comparison
         // TODO: GT and LT comparison can be optimized here (e. g. by checking the string constant characters and comparing with numbers and .+-e)
         if (type == Comparison::EQ) {
@@ -1087,132 +1141,162 @@ llvm::Value *LLVMBuildUtils::createComparison(LLVMRegister *arg1, LLVMRegister *
                 return m_builder.getInt1(false);
         }
 
-        if (type1 != type2 || !isSingleType(type1) || !isSingleType(type2)) {
-            // If the types are different or at least one of them
-            // is unknown, we must use value functions
-            llvm::Value *value1 = createValue(arg1);
-            llvm::Value *value2 = createValue(arg2);
+        // Handle multiple type cases with runtime switch
+        llvm::Value *loadedType1 = loadRegisterType(arg1, type1);
+        llvm::Value *loadedType2 = loadRegisterType(arg2, type2);
 
-            switch (type) {
-                case Comparison::EQ:
-                    return m_builder.CreateCall(m_functions.resolve_value_equals(), { value1, value2 });
+        llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
+        llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(m_llvmCtx, "default", m_function);
+        std::vector<std::pair<llvm::BasicBlock *, llvm::Value *>> results;
 
-                case Comparison::GT:
-                    return m_builder.CreateCall(m_functions.resolve_value_greater(), { value1, value2 });
+        llvm::SwitchInst *sw1 = m_builder.CreateSwitch(loadedType1, defaultBlock, 4);
 
-                case Comparison::LT:
-                    return m_builder.CreateCall(m_functions.resolve_value_lower(), { value1, value2 });
+        if ((type1 & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
+            llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+            sw1->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), numberBlock);
+            m_builder.SetInsertPoint(numberBlock);
 
-                default:
-                    assert(false);
-                    return nullptr;
+            llvm::SwitchInst *sw2 = m_builder.CreateSwitch(loadedType2, defaultBlock, 4);
+
+            if ((type2 & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
+                // Number and number comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "numberAndNumberComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), block);
+                m_builder.SetInsertPoint(block);
+
+                llvm::Value *result = createNumberAndNumberComparison(arg1, arg2, type);
+
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
             }
-        } else {
-            // Compare raw values
-            llvm::Value *value1 = castValue(arg1, type1);
-            llvm::Value *value2 = castValue(arg2, type2);
-            assert(type1 == type2);
 
-            switch (type1) {
-                case Compiler::StaticType::Number: {
-                    // Compare two numbers
-                    switch (type) {
-                        case Comparison::EQ: {
-                            llvm::Value *nan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
-                            llvm::Value *cmp = m_builder.CreateFCmpOEQ(value1, value2);
-                            return m_builder.CreateSelect(nan, m_builder.getInt1(true), cmp);
-                        }
+            if ((type2 & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
+                // Number and bool comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "numberAndBoolComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), block);
+                m_builder.SetInsertPoint(block);
 
-                        case Comparison::GT: {
-                            llvm::Value *bothNan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
-                            llvm::Value *cmp = m_builder.CreateFCmpOGT(value1, value2);
-                            llvm::Value *nan;
-                            llvm::Value *nanCmp;
+                llvm::Value *result = createNumberAndBoolComparison(arg1, arg2, type);
 
-                            if (optNumberBool == 1) {
-                                nan = isNaN(value2);
-                                nanCmp = castValue(arg1, Compiler::StaticType::Bool);
-                            } else if (optNumberBool == 2) {
-                                nan = isNaN(value1);
-                                nanCmp = m_builder.CreateNot(castValue(arg2, Compiler::StaticType::Bool));
-                            } else {
-                                nan = isNaN(value1);
-                                nanCmp = m_builder.CreateFCmpUGT(value1, value2);
-                            }
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
+            }
 
-                            return m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, cmp));
-                        }
+            if ((type2 & Compiler::StaticType::String) == Compiler::StaticType::String) {
+                // Number and string comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "numberAndStringComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), block);
+                m_builder.SetInsertPoint(block);
 
-                        case Comparison::LT: {
-                            llvm::Value *bothNan = m_builder.CreateAnd(isNaN(value1), isNaN(value2)); // NaN == NaN
-                            llvm::Value *cmp = m_builder.CreateFCmpOLT(value1, value2);
-                            llvm::Value *nan;
-                            llvm::Value *nanCmp;
+                llvm::Value *result = createNumberAndStringComparison(arg1, arg2, type);
 
-                            if (optNumberBool == 1) {
-                                nan = isNaN(value2);
-                                nanCmp = m_builder.CreateNot(castValue(arg1, Compiler::StaticType::Bool));
-                            } else if (optNumberBool == 2) {
-                                nan = isNaN(value1);
-                                nanCmp = castValue(arg2, Compiler::StaticType::Bool);
-                            } else {
-                                nan = isNaN(value2);
-                                nanCmp = m_builder.CreateFCmpULT(value1, value2);
-                            }
-
-                            return m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, cmp));
-                        }
-
-                        default:
-                            assert(false);
-                            return nullptr;
-                    }
-                }
-
-                case Compiler::StaticType::Bool:
-                    // Compare two booleans
-                    switch (type) {
-                        case Comparison::EQ:
-                            return m_builder.CreateICmpEQ(value1, value2);
-
-                        case Comparison::GT:
-                            // value1 && !value2
-                            return m_builder.CreateAnd(value1, m_builder.CreateNot(value2));
-
-                        case Comparison::LT:
-                            // value2 && !value1
-                            return m_builder.CreateAnd(value2, m_builder.CreateNot(value1));
-
-                        default:
-                            assert(false);
-                            return nullptr;
-                    }
-
-                case Compiler::StaticType::String: {
-                    // Compare two strings
-                    llvm::Value *cmpRet = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { value1, value2 });
-
-                    switch (type) {
-                        case Comparison::EQ:
-                            return m_builder.CreateICmpEQ(cmpRet, m_builder.getInt32(0));
-
-                        case Comparison::GT:
-                            return m_builder.CreateICmpSGT(cmpRet, m_builder.getInt32(0));
-
-                        case Comparison::LT:
-                            return m_builder.CreateICmpSLT(cmpRet, m_builder.getInt32(0));
-
-                        default:
-                            assert(false);
-                            return nullptr;
-                    }
-                }
-
-                default:
-                    assert(false);
-                    return nullptr;
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
             }
         }
+
+        if ((type1 & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
+            llvm::BasicBlock *boolBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+            sw1->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), boolBlock);
+            m_builder.SetInsertPoint(boolBlock);
+
+            llvm::SwitchInst *sw2 = m_builder.CreateSwitch(loadedType2, defaultBlock, 4);
+
+            if ((type2 & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
+                // Bool and number comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "boolAndNumberComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), block);
+                m_builder.SetInsertPoint(block);
+
+                llvm::Value *result = createNumberAndBoolComparison(arg2, arg1, swapComparisonArgs(type));
+
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
+            }
+
+            if ((type2 & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
+                // Bool and bool comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "boolAndBoolComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), block);
+                m_builder.SetInsertPoint(block);
+
+                llvm::Value *result = createBoolAndBoolComparison(arg1, arg2, type);
+
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
+            }
+
+            if ((type2 & Compiler::StaticType::String) == Compiler::StaticType::String) {
+                // Bool and string comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "boolAndStringComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), block);
+                m_builder.SetInsertPoint(block);
+
+                llvm::Value *result = createBoolAndStringComparison(arg1, arg2, type);
+
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
+            }
+        }
+
+        if ((type1 & Compiler::StaticType::String) == Compiler::StaticType::String) {
+            llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+            sw1->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), stringBlock);
+            m_builder.SetInsertPoint(stringBlock);
+
+            llvm::SwitchInst *sw2 = m_builder.CreateSwitch(loadedType2, defaultBlock, 4);
+
+            if ((type2 & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
+                // String and number comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "stringAndNumberComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), block);
+                m_builder.SetInsertPoint(block);
+
+                llvm::Value *result = createNumberAndStringComparison(arg2, arg1, swapComparisonArgs(type));
+
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
+            }
+
+            if ((type2 & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
+                // String and bool comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "stringAndBoolComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), block);
+                m_builder.SetInsertPoint(block);
+
+                llvm::Value *result = createBoolAndStringComparison(arg2, arg1, swapComparisonArgs(type));
+
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
+            }
+
+            if ((type2 & Compiler::StaticType::String) == Compiler::StaticType::String) {
+                // String and string comparison
+                llvm::BasicBlock *block = llvm::BasicBlock::Create(m_llvmCtx, "stringAndStringComparison", m_function);
+                sw2->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), block);
+                m_builder.SetInsertPoint(block);
+
+                llvm::Value *result = createStringAndStringComparison(arg1, arg2, type);
+
+                results.push_back({ m_builder.GetInsertBlock(), result });
+                m_builder.CreateBr(mergeBlock);
+            }
+        }
+
+        // Default case
+        m_builder.SetInsertPoint(defaultBlock);
+
+        // All possible types are covered, mark as unreachable
+        m_builder.CreateUnreachable();
+
+        // Create phi node to merge results
+        m_builder.SetInsertPoint(mergeBlock);
+        llvm::PHINode *result = m_builder.CreatePHI(m_builder.getInt1Ty(), results.size());
+
+        for (auto &pair : results)
+            result->addIncoming(pair.second, pair.first);
+
+        return result;
     }
 }
 
@@ -1264,9 +1348,9 @@ void LLVMBuildUtils::createSuspend()
             m_builder.SetInsertPoint(suspendBranch);
         }
 
-        syncVariables(m_targetVariables);
+        syncVariables();
         m_coroutine->createSuspend();
-        reloadVariables(m_targetVariables);
+        reloadVariables();
         reloadLists();
 
         if (m_warpArg) {
@@ -1342,21 +1426,45 @@ void LLVMBuildUtils::createListMap()
     }
 }
 
-llvm::Value *LLVMBuildUtils::castRawValue(LLVMRegister *reg, Compiler::StaticType targetType)
+llvm::Value *LLVMBuildUtils::loadRegisterType(LLVMRegister *reg, Compiler::StaticType type)
 {
-    if (reg->type() == targetType)
-        return reg->value;
+    if (reg->isRawValue)
+        return m_builder.getInt32(static_cast<uint32_t>(mapType(type)));
+    else {
+        assert(!reg->isConst());
+        llvm::Value *typePtr = getValueTypePtr(reg);
+        return m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
+    }
+}
+
+llvm::Value *LLVMBuildUtils::castRawValue(LLVMRegister *reg, Compiler::StaticType targetType, NumberType targetNumType)
+{
+    if (reg->type() == targetType) {
+        if (targetType == Compiler::StaticType::Number && targetNumType == NumberType::Int) {
+            llvm::Value *cast = m_builder.CreateFPToSI(reg->value, m_builder.getInt64Ty());
+            return m_builder.CreateSelect(reg->isInt, reg->intValue, cast);
+        } else
+            return reg->value;
+    }
 
     switch (targetType) {
         case Compiler::StaticType::Number:
             switch (reg->type()) {
                 case Compiler::StaticType::Bool:
-                    // Cast bool to double
-                    return m_builder.CreateUIToFP(reg->value, m_builder.getDoubleTy());
+                    // Cast bool to double/int
+                    if (targetNumType == NumberType::Int)
+                        return m_builder.CreateZExt(reg->value, m_builder.getInt64Ty());
+                    else
+                        return m_builder.CreateUIToFP(reg->value, m_builder.getDoubleTy());
 
                 case Compiler::StaticType::String: {
-                    // Convert string to double
-                    return m_builder.CreateCall(m_functions.resolve_value_stringToDouble(), reg->value);
+                    // Convert string to double/int
+                    llvm::Value *doubleValue = m_builder.CreateCall(m_functions.resolve_value_stringToDouble(), reg->value);
+
+                    if (targetNumType == NumberType::Int)
+                        return m_builder.CreateFPToSI(doubleValue, m_builder.getInt64Ty());
+                    else
+                        return doubleValue;
                 }
 
                 default:
@@ -1366,9 +1474,12 @@ llvm::Value *LLVMBuildUtils::castRawValue(LLVMRegister *reg, Compiler::StaticTyp
 
         case Compiler::StaticType::Bool:
             switch (reg->type()) {
-                case Compiler::StaticType::Number:
-                    // Cast double to bool (true if != 0)
-                    return m_builder.CreateFCmpONE(reg->value, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)));
+                case Compiler::StaticType::Number: {
+                    // Cast double/int to bool (true if != 0)
+                    llvm::Value *intResult = m_builder.CreateICmpNE(reg->intValue, llvm::ConstantInt::get(m_builder.getInt64Ty(), 0, true));
+                    llvm::Value *doubleResult = m_builder.CreateFCmpONE(reg->value, llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(0.0)));
+                    return m_builder.CreateSelect(reg->isInt, intResult, doubleResult);
+                }
 
                 case Compiler::StaticType::String:
                     // Convert string to bool
@@ -1382,8 +1493,10 @@ llvm::Value *LLVMBuildUtils::castRawValue(LLVMRegister *reg, Compiler::StaticTyp
         case Compiler::StaticType::String:
             switch (reg->type()) {
                 case Compiler::StaticType::Number: {
-                    // Convert double to string
-                    llvm::Value *ptr = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), reg->value);
+                    // Convert double/int to string
+                    llvm::Value *intCast = m_builder.CreateSIToFP(reg->intValue, m_builder.getDoubleTy());
+                    llvm::Value *doubleValue = m_builder.CreateSelect(reg->isInt, intCast, reg->value);
+                    llvm::Value *ptr = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), doubleValue);
                     freeStringLater(ptr);
                     return ptr;
                 }
@@ -1409,12 +1522,17 @@ llvm::Value *LLVMBuildUtils::castRawValue(LLVMRegister *reg, Compiler::StaticTyp
     }
 }
 
-llvm::Constant *LLVMBuildUtils::castConstValue(const Value &value, Compiler::StaticType targetType)
+llvm::Constant *LLVMBuildUtils::castConstValue(const Value &value, Compiler::StaticType targetType, NumberType targetNumType)
 {
     switch (targetType) {
         case Compiler::StaticType::Number: {
             const double nan = std::numeric_limits<double>::quiet_NaN();
-            return llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(value.isNaN() ? nan : value.toDouble()));
+            const double num = value.toDouble();
+
+            if (targetNumType == NumberType::Int)
+                return llvm::ConstantInt::get(m_builder.getInt64Ty(), num, true);
+            else
+                return llvm::ConstantFP::get(m_llvmCtx, llvm::APFloat(value.isNaN() ? nan : num));
         }
 
         case Compiler::StaticType::Bool:
@@ -1464,6 +1582,332 @@ void LLVMBuildUtils::copyStructField(llvm::Value *source, llvm::Value *target, i
     llvm::Value *sourceField = m_builder.CreateStructGEP(structType, source, index);
     llvm::Value *targetField = m_builder.CreateStructGEP(structType, target, index);
     m_builder.CreateStore(m_builder.CreateLoad(fieldType, sourceField), targetField);
+}
+
+LLVMBuildUtils::Comparison LLVMBuildUtils::swapComparisonArgs(Comparison type)
+{
+    switch (type) {
+        case Comparison::GT:
+            return Comparison::LT;
+
+        case Comparison::LT:
+            return Comparison::GT;
+
+        default:
+            return Comparison::EQ;
+    }
+}
+
+llvm::Value *LLVMBuildUtils::createNumberAndNumberComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
+{
+    llvm::Value *double1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Double);
+    llvm::Value *double2 = castValue(arg2, Compiler::StaticType::Number, NumberType::Double);
+
+    llvm::Value *int1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Int);
+    llvm::Value *int2 = castValue(arg2, Compiler::StaticType::Number, NumberType::Int);
+
+    llvm::Value *isInt = m_builder.CreateAnd(arg1->isInt, arg2->isInt);
+    llvm::Value *bothNan = m_builder.CreateAnd(isNaN(double1), isNaN(double2)); // NaN == NaN
+
+    switch (type) {
+        case Comparison::EQ: {
+            llvm::Value *fcmp = m_builder.CreateFCmpOEQ(double1, double2);
+            llvm::Value *doubleResult = m_builder.CreateOr(bothNan, fcmp);
+            llvm::Value *icmp = m_builder.CreateICmpEQ(int1, int2);
+            return m_builder.CreateSelect(isInt, icmp, doubleResult);
+        }
+
+        case Comparison::GT: {
+            llvm::Value *fcmp = m_builder.CreateFCmpOGT(double1, double2);
+            llvm::Value *nan = isNaN(double1);
+            llvm::Value *nanCmp = m_builder.CreateFCmpUGT(double1, double2);
+            llvm::Value *doubleResult = m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, fcmp));
+            llvm::Value *icmp = m_builder.CreateICmpSGT(int1, int2);
+            return m_builder.CreateSelect(isInt, icmp, doubleResult);
+        }
+
+        case Comparison::LT: {
+            llvm::Value *fcmp = m_builder.CreateFCmpOLT(double1, double2);
+            llvm::Value *nan = isNaN(double2);
+            llvm::Value *nanCmp = m_builder.CreateFCmpULT(double1, double2);
+            llvm::Value *doubleResult = m_builder.CreateAnd(m_builder.CreateNot(bothNan), m_builder.CreateSelect(nan, nanCmp, fcmp));
+            llvm::Value *icmp = m_builder.CreateICmpSLT(int1, int2);
+            return m_builder.CreateSelect(isInt, icmp, doubleResult);
+        }
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+}
+
+llvm::Value *LLVMBuildUtils::createBoolAndBoolComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
+{
+    llvm::Value *value1 = castValue(arg1, Compiler::StaticType::Bool);
+    llvm::Value *value2 = castValue(arg2, Compiler::StaticType::Bool);
+
+    switch (type) {
+        case Comparison::EQ:
+            return m_builder.CreateICmpEQ(value1, value2);
+
+        case Comparison::GT:
+            // value1 && !value2
+            return m_builder.CreateAnd(value1, m_builder.CreateNot(value2));
+
+        case Comparison::LT:
+            // value2 && !value1
+            return m_builder.CreateAnd(value2, m_builder.CreateNot(value1));
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+}
+
+llvm::Value *LLVMBuildUtils::createStringAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
+{
+    llvm::Value *value1 = castValue(arg1, Compiler::StaticType::String);
+    llvm::Value *value2 = castValue(arg2, Compiler::StaticType::String);
+
+    llvm::Value *cmp = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { value1, value2 });
+    llvm::Value *zero = llvm::ConstantInt::get(m_builder.getInt32Ty(), 0, true);
+
+    switch (type) {
+        case Comparison::EQ:
+            return m_builder.CreateICmpEQ(cmp, zero);
+
+        case Comparison::GT:
+            return m_builder.CreateICmpSGT(cmp, zero);
+
+        case Comparison::LT:
+            return m_builder.CreateICmpSLT(cmp, zero);
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+}
+
+llvm::Value *LLVMBuildUtils::createNumberAndBoolComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
+{
+    llvm::Value *doubleValue1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Double);
+    llvm::Value *intValue1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Int);
+
+    llvm::Value *boolValue2 = castValue(arg2, Compiler::StaticType::Bool);
+    llvm::Value *intValue2 = castValue(arg2, Compiler::StaticType::Number, NumberType::Int);
+
+    llvm::Value *doubleValue2 = m_builder.CreateUIToFP(boolValue2, m_builder.getDoubleTy());
+    llvm::Value *isInt = arg1->isInt;
+
+    switch (type) {
+        case Comparison::EQ: {
+            llvm::Value *fcmp = m_builder.CreateFCmpOEQ(doubleValue1, doubleValue2);
+            llvm::Value *icmp = m_builder.CreateICmpEQ(intValue1, intValue2);
+            return m_builder.CreateSelect(isInt, icmp, fcmp);
+        }
+
+        case Comparison::GT: {
+            llvm::Value *fcmp = m_builder.CreateFCmpOGT(doubleValue1, doubleValue2);
+            llvm::Value *nan = isNaN(doubleValue1);
+            llvm::Value *nanCmp = m_builder.CreateFCmpUGT(doubleValue1, doubleValue2);
+            llvm::Value *doubleResult = m_builder.CreateSelect(nan, nanCmp, fcmp);
+            llvm::Value *icmp = m_builder.CreateICmpSGT(intValue1, intValue2);
+            return m_builder.CreateSelect(isInt, icmp, doubleResult);
+        }
+
+        case Comparison::LT: {
+            llvm::Value *fcmp = m_builder.CreateFCmpOLT(doubleValue1, doubleValue2);
+            llvm::Value *icmp = m_builder.CreateICmpSLT(intValue1, intValue2);
+            return m_builder.CreateSelect(isInt, icmp, fcmp);
+        }
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+}
+
+llvm::Value *LLVMBuildUtils::createNumberAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
+{
+    llvm::Value *value1 = castValue(arg1, Compiler::StaticType::Number, NumberType::Double);
+    llvm::Value *value2 = castValue(arg2, Compiler::StaticType::String);
+
+    // If the number is NaN, skip the string to double conversion
+    llvm::Value *nan = m_builder.CreateAnd(m_builder.CreateNot(arg1->isInt), isNaN(value1));
+
+    llvm::BasicBlock *nanBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    llvm::BasicBlock *stringCastBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    m_builder.CreateCondBr(nan, nanBlock, stringCastBlock);
+
+    m_builder.SetInsertPoint(nanBlock);
+    m_builder.CreateBr(nextBlock);
+
+    m_builder.SetInsertPoint(stringCastBlock);
+    llvm::Value *okPtr = addAlloca(m_builder.getInt1Ty());
+    llvm::Value *doubleValue = m_builder.CreateCall(m_functions.resolve_value_stringToDoubleWithCheck(), { value2, okPtr });
+    llvm::Value *ok = m_builder.CreateLoad(m_builder.getInt1Ty(), okPtr);
+    m_builder.CreateBr(nextBlock);
+
+    m_builder.SetInsertPoint(nextBlock);
+
+    llvm::PHINode *doubleValuePhi = m_builder.CreatePHI(m_builder.getDoubleTy(), 2);
+    doubleValuePhi->addIncoming(llvm::ConstantFP::get(m_builder.getDoubleTy(), 0.0), nanBlock);
+    doubleValuePhi->addIncoming(doubleValue, stringCastBlock);
+
+    llvm::PHINode *okPhi = m_builder.CreatePHI(m_builder.getInt1Ty(), 2);
+    okPhi->addIncoming(m_builder.getInt1(false), nanBlock);
+    okPhi->addIncoming(ok, stringCastBlock);
+
+    // If both arguments are valid numbers, compare them as numbers, otherwise as strings
+    llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    m_builder.CreateCondBr(okPhi, numberBlock, stringBlock);
+
+    // Number comparison
+    m_builder.SetInsertPoint(numberBlock);
+    llvm::Value *numberCmp;
+
+    switch (type) {
+        case Comparison::EQ:
+            numberCmp = m_builder.CreateFCmpOEQ(value1, doubleValuePhi);
+            break;
+
+        case Comparison::GT:
+            numberCmp = m_builder.CreateFCmpOGT(value1, doubleValuePhi);
+            break;
+
+        case Comparison::LT:
+            numberCmp = m_builder.CreateFCmpOLT(value1, doubleValuePhi);
+            break;
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+
+    m_builder.CreateBr(nextBlock);
+
+    // String comparison
+    m_builder.SetInsertPoint(stringBlock);
+    llvm::Value *stringValue = m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), { value1 });
+    llvm::Value *cmp = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { stringValue, value2 });
+    m_builder.CreateCall(m_functions.resolve_string_pool_free(), { stringValue }); // free the string immediately
+
+    llvm::Value *zero = llvm::ConstantInt::get(m_builder.getInt32Ty(), 0, true);
+    llvm::Value *stringCmp;
+
+    switch (type) {
+        case Comparison::EQ:
+            stringCmp = m_builder.CreateICmpEQ(cmp, zero);
+            break;
+
+        case Comparison::GT:
+            stringCmp = m_builder.CreateICmpSGT(cmp, zero);
+            break;
+
+        case Comparison::LT:
+            stringCmp = m_builder.CreateICmpSLT(cmp, zero);
+            break;
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+
+    m_builder.CreateBr(nextBlock);
+
+    // Merge the results
+    m_builder.SetInsertPoint(nextBlock);
+
+    llvm::PHINode *result = m_builder.CreatePHI(m_builder.getInt1Ty(), 2);
+    result->addIncoming(numberCmp, numberBlock);
+    result->addIncoming(stringCmp, stringBlock);
+
+    return result;
+}
+
+llvm::Value *LLVMBuildUtils::createBoolAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type)
+{
+    llvm::Value *value1 = castValue(arg1, Compiler::StaticType::Bool);
+    llvm::Value *value2 = castValue(arg2, Compiler::StaticType::String);
+
+    // NOTE: Bools are always valid numbers
+
+    // Convert the string to double
+    llvm::Value *okPtr = addAlloca(m_builder.getInt1Ty());
+    llvm::Value *doubleValue2 = m_builder.CreateCall(m_functions.resolve_value_stringToDoubleWithCheck(), { value2, okPtr });
+    llvm::Value *ok = m_builder.CreateLoad(m_builder.getInt1Ty(), okPtr);
+
+    // If the string is a valid number, compare the arguments as numbers, otherwise as strings
+    llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    m_builder.CreateCondBr(ok, numberBlock, stringBlock);
+
+    // Number comparison
+    m_builder.SetInsertPoint(numberBlock);
+    llvm::Value *doubleValue1 = m_builder.CreateUIToFP(value1, m_builder.getDoubleTy());
+    llvm::Value *numberCmp;
+
+    switch (type) {
+        case Comparison::EQ:
+            numberCmp = m_builder.CreateFCmpOEQ(doubleValue1, doubleValue2);
+            break;
+
+        case Comparison::GT:
+            numberCmp = m_builder.CreateFCmpOGT(doubleValue1, doubleValue2);
+            break;
+
+        case Comparison::LT:
+            numberCmp = m_builder.CreateFCmpOLT(doubleValue1, doubleValue2);
+            break;
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+
+    m_builder.CreateBr(nextBlock);
+
+    // String comparison
+    m_builder.SetInsertPoint(stringBlock);
+    llvm::Value *stringValue = m_builder.CreateCall(m_functions.resolve_value_boolToStringPtr(), { value1 });
+    llvm::Value *cmp = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { stringValue, value2 });
+    // NOTE: Do not free the string!
+
+    llvm::Value *zero = llvm::ConstantInt::get(m_builder.getInt32Ty(), 0, true);
+    llvm::Value *stringCmp;
+
+    switch (type) {
+        case Comparison::EQ:
+            stringCmp = m_builder.CreateICmpEQ(cmp, zero);
+            break;
+
+        case Comparison::GT:
+            stringCmp = m_builder.CreateICmpSGT(cmp, zero);
+            break;
+
+        case Comparison::LT:
+            stringCmp = m_builder.CreateICmpSLT(cmp, zero);
+            break;
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+
+    m_builder.CreateBr(nextBlock);
+
+    // Merge the results
+    m_builder.SetInsertPoint(nextBlock);
+
+    llvm::PHINode *result = m_builder.CreatePHI(m_builder.getInt1Ty(), 2);
+    result->addIncoming(numberCmp, numberBlock);
+    result->addIncoming(stringCmp, stringBlock);
+
+    return result;
 }
 
 llvm::Value *LLVMBuildUtils::getVariablePtr(llvm::Value *targetVariables, Variable *variable)

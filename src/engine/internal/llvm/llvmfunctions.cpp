@@ -21,7 +21,7 @@ extern "C"
         return value_doubleIsInt(from) && value_doubleIsInt(to) ? ctx->rng()->randint(from, to) : ctx->rng()->randintDouble(from, to);
     }
 
-    double llvm_random_long(ExecutionContext *ctx, long from, long to)
+    int64_t llvm_random_int64(ExecutionContext *ctx, int64_t from, int64_t to)
     {
         return ctx->rng()->randint(from, to);
     }
@@ -127,6 +127,15 @@ llvm::FunctionCallee LLVMFunctions::resolve_value_stringToDouble()
 {
     llvm::FunctionCallee callee =
         resolveFunction("value_stringToDouble", llvm::FunctionType::get(m_builder->getDoubleTy(), llvm::PointerType::get(llvm::Type::getInt8Ty(*m_ctx->llvmCtx()), 0), false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
+}
+
+llvm::FunctionCallee LLVMFunctions::resolve_value_stringToDoubleWithCheck()
+{
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_ctx->llvmCtx()), 0);
+    llvm::FunctionCallee callee = resolveFunction("value_stringToDoubleWithCheck", llvm::FunctionType::get(m_builder->getDoubleTy(), { pointerType, m_builder->getInt1Ty()->getPointerTo() }, false));
     llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
     func->addFnAttr(llvm::Attribute::ReadOnly);
     return callee;
@@ -240,10 +249,10 @@ llvm::FunctionCallee LLVMFunctions::resolve_llvm_random_double()
     return resolveFunction("llvm_random_double", llvm::FunctionType::get(m_builder->getDoubleTy(), { pointerType, m_builder->getDoubleTy(), m_builder->getDoubleTy() }, false));
 }
 
-llvm::FunctionCallee LLVMFunctions::resolve_llvm_random_long()
+llvm::FunctionCallee LLVMFunctions::resolve_llvm_random_int64()
 {
     llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_ctx->llvmCtx()), 0);
-    return resolveFunction("llvm_random_long", llvm::FunctionType::get(m_builder->getDoubleTy(), { pointerType, m_builder->getInt64Ty(), m_builder->getInt64Ty() }, false));
+    return resolveFunction("llvm_random_int64", llvm::FunctionType::get(m_builder->getInt64Ty(), { pointerType, m_builder->getInt64Ty(), m_builder->getInt64Ty() }, false));
 }
 
 llvm::FunctionCallee LLVMFunctions::resolve_llvm_random_bool()

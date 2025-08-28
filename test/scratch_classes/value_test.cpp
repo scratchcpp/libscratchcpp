@@ -3387,6 +3387,57 @@ TEST(ValueTest, StringToDouble)
     ASSERT_EQ(value_stringToDouble(string_pool_new_assign("0b-1")), 0.0);
 }
 
+TEST(ValueTest, StringToDoubleWithCheck)
+{
+    bool ok;
+
+    ASSERT_EQ(value_stringToDoubleWithCheck(string_pool_new_assign("2147483647"), &ok), 2147483647.0);
+    ASSERT_TRUE(ok);
+
+    ASSERT_EQ(value_stringToDoubleWithCheck(string_pool_new_assign("-255.625"), &ok), -255.625);
+    ASSERT_TRUE(ok);
+
+    ASSERT_EQ(value_stringToDoubleWithCheck(string_pool_new_assign("0"), &ok), 0.0);
+    ASSERT_TRUE(ok);
+
+    ASSERT_EQ(value_stringToDoubleWithCheck(string_pool_new_assign("-0"), &ok), -0.0);
+    ASSERT_TRUE(ok);
+
+    ASSERT_EQ(value_stringToDoubleWithCheck(string_pool_new_assign("+.15"), &ok), 0.15);
+    ASSERT_TRUE(ok);
+
+    ASSERT_EQ(value_stringToDoubleWithCheck(string_pool_new_assign("0+5"), &ok), 0.0);
+    ASSERT_FALSE(ok);
+
+    ASSERT_EQ(value_stringToDoubleWithCheck(string_pool_new_assign("0-5"), &ok), 0.0);
+    ASSERT_FALSE(ok);
+
+    ASSERT_EQ(value_stringToDoubleWithCheck(string_pool_new_assign("1 2 3"), &ok), 0.0);
+    ASSERT_FALSE(ok);
+
+    ASSERT_EQ(value_stringToDoubleWithCheck(string_pool_new_assign("false"), &ok), 0.0);
+    ASSERT_FALSE(ok);
+
+    ASSERT_EQ(value_stringToDoubleWithCheck(string_pool_new_assign("true"), &ok), 0.0);
+    ASSERT_FALSE(ok);
+
+    double result = value_stringToDoubleWithCheck(string_pool_new_assign("Infinity"), &ok);
+    ASSERT_GT(result, 0);
+    ASSERT_TRUE(std::isinf(result));
+    ASSERT_TRUE(ok);
+
+    result = value_stringToDoubleWithCheck(string_pool_new_assign("-Infinity"), &ok);
+    ASSERT_LT(result, 0);
+    ASSERT_TRUE(std::isinf(result));
+    ASSERT_TRUE(ok);
+
+    ASSERT_EQ(value_stringToDoubleWithCheck(string_pool_new_assign("NaN"), &ok), 0.0);
+    ASSERT_FALSE(ok);
+
+    ASSERT_EQ(value_stringToDoubleWithCheck(string_pool_new_assign("something"), &ok), 0.0);
+    ASSERT_FALSE(ok);
+}
+
 TEST(ValueTest, StringToBool)
 {
     ASSERT_TRUE(value_stringToBool(string_pool_new_assign("2147483647")));

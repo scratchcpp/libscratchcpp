@@ -7,8 +7,8 @@
 
 using namespace libscratchcpp;
 
-static const std::unordered_set<LLVMInstruction::Type>
-    BEGIN_LOOP_INSTRUCTIONS = { LLVMInstruction::Type::BeginRepeatLoop, LLVMInstruction::Type::BeginWhileLoop, LLVMInstruction::Type::BeginRepeatUntilLoop };
+// NOTE: The loop condition in repeat until and while loops is considered a part of the loop body
+static const std::unordered_set<LLVMInstruction::Type> BEGIN_LOOP_INSTRUCTIONS = { LLVMInstruction::Type::BeginRepeatLoop, LLVMInstruction::Type::BeginLoopCondition };
 
 static const std::unordered_set<LLVMInstruction::Type> LIST_WRITE_INSTRUCTIONS = { LLVMInstruction::Type::AppendToList, LLVMInstruction::Type::InsertToList, LLVMInstruction::Type::ListReplace };
 
@@ -58,13 +58,13 @@ void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
                 if (primaryBranch && primaryBranch->elseBranch) {
                     // The previous variable types can be ignored in if/else statements
                     overrideVariableTypes(primaryBranch, previousBranch);
-                    mergeListTypes(primaryBranch, previousBranch);
+                    mergeListTypes(primaryBranch, previousBranch, false);
 
                     mergeVariableTypes(primaryBranch->elseBranch.get(), previousBranch);
-                    mergeListTypes(primaryBranch->elseBranch.get(), previousBranch);
+                    mergeListTypes(primaryBranch->elseBranch.get(), previousBranch, true);
                 } else {
                     mergeVariableTypes(primaryBranch, previousBranch);
-                    mergeListTypes(primaryBranch, previousBranch);
+                    mergeListTypes(primaryBranch, previousBranch, true);
                 }
 
                 // Remove the branch
@@ -102,6 +102,29 @@ void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
             // Store the type in the return register
             // NOTE: Get list item returns empty string if index is out of range
             ins->functionReturnReg->setType(ins->targetType | Compiler::StaticType::String);
+        } else if (isProcedureCall(ins)) {
+            // Variables/lists may change in procedures
+            for (auto &[var, type] : currentBranch->variableTypes) {
+                if (type != Compiler::StaticType::Unknown) {
+                    type = Compiler::StaticType::Unknown;
+
+                    if (typeAssignedInstructions.find(ins) == typeAssignedInstructions.cend())
+                        currentBranch->typeChanges = true;
+                }
+            }
+
+            for (auto &[list, type] : currentBranch->listTypes) {
+                if (type != Compiler::StaticType::Unknown) {
+                    type = Compiler::StaticType::Unknown;
+
+                    if (typeAssignedInstructions.find(ins) == typeAssignedInstructions.cend()) {
+                        typeAssignedInstructions.insert(ins);
+                        currentBranch->typeChanges = true;
+                    }
+                }
+            }
+
+            typeAssignedInstructions.insert(ins);
         }
 
         ins = ins->next;
@@ -173,7 +196,7 @@ void LLVMCodeAnalyzer::mergeVariableTypes(Branch *branch, Branch *previousBranch
         auto it = previousBranch->variableTypes.find(var);
 
         if (it == previousBranch->variableTypes.cend())
-            previousBranch->variableTypes[var] = type;
+            previousBranch->variableTypes[var] = Compiler::StaticType::Unknown;
         else
             it->second |= type;
     }
@@ -185,13 +208,13 @@ void LLVMCodeAnalyzer::overrideVariableTypes(Branch *branch, Branch *previousBra
         previousBranch->variableTypes[var] = type;
 }
 
-void LLVMCodeAnalyzer::mergeListTypes(Branch *branch, Branch *previousBranch) const
+void LLVMCodeAnalyzer::mergeListTypes(Branch *branch, Branch *previousBranch, bool firstUnknown) const
 {
     for (const auto &[list, type] : branch->listTypes) {
         auto it = previousBranch->listTypes.find(list);
 
         if (it == previousBranch->listTypes.cend())
-            previousBranch->listTypes[list] = type;
+            previousBranch->listTypes[list] = firstUnknown ? Compiler::StaticType::Unknown : type;
         else
             it->second |= type;
     }
@@ -245,6 +268,11 @@ bool LLVMCodeAnalyzer::isListWrite(const LLVMInstruction *ins) const
 bool LLVMCodeAnalyzer::isListClear(const LLVMInstruction *ins) const
 {
     return (ins->type == LLVMInstruction::Type::ClearList);
+}
+
+bool LLVMCodeAnalyzer::isProcedureCall(const LLVMInstruction *ins) const
+{
+    return (ins->type == LLVMInstruction::Type::CallProcedure);
 }
 
 Compiler::StaticType LLVMCodeAnalyzer::writeType(LLVMInstruction *ins) const

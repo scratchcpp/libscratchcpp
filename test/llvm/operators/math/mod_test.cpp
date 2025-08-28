@@ -159,6 +159,26 @@ TEST_F(LLVMModTest, NegativeFiveModZero_Const)
     ASSERT_NUM_OP2(m_utils, LLVMTestUtils::OpType::Mod, true, -5, 0);
 }
 
+TEST_F(LLVMModTest, PositiveDecimalModZero)
+{
+    ASSERT_NUM_OP2(m_utils, LLVMTestUtils::OpType::Mod, false, 5.8, 0);
+}
+
+TEST_F(LLVMModTest, PositiveDecimalModZero_Const)
+{
+    ASSERT_NUM_OP2(m_utils, LLVMTestUtils::OpType::Mod, true, 5.8, 0);
+}
+
+TEST_F(LLVMModTest, NegativeDecimalModZero)
+{
+    ASSERT_NUM_OP2(m_utils, LLVMTestUtils::OpType::Mod, false, -5.8, 0);
+}
+
+TEST_F(LLVMModTest, NegativeDecimalModZero_Const)
+{
+    ASSERT_NUM_OP2(m_utils, LLVMTestUtils::OpType::Mod, true, -5.8, 0);
+}
+
 TEST_F(LLVMModTest, NegativeDecimalModInfinity)
 {
     ASSERT_NUM_OP2(m_utils, LLVMTestUtils::OpType::Mod, false, -2.5, "Infinity");

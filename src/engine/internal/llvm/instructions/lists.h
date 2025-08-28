@@ -2,9 +2,17 @@
 
 #pragma once
 
+#include <scratchcpp/compiler.h>
+
 #include "instructiongroup.h"
 
-namespace libscratchcpp::llvmins
+namespace libscratchcpp
+{
+
+class LLVMListPtr;
+class LLVMRegister;
+
+namespace llvmins
 {
 
 class Lists : public InstructionGroup
@@ -25,6 +33,14 @@ class Lists : public InstructionGroup
         LLVMInstruction *buildGetListSize(LLVMInstruction *ins);
         LLVMInstruction *buildGetListItemIndex(LLVMInstruction *ins);
         LLVMInstruction *buildListContainsItem(LLVMInstruction *ins);
+
+        llvm::Value *createIndexRangeCheck(const LLVMListPtr &listPtr, llvm::Value *index, const std::string &name, bool includeSize = false);
+
+        void createListTypeUpdate(const LLVMListPtr &listPtr, const LLVMRegister *newValue, Compiler::StaticType newValueType);
+        llvm::Value *createListTypeVar(const LLVMListPtr &listPtr, llvm::Value *type);
+        void createListTypeAssumption(const LLVMListPtr &listPtr, llvm::Value *typeVar, Compiler::StaticType staticType, llvm::Value *inRange = nullptr);
 };
 
-} // namespace libscratchcpp::llvmins
+} // namespace llvmins
+
+} // namespace libscratchcpp

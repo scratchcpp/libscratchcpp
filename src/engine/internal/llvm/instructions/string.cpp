@@ -85,7 +85,7 @@ LLVMInstruction *String::buildStringChar(LLVMInstruction *ins)
     const auto &arg1 = ins->args[0];
     const auto &arg2 = ins->args[1];
     llvm::Value *str = m_utils.castValue(arg1.second, arg1.first);
-    llvm::Value *index = m_builder.CreateFPToSI(m_utils.castValue(arg2.second, arg2.first), m_builder.getInt64Ty());
+    llvm::Value *index = m_utils.castValue(arg2.second, arg2.first, LLVMBuildUtils::NumberType::Int);
     llvm::PointerType *charPointerType = m_builder.getInt16Ty()->getPointerTo();
     llvm::StructType *stringPtrType = m_utils.compilerCtx()->stringPtrType();
 
@@ -131,6 +131,8 @@ LLVMInstruction *String::buildStringLength(LLVMInstruction *ins)
     llvm::Value *sizeField = m_builder.CreateStructGEP(stringPtrType, str, 1);
     llvm::Value *size = m_builder.CreateLoad(m_builder.getInt64Ty(), sizeField);
     ins->functionReturnReg->value = m_builder.CreateSIToFP(size, m_builder.getDoubleTy());
+    ins->functionReturnReg->intValue = size;
+    ins->functionReturnReg->isInt = m_builder.getInt1(true);
 
     return ins->next;
 }

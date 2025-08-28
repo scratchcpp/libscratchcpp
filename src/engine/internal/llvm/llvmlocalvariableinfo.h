@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include <scratchcpp/compiler.h>
-
 namespace llvm
 {
 
@@ -14,14 +12,8 @@ class Value;
 namespace libscratchcpp
 {
 
-class LLVMInstruction;
-
-struct LLVMVariablePtr
+struct LLVMLocalVariableInfo
 {
-        llvm::Value *heapPtr = nullptr;
-        llvm::Value *stackPtr = nullptr;
-        llvm::Value *changed = nullptr;
-
         llvm::Value *isInt = nullptr;
         llvm::Value *intValue = nullptr;
 };

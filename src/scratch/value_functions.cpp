@@ -501,6 +501,22 @@ extern "C"
         return value_stringToDoubleImpl(s->data, s->size);
     }
 
+    /*!
+     * Converts the given string to double.
+     * \param[out] ok Whether the conversion was successful.
+     */
+    double value_stringToDoubleWithCheck(const StringPtr *s, bool *ok)
+    {
+        *ok = true;
+
+        if (string_compare_case_sensitive(s, &INFINITY_STR) == 0)
+            return std::numeric_limits<double>::infinity();
+        else if (string_compare_case_sensitive(s, &NEGATIVE_INFINITY_STR) == 0)
+            return -std::numeric_limits<double>::infinity();
+
+        return value_stringToDoubleImpl(s->data, s->size, ok);
+    }
+
     /*! Converts the given string to boolean. */
     bool value_stringToBool(const StringPtr *s)
     {

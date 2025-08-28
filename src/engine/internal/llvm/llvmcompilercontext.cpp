@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <llvm/Support/TargetSelect.h>
+#include <llvm/TargetParser/Host.h>
+#include <llvm/MC/TargetRegistry.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/IR/Verifier.h>
 
@@ -70,20 +72,7 @@ void LLVMCompilerContext::initJit()
 #endif
 
     // Optimize
-    llvm::PassBuilder passBuilder;
-    llvm::LoopAnalysisManager loopAnalysisManager;
-    llvm::FunctionAnalysisManager functionAnalysisManager;
-    llvm::CGSCCAnalysisManager cGSCCAnalysisManager;
-    llvm::ModuleAnalysisManager moduleAnalysisManager;
-
-    passBuilder.registerModuleAnalyses(moduleAnalysisManager);
-    passBuilder.registerCGSCCAnalyses(cGSCCAnalysisManager);
-    passBuilder.registerFunctionAnalyses(functionAnalysisManager);
-    passBuilder.registerLoopAnalyses(loopAnalysisManager);
-    passBuilder.crossRegisterProxies(loopAnalysisManager, functionAnalysisManager, cGSCCAnalysisManager, moduleAnalysisManager);
-
-    llvm::ModulePassManager modulePassManager = passBuilder.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
-    modulePassManager.run(*m_module, moduleAnalysisManager);
+    optimize(llvm::OptimizationLevel::O3);
 
     const auto &functions = m_module->getFunctionList();
     std::vector<std::string> lookupNames;
@@ -151,6 +140,71 @@ void LLVMCompilerContext::initTarget()
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
+
+    createTargetMachine();
+
+    m_module->setDataLayout(m_targetMachine->createDataLayout());
+}
+
+void LLVMCompilerContext::createTargetMachine()
+{
+    std::string error;
+    std::string targetTriple = llvm::sys::getDefaultTargetTriple();
+    m_module->setTargetTriple(targetTriple);
+
+    const llvm::Target *target = llvm::TargetRegistry::lookupTarget(targetTriple, error);
+
+    if (!target) {
+        llvm::errs() << error;
+        return;
+    }
+
+    llvm::TargetOptions opt;
+    const char *cpu = "generic";
+    const char *features = "";
+
+    m_targetMachine = std::unique_ptr<llvm::TargetMachine>(target->createTargetMachine(targetTriple, cpu, features, opt, llvm::Reloc::PIC_));
+}
+
+void LLVMCompilerContext::optimize(llvm::OptimizationLevel optLevel)
+{
+    llvm::PassBuilder passBuilder(m_targetMachine.get());
+    llvm::LoopAnalysisManager loopAnalysisManager;
+    llvm::FunctionAnalysisManager functionAnalysisManager;
+    llvm::CGSCCAnalysisManager cGSCCAnalysisManager;
+    llvm::ModuleAnalysisManager moduleAnalysisManager;
+
+    passBuilder.registerModuleAnalyses(moduleAnalysisManager);
+    passBuilder.registerCGSCCAnalyses(cGSCCAnalysisManager);
+    passBuilder.registerFunctionAnalyses(functionAnalysisManager);
+    passBuilder.registerLoopAnalyses(loopAnalysisManager);
+    passBuilder.crossRegisterProxies(loopAnalysisManager, functionAnalysisManager, cGSCCAnalysisManager, moduleAnalysisManager);
+
+    llvm::ModulePassManager modulePassManager = passBuilder.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
+
+    std::string pipeline;
+
+    if (optLevel == llvm::OptimizationLevel::O0)
+        pipeline = "default<O0>";
+    else if (optLevel == llvm::OptimizationLevel::O1)
+        pipeline = "default<O1>";
+    else if (optLevel == llvm::OptimizationLevel::O2)
+        pipeline = "default<O2>";
+    else if (optLevel == llvm::OptimizationLevel::O3)
+        pipeline = "default<O3>";
+    else if (optLevel == llvm::OptimizationLevel::Os)
+        pipeline = "default<Os>";
+    else if (optLevel == llvm::OptimizationLevel::Oz)
+        pipeline = "default<Oz>";
+    else
+        assert(false);
+
+    if (passBuilder.parsePassPipeline(modulePassManager, pipeline)) {
+        llvm::errs() << "Failed to parse pipeline\n";
+        return;
+    }
+
+    modulePassManager.run(*m_module, moduleAnalysisManager);
 }
 
 llvm::Function *LLVMCompilerContext::createCoroResumeFunction()

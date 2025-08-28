@@ -9,6 +9,7 @@
 namespace libscratchcpp
 {
 
+class LLVMLocalVariableInfo;
 class BlockPrototype;
 
 struct LLVMInstruction
@@ -76,6 +77,7 @@ struct LLVMInstruction
             BeginLoopCondition,
             EndLoop,
             Stop,
+            StopWithoutSync,
             CallProcedure,
             ProcedureArg
         };
@@ -92,6 +94,7 @@ struct LLVMInstruction
         LLVMRegister *functionReturnReg = nullptr;
         bool functionTargetArg = false;                                  // whether to add target ptr to function parameters
         bool functionCtxArg = false;                                     // whether to add execution context ptr to function parameters
+        LLVMLocalVariableInfo *localVarInfo = nullptr;                   // for local variables
         Variable *targetVariable = nullptr;                              // for variables
         List *targetList = nullptr;                                      // for lists
         Compiler::StaticType targetType = Compiler::StaticType::Unknown; // variable or list type (before read/write operation)

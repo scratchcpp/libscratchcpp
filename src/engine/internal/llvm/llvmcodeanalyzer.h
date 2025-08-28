@@ -32,7 +32,7 @@ class LLVMCodeAnalyzer
 
         void mergeVariableTypes(Branch *branch, Branch *previousBranch) const;
         void overrideVariableTypes(Branch *branch, Branch *previousBranch) const;
-        void mergeListTypes(Branch *branch, Branch *previousBranch) const;
+        void mergeListTypes(Branch *branch, Branch *previousBranch, bool firstUnknown) const;
 
         bool isLoopStart(const LLVMInstruction *ins) const;
         bool isLoopEnd(const LLVMInstruction *ins) const;
@@ -46,6 +46,8 @@ class LLVMCodeAnalyzer
         bool isListRead(const LLVMInstruction *ins) const;
         bool isListWrite(const LLVMInstruction *ins) const;
         bool isListClear(const LLVMInstruction *ins) const;
+
+        bool isProcedureCall(const LLVMInstruction *ins) const;
 
         Compiler::StaticType writeType(LLVMInstruction *ins) const;
 };

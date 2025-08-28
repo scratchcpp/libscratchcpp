@@ -30,6 +30,7 @@ class LLVMFunctions
         llvm::FunctionCallee resolve_value_doubleToStringPtr();
         llvm::FunctionCallee resolve_value_boolToStringPtr();
         llvm::FunctionCallee resolve_value_stringToDouble();
+        llvm::FunctionCallee resolve_value_stringToDoubleWithCheck();
         llvm::FunctionCallee resolve_value_stringToBool();
         llvm::FunctionCallee resolve_value_equals();
         llvm::FunctionCallee resolve_value_greater();
@@ -44,7 +45,7 @@ class LLVMFunctions
         llvm::FunctionCallee resolve_list_to_string();
         llvm::FunctionCallee resolve_llvm_random();
         llvm::FunctionCallee resolve_llvm_random_double();
-        llvm::FunctionCallee resolve_llvm_random_long();
+        llvm::FunctionCallee resolve_llvm_random_int64();
         llvm::FunctionCallee resolve_llvm_random_bool();
         llvm::FunctionCallee resolve_string_pool_new();
         llvm::FunctionCallee resolve_string_pool_free();
