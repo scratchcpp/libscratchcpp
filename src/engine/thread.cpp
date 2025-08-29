@@ -85,12 +85,14 @@ bool Thread::runPredicate()
 void Thread::kill()
 {
     impl->code->kill(impl->executionContext.get());
+    string_pool_clear_thread(this);
 }
 
 /*! Resets the script to run from the start. */
 void Thread::reset()
 {
     impl->code->reset(impl->executionContext.get());
+    string_pool_clear_thread(this);
 }
 
 /*! Returns true if the script is stopped or finished. */
