@@ -561,12 +561,10 @@ extern "C" double looks_backdrop_number(ExecutionContext *ctx)
     return ctx->engine()->stage()->costumeIndex() + 1;
 }
 
-extern "C" StringPtr *looks_backdrop_name(ExecutionContext *ctx)
+extern "C" void looks_backdrop_name(StringPtr *ret, ExecutionContext *ctx)
 {
     const std::string &name = ctx->engine()->stage()->currentCostume()->name();
-    StringPtr *ret = string_pool_new();
     string_assign_cstring(ret, name.c_str());
-    return ret;
 }
 
 extern "C" double looks_costume_number(Target *target)
@@ -574,12 +572,10 @@ extern "C" double looks_costume_number(Target *target)
     return target->costumeIndex() + 1;
 }
 
-extern "C" StringPtr *looks_costume_name(Target *target)
+extern "C" void looks_costume_name(StringPtr *ret, Target *target)
 {
     const std::string &name = target->currentCostume()->name();
-    StringPtr *ret = string_pool_new();
     string_assign_cstring(ret, name.c_str());
-    return ret;
 }
 
 extern "C" bool looks_backdrop_promise(ExecutionContext *ctx)

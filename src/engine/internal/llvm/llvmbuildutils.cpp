@@ -707,7 +707,11 @@ llvm::Type *LLVMBuildUtils::getType(Compiler::StaticType type, bool isReturnType
             return m_builder.getInt1Ty();
 
         case Compiler::StaticType::String:
-            return m_stringPtrType->getPointerTo();
+            // Strings are returned through an output parameter
+            if (isReturnType)
+                return m_builder.getVoidTy();
+            else
+                return m_stringPtrType->getPointerTo();
 
         case Compiler::StaticType::Pointer:
             return m_builder.getVoidTy()->getPointerTo();

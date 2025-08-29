@@ -63,14 +63,12 @@ extern "C"
         std::cout << "no_args" << std::endl;
     }
 
-    StringPtr *test_function_no_args_ret(Target *target)
+    void test_function_no_args_ret(StringPtr *ret, Target *target)
     {
         target->isStage();
         std::cout << "no_args_ret" << std::endl;
         Value v("no_args_output");
-        StringPtr *ret = string_pool_new();
         value_toStringPtr(&v.data(), ret);
-        return ret;
     }
 
     void test_function_1_arg(Target *target, const StringPtr *arg1)
@@ -79,14 +77,12 @@ extern "C"
         std::cout << "1_arg " << utf8::utf16to8(std::u16string(arg1->data)) << std::endl;
     }
 
-    StringPtr *test_function_1_arg_ret(Target *target, const StringPtr *arg1)
+    void test_function_1_arg_ret(StringPtr *ret, Target *target, const StringPtr *arg1)
     {
         target->isStage();
         std::cout << "1_arg_ret " << utf8::utf16to8(std::u16string(arg1->data)) << std::endl;
         Value v("1_arg_output");
-        StringPtr *ret = string_pool_new();
         value_toStringPtr(&v.data(), ret);
-        return ret;
     }
 
     void test_function_3_args(Target *target, const StringPtr *arg1, const StringPtr *arg2, const StringPtr *arg3)
@@ -95,14 +91,12 @@ extern "C"
         std::cout << "3_args " << utf8::utf16to8(std::u16string(arg1->data)) << " " << utf8::utf16to8(std::u16string(arg2->data)) << " " << utf8::utf16to8(std::u16string(arg3->data)) << std::endl;
     }
 
-    StringPtr *test_function_3_args_ret(Target *target, const StringPtr *arg1, const StringPtr *arg2, const StringPtr *arg3)
+    void test_function_3_args_ret(StringPtr *ret, Target *target, const StringPtr *arg1, const StringPtr *arg2, const StringPtr *arg3)
     {
         target->isStage();
         std::cout << "3_args " << utf8::utf16to8(std::u16string(arg1->data)) << " " << utf8::utf16to8(std::u16string(arg2->data)) << " " << utf8::utf16to8(std::u16string(arg3->data)) << std::endl;
         Value v("3_args_output");
-        StringPtr *ret = string_pool_new();
         value_toStringPtr(&v.data(), ret);
-        return ret;
     }
 
     const void *test_function_1_ptr_arg_ret(Target *target, const int *arg1)
@@ -138,11 +132,9 @@ extern "C"
         return v;
     }
 
-    StringPtr *test_const_string(const StringPtr *v)
+    void test_const_string(StringPtr *ret, const StringPtr *v)
     {
-        StringPtr *ret = string_pool_new();
         string_assign(ret, v);
-        return ret;
     }
 
     ValueData test_const_unknown(const ValueData *v)
