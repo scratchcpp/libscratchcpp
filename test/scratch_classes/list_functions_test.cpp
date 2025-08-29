@@ -171,7 +171,8 @@ TEST(ListFunctionsTest, ToString)
         list.append("sit");
         list.append("amet");
 
-        StringPtr *str = list_to_string(&list);
+        StringPtr *str = string_pool_new();
+        list_to_string(&list, str);
         ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "Lorem ipsum dolor sit amet");
     }
 
@@ -181,7 +182,8 @@ TEST(ListFunctionsTest, ToString)
         list.append(2);
         list.append(3);
 
-        StringPtr *str = list_to_string(&list);
+        StringPtr *str = string_pool_new();
+        list_to_string(&list, str);
         ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "123");
     }
 }

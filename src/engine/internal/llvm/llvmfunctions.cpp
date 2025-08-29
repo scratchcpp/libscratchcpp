@@ -234,7 +234,7 @@ llvm::FunctionCallee LLVMFunctions::resolve_list_alloc_size_ptr()
 llvm::FunctionCallee LLVMFunctions::resolve_list_to_string()
 {
     llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_ctx->llvmCtx()), 0);
-    llvm::FunctionCallee callee = resolveFunction("list_to_string", llvm::FunctionType::get(m_stringPtrType->getPointerTo(), { pointerType }, false));
+    llvm::FunctionCallee callee = resolveFunction("list_to_string", llvm::FunctionType::get(m_builder->getVoidTy(), { pointerType, m_stringPtrType->getPointerTo() }, false));
     llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
     func->addFnAttr(llvm::Attribute::ReadOnly);
     return callee;
