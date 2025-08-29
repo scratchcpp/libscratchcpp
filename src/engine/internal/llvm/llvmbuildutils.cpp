@@ -56,9 +56,6 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
     if (m_procedurePrototype && m_warp)
         m_function->addFnAttr(llvm::Attribute::InlineHint);
 
-    m_stringHeap.clear();
-    pushScopeLevel();
-
     // Init coroutine
     if (!m_warp)
         m_coroutine = std::make_unique<LLVMCoroutine>(m_ctx->module(), &m_builder, m_function);
@@ -123,9 +120,6 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
 
 void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastConstant)
 {
-    assert(m_stringHeap.size() == 1);
-    freeScopeHeap();
-
     // Sync
     llvm::BasicBlock *syncBranch = llvm::BasicBlock::Create(m_llvmCtx, "sync", m_function);
     m_builder.CreateBr(syncBranch);
@@ -382,31 +376,6 @@ void LLVMBuildUtils::reloadLists()
             m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasString);
         }
     }
-}
-
-void LLVMBuildUtils::pushScopeLevel()
-{
-    m_stringHeap.push_back({});
-}
-
-void LLVMBuildUtils::popScopeLevel()
-{
-    freeScopeHeap();
-    m_stringHeap.pop_back();
-}
-
-void LLVMBuildUtils::freeScopeHeap()
-{
-    if (m_stringHeap.empty())
-        return;
-
-    // Free strings in current scope
-    auto &heap = m_stringHeap.back();
-
-    for (llvm::Value *ptr : heap)
-        m_builder.CreateCall(m_functions.resolve_string_pool_free(), { ptr });
-
-    heap.clear();
 }
 
 std::vector<LLVMIfStatement> &LLVMBuildUtils::ifStatements()

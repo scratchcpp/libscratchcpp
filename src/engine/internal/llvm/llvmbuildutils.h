@@ -74,11 +74,6 @@ class LLVMBuildUtils
         void reloadVariables();
         void reloadLists();
 
-        void pushScopeLevel();
-        void popScopeLevel();
-
-        void freeScopeHeap();
-
         std::vector<LLVMIfStatement> &ifStatements();
         std::vector<LLVMLoop> &loops();
 
@@ -177,8 +172,6 @@ class LLVMBuildUtils
 
         std::unordered_map<List *, size_t> m_targetListMap;
         std::unordered_map<List *, LLVMListPtr> m_listPtrs;
-
-        std::vector<std::vector<llvm::Value *>> m_stringHeap; // scopes
 
         std::vector<LLVMIfStatement> m_ifStatements;
         std::vector<LLVMLoop> m_loops;
