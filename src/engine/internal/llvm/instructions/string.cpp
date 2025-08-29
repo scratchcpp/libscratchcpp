@@ -44,9 +44,8 @@ LLVMInstruction *String::buildStringConcat(LLVMInstruction *ins)
     llvm::StructType *stringPtrType = m_utils.compilerCtx()->stringPtrType();
     llvm::Function *memcpyFunc = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::memcpy_inline, { charPointerType, charPointerType, m_builder.getInt64Ty() });
 
-    // StringPtr *result = string_pool_new(true)
-    llvm::Value *result = m_builder.CreateCall(m_utils.functions().resolve_string_pool_new(), m_builder.getInt1(true));
-    m_utils.freeStringLater(result);
+    // StringPtr *result = (allocated string)
+    llvm::Value *result = m_utils.addStringAlloca();
 
     // result->size = string1->size + string2->size
     llvm::Value *sizeField1 = m_builder.CreateStructGEP(stringPtrType, str1, 1);
@@ -100,8 +99,7 @@ LLVMInstruction *String::buildStringChar(LLVMInstruction *ins)
     llvm::Value *charPtr = m_builder.CreateGEP(m_builder.getInt16Ty(), data, index);
 
     // Allocate string
-    llvm::Value *result = m_builder.CreateCall(m_utils.functions().resolve_string_pool_new(), m_builder.getInt1(true));
-    m_utils.freeStringLater(result);
+    llvm::Value *result = m_utils.addStringAlloca();
     m_builder.CreateCall(m_utils.functions().resolve_string_alloc(), { result, m_builder.getInt64(1) }); // size 1 to avoid branching
 
     // Get result data ptr

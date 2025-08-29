@@ -270,9 +270,8 @@ LLVMInstruction *Lists::buildGetListContents(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 0);
     const LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
-    llvm::Value *ptr = m_builder.CreateCall(m_utils.functions().resolve_string_pool_new(), { m_builder.getInt1(true) });
+    llvm::Value *ptr = m_utils.addStringAlloca();
     m_builder.CreateCall(m_utils.functions().resolve_list_to_string(), { listPtr.ptr, ptr });
-    m_utils.freeStringLater(ptr);
     ins->functionReturnReg->value = ptr;
 
     return ins->next;

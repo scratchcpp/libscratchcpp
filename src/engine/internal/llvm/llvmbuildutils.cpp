@@ -395,16 +395,6 @@ void LLVMBuildUtils::popScopeLevel()
     m_stringHeap.pop_back();
 }
 
-void LLVMBuildUtils::freeStringLater(llvm::Value *value)
-{
-    assert(!m_stringHeap.empty());
-
-    if (m_stringHeap.empty())
-        return;
-
-    m_stringHeap.back().push_back(value);
-}
-
 void LLVMBuildUtils::freeScopeHeap()
 {
     if (m_stringHeap.empty())
@@ -464,6 +454,16 @@ llvm::Value *LLVMBuildUtils::addAlloca(llvm::Type *type)
     llvm::BasicBlock *block = m_builder.GetInsertBlock();
     m_builder.SetInsertPointPastAllocas(m_function);
     llvm::Value *ret = m_builder.CreateAlloca(type);
+    m_builder.SetInsertPoint(block);
+    return ret;
+}
+
+llvm::Value *LLVMBuildUtils::addStringAlloca()
+{
+    // NOTE: The string will be deallocated when the thread is destroyed
+    llvm::BasicBlock *block = m_builder.GetInsertBlock();
+    m_builder.SetInsertPointPastAllocas(m_function);
+    llvm::Value *ret = m_builder.CreateCall(m_functions.resolve_string_pool_new(), { m_builder.getInt1(true) }, "localString");
     m_builder.SetInsertPoint(block);
     return ret;
 }
@@ -629,7 +629,7 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
                 llvm::Value *intCast = m_builder.CreateSIToFP(reg->intValue, m_builder.getDoubleTy());
                 llvm::Value *value = m_builder.CreateSelect(reg->isInt, intCast, doubleValue);
 
-                llvm::Value *numberResult = m_builder.CreateCall(m_functions.resolve_string_pool_new(), { m_builder.getInt1(true) });
+                llvm::Value *numberResult = addStringAlloca();
                 m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), { value, numberResult });
                 m_builder.CreateBr(mergeBlock);
                 results.push_back({ numberBlock, numberResult });
@@ -640,13 +640,10 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
                 llvm::BasicBlock *boolBlock = llvm::BasicBlock::Create(m_llvmCtx, "bool", m_function);
                 sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), boolBlock);
 
-                // Since the value is deallocated later, we need to create a copy
                 m_builder.SetInsertPoint(boolBlock);
                 llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
                 llvm::Value *value = m_builder.CreateLoad(m_builder.getInt1Ty(), ptr);
-                llvm::Value *stringPtr = m_builder.CreateCall(m_functions.resolve_value_boolToStringPtr(), value);
-                llvm::Value *boolResult = m_builder.CreateCall(m_functions.resolve_string_pool_new(), m_builder.getInt1(true));
-                m_builder.CreateCall(m_functions.resolve_string_assign(), { boolResult, stringPtr });
+                llvm::Value *boolResult = m_builder.CreateCall(m_functions.resolve_value_boolToStringPtr(), value);
                 m_builder.CreateBr(mergeBlock);
                 results.push_back({ boolBlock, boolResult });
             }
@@ -658,9 +655,7 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
 
                 m_builder.SetInsertPoint(stringBlock);
                 llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
-                llvm::Value *stringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
-                llvm::Value *stringResult = m_builder.CreateCall(m_functions.resolve_string_pool_new(), m_builder.getInt1(true));
-                m_builder.CreateCall(m_functions.resolve_string_assign(), { stringResult, stringPtr });
+                llvm::Value *stringResult = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
                 m_builder.CreateBr(mergeBlock);
                 results.push_back({ stringBlock, stringResult });
             }
@@ -1504,9 +1499,8 @@ llvm::Value *LLVMBuildUtils::castRawValue(LLVMRegister *reg, Compiler::StaticTyp
                     // Convert double/int to string
                     llvm::Value *intCast = m_builder.CreateSIToFP(reg->intValue, m_builder.getDoubleTy());
                     llvm::Value *doubleValue = m_builder.CreateSelect(reg->isInt, intCast, reg->value);
-                    llvm::Value *ptr = m_builder.CreateCall(m_functions.resolve_string_pool_new(), { m_builder.getInt1(true) });
+                    llvm::Value *ptr = addStringAlloca();
                     m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), { doubleValue, ptr });
-                    freeStringLater(ptr);
                     return ptr;
                 }
 
@@ -1800,10 +1794,9 @@ llvm::Value *LLVMBuildUtils::createNumberAndStringComparison(LLVMRegister *arg1,
 
     // String comparison
     m_builder.SetInsertPoint(stringBlock);
-    llvm::Value *stringValue = m_builder.CreateCall(m_functions.resolve_string_pool_new(), { m_builder.getInt1(true) });
+    llvm::Value *stringValue = addStringAlloca();
     m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), { value1, stringValue });
     llvm::Value *cmp = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { stringValue, value2 });
-    m_builder.CreateCall(m_functions.resolve_string_pool_free(), { stringValue }); // free the string immediately
 
     llvm::Value *zero = llvm::ConstantInt::get(m_builder.getInt32Ty(), 0, true);
     llvm::Value *stringCmp;

@@ -77,7 +77,6 @@ class LLVMBuildUtils
         void pushScopeLevel();
         void popScopeLevel();
 
-        void freeStringLater(llvm::Value *value);
         void freeScopeHeap();
 
         std::vector<LLVMIfStatement> &ifStatements();
@@ -89,6 +88,8 @@ class LLVMBuildUtils
         static bool isSingleType(Compiler::StaticType type);
 
         llvm::Value *addAlloca(llvm::Type *type);
+        llvm::Value *addStringAlloca();
+
         llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType, NumberType targetNumType = NumberType::Double);
         llvm::Type *getType(Compiler::StaticType type, bool isReturnType);
         llvm::Value *isNaN(llvm::Value *num);

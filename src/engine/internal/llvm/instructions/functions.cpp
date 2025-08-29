@@ -36,7 +36,7 @@ LLVMInstruction *Functions::buildFunctionCall(LLVMInstruction *ins)
     llvm::Value *stringRet = nullptr;
 
     if (ins->functionReturnReg && ins->functionReturnReg->type() == Compiler::StaticType::String) {
-        stringRet = m_builder.CreateCall(m_utils.functions().resolve_string_pool_new(), { m_builder.getInt1(true) });
+        stringRet = m_utils.addStringAlloca();
         types.push_back(m_utils.getType(Compiler::StaticType::String, false));
         args.push_back(stringRet);
     }
@@ -63,10 +63,9 @@ LLVMInstruction *Functions::buildFunctionCall(LLVMInstruction *ins)
     llvm::Value *ret = m_builder.CreateCall(m_utils.functions().resolveFunction(ins->functionName, llvm::FunctionType::get(retType, types, false)), args);
 
     if (ins->functionReturnReg) {
-        if (ins->functionReturnReg->type() == Compiler::StaticType::String) {
+        if (ins->functionReturnReg->type() == Compiler::StaticType::String)
             ins->functionReturnReg->value = stringRet;
-            m_utils.freeStringLater(stringRet);
-        } else if (m_utils.isSingleType(ins->functionReturnReg->type()))
+        else if (m_utils.isSingleType(ins->functionReturnReg->type()))
             ins->functionReturnReg->value = ret;
         else {
             ins->functionReturnReg->value = m_utils.addAlloca(retType);
