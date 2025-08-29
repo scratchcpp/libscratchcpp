@@ -52,6 +52,8 @@ class LLVMBuildUtils
 
         function_id_t scriptFunctionId() const;
 
+        size_t stringCount() const;
+
         llvm::BasicBlock *endBranch() const;
 
         BlockPrototype *procedurePrototype() const;
@@ -151,11 +153,13 @@ class LLVMBuildUtils
         Target *m_target = nullptr;
         llvm::Function *m_function = nullptr;
         function_id_t m_functionId = 0;
+        llvm::Value *m_functionIdValue = nullptr;
 
         llvm::BasicBlock *m_endBranch = nullptr;
 
         llvm::StructType *m_valueDataType = nullptr;
         llvm::StructType *m_stringPtrType = nullptr;
+        llvm::Type *m_functionIdType = nullptr;
 
         BlockPrototype *m_procedurePrototype = nullptr;
         bool m_warp = false;
@@ -179,6 +183,11 @@ class LLVMBuildUtils
 
         std::vector<LLVMIfStatement> m_ifStatements;
         std::vector<LLVMLoop> m_loops;
+
+        llvm::BasicBlock *m_stringAllocaBlock = nullptr;
+        llvm::BasicBlock *m_stringAllocaNextBlock = nullptr;
+        llvm::Value *m_stringArray = nullptr;
+        size_t m_stringCount = 0;
 };
 
 } // namespace libscratchcpp

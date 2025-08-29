@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/string_pool.h>
+
 #include "llvmexecutioncontext.h"
-#include "llvmcompilercontext.h"
+#include "llvmexecutablecode.h"
 
 using namespace libscratchcpp;
 
@@ -9,6 +11,25 @@ LLVMExecutionContext::LLVMExecutionContext(LLVMCompilerContext *compilerCtx, Thr
     ExecutionContext(thread),
     m_compilerCtx(compilerCtx)
 {
+    // Allocate strings for all scripts in the target
+    // TODO: Allocate strings for this script and procedures it calls
+    const auto &codeMap = compilerCtx->codeMap();
+
+    for (const auto &[functionId, code] : codeMap) {
+        size_t count = code->stringCount();
+
+        if (count > 0) {
+            m_stringVectors[functionId] = {};
+
+            auto &strings = m_stringVectors[functionId];
+            strings.reserve(count);
+
+            for (size_t i = 0; i < count; i++)
+                strings.push_back(string_pool_new());
+
+            m_stringArrays[functionId] = strings.data();
+        }
+    }
 }
 
 LLVMExecutionContext::~LLVMExecutionContext()

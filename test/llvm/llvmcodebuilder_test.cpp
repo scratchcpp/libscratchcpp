@@ -3451,7 +3451,7 @@ TEST_F(LLVMCodeBuilderTest, Procedures)
     v = builder->addProcedureArgument("invalid");
     builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
 
-    builder->build();
+    auto proc1 = builder->build();
 
     // Procedure 2
     BlockPrototype prototype2;
@@ -3464,7 +3464,7 @@ TEST_F(LLVMCodeBuilderTest, Procedures)
     builder->createProcedureCall(&prototype1, { builder->addConstValue(-652.3), builder->addConstValue(false), builder->addConstValue(true) });
     builder->endLoop();
 
-    builder->build();
+    auto proc2 = builder->build();
 
     // Script
     builder = m_utils.createBuilder(&sprite, false);

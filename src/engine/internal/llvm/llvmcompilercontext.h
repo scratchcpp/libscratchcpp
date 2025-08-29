@@ -16,6 +16,7 @@ class ValueData;
 class List;
 class LLVMExecutableCode;
 
+// NOTE: Change this in LLVMTypes as well
 using function_id_t = unsigned int;
 
 class LLVMCompilerContext : public CompilerContext
@@ -28,6 +29,9 @@ class LLVMCompilerContext : public CompilerContext
         llvm::LLVMContext *llvmCtx();
         llvm::Module *module();
 
+        void addCode(LLVMExecutableCode *code);
+        const std::unordered_map<function_id_t, LLVMExecutableCode *> &codeMap() const;
+
         function_id_t getNextFunctionId();
 
         void initJit();
@@ -38,6 +42,7 @@ class LLVMCompilerContext : public CompilerContext
 
         llvm::StructType *valueDataType() const;
         llvm::StructType *stringPtrType() const;
+        llvm::Type *functionIdType() const;
 
         template<typename T>
         T lookupFunction(const std::string &name)
@@ -74,6 +79,7 @@ class LLVMCompilerContext : public CompilerContext
         bool m_jitInitialized = false;
 
         function_id_t m_nextFunctionId = 0;
+        std::unordered_map<function_id_t, LLVMExecutableCode *> m_codeMap;
 
         llvm::Function *m_llvmCoroResumeFunction = nullptr;
 
@@ -82,6 +88,7 @@ class LLVMCompilerContext : public CompilerContext
 
         llvm::StructType *m_valueDataType = nullptr;
         llvm::StructType *m_stringPtrType = nullptr;
+        llvm::Type *m_functionIdType = nullptr;
 };
 
 } // namespace libscratchcpp

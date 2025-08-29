@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/value_functions.h>
-#include <scratchcpp/executioncontext.h>
 #include <scratchcpp/irandomgenerator.h>
 
 #include "llvmfunctions.h"
 #include "llvmcompilercontext.h"
+#include "llvmexecutioncontext.h"
 
 using namespace libscratchcpp;
 
@@ -30,6 +30,11 @@ extern "C"
     {
         return ctx->rng()->randint(from, to);
     }
+
+    StringPtr **llvm_get_string_array(ExecutionContext *ctx, function_id_t functionId)
+    {
+        return static_cast<LLVMExecutionContext *>(ctx)->getStringArray(functionId);
+    }
 }
 
 LLVMFunctions::LLVMFunctions(LLVMCompilerContext *ctx, llvm::IRBuilder<> *builder) :
@@ -39,6 +44,7 @@ LLVMFunctions::LLVMFunctions(LLVMCompilerContext *ctx, llvm::IRBuilder<> *builde
     // Custom types
     m_stringPtrType = m_ctx->stringPtrType();
     m_valueDataType = m_ctx->valueDataType();
+    m_functionIdType = m_ctx->functionIdType();
 }
 
 llvm::FunctionCallee LLVMFunctions::resolveFunction(const std::string name, llvm::FunctionType *type)
@@ -263,6 +269,17 @@ llvm::FunctionCallee LLVMFunctions::resolve_llvm_random_bool()
 {
     llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_ctx->llvmCtx()), 0);
     return resolveFunction("llvm_random_bool", llvm::FunctionType::get(m_builder->getDoubleTy(), { pointerType, m_builder->getInt1Ty(), m_builder->getInt1Ty() }, false));
+}
+
+llvm::FunctionCallee LLVMFunctions::resolve_llvm_get_string_array()
+{
+    llvm::Type *stringPtr = m_stringPtrType->getPointerTo();
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_ctx->llvmCtx()), 0);
+
+    llvm::FunctionCallee callee = resolveFunction("llvm_get_string_array", llvm::FunctionType::get(stringPtr->getPointerTo(), { pointerType, m_functionIdType }, false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
+    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
 }
 
 llvm::FunctionCallee LLVMFunctions::resolve_string_pool_new()

@@ -47,6 +47,7 @@ class LLVMFunctions
         llvm::FunctionCallee resolve_llvm_random_double();
         llvm::FunctionCallee resolve_llvm_random_int64();
         llvm::FunctionCallee resolve_llvm_random_bool();
+        llvm::FunctionCallee resolve_llvm_get_string_array();
         llvm::FunctionCallee resolve_string_pool_new();
         llvm::FunctionCallee resolve_string_pool_free();
         llvm::FunctionCallee resolve_string_alloc();
@@ -60,6 +61,7 @@ class LLVMFunctions
 
         llvm::StructType *m_stringPtrType = nullptr;
         llvm::StructType *m_valueDataType = nullptr;
+        llvm::Type *m_functionIdType = nullptr;
 };
 
 } // namespace libscratchcpp

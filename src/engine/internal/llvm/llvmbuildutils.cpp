@@ -48,6 +48,8 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
     m_procedurePrototype = procedurePrototype;
     m_warp = warp;
 
+    m_functionIdValue = llvm::ConstantInt::get(m_functionIdType, m_functionId);
+
     m_executionContextPtr = m_function->getArg(0);
     m_targetPtr = m_function->getArg(1);
     m_targetVariables = m_function->getArg(2);
@@ -71,6 +73,19 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
 #endif
         reg->intValue = llvm::ConstantInt::get(m_builder.getInt64Ty(), reg->constValue().toDouble(), true);
     }
+
+    // Create string allocation block
+    m_stringAllocaBlock = llvm::BasicBlock::Create(m_llvmCtx, "stringAlloca", m_function);
+    m_builder.CreateBr(m_stringAllocaBlock);
+
+    // Get string array
+    m_builder.SetInsertPoint(m_stringAllocaBlock);
+    m_stringArray = m_builder.CreateCall(m_functions.resolve_llvm_get_string_array(), { m_executionContextPtr, m_functionIdValue });
+    // NOTE: This block is terminated later
+
+    // Create next block
+    m_stringAllocaNextBlock = llvm::BasicBlock::Create(m_llvmCtx, "entry.next", m_function);
+    m_builder.SetInsertPoint(m_stringAllocaNextBlock);
 
     // Create variable pointers
     for (auto &[var, varPtr] : m_variablePtrs) {
@@ -121,6 +136,15 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
 
 void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastConstant)
 {
+    // Terminate string allocation block
+    if (m_stringCount == 0)
+        m_stringAllocaBlock->erase(m_stringAllocaBlock->begin(), m_stringAllocaBlock->end());
+
+    llvm::BasicBlock *previousBlock = m_builder.GetInsertBlock();
+    m_builder.SetInsertPoint(m_stringAllocaBlock);
+    m_builder.CreateBr(m_stringAllocaNextBlock);
+    m_builder.SetInsertPoint(previousBlock);
+
     // Sync
     llvm::BasicBlock *syncBranch = llvm::BasicBlock::Create(m_llvmCtx, "sync", m_function);
     m_builder.CreateBr(syncBranch);
@@ -256,6 +280,11 @@ llvm::FunctionType *LLVMBuildUtils::scriptFunctionType(BlockPrototype *procedure
 function_id_t LLVMBuildUtils::scriptFunctionId() const
 {
     return m_functionId;
+}
+
+size_t LLVMBuildUtils::stringCount() const
+{
+    return m_stringCount;
 }
 
 llvm::BasicBlock *LLVMBuildUtils::endBranch() const
@@ -435,10 +464,14 @@ llvm::Value *LLVMBuildUtils::addAlloca(llvm::Type *type)
 
 llvm::Value *LLVMBuildUtils::addStringAlloca()
 {
-    // NOTE: The string will be deallocated when the thread is destroyed
+    // All temporary strings are allocated before the script is called
     llvm::BasicBlock *block = m_builder.GetInsertBlock();
-    m_builder.SetInsertPointPastAllocas(m_function);
-    llvm::Value *ret = m_builder.CreateCall(m_functions.resolve_string_pool_new(), { m_builder.getInt1(true) }, "localString");
+    m_builder.SetInsertPoint(m_stringAllocaBlock);
+
+    llvm::Value *index = m_builder.getInt64(m_stringCount++);
+    llvm::Value *elementPtr = m_builder.CreateGEP(m_stringPtrType->getPointerTo(), m_stringArray, index);
+    llvm::Value *ret = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), elementPtr, "localString");
+
     m_builder.SetInsertPoint(block);
     return ret;
 }
@@ -1342,6 +1375,7 @@ void LLVMBuildUtils::initTypes()
 {
     m_valueDataType = m_ctx->valueDataType();
     m_stringPtrType = m_ctx->stringPtrType();
+    m_functionIdType = m_ctx->functionIdType();
 }
 
 void LLVMBuildUtils::createVariableMap()
