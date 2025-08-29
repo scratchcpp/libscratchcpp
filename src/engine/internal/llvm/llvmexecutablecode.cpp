@@ -16,8 +16,9 @@
 
 using namespace libscratchcpp;
 
-LLVMExecutableCode::LLVMExecutableCode(LLVMCompilerContext *ctx, const std::string &mainFunctionName, const std::string &resumeFunctionName, Compiler::CodeType codeType) :
+LLVMExecutableCode::LLVMExecutableCode(LLVMCompilerContext *ctx, function_id_t functionId, const std::string &mainFunctionName, const std::string &resumeFunctionName, Compiler::CodeType codeType) :
     m_ctx(ctx),
+    m_functionId(functionId),
     m_mainFunctionName(mainFunctionName),
     m_resumeFunctionName(resumeFunctionName),
     m_codeType(codeType)

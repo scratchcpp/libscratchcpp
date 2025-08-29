@@ -34,7 +34,8 @@ LLVMBuildUtils::LLVMBuildUtils(LLVMCompilerContext *ctx, llvm::IRBuilder<> &buil
     m_builder(builder),
     m_functions(ctx, &builder),
     m_target(ctx->target()),
-    m_codeType(codeType)
+    m_codeType(codeType),
+    m_functionId(ctx->getNextFunctionId())
 {
     initTypes();
     createVariableMap();
@@ -250,6 +251,11 @@ llvm::FunctionType *LLVMBuildUtils::scriptFunctionType(BlockPrototype *procedure
     }
 
     return llvm::FunctionType::get(retType, argTypes, false);
+}
+
+function_id_t LLVMBuildUtils::scriptFunctionId() const
+{
+    return m_functionId;
 }
 
 llvm::BasicBlock *LLVMBuildUtils::endBranch() const

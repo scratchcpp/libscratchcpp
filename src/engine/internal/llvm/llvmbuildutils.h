@@ -11,6 +11,7 @@
 #include "llvmcoroutine.h"
 #include "llvmifstatement.h"
 #include "llvmloop.h"
+#include "llvmcompilercontext.h"
 
 namespace libscratchcpp
 {
@@ -48,6 +49,8 @@ class LLVMBuildUtils
 
         std::string scriptFunctionName(BlockPrototype *procedurePrototype);
         llvm::FunctionType *scriptFunctionType(BlockPrototype *procedurePrototype);
+
+        function_id_t scriptFunctionId() const;
 
         llvm::BasicBlock *endBranch() const;
 
@@ -147,6 +150,7 @@ class LLVMBuildUtils
         LLVMFunctions m_functions;
         Target *m_target = nullptr;
         llvm::Function *m_function = nullptr;
+        function_id_t m_functionId = 0;
 
         llvm::BasicBlock *m_endBranch = nullptr;
 

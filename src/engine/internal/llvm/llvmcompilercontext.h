@@ -16,6 +16,8 @@ class ValueData;
 class List;
 class LLVMExecutableCode;
 
+using function_id_t = unsigned int;
+
 class LLVMCompilerContext : public CompilerContext
 {
     public:
@@ -25,6 +27,8 @@ class LLVMCompilerContext : public CompilerContext
 
         llvm::LLVMContext *llvmCtx();
         llvm::Module *module();
+
+        function_id_t getNextFunctionId();
 
         void initJit();
         bool jitInitialized() const;
@@ -68,6 +72,8 @@ class LLVMCompilerContext : public CompilerContext
         std::unique_ptr<llvm::TargetMachine> m_targetMachine;
         llvm::Expected<std::unique_ptr<llvm::orc::LLJIT>> m_jit;
         bool m_jitInitialized = false;
+
+        function_id_t m_nextFunctionId = 0;
 
         llvm::Function *m_llvmCoroResumeFunction = nullptr;
 

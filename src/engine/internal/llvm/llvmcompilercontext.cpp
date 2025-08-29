@@ -52,6 +52,11 @@ llvm::Module *LLVMCompilerContext::module()
     return m_modulePtr;
 }
 
+function_id_t LLVMCompilerContext::getNextFunctionId()
+{
+    return m_nextFunctionId++;
+}
+
 void LLVMCompilerContext::initJit()
 {
     if (m_jitInitialized) {

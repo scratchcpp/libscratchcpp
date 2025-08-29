@@ -91,7 +91,7 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::build()
     m_utils.end(m_instructions.empty() ? nullptr : m_instructions.last(), m_lastConstValue);
     verifyFunction(m_function);
 
-    return std::make_shared<LLVMExecutableCode>(m_ctx, m_function->getName().str(), m_ctx->coroutineResumeFunction()->getName().str(), m_codeType);
+    return std::make_shared<LLVMExecutableCode>(m_ctx, m_utils.scriptFunctionId(), m_function->getName().str(), m_ctx->coroutineResumeFunction()->getName().str(), m_codeType);
 }
 
 CompilerValue *LLVMCodeBuilder::addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
