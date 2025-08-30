@@ -10,8 +10,6 @@
 #include <cassert>
 #include <algorithm>
 
-#include "string_pool_p.h"
-
 namespace libscratchcpp
 {
 
@@ -78,25 +76,17 @@ void string_pool_add_thread(Thread *thread)
 
 void string_pool_remove_thread(Thread *thread)
 {
-    string_pool_clear_thread(thread);
-    threadStrings.erase(thread);
-
-    if (currentThread == thread)
-        currentThread = nullptr;
-}
-
-void string_pool_clear_thread(Thread *thread)
-{
     // Free all strings in the thread (garbage collection)
     assert(threadStrings.find(thread) != threadStrings.cend());
     auto &strings = threadStrings[thread];
 
-    for (StringPtr *str : strings) {
-        assert(std::find_if(freeStrings.begin(), freeStrings.end(), [str](const std::pair<size_t, StringPtr *> &p) { return p.second == str; }) == freeStrings.end());
+    for (StringPtr *str : strings)
         freeStrings.insert(std::pair<size_t, StringPtr *>(str->allocatedSize, str));
-    }
 
-    strings.clear();
+    threadStrings.erase(thread);
+
+    if (currentThread == thread)
+        currentThread = nullptr;
 }
 
 void string_pool_set_thread(Thread *thread)
