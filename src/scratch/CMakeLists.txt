@@ -2,6 +2,7 @@ target_sources(scratchcpp
   PRIVATE
     value_functions.cpp
     value_functions_p.h
+    stringptr.cpp
     string_functions.cpp
     string_pool.cpp
     string_pool_p.h

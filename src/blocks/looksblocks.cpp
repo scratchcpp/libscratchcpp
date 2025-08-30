@@ -11,7 +11,7 @@
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/costume.h>
-#include <scratchcpp/stringptr.h>
+#include <scratchcpp/string_functions.h>
 #include <scratchcpp/string_pool.h>
 #include <scratchcpp/value.h>
 #include <scratchcpp/input.h>

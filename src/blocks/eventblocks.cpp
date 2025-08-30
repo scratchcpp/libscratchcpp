@@ -10,7 +10,7 @@
 #include <scratchcpp/thread.h>
 #include <scratchcpp/compilerconstant.h>
 #include <scratchcpp/promise.h>
-#include <scratchcpp/stringptr.h>
+#include <scratchcpp/string_functions.h>
 #include <scratchcpp/sprite.h>
 #include <scratchcpp/itimer.h>
 #include <utf8.h>
