@@ -149,8 +149,21 @@ extern "C" void data_showvariable(Target *target, Variable *variable)
          * Since this case doesn't occur frequently,
          * we can look up the variable by ID.
          */
-        auto index = target->findVariableById(variable->id());
-        monitor = target->engine()->createVariableMonitor(target->variableAt(index), "data_variable", "VARIABLE");
+        const auto &targets = target->engine()->targets();
+
+        for (const auto &target : targets) {
+            auto index = target->findVariableById(variable->id());
+
+            if (index != -1) {
+                monitor = target->engine()->createVariableMonitor(target->variableAt(index), "data_variable", "VARIABLE");
+                break;
+            }
+        }
+
+        if (!monitor) {
+            assert(false);
+            return;
+        }
     }
 
     monitor->setVisible(true);

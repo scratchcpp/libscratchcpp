@@ -226,6 +226,45 @@ TEST_F(VariableBlocksTest, ShowVariable_Global_Nonexistent)
     ASSERT_TRUE(monitor2->visible());
 }
 
+TEST_F(VariableBlocksTest, ShowVariable_Global_Nonexistent_FromSprite)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+
+    auto var1 = std::make_shared<Variable>("a", "var1", 835.21);
+    stage->addVariable(var1);
+    auto var2 = std::make_shared<Variable>("b", "var2", "Hello world");
+    stage->addVariable(var2);
+
+    m_engine->setTargets({ stage, sprite });
+
+    ScriptBuilder builder1(m_extension.get(), m_engine, sprite);
+    builder1.addBlock("data_showvariable");
+    builder1.addEntityField("VARIABLE", var1);
+
+    ScriptBuilder builder2(m_extension.get(), m_engine, sprite);
+    builder2.addBlock("data_showvariable");
+    builder2.addEntityField("VARIABLE", var2);
+
+    ScriptBuilder::buildMultiple({ &builder1, &builder2 });
+    m_engine->run();
+
+    // Missing monitors should be created
+    builder1.run();
+
+    Monitor *monitor1 = var1->monitor();
+    ASSERT_TRUE(monitor1);
+    ASSERT_TRUE(monitor1->visible());
+
+    builder2.run();
+
+    Monitor *monitor2 = var2->monitor();
+
+    ASSERT_TRUE(monitor2);
+    ASSERT_TRUE(monitor1->visible());
+    ASSERT_TRUE(monitor2->visible());
+}
+
 TEST_F(VariableBlocksTest, ShowVariable_Local_Existent)
 {
     auto stage = std::make_shared<Stage>();
