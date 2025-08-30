@@ -148,6 +148,8 @@ class LLVMBuildUtils
         llvm::Value *createNumberAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
         llvm::Value *createBoolAndStringComparison(LLVMRegister *arg1, LLVMRegister *arg2, Comparison type);
 
+        llvm::Value *createStringsEqualComparison(llvm::Value *stringPtr1, llvm::Value *stringPtr2, bool caseSensitive);
+
         llvm::Value *getVariablePtr(llvm::Value *targetVariables, Variable *variable);
         llvm::Value *getListPtr(llvm::Value *targetLists, List *list);
         llvm::Value *getListDataPtr(const LLVMListPtr &listPtr);

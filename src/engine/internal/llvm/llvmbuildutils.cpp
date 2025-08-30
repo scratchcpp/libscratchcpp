@@ -1357,8 +1357,7 @@ llvm::Value *LLVMBuildUtils::createStringComparison(LLVMRegister *arg1, LLVMRegi
         // Explicitly cast to string
         llvm::Value *string1 = castValue(arg1, Compiler::StaticType::String);
         llvm::Value *string2 = castValue(arg2, Compiler::StaticType::String);
-        llvm::Value *cmp = m_builder.CreateCall(caseSensitive ? m_functions.resolve_string_compare_case_sensitive() : m_functions.resolve_string_compare_case_insensitive(), { string1, string2 });
-        llvm::Value *result = m_builder.CreateICmpEQ(cmp, m_builder.getInt32(0));
+        llvm::Value *result = createStringsEqualComparison(string1, string2, caseSensitive);
         m_builder.CreateBr(nextBlock);
 
         llvm::BasicBlock *compareBlockNext = m_builder.GetInsertBlock();
@@ -1846,13 +1845,13 @@ llvm::Value *LLVMBuildUtils::createStringAndStringComparison(LLVMRegister *arg1,
     llvm::Value *value1 = castValue(arg1, Compiler::StaticType::String);
     llvm::Value *value2 = castValue(arg2, Compiler::StaticType::String);
 
+    if (type == Comparison::EQ)
+        return createStringsEqualComparison(value1, value2, false);
+
     llvm::Value *cmp = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { value1, value2 });
     llvm::Value *zero = llvm::ConstantInt::get(m_builder.getInt32Ty(), 0, true);
 
     switch (type) {
-        case Comparison::EQ:
-            return m_builder.CreateICmpEQ(cmp, zero);
-
         case Comparison::GT:
             return m_builder.CreateICmpSGT(cmp, zero);
 
@@ -1970,29 +1969,31 @@ llvm::Value *LLVMBuildUtils::createNumberAndStringComparison(LLVMRegister *arg1,
     m_builder.SetInsertPoint(stringBlock);
     llvm::Value *stringValue = addStringAlloca();
     m_builder.CreateCall(m_functions.resolve_value_doubleToStringPtr(), { value1, stringValue });
-    llvm::Value *cmp = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { stringValue, value2 });
 
-    llvm::Value *zero = llvm::ConstantInt::get(m_builder.getInt32Ty(), 0, true);
     llvm::Value *stringCmp;
 
-    switch (type) {
-        case Comparison::EQ:
-            stringCmp = m_builder.CreateICmpEQ(cmp, zero);
-            break;
+    if (type == Comparison::EQ)
+        stringCmp = createStringsEqualComparison(stringValue, value2, false);
+    else {
+        llvm::Value *cmp = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { stringValue, value2 });
+        llvm::Value *zero = llvm::ConstantInt::get(m_builder.getInt32Ty(), 0, true);
 
-        case Comparison::GT:
-            stringCmp = m_builder.CreateICmpSGT(cmp, zero);
-            break;
+        switch (type) {
+            case Comparison::GT:
+                stringCmp = m_builder.CreateICmpSGT(cmp, zero);
+                break;
 
-        case Comparison::LT:
-            stringCmp = m_builder.CreateICmpSLT(cmp, zero);
-            break;
+            case Comparison::LT:
+                stringCmp = m_builder.CreateICmpSLT(cmp, zero);
+                break;
 
-        default:
-            assert(false);
-            return nullptr;
+            default:
+                assert(false);
+                return nullptr;
+        }
     }
 
+    llvm::BasicBlock *stringBlockNext = m_builder.GetInsertBlock();
     m_builder.CreateBr(nextBlock);
 
     // Merge the results
@@ -2000,7 +2001,7 @@ llvm::Value *LLVMBuildUtils::createNumberAndStringComparison(LLVMRegister *arg1,
 
     llvm::PHINode *result = m_builder.CreatePHI(m_builder.getInt1Ty(), 2);
     result->addIncoming(numberCmp, numberBlock);
-    result->addIncoming(stringCmp, stringBlock);
+    result->addIncoming(stringCmp, stringBlockNext);
 
     return result;
 }
@@ -2051,30 +2052,31 @@ llvm::Value *LLVMBuildUtils::createBoolAndStringComparison(LLVMRegister *arg1, L
     // String comparison
     m_builder.SetInsertPoint(stringBlock);
     llvm::Value *stringValue = m_builder.CreateCall(m_functions.resolve_value_boolToStringPtr(), { value1 });
-    llvm::Value *cmp = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { stringValue, value2 });
-    // NOTE: Do not free the string!
 
-    llvm::Value *zero = llvm::ConstantInt::get(m_builder.getInt32Ty(), 0, true);
     llvm::Value *stringCmp;
 
-    switch (type) {
-        case Comparison::EQ:
-            stringCmp = m_builder.CreateICmpEQ(cmp, zero);
-            break;
+    if (type == Comparison::EQ)
+        stringCmp = createStringsEqualComparison(stringValue, value2, false);
+    else {
+        llvm::Value *cmp = m_builder.CreateCall(m_functions.resolve_string_compare_case_insensitive(), { stringValue, value2 });
+        llvm::Value *zero = llvm::ConstantInt::get(m_builder.getInt32Ty(), 0, true);
 
-        case Comparison::GT:
-            stringCmp = m_builder.CreateICmpSGT(cmp, zero);
-            break;
+        switch (type) {
+            case Comparison::GT:
+                stringCmp = m_builder.CreateICmpSGT(cmp, zero);
+                break;
 
-        case Comparison::LT:
-            stringCmp = m_builder.CreateICmpSLT(cmp, zero);
-            break;
+            case Comparison::LT:
+                stringCmp = m_builder.CreateICmpSLT(cmp, zero);
+                break;
 
-        default:
-            assert(false);
-            return nullptr;
+            default:
+                assert(false);
+                return nullptr;
+        }
     }
 
+    llvm::BasicBlock *stringBlockNext = m_builder.GetInsertBlock();
     m_builder.CreateBr(nextBlock);
 
     // Merge the results
@@ -2082,9 +2084,42 @@ llvm::Value *LLVMBuildUtils::createBoolAndStringComparison(LLVMRegister *arg1, L
 
     llvm::PHINode *result = m_builder.CreatePHI(m_builder.getInt1Ty(), 2);
     result->addIncoming(numberCmp, numberBlock);
-    result->addIncoming(stringCmp, stringBlock);
+    result->addIncoming(stringCmp, stringBlockNext);
 
     return result;
+}
+
+llvm::Value *LLVMBuildUtils::createStringsEqualComparison(llvm::Value *stringPtr1, llvm::Value *stringPtr2, bool caseSensitive)
+{
+    llvm::Value *sizePtr1 = m_builder.CreateStructGEP(m_stringPtrType, stringPtr1, 1);
+    llvm::Value *size1 = m_builder.CreateLoad(m_builder.getInt64Ty(), sizePtr1);
+
+    llvm::Value *sizePtr2 = m_builder.CreateStructGEP(m_stringPtrType, stringPtr2, 1);
+    llvm::Value *size2 = m_builder.CreateLoad(m_builder.getInt64Ty(), sizePtr2);
+
+    llvm::Value *sameSize = m_builder.CreateICmpEQ(size1, size2);
+
+    llvm::BasicBlock *compareBlock = llvm::BasicBlock::Create(m_llvmCtx, "stringsEqual.compare", m_function);
+    llvm::BasicBlock *differentBlock = llvm::BasicBlock::Create(m_llvmCtx, "stringsEqual.different", m_function);
+    llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "stringsEqual.next", m_function);
+    m_builder.CreateCondBr(sameSize, compareBlock, differentBlock);
+
+    m_builder.SetInsertPoint(compareBlock);
+    llvm::FunctionCallee func = caseSensitive ? m_functions.resolve_string_compare_case_sensitive() : m_functions.resolve_string_compare_case_insensitive();
+    llvm::Value *cmp = m_builder.CreateCall(func, { stringPtr1, stringPtr2 });
+    llvm::Value *result = m_builder.CreateICmpEQ(cmp, m_builder.getInt32(0));
+    m_builder.CreateBr(nextBlock);
+
+    m_builder.SetInsertPoint(differentBlock);
+    m_builder.CreateBr(nextBlock);
+
+    m_builder.SetInsertPoint(nextBlock);
+
+    llvm::PHINode *phi = m_builder.CreatePHI(m_builder.getInt1Ty(), 2, "stringsEqual");
+    phi->addIncoming(result, compareBlock);
+    phi->addIncoming(m_builder.getInt1(false), differentBlock);
+
+    return phi;
 }
 
 llvm::Value *LLVMBuildUtils::getVariablePtr(llvm::Value *targetVariables, Variable *variable)
