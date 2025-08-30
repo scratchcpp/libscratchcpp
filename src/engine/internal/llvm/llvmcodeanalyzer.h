@@ -8,12 +8,16 @@
 namespace libscratchcpp
 {
 
+class LLVMBuildUtils;
 class LLVMInstructionList;
 class LLVMInstruction;
 
 class LLVMCodeAnalyzer
 {
     public:
+        LLVMCodeAnalyzer(const LLVMBuildUtils &utils);
+        LLVMCodeAnalyzer(const LLVMCodeAnalyzer &) = delete;
+
         void analyzeScript(const LLVMInstructionList &script) const;
 
     private:
@@ -50,6 +54,8 @@ class LLVMCodeAnalyzer
         bool isProcedureCall(const LLVMInstruction *ins) const;
 
         Compiler::StaticType writeType(LLVMInstruction *ins) const;
+
+        const LLVMBuildUtils &m_utils;
 };
 
 } // namespace libscratchcpp

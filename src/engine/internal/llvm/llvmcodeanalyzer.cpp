@@ -12,6 +12,11 @@ static const std::unordered_set<LLVMInstruction::Type> BEGIN_LOOP_INSTRUCTIONS =
 
 static const std::unordered_set<LLVMInstruction::Type> LIST_WRITE_INSTRUCTIONS = { LLVMInstruction::Type::AppendToList, LLVMInstruction::Type::InsertToList, LLVMInstruction::Type::ListReplace };
 
+LLVMCodeAnalyzer::LLVMCodeAnalyzer(const LLVMBuildUtils &utils) :
+    m_utils(utils)
+{
+}
+
 void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
 {
     std::unordered_set<LLVMInstruction *> typeAssignedInstructions;
