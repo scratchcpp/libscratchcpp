@@ -82,7 +82,8 @@ class LLVMBuildUtils
         std::vector<LLVMIfStatement> &ifStatements();
         std::vector<LLVMLoop> &loops();
 
-        static Compiler::StaticType optimizeRegisterType(const LLVMRegister *reg);
+        Compiler::StaticType optimizeRegisterType(const LLVMRegister *reg) const;
+
         static Compiler::StaticType mapType(ValueType type);
         static ValueType mapType(Compiler::StaticType type);
         static bool isSingleType(Compiler::StaticType type);
@@ -172,6 +173,8 @@ class LLVMBuildUtils
         BlockPrototype *m_procedurePrototype = nullptr;
         bool m_warp = false;
         Compiler::CodeType m_codeType = Compiler::CodeType::Script;
+
+        std::unordered_set<std::string> m_unsafeConstants;
 
         llvm::Value *m_executionContextPtr = nullptr;
         llvm::Value *m_targetPtr = nullptr;

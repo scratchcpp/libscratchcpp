@@ -1,15 +1,60 @@
+#include <scratchcpp/project.h>
+#include <scratchcpp/sprite.h>
+#include <scratchcpp/costume.h>
+#include <scratchcpp/sound.h>
+#include <scratchcpp/iengine.h>
 #include <scratchcpp/variable.h>
 #include <engine/internal/llvm/llvmcodeanalyzer.h>
+#include <engine/internal/llvm/llvmcompilercontext.h>
+#include <engine/internal/llvm/llvmbuildutils.h>
 #include <engine/internal/llvm/llvminstruction.h>
 #include <engine/internal/llvm/llvminstructionlist.h>
 #include <engine/internal/llvm/llvmconstantregister.h>
+#include <llvm/IR/IRBuilder.h>
 #include <gtest/gtest.h>
 
 using namespace libscratchcpp;
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, FirstVariableWrite)
+class LLVMCodeAnalyzer_VariableTypeAnalysis : public testing::Test
 {
-    LLVMCodeAnalyzer analyzer;
+    public:
+        void SetUp() override
+        {
+            auto engine = m_project.engine();
+            m_target = std::make_shared<Target>();
+            m_spriteWithUnsafeConstants = std::make_shared<Sprite>();
+
+            auto costume = std::make_shared<Costume>(m_unsafeCostumeNumConstant, "", "");
+            m_spriteWithUnsafeConstants->addCostume(costume);
+
+            auto sound = std::make_shared<Sound>(m_unsafeSoundNumConstant, "", "");
+            m_spriteWithUnsafeConstants->addSound(sound);
+
+            engine->setTargets({ m_target, m_spriteWithUnsafeConstants });
+
+            m_ctx = std::make_unique<LLVMCompilerContext>(engine.get(), m_target.get());
+            m_builder = std::make_unique<llvm::IRBuilder<>>(*m_ctx->llvmCtx());
+            m_utils = std::make_unique<LLVMBuildUtils>(m_ctx.get(), *m_builder, Compiler::CodeType::Script);
+            m_analyzer = std::make_unique<LLVMCodeAnalyzer>(*m_utils);
+        }
+
+        std::unique_ptr<LLVMCodeAnalyzer> m_analyzer;
+
+        const std::string m_safeNumConstant = "3.14";
+        const std::string m_unsafeCostumeNumConstant = "12";
+        const std::string m_unsafeSoundNumConstant = "-27.672";
+
+    private:
+        Project m_project;
+        std::shared_ptr<Target> m_target;
+        std::shared_ptr<Sprite> m_spriteWithUnsafeConstants;
+        std::unique_ptr<LLVMCompilerContext> m_ctx;
+        std::unique_ptr<llvm::IRBuilder<>> m_builder;
+        std::unique_ptr<LLVMBuildUtils> m_utils;
+};
+
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, FirstVariableWrite)
+{
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -19,15 +64,14 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, FirstVariableWrite)
     setVar->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(setVar);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // First write should have Unknown targetType (no previous type)
     ASSERT_EQ(setVar->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, SecondVariableWrite)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, SecondVariableWrite)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -43,7 +87,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, SecondVariableWrite)
     setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     list.addInstruction(setVar2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // First write has no previous type
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
@@ -51,9 +95,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, SecondVariableWrite)
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, MultipleWritesSameType)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, MultipleWritesSameType)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -75,21 +118,20 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, MultipleWritesSameType)
     setVar3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(setVar3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::String);
     ASSERT_EQ(setVar3->targetType, Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, StringOptimization)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, StringOptimization)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
     auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
-    LLVMConstantRegister value1(Compiler::StaticType::String, "3.14");
+    LLVMConstantRegister value1(Compiler::StaticType::String, m_safeNumConstant);
     setVar1->targetVariable = &var;
     setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     list.addInstruction(setVar1);
@@ -100,16 +142,87 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, StringOptimization)
     setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     list.addInstruction(setVar2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
-    // String "3.14" optimized to Number, so second write sees Number type
+    // String gets optimized to Number, so second write sees Number type
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopSingleWrite)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, StringOptimization_DifferentString)
 {
-    LLVMCodeAnalyzer analyzer;
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "1.0");
+    setVar1->targetVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
+    setVar2->targetVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    m_analyzer->analyzeScript(list);
+
+    ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
+    // String "1.0" does NOT get optimized to Number because it would convert to "1"
+    ASSERT_EQ(setVar2->targetType, Compiler::StaticType::String);
+}
+
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, StringOptimization_UnsafeCostumeConstant)
+{
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, m_unsafeCostumeNumConstant);
+    setVar1->targetVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
+    setVar2->targetVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    m_analyzer->analyzeScript(list);
+
+    ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
+    // String does NOT get optimized to Number because there's a costume with the same name
+    ASSERT_EQ(setVar2->targetType, Compiler::StaticType::String);
+}
+
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, StringOptimization_UnsafeSoundConstant)
+{
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, m_unsafeSoundNumConstant);
+    setVar1->targetVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
+    setVar2->targetVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    m_analyzer->analyzeScript(list);
+
+    ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
+    // String does NOT get optimized to Number because there's a sound with the same name
+    ASSERT_EQ(setVar2->targetType, Compiler::StaticType::String);
+}
+
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopSingleWrite)
+{
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -125,15 +238,14 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopSingleWrite)
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Loop convergence: first iteration Unknown, subsequent iterations Number
     ASSERT_EQ(setVar->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WhileLoop)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, WhileLoop)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -170,15 +282,14 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WhileLoop)
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(readVar->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, RepeatUntilLoop)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, RepeatUntilLoop)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -215,15 +326,14 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, RepeatUntilLoop)
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(readVar->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, ProcedureCallInLoop)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, ProcedureCallInLoop)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -248,7 +358,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, ProcedureCallInLoop)
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
 
@@ -256,9 +366,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, ProcedureCallInLoop)
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopMultipleWrites_UnknownType)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopMultipleWrites_UnknownType)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -280,7 +389,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopMultipleWrites_UnknownType)
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // First write: Unknown (unknown before loop)
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
@@ -289,9 +398,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopMultipleWrites_UnknownType)
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopMultipleWrites_KnownType)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopMultipleWrites_KnownType)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -320,7 +428,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopMultipleWrites_KnownType)
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // First write: Bool | String (from loop iterations)
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Bool | Compiler::StaticType::String);
@@ -329,9 +437,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopMultipleWrites_KnownType)
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementSameTypes)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementSameTypes)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -362,7 +469,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementSameTypes)
     setVar3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(setVar3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Both writes see Unknown before the if-else
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
@@ -372,9 +479,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementSameTypes)
     ASSERT_EQ(setVar3->targetType, Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementDifferentTypes)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementDifferentTypes)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -405,7 +511,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementDifferentTypes)
     setVar3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(setVar3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Both writes see Unknown before the if-else
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
@@ -415,9 +521,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementDifferentTypes)
     ASSERT_EQ(setVar3->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementDifferentType_IfBranch)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementDifferentType_IfBranch)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -445,7 +550,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementDifferentType_IfBranc
     setVar3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(setVar3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Number);
@@ -454,9 +559,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementDifferentType_IfBranc
     ASSERT_EQ(setVar3->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementDifferentType_ElseBranch)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementDifferentType_ElseBranch)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -487,7 +591,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementDifferentType_ElseBra
     setVar3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(setVar3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Number);
@@ -496,9 +600,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementDifferentType_ElseBra
     ASSERT_EQ(setVar3->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteBeforeLoop)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteBeforeLoop)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -526,15 +629,14 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteBeforeLoop)
     setVar->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(setVar);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // The type might be String or Number because the loop might or might not run
     ASSERT_EQ(setVar->targetType, Compiler::StaticType::String | Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteBeforeIfStatement_IfBranch)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteBeforeIfStatement_IfBranch)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -562,15 +664,14 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteBeforeIfStatement_IfBranch)
     setVar->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(setVar);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // The type might be String or Number because the if statement might or might not run
     ASSERT_EQ(setVar->targetType, Compiler::StaticType::String | Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteBeforeIfStatement_ElseBranch)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteBeforeIfStatement_ElseBranch)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -601,15 +702,14 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteBeforeIfStatement_ElseBranch)
     setVar->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(setVar);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // The type might be String or Number because the else branch might or might not run
     ASSERT_EQ(setVar->targetType, Compiler::StaticType::String | Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteBeforeIfElse)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteBeforeIfElse)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -646,7 +746,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteBeforeIfElse)
     setVar3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(setVar3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Write before if-else establishes Bool type
     ASSERT_EQ(setVarBefore->targetType, Compiler::StaticType::Unknown);
@@ -659,9 +759,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteBeforeIfElse)
     ASSERT_EQ(setVar3->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfStatement_IfBranch)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfStatement_IfBranch)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -683,7 +782,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfStatement_IfBranch)
     setVar->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(setVar);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(setVarInIfStatement->targetType, Compiler::StaticType::Unknown);
 
@@ -691,9 +790,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfStatement_IfBranch)
     ASSERT_EQ(setVar->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfStatement_ElseBranch)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfStatement_ElseBranch)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -718,7 +816,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfStatement_ElseBranch)
     setVar->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(setVar);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(setVarInIfStatement->targetType, Compiler::StaticType::Unknown);
 
@@ -726,9 +824,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfStatement_ElseBranch)
     ASSERT_EQ(setVar->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfElse)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfElse)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -759,7 +856,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfElse)
     setVar3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(setVar3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Unknown);
@@ -768,9 +865,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInIfElse)
     ASSERT_EQ(setVar3->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInLoop)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInLoop)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -792,7 +888,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInLoop)
     setVar->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(setVar);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(setVarInLoop->targetType, Compiler::StaticType::Unknown);
 
@@ -800,9 +896,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInLoop)
     ASSERT_EQ(setVar->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, ComplexNestedControlFlow)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, ComplexNestedControlFlow)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -851,7 +946,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, ComplexNestedControlFlow)
     setVar4->args.push_back({ Compiler::StaticType::Unknown, &value4 });
     list.addInstruction(setVar4);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Complex analysis with multiple execution paths and loop convergence
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
@@ -860,9 +955,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, ComplexNestedControlFlow)
     ASSERT_EQ(setVar4->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, MultipleVariablesSeparateAnalysis)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, MultipleVariablesSeparateAnalysis)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var1("", ""), var2("", "");
 
@@ -878,16 +972,15 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, MultipleVariablesSeparateAnalysis)
     setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     list.addInstruction(setVar2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Both are first writes for their respective variables
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, CrossVariableDependency_SingleType)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, CrossVariableDependency_SingleType)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var1("", ""), var2("", "");
 
@@ -917,7 +1010,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, CrossVariableDependency_SingleType)
     setVar1_2->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
     list.addInstruction(setVar1_2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // var2 first write has no previous type
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Unknown);
@@ -932,9 +1025,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, CrossVariableDependency_SingleType)
     ASSERT_EQ(setVar1_2->targetType, Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, CrossVariableDependency_MultipleTypes)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, CrossVariableDependency_MultipleTypes)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var1("", ""), var2("", "");
 
@@ -980,7 +1072,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, CrossVariableDependency_MultipleType
     setVar4->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
     list.addInstruction(setVar4);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // var2 has Number or Bool type at read operation
     ASSERT_EQ(readVar2->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
@@ -992,9 +1084,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, CrossVariableDependency_MultipleType
     ASSERT_EQ(setVar4->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, ChainedAssignmentsInLoop)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, ChainedAssignmentsInLoop)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable varA("a", ""), varB("b", ""), varC("c", "");
 
@@ -1079,7 +1170,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, ChainedAssignmentsInLoop)
     setA3->args.push_back({ Compiler::StaticType::Unknown, &cValue2 });
     list.addInstruction(setA3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Check the type of 'a' before the final a = c assignment
     // 'a' could be Number (from initial assignment) or String (from loop iterations where a=b, b=c, c="test")
@@ -1094,9 +1185,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, ChainedAssignmentsInLoop)
     ASSERT_EQ(readC2->targetType, expectedCType);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, SelfAssignment)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, SelfAssignment)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -1129,7 +1219,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, SelfAssignment)
     setVar3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(setVar3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // First write should have Unknown targetType (no previous type)
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
@@ -1141,9 +1231,8 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, SelfAssignment)
     ASSERT_EQ(setVar3->targetType, Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, SelfAssignmentInLoop)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, SelfAssignmentInLoop)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("", "");
 
@@ -1168,16 +1257,15 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, SelfAssignmentInLoop)
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Self-assignment in loop should maintain Unknown type since it's a no-op
     // and doesn't change the variable's type across iterations
     ASSERT_EQ(setVar->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, VariableReadReturnRegType)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, VariableReadReturnRegType)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var1("", ""), var2("", "");
 
@@ -1201,15 +1289,14 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, VariableReadReturnRegType)
     setVar1_1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
     list.addInstruction(setVar1_1);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // var2 read return register has Number type
     ASSERT_EQ(var2Value.type(), Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, CrossVariableWriteArgType)
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, CrossVariableWriteArgType)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var1("", ""), var2("", "");
 
@@ -1233,7 +1320,7 @@ TEST(LLVMCodeAnalyzer_VariableTypeAnalysis, CrossVariableWriteArgType)
     setVar1_1->args.push_back({ Compiler::StaticType::Unknown, &var2Value });
     list.addInstruction(setVar1_1);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // last write argument has Number type
     ASSERT_EQ(setVar1_1->args.front().first, Compiler::StaticType::Number);

@@ -20,6 +20,7 @@ using namespace libscratchcpp;
 using namespace libscratchcpp::test;
 
 using ::testing::Return;
+using ::testing::ReturnRef;
 
 class MotionBlocksTest : public testing::Test
 {
@@ -29,6 +30,8 @@ class MotionBlocksTest : public testing::Test
             m_extension = std::make_unique<MotionBlocks>();
             m_engine = m_project.engine().get();
             m_extension->registerBlocks(m_engine);
+
+            EXPECT_CALL(m_engineMock, targets()).WillRepeatedly(ReturnRef(m_engine->targets()));
         }
 
         std::unique_ptr<IExtension> m_extension;

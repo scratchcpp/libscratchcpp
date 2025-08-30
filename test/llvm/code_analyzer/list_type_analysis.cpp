@@ -1,15 +1,60 @@
+#include <scratchcpp/project.h>
+#include <scratchcpp/sprite.h>
+#include <scratchcpp/costume.h>
+#include <scratchcpp/sound.h>
+#include <scratchcpp/iengine.h>
 #include <scratchcpp/list.h>
 #include <engine/internal/llvm/llvmcodeanalyzer.h>
+#include <engine/internal/llvm/llvmcompilercontext.h>
+#include <engine/internal/llvm/llvmbuildutils.h>
 #include <engine/internal/llvm/llvminstruction.h>
 #include <engine/internal/llvm/llvminstructionlist.h>
 #include <engine/internal/llvm/llvmconstantregister.h>
+#include <llvm/IR/IRBuilder.h>
 #include <gtest/gtest.h>
 
 using namespace libscratchcpp;
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, FirstListWrite)
+class LLVMCodeAnalyzer_ListTypeAnalysis : public testing::Test
 {
-    LLVMCodeAnalyzer analyzer;
+    public:
+        void SetUp() override
+        {
+            auto engine = m_project.engine();
+            m_target = std::make_shared<Target>();
+            m_spriteWithUnsafeConstants = std::make_shared<Sprite>();
+
+            auto costume = std::make_shared<Costume>(m_unsafeCostumeNumConstant, "", "");
+            m_spriteWithUnsafeConstants->addCostume(costume);
+
+            auto sound = std::make_shared<Sound>(m_unsafeSoundNumConstant, "", "");
+            m_spriteWithUnsafeConstants->addSound(sound);
+
+            engine->setTargets({ m_target, m_spriteWithUnsafeConstants });
+
+            m_ctx = std::make_unique<LLVMCompilerContext>(engine.get(), m_target.get());
+            m_builder = std::make_unique<llvm::IRBuilder<>>(*m_ctx->llvmCtx());
+            m_utils = std::make_unique<LLVMBuildUtils>(m_ctx.get(), *m_builder, Compiler::CodeType::Script);
+            m_analyzer = std::make_unique<LLVMCodeAnalyzer>(*m_utils);
+        }
+
+        std::unique_ptr<LLVMCodeAnalyzer> m_analyzer;
+
+        const std::string m_safeNumConstant = "3.14";
+        const std::string m_unsafeCostumeNumConstant = "12";
+        const std::string m_unsafeSoundNumConstant = "-27.672";
+
+    private:
+        Project m_project;
+        std::shared_ptr<Target> m_target;
+        std::shared_ptr<Sprite> m_spriteWithUnsafeConstants;
+        std::unique_ptr<LLVMCompilerContext> m_ctx;
+        std::unique_ptr<llvm::IRBuilder<>> m_builder;
+        std::unique_ptr<LLVMBuildUtils> m_utils;
+};
+
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, FirstListWrite)
+{
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -19,15 +64,14 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, FirstListWrite)
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(appendList);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // First write should have Unknown targetType (no previous type)
     ASSERT_EQ(appendList->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, SecondListWrite)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, SecondListWrite)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -43,7 +87,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, SecondListWrite)
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     list.addInstruction(appendList2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // First write has no previous type
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Unknown);
@@ -52,9 +96,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, SecondListWrite)
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, MultipleWritesSameType_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, MultipleWritesSameType_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -80,16 +123,15 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, MultipleWritesSameType_AfterClear)
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(appendList3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::String);
     ASSERT_EQ(appendList3->targetType, Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, MultipleWritesDifferentTypes_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, MultipleWritesDifferentTypes_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -115,16 +157,15 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, MultipleWritesDifferentTypes_AfterClear)
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(appendList3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Number);
     ASSERT_EQ(appendList3->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, StringOptimization_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, StringOptimization_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -133,7 +174,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, StringOptimization_AfterClear)
     list.addInstruction(clearList);
 
     auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
-    LLVMConstantRegister value1(Compiler::StaticType::String, "3.14");
+    LLVMConstantRegister value1(Compiler::StaticType::String, m_safeNumConstant);
     appendList1->targetList = &targetList;
     appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     list.addInstruction(appendList1);
@@ -144,17 +185,103 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, StringOptimization_AfterClear)
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     list.addInstruction(appendList2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
 
-    // String "3.14" optimized to Number, so second write sees Number type
+    // String gets optimized to Number, so second write sees Number type
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearListOperation)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, StringOptimization_AfterClear_DifferentString)
 {
-    LLVMCodeAnalyzer analyzer;
+    LLVMInstructionList list;
+    List targetList("", "");
+
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
+    clearList->targetList = &targetList;
+    list.addInstruction(clearList);
+
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "1.0");
+    appendList1->targetList = &targetList;
+    appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(appendList1);
+
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
+    appendList2->targetList = &targetList;
+    appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(appendList2);
+
+    m_analyzer->analyzeScript(list);
+
+    ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
+
+    // String "1.0" does NOT get optimized to Number because it would convert to "1"
+    ASSERT_EQ(appendList2->targetType, Compiler::StaticType::String);
+}
+
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, StringOptimization_AfterClear_UnsafeCostumeConstant)
+{
+    LLVMInstructionList list;
+    List targetList("", "");
+
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
+    clearList->targetList = &targetList;
+    list.addInstruction(clearList);
+
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, m_unsafeCostumeNumConstant);
+    appendList1->targetList = &targetList;
+    appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(appendList1);
+
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
+    appendList2->targetList = &targetList;
+    appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(appendList2);
+
+    m_analyzer->analyzeScript(list);
+
+    ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
+
+    // String does NOT get optimized to Number because there's a costume with the same name
+    ASSERT_EQ(appendList2->targetType, Compiler::StaticType::String);
+}
+
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, StringOptimization_AfterClear_UnsafeSoundConstant)
+{
+    LLVMInstructionList list;
+    List targetList("", "");
+
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
+    clearList->targetList = &targetList;
+    list.addInstruction(clearList);
+
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, m_unsafeSoundNumConstant);
+    appendList1->targetList = &targetList;
+    appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(appendList1);
+
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
+    appendList2->targetList = &targetList;
+    appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(appendList2);
+
+    m_analyzer->analyzeScript(list);
+
+    ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
+
+    // String does NOT get optimized to Number because there's a sound with the same name
+    ASSERT_EQ(appendList2->targetType, Compiler::StaticType::String);
+}
+
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, ClearListOperation)
+{
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -174,7 +301,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearListOperation)
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     list.addInstruction(appendList2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Unknown);
 
@@ -182,9 +309,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearListOperation)
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Void);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ProcedureCall)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, ProcedureCall)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -207,7 +333,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ProcedureCall)
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     list.addInstruction(appendList2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
 
@@ -215,9 +341,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ProcedureCall)
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, MixedWriteOperationsSameType_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, MixedWriteOperationsSameType_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -247,16 +372,15 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, MixedWriteOperationsSameType_AfterClear)
     replaceList->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(replaceList);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList->targetType, Compiler::StaticType::Void);
     ASSERT_EQ(insertList->targetType, Compiler::StaticType::String);
     ASSERT_EQ(replaceList->targetType, Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, MixedWriteOperationsDifferentTypes_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, MixedWriteOperationsDifferentTypes_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -292,7 +416,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, MixedWriteOperationsDifferentTypes_After
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value4 });
     list.addInstruction(appendList2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList->targetType, Compiler::StaticType::Void);
     ASSERT_EQ(insertList->targetType, Compiler::StaticType::String);
@@ -300,9 +424,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, MixedWriteOperationsDifferentTypes_After
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, LoopSingleWrite)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, LoopSingleWrite)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -318,15 +441,14 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, LoopSingleWrite)
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Loop convergence: first iteration Unknown, subsequent iterations Number
     ASSERT_EQ(appendList->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, LoopSingleWrite_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, LoopSingleWrite_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -346,14 +468,13 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, LoopSingleWrite_AfterClear)
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList->targetType, Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfStatement_IfBranch)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfStatement_IfBranch)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -379,7 +500,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfStatement_IfBranch)
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     list.addInstruction(appendList2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
 
@@ -387,9 +508,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfStatement_IfBranch)
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfStatement_ElseBranch)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfStatement_ElseBranch)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -418,7 +538,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfStatement_ElseBranch)
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     list.addInstruction(appendList2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
 
@@ -426,9 +546,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfStatement_ElseBranch)
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfElse)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfElse)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -467,7 +586,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfElse)
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(appendList3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Void);
@@ -476,9 +595,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInIfElse)
     ASSERT_EQ(appendList3->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInLoop)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInLoop)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -504,7 +622,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInLoop)
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     list.addInstruction(appendList2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
 
@@ -512,9 +630,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAndWriteInLoop)
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAfterWriteInLoop)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAfterWriteInLoop)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -545,14 +662,13 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearAfterWriteInLoop)
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Bool);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, WhileLoop)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, WhileLoop)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -595,15 +711,14 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, WhileLoop)
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(getItem->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, RepeatUntilLoop)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, RepeatUntilLoop)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -646,15 +761,14 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, RepeatUntilLoop)
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(getItem->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, LoopMultipleWrites_UnknownType)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, LoopMultipleWrites_UnknownType)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -676,7 +790,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, LoopMultipleWrites_UnknownType)
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // First write: Unknown (unknown before loop)
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Unknown);
@@ -685,9 +799,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, LoopMultipleWrites_UnknownType)
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, LoopMultipleWrites_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, LoopMultipleWrites_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -714,16 +827,15 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, LoopMultipleWrites_AfterClear)
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Number | String (from loop iterations)
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentTypes)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentTypes)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -754,7 +866,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentTypes)
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(appendList3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Both writes see Unknown before the if-else
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Unknown);
@@ -764,9 +876,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentTypes)
     ASSERT_EQ(appendList3->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentTypes_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentTypes_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -801,7 +912,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentTypes_AfterClear
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(appendList3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Both writes see Void (empty list) before the if-else
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
@@ -811,9 +922,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentTypes_AfterClear
     ASSERT_EQ(appendList3->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentType_IfBranch_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentType_IfBranch_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -845,7 +955,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentType_IfBranch_Af
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(appendList3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Number);
@@ -854,9 +964,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentType_IfBranch_Af
     ASSERT_EQ(appendList3->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentType_ElseBranch_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentType_ElseBranch_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -891,7 +1000,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentType_ElseBranch_
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(appendList3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Number);
@@ -900,9 +1009,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, IfElseStatementDifferentType_ElseBranch_
     ASSERT_EQ(appendList3->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, WriteBeforeLoop_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, WriteBeforeLoop_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -934,14 +1042,13 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, WriteBeforeLoop_AfterClear)
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(appendList);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList->targetType, Compiler::StaticType::String | Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, WriteBeforeIfStatement_IfBranch_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, WriteBeforeIfStatement_IfBranch_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -973,14 +1080,13 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, WriteBeforeIfStatement_IfBranch_AfterCle
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(appendList);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList->targetType, Compiler::StaticType::String | Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, WriteBeforeIfStatement_ElseBranch_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, WriteBeforeIfStatement_ElseBranch_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -1015,14 +1121,13 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, WriteBeforeIfStatement_ElseBranch_AfterC
     appendList->args.push_back({ Compiler::StaticType::Unknown, &value });
     list.addInstruction(appendList);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(appendList->targetType, Compiler::StaticType::String | Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, WriteBeforeIfElse_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, WriteBeforeIfElse_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -1063,7 +1168,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, WriteBeforeIfElse_AfterClear)
     appendList3->args.push_back({ Compiler::StaticType::Unknown, &value3 });
     list.addInstruction(appendList3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Write before if-else establishes Bool type
     ASSERT_EQ(appendListBefore->targetType, Compiler::StaticType::Void);
@@ -1076,9 +1181,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, WriteBeforeIfElse_AfterClear)
     ASSERT_EQ(appendList3->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ComplexNestedControlFlow_AfterClear)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, ComplexNestedControlFlow_AfterClear)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList("", "");
 
@@ -1131,7 +1235,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ComplexNestedControlFlow_AfterClear)
     appendList4->args.push_back({ Compiler::StaticType::Unknown, &value4 });
     list.addInstruction(appendList4);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Complex analysis with multiple execution paths and loop convergence
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Unknown);
@@ -1140,9 +1244,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ComplexNestedControlFlow_AfterClear)
     ASSERT_EQ(appendList4->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, MultipleListsSeparateAnalysis)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, MultipleListsSeparateAnalysis)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List targetList1("", ""), targetList2("", "");
 
@@ -1162,16 +1265,15 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, MultipleListsSeparateAnalysis)
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
     list.addInstruction(appendList2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Both are first writes for their respective lists
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListDependency_SingleType)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListDependency_SingleType)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List sourceList("", ""), targetList("", "");
 
@@ -1211,7 +1313,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListDependency_SingleType)
     appendList1_2->args.push_back({ Compiler::StaticType::Unknown, &sourceValue });
     list.addInstruction(appendList1_2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // sourceList first write has no previous type
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Void);
@@ -1226,9 +1328,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListDependency_SingleType)
     ASSERT_EQ(appendList1_2->targetType, Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListDependency_MultipleTypes)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListDependency_MultipleTypes)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List sourceList("", ""), targetList("", "");
 
@@ -1275,7 +1376,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListDependency_MultipleTypes)
     appendList4->args.push_back({ Compiler::StaticType::Unknown, &sourceValue });
     list.addInstruction(appendList4);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // sourceList has Number or Bool type at read operation
     ASSERT_EQ(getItem->targetType, Compiler::StaticType::Number | Compiler::StaticType::Bool);
@@ -1287,9 +1388,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListDependency_MultipleTypes)
     ASSERT_EQ(appendList4->targetType, Compiler::StaticType::Unknown);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ChainedAssignmentsInLoop)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, ChainedAssignmentsInLoop)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List listA("a", ""), listB("b", ""), listC("c", "");
 
@@ -1412,7 +1512,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ChainedAssignmentsInLoop)
     appendA3->args.push_back({ Compiler::StaticType::Unknown, &cValue2 });
     list.addInstruction(appendA3);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Check the type of 'a' before the final clear operation
     // 'a' could be Number (from initial assignment) or String (from loop iterations)
@@ -1425,9 +1525,8 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ChainedAssignmentsInLoop)
     ASSERT_EQ(getC2->targetType, expectedCType);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ListReadReturnRegType)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, ListReadReturnRegType)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List sourceList("", ""), targetList("", "");
 
@@ -1461,15 +1560,14 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ListReadReturnRegType)
     appendList1_1->args.push_back({ Compiler::StaticType::Unknown, &sourceValue });
     list.addInstruction(appendList1_1);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // sourceList read return register has Number | String type (get list item can always return string)
     ASSERT_EQ(sourceValue.type(), Compiler::StaticType::Number | Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListWriteArgType)
+TEST_F(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListWriteArgType)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List sourceList("", ""), targetList("", "");
 
@@ -1503,7 +1601,7 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, CrossListWriteArgType)
     appendList1_1->args.push_back({ Compiler::StaticType::Unknown, &sourceValue });
     list.addInstruction(appendList1_1);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // last write argument has Number | String type (get list item can always return string)
     ASSERT_EQ(appendList1_1->args.back().first, Compiler::StaticType::Number | Compiler::StaticType::String);

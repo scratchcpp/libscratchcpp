@@ -14,9 +14,13 @@
 
 using namespace libscratchcpp;
 
+using ::testing::ReturnRef;
+
 LLVMTestUtils::LLVMTestUtils()
 {
     test_function(nullptr, nullptr, nullptr, nullptr, nullptr); // force dependency
+
+    EXPECT_CALL(m_engine, targets()).WillRepeatedly(ReturnRef(m_emptyTargets));
 }
 
 LLVMCodeBuilder *LLVMTestUtils::createBuilder(Target *target, BlockPrototype *procedurePrototype, Compiler::CodeType codeType)

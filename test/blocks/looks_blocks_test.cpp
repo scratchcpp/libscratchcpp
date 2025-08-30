@@ -23,6 +23,7 @@ using namespace libscratchcpp;
 using namespace libscratchcpp::test;
 
 using ::testing::Return;
+using ::testing::ReturnRef;
 using ::testing::ReturnArg;
 using ::testing::_;
 
@@ -35,6 +36,8 @@ class LooksBlocksTest : public testing::Test
             m_engine = m_project.engine().get();
             m_extension->registerBlocks(m_engine);
             m_extension->onInit(m_engine);
+
+            EXPECT_CALL(m_engineMock, targets()).WillRepeatedly(ReturnRef(m_engine->targets()));
 
             // Create and register fake graphic effects
             auto colorEffect = std::make_shared<GraphicsEffectMock>();

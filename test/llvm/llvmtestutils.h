@@ -102,6 +102,7 @@ class LLVMTestUtils
         EngineMock m_engine;
         TargetMock m_target; // NOTE: isStage() is used for call expectations
         RandomGeneratorMock m_rng;
+        const std::vector<std::shared_ptr<Target>> m_emptyTargets;
 };
 
 } // namespace libscratchcpp

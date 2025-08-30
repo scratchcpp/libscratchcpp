@@ -1,35 +1,59 @@
+#include <scratchcpp/project.h>
+#include <scratchcpp/target.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <engine/internal/llvm/llvmcodeanalyzer.h>
+#include <engine/internal/llvm/llvmcompilercontext.h>
+#include <engine/internal/llvm/llvmbuildutils.h>
 #include <engine/internal/llvm/llvminstruction.h>
 #include <engine/internal/llvm/llvminstructionlist.h>
 #include <engine/internal/llvm/llvmconstantregister.h>
+#include <llvm/IR/IRBuilder.h>
 #include <gtest/gtest.h>
 
 using namespace libscratchcpp;
 
-TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, EmptyScript)
+class LLVMCodeAnalyzer_MixedTypeAnalysis : public testing::Test
 {
-    LLVMCodeAnalyzer analyzer;
+    public:
+        void SetUp() override
+        {
+            auto engine = m_project.engine();
+            m_ctx = std::make_unique<LLVMCompilerContext>(engine.get(), &m_target);
+            m_builder = std::make_unique<llvm::IRBuilder<>>(*m_ctx->llvmCtx());
+            m_utils = std::make_unique<LLVMBuildUtils>(m_ctx.get(), *m_builder, Compiler::CodeType::Script);
+            m_analyzer = std::make_unique<LLVMCodeAnalyzer>(*m_utils);
+        }
+
+        std::unique_ptr<LLVMCodeAnalyzer> m_analyzer;
+
+    private:
+        Project m_project;
+        Target m_target;
+        std::unique_ptr<LLVMCompilerContext> m_ctx;
+        std::unique_ptr<llvm::IRBuilder<>> m_builder;
+        std::unique_ptr<LLVMBuildUtils> m_utils;
+};
+
+TEST_F(LLVMCodeAnalyzer_MixedTypeAnalysis, EmptyScript)
+{
     LLVMInstructionList list;
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 }
 
-TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, NoOperations)
+TEST_F(LLVMCodeAnalyzer_MixedTypeAnalysis, NoOperations)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
 
     auto funcCall = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::FunctionCall, false);
     list.addInstruction(funcCall);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 }
 
-TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, VariableToList_SimpleTransfer)
+TEST_F(LLVMCodeAnalyzer_MixedTypeAnalysis, VariableToList_SimpleTransfer)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable sourceVar("sourceVar", "");
     List targetList("targetList", "");
@@ -60,7 +84,7 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, VariableToList_SimpleTransfer)
     appendList->args.push_back({ Compiler::StaticType::Unknown, &readVarReg });
     list.addInstruction(appendList);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Variable write should see Unknown (first write)
     ASSERT_EQ(writeVar->targetType, Compiler::StaticType::Unknown);
@@ -75,9 +99,8 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, VariableToList_SimpleTransfer)
     ASSERT_EQ(readVarReg.type(), Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, ListToVariable_SimpleTransfer)
+TEST_F(LLVMCodeAnalyzer_MixedTypeAnalysis, ListToVariable_SimpleTransfer)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List sourceList("sourceList", "");
     Variable targetVar("targetVar", "");
@@ -110,7 +133,7 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, ListToVariable_SimpleTransfer)
     writeVar->args.push_back({ Compiler::StaticType::Unknown, &readListReg });
     list.addInstruction(writeVar);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // List append should see Void (empty list after clear)
     ASSERT_EQ(appendList->targetType, Compiler::StaticType::Void);
@@ -125,9 +148,8 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, ListToVariable_SimpleTransfer)
     ASSERT_EQ(readListReg.type(), Compiler::StaticType::Bool | Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, CircularVarListDependency)
+TEST_F(LLVMCodeAnalyzer_MixedTypeAnalysis, CircularVarListDependency)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("var", "");
     List targetList("list", "");
@@ -176,7 +198,7 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, CircularVarListDependency)
     writeVar2->args.push_back({ Compiler::StaticType::Unknown, &readListReg });
     list.addInstruction(writeVar2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Should handle circular dependency gracefully
     ASSERT_EQ(writeVar1->targetType, Compiler::StaticType::Unknown);
@@ -186,9 +208,8 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, CircularVarListDependency)
     ASSERT_EQ(writeVar2->targetType, Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, LoopWithVarListInteraction_TypeConflict)
+TEST_F(LLVMCodeAnalyzer_MixedTypeAnalysis, LoopWithVarListInteraction_TypeConflict)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("var", "");
     List targetList("list", "");
@@ -232,7 +253,7 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, LoopWithVarListInteraction_TypeConflict
     auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
     list.addInstruction(loopEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Should show type accumulation through loop iterations
     ASSERT_EQ(writeVar1->targetType, Compiler::StaticType::Unknown);
@@ -241,9 +262,8 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, LoopWithVarListInteraction_TypeConflict
     ASSERT_EQ(writeVar2->targetType, Compiler::StaticType::String | Compiler::StaticType::Number);
 }
 
-TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, ConditionalVarListTransfer_TypeConflict)
+TEST_F(LLVMCodeAnalyzer_MixedTypeAnalysis, ConditionalVarListTransfer_TypeConflict)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var("var", "");
     List targetList("list", "");
@@ -303,7 +323,7 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, ConditionalVarListTransfer_TypeConflict
     auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
     list.addInstruction(ifEnd);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Should show type conflicts from conditional branches
     ASSERT_EQ(writeVar1->targetType, Compiler::StaticType::Unknown);
@@ -312,9 +332,8 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, ConditionalVarListTransfer_TypeConflict
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Void);
 }
 
-TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, MultipleVarsToSingleList_TypePropagation)
+TEST_F(LLVMCodeAnalyzer_MixedTypeAnalysis, MultipleVarsToSingleList_TypePropagation)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable var1("var1", "");
     Variable var2("var2", "");
@@ -368,16 +387,15 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, MultipleVarsToSingleList_TypePropagatio
     appendList2->args.push_back({ Compiler::StaticType::Unknown, &readVar2Reg });
     list.addInstruction(appendList2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // List should have Bool type from both variables
     ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Bool);
 }
 
-TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, SingleListToMultipleVars_TypePropagation)
+TEST_F(LLVMCodeAnalyzer_MixedTypeAnalysis, SingleListToMultipleVars_TypePropagation)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     List sourceList("sourceList", "");
     Variable var1("var1", "");
@@ -434,7 +452,7 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, SingleListToMultipleVars_TypePropagatio
     writeVar2->args.push_back({ Compiler::StaticType::Unknown, &readList2Reg });
     list.addInstruction(writeVar2);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Both variables should have String type from the list
     ASSERT_EQ(writeVar1->targetType, Compiler::StaticType::Unknown);
@@ -443,9 +461,8 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, SingleListToMultipleVars_TypePropagatio
     ASSERT_EQ(readList2Reg.type(), Compiler::StaticType::String);
 }
 
-TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, ComplexChain_VarToListToVar_TypePropagation)
+TEST_F(LLVMCodeAnalyzer_MixedTypeAnalysis, ComplexChain_VarToListToVar_TypePropagation)
 {
-    LLVMCodeAnalyzer analyzer;
     LLVMInstructionList list;
     Variable sourceVar("sourceVar", "");
     List intermediateList("intermediateList", "");
@@ -494,7 +511,7 @@ TEST(LLVMCodeAnalyzer_MixedTypeAnalysis, ComplexChain_VarToListToVar_TypePropaga
     writeTargetVar->args.push_back({ Compiler::StaticType::Unknown, &readListReg });
     list.addInstruction(writeTargetVar);
 
-    analyzer.analyzeScript(list);
+    m_analyzer->analyzeScript(list);
 
     // Type should propagate through the chain: sourceVar -> intermediateList -> targetVar
     ASSERT_EQ(writeSourceVar->targetType, Compiler::StaticType::Unknown);

@@ -5,6 +5,8 @@
 #include <scratchcpp/list.h>
 #include <scratchcpp/blockprototype.h>
 #include <scratchcpp/compiler.h>
+#include <scratchcpp/iengine.h>
+#include <scratchcpp/costume.h>
 
 #include "llvmbuildutils.h"
 #include "llvmfunctions.h"
@@ -40,6 +42,35 @@ LLVMBuildUtils::LLVMBuildUtils(LLVMCompilerContext *ctx, llvm::IRBuilder<> &buil
     initTypes();
     createVariableMap();
     createListMap();
+
+    // Find unsafe numeric string constants in costume and sound names
+    if (m_target) {
+        IEngine *engine = m_target->engine();
+
+        if (engine) {
+            auto checkConstant = [this](const std::string &str) {
+                Value stringValue(str);
+                Value numberValue(stringValue.toDouble());
+
+                if (stringValue.isValidNumber() && str == numberValue.toString())
+                    m_unsafeConstants.insert(str);
+            };
+
+            const auto &targets = engine->targets();
+            bool found = false;
+
+            for (const auto &target : targets) {
+                const auto &costumes = target->costumes();
+                const auto &sounds = target->sounds();
+
+                for (const auto &costume : costumes)
+                    checkConstant(costume->name());
+
+                for (const auto &sound : sounds)
+                    checkConstant(sound->name());
+            }
+        }
+    }
 }
 
 void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePrototype, bool warp, const std::vector<std::shared_ptr<LLVMRegister>> &regs)
@@ -423,13 +454,20 @@ std::vector<LLVMLoop> &LLVMBuildUtils::loops()
     return m_loops;
 }
 
-Compiler::StaticType LLVMBuildUtils::optimizeRegisterType(const LLVMRegister *reg)
+Compiler::StaticType LLVMBuildUtils::optimizeRegisterType(const LLVMRegister *reg) const
 {
     Compiler::StaticType ret = reg->type();
 
     // Optimize string constants that represent numbers
-    if (reg->isConst() && reg->type() == Compiler::StaticType::String && reg->constValue().isValidNumber())
-        ret = Compiler::StaticType::Number;
+    if (reg->isConst() && reg->type() == Compiler::StaticType::String) {
+        const Value &value = reg->constValue();
+        Value numberValue(value.toDouble());
+        std::string str = value.toString();
+
+        // Apply this optimization only if the number matches the string and the constant is safe
+        if (value.isValidNumber() && numberValue.toString() == str && m_unsafeConstants.find(str) == m_unsafeConstants.cend())
+            ret = Compiler::StaticType::Number;
+    }
 
     return ret;
 }
