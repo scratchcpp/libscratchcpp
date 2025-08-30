@@ -654,6 +654,49 @@ TEST_F(ListBlocksTest, ShowList_Global_Nonexistent)
     ASSERT_TRUE(monitor2->visible());
 }
 
+TEST_F(ListBlocksTest, ShowList_Global_Nonexistent_FromSprite)
+{
+    auto stage = std::make_shared<Stage>();
+    auto sprite = std::make_shared<Sprite>();
+
+    auto list1 = std::make_shared<List>("a", "list1");
+    list1->append("item1");
+    list1->append("item2");
+    stage->addList(list1);
+    auto list2 = std::make_shared<List>("b", "list2");
+    list2->append("Hello");
+    list2->append("world");
+    stage->addList(list2);
+
+    m_engine->setTargets({ stage, sprite });
+
+    ScriptBuilder builder1(m_extension.get(), m_engine, sprite);
+    builder1.addBlock("data_showlist");
+    builder1.addEntityField("LIST", list1);
+
+    ScriptBuilder builder2(m_extension.get(), m_engine, sprite);
+    builder2.addBlock("data_showlist");
+    builder2.addEntityField("LIST", list2);
+
+    ScriptBuilder::buildMultiple({ &builder1, &builder2 });
+    m_engine->run();
+
+    // Missing monitors should be created
+    builder1.run();
+
+    Monitor *monitor1 = list1->monitor();
+    ASSERT_TRUE(monitor1);
+    ASSERT_TRUE(monitor1->visible());
+
+    builder2.run();
+
+    Monitor *monitor2 = list2->monitor();
+
+    ASSERT_TRUE(monitor2);
+    ASSERT_TRUE(monitor1->visible());
+    ASSERT_TRUE(monitor2->visible());
+}
+
 TEST_F(ListBlocksTest, ShowList_Local_Existent)
 {
     auto stage = std::make_shared<Stage>();

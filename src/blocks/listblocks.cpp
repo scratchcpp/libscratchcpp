@@ -269,8 +269,21 @@ extern "C" void data_showlist(Target *target, List *list)
          * Since this case doesn't occur frequently,
          * we can look up the list by ID.
          */
-        auto index = target->findListById(list->id());
-        monitor = target->engine()->createListMonitor(target->listAt(index), "data_listcontents", "LIST");
+        const auto &targets = target->engine()->targets();
+
+        for (const auto &target : targets) {
+            auto index = target->findListById(list->id());
+
+            if (index != -1) {
+                monitor = target->engine()->createListMonitor(target->listAt(index), "data_listcontents", "LIST");
+                break;
+            }
+        }
+
+        if (!monitor) {
+            assert(false);
+            return;
+        }
     }
 
     monitor->setVisible(true);
