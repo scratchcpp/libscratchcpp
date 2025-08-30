@@ -1333,16 +1333,42 @@ llvm::Value *LLVMBuildUtils::createStringComparison(LLVMRegister *arg1, LLVMRegi
         return m_builder.getInt1(result);
     } else {
         // Optimize number and string constant comparison
+        // If there's a non-numeric string constant and the other operand is a valid number, the result is false
         // TODO: Optimize bool and string constant comparison (in compare() as well)
-        if ((type1 == Compiler::StaticType::Number && type2 == Compiler::StaticType::String && arg2->isConst() && !arg2->constValue().isValidNumber()) ||
-            (type1 == Compiler::StaticType::String && type2 == Compiler::StaticType::Number && arg1->isConst() && !arg1->constValue().isValidNumber()))
-            return m_builder.getInt1(false);
+        llvm::Value *optimize;
+
+        if (type1 == Compiler::StaticType::String && arg1->isConst() && !arg1->constValue().isValidNumber())
+            optimize = valueIsValidNumber(arg2);
+        else if (type2 == Compiler::StaticType::String && arg2->isConst() && !arg2->constValue().isValidNumber())
+            optimize = valueIsValidNumber(arg1);
+        else
+            optimize = m_builder.getInt1(false);
+
+        llvm::BasicBlock *optimizedBlock = llvm::BasicBlock::Create(m_llvmCtx, "stringComparison.optimized", m_function);
+        llvm::BasicBlock *compareBlock = llvm::BasicBlock::Create(m_llvmCtx, "stringComparison.compare", m_function);
+        llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "stringComparison.next", m_function);
+        m_builder.CreateCondBr(optimize, optimizedBlock, compareBlock);
+
+        m_builder.SetInsertPoint(optimizedBlock);
+        m_builder.CreateBr(nextBlock);
+
+        m_builder.SetInsertPoint(compareBlock);
 
         // Explicitly cast to string
         llvm::Value *string1 = castValue(arg1, Compiler::StaticType::String);
         llvm::Value *string2 = castValue(arg2, Compiler::StaticType::String);
         llvm::Value *cmp = m_builder.CreateCall(caseSensitive ? m_functions.resolve_string_compare_case_sensitive() : m_functions.resolve_string_compare_case_insensitive(), { string1, string2 });
-        return m_builder.CreateICmpEQ(cmp, m_builder.getInt32(0));
+        llvm::Value *result = m_builder.CreateICmpEQ(cmp, m_builder.getInt32(0));
+        m_builder.CreateBr(nextBlock);
+
+        llvm::BasicBlock *compareBlockNext = m_builder.GetInsertBlock();
+        m_builder.SetInsertPoint(nextBlock);
+
+        llvm::PHINode *phi = m_builder.CreatePHI(m_builder.getInt1Ty(), 2, "stringComparison.result");
+        phi->addIncoming(m_builder.getInt1(false), optimizedBlock);
+        phi->addIncoming(result, compareBlockNext);
+
+        return phi;
     }
 }
 
@@ -1579,6 +1605,133 @@ llvm::Constant *LLVMBuildUtils::castConstValue(const Value &value, Compiler::Sta
             assert(false);
             return nullptr;
     }
+}
+
+llvm::Value *LLVMBuildUtils::valueIsValidNumber(LLVMRegister *reg)
+{
+    if (reg->isConst())
+        return m_builder.getInt1(reg->constValue().isValidNumber());
+
+    if (reg->isRawValue)
+        return rawValueIsValidNumber(reg);
+
+    assert(reg->type() != Compiler::StaticType::Void);
+
+    // Handle multiple type cases with runtime switch
+    llvm::Value *typePtr = getValueTypePtr(reg);
+    llvm::Value *loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
+
+    llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(m_llvmCtx, "merge", m_function);
+    llvm::BasicBlock *defaultBlock = llvm::BasicBlock::Create(m_llvmCtx, "default", m_function);
+
+    llvm::SwitchInst *sw = m_builder.CreateSwitch(loadedType, defaultBlock, 4);
+    std::vector<std::pair<llvm::BasicBlock *, llvm::Value *>> results;
+
+    Compiler::StaticType type = reg->type();
+
+    // Number case
+    if ((type & Compiler::StaticType::Number) == Compiler::StaticType::Number) {
+        llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "isValidNumber.number", m_function);
+        sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Number)), numberBlock);
+
+        m_builder.SetInsertPoint(numberBlock);
+        llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
+        llvm::Value *number = m_builder.CreateLoad(m_builder.getDoubleTy(), ptr);
+        llvm::Value *numberResult = m_builder.CreateOr(reg->isInt, m_builder.CreateNot(isNaN(number)));
+        m_builder.CreateBr(mergeBlock);
+        results.push_back({ numberBlock, numberResult });
+    }
+
+    // Bool case
+    if ((type & Compiler::StaticType::Bool) == Compiler::StaticType::Bool) {
+        llvm::BasicBlock *boolBlock = llvm::BasicBlock::Create(m_llvmCtx, "isValidNumber.bool", m_function);
+        sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::Bool)), boolBlock);
+
+        m_builder.SetInsertPoint(boolBlock);
+        llvm::Value *boolResult = m_builder.getInt1(true);
+        m_builder.CreateBr(mergeBlock);
+        results.push_back({ boolBlock, boolResult });
+    }
+
+    // String case
+    if ((type & Compiler::StaticType::String) == Compiler::StaticType::String) {
+        llvm::BasicBlock *stringBlock = llvm::BasicBlock::Create(m_llvmCtx, "isValidNumber.string", m_function);
+        sw->addCase(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), stringBlock);
+
+        m_builder.SetInsertPoint(stringBlock);
+        llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
+        llvm::Value *stringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
+
+        llvm::Value *stringResult = stringIsValidNumber(stringPtr);
+
+        m_builder.CreateBr(mergeBlock);
+        results.push_back({ m_builder.GetInsertBlock(), stringResult });
+    }
+
+    // Default case
+    m_builder.SetInsertPoint(defaultBlock);
+
+    // All possible types are covered, mark as unreachable
+    m_builder.CreateUnreachable();
+
+    // Create phi node to merge results
+    m_builder.SetInsertPoint(mergeBlock);
+
+    llvm::PHINode *result = m_builder.CreatePHI(m_builder.getInt1Ty(), results.size());
+
+    for (auto &pair : results)
+        result->addIncoming(pair.second, pair.first);
+
+    return result;
+}
+
+llvm::Value *LLVMBuildUtils::rawValueIsValidNumber(LLVMRegister *reg)
+{
+    switch (reg->type()) {
+        case Compiler::StaticType::Number:
+            return m_builder.CreateOr(reg->isInt, m_builder.CreateNot(isNaN(reg->value)));
+
+        case Compiler::StaticType::Bool:
+            return m_builder.getInt1(true);
+
+        case Compiler::StaticType::String:
+            return stringIsValidNumber(reg->value);
+
+        default:
+            assert(false);
+            return nullptr;
+    }
+}
+
+llvm::Value *LLVMBuildUtils::stringIsValidNumber(llvm::Value *stringPtr)
+{
+    llvm::Value *stringSizePtr = m_builder.CreateStructGEP(m_stringPtrType, stringPtr, 1);
+    llvm::Value *stringSize = m_builder.CreateLoad(m_builder.getInt64Ty(), stringSizePtr);
+    llvm::Value *empty = m_builder.CreateICmpEQ(stringSize, m_builder.getInt64(0));
+
+    // If the string is empty, return true, otherwise call value_stringToDoubleWithCheck()
+    llvm::BasicBlock *emptyBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    llvm::BasicBlock *castBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    llvm::BasicBlock *nextBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
+    m_builder.CreateCondBr(empty, emptyBlock, castBlock);
+
+    m_builder.SetInsertPoint(emptyBlock);
+    m_builder.CreateBr(nextBlock);
+
+    m_builder.SetInsertPoint(castBlock);
+    llvm::Value *okPtr = addAlloca(m_builder.getInt1Ty());
+    m_builder.CreateCall(m_functions.resolve_value_stringToDoubleWithCheck(), { stringPtr, okPtr });
+
+    llvm::Value *ok = m_builder.CreateLoad(m_builder.getInt1Ty(), okPtr);
+    m_builder.CreateBr(nextBlock);
+
+    m_builder.SetInsertPoint(nextBlock);
+
+    llvm::PHINode *phi = m_builder.CreatePHI(m_builder.getInt1Ty(), 2, "stringIsValidNumber");
+    phi->addIncoming(m_builder.getInt1(true), emptyBlock);
+    phi->addIncoming(ok, castBlock);
+
+    return phi;
 }
 
 void LLVMBuildUtils::createValueCopy(llvm::Value *source, llvm::Value *target)

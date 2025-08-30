@@ -129,6 +129,10 @@ class LLVMBuildUtils
         llvm::Value *castRawValue(LLVMRegister *reg, Compiler::StaticType targetType, NumberType targetNumType);
         llvm::Constant *castConstValue(const Value &value, Compiler::StaticType targetType, NumberType targetNumType);
 
+        llvm::Value *valueIsValidNumber(LLVMRegister *reg);
+        llvm::Value *rawValueIsValidNumber(LLVMRegister *reg);
+        llvm::Value *stringIsValidNumber(llvm::Value *stringPtr);
+
         void createValueCopy(llvm::Value *source, llvm::Value *target);
         void copyStructField(llvm::Value *source, llvm::Value *target, int index, llvm::StructType *structType, llvm::Type *fieldType);
 
