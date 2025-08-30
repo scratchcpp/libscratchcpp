@@ -23,6 +23,7 @@ using namespace libscratchcpp;
 using namespace libscratchcpp::test;
 
 using ::testing::Return;
+using ::testing::ReturnRef;
 using ::testing::SaveArg;
 using ::testing::_;
 
@@ -35,6 +36,8 @@ class ControlBlocksTest : public testing::Test
             m_engine = m_project.engine().get();
             m_extension->registerBlocks(m_engine);
             registerBlocks(m_engine, m_extension.get());
+
+            EXPECT_CALL(m_engineMock, targets()).WillRepeatedly(ReturnRef(m_engine->targets()));
         }
 
         std::unique_ptr<IExtension> m_extension;

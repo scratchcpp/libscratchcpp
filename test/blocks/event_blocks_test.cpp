@@ -20,6 +20,7 @@ using namespace libscratchcpp;
 using namespace libscratchcpp::test;
 
 using ::testing::Return;
+using ::testing::ReturnRef;
 
 class EventBlocksTest : public testing::Test
 {
@@ -29,6 +30,8 @@ class EventBlocksTest : public testing::Test
             m_extension = std::make_unique<EventBlocks>();
             m_engine = m_project.engine().get();
             m_extension->registerBlocks(m_engine);
+
+            EXPECT_CALL(m_engineMock, targets()).WillRepeatedly(ReturnRef(m_engine->targets()));
         }
 
         std::unique_ptr<IExtension> m_extension;

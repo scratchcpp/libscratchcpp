@@ -1,5 +1,8 @@
 #include <scratchcpp/project.h>
-#include <scratchcpp/target.h>
+#include <scratchcpp/sprite.h>
+#include <scratchcpp/costume.h>
+#include <scratchcpp/sound.h>
+#include <scratchcpp/iengine.h>
 #include <scratchcpp/variable.h>
 #include <engine/internal/llvm/llvmcodeanalyzer.h>
 #include <engine/internal/llvm/llvmcompilercontext.h>
@@ -18,7 +21,18 @@ class LLVMCodeAnalyzer_VariableTypeAnalysis : public testing::Test
         void SetUp() override
         {
             auto engine = m_project.engine();
-            m_ctx = std::make_unique<LLVMCompilerContext>(engine.get(), &m_target);
+            m_target = std::make_shared<Target>();
+            m_spriteWithUnsafeConstants = std::make_shared<Sprite>();
+
+            auto costume = std::make_shared<Costume>(m_unsafeCostumeNumConstant, "", "");
+            m_spriteWithUnsafeConstants->addCostume(costume);
+
+            auto sound = std::make_shared<Sound>(m_unsafeSoundNumConstant, "", "");
+            m_spriteWithUnsafeConstants->addSound(sound);
+
+            engine->setTargets({ m_target, m_spriteWithUnsafeConstants });
+
+            m_ctx = std::make_unique<LLVMCompilerContext>(engine.get(), m_target.get());
             m_builder = std::make_unique<llvm::IRBuilder<>>(*m_ctx->llvmCtx());
             m_utils = std::make_unique<LLVMBuildUtils>(m_ctx.get(), *m_builder, Compiler::CodeType::Script);
             m_analyzer = std::make_unique<LLVMCodeAnalyzer>(*m_utils);
@@ -26,9 +40,14 @@ class LLVMCodeAnalyzer_VariableTypeAnalysis : public testing::Test
 
         std::unique_ptr<LLVMCodeAnalyzer> m_analyzer;
 
+        const std::string m_safeNumConstant = "3.14";
+        const std::string m_unsafeCostumeNumConstant = "12";
+        const std::string m_unsafeSoundNumConstant = "-27.672";
+
     private:
         Project m_project;
-        Target m_target;
+        std::shared_ptr<Target> m_target;
+        std::shared_ptr<Sprite> m_spriteWithUnsafeConstants;
         std::unique_ptr<LLVMCompilerContext> m_ctx;
         std::unique_ptr<llvm::IRBuilder<>> m_builder;
         std::unique_ptr<LLVMBuildUtils> m_utils;
@@ -112,7 +131,7 @@ TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, StringOptimization)
     Variable var("", "");
 
     auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
-    LLVMConstantRegister value1(Compiler::StaticType::String, "3.14");
+    LLVMConstantRegister value1(Compiler::StaticType::String, m_safeNumConstant);
     setVar1->targetVariable = &var;
     setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
     list.addInstruction(setVar1);
@@ -126,7 +145,7 @@ TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, StringOptimization)
     m_analyzer->analyzeScript(list);
 
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
-    // String "3.14" optimized to Number, so second write sees Number type
+    // String gets optimized to Number, so second write sees Number type
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Number);
 }
 
@@ -151,6 +170,54 @@ TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, StringOptimization_DifferentString
 
     ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
     // String "1.0" does NOT get optimized to Number because it would convert to "1"
+    ASSERT_EQ(setVar2->targetType, Compiler::StaticType::String);
+}
+
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, StringOptimization_UnsafeCostumeConstant)
+{
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, m_unsafeCostumeNumConstant);
+    setVar1->targetVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
+    setVar2->targetVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    m_analyzer->analyzeScript(list);
+
+    ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
+    // String does NOT get optimized to Number because there's a costume with the same name
+    ASSERT_EQ(setVar2->targetType, Compiler::StaticType::String);
+}
+
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, StringOptimization_UnsafeSoundConstant)
+{
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, m_unsafeSoundNumConstant);
+    setVar1->targetVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
+    setVar2->targetVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    m_analyzer->analyzeScript(list);
+
+    ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
+    // String does NOT get optimized to Number because there's a sound with the same name
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::String);
 }
 

@@ -47,6 +47,8 @@ class SensingBlocksTest : public testing::Test
             EXPECT_CALL(m_audioInput, audioLoudness()).WillRepeatedly(Return(m_audioLoudness));
 
             SensingBlocks::clock = &m_clock;
+
+            EXPECT_CALL(m_engineMock, targets()).WillRepeatedly(ReturnRef(m_engine->targets()));
         }
 
         void TearDown() override

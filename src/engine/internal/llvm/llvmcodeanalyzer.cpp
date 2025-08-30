@@ -294,5 +294,5 @@ Compiler::StaticType LLVMCodeAnalyzer::writeType(LLVMInstruction *ins) const
         }
     }
 
-    return LLVMBuildUtils::optimizeRegisterType(argReg);
+    return m_utils.optimizeRegisterType(argReg);
 }
