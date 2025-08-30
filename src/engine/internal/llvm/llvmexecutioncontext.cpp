@@ -41,6 +41,12 @@ LLVMExecutionContext::~LLVMExecutionContext()
         } else
             assert(false);
     }
+
+    // Deallocate strings
+    for (const auto &[functionId, strings] : m_stringVectors) {
+        for (StringPtr *str : strings)
+            string_pool_free(str);
+    }
 }
 
 void *LLVMExecutionContext::coroutineHandle() const
