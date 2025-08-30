@@ -152,6 +152,36 @@ TEST(LLVMCodeAnalyzer_ListTypeAnalysis, StringOptimization_AfterClear)
     ASSERT_EQ(appendList2->targetType, Compiler::StaticType::Number);
 }
 
+TEST(LLVMCodeAnalyzer_ListTypeAnalysis, StringOptimization_AfterClear_DifferentString)
+{
+    LLVMCodeAnalyzer analyzer;
+    LLVMInstructionList list;
+    List targetList("", "");
+
+    auto clearList = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ClearList, false);
+    clearList->targetList = &targetList;
+    list.addInstruction(clearList);
+
+    auto appendList1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value1(Compiler::StaticType::String, "1.0");
+    appendList1->targetList = &targetList;
+    appendList1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(appendList1);
+
+    auto appendList2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::AppendToList, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Bool, true);
+    appendList2->targetList = &targetList;
+    appendList2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(appendList2);
+
+    analyzer.analyzeScript(list);
+
+    ASSERT_EQ(appendList1->targetType, Compiler::StaticType::Void);
+
+    // String "1.0" does NOT get optimized to Number because it would convert to "1"
+    ASSERT_EQ(appendList2->targetType, Compiler::StaticType::String);
+}
+
 TEST(LLVMCodeAnalyzer_ListTypeAnalysis, ClearListOperation)
 {
     LLVMCodeAnalyzer analyzer;
