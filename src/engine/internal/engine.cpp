@@ -50,7 +50,7 @@ Engine::Engine() :
     m_clock(Clock::instance().get()),
     m_audioEngine(IAudioEngine::instance())
 {
-    m_answer = string_pool_new(false);
+    m_answer = string_pool_new();
     string_assign_cstring(m_answer, "");
 
     m_questionAnswered.connect([this](const std::string &answer) {

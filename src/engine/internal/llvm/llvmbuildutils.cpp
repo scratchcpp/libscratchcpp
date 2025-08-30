@@ -815,7 +815,7 @@ void LLVMBuildUtils::createValueStore(
 
             // Create a new string, change type and assign
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
-            llvm::Value *destStringPtr = m_builder.CreateCall(m_functions.resolve_string_pool_new(), m_builder.getInt1(false));
+            llvm::Value *destStringPtr = m_builder.CreateCall(m_functions.resolve_string_pool_new());
 
             m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), destTypePtr);
             m_builder.CreateStore(destStringPtr, ptr);
@@ -879,7 +879,7 @@ void LLVMBuildUtils::createValueStore(
 
             // Create a new string, change type and assign
             llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, destPtr, 0);
-            llvm::Value *destStringPtr = m_builder.CreateCall(m_functions.resolve_string_pool_new(), m_builder.getInt1(false));
+            llvm::Value *destStringPtr = m_builder.CreateCall(m_functions.resolve_string_pool_new());
 
             m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(ValueType::String)), destTypePtr);
             m_builder.CreateStore(destStringPtr, ptr);

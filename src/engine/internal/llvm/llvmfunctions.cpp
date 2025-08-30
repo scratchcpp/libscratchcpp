@@ -284,7 +284,7 @@ llvm::FunctionCallee LLVMFunctions::resolve_llvm_get_string_array()
 
 llvm::FunctionCallee LLVMFunctions::resolve_string_pool_new()
 {
-    return resolveFunction("string_pool_new", llvm::FunctionType::get(m_stringPtrType->getPointerTo(), { m_builder->getInt1Ty() }, false));
+    return resolveFunction("string_pool_new", llvm::FunctionType::get(m_stringPtrType->getPointerTo(), false));
 }
 
 llvm::FunctionCallee LLVMFunctions::resolve_string_pool_free()
