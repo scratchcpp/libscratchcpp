@@ -1607,6 +1607,20 @@ llvm::Constant *LLVMBuildUtils::castConstValue(const Value &value, Compiler::Sta
     }
 }
 
+std::pair<llvm::Value *, llvm::Value *> LLVMBuildUtils::callStringToDoubleWithCheck(LLVMRegister *reg, llvm::Value *stringPtr)
+{
+    if (reg->isConst()) {
+        bool ok;
+        double ret = value_stringToDoubleWithCheck(reg->constValue().data().stringValue, &ok);
+        return { llvm::ConstantFP::get(m_builder.getDoubleTy(), ret), m_builder.getInt1(ok) };
+    } else {
+        llvm::Value *okPtr = addAlloca(m_builder.getInt1Ty());
+        llvm::Value *ret = m_builder.CreateCall(m_functions.resolve_value_stringToDoubleWithCheck(), { stringPtr, okPtr });
+        llvm::Value *ok = m_builder.CreateLoad(m_builder.getInt1Ty(), okPtr);
+        return { ret, ok };
+    }
+}
+
 llvm::Value *LLVMBuildUtils::valueIsValidNumber(LLVMRegister *reg)
 {
     if (reg->isConst())
@@ -1662,7 +1676,7 @@ llvm::Value *LLVMBuildUtils::valueIsValidNumber(LLVMRegister *reg)
         llvm::Value *ptr = m_builder.CreateStructGEP(m_valueDataType, reg->value, 0);
         llvm::Value *stringPtr = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), ptr);
 
-        llvm::Value *stringResult = stringIsValidNumber(stringPtr);
+        llvm::Value *stringResult = stringIsValidNumber(reg, stringPtr);
 
         m_builder.CreateBr(mergeBlock);
         results.push_back({ m_builder.GetInsertBlock(), stringResult });
@@ -1695,7 +1709,7 @@ llvm::Value *LLVMBuildUtils::rawValueIsValidNumber(LLVMRegister *reg)
             return m_builder.getInt1(true);
 
         case Compiler::StaticType::String:
-            return stringIsValidNumber(reg->value);
+            return stringIsValidNumber(reg, reg->value);
 
         default:
             assert(false);
@@ -1703,7 +1717,7 @@ llvm::Value *LLVMBuildUtils::rawValueIsValidNumber(LLVMRegister *reg)
     }
 }
 
-llvm::Value *LLVMBuildUtils::stringIsValidNumber(llvm::Value *stringPtr)
+llvm::Value *LLVMBuildUtils::stringIsValidNumber(LLVMRegister *reg, llvm::Value *stringPtr)
 {
     llvm::Value *stringSizePtr = m_builder.CreateStructGEP(m_stringPtrType, stringPtr, 1);
     llvm::Value *stringSize = m_builder.CreateLoad(m_builder.getInt64Ty(), stringSizePtr);
@@ -1719,10 +1733,8 @@ llvm::Value *LLVMBuildUtils::stringIsValidNumber(llvm::Value *stringPtr)
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(castBlock);
-    llvm::Value *okPtr = addAlloca(m_builder.getInt1Ty());
-    m_builder.CreateCall(m_functions.resolve_value_stringToDoubleWithCheck(), { stringPtr, okPtr });
-
-    llvm::Value *ok = m_builder.CreateLoad(m_builder.getInt1Ty(), okPtr);
+    auto ret = callStringToDoubleWithCheck(reg, stringPtr);
+    llvm::Value *ok = ret.second;
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
@@ -1909,9 +1921,9 @@ llvm::Value *LLVMBuildUtils::createNumberAndStringComparison(LLVMRegister *arg1,
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(stringCastBlock);
-    llvm::Value *okPtr = addAlloca(m_builder.getInt1Ty());
-    llvm::Value *doubleValue = m_builder.CreateCall(m_functions.resolve_value_stringToDoubleWithCheck(), { value2, okPtr });
-    llvm::Value *ok = m_builder.CreateLoad(m_builder.getInt1Ty(), okPtr);
+    auto ret = callStringToDoubleWithCheck(arg2, value2);
+    llvm::Value *doubleValue = ret.first;
+    llvm::Value *ok = ret.second;
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
@@ -2001,9 +2013,9 @@ llvm::Value *LLVMBuildUtils::createBoolAndStringComparison(LLVMRegister *arg1, L
     // NOTE: Bools are always valid numbers
 
     // Convert the string to double
-    llvm::Value *okPtr = addAlloca(m_builder.getInt1Ty());
-    llvm::Value *doubleValue2 = m_builder.CreateCall(m_functions.resolve_value_stringToDoubleWithCheck(), { value2, okPtr });
-    llvm::Value *ok = m_builder.CreateLoad(m_builder.getInt1Ty(), okPtr);
+    auto ret = callStringToDoubleWithCheck(arg2, value2);
+    llvm::Value *doubleValue2 = ret.first;
+    llvm::Value *ok = ret.second;
 
     // If the string is a valid number, compare the arguments as numbers, otherwise as strings
     llvm::BasicBlock *numberBlock = llvm::BasicBlock::Create(m_llvmCtx, "", m_function);
