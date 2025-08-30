@@ -225,7 +225,8 @@ extern "C" void control_create_clone_by_index(ExecutionContext *ctx, double inde
 extern "C" void control_create_clone(ExecutionContext *ctx, const StringPtr *spriteName)
 {
     static const StringPtr myself("_myself_");
-    if (string_compare_case_sensitive(spriteName, &myself) == 0)
+
+    if (strings_equal_case_sensitive(spriteName, &myself))
         control_create_clone_of_myself(ctx->thread()->target());
     else {
         IEngine *engine = ctx->engine();

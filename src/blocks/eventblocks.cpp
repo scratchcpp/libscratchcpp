@@ -180,9 +180,9 @@ extern "C" bool event_whentouchingobject_predicate(Target *target, const StringP
 
     IEngine *engine = target->engine();
 
-    if (string_compare_case_sensitive(name, &MOUSE_STR) == 0)
+    if (strings_equal_case_sensitive(name, &MOUSE_STR))
         return target->touchingPoint(engine->mouseX(), engine->mouseY());
-    else if (string_compare_case_sensitive(name, &EDGE_STR) == 0)
+    else if (strings_equal_case_sensitive(name, &EDGE_STR))
         return target->touchingEdge();
     else {
         // TODO: Use UTF-16 in engine

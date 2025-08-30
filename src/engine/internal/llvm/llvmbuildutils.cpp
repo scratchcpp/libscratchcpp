@@ -1323,9 +1323,9 @@ llvm::Value *LLVMBuildUtils::createStringComparison(LLVMRegister *arg1, LLVMRegi
         bool result;
 
         if (caseSensitive)
-            result = string_compare_case_sensitive(str1, str2) == 0;
+            result = strings_equal_case_sensitive(str1, str2);
         else {
-            result = string_compare_case_insensitive(str1, str2) == 0;
+            result = strings_equal_case_insensitive(str1, str2);
         }
 
         string_pool_free(str1);

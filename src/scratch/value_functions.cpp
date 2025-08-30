@@ -124,7 +124,7 @@ extern "C"
             case ValueType::Number:
                 return value_isInf(v->numberValue);
             case ValueType::String:
-                return string_compare_case_sensitive(v->stringValue, &INFINITY_STR) == 0;
+                return strings_equal_case_sensitive(v->stringValue, &INFINITY_STR);
             default:
                 return false;
         }
@@ -137,7 +137,7 @@ extern "C"
             case ValueType::Number:
                 return value_isNegativeInf(v->numberValue);
             case ValueType::String:
-                return string_compare_case_sensitive(v->stringValue, &NEGATIVE_INFINITY_STR) == 0;
+                return strings_equal_case_sensitive(v->stringValue, &NEGATIVE_INFINITY_STR);
             default:
                 return false;
         }
@@ -150,7 +150,7 @@ extern "C"
             case ValueType::Number:
                 return std::isnan(v->numberValue);
             case ValueType::String:
-                return string_compare_case_sensitive(v->stringValue, &NAN_STR) == 0;
+                return strings_equal_case_sensitive(v->stringValue, &NAN_STR);
             default:
                 return false;
         }
@@ -466,9 +466,9 @@ extern "C"
     /*! Converts the given string to double. */
     double value_stringToDouble(const StringPtr *s)
     {
-        if (string_compare_case_sensitive(s, &INFINITY_STR) == 0)
+        if (strings_equal_case_sensitive(s, &INFINITY_STR))
             return std::numeric_limits<double>::infinity();
-        else if (string_compare_case_sensitive(s, &NEGATIVE_INFINITY_STR) == 0)
+        else if (strings_equal_case_sensitive(s, &NEGATIVE_INFINITY_STR))
             return -std::numeric_limits<double>::infinity();
 
         return value_stringToDoubleImpl(s->data, s->size);
@@ -482,9 +482,9 @@ extern "C"
     {
         *ok = true;
 
-        if (string_compare_case_sensitive(s, &INFINITY_STR) == 0)
+        if (strings_equal_case_sensitive(s, &INFINITY_STR))
             return std::numeric_limits<double>::infinity();
-        else if (string_compare_case_sensitive(s, &NEGATIVE_INFINITY_STR) == 0)
+        else if (strings_equal_case_sensitive(s, &NEGATIVE_INFINITY_STR))
             return -std::numeric_limits<double>::infinity();
 
         return value_stringToDoubleImpl(s->data, s->size, ok);
@@ -493,7 +493,7 @@ extern "C"
     /*! Converts the given string to boolean. */
     bool value_stringToBool(const StringPtr *s)
     {
-        return s->size != 0 && string_compare_case_insensitive(s, &FALSE_STR) != 0 && string_compare_case_insensitive(s, &ZERO_STR) != 0;
+        return s->size != 0 && !strings_equal_case_insensitive(s, &FALSE_STR) && !strings_equal_case_insensitive(s, &ZERO_STR);
     }
 
     /* operations */

@@ -332,11 +332,11 @@ extern "C"
         }
 
         // Special values
-        if (string_compare_raw_case_sensitive(s, n, INFINITY_STR.data, INFINITY_STR.size) == 0) {
+        if (raw_strings_equal_case_sensitive(s, n, INFINITY_STR.data, INFINITY_STR.size)) {
             if (ok)
                 *ok = true;
             return std::numeric_limits<double>::infinity();
-        } else if (string_compare_raw_case_sensitive(s, n, NEGATIVE_INFINITY_STR.data, NEGATIVE_INFINITY_STR.size) == 0) {
+        } else if (raw_strings_equal_case_sensitive(s, n, NEGATIVE_INFINITY_STR.data, NEGATIVE_INFINITY_STR.size)) {
             if (ok)
                 *ok = true;
             return -std::numeric_limits<double>::infinity();

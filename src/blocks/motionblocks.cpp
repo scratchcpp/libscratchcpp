@@ -417,9 +417,9 @@ extern "C" void motion_pointtowards(ExecutionContext *ctx, const StringPtr *towa
 
     Sprite *sprite = static_cast<Sprite *>(ctx->thread()->target());
 
-    if (string_compare_case_sensitive(towards, &MOUSE_STR) == 0)
+    if (strings_equal_case_sensitive(towards, &MOUSE_STR))
         motion_point_towards_mouse(sprite);
-    else if (string_compare_case_sensitive(towards, &RANDOM_STR) == 0)
+    else if (strings_equal_case_sensitive(towards, &RANDOM_STR))
         motion_point_towards_random_direction(ctx);
     else {
         // TODO: Use UTF-16 in engine
@@ -467,9 +467,9 @@ extern "C" void motion_goto(ExecutionContext *ctx, const StringPtr *towards)
 
     Sprite *sprite = static_cast<Sprite *>(ctx->thread()->target());
 
-    if (string_compare_case_sensitive(towards, &MOUSE_STR) == 0)
+    if (strings_equal_case_sensitive(towards, &MOUSE_STR))
         motion_go_to_mouse(sprite);
-    else if (string_compare_case_sensitive(towards, &RANDOM_STR) == 0)
+    else if (strings_equal_case_sensitive(towards, &RANDOM_STR))
         motion_go_to_random_pos(ctx);
     else {
         // TODO: Use UTF-16 in engine
@@ -552,9 +552,9 @@ extern "C" double motion_get_target_x(ExecutionContext *ctx, const StringPtr *na
     static const StringPtr MOUSE_STR("_mouse_");
     static const StringPtr RANDOM_STR("_random_");
 
-    if (string_compare_case_sensitive(name, &MOUSE_STR) == 0)
+    if (strings_equal_case_sensitive(name, &MOUSE_STR))
         return ctx->engine()->mouseX();
-    else if (string_compare_case_sensitive(name, &RANDOM_STR) == 0)
+    else if (strings_equal_case_sensitive(name, &RANDOM_STR))
         return motion_get_random_x(ctx);
     else {
         // TODO: Use UTF-16 in engine
@@ -575,9 +575,9 @@ extern "C" double motion_get_target_y(ExecutionContext *ctx, const StringPtr *na
     static const StringPtr MOUSE_STR("_mouse_");
     static const StringPtr RANDOM_STR("_random_");
 
-    if (string_compare_case_sensitive(name, &MOUSE_STR) == 0)
+    if (strings_equal_case_sensitive(name, &MOUSE_STR))
         return ctx->engine()->mouseY();
-    else if (string_compare_case_sensitive(name, &RANDOM_STR) == 0)
+    else if (strings_equal_case_sensitive(name, &RANDOM_STR))
         return motion_get_random_y(ctx);
     else {
         // TODO: Use UTF-16 in engine
@@ -598,7 +598,7 @@ extern "C" bool motion_is_target_valid(ExecutionContext *ctx, const StringPtr *n
     static const StringPtr MOUSE_STR("_mouse_");
     static const StringPtr RANDOM_STR("_random_");
 
-    if (string_compare_case_sensitive(name, &MOUSE_STR) == 0 || string_compare_case_sensitive(name, &RANDOM_STR) == 0)
+    if (strings_equal_case_sensitive(name, &MOUSE_STR) || strings_equal_case_sensitive(name, &RANDOM_STR))
         return true;
     else {
         // TODO: Use UTF-16 in engine

@@ -453,11 +453,11 @@ extern "C" bool sensing_touchingobject(Target *target, const StringPtr *object)
     static const StringPtr EDGE_STR("_edge_");
     static const StringPtr STAGE_STR("_stage_");
 
-    if (string_compare_case_sensitive(object, &MOUSE_STR) == 0)
+    if (strings_equal_case_sensitive(object, &MOUSE_STR))
         return sensing_touching_mouse(target);
-    else if (string_compare_case_sensitive(object, &EDGE_STR) == 0)
+    else if (strings_equal_case_sensitive(object, &EDGE_STR))
         return sensing_touching_edge(target);
-    else if (string_compare_case_sensitive(object, &STAGE_STR) != 0) {
+    else if (!strings_equal_case_sensitive(object, &STAGE_STR)) {
         IEngine *engine = target->engine();
         // TODO: Use UTF-16 in engine
         std::string u8name = utf8::utf16to8(std::u16string(object->data));
@@ -501,9 +501,9 @@ extern "C" double sensing_distanceto(Sprite *sprite, const StringPtr *object)
     static const StringPtr MOUSE_STR("_mouse_");
     static const StringPtr STAGE_STR("_stage_");
 
-    if (string_compare_case_sensitive(object, &MOUSE_STR) == 0)
+    if (strings_equal_case_sensitive(object, &MOUSE_STR))
         return sensing_distance_to_mouse(sprite);
-    else if (string_compare_case_sensitive(object, &STAGE_STR) != 0) {
+    else if (!strings_equal_case_sensitive(object, &STAGE_STR)) {
         IEngine *engine = sprite->engine();
         // TODO: Use UTF-16 in engine
         std::string u8name = utf8::utf16to8(std::u16string(object->data));
