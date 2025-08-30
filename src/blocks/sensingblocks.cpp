@@ -522,11 +522,9 @@ extern "C" void sensing_askandwait(ExecutionContext *ctx, const StringPtr *quest
     ctx->thread()->setPromise(std::make_shared<Promise>());
 }
 
-extern "C" StringPtr *sensing_answer(ExecutionContext *ctx)
+extern "C" void sensing_answer(StringPtr *ret, ExecutionContext *ctx)
 {
-    StringPtr *ret = string_pool_new();
     string_assign(ret, ctx->engine()->answer());
-    return ret;
 }
 
 extern "C" bool sensing_keypressed(ExecutionContext *ctx, const StringPtr *key)
@@ -595,12 +593,10 @@ extern "C" double sensing_costume_number_of_target(Target *target)
     return target->costumeIndex() + 1;
 }
 
-extern "C" StringPtr *sensing_costume_name_of_target(Target *target)
+extern "C" void sensing_costume_name_of_target(StringPtr *ret, Target *target)
 {
     const std::string &name = target->currentCostume()->name();
-    StringPtr *ret = string_pool_new();
     string_assign_cstring(ret, name.c_str());
-    return ret;
 }
 
 extern "C" double sensing_size_of_sprite(Sprite *sprite)
@@ -659,17 +655,13 @@ extern "C" double sensing_costume_number_of_sprite_with_check(Target *target)
     return 0.0;
 }
 
-extern "C" StringPtr *sensing_costume_name_of_sprite_with_check(Target *target)
+extern "C" void sensing_costume_name_of_sprite_with_check(StringPtr *ret, Target *target)
 {
-    StringPtr *ret = string_pool_new();
-
     if (target && !target->isStage()) {
         const std::string &name = target->currentCostume()->name();
         string_assign_cstring(ret, name.c_str());
     } else
         string_assign_cstring(ret, "0");
-
-    return ret;
 }
 
 extern "C" double sensing_size_of_sprite_with_check(Target *target)
@@ -690,17 +682,13 @@ extern "C" double sensing_backdrop_number_of_stage_with_check(Target *target)
     return 0.0;
 }
 
-extern "C" StringPtr *sensing_backdrop_name_of_stage_with_check(Target *target)
+extern "C" void sensing_backdrop_name_of_stage_with_check(StringPtr *ret, Target *target)
 {
-    StringPtr *ret = string_pool_new();
-
     if (target && target->isStage()) {
         const std::string &name = target->currentCostume()->name();
         string_assign_cstring(ret, name.c_str());
     } else
         string_assign_cstring(ret, "");
-
-    return ret;
 }
 
 extern "C" double sensing_volume_of_target_with_check(Target *target)

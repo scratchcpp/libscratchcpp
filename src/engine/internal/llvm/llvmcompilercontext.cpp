@@ -12,6 +12,7 @@
 #include "llvmcompilercontext.h"
 #include "llvmcoroutine.h"
 #include "llvmtypes.h"
+#include "llvmexecutablecode.h"
 
 using namespace libscratchcpp;
 
@@ -30,6 +31,7 @@ LLVMCompilerContext::LLVMCompilerContext(IEngine *engine, Target *target) :
     // Create types
     m_valueDataType = LLVMTypes::createValueDataType(*m_llvmCtx);
     m_stringPtrType = LLVMTypes::createStringPtrType(*m_llvmCtx);
+    m_functionIdType = LLVMTypes::createFunctionIdType(*m_llvmCtx);
 
     if (!m_jit) {
         llvm::errs() << "error: failed to create JIT: " << toString(m_jit.takeError()) << "\n";
@@ -50,6 +52,22 @@ llvm::LLVMContext *LLVMCompilerContext::llvmCtx()
 llvm::Module *LLVMCompilerContext::module()
 {
     return m_modulePtr;
+}
+
+void LLVMCompilerContext::addCode(LLVMExecutableCode *code)
+{
+    assert(m_codeMap.find(code->functionId()) == m_codeMap.cend());
+    m_codeMap[code->functionId()] = code;
+}
+
+const std::unordered_map<function_id_t, LLVMExecutableCode *> &LLVMCompilerContext::codeMap() const
+{
+    return m_codeMap;
+}
+
+function_id_t LLVMCompilerContext::getNextFunctionId()
+{
+    return m_nextFunctionId++;
 }
 
 void LLVMCompilerContext::initJit()
@@ -133,6 +151,11 @@ llvm::StructType *LLVMCompilerContext::valueDataType() const
 llvm::StructType *LLVMCompilerContext::stringPtrType() const
 {
     return m_stringPtrType;
+}
+
+llvm::Type *LLVMCompilerContext::functionIdType() const
+{
+    return m_functionIdType;
 }
 
 void LLVMCompilerContext::initTarget()

@@ -197,11 +197,31 @@ Value LLVMTestUtils::getExpectedOpResult(OpType type, const Value &v1, const Val
         case OpType::CmpLT:
             return v1 < v2;
 
-        case OpType::StrCmpEQCS:
-            return string_compare_case_sensitive(value_toStringPtr(&v1.data()), value_toStringPtr(&v2.data())) == 0;
+        case OpType::StrCmpEQCS: {
+            StringPtr *s1 = string_pool_new();
+            StringPtr *s2 = string_pool_new();
+            value_toStringPtr(&v1.data(), s1);
+            value_toStringPtr(&v2.data(), s2);
 
-        case OpType::StrCmpEQCI:
-            return string_compare_case_insensitive(value_toStringPtr(&v1.data()), value_toStringPtr(&v2.data())) == 0;
+            bool ret = string_compare_case_sensitive(s1, s2) == 0;
+
+            string_pool_free(s1);
+            string_pool_free(s2);
+            return ret;
+        }
+
+        case OpType::StrCmpEQCI: {
+            StringPtr *s1 = string_pool_new();
+            StringPtr *s2 = string_pool_new();
+            value_toStringPtr(&v1.data(), s1);
+            value_toStringPtr(&v2.data(), s2);
+
+            bool ret = string_compare_case_insensitive(s1, s2) == 0;
+
+            string_pool_free(s1);
+            string_pool_free(s2);
+            return ret;
+        }
 
         case OpType::And:
             return v1.toBool() && v2.toBool();

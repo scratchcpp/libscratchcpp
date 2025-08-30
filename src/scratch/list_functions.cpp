@@ -58,8 +58,8 @@ extern "C"
         return list->size();
     }
 
-    StringPtr *list_to_string(List *list)
+    void list_to_string(List *list, StringPtr *dst)
     {
-        return list->toStringPtr();
+        list->toStringPtr(dst);
     }
 }

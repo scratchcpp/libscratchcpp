@@ -61,7 +61,8 @@ void List::setMonitor(Monitor *monitor)
 /*! Same as the other method, but returns the result as std::string. */
 std::string List::toString() const
 {
-    StringPtr *str = toStringPtr();
+    StringPtr *str = string_pool_new();
+    toStringPtr(str);
     std::string ret = utf8::utf16to8(std::u16string(str->data));
     string_pool_free(str);
     return ret;

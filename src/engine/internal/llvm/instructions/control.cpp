@@ -119,7 +119,6 @@ LLVMInstruction *Control::buildBeginIf(LLVMInstruction *ins)
     m_builder.SetInsertPoint(statement.body);
 
     m_utils.ifStatements().push_back(statement);
-    m_utils.pushScopeLevel();
 
     return ins->next;
 }
@@ -135,7 +134,6 @@ LLVMInstruction *Control::buildBeginElse(LLVMInstruction *ins)
     // Jump to the branch after the if statement
     assert(!statement.afterIf);
     statement.afterIf = llvm::BasicBlock::Create(llvmCtx, "", function);
-    m_utils.freeScopeHeap();
     m_builder.CreateBr(statement.afterIf);
 
     // Create else branch
@@ -157,7 +155,6 @@ LLVMInstruction *Control::buildEndIf(LLVMInstruction *ins)
     auto &ifStatements = m_utils.ifStatements();
     assert(!ifStatements.empty());
     LLVMIfStatement &statement = ifStatements.back();
-    m_utils.freeScopeHeap();
 
     // Jump to the branch after the if statement
     if (!statement.afterIf)
@@ -176,7 +173,6 @@ LLVMInstruction *Control::buildEndIf(LLVMInstruction *ins)
     m_builder.SetInsertPoint(statement.afterIf);
 
     ifStatements.pop_back();
-    m_utils.popScopeLevel();
 
     return ins->next;
 }
@@ -236,7 +232,6 @@ LLVMInstruction *Control::buildBeginRepeatLoop(LLVMInstruction *ins)
     m_builder.SetInsertPoint(body);
 
     m_utils.loops().push_back(loop);
-    m_utils.pushScopeLevel();
 
     return ins->next;
 }
@@ -274,7 +269,6 @@ LLVMInstruction *Control::buildBeginWhileLoop(LLVMInstruction *ins)
 
     // Switch to body branch
     m_builder.SetInsertPoint(body);
-    m_utils.pushScopeLevel();
 
     return ins->next;
 }
@@ -300,7 +294,6 @@ LLVMInstruction *Control::buildBeginRepeatUntilLoop(LLVMInstruction *ins)
 
     // Switch to body branch
     m_builder.SetInsertPoint(body);
-    m_utils.pushScopeLevel();
 
     return ins->next;
 }
@@ -331,14 +324,12 @@ LLVMInstruction *Control::buildEndLoop(LLVMInstruction *ins)
     }
 
     // Jump to the condition branch
-    m_utils.freeScopeHeap();
     m_builder.CreateBr(loop.conditionBranch);
 
     // Switch to the branch after the loop
     m_builder.SetInsertPoint(loop.afterLoop);
 
     loops.pop_back();
-    m_utils.popScopeLevel();
 
     return ins->next;
 }
@@ -351,7 +342,6 @@ LLVMInstruction *Control::buildStop(LLVMInstruction *ins)
 
 LLVMInstruction *Control::buildStopWithoutSync(LLVMInstruction *ins)
 {
-    m_utils.freeScopeHeap();
     m_builder.CreateBr(m_utils.endBranch());
     llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_utils.llvmCtx(), "", m_utils.function());
     m_builder.SetInsertPoint(nextBranch);

@@ -16,10 +16,18 @@
 
 using namespace libscratchcpp;
 
-LLVMExecutableCode::LLVMExecutableCode(LLVMCompilerContext *ctx, const std::string &mainFunctionName, const std::string &resumeFunctionName, Compiler::CodeType codeType) :
+LLVMExecutableCode::LLVMExecutableCode(
+    LLVMCompilerContext *ctx,
+    function_id_t functionId,
+    const std::string &mainFunctionName,
+    const std::string &resumeFunctionName,
+    size_t stringCount,
+    Compiler::CodeType codeType) :
     m_ctx(ctx),
+    m_functionId(functionId),
     m_mainFunctionName(mainFunctionName),
     m_resumeFunctionName(resumeFunctionName),
+    m_stringCount(stringCount),
     m_codeType(codeType)
 {
     assert(m_ctx);
@@ -28,6 +36,8 @@ LLVMExecutableCode::LLVMExecutableCode(LLVMCompilerContext *ctx, const std::stri
         std::cerr << "error: cannot create LLVM code after JIT compiler had been initialized" << std::endl;
         assert(false);
     }
+
+    m_ctx->addCode(this);
 }
 
 void LLVMExecutableCode::run(ExecutionContext *context)
@@ -133,6 +143,16 @@ std::shared_ptr<ExecutionContext> LLVMExecutableCode::createExecutionContext(Thr
 
     m_resumeFunction = m_ctx->lookupFunction<ResumeFunctionType>(m_resumeFunctionName);
     return std::make_shared<LLVMExecutionContext>(m_ctx, thread);
+}
+
+function_id_t LLVMExecutableCode::functionId() const
+{
+    return m_functionId;
+}
+
+size_t LLVMExecutableCode::stringCount() const
+{
+    return m_stringCount;
 }
 
 LLVMExecutionContext *LLVMExecutableCode::getContext(ExecutionContext *context)

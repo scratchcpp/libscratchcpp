@@ -1477,230 +1477,342 @@ TEST(ValueTest, ToString)
     Value v = 2147483647;
     ASSERT_EQ(v.toString(), "2147483647");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    StringPtr *str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = -2147483647;
     ASSERT_EQ(v.toString(), "-2147483647");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = 512L;
     ASSERT_EQ(v.toString(), "512");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = -512L;
     ASSERT_EQ(v.toString(), "-512");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = 0.0;
     ASSERT_EQ(v.toString(), "0");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = -0.0;
     ASSERT_EQ(v.toString(), "0");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = 2.0;
     ASSERT_EQ(v.toString(), "2");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = -2.0;
     ASSERT_EQ(v.toString(), "-2");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = 2.54;
     ASSERT_EQ(v.toString(), "2.54");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = -2.54;
     ASSERT_EQ(v.toString(), "-2.54");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = 59.8;
     ASSERT_EQ(v.toString(), "59.8");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = -59.8;
     ASSERT_EQ(v.toString(), "-59.8");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = 5.3;
     ASSERT_EQ(v.toString(), "5.3");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = -5.3;
     ASSERT_EQ(v.toString(), "-5.3");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = 2550.625021000115;
     ASSERT_EQ(v.toString(), "2550.625021000115");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = -2550.625021000115;
     ASSERT_EQ(v.toString(), "-2550.625021000115");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = 9.4324e+20;
     ASSERT_EQ(v.toString(), "943240000000000000000");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = -2.591e-2;
     ASSERT_EQ(v.toString(), "-0.02591");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = 9.4324e+21;
     ASSERT_EQ(v.toString(), "9.4324e+21");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = -2.591e-13;
     ASSERT_EQ(v.toString(), "-2.591e-13");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = 0.001;
     ASSERT_EQ(v.toString(), "0.001");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = -0.001;
     ASSERT_EQ(v.toString(), "-0.001");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = 0.000001;
     ASSERT_EQ(v.toString(), "0.000001");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = -0.000001;
     ASSERT_EQ(v.toString(), "-0.000001");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = 0.0000001;
     ASSERT_EQ(v.toString(), "1e-7");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = -0.0000001;
     ASSERT_EQ(v.toString(), "-1e-7");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = false;
     ASSERT_EQ(v.toString(), "false");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = true;
     ASSERT_EQ(v.toString(), "true");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = "2147483647";
     ASSERT_EQ(v.toString(), "2147483647");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = "-2147483647";
     ASSERT_EQ(v.toString(), "-2147483647");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = "999999999999999999";
     ASSERT_EQ(v.toString(), "999999999999999999");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = "-999999999999999999";
     ASSERT_EQ(v.toString(), "-999999999999999999");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = "255.625";
     ASSERT_EQ(v.toString(), "255.625");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = "-255.625";
     ASSERT_EQ(v.toString(), "-255.625");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = "9432.4e-12";
     ASSERT_EQ(v.toString(), "9432.4e-12");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = "-9432.4e-12";
     ASSERT_EQ(v.toString(), "-9432.4e-12");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = "9432.4e+6";
     ASSERT_EQ(v.toString(), "9432.4e+6");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = "-9432.4e+6";
     ASSERT_EQ(v.toString(), "-9432.4e+6");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = "false";
     ASSERT_EQ(v.toString(), "false");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = "true";
     ASSERT_EQ(v.toString(), "true");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = "Infinity";
     ASSERT_TRUE(v.isInfinity());
     ASSERT_EQ(v.toString(), "Infinity");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = "-Infinity";
     ASSERT_TRUE(v.isNegativeInfinity());
     ASSERT_EQ(v.toString(), "-Infinity");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = "NaN";
     ASSERT_TRUE(v.isNaN());
     ASSERT_EQ(v.toString(), "NaN");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = "something";
     ASSERT_EQ(v.toString(), "something");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     long var;
     v = &var;
     ASSERT_EQ(v.toString(), "0");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     v = std::numeric_limits<double>::infinity();
     ASSERT_EQ(v.toString(), "Infinity");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = -std::numeric_limits<double>::infinity();
     ASSERT_EQ(v.toString(), "-Infinity");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
+
     v = std::numeric_limits<double>::quiet_NaN();
     ASSERT_EQ(v.toString(), "NaN");
     ASSERT_EQ(utf8::utf16to8(v.toUtf16()), v.toString());
-    ASSERT_EQ(std::u16string(value_toStringPtr(&v.data())->data), v.toUtf16());
+    str = string_pool_new();
+    value_toStringPtr(&v.data(), str);
+    ASSERT_EQ(std::u16string(str->data), v.toUtf16());
 
     std::setlocale(LC_NUMERIC, oldLocale.c_str());
 }
@@ -3211,79 +3323,105 @@ TEST(ValueTest, DoubleToStringPtr)
 
     // TODO: Use a custom comparison function
     StringPtr *ret;
-    ret = value_doubleToStringPtr(0.0);
+
+    ret = string_pool_new();
+    value_doubleToStringPtr(0.0, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "0");
 
-    ret = value_doubleToStringPtr(-0.0);
+    ret = string_pool_new();
+    value_doubleToStringPtr(-0.0, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "0");
 
-    ret = value_doubleToStringPtr(2.0);
+    ret = string_pool_new();
+    value_doubleToStringPtr(2.0, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "2");
 
-    ret = value_doubleToStringPtr(-2.0);
+    ret = string_pool_new();
+    value_doubleToStringPtr(-2.0, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "-2");
 
-    ret = value_doubleToStringPtr(2.54);
+    ret = string_pool_new();
+    value_doubleToStringPtr(2.54, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "2.54");
 
-    ret = value_doubleToStringPtr(-2.54);
+    ret = string_pool_new();
+    value_doubleToStringPtr(-2.54, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "-2.54");
 
-    ret = value_doubleToStringPtr(59.8);
+    ret = string_pool_new();
+    value_doubleToStringPtr(59.8, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "59.8");
 
-    ret = value_doubleToStringPtr(-59.8);
+    ret = string_pool_new();
+    value_doubleToStringPtr(-59.8, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "-59.8");
 
-    ret = value_doubleToStringPtr(5.3);
+    ret = string_pool_new();
+    value_doubleToStringPtr(5.3, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "5.3");
 
-    ret = value_doubleToStringPtr(-5.3);
+    ret = string_pool_new();
+    value_doubleToStringPtr(-5.3, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "-5.3");
 
-    ret = value_doubleToStringPtr(2550.625021000115);
+    ret = string_pool_new();
+    value_doubleToStringPtr(2550.625021000115, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "2550.625021000115");
 
-    ret = value_doubleToStringPtr(-2550.625021000115);
+    ret = string_pool_new();
+    value_doubleToStringPtr(-2550.625021000115, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "-2550.625021000115");
 
-    ret = value_doubleToStringPtr(9.4324e+20);
+    ret = string_pool_new();
+    value_doubleToStringPtr(9.4324e+20, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "943240000000000000000");
 
-    ret = value_doubleToStringPtr(-2.591e-2);
+    ret = string_pool_new();
+    value_doubleToStringPtr(-2.591e-2, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "-0.02591");
 
-    ret = value_doubleToStringPtr(9.4324e+21);
+    ret = string_pool_new();
+    value_doubleToStringPtr(9.4324e+21, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "9.4324e+21");
 
-    ret = value_doubleToStringPtr(-2.591e-13);
+    ret = string_pool_new();
+    value_doubleToStringPtr(-2.591e-13, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "-2.591e-13");
 
-    ret = value_doubleToStringPtr(0.001);
+    ret = string_pool_new();
+    value_doubleToStringPtr(0.001, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "0.001");
 
-    ret = value_doubleToStringPtr(-0.001);
+    ret = string_pool_new();
+    value_doubleToStringPtr(-0.001, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "-0.001");
 
-    ret = value_doubleToStringPtr(0.000001);
+    ret = string_pool_new();
+    value_doubleToStringPtr(0.000001, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "0.000001");
 
-    ret = value_doubleToStringPtr(-0.000001);
+    ret = string_pool_new();
+    value_doubleToStringPtr(-0.000001, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "-0.000001");
 
-    ret = value_doubleToStringPtr(0.0000001);
+    ret = string_pool_new();
+    value_doubleToStringPtr(0.0000001, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "1e-7");
 
-    ret = value_doubleToStringPtr(-0.0000001);
+    ret = string_pool_new();
+    value_doubleToStringPtr(-0.0000001, ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "-1e-7");
 
-    ret = value_doubleToStringPtr(std::numeric_limits<double>::infinity());
+    ret = string_pool_new();
+    value_doubleToStringPtr(std::numeric_limits<double>::infinity(), ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "Infinity");
 
-    ret = value_doubleToStringPtr(-std::numeric_limits<double>::infinity());
+    ret = string_pool_new();
+    value_doubleToStringPtr(-std::numeric_limits<double>::infinity(), ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "-Infinity");
 
-    ret = value_doubleToStringPtr(std::numeric_limits<double>::quiet_NaN());
+    ret = string_pool_new();
+    value_doubleToStringPtr(std::numeric_limits<double>::quiet_NaN(), ret);
     ASSERT_EQ(utf8::utf16to8(std::u16string(ret->data)), "NaN");
 
     std::setlocale(LC_NUMERIC, oldLocale.c_str());

@@ -11,6 +11,7 @@
 #include "llvmcoroutine.h"
 #include "llvmifstatement.h"
 #include "llvmloop.h"
+#include "llvmcompilercontext.h"
 
 namespace libscratchcpp
 {
@@ -49,6 +50,10 @@ class LLVMBuildUtils
         std::string scriptFunctionName(BlockPrototype *procedurePrototype);
         llvm::FunctionType *scriptFunctionType(BlockPrototype *procedurePrototype);
 
+        function_id_t scriptFunctionId() const;
+
+        size_t stringCount() const;
+
         llvm::BasicBlock *endBranch() const;
 
         BlockPrototype *procedurePrototype() const;
@@ -74,12 +79,6 @@ class LLVMBuildUtils
         void reloadVariables();
         void reloadLists();
 
-        void pushScopeLevel();
-        void popScopeLevel();
-
-        void freeStringLater(llvm::Value *value);
-        void freeScopeHeap();
-
         std::vector<LLVMIfStatement> &ifStatements();
         std::vector<LLVMLoop> &loops();
 
@@ -89,6 +88,8 @@ class LLVMBuildUtils
         static bool isSingleType(Compiler::StaticType type);
 
         llvm::Value *addAlloca(llvm::Type *type);
+        llvm::Value *addStringAlloca();
+
         llvm::Value *castValue(LLVMRegister *reg, Compiler::StaticType targetType, NumberType targetNumType = NumberType::Double);
         llvm::Type *getType(Compiler::StaticType type, bool isReturnType);
         llvm::Value *isNaN(llvm::Value *num);
@@ -151,11 +152,14 @@ class LLVMBuildUtils
         LLVMFunctions m_functions;
         Target *m_target = nullptr;
         llvm::Function *m_function = nullptr;
+        function_id_t m_functionId = 0;
+        llvm::Value *m_functionIdValue = nullptr;
 
         llvm::BasicBlock *m_endBranch = nullptr;
 
         llvm::StructType *m_valueDataType = nullptr;
         llvm::StructType *m_stringPtrType = nullptr;
+        llvm::Type *m_functionIdType = nullptr;
 
         BlockPrototype *m_procedurePrototype = nullptr;
         bool m_warp = false;
@@ -177,10 +181,13 @@ class LLVMBuildUtils
         std::unordered_map<List *, size_t> m_targetListMap;
         std::unordered_map<List *, LLVMListPtr> m_listPtrs;
 
-        std::vector<std::vector<llvm::Value *>> m_stringHeap; // scopes
-
         std::vector<LLVMIfStatement> m_ifStatements;
         std::vector<LLVMLoop> m_loops;
+
+        llvm::BasicBlock *m_stringAllocaBlock = nullptr;
+        llvm::BasicBlock *m_stringAllocaNextBlock = nullptr;
+        llvm::Value *m_stringArray = nullptr;
+        size_t m_stringCount = 0;
 };
 
 } // namespace libscratchcpp

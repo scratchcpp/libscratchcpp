@@ -32,6 +32,15 @@ LLVMInstruction *Functions::buildFunctionCall(LLVMInstruction *ins)
     // Variables must be synchronized because the function can read them
     m_utils.syncVariables();
 
+    // Strings are returned through an output parameter
+    llvm::Value *stringRet = nullptr;
+
+    if (ins->functionReturnReg && ins->functionReturnReg->type() == Compiler::StaticType::String) {
+        stringRet = m_utils.addStringAlloca();
+        types.push_back(m_utils.getType(Compiler::StaticType::String, false));
+        args.push_back(stringRet);
+    }
+
     // Add execution context arg
     if (ins->functionCtxArg) {
         types.push_back(llvm::PointerType::get(llvm::Type::getInt8Ty(m_utils.llvmCtx()), 0));
@@ -54,15 +63,14 @@ LLVMInstruction *Functions::buildFunctionCall(LLVMInstruction *ins)
     llvm::Value *ret = m_builder.CreateCall(m_utils.functions().resolveFunction(ins->functionName, llvm::FunctionType::get(retType, types, false)), args);
 
     if (ins->functionReturnReg) {
-        if (m_utils.isSingleType(ins->functionReturnReg->type()))
+        if (ins->functionReturnReg->type() == Compiler::StaticType::String)
+            ins->functionReturnReg->value = stringRet;
+        else if (m_utils.isSingleType(ins->functionReturnReg->type()))
             ins->functionReturnReg->value = ret;
         else {
             ins->functionReturnReg->value = m_utils.addAlloca(retType);
             m_builder.CreateStore(ret, ins->functionReturnReg->value);
         }
-
-        if (ins->functionReturnReg->type() == Compiler::StaticType::String)
-            m_utils.freeStringLater(ins->functionReturnReg->value);
     }
 
     return ins->next;

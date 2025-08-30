@@ -281,44 +281,31 @@ extern "C"
     /*! Writes the string representation of the given value to dst. */
     void value_toString(const ValueData *v, std::string *dst)
     {
-        StringPtr *str = value_toStringPtr(v);
+        StringPtr *str = string_pool_new();
+        value_toStringPtr(v, str);
         dst->assign(utf8::utf16to8(std::u16string(str->data)));
         string_pool_free(str);
     }
 
-    /*!
-     * Returns the string representation of the given value.
-     * \note It is the caller's responsibility to free allocated memory.
-     */
-    StringPtr *value_toStringPtr(const ValueData *v)
+    /*! Writes the string representation of the given value to dst. */
+    void value_toStringPtr(const ValueData *v, StringPtr *dst)
     {
-        if (v->type == ValueType::String) {
-            StringPtr *ret = string_pool_new();
-            string_assign(ret, v->stringValue);
-            return ret;
-        } else if (v->type == ValueType::Number)
-            return value_doubleToStringPtr(v->numberValue);
+        if (v->type == ValueType::String)
+            string_assign(dst, v->stringValue);
+        else if (v->type == ValueType::Number)
+            value_doubleToStringPtr(v->numberValue, dst);
         else if (v->type == ValueType::Bool) {
-            if (v->boolValue) {
-                StringPtr *ret = string_pool_new();
-                string_assign(ret, &TRUE_STR);
-                return ret;
-            } else {
-                StringPtr *ret = string_pool_new();
-                string_assign(ret, &FALSE_STR);
-                return ret;
-            }
-        } else {
-            StringPtr *ret = string_pool_new();
-            string_assign(ret, &ZERO_STR);
-            return ret;
-        }
+            const StringPtr *boolStr = value_boolToStringPtr(v->boolValue);
+            string_assign(dst, boolStr);
+        } else
+            string_assign(dst, &ZERO_STR);
     }
 
     /*! Writes the UTF-16 representation of the given value to dst. */
     void value_toUtf16(const libscratchcpp::ValueData *v, std::u16string *dst)
     {
-        StringPtr *str = value_toStringPtr(v);
+        StringPtr *str = string_pool_new();
+        value_toStringPtr(v, str);
         dst->assign(str->data);
         string_pool_free(str);
     }
@@ -395,90 +382,76 @@ extern "C"
         return v == intpart;
     }
 
-    /*!
-     * Converts the given number to string.
-     * \note It is the caller's responsibility to free the string.
-     */
-    StringPtr *value_doubleToStringPtr(double v)
+    /*! Converts the given number to string and stores the result in dst. */
+    void value_doubleToStringPtr(double v, StringPtr *dst)
     {
-        if (v == 0) {
-            StringPtr *ret = string_pool_new();
-            string_assign_cstring(ret, "0");
-            return ret;
-        } else if (std::isinf(v)) {
-            if (v > 0) {
-                StringPtr *ret = string_pool_new();
-                string_assign(ret, &INFINITY_STR);
-                return ret;
+        if (v == 0)
+            string_assign_cstring(dst, "0");
+        else if (std::isinf(v)) {
+            if (v > 0)
+                string_assign(dst, &INFINITY_STR);
+            else
+                string_assign(dst, &NEGATIVE_INFINITY_STR);
+        } else if (std::isnan(v))
+            string_assign(dst, &NAN_STR);
+        else {
+            // snprintf() is locale-dependent
+            std::string oldLocale = std::setlocale(LC_NUMERIC, nullptr);
+            std::setlocale(LC_NUMERIC, "C");
+
+            const int maxlen = 26; // should be enough for any number
+            char *buffer = (char *)malloc((maxlen + 1) * sizeof(char));
+
+            // Constants for significant digits and thresholds
+            const int significantDigits = 17 - value_intDigitCount(std::floor(std::fabs(v)));
+            constexpr double scientificThreshold = 1e21;
+            constexpr double minScientificThreshold = 1e-6;
+
+            // Use scientific notation if the number is very large or very small
+            if (std::fabs(v) >= scientificThreshold || std::fabs(v) < minScientificThreshold) {
+                int ret = snprintf(buffer, maxlen, "%.*g", significantDigits - 1, v);
+                assert(ret >= 0);
             } else {
-                StringPtr *ret = string_pool_new();
-                string_assign(ret, &NEGATIVE_INFINITY_STR);
-                return ret;
-            }
-        } else if (std::isnan(v)) {
-            StringPtr *ret = string_pool_new();
-            string_assign(ret, &NAN_STR);
-            return ret;
-        }
+                snprintf(buffer, maxlen, "%.*f", significantDigits - 1, v);
 
-        // snprintf() is locale-dependent
-        std::string oldLocale = std::setlocale(LC_NUMERIC, nullptr);
-        std::setlocale(LC_NUMERIC, "C");
+                // Remove trailing zeros from the fractional part
+                char *dot = std::strchr(buffer, '.');
 
-        const int maxlen = 26; // should be enough for any number
-        char *buffer = (char *)malloc((maxlen + 1) * sizeof(char));
-
-        // Constants for significant digits and thresholds
-        const int significantDigits = 17 - value_intDigitCount(std::floor(std::fabs(v)));
-        constexpr double scientificThreshold = 1e21;
-        constexpr double minScientificThreshold = 1e-6;
-
-        // Use scientific notation if the number is very large or very small
-        if (std::fabs(v) >= scientificThreshold || std::fabs(v) < minScientificThreshold) {
-            int ret = snprintf(buffer, maxlen, "%.*g", significantDigits - 1, v);
-            assert(ret >= 0);
-        } else {
-            snprintf(buffer, maxlen, "%.*f", significantDigits - 1, v);
-
-            // Remove trailing zeros from the fractional part
-            char *dot = std::strchr(buffer, '.');
-
-            if (dot) {
-                char *end = buffer + std::strlen(buffer) - 1;
-                while (end > dot && *end == '0') {
-                    *end-- = '\0';
-                }
-                if (*end == '.') {
-                    *end = '\0'; // Remove trailing dot
+                if (dot) {
+                    char *end = buffer + std::strlen(buffer) - 1;
+                    while (end > dot && *end == '0') {
+                        *end-- = '\0';
+                    }
+                    if (*end == '.') {
+                        *end = '\0'; // Remove trailing dot
+                    }
                 }
             }
-        }
 
-        // Remove leading zeros after e+/e-
-        for (int i = 0; i < 2; i++) {
-            const char *target = (i == 0) ? "e+" : "e-";
-            char *index = strstr(buffer, target);
+            // Remove leading zeros after e+/e-
+            for (int i = 0; i < 2; i++) {
+                const char *target = (i == 0) ? "e+" : "e-";
+                char *index = strstr(buffer, target);
 
-            if (index != nullptr) {
-                char *ptr = index + 2;
-                while (*(ptr + 1) != '\0' && *ptr == '0') {
-                    // Shift the characters left to erase '0'
-                    char *shiftPtr = ptr;
-                    do {
-                        *shiftPtr = *(shiftPtr + 1);
-                        shiftPtr++;
-                    } while (*shiftPtr != '\0');
+                if (index != nullptr) {
+                    char *ptr = index + 2;
+                    while (*(ptr + 1) != '\0' && *ptr == '0') {
+                        // Shift the characters left to erase '0'
+                        char *shiftPtr = ptr;
+                        do {
+                            *shiftPtr = *(shiftPtr + 1);
+                            shiftPtr++;
+                        } while (*shiftPtr != '\0');
+                    }
                 }
             }
+
+            // Restore old locale
+            std::setlocale(LC_NUMERIC, oldLocale.c_str());
+
+            string_assign_cstring(dst, buffer);
+            free(buffer);
         }
-
-        // Restore old locale
-        std::setlocale(LC_NUMERIC, oldLocale.c_str());
-
-        StringPtr *ret = string_pool_new();
-        string_assign_cstring(ret, buffer);
-        free(buffer);
-        return ret;
     }
 
     /*!

@@ -6,7 +6,6 @@
 #include <scratchcpp/executioncontext.h>
 
 #include "thread_p.h"
-#include "scratch/string_pool_p.h"
 
 using namespace libscratchcpp;
 
@@ -14,8 +13,6 @@ using namespace libscratchcpp;
 Thread::Thread(Target *target, IEngine *engine, Script *script) :
     impl(spimpl::make_unique_impl<ThreadPrivate>(target, engine, script))
 {
-    string_pool_add_thread(this);
-
     if (impl->script) {
         impl->code = impl->script->code();
         impl->hatPredicateCode = impl->script->hatPredicateCode();
@@ -26,12 +23,6 @@ Thread::Thread(Target *target, IEngine *engine, Script *script) :
         if (impl->hatPredicateCode)
             impl->hatPredicateExecutionContext = impl->hatPredicateCode->createExecutionContext(this);
     }
-}
-
-/*! Destroys Thread. */
-Thread::~Thread()
-{
-    string_pool_remove_thread(this);
 }
 
 /*! Returns the Target of the script. */
@@ -55,17 +46,13 @@ Script *Thread::script() const
 /*! Runs the script until it finishes or yields. */
 void Thread::run()
 {
-    string_pool_set_thread(this);
     impl->code->run(impl->executionContext.get());
-    string_pool_set_thread(nullptr);
 }
 
 /*! Runs the reporter and returns its return value. */
 ValueData Thread::runReporter()
 {
-    string_pool_set_thread(this);
     ValueData ret = impl->code->runReporter(impl->executionContext.get());
-    string_pool_set_thread(nullptr);
     return ret;
 }
 
@@ -75,9 +62,7 @@ bool Thread::runPredicate()
     if (!impl->hatPredicateCode)
         return false;
 
-    string_pool_set_thread(this);
     const bool ret = impl->hatPredicateCode->runPredicate(impl->hatPredicateExecutionContext.get());
-    string_pool_set_thread(nullptr);
     return ret;
 }
 

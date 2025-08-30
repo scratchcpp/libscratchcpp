@@ -30,3 +30,8 @@ llvm::StructType *LLVMTypes::createStringPtrType(llvm::LLVMContext &ctx)
 
     return ret;
 }
+
+llvm::Type *LLVMTypes::createFunctionIdType(llvm::LLVMContext &ctx)
+{
+    return llvm::Type::getInt32Ty(ctx);
+}

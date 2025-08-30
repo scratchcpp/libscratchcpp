@@ -153,7 +153,7 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
         }
 
         /*! Joins the list items with spaces or without any separator if there are only digits and returns the result as StringPtr. */
-        inline StringPtr *toStringPtr() const
+        inline void toStringPtr(StringPtr *dst) const
         {
             veque::veque<StringPtr *> strings;
             size_t size = 0;
@@ -163,7 +163,9 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
 
             for (i = 0; i < m_size; i++) {
                 const ValueData *item = &m_dataPtr->operator[](i);
-                strings.push_back(value_toStringPtr(item));
+                StringPtr *str = string_pool_new();
+                value_toStringPtr(item, str);
+                strings.push_back(str);
                 size += strings.back()->size;
 
                 if (value_isValidNumber(item) && !value_isBool(item) && strings.back()->size > 0) {
@@ -185,54 +187,54 @@ class LIBSCRATCHCPP_EXPORT List : public Entity
                 }
             }
 
-            StringPtr *ret = string_pool_new();
-            ret->size = 0;
+            dst->size = 0;
 
             if (digits) {
-                string_alloc(ret, size);
+                string_alloc(dst, size);
 
                 for (i = 0; i < strings.size(); i++) {
-                    memcpy(ret->data + ret->size, strings[i]->data, strings[i]->size * sizeof(char16_t));
-                    ret->size += strings[i]->size;
+                    memcpy(dst->data + dst->size, strings[i]->data, strings[i]->size * sizeof(char16_t));
+                    dst->size += strings[i]->size;
                     string_pool_free(strings[i]);
                 }
 
                 for (; i < m_size; i++) {
-                    StringPtr *item = value_toStringPtr(&m_dataPtr->operator[](i));
+                    StringPtr *item = string_pool_new();
+                    value_toStringPtr(&m_dataPtr->operator[](i), item);
                     size += item->size + 1;
-                    string_alloc(ret, size);
-                    memcpy(ret->data + ret->size, item->data, item->size * sizeof(char16_t));
-                    ret->size += item->size;
+                    string_alloc(dst, size);
+                    memcpy(dst->data + dst->size, item->data, item->size * sizeof(char16_t));
+                    dst->size += item->size;
                     string_pool_free(item);
                 }
             } else {
                 size += strings.size() - 1;
-                string_alloc(ret, size);
+                string_alloc(dst, size);
 
                 for (i = 0; i < strings.size(); i++) {
-                    memcpy(ret->data + ret->size, strings[i]->data, strings[i]->size * sizeof(char16_t));
-                    ret->size += strings[i]->size;
+                    memcpy(dst->data + dst->size, strings[i]->data, strings[i]->size * sizeof(char16_t));
+                    dst->size += strings[i]->size;
                     string_pool_free(strings[i]);
 
                     if (i + 1 < m_size)
-                        ret->data[ret->size++] = u' ';
+                        dst->data[dst->size++] = u' ';
                 }
 
                 for (; i < m_size; i++) {
-                    StringPtr *item = value_toStringPtr(&m_dataPtr->operator[](i));
+                    StringPtr *item = string_pool_new();
+                    value_toStringPtr(&m_dataPtr->operator[](i), item);
                     size += item->size + 1;
-                    string_alloc(ret, size);
-                    memcpy(ret->data + ret->size, item->data, item->size * sizeof(char16_t));
-                    ret->size += item->size;
+                    string_alloc(dst, size);
+                    memcpy(dst->data + dst->size, item->data, item->size * sizeof(char16_t));
+                    dst->size += item->size;
                     string_pool_free(item);
 
                     if (i + 1 < m_size)
-                        ret->data[ret->size++] = u' ';
+                        dst->data[dst->size++] = u' ';
                 }
             }
 
-            ret->data[ret->size] = u'\0';
-            return ret;
+            dst->data[dst->size] = u'\0';
         }
 
         std::string toString() const;

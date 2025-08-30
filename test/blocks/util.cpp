@@ -68,11 +68,9 @@ extern "C" bool test_condition()
     return conditionReturnValue;
 }
 
-extern "C" StringPtr *test_const_string(const StringPtr *str)
+extern "C" void test_const_string(StringPtr *ret, const StringPtr *str)
 {
-    StringPtr *ret = string_pool_new();
     string_assign(ret, str);
-    return ret;
 }
 
 } // namespace libscratchcpp

@@ -26,7 +26,7 @@ extern "C"
     const size_t *list_alloc_size_ptr(List *list);
     size_t list_size(List *list);
 
-    StringPtr *list_to_string(List *list);
+    void list_to_string(List *list, StringPtr *dst);
 }
 
 } // namespace libscratchcpp

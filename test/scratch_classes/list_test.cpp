@@ -296,20 +296,23 @@ TEST(ListTest, ArrayIndexOperator)
 TEST(ListTest, ToString)
 {
     List list("", "test list");
-    StringPtr *str = list.toStringPtr();
+    StringPtr *str = string_pool_new();
+    list.toStringPtr(str);
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "");
     ASSERT_EQ(str->size, 0);
     ASSERT_EQ(list.toString(), "");
 
     list.append("");
-    str = list.toStringPtr();
+    str = string_pool_new();
+    list.toStringPtr(str);
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "");
     ASSERT_EQ(str->size, 0);
     ASSERT_EQ(list.toString(), "");
 
     list.append("");
     list.append("");
-    str = list.toStringPtr();
+    str = string_pool_new();
+    list.toStringPtr(str);
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "  ");
     ASSERT_EQ(str->size, 2);
     ASSERT_EQ(list.toString(), "  ");
@@ -318,7 +321,8 @@ TEST(ListTest, ToString)
     list.append("item1");
     list.append("i t e m 2");
     list.append("item 3");
-    str = list.toStringPtr();
+    str = string_pool_new();
+    list.toStringPtr(str);
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "item1 i t e m 2 item 3");
     ASSERT_EQ(str->size, 22);
     ASSERT_EQ(list.toString(), "item1 i t e m 2 item 3");
@@ -328,7 +332,8 @@ TEST(ListTest, ToString)
     list.append("a ");
     list.append(" b");
     list.append(" c ");
-    str = list.toStringPtr();
+    str = string_pool_new();
+    list.toStringPtr(str);
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "  a   b  c ");
     ASSERT_EQ(str->size, 11);
     ASSERT_EQ(list.toString(), "  a   b  c ");
@@ -336,7 +341,8 @@ TEST(ListTest, ToString)
     list.clear();
     list.append("áä");
     list.append("ľ š");
-    str = list.toStringPtr();
+    str = string_pool_new();
+    list.toStringPtr(str);
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "áä ľ š");
     ASSERT_EQ(str->size, 6);
     ASSERT_EQ(list.toString(), "áä ľ š");
@@ -345,7 +351,8 @@ TEST(ListTest, ToString)
     list.append(-2);
     list.append(5);
     list.append(8);
-    str = list.toStringPtr();
+    str = string_pool_new();
+    list.toStringPtr(str);
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "-2 5 8");
     ASSERT_EQ(str->size, 6);
     ASSERT_EQ(list.toString(), "-2 5 8");
@@ -354,7 +361,8 @@ TEST(ListTest, ToString)
     list.append(2);
     list.append(10);
     list.append(8);
-    str = list.toStringPtr();
+    str = string_pool_new();
+    list.toStringPtr(str);
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "2 10 8");
     ASSERT_EQ(str->size, 6);
     ASSERT_EQ(list.toString(), "2 10 8");
@@ -363,7 +371,8 @@ TEST(ListTest, ToString)
     list.append(0);
     list.append(9);
     list.append(8);
-    str = list.toStringPtr();
+    str = string_pool_new();
+    list.toStringPtr(str);
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "098");
     ASSERT_EQ(str->size, 3);
     ASSERT_EQ(list.toString(), "098");
@@ -371,7 +380,8 @@ TEST(ListTest, ToString)
     list.clear();
     list.append("true");
     list.append("false");
-    str = list.toStringPtr();
+    str = string_pool_new();
+    list.toStringPtr(str);
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "true false");
     ASSERT_EQ(str->size, 10);
     ASSERT_EQ(list.toString(), "true false");
@@ -379,7 +389,8 @@ TEST(ListTest, ToString)
     list.clear();
     list.append(true);
     list.append(false);
-    str = list.toStringPtr();
+    str = string_pool_new();
+    list.toStringPtr(str);
     ASSERT_EQ(utf8::utf16to8(std::u16string(str->data)), "true false");
     ASSERT_EQ(str->size, 10);
     ASSERT_EQ(list.toString(), "true false");

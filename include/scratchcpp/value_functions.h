@@ -75,14 +75,14 @@ extern "C"
     LIBSCRATCHCPP_EXPORT double value_toDouble(const ValueData *v);
     LIBSCRATCHCPP_EXPORT bool value_toBool(const ValueData *v);
     LIBSCRATCHCPP_EXPORT void value_toString(const ValueData *v, std::string *dst);
-    LIBSCRATCHCPP_EXPORT StringPtr *value_toStringPtr(const ValueData *v);
+    LIBSCRATCHCPP_EXPORT void value_toStringPtr(const ValueData *v, StringPtr *dst);
     LIBSCRATCHCPP_EXPORT void value_toUtf16(const ValueData *v, std::u16string *dst);
     LIBSCRATCHCPP_EXPORT Rgb value_toRgba(const ValueData *v);
     LIBSCRATCHCPP_EXPORT const void *value_toPointer(const ValueData *v);
 
     LIBSCRATCHCPP_EXPORT bool value_doubleIsInt(double v);
 
-    LIBSCRATCHCPP_EXPORT StringPtr *value_doubleToStringPtr(double v);
+    LIBSCRATCHCPP_EXPORT void value_doubleToStringPtr(double v, StringPtr *dst);
     LIBSCRATCHCPP_EXPORT const StringPtr *value_boolToStringPtr(bool v);
     LIBSCRATCHCPP_EXPORT double value_stringToDouble(const StringPtr *s);
     LIBSCRATCHCPP_EXPORT double value_stringToDoubleWithCheck(const StringPtr *s, bool *ok);

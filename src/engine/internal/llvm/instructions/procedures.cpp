@@ -38,7 +38,6 @@ LLVMInstruction *Procedures::buildCallProcedure(LLVMInstruction *ins)
 
     assert(ins->procedurePrototype);
     assert(ins->args.size() == ins->procedurePrototype->argumentTypes().size());
-    m_utils.freeScopeHeap();
     m_utils.syncVariables();
 
     std::string name = m_utils.scriptFunctionName(ins->procedurePrototype);
