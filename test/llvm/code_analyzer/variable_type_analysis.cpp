@@ -896,6 +896,47 @@ TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, WriteInLoop)
     ASSERT_EQ(setVar->targetType, Compiler::StaticType::Unknown);
 }
 
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, NestedIfStatements)
+{
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    auto outerIf = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
+    list.addInstruction(outerIf);
+
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 1);
+    setVar1->targetVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    auto outerElse = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
+    list.addInstruction(outerElse);
+
+    auto innerIf = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
+    list.addInstruction(innerIf);
+
+    auto innerElse = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
+    list.addInstruction(innerElse);
+
+    auto innerIfEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
+    list.addInstruction(innerIfEnd);
+
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value2(Compiler::StaticType::String, "test");
+    setVar2->targetVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    auto outerIfEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
+    list.addInstruction(outerIfEnd);
+
+    m_analyzer->analyzeScript(list);
+
+    ASSERT_EQ(setVar1->targetType, Compiler::StaticType::Unknown);
+    ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Unknown);
+}
+
 TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, ComplexNestedControlFlow)
 {
     LLVMInstructionList list;

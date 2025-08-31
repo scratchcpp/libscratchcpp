@@ -29,6 +29,7 @@ class LLVMCodeAnalyzer
                 std::unordered_map<List *, Compiler::StaticType> listTypes;
 
                 std::unique_ptr<Branch> elseBranch;
+                bool isAtElse = false; // whether we're currently processing the else branch
         };
 
         void updateVariableType(Branch *branch, LLVMInstruction *ins, std::unordered_set<LLVMInstruction *> &typeAssignedInstructions, bool isWrite) const;

@@ -38,12 +38,21 @@ void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
             branch->listTypes = currentBranch->listTypes;
             currentBranch = branch.get();
             branches.push_back(std::move(branch));
+
+            assert(!currentBranch->isAtElse);
         } else if (isElse(ins)) {
             assert(!currentBranch->elseBranch);
 
             // Enter else branch with type information from the previous branch
             Branch *previousBranch = branches[branches.size() - 2].get();
+
+            if (previousBranch->isAtElse) {
+                previousBranch = previousBranch->elseBranch.get();
+                assert(previousBranch);
+            }
+
             currentBranch->elseBranch = std::make_unique<Branch>();
+            currentBranch->isAtElse = true;
             currentBranch = currentBranch->elseBranch.get();
             currentBranch->start = ins;
             currentBranch->variableTypes = previousBranch->variableTypes;
@@ -57,8 +66,12 @@ void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
                 // Merge/override types
                 Branch *previousBranch = branches[branches.size() - 2].get();
                 Branch *primaryBranch = branches.back().get();
-
                 assert(primaryBranch);
+
+                if (previousBranch->isAtElse) {
+                    previousBranch = previousBranch->elseBranch.get();
+                    assert(previousBranch);
+                }
 
                 if (primaryBranch && primaryBranch->elseBranch) {
                     // The previous variable types can be ignored in if/else statements
