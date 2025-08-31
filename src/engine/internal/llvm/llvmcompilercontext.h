@@ -37,7 +37,7 @@ class LLVMCompilerContext : public CompilerContext
         const std::unordered_map<function_id_t, LLVMExecutableCode *> &codeMap() const;
 
         void addDefinedProcedure(BlockPrototype *prototype);
-        void addUsedProcedure(BlockPrototype *prototype, const std::string &functionName, llvm::FunctionType *functionType);
+        void addUsedProcedure(BlockPrototype *prototype, const std::string &functionName);
 
         function_id_t getNextFunctionId();
 
@@ -70,6 +70,7 @@ class LLVMCompilerContext : public CompilerContext
 
         void initTarget();
         void createTargetMachine();
+        void createProcedureShims();
         void optimize(llvm::OptimizationLevel optLevel);
 
         llvm::Function *createCoroResumeFunction();
@@ -98,7 +99,7 @@ class LLVMCompilerContext : public CompilerContext
         llvm::Type *m_functionIdType = nullptr;
 
         std::unordered_set<BlockPrototype *> m_definedProcedures;
-        std::unordered_map<BlockPrototype *, std::pair<std::string, llvm::FunctionType *>> m_usedProcedures; // function name, function type
+        std::unordered_map<BlockPrototype *, std::string> m_usedProcedures;
 };
 
 } // namespace libscratchcpp

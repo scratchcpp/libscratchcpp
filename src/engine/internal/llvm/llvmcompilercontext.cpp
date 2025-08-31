@@ -7,6 +7,7 @@
 #include <llvm/IR/Verifier.h>
 
 #include <scratchcpp/target.h>
+#include <scratchcpp/blockprototype.h>
 #include <iostream>
 
 #include "llvmcompilercontext.h"
@@ -70,9 +71,9 @@ void LLVMCompilerContext::addDefinedProcedure(BlockPrototype *prototype)
     m_definedProcedures.insert(prototype);
 }
 
-void LLVMCompilerContext::addUsedProcedure(BlockPrototype *prototype, const std::string &functionName, llvm::FunctionType *functionType)
+void LLVMCompilerContext::addUsedProcedure(BlockPrototype *prototype, const std::string &functionName)
 {
-    m_usedProcedures[prototype] = { functionName, functionType };
+    m_usedProcedures[prototype] = functionName;
 }
 
 function_id_t LLVMCompilerContext::getNextFunctionId()
@@ -98,6 +99,9 @@ void LLVMCompilerContext::initJit()
     m_module->print(llvm::outs(), nullptr);
     std::cout << "==============" << std::endl << std::endl;
 #endif
+
+    // Define shims for missing procedures
+    createProcedureShims();
 
     // Optimize
     optimize(llvm::OptimizationLevel::O3);
@@ -197,6 +201,27 @@ void LLVMCompilerContext::createTargetMachine()
     const char *features = "";
 
     m_targetMachine = std::unique_ptr<llvm::TargetMachine>(target->createTargetMachine(targetTriple, cpu, features, opt, llvm::Reloc::PIC_));
+}
+
+void LLVMCompilerContext::createProcedureShims()
+{
+    llvm::IRBuilder<> builder(*m_llvmCtx);
+
+    for (const auto &[prototype, name] : m_usedProcedures) {
+        if (m_definedProcedures.find(prototype) == m_definedProcedures.cend()) {
+            std::cout << "warning: procedure \"" << prototype->procCode() << "\" is not defined" << std::endl;
+
+            // We need to define shims for undefined procedures (the JIT compiler crashes without them)
+            llvm::Function *func = m_module->getFunction(name); // since the function is used, it's already declared
+            llvm::BasicBlock *entry = llvm::BasicBlock::Create(*m_llvmCtx, "entry", func);
+            llvm::PointerType *pointerType = llvm::PointerType::get(*m_llvmCtx, 0);
+            llvm::Constant *nullPointer = llvm::ConstantPointerNull::get(pointerType);
+            builder.SetInsertPoint(entry);
+            builder.CreateRet(nullPointer);
+
+            verifyFunction(func);
+        }
+    }
 }
 
 void LLVMCompilerContext::optimize(llvm::OptimizationLevel optLevel)

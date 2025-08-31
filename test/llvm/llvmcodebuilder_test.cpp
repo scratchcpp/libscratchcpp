@@ -3522,6 +3522,36 @@ TEST_F(LLVMCodeBuilderTest, Procedures)
     ASSERT_TRUE(code->isFinished(ctx.get()));
 }
 
+TEST_F(LLVMCodeBuilderTest, UndefinedProcedure)
+{
+    Sprite sprite;
+
+    BlockPrototype prototype;
+    prototype.setProcCode("procedure 1 %s %s %b");
+    prototype.setArgumentNames({ "any type 1", "any type 2", "bool" });
+    prototype.setArgumentIds({ "a", "b", "c" });
+    prototype.setWarp(false);
+
+    LLVMCodeBuilder *builder = m_utils.createBuilder(&sprite, false);
+    builder->createProcedureCall(&prototype, { builder->addConstValue("test"), builder->addConstValue(true), builder->addConstValue(false) });
+
+    CompilerValue *v = builder->addConstValue("test");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    std::string expected = "test\n";
+
+    auto code = builder->build();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+    ASSERT_TRUE(code->isFinished(ctx.get()));
+}
+
 TEST_F(LLVMCodeBuilderTest, HatPredicates)
 {
     Sprite sprite;
