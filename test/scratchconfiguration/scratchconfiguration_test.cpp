@@ -68,3 +68,21 @@ TEST_F(ScratchConfigurationTest, GraphicsEffects)
     ScratchConfiguration::removeGraphicsEffect("effect1");
     ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("effect1"), nullptr);
 }
+
+TEST_F(ScratchConfigurationTest, GraphicsEffects_CaseInsensitive)
+{
+    auto effect1 = std::make_shared<GraphicsEffectMock>();
+    auto effect2 = std::make_shared<GraphicsEffectMock>();
+
+    EXPECT_CALL(*effect1, name()).WillOnce(Return("eFfEct1"));
+    EXPECT_CALL(*effect2, name()).WillOnce(Return("eFFeCT2"));
+    ScratchConfiguration::registerGraphicsEffect(effect1);
+    ScratchConfiguration::registerGraphicsEffect(effect2);
+
+    ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("EFFECT1"), effect1.get());
+    ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("effEct2"), effect2.get());
+    ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("effect3"), nullptr);
+
+    ScratchConfiguration::removeGraphicsEffect("effect1");
+    ScratchConfiguration::removeGraphicsEffect("effect2");
+}

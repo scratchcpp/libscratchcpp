@@ -2,7 +2,7 @@
 
 #include <scratchcpp/scratchconfiguration.h>
 #include <scratchcpp/igraphicseffect.h>
-#include <iostream>
+#include <algorithm>
 
 #include "scratchconfiguration_p.h"
 
@@ -44,12 +44,21 @@ void ScratchConfiguration::removeGraphicsEffect(const std::string &name)
 /*! Returns the graphics effect with the given name, or nullptr if it isn't registered. */
 IGraphicsEffect *ScratchConfiguration::getGraphicsEffect(const std::string &name)
 {
-    auto it = getImpl()->graphicsEffects.find(name);
+    // Effect names are case insensitive
+    std::string lower = name;
+    std::transform(lower.begin(), lower.end(), lower.begin(), [](char c) { return std::tolower(c); });
 
-    if (it == getImpl()->graphicsEffects.cend())
-        return nullptr;
-    else
-        return it->second.get();
+    const auto &effects = getImpl()->graphicsEffects;
+
+    for (const auto &[currentName, effect] : effects) {
+        std::string current = currentName;
+        std::transform(current.begin(), current.end(), current.begin(), [](char c) { return std::tolower(c); });
+
+        if (current == lower)
+            return effect.get();
+    }
+
+    return nullptr;
 }
 
 /*! Returns the version string of the library. */
