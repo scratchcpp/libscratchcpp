@@ -44,7 +44,7 @@ LLVMInstruction *Procedures::buildCallProcedure(LLVMInstruction *ins)
     llvm::FunctionType *type = m_utils.scriptFunctionType(ins->procedurePrototype);
     std::vector<llvm::Value *> args;
 
-    m_utils.compilerCtx()->addUsedProcedure(name);
+    m_utils.compilerCtx()->addUsedProcedure(ins->procedurePrototype, name, type);
 
     llvm::FunctionType *funcType = m_utils.scriptFunctionType(nullptr);
     int passArgCount = funcType->getNumParams();

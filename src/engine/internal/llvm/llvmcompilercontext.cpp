@@ -65,9 +65,9 @@ const std::unordered_map<function_id_t, LLVMExecutableCode *> &LLVMCompilerConte
     return m_codeMap;
 }
 
-void LLVMCompilerContext::addUsedProcedure(const std::string &functionName)
+void LLVMCompilerContext::addUsedProcedure(BlockPrototype *prototype, const std::string &functionName, llvm::FunctionType *functionType)
 {
-    m_usedProcedures.insert(functionName);
+    m_usedProcedures[prototype] = { functionName, functionType };
 }
 
 function_id_t LLVMCompilerContext::getNextFunctionId()
