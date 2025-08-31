@@ -8,6 +8,8 @@
 
 #include <scratchcpp/compilercontext.h>
 
+#include <unordered_set>
+
 namespace libscratchcpp
 {
 
@@ -31,6 +33,8 @@ class LLVMCompilerContext : public CompilerContext
 
         void addCode(LLVMExecutableCode *code);
         const std::unordered_map<function_id_t, LLVMExecutableCode *> &codeMap() const;
+
+        void addUsedProcedure(const std::string &functionName);
 
         function_id_t getNextFunctionId();
 
@@ -89,6 +93,8 @@ class LLVMCompilerContext : public CompilerContext
         llvm::StructType *m_valueDataType = nullptr;
         llvm::StructType *m_stringPtrType = nullptr;
         llvm::Type *m_functionIdType = nullptr;
+
+        std::unordered_set<std::string> m_usedProcedures;
 };
 
 } // namespace libscratchcpp
