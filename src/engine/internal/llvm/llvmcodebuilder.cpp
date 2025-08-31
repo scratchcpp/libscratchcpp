@@ -73,9 +73,10 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::build()
     std::string funcName = m_utils.scriptFunctionName(m_procedurePrototype);
     llvm::FunctionType *funcType = m_utils.scriptFunctionType(m_procedurePrototype);
 
-    if (m_procedurePrototype)
+    if (m_procedurePrototype) {
         m_function = getOrCreateFunction(funcName, funcType);
-    else
+        m_ctx->addDefinedProcedure(m_procedurePrototype);
+    } else
         m_function = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, funcName, m_module);
 
     llvm::BasicBlock *entry = llvm::BasicBlock::Create(m_llvmCtx, "entry", m_function);
