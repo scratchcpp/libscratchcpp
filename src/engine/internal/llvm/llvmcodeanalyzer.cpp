@@ -300,12 +300,7 @@ Compiler::StaticType LLVMCodeAnalyzer::writeType(LLVMInstruction *ins) const
     auto &arg = ins->args.back(); // value is always the last argument in variable/list write instructions
     const LLVMRegister *argReg = arg.second;
 
-    if (argReg->instruction) {
-        if (isVariableRead(argReg->instruction.get()) || isListRead(argReg->instruction.get())) {
-            // Store the variable/list type in the value argument
-            arg.first = argReg->instruction->functionReturnReg->type();
-        }
-    }
-
-    return m_utils.optimizeRegisterType(argReg);
+    Compiler::StaticType ret = m_utils.optimizeRegisterType(argReg);
+    arg.first = ret; // store the return type in the value argument
+    return ret;
 }
