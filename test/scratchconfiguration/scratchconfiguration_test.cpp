@@ -83,6 +83,10 @@ TEST_F(ScratchConfigurationTest, GraphicsEffects_CaseInsensitive)
     ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("effEct2"), effect2.get());
     ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("effect3"), nullptr);
 
-    ScratchConfiguration::removeGraphicsEffect("effect1");
     ScratchConfiguration::removeGraphicsEffect("effect2");
+    ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("effect1"), effect1.get());
+    ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("effect2"), nullptr);
+
+    ScratchConfiguration::removeGraphicsEffect("effEct1");
+    ASSERT_EQ(ScratchConfiguration::getGraphicsEffect("effect1"), nullptr);
 }

@@ -32,13 +32,17 @@ void ScratchConfiguration::registerGraphicsEffect(std::shared_ptr<IGraphicsEffec
     if (!effect)
         return;
 
-    getImpl()->graphicsEffects[effect->name()] = effect;
+    std::string lower = effect->name();
+    std::transform(lower.begin(), lower.end(), lower.begin(), [](char c) { return std::tolower(c); });
+    getImpl()->graphicsEffects[lower] = effect;
 }
 
 /*! Removes the given graphics effect. */
 void ScratchConfiguration::removeGraphicsEffect(const std::string &name)
 {
-    getImpl()->graphicsEffects.erase(name);
+    std::string lower = name;
+    std::transform(lower.begin(), lower.end(), lower.begin(), [](char c) { return std::tolower(c); });
+    getImpl()->graphicsEffects.erase(lower);
 }
 
 /*! Returns the graphics effect with the given name, or nullptr if it isn't registered. */
@@ -48,15 +52,12 @@ IGraphicsEffect *ScratchConfiguration::getGraphicsEffect(const std::string &name
     std::string lower = name;
     std::transform(lower.begin(), lower.end(), lower.begin(), [](char c) { return std::tolower(c); });
 
-    const auto &effects = getImpl()->graphicsEffects;
+    auto it = getImpl()->graphicsEffects.find(lower);
 
-    for (const auto &[currentName, effect] : effects) {
-        std::string current = currentName;
-        std::transform(current.begin(), current.end(), current.begin(), [](char c) { return std::tolower(c); });
-
-        if (current == lower)
-            return effect.get();
-    }
+    if (it == getImpl()->graphicsEffects.cend())
+        return nullptr;
+    else
+        return it->second.get();
 
     return nullptr;
 }
