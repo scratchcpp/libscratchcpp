@@ -11,6 +11,13 @@ target_sources(scratchcpp
     rect_p.h
 )
 
+add_library(scratchcpp-test-export
+  INTERFACE
+    test_export.h
+)
+
+target_include_directories(scratchcpp-test-export INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
 add_subdirectory(blocks)
 add_subdirectory(engine)
 add_subdirectory(internal)
