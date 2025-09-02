@@ -6,6 +6,8 @@
 #include <vector>
 #include <memory>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
@@ -14,7 +16,7 @@ class IClock;
 class ExecutionContext;
 class Thread;
 
-class SensingBlocks : public IExtension
+class LIBSCRATCHCPP_TEST_EXPORT SensingBlocks : public IExtension
 {
     public:
         std::string name() const override;

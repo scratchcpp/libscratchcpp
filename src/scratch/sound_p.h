@@ -6,6 +6,7 @@
 
 #include "audio/iaudiooutput.h"
 #include "audio/iaudioplayer.h"
+#include "test_export.h"
 
 namespace libscratchcpp
 {
@@ -13,7 +14,7 @@ namespace libscratchcpp
 class Sound;
 class Thread;
 
-struct SoundPrivate
+struct LIBSCRATCHCPP_TEST_EXPORT SoundPrivate
 {
         SoundPrivate();
         SoundPrivate(const SoundPrivate &) = delete;

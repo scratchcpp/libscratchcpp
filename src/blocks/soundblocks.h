@@ -4,12 +4,14 @@
 
 #include <scratchcpp/iextension.h>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
 class IAudioOutput;
 
-class SoundBlocks : public IExtension
+class LIBSCRATCHCPP_TEST_EXPORT SoundBlocks : public IExtension
 {
     public:
         std::string name() const override;

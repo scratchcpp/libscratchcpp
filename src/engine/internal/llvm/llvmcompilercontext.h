@@ -11,6 +11,8 @@
 #include <unordered_set>
 #include <unordered_map>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
@@ -23,7 +25,7 @@ class LLVMExecutableCode;
 // NOTE: Change this in LLVMTypes as well
 using function_id_t = unsigned int;
 
-class LLVMCompilerContext : public CompilerContext
+class LIBSCRATCHCPP_TEST_EXPORT LLVMCompilerContext : public CompilerContext
 {
     public:
         LLVMCompilerContext(IEngine *engine, Target *target);

@@ -3,12 +3,14 @@
 #pragma once
 
 #include <memory>
+
 #include "iclock.h"
+#include "test_export.h"
 
 namespace libscratchcpp
 {
 
-class Clock : public IClock
+class LIBSCRATCHCPP_TEST_EXPORT Clock : public IClock
 {
     public:
         Clock();

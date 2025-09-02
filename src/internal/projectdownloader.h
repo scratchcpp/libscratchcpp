@@ -7,6 +7,7 @@
 #include <mutex>
 
 #include "iprojectdownloader.h"
+#include "test_export.h"
 
 namespace libscratchcpp
 {
@@ -14,7 +15,7 @@ namespace libscratchcpp
 class IDownloaderFactory;
 class IDownloader;
 
-class ProjectDownloader : public IProjectDownloader
+class LIBSCRATCHCPP_TEST_EXPORT ProjectDownloader : public IProjectDownloader
 {
     public:
         ProjectDownloader(IDownloaderFactory *downloaderFactory = nullptr);

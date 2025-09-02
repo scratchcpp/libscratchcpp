@@ -5,12 +5,14 @@
 #include <scratchcpp/itimer.h>
 #include <chrono>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
 class IClock;
 
-class Timer : public ITimer
+class LIBSCRATCHCPP_TEST_EXPORT Timer : public ITimer
 {
     public:
         Timer();

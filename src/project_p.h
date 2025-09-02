@@ -5,6 +5,8 @@
 #include <scratchcpp/project.h>
 #include <string>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
@@ -13,7 +15,7 @@ class IProjectReader;
 class IProjectDownloaderFactory;
 class IProjectDownloader;
 
-struct ProjectPrivate
+struct LIBSCRATCHCPP_TEST_EXPORT ProjectPrivate
 {
         ProjectPrivate();
         ProjectPrivate(const std::string &fileName);

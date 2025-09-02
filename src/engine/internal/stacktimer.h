@@ -5,12 +5,14 @@
 #include <scratchcpp/istacktimer.h>
 #include <chrono>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
 class IClock;
 
-class StackTimer : public IStackTimer
+class LIBSCRATCHCPP_TEST_EXPORT StackTimer : public IStackTimer
 {
     public:
         StackTimer();

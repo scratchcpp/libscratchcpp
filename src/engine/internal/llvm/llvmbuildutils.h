@@ -4,6 +4,7 @@
 
 #include <scratchcpp/valuedata.h>
 
+#include "test_export.h"
 #include "llvmfunctions.h"
 #include "llvmlocalvariableinfo.h"
 #include "llvmvariableptr.h"
@@ -19,7 +20,7 @@ namespace libscratchcpp
 class LLVMRegister;
 class LLVMCoroutine;
 
-class LLVMBuildUtils
+class LIBSCRATCHCPP_TEST_EXPORT LLVMBuildUtils
 {
     public:
         enum class Comparison

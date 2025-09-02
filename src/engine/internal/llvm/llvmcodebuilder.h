@@ -10,6 +10,7 @@
 #include <llvm/IR/IRBuilder.h>
 
 #include "../icodebuilder.h"
+#include "test_export.h"
 #include "llvmbuildutils.h"
 #include "llvmcodeanalyzer.h"
 #include "llvminstruction.h"
@@ -26,7 +27,7 @@ namespace libscratchcpp
 class LLVMCompilerContext;
 class LLVMConstantRegister;
 
-class LLVMCodeBuilder : public ICodeBuilder
+class LIBSCRATCHCPP_TEST_EXPORT LLVMCodeBuilder : public ICodeBuilder
 {
     public:
         LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *procedurePrototype = nullptr, Compiler::CodeType codeType = Compiler::CodeType::Script);

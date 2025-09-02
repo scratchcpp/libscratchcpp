@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include <memory>
-
 #include "../iaudioengine.h"
 
 struct ma_engine;
@@ -12,7 +10,7 @@ namespace libscratchcpp
 {
 
 // This is a singleton which initializes and uninitializes the miniaudio engine
-class AudioEngine : public IAudioEngine
+class LIBSCRATCHCPP_TEST_EXPORT AudioEngine : public IAudioEngine
 {
     public:
         AudioEngine();

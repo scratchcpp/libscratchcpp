@@ -5,12 +5,14 @@
 #include <memory>
 #include <functional>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
 struct LLVMInstruction;
 
-class LLVMInstructionList
+class LIBSCRATCHCPP_TEST_EXPORT LLVMInstructionList
 {
     public:
         LLVMInstructionList() = default;

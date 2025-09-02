@@ -4,10 +4,12 @@
 
 #include <string>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
-class ProjectUrl
+class LIBSCRATCHCPP_TEST_EXPORT ProjectUrl
 {
     public:
         ProjectUrl(const std::string &url);

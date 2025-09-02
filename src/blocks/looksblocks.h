@@ -4,7 +4,8 @@
 
 #include <scratchcpp/iextension.h>
 #include <scratchcpp/textbubble.h>
-#include <unordered_map>
+
+#include "test_export.h"
 
 namespace libscratchcpp
 {
@@ -13,7 +14,7 @@ class Target;
 class Thread;
 class IGraphicsEffect;
 
-class LooksBlocks : public IExtension
+class LIBSCRATCHCPP_TEST_EXPORT LooksBlocks : public IExtension
 {
     public:
         std::string name() const override;

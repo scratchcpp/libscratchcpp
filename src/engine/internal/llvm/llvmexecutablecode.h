@@ -8,13 +8,14 @@
 #include <llvm/IR/LLVMContext.h>
 
 #include "llvmcompilercontext.h"
+#include "test_export.h"
 
 namespace libscratchcpp
 {
 
 class LLVMExecutionContext;
 
-class LLVMExecutableCode : public ExecutableCode
+class LIBSCRATCHCPP_TEST_EXPORT LLVMExecutableCode : public ExecutableCode
 {
     public:
         LLVMExecutableCode(

@@ -3,11 +3,12 @@
 #pragma once
 
 #include "iprojectdownloaderfactory.h"
+#include "test_export.h"
 
 namespace libscratchcpp
 {
 
-class ProjectDownloaderFactory : public IProjectDownloaderFactory
+class LIBSCRATCHCPP_TEST_EXPORT ProjectDownloaderFactory : public IProjectDownloaderFactory
 {
     public:
         ProjectDownloaderFactory();
