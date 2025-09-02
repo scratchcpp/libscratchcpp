@@ -15,8 +15,9 @@ class IProjectReader;
 class IProjectDownloaderFactory;
 class IProjectDownloader;
 
-struct LIBSCRATCHCPP_TEST_EXPORT ProjectPrivate
+class LIBSCRATCHCPP_TEST_EXPORT ProjectPrivate
 {
+    public:
         ProjectPrivate();
         ProjectPrivate(const std::string &fileName);
         ProjectPrivate(const ProjectPrivate &) = delete;
@@ -35,8 +36,13 @@ struct LIBSCRATCHCPP_TEST_EXPORT ProjectPrivate
         std::atomic<bool> stopLoading = false;
         std::shared_ptr<IEngine> engine = nullptr;
 
-        static IProjectDownloaderFactory *downloaderFactory;
         std::shared_ptr<IProjectDownloader> downloader;
+
+        static IProjectDownloaderFactory *downloaderFactory();
+        static void setDownloaderFactory(IProjectDownloaderFactory *downloaderFactory);
+
+    private:
+        static inline IProjectDownloaderFactory *m_downloaderFactory = nullptr;
 };
 
 }; // namespace libscratchcpp

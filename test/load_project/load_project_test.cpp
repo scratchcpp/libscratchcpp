@@ -81,12 +81,12 @@ TEST(LoadProjectTest, DownloadDefaultProject)
 {
     ProjectDownloaderFactoryMock factory;
     auto downloader = std::make_shared<ProjectDownloaderMock>();
-    ProjectPrivate::downloaderFactory = &factory;
+    ProjectPrivate::setDownloaderFactory(&factory);
 
     EXPECT_CALL(factory, create()).WillOnce(Return(downloader));
     ProjectPrivate p;
     p.fileName = "https://scratch.mit.edu/projects/ABCDEFGH"; // NOTE: This is a fake URL
-    ProjectPrivate::downloaderFactory = nullptr;
+    ProjectPrivate::setDownloaderFactory(nullptr);
 
     std::string data = readFileStr("default_project.json");
     static const std::vector<std::string> assets = {
@@ -144,12 +144,12 @@ TEST(LoadProjectTest, DownloadDefaultProjectFailure)
 {
     ProjectDownloaderFactoryMock factory;
     auto downloader = std::make_shared<ProjectDownloaderMock>();
-    ProjectPrivate::downloaderFactory = &factory;
+    ProjectPrivate::setDownloaderFactory(&factory);
 
     EXPECT_CALL(factory, create()).WillOnce(Return(downloader));
     ProjectPrivate p;
     p.fileName = "https://scratch.mit.edu/projects/ABCDEFGH"; // NOTE: This is a fake URL
-    ProjectPrivate::downloaderFactory = nullptr;
+    ProjectPrivate::setDownloaderFactory(nullptr);
 
     std::string data = readFileStr("default_project.json");
     static const std::vector<std::string> assets = {

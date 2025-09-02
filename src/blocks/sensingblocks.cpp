@@ -431,6 +431,26 @@ void SensingBlocks::askNextQuestion()
         engine->questionAsked()(question->question);
 }
 
+IAudioInput *SensingBlocks::audioInput()
+{
+    return m_audioInput;
+}
+
+void SensingBlocks::setAudioInput(IAudioInput *audioInput)
+{
+    m_audioInput = audioInput;
+}
+
+IClock *SensingBlocks::clock()
+{
+    return m_clock;
+}
+
+void SensingBlocks::setClock(IClock *clock)
+{
+    m_clock = clock;
+}
+
 BLOCK_EXPORT bool sensing_touching_mouse(Target *target)
 {
     IEngine *engine = target->engine();
@@ -556,10 +576,10 @@ BLOCK_EXPORT void sensing_setdragmode(Sprite *sprite, bool draggable)
 
 BLOCK_EXPORT double sensing_loudness()
 {
-    if (!SensingBlocks::audioInput)
-        SensingBlocks::audioInput = AudioInput::instance().get();
+    if (!SensingBlocks::audioInput())
+        SensingBlocks::setAudioInput(AudioInput::instance().get());
 
-    auto audioLoudness = SensingBlocks::audioInput->audioLoudness();
+    auto audioLoudness = SensingBlocks::audioInput()->audioLoudness();
     return audioLoudness->getLoudness();
 }
 
@@ -773,9 +793,9 @@ BLOCK_EXPORT double sensing_current_second()
 
 BLOCK_EXPORT double sensing_dayssince2000()
 {
-    if (!SensingBlocks::clock)
-        SensingBlocks::clock = Clock::instance().get();
+    if (!SensingBlocks::clock())
+        SensingBlocks::setClock(Clock::instance().get());
 
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(SensingBlocks::clock->currentSystemTime().time_since_epoch()).count();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(SensingBlocks::clock()->currentSystemTime().time_since_epoch()).count();
     return ms / 86400000.0 - 10957.0;
 }

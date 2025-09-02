@@ -29,8 +29,11 @@ class LIBSCRATCHCPP_TEST_EXPORT SensingBlocks : public IExtension
         static void clearQuestions();
         static void askQuestion(ExecutionContext *ctx, const StringPtr *question);
 
-        static inline IAudioInput *audioInput = nullptr;
-        static inline IClock *clock = nullptr;
+        static IAudioInput *audioInput();
+        static void setAudioInput(IAudioInput *audioInput);
+
+        static IClock *clock();
+        static void setClock(IClock *clock);
 
     private:
         struct Question
@@ -73,6 +76,9 @@ class LIBSCRATCHCPP_TEST_EXPORT SensingBlocks : public IExtension
         static void askNextQuestion();
 
         static inline std::vector<std::unique_ptr<Question>> m_questions;
+
+        static inline IAudioInput *m_audioInput = nullptr;
+        static inline IClock *m_clock = nullptr;
 };
 
 } // namespace libscratchcpp

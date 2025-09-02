@@ -446,7 +446,7 @@ TEST(TargetTest, Sounds)
     auto player1 = std::make_shared<AudioPlayerMock>();
     auto player2 = std::make_shared<AudioPlayerMock>();
     auto player3 = std::make_shared<AudioPlayerMock>();
-    SoundPrivate::audioOutput = &factory;
+    SoundPrivate::setAudioOutput(&factory);
     EXPECT_CALL(factory, createAudioPlayer()).WillOnce(Return(player1)).WillOnce(Return(player2)).WillOnce(Return(player3));
     auto s1 = std::make_shared<Sound>("sound1", "", "mp3");
     auto s2 = std::make_shared<Sound>("sound2", "", "wav");
@@ -477,7 +477,7 @@ TEST(TargetTest, Sounds)
     ASSERT_EQ(s2->target(), &target);
     ASSERT_EQ(s3->target(), &target);
 
-    SoundPrivate::audioOutput = nullptr;
+    SoundPrivate::setAudioOutput(nullptr);
 }
 
 TEST(TargetTest, Volume)
@@ -501,7 +501,7 @@ TEST(TargetTest, Volume)
     auto player1 = std::make_shared<AudioPlayerMock>();
     auto player2 = std::make_shared<AudioPlayerMock>();
     auto player3 = std::make_shared<AudioPlayerMock>();
-    SoundPrivate::audioOutput = &factory;
+    SoundPrivate::setAudioOutput(&factory);
     EXPECT_CALL(factory, createAudioPlayer()).WillOnce(Return(player1)).WillOnce(Return(player2)).WillOnce(Return(player3));
     auto s1 = std::make_shared<Sound>("", "", "");
     auto s2 = std::make_shared<Sound>("", "", "");
@@ -531,7 +531,7 @@ TEST(TargetTest, Volume)
     EXPECT_CALL(*player3, setVolume(0));
     target.setVolume(-0.5);
 
-    SoundPrivate::audioOutput = nullptr;
+    SoundPrivate::setAudioOutput(nullptr);
 }
 
 TEST(TargetTest, SoundEffects)

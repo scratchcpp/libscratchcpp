@@ -26,8 +26,8 @@ CompilerPrivate::CompilerPrivate(IEngine *engine, Target *target) :
 
 void CompilerPrivate::initBuilderFactory()
 {
-    if (!builderFactory)
-        builderFactory = CodeBuilderFactory::instance().get();
+    if (!m_builderFactory)
+        m_builderFactory = CodeBuilderFactory::instance().get();
 }
 
 void CompilerPrivate::substackEnd()
@@ -66,4 +66,14 @@ void CompilerPrivate::substackEnd()
 
     if (!block && !substackTree.empty())
         substackEnd();
+}
+
+ICodeBuilderFactory *CompilerPrivate::builderFactory()
+{
+    return m_builderFactory;
+}
+
+void CompilerPrivate::setBuilderFactory(ICodeBuilderFactory *builderFactory)
+{
+    m_builderFactory = builderFactory;
 }

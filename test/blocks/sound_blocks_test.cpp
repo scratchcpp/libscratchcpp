@@ -30,10 +30,10 @@ class SoundBlocksTest : public testing::Test
             m_extension->registerBlocks(m_engine);
             m_extension->onInit(m_engine);
 
-            SoundPrivate::audioOutput = &m_outputMock;
+            SoundPrivate::setAudioOutput(&m_outputMock);
         }
 
-        void TearDown() override { SoundPrivate::audioOutput = nullptr; }
+        void TearDown() override { SoundPrivate::setAudioOutput(nullptr); }
 
         std::unique_ptr<IExtension> m_extension;
         Project m_project;

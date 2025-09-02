@@ -5,13 +5,16 @@
 
 using namespace libscratchcpp;
 
-IAudioOutput *SoundPrivate::audioOutput = nullptr;
-
 SoundPrivate::SoundPrivate()
 {
     // NOTE: audioOutput must be initialized in the constructor to avoid static initialization order fiasco
-    if (!audioOutput)
-        audioOutput = AudioOutput::instance().get();
+    if (!m_audioOutput)
+        m_audioOutput = AudioOutput::instance().get();
 
-    player = audioOutput->createAudioPlayer();
+    player = m_audioOutput->createAudioPlayer();
+}
+
+void SoundPrivate::setAudioOutput(IAudioOutput *audioOutput)
+{
+    m_audioOutput = audioOutput;
 }

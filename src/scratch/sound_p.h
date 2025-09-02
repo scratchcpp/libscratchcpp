@@ -14,17 +14,22 @@ namespace libscratchcpp
 class Sound;
 class Thread;
 
-struct LIBSCRATCHCPP_TEST_EXPORT SoundPrivate
+class LIBSCRATCHCPP_TEST_EXPORT SoundPrivate
 {
+    public:
         SoundPrivate();
         SoundPrivate(const SoundPrivate &) = delete;
 
         int rate = 0;
         int sampleCount = 0;
-        static IAudioOutput *audioOutput;
         std::shared_ptr<IAudioPlayer> player = nullptr;
         const Sound *cloneRoot = nullptr;
         Thread *owner = nullptr;
+
+        static void setAudioOutput(IAudioOutput *newAudioOutput);
+
+    private:
+        static inline IAudioOutput *m_audioOutput = nullptr;
 };
 
 } // namespace libscratchcpp
