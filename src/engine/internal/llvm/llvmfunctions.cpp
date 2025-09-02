@@ -11,27 +11,27 @@ using namespace libscratchcpp;
 
 extern "C"
 {
-    double llvm_random(ExecutionContext *ctx, ValueData *from, ValueData *to)
+    LIBSCRATCHCPP_EXPORT double llvm_random(ExecutionContext *ctx, ValueData *from, ValueData *to)
     {
         return value_isInt(from) && value_isInt(to) ? ctx->rng()->randint(value_toLong(from), value_toLong(to)) : ctx->rng()->randintDouble(value_toDouble(from), value_toDouble(to));
     }
 
-    double llvm_random_double(ExecutionContext *ctx, double from, double to)
+    LIBSCRATCHCPP_EXPORT double llvm_random_double(ExecutionContext *ctx, double from, double to)
     {
         return value_doubleIsInt(from) && value_doubleIsInt(to) ? ctx->rng()->randint(from, to) : ctx->rng()->randintDouble(from, to);
     }
 
-    int64_t llvm_random_int64(ExecutionContext *ctx, int64_t from, int64_t to)
+    LIBSCRATCHCPP_EXPORT int64_t llvm_random_int64(ExecutionContext *ctx, int64_t from, int64_t to)
     {
         return ctx->rng()->randint(from, to);
     }
 
-    double llvm_random_bool(ExecutionContext *ctx, bool from, bool to)
+    LIBSCRATCHCPP_EXPORT double llvm_random_bool(ExecutionContext *ctx, bool from, bool to)
     {
         return ctx->rng()->randint(from, to);
     }
 
-    StringPtr **llvm_get_string_array(ExecutionContext *ctx, function_id_t functionId)
+    LIBSCRATCHCPP_EXPORT StringPtr **llvm_get_string_array(ExecutionContext *ctx, function_id_t functionId)
     {
         return static_cast<LLVMExecutionContext *>(ctx)->getStringArray(functionId);
     }
