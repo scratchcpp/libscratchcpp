@@ -82,6 +82,17 @@ target_sources(scratchcpp
 
 include(FetchContent)
 
+# Compiler options
+target_compile_options(scratchcpp PRIVATE
+    -fvisibility=hidden
+    -fvisibility-inlines-hidden
+)
+
+target_link_options(scratchcpp PRIVATE
+    -Wl,--exclude-libs,ALL
+    -Wl,-Bsymbolic
+)
+
 # zip
 include(build/zip.cmake)
 target_link_libraries(scratchcpp PRIVATE zip)
@@ -139,7 +150,11 @@ target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION_MINOR=${PROJ
 target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION_PATCH=${PROJECT_VERSION_PATCH})
 
 # Unit tests
+target_link_libraries(scratchcpp PRIVATE scratchcpp-test-export)
+
 if (LIBSCRATCHCPP_BUILD_UNIT_TESTS)
+    target_compile_definitions(scratchcpp-test-export INTERFACE LIBSCRATCHCPP_TEST)
+
     enable_testing()
     add_subdirectory(test)
 endif()

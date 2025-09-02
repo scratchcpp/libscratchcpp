@@ -43,10 +43,10 @@ class SensingBlocksTest : public testing::Test
             registerBlocks(m_engine, m_extension.get());
 
             m_audioLoudness = std::make_shared<AudioLoudnessMock>();
-            SensingBlocks::audioInput = &m_audioInput;
+            SensingBlocks::setAudioInput(&m_audioInput);
             EXPECT_CALL(m_audioInput, audioLoudness()).WillRepeatedly(Return(m_audioLoudness));
 
-            SensingBlocks::clock = &m_clock;
+            SensingBlocks::setClock(&m_clock);
 
             EXPECT_CALL(m_engineMock, targets()).WillRepeatedly(ReturnRef(m_engine->targets()));
         }
@@ -54,8 +54,8 @@ class SensingBlocksTest : public testing::Test
         void TearDown() override
         {
             SensingBlocks::clearQuestions();
-            SensingBlocks::audioInput = nullptr;
-            SensingBlocks::clock = nullptr;
+            SensingBlocks::setAudioInput(nullptr);
+            SensingBlocks::setClock(nullptr);
         }
 
         std::unique_ptr<IExtension> m_extension;

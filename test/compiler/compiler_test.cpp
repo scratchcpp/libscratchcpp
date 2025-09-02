@@ -29,7 +29,7 @@ class CompilerTest : public testing::Test
         void SetUp() override
         {
             m_ctx = std::make_shared<CompilerContext>(&m_engine, &m_target);
-            CompilerPrivate::builderFactory = &m_builderFactory;
+            CompilerPrivate::setBuilderFactory(&m_builderFactory);
 
             EXPECT_CALL(m_builderFactory, createCtx(&m_engine, &m_target)).WillOnce(Return(m_ctx));
             m_compiler = std::make_unique<Compiler>(&m_engine, &m_target);
@@ -40,7 +40,7 @@ class CompilerTest : public testing::Test
 
         void TearDown() override
         {
-            CompilerPrivate::builderFactory = nullptr;
+            CompilerPrivate::setBuilderFactory(nullptr);
             m_builder.reset();
             m_compareBlock.reset();
             m_testVar.reset();

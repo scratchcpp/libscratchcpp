@@ -3,11 +3,12 @@
 #pragma once
 
 #include "iaudiooutput.h"
+#include "test_export.h"
 
 namespace libscratchcpp
 {
 
-class AudioOutput : public IAudioOutput
+class LIBSCRATCHCPP_TEST_EXPORT AudioOutput : public IAudioOutput
 {
     public:
         AudioOutput();

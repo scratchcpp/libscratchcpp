@@ -3,11 +3,12 @@
 #pragma once
 
 #include "../iaudioplayer.h"
+#include "test_export.h"
 
 namespace libscratchcpp
 {
 
-class AudioPlayerStub : public IAudioPlayer
+class LIBSCRATCHCPP_TEST_EXPORT AudioPlayerStub : public IAudioPlayer
 {
     public:
         AudioPlayerStub();

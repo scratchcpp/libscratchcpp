@@ -3,13 +3,14 @@
 #pragma once
 
 #include "../iaudioloudness.h"
+#include "test_export.h"
 
 struct ma_device;
 
 namespace libscratchcpp
 {
 
-class AudioLoudness : public IAudioLoudness
+class LIBSCRATCHCPP_TEST_EXPORT AudioLoudness : public IAudioLoudness
 {
     public:
         AudioLoudness();

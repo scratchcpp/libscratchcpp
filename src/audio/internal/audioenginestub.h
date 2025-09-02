@@ -3,11 +3,12 @@
 #pragma once
 
 #include "../iaudioengine.h"
+#include "test_export.h"
 
 namespace libscratchcpp
 {
 
-class AudioEngineStub : public IAudioEngine
+class LIBSCRATCHCPP_TEST_EXPORT AudioEngineStub : public IAudioEngine
 {
     public:
         friend class IAudioEngine;

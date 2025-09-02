@@ -6,6 +6,8 @@
 #include <vector>
 #include <unordered_set>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
@@ -17,8 +19,9 @@ class CompilerValue;
 class ICodeBuilderFactory;
 class ICodeBuilder;
 
-struct CompilerPrivate
+class LIBSCRATCHCPP_TEST_EXPORT CompilerPrivate
 {
+    public:
         enum class SubstackType
         {
             Loop,
@@ -43,10 +46,15 @@ struct CompilerPrivate
         bool emptySubstack = false;
         bool warp = false;
 
-        static inline ICodeBuilderFactory *builderFactory = nullptr;
         std::shared_ptr<ICodeBuilder> builder;
 
         std::unordered_set<std::string> unsupportedBlocks;
+
+        static ICodeBuilderFactory *builderFactory();
+        static void setBuilderFactory(ICodeBuilderFactory *builderFactory);
+
+    private:
+        static inline ICodeBuilderFactory *m_builderFactory = nullptr;
 };
 
 } // namespace libscratchcpp

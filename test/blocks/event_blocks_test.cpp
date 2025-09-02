@@ -264,7 +264,7 @@ TEST_F(EventBlocksTest, WhenGreaterThanPredicate)
 
     AudioInputMock audioInput;
     auto audioLoudness = std::make_shared<AudioLoudnessMock>();
-    EventBlocks::audioInput = &audioInput;
+    EventBlocks::setAudioInput(&audioInput);
     EXPECT_CALL(audioInput, audioLoudness()).Times(3).WillRepeatedly(Return(audioLoudness));
     EXPECT_CALL(*audioLoudness, getLoudness()).Times(3).WillRepeatedly(Return(23));
 
@@ -285,7 +285,7 @@ TEST_F(EventBlocksTest, WhenGreaterThanPredicate)
         ASSERT_EQ(thread.runPredicate(), retValues[i]);
     }
 
-    EventBlocks::audioInput = nullptr;
+    EventBlocks::setAudioInput(nullptr);
 
     TimerMock timer;
     EXPECT_CALL(m_engineMock, timer()).Times(3).WillRepeatedly(Return(&timer));

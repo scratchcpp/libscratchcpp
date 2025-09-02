@@ -4,12 +4,14 @@
 
 #include <scratchcpp/iextension.h>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
 class IRandomGenerator;
 
-class OperatorBlocks : public IExtension
+class LIBSCRATCHCPP_TEST_EXPORT OperatorBlocks : public IExtension
 {
     public:
         std::string name() const override;

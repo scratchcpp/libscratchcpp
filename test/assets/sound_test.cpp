@@ -18,11 +18,11 @@ class SoundTest : public testing::Test
         void SetUp() override
         {
             m_player = std::make_shared<AudioPlayerMock>();
-            SoundPrivate::audioOutput = &m_playerFactory;
+            SoundPrivate::setAudioOutput(&m_playerFactory);
             EXPECT_CALL(m_playerFactory, createAudioPlayer()).WillOnce(Return(m_player));
         }
 
-        void TearDown() override { SoundPrivate::audioOutput = nullptr; }
+        void TearDown() override { SoundPrivate::setAudioOutput(nullptr); }
 
         AudioOutputMock m_playerFactory;
         std::shared_ptr<AudioPlayerMock> m_player;
@@ -170,8 +170,6 @@ TEST_F(SoundTest, IsPlaying)
 
     EXPECT_CALL(*m_player, isPlaying()).WillOnce(Return(false));
     ASSERT_FALSE(sound.isPlaying());
-
-    SoundPrivate::audioOutput = nullptr;
 }
 
 TEST_F(SoundTest, Clone)

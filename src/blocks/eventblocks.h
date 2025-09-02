@@ -4,12 +4,14 @@
 
 #include <scratchcpp/iextension.h>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
 class IAudioInput;
 
-class EventBlocks : public IExtension
+class LIBSCRATCHCPP_TEST_EXPORT EventBlocks : public IExtension
 {
     public:
         std::string name() const override;
@@ -18,7 +20,8 @@ class EventBlocks : public IExtension
 
         void registerBlocks(IEngine *engine) override;
 
-        static inline IAudioInput *audioInput = nullptr;
+        static IAudioInput *audioInput();
+        static void setAudioInput(IAudioInput *audioInput);
 
     private:
         static CompilerValue *compileWhenTouchingObject(Compiler *compiler);
@@ -33,6 +36,8 @@ class EventBlocks : public IExtension
         static CompilerValue *compileBroadcast(Compiler *compiler);
         static CompilerValue *compileBroadcastAndWait(Compiler *compiler);
         static CompilerValue *compileWhenKeyPressed(Compiler *compiler);
+
+        static inline IAudioInput *m_audioInput = nullptr;
 };
 
 } // namespace libscratchcpp

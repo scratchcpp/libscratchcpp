@@ -4,10 +4,12 @@
 
 #include "idownloaderfactory.h"
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
-class DownloaderFactory : public IDownloaderFactory
+class LIBSCRATCHCPP_TEST_EXPORT DownloaderFactory : public IDownloaderFactory
 {
     public:
         DownloaderFactory();

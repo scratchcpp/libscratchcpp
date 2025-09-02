@@ -6,6 +6,8 @@
 #include <vector>
 #include <memory>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
@@ -14,7 +16,7 @@ class IClock;
 class ExecutionContext;
 class Thread;
 
-class SensingBlocks : public IExtension
+class LIBSCRATCHCPP_TEST_EXPORT SensingBlocks : public IExtension
 {
     public:
         std::string name() const override;
@@ -27,8 +29,11 @@ class SensingBlocks : public IExtension
         static void clearQuestions();
         static void askQuestion(ExecutionContext *ctx, const StringPtr *question);
 
-        static inline IAudioInput *audioInput = nullptr;
-        static inline IClock *clock = nullptr;
+        static IAudioInput *audioInput();
+        static void setAudioInput(IAudioInput *audioInput);
+
+        static IClock *clock();
+        static void setClock(IClock *clock);
 
     private:
         struct Question
@@ -71,6 +76,9 @@ class SensingBlocks : public IExtension
         static void askNextQuestion();
 
         static inline std::vector<std::unique_ptr<Question>> m_questions;
+
+        static inline IAudioInput *m_audioInput = nullptr;
+        static inline IClock *m_clock = nullptr;
 };
 
 } // namespace libscratchcpp

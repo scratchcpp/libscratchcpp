@@ -2,14 +2,13 @@
 
 #pragma once
 
-#include <memory>
-
 #include "iaudioinput.h"
+#include "test_export.h"
 
 namespace libscratchcpp
 {
 
-class AudioInput : public IAudioInput
+class LIBSCRATCHCPP_TEST_EXPORT AudioInput : public IAudioInput
 {
     public:
         AudioInput();

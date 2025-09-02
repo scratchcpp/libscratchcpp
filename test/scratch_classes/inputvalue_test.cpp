@@ -119,14 +119,14 @@ TEST(InputValueTest, Compile)
     TargetMock target;
     CodeBuilderFactoryMock builderFactory;
     auto builder = std::make_shared<CodeBuilderMock>();
-    CompilerPrivate::builderFactory = &builderFactory;
+    CompilerPrivate::setBuilderFactory(&builderFactory);
     Compiler compiler(&engine, &target);
 
     auto block = std::make_shared<Block>("", "");
     EXPECT_CALL(builderFactory, create).WillOnce(Return(builder));
     EXPECT_CALL(*builder, build);
     compiler.compile(block.get());
-    CompilerPrivate::builderFactory = nullptr;
+    CompilerPrivate::setBuilderFactory(nullptr);
 
     auto input = std::make_shared<Input>("", Input::Type::Shadow);
     input->setPrimaryValue(5);

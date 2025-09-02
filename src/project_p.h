@@ -5,6 +5,8 @@
 #include <scratchcpp/project.h>
 #include <string>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
@@ -13,8 +15,9 @@ class IProjectReader;
 class IProjectDownloaderFactory;
 class IProjectDownloader;
 
-struct ProjectPrivate
+class LIBSCRATCHCPP_TEST_EXPORT ProjectPrivate
 {
+    public:
         ProjectPrivate();
         ProjectPrivate(const std::string &fileName);
         ProjectPrivate(const ProjectPrivate &) = delete;
@@ -33,8 +36,13 @@ struct ProjectPrivate
         std::atomic<bool> stopLoading = false;
         std::shared_ptr<IEngine> engine = nullptr;
 
-        static IProjectDownloaderFactory *downloaderFactory;
         std::shared_ptr<IProjectDownloader> downloader;
+
+        static IProjectDownloaderFactory *downloaderFactory();
+        static void setDownloaderFactory(IProjectDownloaderFactory *downloaderFactory);
+
+    private:
+        static inline IProjectDownloaderFactory *m_downloaderFactory = nullptr;
 };
 
 }; // namespace libscratchcpp

@@ -259,7 +259,7 @@ const std::string &ListBlocks::listContentsMonitorName(Block *block)
         return empty;
 }
 
-extern "C" void data_showlist(Target *target, List *list)
+BLOCK_EXPORT void data_showlist(Target *target, List *list)
 {
     Monitor *monitor = list->monitor();
 
@@ -289,7 +289,7 @@ extern "C" void data_showlist(Target *target, List *list)
     monitor->setVisible(true);
 }
 
-extern "C" void data_hidelist(Target *target, List *list)
+BLOCK_EXPORT void data_hidelist(Target *target, List *list)
 {
     Monitor *monitor = list->monitor();
 

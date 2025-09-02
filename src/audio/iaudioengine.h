@@ -2,12 +2,12 @@
 
 #pragma once
 
-#include <memory>
+#include "test_export.h"
 
 namespace libscratchcpp
 {
 
-class IAudioEngine
+class LIBSCRATCHCPP_TEST_EXPORT IAudioEngine
 {
     public:
         virtual ~IAudioEngine() { }

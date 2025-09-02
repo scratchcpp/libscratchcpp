@@ -15,7 +15,7 @@ extern "C"
     /* free */
 
     /*! Frees memory used by the given value if it's a string. */
-    void value_free(ValueData *v)
+    LIBSCRATCHCPP_EXPORT void value_free(ValueData *v)
     {
         if (v->type == ValueType::String) {
             assert(v->stringValue);
@@ -27,7 +27,7 @@ extern "C"
     /* init */
 
     /*! Initializes the given value. */
-    void value_init(ValueData *v)
+    LIBSCRATCHCPP_EXPORT void value_init(ValueData *v)
     {
         v->type = ValueType::Number;
         v->numberValue = 0;
@@ -36,7 +36,7 @@ extern "C"
     /* assign */
 
     /*! Assigns number of type 'double' to the given value. */
-    void value_assign_double(ValueData *v, double numberValue)
+    LIBSCRATCHCPP_EXPORT void value_assign_double(ValueData *v, double numberValue)
     {
         value_free(v);
 
@@ -45,7 +45,7 @@ extern "C"
     }
 
     /*! Assigns boolean to the given value. */
-    void value_assign_bool(ValueData *v, bool boolValue)
+    LIBSCRATCHCPP_EXPORT void value_assign_bool(ValueData *v, bool boolValue)
     {
         value_free(v);
 
@@ -54,13 +54,13 @@ extern "C"
     }
 
     /*! Assigns string to the given value. */
-    void value_assign_string(ValueData *v, const std::string &stringValue)
+    LIBSCRATCHCPP_EXPORT void value_assign_string(ValueData *v, const std::string &stringValue)
     {
         value_assign_cstring(v, stringValue.c_str());
     }
 
     /*! Assigns C string to the given value. */
-    void value_assign_cstring(ValueData *v, const char *stringValue)
+    LIBSCRATCHCPP_EXPORT void value_assign_cstring(ValueData *v, const char *stringValue)
     {
         if (v->type != ValueType::String) {
             v->stringValue = string_pool_new();
@@ -71,7 +71,7 @@ extern "C"
     }
 
     /*! Assigns string to the given value. */
-    void value_assign_stringPtr(ValueData *v, const StringPtr *stringValue)
+    LIBSCRATCHCPP_EXPORT void value_assign_stringPtr(ValueData *v, const StringPtr *stringValue)
     {
         if (v->type != ValueType::String) {
             v->stringValue = string_pool_new();
@@ -82,7 +82,7 @@ extern "C"
     }
 
     /*! Assigns pointer to the given value. */
-    void value_assign_pointer(ValueData *v, const void *pointerValue)
+    LIBSCRATCHCPP_EXPORT void value_assign_pointer(ValueData *v, const void *pointerValue)
     {
         value_free(v);
 
@@ -91,7 +91,7 @@ extern "C"
     }
 
     /*! Assigns another value to the given value. */
-    void value_assign_copy(ValueData *v, const libscratchcpp::ValueData *another)
+    LIBSCRATCHCPP_EXPORT void value_assign_copy(ValueData *v, const libscratchcpp::ValueData *another)
     {
         if (another->type == ValueType::Number) {
             value_free(v);
@@ -118,7 +118,7 @@ extern "C"
     /* type checkers */
 
     /*! Returns true if the given value is Infinity. */
-    bool value_isInfinity(const libscratchcpp::ValueData *v)
+    LIBSCRATCHCPP_EXPORT bool value_isInfinity(const libscratchcpp::ValueData *v)
     {
         switch (v->type) {
             case ValueType::Number:
@@ -131,7 +131,7 @@ extern "C"
     }
 
     /*! Returns true if the given value is -Infinity. */
-    bool value_isNegativeInfinity(const libscratchcpp::ValueData *v)
+    LIBSCRATCHCPP_EXPORT bool value_isNegativeInfinity(const libscratchcpp::ValueData *v)
     {
         switch (v->type) {
             case ValueType::Number:
@@ -144,7 +144,7 @@ extern "C"
     }
 
     /*! Returns true if the given value is NaN. */
-    bool value_isNaN(const libscratchcpp::ValueData *v)
+    LIBSCRATCHCPP_EXPORT bool value_isNaN(const libscratchcpp::ValueData *v)
     {
         switch (v->type) {
             case ValueType::Number:
@@ -157,13 +157,13 @@ extern "C"
     }
 
     /*! Returns true if the given value is a number. */
-    bool value_isNumber(const libscratchcpp::ValueData *v)
+    LIBSCRATCHCPP_EXPORT bool value_isNumber(const libscratchcpp::ValueData *v)
     {
         return v->type == ValueType::Number;
     }
 
     /*! Returns true if the given value is a number or can be converted to a number. */
-    bool value_isValidNumber(const libscratchcpp::ValueData *v)
+    LIBSCRATCHCPP_EXPORT bool value_isValidNumber(const libscratchcpp::ValueData *v)
     {
         if (value_isNaN(v))
             return false;
@@ -183,7 +183,7 @@ extern "C"
     }
 
     /*! Returns true if the given value represents a round integer. */
-    bool value_isInt(const ValueData *v)
+    LIBSCRATCHCPP_EXPORT bool value_isInt(const ValueData *v)
     {
         // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L157-L181
         switch (v->type) {
@@ -204,19 +204,19 @@ extern "C"
     }
 
     /*! Returns true if the given value is a pointer. */
-    bool value_isPointer(const ValueData *v)
+    LIBSCRATCHCPP_EXPORT bool value_isPointer(const ValueData *v)
     {
         return v->type == ValueType::Pointer;
     }
 
     /*! Returns true if the given value is a boolean. */
-    bool value_isBool(const libscratchcpp::ValueData *v)
+    LIBSCRATCHCPP_EXPORT bool value_isBool(const libscratchcpp::ValueData *v)
     {
         return v->type == ValueType::Bool;
     }
 
     /*! Returns true if the given value is a string. */
-    bool value_isString(const libscratchcpp::ValueData *v)
+    LIBSCRATCHCPP_EXPORT bool value_isString(const libscratchcpp::ValueData *v)
     {
         return v->type == ValueType::String;
     }
@@ -224,7 +224,7 @@ extern "C"
     /* conversion */
 
     /*! Returns the long representation of the given value. */
-    long value_toLong(const libscratchcpp::ValueData *v)
+    LIBSCRATCHCPP_EXPORT long value_toLong(const libscratchcpp::ValueData *v)
     {
         if (v->type == ValueType::Number) {
             return std::isnan(v->numberValue) || std::isinf(v->numberValue) ? 0 : v->numberValue;
@@ -237,7 +237,7 @@ extern "C"
     }
 
     /*! Returns the int representation of the given value. */
-    int value_toInt(const libscratchcpp::ValueData *v)
+    LIBSCRATCHCPP_EXPORT int value_toInt(const libscratchcpp::ValueData *v)
     {
         if (v->type == ValueType::Number)
             return std::isnan(v->numberValue) || std::isinf(v->numberValue) ? 0 : v->numberValue;
@@ -250,7 +250,7 @@ extern "C"
     }
 
     /*! Returns the double representation of the given value. */
-    double value_toDouble(const libscratchcpp::ValueData *v)
+    LIBSCRATCHCPP_EXPORT double value_toDouble(const libscratchcpp::ValueData *v)
     {
         if (v->type == ValueType::Number) {
             return std::isnan(v->numberValue) ? 0 : v->numberValue;
@@ -263,7 +263,7 @@ extern "C"
     }
 
     /*! Returns the boolean representation of the given value. */
-    bool value_toBool(const libscratchcpp::ValueData *v)
+    LIBSCRATCHCPP_EXPORT bool value_toBool(const libscratchcpp::ValueData *v)
     {
         if (v->type == ValueType::Bool) {
             return v->boolValue;
@@ -279,7 +279,7 @@ extern "C"
     }
 
     /*! Writes the string representation of the given value to dst. */
-    void value_toString(const ValueData *v, std::string *dst)
+    LIBSCRATCHCPP_EXPORT void value_toString(const ValueData *v, std::string *dst)
     {
         StringPtr *str = string_pool_new();
         value_toStringPtr(v, str);
@@ -288,7 +288,7 @@ extern "C"
     }
 
     /*! Writes the string representation of the given value to dst. */
-    void value_toStringPtr(const ValueData *v, StringPtr *dst)
+    LIBSCRATCHCPP_EXPORT void value_toStringPtr(const ValueData *v, StringPtr *dst)
     {
         if (v->type == ValueType::String)
             string_assign(dst, v->stringValue);
@@ -302,7 +302,7 @@ extern "C"
     }
 
     /*! Writes the UTF-16 representation of the given value to dst. */
-    void value_toUtf16(const libscratchcpp::ValueData *v, std::u16string *dst)
+    LIBSCRATCHCPP_EXPORT void value_toUtf16(const libscratchcpp::ValueData *v, std::u16string *dst)
     {
         StringPtr *str = string_pool_new();
         value_toStringPtr(v, str);
@@ -311,7 +311,7 @@ extern "C"
     }
 
     /*! Returns the RGBA quadruplet from the given color value. */
-    Rgb value_toRgba(const ValueData *v)
+    LIBSCRATCHCPP_EXPORT Rgb value_toRgba(const ValueData *v)
     {
         // https://github.com/scratchfoundation/scratch-vm/blob/112989da0e7306eeb405a5c52616e41c2164af24/src/util/cast.js#L92-L103
         StringPtr *string = nullptr;
@@ -363,7 +363,7 @@ extern "C"
     }
 
     /*! Returns the pointer stored in the given value or nullptr if it isn't a pointer. */
-    const void *value_toPointer(const ValueData *v)
+    LIBSCRATCHCPP_EXPORT const void *value_toPointer(const ValueData *v)
     {
         if (v->type == ValueType::Pointer)
             return v->pointerValue;
@@ -372,7 +372,7 @@ extern "C"
     }
 
     /*! Returns true if the given number represents a round integer. */
-    bool value_doubleIsInt(double v)
+    LIBSCRATCHCPP_EXPORT bool value_doubleIsInt(double v)
     {
         if (std::isinf(v) || std::isnan(v))
             return true;
@@ -383,7 +383,7 @@ extern "C"
     }
 
     /*! Converts the given number to string and stores the result in dst. */
-    void value_doubleToStringPtr(double v, StringPtr *dst)
+    LIBSCRATCHCPP_EXPORT void value_doubleToStringPtr(double v, StringPtr *dst)
     {
         if (v == 0)
             string_assign_cstring(dst, "0");
@@ -458,13 +458,13 @@ extern "C"
      * Converts the given boolean to string.
      * \note Do not free the string!
      */
-    const StringPtr *value_boolToStringPtr(bool v)
+    LIBSCRATCHCPP_EXPORT const StringPtr *value_boolToStringPtr(bool v)
     {
         return v ? &TRUE_STR : &FALSE_STR;
     }
 
     /*! Converts the given string to double. */
-    double value_stringToDouble(const StringPtr *s)
+    LIBSCRATCHCPP_EXPORT double value_stringToDouble(const StringPtr *s)
     {
         if (strings_equal_case_sensitive(s, &INFINITY_STR))
             return std::numeric_limits<double>::infinity();
@@ -478,7 +478,7 @@ extern "C"
      * Converts the given string to double.
      * \param[out] ok Whether the conversion was successful.
      */
-    double value_stringToDoubleWithCheck(const StringPtr *s, bool *ok)
+    LIBSCRATCHCPP_EXPORT double value_stringToDoubleWithCheck(const StringPtr *s, bool *ok)
     {
         *ok = true;
 
@@ -491,7 +491,7 @@ extern "C"
     }
 
     /*! Converts the given string to boolean. */
-    bool value_stringToBool(const StringPtr *s)
+    LIBSCRATCHCPP_EXPORT bool value_stringToBool(const StringPtr *s)
     {
         return s->size != 0 && !strings_equal_case_insensitive(s, &FALSE_STR) && !strings_equal_case_insensitive(s, &ZERO_STR);
     }
@@ -499,31 +499,31 @@ extern "C"
     /* operations */
 
     /*! Adds the given values and writes the result to dst. */
-    void value_add(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
+    LIBSCRATCHCPP_EXPORT void value_add(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
     {
         value_assign_double(dst, value_toDouble(v1) + value_toDouble(v2));
     }
 
     /*! Subtracts the given values and writes the result to dst. */
-    void value_subtract(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
+    LIBSCRATCHCPP_EXPORT void value_subtract(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
     {
         value_assign_double(dst, value_toDouble(v1) - value_toDouble(v2));
     }
 
     /*! Multiplies the given values and writes the result to dst. */
-    void value_multiply(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
+    LIBSCRATCHCPP_EXPORT void value_multiply(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
     {
         value_assign_double(dst, value_toDouble(v1) * value_toDouble(v2));
     }
 
     /*! Divides the given values and writes the result to dst. */
-    void value_divide(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
+    LIBSCRATCHCPP_EXPORT void value_divide(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
     {
         value_assign_double(dst, value_toDouble(v1) / value_toDouble(v2));
     }
 
     /*! Calculates the modulo the given values and writes the result to dst. */
-    void value_mod(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
+    LIBSCRATCHCPP_EXPORT void value_mod(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2, ValueData *dst)
     {
         const double a = value_toDouble(v1);
         const double b = value_toDouble(v2);
@@ -533,19 +533,19 @@ extern "C"
     /* comparison */
 
     /*! Returns true if the given values are equal. */
-    bool value_equals(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2)
+    LIBSCRATCHCPP_EXPORT bool value_equals(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2)
     {
         return value_compare(v1, v2) == 0;
     }
 
     /*! Returns true if the first value is greater than the second value. */
-    bool value_greater(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2)
+    LIBSCRATCHCPP_EXPORT bool value_greater(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2)
     {
         return value_compare(v1, v2) > 0;
     }
 
     /*! Returns true if the first value is lower than the second value. */
-    bool value_lower(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2)
+    LIBSCRATCHCPP_EXPORT bool value_lower(const libscratchcpp::ValueData *v1, const libscratchcpp::ValueData *v2)
     {
         return value_compare(v1, v2) < 0;
     }

@@ -13,15 +13,13 @@
 
 using namespace libscratchcpp;
 
-IProjectDownloaderFactory *ProjectPrivate::downloaderFactory = nullptr;
-
 ProjectPrivate::ProjectPrivate() :
     engine(std::make_shared<Engine>())
 {
-    if (!downloaderFactory)
-        downloaderFactory = ProjectDownloaderFactory::instance().get();
+    if (!m_downloaderFactory)
+        m_downloaderFactory = ProjectDownloaderFactory::instance().get();
 
-    downloader = downloaderFactory->create();
+    downloader = m_downloaderFactory->create();
 }
 
 ProjectPrivate::ProjectPrivate(const std::string &fileName) :
@@ -193,4 +191,14 @@ void ProjectPrivate::runEventLoop()
 sigslot::signal<unsigned int, unsigned int> &ProjectPrivate::downloadProgressChanged()
 {
     return downloader->downloadProgressChanged();
+}
+
+IProjectDownloaderFactory *ProjectPrivate::downloaderFactory()
+{
+    return m_downloaderFactory;
+}
+
+void ProjectPrivate::setDownloaderFactory(IProjectDownloaderFactory *downloaderFactory)
+{
+    m_downloaderFactory = downloaderFactory;
 }

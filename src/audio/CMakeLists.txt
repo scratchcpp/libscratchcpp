@@ -15,6 +15,8 @@ if (LIBSCRATCHCPP_AUDIO_SUPPORT)
     target_compile_definitions(scratchcpp-audio PUBLIC LIBSCRATCHCPP_AUDIO_SUPPORT)
 endif()
 
+target_link_libraries(scratchcpp-audio PRIVATE scratchcpp-test-export)
+
 target_sources(scratchcpp-audio
   PUBLIC
     iaudioengine.h

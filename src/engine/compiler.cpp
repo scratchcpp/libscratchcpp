@@ -60,7 +60,7 @@ std::shared_ptr<ExecutableCode> Compiler::compile(Block *startBlock, CodeType co
         }
     }
 
-    impl->builder = impl->builderFactory->create(impl->ctx, procedurePrototype, codeType);
+    impl->builder = impl->builderFactory()->create(impl->ctx, procedurePrototype, codeType);
     impl->substackTree.clear();
     impl->substackHit = false;
     impl->emptySubstack = false;
@@ -743,5 +743,5 @@ const std::unordered_set<std::string> &Compiler::unsupportedBlocks() const
 std::shared_ptr<CompilerContext> Compiler::createContext(IEngine *engine, Target *target)
 {
     CompilerPrivate::initBuilderFactory();
-    return CompilerPrivate::builderFactory->createCtx(engine, target);
+    return CompilerPrivate::builderFactory()->createCtx(engine, target);
 }

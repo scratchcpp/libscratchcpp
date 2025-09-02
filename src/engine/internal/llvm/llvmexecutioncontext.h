@@ -5,13 +5,14 @@
 #include <scratchcpp/executioncontext.h>
 
 #include "llvmcompilercontext.h"
+#include "test_export.h"
 
 namespace libscratchcpp
 {
 
 struct StringPtr;
 
-class LLVMExecutionContext : public ExecutionContext
+class LIBSCRATCHCPP_TEST_EXPORT LLVMExecutionContext : public ExecutionContext
 {
     public:
         LLVMExecutionContext(LLVMCompilerContext *compilerCtx, Thread *thread);

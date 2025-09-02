@@ -3,6 +3,7 @@
 #pragma once
 
 #include "../iaudioplayer.h"
+#include "test_export.h"
 
 struct ma_decoder;
 struct ma_sound;
@@ -10,7 +11,7 @@ struct ma_sound;
 namespace libscratchcpp
 {
 
-class AudioPlayer : public IAudioPlayer
+class LIBSCRATCHCPP_TEST_EXPORT AudioPlayer : public IAudioPlayer
 {
     public:
         AudioPlayer();

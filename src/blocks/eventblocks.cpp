@@ -173,7 +173,17 @@ CompilerValue *EventBlocks::compileWhenKeyPressed(Compiler *compiler)
     return nullptr;
 }
 
-extern "C" bool event_whentouchingobject_predicate(Target *target, const StringPtr *name)
+IAudioInput *EventBlocks::audioInput()
+{
+    return m_audioInput;
+}
+
+void EventBlocks::setAudioInput(IAudioInput *audioInput)
+{
+    m_audioInput = audioInput;
+}
+
+BLOCK_EXPORT bool event_whentouchingobject_predicate(Target *target, const StringPtr *name)
 {
     static const StringPtr MOUSE_STR = StringPtr("_mouse_");
     static const StringPtr EDGE_STR = StringPtr("_edge_");
@@ -196,21 +206,21 @@ extern "C" bool event_whentouchingobject_predicate(Target *target, const StringP
     }
 }
 
-extern "C" bool event_whengreaterthan_loudness_predicate(ExecutionContext *ctx, double value)
+BLOCK_EXPORT bool event_whengreaterthan_loudness_predicate(ExecutionContext *ctx, double value)
 {
-    if (!EventBlocks::audioInput)
-        EventBlocks::audioInput = AudioInput::instance().get();
+    if (!EventBlocks::audioInput())
+        EventBlocks::setAudioInput(AudioInput::instance().get());
 
-    auto audioLoudness = EventBlocks::audioInput->audioLoudness();
+    auto audioLoudness = EventBlocks::audioInput()->audioLoudness();
     return (audioLoudness->getLoudness() > value);
 }
 
-extern "C" bool event_whengreaterthan_timer_predicate(ExecutionContext *ctx, double value)
+BLOCK_EXPORT bool event_whengreaterthan_timer_predicate(ExecutionContext *ctx, double value)
 {
     return ctx->engine()->timer()->value() > value;
 }
 
-extern "C" void event_broadcast(ExecutionContext *ctx, const StringPtr *name, bool wait)
+BLOCK_EXPORT void event_broadcast(ExecutionContext *ctx, const StringPtr *name, bool wait)
 {
     Thread *thread = ctx->thread();
     IEngine *engine = thread->engine();

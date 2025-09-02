@@ -6,10 +6,12 @@
 #include <memory>
 #include <random>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
-class RandomGenerator : public IRandomGenerator
+class LIBSCRATCHCPP_TEST_EXPORT RandomGenerator : public IRandomGenerator
 {
     public:
         RandomGenerator();

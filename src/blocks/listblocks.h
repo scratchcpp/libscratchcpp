@@ -4,12 +4,14 @@
 
 #include <scratchcpp/iextension.h>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
 class List;
 
-class ListBlocks : public IExtension
+class LIBSCRATCHCPP_TEST_EXPORT ListBlocks : public IExtension
 {
     public:
         std::string name() const override;

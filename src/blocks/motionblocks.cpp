@@ -354,23 +354,23 @@ CompilerValue *MotionBlocks::compileDirection(Compiler *compiler)
         return compiler->addTargetFunctionCall("motion_direction", Compiler::StaticType::Number);
 }
 
-extern "C" void motion_movesteps(Sprite *sprite, double steps)
+BLOCK_EXPORT void motion_movesteps(Sprite *sprite, double steps)
 {
     double dir = sprite->direction();
     sprite->setPosition(sprite->x() + std::sin(dir * pi / 180) * steps, sprite->y() + std::cos(dir * pi / 180) * steps);
 }
 
-extern "C" void motion_turnright(Sprite *sprite, double degrees)
+BLOCK_EXPORT void motion_turnright(Sprite *sprite, double degrees)
 {
     sprite->setDirection(sprite->direction() + degrees);
 }
 
-extern "C" void motion_turnleft(Sprite *sprite, double degrees)
+BLOCK_EXPORT void motion_turnleft(Sprite *sprite, double degrees)
 {
     sprite->setDirection(sprite->direction() - degrees);
 }
 
-extern "C" void motion_pointindirection(Sprite *sprite, double direction)
+BLOCK_EXPORT void motion_pointindirection(Sprite *sprite, double direction)
 {
     sprite->setDirection(direction);
 }
@@ -392,25 +392,25 @@ inline void motion_point_towards_pos(Sprite *sprite, double x, double y)
         sprite->setDirection((180 / pi) * std::atan(deltaX / deltaY));
 }
 
-extern "C" void motion_point_towards_mouse(Sprite *sprite)
+BLOCK_EXPORT void motion_point_towards_mouse(Sprite *sprite)
 {
     IEngine *engine = sprite->engine();
     motion_point_towards_pos(sprite, engine->mouseX(), engine->mouseY());
 }
 
-extern "C" void motion_point_towards_random_direction(ExecutionContext *ctx)
+BLOCK_EXPORT void motion_point_towards_random_direction(ExecutionContext *ctx)
 {
     Sprite *sprite = static_cast<Sprite *>(ctx->thread()->target());
     IRandomGenerator *rng = ctx->rng();
     sprite->setDirection(rng->randint(-180, 179));
 }
 
-extern "C" void motion_point_towards_sprite(Sprite *sprite, Sprite *anotherSprite)
+BLOCK_EXPORT void motion_point_towards_sprite(Sprite *sprite, Sprite *anotherSprite)
 {
     motion_point_towards_pos(sprite, anotherSprite->x(), anotherSprite->y());
 }
 
-extern "C" void motion_pointtowards(ExecutionContext *ctx, const StringPtr *towards)
+BLOCK_EXPORT void motion_pointtowards(ExecutionContext *ctx, const StringPtr *towards)
 {
     static const StringPtr MOUSE_STR("_mouse_");
     static const StringPtr RANDOM_STR("_random_");
@@ -434,18 +434,18 @@ extern "C" void motion_pointtowards(ExecutionContext *ctx, const StringPtr *towa
     }
 }
 
-extern "C" void motion_gotoxy(Sprite *sprite, double x, double y)
+BLOCK_EXPORT void motion_gotoxy(Sprite *sprite, double x, double y)
 {
     sprite->setPosition(x, y);
 }
 
-extern "C" void motion_go_to_mouse(Sprite *sprite)
+BLOCK_EXPORT void motion_go_to_mouse(Sprite *sprite)
 {
     IEngine *engine = sprite->engine();
     sprite->setPosition(engine->mouseX(), engine->mouseY());
 }
 
-extern "C" void motion_go_to_random_pos(ExecutionContext *ctx)
+BLOCK_EXPORT void motion_go_to_random_pos(ExecutionContext *ctx)
 {
     Sprite *sprite = static_cast<Sprite *>(ctx->thread()->target());
     IEngine *engine = ctx->engine();
@@ -455,12 +455,12 @@ extern "C" void motion_go_to_random_pos(ExecutionContext *ctx)
     sprite->setPosition(rng->randintDouble(-stageWidth / 2.0, stageWidth / 2.0), rng->randintDouble(-stageHeight / 2.0, stageHeight / 2.0));
 }
 
-extern "C" void motion_go_to_sprite(Sprite *sprite, Sprite *anotherSprite)
+BLOCK_EXPORT void motion_go_to_sprite(Sprite *sprite, Sprite *anotherSprite)
 {
     sprite->setPosition(anotherSprite->x(), anotherSprite->y());
 }
 
-extern "C" void motion_goto(ExecutionContext *ctx, const StringPtr *towards)
+BLOCK_EXPORT void motion_goto(ExecutionContext *ctx, const StringPtr *towards)
 {
     static const StringPtr MOUSE_STR("_mouse_");
     static const StringPtr RANDOM_STR("_random_");
@@ -484,12 +484,12 @@ extern "C" void motion_goto(ExecutionContext *ctx, const StringPtr *towards)
     }
 }
 
-extern "C" void motion_start_glide(ExecutionContext *ctx, double duration)
+BLOCK_EXPORT void motion_start_glide(ExecutionContext *ctx, double duration)
 {
     ctx->stackTimer()->start(duration);
 }
 
-extern "C" bool motion_glide(ExecutionContext *ctx, double duration, double startX, double startY, double endX, double endY)
+BLOCK_EXPORT bool motion_glide(ExecutionContext *ctx, double duration, double startX, double startY, double endX, double endY)
 {
     IStackTimer *timer = ctx->stackTimer();
     Target *target = ctx->thread()->target();
@@ -515,39 +515,39 @@ extern "C" bool motion_glide(ExecutionContext *ctx, double duration, double star
     }
 }
 
-extern "C" double motion_get_mouse_x(ExecutionContext *ctx)
+BLOCK_EXPORT double motion_get_mouse_x(ExecutionContext *ctx)
 {
     return ctx->engine()->mouseX();
 }
 
-extern "C" double motion_get_mouse_y(ExecutionContext *ctx)
+BLOCK_EXPORT double motion_get_mouse_y(ExecutionContext *ctx)
 {
     return ctx->engine()->mouseY();
 }
 
-extern "C" double motion_get_random_x(ExecutionContext *ctx)
+BLOCK_EXPORT double motion_get_random_x(ExecutionContext *ctx)
 {
     const int stageWidth = ctx->engine()->stageWidth();
     return ctx->rng()->randintDouble(-stageWidth / 2.0, stageWidth / 2.0);
 }
 
-extern "C" double motion_get_random_y(ExecutionContext *ctx)
+BLOCK_EXPORT double motion_get_random_y(ExecutionContext *ctx)
 {
     const int stageHeight = ctx->engine()->stageHeight();
     return ctx->rng()->randintDouble(-stageHeight / 2.0, stageHeight / 2.0);
 }
 
-extern "C" double motion_get_sprite_x(ExecutionContext *ctx, Sprite *sprite)
+BLOCK_EXPORT double motion_get_sprite_x(ExecutionContext *ctx, Sprite *sprite)
 {
     return sprite->x();
 }
 
-extern "C" double motion_get_sprite_y(ExecutionContext *ctx, Sprite *sprite)
+BLOCK_EXPORT double motion_get_sprite_y(ExecutionContext *ctx, Sprite *sprite)
 {
     return sprite->y();
 }
 
-extern "C" double motion_get_target_x(ExecutionContext *ctx, const StringPtr *name)
+BLOCK_EXPORT double motion_get_target_x(ExecutionContext *ctx, const StringPtr *name)
 {
     static const StringPtr MOUSE_STR("_mouse_");
     static const StringPtr RANDOM_STR("_random_");
@@ -570,7 +570,7 @@ extern "C" double motion_get_target_x(ExecutionContext *ctx, const StringPtr *na
     }
 }
 
-extern "C" double motion_get_target_y(ExecutionContext *ctx, const StringPtr *name)
+BLOCK_EXPORT double motion_get_target_y(ExecutionContext *ctx, const StringPtr *name)
 {
     static const StringPtr MOUSE_STR("_mouse_");
     static const StringPtr RANDOM_STR("_random_");
@@ -593,7 +593,7 @@ extern "C" double motion_get_target_y(ExecutionContext *ctx, const StringPtr *na
     }
 }
 
-extern "C" bool motion_is_target_valid(ExecutionContext *ctx, const StringPtr *name)
+BLOCK_EXPORT bool motion_is_target_valid(ExecutionContext *ctx, const StringPtr *name)
 {
     static const StringPtr MOUSE_STR("_mouse_");
     static const StringPtr RANDOM_STR("_random_");
@@ -609,27 +609,27 @@ extern "C" bool motion_is_target_valid(ExecutionContext *ctx, const StringPtr *n
     }
 }
 
-extern "C" void motion_changexby(Sprite *sprite, double dx)
+BLOCK_EXPORT void motion_changexby(Sprite *sprite, double dx)
 {
     sprite->setX(sprite->x() + dx);
 }
 
-extern "C" void motion_setx(Sprite *sprite, double x)
+BLOCK_EXPORT void motion_setx(Sprite *sprite, double x)
 {
     sprite->setX(x);
 }
 
-extern "C" void motion_changeyby(Sprite *sprite, double dy)
+BLOCK_EXPORT void motion_changeyby(Sprite *sprite, double dy)
 {
     sprite->setY(sprite->y() + dy);
 }
 
-extern "C" void motion_sety(Sprite *sprite, double y)
+BLOCK_EXPORT void motion_sety(Sprite *sprite, double y)
 {
     sprite->setY(y);
 }
 
-extern "C" void motion_ifonedgebounce(Sprite *sprite)
+BLOCK_EXPORT void motion_ifonedgebounce(Sprite *sprite)
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/c37745e97e6d8a77ad1dc31a943ea728dd17ba78/src/blocks/scratch3_motion.js#L186-L240
     IEngine *engine = sprite->engine();
@@ -713,32 +713,32 @@ extern "C" void motion_ifonedgebounce(Sprite *sprite)
     sprite->setPosition(fencedX, fencedY);
 }
 
-extern "C" void motion_set_left_right_style(Sprite *sprite)
+BLOCK_EXPORT void motion_set_left_right_style(Sprite *sprite)
 {
     sprite->setRotationStyle(Sprite::RotationStyle::LeftRight);
 }
 
-extern "C" void motion_set_do_not_rotate_style(Sprite *sprite)
+BLOCK_EXPORT void motion_set_do_not_rotate_style(Sprite *sprite)
 {
     sprite->setRotationStyle(Sprite::RotationStyle::DoNotRotate);
 }
 
-extern "C" void motion_set_all_around_style(Sprite *sprite)
+BLOCK_EXPORT void motion_set_all_around_style(Sprite *sprite)
 {
     sprite->setRotationStyle(Sprite::RotationStyle::AllAround);
 }
 
-extern "C" double motion_xposition(Sprite *sprite)
+BLOCK_EXPORT double motion_xposition(Sprite *sprite)
 {
     return sprite->x();
 }
 
-extern "C" double motion_yposition(Sprite *sprite)
+BLOCK_EXPORT double motion_yposition(Sprite *sprite)
 {
     return sprite->y();
 }
 
-extern "C" double motion_direction(Sprite *sprite)
+BLOCK_EXPORT double motion_direction(Sprite *sprite)
 {
     return sprite->direction();
 }

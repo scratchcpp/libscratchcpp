@@ -5,10 +5,12 @@
 #include <string>
 #include <zip.h>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
-class ZipReader
+class LIBSCRATCHCPP_TEST_EXPORT ZipReader
 {
     public:
         ZipReader(const std::string &fileName);

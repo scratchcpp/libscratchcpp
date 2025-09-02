@@ -6,11 +6,12 @@
 #include <cpr/response.h>
 
 #include "idownloader.h"
+#include "test_export.h"
 
 namespace libscratchcpp
 {
 
-class Downloader : public IDownloader
+class LIBSCRATCHCPP_TEST_EXPORT Downloader : public IDownloader
 {
     public:
         Downloader();

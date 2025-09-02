@@ -12,6 +12,8 @@
 #include <set>
 #include <variant>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
@@ -21,7 +23,7 @@ class IAudioEngine;
 class Thread;
 class CompilerContext;
 
-class Engine : public IEngine
+class LIBSCRATCHCPP_TEST_EXPORT Engine : public IEngine
 {
     public:
         Engine();

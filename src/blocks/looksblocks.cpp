@@ -338,7 +338,7 @@ CompilerValue *LooksBlocks::compileNextBackdrop(Compiler *compiler)
     return nullptr;
 }
 
-extern "C" void looks_start_stack_timer(ExecutionContext *ctx, double duration)
+BLOCK_EXPORT void looks_start_stack_timer(ExecutionContext *ctx, double duration)
 {
     ctx->stackTimer()->start(duration);
 }
@@ -356,7 +356,7 @@ void looks_show_bubble(Thread *thread, TextBubble::Type type, const StringPtr *m
         target->bubble()->setText(u8message);
 }
 
-extern "C" bool looks_update_bubble(ExecutionContext *ctx)
+BLOCK_EXPORT bool looks_update_bubble(ExecutionContext *ctx)
 {
     if (ctx->stackTimer()->elapsed()) {
         Thread *thread = ctx->thread();
@@ -372,57 +372,57 @@ extern "C" bool looks_update_bubble(ExecutionContext *ctx)
     return false;
 }
 
-extern "C" void looks_say(ExecutionContext *ctx, const StringPtr *message, bool saveThread)
+BLOCK_EXPORT void looks_say(ExecutionContext *ctx, const StringPtr *message, bool saveThread)
 {
     looks_show_bubble(ctx->thread(), TextBubble::Type::Say, message, saveThread);
 }
 
-extern "C" void looks_think(ExecutionContext *ctx, const StringPtr *message, bool saveThread)
+BLOCK_EXPORT void looks_think(ExecutionContext *ctx, const StringPtr *message, bool saveThread)
 {
     looks_show_bubble(ctx->thread(), TextBubble::Type::Think, message, saveThread);
 }
 
-extern "C" void looks_show(Sprite *sprite)
+BLOCK_EXPORT void looks_show(Sprite *sprite)
 {
     sprite->setVisible(true);
 }
 
-extern "C" void looks_hide(Sprite *sprite)
+BLOCK_EXPORT void looks_hide(Sprite *sprite)
 {
     sprite->setVisible(false);
 }
 
-extern "C" void looks_changeeffectby(Target *target, IGraphicsEffect *effect, double change)
+BLOCK_EXPORT void looks_changeeffectby(Target *target, IGraphicsEffect *effect, double change)
 {
     target->setGraphicsEffectValue(effect, target->graphicsEffectValue(effect) + change);
 }
 
-extern "C" void looks_seteffectto(Target *target, IGraphicsEffect *effect, double value)
+BLOCK_EXPORT void looks_seteffectto(Target *target, IGraphicsEffect *effect, double value)
 {
     target->setGraphicsEffectValue(effect, value);
 }
 
-extern "C" void looks_cleargraphiceffects(Target *target)
+BLOCK_EXPORT void looks_cleargraphiceffects(Target *target)
 {
     target->clearGraphicsEffects();
 }
 
-extern "C" void looks_changesizeby(Sprite *sprite, double change)
+BLOCK_EXPORT void looks_changesizeby(Sprite *sprite, double change)
 {
     sprite->setSize(sprite->size() + change);
 }
 
-extern "C" void looks_setsizeto(Sprite *sprite, double size)
+BLOCK_EXPORT void looks_setsizeto(Sprite *sprite, double size)
 {
     sprite->setSize(size);
 }
 
-extern "C" double looks_size(Sprite *sprite)
+BLOCK_EXPORT double looks_size(Sprite *sprite)
 {
     return sprite->size();
 }
 
-extern "C" void looks_set_costume_by_index(Target *target, long index)
+BLOCK_EXPORT void looks_set_costume_by_index(Target *target, long index)
 {
     const int costumeCount = target->costumes().size();
 
@@ -434,12 +434,12 @@ extern "C" void looks_set_costume_by_index(Target *target, long index)
     target->setCostumeIndex(index);
 }
 
-extern "C" void looks_nextcostume(Target *target)
+BLOCK_EXPORT void looks_nextcostume(Target *target)
 {
     looks_set_costume_by_index(target, target->costumeIndex() + 1);
 }
 
-extern "C" void looks_previouscostume(Target *target)
+BLOCK_EXPORT void looks_previouscostume(Target *target)
 {
     looks_set_costume_by_index(target, target->costumeIndex() - 1);
 }
@@ -452,7 +452,7 @@ void looks_randomcostume(Target *target, IRandomGenerator *rng)
         looks_set_costume_by_index(target, rng->randintExcept(0, count - 1, target->costumeIndex())); // exclude current costume
 }
 
-extern "C" void looks_switchcostumeto(Target *target, const ValueData *costume)
+BLOCK_EXPORT void looks_switchcostumeto(Target *target, const ValueData *costume)
 {
     // https://github.com/scratchfoundation/scratch-vm/blob/8dbcc1fc8f8d8c4f1e40629fe8a388149d6dfd1c/src/blocks/scratch3_looks.js#L389-L413
     if (!value_isString(costume)) {
@@ -485,7 +485,7 @@ extern "C" void looks_switchcostumeto(Target *target, const ValueData *costume)
     }
 }
 
-extern "C" void looks_start_backdrop_scripts(ExecutionContext *ctx, bool wait)
+BLOCK_EXPORT void looks_start_backdrop_scripts(ExecutionContext *ctx, bool wait)
 {
     IEngine *engine = ctx->engine();
     Stage *stage = engine->stage();
@@ -495,7 +495,7 @@ extern "C" void looks_start_backdrop_scripts(ExecutionContext *ctx, bool wait)
         engine->startBackdropScripts(backdrop->broadcast(), ctx->thread(), wait);
 }
 
-extern "C" void looks_switchbackdropto(ExecutionContext *ctx, const ValueData *backdrop)
+BLOCK_EXPORT void looks_switchbackdropto(ExecutionContext *ctx, const ValueData *backdrop)
 {
     Stage *stage = ctx->engine()->stage();
 
@@ -532,53 +532,53 @@ extern "C" void looks_switchbackdropto(ExecutionContext *ctx, const ValueData *b
     }
 }
 
-extern "C" void looks_move_to_front(ExecutionContext *ctx)
+BLOCK_EXPORT void looks_move_to_front(ExecutionContext *ctx)
 {
     Target *target = ctx->thread()->target();
     ctx->engine()->moveDrawableToFront(target);
 }
 
-extern "C" void looks_move_to_back(ExecutionContext *ctx)
+BLOCK_EXPORT void looks_move_to_back(ExecutionContext *ctx)
 {
     Target *target = ctx->thread()->target();
     ctx->engine()->moveDrawableToBack(target);
 }
 
-extern "C" void looks_move_forward_layers(ExecutionContext *ctx, double layers)
+BLOCK_EXPORT void looks_move_forward_layers(ExecutionContext *ctx, double layers)
 {
     Target *target = ctx->thread()->target();
     ctx->engine()->moveDrawableForwardLayers(target, layers);
 }
 
-extern "C" void looks_move_backward_layers(ExecutionContext *ctx, double layers)
+BLOCK_EXPORT void looks_move_backward_layers(ExecutionContext *ctx, double layers)
 {
     Target *target = ctx->thread()->target();
     ctx->engine()->moveDrawableBackwardLayers(target, layers);
 }
 
-extern "C" double looks_backdrop_number(ExecutionContext *ctx)
+BLOCK_EXPORT double looks_backdrop_number(ExecutionContext *ctx)
 {
     return ctx->engine()->stage()->costumeIndex() + 1;
 }
 
-extern "C" void looks_backdrop_name(StringPtr *ret, ExecutionContext *ctx)
+BLOCK_EXPORT void looks_backdrop_name(StringPtr *ret, ExecutionContext *ctx)
 {
     const std::string &name = ctx->engine()->stage()->currentCostume()->name();
     string_assign_cstring(ret, name.c_str());
 }
 
-extern "C" double looks_costume_number(Target *target)
+BLOCK_EXPORT double looks_costume_number(Target *target)
 {
     return target->costumeIndex() + 1;
 }
 
-extern "C" void looks_costume_name(StringPtr *ret, Target *target)
+BLOCK_EXPORT void looks_costume_name(StringPtr *ret, Target *target)
 {
     const std::string &name = target->currentCostume()->name();
     string_assign_cstring(ret, name.c_str());
 }
 
-extern "C" bool looks_backdrop_promise(ExecutionContext *ctx)
+BLOCK_EXPORT bool looks_backdrop_promise(ExecutionContext *ctx)
 {
     if (ctx->engine()->stage()->costumes().size() > 0) {
         ctx->setPromise(std::make_shared<Promise>());
@@ -588,7 +588,7 @@ extern "C" bool looks_backdrop_promise(ExecutionContext *ctx)
     return false;
 }
 
-extern "C" void looks_nextbackdrop(ExecutionContext *ctx)
+BLOCK_EXPORT void looks_nextbackdrop(ExecutionContext *ctx)
 {
     looks_nextcostume(ctx->engine()->stage());
 }

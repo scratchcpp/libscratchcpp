@@ -186,35 +186,35 @@ CompilerValue *ControlBlocks::compileDeleteThisClone(Compiler *compiler)
     return nullptr;
 }
 
-extern "C" void control_stop_all(ExecutionContext *ctx)
+BLOCK_EXPORT void control_stop_all(ExecutionContext *ctx)
 {
     ctx->engine()->stop();
 }
 
-extern "C" void control_stop_other_scripts_in_target(ExecutionContext *ctx)
+BLOCK_EXPORT void control_stop_other_scripts_in_target(ExecutionContext *ctx)
 {
     Thread *thread = ctx->thread();
     ctx->engine()->stopTarget(thread->target(), thread);
 }
 
-extern "C" void control_start_wait(ExecutionContext *ctx, double seconds)
+BLOCK_EXPORT void control_start_wait(ExecutionContext *ctx, double seconds)
 {
     ctx->stackTimer()->start(seconds);
     ctx->engine()->requestRedraw();
 }
 
-extern "C" bool control_stack_timer_elapsed(ExecutionContext *ctx)
+BLOCK_EXPORT bool control_stack_timer_elapsed(ExecutionContext *ctx)
 {
     return ctx->stackTimer()->elapsed();
 }
 
-extern "C" void control_create_clone_of_myself(Target *target)
+BLOCK_EXPORT void control_create_clone_of_myself(Target *target)
 {
     if (!target->isStage())
         static_cast<Sprite *>(target)->clone();
 }
 
-extern "C" void control_create_clone_by_index(ExecutionContext *ctx, double index)
+BLOCK_EXPORT void control_create_clone_by_index(ExecutionContext *ctx, double index)
 {
     Target *target = ctx->engine()->targetAt(index);
 
@@ -222,7 +222,7 @@ extern "C" void control_create_clone_by_index(ExecutionContext *ctx, double inde
         static_cast<Sprite *>(target)->clone();
 }
 
-extern "C" void control_create_clone(ExecutionContext *ctx, const StringPtr *spriteName)
+BLOCK_EXPORT void control_create_clone(ExecutionContext *ctx, const StringPtr *spriteName)
 {
     static const StringPtr myself("_myself_");
 
@@ -239,7 +239,7 @@ extern "C" void control_create_clone(ExecutionContext *ctx, const StringPtr *spr
     }
 }
 
-extern "C" bool control_delete_this_clone(Target *target)
+BLOCK_EXPORT bool control_delete_this_clone(Target *target)
 {
     if (!target->isStage()) {
         Sprite *sprite = static_cast<Sprite *>(target);

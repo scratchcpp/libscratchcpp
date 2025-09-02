@@ -105,11 +105,11 @@ TEST(LoadProjectTest, DownloadProgressChanged)
 {
     ProjectDownloaderFactoryMock factory;
     auto downloader = std::make_shared<ProjectDownloaderMock>();
-    ProjectPrivate::downloaderFactory = &factory;
+    ProjectPrivate::setDownloaderFactory(&factory);
 
     EXPECT_CALL(factory, create()).WillOnce(Return(downloader));
     ProjectPrivate p;
-    ProjectPrivate::downloaderFactory = nullptr;
+    ProjectPrivate::setDownloaderFactory(nullptr);
 
     sigslot::signal<unsigned int, unsigned int> signal;
     EXPECT_CALL(*downloader, downloadProgressChanged).WillOnce(ReturnRef(signal));
@@ -120,11 +120,11 @@ TEST(LoadProjectTest, AbortDownload)
 {
     ProjectDownloaderFactoryMock factory;
     auto downloader = std::make_shared<ProjectDownloaderMock>();
-    ProjectPrivate::downloaderFactory = &factory;
+    ProjectPrivate::setDownloaderFactory(&factory);
 
     EXPECT_CALL(factory, create()).WillOnce(Return(downloader));
     Project p;
-    ProjectPrivate::downloaderFactory = nullptr;
+    ProjectPrivate::setDownloaderFactory(nullptr);
 
     EXPECT_CALL(*downloader, cancel());
     p.stopLoading();
