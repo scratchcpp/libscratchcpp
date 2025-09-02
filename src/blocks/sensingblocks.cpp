@@ -431,23 +431,23 @@ void SensingBlocks::askNextQuestion()
         engine->questionAsked()(question->question);
 }
 
-extern "C" bool sensing_touching_mouse(Target *target)
+BLOCK_EXPORT bool sensing_touching_mouse(Target *target)
 {
     IEngine *engine = target->engine();
     return target->touchingPoint(engine->mouseX(), engine->mouseY());
 }
 
-extern "C" bool sensing_touching_edge(Target *target)
+BLOCK_EXPORT bool sensing_touching_edge(Target *target)
 {
     return target->touchingEdge();
 }
 
-extern "C" bool sensing_touching_sprite(Target *target, Sprite *sprite)
+BLOCK_EXPORT bool sensing_touching_sprite(Target *target, Sprite *sprite)
 {
     return target->touchingSprite(sprite);
 }
 
-extern "C" bool sensing_touchingobject(Target *target, const StringPtr *object)
+BLOCK_EXPORT bool sensing_touchingobject(Target *target, const StringPtr *object)
 {
     static const StringPtr MOUSE_STR("_mouse_");
     static const StringPtr EDGE_STR("_edge_");
@@ -470,12 +470,12 @@ extern "C" bool sensing_touchingobject(Target *target, const StringPtr *object)
     return false;
 }
 
-extern "C" bool sensing_touchingcolor(Target *target, const ValueData *color)
+BLOCK_EXPORT bool sensing_touchingcolor(Target *target, const ValueData *color)
 {
     return target->touchingColor(value_toRgba(color));
 }
 
-extern "C" bool sensing_coloristouchingcolor(Target *target, const ValueData *color, const ValueData *color2)
+BLOCK_EXPORT bool sensing_coloristouchingcolor(Target *target, const ValueData *color, const ValueData *color2)
 {
     return target->touchingColor(value_toRgba(color), value_toRgba(color2));
 }
@@ -485,18 +485,18 @@ static inline double sensing_distance(double x0, double y0, double x1, double y1
     return std::sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
 }
 
-extern "C" double sensing_distance_to_mouse(Sprite *sprite)
+BLOCK_EXPORT double sensing_distance_to_mouse(Sprite *sprite)
 {
     IEngine *engine = sprite->engine();
     return sensing_distance(sprite->x(), sprite->y(), engine->mouseX(), engine->mouseY());
 }
 
-extern "C" double sensing_distance_to_sprite(Sprite *sprite, Sprite *targetSprite)
+BLOCK_EXPORT double sensing_distance_to_sprite(Sprite *sprite, Sprite *targetSprite)
 {
     return sensing_distance(sprite->x(), sprite->y(), targetSprite->x(), targetSprite->y());
 }
 
-extern "C" double sensing_distanceto(Sprite *sprite, const StringPtr *object)
+BLOCK_EXPORT double sensing_distanceto(Sprite *sprite, const StringPtr *object)
 {
     static const StringPtr MOUSE_STR("_mouse_");
     static const StringPtr STAGE_STR("_stage_");
@@ -516,45 +516,45 @@ extern "C" double sensing_distanceto(Sprite *sprite, const StringPtr *object)
     return 10000.0;
 }
 
-extern "C" void sensing_askandwait(ExecutionContext *ctx, const StringPtr *question)
+BLOCK_EXPORT void sensing_askandwait(ExecutionContext *ctx, const StringPtr *question)
 {
     SensingBlocks::askQuestion(ctx, question);
     ctx->thread()->setPromise(std::make_shared<Promise>());
 }
 
-extern "C" void sensing_answer(StringPtr *ret, ExecutionContext *ctx)
+BLOCK_EXPORT void sensing_answer(StringPtr *ret, ExecutionContext *ctx)
 {
     string_assign(ret, ctx->engine()->answer());
 }
 
-extern "C" bool sensing_keypressed(ExecutionContext *ctx, const StringPtr *key)
+BLOCK_EXPORT bool sensing_keypressed(ExecutionContext *ctx, const StringPtr *key)
 {
     // TODO: Use UTF-16 in engine
     std::string u8name = utf8::utf16to8(std::u16string(key->data));
     return ctx->engine()->keyPressed(u8name);
 }
 
-extern "C" bool sensing_mousedown(ExecutionContext *ctx)
+BLOCK_EXPORT bool sensing_mousedown(ExecutionContext *ctx)
 {
     return ctx->engine()->mousePressed();
 }
 
-extern "C" double sensing_mousex(ExecutionContext *ctx)
+BLOCK_EXPORT double sensing_mousex(ExecutionContext *ctx)
 {
     return ctx->engine()->mouseX();
 }
 
-extern "C" double sensing_mousey(ExecutionContext *ctx)
+BLOCK_EXPORT double sensing_mousey(ExecutionContext *ctx)
 {
     return ctx->engine()->mouseY();
 }
 
-extern "C" void sensing_setdragmode(Sprite *sprite, bool draggable)
+BLOCK_EXPORT void sensing_setdragmode(Sprite *sprite, bool draggable)
 {
     sprite->setDraggable(draggable);
 }
 
-extern "C" double sensing_loudness()
+BLOCK_EXPORT double sensing_loudness()
 {
     if (!SensingBlocks::audioInput)
         SensingBlocks::audioInput = AudioInput::instance().get();
@@ -563,53 +563,53 @@ extern "C" double sensing_loudness()
     return audioLoudness->getLoudness();
 }
 
-extern "C" double sensing_timer(ITimer *timer)
+BLOCK_EXPORT double sensing_timer(ITimer *timer)
 {
     return timer->value();
 }
 
-extern "C" void sensing_resettimer(ITimer *timer)
+BLOCK_EXPORT void sensing_resettimer(ITimer *timer)
 {
     timer->reset();
 }
 
-extern "C" double sensing_x_position_of_sprite(Sprite *sprite)
+BLOCK_EXPORT double sensing_x_position_of_sprite(Sprite *sprite)
 {
     return sprite->x();
 }
 
-extern "C" double sensing_y_position_of_sprite(Sprite *sprite)
+BLOCK_EXPORT double sensing_y_position_of_sprite(Sprite *sprite)
 {
     return sprite->y();
 }
 
-extern "C" double sensing_direction_of_sprite(Sprite *sprite)
+BLOCK_EXPORT double sensing_direction_of_sprite(Sprite *sprite)
 {
     return sprite->direction();
 }
 
-extern "C" double sensing_costume_number_of_target(Target *target)
+BLOCK_EXPORT double sensing_costume_number_of_target(Target *target)
 {
     return target->costumeIndex() + 1;
 }
 
-extern "C" void sensing_costume_name_of_target(StringPtr *ret, Target *target)
+BLOCK_EXPORT void sensing_costume_name_of_target(StringPtr *ret, Target *target)
 {
     const std::string &name = target->currentCostume()->name();
     string_assign_cstring(ret, name.c_str());
 }
 
-extern "C" double sensing_size_of_sprite(Sprite *sprite)
+BLOCK_EXPORT double sensing_size_of_sprite(Sprite *sprite)
 {
     return sprite->size();
 }
 
-extern "C" double sensing_volume_of_target(Target *target)
+BLOCK_EXPORT double sensing_volume_of_target(Target *target)
 {
     return target->volume();
 }
 
-extern "C" Target *sensing_get_target(ExecutionContext *ctx, const StringPtr *name)
+BLOCK_EXPORT Target *sensing_get_target(ExecutionContext *ctx, const StringPtr *name)
 {
     // TODO: Use UTF-16 in engine
     std::string u8name = utf8::utf16to8(std::u16string(name->data));
@@ -617,7 +617,7 @@ extern "C" Target *sensing_get_target(ExecutionContext *ctx, const StringPtr *na
     return engine->targetAt(engine->findTarget(u8name));
 }
 
-extern "C" double sensing_x_position_of_sprite_with_check(Target *target)
+BLOCK_EXPORT double sensing_x_position_of_sprite_with_check(Target *target)
 {
     if (target && !target->isStage()) {
         Sprite *sprite = static_cast<Sprite *>(target);
@@ -627,7 +627,7 @@ extern "C" double sensing_x_position_of_sprite_with_check(Target *target)
     return 0.0;
 }
 
-extern "C" double sensing_y_position_of_sprite_with_check(Target *target)
+BLOCK_EXPORT double sensing_y_position_of_sprite_with_check(Target *target)
 {
     if (target && !target->isStage()) {
         Sprite *sprite = static_cast<Sprite *>(target);
@@ -637,7 +637,7 @@ extern "C" double sensing_y_position_of_sprite_with_check(Target *target)
     return 0.0;
 }
 
-extern "C" double sensing_direction_of_sprite_with_check(Target *target)
+BLOCK_EXPORT double sensing_direction_of_sprite_with_check(Target *target)
 {
     if (target && !target->isStage()) {
         Sprite *sprite = static_cast<Sprite *>(target);
@@ -647,7 +647,7 @@ extern "C" double sensing_direction_of_sprite_with_check(Target *target)
     return 0.0;
 }
 
-extern "C" double sensing_costume_number_of_sprite_with_check(Target *target)
+BLOCK_EXPORT double sensing_costume_number_of_sprite_with_check(Target *target)
 {
     if (target && !target->isStage())
         return target->costumeIndex() + 1;
@@ -655,7 +655,7 @@ extern "C" double sensing_costume_number_of_sprite_with_check(Target *target)
     return 0.0;
 }
 
-extern "C" void sensing_costume_name_of_sprite_with_check(StringPtr *ret, Target *target)
+BLOCK_EXPORT void sensing_costume_name_of_sprite_with_check(StringPtr *ret, Target *target)
 {
     if (target && !target->isStage()) {
         const std::string &name = target->currentCostume()->name();
@@ -664,7 +664,7 @@ extern "C" void sensing_costume_name_of_sprite_with_check(StringPtr *ret, Target
         string_assign_cstring(ret, "0");
 }
 
-extern "C" double sensing_size_of_sprite_with_check(Target *target)
+BLOCK_EXPORT double sensing_size_of_sprite_with_check(Target *target)
 {
     if (target && !target->isStage()) {
         Sprite *sprite = static_cast<Sprite *>(target);
@@ -674,7 +674,7 @@ extern "C" double sensing_size_of_sprite_with_check(Target *target)
     return 0.0;
 }
 
-extern "C" double sensing_backdrop_number_of_stage_with_check(Target *target)
+BLOCK_EXPORT double sensing_backdrop_number_of_stage_with_check(Target *target)
 {
     if (target && target->isStage())
         return target->costumeIndex() + 1;
@@ -682,7 +682,7 @@ extern "C" double sensing_backdrop_number_of_stage_with_check(Target *target)
     return 0.0;
 }
 
-extern "C" void sensing_backdrop_name_of_stage_with_check(StringPtr *ret, Target *target)
+BLOCK_EXPORT void sensing_backdrop_name_of_stage_with_check(StringPtr *ret, Target *target)
 {
     if (target && target->isStage()) {
         const std::string &name = target->currentCostume()->name();
@@ -691,7 +691,7 @@ extern "C" void sensing_backdrop_name_of_stage_with_check(StringPtr *ret, Target
         string_assign_cstring(ret, "");
 }
 
-extern "C" double sensing_volume_of_target_with_check(Target *target)
+BLOCK_EXPORT double sensing_volume_of_target_with_check(Target *target)
 {
     if (target)
         return target->volume();
@@ -699,7 +699,7 @@ extern "C" double sensing_volume_of_target_with_check(Target *target)
     return 0.0;
 }
 
-extern "C" ValueData sensing_variable_of_target(Target *target, const StringPtr *varName)
+BLOCK_EXPORT ValueData sensing_variable_of_target(Target *target, const StringPtr *varName)
 {
     if (target) {
         // TODO: Use UTF-16 in... Target?
@@ -722,56 +722,56 @@ extern "C" ValueData sensing_variable_of_target(Target *target, const StringPtr 
     return ret;
 }
 
-extern "C" double sensing_current_year()
+BLOCK_EXPORT double sensing_current_year()
 {
     time_t now = time(0);
     tm *ltm = localtime(&now);
     return ltm->tm_year + 1900;
 }
 
-extern "C" double sensing_current_month()
+BLOCK_EXPORT double sensing_current_month()
 {
     time_t now = time(0);
     tm *ltm = localtime(&now);
     return ltm->tm_mon + 1;
 }
 
-extern "C" double sensing_current_date()
+BLOCK_EXPORT double sensing_current_date()
 {
     time_t now = time(0);
     tm *ltm = localtime(&now);
     return ltm->tm_mday;
 }
 
-extern "C" double sensing_current_day_of_week()
+BLOCK_EXPORT double sensing_current_day_of_week()
 {
     time_t now = time(0);
     tm *ltm = localtime(&now);
     return ltm->tm_wday + 1;
 }
 
-extern "C" double sensing_current_hour()
+BLOCK_EXPORT double sensing_current_hour()
 {
     time_t now = time(0);
     tm *ltm = localtime(&now);
     return ltm->tm_hour;
 }
 
-extern "C" double sensing_current_minute()
+BLOCK_EXPORT double sensing_current_minute()
 {
     time_t now = time(0);
     tm *ltm = localtime(&now);
     return ltm->tm_min;
 }
 
-extern "C" double sensing_current_second()
+BLOCK_EXPORT double sensing_current_second()
 {
     time_t now = time(0);
     tm *ltm = localtime(&now);
     return ltm->tm_sec;
 }
 
-extern "C" double sensing_dayssince2000()
+BLOCK_EXPORT double sensing_dayssince2000()
 {
     if (!SensingBlocks::clock)
         SensingBlocks::clock = Clock::instance().get();

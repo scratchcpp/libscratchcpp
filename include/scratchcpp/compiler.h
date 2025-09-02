@@ -9,6 +9,8 @@
 #include "enum_bitmask.h"
 #include "spimpl.h"
 
+#define BLOCK_EXPORT extern "C" LIBSCRATCHCPP_EXPORT
+
 namespace libscratchcpp
 {
 

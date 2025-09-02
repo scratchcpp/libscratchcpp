@@ -139,7 +139,7 @@ void VariableBlocks::changeVariableMonitorValue(Block *block, const Value &newVa
         var->setValue(newValue);
 }
 
-extern "C" void data_showvariable(Target *target, Variable *variable)
+BLOCK_EXPORT void data_showvariable(Target *target, Variable *variable)
 {
     Monitor *monitor = variable->monitor();
 
@@ -169,7 +169,7 @@ extern "C" void data_showvariable(Target *target, Variable *variable)
     monitor->setVisible(true);
 }
 
-extern "C" void data_hidevariable(Target *target, Variable *variable)
+BLOCK_EXPORT void data_hidevariable(Target *target, Variable *variable)
 {
     Monitor *monitor = variable->monitor();
 

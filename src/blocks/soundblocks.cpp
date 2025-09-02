@@ -192,7 +192,7 @@ int sound_get_index(Target *target, const ValueData *sound)
     return -1;
 }
 
-extern "C" Sound *sound_play(ExecutionContext *ctx, const ValueData *soundName, bool storeOwner)
+BLOCK_EXPORT Sound *sound_play(ExecutionContext *ctx, const ValueData *soundName, bool storeOwner)
 {
     Thread *thread = ctx->thread();
     Target *target = thread->target();
@@ -207,7 +207,7 @@ extern "C" Sound *sound_play(ExecutionContext *ctx, const ValueData *soundName, 
     return nullptr;
 }
 
-extern "C" bool sound_is_waiting(ExecutionContext *ctx, Sound *sound)
+BLOCK_EXPORT bool sound_is_waiting(ExecutionContext *ctx, Sound *sound)
 {
     if (!sound)
         return false;
@@ -215,47 +215,47 @@ extern "C" bool sound_is_waiting(ExecutionContext *ctx, Sound *sound)
     return sound->owner() == ctx->thread() && sound->isPlaying();
 }
 
-extern "C" void sound_stopallsounds(ExecutionContext *ctx)
+BLOCK_EXPORT void sound_stopallsounds(ExecutionContext *ctx)
 {
     ctx->engine()->stopSounds();
 }
 
-extern "C" void sound_set_pitch_effect(Target *target, double value)
+BLOCK_EXPORT void sound_set_pitch_effect(Target *target, double value)
 {
     target->setSoundEffectValue(Sound::Effect::Pitch, value);
 }
 
-extern "C" void sound_set_pan_effect(Target *target, double value)
+BLOCK_EXPORT void sound_set_pan_effect(Target *target, double value)
 {
     target->setSoundEffectValue(Sound::Effect::Pan, value);
 }
 
-extern "C" void sound_change_pitch_effect(Target *target, double value)
+BLOCK_EXPORT void sound_change_pitch_effect(Target *target, double value)
 {
     target->setSoundEffectValue(Sound::Effect::Pitch, target->soundEffectValue(Sound::Effect::Pitch) + value);
 }
 
-extern "C" void sound_change_pan_effect(Target *target, double value)
+BLOCK_EXPORT void sound_change_pan_effect(Target *target, double value)
 {
     target->setSoundEffectValue(Sound::Effect::Pan, target->soundEffectValue(Sound::Effect::Pan) + value);
 }
 
-extern "C" void sound_cleareffects(Target *target)
+BLOCK_EXPORT void sound_cleareffects(Target *target)
 {
     target->clearSoundEffects();
 }
 
-extern "C" void sound_changevolumeby(Target *target, double volume)
+BLOCK_EXPORT void sound_changevolumeby(Target *target, double volume)
 {
     target->setVolume(target->volume() + volume);
 }
 
-extern "C" void sound_setvolumeto(Target *target, double volume)
+BLOCK_EXPORT void sound_setvolumeto(Target *target, double volume)
 {
     target->setVolume(volume);
 }
 
-extern "C" double sound_volume(Target *target)
+BLOCK_EXPORT double sound_volume(Target *target)
 {
     return target->volume();
 }
