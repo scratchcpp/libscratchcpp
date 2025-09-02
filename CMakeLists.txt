@@ -142,7 +142,7 @@ target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION_PATCH=${PROJ
 target_link_libraries(scratchcpp PRIVATE scratchcpp-test-export)
 
 if (LIBSCRATCHCPP_BUILD_UNIT_TESTS)
-    target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_TEST)
+    target_compile_definitions(scratchcpp-test-export INTERFACE LIBSCRATCHCPP_TEST)
 
     enable_testing()
     add_subdirectory(test)
