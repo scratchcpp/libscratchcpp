@@ -35,21 +35,32 @@ LLVMCoroutine::LLVMCoroutine(llvm::Module *module, llvm::IRBuilder<> *builder, l
 
     // Begin
     m_handle = builder->CreateCall(coroBegin, { coroIdRet, alloc });
+
     m_didSuspendVar = builder->CreateAlloca(builder->getInt1Ty(), nullptr, "didSuspend");
     builder->CreateStore(builder->getInt1(false), m_didSuspendVar);
+
+    m_sentinelVar = builder->CreateAlloca(pointerType, nullptr, "sentinel");
+    builder->CreateStore(nullPointer, m_sentinelVar);
+
     llvm::BasicBlock *entry = builder->GetInsertBlock();
 
     // Create suspend branch
     m_suspendBlock = llvm::BasicBlock::Create(ctx, "suspend", func);
     builder->SetInsertPoint(m_suspendBlock);
+
+    llvm::Value *sentinelValue = builder->CreateLoad(pointerType, m_sentinelVar);
+    llvm::Value *sentinelIsNull = builder->CreateIsNull(sentinelValue);
     builder->CreateCall(coroEnd, { m_handle, builder->getInt1(false), llvm::ConstantTokenNone::get(ctx) });
-    builder->CreateRet(m_handle);
+    builder->CreateRet(builder->CreateSelect(sentinelIsNull, m_handle, sentinelValue));
 
     // Create free branches
     m_freeMemRetBlock = llvm::BasicBlock::Create(ctx, "freeMemRet", func);
     builder->SetInsertPoint(m_freeMemRetBlock);
+
+    sentinelValue = builder->CreateLoad(pointerType, m_sentinelVar);
+    sentinelIsNull = builder->CreateIsNull(sentinelValue);
     builder->CreateFree(alloc);
-    builder->CreateRet(llvm::ConstantPointerNull::get(pointerType));
+    builder->CreateRet(builder->CreateSelect(sentinelIsNull, llvm::ConstantPointerNull::get(pointerType), sentinelValue));
 
     llvm::BasicBlock *freeBranch = llvm::BasicBlock::Create(ctx, "free", func);
     builder->SetInsertPoint(freeBranch);
@@ -62,6 +73,15 @@ LLVMCoroutine::LLVMCoroutine(llvm::Module *module, llvm::IRBuilder<> *builder, l
     llvm::Value *mem = builder->CreateCall(coroFree, { coroIdRet, m_handle });
     llvm::Value *needFree = builder->CreateIsNotNull(mem);
     builder->CreateCondBr(needFree, freeBranch, m_suspendBlock);
+
+    // Create final suspend point
+    m_finalSuspendBlock = llvm::BasicBlock::Create(ctx, "finalSuspend", m_function);
+
+    m_builder->SetInsertPoint(m_finalSuspendBlock);
+    llvm::Value *suspendResult = m_builder->CreateCall(llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::coro_suspend), { llvm::ConstantTokenNone::get(ctx), m_builder->getInt1(true) });
+    llvm::SwitchInst *sw = m_builder->CreateSwitch(suspendResult, m_suspendBlock, 2);
+    sw->addCase(m_builder->getInt8(0), m_freeMemRetBlock);
+    sw->addCase(m_builder->getInt8(1), m_cleanupBlock);
 
     builder->SetInsertPoint(entry);
 }
@@ -135,20 +155,11 @@ llvm::Value *LLVMCoroutine::createResume(llvm::Module *module, llvm::IRBuilder<>
 
 void LLVMCoroutine::end()
 {
-    llvm::LLVMContext &ctx = m_builder->getContext();
+    m_builder->CreateCondBr(m_builder->CreateLoad(m_builder->getInt1Ty(), m_didSuspendVar), m_finalSuspendBlock, m_freeMemRetBlock);
+}
 
-    // Add final suspend point
-    llvm::BasicBlock *endBranch = llvm::BasicBlock::Create(ctx, "end", m_function);
-    llvm::BasicBlock *finalSuspendBranch = llvm::BasicBlock::Create(ctx, "finalSuspend", m_function);
-    m_builder->CreateCondBr(m_builder->CreateLoad(m_builder->getInt1Ty(), m_didSuspendVar), finalSuspendBranch, endBranch);
-
-    m_builder->SetInsertPoint(finalSuspendBranch);
-    llvm::Value *suspendResult = m_builder->CreateCall(llvm::Intrinsic::getDeclaration(m_module, llvm::Intrinsic::coro_suspend), { llvm::ConstantTokenNone::get(ctx), m_builder->getInt1(true) });
-    llvm::SwitchInst *sw = m_builder->CreateSwitch(suspendResult, m_suspendBlock, 2);
-    sw->addCase(m_builder->getInt8(0), endBranch); // unreachable
-    sw->addCase(m_builder->getInt8(1), m_cleanupBlock);
-
-    // Jump to "free and return" branch
-    m_builder->SetInsertPoint(endBranch);
-    m_builder->CreateBr(m_freeMemRetBlock);
+void LLVMCoroutine::endWithSentinel(llvm::Value *sentinel)
+{
+    m_builder->CreateStore(sentinel, m_sentinelVar);
+    end();
 }

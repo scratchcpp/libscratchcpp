@@ -567,6 +567,12 @@ void LLVMCodeBuilder::createStop()
     m_instructions.addInstruction(ins);
 }
 
+void LLVMCodeBuilder::createThreadStop()
+{
+    auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ThreadStop, m_loopCondition);
+    m_instructions.addInstruction(ins);
+}
+
 void LLVMCodeBuilder::createStopWithoutSync()
 {
     auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::StopWithoutSync, m_loopCondition);

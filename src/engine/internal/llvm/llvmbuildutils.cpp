@@ -161,8 +161,9 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
     reloadVariables();
     reloadLists();
 
-    // Create end branch
+    // Create end branches
     m_endBranch = llvm::BasicBlock::Create(m_llvmCtx, "end", m_function);
+    m_endThreadBranch = llvm::BasicBlock::Create(m_llvmCtx, "endThread", m_function);
 }
 
 void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastConstant)
@@ -184,9 +185,9 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
     syncVariables();
     m_builder.CreateBr(m_endBranch);
 
+    // End branch
     m_builder.SetInsertPoint(m_endBranch);
 
-    // End the script function
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
 
     switch (m_codeType) {
@@ -214,6 +215,31 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
                 m_builder.CreateRet(castValue(lastInstruction->functionReturnReg, Compiler::StaticType::Bool));
             else
                 m_builder.CreateRet(castValue(lastConstant, Compiler::StaticType::Bool));
+            break;
+    }
+
+    // Thread end branch (stop the entire thread, including procedure callers)
+    m_builder.SetInsertPoint(m_endThreadBranch);
+
+    switch (m_codeType) {
+        case Compiler::CodeType::Script:
+            // Return a sentinel value (special pointer) to terminate any procedure callers
+            if (m_warp)
+                m_builder.CreateRet(threadEndSentinel());
+            else if (m_procedurePrototype)
+                m_coroutine->endWithSentinel(threadEndSentinel());
+            else {
+                // There's no need to return the sentinel value in standard scripts because they don't have any callers
+                m_coroutine->endWithSentinel(threadEndSentinel());
+                // m_coroutine->end();
+            }
+
+            break;
+
+        case Compiler::CodeType::Reporter:
+        case Compiler::CodeType::HatPredicate:
+            // Procedures cannot be called by these scripts, so we don't have to return the sentinel value
+            m_builder.CreateBr(m_endBranch);
             break;
     }
 }
@@ -321,6 +347,17 @@ size_t LLVMBuildUtils::stringCount() const
 llvm::BasicBlock *LLVMBuildUtils::endBranch() const
 {
     return m_endBranch;
+}
+
+llvm::BasicBlock *LLVMBuildUtils::endThreadBranch() const
+{
+    return m_endThreadBranch;
+}
+
+llvm::Value *LLVMBuildUtils::threadEndSentinel() const
+{
+    llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
+    return m_builder.CreateIntToPtr(m_builder.getInt64(1), pointerType, "threadEndSentinel");
 }
 
 BlockPrototype *LLVMBuildUtils::procedurePrototype() const

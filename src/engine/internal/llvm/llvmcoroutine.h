@@ -24,6 +24,7 @@ class LLVMCoroutine
         void createSuspend();
         static llvm::Value *createResume(llvm::Module *module, llvm::IRBuilder<> *builder, llvm::Function *function, llvm::Value *coroHandle);
         void end();
+        void endWithSentinel(llvm::Value *sentinel);
 
     private:
         llvm::Module *m_module = nullptr;
@@ -31,9 +32,11 @@ class LLVMCoroutine
         llvm::Function *m_function = nullptr;
         llvm::Value *m_handle = nullptr;
         llvm::BasicBlock *m_suspendBlock = nullptr;
+        llvm::BasicBlock *m_finalSuspendBlock = nullptr;
         llvm::BasicBlock *m_cleanupBlock = nullptr;
         llvm::BasicBlock *m_freeMemRetBlock = nullptr;
         llvm::Value *m_didSuspendVar = nullptr;
+        llvm::Value *m_sentinelVar = nullptr;
 };
 
 } // namespace libscratchcpp

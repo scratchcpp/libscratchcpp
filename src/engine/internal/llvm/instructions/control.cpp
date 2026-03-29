@@ -60,6 +60,10 @@ ProcessResult Control::process(LLVMInstruction *ins)
             ret.next = buildStop(ins);
             break;
 
+        case LLVMInstruction::Type::ThreadStop:
+            ret.next = buildThreadStop(ins);
+            break;
+
         case LLVMInstruction::Type::StopWithoutSync:
             ret.next = buildStopWithoutSync(ins);
             break;
@@ -338,6 +342,17 @@ LLVMInstruction *Control::buildStop(LLVMInstruction *ins)
 {
     m_utils.syncVariables();
     return buildStopWithoutSync(ins);
+}
+
+LLVMInstruction *Control::buildThreadStop(LLVMInstruction *ins)
+{
+    m_utils.syncVariables();
+    m_builder.CreateBr(m_utils.endThreadBranch());
+
+    llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_utils.llvmCtx(), "", m_utils.function());
+    m_builder.SetInsertPoint(nextBranch);
+
+    return ins->next;
 }
 
 LLVMInstruction *Control::buildStopWithoutSync(LLVMInstruction *ins)

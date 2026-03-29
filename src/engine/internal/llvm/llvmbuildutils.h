@@ -56,6 +56,9 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMBuildUtils
         size_t stringCount() const;
 
         llvm::BasicBlock *endBranch() const;
+        llvm::BasicBlock *endThreadBranch() const;
+
+        llvm::Value *threadEndSentinel() const;
 
         BlockPrototype *procedurePrototype() const;
         bool warp() const;
@@ -166,6 +169,7 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMBuildUtils
         llvm::Value *m_functionIdValue = nullptr;
 
         llvm::BasicBlock *m_endBranch = nullptr;
+        llvm::BasicBlock *m_endThreadBranch = nullptr;
 
         llvm::StructType *m_valueDataType = nullptr;
         llvm::StructType *m_stringPtrType = nullptr;

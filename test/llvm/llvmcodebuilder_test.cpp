@@ -3552,6 +3552,140 @@ TEST_F(LLVMCodeBuilderTest, UndefinedProcedure)
     ASSERT_TRUE(code->isFinished(ctx.get()));
 }
 
+TEST_F(LLVMCodeBuilderTest, ProcedureThreadStop_Warp)
+{
+    Sprite sprite;
+
+    // Inner procedure (proc2): prints "inner_before", then stops the thread
+    BlockPrototype prototype2;
+    prototype2.setProcCode("proc2");
+    prototype2.setWarp(true);
+    LLVMCodeBuilder *builder = m_utils.createBuilder(&sprite, &prototype2);
+
+    CompilerValue *v = builder->addConstValue("inner_before");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    builder->createThreadStop();
+
+    // This should NOT execute
+    v = builder->addConstValue("inner_after");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    auto proc2Code = builder->build();
+
+    // Outer procedure (proc1): prints "outer_before", calls proc2, then prints "outer_after"
+    BlockPrototype prototype1;
+    prototype1.setProcCode("proc1");
+    prototype1.setWarp(true);
+    builder = m_utils.createBuilder(&sprite, &prototype1);
+
+    v = builder->addConstValue("outer_before");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    builder->createProcedureCall(&prototype2, {});
+
+    // This should NOT execute (thread was stopped by proc2)
+    v = builder->addConstValue("outer_after");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    auto proc1Code = builder->build();
+
+    // Root script: prints "script_before", calls proc1, then prints "script_after"
+    builder = m_utils.createBuilder(&sprite, true);
+
+    v = builder->addConstValue("script_before");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    builder->createProcedureCall(&prototype1, {});
+
+    // This should NOT execute (thread was stopped by proc2 via proc1)
+    v = builder->addConstValue("script_after");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    std::string expected =
+        "script_before\n"
+        "outer_before\n"
+        "inner_before\n";
+
+    auto code = builder->build();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+    ASSERT_TRUE(code->isFinished(ctx.get()));
+}
+
+TEST_F(LLVMCodeBuilderTest, ProcedureThreadStop_NonWarp)
+{
+    Sprite sprite;
+
+    // Inner procedure (proc2): prints "inner_before", then stops the thread
+    BlockPrototype prototype2;
+    prototype2.setProcCode("proc2");
+    prototype2.setWarp(false);
+    LLVMCodeBuilder *builder = m_utils.createBuilder(&sprite, &prototype2);
+
+    CompilerValue *v = builder->addConstValue("inner_before");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    builder->createThreadStop();
+
+    // This should NOT execute
+    v = builder->addConstValue("inner_after");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    auto proc2Code = builder->build();
+
+    // Outer procedure (proc1): prints "outer_before", calls proc2, then prints "outer_after"
+    BlockPrototype prototype1;
+    prototype1.setProcCode("proc1");
+    prototype1.setWarp(false);
+    builder = m_utils.createBuilder(&sprite, &prototype1);
+
+    v = builder->addConstValue("outer_before");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    builder->createProcedureCall(&prototype2, {});
+
+    // This should NOT execute (thread was stopped by proc2)
+    v = builder->addConstValue("outer_after");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    auto proc1Code = builder->build();
+
+    // Root script: prints "script_before", calls proc1, then prints "script_after"
+    builder = m_utils.createBuilder(&sprite, false);
+
+    v = builder->addConstValue("script_before");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    builder->createProcedureCall(&prototype1, {});
+
+    // This should NOT execute (thread was stopped by proc2 via proc1)
+    v = builder->addConstValue("script_after");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    std::string expected =
+        "script_before\n"
+        "outer_before\n"
+        "inner_before\n";
+
+    auto code = builder->build();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+    ASSERT_TRUE(code->isFinished(ctx.get()));
+}
+
 TEST_F(LLVMCodeBuilderTest, HatPredicates)
 {
     Sprite sprite;
