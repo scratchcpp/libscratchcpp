@@ -87,6 +87,13 @@ LLVMInstruction *Procedures::buildCallProcedure(LLVMInstruction *ins)
         m_builder.CreateCondBr(done, nextBranch, suspendBranch);
 
         m_builder.SetInsertPoint(nextBranch);
+
+        // The thread could be stopped from the coroutine
+        llvm::BasicBlock *afterResumeBranch = llvm::BasicBlock::Create(llvmCtx, "", function);
+        llvm::Value *isFinished = m_builder.CreateCall(m_utils.functions().resolve_llvm_is_thread_finished(), m_utils.executionContextPtr());
+        m_builder.CreateCondBr(isFinished, m_utils.endThreadBranch(), afterResumeBranch);
+
+        m_builder.SetInsertPoint(afterResumeBranch);
     }
 
     m_utils.reloadVariables();

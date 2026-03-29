@@ -35,6 +35,16 @@ extern "C"
     {
         return static_cast<LLVMExecutionContext *>(ctx)->getStringArray(functionId);
     }
+
+    LIBSCRATCHCPP_EXPORT void llvm_mark_thread_as_finished(ExecutionContext *ctx)
+    {
+        static_cast<LLVMExecutionContext *>(ctx)->setFinished(true);
+    }
+
+    LIBSCRATCHCPP_EXPORT bool llvm_is_thread_finished(ExecutionContext *ctx)
+    {
+        return static_cast<LLVMExecutionContext *>(ctx)->finished();
+    }
 }
 
 LLVMFunctions::LLVMFunctions(LLVMCompilerContext *ctx, llvm::IRBuilder<> *builder) :
@@ -280,6 +290,18 @@ llvm::FunctionCallee LLVMFunctions::resolve_llvm_get_string_array()
     llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
     func->addFnAttr(llvm::Attribute::ReadOnly);
     return callee;
+}
+
+llvm::FunctionCallee LLVMFunctions::resolve_llvm_mark_thread_as_finished()
+{
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_ctx->llvmCtx()), 0);
+    return resolveFunction("llvm_mark_thread_as_finished", llvm::FunctionType::get(m_builder->getVoidTy(), { pointerType }, false));
+}
+
+llvm::FunctionCallee LLVMFunctions::resolve_llvm_is_thread_finished()
+{
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_ctx->llvmCtx()), 0);
+    return resolveFunction("llvm_is_thread_finished", llvm::FunctionType::get(m_builder->getInt1Ty(), { pointerType }, false));
 }
 
 llvm::FunctionCallee LLVMFunctions::resolve_string_pool_new()

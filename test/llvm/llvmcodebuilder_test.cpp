@@ -3686,6 +3686,99 @@ TEST_F(LLVMCodeBuilderTest, ProcedureThreadStop_NonWarp)
     ASSERT_TRUE(code->isFinished(ctx.get()));
 }
 
+TEST_F(LLVMCodeBuilderTest, ProcedureThreadStop_NonWarp_AfterYield)
+{
+    Sprite sprite;
+
+    // Inner procedure (proc2): yields via a repeat loop, then stops the thread
+    // This exercises the coroutine resume path where the sentinel must propagate
+    BlockPrototype prototype2;
+    prototype2.setProcCode("proc2");
+    prototype2.setWarp(false);
+
+    LLVMCodeBuilder *builder = m_utils.createBuilder(&sprite, &prototype2);
+    CompilerValue *v = builder->addConstValue("inner_before");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    // This repeat loop causes the coroutine to suspend (yield) on each iteration
+    v = builder->addConstValue(2);
+    builder->beginRepeatLoop(v);
+    {
+        v = builder->addConstValue("inner_loop");
+        builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+    }
+    builder->endLoop();
+
+    // After the loop completes, stop the thread
+    builder->createThreadStop();
+
+    // This should NOT execute
+    v = builder->addConstValue("inner_after");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    auto proc2Code = builder->build();
+
+    // Outer procedure (proc1): calls proc2
+    BlockPrototype prototype1;
+    prototype1.setProcCode("proc1");
+    prototype1.setWarp(false);
+
+    builder = m_utils.createBuilder(&sprite, &prototype1);
+
+    v = builder->addConstValue("outer_before");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+    builder->createProcedureCall(&prototype2, {});
+
+    // This should NOT execute (thread was stopped by proc2)
+    v = builder->addConstValue("outer_after");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+    auto proc1Code = builder->build();
+
+    // Root script: calls proc1
+    builder = m_utils.createBuilder(&sprite, false);
+    v = builder->addConstValue("script_before");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+    builder->createProcedureCall(&prototype1, {});
+
+    // This should NOT execute (thread was stopped by proc2 via proc1)
+    v = builder->addConstValue("script_after");
+    builder->addFunctionCall("test_print_string", Compiler::StaticType::Void, { Compiler::StaticType::String }, { v });
+
+    auto code = builder->build();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+
+    // First run: enters the repeat loop in proc2, yields after first iteration
+    std::string expected1 =
+        "script_before\n"
+        "outer_before\n"
+        "inner_before\n"
+        "inner_loop\n";
+
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected1);
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    // Second run: second iteration of the repeat loop, yields again
+    std::string expected2 = "inner_loop\n";
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected2);
+    ASSERT_FALSE(code->isFinished(ctx.get()));
+
+    // Third run: loop is done, createThreadStop() fires, sentinel must propagate
+    // through the coroutine resume path back to the caller
+    // Neither "inner_after", "outer_after", nor "script_after" should print
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), "");
+    ASSERT_TRUE(code->isFinished(ctx.get()));
+}
+
 TEST_F(LLVMCodeBuilderTest, HatPredicates)
 {
     Sprite sprite;

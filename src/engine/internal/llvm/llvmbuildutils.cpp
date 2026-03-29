@@ -227,6 +227,9 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
 
     switch (m_codeType) {
         case Compiler::CodeType::Script:
+            // Mark the thread as finished
+            m_builder.CreateCall(m_functions.resolve_llvm_mark_thread_as_finished(), { m_executionContextPtr });
+
             // Return a sentinel value (special pointer) to terminate any procedure callers
             if (m_warp)
                 m_builder.CreateRet(threadEndSentinel());
