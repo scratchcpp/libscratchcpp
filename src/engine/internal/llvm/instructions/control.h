@@ -28,7 +28,6 @@ class Control : public InstructionGroup
         LLVMInstruction *buildEndLoop(LLVMInstruction *ins);
         LLVMInstruction *buildStop(LLVMInstruction *ins);
         LLVMInstruction *buildThreadStop(LLVMInstruction *ins);
-        LLVMInstruction *buildStopWithoutSync(LLVMInstruction *ins);
         LLVMInstruction *buildInvalidateTarget(LLVMInstruction *ins);
 };
 

@@ -64,10 +64,6 @@ ProcessResult Control::process(LLVMInstruction *ins)
             ret.next = buildThreadStop(ins);
             break;
 
-        case LLVMInstruction::Type::StopWithoutSync:
-            ret.next = buildStopWithoutSync(ins);
-            break;
-
         case LLVMInstruction::Type::InvalidateTarget:
             ret.next = buildInvalidateTarget(ins);
             break;
@@ -345,7 +341,12 @@ LLVMInstruction *Control::buildEndLoop(LLVMInstruction *ins)
 LLVMInstruction *Control::buildStop(LLVMInstruction *ins)
 {
     m_utils.syncVariables();
-    return buildStopWithoutSync(ins);
+
+    m_builder.CreateBr(m_utils.endBranch());
+    llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_utils.llvmCtx(), "", m_utils.function());
+    m_builder.SetInsertPoint(nextBranch);
+
+    return ins->next;
 }
 
 LLVMInstruction *Control::buildThreadStop(LLVMInstruction *ins)
@@ -353,15 +354,6 @@ LLVMInstruction *Control::buildThreadStop(LLVMInstruction *ins)
     m_utils.syncVariables();
     m_builder.CreateBr(m_utils.endThreadBranch());
 
-    llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_utils.llvmCtx(), "", m_utils.function());
-    m_builder.SetInsertPoint(nextBranch);
-
-    return ins->next;
-}
-
-LLVMInstruction *Control::buildStopWithoutSync(LLVMInstruction *ins)
-{
-    m_builder.CreateBr(m_utils.endBranch());
     llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_utils.llvmCtx(), "", m_utils.function());
     m_builder.SetInsertPoint(nextBranch);
 

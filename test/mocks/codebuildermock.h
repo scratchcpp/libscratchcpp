@@ -89,7 +89,6 @@ class CodeBuilderMock : public ICodeBuilder
 
         MOCK_METHOD(void, createStop, (), (override));
         MOCK_METHOD(void, createThreadStop, (), (override));
-        MOCK_METHOD(void, createStopWithoutSync, (), (override));
 
         MOCK_METHOD(void, invalidateTarget, (), (override));
 

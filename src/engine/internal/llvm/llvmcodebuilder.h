@@ -114,7 +114,6 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMCodeBuilder : public ICodeBuilder
 
         void createStop() override;
         void createThreadStop() override;
-        void createStopWithoutSync() override;
 
         void invalidateTarget() override;
 

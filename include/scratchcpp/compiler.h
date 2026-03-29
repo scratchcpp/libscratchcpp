@@ -149,9 +149,9 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void warp();
 
         void createYield();
+
         void createStop();
         void createThreadStop();
-        void createStopWithoutSync();
 
         void invalidateTarget();
 

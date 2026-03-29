@@ -100,7 +100,6 @@ class ICodeBuilder
 
         virtual void createStop() = 0;
         virtual void createThreadStop() = 0;
-        virtual void createStopWithoutSync() = 0;
 
         virtual void invalidateTarget() = 0;
 

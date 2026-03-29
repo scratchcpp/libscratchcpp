@@ -78,7 +78,6 @@ struct LLVMInstruction
             EndLoop,
             Stop,
             ThreadStop,
-            StopWithoutSync,
             InvalidateTarget,
             CallProcedure,
             ProcedureArg
