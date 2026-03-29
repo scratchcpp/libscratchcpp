@@ -79,6 +79,7 @@ struct LLVMInstruction
             Stop,
             ThreadStop,
             StopWithoutSync,
+            InvalidateTarget,
             CallProcedure,
             ProcedureArg
         };

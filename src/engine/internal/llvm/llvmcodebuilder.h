@@ -116,6 +116,8 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMCodeBuilder : public ICodeBuilder
         void createThreadStop() override;
         void createStopWithoutSync() override;
 
+        void invalidateTarget() override;
+
         void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args) override;
 
     private:

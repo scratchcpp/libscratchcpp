@@ -102,6 +102,8 @@ class ICodeBuilder
         virtual void createThreadStop() = 0;
         virtual void createStopWithoutSync() = 0;
 
+        virtual void invalidateTarget() = 0;
+
         virtual void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args) = 0;
 };
 

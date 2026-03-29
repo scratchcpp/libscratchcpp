@@ -82,6 +82,7 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMBuildUtils
         void syncVariables();
         void reloadVariables();
         void reloadLists();
+        void invalidateTarget();
 
         std::vector<LLVMIfStatement> &ifStatements();
         std::vector<LLVMLoop> &loops();
@@ -186,6 +187,7 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMBuildUtils
         llvm::Value *m_targetVariables = nullptr;
         llvm::Value *m_targetLists = nullptr;
         llvm::Value *m_warpArg = nullptr;
+        llvm::Value *m_targetValidFlag = nullptr;
 
         std::unique_ptr<LLVMCoroutine> m_coroutine;
 

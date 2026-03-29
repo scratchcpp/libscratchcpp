@@ -161,6 +161,10 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
     reloadVariables();
     reloadLists();
 
+    // Mark the target as valid
+    m_targetValidFlag = m_builder.CreateAlloca(m_builder.getInt1Ty());
+    m_builder.CreateStore(m_builder.getInt1(true), m_targetValidFlag);
+
     // Create end branches
     m_endBranch = llvm::BasicBlock::Create(m_llvmCtx, "end", m_function);
     m_endThreadBranch = llvm::BasicBlock::Create(m_llvmCtx, "endThread", m_function);
@@ -438,6 +442,12 @@ LLVMListPtr &LLVMBuildUtils::listPtr(List *list)
 
 void LLVMBuildUtils::syncVariables()
 {
+    llvm::BasicBlock *syncBlock = llvm::BasicBlock::Create(m_llvmCtx, "syncVariables", m_function);
+    llvm::BasicBlock *syncNextBlock = llvm::BasicBlock::Create(m_llvmCtx, "syncVariables.next", m_function);
+    m_builder.CreateCondBr(m_builder.CreateLoad(m_builder.getInt1Ty(), m_targetValidFlag), syncBlock, syncNextBlock);
+
+    m_builder.SetInsertPoint(syncBlock);
+
     // Copy stack variables to the actual variables
     for (auto &[var, varPtr] : m_variablePtrs) {
         llvm::BasicBlock *copyBlock = llvm::BasicBlock::Create(m_llvmCtx, "syncVar", m_function);
@@ -451,6 +461,9 @@ void LLVMBuildUtils::syncVariables()
 
         m_builder.SetInsertPoint(nextBlock);
     }
+
+    m_builder.CreateBr(syncNextBlock);
+    m_builder.SetInsertPoint(syncNextBlock);
 }
 
 void LLVMBuildUtils::reloadVariables()
@@ -479,6 +492,11 @@ void LLVMBuildUtils::reloadLists()
             m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasString);
         }
     }
+}
+
+void LLVMBuildUtils::invalidateTarget()
+{
+    m_builder.CreateStore(m_builder.getInt1(false), m_targetValidFlag);
 }
 
 std::vector<LLVMIfStatement> &LLVMBuildUtils::ifStatements()

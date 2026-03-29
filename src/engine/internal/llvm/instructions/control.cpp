@@ -68,6 +68,10 @@ ProcessResult Control::process(LLVMInstruction *ins)
             ret.next = buildStopWithoutSync(ins);
             break;
 
+        case LLVMInstruction::Type::InvalidateTarget:
+            ret.next = buildInvalidateTarget(ins);
+            break;
+
         default:
             ret.match = false;
             break;
@@ -361,5 +365,11 @@ LLVMInstruction *Control::buildStopWithoutSync(LLVMInstruction *ins)
     llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_utils.llvmCtx(), "", m_utils.function());
     m_builder.SetInsertPoint(nextBranch);
 
+    return ins->next;
+}
+
+LLVMInstruction *Control::buildInvalidateTarget(LLVMInstruction *ins)
+{
+    m_utils.invalidateTarget();
     return ins->next;
 }
