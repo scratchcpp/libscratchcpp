@@ -705,6 +705,12 @@ void Compiler::createStop()
     impl->builder->createStop();
 }
 
+/*! Creates a stop thread (current script and procedure callers) instruction. */
+void Compiler::createThreadStop()
+{
+    impl->builder->createThreadStop();
+}
+
 /*!
  * Creates a stop script without synchronization instruction.\n
  * Use this if synchronization is not possible at the stop point.
