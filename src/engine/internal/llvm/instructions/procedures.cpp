@@ -66,9 +66,17 @@ LLVMInstruction *Procedures::buildCallProcedure(LLVMInstruction *ins)
             args.push_back(m_utils.createValue(arg.second));
     }
 
+    // Call the procedure
     llvm::Value *handle = m_builder.CreateCall(m_utils.functions().resolveFunction(name, type), args);
 
+    // Check for end thread sentinel value
+    llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(llvmCtx, "", function);
+    llvm::Value *endThread = m_builder.CreateICmpEQ(handle, m_utils.threadEndSentinel());
+    m_builder.CreateCondBr(endThread, m_utils.endThreadBranch(), nextBranch);
+    m_builder.SetInsertPoint(nextBranch);
+
     if (!m_utils.warp() && !ins->procedurePrototype->warp()) {
+        // Handle suspend
         llvm::BasicBlock *suspendBranch = llvm::BasicBlock::Create(llvmCtx, "", function);
         llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(llvmCtx, "", function);
         m_builder.CreateCondBr(m_builder.CreateIsNull(handle), nextBranch, suspendBranch);
@@ -79,6 +87,13 @@ LLVMInstruction *Procedures::buildCallProcedure(LLVMInstruction *ins)
         m_builder.CreateCondBr(done, nextBranch, suspendBranch);
 
         m_builder.SetInsertPoint(nextBranch);
+
+        // The thread could be stopped from the coroutine
+        llvm::BasicBlock *afterResumeBranch = llvm::BasicBlock::Create(llvmCtx, "", function);
+        llvm::Value *isFinished = m_builder.CreateCall(m_utils.functions().resolve_llvm_is_thread_finished(), m_utils.executionContextPtr());
+        m_builder.CreateCondBr(isFinished, m_utils.endThreadBranch(), afterResumeBranch);
+
+        m_builder.SetInsertPoint(afterResumeBranch);
     }
 
     m_utils.reloadVariables();

@@ -16,6 +16,8 @@
 
 using namespace libscratchcpp;
 
+static const void *END_THREAD_SENTINEL = (void *)0x1;
+
 LLVMExecutableCode::LLVMExecutableCode(
     LLVMCompilerContext *ctx,
     function_id_t functionId,
@@ -70,10 +72,11 @@ void LLVMExecutableCode::run(ExecutionContext *context)
         MainFunctionType f = std::get<MainFunctionType>(m_mainFunction);
         void *handle = f(context, target, target->variableData(), target->listData());
 
-        if (!handle)
+        if (!handle || handle == END_THREAD_SENTINEL) {
             ctx->setFinished(true);
-
-        ctx->setCoroutineHandle(handle);
+            ctx->setCoroutineHandle(nullptr);
+        } else
+            ctx->setCoroutineHandle(handle);
     }
 }
 

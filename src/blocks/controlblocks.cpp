@@ -90,7 +90,8 @@ CompilerValue *ControlBlocks::compileStop(Compiler *compiler)
 
         if (str == "all") {
             compiler->addFunctionCallWithCtx("control_stop_all", Compiler::StaticType::Void);
-            compiler->createStop();
+            compiler->invalidateTarget(); // if this is a clone, it doesn't exist anymore
+            compiler->createThreadStop();
         } else if (str == "this script")
             compiler->createStop();
         else if (str == "other scripts in sprite" || str == "other scripts in stage")
@@ -181,7 +182,8 @@ CompilerValue *ControlBlocks::compileDeleteThisClone(Compiler *compiler)
 {
     CompilerValue *deleted = compiler->addTargetFunctionCall("control_delete_this_clone", Compiler::StaticType::Bool);
     compiler->beginIfStatement(deleted);
-    compiler->createStopWithoutSync(); // sync happens before the function call
+    compiler->invalidateTarget(); // the sprite doesn't exist anymore
+    compiler->createThreadStop(); // callers should be stopped too
     compiler->endIf();
     return nullptr;
 }

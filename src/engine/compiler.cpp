@@ -705,14 +705,19 @@ void Compiler::createStop()
     impl->builder->createStop();
 }
 
-/*!
- * Creates a stop script without synchronization instruction.\n
- * Use this if synchronization is not possible at the stop point.
- * \note Only use this when everything is synchronized, e. g. after a function call.
- */
-void Compiler::createStopWithoutSync()
+/*! Creates a stop thread (current script and procedure callers) instruction. */
+void Compiler::createThreadStop()
 {
-    impl->builder->createStopWithoutSync();
+    impl->builder->createThreadStop();
+}
+
+/*!
+ * Creates a sprite/stage invalidation point.\n
+ * Use this if synchronization is not possible because the target has been deleted.
+ */
+void Compiler::invalidateTarget()
+{
+    impl->builder->invalidateTarget();
 }
 
 /*! Creates a call to the procedure with the given prototype. */

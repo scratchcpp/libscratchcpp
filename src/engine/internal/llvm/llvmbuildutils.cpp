@@ -161,8 +161,13 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
     reloadVariables();
     reloadLists();
 
-    // Create end branch
+    // Mark the target as valid
+    m_targetValidFlag = m_builder.CreateAlloca(m_builder.getInt1Ty());
+    m_builder.CreateStore(m_builder.getInt1(true), m_targetValidFlag);
+
+    // Create end branches
     m_endBranch = llvm::BasicBlock::Create(m_llvmCtx, "end", m_function);
+    m_endThreadBranch = llvm::BasicBlock::Create(m_llvmCtx, "endThread", m_function);
 }
 
 void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastConstant)
@@ -184,9 +189,9 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
     syncVariables();
     m_builder.CreateBr(m_endBranch);
 
+    // End branch
     m_builder.SetInsertPoint(m_endBranch);
 
-    // End the script function
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
 
     switch (m_codeType) {
@@ -214,6 +219,33 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
                 m_builder.CreateRet(castValue(lastInstruction->functionReturnReg, Compiler::StaticType::Bool));
             else
                 m_builder.CreateRet(castValue(lastConstant, Compiler::StaticType::Bool));
+            break;
+    }
+
+    // Thread end branch (stop the entire thread, including procedure callers)
+    m_builder.SetInsertPoint(m_endThreadBranch);
+
+    switch (m_codeType) {
+        case Compiler::CodeType::Script:
+            // Mark the thread as finished
+            m_builder.CreateCall(m_functions.resolve_llvm_mark_thread_as_finished(), { m_executionContextPtr });
+
+            // Return a sentinel value (special pointer) to terminate any procedure callers
+            if (m_warp)
+                m_builder.CreateRet(threadEndSentinel());
+            else if (m_procedurePrototype)
+                m_coroutine->endWithSentinel(threadEndSentinel());
+            else {
+                // There's no need to return the sentinel value in standard scripts because they don't have any callers
+                m_coroutine->end();
+            }
+
+            break;
+
+        case Compiler::CodeType::Reporter:
+        case Compiler::CodeType::HatPredicate:
+            // Procedures cannot be called by these scripts, so we don't have to return the sentinel value
+            m_builder.CreateBr(m_endBranch);
             break;
     }
 }
@@ -323,6 +355,17 @@ llvm::BasicBlock *LLVMBuildUtils::endBranch() const
     return m_endBranch;
 }
 
+llvm::BasicBlock *LLVMBuildUtils::endThreadBranch() const
+{
+    return m_endThreadBranch;
+}
+
+llvm::Value *LLVMBuildUtils::threadEndSentinel() const
+{
+    llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
+    return m_builder.CreateIntToPtr(m_builder.getInt64(1), pointerType, "threadEndSentinel");
+}
+
 BlockPrototype *LLVMBuildUtils::procedurePrototype() const
 {
     return m_procedurePrototype;
@@ -401,6 +444,12 @@ LLVMListPtr &LLVMBuildUtils::listPtr(List *list)
 
 void LLVMBuildUtils::syncVariables()
 {
+    llvm::BasicBlock *syncBlock = llvm::BasicBlock::Create(m_llvmCtx, "syncVariables", m_function);
+    llvm::BasicBlock *syncNextBlock = llvm::BasicBlock::Create(m_llvmCtx, "syncVariables.next", m_function);
+    m_builder.CreateCondBr(m_builder.CreateLoad(m_builder.getInt1Ty(), m_targetValidFlag), syncBlock, syncNextBlock);
+
+    m_builder.SetInsertPoint(syncBlock);
+
     // Copy stack variables to the actual variables
     for (auto &[var, varPtr] : m_variablePtrs) {
         llvm::BasicBlock *copyBlock = llvm::BasicBlock::Create(m_llvmCtx, "syncVar", m_function);
@@ -414,6 +463,9 @@ void LLVMBuildUtils::syncVariables()
 
         m_builder.SetInsertPoint(nextBlock);
     }
+
+    m_builder.CreateBr(syncNextBlock);
+    m_builder.SetInsertPoint(syncNextBlock);
 }
 
 void LLVMBuildUtils::reloadVariables()
@@ -442,6 +494,11 @@ void LLVMBuildUtils::reloadLists()
             m_builder.CreateStore(m_builder.getInt1(true), listPtr.hasString);
         }
     }
+}
+
+void LLVMBuildUtils::invalidateTarget()
+{
+    m_builder.CreateStore(m_builder.getInt1(false), m_targetValidFlag);
 }
 
 std::vector<LLVMIfStatement> &LLVMBuildUtils::ifStatements()

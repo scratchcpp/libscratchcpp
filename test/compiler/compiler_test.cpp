@@ -1673,14 +1673,28 @@ TEST_F(CompilerTest, CreateStop)
     compile(m_compiler.get(), block.get());
 }
 
-TEST_F(CompilerTest, CreateStopWithoutSync)
+TEST_F(CompilerTest, CreateThreadStop)
 {
 
     auto block = std::make_shared<Block>("", "");
 
     block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
-        EXPECT_CALL(*m_builder, createStopWithoutSync());
-        compiler->createStopWithoutSync();
+        EXPECT_CALL(*m_builder, createThreadStop());
+        compiler->createThreadStop();
+        return nullptr;
+    });
+
+    compile(m_compiler.get(), block.get());
+}
+
+TEST_F(CompilerTest, InvalidateTarget)
+{
+
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        EXPECT_CALL(*m_builder, invalidateTarget());
+        compiler->invalidateTarget();
         return nullptr;
     });
 
