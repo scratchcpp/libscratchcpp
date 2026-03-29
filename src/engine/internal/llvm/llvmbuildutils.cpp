@@ -234,8 +234,7 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
                 m_coroutine->endWithSentinel(threadEndSentinel());
             else {
                 // There's no need to return the sentinel value in standard scripts because they don't have any callers
-                m_coroutine->endWithSentinel(threadEndSentinel());
-                // m_coroutine->end();
+                m_coroutine->end();
             }
 
             break;
