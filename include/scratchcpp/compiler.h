@@ -153,6 +153,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
         void createThreadStop();
         void createStopWithoutSync();
 
+        void invalidateTarget();
+
         void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args);
 
         Input *input(const std::string &name) const;

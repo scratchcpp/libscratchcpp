@@ -1701,6 +1701,20 @@ TEST_F(CompilerTest, CreateStopWithoutSync)
     compile(m_compiler.get(), block.get());
 }
 
+TEST_F(CompilerTest, InvalidateTarget)
+{
+
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        EXPECT_CALL(*m_builder, invalidateTarget());
+        compiler->invalidateTarget();
+        return nullptr;
+    });
+
+    compile(m_compiler.get(), block.get());
+}
+
 TEST_F(CompilerTest, CreateProcedureCall)
 {
 

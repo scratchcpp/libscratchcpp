@@ -721,6 +721,15 @@ void Compiler::createStopWithoutSync()
     impl->builder->createStopWithoutSync();
 }
 
+/*!
+ * Creates a sprite/stage invalidation point.\n
+ * Use this if synchronization is not possible because the target has been deleted.
+ */
+void Compiler::invalidateTarget()
+{
+    impl->builder->invalidateTarget();
+}
+
 /*! Creates a call to the procedure with the given prototype. */
 void Compiler::createProcedureCall(BlockPrototype *prototype, const libscratchcpp::Compiler::Args &args)
 {
