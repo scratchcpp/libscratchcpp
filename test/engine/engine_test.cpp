@@ -2280,3 +2280,105 @@ TEST(EngineTest, BroadcastAndWaitCaseInsensitive)
     ASSERT_VAR(stage, "passed");
     ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
 }
+
+TEST(EngineTest, CloneScriptsAreStoppedFromProcedureDeletingTheClone)
+{
+    // Regtest for #660
+    Project p("regtest_projects/660_stop_script_from_procedure_clone.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    engine->run();
+
+    ASSERT_VAR(stage, "passed");
+    ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
+}
+
+TEST(EngineTest, ScriptsAreNotStoppedFromProcedureStoppingTheProcedureScript)
+{
+    // Regtest for #660
+    Project p("regtest_projects/660_stop_script_from_procedure_stop_this_script.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    engine->run();
+
+    ASSERT_VAR(stage, "passed");
+    ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
+}
+
+TEST(EngineTest, ScriptsAreNotStoppedFromProcedureStoppingOtherScripts)
+{
+    // Regtest for #660
+    Project p("regtest_projects/660_stop_script_from_procedure_stop_other_scripts.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    engine->run();
+
+    ASSERT_VAR(stage, "passed");
+    ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
+}
+
+TEST(EngineTest, ScriptsAreStoppedFromProcedureStoppingAll)
+{
+    // Regtest for #660
+    Project p("regtest_projects/660_stop_script_from_procedure_stop_all.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    engine->run();
+
+    ASSERT_VAR(stage, "passed");
+    ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
+}
+
+TEST(EngineTest, ScriptsAreStoppedFromProcedureStoppingAll_NonWarp)
+{
+    // Regtest for #660
+    Project p("regtest_projects/660_stop_script_from_procedure_stop_all_non_warp.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    engine->run();
+
+    ASSERT_VAR(stage, "passed");
+    ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
+}
+
+TEST(EngineTest, ScriptsAreStoppedFromProcedureStoppingAll_Nested)
+{
+    // Regtest for #660
+    Project p("regtest_projects/660_stop_script_from_procedure_stop_all_nested.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    engine->run();
+
+    ASSERT_VAR(stage, "passed");
+    ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
+}
