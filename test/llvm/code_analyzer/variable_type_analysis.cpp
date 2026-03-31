@@ -526,6 +526,61 @@ TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopMultipleWrites_KnownType)
     ASSERT_EQ(setVar2->targetType, Compiler::StaticType::Number);
 }
 
+TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, LoopWithIfElseWrites)
+{
+    LLVMInstructionList list;
+    Variable var("", "");
+
+    // var = "string"
+    auto setVarBefore = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister valueBefore(Compiler::StaticType::String, "string");
+    setVarBefore->targetVariable = &var;
+    setVarBefore->args.push_back({ Compiler::StaticType::Unknown, &valueBefore });
+    list.addInstruction(setVarBefore);
+
+    // repeat
+    auto loopStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginRepeatLoop, false);
+    list.addInstruction(loopStart);
+
+    // if
+    auto ifStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginIf, false);
+    list.addInstruction(ifStart);
+
+    // var = 1
+    auto setVar1 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value1(Compiler::StaticType::Number, 1);
+    setVar1->targetVariable = &var;
+    setVar1->args.push_back({ Compiler::StaticType::Unknown, &value1 });
+    list.addInstruction(setVar1);
+
+    // else
+    auto elseStart = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::BeginElse, false);
+    list.addInstruction(elseStart);
+
+    // var = 2
+    auto setVar2 = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::WriteVariable, false);
+    LLVMConstantRegister value2(Compiler::StaticType::Number, 2);
+    setVar2->targetVariable = &var;
+    setVar2->args.push_back({ Compiler::StaticType::Unknown, &value2 });
+    list.addInstruction(setVar2);
+
+    // end if
+    auto ifEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndIf, false);
+    list.addInstruction(ifEnd);
+
+    // end loop
+    auto loopEnd = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::EndLoop, false);
+    list.addInstruction(loopEnd);
+
+    m_analyzer->analyzeScript(list);
+
+    // Before the loop, var is String
+    // After the if-else (both branches write Number), var becomes Number
+    // On re-iteration, var could be String (initial) or Number (from previous iteration)
+    ASSERT_EQ(setVar1->targetType, Compiler::StaticType::String | Compiler::StaticType::Number);
+    ASSERT_EQ(setVar2->targetType, Compiler::StaticType::String | Compiler::StaticType::Number);
+}
+
 TEST_F(LLVMCodeAnalyzer_VariableTypeAnalysis, IfElseStatementSameTypes)
 {
     LLVMInstructionList list;

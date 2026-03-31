@@ -73,6 +73,9 @@ void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
                     assert(previousBranch);
                 }
 
+                if (primaryBranch->typeChanges || (primaryBranch->elseBranch && primaryBranch->elseBranch->typeChanges))
+                    previousBranch->typeChanges = true;
+
                 if (primaryBranch && primaryBranch->elseBranch) {
                     // The previous variable types can be ignored in if/else statements
                     overrideVariableTypes(primaryBranch, previousBranch);
