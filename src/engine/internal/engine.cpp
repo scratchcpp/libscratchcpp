@@ -83,6 +83,7 @@ void Engine::clear()
     m_monitors.clear();
     m_extensions.clear();
     m_broadcastMap.clear();
+    m_broadcastSenders.clear();
     m_sortedDrawables.clear();
     m_threads.clear();
     m_threadsToStop.clear();
