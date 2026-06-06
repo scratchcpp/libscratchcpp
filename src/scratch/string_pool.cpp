@@ -15,6 +15,11 @@ namespace libscratchcpp
 static std::unordered_set<std::unique_ptr<StringPtr>> strings;
 static std::multimap<size_t, StringPtr *> freeStrings; // sorted by allocated space
 
+#ifndef NDEBUG
+static std::unordered_set<StringPtr *> allStringPtrs;
+static std::unordered_set<StringPtr *> freeStringPtrs;
+#endif
+
 extern "C"
 {
     /*!
@@ -28,7 +33,9 @@ extern "C"
             StringPtr *ptr = str.get();
             assert(strings.find(str) == strings.cend());
             strings.insert(std::move(str));
-
+#ifndef NDEBUG
+            allStringPtrs.insert(ptr);
+#endif
             return ptr;
         }
 
@@ -36,16 +43,21 @@ extern "C"
         auto last = std::prev(freeStrings.end());
         StringPtr *ptr = last->second;
         freeStrings.erase(last);
-
+#ifndef NDEBUG
+        freeStringPtrs.erase(ptr);
+#endif
         return ptr;
     }
 
     /*! Invalidates the given StringPtr so that it can be used for new strings later. */
     void string_pool_free(StringPtr *str)
     {
-        assert(std::find_if(freeStrings.begin(), freeStrings.end(), [str](const std::pair<size_t, StringPtr *> &p) { return p.second == str; }) == freeStrings.end());
-        assert(std::find_if(strings.begin(), strings.end(), [str](const std::unique_ptr<StringPtr> &p) { return p.get() == str; }) != strings.end());
+        assert(freeStringPtrs.count(str) == 0);
+        assert(allStringPtrs.count(str) != 0);
         freeStrings.insert(std::pair<size_t, StringPtr *>(str->allocatedSize, str));
+#ifndef NDEBUG
+        freeStringPtrs.insert(str);
+#endif
     }
 }
 
