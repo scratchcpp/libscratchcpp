@@ -68,7 +68,7 @@ const std::unordered_map<function_id_t, LLVMExecutableCode *> &LLVMCompilerConte
 
 void LLVMCompilerContext::addDefinedProcedure(BlockPrototype *prototype)
 {
-    m_definedProcedures.insert(prototype);
+    m_definedProcedures.insert(prototype->procCode());
 }
 
 void LLVMCompilerContext::addUsedProcedure(BlockPrototype *prototype, const std::string &functionName)
@@ -208,7 +208,7 @@ void LLVMCompilerContext::createProcedureShims()
     llvm::IRBuilder<> builder(*m_llvmCtx);
 
     for (const auto &[prototype, name] : m_usedProcedures) {
-        if (m_definedProcedures.find(prototype) == m_definedProcedures.cend()) {
+        if (m_definedProcedures.find(prototype->procCode()) == m_definedProcedures.cend()) {
             std::cout << "warning: procedure \"" << prototype->procCode() << "\" is not defined" << std::endl;
 
             // We need to define shims for undefined procedures (the JIT compiler crashes without them)

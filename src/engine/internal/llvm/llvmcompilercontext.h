@@ -100,7 +100,7 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMCompilerContext : public CompilerContext
         llvm::StructType *m_stringPtrType = nullptr;
         llvm::Type *m_functionIdType = nullptr;
 
-        std::unordered_set<BlockPrototype *> m_definedProcedures;
+        std::unordered_set<std::string> m_definedProcedures;
         std::unordered_map<BlockPrototype *, std::string> m_usedProcedures;
 };
 
