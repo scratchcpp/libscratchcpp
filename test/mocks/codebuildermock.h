@@ -93,4 +93,6 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(void, invalidateTarget, (), (override));
 
         MOCK_METHOD(void, createProcedureCall, (BlockPrototype *, const Compiler::Args &), (override));
+
+        MOCK_METHOD(void, createPrint, (CompilerValue *), (override));
 };

@@ -104,6 +104,8 @@ class ICodeBuilder
         virtual void invalidateTarget() = 0;
 
         virtual void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args) = 0;
+
+        virtual void createPrint(CompilerValue *string) = 0;
 };
 
 } // namespace libscratchcpp

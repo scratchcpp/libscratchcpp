@@ -119,6 +119,8 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMCodeBuilder : public ICodeBuilder
 
         void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args) override;
 
+        void createPrint(CompilerValue *string) override;
+
     private:
         void initTypes();
 

@@ -594,6 +594,11 @@ void LLVMCodeBuilder::createProcedureCall(BlockPrototype *prototype, const Compi
     createOp(ins, Compiler::StaticType::Void, types, args);
 }
 
+void LLVMCodeBuilder::createPrint(CompilerValue *string)
+{
+    createOp(LLVMInstruction::Type::Print, Compiler::StaticType::Void, Compiler::StaticType::String, { string });
+}
+
 void LLVMCodeBuilder::initTypes()
 {
     m_valueDataType = m_ctx->valueDataType();

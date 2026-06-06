@@ -80,7 +80,8 @@ struct LLVMInstruction
             ThreadStop,
             InvalidateTarget,
             CallProcedure,
-            ProcedureArg
+            ProcedureArg,
+            Print
         };
 
         LLVMInstruction(Type type, bool loopCondition) :

@@ -3779,6 +3779,27 @@ TEST_F(LLVMCodeBuilderTest, ProcedureThreadStop_NonWarp_AfterYield)
     ASSERT_TRUE(code->isFinished(ctx.get()));
 }
 
+TEST_F(LLVMCodeBuilderTest, Print)
+{
+    Sprite sprite;
+    LLVMCodeBuilder *builder = m_utils.createBuilder(&sprite, true);
+
+    CompilerValue *ret = builder->addTargetFunctionCall("test_function_no_args_ret", Compiler::StaticType::String, {}, {});
+    builder->createPrint(ret);
+    builder->createPrint(builder->addConstValue("\n"));
+
+    std::string expected = "no_args_ret\nno_args_output\n";
+
+    auto code = builder->build();
+    Script script(&sprite, nullptr, nullptr);
+    script.setCode(code);
+    Thread thread(&sprite, nullptr, &script);
+    auto ctx = code->createExecutionContext(&thread);
+    testing::internal::CaptureStdout();
+    code->run(ctx.get());
+    ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
+}
+
 TEST_F(LLVMCodeBuilderTest, HatPredicates)
 {
     Sprite sprite;

@@ -2,6 +2,9 @@
 
 #include <scratchcpp/value_functions.h>
 #include <scratchcpp/irandomgenerator.h>
+#include <scratchcpp/stringptr.h>
+#include <utf8.h>
+#include <iostream>
 
 #include "llvmfunctions.h"
 #include "llvmcompilercontext.h"
@@ -44,6 +47,12 @@ extern "C"
     LIBSCRATCHCPP_EXPORT bool llvm_is_thread_finished(ExecutionContext *ctx)
     {
         return static_cast<LLVMExecutionContext *>(ctx)->finished();
+    }
+
+    LIBSCRATCHCPP_EXPORT void llvm_print(const StringPtr *string)
+    {
+        // TODO: Using a string function would be better
+        std::cout << utf8::utf16to8(std::u16string(string->data));
     }
 }
 
@@ -302,6 +311,11 @@ llvm::FunctionCallee LLVMFunctions::resolve_llvm_is_thread_finished()
 {
     llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_ctx->llvmCtx()), 0);
     return resolveFunction("llvm_is_thread_finished", llvm::FunctionType::get(m_builder->getInt1Ty(), { pointerType }, false));
+}
+
+llvm::FunctionCallee LLVMFunctions::resolve_llvm_print()
+{
+    return resolveFunction("llvm_print", llvm::FunctionType::get(m_builder->getVoidTy(), { m_stringPtrType->getPointerTo() }, false));
 }
 
 llvm::FunctionCallee LLVMFunctions::resolve_string_pool_new()

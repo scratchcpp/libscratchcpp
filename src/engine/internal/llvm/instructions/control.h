@@ -29,6 +29,7 @@ class Control : public InstructionGroup
         LLVMInstruction *buildStop(LLVMInstruction *ins);
         LLVMInstruction *buildThreadStop(LLVMInstruction *ins);
         LLVMInstruction *buildInvalidateTarget(LLVMInstruction *ins);
+        LLVMInstruction *buildPrint(LLVMInstruction *ins);
 };
 
 } // namespace libscratchcpp::llvmins

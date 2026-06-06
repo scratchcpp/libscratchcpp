@@ -68,6 +68,10 @@ ProcessResult Control::process(LLVMInstruction *ins)
             ret.next = buildInvalidateTarget(ins);
             break;
 
+        case LLVMInstruction::Type::Print:
+            ret.next = buildPrint(ins);
+            break;
+
         default:
             ret.match = false;
             break;
@@ -363,5 +367,16 @@ LLVMInstruction *Control::buildThreadStop(LLVMInstruction *ins)
 LLVMInstruction *Control::buildInvalidateTarget(LLVMInstruction *ins)
 {
     m_utils.invalidateTarget();
+    return ins->next;
+}
+
+LLVMInstruction *Control::buildPrint(LLVMInstruction *ins)
+{
+    assert(ins->args.size() == 1);
+
+    const auto &arg = ins->args[0];
+    llvm::Value *str = m_utils.castValue(arg.second, arg.first);
+
+    m_builder.CreateCall(m_utils.functions().resolve_llvm_print(), str);
     return ins->next;
 }
