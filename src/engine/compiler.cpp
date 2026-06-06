@@ -726,6 +726,12 @@ void Compiler::createProcedureCall(BlockPrototype *prototype, const libscratchcp
     impl->builder->createProcedureCall(prototype, args);
 }
 
+/*! Creates a print instruction. */
+void Compiler::createPrint(CompilerValue *string)
+{
+    impl->builder->createPrint(string);
+}
+
 /*! Convenience method which returns the field with the given name. */
 Input *Compiler::input(const std::string &name) const
 {

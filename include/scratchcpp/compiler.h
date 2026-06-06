@@ -157,6 +157,8 @@ class LIBSCRATCHCPP_EXPORT Compiler
 
         void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args);
 
+        void createPrint(CompilerValue *string);
+
         Input *input(const std::string &name) const;
         Field *field(const std::string &name) const;
 

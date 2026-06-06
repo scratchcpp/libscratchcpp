@@ -1720,6 +1720,22 @@ TEST_F(CompilerTest, CreateProcedureCall)
     compile(m_compiler.get(), block.get());
 }
 
+TEST_F(CompilerTest, CreatePrint)
+{
+
+    auto block = std::make_shared<Block>("", "");
+
+    block->setCompileFunction([](Compiler *compiler) -> CompilerValue * {
+        CompilerValue arg(Compiler::StaticType::Unknown);
+
+        EXPECT_CALL(*m_builder, createPrint(&arg));
+        compiler->createPrint(&arg);
+        return nullptr;
+    });
+
+    compile(m_compiler.get(), block.get());
+}
+
 TEST_F(CompilerTest, Input)
 {
 
