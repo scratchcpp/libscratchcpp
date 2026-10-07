@@ -147,11 +147,11 @@ if(LIBSCRATCHCPP_LLVM_INTEGER_SUPPORT)
 endif()
 
 # Macros
-target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_LIBRARY)
-target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION="${PROJECT_VERSION}")
-target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION_MAJOR=${PROJECT_VERSION_MAJOR})
-target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION_MINOR=${PROJECT_VERSION_MINOR})
-target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_VERSION_PATCH=${PROJECT_VERSION_PATCH})
+target_compile_definitions(scratchcpp PUBLIC LIBSCRATCHCPP_LIBRARY)
+target_compile_definitions(scratchcpp PUBLIC LIBSCRATCHCPP_VERSION="${PROJECT_VERSION}")
+target_compile_definitions(scratchcpp PUBLIC LIBSCRATCHCPP_VERSION_MAJOR=${PROJECT_VERSION_MAJOR})
+target_compile_definitions(scratchcpp PUBLIC LIBSCRATCHCPP_VERSION_MINOR=${PROJECT_VERSION_MINOR})
+target_compile_definitions(scratchcpp PUBLIC LIBSCRATCHCPP_VERSION_PATCH=${PROJECT_VERSION_PATCH})
 
 # Unit tests
 target_link_libraries(scratchcpp PRIVATE scratchcpp-test-export)
