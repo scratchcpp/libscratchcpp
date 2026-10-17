@@ -21,8 +21,7 @@ extern "C"
         size++; // null terminator
 
         if (str->allocatedSize < size) {
-            // TODO: Use std::bit_ceil() in C++20
-            const size_t newSize = std::pow(2, std::ceil(std::log2(size)));
+            const size_t newSize = std::bit_ceil(size);
             assert((str->data && str->allocatedSize > 0) || (!str->data && str->allocatedSize == 0));
 
             if (str->data)
