@@ -20,8 +20,6 @@
 
 using namespace libscratchcpp;
 
-static const double pi = std::acos(-1); // TODO: Use std::numbers::pi in C++20
-
 std::string MotionBlocks::name() const
 {
     return "Motion";
@@ -357,7 +355,7 @@ CompilerValue *MotionBlocks::compileDirection(Compiler *compiler)
 BLOCK_EXPORT void motion_movesteps(Sprite *sprite, double steps)
 {
     double dir = sprite->direction();
-    sprite->setPosition(sprite->x() + std::sin(dir * pi / 180) * steps, sprite->y() + std::cos(dir * pi / 180) * steps);
+    sprite->setPosition(sprite->x() + std::sin(dir * std::numbers::pi / 180) * steps, sprite->y() + std::cos(dir * std::numbers::pi / 180) * steps);
 }
 
 BLOCK_EXPORT void motion_turnright(Sprite *sprite, double degrees)
@@ -387,9 +385,9 @@ inline void motion_point_towards_pos(Sprite *sprite, double x, double y)
         else
             sprite->setDirection(90);
     } else if (deltaY < 0)
-        sprite->setDirection(180 + (180 / pi) * std::atan(deltaX / deltaY));
+        sprite->setDirection(180 + (180 / std::numbers::pi) * std::atan(deltaX / deltaY));
     else
-        sprite->setDirection((180 / pi) * std::atan(deltaX / deltaY));
+        sprite->setDirection((180 / std::numbers::pi) * std::atan(deltaX / deltaY));
 }
 
 BLOCK_EXPORT void motion_point_towards_mouse(Sprite *sprite)
@@ -678,7 +676,7 @@ BLOCK_EXPORT void motion_ifonedgebounce(Sprite *sprite)
     assert(nearestEdge != 0);
 
     // Point away from the nearest edge
-    double radians = (90 - sprite->direction()) * pi / 180;
+    double radians = (90 - sprite->direction()) * std::numbers::pi / 180;
     double dx = std::cos(radians);
     double dy = -std::sin(radians);
 
@@ -704,7 +702,7 @@ BLOCK_EXPORT void motion_ifonedgebounce(Sprite *sprite)
             break;
     }
 
-    double newDirection = (180 / pi) * (std::atan2(dy, dx)) + 90;
+    double newDirection = (180 / std::numbers::pi) * (std::atan2(dy, dx)) + 90;
     sprite->setDirection(newDirection);
 
     // Keep within the stage

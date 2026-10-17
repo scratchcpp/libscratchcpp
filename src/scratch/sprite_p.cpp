@@ -10,7 +10,6 @@
 
 using namespace libscratchcpp;
 
-static const double pi = std::acos(-1); // TODO: Use std::numbers::pi in C++20
 static const double FENCE_WIDTH = 15;
 
 SpritePrivate::SpritePrivate(Sprite *sprite) :
