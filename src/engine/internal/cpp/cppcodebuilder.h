@@ -164,6 +164,7 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeBuilder : public ICodeBuilder
 
         const std::string &variablePtr(Variable *variable);
         const std::string &listPtr(List *list);
+        std::string entityPtr(const void *ptr);
 
         CppCompilerContext *m_ctx = nullptr;
         BlockPrototype *m_procedurePrototype = nullptr;

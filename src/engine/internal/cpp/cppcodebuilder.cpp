@@ -6,6 +6,8 @@
 #include <scratchcpp/list.h>
 #include <scratchcpp/target.h>
 #include <scratchcpp/value.h>
+#include <scratchcpp/iengine.h>
+#include <scratchcpp/stage.h>
 #include <iomanip>
 #include <cmath>
 #include <cassert>
@@ -161,8 +163,13 @@ CompilerConstant *CppCodeBuilder::addConstValue(const Value &value)
             break;
 
         case ValueType::Pointer: {
-            // NOTE: Pointers are only valid in the current process
             type = Compiler::StaticType::Pointer;
+            expr = entityPtr(value.toPointer());
+
+            if (!expr.empty())
+                break;
+
+            // NOTE: Other pointers are only valid in the current process
             std::stringstream ss;
             ss << "reinterpret_cast<void *>(0x" << std::hex << reinterpret_cast<uintptr_t>(value.toPointer()) << ")";
             expr = ss.str();
@@ -1007,6 +1014,32 @@ const std::string &CppCodeBuilder::variablePtr(Variable *variable)
         m_resolve << "            " << name << " = cpp::stage(ctx)->variableData()[" << index << "];\n";
 
     return m_variables[variable] = name;
+}
+
+std::string CppCodeBuilder::entityPtr(const void *ptr)
+{
+    // Lists and variables are resolved at runtime, so generated code doesn't depend on their addresses
+    std::vector<Target *> targets;
+
+    if (m_ctx->target())
+        targets.push_back(m_ctx->target());
+
+    if (m_ctx->engine() && m_ctx->engine()->stage())
+        targets.push_back(m_ctx->engine()->stage());
+
+    for (Target *target : targets) {
+        for (auto list : target->lists()) {
+            if (list.get() == ptr)
+                return "static_cast<void *>(" + listPtr(list.get()) + ")";
+        }
+
+        for (auto var : target->variables()) {
+            if (var.get() == ptr)
+                return "static_cast<void *>(" + variablePtr(var.get()) + ")";
+        }
+    }
+
+    return "";
 }
 
 const std::string &CppCodeBuilder::listPtr(List *list)

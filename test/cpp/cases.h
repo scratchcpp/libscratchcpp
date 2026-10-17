@@ -38,9 +38,9 @@ struct CppTestCase
 {
         std::string name;
         std::function<std::shared_ptr<ExecutableCode>(CppTestEnv &)> build;
-        std::string expectedOutput;  // standard output after running the code
-        int expectedRuns = -1;       // the number of run() calls until the script finishes (-1 to skip)
-        std::string expectedValue;   // the return value of reporters and hat predicates
+        std::string expectedOutput; // standard output after running the code
+        int expectedRuns = -1;      // the number of run() calls until the script finishes (-1 to skip)
+        std::string expectedValue;  // the return value of reporters and hat predicates
         Compiler::CodeType codeType = Compiler::CodeType::Script;
 };
 

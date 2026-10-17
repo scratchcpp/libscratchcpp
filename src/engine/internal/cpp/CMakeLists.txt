@@ -8,7 +8,9 @@ target_sources(scratchcpp
     cppcodebuilderfactory.cpp
     cppcodebuilderfactory.h
     cppregister.h
-    cppcompilercontext.cpp
+  cppcodebasegenerator.cpp
+  cppcodebasegenerator.h
+  cppcompilercontext.cpp
     cppcompilercontext.h
     cppexecutablecode.cpp
     cppexecutablecode.h

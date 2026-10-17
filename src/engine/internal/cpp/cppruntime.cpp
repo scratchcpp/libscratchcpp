@@ -4,6 +4,9 @@
 #include <cassert>
 
 #include "cppruntime.h"
+#include "cppcodebuilderfactory.h"
+#include "cppcodebasegenerator.h"
+#include "../../compiler_p.h"
 #include "cppexecutioncontext.h"
 
 using namespace libscratchcpp;
@@ -44,5 +47,18 @@ extern "C"
     {
         assert(dynamic_cast<CppExecutionContext *>(ctx));
         return static_cast<CppExecutionContext *>(ctx)->finished();
+    }
+}
+
+extern "C"
+{
+    LIBSCRATCHCPP_EXPORT void cpp_use_cpp_backend()
+    {
+        CompilerPrivate::setBuilderFactory(CppCodeBuilderFactory::instance().get());
+    }
+
+    LIBSCRATCHCPP_EXPORT bool cpp_generate_codebase(const char *projectFile, const char *outputDir, const char *projectName)
+    {
+        return CppCodebaseGenerator::generate(projectFile, outputDir, projectName);
     }
 }
