@@ -20,7 +20,6 @@ add_executable(
   llvmtestutils.h
   llvmexecutioncontext_test.cpp
   llvmexecutablecode_test.cpp
-  llvmcodebuilder_test.cpp
   llvminstructionlist_test.cpp
   code_analyzer/variable_type_analysis.cpp
   code_analyzer/list_type_analysis.cpp
