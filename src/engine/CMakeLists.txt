@@ -45,3 +45,4 @@ target_sources(scratchcpp
 )
 
 add_subdirectory(internal/llvm)
+add_subdirectory(internal/cpp)
