@@ -1,0 +1,156 @@
+#include <gtest/gtest.h>
+#include <scratchcpp/value.h>
+
+#include "codegentestutils.h"
+
+class RoundTest : public testing::Test
+{
+    public:
+        CodeGenTestUtils m_utils;
+};
+
+TEST_F(RoundTest, FourPointZero)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, false, 4.0).toDouble(), 4.0);
+}
+
+TEST_F(RoundTest, FourPointZero_Const)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, true, 4.0).toDouble(), 4.0);
+}
+
+TEST_F(RoundTest, NegativeFourPointZero)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, false, -4.0).toDouble(), -4.0);
+}
+
+TEST_F(RoundTest, NegativeFourPointZero_Const)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, true, -4.0).toDouble(), -4.0);
+}
+
+TEST_F(RoundTest, ThreePointTwo)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, false, 3.2).toDouble(), 3.0);
+}
+
+TEST_F(RoundTest, ThreePointTwo_Const)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, true, 3.2).toDouble(), 3.0);
+}
+
+TEST_F(RoundTest, ThreePointFive)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, false, 3.5).toDouble(), 4.0);
+}
+
+TEST_F(RoundTest, ThreePointFive_Const)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, true, 3.5).toDouble(), 4.0);
+}
+
+TEST_F(RoundTest, ThreePointSix)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, false, 3.6).toDouble(), 4.0);
+}
+
+TEST_F(RoundTest, ThreePointSix_Const)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, true, 3.6).toDouble(), 4.0);
+}
+
+TEST_F(RoundTest, NegativeTwoPointFour)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, false, -2.4).toDouble(), -2.0);
+}
+
+TEST_F(RoundTest, NegativeTwoPointFour_Const)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, true, -2.4).toDouble(), -2.0);
+}
+
+TEST_F(RoundTest, NegativeTwoPointFive)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, false, -2.5).toDouble(), -2.0);
+}
+
+TEST_F(RoundTest, NegativeTwoPointFive_Const)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, true, -2.5).toDouble(), -2.0);
+}
+
+TEST_F(RoundTest, NegativeTwoPointSix)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, false, -2.6).toDouble(), -3.0);
+}
+
+TEST_F(RoundTest, NegativeTwoPointSix_Const)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, true, -2.6).toDouble(), -3.0);
+}
+
+TEST_F(RoundTest, NegativeZeroPointFour)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, false, -0.4).toDouble(), -0.0);
+}
+
+TEST_F(RoundTest, NegativeZeroPointFour_Const)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, true, -0.4).toDouble(), -0.0);
+}
+
+TEST_F(RoundTest, NegativeZeroPointFive)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, false, -0.5).toDouble(), -0.0);
+}
+
+TEST_F(RoundTest, NegativeZeroPointFive_Const)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, true, -0.5).toDouble(), -0.0);
+}
+
+TEST_F(RoundTest, NegativeZeroPointFiftyOne)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, false, -0.51).toDouble(), -1.0);
+}
+
+TEST_F(RoundTest, NegativeZeroPointFiftyOne_Const)
+{
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, true, -0.51).toDouble(), -1.0);
+}
+
+TEST_F(RoundTest, Infinity)
+{
+    static const double inf = std::numeric_limits<double>::infinity();
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, false, inf).toDouble(), inf);
+}
+
+TEST_F(RoundTest, Infinity_Const)
+{
+    static const double inf = std::numeric_limits<double>::infinity();
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, true, inf).toDouble(), inf);
+}
+
+TEST_F(RoundTest, NegativeInfinity)
+{
+    static const double inf = std::numeric_limits<double>::infinity();
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, false, -inf).toDouble(), -inf);
+}
+
+TEST_F(RoundTest, NegativeInfinity_Const)
+{
+    static const double inf = std::numeric_limits<double>::infinity();
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, true, -inf).toDouble(), -inf);
+}
+
+TEST_F(RoundTest, NaN)
+{
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, false, nan).toDouble(), 0);
+}
+
+TEST_F(RoundTest, NaN_Const)
+{
+    static const double nan = std::numeric_limits<double>::quiet_NaN();
+    ASSERT_EQ(m_utils.getOpResult(CodeGenTestUtils::OpType::Round, true, nan).toDouble(), 0);
+}

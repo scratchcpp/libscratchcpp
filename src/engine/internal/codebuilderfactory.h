@@ -3,11 +3,12 @@
 #pragma once
 
 #include "icodebuilderfactory.h"
+#include "test_export.h"
 
 namespace libscratchcpp
 {
 
-class CodeBuilderFactory : public ICodeBuilderFactory
+class LIBSCRATCHCPP_TEST_EXPORT CodeBuilderFactory : public ICodeBuilderFactory
 {
     public:
         static std::shared_ptr<CodeBuilderFactory> instance();
