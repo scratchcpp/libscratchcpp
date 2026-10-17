@@ -398,17 +398,17 @@ CompilerValue *CppCodeBuilder::createTan(CompilerValue *num)
 
 CompilerValue *CppCodeBuilder::createAsin(CompilerValue *num)
 {
-    return mathFunction(num, "std::asin", " * 180.0 / M_PI + 0.0");
+    return mathFunction(num, "std::asin", " * 180.0 / cpp::PI + 0.0");
 }
 
 CompilerValue *CppCodeBuilder::createAcos(CompilerValue *num)
 {
-    return mathFunction(num, "std::acos", " * 180.0 / M_PI");
+    return mathFunction(num, "std::acos", " * 180.0 / cpp::PI");
 }
 
 CompilerValue *CppCodeBuilder::createAtan(CompilerValue *num)
 {
-    return mathFunction(num, "std::atan", " * 180.0 / M_PI");
+    return mathFunction(num, "std::atan", " * 180.0 / cpp::PI");
 }
 
 CompilerValue *CppCodeBuilder::createLn(CompilerValue *num)

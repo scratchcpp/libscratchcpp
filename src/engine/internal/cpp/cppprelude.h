@@ -63,6 +63,8 @@ struct Frame
         int state = 0;
 };
 
+static constexpr double PI = 3.14159265358979323846;
+
 struct Str
 {
         Str() :
@@ -231,12 +233,12 @@ inline double round(double x)
 
 inline double sin(double x)
 {
-    return std::round(std::sin(x * M_PI / 180.0) * 1e10) / 1e10 + 0.0;
+    return std::round(std::sin(x * PI / 180.0) * 1e10) / 1e10 + 0.0;
 }
 
 inline double cos(double x)
 {
-    return std::round(std::cos(x * M_PI / 180.0) * 1e10) / 1e10;
+    return std::round(std::cos(x * PI / 180.0) * 1e10) / 1e10;
 }
 
 inline double tan(double x)
@@ -248,7 +250,7 @@ inline double tan(double x)
     else if (m == -90.0 || m == 270.0)
         return -std::numeric_limits<double>::infinity();
 
-    return std::round(std::tan(x * M_PI / 180.0) * 1e10) / 1e10 + 0.0;
+    return std::round(std::tan(x * PI / 180.0) * 1e10) / 1e10 + 0.0;
 }
 
 inline double random(ExecutionContext *ctx, double from, double to)
