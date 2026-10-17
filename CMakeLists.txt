@@ -11,6 +11,7 @@ option(LIBSCRATCHCPP_NETWORK_SUPPORT "Support for downloading projects" ON)
 option(LIBSCRATCHCPP_PRINT_LLVM_IR "Print LLVM IR of compiled Scratch scripts (for debugging)" OFF)
 option(LIBSCRATCHCPP_ENABLE_CODE_ANALYZER "Analyze Scratch scripts to enable various optimizations" ON)
 option(LIBSCRATCHCPP_LLVM_INTEGER_SUPPORT "Use integers when possible to enable various optimizations" ON)
+option(LIBSCRATCHCPP_BUILD_TRANSPILER "Build the Scratch to C++ transpiler tool" ON)
 option(LIBSCRATCHCPP_ENABLE_SANITIZER "Enable sanitizer to detect memory issues" OFF)
 
 if (LIBSCRATCHCPP_ENABLE_SANITIZER)
@@ -152,6 +153,11 @@ target_compile_definitions(scratchcpp PUBLIC LIBSCRATCHCPP_VERSION="${PROJECT_VE
 target_compile_definitions(scratchcpp PUBLIC LIBSCRATCHCPP_VERSION_MAJOR=${PROJECT_VERSION_MAJOR})
 target_compile_definitions(scratchcpp PUBLIC LIBSCRATCHCPP_VERSION_MINOR=${PROJECT_VERSION_MINOR})
 target_compile_definitions(scratchcpp PUBLIC LIBSCRATCHCPP_VERSION_PATCH=${PROJECT_VERSION_PATCH})
+
+# Scratch to C++ transpiler
+if (LIBSCRATCHCPP_BUILD_TRANSPILER)
+    add_subdirectory(transpiler)
+endif()
 
 # Unit tests
 target_link_libraries(scratchcpp PRIVATE scratchcpp-test-export)
