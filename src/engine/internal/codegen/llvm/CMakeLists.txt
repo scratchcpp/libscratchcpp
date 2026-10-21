@@ -9,7 +9,6 @@ target_sources(scratchcpp
     llvmregister.h
     llvmconstantregister.h
     llvminstruction.h
-    llvminstructionlist.cpp
     llvminstructionlist.h
     llvmifstatement.h
     llvmloop.h

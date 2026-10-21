@@ -5,6 +5,7 @@ target_sources(scratchcpp
     codebuilderfactory.cpp
     codebuilderfactory.h
     instruction.h
+    instructionlist.h
 )
 
 add_subdirectory(llvm)
