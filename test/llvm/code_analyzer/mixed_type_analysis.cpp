@@ -2,12 +2,12 @@
 #include <scratchcpp/target.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
-#include <engine/internal/llvm/llvmcodeanalyzer.h>
-#include <engine/internal/llvm/llvmcompilercontext.h>
-#include <engine/internal/llvm/llvmbuildutils.h>
-#include <engine/internal/llvm/llvminstruction.h>
-#include <engine/internal/llvm/llvminstructionlist.h>
-#include <engine/internal/llvm/llvmconstantregister.h>
+#include <engine/internal/codegen/llvm/llvmcodeanalyzer.h>
+#include <engine/internal/codegen/llvm/llvmcompilercontext.h>
+#include <engine/internal/codegen/llvm/llvmbuildutils.h>
+#include <engine/internal/codegen/llvm/llvminstruction.h>
+#include <engine/internal/codegen/llvm/llvminstructionlist.h>
+#include <engine/internal/codegen/llvm/llvmconstantregister.h>
 #include <llvm/IR/IRBuilder.h>
 #include <gtest/gtest.h>
 

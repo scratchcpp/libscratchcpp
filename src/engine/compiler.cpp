@@ -8,8 +8,8 @@
 #include <scratchcpp/inputvalue.h>
 
 #include "compiler_p.h"
-#include "internal/icodebuilderfactory.h"
-#include "internal/icodebuilder.h"
+#include "internal/codegen/icodebuilderfactory.h"
+#include "internal/codegen/icodebuilder.h"
 
 using namespace libscratchcpp;
 

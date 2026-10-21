@@ -1,6 +1,6 @@
 #pragma once
 
-#include <engine/internal/icodebuilderfactory.h>
+#include <engine/internal/codegen/icodebuilderfactory.h>
 #include <gmock/gmock.h>
 
 using namespace libscratchcpp;

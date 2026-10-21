@@ -1,6 +1,6 @@
 #include <scratchcpp/thread.h>
-#include <engine/internal/llvm/llvminstructionlist.h>
-#include <engine/internal/llvm/llvminstruction.h>
+#include <engine/internal/codegen/llvm/llvminstructionlist.h>
+#include <engine/internal/codegen/llvm/llvminstruction.h>
 #include <gtest/gtest.h>
 
 using namespace libscratchcpp;

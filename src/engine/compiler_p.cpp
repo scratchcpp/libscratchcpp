@@ -5,8 +5,8 @@
 
 #include "compiler_p.h"
 
-#include "internal/codebuilderfactory.h"
-#include "internal/icodebuilder.h"
+#include "internal/codegen/codebuilderfactory.h"
+#include "internal/codegen/icodebuilder.h"
 
 using namespace libscratchcpp;
 
