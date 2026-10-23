@@ -102,13 +102,13 @@ LLVMInstruction *Control::buildSelect(LLVMInstruction *ins)
     ins->functionReturnReg->value = m_builder.CreateSelect(cond, trueValue, falseValue);
     ins->functionReturnReg->isInt = m_builder.CreateSelect(cond, arg2.second->isInt, arg3.second->isInt);
     ins->functionReturnReg->intValue = m_builder.CreateSelect(cond, arg2.second->intValue, arg3.second->intValue);
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Control::buildYield(LLVMInstruction *ins)
 {
     m_utils.createSuspend();
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Control::buildBeginIf(LLVMInstruction *ins)
@@ -128,7 +128,7 @@ LLVMInstruction *Control::buildBeginIf(LLVMInstruction *ins)
 
     m_utils.ifStatements().push_back(statement);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Control::buildBeginElse(LLVMInstruction *ins)
@@ -155,7 +155,7 @@ LLVMInstruction *Control::buildBeginElse(LLVMInstruction *ins)
     // Switch to the else branch
     m_builder.SetInsertPoint(statement.elseBranch);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Control::buildEndIf(LLVMInstruction *ins)
@@ -182,7 +182,7 @@ LLVMInstruction *Control::buildEndIf(LLVMInstruction *ins)
 
     ifStatements.pop_back();
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Control::buildBeginRepeatLoop(LLVMInstruction *ins)
@@ -241,7 +241,7 @@ LLVMInstruction *Control::buildBeginRepeatLoop(LLVMInstruction *ins)
 
     m_utils.loops().push_back(loop);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Control::buildLoopIndex(LLVMInstruction *ins)
@@ -253,7 +253,7 @@ LLVMInstruction *Control::buildLoopIndex(LLVMInstruction *ins)
     ins->functionReturnReg->intValue = index;
     ins->functionReturnReg->isInt = m_builder.getInt1(true);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Control::buildBeginWhileLoop(LLVMInstruction *ins)
@@ -278,7 +278,7 @@ LLVMInstruction *Control::buildBeginWhileLoop(LLVMInstruction *ins)
     // Switch to body branch
     m_builder.SetInsertPoint(body);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Control::buildBeginRepeatUntilLoop(LLVMInstruction *ins)
@@ -303,7 +303,7 @@ LLVMInstruction *Control::buildBeginRepeatUntilLoop(LLVMInstruction *ins)
     // Switch to body branch
     m_builder.SetInsertPoint(body);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Control::buildBeginLoopCondition(LLVMInstruction *ins)
@@ -315,7 +315,7 @@ LLVMInstruction *Control::buildBeginLoopCondition(LLVMInstruction *ins)
     m_builder.SetInsertPoint(loop.conditionBranch);
     m_utils.loops().push_back(loop);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Control::buildEndLoop(LLVMInstruction *ins)
@@ -339,7 +339,7 @@ LLVMInstruction *Control::buildEndLoop(LLVMInstruction *ins)
 
     loops.pop_back();
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Control::buildStop(LLVMInstruction *ins)
@@ -350,7 +350,7 @@ LLVMInstruction *Control::buildStop(LLVMInstruction *ins)
     llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_utils.llvmCtx(), "", m_utils.function());
     m_builder.SetInsertPoint(nextBranch);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Control::buildThreadStop(LLVMInstruction *ins)
@@ -361,13 +361,13 @@ LLVMInstruction *Control::buildThreadStop(LLVMInstruction *ins)
     llvm::BasicBlock *nextBranch = llvm::BasicBlock::Create(m_utils.llvmCtx(), "", m_utils.function());
     m_builder.SetInsertPoint(nextBranch);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Control::buildInvalidateTarget(LLVMInstruction *ins)
 {
     m_utils.invalidateTarget();
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Control::buildPrint(LLVMInstruction *ins)
@@ -378,5 +378,5 @@ LLVMInstruction *Control::buildPrint(LLVMInstruction *ins)
     llvm::Value *str = m_utils.castValue(arg.second, arg.first);
 
     m_builder.CreateCall(m_utils.functions().resolve_llvm_print(), str);
-    return ins->next;
+    return ins->getNext();
 }

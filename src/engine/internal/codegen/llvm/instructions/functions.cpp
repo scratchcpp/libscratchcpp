@@ -73,5 +73,5 @@ LLVMInstruction *Functions::buildFunctionCall(LLVMInstruction *ins)
         }
     }
 
-    return ins->next;
+    return ins->getNext();
 }

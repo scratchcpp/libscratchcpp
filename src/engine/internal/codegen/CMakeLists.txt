@@ -4,7 +4,10 @@ target_sources(scratchcpp
     icodebuilderfactory.h
     codebuilderfactory.cpp
     codebuilderfactory.h
+    instructionbase.h
     instruction.h
+    instructionlistbase.cpp
+    instructionlistbase.h
     instructionlist.h
 )
 

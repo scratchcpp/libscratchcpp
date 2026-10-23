@@ -148,7 +148,7 @@ void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
             typeAssignedInstructions.insert(ins);
         }
 
-        ins = ins->next;
+        ins = ins->getNext();
     }
 
     assert(branches.size() == 1);

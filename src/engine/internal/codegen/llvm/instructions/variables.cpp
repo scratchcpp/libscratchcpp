@@ -53,7 +53,7 @@ LLVMInstruction *Variables::buildCreateLocalVariable(LLVMInstruction *ins)
 
     LLVMConstantRegister null(ins->functionReturnReg->type(), Value());
     ins->functionReturnReg->value = m_utils.createValue(&null);
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Variables::buildWriteLocalVariable(LLVMInstruction *ins)
@@ -66,7 +66,7 @@ LLVMInstruction *Variables::buildWriteLocalVariable(LLVMInstruction *ins)
     m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(m_utils.mapType(arg2.first))), typeVar);
 
     m_utils.createValueStore(arg1.second->value, typeVar, info->isInt, info->intValue, arg2.second, arg2.first, arg2.first);
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Variables::buildReadLocalVariable(LLVMInstruction *ins)
@@ -77,7 +77,7 @@ LLVMInstruction *Variables::buildReadLocalVariable(LLVMInstruction *ins)
     ins->functionReturnReg->value = m_utils.castValue(arg.second, ins->functionReturnReg->type());
     ins->functionReturnReg->isInt = m_builder.CreateLoad(m_builder.getInt1Ty(), info->isInt);
     ins->functionReturnReg->intValue = m_builder.CreateLoad(m_builder.getInt64Ty(), info->intValue);
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Variables::buildWriteVariable(LLVMInstruction *ins)
@@ -89,7 +89,7 @@ LLVMInstruction *Variables::buildWriteVariable(LLVMInstruction *ins)
 
     m_utils.createValueStore(varPtr.stackPtr, m_utils.getValueTypePtr(varPtr.stackPtr), varPtr.isInt, varPtr.intValue, arg.second, ins->targetType, argType);
     m_builder.CreateStore(m_builder.getInt1(true), varPtr.changed);
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Variables::buildReadVariable(LLVMInstruction *ins)
@@ -100,5 +100,5 @@ LLVMInstruction *Variables::buildReadVariable(LLVMInstruction *ins)
     ins->functionReturnReg->value = varPtr.stackPtr;
     ins->functionReturnReg->isInt = m_builder.CreateLoad(m_builder.getInt1Ty(), varPtr.isInt);
     ins->functionReturnReg->intValue = m_builder.CreateLoad(m_builder.getInt64Ty(), varPtr.intValue);
-    return ins->next;
+    return ins->getNext();
 }
