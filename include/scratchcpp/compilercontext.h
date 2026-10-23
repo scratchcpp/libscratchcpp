@@ -25,6 +25,8 @@ class LIBSCRATCHCPP_EXPORT CompilerContext
         IEngine *engine() const;
         Target *target() const;
 
+        const std::unordered_set<std::string> &unsafeConstants() const;
+
         /*!
          * Optimizes compiled scripts ahead of time.
          * \see Compiler#preoptimize()

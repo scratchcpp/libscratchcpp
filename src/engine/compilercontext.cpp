@@ -23,3 +23,9 @@ Target *CompilerContext::target() const
 {
     return impl->target;
 }
+
+/*! Returns the list of unsafe constants (used internally during optimization). */
+const std::unordered_set<std::string> &CompilerContext::unsafeConstants() const
+{
+    return impl->unsafeConstants;
+}
