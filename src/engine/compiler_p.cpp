@@ -18,7 +18,7 @@ CompilerPrivate::CompilerPrivate(CompilerContext *ctx) :
 }
 
 CompilerPrivate::CompilerPrivate(IEngine *engine, Target *target) :
-    ctxPtr(Compiler::createContext(engine, target)),
+    ctxPtr(Compiler::createContext(engine, target, {})), // NOTE: This constructor is only used in tests, so we can leave unsafe constants empty
     ctx(ctxPtr.get())
 {
     initBuilderFactory();
