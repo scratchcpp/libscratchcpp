@@ -17,8 +17,8 @@
 
 using namespace libscratchcpp;
 
-LLVMCompilerContext::LLVMCompilerContext(IEngine *engine, Target *target) :
-    CompilerContext(engine, target),
+LLVMCompilerContext::LLVMCompilerContext(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants) :
+    CompilerContext(engine, target, unsafeConstants),
     m_llvmCtx(std::make_unique<llvm::LLVMContext>()),
     m_module(std::make_unique<llvm::Module>(target ? target->name() : "", *m_llvmCtx)),
     m_llvmCtxPtr(m_llvmCtx.get()),

@@ -19,6 +19,7 @@ add_executable(
   codebuilder_test.cpp
   codegentestutils.cpp
   codegentestutils.h
+  instructionlist_test.cpp
   operators/equal_comparison_test.cpp
   operators/greater_than_test.cpp
   operators/less_than_test.cpp

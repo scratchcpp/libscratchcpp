@@ -8,8 +8,8 @@
 #include <scratchcpp/inputvalue.h>
 
 #include "compiler_p.h"
-#include "internal/icodebuilderfactory.h"
-#include "internal/icodebuilder.h"
+#include "internal/codegen/icodebuilderfactory.h"
+#include "internal/codegen/icodebuilder.h"
 
 using namespace libscratchcpp;
 
@@ -751,8 +751,8 @@ const std::unordered_set<std::string> &Compiler::unsupportedBlocks() const
 }
 
 /*! Creates a compiler context for the given target. */
-std::shared_ptr<CompilerContext> Compiler::createContext(IEngine *engine, Target *target)
+std::shared_ptr<CompilerContext> Compiler::createContext(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants)
 {
     CompilerPrivate::initBuilderFactory();
-    return CompilerPrivate::builderFactory()->createCtx(engine, target);
+    return CompilerPrivate::builderFactory()->createCtx(engine, target, unsafeConstants);
 }

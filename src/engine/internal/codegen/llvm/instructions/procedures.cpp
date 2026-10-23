@@ -98,7 +98,7 @@ LLVMInstruction *Procedures::buildCallProcedure(LLVMInstruction *ins)
 
     m_utils.reloadVariables();
     m_utils.reloadLists();
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Procedures::buildProcedureArg(LLVMInstruction *ins)
@@ -109,5 +109,5 @@ LLVMInstruction *Procedures::buildProcedureArg(LLVMInstruction *ins)
     llvm::Value *arg = m_utils.function()->getArg(passArgCount + 1 + ins->procedureArgIndex); // omit warp arg
     ins->functionReturnReg->value = arg;
 
-    return ins->next;
+    return ins->getNext();
 }

@@ -47,7 +47,7 @@ LLVMInstruction *Comparison::buildCmpEQ(LLVMInstruction *ins)
     const auto &arg2 = ins->args[1].second;
     ins->functionReturnReg->value = m_utils.createComparison(arg1, arg2, LLVMBuildUtils::Comparison::EQ);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Comparison::buildCmpGT(LLVMInstruction *ins)
@@ -57,7 +57,7 @@ LLVMInstruction *Comparison::buildCmpGT(LLVMInstruction *ins)
     const auto &arg2 = ins->args[1].second;
     ins->functionReturnReg->value = m_utils.createComparison(arg1, arg2, LLVMBuildUtils::Comparison::GT);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Comparison::buildCmpLT(LLVMInstruction *ins)
@@ -67,7 +67,7 @@ LLVMInstruction *Comparison::buildCmpLT(LLVMInstruction *ins)
     const auto &arg2 = ins->args[1].second;
     ins->functionReturnReg->value = m_utils.createComparison(arg1, arg2, LLVMBuildUtils::Comparison::LT);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Comparison::buildStrCmpEQCS(LLVMInstruction *ins)
@@ -77,7 +77,7 @@ LLVMInstruction *Comparison::buildStrCmpEQCS(LLVMInstruction *ins)
     const auto &arg2 = ins->args[1].second;
     ins->functionReturnReg->value = m_utils.createStringComparison(arg1, arg2, true);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Comparison::buildStrCmpEQCI(LLVMInstruction *ins)
@@ -87,5 +87,5 @@ LLVMInstruction *Comparison::buildStrCmpEQCI(LLVMInstruction *ins)
     const auto &arg2 = ins->args[1].second;
     ins->functionReturnReg->value = m_utils.createStringComparison(arg1, arg2, false);
 
-    return ins->next;
+    return ins->getNext();
 }

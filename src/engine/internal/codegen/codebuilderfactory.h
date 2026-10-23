@@ -13,7 +13,7 @@ class LIBSCRATCHCPP_TEST_EXPORT CodeBuilderFactory : public ICodeBuilderFactory
     public:
         static std::shared_ptr<CodeBuilderFactory> instance();
         std::shared_ptr<ICodeBuilder> create(CompilerContext *ctx, BlockPrototype *procedurePrototype, Compiler::CodeType codeType) const override;
-        std::shared_ptr<CompilerContext> createCtx(IEngine *engine, Target *target) const override;
+        std::shared_ptr<CompilerContext> createCtx(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants = {}) const override;
 
     private:
         static std::shared_ptr<CodeBuilderFactory> m_instance;

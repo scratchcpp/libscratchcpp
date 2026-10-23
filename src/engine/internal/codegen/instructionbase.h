@@ -4,15 +4,12 @@
 
 #include <scratchcpp/compiler.h>
 
-#include "llvmregister.h"
-
 namespace libscratchcpp
 {
 
-class LLVMLocalVariableInfo;
 class BlockPrototype;
 
-struct LLVMInstruction
+struct InstructionBase
 {
         enum class Type
         {
@@ -84,7 +81,7 @@ struct LLVMInstruction
             Print
         };
 
-        LLVMInstruction(Type type, bool loopCondition) :
+        InstructionBase(Type type, bool loopCondition) :
             type(type),
             loopCondition(loopCondition)
         {
@@ -92,11 +89,8 @@ struct LLVMInstruction
 
         Type type;
         std::string functionName;
-        std::vector<std::pair<Compiler::StaticType, LLVMRegister *>> args; // target type, register
-        LLVMRegister *functionReturnReg = nullptr;
         bool functionTargetArg = false;                                  // whether to add target ptr to function parameters
         bool functionCtxArg = false;                                     // whether to add execution context ptr to function parameters
-        LLVMLocalVariableInfo *localVarInfo = nullptr;                   // for local variables
         Variable *targetVariable = nullptr;                              // for variables
         List *targetList = nullptr;                                      // for lists
         Compiler::StaticType targetType = Compiler::StaticType::Unknown; // variable or list type (before read/write operation)
@@ -105,9 +99,9 @@ struct LLVMInstruction
         bool loopCondition = false; // whether the instruction is part of a loop condition
 
         // Linked list
-        LLVMInstruction *previous = nullptr;
-        LLVMInstruction *next = nullptr;
-        std::shared_ptr<LLVMInstruction> _next; // ensure items are not deleted
+        InstructionBase *previous = nullptr;
+        InstructionBase *next = nullptr;
+        std::shared_ptr<InstructionBase> _next; // ensure items are not deleted
 };
 
 } // namespace libscratchcpp

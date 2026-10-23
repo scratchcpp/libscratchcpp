@@ -75,7 +75,7 @@ LLVMInstruction *String::buildStringConcat(LLVMInstruction *ins)
 
     ins->functionReturnReg->value = result;
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *String::buildStringChar(LLVMInstruction *ins)
@@ -116,7 +116,7 @@ LLVMInstruction *String::buildStringChar(LLVMInstruction *ins)
 
     ins->functionReturnReg->value = result;
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *String::buildStringLength(LLVMInstruction *ins)
@@ -132,5 +132,5 @@ LLVMInstruction *String::buildStringLength(LLVMInstruction *ins)
     ins->functionReturnReg->intValue = size;
     ins->functionReturnReg->isInt = m_builder.getInt1(true);
 
-    return ins->next;
+    return ins->getNext();
 }

@@ -1,25 +1,10 @@
-// SPDX-License-Identifier: Apache-2.0
-
-#include <cassert>
-
-#include "llvminstructionlist.h"
-#include "llvminstruction.h"
+#include "instructionlistbase.h"
 
 using namespace libscratchcpp;
 
-LLVMInstruction *LLVMInstructionList::first() const
+bool InstructionListBase::containsInstruction(InstructionBase *ins) const
 {
-    return m_first.get();
-}
-
-LLVMInstruction *LLVMInstructionList::last() const
-{
-    return m_last.get();
-}
-
-bool LLVMInstructionList::containsInstruction(LLVMInstruction *ins) const
-{
-    LLVMInstruction *ptr = m_first.get();
+    InstructionBase *ptr = m_first.get();
 
     while (ptr) {
         if (ptr == ins)
@@ -31,9 +16,9 @@ bool LLVMInstructionList::containsInstruction(LLVMInstruction *ins) const
     return false;
 }
 
-bool LLVMInstructionList::containsInstruction(std::function<bool(const LLVMInstruction *)> func) const
+bool InstructionListBase::containsInstruction(std::function<bool(const InstructionBase *)> func) const
 {
-    LLVMInstruction *ptr = m_first.get();
+    InstructionBase *ptr = m_first.get();
 
     while (ptr) {
         if (func(ptr))
@@ -45,7 +30,7 @@ bool LLVMInstructionList::containsInstruction(std::function<bool(const LLVMInstr
     return false;
 }
 
-void LLVMInstructionList::addInstruction(std::shared_ptr<LLVMInstruction> ins)
+void InstructionListBase::addInstruction(std::shared_ptr<InstructionBase> ins)
 {
     if (!(m_first && m_last)) {
         assert(!m_first && !m_last);

@@ -5,8 +5,8 @@
 
 #include "compiler_p.h"
 
-#include "internal/codebuilderfactory.h"
-#include "internal/icodebuilder.h"
+#include "internal/codegen/codebuilderfactory.h"
+#include "internal/codegen/icodebuilder.h"
 
 using namespace libscratchcpp;
 
@@ -18,7 +18,7 @@ CompilerPrivate::CompilerPrivate(CompilerContext *ctx) :
 }
 
 CompilerPrivate::CompilerPrivate(IEngine *engine, Target *target) :
-    ctxPtr(Compiler::createContext(engine, target)),
+    ctxPtr(Compiler::createContext(engine, target, {})), // NOTE: This constructor is only used in tests, so we can leave unsafe constants empty
     ctx(ctxPtr.get())
 {
     initBuilderFactory();

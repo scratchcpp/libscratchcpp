@@ -1,15 +1,13 @@
 #include <scratchcpp/project.h>
-#include <scratchcpp/sprite.h>
-#include <scratchcpp/costume.h>
-#include <scratchcpp/sound.h>
+#include <scratchcpp/target.h>
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/variable.h>
-#include <engine/internal/llvm/llvmcodeanalyzer.h>
-#include <engine/internal/llvm/llvmcompilercontext.h>
-#include <engine/internal/llvm/llvmbuildutils.h>
-#include <engine/internal/llvm/llvminstruction.h>
-#include <engine/internal/llvm/llvminstructionlist.h>
-#include <engine/internal/llvm/llvmconstantregister.h>
+#include <engine/internal/codegen/llvm/llvmcodeanalyzer.h>
+#include <engine/internal/codegen/llvm/llvmcompilercontext.h>
+#include <engine/internal/codegen/llvm/llvmbuildutils.h>
+#include <engine/internal/codegen/llvm/llvminstruction.h>
+#include <engine/internal/codegen/llvm/llvminstructionlist.h>
+#include <engine/internal/codegen/llvm/llvmconstantregister.h>
 #include <llvm/IR/IRBuilder.h>
 #include <gtest/gtest.h>
 
@@ -22,17 +20,11 @@ class LLVMCodeAnalyzer_VariableTypeAnalysis : public testing::Test
         {
             auto engine = m_project.engine();
             m_target = std::make_shared<Target>();
-            m_spriteWithUnsafeConstants = std::make_shared<Sprite>();
 
-            auto costume = std::make_shared<Costume>(m_unsafeCostumeNumConstant, "", "");
-            m_spriteWithUnsafeConstants->addCostume(costume);
+            engine->setTargets({ m_target });
 
-            auto sound = std::make_shared<Sound>(m_unsafeSoundNumConstant, "", "");
-            m_spriteWithUnsafeConstants->addSound(sound);
-
-            engine->setTargets({ m_target, m_spriteWithUnsafeConstants });
-
-            m_ctx = std::make_unique<LLVMCompilerContext>(engine.get(), m_target.get());
+            const std::unordered_set<std::string> unsafeConstants = { m_unsafeCostumeNumConstant, m_unsafeSoundNumConstant };
+            m_ctx = std::make_unique<LLVMCompilerContext>(engine.get(), m_target.get(), unsafeConstants);
             m_builder = std::make_unique<llvm::IRBuilder<>>(*m_ctx->llvmCtx());
             m_utils = std::make_unique<LLVMBuildUtils>(m_ctx.get(), *m_builder, Compiler::CodeType::Script);
             m_analyzer = std::make_unique<LLVMCodeAnalyzer>(*m_utils);
@@ -47,7 +39,6 @@ class LLVMCodeAnalyzer_VariableTypeAnalysis : public testing::Test
     private:
         Project m_project;
         std::shared_ptr<Target> m_target;
-        std::shared_ptr<Sprite> m_spriteWithUnsafeConstants;
         std::unique_ptr<LLVMCompilerContext> m_ctx;
         std::unique_ptr<llvm::IRBuilder<>> m_builder;
         std::unique_ptr<LLVMBuildUtils> m_utils;

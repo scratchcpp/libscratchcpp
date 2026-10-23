@@ -42,7 +42,7 @@ LLVMInstruction *Logic::buildAnd(LLVMInstruction *ins)
     llvm::Value *bool2 = m_utils.castValue(arg2.second, arg2.first);
     ins->functionReturnReg->value = m_builder.CreateAnd(bool1, bool2);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Logic::buildOr(LLVMInstruction *ins)
@@ -54,7 +54,7 @@ LLVMInstruction *Logic::buildOr(LLVMInstruction *ins)
     llvm::Value *bool2 = m_utils.castValue(arg2.second, arg2.first);
     ins->functionReturnReg->value = m_builder.CreateOr(bool1, bool2);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Logic::buildNot(LLVMInstruction *ins)
@@ -64,5 +64,5 @@ LLVMInstruction *Logic::buildNot(LLVMInstruction *ins)
     llvm::Value *value = m_utils.castValue(arg.second, arg.first);
     ins->functionReturnReg->value = m_builder.CreateNot(value);
 
-    return ins->next;
+    return ins->getNext();
 }

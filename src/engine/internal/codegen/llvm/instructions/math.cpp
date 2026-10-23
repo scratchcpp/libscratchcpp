@@ -123,7 +123,7 @@ LLVMInstruction *Math::buildAdd(LLVMInstruction *ins)
     ins->functionReturnReg->isInt = m_builder.CreateAnd(arg1.second->isInt, arg2.second->isInt);
     ins->functionReturnReg->intValue = m_builder.CreateAdd(int1, int2);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildSub(LLVMInstruction *ins)
@@ -141,7 +141,7 @@ LLVMInstruction *Math::buildSub(LLVMInstruction *ins)
     ins->functionReturnReg->isInt = m_builder.CreateAnd(arg1.second->isInt, arg2.second->isInt);
     ins->functionReturnReg->intValue = m_builder.CreateSub(int1, int2);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildMul(LLVMInstruction *ins)
@@ -159,7 +159,7 @@ LLVMInstruction *Math::buildMul(LLVMInstruction *ins)
     ins->functionReturnReg->isInt = m_builder.CreateAnd(arg1.second->isInt, arg2.second->isInt);
     ins->functionReturnReg->intValue = m_builder.CreateMul(int1, int2);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildDiv(LLVMInstruction *ins)
@@ -171,7 +171,7 @@ LLVMInstruction *Math::buildDiv(LLVMInstruction *ins)
     llvm::Value *num2 = m_utils.removeNaN(m_utils.castValue(arg2.second, arg2.first));
     ins->functionReturnReg->value = m_builder.CreateFDiv(num1, num2);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildRandom(LLVMInstruction *ins)
@@ -205,7 +205,7 @@ LLVMInstruction *Math::buildRandom(LLVMInstruction *ins)
         }
     }
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildRandomInt(LLVMInstruction *ins)
@@ -220,7 +220,7 @@ LLVMInstruction *Math::buildRandomInt(LLVMInstruction *ins)
     ins->functionReturnReg->intValue = intValue;
     ins->functionReturnReg->isInt = m_builder.getInt1(true);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildMod(LLVMInstruction *ins)
@@ -272,7 +272,7 @@ LLVMInstruction *Math::buildMod(LLVMInstruction *ins)
     ins->functionReturnReg->intValue = resultPhi;
     ins->functionReturnReg->isInt = isIntPhi;
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildRound(LLVMInstruction *ins)
@@ -305,7 +305,7 @@ LLVMInstruction *Math::buildRound(LLVMInstruction *ins)
     ins->functionReturnReg->isInt = isNotInf;
     ins->functionReturnReg->intValue = m_builder.CreateSelect(isInt, intValue, cast);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildAbs(LLVMInstruction *ins)
@@ -322,7 +322,7 @@ LLVMInstruction *Math::buildAbs(LLVMInstruction *ins)
     ins->functionReturnReg->isInt = arg.second->isInt;
     ins->functionReturnReg->intValue = m_builder.CreateCall(absFunc, { intValue, m_builder.getInt1(false) });
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildFloor(LLVMInstruction *ins)
@@ -345,7 +345,7 @@ LLVMInstruction *Math::buildFloor(LLVMInstruction *ins)
     ins->functionReturnReg->isInt = isNotInf;
     ins->functionReturnReg->intValue = m_builder.CreateSelect(isInt, intValue, cast);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildCeil(LLVMInstruction *ins)
@@ -368,7 +368,7 @@ LLVMInstruction *Math::buildCeil(LLVMInstruction *ins)
     ins->functionReturnReg->isInt = isNotInf;
     ins->functionReturnReg->intValue = m_builder.CreateSelect(isInt, intValue, cast);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildSqrt(LLVMInstruction *ins)
@@ -382,7 +382,7 @@ LLVMInstruction *Math::buildSqrt(LLVMInstruction *ins)
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
     ins->functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateCall(sqrtFunc, num), zero);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildSin(LLVMInstruction *ins)
@@ -405,7 +405,7 @@ LLVMInstruction *Math::buildSin(LLVMInstruction *ins)
     llvm::Value *rounded = m_builder.CreateCall(roundFunc, m_builder.CreateFMul(sinResult, factor));                    // round(sin(x * 180) * 1e10)
     ins->functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateFDiv(rounded, factor), zero);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildCos(LLVMInstruction *ins)
@@ -426,7 +426,7 @@ LLVMInstruction *Math::buildCos(LLVMInstruction *ins)
     llvm::Value *rounded = m_builder.CreateCall(roundFunc, m_builder.CreateFMul(cosResult, factor));                    // round(cos(x * 180) * 1e10)
     ins->functionReturnReg->value = m_builder.CreateFDiv(rounded, factor);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildTan(LLVMInstruction *ins)
@@ -463,7 +463,7 @@ LLVMInstruction *Math::buildTan(LLVMInstruction *ins)
     llvm::Value *inner = m_builder.CreateSelect(m_builder.CreateOr(isUndefined3, isUndefined4), negInf, result);
     ins->functionReturnReg->value = m_builder.CreateSelect(m_builder.CreateOr(isUndefined1, isUndefined2), posInf, inner);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildAsin(LLVMInstruction *ins)
@@ -481,7 +481,7 @@ LLVMInstruction *Math::buildAsin(LLVMInstruction *ins)
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
     ins->functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(asinFunc, num), piDeg), pi), zero);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildAcos(LLVMInstruction *ins)
@@ -497,7 +497,7 @@ LLVMInstruction *Math::buildAcos(LLVMInstruction *ins)
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
     ins->functionReturnReg->value = m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(acosFunc, num), piDeg), pi);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildAtan(LLVMInstruction *ins)
@@ -513,7 +513,7 @@ LLVMInstruction *Math::buildAtan(LLVMInstruction *ins)
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
     ins->functionReturnReg->value = m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(atanFunc, num), piDeg), pi);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildLn(LLVMInstruction *ins)
@@ -525,7 +525,7 @@ LLVMInstruction *Math::buildLn(LLVMInstruction *ins)
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
     ins->functionReturnReg->value = m_builder.CreateCall(logFunc, num);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildLog10(LLVMInstruction *ins)
@@ -537,7 +537,7 @@ LLVMInstruction *Math::buildLog10(LLVMInstruction *ins)
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
     ins->functionReturnReg->value = m_builder.CreateCall(log10Func, num);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildExp(LLVMInstruction *ins)
@@ -549,7 +549,7 @@ LLVMInstruction *Math::buildExp(LLVMInstruction *ins)
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
     ins->functionReturnReg->value = m_builder.CreateCall(expFunc, num);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Math::buildExp10(LLVMInstruction *ins)
@@ -561,5 +561,5 @@ LLVMInstruction *Math::buildExp10(LLVMInstruction *ins)
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
     ins->functionReturnReg->value = m_builder.CreateCall(expFunc, num);
 
-    return ins->next;
+    return ins->getNext();
 }

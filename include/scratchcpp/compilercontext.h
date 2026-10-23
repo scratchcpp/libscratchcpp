@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <unordered_set>
+
 #include "global.h"
 #include "spimpl.h"
 
@@ -16,12 +18,14 @@ class CompilerContextPrivate;
 class LIBSCRATCHCPP_EXPORT CompilerContext
 {
     public:
-        CompilerContext(IEngine *engine, Target *target);
+        CompilerContext(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants = {});
         CompilerContext(const CompilerContext &) = delete;
         virtual ~CompilerContext() { }
 
         IEngine *engine() const;
         Target *target() const;
+
+        const std::unordered_set<std::string> &unsafeConstants() const;
 
         /*!
          * Optimizes compiled scripts ahead of time.

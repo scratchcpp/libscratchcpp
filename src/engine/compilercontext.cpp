@@ -7,8 +7,8 @@
 using namespace libscratchcpp;
 
 /*! Constructs CompilerContext. */
-CompilerContext::CompilerContext(IEngine *engine, Target *target) :
-    impl(spimpl::make_unique_impl<CompilerContextPrivate>(engine, target))
+CompilerContext::CompilerContext(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants) :
+    impl(spimpl::make_unique_impl<CompilerContextPrivate>(engine, target, unsafeConstants))
 {
 }
 
@@ -22,4 +22,10 @@ IEngine *CompilerContext::engine() const
 Target *CompilerContext::target() const
 {
     return impl->target;
+}
+
+/*! Returns the list of unsafe constants (used internally during optimization). */
+const std::unordered_set<std::string> &CompilerContext::unsafeConstants() const
+{
+    return impl->unsafeConstants;
 }

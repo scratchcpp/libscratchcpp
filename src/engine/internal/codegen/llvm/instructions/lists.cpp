@@ -82,14 +82,14 @@ LLVMInstruction *Lists::buildClearList(LLVMInstruction *ins)
         }
     }
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Lists::buildRemoveListItem(LLVMInstruction *ins)
 {
     // No-op in empty lists
     if (ins->targetType == Compiler::StaticType::Void)
-        return ins->next;
+        return ins->getNext();
 
     llvm::LLVMContext &llvmCtx = m_utils.llvmCtx();
     llvm::Function *function = m_utils.function();
@@ -121,7 +121,7 @@ LLVMInstruction *Lists::buildRemoveListItem(LLVMInstruction *ins)
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
@@ -170,7 +170,7 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
     }
 
     createListTypeUpdate(listPtr, arg.second, type);
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
@@ -212,14 +212,14 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
 {
     // No-op in empty lists
     if (ins->targetType == Compiler::StaticType::Void)
-        return ins->next;
+        return ins->getNext();
 
     llvm::LLVMContext &llvmCtx = m_utils.llvmCtx();
     llvm::Function *function = m_utils.function();
@@ -263,7 +263,7 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
     m_builder.CreateBr(nextBlock);
 
     m_builder.SetInsertPoint(nextBlock);
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Lists::buildGetListContents(LLVMInstruction *ins)
@@ -274,7 +274,7 @@ LLVMInstruction *Lists::buildGetListContents(LLVMInstruction *ins)
     m_builder.CreateCall(m_utils.functions().resolve_list_to_string(), { listPtr.ptr, ptr });
     ins->functionReturnReg->value = ptr;
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
@@ -286,7 +286,7 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
     if (ins->targetType == Compiler::StaticType::Void) {
         LLVMConstantRegister nullReg(Compiler::StaticType::String, "");
         ins->functionReturnReg->value = m_utils.createValue(static_cast<LLVMRegister *>(&nullReg));
-        return ins->next;
+        return ins->getNext();
     }
 
     assert(ins->args.size() == 1);
@@ -331,7 +331,7 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
     ins->functionReturnReg->typeVar = typeVar;
     createListTypeAssumption(listPtr, typeVar, ins->targetType, inRange);
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Lists::buildGetListSize(LLVMInstruction *ins)
@@ -343,7 +343,7 @@ LLVMInstruction *Lists::buildGetListSize(LLVMInstruction *ins)
     ins->functionReturnReg->isInt = m_builder.getInt1(true);
     ins->functionReturnReg->intValue = size;
 
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Lists::buildGetListItemIndex(LLVMInstruction *ins)
@@ -355,7 +355,7 @@ LLVMInstruction *Lists::buildGetListItemIndex(LLVMInstruction *ins)
     Compiler::StaticType listType = ins->targetType;
 
     ins->functionReturnReg->value = m_builder.CreateSIToFP(m_utils.getListItemIndex(listPtr, listType, arg.second), m_builder.getDoubleTy());
-    return ins->next;
+    return ins->getNext();
 }
 
 LLVMInstruction *Lists::buildListContainsItem(LLVMInstruction *ins)
@@ -369,7 +369,7 @@ LLVMInstruction *Lists::buildListContainsItem(LLVMInstruction *ins)
     llvm::Value *index = m_utils.getListItemIndex(listPtr, listType, arg.second);
     ins->functionReturnReg->value = m_builder.CreateICmpSGT(index, llvm::ConstantInt::get(m_builder.getInt64Ty(), -1, true));
 
-    return ins->next;
+    return ins->getNext();
 }
 
 llvm::Value *Lists::createIndexRangeCheck(const LLVMListPtr &listPtr, llvm::Value *index, const std::string &name, bool includeSize)

@@ -7,7 +7,7 @@
 #include <scratchcpp/string_pool.h>
 #include <scratchcpp/stringptr.h>
 #include <scratchcpp/blockprototype.h>
-#include <engine/internal/codebuilderfactory.h>
+#include <engine/internal/codegen/codebuilderfactory.h>
 
 #include "codegentestutils.h"
 #include "testfunctions.h"

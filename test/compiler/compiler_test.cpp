@@ -31,7 +31,7 @@ class CompilerTest : public testing::Test
             m_ctx = std::make_shared<CompilerContext>(&m_engine, &m_target);
             CompilerPrivate::setBuilderFactory(&m_builderFactory);
 
-            EXPECT_CALL(m_builderFactory, createCtx(&m_engine, &m_target)).WillOnce(Return(m_ctx));
+            EXPECT_CALL(m_builderFactory, createCtx(&m_engine, &m_target, _)).WillOnce(Return(m_ctx));
             m_compiler = std::make_unique<Compiler>(&m_engine, &m_target);
 
             m_builder = std::make_shared<CodeBuilderMock>();
@@ -1873,7 +1873,7 @@ TEST_F(CompilerTest, Preoptimize)
 {
     auto ctx = std::make_shared<CompilerContextMock>(&m_engine, &m_target);
 
-    EXPECT_CALL(m_builderFactory, createCtx(&m_engine, &m_target)).WillOnce(Return(ctx));
+    EXPECT_CALL(m_builderFactory, createCtx(&m_engine, &m_target, _)).WillOnce(Return(ctx));
     Compiler compiler(&m_engine, &m_target);
 
     EXPECT_CALL(*ctx, preoptimize());

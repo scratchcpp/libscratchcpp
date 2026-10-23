@@ -19,8 +19,8 @@ std::shared_ptr<ICodeBuilder> CodeBuilderFactory::create(CompilerContext *ctx, B
     return std::make_shared<LLVMCodeBuilder>(static_cast<LLVMCompilerContext *>(ctx), procedurePrototype, codeType);
 }
 
-std::shared_ptr<CompilerContext> CodeBuilderFactory::createCtx(IEngine *engine, Target *target) const
+std::shared_ptr<CompilerContext> CodeBuilderFactory::createCtx(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants) const
 {
-    auto ptr = std::make_shared<LLVMCompilerContext>(engine, target);
+    auto ptr = std::make_shared<LLVMCompilerContext>(engine, target, unsafeConstants);
     return ptr;
 }

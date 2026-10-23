@@ -180,8 +180,6 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMBuildUtils
         bool m_warp = false;
         Compiler::CodeType m_codeType = Compiler::CodeType::Script;
 
-        std::unordered_set<std::string> m_unsafeConstants;
-
         llvm::Value *m_executionContextPtr = nullptr;
         llvm::Value *m_targetPtr = nullptr;
         llvm::Value *m_targetVariables = nullptr;

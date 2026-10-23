@@ -28,7 +28,7 @@ using function_id_t = unsigned int;
 class LIBSCRATCHCPP_TEST_EXPORT LLVMCompilerContext : public CompilerContext
 {
     public:
-        LLVMCompilerContext(IEngine *engine, Target *target);
+        LLVMCompilerContext(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants = {});
 
         void preoptimize() override;
 

@@ -6,12 +6,12 @@
 #include <unordered_map>
 
 #include "test_export.h"
+#include "llvminstructionlist.h"
 
 namespace libscratchcpp
 {
 
 class LLVMBuildUtils;
-class LLVMInstructionList;
 class LLVMInstruction;
 
 class LIBSCRATCHCPP_TEST_EXPORT LLVMCodeAnalyzer

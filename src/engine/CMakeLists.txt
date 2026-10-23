@@ -29,10 +29,6 @@ target_sources(scratchcpp
     thread_p.h
     internal/engine.cpp
     internal/engine.h
-    internal/icodebuilder.h
-    internal/icodebuilderfactory.h
-    internal/codebuilderfactory.cpp
-    internal/codebuilderfactory.h
     internal/clock.cpp
     internal/clock.h
     internal/iclock.h
@@ -44,4 +40,4 @@ target_sources(scratchcpp
     internal/randomgenerator.cpp
 )
 
-add_subdirectory(internal/llvm)
+add_subdirectory(internal/codegen)
