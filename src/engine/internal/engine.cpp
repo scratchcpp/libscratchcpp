@@ -249,32 +249,25 @@ void Engine::compile()
     // Find unsafe constants (string numerals) in costume and sound names
     m_unsafeConstants.clear();
 
-    for (auto target : m_targets) {
-        IEngine *engine = target->engine();
+    auto checkConstant = [this](const std::string &str) {
+        Value stringValue(str);
+        Value numberValue(stringValue.toDouble());
 
-        if (engine) {
-            auto checkConstant = [this](const std::string &str) {
-                Value stringValue(str);
-                Value numberValue(stringValue.toDouble());
+        if (stringValue.isValidNumber() && str == numberValue.toString())
+            m_unsafeConstants.insert(str);
+    };
 
-                if (stringValue.isValidNumber() && str == numberValue.toString())
-                    m_unsafeConstants.insert(str);
-            };
+    bool found = false;
 
-            const auto &targets = engine->targets();
-            bool found = false;
+    for (const auto &target : m_targets) {
+        const auto &costumes = target->costumes();
+        const auto &sounds = target->sounds();
 
-            for (const auto &target : targets) {
-                const auto &costumes = target->costumes();
-                const auto &sounds = target->sounds();
+        for (const auto &costume : costumes)
+            checkConstant(costume->name());
 
-                for (const auto &costume : costumes)
-                    checkConstant(costume->name());
-
-                for (const auto &sound : sounds)
-                    checkConstant(sound->name());
-            }
-        }
+        for (const auto &sound : sounds)
+            checkConstant(sound->name());
     }
 
     // Compile scripts
