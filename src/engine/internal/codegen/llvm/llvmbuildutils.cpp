@@ -13,6 +13,7 @@
 #include "llvmcompilercontext.h"
 #include "llvmregister.h"
 #include "llvminstruction.h"
+#include "../optimizationutils.h"
 
 using namespace libscratchcpp;
 
@@ -68,7 +69,8 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
     // Init registers
     for (auto reg : regs) {
 #ifdef LLVM_INTEGER_SUPPORT
-        bool isIntConst = (reg->isConst() && optimizeRegisterType(reg.get()) == Compiler::StaticType::Number && reg->constValue().toDouble() == std::floor(reg->constValue().toDouble()));
+        bool isIntConst =
+            (reg->isConst() && OptimizationUtils::optimizeValueType(m_ctx, reg.get()) == Compiler::StaticType::Number && reg->constValue().toDouble() == std::floor(reg->constValue().toDouble()));
         reg->isInt = m_builder.getInt1(isIntConst);
 #else
         reg->isInt = m_builder.getInt1(false);
@@ -480,26 +482,6 @@ std::vector<LLVMIfStatement> &LLVMBuildUtils::ifStatements()
 std::vector<LLVMLoop> &LLVMBuildUtils::loops()
 {
     return m_loops;
-}
-
-Compiler::StaticType LLVMBuildUtils::optimizeRegisterType(const LLVMRegister *reg) const
-{
-    Compiler::StaticType ret = reg->type();
-
-    // Optimize string constants that represent numbers
-    if (reg->isConst() && reg->type() == Compiler::StaticType::String) {
-        const Value &value = reg->constValue();
-        Value numberValue(value.toDouble());
-        std::string str = value.toString();
-
-        // Apply this optimization only if the number matches the string and the constant is safe
-        const auto &unsafeConstants = m_ctx->unsafeConstants();
-
-        if (value.isValidNumber() && numberValue.toString() == str && unsafeConstants.find(str) == unsafeConstants.cend())
-            ret = Compiler::StaticType::Number;
-    }
-
-    return ret;
 }
 
 Compiler::StaticType LLVMBuildUtils::mapType(ValueType type)

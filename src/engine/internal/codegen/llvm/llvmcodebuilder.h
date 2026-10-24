@@ -12,7 +12,6 @@
 #include "../icodebuilder.h"
 #include "test_export.h"
 #include "llvmbuildutils.h"
-#include "llvmcodeanalyzer.h"
 #include "llvminstruction.h"
 #include "llvminstructionlist.h"
 #include "llvmcoroutine.h"
@@ -20,6 +19,7 @@
 #include "llvmlistptr.h"
 #include "llvmfunctions.h"
 #include "instructions/instructionbuilder.h"
+#include "../codeanalyzer.h"
 
 namespace libscratchcpp
 {
@@ -144,7 +144,7 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMCodeBuilder : public ICodeBuilder
         llvm::IRBuilder<> m_builder;
         llvm::Function *m_function = nullptr;
         LLVMBuildUtils m_utils;
-        LLVMCodeAnalyzer m_codeAnalyzer;
+        CodeAnalyzer m_codeAnalyzer;
 
         llvm::StructType *m_valueDataType = nullptr;
         llvm::StructType *m_stringPtrType = nullptr;

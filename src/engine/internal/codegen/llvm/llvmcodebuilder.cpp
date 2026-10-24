@@ -28,7 +28,7 @@ LLVMCodeBuilder::LLVMCodeBuilder(LLVMCompilerContext *ctx, BlockPrototype *proce
     m_module(ctx->module()),
     m_builder(m_llvmCtx),
     m_utils(ctx, m_builder, codeType),
-    m_codeAnalyzer(m_utils),
+    m_codeAnalyzer(ctx),
     m_procedurePrototype(procedurePrototype),
     m_defaultWarp(procedurePrototype ? procedurePrototype->warp() : false),
     m_warp(m_defaultWarp),

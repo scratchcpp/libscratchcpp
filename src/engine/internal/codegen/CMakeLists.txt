@@ -9,6 +9,10 @@ target_sources(scratchcpp
     instructionlistbase.cpp
     instructionlistbase.h
     instructionlist.h
+    codeanalyzer.cpp
+    codeanalyzer.h
+    optimizationutils.cpp
+    optimizationutils.h
 )
 
 add_subdirectory(llvm)

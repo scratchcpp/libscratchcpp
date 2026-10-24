@@ -1,27 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include "llvmcodeanalyzer.h"
-#include "llvminstructionlist.h"
-#include "llvminstruction.h"
-#include "llvmbuildutils.h"
+#include <scratchcpp/compilervalue.h>
+
+#include "codeanalyzer.h"
+#include "instructionlistbase.h"
+#include "instructionbase.h"
+#include "optimizationutils.h"
 
 using namespace libscratchcpp;
 
 // NOTE: The loop condition in repeat until and while loops is considered a part of the loop body
-static const std::unordered_set<LLVMInstruction::Type> BEGIN_LOOP_INSTRUCTIONS = { LLVMInstruction::Type::BeginRepeatLoop, LLVMInstruction::Type::BeginLoopCondition };
+static const std::unordered_set<InstructionBase::Type> BEGIN_LOOP_INSTRUCTIONS = { InstructionBase::Type::BeginRepeatLoop, InstructionBase::Type::BeginLoopCondition };
 
-static const std::unordered_set<LLVMInstruction::Type> LIST_WRITE_INSTRUCTIONS = { LLVMInstruction::Type::AppendToList, LLVMInstruction::Type::InsertToList, LLVMInstruction::Type::ListReplace };
+static const std::unordered_set<InstructionBase::Type> LIST_WRITE_INSTRUCTIONS = { InstructionBase::Type::AppendToList, InstructionBase::Type::InsertToList, InstructionBase::Type::ListReplace };
 
-LLVMCodeAnalyzer::LLVMCodeAnalyzer(const LLVMBuildUtils &utils) :
-    m_utils(utils)
+CodeAnalyzer::CodeAnalyzer(CompilerContext *ctx) :
+    m_ctx(ctx)
 {
 }
 
-void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
+void CodeAnalyzer::analyzeScript(const InstructionListBase &script) const
 {
-    std::unordered_set<LLVMInstruction *> typeAssignedInstructions;
+    std::unordered_set<InstructionBase *> typeAssignedInstructions;
     std::vector<std::unique_ptr<Branch>> branches;
-    LLVMInstruction *ins = script.first();
+    InstructionBase *ins = script.first();
 
     auto topBranch = std::make_unique<Branch>();
     topBranch->start = ins;
@@ -148,14 +150,14 @@ void LLVMCodeAnalyzer::analyzeScript(const LLVMInstructionList &script) const
             typeAssignedInstructions.insert(ins);
         }
 
-        ins = ins->getNext();
+        ins = ins->next;
     }
 
     assert(branches.size() == 1);
     assert(branches.back().get() == topBranchPtr);
 }
 
-void LLVMCodeAnalyzer::updateVariableType(Branch *branch, LLVMInstruction *ins, std::unordered_set<LLVMInstruction *> &typeAssignedInstructions, bool isWrite) const
+void CodeAnalyzer::updateVariableType(Branch *branch, InstructionBase *ins, std::unordered_set<InstructionBase *> &typeAssignedInstructions, bool isWrite) const
 {
     auto it = branch->variableTypes.find(ins->targetVariable);
 
@@ -182,7 +184,7 @@ void LLVMCodeAnalyzer::updateVariableType(Branch *branch, LLVMInstruction *ins, 
     }
 }
 
-void LLVMCodeAnalyzer::updateListType(Branch *branch, LLVMInstruction *ins, std::unordered_set<LLVMInstruction *> &typeAssignedInstructions, bool isWrite) const
+void CodeAnalyzer::updateListType(Branch *branch, InstructionBase *ins, std::unordered_set<InstructionBase *> &typeAssignedInstructions, bool isWrite) const
 {
     auto it = branch->listTypes.find(ins->targetList);
 
@@ -211,7 +213,7 @@ void LLVMCodeAnalyzer::updateListType(Branch *branch, LLVMInstruction *ins, std:
     }
 }
 
-void LLVMCodeAnalyzer::mergeVariableTypes(Branch *branch, Branch *previousBranch) const
+void CodeAnalyzer::mergeVariableTypes(Branch *branch, Branch *previousBranch) const
 {
     for (const auto &[var, type] : branch->variableTypes) {
         auto it = previousBranch->variableTypes.find(var);
@@ -223,13 +225,13 @@ void LLVMCodeAnalyzer::mergeVariableTypes(Branch *branch, Branch *previousBranch
     }
 }
 
-void LLVMCodeAnalyzer::overrideVariableTypes(Branch *branch, Branch *previousBranch) const
+void CodeAnalyzer::overrideVariableTypes(Branch *branch, Branch *previousBranch) const
 {
     for (const auto &[var, type] : branch->variableTypes)
         previousBranch->variableTypes[var] = type;
 }
 
-void LLVMCodeAnalyzer::mergeListTypes(Branch *branch, Branch *previousBranch, bool firstUnknown) const
+void CodeAnalyzer::mergeListTypes(Branch *branch, Branch *previousBranch, bool firstUnknown) const
 {
     for (const auto &[list, type] : branch->listTypes) {
         auto it = previousBranch->listTypes.find(list);
@@ -241,69 +243,69 @@ void LLVMCodeAnalyzer::mergeListTypes(Branch *branch, Branch *previousBranch, bo
     }
 }
 
-bool LLVMCodeAnalyzer::isLoopStart(const LLVMInstruction *ins) const
+bool CodeAnalyzer::isLoopStart(const InstructionBase *ins) const
 {
     return (BEGIN_LOOP_INSTRUCTIONS.find(ins->type) != BEGIN_LOOP_INSTRUCTIONS.cend());
 }
 
-bool LLVMCodeAnalyzer::isLoopEnd(const LLVMInstruction *ins) const
+bool CodeAnalyzer::isLoopEnd(const InstructionBase *ins) const
 {
-    return (ins->type == LLVMInstruction::Type::EndLoop);
+    return (ins->type == InstructionBase::Type::EndLoop);
 }
 
-bool LLVMCodeAnalyzer::isIfStart(const LLVMInstruction *ins) const
+bool CodeAnalyzer::isIfStart(const InstructionBase *ins) const
 {
-    return (ins->type == LLVMInstruction::Type::BeginIf);
+    return (ins->type == InstructionBase::Type::BeginIf);
 }
 
-bool LLVMCodeAnalyzer::isElse(const LLVMInstruction *ins) const
+bool CodeAnalyzer::isElse(const InstructionBase *ins) const
 {
-    return (ins->type == LLVMInstruction::Type::BeginElse);
+    return (ins->type == InstructionBase::Type::BeginElse);
 }
 
-bool LLVMCodeAnalyzer::isIfEnd(const LLVMInstruction *ins) const
+bool CodeAnalyzer::isIfEnd(const InstructionBase *ins) const
 {
-    return (ins->type == LLVMInstruction::Type::EndIf);
+    return (ins->type == InstructionBase::Type::EndIf);
 }
 
-bool LLVMCodeAnalyzer::isVariableRead(const LLVMInstruction *ins) const
+bool CodeAnalyzer::isVariableRead(const InstructionBase *ins) const
 {
-    return (ins->type == LLVMInstruction::Type::ReadVariable);
+    return (ins->type == InstructionBase::Type::ReadVariable);
 }
 
-bool LLVMCodeAnalyzer::isVariableWrite(const LLVMInstruction *ins) const
+bool CodeAnalyzer::isVariableWrite(const InstructionBase *ins) const
 {
-    return (ins->type == LLVMInstruction::Type::WriteVariable);
+    return (ins->type == InstructionBase::Type::WriteVariable);
 }
 
-bool LLVMCodeAnalyzer::isListRead(const LLVMInstruction *ins) const
+bool CodeAnalyzer::isListRead(const InstructionBase *ins) const
 {
-    return (ins->type == LLVMInstruction::Type::GetListItem);
+    return (ins->type == InstructionBase::Type::GetListItem);
 }
 
-bool LLVMCodeAnalyzer::isListWrite(const LLVMInstruction *ins) const
+bool CodeAnalyzer::isListWrite(const InstructionBase *ins) const
 {
     return (LIST_WRITE_INSTRUCTIONS.find(ins->type) != LIST_WRITE_INSTRUCTIONS.cend());
 }
 
-bool LLVMCodeAnalyzer::isListClear(const LLVMInstruction *ins) const
+bool CodeAnalyzer::isListClear(const InstructionBase *ins) const
 {
-    return (ins->type == LLVMInstruction::Type::ClearList);
+    return (ins->type == InstructionBase::Type::ClearList);
 }
 
-bool LLVMCodeAnalyzer::isProcedureCall(const LLVMInstruction *ins) const
+bool CodeAnalyzer::isProcedureCall(const InstructionBase *ins) const
 {
-    return (ins->type == LLVMInstruction::Type::CallProcedure);
+    return (ins->type == InstructionBase::Type::CallProcedure);
 }
 
-Compiler::StaticType LLVMCodeAnalyzer::writeType(LLVMInstruction *ins) const
+Compiler::StaticType CodeAnalyzer::writeType(InstructionBase *ins) const
 {
     assert(ins);
     assert(!ins->args.empty());
     auto &arg = ins->args.back(); // value is always the last argument in variable/list write instructions
-    const LLVMRegister *argReg = arg.second;
+    const CompilerValue *argValue = arg.second;
 
-    Compiler::StaticType ret = m_utils.optimizeRegisterType(argReg);
+    Compiler::StaticType ret = OptimizationUtils::optimizeValueType(m_ctx, argValue);
     arg.first = ret; // store the return type in the value argument
     return ret;
 }
