@@ -176,7 +176,7 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
         case Compiler::CodeType::Reporter: {
             // Use last instruction return value (or last constant) and create a ValueData instance
             assert(lastInstruction || lastConstant);
-            LLVMRegister *ret = lastInstruction ? lastInstruction->functionReturnReg : lastConstant;
+            LLVMRegister *ret = lastInstruction ? lastInstruction->getFunctionReturnReg() : lastConstant;
             llvm::Value *copy = createNewValue(ret);
             m_builder.CreateRet(m_builder.CreateLoad(m_valueDataType, copy));
             break;
@@ -187,7 +187,7 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
             assert(lastInstruction || lastConstant);
 
             if (lastInstruction)
-                m_builder.CreateRet(castValue(lastInstruction->functionReturnReg, Compiler::StaticType::Bool));
+                m_builder.CreateRet(castValue(lastInstruction->getFunctionReturnReg(), Compiler::StaticType::Bool));
             else
                 m_builder.CreateRet(castValue(lastConstant, Compiler::StaticType::Bool));
             break;

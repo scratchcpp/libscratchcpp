@@ -83,9 +83,10 @@ ProcessResult Control::process(LLVMInstruction *ins)
 LLVMInstruction *Control::buildSelect(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 3);
-    const auto &arg1 = ins->args[0];
-    const auto &arg2 = ins->args[1];
-    const auto &arg3 = ins->args[2];
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0];
+    const auto &arg2 = args[1];
+    const auto &arg3 = args[2];
     auto type = arg2.first;
     llvm::Value *cond = m_utils.castValue(arg1.second, arg1.first);
     llvm::Value *trueValue;
@@ -99,9 +100,9 @@ LLVMInstruction *Control::buildSelect(LLVMInstruction *ins)
         falseValue = m_utils.createValue(arg3.second);
     }
 
-    ins->functionReturnReg->value = m_builder.CreateSelect(cond, trueValue, falseValue);
-    ins->functionReturnReg->isInt = m_builder.CreateSelect(cond, arg2.second->isInt, arg3.second->isInt);
-    ins->functionReturnReg->intValue = m_builder.CreateSelect(cond, arg2.second->intValue, arg3.second->intValue);
+    ins->getFunctionReturnReg()->value = m_builder.CreateSelect(cond, trueValue, falseValue);
+    ins->getFunctionReturnReg()->isInt = m_builder.CreateSelect(cond, arg2.second->isInt, arg3.second->isInt);
+    ins->getFunctionReturnReg()->intValue = m_builder.CreateSelect(cond, arg2.second->intValue, arg3.second->intValue);
     return ins->getNext();
 }
 
@@ -119,7 +120,8 @@ LLVMInstruction *Control::buildBeginIf(LLVMInstruction *ins)
 
     // Use last reg
     assert(ins->args.size() == 1);
-    const auto &reg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &reg = args[0];
     assert(reg.first == Compiler::StaticType::Bool);
     statement.condition = m_utils.castValue(reg.second, reg.first);
 
@@ -205,7 +207,8 @@ LLVMInstruction *Control::buildBeginRepeatLoop(LLVMInstruction *ins)
 
     // Use last reg for count
     assert(ins->args.size() == 1);
-    const auto &reg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &reg = args[0];
     assert(reg.first == Compiler::StaticType::Number);
     llvm::Value *count = m_utils.castValue(reg.second, reg.first);
     llvm::Value *isInf = m_builder.CreateFCmpOEQ(count, llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), false));
@@ -249,9 +252,9 @@ LLVMInstruction *Control::buildLoopIndex(LLVMInstruction *ins)
     assert(!m_utils.loops().empty());
     LLVMLoop &loop = m_utils.loops().back();
     llvm::Value *index = m_builder.CreateLoad(m_builder.getInt64Ty(), loop.index);
-    ins->functionReturnReg->value = m_builder.CreateUIToFP(index, m_builder.getDoubleTy());
-    ins->functionReturnReg->intValue = index;
-    ins->functionReturnReg->isInt = m_builder.getInt1(true);
+    ins->getFunctionReturnReg()->value = m_builder.CreateUIToFP(index, m_builder.getDoubleTy());
+    ins->getFunctionReturnReg()->intValue = index;
+    ins->getFunctionReturnReg()->isInt = m_builder.getInt1(true);
 
     return ins->getNext();
 }
@@ -270,7 +273,8 @@ LLVMInstruction *Control::buildBeginWhileLoop(LLVMInstruction *ins)
 
     // Use last reg
     assert(ins->args.size() == 1);
-    const auto &reg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &reg = args[0];
     assert(reg.first == Compiler::StaticType::Bool);
     llvm::Value *condition = m_utils.castValue(reg.second, reg.first);
     m_builder.CreateCondBr(condition, body, loop.afterLoop);
@@ -295,7 +299,8 @@ LLVMInstruction *Control::buildBeginRepeatUntilLoop(LLVMInstruction *ins)
 
     // Use last reg
     assert(ins->args.size() == 1);
-    const auto &reg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &reg = args[0];
     assert(reg.first == Compiler::StaticType::Bool);
     llvm::Value *condition = m_utils.castValue(reg.second, reg.first);
     m_builder.CreateCondBr(condition, loop.afterLoop, body);
@@ -374,7 +379,8 @@ LLVMInstruction *Control::buildPrint(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
 
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
     llvm::Value *str = m_utils.castValue(arg.second, arg.first);
 
     m_builder.CreateCall(m_utils.functions().resolve_llvm_print(), str);

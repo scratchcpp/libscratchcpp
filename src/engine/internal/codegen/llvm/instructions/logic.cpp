@@ -36,11 +36,12 @@ ProcessResult Logic::process(LLVMInstruction *ins)
 LLVMInstruction *Logic::buildAnd(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0];
-    const auto &arg2 = ins->args[1];
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0];
+    const auto &arg2 = args[1];
     llvm::Value *bool1 = m_utils.castValue(arg1.second, arg1.first);
     llvm::Value *bool2 = m_utils.castValue(arg2.second, arg2.first);
-    ins->functionReturnReg->value = m_builder.CreateAnd(bool1, bool2);
+    ins->getFunctionReturnReg()->value = m_builder.CreateAnd(bool1, bool2);
 
     return ins->getNext();
 }
@@ -48,11 +49,12 @@ LLVMInstruction *Logic::buildAnd(LLVMInstruction *ins)
 LLVMInstruction *Logic::buildOr(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0];
-    const auto &arg2 = ins->args[1];
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0];
+    const auto &arg2 = args[1];
     llvm::Value *bool1 = m_utils.castValue(arg1.second, arg1.first);
     llvm::Value *bool2 = m_utils.castValue(arg2.second, arg2.first);
-    ins->functionReturnReg->value = m_builder.CreateOr(bool1, bool2);
+    ins->getFunctionReturnReg()->value = m_builder.CreateOr(bool1, bool2);
 
     return ins->getNext();
 }
@@ -60,9 +62,10 @@ LLVMInstruction *Logic::buildOr(LLVMInstruction *ins)
 LLVMInstruction *Logic::buildNot(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
     llvm::Value *value = m_utils.castValue(arg.second, arg.first);
-    ins->functionReturnReg->value = m_builder.CreateNot(value);
+    ins->getFunctionReturnReg()->value = m_builder.CreateNot(value);
 
     return ins->getNext();
 }

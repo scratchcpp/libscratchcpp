@@ -59,7 +59,9 @@ LLVMInstruction *Procedures::buildCallProcedure(LLVMInstruction *ins)
         args.push_back(m_utils.procedurePrototype() ? m_utils.warpArg() : m_builder.getInt1(false));
 
     // Add procedure args
-    for (const auto &arg : ins->args) {
+    const auto &insArgs = ins->getArgs();
+
+    for (const auto &arg : insArgs) {
         if (m_utils.isSingleType(arg.first))
             args.push_back(m_utils.castValue(arg.second, arg.first));
         else
@@ -107,7 +109,7 @@ LLVMInstruction *Procedures::buildProcedureArg(LLVMInstruction *ins)
     llvm::FunctionType *funcType = m_utils.scriptFunctionType(nullptr);
     int passArgCount = funcType->getNumParams();
     llvm::Value *arg = m_utils.function()->getArg(passArgCount + 1 + ins->procedureArgIndex); // omit warp arg
-    ins->functionReturnReg->value = arg;
+    ins->getFunctionReturnReg()->value = arg;
 
     return ins->getNext();
 }

@@ -5,6 +5,7 @@
 #include "../llvmbuildutils.h"
 #include "../llvmconstantregister.h"
 #include "../llvmcompilercontext.h"
+#include "../../optimizationutils.h"
 
 using namespace libscratchcpp;
 using namespace libscratchcpp::llvmins;
@@ -95,7 +96,8 @@ LLVMInstruction *Lists::buildRemoveListItem(LLVMInstruction *ins)
     llvm::Function *function = m_utils.function();
 
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
 
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
@@ -130,8 +132,9 @@ LLVMInstruction *Lists::buildAppendToList(LLVMInstruction *ins)
     llvm::Function *function = m_utils.function();
 
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
-    Compiler::StaticType type = m_utils.optimizeRegisterType(arg.second);
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
+    Compiler::StaticType type = OptimizationUtils::optimizeValueType(m_utils.compilerCtx(), arg.second);
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     // Check if enough space is allocated
@@ -179,9 +182,10 @@ LLVMInstruction *Lists::buildInsertToList(LLVMInstruction *ins)
     llvm::Function *function = m_utils.function();
 
     assert(ins->args.size() == 2);
-    const auto &indexArg = ins->args[0];
-    const auto &valueArg = ins->args[1];
-    Compiler::StaticType type = m_utils.optimizeRegisterType(valueArg.second);
+    const auto &args = ins->getArgs();
+    const auto &indexArg = args[0];
+    const auto &valueArg = args[1];
+    Compiler::StaticType type = OptimizationUtils::optimizeValueType(m_utils.compilerCtx(), valueArg.second);
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     // Range check
@@ -225,9 +229,10 @@ LLVMInstruction *Lists::buildListReplace(LLVMInstruction *ins)
     llvm::Function *function = m_utils.function();
 
     assert(ins->args.size() == 2);
-    const auto &indexArg = ins->args[0];
-    const auto &valueArg = ins->args[1];
-    Compiler::StaticType type = m_utils.optimizeRegisterType(valueArg.second);
+    const auto &args = ins->getArgs();
+    const auto &indexArg = args[0];
+    const auto &valueArg = args[1];
+    Compiler::StaticType type = OptimizationUtils::optimizeValueType(m_utils.compilerCtx(), valueArg.second);
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     Compiler::StaticType listType = ins->targetType;
@@ -272,7 +277,7 @@ LLVMInstruction *Lists::buildGetListContents(LLVMInstruction *ins)
     const LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
     llvm::Value *ptr = m_utils.addStringAlloca();
     m_builder.CreateCall(m_utils.functions().resolve_list_to_string(), { listPtr.ptr, ptr });
-    ins->functionReturnReg->value = ptr;
+    ins->getFunctionReturnReg()->value = ptr;
 
     return ins->getNext();
 }
@@ -285,12 +290,13 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
     // Return empty string for empty lists
     if (ins->targetType == Compiler::StaticType::Void) {
         LLVMConstantRegister nullReg(Compiler::StaticType::String, "");
-        ins->functionReturnReg->value = m_utils.createValue(static_cast<LLVMRegister *>(&nullReg));
+        ins->getFunctionReturnReg()->value = m_utils.createValue(static_cast<LLVMRegister *>(&nullReg));
         return ins->getNext();
     }
 
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     // Range check
@@ -327,8 +333,8 @@ LLVMInstruction *Lists::buildGetListItem(LLVMInstruction *ins)
     itemTypeResult->addIncoming(stringType, outOfRangeBlock);
 
     llvm::Value *typeVar = createListTypeVar(listPtr, itemTypeResult);
-    ins->functionReturnReg->value = result;
-    ins->functionReturnReg->typeVar = typeVar;
+    ins->getFunctionReturnReg()->value = result;
+    ins->getFunctionReturnReg()->typeVar = typeVar;
     createListTypeAssumption(listPtr, typeVar, ins->targetType, inRange);
 
     return ins->getNext();
@@ -339,9 +345,9 @@ LLVMInstruction *Lists::buildGetListSize(LLVMInstruction *ins)
     assert(ins->args.size() == 0);
     const LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
     llvm::Value *size = m_utils.getListSize(listPtr);
-    ins->functionReturnReg->value = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
-    ins->functionReturnReg->isInt = m_builder.getInt1(true);
-    ins->functionReturnReg->intValue = size;
+    ins->getFunctionReturnReg()->value = m_builder.CreateUIToFP(size, m_builder.getDoubleTy());
+    ins->getFunctionReturnReg()->isInt = m_builder.getInt1(true);
+    ins->getFunctionReturnReg()->intValue = size;
 
     return ins->getNext();
 }
@@ -349,25 +355,27 @@ LLVMInstruction *Lists::buildGetListSize(LLVMInstruction *ins)
 LLVMInstruction *Lists::buildGetListItemIndex(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     Compiler::StaticType listType = ins->targetType;
 
-    ins->functionReturnReg->value = m_builder.CreateSIToFP(m_utils.getListItemIndex(listPtr, listType, arg.second), m_builder.getDoubleTy());
+    ins->getFunctionReturnReg()->value = m_builder.CreateSIToFP(m_utils.getListItemIndex(listPtr, listType, arg.second), m_builder.getDoubleTy());
     return ins->getNext();
 }
 
 LLVMInstruction *Lists::buildListContainsItem(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
     LLVMListPtr &listPtr = m_utils.listPtr(ins->targetList);
 
     Compiler::StaticType listType = ins->targetType;
 
     llvm::Value *index = m_utils.getListItemIndex(listPtr, listType, arg.second);
-    ins->functionReturnReg->value = m_builder.CreateICmpSGT(index, llvm::ConstantInt::get(m_builder.getInt64Ty(), -1, true));
+    ins->getFunctionReturnReg()->value = m_builder.CreateICmpSGT(index, llvm::ConstantInt::get(m_builder.getInt64Ty(), -1, true));
 
     return ins->getNext();
 }

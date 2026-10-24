@@ -35,7 +35,7 @@ LLVMInstruction *Functions::buildFunctionCall(LLVMInstruction *ins)
     // Strings are returned through an output parameter
     llvm::Value *stringRet = nullptr;
 
-    if (ins->functionReturnReg && ins->functionReturnReg->type() == Compiler::StaticType::String) {
+    if (ins->getFunctionReturnReg() && ins->getFunctionReturnReg()->type() == Compiler::StaticType::String) {
         stringRet = m_utils.addStringAlloca();
         types.push_back(m_utils.getType(Compiler::StaticType::String, false));
         args.push_back(stringRet);
@@ -54,22 +54,24 @@ LLVMInstruction *Functions::buildFunctionCall(LLVMInstruction *ins)
     }
 
     // Args
-    for (auto &arg : ins->args) {
+    const auto &insArgs = ins->getArgs();
+
+    for (auto &arg : insArgs) {
         types.push_back(m_utils.getType(arg.first, false));
         args.push_back(m_utils.castValue(arg.second, arg.first));
     }
 
-    llvm::Type *retType = m_utils.getType(ins->functionReturnReg ? ins->functionReturnReg->type() : Compiler::StaticType::Void, true);
+    llvm::Type *retType = m_utils.getType(ins->getFunctionReturnReg() ? ins->getFunctionReturnReg()->type() : Compiler::StaticType::Void, true);
     llvm::Value *ret = m_builder.CreateCall(m_utils.functions().resolveFunction(ins->functionName, llvm::FunctionType::get(retType, types, false)), args);
 
-    if (ins->functionReturnReg) {
-        if (ins->functionReturnReg->type() == Compiler::StaticType::String)
-            ins->functionReturnReg->value = stringRet;
-        else if (m_utils.isSingleType(ins->functionReturnReg->type()))
-            ins->functionReturnReg->value = ret;
+    if (ins->getFunctionReturnReg()) {
+        if (ins->getFunctionReturnReg()->type() == Compiler::StaticType::String)
+            ins->getFunctionReturnReg()->value = stringRet;
+        else if (m_utils.isSingleType(ins->getFunctionReturnReg()->type()))
+            ins->getFunctionReturnReg()->value = ret;
         else {
-            ins->functionReturnReg->value = m_utils.addAlloca(retType);
-            m_builder.CreateStore(ret, ins->functionReturnReg->value);
+            ins->getFunctionReturnReg()->value = m_utils.addAlloca(retType);
+            m_builder.CreateStore(ret, ins->getFunctionReturnReg()->value);
         }
     }
 

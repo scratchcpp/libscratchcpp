@@ -4,6 +4,7 @@
 #include "../llvminstruction.h"
 #include "../llvmbuildutils.h"
 #include "../llvmconstantregister.h"
+#include "../../optimizationutils.h"
 
 using namespace libscratchcpp;
 using namespace libscratchcpp::llvmins;
@@ -51,16 +52,17 @@ LLVMInstruction *Variables::buildCreateLocalVariable(LLVMInstruction *ins)
     m_builder.CreateStore(m_builder.getInt1(false), info->isInt);
     m_builder.CreateStore(llvm::ConstantInt::get(m_builder.getInt64Ty(), 0, true), info->isInt);
 
-    LLVMConstantRegister null(ins->functionReturnReg->type(), Value());
-    ins->functionReturnReg->value = m_utils.createValue(&null);
+    LLVMConstantRegister null(ins->getFunctionReturnReg()->type(), Value());
+    ins->getFunctionReturnReg()->value = m_utils.createValue(&null);
     return ins->getNext();
 }
 
 LLVMInstruction *Variables::buildWriteLocalVariable(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0];
-    const auto &arg2 = ins->args[1];
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0];
+    const auto &arg2 = args[1];
     LLVMLocalVariableInfo *info = ins->localVarInfo;
     llvm::Value *typeVar = m_utils.addAlloca(m_builder.getInt32Ty());
     m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(m_utils.mapType(arg2.first))), typeVar);
@@ -72,19 +74,21 @@ LLVMInstruction *Variables::buildWriteLocalVariable(LLVMInstruction *ins)
 LLVMInstruction *Variables::buildReadLocalVariable(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
     LLVMLocalVariableInfo *info = ins->localVarInfo;
-    ins->functionReturnReg->value = m_utils.castValue(arg.second, ins->functionReturnReg->type());
-    ins->functionReturnReg->isInt = m_builder.CreateLoad(m_builder.getInt1Ty(), info->isInt);
-    ins->functionReturnReg->intValue = m_builder.CreateLoad(m_builder.getInt64Ty(), info->intValue);
+    ins->getFunctionReturnReg()->value = m_utils.castValue(arg.second, ins->getFunctionReturnReg()->type());
+    ins->getFunctionReturnReg()->isInt = m_builder.CreateLoad(m_builder.getInt1Ty(), info->isInt);
+    ins->getFunctionReturnReg()->intValue = m_builder.CreateLoad(m_builder.getInt64Ty(), info->intValue);
     return ins->getNext();
 }
 
 LLVMInstruction *Variables::buildWriteVariable(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
-    Compiler::StaticType argType = m_utils.optimizeRegisterType(arg.second);
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
+    Compiler::StaticType argType = OptimizationUtils::optimizeValueType(m_utils.compilerCtx(), arg.second);
     LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->targetVariable);
 
     m_utils.createValueStore(varPtr.stackPtr, m_utils.getValueTypePtr(varPtr.stackPtr), varPtr.isInt, varPtr.intValue, arg.second, ins->targetType, argType);
@@ -97,8 +101,8 @@ LLVMInstruction *Variables::buildReadVariable(LLVMInstruction *ins)
     assert(ins->args.size() == 0);
     LLVMVariablePtr &varPtr = m_utils.variablePtr(ins->targetVariable);
 
-    ins->functionReturnReg->value = varPtr.stackPtr;
-    ins->functionReturnReg->isInt = m_builder.CreateLoad(m_builder.getInt1Ty(), varPtr.isInt);
-    ins->functionReturnReg->intValue = m_builder.CreateLoad(m_builder.getInt64Ty(), varPtr.intValue);
+    ins->getFunctionReturnReg()->value = varPtr.stackPtr;
+    ins->getFunctionReturnReg()->isInt = m_builder.CreateLoad(m_builder.getInt1Ty(), varPtr.isInt);
+    ins->getFunctionReturnReg()->intValue = m_builder.CreateLoad(m_builder.getInt64Ty(), varPtr.intValue);
     return ins->getNext();
 }

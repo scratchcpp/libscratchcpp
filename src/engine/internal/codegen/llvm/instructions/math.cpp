@@ -111,17 +111,18 @@ ProcessResult Math::process(LLVMInstruction *ins)
 LLVMInstruction *Math::buildAdd(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0];
-    const auto &arg2 = ins->args[1];
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0];
+    const auto &arg2 = args[1];
 
     llvm::Value *double1 = m_utils.removeNaN(m_utils.castValue(arg1.second, arg1.first, LLVMBuildUtils::NumberType::Double));
     llvm::Value *double2 = m_utils.removeNaN(m_utils.castValue(arg2.second, arg2.first, LLVMBuildUtils::NumberType::Double));
-    ins->functionReturnReg->value = m_builder.CreateFAdd(double1, double2);
+    ins->getFunctionReturnReg()->value = m_builder.CreateFAdd(double1, double2);
 
     llvm::Value *int1 = m_utils.castValue(arg1.second, arg1.first, LLVMBuildUtils::NumberType::Int);
     llvm::Value *int2 = m_utils.castValue(arg2.second, arg2.first, LLVMBuildUtils::NumberType::Int);
-    ins->functionReturnReg->isInt = m_builder.CreateAnd(arg1.second->isInt, arg2.second->isInt);
-    ins->functionReturnReg->intValue = m_builder.CreateAdd(int1, int2);
+    ins->getFunctionReturnReg()->isInt = m_builder.CreateAnd(arg1.second->isInt, arg2.second->isInt);
+    ins->getFunctionReturnReg()->intValue = m_builder.CreateAdd(int1, int2);
 
     return ins->getNext();
 }
@@ -129,17 +130,18 @@ LLVMInstruction *Math::buildAdd(LLVMInstruction *ins)
 LLVMInstruction *Math::buildSub(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0];
-    const auto &arg2 = ins->args[1];
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0];
+    const auto &arg2 = args[1];
 
     llvm::Value *double1 = m_utils.removeNaN(m_utils.castValue(arg1.second, arg1.first, LLVMBuildUtils::NumberType::Double));
     llvm::Value *double2 = m_utils.removeNaN(m_utils.castValue(arg2.second, arg2.first, LLVMBuildUtils::NumberType::Double));
-    ins->functionReturnReg->value = m_builder.CreateFSub(double1, double2);
+    ins->getFunctionReturnReg()->value = m_builder.CreateFSub(double1, double2);
 
     llvm::Value *int1 = m_utils.castValue(arg1.second, arg1.first, LLVMBuildUtils::NumberType::Int);
     llvm::Value *int2 = m_utils.castValue(arg2.second, arg2.first, LLVMBuildUtils::NumberType::Int);
-    ins->functionReturnReg->isInt = m_builder.CreateAnd(arg1.second->isInt, arg2.second->isInt);
-    ins->functionReturnReg->intValue = m_builder.CreateSub(int1, int2);
+    ins->getFunctionReturnReg()->isInt = m_builder.CreateAnd(arg1.second->isInt, arg2.second->isInt);
+    ins->getFunctionReturnReg()->intValue = m_builder.CreateSub(int1, int2);
 
     return ins->getNext();
 }
@@ -147,17 +149,18 @@ LLVMInstruction *Math::buildSub(LLVMInstruction *ins)
 LLVMInstruction *Math::buildMul(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0];
-    const auto &arg2 = ins->args[1];
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0];
+    const auto &arg2 = args[1];
 
     llvm::Value *double1 = m_utils.removeNaN(m_utils.castValue(arg1.second, arg1.first, LLVMBuildUtils::NumberType::Double));
     llvm::Value *double2 = m_utils.removeNaN(m_utils.castValue(arg2.second, arg2.first, LLVMBuildUtils::NumberType::Double));
-    ins->functionReturnReg->value = m_builder.CreateFMul(double1, double2);
+    ins->getFunctionReturnReg()->value = m_builder.CreateFMul(double1, double2);
 
     llvm::Value *int1 = m_utils.castValue(arg1.second, arg1.first, LLVMBuildUtils::NumberType::Int);
     llvm::Value *int2 = m_utils.castValue(arg2.second, arg2.first, LLVMBuildUtils::NumberType::Int);
-    ins->functionReturnReg->isInt = m_builder.CreateAnd(arg1.second->isInt, arg2.second->isInt);
-    ins->functionReturnReg->intValue = m_builder.CreateMul(int1, int2);
+    ins->getFunctionReturnReg()->isInt = m_builder.CreateAnd(arg1.second->isInt, arg2.second->isInt);
+    ins->getFunctionReturnReg()->intValue = m_builder.CreateMul(int1, int2);
 
     return ins->getNext();
 }
@@ -165,11 +168,12 @@ LLVMInstruction *Math::buildMul(LLVMInstruction *ins)
 LLVMInstruction *Math::buildDiv(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0];
-    const auto &arg2 = ins->args[1];
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0];
+    const auto &arg2 = args[1];
     llvm::Value *num1 = m_utils.removeNaN(m_utils.castValue(arg1.second, arg1.first));
     llvm::Value *num2 = m_utils.removeNaN(m_utils.castValue(arg2.second, arg2.first));
-    ins->functionReturnReg->value = m_builder.CreateFDiv(num1, num2);
+    ins->getFunctionReturnReg()->value = m_builder.CreateFDiv(num1, num2);
 
     return ins->getNext();
 }
@@ -177,15 +181,16 @@ LLVMInstruction *Math::buildDiv(LLVMInstruction *ins)
 LLVMInstruction *Math::buildRandom(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0];
-    const auto &arg2 = ins->args[1];
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0];
+    const auto &arg2 = args[1];
     LLVMRegister *reg1 = arg1.second;
     LLVMRegister *reg2 = arg2.second;
 
     if (reg1->type() == Compiler::StaticType::Bool && reg2->type() == Compiler::StaticType::Bool) {
         llvm::Value *bool1 = m_utils.castValue(arg1.second, Compiler::StaticType::Bool);
         llvm::Value *bool2 = m_utils.castValue(arg2.second, Compiler::StaticType::Bool);
-        ins->functionReturnReg->value = m_builder.CreateCall(m_utils.functions().resolve_llvm_random_bool(), { m_utils.executionContextPtr(), bool1, bool2 });
+        ins->getFunctionReturnReg()->value = m_builder.CreateCall(m_utils.functions().resolve_llvm_random_bool(), { m_utils.executionContextPtr(), bool1, bool2 });
     } else {
         llvm::Constant *inf = llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), false);
         llvm::Value *num1 = m_utils.removeNaN(m_utils.castValue(arg1.second, Compiler::StaticType::Number));
@@ -196,12 +201,13 @@ LLVMInstruction *Math::buildRandom(LLVMInstruction *ins)
 
         // NOTE: The random function will be called even in edge cases where it isn't needed, but they're rare, so it shouldn't be an issue
         if (reg1->type() == Compiler::StaticType::Number && reg2->type() == Compiler::StaticType::Number)
-            ins->functionReturnReg->value =
+            ins->getFunctionReturnReg()->value =
                 m_builder.CreateSelect(isInfOrNaN, sum, m_builder.CreateCall(m_utils.functions().resolve_llvm_random_double(), { m_utils.executionContextPtr(), num1, num2 }));
         else {
             llvm::Value *value1 = m_utils.createValue(reg1);
             llvm::Value *value2 = m_utils.createValue(reg2);
-            ins->functionReturnReg->value = m_builder.CreateSelect(isInfOrNaN, sum, m_builder.CreateCall(m_utils.functions().resolve_llvm_random(), { m_utils.executionContextPtr(), value1, value2 }));
+            ins->getFunctionReturnReg()->value =
+                m_builder.CreateSelect(isInfOrNaN, sum, m_builder.CreateCall(m_utils.functions().resolve_llvm_random(), { m_utils.executionContextPtr(), value1, value2 }));
         }
     }
 
@@ -211,14 +217,15 @@ LLVMInstruction *Math::buildRandom(LLVMInstruction *ins)
 LLVMInstruction *Math::buildRandomInt(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0];
-    const auto &arg2 = ins->args[1];
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0];
+    const auto &arg2 = args[1];
     llvm::Value *from = m_builder.CreateFPToSI(m_utils.castValue(arg1.second, arg1.first), m_builder.getInt64Ty());
     llvm::Value *to = m_builder.CreateFPToSI(m_utils.castValue(arg2.second, arg2.first), m_builder.getInt64Ty());
     llvm::Value *intValue = m_builder.CreateCall(m_utils.functions().resolve_llvm_random_int64(), { m_utils.executionContextPtr(), from, to });
-    ins->functionReturnReg->value = m_builder.CreateSIToFP(intValue, m_builder.getDoubleTy());
-    ins->functionReturnReg->intValue = intValue;
-    ins->functionReturnReg->isInt = m_builder.getInt1(true);
+    ins->getFunctionReturnReg()->value = m_builder.CreateSIToFP(intValue, m_builder.getDoubleTy());
+    ins->getFunctionReturnReg()->intValue = intValue;
+    ins->getFunctionReturnReg()->isInt = m_builder.getInt1(true);
 
     return ins->getNext();
 }
@@ -226,8 +233,9 @@ LLVMInstruction *Math::buildRandomInt(LLVMInstruction *ins)
 LLVMInstruction *Math::buildMod(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0];
-    const auto &arg2 = ins->args[1];
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0];
+    const auto &arg2 = args[1];
 
     // double: rem(a, b) / b < 0.0 ? rem(a, b) + b : rem(a, b)
     llvm::Constant *doubleZero = llvm::ConstantFP::get(m_utils.llvmCtx(), llvm::APFloat(0.0));
@@ -235,7 +243,7 @@ LLVMInstruction *Math::buildMod(LLVMInstruction *ins)
     llvm::Value *double2 = m_utils.removeNaN(m_utils.castValue(arg2.second, arg2.first));
     llvm::Value *doubleRem = m_builder.CreateFRem(double1, double2);                                         // rem(a, b)
     llvm::Value *doubleCond = m_builder.CreateFCmpOLT(m_builder.CreateFDiv(doubleRem, double2), doubleZero); // rem(a, b) / b < 0.0
-    ins->functionReturnReg->value = m_builder.CreateSelect(doubleCond, m_builder.CreateFAdd(doubleRem, double2), doubleRem);
+    ins->getFunctionReturnReg()->value = m_builder.CreateSelect(doubleCond, m_builder.CreateFAdd(doubleRem, double2), doubleRem);
 
     // int: b == 0 ? 0 (double fallback) : ((rem(a, b) < 0) != (b < 0) ? rem(a, b) + b : rem(a, b))
     llvm::Constant *intZero = llvm::ConstantInt::get(m_builder.getInt64Ty(), 0, true);
@@ -269,8 +277,8 @@ LLVMInstruction *Math::buildMod(LLVMInstruction *ins)
     isIntPhi->addIncoming(noInt, nanBlock);
     isIntPhi->addIncoming(isInt, intBlock);
 
-    ins->functionReturnReg->intValue = resultPhi;
-    ins->functionReturnReg->isInt = isIntPhi;
+    ins->getFunctionReturnReg()->intValue = resultPhi;
+    ins->getFunctionReturnReg()->isInt = isIntPhi;
 
     return ins->getNext();
 }
@@ -281,7 +289,8 @@ LLVMInstruction *Math::buildRound(LLVMInstruction *ins)
     llvm::Module *module = m_utils.module();
 
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
 
     // double: x >= 0.0 ? round(x) : (x >= -0.5 ? -0.0 : floor(x + 0.5))
     llvm::Constant *zero = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
@@ -293,7 +302,7 @@ LLVMInstruction *Math::buildRound(LLVMInstruction *ins)
     llvm::Value *roundNum = m_builder.CreateCall(roundFunc, doubleValue);                                                                                // round(num)
     llvm::Value *negativeCond = m_builder.CreateFCmpOGE(doubleValue, llvm::ConstantFP::get(llvmCtx, llvm::APFloat(-0.5)));                               // num >= -0.5
     llvm::Value *negativeRound = m_builder.CreateCall(floorFunc, m_builder.CreateFAdd(doubleValue, llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.5)))); // floor(x + 0.5)
-    ins->functionReturnReg->value = m_builder.CreateSelect(notNegative, roundNum, m_builder.CreateSelect(negativeCond, negativeZero, negativeRound));
+    ins->getFunctionReturnReg()->value = m_builder.CreateSelect(notNegative, roundNum, m_builder.CreateSelect(negativeCond, negativeZero, negativeRound));
 
     // int: doubleX == inf || doubleX == -inf ? doubleX : intX
     llvm::Constant *posInf = llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), false);
@@ -301,9 +310,9 @@ LLVMInstruction *Math::buildRound(LLVMInstruction *ins)
     llvm::Value *isInt = arg.second->isInt;
     llvm::Value *intValue = arg.second->intValue;
     llvm::Value *isNotInf = m_builder.CreateAnd(m_builder.CreateFCmpONE(doubleValue, posInf), m_builder.CreateFCmpONE(doubleValue, negInf));
-    llvm::Value *cast = m_builder.CreateFPToSI(ins->functionReturnReg->value, m_builder.getInt64Ty());
-    ins->functionReturnReg->isInt = isNotInf;
-    ins->functionReturnReg->intValue = m_builder.CreateSelect(isInt, intValue, cast);
+    llvm::Value *cast = m_builder.CreateFPToSI(ins->getFunctionReturnReg()->value, m_builder.getInt64Ty());
+    ins->getFunctionReturnReg()->isInt = isNotInf;
+    ins->getFunctionReturnReg()->intValue = m_builder.CreateSelect(isInt, intValue, cast);
 
     return ins->getNext();
 }
@@ -311,16 +320,17 @@ LLVMInstruction *Math::buildRound(LLVMInstruction *ins)
 LLVMInstruction *Math::buildAbs(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
 
     llvm::Function *fabsFunc = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::fabs, m_builder.getDoubleTy());
     llvm::Value *doubleValue = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
-    ins->functionReturnReg->value = m_builder.CreateCall(fabsFunc, doubleValue);
+    ins->getFunctionReturnReg()->value = m_builder.CreateCall(fabsFunc, doubleValue);
 
     llvm::Function *absFunc = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::abs, m_builder.getInt64Ty());
     llvm::Value *intValue = arg.second->intValue;
-    ins->functionReturnReg->isInt = arg.second->isInt;
-    ins->functionReturnReg->intValue = m_builder.CreateCall(absFunc, { intValue, m_builder.getInt1(false) });
+    ins->getFunctionReturnReg()->isInt = arg.second->isInt;
+    ins->getFunctionReturnReg()->intValue = m_builder.CreateCall(absFunc, { intValue, m_builder.getInt1(false) });
 
     return ins->getNext();
 }
@@ -328,12 +338,13 @@ LLVMInstruction *Math::buildAbs(LLVMInstruction *ins)
 LLVMInstruction *Math::buildFloor(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
 
     // double: floor(doubleX)
     llvm::Function *floorFunc = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::floor, m_builder.getDoubleTy());
     llvm::Value *doubleValue = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
-    ins->functionReturnReg->value = m_builder.CreateCall(floorFunc, doubleValue);
+    ins->getFunctionReturnReg()->value = m_builder.CreateCall(floorFunc, doubleValue);
 
     // int: doubleX == inf || doubleX == -inf ? doubleX : intX
     llvm::Constant *posInf = llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), false);
@@ -341,9 +352,9 @@ LLVMInstruction *Math::buildFloor(LLVMInstruction *ins)
     llvm::Value *isInt = arg.second->isInt;
     llvm::Value *intValue = arg.second->intValue;
     llvm::Value *isNotInf = m_builder.CreateAnd(m_builder.CreateFCmpONE(doubleValue, posInf), m_builder.CreateFCmpONE(doubleValue, negInf));
-    llvm::Value *cast = m_builder.CreateFPToSI(ins->functionReturnReg->value, m_builder.getInt64Ty());
-    ins->functionReturnReg->isInt = isNotInf;
-    ins->functionReturnReg->intValue = m_builder.CreateSelect(isInt, intValue, cast);
+    llvm::Value *cast = m_builder.CreateFPToSI(ins->getFunctionReturnReg()->value, m_builder.getInt64Ty());
+    ins->getFunctionReturnReg()->isInt = isNotInf;
+    ins->getFunctionReturnReg()->intValue = m_builder.CreateSelect(isInt, intValue, cast);
 
     return ins->getNext();
 }
@@ -351,12 +362,13 @@ LLVMInstruction *Math::buildFloor(LLVMInstruction *ins)
 LLVMInstruction *Math::buildCeil(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
 
     // double: ceil(doubleX)
     llvm::Function *ceilFunc = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::ceil, m_builder.getDoubleTy());
     llvm::Value *doubleValue = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
-    ins->functionReturnReg->value = m_builder.CreateCall(ceilFunc, doubleValue);
+    ins->getFunctionReturnReg()->value = m_builder.CreateCall(ceilFunc, doubleValue);
 
     // int: doubleX == inf || doubleX == -inf ? doubleX : intX
     llvm::Constant *posInf = llvm::ConstantFP::getInfinity(m_builder.getDoubleTy(), false);
@@ -364,9 +376,9 @@ LLVMInstruction *Math::buildCeil(LLVMInstruction *ins)
     llvm::Value *isInt = arg.second->isInt;
     llvm::Value *intValue = arg.second->intValue;
     llvm::Value *isNotInf = m_builder.CreateAnd(m_builder.CreateFCmpONE(doubleValue, posInf), m_builder.CreateFCmpONE(doubleValue, negInf));
-    llvm::Value *cast = m_builder.CreateFPToSI(ins->functionReturnReg->value, m_builder.getInt64Ty());
-    ins->functionReturnReg->isInt = isNotInf;
-    ins->functionReturnReg->intValue = m_builder.CreateSelect(isInt, intValue, cast);
+    llvm::Value *cast = m_builder.CreateFPToSI(ins->getFunctionReturnReg()->value, m_builder.getInt64Ty());
+    ins->getFunctionReturnReg()->isInt = isNotInf;
+    ins->getFunctionReturnReg()->intValue = m_builder.CreateSelect(isInt, intValue, cast);
 
     return ins->getNext();
 }
@@ -374,13 +386,15 @@ LLVMInstruction *Math::buildCeil(LLVMInstruction *ins)
 LLVMInstruction *Math::buildSqrt(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
+
     // sqrt(x) + 0.0
     // This avoids negative zero
     llvm::Constant *zero = llvm::ConstantFP::get(m_utils.llvmCtx(), llvm::APFloat(0.0));
     llvm::Function *sqrtFunc = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::sqrt, m_builder.getDoubleTy());
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
-    ins->functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateCall(sqrtFunc, num), zero);
+    ins->getFunctionReturnReg()->value = m_builder.CreateFAdd(m_builder.CreateCall(sqrtFunc, num), zero);
 
     return ins->getNext();
 }
@@ -391,7 +405,9 @@ LLVMInstruction *Math::buildSin(LLVMInstruction *ins)
     llvm::Module *module = m_utils.module();
 
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
+
     // round(sin(x * pi / 180.0) * 1e10) / 1e10 + 0.0
     // +0.0 to avoid -0.0
     llvm::Constant *zero = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
@@ -403,7 +419,7 @@ LLVMInstruction *Math::buildSin(LLVMInstruction *ins)
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
     llvm::Value *sinResult = m_builder.CreateCall(sinFunc, m_builder.CreateFDiv(m_builder.CreateFMul(num, pi), piDeg)); // sin(x * pi / 180)
     llvm::Value *rounded = m_builder.CreateCall(roundFunc, m_builder.CreateFMul(sinResult, factor));                    // round(sin(x * 180) * 1e10)
-    ins->functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateFDiv(rounded, factor), zero);
+    ins->getFunctionReturnReg()->value = m_builder.CreateFAdd(m_builder.CreateFDiv(rounded, factor), zero);
 
     return ins->getNext();
 }
@@ -414,7 +430,9 @@ LLVMInstruction *Math::buildCos(LLVMInstruction *ins)
     llvm::Module *module = m_utils.module();
 
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
+
     // round(cos(x * pi / 180.0) * 1e10) / 1e10
     llvm::Constant *pi = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(std::acos(-1.0)));
     llvm::Constant *piDeg = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(180.0));
@@ -424,7 +442,7 @@ LLVMInstruction *Math::buildCos(LLVMInstruction *ins)
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
     llvm::Value *cosResult = m_builder.CreateCall(cosFunc, m_builder.CreateFDiv(m_builder.CreateFMul(num, pi), piDeg)); // cos(x * pi / 180)
     llvm::Value *rounded = m_builder.CreateCall(roundFunc, m_builder.CreateFMul(cosResult, factor));                    // round(cos(x * 180) * 1e10)
-    ins->functionReturnReg->value = m_builder.CreateFDiv(rounded, factor);
+    ins->getFunctionReturnReg()->value = m_builder.CreateFDiv(rounded, factor);
 
     return ins->getNext();
 }
@@ -435,7 +453,9 @@ LLVMInstruction *Math::buildTan(LLVMInstruction *ins)
     llvm::Module *module = m_utils.module();
 
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
+
     // ((mod = rem(x, 360.0)) == -270.0 || mod == 90.0) ? inf : ((mod == -90.0 || mod == 270.0) ? -inf : round(tan(x * pi / 180.0) * 1e10) / 1e10 + 0.0)
     // +0.0 to avoid -0.0
     llvm::Constant *zero = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
@@ -461,7 +481,7 @@ LLVMInstruction *Math::buildTan(LLVMInstruction *ins)
     llvm::Value *rounded = m_builder.CreateCall(roundFunc, m_builder.CreateFMul(tanResult, factor));                    // round(tan(x * 180) * 1e10)
     llvm::Value *result = m_builder.CreateFAdd(m_builder.CreateFDiv(rounded, factor), zero);                            // round(tan(x * pi / 180.0) * 1e10) / 1e10 + 0.0
     llvm::Value *inner = m_builder.CreateSelect(m_builder.CreateOr(isUndefined3, isUndefined4), negInf, result);
-    ins->functionReturnReg->value = m_builder.CreateSelect(m_builder.CreateOr(isUndefined1, isUndefined2), posInf, inner);
+    ins->getFunctionReturnReg()->value = m_builder.CreateSelect(m_builder.CreateOr(isUndefined1, isUndefined2), posInf, inner);
 
     return ins->getNext();
 }
@@ -471,7 +491,9 @@ LLVMInstruction *Math::buildAsin(LLVMInstruction *ins)
     llvm::LLVMContext &llvmCtx = m_utils.llvmCtx();
 
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
+
     // asin(x) * 180.0 / pi + 0.0
     // +0.0 to avoid -0.0
     llvm::Constant *zero = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(0.0));
@@ -479,7 +501,7 @@ LLVMInstruction *Math::buildAsin(LLVMInstruction *ins)
     llvm::Constant *piDeg = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(180.0));
     llvm::Function *asinFunc = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::asin, m_builder.getDoubleTy());
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
-    ins->functionReturnReg->value = m_builder.CreateFAdd(m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(asinFunc, num), piDeg), pi), zero);
+    ins->getFunctionReturnReg()->value = m_builder.CreateFAdd(m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(asinFunc, num), piDeg), pi), zero);
 
     return ins->getNext();
 }
@@ -489,13 +511,15 @@ LLVMInstruction *Math::buildAcos(LLVMInstruction *ins)
     llvm::LLVMContext &llvmCtx = m_utils.llvmCtx();
 
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
+
     // acos(x) * 180.0 / pi
     llvm::Constant *pi = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(std::acos(-1.0)));
     llvm::Constant *piDeg = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(180.0));
     llvm::Function *acosFunc = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::acos, m_builder.getDoubleTy());
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
-    ins->functionReturnReg->value = m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(acosFunc, num), piDeg), pi);
+    ins->getFunctionReturnReg()->value = m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(acosFunc, num), piDeg), pi);
 
     return ins->getNext();
 }
@@ -505,13 +529,15 @@ LLVMInstruction *Math::buildAtan(LLVMInstruction *ins)
     llvm::LLVMContext &llvmCtx = m_utils.llvmCtx();
 
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
+
     // atan(x) * 180.0 / pi
     llvm::Constant *pi = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(std::acos(-1.0)));
     llvm::Constant *piDeg = llvm::ConstantFP::get(llvmCtx, llvm::APFloat(180.0));
     llvm::Function *atanFunc = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::atan, m_builder.getDoubleTy());
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
-    ins->functionReturnReg->value = m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(atanFunc, num), piDeg), pi);
+    ins->getFunctionReturnReg()->value = m_builder.CreateFDiv(m_builder.CreateFMul(m_builder.CreateCall(atanFunc, num), piDeg), pi);
 
     return ins->getNext();
 }
@@ -519,11 +545,13 @@ LLVMInstruction *Math::buildAtan(LLVMInstruction *ins)
 LLVMInstruction *Math::buildLn(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
+
     // log(x)
     llvm::Function *logFunc = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::log, m_builder.getDoubleTy());
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
-    ins->functionReturnReg->value = m_builder.CreateCall(logFunc, num);
+    ins->getFunctionReturnReg()->value = m_builder.CreateCall(logFunc, num);
 
     return ins->getNext();
 }
@@ -531,11 +559,13 @@ LLVMInstruction *Math::buildLn(LLVMInstruction *ins)
 LLVMInstruction *Math::buildLog10(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
+
     // log10(x)
     llvm::Function *log10Func = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::log10, m_builder.getDoubleTy());
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
-    ins->functionReturnReg->value = m_builder.CreateCall(log10Func, num);
+    ins->getFunctionReturnReg()->value = m_builder.CreateCall(log10Func, num);
 
     return ins->getNext();
 }
@@ -543,11 +573,13 @@ LLVMInstruction *Math::buildLog10(LLVMInstruction *ins)
 LLVMInstruction *Math::buildExp(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
+
     // exp(x)
     llvm::Function *expFunc = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::exp, m_builder.getDoubleTy());
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
-    ins->functionReturnReg->value = m_builder.CreateCall(expFunc, num);
+    ins->getFunctionReturnReg()->value = m_builder.CreateCall(expFunc, num);
 
     return ins->getNext();
 }
@@ -555,11 +587,13 @@ LLVMInstruction *Math::buildExp(LLVMInstruction *ins)
 LLVMInstruction *Math::buildExp10(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 1);
-    const auto &arg = ins->args[0];
+    const auto &args = ins->getArgs();
+    const auto &arg = args[0];
+
     // exp10(x)
     llvm::Function *expFunc = llvm::Intrinsic::getDeclaration(m_utils.module(), llvm::Intrinsic::exp10, m_builder.getDoubleTy());
     llvm::Value *num = m_utils.removeNaN(m_utils.castValue(arg.second, arg.first));
-    ins->functionReturnReg->value = m_builder.CreateCall(expFunc, num);
+    ins->getFunctionReturnReg()->value = m_builder.CreateCall(expFunc, num);
 
     return ins->getNext();
 }

@@ -43,9 +43,10 @@ ProcessResult Comparison::process(LLVMInstruction *ins)
 LLVMInstruction *Comparison::buildCmpEQ(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0].second;
-    const auto &arg2 = ins->args[1].second;
-    ins->functionReturnReg->value = m_utils.createComparison(arg1, arg2, LLVMBuildUtils::Comparison::EQ);
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0].second;
+    const auto &arg2 = args[1].second;
+    ins->getFunctionReturnReg()->value = m_utils.createComparison(arg1, arg2, LLVMBuildUtils::Comparison::EQ);
 
     return ins->getNext();
 }
@@ -53,9 +54,10 @@ LLVMInstruction *Comparison::buildCmpEQ(LLVMInstruction *ins)
 LLVMInstruction *Comparison::buildCmpGT(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0].second;
-    const auto &arg2 = ins->args[1].second;
-    ins->functionReturnReg->value = m_utils.createComparison(arg1, arg2, LLVMBuildUtils::Comparison::GT);
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0].second;
+    const auto &arg2 = args[1].second;
+    ins->getFunctionReturnReg()->value = m_utils.createComparison(arg1, arg2, LLVMBuildUtils::Comparison::GT);
 
     return ins->getNext();
 }
@@ -63,9 +65,10 @@ LLVMInstruction *Comparison::buildCmpGT(LLVMInstruction *ins)
 LLVMInstruction *Comparison::buildCmpLT(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0].second;
-    const auto &arg2 = ins->args[1].second;
-    ins->functionReturnReg->value = m_utils.createComparison(arg1, arg2, LLVMBuildUtils::Comparison::LT);
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0].second;
+    const auto &arg2 = args[1].second;
+    ins->getFunctionReturnReg()->value = m_utils.createComparison(arg1, arg2, LLVMBuildUtils::Comparison::LT);
 
     return ins->getNext();
 }
@@ -73,9 +76,10 @@ LLVMInstruction *Comparison::buildCmpLT(LLVMInstruction *ins)
 LLVMInstruction *Comparison::buildStrCmpEQCS(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0].second;
-    const auto &arg2 = ins->args[1].second;
-    ins->functionReturnReg->value = m_utils.createStringComparison(arg1, arg2, true);
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0].second;
+    const auto &arg2 = args[1].second;
+    ins->getFunctionReturnReg()->value = m_utils.createStringComparison(arg1, arg2, true);
 
     return ins->getNext();
 }
@@ -83,9 +87,10 @@ LLVMInstruction *Comparison::buildStrCmpEQCS(LLVMInstruction *ins)
 LLVMInstruction *Comparison::buildStrCmpEQCI(LLVMInstruction *ins)
 {
     assert(ins->args.size() == 2);
-    const auto &arg1 = ins->args[0].second;
-    const auto &arg2 = ins->args[1].second;
-    ins->functionReturnReg->value = m_utils.createStringComparison(arg1, arg2, false);
+    const auto &args = ins->getArgs();
+    const auto &arg1 = args[0].second;
+    const auto &arg2 = args[1].second;
+    ins->getFunctionReturnReg()->value = m_utils.createStringComparison(arg1, arg2, false);
 
     return ins->getNext();
 }

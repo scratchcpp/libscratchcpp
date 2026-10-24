@@ -98,6 +98,9 @@ struct InstructionBase
         size_t procedureArgIndex = 0;
         bool loopCondition = false; // whether the instruction is part of a loop condition
 
+        std::vector<std::pair<Compiler::StaticType, CompilerValue *>> args; // target type, register
+        CompilerValue *functionReturnReg = nullptr;
+
         // Linked list
         InstructionBase *previous = nullptr;
         InstructionBase *next = nullptr;

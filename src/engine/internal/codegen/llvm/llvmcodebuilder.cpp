@@ -114,7 +114,7 @@ CompilerValue *LLVMCodeBuilder::addFunctionCall(const std::string &functionName,
         if (m_utils.isSingleType(returnType))
             reg->isRawValue = true;
 
-        ins->functionReturnReg = reg.get();
+        ins->setFunctionReturnReg(reg.get());
         return addReg(reg, ins);
     }
 
@@ -167,7 +167,7 @@ CompilerValue *LLVMCodeBuilder::addLocalVariableValue(CompilerLocalVariable *var
 
     auto ret = std::make_shared<LLVMRegister>(variable->type());
     ret->isRawValue = false;
-    ins->functionReturnReg = ret.get();
+    ins->setFunctionReturnReg(ret.get());
 
     m_instructions.addInstruction(ins);
     return addReg(ret, ins);
@@ -181,7 +181,7 @@ CompilerValue *LLVMCodeBuilder::addVariableValue(Variable *variable)
 
     auto ret = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     ret->isRawValue = false;
-    ins->functionReturnReg = ret.get();
+    ins->setFunctionReturnReg(ret.get());
 
     m_instructions.addInstruction(ins);
     return addReg(ret, ins);
@@ -206,7 +206,7 @@ CompilerValue *LLVMCodeBuilder::addListItem(List *list, CompilerValue *index)
 
     auto ret = std::make_shared<LLVMRegister>(Compiler::StaticType::Unknown);
     ret->isRawValue = false;
-    ins->functionReturnReg = ret.get();
+    ins->setFunctionReturnReg(ret.get());
 
     m_instructions.addInstruction(ins);
     return addReg(ret, ins);
@@ -259,7 +259,7 @@ CompilerValue *LLVMCodeBuilder::addProcedureArgument(const std::string &name)
     auto ins = std::make_shared<LLVMInstruction>(LLVMInstruction::Type::ProcedureArg, m_loopCondition);
     auto ret = std::make_shared<LLVMRegister>(type);
     ret->isRawValue = (type != Compiler::StaticType::Unknown);
-    ins->functionReturnReg = ret.get();
+    ins->setFunctionReturnReg(ret.get());
     ins->procedureArgIndex = index;
 
     m_instructions.addInstruction(ins);

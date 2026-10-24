@@ -39,8 +39,8 @@ LLVMInstruction *InstructionBuilder::process(LLVMInstruction *ins)
 
         if (result.match) {
 #ifndef LLVM_INTEGER_SUPPORT
-            if (ins->functionReturnReg)
-                ins->functionReturnReg->isInt = m_utils.builder().getInt1(false);
+            if (ins->getFunctionReturnReg())
+                ins->getFunctionReturnReg()->isInt = m_utils.builder().getInt1(false);
 #endif
 
             return result.next;
