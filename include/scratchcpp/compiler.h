@@ -53,7 +53,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         using Args = std::vector<CompilerValue *>;
 
         Compiler(CompilerContext *ctx);
-        Compiler(IEngine *engine, Target *target);
+        Compiler(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants = {});
         Compiler(const Compiler &) = delete;
 
         IEngine *engine() const;

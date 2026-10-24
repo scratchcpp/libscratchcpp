@@ -20,8 +20,8 @@ Compiler::Compiler(CompilerContext *ctx) :
 }
 
 /*! Constructs Compiler using a new context for the given target. */
-Compiler::Compiler(IEngine *engine, Target *target) :
-    impl(spimpl::make_unique_impl<CompilerPrivate>(engine, target))
+Compiler::Compiler(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants) :
+    impl(spimpl::make_unique_impl<CompilerPrivate>(engine, target, unsafeConstants))
 {
 }
 

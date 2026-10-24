@@ -17,8 +17,8 @@ CompilerPrivate::CompilerPrivate(CompilerContext *ctx) :
     initBuilderFactory();
 }
 
-CompilerPrivate::CompilerPrivate(IEngine *engine, Target *target) :
-    ctxPtr(Compiler::createContext(engine, target, {})), // NOTE: This constructor is only used in tests, so we can leave unsafe constants empty
+CompilerPrivate::CompilerPrivate(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants) :
+    ctxPtr(Compiler::createContext(engine, target, unsafeConstants)),
     ctx(ctxPtr.get())
 {
     initBuilderFactory();
