@@ -85,6 +85,7 @@ void Engine::clear()
     m_broadcastMap.clear();
     m_broadcastSenders.clear();
     m_sortedDrawables.clear();
+    m_unsafeConstants.clear();
     m_threads.clear();
     m_threadsToStop.clear();
     m_scripts.clear();
@@ -245,10 +246,34 @@ void Engine::compile()
     // Resolve entities by ID
     resolveIds();
 
+    // Find unsafe constants (string numerals) in costume and sound names
+    m_unsafeConstants.clear();
+
+    auto checkConstant = [this](const std::string &str) {
+        Value stringValue(str);
+        Value numberValue(stringValue.toDouble());
+
+        if (stringValue.isValidNumber() && str == numberValue.toString())
+            m_unsafeConstants.insert(str);
+    };
+
+    bool found = false;
+
+    for (const auto &target : m_targets) {
+        const auto &costumes = target->costumes();
+        const auto &sounds = target->sounds();
+
+        for (const auto &costume : costumes)
+            checkConstant(costume->name());
+
+        for (const auto &sound : sounds)
+            checkConstant(sound->name());
+    }
+
     // Compile scripts
     for (auto target : m_targets) {
         std::cout << "Compiling scripts in target " << target->name() << "..." << std::endl;
-        auto ctx = Compiler::createContext(this, target.get());
+        auto ctx = Compiler::createContext(this, target.get(), m_unsafeConstants);
         m_compilerContexts[target.get()] = ctx;
         Compiler compiler(ctx.get());
         const auto &blocks = target->blocks();
@@ -1789,7 +1814,7 @@ void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
     auto ext = blockExtension(block->opcode());
 
     if (ext) {
-        auto ctx = Compiler::createContext(this, target);
+        auto ctx = Compiler::createContext(this, target, m_unsafeConstants);
         Compiler compiler(ctx.get());
         MonitorNameFunc nameFunc = resolveMonitorNameFunc(ext, block->opcode());
 

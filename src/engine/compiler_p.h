@@ -29,7 +29,7 @@ class LIBSCRATCHCPP_TEST_EXPORT CompilerPrivate
         };
 
         CompilerPrivate(CompilerContext *ctx);
-        CompilerPrivate(IEngine *engine, Target *target);
+        CompilerPrivate(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants);
 
         static void initBuilderFactory();
 

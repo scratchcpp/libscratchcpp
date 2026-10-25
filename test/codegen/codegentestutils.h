@@ -5,7 +5,7 @@
 #include <targetmock.h>
 #include <randomgeneratormock.h>
 
-#include <engine/internal/icodebuilder.h>
+#include <engine/internal/codegen/icodebuilder.h>
 
 #define ASSERT_NUM_OP1(utils, type, rawArg, v)                                                                                                                                                         \
     Value result = utils.getOpResult(type, rawArg, v);                                                                                                                                                 \

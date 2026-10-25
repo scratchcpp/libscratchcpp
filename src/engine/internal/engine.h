@@ -241,7 +241,8 @@ class LIBSCRATCHCPP_TEST_EXPORT Engine : public IEngine
         std::unordered_map<Broadcast *, Thread *> m_broadcastSenders; // used for resolving broadcast promises
         std::vector<std::shared_ptr<Monitor>> m_monitors;
         std::vector<std::string> m_extensions;
-        std::vector<Drawable *> m_sortedDrawables; // sorted by layer (reverse order of execution)
+        std::vector<Drawable *> m_sortedDrawables;         // sorted by layer (reverse order of execution)
+        std::unordered_set<std::string> m_unsafeConstants; // string numerals which shouldn't be optimized
         std::vector<std::shared_ptr<Thread>> m_threads;
         std::vector<std::shared_ptr<Thread>> m_threadsToStop;
         std::shared_ptr<Thread> m_activeThread;

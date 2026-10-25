@@ -5,10 +5,10 @@
 #include <scratchcpp/promise.h>
 #include <scratchcpp/thread.h>
 #include <scratchcpp/script.h>
-#include <engine/internal/llvm/llvmexecutablecode.h>
-#include <engine/internal/llvm/llvmcompilercontext.h>
-#include <engine/internal/llvm/llvmexecutioncontext.h>
-#include <engine/internal/llvm/llvmtypes.h>
+#include <engine/internal/codegen/llvm/llvmexecutablecode.h>
+#include <engine/internal/codegen/llvm/llvmcompilercontext.h>
+#include <engine/internal/codegen/llvm/llvmexecutioncontext.h>
+#include <engine/internal/codegen/llvm/llvmtypes.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
 #include <enginemock.h>

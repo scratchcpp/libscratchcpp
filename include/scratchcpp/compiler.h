@@ -53,7 +53,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         using Args = std::vector<CompilerValue *>;
 
         Compiler(CompilerContext *ctx);
-        Compiler(IEngine *engine, Target *target);
+        Compiler(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants = {});
         Compiler(const Compiler &) = delete;
 
         IEngine *engine() const;
@@ -164,7 +164,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
 
         const std::unordered_set<std::string> &unsupportedBlocks() const;
 
-        static std::shared_ptr<CompilerContext> createContext(IEngine *engine, Target *target);
+        static std::shared_ptr<CompilerContext> createContext(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants);
 
     private:
         spimpl::unique_impl_ptr<CompilerPrivate> impl;

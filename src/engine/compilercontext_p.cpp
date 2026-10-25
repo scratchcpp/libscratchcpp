@@ -4,8 +4,9 @@
 
 using namespace libscratchcpp;
 
-CompilerContextPrivate::CompilerContextPrivate(IEngine *engine, Target *target) :
+CompilerContextPrivate::CompilerContextPrivate(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants) :
     engine(engine),
-    target(target)
+    target(target),
+    unsafeConstants(unsafeConstants)
 {
 }
