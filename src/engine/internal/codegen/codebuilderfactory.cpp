@@ -6,6 +6,8 @@
 #include "llvm/llvmcodebuilder.h"
 #include "llvm/llvmcompilercontext.h"
 #elif defined(CODEGEN_BACKEND_CPP)
+#include "cpp/cppcodebuilder.h"
+#include "cpp/cppcompilercontext.h"
 #endif
 
 using namespace libscratchcpp;
@@ -23,7 +25,8 @@ std::shared_ptr<ICodeBuilder> CodeBuilderFactory::create(CompilerContext *ctx, B
     assert(dynamic_cast<LLVMCompilerContext *>(ctx));
     return std::make_shared<LLVMCodeBuilder>(static_cast<LLVMCompilerContext *>(ctx), procedurePrototype, codeType);
 #elif defined(CODEGEN_BACKEND_CPP)
-    return nullptr;
+    assert(dynamic_cast<CppCompilerContext *>(ctx));
+    return std::make_shared<CppCodeBuilder>(static_cast<CppCompilerContext *>(ctx), procedurePrototype, codeType);
 #endif
 }
 
@@ -33,6 +36,7 @@ std::shared_ptr<CompilerContext> CodeBuilderFactory::createCtx(IEngine *engine, 
     auto ptr = std::make_shared<LLVMCompilerContext>(engine, target, unsafeConstants);
     return ptr;
 #elif defined(CODEGEN_BACKEND_CPP)
-    return nullptr;
+    auto ptr = std::make_shared<CppCompilerContext>(engine, target, unsafeConstants);
+    return ptr;
 #endif
 }

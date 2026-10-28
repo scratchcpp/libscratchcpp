@@ -1,3 +1,15 @@
 target_sources(scratchcpp
   PRIVATE
+    cppcompilercontext.cpp
+    cppcompilercontext.h
+    cppexecutablecode.cpp
+    cppexecutablecode.h
+    cppexecutioncontext.cpp
+    cppexecutioncontext.h
+    cppinstruction.h
+    cppinstructionlist.h
+    cppvalue.h
+    cppconstant.h
+    cppcodebuilder.cpp
+    cppcodebuilder.h
 )
