@@ -3,6 +3,7 @@
 #include "control.h"
 #include "../llvminstruction.h"
 #include "../llvmbuildutils.h"
+#include "../../typeutils.h"
 
 using namespace libscratchcpp;
 using namespace libscratchcpp::llvmins;
@@ -92,7 +93,7 @@ LLVMInstruction *Control::buildSelect(LLVMInstruction *ins)
     llvm::Value *trueValue;
     llvm::Value *falseValue;
 
-    if (m_utils.isSingleType(type)) {
+    if (TypeUtils::isSingleType(type)) {
         trueValue = m_utils.castValue(arg2.second, type);
         falseValue = m_utils.castValue(arg3.second, type);
     } else {

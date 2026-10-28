@@ -6,6 +6,7 @@
 #include "../llvminstruction.h"
 #include "../llvmbuildutils.h"
 #include "../llvmcompilercontext.h"
+#include "../../typeutils.h"
 
 using namespace libscratchcpp;
 using namespace libscratchcpp::llvmins;
@@ -62,7 +63,7 @@ LLVMInstruction *Procedures::buildCallProcedure(LLVMInstruction *ins)
     const auto &insArgs = ins->getArgs();
 
     for (const auto &arg : insArgs) {
-        if (m_utils.isSingleType(arg.first))
+        if (TypeUtils::isSingleType(arg.first))
             args.push_back(m_utils.castValue(arg.second, arg.first));
         else
             args.push_back(m_utils.createValue(arg.second));

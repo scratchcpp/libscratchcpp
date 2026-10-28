@@ -6,6 +6,7 @@
 #include "../llvmconstantregister.h"
 #include "../llvmcompilercontext.h"
 #include "../../optimizationutils.h"
+#include "../../typeutils.h"
 
 using namespace libscratchcpp;
 using namespace libscratchcpp::llvmins;
@@ -400,7 +401,7 @@ void Lists::createListTypeUpdate(const LLVMListPtr &listPtr, const LLVMRegister 
         llvm::Value *newType;
 
         if (newValue->isRawValue)
-            newType = m_builder.getInt32(static_cast<uint32_t>(m_utils.mapType(newValueType)));
+            newType = m_builder.getInt32(static_cast<uint32_t>(TypeUtils::mapType(newValueType)));
         else {
             llvm::Value *typeField = m_builder.CreateStructGEP(m_utils.compilerCtx()->valueDataType(), newValue->value, 1);
             newType = m_builder.CreateLoad(m_builder.getInt32Ty(), typeField);

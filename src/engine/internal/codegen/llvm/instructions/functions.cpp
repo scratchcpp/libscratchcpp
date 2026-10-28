@@ -3,6 +3,7 @@
 #include "functions.h"
 #include "../llvminstruction.h"
 #include "../llvmbuildutils.h"
+#include "../../typeutils.h"
 
 using namespace libscratchcpp;
 using namespace libscratchcpp::llvmins;
@@ -67,7 +68,7 @@ LLVMInstruction *Functions::buildFunctionCall(LLVMInstruction *ins)
     if (ins->getFunctionReturnReg()) {
         if (ins->getFunctionReturnReg()->type() == Compiler::StaticType::String)
             ins->getFunctionReturnReg()->value = stringRet;
-        else if (m_utils.isSingleType(ins->getFunctionReturnReg()->type()))
+        else if (TypeUtils::isSingleType(ins->getFunctionReturnReg()->type()))
             ins->getFunctionReturnReg()->value = ret;
         else {
             ins->getFunctionReturnReg()->value = m_utils.addAlloca(retType);

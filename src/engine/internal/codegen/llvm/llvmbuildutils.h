@@ -87,10 +87,6 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMBuildUtils
         std::vector<LLVMIfStatement> &ifStatements();
         std::vector<LLVMLoop> &loops();
 
-        static Compiler::StaticType mapType(ValueType type);
-        static ValueType mapType(Compiler::StaticType type);
-        static bool isSingleType(Compiler::StaticType type);
-
         llvm::Value *addAlloca(llvm::Type *type);
         llvm::Value *addStringAlloca();
 

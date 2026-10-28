@@ -13,6 +13,8 @@ target_sources(scratchcpp
     codeanalyzer.h
     optimizationutils.cpp
     optimizationutils.h
+    typeutils.cpp
+    typeutils.h
 )
 
 if (LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "llvm")
