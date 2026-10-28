@@ -4,10 +4,12 @@
 
 #include <scratchcpp/compilercontext.h>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
-class CppCompilerContext : public CompilerContext
+class LIBSCRATCHCPP_TEST_EXPORT CppCompilerContext : public CompilerContext
 {
     public:
         CppCompilerContext(IEngine *engine, Target *target, const std::unordered_set<std::string> &unsafeConstants = {});

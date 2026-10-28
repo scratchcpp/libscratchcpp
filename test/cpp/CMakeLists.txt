@@ -1,6 +1,7 @@
 add_executable(
   cpp_test
   main.cpp
+  cppexecutioncontext_test.cpp
 )
 
 target_link_libraries(

@@ -4,12 +4,14 @@
 
 #include <scratchcpp/executioncontext.h>
 
+#include "test_export.h"
+
 namespace libscratchcpp
 {
 
 class CppCompilerContext;
 
-class CppExecutionContext : public ExecutionContext
+class LIBSCRATCHCPP_TEST_EXPORT CppExecutionContext : public ExecutionContext
 {
     public:
         CppExecutionContext(CppCompilerContext *ctx, Thread *thread);
