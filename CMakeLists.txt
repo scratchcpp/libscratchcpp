@@ -13,6 +13,8 @@ option(LIBSCRATCHCPP_ENABLE_CODE_ANALYZER "Analyze Scratch scripts to enable var
 option(LIBSCRATCHCPP_LLVM_INTEGER_SUPPORT "Use integers when possible to enable various optimizations" ON)
 option(LIBSCRATCHCPP_ENABLE_SANITIZER "Enable sanitizer to detect memory issues" OFF)
 
+set(LIBSCRATCHCPP_CODEGEN_BACKEND "llvm" CACHE STRING "The backend used for code generation")
+
 if (LIBSCRATCHCPP_ENABLE_SANITIZER)
     set(SANITIZER_FLAGS "-fsanitize=undefined -fsanitize=address -fno-omit-frame-pointer")
     set(CMAKE_CFLAGS ${CMAKE_CFLAGS} ${SANITIZER_FLAGS})
@@ -130,20 +132,29 @@ if (LIBSCRATCHCPP_NETWORK_SUPPORT)
 endif()
 
 # LLVM
-include(build/HunterPackages.cmake)
-include(build/LLVM.cmake)
-target_link_libraries(scratchcpp PRIVATE LLVM)
+if (LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "llvm")
+    include(build/HunterPackages.cmake)
+    include(build/LLVM.cmake)
+    target_link_libraries(scratchcpp PRIVATE LLVM)
 
-if(LIBSCRATCHCPP_PRINT_LLVM_IR)
-    target_compile_definitions(scratchcpp PRIVATE PRINT_LLVM_IR)
+    target_compile_definitions(scratchcpp PRIVATE CODEGEN_BACKEND_LLVM)
+
+    if(LIBSCRATCHCPP_PRINT_LLVM_IR)
+        target_compile_definitions(scratchcpp PRIVATE PRINT_LLVM_IR)
+    endif()
+
+    if(LIBSCRATCHCPP_ENABLE_CODE_ANALYZER)
+        target_compile_definitions(scratchcpp PRIVATE ENABLE_CODE_ANALYZER)
+    endif()
+
+    if(LIBSCRATCHCPP_LLVM_INTEGER_SUPPORT)
+        target_compile_definitions(scratchcpp PRIVATE LLVM_INTEGER_SUPPORT)
+    endif()
 endif()
 
-if(LIBSCRATCHCPP_ENABLE_CODE_ANALYZER)
-    target_compile_definitions(scratchcpp PRIVATE ENABLE_CODE_ANALYZER)
-endif()
-
-if(LIBSCRATCHCPP_LLVM_INTEGER_SUPPORT)
-    target_compile_definitions(scratchcpp PRIVATE LLVM_INTEGER_SUPPORT)
+# C++ transpiler
+if (LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "cpp")
+    target_compile_definitions(scratchcpp PRIVATE CODEGEN_BACKEND_CPP)
 endif()
 
 # Macros

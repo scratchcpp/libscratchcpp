@@ -15,4 +15,8 @@ target_sources(scratchcpp
     optimizationutils.h
 )
 
-add_subdirectory(llvm)
+if (LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "llvm")
+  add_subdirectory(llvm)
+elseif (LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "cpp")
+  add_subdirectory(cpp)
+endif()
