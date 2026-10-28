@@ -18,9 +18,6 @@ add_executable(
   main.cpp
   llvmexecutioncontext_test.cpp
   llvmexecutablecode_test.cpp
-  code_analyzer/variable_type_analysis.cpp
-  code_analyzer/list_type_analysis.cpp
-  code_analyzer/mixed_type_analysis.cpp
 )
 
 target_link_libraries(
