@@ -15,7 +15,7 @@ class CppExecutableCodeMock : public CppExecutableCode
         {
         }
 
-        MOCK_METHOD(void, runScript, (ExecutionContext * ctx, Target *, ValueData **, List **));
+        MOCK_METHOD(CppCoroutine, runScript, (ExecutionContext * ctx, Target *, ValueData **, List **));
         MOCK_METHOD(ValueData, runReporter, (ExecutionContext * ctx, Target *, ValueData **, List **));
         MOCK_METHOD(bool, runPredicate, (ExecutionContext * ctx, Target *, ValueData **, List **));
 };

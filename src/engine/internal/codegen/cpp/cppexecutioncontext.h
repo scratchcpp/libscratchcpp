@@ -5,6 +5,7 @@
 #include <scratchcpp/executioncontext.h>
 
 #include "test_export.h"
+#include "cppcoroutine.h"
 
 namespace libscratchcpp
 {
@@ -19,9 +20,13 @@ class LIBSCRATCHCPP_TEST_EXPORT CppExecutionContext : public ExecutionContext
         bool finished() const;
         void setFinished(bool finished);
 
+        CppCoroutine &coroutine();
+        void setCoroutine(CppCoroutine &&coroutine);
+
     private:
         CppCompilerContext *m_ctx = nullptr;
         bool m_finished = false;
+        CppCoroutine m_coroutine;
 };
 
 } // namespace libscratchcpp

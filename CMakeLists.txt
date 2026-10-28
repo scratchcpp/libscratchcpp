@@ -155,6 +155,7 @@ endif()
 # C++ transpiler
 if (LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "cpp")
     target_compile_definitions(scratchcpp PRIVATE CODEGEN_BACKEND_CPP)
+    add_subdirectory(transpiler)
 endif()
 
 # Macros

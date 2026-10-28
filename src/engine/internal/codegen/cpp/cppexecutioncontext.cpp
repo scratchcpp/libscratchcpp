@@ -19,3 +19,13 @@ void CppExecutionContext::setFinished(bool finished)
 {
     m_finished = finished;
 }
+
+CppCoroutine &CppExecutionContext::coroutine()
+{
+    return m_coroutine;
+}
+
+void CppExecutionContext::setCoroutine(CppCoroutine &&coroutine)
+{
+    m_coroutine = std::move(coroutine);
+}
