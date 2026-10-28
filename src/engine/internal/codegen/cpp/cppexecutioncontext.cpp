@@ -9,3 +9,13 @@ CppExecutionContext::CppExecutionContext(CppCompilerContext *ctx, Thread *thread
     m_ctx(ctx)
 {
 }
+
+bool CppExecutionContext::finished() const
+{
+    return m_finished;
+}
+
+void CppExecutionContext::setFinished(bool finished)
+{
+    m_finished = finished;
+}
