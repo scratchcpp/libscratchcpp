@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "cppcodebuilder.h"
+#include "cppconstant.h"
+#include "../typeutils.h"
 
 using namespace libscratchcpp;
 
@@ -33,7 +35,9 @@ CompilerValue *CppCodeBuilder::addFunctionCallWithCtx(const std::string &functio
 
 CompilerConstant *CppCodeBuilder::addConstValue(const Value &value)
 {
-    return nullptr;
+    auto constValue = std::make_shared<CppConstant>(TypeUtils::mapType(value.type()), value);
+    auto genericValue = std::static_pointer_cast<CppValue>(constValue);
+    return static_cast<CompilerConstant *>(static_cast<CppConstant *>(addValue(genericValue, nullptr)));
 }
 
 CompilerValue *CppCodeBuilder::addStringChar(CompilerValue *string, CompilerValue *index)
@@ -333,4 +337,11 @@ void CppCodeBuilder::createProcedureCall(BlockPrototype *prototype, const Compil
 
 void CppCodeBuilder::createPrint(CompilerValue *string)
 {
+}
+
+CppValue *CppCodeBuilder::addValue(std::shared_ptr<CppValue> value, std::shared_ptr<CppInstruction> ins)
+{
+    value->instruction = ins;
+    m_values.push_back(value);
+    return value.get();
 }

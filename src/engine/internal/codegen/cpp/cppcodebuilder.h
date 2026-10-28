@@ -8,6 +8,8 @@ namespace libscratchcpp
 {
 
 class CppCompilerContext;
+class CppValue;
+class CppInstruction;
 
 class CppCodeBuilder : public ICodeBuilder
 {
@@ -104,9 +106,13 @@ class CppCodeBuilder : public ICodeBuilder
         void createPrint(CompilerValue *string) override;
 
     private:
+        CppValue *addValue(std::shared_ptr<CppValue> value, std::shared_ptr<CppInstruction> ins);
+
         CppCompilerContext *m_ctx = nullptr;
         BlockPrototype *m_procedurePrototype = nullptr;
         Compiler::CodeType m_codeType = Compiler::CodeType::Script;
+
+        std::vector<std::shared_ptr<CppValue>> m_values;
 };
 
 } // namespace libscratchcpp
