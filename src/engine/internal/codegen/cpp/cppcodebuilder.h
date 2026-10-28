@@ -14,11 +14,6 @@ class CppCodeBuilder : public ICodeBuilder
     public:
         CppCodeBuilder(CppCompilerContext *ctx, BlockPrototype *procedurePrototype = nullptr, Compiler::CodeType codeType = Compiler::CodeType::Script);
 
-    private:
-        CppCompilerContext *m_ctx = nullptr;
-        BlockPrototype *m_procedurePrototype = nullptr;
-        Compiler::CodeType m_codeType = Compiler::CodeType::Script;
-
         std::shared_ptr<ExecutableCode> build() override;
 
         CompilerValue *addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
@@ -107,6 +102,11 @@ class CppCodeBuilder : public ICodeBuilder
         void createProcedureCall(BlockPrototype *prototype, const Compiler::Args &args) override;
 
         void createPrint(CompilerValue *string) override;
+
+    private:
+        CppCompilerContext *m_ctx = nullptr;
+        BlockPrototype *m_procedurePrototype = nullptr;
+        Compiler::CodeType m_codeType = Compiler::CodeType::Script;
 };
 
 } // namespace libscratchcpp
