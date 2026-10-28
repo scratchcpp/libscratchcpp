@@ -2,6 +2,8 @@ add_executable(
   cpp_test
   main.cpp
   cppexecutioncontext_test.cpp
+  cppexecutablecode_test.cpp
+  cppexecutablecodemock.h
 )
 
 target_link_libraries(
