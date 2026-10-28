@@ -113,6 +113,7 @@ class CppCodeBuilder : public ICodeBuilder
         Compiler::CodeType m_codeType = Compiler::CodeType::Script;
 
         std::vector<std::shared_ptr<CppValue>> m_values;
+        std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
 };
 
 } // namespace libscratchcpp

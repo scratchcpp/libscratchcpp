@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include <scratchcpp/compilerlocalvariable.h>
+
 #include "cppcodebuilder.h"
+#include "cppexecutablecode.h"
 #include "cppconstant.h"
 #include "../typeutils.h"
 
@@ -15,22 +18,22 @@ CppCodeBuilder::CppCodeBuilder(CppCompilerContext *ctx, BlockPrototype *procedur
 
 std::shared_ptr<ExecutableCode> CppCodeBuilder::build()
 {
-    return nullptr;
+    return std::make_shared<CppExecutableCode>(m_ctx);
 }
 
 CompilerValue *CppCodeBuilder::addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::addTargetFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::addFunctionCallWithCtx(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerConstant *CppCodeBuilder::addConstValue(const Value &value)
@@ -42,217 +45,221 @@ CompilerConstant *CppCodeBuilder::addConstValue(const Value &value)
 
 CompilerValue *CppCodeBuilder::addStringChar(CompilerValue *string, CompilerValue *index)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::addStringLength(CompilerValue *string)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::addLoopIndex()
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::addLocalVariableValue(CompilerLocalVariable *variable)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::addVariableValue(Variable *variable)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::addListContents(List *list)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::addListItem(List *list, CompilerValue *index)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::addListItemIndex(List *list, CompilerValue *item)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::addListContains(List *list, CompilerValue *item)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::addListSize(List *list)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::addProcedureArgument(const std::string &name)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createAdd(CompilerValue *operand1, CompilerValue *operand2)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createSub(CompilerValue *operand1, CompilerValue *operand2)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createMul(CompilerValue *operand1, CompilerValue *operand2)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createDiv(CompilerValue *operand1, CompilerValue *operand2)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createRandom(CompilerValue *from, CompilerValue *to)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createRandomInt(CompilerValue *from, CompilerValue *to)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createCmpEQ(CompilerValue *operand1, CompilerValue *operand2)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createCmpGT(CompilerValue *operand1, CompilerValue *operand2)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createCmpLT(CompilerValue *operand1, CompilerValue *operand2)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createStrCmpEQ(CompilerValue *string1, CompilerValue *string2, bool caseSensitive)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createAnd(CompilerValue *operand1, CompilerValue *operand2)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createOr(CompilerValue *operand1, CompilerValue *operand2)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createNot(CompilerValue *operand)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createMod(CompilerValue *num1, CompilerValue *num2)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createRound(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createAbs(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createFloor(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createCeil(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createSqrt(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createSin(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createCos(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createTan(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createAsin(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createAcos(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createAtan(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createLn(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createLog10(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createExp(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createExp10(CompilerValue *num)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createStringConcat(CompilerValue *string1, CompilerValue *string2)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerValue *CppCodeBuilder::createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType)
 {
-    return nullptr;
+    return addConstValue(Value());
 }
 
 CompilerLocalVariable *CppCodeBuilder::createLocalVariable(Compiler::StaticType type)
 {
-    return nullptr;
+    // TODO: Complete this
+    CompilerValue *ptr = addConstValue(Value());
+    auto var = std::make_shared<CompilerLocalVariable>(ptr);
+    m_localVars.push_back(var);
+    return var.get();
 }
 
 void CppCodeBuilder::createLocalVariableWrite(CompilerLocalVariable *variable, CompilerValue *value)
