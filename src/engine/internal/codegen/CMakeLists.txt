@@ -13,6 +13,12 @@ target_sources(scratchcpp
     codeanalyzer.h
     optimizationutils.cpp
     optimizationutils.h
+    typeutils.cpp
+    typeutils.h
 )
 
-add_subdirectory(llvm)
+if (LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "llvm")
+  add_subdirectory(llvm)
+elseif (LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "cpp")
+  add_subdirectory(cpp)
+endif()

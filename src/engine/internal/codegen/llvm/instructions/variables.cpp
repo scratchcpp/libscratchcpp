@@ -5,6 +5,7 @@
 #include "../llvmbuildutils.h"
 #include "../llvmconstantregister.h"
 #include "../../optimizationutils.h"
+#include "../../typeutils.h"
 
 using namespace libscratchcpp;
 using namespace libscratchcpp::llvmins;
@@ -65,7 +66,7 @@ LLVMInstruction *Variables::buildWriteLocalVariable(LLVMInstruction *ins)
     const auto &arg2 = args[1];
     LLVMLocalVariableInfo *info = ins->localVarInfo;
     llvm::Value *typeVar = m_utils.addAlloca(m_builder.getInt32Ty());
-    m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(m_utils.mapType(arg2.first))), typeVar);
+    m_builder.CreateStore(m_builder.getInt32(static_cast<uint32_t>(TypeUtils::mapType(arg2.first))), typeVar);
 
     m_utils.createValueStore(arg1.second->value, typeVar, info->isInt, info->intValue, arg2.second, arg2.first, arg2.first);
     return ins->getNext();

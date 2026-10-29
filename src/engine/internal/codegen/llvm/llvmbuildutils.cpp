@@ -14,6 +14,7 @@
 #include "llvmregister.h"
 #include "llvminstruction.h"
 #include "../optimizationutils.h"
+#include "../typeutils.h"
 
 using namespace libscratchcpp;
 
@@ -484,24 +485,6 @@ std::vector<LLVMLoop> &LLVMBuildUtils::loops()
     return m_loops;
 }
 
-Compiler::StaticType LLVMBuildUtils::mapType(ValueType type)
-{
-    assert(TYPE_MAP.find(type) != TYPE_MAP.cend());
-    return TYPE_MAP[type];
-}
-
-ValueType LLVMBuildUtils::mapType(Compiler::StaticType type)
-{
-    assert(REVERSE_TYPE_MAP.find(type) != REVERSE_TYPE_MAP.cend());
-    return REVERSE_TYPE_MAP[type];
-}
-
-bool LLVMBuildUtils::isSingleType(Compiler::StaticType type)
-{
-    // Check if the type is a power of 2 (only one bit set)
-    return (type & (static_cast<Compiler::StaticType>(static_cast<int>(type) - 1))) == static_cast<Compiler::StaticType>(0);
-}
-
 llvm::Value *LLVMBuildUtils::addAlloca(llvm::Type *type)
 {
     // Add an alloca to the entry block because allocas must be there (to avoid stack overflow)
@@ -529,7 +512,7 @@ llvm::Value *LLVMBuildUtils::addStringAlloca()
 llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType targetType, NumberType targetNumType)
 {
     if (reg->isConst()) {
-        if (!isSingleType(targetType))
+        if (!TypeUtils::isSingleType(targetType))
             return createValue(reg);
         else
             return castConstValue(reg->constValue(), targetType, targetNumType);
@@ -547,7 +530,7 @@ llvm::Value *LLVMBuildUtils::castValue(LLVMRegister *reg, Compiler::StaticType t
     llvm::SwitchInst *sw = nullptr;
     std::vector<std::pair<llvm::BasicBlock *, llvm::Value *>> results;
 
-    if (isSingleType(targetType)) {
+    if (TypeUtils::isSingleType(targetType)) {
         // Handle multiple source type cases with runtime switch
         typePtr = getValueTypePtr(reg);
         loadedType = m_builder.CreateLoad(m_builder.getInt32Ty(), typePtr);
@@ -1516,7 +1499,7 @@ void LLVMBuildUtils::createListMap()
 llvm::Value *LLVMBuildUtils::loadRegisterType(LLVMRegister *reg, Compiler::StaticType type)
 {
     if (reg->isRawValue)
-        return m_builder.getInt32(static_cast<uint32_t>(mapType(type)));
+        return m_builder.getInt32(static_cast<uint32_t>(TypeUtils::mapType(type)));
     else {
         assert(!reg->isConst());
         llvm::Value *typePtr = getValueTypePtr(reg);

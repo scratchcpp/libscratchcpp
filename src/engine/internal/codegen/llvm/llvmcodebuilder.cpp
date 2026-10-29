@@ -15,6 +15,7 @@
 #include "llvmconstantregister.h"
 #include "llvmifstatement.h"
 #include "llvmloop.h"
+#include "../typeutils.h"
 
 using namespace libscratchcpp;
 
@@ -111,7 +112,7 @@ CompilerValue *LLVMCodeBuilder::addFunctionCall(const std::string &functionName,
     if (returnType != Compiler::StaticType::Void) {
         auto reg = std::make_shared<LLVMRegister>(returnType);
 
-        if (m_utils.isSingleType(returnType))
+        if (TypeUtils::isSingleType(returnType))
             reg->isRawValue = true;
 
         ins->setFunctionReturnReg(reg.get());
@@ -137,7 +138,7 @@ CompilerValue *LLVMCodeBuilder::addFunctionCallWithCtx(const std::string &functi
 
 CompilerConstant *LLVMCodeBuilder::addConstValue(const Value &value)
 {
-    auto constReg = std::make_shared<LLVMConstantRegister>(m_utils.mapType(value.type()), value);
+    auto constReg = std::make_shared<LLVMConstantRegister>(TypeUtils::mapType(value.type()), value);
     auto reg = std::static_pointer_cast<LLVMRegister>(constReg);
     m_lastConstValue = reg.get();
     return static_cast<CompilerConstant *>(static_cast<LLVMConstantRegister *>(addReg(reg, nullptr)));
@@ -419,7 +420,7 @@ CompilerValue *LLVMCodeBuilder::createStringConcat(CompilerValue *string1, Compi
 CompilerValue *LLVMCodeBuilder::createSelect(CompilerValue *cond, CompilerValue *trueValue, CompilerValue *falseValue, Compiler::StaticType valueType)
 {
     LLVMRegister *ret = createOp(LLVMInstruction::Type::Select, valueType, { Compiler::StaticType::Bool, valueType, valueType }, { cond, trueValue, falseValue });
-    ret->isRawValue = m_utils.isSingleType(valueType);
+    ret->isRawValue = TypeUtils::isSingleType(valueType);
     return ret;
 }
 
