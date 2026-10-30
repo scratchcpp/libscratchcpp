@@ -131,6 +131,11 @@ if (LIBSCRATCHCPP_NETWORK_SUPPORT)
     target_compile_definitions(scratchcpp PRIVATE LIBSCRATCHCPP_NETWORK_SUPPORT)
 endif()
 
+# Codegen
+if(LIBSCRATCHCPP_ENABLE_CODE_ANALYZER)
+    target_compile_definitions(scratchcpp PRIVATE ENABLE_CODE_ANALYZER)
+endif()
+
 # LLVM
 if (LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "llvm")
     include(build/HunterPackages.cmake)
@@ -141,10 +146,6 @@ if (LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "llvm")
 
     if(LIBSCRATCHCPP_PRINT_LLVM_IR)
         target_compile_definitions(scratchcpp PRIVATE PRINT_LLVM_IR)
-    endif()
-
-    if(LIBSCRATCHCPP_ENABLE_CODE_ANALYZER)
-        target_compile_definitions(scratchcpp PRIVATE ENABLE_CODE_ANALYZER)
     endif()
 
     if(LIBSCRATCHCPP_LLVM_INTEGER_SUPPORT)
