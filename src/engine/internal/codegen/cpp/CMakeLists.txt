@@ -13,3 +13,5 @@ target_sources(scratchcpp
     cppcodebuilder.cpp
     cppcodebuilder.h
 )
+
+add_subdirectory(instructions)
