@@ -2,7 +2,10 @@
 
 #pragma once
 
+#include <scratchcpp/blockprototype.h>
+
 #include "../icodebuilder.h"
+#include "cppinstruction.h"
 #include "cppinstructionlist.h"
 #include "instructions/instructionbuilder.h"
 #include "../codeanalyzer.h"
@@ -110,6 +113,13 @@ class CppCodeBuilder : public ICodeBuilder
     private:
         CppValue *addValue(std::shared_ptr<CppValue> value, std::shared_ptr<CppInstruction> ins);
 
+        Compiler::StaticType getProcedureArgType(BlockPrototype::ArgType type);
+
+        CppValue *createOp(CppInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
+        CppValue *createOp(CppInstruction::Type type, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
+        CppValue *createOp(const CppInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
+        CppValue *createOp(const CppInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
+
         CppCompilerContext *m_ctx = nullptr;
         BlockPrototype *m_procedurePrototype = nullptr;
         Compiler::CodeType m_codeType = Compiler::CodeType::Script;
@@ -120,6 +130,7 @@ class CppCodeBuilder : public ICodeBuilder
         cppins::InstructionBuilder m_instructionBuilder;
         CodeAnalyzer m_codeAnalyzer;
         bool m_warp = false;
+        bool m_loopCondition = false; // whether we're currently compiling a loop condition
 };
 
 } // namespace libscratchcpp
