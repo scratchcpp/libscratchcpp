@@ -5,6 +5,7 @@
 #include "../icodebuilder.h"
 #include "cppinstructionlist.h"
 #include "instructions/instructionbuilder.h"
+#include "../codeanalyzer.h"
 
 namespace libscratchcpp
 {
@@ -117,6 +118,8 @@ class CppCodeBuilder : public ICodeBuilder
         std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
         CppInstructionList m_instructions;
         cppins::InstructionBuilder m_instructionBuilder;
+        CodeAnalyzer m_codeAnalyzer;
+        bool m_warp = false;
 };
 
 } // namespace libscratchcpp

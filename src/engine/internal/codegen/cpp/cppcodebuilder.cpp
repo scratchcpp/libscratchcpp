@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/compilerlocalvariable.h>
+#include <scratchcpp/blockprototype.h>
 
 #include "cppcodebuilder.h"
+#include "cppcompilercontext.h"
 #include "cppexecutablecode.h"
+#include "cppinstruction.h"
 #include "cppconstant.h"
 #include "../typeutils.h"
 
@@ -12,12 +15,34 @@ using namespace libscratchcpp;
 CppCodeBuilder::CppCodeBuilder(CppCompilerContext *ctx, BlockPrototype *procedurePrototype, Compiler::CodeType codeType) :
     m_ctx(ctx),
     m_procedurePrototype(procedurePrototype),
-    m_codeType(codeType)
+    m_codeType(codeType),
+    m_codeAnalyzer(ctx)
 {
 }
 
 std::shared_ptr<ExecutableCode> CppCodeBuilder::build()
 {
+    if (!m_warp) {
+        // Do not create coroutine if there are no yield instructions nor non-warp procedure calls
+        if (!m_instructions.containsInstruction([](const CppInstruction *ins) {
+                return ins->type == CppInstruction::Type::Yield || (ins->type == CppInstruction::Type::CallProcedure && ins->procedurePrototype && !ins->procedurePrototype->warp());
+            })) {
+            m_warp = true;
+        }
+
+        // Only create coroutines in scripts
+        if (m_codeType != Compiler::CodeType::Script)
+            m_warp = true;
+    }
+
+    if (m_warp) {
+#ifdef ENABLE_CODE_ANALYZER
+        // Analyze the script (type analysis, optimizations, etc.)
+        // NOTE: Do this only for warp scripts
+        m_codeAnalyzer.analyzeScript(m_instructions);
+#endif
+    }
+
     // Build recorded instructions
     CppInstruction *ins = m_instructions.first();
 
