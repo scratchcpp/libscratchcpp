@@ -3,13 +3,14 @@
 #pragma once
 
 #include "../icodebuilder.h"
+#include "cppinstructionlist.h"
+#include "instructions/instructionbuilder.h"
 
 namespace libscratchcpp
 {
 
 class CppCompilerContext;
 class CppValue;
-class CppInstruction;
 
 class CppCodeBuilder : public ICodeBuilder
 {
@@ -114,6 +115,8 @@ class CppCodeBuilder : public ICodeBuilder
 
         std::vector<std::shared_ptr<CppValue>> m_values;
         std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
+        CppInstructionList m_instructions;
+        cppins::InstructionBuilder m_instructionBuilder;
 };
 
 } // namespace libscratchcpp

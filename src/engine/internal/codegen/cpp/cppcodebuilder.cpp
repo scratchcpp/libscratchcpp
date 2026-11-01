@@ -18,6 +18,12 @@ CppCodeBuilder::CppCodeBuilder(CppCompilerContext *ctx, BlockPrototype *procedur
 
 std::shared_ptr<ExecutableCode> CppCodeBuilder::build()
 {
+    // Build recorded instructions
+    CppInstruction *ins = m_instructions.first();
+
+    while (ins)
+        ins = m_instructionBuilder.process(ins);
+
     return std::make_shared<CppExecutableCode>(m_ctx);
 }
 
