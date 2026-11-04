@@ -13,6 +13,18 @@ ExecutionContext::ExecutionContext(Thread *thread) :
 {
 }
 
+/*! Destroys ExecutionContext. */
+ExecutionContext::~ExecutionContext()
+{
+    // Deallocate strings
+    // NOTE: The stack should be already empty
+    assert(m_stringStack.empty());
+
+    while (!m_stringStack.empty()) {
+        popStringStack();
+    }
+}
+
 /*! Returns the thread of this context. */
 Thread *ExecutionContext::thread() const
 {

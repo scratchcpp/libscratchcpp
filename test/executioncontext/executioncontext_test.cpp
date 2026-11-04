@@ -1,6 +1,8 @@
 #include <scratchcpp/executioncontext.h>
 #include <scratchcpp/thread.h>
 #include <scratchcpp/promise.h>
+#include <scratchcpp/stringptr.h>
+#include <scratchcpp/string_functions.h>
 
 #include <enginemock.h>
 #include <stacktimermock.h>
@@ -50,4 +52,29 @@ TEST(ExecutionContextTest, Rng)
     RandomGeneratorMock rng;
     ctx.setRng(&rng);
     ASSERT_EQ(ctx.rng(), &rng);
+}
+
+TEST(ExecutionContextTest, StringStack)
+{
+    EngineMock engine;
+    ExecutionContext ctx(nullptr);
+
+    StringPtr **frame1 = ctx.pushStringStack(3);
+
+    for (int i = 0; i < 3; i++) {
+        string_assign_cstring(frame1[i], "test"); // address sanitizer will detect potential buffer overflow
+    }
+
+    StringPtr **frame2 = ctx.pushStringStack(5);
+
+    for (int i = 0; i < 5; i++) {
+        string_assign_cstring(frame2[i], "foo bar");
+    }
+
+    ctx.popStringStack();
+
+    StringPtr testString("test");
+    ASSERT_EQ(string_compare_case_sensitive(frame1[2], &testString), 0);
+
+    ctx.popStringStack();
 }
