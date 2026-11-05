@@ -154,6 +154,9 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMBuildUtils
         llvm::Value *getListPtr(llvm::Value *targetLists, List *list);
         llvm::Value *getListDataPtr(const LLVMListPtr &listPtr);
 
+        void pushStringStack();
+        void popStringStack();
+
         LLVMCompilerContext *m_ctx = nullptr;
         llvm::LLVMContext &m_llvmCtx;
         llvm::IRBuilder<> &m_builder;
@@ -194,9 +197,11 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMBuildUtils
         std::vector<LLVMIfStatement> m_ifStatements;
         std::vector<LLVMLoop> m_loops;
 
+        llvm::BasicBlock *m_stringCountBlock = nullptr;
         llvm::BasicBlock *m_stringAllocaBlock = nullptr;
         llvm::BasicBlock *m_stringAllocaNextBlock = nullptr;
-        llvm::Value *m_stringArray = nullptr;
+        llvm::Value *m_stringCountVar = nullptr;
+        llvm::Value *m_stringArrayVar = nullptr;
         size_t m_stringCount = 0;
 };
 
