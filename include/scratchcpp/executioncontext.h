@@ -41,6 +41,7 @@ class LIBSCRATCHCPP_EXPORT ExecutionContext
 
         inline StringPtr **pushStringStack(size_t stringCount)
         {
+            m_stringStackCleared = false;
             m_stringStack.push({});
 
             auto &strings = m_stringStack.top();
@@ -55,7 +56,11 @@ class LIBSCRATCHCPP_EXPORT ExecutionContext
 
         inline void popStringStack()
         {
-            assert(!m_stringStack.empty());
+            if (m_stringStackCleared) // avoid UB when popping after killing a thread
+                return;
+
+            assert(!m_stringStack.empty()); // check only in debug mode to maximize performance
+
             const auto &strings = m_stringStack.top();
 
             for (StringPtr *str : strings)
@@ -64,10 +69,20 @@ class LIBSCRATCHCPP_EXPORT ExecutionContext
             m_stringStack.pop();
         }
 
+        inline void clearStringStack()
+        {
+            while (!m_stringStack.empty()) {
+                popStringStack();
+            }
+
+            m_stringStackCleared = true;
+        }
+
     private:
         spimpl::unique_impl_ptr<ExecutionContextPrivate> impl;
 
         std::stack<std::vector<StringPtr *>> m_stringStack;
+        bool m_stringStackCleared = false;
 };
 
 } // namespace libscratchcpp
