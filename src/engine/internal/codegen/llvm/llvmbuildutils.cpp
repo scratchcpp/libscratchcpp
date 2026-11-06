@@ -82,9 +82,6 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
     // Create string count variable (LLVM should optimize it into a constant later)
     m_stringCountVar = m_builder.CreateAlloca(m_builder.getInt64Ty(), nullptr, "stringCount");
 
-    // Create string array variable
-    m_stringArrayVar = m_builder.CreateAlloca(m_stringPtrType->getPointerTo(), nullptr, "stringArray");
-
     // Create string count block (string count is known after all instructions are processed)
     m_stringCountBlock = llvm::BasicBlock::Create(m_llvmCtx, "getStringCount", m_function);
     m_builder.CreateBr(m_stringCountBlock);
@@ -97,7 +94,9 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
 
     // Push string stack (load string array)
     m_builder.SetInsertPoint(m_stringAllocaBlock);
-    pushStringStack();
+
+    llvm::Value *stringCount = m_builder.CreateLoad(m_builder.getInt64Ty(), m_stringCountVar, "strCount");
+    m_stringArray = m_builder.CreateCall(m_functions.resolve_llvm_push_string_stack(), { m_executionContextPtr, stringCount });
 
     // Create next block
     m_stringAllocaNextBlock = llvm::BasicBlock::Create(m_llvmCtx, "entry.next", m_function);
@@ -178,7 +177,7 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
 
     // End branch
     m_builder.SetInsertPoint(m_endBranch);
-    popStringStack();
+    m_builder.CreateCall(m_functions.resolve_llvm_pop_string_stack(), { m_executionContextPtr });
 
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
 
@@ -212,7 +211,7 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
 
     // Thread end branch (stop the entire thread, including procedure callers)
     m_builder.SetInsertPoint(m_endThreadBranch);
-    popStringStack();
+    m_builder.CreateCall(m_functions.resolve_llvm_pop_string_stack(), { m_executionContextPtr });
 
     switch (m_codeType) {
         case Compiler::CodeType::Script:
@@ -513,10 +512,14 @@ llvm::Value *LLVMBuildUtils::addAlloca(llvm::Type *type)
 llvm::Value *LLVMBuildUtils::addStringAlloca()
 {
     // All temporary strings are allocated when the string stack is pushed
-    llvm::Value *stringArray = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), m_stringArrayVar, "loadedStringArray");
+    llvm::BasicBlock *block = m_builder.GetInsertBlock();
+    m_builder.SetInsertPoint(m_stringAllocaBlock);
+
     llvm::Value *index = m_builder.getInt64(m_stringCount++);
-    llvm::Value *elementPtr = m_builder.CreateGEP(m_stringPtrType->getPointerTo(), stringArray, index);
+    llvm::Value *elementPtr = m_builder.CreateGEP(m_stringPtrType->getPointerTo(), m_stringArray, index);
     llvm::Value *ret = m_builder.CreateLoad(m_stringPtrType->getPointerTo(), elementPtr, "localString");
+
+    m_builder.SetInsertPoint(block);
     return ret;
 }
 
@@ -1428,14 +1431,12 @@ void LLVMBuildUtils::createSuspend()
             m_builder.SetInsertPoint(suspendBranch);
         }
 
-        popStringStack();
         syncVariables();
 
         m_coroutine->createSuspend();
 
         reloadVariables();
         reloadLists();
-        pushStringStack();
 
         if (m_warpArg) {
             m_builder.CreateBr(nextBranch);
@@ -2204,16 +2205,4 @@ llvm::Value *LLVMBuildUtils::getListPtr(llvm::Value *targetLists, List *list)
 llvm::Value *LLVMBuildUtils::getListDataPtr(const LLVMListPtr &listPtr)
 {
     return m_builder.CreateLoad(m_valueDataType->getPointerTo(), m_builder.CreateLoad(m_valueDataType->getPointerTo()->getPointerTo(), listPtr.dataPtr));
-}
-
-void LLVMBuildUtils::pushStringStack()
-{
-    llvm::Value *stringCount = m_builder.CreateLoad(m_builder.getInt64Ty(), m_stringCountVar, "strCount");
-    llvm::Value *strings = m_builder.CreateCall(m_functions.resolve_llvm_push_string_stack(), { m_executionContextPtr, stringCount });
-    m_builder.CreateStore(strings, m_stringArrayVar);
-}
-
-void LLVMBuildUtils::popStringStack()
-{
-    m_builder.CreateCall(m_functions.resolve_llvm_pop_string_stack(), { m_executionContextPtr });
 }
