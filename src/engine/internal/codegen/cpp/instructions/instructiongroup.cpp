@@ -1,0 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+
+#include "instructiongroup.h"
+
+using namespace libscratchcpp::cppins;
+
+InstructionGroup::InstructionGroup()
+{
+}
