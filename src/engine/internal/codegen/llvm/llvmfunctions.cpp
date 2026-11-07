@@ -302,7 +302,6 @@ llvm::FunctionCallee LLVMFunctions::resolve_llvm_push_string_stack()
 
     llvm::FunctionCallee callee = resolveFunction("llvm_push_string_stack", llvm::FunctionType::get(stringPtr->getPointerTo(), { pointerType, m_builder->getInt64Ty() }, false));
     llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
     return callee;
 }
 
@@ -312,7 +311,6 @@ llvm::FunctionCallee LLVMFunctions::resolve_llvm_pop_string_stack()
 
     llvm::FunctionCallee callee = resolveFunction("llvm_pop_string_stack", llvm::FunctionType::get(m_builder->getVoidTy(), { pointerType }, false));
     llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
     return callee;
 }
 
