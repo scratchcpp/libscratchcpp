@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/valuedata.h>
+#include <scratchcpp/value_functions.h>
 #include <scratchcpp/promise.h>
 #include <scratchcpp/thread.h>
 #include <scratchcpp/target.h>
@@ -12,8 +13,9 @@
 
 using namespace libscratchcpp;
 
-CppExecutableCode::CppExecutableCode(CppCompilerContext *ctx) :
-    m_ctx(ctx)
+CppExecutableCode::CppExecutableCode(CppCompilerContext *ctx, const std::vector<void *> &pointers) :
+    m_ctx(ctx),
+    m_pointers(pointers)
 {
     assert(m_ctx);
 }
@@ -34,11 +36,23 @@ void CppExecutableCode::run(ExecutionContext *context)
             return;
     }
 
-    // TODO: Add support for coroutines
-    // TODO: Add support for end thread sentinel value
-    Target *target = ctx->thread()->target();
-    runScript(context, target, target->variableData(), target->listData());
-    ctx->setFinished(true);
+    CppCoroutine &coroutine = ctx->coroutine();
+
+    if (!coroutine.done()) {
+        if (coroutine.resume()) {
+            ctx->setCoroutine(CppCoroutine());
+            ctx->setFinished(true);
+        }
+    } else {
+        Target *target = ctx->thread()->target();
+        CppCoroutine ret = runScript(context, target, target->variableData(), target->listData());
+
+        // NOTE: The end thread flag only stops the code (procedures propagate it)
+        if (ret.done())
+            ctx->setFinished(true);
+        else
+            ctx->setCoroutine(std::move(ret));
+    }
 }
 
 ValueData CppExecutableCode::runReporter(ExecutionContext *context)
@@ -56,7 +70,6 @@ bool CppExecutableCode::runPredicate(ExecutionContext *context)
 void CppExecutableCode::kill(ExecutionContext *context)
 {
     CppExecutionContext *ctx = getContext(context);
-    // TODO: Add support for coroutines
     // NOTE: Do not destroy coroutine, it will be destroyed later
     // (really bad things happen when a coroutine destroys itself...)
     // The code is finished and the coroutine won't be used again until reset() is called
@@ -67,8 +80,7 @@ void CppExecutableCode::kill(ExecutionContext *context)
 void CppExecutableCode::reset(ExecutionContext *context)
 {
     CppExecutionContext *ctx = getContext(context);
-
-    // TODO: Add support for coroutines
+    ctx->setCoroutine(CppCoroutine());
     ctx->setFinished(false);
     ctx->setPromise(nullptr);
 }
@@ -83,21 +95,40 @@ std::shared_ptr<ExecutionContext> CppExecutableCode::createExecutionContext(Thre
     return std::make_shared<CppExecutionContext>(m_ctx, thread);
 }
 
-void CppExecutableCode::runScript(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists)
+CppCoroutine CppExecutableCode::runProcedure(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists, bool warp, ValueData *args)
 {
     // Generated code overrides this
+    return CppCoroutine(false);
+}
+
+CppCoroutine CppExecutableCode::runScript(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists)
+{
+    // Generated code overrides this
+    return CppCoroutine(false);
 }
 
 ValueData CppExecutableCode::runReporter(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists)
 {
     // Generated code overrides this
-    return ValueData();
+    ValueData ret;
+    value_init(&ret);
+    return ret;
 }
 
 bool CppExecutableCode::runPredicate(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists)
 {
     // Generated code overrides this
     return false;
+}
+
+CppCompilerContext *CppExecutableCode::compilerContext() const
+{
+    return m_ctx;
+}
+
+const std::vector<void *> &CppExecutableCode::pointers() const
+{
+    return m_pointers;
 }
 
 CppExecutionContext *CppExecutableCode::getContext(ExecutionContext *context)

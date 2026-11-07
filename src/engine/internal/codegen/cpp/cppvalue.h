@@ -4,6 +4,7 @@
 
 #include <scratchcpp/compilervalue.h>
 #include <scratchcpp/value.h>
+#include <string>
 
 namespace libscratchcpp
 {
@@ -24,6 +25,7 @@ struct CppValue : public virtual CompilerValue
         }
 
         bool isRawValue = false;
+        std::string expr; // C++ expression of the value in generated code
 
         std::shared_ptr<CppInstruction> instruction;
 };

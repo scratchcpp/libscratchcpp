@@ -12,4 +12,8 @@ target_sources(scratchcpp
     cppconstant.h
     cppcodebuilder.cpp
     cppcodebuilder.h
+    cppcoroutine.h
+    cppprelude.h
+    cppcodebasegenerator.cpp
+    cppcodebasegenerator.h
 )

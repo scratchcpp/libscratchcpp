@@ -3,8 +3,10 @@
 #pragma once
 
 #include <scratchcpp/executablecode.h>
+#include <scratchcpp/global.h>
+#include <vector>
 
-#include "test_export.h"
+#include "cppcoroutine.h"
 
 namespace libscratchcpp
 {
@@ -14,10 +16,14 @@ class List;
 class CppCompilerContext;
 class CppExecutionContext;
 
-class LIBSCRATCHCPP_TEST_EXPORT CppExecutableCode : public ExecutableCode
+/*!
+ * Base class of generated C++ code.
+ * Generated classes override runScript(), runReporter(), runPredicate() and runProcedure().
+ */
+class LIBSCRATCHCPP_EXPORT CppExecutableCode : public ExecutableCode
 {
     public:
-        CppExecutableCode(CppCompilerContext *ctx);
+        CppExecutableCode(CppCompilerContext *ctx, const std::vector<void *> &pointers = {});
 
         virtual void run(ExecutionContext *context) override final;
         virtual ValueData runReporter(ExecutionContext *context) override final;
@@ -29,15 +35,21 @@ class LIBSCRATCHCPP_TEST_EXPORT CppExecutableCode : public ExecutableCode
 
         virtual std::shared_ptr<ExecutionContext> createExecutionContext(Thread *thread) const override final;
 
+        virtual CppCoroutine runProcedure(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists, bool warp, ValueData *args);
+
     protected:
-        virtual void runScript(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists);
+        virtual CppCoroutine runScript(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists);
         virtual ValueData runReporter(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists);
         virtual bool runPredicate(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists);
+
+        CppCompilerContext *compilerContext() const;
+        const std::vector<void *> &pointers() const;
 
     private:
         static CppExecutionContext *getContext(ExecutionContext *context);
 
         CppCompilerContext *m_ctx = nullptr;
+        std::vector<void *> m_pointers;
 };
 
 } // namespace libscratchcpp

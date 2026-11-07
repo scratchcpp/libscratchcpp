@@ -2,14 +2,18 @@
 
 #pragma once
 
+#include <sstream>
+#include <unordered_map>
+#include <unordered_set>
+
 #include "../icodebuilder.h"
+#include "cppinstruction.h"
+#include "cppinstructionlist.h"
 
 namespace libscratchcpp
 {
 
 class CppCompilerContext;
-class CppValue;
-class CppInstruction;
 
 class CppCodeBuilder : public ICodeBuilder
 {
@@ -106,14 +110,82 @@ class CppCodeBuilder : public ICodeBuilder
         void createPrint(CompilerValue *string) override;
 
     private:
+        enum class Storage
+        {
+            Void,
+            Number,
+            Bool,
+            String,
+            Pointer,
+            Unknown
+        };
+
+        struct Loop
+        {
+                bool isRepeatLoop = false;
+                std::string index;
+        };
+
+        std::shared_ptr<CppInstruction> addInstruction(CppInstruction::Type type);
         CppValue *addValue(std::shared_ptr<CppValue> value, std::shared_ptr<CppInstruction> ins);
+        CppValue *addRegister(Compiler::StaticType type);
+        CppValue *addRegister(Compiler::StaticType type, const std::string &expr);
+        CppValue *assignNumber(CppInstruction::Type type, const std::string &expr);
+        CppValue *assignBool(CppInstruction::Type type, const std::string &expr);
+        CppValue *mathFunction(CppInstruction::Type type, CompilerValue *num, const std::string &func, const std::string &suffix = "");
+
+        CompilerValue *createFunctionCall(
+            const std::string &functionName,
+            Compiler::StaticType returnType,
+            const Compiler::ArgTypes &argTypes,
+            const Compiler::Args &args,
+            const std::string &firstArgType,
+            const std::string &firstArg);
+
+        static Storage storage(Compiler::StaticType type);
+        static std::string cppType(Compiler::StaticType type, bool arg);
+        static std::string numberLiteral(double value);
+        static std::string stringLiteral(const std::string &str);
+
+        std::string addLocal(Storage storage, const std::string &prefix, const std::string &init = "");
+        std::string cast(CompilerValue *value, Compiler::StaticType targetType);
+        void assign(CppValue *dst, CompilerValue *src);
+        void emit(const std::string &line);
+        void indent();
+        void unindent();
+        void emitYield(bool checkWarp = true);
+        void emitReturn(bool endThread);
+        bool isWarp() const;
+
+        std::string pointer(void *ptr);
+        const std::string &variablePtr(Variable *variable);
+        const std::string &listPtr(List *list);
+        std::string generateSource(const std::string &className) const;
 
         CppCompilerContext *m_ctx = nullptr;
         BlockPrototype *m_procedurePrototype = nullptr;
         Compiler::CodeType m_codeType = Compiler::CodeType::Script;
 
+        CppInstructionList m_instructions;
         std::vector<std::shared_ptr<CppValue>> m_values;
         std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
+        CppValue *m_lastValue = nullptr;
+        std::shared_ptr<CppInstruction> m_lastInstruction;
+
+        std::stringstream m_decls;
+        std::stringstream m_body;
+        std::stringstream m_resolve;
+        std::stringstream m_externs;
+        std::unordered_set<std::string> m_declaredFunctions;
+        std::unordered_map<Variable *, std::string> m_variables;
+        std::unordered_map<List *, std::string> m_lists;
+        std::unordered_map<const void *, size_t> m_pointerIndexes;
+        std::vector<void *> m_pointers;
+        std::vector<Loop> m_loops;
+        int m_localCount = 0;
+        int m_indent = 3;
+        bool m_loopCondition = false;
+        bool m_suspends = false;
 };
 
 } // namespace libscratchcpp

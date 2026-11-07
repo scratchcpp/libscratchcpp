@@ -2,6 +2,7 @@
 
 #include <scratchcpp/string_functions.h>
 #include <scratchcpp/stringptr.h>
+#include <bit>
 #include <cmath>
 #include <cstring>
 #include <cassert>
