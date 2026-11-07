@@ -194,8 +194,10 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMBuildUtils
         std::vector<LLVMIfStatement> m_ifStatements;
         std::vector<LLVMLoop> m_loops;
 
+        llvm::BasicBlock *m_stringCountBlock = nullptr;
         llvm::BasicBlock *m_stringAllocaBlock = nullptr;
         llvm::BasicBlock *m_stringAllocaNextBlock = nullptr;
+        llvm::Value *m_stringCountVar = nullptr;
         llvm::Value *m_stringArray = nullptr;
         size_t m_stringCount = 0;
 };

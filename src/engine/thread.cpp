@@ -25,6 +25,13 @@ Thread::Thread(Target *target, IEngine *engine, Script *script) :
     }
 }
 
+/*! Destroys Thread. */
+Thread::~Thread()
+{
+    if (impl->executionContext)
+        impl->executionContext->clearStringStack();
+}
+
 /*! Returns the Target of the script. */
 Target *Thread::target() const
 {
@@ -70,12 +77,14 @@ bool Thread::runPredicate()
 void Thread::kill()
 {
     impl->code->kill(impl->executionContext.get());
+    impl->executionContext->clearStringStack();
 }
 
 /*! Resets the script to run from the start. */
 void Thread::reset()
 {
     impl->code->reset(impl->executionContext.get());
+    impl->executionContext->clearStringStack();
 }
 
 /*! Returns true if the script is stopped or finished. */

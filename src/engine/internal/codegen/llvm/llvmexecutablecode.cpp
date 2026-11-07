@@ -18,18 +18,11 @@ using namespace libscratchcpp;
 
 static const void *END_THREAD_SENTINEL = (void *)0x1;
 
-LLVMExecutableCode::LLVMExecutableCode(
-    LLVMCompilerContext *ctx,
-    function_id_t functionId,
-    const std::string &mainFunctionName,
-    const std::string &resumeFunctionName,
-    size_t stringCount,
-    Compiler::CodeType codeType) :
+LLVMExecutableCode::LLVMExecutableCode(LLVMCompilerContext *ctx, function_id_t functionId, const std::string &mainFunctionName, const std::string &resumeFunctionName, Compiler::CodeType codeType) :
     m_ctx(ctx),
     m_functionId(functionId),
     m_mainFunctionName(mainFunctionName),
     m_resumeFunctionName(resumeFunctionName),
-    m_stringCount(stringCount),
     m_codeType(codeType)
 {
     assert(m_ctx);
@@ -151,11 +144,6 @@ std::shared_ptr<ExecutionContext> LLVMExecutableCode::createExecutionContext(Thr
 function_id_t LLVMExecutableCode::functionId() const
 {
     return m_functionId;
-}
-
-size_t LLVMExecutableCode::stringCount() const
-{
-    return m_stringCount;
 }
 
 LLVMExecutionContext *LLVMExecutableCode::getContext(ExecutionContext *context)

@@ -2382,3 +2382,37 @@ TEST(EngineTest, ScriptsAreStoppedFromProcedureStoppingAll_Nested)
     ASSERT_VAR(stage, "passed");
     ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
 }
+
+TEST(EngineTest, NoStringStackRaceConditionInRecursiveProcedures)
+{
+    // Regtest for #704
+    Project p("regtest_projects/704_string_stack_race_condition.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    engine->run();
+
+    ASSERT_VAR(stage, "passed");
+    ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
+}
+
+TEST(EngineTest, NoStaleStringStackInNonWarpProceduresWithArguments)
+{
+    // Regtest for #704
+    Project p("regtest_projects/704_string_stack_with_procedure_arguments.sb3");
+    ASSERT_TRUE(p.load());
+
+    auto engine = p.engine();
+
+    Stage *stage = engine->stage();
+    ASSERT_TRUE(stage);
+
+    engine->run();
+
+    ASSERT_VAR(stage, "passed");
+    ASSERT_TRUE(GET_VAR(stage, "passed")->value().toBool());
+}

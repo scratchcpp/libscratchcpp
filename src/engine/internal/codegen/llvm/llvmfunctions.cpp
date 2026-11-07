@@ -34,9 +34,14 @@ extern "C"
         return ctx->rng()->randint(from, to);
     }
 
-    LIBSCRATCHCPP_EXPORT StringPtr **llvm_get_string_array(ExecutionContext *ctx, function_id_t functionId)
+    LIBSCRATCHCPP_EXPORT StringPtr **llvm_push_string_stack(ExecutionContext *ctx, size_t stringCount)
     {
-        return static_cast<LLVMExecutionContext *>(ctx)->getStringArray(functionId);
+        return ctx->pushStringStack(stringCount);
+    }
+
+    LIBSCRATCHCPP_EXPORT void llvm_pop_string_stack(ExecutionContext *ctx)
+    {
+        return ctx->popStringStack();
     }
 
     LIBSCRATCHCPP_EXPORT void llvm_mark_thread_as_finished(ExecutionContext *ctx)
@@ -290,14 +295,22 @@ llvm::FunctionCallee LLVMFunctions::resolve_llvm_random_bool()
     return resolveFunction("llvm_random_bool", llvm::FunctionType::get(m_builder->getDoubleTy(), { pointerType, m_builder->getInt1Ty(), m_builder->getInt1Ty() }, false));
 }
 
-llvm::FunctionCallee LLVMFunctions::resolve_llvm_get_string_array()
+llvm::FunctionCallee LLVMFunctions::resolve_llvm_push_string_stack()
 {
     llvm::Type *stringPtr = m_stringPtrType->getPointerTo();
     llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_ctx->llvmCtx()), 0);
 
-    llvm::FunctionCallee callee = resolveFunction("llvm_get_string_array", llvm::FunctionType::get(stringPtr->getPointerTo(), { pointerType, m_functionIdType }, false));
+    llvm::FunctionCallee callee = resolveFunction("llvm_push_string_stack", llvm::FunctionType::get(stringPtr->getPointerTo(), { pointerType, m_builder->getInt64Ty() }, false));
     llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
-    func->addFnAttr(llvm::Attribute::ReadOnly);
+    return callee;
+}
+
+llvm::FunctionCallee LLVMFunctions::resolve_llvm_pop_string_stack()
+{
+    llvm::Type *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(*m_ctx->llvmCtx()), 0);
+
+    llvm::FunctionCallee callee = resolveFunction("llvm_pop_string_stack", llvm::FunctionType::get(m_builder->getVoidTy(), { pointerType }, false));
+    llvm::Function *func = llvm::cast<llvm::Function>(callee.getCallee());
     return callee;
 }
 

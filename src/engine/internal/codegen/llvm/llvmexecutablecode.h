@@ -18,13 +18,7 @@ class LLVMExecutionContext;
 class LIBSCRATCHCPP_TEST_EXPORT LLVMExecutableCode : public ExecutableCode
 {
     public:
-        LLVMExecutableCode(
-            LLVMCompilerContext *ctx,
-            function_id_t functionId,
-            const std::string &mainFunctionName,
-            const std::string &resumeFunctionName,
-            size_t stringCount,
-            Compiler::CodeType codeType);
+        LLVMExecutableCode(LLVMCompilerContext *ctx, function_id_t functionId, const std::string &mainFunctionName, const std::string &resumeFunctionName, Compiler::CodeType codeType);
 
         void run(ExecutionContext *context) override;
         ValueData runReporter(ExecutionContext *context) override;
@@ -37,7 +31,6 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMExecutableCode : public ExecutableCode
         std::shared_ptr<ExecutionContext> createExecutionContext(Thread *thread) const override;
 
         function_id_t functionId() const;
-        size_t stringCount() const;
 
     private:
         using MainFunctionType = void *(*)(ExecutionContext *, Target *, ValueData **, List **);
@@ -52,7 +45,6 @@ class LIBSCRATCHCPP_TEST_EXPORT LLVMExecutableCode : public ExecutableCode
         std::string m_mainFunctionName;
         std::string m_predicateFunctionName;
         std::string m_resumeFunctionName;
-        size_t m_stringCount = 0;
         Compiler::CodeType m_codeType;
 
         mutable std::variant<MainFunctionType, ReporterFunctionType, PredicateFunctionType> m_mainFunction;

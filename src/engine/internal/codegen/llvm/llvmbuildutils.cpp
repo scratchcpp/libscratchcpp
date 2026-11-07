@@ -79,14 +79,24 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
         reg->intValue = llvm::ConstantInt::get(m_builder.getInt64Ty(), reg->constValue().toDouble(), true);
     }
 
-    // Create string allocation block
-    m_stringAllocaBlock = llvm::BasicBlock::Create(m_llvmCtx, "stringAlloca", m_function);
-    m_builder.CreateBr(m_stringAllocaBlock);
+    // Create string count variable (LLVM should optimize it into a constant later)
+    m_stringCountVar = m_builder.CreateAlloca(m_builder.getInt64Ty(), nullptr, "stringCount");
 
-    // Get string array
-    m_builder.SetInsertPoint(m_stringAllocaBlock);
-    m_stringArray = m_builder.CreateCall(m_functions.resolve_llvm_get_string_array(), { m_executionContextPtr, m_functionIdValue });
+    // Create string count block (string count is known after all instructions are processed)
+    m_stringCountBlock = llvm::BasicBlock::Create(m_llvmCtx, "getStringCount", m_function);
+    m_builder.CreateBr(m_stringCountBlock);
     // NOTE: This block is terminated later
+
+    // Create string allocation block
+    m_builder.SetInsertPoint(m_stringCountBlock);
+    m_stringAllocaBlock = llvm::BasicBlock::Create(m_llvmCtx, "stringAlloca", m_function);
+    // NOTE: This block is terminated later
+
+    // Push string stack (load string array)
+    m_builder.SetInsertPoint(m_stringAllocaBlock);
+
+    llvm::Value *stringCount = m_builder.CreateLoad(m_builder.getInt64Ty(), m_stringCountVar, "strCount");
+    m_stringArray = m_builder.CreateCall(m_functions.resolve_llvm_push_string_stack(), { m_executionContextPtr, stringCount });
 
     // Create next block
     m_stringAllocaNextBlock = llvm::BasicBlock::Create(m_llvmCtx, "entry.next", m_function);
@@ -146,11 +156,13 @@ void LLVMBuildUtils::init(llvm::Function *function, BlockPrototype *procedurePro
 
 void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastConstant)
 {
-    // Terminate string allocation block
-    if (m_stringCount == 0)
-        m_stringAllocaBlock->erase(m_stringAllocaBlock->begin(), m_stringAllocaBlock->end());
-
+    // Terminate string count and allocation blocks
     llvm::BasicBlock *previousBlock = m_builder.GetInsertBlock();
+    m_builder.SetInsertPoint(m_stringCountBlock);
+    m_builder.CreateStore(m_builder.getInt64(m_stringCount), m_stringCountVar);
+
+    m_builder.CreateBr(m_stringAllocaBlock);
+
     m_builder.SetInsertPoint(m_stringAllocaBlock);
     m_builder.CreateBr(m_stringAllocaNextBlock);
     m_builder.SetInsertPoint(previousBlock);
@@ -165,6 +177,7 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
 
     // End branch
     m_builder.SetInsertPoint(m_endBranch);
+    m_builder.CreateCall(m_functions.resolve_llvm_pop_string_stack(), { m_executionContextPtr });
 
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
 
@@ -198,6 +211,7 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
 
     // Thread end branch (stop the entire thread, including procedure callers)
     m_builder.SetInsertPoint(m_endThreadBranch);
+    m_builder.CreateCall(m_functions.resolve_llvm_pop_string_stack(), { m_executionContextPtr });
 
     switch (m_codeType) {
         case Compiler::CodeType::Script:
@@ -497,7 +511,7 @@ llvm::Value *LLVMBuildUtils::addAlloca(llvm::Type *type)
 
 llvm::Value *LLVMBuildUtils::addStringAlloca()
 {
-    // All temporary strings are allocated before the script is called
+    // All temporary strings are allocated when the string stack is pushed
     llvm::BasicBlock *block = m_builder.GetInsertBlock();
     m_builder.SetInsertPoint(m_stringAllocaBlock);
 
@@ -1418,7 +1432,9 @@ void LLVMBuildUtils::createSuspend()
         }
 
         syncVariables();
+
         m_coroutine->createSuspend();
+
         reloadVariables();
         reloadLists();
 

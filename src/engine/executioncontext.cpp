@@ -13,6 +13,13 @@ ExecutionContext::ExecutionContext(Thread *thread) :
 {
 }
 
+/*! Destroys ExecutionContext. */
+ExecutionContext::~ExecutionContext()
+{
+    // Deallocate strings
+    clearStringStack();
+}
+
 /*! Returns the thread of this context. */
 Thread *ExecutionContext::thread() const
 {
