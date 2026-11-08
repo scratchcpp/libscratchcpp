@@ -12,6 +12,15 @@ target_sources(scratchcpp
     cppconstant.h
     cppcodebuilder.cpp
     cppcodebuilder.h
+    cppcodegenerator.cpp
+    cppcodegenerator.h
+    cppcodestream.h
+    cpptypeinfo.h
+    cppidentifier.h
+    cppconstidentifier.h
+    cppnamedidentifier.h
+    cppfunctioncall.h
+    cppswitch.h
 )
 
 add_subdirectory(instructions)
