@@ -4,6 +4,7 @@
 
 using namespace libscratchcpp::cppins;
 
-InstructionGroup::InstructionGroup()
+InstructionGroup::InstructionGroup(CppCodeGenerator &codeGen) :
+    m_codeGen(codeGen)
 {
 }

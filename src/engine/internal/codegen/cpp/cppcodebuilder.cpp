@@ -15,6 +15,7 @@ CppCodeBuilder::CppCodeBuilder(CppCompilerContext *ctx, BlockPrototype *procedur
     m_ctx(ctx),
     m_procedurePrototype(procedurePrototype),
     m_codeType(codeType),
+    m_instructionBuilder(m_codeGen),
     m_codeAnalyzer(ctx)
 {
 }

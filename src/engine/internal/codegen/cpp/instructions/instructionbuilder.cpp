@@ -15,18 +15,18 @@
 using namespace libscratchcpp;
 using namespace libscratchcpp::cppins;
 
-InstructionBuilder::InstructionBuilder()
+InstructionBuilder::InstructionBuilder(CppCodeGenerator &codeGen)
 {
     // Create groups
-    m_groups.push_back(std::make_shared<Functions>());
-    m_groups.push_back(std::make_shared<Math>());
-    m_groups.push_back(std::make_shared<Comparison>());
-    m_groups.push_back(std::make_shared<String>());
-    m_groups.push_back(std::make_shared<Logic>());
-    m_groups.push_back(std::make_shared<Control>());
-    m_groups.push_back(std::make_shared<Variables>());
-    m_groups.push_back(std::make_shared<Lists>());
-    m_groups.push_back(std::make_shared<Procedures>());
+    m_groups.push_back(std::make_shared<Functions>(codeGen));
+    m_groups.push_back(std::make_shared<Math>(codeGen));
+    m_groups.push_back(std::make_shared<Comparison>(codeGen));
+    m_groups.push_back(std::make_shared<String>(codeGen));
+    m_groups.push_back(std::make_shared<Logic>(codeGen));
+    m_groups.push_back(std::make_shared<Control>(codeGen));
+    m_groups.push_back(std::make_shared<Variables>(codeGen));
+    m_groups.push_back(std::make_shared<Lists>(codeGen));
+    m_groups.push_back(std::make_shared<Procedures>(codeGen));
 }
 
 CppInstruction *InstructionBuilder::process(CppInstruction *ins)

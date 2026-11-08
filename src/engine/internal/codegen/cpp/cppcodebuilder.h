@@ -7,6 +7,7 @@
 #include "../icodebuilder.h"
 #include "cppinstruction.h"
 #include "cppinstructionlist.h"
+#include "cppcodegenerator.h"
 #include "instructions/instructionbuilder.h"
 #include "../codeanalyzer.h"
 
@@ -127,6 +128,7 @@ class CppCodeBuilder : public ICodeBuilder
         std::vector<std::shared_ptr<CppValue>> m_values;
         std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
         CppInstructionList m_instructions;
+        CppCodeGenerator m_codeGen;
         cppins::InstructionBuilder m_instructionBuilder;
         CodeAnalyzer m_codeAnalyzer;
         bool m_warp = false;

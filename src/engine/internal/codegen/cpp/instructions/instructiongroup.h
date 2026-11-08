@@ -4,15 +4,25 @@
 
 #include "processresult.h"
 
-namespace libscratchcpp::cppins
+namespace libscratchcpp
+{
+
+class CppCodeGenerator;
+
+namespace cppins
 {
 
 class InstructionGroup
 {
     public:
-        InstructionGroup();
+        InstructionGroup(CppCodeGenerator &codeGen);
 
         virtual ProcessResult process(CppInstruction *ins) = 0;
+
+    protected:
+        CppCodeGenerator &m_codeGen;
 };
 
-} // namespace libscratchcpp::cppins
+} // namespace cppins
+
+} // namespace libscratchcpp

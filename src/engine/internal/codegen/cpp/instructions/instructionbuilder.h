@@ -13,7 +13,7 @@ namespace libscratchcpp::cppins
 class InstructionBuilder
 {
     public:
-        InstructionBuilder();
+        InstructionBuilder(CppCodeGenerator &codeGen);
 
         CppInstruction *process(CppInstruction *ins);
 
