@@ -14,7 +14,8 @@ const std::unordered_map<Compiler::StaticType, CppIdentifier::Type> CppCodeGener
     { Compiler::StaticType::Number, CppIdentifier::Type::Double },
     { Compiler::StaticType::Bool, CppIdentifier::Type::Bool },
     { Compiler::StaticType::String, CppIdentifier::Type::StringPtr },
-    { Compiler::StaticType::Pointer, CppIdentifier::Type::Pointer }
+    { Compiler::StaticType::Pointer, CppIdentifier::Type::Pointer },
+    { Compiler::StaticType::Unknown, CppIdentifier::Type::ValueData }
 };
 
 const std::unordered_map<CppCodeGenerator::Header, std::string> CppCodeGenerator::m_headers = {
