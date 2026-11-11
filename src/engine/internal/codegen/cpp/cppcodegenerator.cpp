@@ -83,8 +83,6 @@ void CppCodeGenerator::createCall(const std::string &name, CppIdentifier::Type r
     m_codeStream.beginLine();
 
     if (retType != CppIdentifier::Type::StringPtr) {
-        m_codeStream.addToLine(CppIdentifier::typeString(retType));
-        m_codeStream.addToLine(" ");
         m_codeStream.addToLine(getNamedIdentifier(retValue, retType, "ret", false)->name);
         m_codeStream.addToLine(" = ");
     }
@@ -139,12 +137,12 @@ const CppIdentifier *CppCodeGenerator::getIdentifier(CppValue *value)
     return it->second.get();
 }
 
-const CppNamedIdentifier *CppCodeGenerator::getNamedIdentifier(CppValue *value, CppIdentifier::Type type, const std::string &name, bool isMutable)
+const CppNamedIdentifier *CppCodeGenerator::getNamedIdentifier(CppValue *value, CppIdentifier::Type type, const std::string &name, bool isMutable, bool isReference)
 {
     auto it = m_identifiers.find(value);
 
     if (it == m_identifiers.cend()) {
-        auto identifier = std::make_shared<CppNamedIdentifier>(type, getNewIdentifierName(name), isMutable);
+        auto identifier = std::make_shared<CppNamedIdentifier>(type, getNewIdentifierName(name), isMutable, isReference);
         m_identifiers[value] = identifier;
         return identifier.get();
     } else {
@@ -188,8 +186,6 @@ const CppNamedIdentifier *CppCodeGenerator::addStringAlloca()
     m_strings.push_back(identifier);
 
     m_codeStream.beginLine();
-    m_codeStream.addToLine(CppIdentifier::typeString(CppIdentifier::Type::StringPtr));
-    m_codeStream.addToLine(" ");
     m_codeStream.addToLine(identifier->name);
     m_codeStream.addToLine(" = ");
     addArrayElement(&m_stringArray, m_strings.size() - 1);
@@ -228,29 +224,25 @@ const CppNamedIdentifier *CppCodeGenerator::castRawValue(CppValue *value, Compil
 
 const CppNamedIdentifier *CppCodeGenerator::createValue(CppValue *value)
 {
-    const CppNamedIdentifier *identifier = getNamedIdentifier(value, CppIdentifier::Type::ValueData, "value", false);
-
     if (value->isConst()) {
+        const CppNamedIdentifier *identifier = getNamedIdentifier(value, CppIdentifier::Type::ValueData, "value", true, true);
+
         includeHeader(Header::Value);
 
-        // const Value constant(...);
+        // const Value constant = Value(...);
         const CppNamedIdentifier *valueObj = createNamedIdentifier(CppIdentifier::Type::Value, "constant", false);
         m_codeStream.beginLine();
-        m_codeStream.addToLine("const ");
-        m_codeStream.addToLine(valueObj->typeString());
-        m_codeStream.addToLine(" ");
         m_codeStream.addToLine(valueObj->name);
+        m_codeStream.addToLine(" = ");
+        m_codeStream.addToLine(valueObj->typeString());
         m_codeStream.addToLine("(");
         m_codeStream.addToLine(toCppConstant(value->constValue()));
         m_codeStream.addToLine(")");
         m_codeStream.addToLine(";");
         m_codeStream.endLine();
 
-        // const ValueData &value = constant.data();
+        // ValueData &value = constant.data();
         m_codeStream.beginLine();
-        m_codeStream.addToLine("const ");
-        m_codeStream.addToLine(identifier->typeString());
-        m_codeStream.addToLine(" &");
         m_codeStream.addToLine(identifier->name);
         m_codeStream.addToLine(" = ");
 
@@ -259,17 +251,11 @@ const CppNamedIdentifier *CppCodeGenerator::createValue(CppValue *value)
 
         m_codeStream.addToLine(";");
         m_codeStream.endLine();
+        return identifier;
     } else if (value->isRawValue) {
-        includeHeader(Header::ValueData);
+        const CppNamedIdentifier *identifier = getNamedIdentifier(value, CppIdentifier::Type::ValueData, "value", false);
 
-        // const ValueData value;
-        m_codeStream.beginLine();
-        m_codeStream.addToLine("const ");
-        m_codeStream.addToLine(identifier->typeString());
-        m_codeStream.addToLine(" ");
-        m_codeStream.addToLine(identifier->name);
-        m_codeStream.addToLine(";");
-        m_codeStream.endLine();
+        includeHeader(Header::ValueData);
 
         // Store value
         const CppIdentifier *valueIdentifier = getIdentifier(value);
@@ -310,9 +296,10 @@ const CppNamedIdentifier *CppCodeGenerator::createValue(CppValue *value)
         m_codeStream.addToLine(valueNamedIdentifier->name);
         m_codeStream.addToLine(";");
         m_codeStream.endLine();
+        return identifier;
+    } else {
+        return getNamedIdentifier(value, CppIdentifier::Type::ValueData, "value", false);
     }
-
-    return identifier;
 }
 
 std::string CppCodeGenerator::toCppConstant(const Value &value)

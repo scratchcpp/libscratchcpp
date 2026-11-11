@@ -50,7 +50,7 @@ class CppCodeGenerator
 
         const CppNamedIdentifier *getParam(FuncParam param);
         const CppIdentifier *getIdentifier(CppValue *value);
-        const CppNamedIdentifier *getNamedIdentifier(CppValue *value, CppIdentifier::Type type, const std::string &name, bool isMutable);
+        const CppNamedIdentifier *getNamedIdentifier(CppValue *value, CppIdentifier::Type type, const std::string &name, bool isMutable, bool isReference = false);
         const CppNamedIdentifier *createNamedIdentifier(CppIdentifier::Type type, const std::string &name, bool isMutable);
         std::string getNewIdentifierName(const std::string &name);
         void includeHeader(Header header);
