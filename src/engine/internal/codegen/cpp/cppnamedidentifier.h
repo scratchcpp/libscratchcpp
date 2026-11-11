@@ -13,10 +13,11 @@ struct CppNamedIdentifier : public CppIdentifier
 {
         CppNamedIdentifier() { }
 
-        CppNamedIdentifier(Type type, const std::string &name, bool isMutable = true) :
+        CppNamedIdentifier(Type type, const std::string &name, bool isMutable = true, bool isReference = false) :
             CppIdentifier(type),
             name(name),
-            isMutable(isMutable)
+            isMutable(isMutable),
+            isReference(isReference)
         {
         }
 
@@ -24,6 +25,7 @@ struct CppNamedIdentifier : public CppIdentifier
 
         std::string name;
         bool isMutable = true;
+        bool isReference = false;
 };
 
 } // namespace libscratchcpp
