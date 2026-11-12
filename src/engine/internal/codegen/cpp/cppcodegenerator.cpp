@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <iostream>
+#include <optional>
 
 #include "cppcodegenerator.h"
+#include "cppassignment.h"
 #include "cppfunctioncall.h"
 #include "cppvalue.h"
 #include "cppconstidentifier.h"
@@ -82,12 +84,17 @@ void CppCodeGenerator::createCall(const std::string &name, CppIdentifier::Type r
 
     m_codeStream.beginLine();
 
+    std::unique_ptr<CppAssignment> strAssignment;
+
     if (retType != CppIdentifier::Type::StringPtr) {
-        m_codeStream.addToLine(getNamedIdentifier(retValue, retType, "ret", false)->name);
-        m_codeStream.addToLine(" = ");
+        strAssignment = std::make_unique<CppAssignment>(m_codeStream, getNamedIdentifier(retValue, retType, "ret", false));
     }
 
     createCall(name, strRet, ctxArg, targetArg, args);
+
+    if (strAssignment)
+        strAssignment->close();
+
     m_codeStream.endLine();
 }
 
@@ -186,9 +193,10 @@ const CppNamedIdentifier *CppCodeGenerator::addStringAlloca()
     m_strings.push_back(identifier);
 
     m_codeStream.beginLine();
-    m_codeStream.addToLine(identifier->name);
-    m_codeStream.addToLine(" = ");
+
+    CppAssignment assignment(m_codeStream, identifier.get());
     addArrayElement(&m_stringArray, m_strings.size() - 1);
+    assignment.close();
     m_codeStream.endLine();
 
     return identifier.get();
@@ -229,27 +237,28 @@ const CppNamedIdentifier *CppCodeGenerator::createValue(CppValue *value)
 
         includeHeader(Header::Value);
 
-        // const Value constant = Value(...);
-        const CppNamedIdentifier *valueObj = createNamedIdentifier(CppIdentifier::Type::Value, "constant", false);
+        // Value constant = Value(...);
+        const CppNamedIdentifier *valueObj = createNamedIdentifier(CppIdentifier::Type::Value, "constant", true);
         m_codeStream.beginLine();
-        m_codeStream.addToLine(valueObj->name);
-        m_codeStream.addToLine(" = ");
+
+        CppAssignment constAssignment(m_codeStream, valueObj);
         m_codeStream.addToLine(valueObj->typeString());
         m_codeStream.addToLine("(");
         m_codeStream.addToLine(toCppConstant(value->constValue()));
         m_codeStream.addToLine(")");
         m_codeStream.addToLine(";");
+
+        constAssignment.close();
         m_codeStream.endLine();
 
         // ValueData &value = constant.data();
         m_codeStream.beginLine();
-        m_codeStream.addToLine(identifier->name);
-        m_codeStream.addToLine(" = ");
 
+        CppAssignment valueAssignment(m_codeStream, identifier);
         CppFunctionCall dataCall(m_codeStream, valueObj, "data");
         dataCall.close();
 
-        m_codeStream.addToLine(";");
+        valueAssignment.close();
         m_codeStream.endLine();
         return identifier;
     } else if (value->isRawValue) {
@@ -264,35 +273,37 @@ const CppNamedIdentifier *CppCodeGenerator::createValue(CppValue *value)
             throw std::runtime_error("raw values must have a named identifier when creating a ValueData instance");
         }
 
-        auto valueNamedIdentifier = static_cast<const CppNamedIdentifier *>(valueIdentifier);
-        m_codeStream.addToLine(identifier->name);
-
         switch (value->type()) {
-            case Compiler::StaticType::Number:
+            case Compiler::StaticType::Number: {
                 // value.numberValue = rawValue;
-                m_codeStream.addToLine(".numberValue = ");
+                CppAssignment valueAssignment(m_codeStream, identifier, "numberValue");
                 break;
+            }
 
-            case Compiler::StaticType::Bool:
+            case Compiler::StaticType::Bool: {
                 // value.boolValue = rawValue;
-                m_codeStream.addToLine(".boolValue = ");
+                CppAssignment valueAssignment(m_codeStream, identifier, "boolValue");
                 break;
+            }
 
-            case Compiler::StaticType::String:
+            case Compiler::StaticType::String: {
                 // value.stringValue = rawValue;
-                m_codeStream.addToLine(".stringValue = ");
+                CppAssignment valueAssignment(m_codeStream, identifier, "stringValue");
                 break;
+            }
 
-            case Compiler::StaticType::Pointer:
+            case Compiler::StaticType::Pointer: {
                 // value.pointerValue = rawValue;
-                m_codeStream.addToLine(".pointerValue = ");
+                CppAssignment valueAssignment(m_codeStream, identifier, "pointerValue");
                 break;
+            }
 
             default:
                 assert(false);
                 break;
         }
 
+        auto valueNamedIdentifier = static_cast<const CppNamedIdentifier *>(valueIdentifier);
         m_codeStream.addToLine(valueNamedIdentifier->name);
         m_codeStream.addToLine(";");
         m_codeStream.endLine();
