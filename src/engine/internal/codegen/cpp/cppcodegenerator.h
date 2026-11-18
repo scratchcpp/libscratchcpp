@@ -25,6 +25,8 @@ class CppCodeGenerator
 
         const CppIdentifier *castValue(CppValue *value, Compiler::StaticType targetType);
 
+        std::string finalize();
+
         void createCall(const std::string &name, bool ctxArg, bool targetArg, const std::vector<const CppIdentifier *> &args);
         void createCall(const std::string &name, CppIdentifier::Type retType, CppValue *retValue, bool ctxArg, bool targetArg, const std::vector<const CppIdentifier *> &args);
 
@@ -80,7 +82,7 @@ class CppCodeGenerator
         std::vector<std::shared_ptr<CppConstIdentifier>> m_constants;
 
         CppNamedIdentifier m_stringArray;
-        std::vector<std::shared_ptr<CppIdentifier>> m_strings;
+        std::vector<std::shared_ptr<CppNamedIdentifier>> m_strings;
 };
 
 } // namespace libscratchcpp

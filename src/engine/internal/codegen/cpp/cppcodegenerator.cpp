@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-#include <iostream>
 #include <optional>
+#include <unordered_set>
 
 #include "cppcodegenerator.h"
 #include "cppassignment.h"
@@ -43,7 +43,61 @@ CppCodeGenerator::CppCodeGenerator() :
 
 CppCodeGenerator::~CppCodeGenerator()
 {
-    std::cout << m_codeStream.code() << std::endl;
+}
+
+std::string CppCodeGenerator::finalize()
+{
+    static unsigned int scriptCount = 0;
+
+    const std::string scriptName = "Script" + std::to_string(scriptCount++);
+
+    std::ostringstream source;
+    source << "#include \"script" + std::to_string(scriptCount++) + ".h\"\n";
+
+    for (Header header : m_includedHeaders) {
+        source << "#include " << m_headers.at(header) << "\n";
+    }
+
+    source << "\nnamespace libscratchcpp\n{\n\n";
+    source << "void " << scriptName << "::runScript(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists)\n{\n";
+
+    std::unordered_set<const CppIdentifier *> declared;
+    const auto declare = [&](const CppIdentifier *identifier) {
+        if (!identifier || !identifier->isNamed() || !declared.insert(identifier).second)
+            return;
+
+        const auto *named = static_cast<const CppNamedIdentifier *>(identifier);
+
+        source << "    " << identifier->typeString();
+        source << " " << named->name << ";\n";
+    };
+
+    for (const auto &entry : m_identifiers)
+        declare(entry.second.get());
+
+    for (const auto &identifier : m_internalIdentifiers)
+        declare(identifier.get());
+
+    for (const auto &identifier : m_strings)
+        declare(identifier.get());
+
+    if (!m_strings.empty()) {
+        for (size_t i = 0; i < m_strings.size(); ++i)
+            source << "    StringPtr " << m_strings[i]->name << "Storage;\n";
+
+        source << "    StringPtr *" << m_stringArray.name << "[" << m_strings.size() << "] = { ";
+
+        for (size_t i = 0; i < m_strings.size(); ++i) {
+            if (i)
+                source << ", ";
+            source << "&" << m_strings[i]->name << "Storage";
+        }
+        source << " };\n";
+    }
+
+    source << m_codeStream.code();
+    source << "}\n\n} // namespace libscratchcpp\n";
+    return source.str();
 }
 
 const CppIdentifier *CppCodeGenerator::castValue(CppValue *value, Compiler::StaticType targetType)
