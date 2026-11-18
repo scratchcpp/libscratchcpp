@@ -6,6 +6,7 @@
 #include "cppcodegenerator.h"
 #include "cppassignment.h"
 #include "cppfunctioncall.h"
+#include "cppswitch.h"
 #include "cppvalue.h"
 #include "cppconstidentifier.h"
 #include "../typeutils.h"
@@ -47,7 +48,6 @@ CppCodeGenerator::~CppCodeGenerator()
 
 const CppIdentifier *CppCodeGenerator::castValue(CppValue *value, Compiler::StaticType targetType)
 {
-    // TODO: Implement this
     if (value->isConst()) {
         if (!TypeUtils::isSingleType(targetType))
             return createValue(value);
@@ -58,7 +58,97 @@ const CppIdentifier *CppCodeGenerator::castValue(CppValue *value, Compiler::Stat
     if (value->isRawValue)
         return castRawValue(value, targetType);
 
-    return getNamedIdentifier(value, m_valueTypeMap.at(targetType), "castValue", false);
+    if (!TypeUtils::isSingleType(targetType))
+        return createValue(value);
+
+    assert(value->type() != Compiler::StaticType::Void && targetType != Compiler::StaticType::Void);
+    const CppNamedIdentifier *source = static_cast<const CppNamedIdentifier *>(createValue(value));
+    const CppNamedIdentifier *result = getNamedIdentifier(value, m_valueTypeMap.at(targetType), "castValue", false);
+    const CppNamedIdentifier *valueType = createNamedIdentifier(CppIdentifier::Type::ValueType, "valueType", true);
+
+    m_codeStream.beginLine();
+
+    CppAssignment typeAssignment(m_codeStream, valueType);
+    m_codeStream.addToLine(source->name + ".type");
+    typeAssignment.close();
+    m_codeStream.endLine();
+
+    const CppNamedIdentifier *stringResult = targetType == Compiler::StaticType::String ? addStringAlloca() : nullptr;
+    CppSwitch sw(m_codeStream, valueType);
+    const auto emitCase = [&](ValueType fromType, const std::string &, const std::string &expression) {
+        sw.addCase("ValueType::" + (fromType == ValueType::Number ? std::string("Number") : fromType == ValueType::Bool ? "Bool" : "String"));
+        m_codeStream.beginLine();
+        CppAssignment assignment(m_codeStream, result);
+        m_codeStream.addToLine(expression);
+        assignment.close();
+        m_codeStream.endLine();
+        m_codeStream.beginLine();
+        m_codeStream.addToLine("break;");
+        m_codeStream.endLine();
+    };
+
+    includeHeader(Header::ValueData);
+
+    if (targetType == Compiler::StaticType::Number) {
+        emitCase(ValueType::Number, "numberValue", source->name + ".numberValue");
+        emitCase(ValueType::Bool, "boolValue", "static_cast<double>(" + source->name + ".boolValue)");
+        includeHeader(Header::ValueFunctions);
+        emitCase(ValueType::String, "stringValue", "value_stringToDouble(" + source->name + ".stringValue)");
+    } else if (targetType == Compiler::StaticType::Bool) {
+        emitCase(ValueType::Number, "numberValue", "(" + source->name + ".numberValue != 0.0)");
+        emitCase(ValueType::Bool, "boolValue", source->name + ".boolValue");
+        includeHeader(Header::ValueFunctions);
+        emitCase(ValueType::String, "stringValue", "value_stringToBool(" + source->name + ".stringValue)");
+    } else if (targetType == Compiler::StaticType::String) {
+        includeHeader(Header::ValueFunctions);
+
+        // The string destination is passed to the number conversion routine; bool conversion returns a stable pointer.
+        sw.addCase("ValueType::Number");
+        m_codeStream.beginLine();
+
+        CppFunctionCall numberCall(m_codeStream, "value_doubleToStringPtr");
+        numberCall.param(source->name + ".numberValue").param(stringResult->name);
+        numberCall.close();
+        m_codeStream.addToLine(";");
+        m_codeStream.endLine();
+        m_codeStream.beginLine();
+
+        CppAssignment stringAssignment(m_codeStream, result);
+        m_codeStream.addToLine(stringResult->name);
+        stringAssignment.close();
+        m_codeStream.endLine();
+        m_codeStream.beginLine();
+        m_codeStream.addToLine("break;");
+        m_codeStream.endLine();
+        sw.addCase("ValueType::Bool");
+        m_codeStream.beginLine();
+
+        CppAssignment boolAssignment(m_codeStream, result);
+        m_codeStream.addToLine("value_boolToStringPtr(" + source->name + ".boolValue)");
+        boolAssignment.close();
+        m_codeStream.endLine();
+        m_codeStream.beginLine();
+        m_codeStream.addToLine("break;");
+        m_codeStream.endLine();
+        sw.addCase("ValueType::String");
+        m_codeStream.beginLine();
+
+        CppAssignment identityAssignment(m_codeStream, result);
+        m_codeStream.addToLine(source->name + ".stringValue");
+        identityAssignment.close();
+        m_codeStream.endLine();
+        m_codeStream.beginLine();
+        m_codeStream.addToLine("break;");
+        m_codeStream.endLine();
+    }
+
+    sw.addDefaultCase("");
+    m_codeStream.beginLine();
+    m_codeStream.addToLine("__builtin_unreachable();");
+    m_codeStream.endLine();
+    sw.close();
+
+    return result;
 }
 
 void CppCodeGenerator::createCall(const std::string &name, bool ctxArg, bool targetArg, const std::vector<const CppIdentifier *> &args)
@@ -216,18 +306,76 @@ void CppCodeGenerator::addArrayElement(const CppNamedIdentifier *array, size_t i
 
 const CppConstIdentifier *CppCodeGenerator::castConstValue(const Value &value, Compiler::StaticType targetType)
 {
-    // TODO: Implement this
-    auto identifierType = m_valueTypeMap.at(TypeUtils::mapType(value.type()));
-    auto ret = std::make_shared<CppConstIdentifier>(identifierType, value);
+    Value casted = value;
+
+    switch (targetType) {
+        case Compiler::StaticType::Number:
+            casted = Value(value.toDouble());
+            break;
+
+        case Compiler::StaticType::Bool:
+            casted = Value(value.toBool());
+            break;
+
+        case Compiler::StaticType::String:
+            casted = Value(value.toString());
+            break;
+
+        case Compiler::StaticType::Pointer:
+            casted = Value(value.toPointer());
+            break;
+
+        default:
+            assert(false);
+            break;
+    }
+
+    auto ret = std::make_shared<CppConstIdentifier>(m_valueTypeMap.at(targetType), casted);
     m_constants.push_back(ret);
     return ret.get();
 }
 
 const CppNamedIdentifier *CppCodeGenerator::castRawValue(CppValue *value, Compiler::StaticType targetType)
 {
-    // TODO: Implement this
     assert(value->isRawValue);
-    return getNamedIdentifier(value, m_valueTypeMap.at(targetType), "castRawValue", false);
+
+    const CppNamedIdentifier *source = static_cast<const CppNamedIdentifier *>(getIdentifier(value));
+
+    if (value->type() == targetType)
+        return source;
+
+    const CppNamedIdentifier *result = getNamedIdentifier(value, m_valueTypeMap.at(targetType), "castRawValue", false);
+    std::string expression;
+
+    includeHeader(Header::ValueFunctions);
+
+    if (targetType == Compiler::StaticType::Number) {
+        expression = value->type() == Compiler::StaticType::Bool ? "static_cast<double>(" + source->name + ")" : "value_stringToDouble(" + source->name + ")";
+    } else if (targetType == Compiler::StaticType::Bool) {
+        expression = value->type() == Compiler::StaticType::Number ? "(" + source->name + " != 0.0)" : "value_stringToBool(" + source->name + ")";
+    } else if (targetType == Compiler::StaticType::String) {
+        if (value->type() == Compiler::StaticType::Number) {
+            const CppNamedIdentifier *string = addStringAlloca();
+
+            m_codeStream.beginLine();
+            CppFunctionCall call(m_codeStream, "value_doubleToStringPtr");
+            call.param(source->name).param(string->name);
+            call.close();
+            m_codeStream.addToLine(";");
+            m_codeStream.endLine();
+
+            expression = string->name;
+        } else if (value->type() == Compiler::StaticType::Bool) {
+            expression = "value_boolToStringPtr(" + source->name + ")";
+        }
+    }
+
+    m_codeStream.beginLine();
+    CppAssignment assignment(m_codeStream, result);
+    m_codeStream.addToLine(expression);
+    assignment.close();
+    m_codeStream.endLine();
+    return result;
 }
 
 const CppNamedIdentifier *CppCodeGenerator::createValue(CppValue *value)
