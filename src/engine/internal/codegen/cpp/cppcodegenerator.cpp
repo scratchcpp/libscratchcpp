@@ -224,6 +224,9 @@ void CppCodeGenerator::createCall(const std::string &name, CppIdentifier::Type r
         // Strings are returned through an output parameter
         includeHeader(Header::ExecutionContext);
         strRet = addStringAlloca();
+
+        if (retValue)
+            m_identifiers[retValue] = m_strings.back();
     }
 
     m_codeStream.beginLine();

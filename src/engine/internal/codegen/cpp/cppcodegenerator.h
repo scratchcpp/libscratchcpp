@@ -3,6 +3,7 @@
 #pragma once
 
 #include <scratchcpp/compiler.h>
+#include <test_export.h>
 #include <unordered_map>
 #include <sstream>
 
@@ -15,7 +16,7 @@ namespace libscratchcpp
 
 class CppValue;
 
-class CppCodeGenerator
+class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
 {
     public:
         CppCodeGenerator();
