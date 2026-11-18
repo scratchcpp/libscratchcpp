@@ -49,6 +49,8 @@ std::shared_ptr<ExecutableCode> CppCodeBuilder::build()
     while (ins)
         ins = m_instructionBuilder.process(ins);
 
+    std::cout << m_codeGen.finalize();
+
     return std::make_shared<CppExecutableCode>(m_ctx);
 }
 
