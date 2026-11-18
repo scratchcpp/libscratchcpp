@@ -231,7 +231,7 @@ void CppCodeGenerator::createCall(const std::string &name, CppIdentifier::Type r
     std::unique_ptr<CppAssignment> strAssignment;
 
     if (retType != CppIdentifier::Type::StringPtr) {
-        strAssignment = std::make_unique<CppAssignment>(m_codeStream, getNamedIdentifier(retValue, retType, "ret", false));
+        strAssignment = std::make_unique<CppAssignment>(m_codeStream, getNamedIdentifier(retValue, retType, "ret", true));
     }
 
     createCall(name, strRet, ctxArg, targetArg, args);
