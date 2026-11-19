@@ -10,6 +10,7 @@
 #include "cppnamedidentifier.h"
 #include "cppconstidentifier.h"
 #include "cppcodestream.h"
+#include "cppobjectpointer.h"
 
 namespace libscratchcpp
 {
@@ -55,6 +56,7 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
         const CppIdentifier *getIdentifier(CppValue *value);
         const CppNamedIdentifier *getNamedIdentifier(CppValue *value, CppIdentifier::Type type, const std::string &name, bool isMutable, bool isReference = false);
         const CppNamedIdentifier *createNamedIdentifier(CppIdentifier::Type type, const std::string &name, bool isMutable);
+        const CppIdentifier *addPointerValue(CppValue *value, const CppObjectPointerDescriptor &descriptor);
         std::string getNewIdentifierName(const std::string &name);
         void includeHeader(Header header);
 
@@ -83,6 +85,7 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
         std::unordered_set<Header> m_includedHeaders;
         std::vector<std::shared_ptr<CppIdentifier>> m_internalIdentifiers;
         std::vector<std::shared_ptr<CppConstIdentifier>> m_constants;
+        std::vector<CppObjectPointerDescriptor> m_objectPointers;
 
         CppNamedIdentifier m_stringArray;
         std::vector<std::shared_ptr<CppNamedIdentifier>> m_strings;

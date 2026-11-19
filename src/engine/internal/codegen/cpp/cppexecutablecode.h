@@ -4,6 +4,11 @@
 
 #include <scratchcpp/executablecode.h>
 
+#include <mutex>
+#include <unordered_map>
+#include <vector>
+
+#include "cppobjectpointer.h"
 #include "test_export.h"
 
 namespace libscratchcpp
@@ -11,13 +16,14 @@ namespace libscratchcpp
 
 class Target;
 class List;
+class IEngine;
 class CppCompilerContext;
 class CppExecutionContext;
 
 class LIBSCRATCHCPP_TEST_EXPORT CppExecutableCode : public ExecutableCode
 {
     public:
-        CppExecutableCode(CppCompilerContext *ctx);
+        CppExecutableCode(CppCompilerContext *ctx, std::vector<CppObjectPointerDescriptor> objectPointers = {});
 
         virtual void run(ExecutionContext *context) override final;
         virtual ValueData runReporter(ExecutionContext *context) override final;
@@ -30,14 +36,18 @@ class LIBSCRATCHCPP_TEST_EXPORT CppExecutableCode : public ExecutableCode
         virtual std::shared_ptr<ExecutionContext> createExecutionContext(Thread *thread) const override final;
 
     protected:
-        virtual void runScript(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists);
-        virtual ValueData runReporter(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists);
-        virtual bool runPredicate(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists);
+        virtual void runScript(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists, void **objects);
+        virtual ValueData runReporter(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists, void **objects);
+        virtual bool runPredicate(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists, void **objects);
 
     private:
         static CppExecutionContext *getContext(ExecutionContext *context);
+        void **getObjectPointers(IEngine *engine) const;
 
         CppCompilerContext *m_ctx = nullptr;
+        std::vector<CppObjectPointerDescriptor> m_objectPointerDescriptors;
+        mutable std::mutex m_objectPointerMutex;
+        mutable std::unordered_map<IEngine *, std::vector<void *>> m_objectPointersByEngine;
 };
 
 } // namespace libscratchcpp

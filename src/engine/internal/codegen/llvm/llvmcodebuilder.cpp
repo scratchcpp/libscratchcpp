@@ -6,6 +6,9 @@
 #include <scratchcpp/iengine.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <scratchcpp/itimer.h>
+#include <scratchcpp/scratchconfiguration.h>
+#include <scratchcpp/igraphicseffect.h>
 #include <scratchcpp/compilerconstant.h>
 #include <scratchcpp/compilerlocalvariable.h>
 
@@ -142,6 +145,35 @@ CompilerConstant *LLVMCodeBuilder::addConstValue(const Value &value)
     auto reg = std::static_pointer_cast<LLVMRegister>(constReg);
     m_lastConstValue = reg.get();
     return static_cast<CompilerConstant *>(static_cast<LLVMConstantRegister *>(addReg(reg, nullptr)));
+}
+
+CompilerValue *LLVMCodeBuilder::addTargetPointer(const std::string &name)
+{
+    IEngine *engine = m_ctx->engine();
+    const int targetIndex = engine->findTarget(name);
+    Target *target = targetIndex >= 0 ? engine->targetAt(targetIndex) : nullptr;
+
+    return addConstValue(Value(static_cast<const void *>(target)));
+}
+
+CompilerValue *LLVMCodeBuilder::addVariablePointer(Variable *variable)
+{
+    return addConstValue(Value(static_cast<const void *>(variable)));
+}
+
+CompilerValue *LLVMCodeBuilder::addListPointer(List *list)
+{
+    return addConstValue(Value(static_cast<const void *>(list)));
+}
+
+CompilerValue *LLVMCodeBuilder::addTimerPointer()
+{
+    return addConstValue(Value(static_cast<const void *>(m_ctx->engine()->timer())));
+}
+
+CompilerValue *LLVMCodeBuilder::addEffectPointer(const std::string &name)
+{
+    return addConstValue(Value(static_cast<const void *>(ScratchConfiguration::getGraphicsEffect(name))));
 }
 
 CompilerValue *LLVMCodeBuilder::addStringChar(CompilerValue *string, CompilerValue *index)

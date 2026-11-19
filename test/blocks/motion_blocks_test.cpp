@@ -312,13 +312,13 @@ TEST_F(MotionBlocksTest, PointTowardsSprite)
         anotherSprite->setY(-123.48);
         anotherSprite->setDirection(-2.5);
 
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillRepeatedly(Return(2));
+        EXPECT_CALL(m_engineMock, targetAt(2)).WillRepeatedly(Return(anotherSprite.get()));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_pointtowards");
         builder.addDropdownInput("TOWARDS", "def");
         auto block = builder.currentBlock();
 
-        EXPECT_CALL(m_engineMock, findTarget("def")).WillOnce(Return(2));
-        EXPECT_CALL(m_engineMock, targetAt(2)).WillRepeatedly(Return(anotherSprite.get()));
         Compiler compiler(&m_engineMock, sprite.get());
         auto code = compiler.compile(block);
         Script script(sprite.get(), block, &m_engineMock);
@@ -337,13 +337,13 @@ TEST_F(MotionBlocksTest, PointTowardsSprite)
         sprite->setY(-100.025);
         sprite->setDirection(21.58);
 
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillRepeatedly(Return(2));
+        EXPECT_CALL(m_engineMock, targetAt(2)).WillRepeatedly(Return(nullptr));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_pointtowards");
         builder.addDropdownInput("TOWARDS", "def");
         auto block = builder.currentBlock();
 
-        EXPECT_CALL(m_engineMock, findTarget("def")).WillOnce(Return(2));
-        EXPECT_CALL(m_engineMock, targetAt(2)).WillRepeatedly(Return(nullptr));
         Compiler compiler(&m_engineMock, sprite.get());
         auto code = compiler.compile(block);
         Script script(sprite.get(), block, &m_engineMock);
@@ -364,13 +364,13 @@ TEST_F(MotionBlocksTest, PointTowardsSprite)
 
         auto stage = std::make_shared<Stage>();
 
+        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(0));
+        EXPECT_CALL(m_engineMock, targetAt(0)).WillRepeatedly(Return(stage.get()));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_pointtowards");
         builder.addDropdownInput("TOWARDS", "_stage_");
         auto block = builder.currentBlock();
 
-        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(0));
-        EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(stage.get()));
         Compiler compiler(&m_engineMock, sprite.get());
         auto code = compiler.compile(block);
         Script script(sprite.get(), block, &m_engineMock);
@@ -396,6 +396,8 @@ TEST_F(MotionBlocksTest, PointTowardsSprite)
         anotherSprite->setY(-3.21);
         anotherSprite->setDirection(82.54);
 
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillRepeatedly(Return(5));
+        EXPECT_CALL(m_engineMock, targetAt(5)).WillRepeatedly(Return(anotherSprite.get()));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_pointtowards");
         builder.addValueInput("TOWARDS", "def");
@@ -407,8 +409,6 @@ TEST_F(MotionBlocksTest, PointTowardsSprite)
         script.setCode(code);
         Thread thread(sprite.get(), &m_engineMock, &script);
 
-        EXPECT_CALL(m_engineMock, findTarget("def")).WillOnce(Return(5));
-        EXPECT_CALL(m_engineMock, targetAt(5)).WillOnce(Return(anotherSprite.get()));
         thread.run();
         ASSERT_EQ(std::round(sprite->direction() * 100) / 100, 29.66);
     }
@@ -421,6 +421,8 @@ TEST_F(MotionBlocksTest, PointTowardsSprite)
         sprite->setY(-100.025);
         sprite->setDirection(21.58);
 
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillRepeatedly(Return(5));
+        EXPECT_CALL(m_engineMock, targetAt(5)).WillRepeatedly(Return(nullptr));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_pointtowards");
         builder.addValueInput("TOWARDS", "def");
@@ -432,8 +434,6 @@ TEST_F(MotionBlocksTest, PointTowardsSprite)
         script.setCode(code);
         Thread thread(sprite.get(), &m_engineMock, &script);
 
-        EXPECT_CALL(m_engineMock, findTarget("def")).WillOnce(Return(5));
-        EXPECT_CALL(m_engineMock, targetAt(5)).WillOnce(Return(nullptr));
         thread.run();
         ASSERT_EQ(sprite->direction(), 21.58);
     }
@@ -448,6 +448,8 @@ TEST_F(MotionBlocksTest, PointTowardsSprite)
 
         auto stage = std::make_shared<Stage>();
 
+        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(0));
+        EXPECT_CALL(m_engineMock, targetAt(0)).WillRepeatedly(Return(stage.get()));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_pointtowards");
         builder.addValueInput("TOWARDS", "_stage_");
@@ -459,8 +461,6 @@ TEST_F(MotionBlocksTest, PointTowardsSprite)
         script.setCode(code);
         Thread thread(sprite.get(), &m_engineMock, &script);
 
-        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(0));
-        EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(stage.get()));
         thread.run();
         ASSERT_EQ(std::round(sprite->direction() * 100) / 100, 21.58);
     }
@@ -674,13 +674,13 @@ TEST_F(MotionBlocksTest, GoToSprite)
         anotherSprite->setX(-45.12);
         anotherSprite->setY(-123.48);
 
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillRepeatedly(Return(2));
+        EXPECT_CALL(m_engineMock, targetAt(2)).WillRepeatedly(Return(anotherSprite.get()));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_goto");
         builder.addDropdownInput("TO", "def");
         auto block = builder.currentBlock();
 
-        EXPECT_CALL(m_engineMock, findTarget("def")).WillOnce(Return(2));
-        EXPECT_CALL(m_engineMock, targetAt(2)).WillRepeatedly(Return(anotherSprite.get()));
         Compiler compiler(&m_engineMock, sprite.get());
         auto code = compiler.compile(block);
         Script script(sprite.get(), block, &m_engineMock);
@@ -699,13 +699,13 @@ TEST_F(MotionBlocksTest, GoToSprite)
         sprite->setX(70.1);
         sprite->setY(-100.025);
 
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillRepeatedly(Return(2));
+        EXPECT_CALL(m_engineMock, targetAt(2)).WillRepeatedly(Return(nullptr));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_goto");
         builder.addDropdownInput("TO", "def");
         auto block = builder.currentBlock();
 
-        EXPECT_CALL(m_engineMock, findTarget("def")).WillOnce(Return(2));
-        EXPECT_CALL(m_engineMock, targetAt(2)).WillRepeatedly(Return(nullptr));
         Compiler compiler(&m_engineMock, sprite.get());
         auto code = compiler.compile(block);
         Script script(sprite.get(), block, &m_engineMock);
@@ -726,13 +726,13 @@ TEST_F(MotionBlocksTest, GoToSprite)
 
         auto stage = std::make_shared<Stage>();
 
+        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(0));
+        EXPECT_CALL(m_engineMock, targetAt(0)).WillRepeatedly(Return(stage.get()));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_goto");
         builder.addDropdownInput("TO", "_stage_");
         auto block = builder.currentBlock();
 
-        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(0));
-        EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(stage.get()));
         Compiler compiler(&m_engineMock, sprite.get());
         auto code = compiler.compile(block);
         Script script(sprite.get(), block, &m_engineMock);
@@ -757,6 +757,8 @@ TEST_F(MotionBlocksTest, GoToSprite)
         anotherSprite->setX(125.23);
         anotherSprite->setY(-3.21);
 
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillRepeatedly(Return(5));
+        EXPECT_CALL(m_engineMock, targetAt(5)).WillRepeatedly(Return(anotherSprite.get()));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_goto");
         builder.addValueInput("TO", "def");
@@ -768,8 +770,6 @@ TEST_F(MotionBlocksTest, GoToSprite)
         script.setCode(code);
         Thread thread(sprite.get(), &m_engineMock, &script);
 
-        EXPECT_CALL(m_engineMock, findTarget("def")).WillOnce(Return(5));
-        EXPECT_CALL(m_engineMock, targetAt(5)).WillOnce(Return(anotherSprite.get()));
         thread.run();
         ASSERT_EQ(sprite->x(), 125.23);
         ASSERT_EQ(sprite->y(), -3.21);
@@ -782,6 +782,8 @@ TEST_F(MotionBlocksTest, GoToSprite)
         sprite->setX(70.1);
         sprite->setY(-100.025);
 
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillRepeatedly(Return(5));
+        EXPECT_CALL(m_engineMock, targetAt(5)).WillRepeatedly(Return(nullptr));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_goto");
         builder.addValueInput("TO", "def");
@@ -793,8 +795,6 @@ TEST_F(MotionBlocksTest, GoToSprite)
         script.setCode(code);
         Thread thread(sprite.get(), &m_engineMock, &script);
 
-        EXPECT_CALL(m_engineMock, findTarget("def")).WillOnce(Return(5));
-        EXPECT_CALL(m_engineMock, targetAt(5)).WillOnce(Return(nullptr));
         thread.run();
         ASSERT_EQ(sprite->x(), 70.1);
         ASSERT_EQ(sprite->y(), -100.025);
@@ -809,6 +809,8 @@ TEST_F(MotionBlocksTest, GoToSprite)
 
         auto stage = std::make_shared<Stage>();
 
+        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(0));
+        EXPECT_CALL(m_engineMock, targetAt(0)).WillRepeatedly(Return(stage.get()));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_goto");
         builder.addValueInput("TO", "_stage_");
@@ -820,8 +822,6 @@ TEST_F(MotionBlocksTest, GoToSprite)
         script.setCode(code);
         Thread thread(sprite.get(), &m_engineMock, &script);
 
-        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(0));
-        EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(stage.get()));
         thread.run();
         ASSERT_EQ(sprite->x(), 70.1);
         ASSERT_EQ(sprite->y(), -100.025);
@@ -1283,14 +1283,14 @@ TEST_F(MotionBlocksTest, GlideToSprite)
         anotherSprite->setX(-45.12);
         anotherSprite->setY(-123.48);
 
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillRepeatedly(Return(2));
+        EXPECT_CALL(m_engineMock, targetAt(2)).WillRepeatedly(Return(anotherSprite.get()));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_glideto");
         builder.addValueInput("SECS", 2.5);
         builder.addDropdownInput("TO", "def");
         auto block = builder.currentBlock();
 
-        EXPECT_CALL(m_engineMock, findTarget("def")).WillOnce(Return(2));
-        EXPECT_CALL(m_engineMock, targetAt(2)).WillRepeatedly(Return(anotherSprite.get()));
         Compiler compiler(&m_engineMock, sprite.get());
         auto code = compiler.compile(block);
         Script script(sprite.get(), block, &m_engineMock);
@@ -1327,14 +1327,14 @@ TEST_F(MotionBlocksTest, GlideToSprite)
         sprite->setX(70.1);
         sprite->setY(-100.025);
 
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillRepeatedly(Return(2));
+        EXPECT_CALL(m_engineMock, targetAt(2)).WillRepeatedly(Return(nullptr));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_glideto");
         builder.addValueInput("SECS", 2.5);
         builder.addDropdownInput("TO", "def");
         auto block = builder.currentBlock();
 
-        EXPECT_CALL(m_engineMock, findTarget("def")).WillOnce(Return(2));
-        EXPECT_CALL(m_engineMock, targetAt(2)).WillRepeatedly(Return(nullptr));
         Compiler compiler(&m_engineMock, sprite.get());
         auto code = compiler.compile(block);
         Script script(sprite.get(), block, &m_engineMock);
@@ -1363,14 +1363,14 @@ TEST_F(MotionBlocksTest, GlideToSprite)
 
         auto stage = std::make_shared<Stage>();
 
+        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(0));
+        EXPECT_CALL(m_engineMock, targetAt(0)).WillRepeatedly(Return(stage.get()));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_glideto");
         builder.addValueInput("SECS", 2.5);
         builder.addDropdownInput("TO", "_stage_");
         auto block = builder.currentBlock();
 
-        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(0));
-        EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(stage.get()));
         Compiler compiler(&m_engineMock, sprite.get());
         auto code = compiler.compile(block);
         Script script(sprite.get(), block, &m_engineMock);
@@ -1403,6 +1403,8 @@ TEST_F(MotionBlocksTest, GlideToSprite)
         anotherSprite->setX(-45.12);
         anotherSprite->setY(-123.48);
 
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillRepeatedly(Return(5));
+        EXPECT_CALL(m_engineMock, targetAt(5)).WillRepeatedly(Return(anotherSprite.get()));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_glideto");
         builder.addValueInput("SECS", 2.5);
@@ -1418,8 +1420,6 @@ TEST_F(MotionBlocksTest, GlideToSprite)
         StackTimerMock timer;
         ctx->setStackTimer(&timer);
 
-        EXPECT_CALL(m_engineMock, findTarget("def")).WillRepeatedly(Return(5));
-        EXPECT_CALL(m_engineMock, targetAt(5)).WillRepeatedly(Return(anotherSprite.get()));
 
         EXPECT_CALL(timer, start(2.5));
         EXPECT_CALL(m_engineMock, requestRedraw()).WillRepeatedly(Return());
@@ -1448,6 +1448,8 @@ TEST_F(MotionBlocksTest, GlideToSprite)
         sprite->setX(70.1);
         sprite->setY(-100.025);
 
+        EXPECT_CALL(m_engineMock, findTarget("def")).WillRepeatedly(Return(5));
+        EXPECT_CALL(m_engineMock, targetAt(5)).WillRepeatedly(Return(nullptr));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_glideto");
         builder.addValueInput("SECS", 2.5);
@@ -1466,8 +1468,6 @@ TEST_F(MotionBlocksTest, GlideToSprite)
         EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
         EXPECT_CALL(timer, start).Times(0);
 
-        EXPECT_CALL(m_engineMock, findTarget("def")).WillOnce(Return(5));
-        EXPECT_CALL(m_engineMock, targetAt(5)).WillOnce(Return(nullptr));
         code->run(ctx.get());
         ASSERT_EQ(sprite->x(), 70.1);
         ASSERT_EQ(sprite->y(), -100.025);
@@ -1484,6 +1484,8 @@ TEST_F(MotionBlocksTest, GlideToSprite)
 
         auto stage = std::make_shared<Stage>();
 
+        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(0));
+        EXPECT_CALL(m_engineMock, targetAt(0)).WillRepeatedly(Return(stage.get()));
         ScriptBuilder builder(m_extension.get(), m_engine, sprite);
         builder.addBlock("motion_glideto");
         builder.addValueInput("SECS", 2.5);
@@ -1502,8 +1504,6 @@ TEST_F(MotionBlocksTest, GlideToSprite)
         EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
         EXPECT_CALL(timer, start).Times(0);
 
-        EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillOnce(Return(0));
-        EXPECT_CALL(m_engineMock, targetAt(0)).WillOnce(Return(stage.get()));
         code->run(ctx.get());
         ASSERT_EQ(sprite->x(), 70.1);
         ASSERT_EQ(sprite->y(), -100.025);
@@ -1520,6 +1520,8 @@ TEST_F(MotionBlocksTest, GlideToSprite)
         sprite->setX(153.2);
         sprite->setY(59.27);
 
+        EXPECT_CALL(m_engineMock, findTarget("Test")).WillRepeatedly(Return(9));
+        EXPECT_CALL(m_engineMock, targetAt(9)).WillRepeatedly(Return(sprite.get()));
         ScriptBuilder builder(m_extension.get(), m_engine, stage);
 
         builder.addBlock("motion_glideto");
@@ -1527,8 +1529,6 @@ TEST_F(MotionBlocksTest, GlideToSprite)
         builder.addDropdownInput("TO", "Test");
         auto block = builder.currentBlock();
 
-        EXPECT_CALL(m_engineMock, findTarget("Test")).WillOnce(Return(9));
-        EXPECT_CALL(m_engineMock, targetAt(9)).WillOnce(Return(sprite.get()));
         Compiler compiler(&m_engineMock, stage.get());
         auto code = compiler.compile(block);
         Script script(stage.get(), block, &m_engineMock);
@@ -1563,6 +1563,8 @@ TEST_F(MotionBlocksTest, GlideToSprite)
         sprite->setX(153.2);
         sprite->setY(59.27);
 
+        EXPECT_CALL(m_engineMock, findTarget("Test")).WillRepeatedly(Return(9));
+        EXPECT_CALL(m_engineMock, targetAt(9)).WillRepeatedly(Return(sprite.get()));
         ScriptBuilder builder(m_extension.get(), m_engine, stage);
 
         builder.addBlock("motion_glideto");
@@ -1581,8 +1583,6 @@ TEST_F(MotionBlocksTest, GlideToSprite)
 
         EXPECT_CALL(m_engineMock, requestRedraw).Times(0);
 
-        EXPECT_CALL(m_engineMock, findTarget("Test")).WillOnce(Return(9));
-        EXPECT_CALL(m_engineMock, targetAt(9)).WillOnce(Return(sprite.get()));
         EXPECT_CALL(timer, start(2.5));
         code->run(ctx.get());
         ASSERT_FALSE(code->isFinished(ctx.get()));

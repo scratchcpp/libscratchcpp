@@ -13,6 +13,11 @@ class CodeBuilderMock : public ICodeBuilder
         MOCK_METHOD(CompilerValue *, addTargetFunctionCall, (const std::string &, Compiler::StaticType, const Compiler::ArgTypes &, const Compiler::Args &), (override));
         MOCK_METHOD(CompilerValue *, addFunctionCallWithCtx, (const std::string &, Compiler::StaticType, const Compiler::ArgTypes &, const Compiler::Args &), (override));
         MOCK_METHOD(CompilerConstant *, addConstValue, (const Value &), (override));
+        MOCK_METHOD(CompilerValue *, addTargetPointer, (const std::string &), (override));
+        MOCK_METHOD(CompilerValue *, addVariablePointer, (Variable *), (override));
+        MOCK_METHOD(CompilerValue *, addListPointer, (List *), (override));
+        MOCK_METHOD(CompilerValue *, addTimerPointer, (), (override));
+        MOCK_METHOD(CompilerValue *, addEffectPointer, (const std::string &), (override));
         MOCK_METHOD(CompilerValue *, addStringChar, (CompilerValue *, CompilerValue *), (override));
         MOCK_METHOD(CompilerValue *, addStringLength, (CompilerValue *), (override));
         MOCK_METHOD(CompilerValue *, addLoopIndex, (), (override));

@@ -49,17 +49,50 @@ std::string CppCodeGenerator::finalize()
 {
     static unsigned int scriptCount = 0;
 
-    const std::string scriptName = "Script" + std::to_string(scriptCount++);
+    const std::string scriptNumber = std::to_string(scriptCount++);
+    const std::string scriptName = "Script" + scriptNumber;
 
     std::ostringstream source;
-    source << "#include \"script" + std::to_string(scriptCount++) + ".h\"\n";
+    source << "#include \"script" << scriptNumber << ".h\"\n";
 
     for (Header header : m_includedHeaders) {
         source << "#include " << m_headers.at(header) << "\n";
     }
 
     source << "\nnamespace libscratchcpp\n{\n\n";
-    source << "void " << scriptName << "::runScript(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists)\n{\n";
+    source << scriptName << "::" << scriptName << "(CppCompilerContext *ctx) :\n";
+    source << "    CppExecutableCode(ctx, {";
+
+    for (size_t i = 0; i < m_objectPointers.size(); ++i) {
+        if (i)
+            source << ",";
+
+        const CppObjectPointerDescriptor &descriptor = m_objectPointers[i];
+        const char *kind = "";
+
+        switch (descriptor.kind) {
+            case CppObjectPointerDescriptor::Kind::Target:
+                kind = "Target";
+                break;
+            case CppObjectPointerDescriptor::Kind::Variable:
+                kind = "Variable";
+                break;
+            case CppObjectPointerDescriptor::Kind::List:
+                kind = "List";
+                break;
+            case CppObjectPointerDescriptor::Kind::Timer:
+                kind = "Timer";
+                break;
+            case CppObjectPointerDescriptor::Kind::Effect:
+                kind = "Effect";
+                break;
+        }
+
+        source << " { CppObjectPointerDescriptor::Kind::" << kind << ", \"" << escapeCppString(descriptor.key) << "\" }";
+    }
+
+    source << "})\n{\n}\n\n";
+    source << "void " << scriptName << "::runScript(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists, void **objects)\n{\n";
 
     std::unordered_set<const CppIdentifier *> declared;
     const auto declare = [&](const CppIdentifier *identifier) {
@@ -67,6 +100,9 @@ std::string CppCodeGenerator::finalize()
             return;
 
         const auto *named = static_cast<const CppNamedIdentifier *>(identifier);
+
+        if (named->name.rfind("objects[", 0) == 0)
+            return;
 
         source << "    " << identifier->typeString();
         source << " " << named->name << ";\n";
@@ -102,6 +138,9 @@ std::string CppCodeGenerator::finalize()
 
 const CppIdentifier *CppCodeGenerator::castValue(CppValue *value, Compiler::StaticType targetType)
 {
+    if (auto *pointerValue = dynamic_cast<CppPointerValue *>(value))
+        return addPointerValue(value, pointerValue->descriptor);
+
     if (value->isConst()) {
         if (!TypeUtils::isSingleType(targetType))
             return createValue(value);
@@ -203,6 +242,22 @@ const CppIdentifier *CppCodeGenerator::castValue(CppValue *value, Compiler::Stat
     sw.close();
 
     return result;
+}
+
+const CppIdentifier *CppCodeGenerator::addPointerValue(CppValue *value, const CppObjectPointerDescriptor &descriptor)
+{
+    auto it = m_identifiers.find(value);
+
+    if (it != m_identifiers.cend())
+        return it->second.get();
+
+    const size_t index = m_objectPointers.size();
+    m_objectPointers.push_back(descriptor);
+
+    const std::string expression = "objects[" + std::to_string(index) + "]";
+    auto identifier = std::make_shared<CppNamedIdentifier>(CppIdentifier::Type::Pointer, expression, false);
+    m_identifiers[value] = identifier;
+    return identifier.get();
 }
 
 void CppCodeGenerator::createCall(const std::string &name, bool ctxArg, bool targetArg, const std::vector<const CppIdentifier *> &args)
@@ -561,6 +616,9 @@ std::string CppCodeGenerator::toCppConstant(const Value &value)
 
         case ValueType::String:
             return "\"" + escapeCppString(value.toString()) + "\"";
+
+        case ValueType::Pointer:
+            throw std::runtime_error("pointer constants not supported in C++ backend");
 
         default:
             throw std::runtime_error("unsupported constant type");

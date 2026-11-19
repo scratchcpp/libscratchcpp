@@ -28,6 +28,11 @@ class CppCodeBuilder : public ICodeBuilder
         CompilerValue *addTargetFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
         CompilerValue *addFunctionCallWithCtx(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
         CompilerConstant *addConstValue(const Value &value) override;
+        CompilerValue *addTargetPointer(const std::string &name) override;
+        CompilerValue *addVariablePointer(Variable *variable) override;
+        CompilerValue *addListPointer(List *list) override;
+        CompilerValue *addTimerPointer() override;
+        CompilerValue *addEffectPointer(const std::string &name) override;
         CompilerValue *addStringChar(CompilerValue *string, CompilerValue *index) override;
         CompilerValue *addStringLength(CompilerValue *string) override;
         CompilerValue *addLoopIndex() override;

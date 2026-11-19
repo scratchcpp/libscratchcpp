@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/compilerlocalvariable.h>
+#include <scratchcpp/variable.h>
+#include <scratchcpp/list.h>
 
 #include "cppcodebuilder.h"
 #include "cppcompilercontext.h"
@@ -98,6 +100,33 @@ CompilerConstant *CppCodeBuilder::addConstValue(const Value &value)
     auto constValue = std::make_shared<CppConstant>(TypeUtils::mapType(value.type()), value);
     auto genericValue = std::static_pointer_cast<CppValue>(constValue);
     return static_cast<CompilerConstant *>(static_cast<CppConstant *>(addValue(genericValue, nullptr)));
+}
+
+CompilerValue *CppCodeBuilder::addTargetPointer(const std::string &name)
+{
+    return addValue(std::make_shared<CppPointerValue>(CppObjectPointerDescriptor(CppObjectPointerDescriptor::Kind::Target, name)), nullptr);
+}
+
+CompilerValue *CppCodeBuilder::addVariablePointer(Variable *variable)
+{
+    assert(variable);
+    return addValue(std::make_shared<CppPointerValue>(CppObjectPointerDescriptor(CppObjectPointerDescriptor::Kind::Variable, variable->id())), nullptr);
+}
+
+CompilerValue *CppCodeBuilder::addListPointer(List *list)
+{
+    assert(list);
+    return addValue(std::make_shared<CppPointerValue>(CppObjectPointerDescriptor(CppObjectPointerDescriptor::Kind::List, list->id())), nullptr);
+}
+
+CompilerValue *CppCodeBuilder::addTimerPointer()
+{
+    return addValue(std::make_shared<CppPointerValue>(CppObjectPointerDescriptor(CppObjectPointerDescriptor::Kind::Timer)), nullptr);
+}
+
+CompilerValue *CppCodeBuilder::addEffectPointer(const std::string &name)
+{
+    return addValue(std::make_shared<CppPointerValue>(CppObjectPointerDescriptor(CppObjectPointerDescriptor::Kind::Effect, name)), nullptr);
 }
 
 CompilerValue *CppCodeBuilder::addStringChar(CompilerValue *string, CompilerValue *index)

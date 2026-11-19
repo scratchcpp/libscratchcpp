@@ -5,6 +5,10 @@
 #include <scratchcpp/compilervalue.h>
 #include <scratchcpp/value.h>
 
+#include <utility>
+
+#include "cppobjectpointer.h"
+
 namespace libscratchcpp
 {
 
@@ -26,6 +30,19 @@ struct CppValue : public virtual CompilerValue
         bool isRawValue = false;
 
         std::shared_ptr<CppInstruction> instruction;
+};
+
+struct CppPointerValue : public CppValue
+{
+        CppPointerValue(CppObjectPointerDescriptor descriptor) :
+            CompilerValue(Compiler::StaticType::Pointer),
+            CppValue(Compiler::StaticType::Pointer),
+            descriptor(std::move(descriptor))
+        {
+            isRawValue = true;
+        }
+
+        CppObjectPointerDescriptor descriptor;
 };
 
 } // namespace libscratchcpp

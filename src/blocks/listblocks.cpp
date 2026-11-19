@@ -55,7 +55,7 @@ CompilerValue *ListBlocks::compileListContents(Compiler *compiler)
 
     // If this block is used in a list monitor, return the list pointer
     if (compiler->block()->isMonitorBlock())
-        return compiler->addConstValue(list.get());
+        return compiler->addListPointer(static_cast<List *>(list.get()));
     else
         return compiler->addListContents(static_cast<List *>(list.get()));
 }
@@ -224,7 +224,7 @@ CompilerValue *ListBlocks::compileShowList(Compiler *compiler)
     List *list = static_cast<List *>(field->valuePtr().get());
     assert(list);
 
-    CompilerConstant *listPtr = compiler->addConstValue(list);
+    CompilerValue *listPtr = compiler->addListPointer(list);
     compiler->addTargetFunctionCall("data_showlist", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { listPtr });
 
     return nullptr;
@@ -237,7 +237,7 @@ CompilerValue *ListBlocks::compileHideList(Compiler *compiler)
     List *list = static_cast<List *>(field->valuePtr().get());
     assert(list);
 
-    CompilerConstant *listPtr = compiler->addConstValue(list);
+    CompilerValue *listPtr = compiler->addListPointer(list);
     compiler->addTargetFunctionCall("data_hidelist", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { listPtr });
 
     return nullptr;

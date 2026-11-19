@@ -56,7 +56,7 @@ TEST_F(CppExecutableCodeTest, ScriptFunction)
     auto ctx = m_code->createExecutionContext(&thread);
     ASSERT_FALSE(m_code->isFinished(ctx.get()));
 
-    EXPECT_CALL(*m_code, runScript(ctx.get(), &m_target, m_target.variableData(), m_target.listData()));
+    EXPECT_CALL(*m_code, runScript(ctx.get(), &m_target, m_target.variableData(), m_target.listData(), nullptr));
     m_code->run(ctx.get());
     ASSERT_TRUE(m_code->isFinished(ctx.get()));
 
@@ -84,7 +84,7 @@ TEST_F(CppExecutableCodeTest, ScriptFunction)
     ASSERT_FALSE(m_code->isFinished(anotherCtx.get()));
     ASSERT_TRUE(m_code->isFinished(ctx.get()));
 
-    EXPECT_CALL(*m_code, runScript(anotherCtx.get(), &anotherTarget, anotherTarget.variableData(), anotherTarget.listData()));
+    EXPECT_CALL(*m_code, runScript(anotherCtx.get(), &anotherTarget, anotherTarget.variableData(), anotherTarget.listData(), nullptr));
     m_code->run(anotherCtx.get());
     ASSERT_TRUE(m_code->isFinished(anotherCtx.get()));
     ASSERT_TRUE(m_code->isFinished(ctx.get()));
@@ -102,16 +102,16 @@ TEST_F(CppExecutableCodeTest, PredicateFunction)
     Thread thread(&m_target, &m_engine, m_script.get());
     auto ctx = m_code->createExecutionContext(&thread);
 
-    EXPECT_CALL(*m_code, runPredicate(ctx.get(), &m_target, m_target.variableData(), m_target.listData())).WillOnce(Return(true));
+    EXPECT_CALL(*m_code, runPredicate(ctx.get(), &m_target, m_target.variableData(), m_target.listData(), nullptr)).WillOnce(Return(true));
     ASSERT_TRUE(std::static_pointer_cast<CppExecutableCode>(m_code)->runPredicate(ctx.get()));
 
-    EXPECT_CALL(*m_code, runPredicate(ctx.get(), &m_target, m_target.variableData(), m_target.listData())).WillOnce(Return(true));
+    EXPECT_CALL(*m_code, runPredicate(ctx.get(), &m_target, m_target.variableData(), m_target.listData(), nullptr)).WillOnce(Return(true));
     ASSERT_TRUE(std::static_pointer_cast<CppExecutableCode>(m_code)->runPredicate(ctx.get()));
 
-    EXPECT_CALL(*m_code, runPredicate(ctx.get(), &m_target, m_target.variableData(), m_target.listData())).WillOnce(Return(false));
+    EXPECT_CALL(*m_code, runPredicate(ctx.get(), &m_target, m_target.variableData(), m_target.listData(), nullptr)).WillOnce(Return(false));
     ASSERT_FALSE(std::static_pointer_cast<CppExecutableCode>(m_code)->runPredicate(ctx.get()));
 
-    EXPECT_CALL(*m_code, runPredicate(ctx.get(), &m_target, m_target.variableData(), m_target.listData())).WillOnce(Return(false));
+    EXPECT_CALL(*m_code, runPredicate(ctx.get(), &m_target, m_target.variableData(), m_target.listData(), nullptr)).WillOnce(Return(false));
     ASSERT_FALSE(std::static_pointer_cast<CppExecutableCode>(m_code)->runPredicate(ctx.get()));
 }
 
@@ -124,7 +124,7 @@ TEST_F(CppExecutableCodeTest, ReporterFunction)
     auto ctx = m_code->createExecutionContext(&thread);
 
     Value v = "test";
-    EXPECT_CALL(*m_code, runReporter(ctx.get(), &m_target, m_target.variableData(), m_target.listData())).WillOnce(Return(v.data()));
+    EXPECT_CALL(*m_code, runReporter(ctx.get(), &m_target, m_target.variableData(), m_target.listData(), nullptr)).WillOnce(Return(v.data()));
     ASSERT_EQ(Value(std::static_pointer_cast<CppExecutableCode>(m_code)->runReporter(ctx.get())).toString(), v.toString());
 }
 

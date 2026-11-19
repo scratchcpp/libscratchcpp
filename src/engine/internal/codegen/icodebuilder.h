@@ -24,6 +24,11 @@ class ICodeBuilder
         virtual CompilerValue *addTargetFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) = 0;
         virtual CompilerValue *addFunctionCallWithCtx(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) = 0;
         virtual CompilerConstant *addConstValue(const Value &value) = 0;
+        virtual CompilerValue *addTargetPointer(const std::string &name) = 0;
+        virtual CompilerValue *addVariablePointer(Variable *variable) = 0;
+        virtual CompilerValue *addListPointer(List *list) = 0;
+        virtual CompilerValue *addTimerPointer() = 0;
+        virtual CompilerValue *addEffectPointer(const std::string &name) = 0;
         virtual CompilerValue *addStringChar(CompilerValue *string, CompilerValue *index) = 0;
         virtual CompilerValue *addStringLength(CompilerValue *string) = 0;
         virtual CompilerValue *addLoopIndex() = 0;
