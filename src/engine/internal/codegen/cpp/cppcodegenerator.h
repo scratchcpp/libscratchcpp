@@ -62,6 +62,7 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
 
         const CppNamedIdentifier *addStringAlloca();
         void addArrayElement(const CppNamedIdentifier *array, size_t index);
+        const CppNamedIdentifier *getValueDataIdentifier(CppValue *value);
         const CppConstIdentifier *castConstValue(const Value &value, Compiler::StaticType targetType);
         const CppNamedIdentifier *castRawValue(CppValue *value, Compiler::StaticType targetType);
         const CppNamedIdentifier *createValue(CppValue *value);
@@ -77,6 +78,7 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
         CppCodeStream m_codeStream;
 
         std::unordered_map<CppValue *, std::shared_ptr<CppIdentifier>> m_identifiers;
+        std::unordered_map<CppValue *, const CppNamedIdentifier *> m_valueDataIdentifiers;
         std::unordered_map<std::string, unsigned int> m_identifierNameCounts;
         std::unordered_set<Header> m_includedHeaders;
         std::vector<std::shared_ptr<CppIdentifier>> m_internalIdentifiers;

@@ -109,15 +109,15 @@ const CppIdentifier *CppCodeGenerator::castValue(CppValue *value, Compiler::Stat
             return castConstValue(value->constValue(), targetType);
     }
 
-    if (value->isRawValue)
-        return castRawValue(value, targetType);
-
     if (!TypeUtils::isSingleType(targetType))
         return createValue(value);
 
+    if (value->isRawValue)
+        return castRawValue(value, targetType);
+
     assert(value->type() != Compiler::StaticType::Void && targetType != Compiler::StaticType::Void);
     const CppNamedIdentifier *source = static_cast<const CppNamedIdentifier *>(createValue(value));
-    const CppNamedIdentifier *result = getNamedIdentifier(value, m_valueTypeMap.at(targetType), "castValue", false);
+    const CppNamedIdentifier *result = createNamedIdentifier(m_valueTypeMap.at(targetType), "castValue", true);
     const CppNamedIdentifier *valueType = createNamedIdentifier(CppIdentifier::Type::ValueType, "valueType", true);
 
     m_codeStream.beginLine();
@@ -361,6 +361,18 @@ void CppCodeGenerator::addArrayElement(const CppNamedIdentifier *array, size_t i
     m_codeStream.addToLine("]");
 }
 
+const CppNamedIdentifier *CppCodeGenerator::getValueDataIdentifier(CppValue *value)
+{
+    auto it = m_valueDataIdentifiers.find(value);
+
+    if (it != m_valueDataIdentifiers.cend())
+        return it->second;
+
+    const CppNamedIdentifier *identifier = createNamedIdentifier(CppIdentifier::Type::ValueData, "value", true);
+    m_valueDataIdentifiers[value] = identifier;
+    return identifier;
+}
+
 const CppConstIdentifier *CppCodeGenerator::castConstValue(const Value &value, Compiler::StaticType targetType)
 {
     Value casted = value;
@@ -401,7 +413,7 @@ const CppNamedIdentifier *CppCodeGenerator::castRawValue(CppValue *value, Compil
     if (value->type() == targetType)
         return source;
 
-    const CppNamedIdentifier *result = getNamedIdentifier(value, m_valueTypeMap.at(targetType), "castRawValue", false);
+    const CppNamedIdentifier *result = createNamedIdentifier(m_valueTypeMap.at(targetType), "castRawValue", true);
     std::string expression;
 
     includeHeader(Header::ValueFunctions);
@@ -438,7 +450,7 @@ const CppNamedIdentifier *CppCodeGenerator::castRawValue(CppValue *value, Compil
 const CppNamedIdentifier *CppCodeGenerator::createValue(CppValue *value)
 {
     if (value->isConst()) {
-        const CppNamedIdentifier *identifier = getNamedIdentifier(value, CppIdentifier::Type::ValueData, "value", true, true);
+        const CppNamedIdentifier *identifier = getValueDataIdentifier(value);
 
         includeHeader(Header::Value);
 
@@ -466,8 +478,12 @@ const CppNamedIdentifier *CppCodeGenerator::createValue(CppValue *value)
         valueAssignment.close();
         m_codeStream.endLine();
         return identifier;
-    } else if (value->isRawValue) {
-        const CppNamedIdentifier *identifier = getNamedIdentifier(value, CppIdentifier::Type::ValueData, "value", false);
+    }
+
+    const auto it = m_identifiers.find(value);
+
+    if (value->isRawValue || (it != m_identifiers.cend() && it->second->type != CppIdentifier::Type::ValueData)) {
+        const CppNamedIdentifier *identifier = getValueDataIdentifier(value);
 
         includeHeader(Header::ValueData);
 
@@ -478,28 +494,31 @@ const CppNamedIdentifier *CppCodeGenerator::createValue(CppValue *value)
             throw std::runtime_error("raw values must have a named identifier when creating a ValueData instance");
         }
 
+        std::string member;
+        ValueType type = ValueType::Number;
+
         switch (value->type()) {
             case Compiler::StaticType::Number: {
-                // value.numberValue = rawValue;
-                CppAssignment valueAssignment(m_codeStream, identifier, "numberValue");
+                member = "numberValue";
+                type = ValueType::Number;
                 break;
             }
 
             case Compiler::StaticType::Bool: {
-                // value.boolValue = rawValue;
-                CppAssignment valueAssignment(m_codeStream, identifier, "boolValue");
+                member = "boolValue";
+                type = ValueType::Bool;
                 break;
             }
 
             case Compiler::StaticType::String: {
-                // value.stringValue = rawValue;
-                CppAssignment valueAssignment(m_codeStream, identifier, "stringValue");
+                member = "stringValue";
+                type = ValueType::String;
                 break;
             }
 
             case Compiler::StaticType::Pointer: {
-                // value.pointerValue = rawValue;
-                CppAssignment valueAssignment(m_codeStream, identifier, "pointerValue");
+                member = "pointerValue";
+                type = ValueType::Pointer;
                 break;
             }
 
@@ -509,13 +528,25 @@ const CppNamedIdentifier *CppCodeGenerator::createValue(CppValue *value)
         }
 
         auto valueNamedIdentifier = static_cast<const CppNamedIdentifier *>(valueIdentifier);
+
+        m_codeStream.beginLine();
+        CppAssignment valueAssignment(m_codeStream, identifier, member);
         m_codeStream.addToLine(valueNamedIdentifier->name);
-        m_codeStream.addToLine(";");
+        valueAssignment.close();
+        m_codeStream.endLine();
+
+        m_codeStream.beginLine();
+        CppAssignment typeAssignment(m_codeStream, identifier, "type");
+        m_codeStream.addToLine("ValueType::" + (type == ValueType::Number ? std::string("Number") : type == ValueType::Bool ? "Bool" : type == ValueType::String ? "String" : "Pointer"));
+        typeAssignment.close();
         m_codeStream.endLine();
         return identifier;
-    } else {
-        return getNamedIdentifier(value, CppIdentifier::Type::ValueData, "value", false);
     }
+
+    if (it != m_identifiers.cend())
+        return static_cast<const CppNamedIdentifier *>(it->second.get());
+
+    return getNamedIdentifier(value, CppIdentifier::Type::ValueData, "value", false);
 }
 
 std::string CppCodeGenerator::toCppConstant(const Value &value)
