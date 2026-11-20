@@ -167,7 +167,43 @@ CompilerValue *Compiler::addFunctionCallWithCtx(const std::string &functionName,
 /*! Adds the given constant to the compiled code. */
 CompilerConstant *Compiler::addConstValue(const Value &value)
 {
+    if (value.isPointer()) {
+        std::cerr << "error: constant pointers are not supported" << std::endl;
+        assert(false);
+        return nullptr;
+    }
+
     return static_cast<CompilerConstant *>(impl->builder->addConstValue(value));
+}
+
+/*! Adds a pointer to a target that is identified by its name. */
+CompilerValue *Compiler::addTargetPointer(const std::string &name)
+{
+    return impl->builder->addTargetPointer(name);
+}
+
+/*! Adds a pointer to a variable that is identified by its ID. */
+CompilerValue *Compiler::addVariablePointer(Variable *variable)
+{
+    return impl->builder->addVariablePointer(variable);
+}
+
+/*! Adds a pointer to a list that is identified by its ID. */
+CompilerValue *Compiler::addListPointer(List *list)
+{
+    return impl->builder->addListPointer(list);
+}
+
+/*! Adds a pointer to the engine's timer. */
+CompilerValue *Compiler::addTimerPointer()
+{
+    return impl->builder->addTimerPointer();
+}
+
+/*! Adds a pointer to the graphics effect that is identified by its name. */
+CompilerValue *Compiler::addEffectPointer(const std::string &name)
+{
+    return impl->builder->addEffectPointer(name);
 }
 
 /*! Adds the string character with the given index to the compiled code. */

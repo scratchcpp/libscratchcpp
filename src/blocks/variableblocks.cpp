@@ -90,7 +90,7 @@ CompilerValue *VariableBlocks::compileShowVariable(Compiler *compiler)
     Variable *var = static_cast<Variable *>(field->valuePtr().get());
     assert(var);
 
-    CompilerConstant *varPtr = compiler->addConstValue(var);
+    CompilerValue *varPtr = compiler->addVariablePointer(var);
     compiler->addTargetFunctionCall("data_showvariable", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { varPtr });
 
     return nullptr;
@@ -103,7 +103,7 @@ CompilerValue *VariableBlocks::compileHideVariable(Compiler *compiler)
     Variable *var = static_cast<Variable *>(field->valuePtr().get());
     assert(var);
 
-    CompilerConstant *varPtr = compiler->addConstValue(var);
+    CompilerValue *varPtr = compiler->addVariablePointer(var);
     compiler->addTargetFunctionCall("data_hidevariable", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { varPtr });
 
     return nullptr;

@@ -113,7 +113,7 @@ CompilerValue *SensingBlocks::compileTouchingObject(Compiler *compiler)
             Target *target = engine->targetAt(engine->findTarget(value));
 
             if (target) {
-                CompilerValue *targetPtr = compiler->addConstValue(target);
+                CompilerValue *targetPtr = compiler->addTargetPointer(value);
                 return compiler->addTargetFunctionCall("sensing_touching_sprite", Compiler::StaticType::Bool, { Compiler::StaticType::Pointer }, { targetPtr });
             }
         }
@@ -155,7 +155,7 @@ CompilerValue *SensingBlocks::compileDistanceTo(Compiler *compiler)
             Target *target = engine->targetAt(engine->findTarget(value));
 
             if (target) {
-                CompilerValue *targetPtr = compiler->addConstValue(target);
+                CompilerValue *targetPtr = compiler->addTargetPointer(value);
                 return compiler->addTargetFunctionCall("sensing_distance_to_sprite", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
             }
         }
@@ -237,15 +237,13 @@ CompilerValue *SensingBlocks::compileLoud(Compiler *compiler)
 
 CompilerValue *SensingBlocks::compileTimer(Compiler *compiler)
 {
-    ITimer *timer = compiler->engine()->timer();
-    CompilerValue *timerPtr = compiler->addConstValue(timer);
+    CompilerValue *timerPtr = compiler->addTimerPointer();
     return compiler->addFunctionCall("sensing_timer", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { timerPtr });
 }
 
 CompilerValue *SensingBlocks::compileResetTimer(Compiler *compiler)
 {
-    ITimer *timer = compiler->engine()->timer();
-    CompilerValue *timerPtr = compiler->addConstValue(timer);
+    CompilerValue *timerPtr = compiler->addTimerPointer();
     compiler->addFunctionCall("sensing_resettimer", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { timerPtr });
     return nullptr;
 }
@@ -269,7 +267,7 @@ CompilerValue *SensingBlocks::compileOf(Compiler *compiler)
         if (value == "_stage_") {
             // Stage properties
             target = engine->stage();
-            targetPtr = compiler->addConstValue(target);
+            targetPtr = compiler->addTargetPointer("_stage_");
 
             if (property == "backdrop #")
                 return compiler->addFunctionCall("sensing_costume_number_of_target", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });
@@ -280,7 +278,7 @@ CompilerValue *SensingBlocks::compileOf(Compiler *compiler)
             target = engine->targetAt(engine->findTarget(value));
 
             if (target) {
-                targetPtr = compiler->addConstValue(target);
+                targetPtr = compiler->addTargetPointer(value);
 
                 if (property == "x position")
                     return compiler->addFunctionCall("sensing_x_position_of_sprite", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { targetPtr });

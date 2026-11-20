@@ -109,7 +109,7 @@ void LooksBlocks::compileSetOrChangeEffect(Compiler *compiler, const std::string
     IGraphicsEffect *effect = ScratchConfiguration::getGraphicsEffect(effectName);
 
     if (effect) {
-        CompilerValue *effectPtr = compiler->addConstValue(effect);
+        CompilerValue *effectPtr = compiler->addEffectPointer(effectName);
         compiler->addTargetFunctionCall(function, Compiler::StaticType::Void, { Compiler::StaticType::Pointer, Compiler::StaticType::Number }, { effectPtr, arg });
     } else
         std::cout << "warning: graphic effect '" << effectName << "' is not registered" << std::endl;

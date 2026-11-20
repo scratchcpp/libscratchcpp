@@ -1,6 +1,7 @@
 add_executable(
   cpp_test
   main.cpp
+  cppcodegenerator_test.cpp
   cppexecutioncontext_test.cpp
   cppexecutablecode_test.cpp
   cppexecutablecodemock.h

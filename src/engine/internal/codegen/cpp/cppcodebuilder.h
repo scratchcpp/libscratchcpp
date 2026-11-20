@@ -2,14 +2,20 @@
 
 #pragma once
 
+#include <scratchcpp/blockprototype.h>
+
 #include "../icodebuilder.h"
+#include "cppinstruction.h"
+#include "cppinstructionlist.h"
+#include "cppcodegenerator.h"
+#include "instructions/instructionbuilder.h"
+#include "../codeanalyzer.h"
 
 namespace libscratchcpp
 {
 
 class CppCompilerContext;
 class CppValue;
-class CppInstruction;
 
 class CppCodeBuilder : public ICodeBuilder
 {
@@ -22,6 +28,11 @@ class CppCodeBuilder : public ICodeBuilder
         CompilerValue *addTargetFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
         CompilerValue *addFunctionCallWithCtx(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
         CompilerConstant *addConstValue(const Value &value) override;
+        CompilerValue *addTargetPointer(const std::string &name) override;
+        CompilerValue *addVariablePointer(Variable *variable) override;
+        CompilerValue *addListPointer(List *list) override;
+        CompilerValue *addTimerPointer() override;
+        CompilerValue *addEffectPointer(const std::string &name) override;
         CompilerValue *addStringChar(CompilerValue *string, CompilerValue *index) override;
         CompilerValue *addStringLength(CompilerValue *string) override;
         CompilerValue *addLoopIndex() override;
@@ -108,12 +119,25 @@ class CppCodeBuilder : public ICodeBuilder
     private:
         CppValue *addValue(std::shared_ptr<CppValue> value, std::shared_ptr<CppInstruction> ins);
 
+        Compiler::StaticType getProcedureArgType(BlockPrototype::ArgType type);
+
+        CppValue *createOp(CppInstruction::Type type, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
+        CppValue *createOp(CppInstruction::Type type, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
+        CppValue *createOp(const CppInstruction &ins, Compiler::StaticType retType, Compiler::StaticType argType, const Compiler::Args &args);
+        CppValue *createOp(const CppInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
+
         CppCompilerContext *m_ctx = nullptr;
         BlockPrototype *m_procedurePrototype = nullptr;
         Compiler::CodeType m_codeType = Compiler::CodeType::Script;
 
         std::vector<std::shared_ptr<CppValue>> m_values;
         std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
+        CppInstructionList m_instructions;
+        CppCodeGenerator m_codeGen;
+        cppins::InstructionBuilder m_instructionBuilder;
+        CodeAnalyzer m_codeAnalyzer;
+        bool m_warp = false;
+        bool m_loopCondition = false; // whether we're currently compiling a loop condition
 };
 
 } // namespace libscratchcpp

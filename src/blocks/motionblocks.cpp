@@ -116,7 +116,7 @@ CompilerValue *MotionBlocks::compilePointTowards(Compiler *compiler)
             Target *anotherTarget = compiler->engine()->targetAt(index);
 
             if (anotherTarget && !anotherTarget->isStage())
-                compiler->addTargetFunctionCall("motion_point_towards_sprite", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { compiler->addConstValue(anotherTarget) });
+                compiler->addTargetFunctionCall("motion_point_towards_sprite", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { compiler->addTargetPointer(anotherTarget->name()) });
         }
     } else {
         CompilerValue *towards = compiler->addInput(input);
@@ -156,7 +156,7 @@ CompilerValue *MotionBlocks::compileGoTo(Compiler *compiler)
             Target *anotherTarget = compiler->engine()->targetAt(index);
 
             if (anotherTarget && !anotherTarget->isStage())
-                compiler->addTargetFunctionCall("motion_go_to_sprite", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { compiler->addConstValue(anotherTarget) });
+                compiler->addTargetFunctionCall("motion_go_to_sprite", Compiler::StaticType::Void, { Compiler::StaticType::Pointer }, { compiler->addTargetPointer(anotherTarget->name()) });
         }
     } else {
         CompilerValue *to = compiler->addInput(input);
@@ -218,8 +218,10 @@ CompilerValue *MotionBlocks::compileGlideTo(Compiler *compiler)
 
             if (anotherTarget && !anotherTarget->isStage()) {
                 if (!target->isStage()) {
-                    endX = compiler->addFunctionCallWithCtx("motion_get_sprite_x", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { compiler->addConstValue(anotherTarget) });
-                    endY = compiler->addFunctionCallWithCtx("motion_get_sprite_y", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { compiler->addConstValue(anotherTarget) });
+                    endX =
+                        compiler->addFunctionCallWithCtx("motion_get_sprite_x", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { compiler->addTargetPointer(anotherTarget->name()) });
+                    endY =
+                        compiler->addFunctionCallWithCtx("motion_get_sprite_y", Compiler::StaticType::Number, { Compiler::StaticType::Pointer }, { compiler->addTargetPointer(anotherTarget->name()) });
                 }
             } else
                 return nullptr;

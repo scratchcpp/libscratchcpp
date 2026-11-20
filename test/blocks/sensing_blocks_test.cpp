@@ -76,13 +76,14 @@ TEST_F(SensingBlocksTest, TouchingObject_Sprite_CompileTime)
 
     Sprite sprite;
 
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&sprite));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_touchingobject");
     builder.addDropdownInput("TOUCHINGOBJECTMENU", "Sprite2");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(3));
-    EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&sprite));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
@@ -144,13 +145,14 @@ TEST_F(SensingBlocksTest, TouchingObject_Stage_CompileTime)
 
     Stage stage;
 
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_touchingobject");
     builder.addDropdownInput("TOUCHINGOBJECTMENU", "_stage_");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
-    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
@@ -354,12 +356,12 @@ TEST_F(SensingBlocksTest, TouchingObject_Invalid_CompileTime)
 
     Sprite sprite;
 
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillRepeatedly(Return(-1));
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_touchingobject");
     builder.addDropdownInput("TOUCHINGOBJECTMENU", "test");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(-1));
     EXPECT_CALL(m_engineMock, targetAt).WillRepeatedly(Return(nullptr));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
@@ -519,13 +521,14 @@ TEST_F(SensingBlocksTest, DistanceTo_Sprite_CompileTime)
 
     Sprite targetSprite;
 
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&targetSprite));
+
     ScriptBuilder builder(m_extension.get(), m_engine, sprite);
     builder.addBlock("sensing_distanceto");
     builder.addDropdownInput("DISTANCETOMENU", "Sprite2");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(3));
-    EXPECT_CALL(m_engineMock, targetAt(3)).WillOnce(Return(&targetSprite));
     Compiler compiler(&m_engineMock, sprite.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(sprite.get(), block, &m_engineMock);
@@ -615,13 +618,14 @@ TEST_F(SensingBlocksTest, DistanceTo_Stage_CompileTime)
 
     Stage stage;
 
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
+
     ScriptBuilder builder(m_extension.get(), m_engine, sprite);
     builder.addBlock("sensing_distanceto");
     builder.addDropdownInput("DISTANCETOMENU", "_stage_");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
-    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
     Compiler compiler(&m_engineMock, sprite.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(sprite.get(), block, &m_engineMock);
@@ -731,12 +735,12 @@ TEST_F(SensingBlocksTest, DistanceTo_Invalid_CompileTime)
     auto sprite = std::make_shared<Sprite>();
     sprite->setEngine(&m_engineMock);
 
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillRepeatedly(Return(-1));
     ScriptBuilder builder(m_extension.get(), m_engine, sprite);
     builder.addBlock("sensing_distanceto");
     builder.addDropdownInput("DISTANCETOMENU", "test");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(-1));
     EXPECT_CALL(m_engineMock, targetAt).WillRepeatedly(Return(nullptr));
     Compiler compiler(&m_engineMock, sprite.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
@@ -1519,14 +1523,15 @@ TEST_F(SensingBlocksTest, Of_XPositionOfSprite_CompileTime)
     targetSprite.setX(65.41);
     targetSprite.setY(-56.28);
 
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&targetSprite));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "x position");
     builder.addDropdownInput("OBJECT", "Sprite2");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
@@ -1580,14 +1585,15 @@ TEST_F(SensingBlocksTest, Of_YPositionOfSprite_CompileTime)
     targetSprite.setX(65.41);
     targetSprite.setY(-56.28);
 
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&targetSprite));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "y position");
     builder.addDropdownInput("OBJECT", "Sprite2");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
@@ -1640,14 +1646,15 @@ TEST_F(SensingBlocksTest, Of_DirectionOfSprite_CompileTime)
     Sprite targetSprite;
     targetSprite.setDirection(73.8);
 
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&targetSprite));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "direction");
     builder.addDropdownInput("OBJECT", "Sprite2");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
@@ -1701,14 +1708,15 @@ TEST_F(SensingBlocksTest, Of_CostumeNumberOfSprite_CompileTime)
     targetSprite.addCostume(std::make_shared<Costume>("costume2", "b", "svg"));
     targetSprite.setCostumeIndex(1);
 
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&targetSprite));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "costume #");
     builder.addDropdownInput("OBJECT", "Sprite2");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
@@ -1764,14 +1772,15 @@ TEST_F(SensingBlocksTest, Of_CostumeNameOfSprite_CompileTime)
     targetSprite.addCostume(std::make_shared<Costume>("costume2", "b", "svg"));
     targetSprite.setCostumeIndex(1);
 
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&targetSprite));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "costume name");
     builder.addDropdownInput("OBJECT", "Sprite2");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
@@ -1829,14 +1838,15 @@ TEST_F(SensingBlocksTest, Of_SizeOfSprite_CompileTime)
     Sprite targetSprite;
     targetSprite.setSize(47.32);
 
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&targetSprite));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "size");
     builder.addDropdownInput("OBJECT", "Sprite2");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
@@ -1888,14 +1898,15 @@ TEST_F(SensingBlocksTest, Of_VolumeOfTarget_CompileTime)
     TargetMock target;
     target.setVolume(89.46);
 
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&target));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "volume");
     builder.addDropdownInput("OBJECT", "test");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&target));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
@@ -1952,14 +1963,15 @@ TEST_F(SensingBlocksTest, Of_VariableOfTarget_CompileTime)
     target.addVariable(v2);
     target.addVariable(v3);
 
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&target));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "var2");
     builder.addDropdownInput("OBJECT", "test");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&target));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
@@ -2019,14 +2031,15 @@ TEST_F(SensingBlocksTest, Of_BackdropNumberOfStage_CompileTime)
     stage.addCostume(std::make_shared<Costume>("backdrop3", "b", "svg"));
     stage.setCostumeIndex(2);
 
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "backdrop #");
     builder.addDropdownInput("OBJECT", "_stage_");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
-    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
@@ -2086,14 +2099,15 @@ TEST_F(SensingBlocksTest, Of_BackdropNameOfStage_CompileTime)
     stage.addCostume(std::make_shared<Costume>("backdrop3", "b", "svg"));
     stage.setCostumeIndex(2);
 
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "backdrop name");
     builder.addDropdownInput("OBJECT", "_stage_");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
-    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
@@ -2151,14 +2165,15 @@ TEST_F(SensingBlocksTest, Of_InvalidTarget_CompileTime)
     auto targetMock = std::make_shared<TargetMock>();
     targetMock->setEngine(&m_engineMock);
 
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillRepeatedly(Return(-1));
+    EXPECT_CALL(m_engineMock, targetAt(-1)).WillRepeatedly(Return(nullptr));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "volume");
     builder.addDropdownInput("OBJECT", "test");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(-1));
-    EXPECT_CALL(m_engineMock, targetAt(-1)).WillRepeatedly(Return(nullptr));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
@@ -2206,14 +2221,15 @@ TEST_F(SensingBlocksTest, Of_InvalidProperty_Sprite_CompileTime)
 
     Sprite targetSprite;
 
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&targetSprite));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "test");
     builder.addDropdownInput("OBJECT", "Sprite2");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
-    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&targetSprite));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
@@ -2263,14 +2279,15 @@ TEST_F(SensingBlocksTest, Of_InvalidProperty_Stage_CompileTime)
 
     Stage stage;
 
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&stage));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "test");
     builder.addDropdownInput("OBJECT", "Sprite2");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
-    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&stage));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
@@ -2320,14 +2337,15 @@ TEST_F(SensingBlocksTest, Of_Invalid_XPositionOfStage_CompileTime)
 
     Stage stage;
 
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "x position");
     builder.addDropdownInput("OBJECT", "_stage_");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
-    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
@@ -2383,14 +2401,15 @@ TEST_F(SensingBlocksTest, Of_Invalid_CostumeNumberOfStage_CompileTime)
     stage.addCostume(std::make_shared<Costume>("backdrop3", "b", "svg"));
     stage.setCostumeIndex(2);
 
+    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
+    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "costume #");
     builder.addDropdownInput("OBJECT", "_stage_");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("_stage_")).WillRepeatedly(Return(3));
-    EXPECT_CALL(m_engineMock, targetAt(3)).WillRepeatedly(Return(&stage));
     EXPECT_CALL(m_engineMock, stage()).WillRepeatedly(Return(&stage));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
@@ -2451,14 +2470,15 @@ TEST_F(SensingBlocksTest, Of_Invalid_BackdropNameOfSprite_CompileTime)
     targetSprite.addCostume(std::make_shared<Costume>("costume2", "b", "svg"));
     targetSprite.setCostumeIndex(1);
 
+    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&targetSprite));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "backdrop name");
     builder.addDropdownInput("OBJECT", "Sprite2");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("Sprite2")).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&targetSprite));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
@@ -2521,14 +2541,15 @@ TEST_F(SensingBlocksTest, Of_PreferPropertiesOverVariables_CompileTime)
 
     sprite.setX(-78.25);
 
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillRepeatedly(Return(7));
+    EXPECT_CALL(m_engineMock, targetAt(7)).WillRepeatedly(Return(&sprite));
+
     ScriptBuilder builder(m_extension.get(), m_engine, targetMock);
     builder.addBlock("sensing_of");
     builder.addDropdownField("PROPERTY", "x position");
     builder.addDropdownInput("OBJECT", "test");
     Block *block = builder.currentBlock();
 
-    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(7));
-    EXPECT_CALL(m_engineMock, targetAt(7)).WillOnce(Return(&sprite));
     Compiler compiler(&m_engineMock, targetMock.get());
     auto code = compiler.compile(block, Compiler::CodeType::Reporter);
     Script script(targetMock.get(), block, &m_engineMock);
