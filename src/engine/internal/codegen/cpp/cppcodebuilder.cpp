@@ -48,8 +48,12 @@ std::shared_ptr<ExecutableCode> CppCodeBuilder::build()
     // Build recorded instructions
     CppInstruction *ins = m_instructions.first();
 
-    while (ins)
-        ins = m_instructionBuilder.process(ins);
+    try {
+        while (ins)
+            ins = m_instructionBuilder.process(ins);
+    } catch (std::exception &e) {
+        std::cerr << e.what() << std::endl;
+    }
 
     std::cout << m_codeGen.finalize();
 
