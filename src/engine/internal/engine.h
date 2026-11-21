@@ -33,6 +33,7 @@ class LIBSCRATCHCPP_TEST_EXPORT Engine : public IEngine
         void clear() override;
         void resolveIds();
         void compile() override;
+        void save(const std::string &destination) override;
 
         void start() override;
         void stop() override;
@@ -301,6 +302,7 @@ class LIBSCRATCHCPP_TEST_EXPORT Engine : public IEngine
         sigslot::signal<const std::string &> m_questionAnswered;
 
         std::unordered_set<std::string> m_unsupportedBlocks;
+        std::string m_saveDestination;
 };
 
 } // namespace libscratchcpp

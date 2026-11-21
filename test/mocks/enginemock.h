@@ -13,6 +13,7 @@ class EngineMock : public IEngine
     public:
         MOCK_METHOD(void, clear, (), (override));
         MOCK_METHOD(void, compile, (), (override));
+        MOCK_METHOD(void, save, (const std::string &), (override));
 
         MOCK_METHOD(void, start, (), (override));
         MOCK_METHOD(void, stop, (), (override));

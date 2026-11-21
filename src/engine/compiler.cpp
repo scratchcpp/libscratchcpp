@@ -125,6 +125,17 @@ std::shared_ptr<ExecutableCode> Compiler::compile(Block *startBlock, CodeType co
     return impl->builder->build();
 }
 
+/*! Saves the generated code to the given destination directory. */
+void Compiler::save(const std::string &destination)
+{
+    if (!impl->builder) {
+        std::cerr << "error: cannot save code before compiling it" << std::endl;
+        return;
+    }
+
+    impl->builder->save(destination);
+}
+
 /*!
  * Optimizes all compiled scripts before they're called for the first time.
  * \note Call this only after compiling all scripts.

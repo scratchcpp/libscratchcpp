@@ -45,22 +45,20 @@ CppCodeGenerator::~CppCodeGenerator()
 {
 }
 
-std::string CppCodeGenerator::finalize()
+std::string CppCodeGenerator::finalize(const std::string &headerName)
 {
-    static unsigned int scriptCount = 0;
-
-    const std::string scriptNumber = std::to_string(scriptCount++);
-    const std::string scriptName = "Script" + scriptNumber;
+    ensureScriptName();
+    const std::string generatedHeaderName = headerName.empty() ? m_generatedFileName + ".h" : headerName;
 
     std::ostringstream source;
-    source << "#include \"script" << scriptNumber << ".h\"\n";
+    source << "#include \"" << generatedHeaderName << "\"\n";
 
     for (Header header : m_includedHeaders) {
         source << "#include " << m_headers.at(header) << "\n";
     }
 
     source << "\nnamespace libscratchcpp\n{\n\n";
-    source << scriptName << "::" << scriptName << "(CppCompilerContext *ctx) :\n";
+    source << m_scriptName << "::" << m_scriptName << "(CppCompilerContext *ctx) :\n";
     source << "    CppExecutableCode(ctx, {";
 
     for (size_t i = 0; i < m_objectPointers.size(); ++i) {
@@ -92,7 +90,17 @@ std::string CppCodeGenerator::finalize()
     }
 
     source << "})\n{\n}\n\n";
-    source << "void " << scriptName << "::runScript(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists, void **objects)\n{\n";
+    source << "void " << m_scriptName << "::runScript(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists, void **objects)\n{\n";
+
+    std::ostringstream declaration;
+    declaration << "namespace libscratchcpp\n{\n\n";
+    declaration << "class " << m_scriptName << " : public CppExecutableCode\n{\n";
+    declaration << "    public:\n";
+    declaration << "        explicit " << m_scriptName << "(CppCompilerContext *ctx);\n\n";
+    declaration << "    protected:\n";
+    declaration << "        void runScript(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists, void **objects) override;\n";
+    declaration << "};\n\n} // namespace libscratchcpp\n";
+    m_generatedClassDeclaration = declaration.str();
 
     std::unordered_set<const CppIdentifier *> declared;
     const auto declare = [&](const CppIdentifier *identifier) {
@@ -134,6 +142,23 @@ std::string CppCodeGenerator::finalize()
     source << m_codeStream.code();
     source << "}\n\n} // namespace libscratchcpp\n";
     return source.str();
+}
+
+const std::string &CppCodeGenerator::generatedFileName()
+{
+    ensureScriptName();
+    return m_generatedFileName;
+}
+
+void CppCodeGenerator::ensureScriptName()
+{
+    if (!m_scriptName.empty())
+        return;
+
+    static unsigned int scriptCount = 0;
+    const std::string scriptNumber = std::to_string(scriptCount++);
+    m_scriptName = "Script" + scriptNumber;
+    m_generatedFileName = "script" + scriptNumber;
 }
 
 const CppIdentifier *CppCodeGenerator::castValue(CppValue *value, Compiler::StaticType targetType)

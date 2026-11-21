@@ -43,6 +43,12 @@ bool ProjectPrivate::load()
     return false;
 }
 
+void ProjectPrivate::save(const std::string &destination)
+{
+    if (engine)
+        engine->save(destination);
+}
+
 bool ProjectPrivate::tryLoad(IProjectReader *reader)
 {
     stopLoading = false;

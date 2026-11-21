@@ -3,8 +3,10 @@
 #include <scratchcpp/compilerlocalvariable.h>
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
+#include <iostream>
 
 #include "cppcodebuilder.h"
+#include "cppcodesaver.h"
 #include "cppcompilercontext.h"
 #include "cppexecutablecode.h"
 #include "cppinstruction.h"
@@ -55,9 +57,12 @@ std::shared_ptr<ExecutableCode> CppCodeBuilder::build()
         std::cerr << e.what() << std::endl;
     }
 
-    std::cout << m_codeGen.finalize();
-
     return std::make_shared<CppExecutableCode>(m_ctx);
+}
+
+void CppCodeBuilder::save(const std::string &destination)
+{
+    CppCodeSaver::save(m_codeGen, m_ctx, destination);
 }
 
 CompilerValue *CppCodeBuilder::addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)

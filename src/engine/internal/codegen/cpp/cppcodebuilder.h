@@ -23,6 +23,7 @@ class CppCodeBuilder : public ICodeBuilder
         CppCodeBuilder(CppCompilerContext *ctx, BlockPrototype *procedurePrototype = nullptr, Compiler::CodeType codeType = Compiler::CodeType::Script);
 
         std::shared_ptr<ExecutableCode> build() override;
+        void save(const std::string &destination) override;
 
         CompilerValue *addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
         CompilerValue *addTargetFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;

@@ -24,6 +24,9 @@
 #include <scratchcpp/thread.h>
 #include <cassert>
 #include <iostream>
+#ifdef CODEGEN_BACKEND_CPP
+#include <filesystem>
+#endif
 
 #include "engine.h"
 #include "timer.h"
@@ -286,8 +289,15 @@ void Engine::compile()
                     m_scripts[block.get()] = script;
                     script->setCode(compiler.compile(block.get()));
 
-                    if (block->hatPredicateCompileFunction())
+                    if (!m_saveDestination.empty())
+                        compiler.save(m_saveDestination);
+
+                    if (block->hatPredicateCompileFunction()) {
                         script->setHatPredicateCode(compiler.compile(block.get(), Compiler::CodeType::HatPredicate));
+
+                        if (!m_saveDestination.empty())
+                            compiler.save(m_saveDestination);
+                    }
                 } else {
                     std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
                     m_unsupportedBlocks.insert(block->opcode());
@@ -310,6 +320,28 @@ void Engine::compile()
 
     for (auto monitor : m_monitors)
         compileMonitor(monitor);
+}
+
+void Engine::save(const std::string &destination)
+{
+    if (destination.empty()) {
+        std::cerr << "error: output destination cannot be empty" << std::endl;
+        return;
+    }
+
+#ifdef CODEGEN_BACKEND_CPP
+    std::error_code error;
+    std::filesystem::remove_all(std::filesystem::path(destination) / "src", error);
+
+    if (error) {
+        std::cerr << "error: could not clear generated C++ output: " << error.message() << std::endl;
+        return;
+    }
+#endif
+
+    m_saveDestination = destination;
+    compile();
+    m_saveDestination.clear();
 }
 
 void Engine::start()
@@ -1828,6 +1860,8 @@ void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
         monitor->setScript(script);
         auto code = compiler.compile(block.get(), Compiler::CodeType::Reporter);
         script->setCode(code);
+        if (!m_saveDestination.empty())
+            compiler.save(m_saveDestination);
         m_monitorCompilerContexts[monitor.get()] = ctx;
 
         const auto &unsupportedBlocks = compiler.unsupportedBlocks();

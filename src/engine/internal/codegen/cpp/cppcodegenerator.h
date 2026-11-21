@@ -27,7 +27,9 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
 
         const CppIdentifier *castValue(CppValue *value, Compiler::StaticType targetType);
 
-        std::string finalize();
+        std::string finalize(const std::string &headerName = "");
+        const std::string &generatedFileName();
+        const std::string &generatedClassDeclaration() const { return m_generatedClassDeclaration; }
 
         void createCall(const std::string &name, bool ctxArg, bool targetArg, const std::vector<const CppIdentifier *> &args);
         void createCall(const std::string &name, CppIdentifier::Type retType, CppValue *retValue, bool ctxArg, bool targetArg, const std::vector<const CppIdentifier *> &args);
@@ -59,6 +61,7 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
         const CppIdentifier *addPointerValue(CppValue *value, const CppObjectPointerDescriptor &descriptor);
         std::string getNewIdentifierName(const std::string &name);
         void includeHeader(Header header);
+        void ensureScriptName();
 
         inline bool identifierExists(CppValue *value) const { return m_identifiers.find(value) != m_identifiers.cend(); }
 
@@ -86,6 +89,9 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
         std::vector<std::shared_ptr<CppIdentifier>> m_internalIdentifiers;
         std::vector<std::shared_ptr<CppConstIdentifier>> m_constants;
         std::vector<CppObjectPointerDescriptor> m_objectPointers;
+        std::string m_scriptName;
+        std::string m_generatedFileName;
+        std::string m_generatedClassDeclaration;
 
         CppNamedIdentifier m_stringArray;
         std::vector<std::shared_ptr<CppNamedIdentifier>> m_strings;

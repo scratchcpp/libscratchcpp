@@ -51,6 +51,9 @@ class LIBSCRATCHCPP_EXPORT IEngine
          */
         virtual void compile() = 0;
 
+        /*! Saves the compiled project to the given destination directory. */
+        virtual void save(const std::string &destination) = 0;
+
         /*!
          * Calls all "when green flag clicked" blocks.
          * \note Nothing will happen until the event loop is started.

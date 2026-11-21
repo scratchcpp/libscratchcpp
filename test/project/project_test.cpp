@@ -1,7 +1,17 @@
 #include <scratchcpp/project.h>
+#include <scratchcpp/block.h>
+#include <scratchcpp/sprite.h>
+#include <scratchcpp/stage.h>
+#include <scratchcpp/compilercontext.h>
 #include <enginemock.h>
 #include <projectdownloaderfactorymock.h>
 #include <projectdownloadermock.h>
+#include <extensionmock.h>
+#include <codebuilderfactorymock.h>
+#include <codebuildermock.h>
+#include <engine/compiler_p.h>
+#include <engine/internal/engine.h>
+#include <filesystem>
 
 #include "project_p.h"
 #include "../common.h"
@@ -71,6 +81,40 @@ TEST_F(ProjectTest, Load)
     ASSERT_TRUE(p3.load());
 
     testing::Mock::AllowLeak(m_engine.get());
+}
+
+TEST_F(ProjectTest, SaveDelegatesThroughEngineAndCodeBuilder)
+{
+    Project project;
+    auto engine = std::dynamic_pointer_cast<Engine>(project.engine());
+    ASSERT_TRUE(engine);
+
+    auto target = std::make_shared<Sprite>();
+    auto stage = std::make_shared<Stage>();
+    auto block = std::make_shared<Block>("save-script", "save_test");
+    target->addBlock(block);
+    engine->setTargets({ stage, target });
+
+    ExtensionMock extension;
+    engine->addCompileFunction(&extension, "save_test", [](Compiler *) -> CompilerValue * { return nullptr; });
+
+    CodeBuilderFactoryMock builderFactory;
+    auto stageCompilerContext = std::make_shared<CompilerContext>(engine.get(), stage.get());
+    auto targetCompilerContext = std::make_shared<CompilerContext>(engine.get(), target.get());
+    auto codeBuilder = std::make_shared<CodeBuilderMock>();
+    const std::filesystem::path destination = std::filesystem::temp_directory_path() / "libscratchcpp-project-save-test";
+    CompilerPrivate::setBuilderFactory(&builderFactory);
+
+    EXPECT_CALL(builderFactory, createCtx(engine.get(), stage.get(), testing::_)).WillOnce(testing::Return(stageCompilerContext));
+    EXPECT_CALL(builderFactory, createCtx(engine.get(), target.get(), testing::_)).WillOnce(testing::Return(targetCompilerContext));
+    EXPECT_CALL(builderFactory, create(targetCompilerContext.get(), nullptr, Compiler::CodeType::Script)).WillOnce(testing::Return(codeBuilder));
+    EXPECT_CALL(*codeBuilder, build()).WillOnce(testing::Return(std::shared_ptr<ExecutableCode>()));
+    EXPECT_CALL(*codeBuilder, save(destination.string())).Times(1);
+
+    project.save(destination.string());
+
+    CompilerPrivate::setBuilderFactory(nullptr);
+    std::filesystem::remove_all(destination);
 }
 
 TEST_F(ProjectTest, Start)

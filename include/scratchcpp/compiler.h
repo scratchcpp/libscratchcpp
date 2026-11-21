@@ -61,6 +61,7 @@ class LIBSCRATCHCPP_EXPORT Compiler
         Block *block() const;
 
         std::shared_ptr<ExecutableCode> compile(Block *startBlock, CodeType codeType = CodeType::Script);
+        void save(const std::string &destination);
         void preoptimize();
 
         CompilerValue *addFunctionCall(const std::string &functionName, StaticType returnType = StaticType::Void, const ArgTypes &argTypes = {}, const Args &args = {});
