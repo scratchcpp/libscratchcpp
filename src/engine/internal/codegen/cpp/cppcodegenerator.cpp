@@ -24,9 +24,11 @@ const std::unordered_map<Compiler::StaticType, CppIdentifier::Type> CppCodeGener
 const std::unordered_map<CppCodeGenerator::Header, std::string> CppCodeGenerator::m_headers = {
     { Header::Limits, "<limits>" },
     { Header::Value, "<scratchcpp/value.h>" },
+    { Header::StringPtr, "<scratchcpp/stringptr.h>" },
     { Header::ValueData, "<scratchcpp/valuedata.h>" },
     { Header::ValueFunctions, "<scratchcpp/value_functions.h>" },
-    { Header::ExecutionContext, "<scratchcpp/executioncontext.h>" }
+    { Header::ExecutionContext, "<scratchcpp/executioncontext.h>" },
+    { Header::Target, "<scratchcpp/target.h>" }
 };
 
 const std::unordered_map<CppCodeGenerator::FuncParam, CppNamedIdentifier> CppCodeGenerator::m_funcParams = {
@@ -45,10 +47,40 @@ CppCodeGenerator::~CppCodeGenerator()
 {
 }
 
+CppIdentifier::Type CppCodeGenerator::getType(Compiler::StaticType type) const
+{
+    return m_valueTypeMap.at(TypeUtils::isSingleType(type) ? type : Compiler::StaticType::Unknown);
+}
+
 std::string CppCodeGenerator::finalize(const std::string &headerName)
 {
     ensureScriptName();
     const std::string generatedHeaderName = headerName.empty() ? m_generatedFileName + ".h" : headerName;
+    const CppIdentifier *returnIdentifier = nullptr;
+
+    if (m_returnValue) {
+        switch (m_codeType) {
+            case Compiler::CodeType::Reporter:
+                returnIdentifier = castValue(m_returnValue, Compiler::StaticType::Unknown);
+                break;
+
+            case Compiler::CodeType::HatPredicate:
+                returnIdentifier = castValue(m_returnValue, Compiler::StaticType::Bool);
+                break;
+
+            case Compiler::CodeType::Script:
+                break;
+        }
+    }
+
+    if (!m_strings.empty())
+        includeHeader(Header::StringPtr);
+
+    if (m_codeType == Compiler::CodeType::Reporter)
+        includeHeader(Header::ValueData);
+
+    if (m_codeType == Compiler::CodeType::Reporter && returnIdentifier)
+        includeHeader(Header::ValueFunctions);
 
     std::ostringstream source;
     source << "#include \"" << generatedHeaderName << "\"\n";
@@ -58,6 +90,13 @@ std::string CppCodeGenerator::finalize(const std::string &headerName)
     }
 
     source << "\nnamespace libscratchcpp\n{\n\n";
+
+    for (const auto &entry : m_functionDeclarations)
+        source << "extern \"C\" " << entry.second << "\n";
+
+    if (!m_functionDeclarations.empty())
+        source << "\n";
+
     source << m_scriptName << "::" << m_scriptName << "(CppCompilerContext *ctx) :\n";
     source << "    CppExecutableCode(ctx, {";
 
@@ -90,7 +129,18 @@ std::string CppCodeGenerator::finalize(const std::string &headerName)
     }
 
     source << "})\n{\n}\n\n";
-    source << "void " << m_scriptName << "::runScript(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists, void **objects)\n{\n";
+    const char *methodName = "runScript";
+    const char *returnType = "void";
+
+    if (m_codeType == Compiler::CodeType::Reporter) {
+        methodName = "runReporter";
+        returnType = "ValueData";
+    } else if (m_codeType == Compiler::CodeType::HatPredicate) {
+        methodName = "runPredicate";
+        returnType = "bool";
+    }
+
+    source << returnType << " " << m_scriptName << "::" << methodName << "(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists, void **objects)\n{\n";
 
     std::ostringstream declaration;
     declaration << "namespace libscratchcpp\n{\n\n";
@@ -98,7 +148,7 @@ std::string CppCodeGenerator::finalize(const std::string &headerName)
     declaration << "    public:\n";
     declaration << "        explicit " << m_scriptName << "(CppCompilerContext *ctx);\n\n";
     declaration << "    protected:\n";
-    declaration << "        void runScript(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists, void **objects) override;\n";
+    declaration << "        " << returnType << " " << methodName << "(ExecutionContext *ctx, Target *target, ValueData **targetVariables, List **targetLists, void **objects) override;\n";
     declaration << "};\n\n} // namespace libscratchcpp\n";
     m_generatedClassDeclaration = declaration.str();
 
@@ -140,8 +190,41 @@ std::string CppCodeGenerator::finalize(const std::string &headerName)
     }
 
     source << m_codeStream.code();
+
+    if (m_codeType == Compiler::CodeType::Reporter) {
+        if (returnIdentifier) {
+            source << "    ValueData returnValue{};\n";
+            source << "    value_assign_copy(&returnValue, &" << static_cast<const CppNamedIdentifier *>(returnIdentifier)->name << ");\n";
+            source << "    return returnValue;\n";
+        } else
+            source << "    return ValueData();\n";
+    } else if (m_codeType == Compiler::CodeType::HatPredicate) {
+        source << "    return ";
+
+        if (!returnIdentifier)
+            source << "false";
+        else if (returnIdentifier->isConst())
+            source << toCppConstant(static_cast<const CppConstIdentifier *>(returnIdentifier)->value);
+        else
+            source << static_cast<const CppNamedIdentifier *>(returnIdentifier)->name;
+
+        source << ";\n";
+    }
+
     source << "}\n\n} // namespace libscratchcpp\n";
     return source.str();
+}
+
+void CppCodeGenerator::setCodeType(Compiler::CodeType codeType, CppValue *returnValue)
+{
+    m_codeType = codeType;
+    m_returnValue = returnValue;
+}
+
+void CppCodeGenerator::setGeneratedName(const std::string &className, const std::string &fileName)
+{
+    m_scriptName = className;
+    m_generatedFileName = fileName;
 }
 
 const std::string &CppCodeGenerator::generatedFileName()
@@ -242,7 +325,7 @@ const CppIdentifier *CppCodeGenerator::castValue(CppValue *value, Compiler::Stat
         m_codeStream.beginLine();
 
         CppAssignment boolAssignment(m_codeStream, result);
-        m_codeStream.addToLine("value_boolToStringPtr(" + source->name + ".boolValue)");
+        m_codeStream.addToLine("const_cast<StringPtr *>(value_boolToStringPtr(" + source->name + ".boolValue))");
         boolAssignment.close();
         m_codeStream.endLine();
         m_codeStream.beginLine();
@@ -287,13 +370,19 @@ const CppIdentifier *CppCodeGenerator::addPointerValue(CppValue *value, const Cp
 
 void CppCodeGenerator::createCall(const std::string &name, bool ctxArg, bool targetArg, const std::vector<const CppIdentifier *> &args)
 {
+    const auto preparedArgs = prepareCallArgs(name, args);
+    addFunctionDeclaration(name, CppIdentifier::Type::Pointer, false, true, ctxArg, targetArg, preparedArgs);
     m_codeStream.beginLine();
-    createCall(name, nullptr, ctxArg, targetArg, args);
+    createCall(name, nullptr, ctxArg, targetArg, preparedArgs);
+    m_codeStream.addToLine(";");
     m_codeStream.endLine();
 }
 
 void CppCodeGenerator::createCall(const std::string &name, CppIdentifier::Type retType, CppValue *retValue, bool ctxArg, bool targetArg, const std::vector<const CppIdentifier *> &args)
 {
+    if (retType == CppIdentifier::Type::ValueData)
+        includeHeader(Header::ValueData);
+
     if (identifierExists(retValue)) {
         throw std::runtime_error("assigning to existing return value identifier when calling function: " + name);
     }
@@ -309,6 +398,9 @@ void CppCodeGenerator::createCall(const std::string &name, CppIdentifier::Type r
             m_identifiers[retValue] = m_strings.back();
     }
 
+    const auto preparedArgs = prepareCallArgs(name, args);
+    addFunctionDeclaration(name, retType, retType == CppIdentifier::Type::StringPtr, false, ctxArg, targetArg, preparedArgs);
+
     m_codeStream.beginLine();
 
     std::unique_ptr<CppAssignment> strAssignment;
@@ -317,10 +409,12 @@ void CppCodeGenerator::createCall(const std::string &name, CppIdentifier::Type r
         strAssignment = std::make_unique<CppAssignment>(m_codeStream, getNamedIdentifier(retValue, retType, "ret", true));
     }
 
-    createCall(name, strRet, ctxArg, targetArg, args);
+    createCall(name, strRet, ctxArg, targetArg, preparedArgs);
 
     if (strAssignment)
         strAssignment->close();
+    else
+        m_codeStream.addToLine(";");
 
     m_codeStream.endLine();
 }
@@ -340,19 +434,139 @@ void CppCodeGenerator::createCall(const std::string &name, const CppNamedIdentif
 
     for (const CppIdentifier *arg : args) {
         try {
-            if (arg->isConst()) {
+            if (arg->isConst())
                 call.param(toCppConstant(static_cast<const CppConstIdentifier *>(arg)->value));
-            } else if (arg->isNamed()) {
-                call.param(static_cast<const CppNamedIdentifier *>(arg));
-            } else {
-                throw std::runtime_error("unsupported identifier when calling function: " + name);
+            else if (arg->isNamed()) {
+                const auto *named = static_cast<const CppNamedIdentifier *>(arg);
+
+                if (named->type == CppIdentifier::Type::ValueData)
+                    call.param("&" + named->name);
+                else
+                    call.param(named);
             }
+            else
+                throw std::runtime_error("unsupported identifier when calling function: " + name);
         } catch (std::exception &e) {
             throw std::runtime_error("error when creating call of function '" + name + "': " + e.what());
         }
     }
 
     call.close();
+}
+
+std::vector<const CppIdentifier *> CppCodeGenerator::prepareCallArgs(const std::string &name, const std::vector<const CppIdentifier *> &args)
+{
+    std::vector<const CppIdentifier *> preparedArgs;
+    preparedArgs.reserve(args.size());
+
+    for (const CppIdentifier *arg : args) {
+        try {
+            if (!arg->isConst()) {
+                preparedArgs.push_back(arg);
+                continue;
+            }
+
+            const auto *constant = static_cast<const CppConstIdentifier *>(arg);
+
+            if (constant->type != CppIdentifier::Type::StringPtr) {
+                preparedArgs.push_back(arg);
+                continue;
+            }
+
+            includeHeader(Header::Value);
+            includeHeader(Header::ValueFunctions);
+            const CppNamedIdentifier *value = createNamedIdentifier(CppIdentifier::Type::Value, "constant", true);
+            const CppNamedIdentifier *string = addStringAlloca();
+
+            m_codeStream.beginLine();
+            CppAssignment valueAssignment(m_codeStream, value);
+            m_codeStream.addToLine("Value(" + toCppConstant(constant->value) + ")");
+            valueAssignment.close();
+            m_codeStream.endLine();
+
+            m_codeStream.beginLine();
+            CppFunctionCall stringCall(m_codeStream, "value_toStringPtr");
+            stringCall.param("&" + value->name + ".data()").param(string->name);
+            stringCall.close();
+            m_codeStream.addToLine(";");
+            m_codeStream.endLine();
+            preparedArgs.push_back(string);
+        } catch (std::exception &e) {
+            throw std::runtime_error("error when creating call of function '" + name + "': " + e.what());
+        }
+    }
+
+    return preparedArgs;
+}
+
+void CppCodeGenerator::addFunctionDeclaration(const std::string &name, CppIdentifier::Type returnType, bool stringReturn, bool voidReturn, bool ctxArg, bool targetArg, const std::vector<const CppIdentifier *> &args)
+{
+    // Test helper declarations are provided by their test support headers.
+    if (name.rfind("test_", 0) == 0)
+        return;
+
+    const auto typeName = [&name](CppIdentifier::Type type, bool argument) {
+        switch (type) {
+            case CppIdentifier::Type::Double:
+                return std::string("double");
+            case CppIdentifier::Type::Bool:
+                return std::string("bool");
+            case CppIdentifier::Type::StringPtr:
+                return argument ? std::string("const StringPtr *") : std::string("StringPtr *");
+            case CppIdentifier::Type::Pointer:
+                return argument ? std::string("const void *") : std::string("void *");
+            case CppIdentifier::Type::ValueData:
+                return argument ? std::string("const ValueData *") : std::string("ValueData");
+            case CppIdentifier::Type::ContextPointer:
+                return std::string("ExecutionContext *");
+            case CppIdentifier::Type::TargetPointer:
+                return std::string("Target *");
+            default:
+                throw std::runtime_error("unsupported function parameter type when declaring '" + name + "'");
+        }
+    };
+
+    std::vector<std::string> parameterTypes;
+
+    if (stringReturn) {
+        includeHeader(Header::StringPtr);
+        parameterTypes.emplace_back("StringPtr *");
+    }
+
+    if (ctxArg) {
+        includeHeader(Header::ExecutionContext);
+        parameterTypes.emplace_back("ExecutionContext *");
+    }
+
+    if (targetArg) {
+        includeHeader(Header::Target);
+        parameterTypes.emplace_back("Target *");
+    }
+
+    for (const CppIdentifier *arg : args) {
+        if (arg->type == CppIdentifier::Type::StringPtr)
+            includeHeader(Header::StringPtr);
+        else if (arg->type == CppIdentifier::Type::ValueData)
+            includeHeader(Header::ValueData);
+        else if (arg->type == CppIdentifier::Type::ContextPointer)
+            includeHeader(Header::ExecutionContext);
+        else if (arg->type == CppIdentifier::Type::TargetPointer)
+            includeHeader(Header::Target);
+
+        parameterTypes.push_back(typeName(arg->type, true));
+    }
+
+    std::string declaration = stringReturn || voidReturn ? "void" : typeName(returnType, false);
+    declaration += " " + name + "(";
+
+    for (size_t i = 0; i < parameterTypes.size(); ++i) {
+        if (i)
+            declaration += ", ";
+        declaration += parameterTypes[i];
+    }
+
+    declaration += ");";
+    m_functionDeclarations.emplace(name, std::move(declaration));
 }
 
 const CppNamedIdentifier *CppCodeGenerator::getParam(FuncParam param)
@@ -515,7 +729,7 @@ const CppNamedIdentifier *CppCodeGenerator::castRawValue(CppValue *value, Compil
 
             expression = string->name;
         } else if (value->type() == Compiler::StaticType::Bool) {
-            expression = "value_boolToStringPtr(" + source->name + ")";
+            expression = "const_cast<StringPtr *>(value_boolToStringPtr(" + source->name + "))";
         }
     }
 

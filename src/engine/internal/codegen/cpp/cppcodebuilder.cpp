@@ -4,6 +4,10 @@
 #include <scratchcpp/variable.h>
 #include <scratchcpp/list.h>
 #include <iostream>
+#include <fstream>
+#include <cctype>
+#include <filesystem>
+#include <functional>
 
 #include "cppcodebuilder.h"
 #include "cppcodesaver.h"
@@ -17,6 +21,7 @@ using namespace libscratchcpp;
 
 CppCodeBuilder::CppCodeBuilder(CppCompilerContext *ctx, BlockPrototype *procedurePrototype, Compiler::CodeType codeType) :
     m_ctx(ctx),
+    m_testCodeId(ctx->testCodeId().empty() ? CppCompilerContext::nextTestCodeId() : ctx->testCodeId()),
     m_procedurePrototype(procedurePrototype),
     m_codeType(codeType),
     m_instructionBuilder(m_codeGen),
@@ -26,6 +31,13 @@ CppCodeBuilder::CppCodeBuilder(CppCompilerContext *ctx, BlockPrototype *procedur
 
 std::shared_ptr<ExecutableCode> CppCodeBuilder::build()
 {
+    if (m_ctx->generatedCodeFactory()) {
+        if (auto generatedCode = m_ctx->generatedCodeFactory()(m_testCodeId, m_ctx))
+            return generatedCode;
+
+        throw std::runtime_error("No generated C++ test script for '" + m_testCodeId + "'");
+    }
+
     if (!m_warp) {
         // Do not create coroutine if there are no yield instructions nor non-warp procedure calls
         if (!m_instructions.containsInstruction([](const CppInstruction *ins) {
@@ -57,11 +69,64 @@ std::shared_ptr<ExecutableCode> CppCodeBuilder::build()
         std::cerr << e.what() << std::endl;
     }
 
+    CppInstruction *lastInstruction = m_instructions.last();
+    CppValue *returnValue = lastInstruction ? lastInstruction->getFunctionReturnReg() : m_lastConstValue;
+
+    if (returnValue && !returnValue->isConst() && !m_codeGen.hasIdentifier(returnValue))
+        returnValue = nullptr;
+
+    m_codeGen.setCodeType(m_codeType, returnValue);
+
+    if (!m_testCodeId.empty() && !CppCompilerContext::testGenerationDirectory().empty()) {
+        std::string suffix;
+
+        for (unsigned char character : m_testCodeId)
+            suffix += std::isalnum(character) ? static_cast<char>(character) : '_';
+
+        const std::string uniqueSuffix = suffix + "_" + std::to_string(std::hash<std::string>{}(m_testCodeId));
+        const std::string className = "Script_" + uniqueSuffix;
+        const std::string fileName = "script_" + uniqueSuffix;
+        m_codeGen.setGeneratedName(className, fileName);
+
+        try {
+            const std::filesystem::path destination = CppCompilerContext::testGenerationDirectory();
+            CppCodeSaver::save(m_codeGen, m_ctx, destination.string());
+
+            const std::string sourceFileName = fileName + ".cpp";
+            std::filesystem::path generatedSource;
+
+            for (const auto &file : std::filesystem::recursive_directory_iterator(destination)) {
+                if (file.path().filename() == sourceFileName) {
+                    generatedSource = file.path();
+                    break;
+                }
+            }
+
+            if (generatedSource.empty())
+                throw std::runtime_error("generated test source file was not written");
+
+            std::ofstream manifest(destination / "test_scripts.txt", std::ios::app);
+            manifest.exceptions(std::ios::failbit | std::ios::badbit);
+            manifest << m_testCodeId << '\t' << className << '\t'
+                     << std::filesystem::relative(generatedSource, destination).generic_string() << '\n';
+            manifest.close();
+        } catch (const std::exception &e) {
+            throw std::runtime_error("Could not generate C++ test script '" + m_testCodeId + "': " + e.what());
+        }
+    }
+
     return std::make_shared<CppExecutableCode>(m_ctx);
 }
 
 void CppCodeBuilder::save(const std::string &destination)
 {
+    CppInstruction *lastInstruction = m_instructions.last();
+    CppValue *returnValue = lastInstruction ? lastInstruction->getFunctionReturnReg() : m_lastConstValue;
+
+    if (returnValue && !returnValue->isConst() && !m_codeGen.hasIdentifier(returnValue))
+        returnValue = nullptr;
+
+    m_codeGen.setCodeType(m_codeType, returnValue);
     CppCodeSaver::save(m_codeGen, m_ctx, destination);
 }
 
@@ -108,6 +173,7 @@ CompilerConstant *CppCodeBuilder::addConstValue(const Value &value)
 {
     auto constValue = std::make_shared<CppConstant>(TypeUtils::mapType(value.type()), value);
     auto genericValue = std::static_pointer_cast<CppValue>(constValue);
+    m_lastConstValue = genericValue.get();
     return static_cast<CompilerConstant *>(static_cast<CppConstant *>(addValue(genericValue, nullptr)));
 }
 

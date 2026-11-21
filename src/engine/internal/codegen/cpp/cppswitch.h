@@ -18,6 +18,7 @@ class CppSwitch
             m_out.addToLine("switch (");
             m_out.addToLine(identifier->name);
             m_out.addToLine(") {");
+            m_out.endLine();
             m_out.indent();
         }
 
@@ -42,6 +43,7 @@ class CppSwitch
             m_out.addToLine("case ");
             m_out.addToLine(value);
             m_out.addToLine(":");
+            m_out.endLine();
 
             m_out.indent();
 
@@ -57,6 +59,7 @@ class CppSwitch
 
             m_out.beginLine();
             m_out.addToLine("default:");
+            m_out.endLine();
             m_out.indent();
 
             return *this;
@@ -69,6 +72,9 @@ class CppSwitch
 
             m_closed = true;
             m_out.dedent();
+            m_out.beginLine();
+            m_out.addToLine("}");
+            m_out.endLine();
         }
 
     private:

@@ -84,6 +84,9 @@ TEST_F(CodeBuilderTest, FunctionCalls)
         builder->addFunctionCall("test_print_unknown", Compiler::StaticType::Void, { Compiler::StaticType::Unknown }, { v });
 
         auto code = builder->build();
+#ifdef LIBSCRATCHCPP_CPP_TEST_GENERATOR
+        continue;
+#endif
         Script script(&m_utils.target(), nullptr, nullptr);
         script.setCode(code);
         Thread thread(&m_utils.target(), nullptr, &script);
@@ -123,6 +126,9 @@ TEST_F(CodeBuilderTest, FunctionCalls)
 
 TEST_F(CodeBuilderTest, FunctionCallsWithPointers)
 {
+#if defined(LIBSCRATCHCPP_CPP_TEST_GENERATOR) || defined(LIBSCRATCHCPP_CPP_TEST_GENERATED_CODE)
+    GTEST_SKIP() << "C++ backend does not support pointer constants";
+#else
     ICodeBuilder *builder = m_utils.createBuilder(true);
 
     int var = 12;
@@ -148,6 +154,7 @@ TEST_F(CodeBuilderTest, FunctionCallsWithPointers)
     code->run(ctx.get());
     ASSERT_EQ(testing::internal::GetCapturedStdout(), expected);
     ASSERT_TRUE(code->isFinished(ctx.get()));
+#endif
 }
 
 TEST_F(CodeBuilderTest, ConstCasting)
@@ -3860,6 +3867,7 @@ TEST_F(CodeBuilderTest, Reporters)
 
     auto code3 = builder->build();
 
+#if !defined(LIBSCRATCHCPP_CPP_TEST_GENERATOR) && !defined(LIBSCRATCHCPP_CPP_TEST_GENERATED_CODE)
     // Reporter 4
     builder = m_utils.createReporterBuilder(&sprite);
     int pointee;
@@ -3873,6 +3881,7 @@ TEST_F(CodeBuilderTest, Reporters)
     builder->addFunctionCall("test_const_pointer", Compiler::StaticType::Pointer, { Compiler::StaticType::Pointer }, { v });
 
     auto code5 = builder->build();
+#endif
 
     auto runReporter = [&sprite](std::shared_ptr<ExecutableCode> code) {
         Script script(&sprite, nullptr, nullptr);
@@ -3899,6 +3908,7 @@ TEST_F(CodeBuilderTest, Reporters)
     ASSERT_EQ(Value(ret).toString(), "Hello world!");
     value_free(&ret);
 
+#if !defined(LIBSCRATCHCPP_CPP_TEST_GENERATOR) && !defined(LIBSCRATCHCPP_CPP_TEST_GENERATED_CODE)
     // 4
     ret = runReporter(code4);
     ASSERT_TRUE(value_isPointer(&ret));
@@ -3910,6 +3920,7 @@ TEST_F(CodeBuilderTest, Reporters)
     ASSERT_TRUE(value_isPointer(&ret));
     ASSERT_EQ(value_toPointer(&ret), &pointee);
     value_free(&ret);
+#endif
 }
 
 TEST_F(CodeBuilderTest, UnknownTypeReporter)

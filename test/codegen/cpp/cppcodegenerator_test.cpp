@@ -9,11 +9,40 @@
 #include <engine/internal/codegen/cpp/cppcodesaver.h>
 #include <engine/internal/codegen/cpp/cppcompilercontext.h>
 #include <engine/internal/codegen/cpp/cppvalue.h>
+#include <engine/internal/codegen/cpp/cppexecutablecode.h>
+#include <engine/internal/codegen/codebuilderfactory.h>
+#include <engine/internal/codegen/icodebuilder.h>
 #include <scratchcpp/stage.h>
 #include <scratchcpp/sprite.h>
 #include <enginemock.h>
 
 using namespace libscratchcpp;
+
+TEST(CppCodeBuilderTest, UsesGeneratedCodeWithTheBuilderId)
+{
+    CppCompilerContext context(nullptr, nullptr);
+    context.setTestCodeId("builder#0");
+    auto code = std::make_shared<CppExecutableCode>(&context);
+    context.setGeneratedCodeFactory([&](const std::string &id, CppCompilerContext *ctx) {
+        EXPECT_EQ(id, "builder#0");
+        EXPECT_EQ(ctx, &context);
+        return code;
+    });
+
+    auto builder = CodeBuilderFactory::instance()->create(&context, nullptr, Compiler::CodeType::Script);
+    context.setTestCodeId("builder#1");
+    EXPECT_EQ(builder->build(), code);
+}
+
+TEST(CppCodeBuilderTest, MissingGeneratedCodeFailsExplicitly)
+{
+    CppCompilerContext context(nullptr, nullptr);
+    context.setTestCodeId("missing#0");
+    context.setGeneratedCodeFactory([](const std::string &, CppCompilerContext *) -> std::shared_ptr<ExecutableCode> { return nullptr; });
+
+    auto builder = CodeBuilderFactory::instance()->create(&context, nullptr, Compiler::CodeType::Script);
+    EXPECT_THROW(builder->build(), std::runtime_error);
+}
 
 TEST(CppCodeGeneratorTest, StringReturnValueCanBePassedToAnotherCall)
 {
@@ -28,6 +57,23 @@ TEST(CppCodeGeneratorTest, StringReturnValueCanBePassedToAnotherCall)
 
     const std::string source = codeGen.finalize();
     EXPECT_NE(source.find("test_print_string(string0)"), std::string::npos);
+}
+
+TEST(CppCodeGeneratorTest, ReporterReturnsBoxedResult)
+{
+    CppCodeGenerator codeGen;
+    CppValue reporterResult(Compiler::StaticType::Number);
+    reporterResult.isRawValue = true;
+
+    codeGen.createCall("test_get_number", CppIdentifier::Type::Double, &reporterResult, false, false, {});
+    codeGen.setCodeType(Compiler::CodeType::Reporter, &reporterResult);
+
+    const std::string source = codeGen.finalize();
+    const std::string declaration = codeGen.generatedClassDeclaration();
+
+    EXPECT_NE(source.find("ValueData Script"), std::string::npos);
+    EXPECT_NE(source.find("value_assign_copy(&returnValue, &value0);"), std::string::npos) << source;
+    EXPECT_NE(declaration.find("ValueData runReporter("), std::string::npos);
 }
 
 TEST(CppCodeGeneratorTest, ReporterCanBeConvertedAndBoxedWithoutChangingItsOriginalValue)
@@ -52,7 +98,7 @@ TEST(CppCodeGeneratorTest, ReporterCanBeConvertedAndBoxedWithoutChangingItsOrigi
     EXPECT_NE(source.find("test_print_number(ret0)"), std::string::npos);
     EXPECT_NE(source.find("value0.numberValue = ret0;"), std::string::npos) << source;
     EXPECT_NE(source.find("value0.type = ValueType::Number;"), std::string::npos) << source;
-    EXPECT_NE(source.find("test_print_unknown(value0)"), std::string::npos) << source;
+    EXPECT_NE(source.find("test_print_unknown(&value0)"), std::string::npos) << source;
 }
 
 TEST(CppCodeSaverTest, WritesOnePairOfFilesPerScriptInTargetDirectories)
