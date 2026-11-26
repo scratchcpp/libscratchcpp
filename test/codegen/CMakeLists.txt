@@ -71,18 +71,10 @@ if (NOT LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "cpp")
 endif()
 
 if (LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "cpp")
-    set(CPP_EXTRA_TEST_SOURCES
-      "${CMAKE_CURRENT_SOURCE_DIR}/../engine/engine_test.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/../blocks/util.cpp"
-    )
-    foreach(CPP_BLOCK_EXTENSION motion looks sound event control sensing operator variable list custom)
-      string(TOUPPER "${CPP_BLOCK_EXTENSION}" CPP_BLOCK_EXTENSION_UPPER)
-      if (LIBSCRATCHCPP_ENABLE_${CPP_BLOCK_EXTENSION_UPPER}_BLOCKS)
-        list(APPEND CPP_EXTRA_TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../blocks/${CPP_BLOCK_EXTENSION}_blocks_test.cpp")
-      endif()
-    endforeach()
-    target_sources(codegen_test PRIVATE ${CPP_EXTRA_TEST_SOURCES})
-    target_include_directories(codegen_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../blocks")
+    get_property(CPP_EXTRA_TEST_SOURCES GLOBAL PROPERTY LIBSCRATCHCPP_CPP_TEST_SOURCES)
+    if (CPP_EXTRA_TEST_SOURCES)
+      target_sources(codegen_test PRIVATE ${CPP_EXTRA_TEST_SOURCES})
+    endif()
 endif()
 
 target_link_libraries(

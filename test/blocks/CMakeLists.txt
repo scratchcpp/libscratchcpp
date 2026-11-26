@@ -1,196 +1,36 @@
-add_library(
-  block_test_deps SHARED
-  util.cpp
-  util.h
-)
+file(GLOB BLOCK_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*_blocks_test.cpp")
+set(ENABLED_BLOCK_TEST_SOURCES)
+foreach(BLOCK_TEST_SOURCE IN LISTS BLOCK_TEST_SOURCES)
+  get_filename_component(BLOCK_TEST_NAME "${BLOCK_TEST_SOURCE}" NAME_WE)
+  string(REGEX REPLACE "_blocks_test$" "" BLOCK_EXTENSION "${BLOCK_TEST_NAME}")
+  string(TOUPPER "${BLOCK_EXTENSION}" BLOCK_EXTENSION_UPPER)
+  if (LIBSCRATCHCPP_ENABLE_${BLOCK_EXTENSION_UPPER}_BLOCKS)
+    list(APPEND ENABLED_BLOCK_TEST_SOURCES "${BLOCK_TEST_SOURCE}")
+  endif()
+endforeach()
 
-target_link_libraries(
-  block_test_deps
-  GTest::gtest_main
-  scratchcpp
-)
-
-# motion_blocks_test
-if (LIBSCRATCHCPP_ENABLE_MOTION_BLOCKS)
-    add_executable(
-      motion_blocks_test
-      motion_blocks_test.cpp
+if (LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "cpp")
+  if (ENABLED_BLOCK_TEST_SOURCES)
+    set_property(GLOBAL APPEND PROPERTY LIBSCRATCHCPP_CPP_TEST_SOURCES
+      "${CMAKE_CURRENT_SOURCE_DIR}/util.cpp"
+      ${ENABLED_BLOCK_TEST_SOURCES}
     )
-
-    target_link_libraries(
-      motion_blocks_test
-      GTest::gtest_main
-      GTest::gmock_main
-      scratchcpp
-      scratchcpp_mocks
-    )
-
-    gtest_discover_tests(motion_blocks_test)
+  endif()
+  return()
 endif()
 
-# looks_blocks_test
-if (LIBSCRATCHCPP_ENABLE_LOOKS_BLOCKS)
-    add_executable(
-      looks_blocks_test
-      looks_blocks_test.cpp
-    )
+add_library(block_test_deps SHARED util.cpp util.h)
+target_link_libraries(block_test_deps GTest::gtest_main scratchcpp)
 
-    target_link_libraries(
-      looks_blocks_test
-      GTest::gtest_main
-      GTest::gmock_main
-      scratchcpp
-      scratchcpp_mocks
-    )
-
-    gtest_discover_tests(looks_blocks_test)
-endif()
-
-# sound_blocks_test
-if (LIBSCRATCHCPP_ENABLE_SOUND_BLOCKS)
-    add_executable(
-      sound_blocks_test
-      sound_blocks_test.cpp
-    )
-
-    target_link_libraries(
-      sound_blocks_test
-      GTest::gtest_main
-      GTest::gmock_main
-      scratchcpp
-      scratchcpp_mocks
-    )
-
-    gtest_discover_tests(sound_blocks_test)
-endif()
-
-# event_blocks_test
-if (LIBSCRATCHCPP_ENABLE_EVENT_BLOCKS)
-    add_executable(
-      event_blocks_test
-      event_blocks_test.cpp
-    )
-
-    target_link_libraries(
-      event_blocks_test
-      GTest::gtest_main
-      GTest::gmock_main
-      scratchcpp
-      scratchcpp_mocks
-    )
-
-    gtest_discover_tests(event_blocks_test)
-endif()
-
-# control_blocks_test
-if (LIBSCRATCHCPP_ENABLE_CONTROL_BLOCKS)
-    add_executable(
-      control_blocks_test
-      control_blocks_test.cpp
-    )
-
-    target_link_libraries(
-      control_blocks_test
-      GTest::gtest_main
-      GTest::gmock_main
-      scratchcpp
-      scratchcpp_mocks
-      block_test_deps
-    )
-
-    gtest_discover_tests(control_blocks_test)
-endif()
-
-# sensing_blocks_test
-if (LIBSCRATCHCPP_ENABLE_SENSING_BLOCKS)
-    add_executable(
-      sensing_blocks_test
-      sensing_blocks_test.cpp
-    )
-
-    target_link_libraries(
-      sensing_blocks_test
-      GTest::gtest_main
-      GTest::gmock_main
-      scratchcpp
-      scratchcpp_mocks
-      block_test_deps
-    )
-
-    gtest_discover_tests(sensing_blocks_test)
-endif()
-
-# operator_blocks_test
-if (LIBSCRATCHCPP_ENABLE_OPERATOR_BLOCKS)
-    add_executable(
-      operator_blocks_test
-      operator_blocks_test.cpp
-    )
-
-    target_link_libraries(
-      operator_blocks_test
-      GTest::gtest_main
-      GTest::gmock_main
-      scratchcpp
-      scratchcpp_mocks
-      block_test_deps
-    )
-
-    gtest_discover_tests(operator_blocks_test)
-endif()
-
-# variable_blocks_test
-if (LIBSCRATCHCPP_ENABLE_VARIABLE_BLOCKS)
-    add_executable(
-      variable_blocks_test
-      variable_blocks_test.cpp
-    )
-
-    target_link_libraries(
-      variable_blocks_test
-      GTest::gtest_main
-      GTest::gmock_main
-      scratchcpp
-      scratchcpp_mocks
-    )
-
-    gtest_discover_tests(variable_blocks_test)
-endif()
-
-# list_blocks_test
-if (LIBSCRATCHCPP_ENABLE_LIST_BLOCKS)
-    add_executable(
-      list_blocks_test
-      list_blocks_test.cpp
-    )
-
-    target_link_libraries(
-      list_blocks_test
-      GTest::gtest_main
-      GTest::gmock_main
-      scratchcpp
-      scratchcpp_mocks
-      block_test_deps
-    )
-
-    gtest_discover_tests(list_blocks_test)
-endif()
-
-# custom_blocks_test
-if (LIBSCRATCHCPP_ENABLE_CUSTOM_BLOCKS)
-    add_executable(
-      custom_blocks_test
-      custom_blocks_test.cpp
-    )
-
-    target_link_libraries(
-      custom_blocks_test
-      GTest::gtest_main
-      GTest::gmock_main
-      scratchcpp
-      scratchcpp_mocks
-      block_test_deps
-    )
-
-    gtest_discover_tests(custom_blocks_test)
-endif()
+foreach(BLOCK_TEST_SOURCE IN LISTS ENABLED_BLOCK_TEST_SOURCES)
+  get_filename_component(BLOCK_TEST_NAME "${BLOCK_TEST_SOURCE}" NAME_WE)
+  add_executable(${BLOCK_TEST_NAME} "${BLOCK_TEST_SOURCE}")
+  target_link_libraries(${BLOCK_TEST_NAME}
+    GTest::gtest_main
+    GTest::gmock_main
+    scratchcpp
+    scratchcpp_mocks
+    block_test_deps
+  )
+  gtest_discover_tests(${BLOCK_TEST_NAME})
+endforeach()
