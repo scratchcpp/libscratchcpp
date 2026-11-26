@@ -4,8 +4,8 @@
 #include <scratchcpp/target.h>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <mutex>
+#include <stdexcept>
 
 #include "cppcodesaver.h"
 #include "cppcodegenerator.h"
@@ -49,33 +49,26 @@ void CppCodeSaver::save(CppCodeGenerator &codeGenerator, CppCompilerContext *ctx
 {
     std::lock_guard<std::mutex> lock(outputMutex);
 
-    if (destination.empty()) {
-        std::cerr << "error: C++ output destination cannot be empty" << std::endl;
-        return;
-    }
+    if (destination.empty())
+        throw std::invalid_argument("C++ output destination cannot be empty");
 
     const std::filesystem::path outputDirectory = targetOutputDirectory(std::filesystem::path(destination), ctx);
     const std::string baseName = codeGenerator.generatedFileName();
     const std::filesystem::path sourcePath = outputDirectory / (baseName + ".cpp");
     const std::filesystem::path headerPath = outputDirectory / (baseName + ".h");
-    std::error_code error;
-    std::filesystem::create_directories(outputDirectory, error);
+    std::filesystem::create_directories(outputDirectory);
 
-    if (error) {
-        std::cerr << "error: could not create C++ output directory '" << outputDirectory.string() << "': " << error.message() << std::endl;
-        return;
-    }
-
-    std::ofstream sourceFile(sourcePath, std::ios::trunc);
-    std::ofstream headerFile(headerPath, std::ios::trunc);
-
-    if (!sourceFile || !headerFile) {
-        std::cerr << "error: could not write generated C++ files for '" << baseName << "'" << std::endl;
-        return;
-    }
+    std::ofstream sourceFile;
+    std::ofstream headerFile;
+    sourceFile.exceptions(std::ios::failbit | std::ios::badbit);
+    headerFile.exceptions(std::ios::failbit | std::ios::badbit);
+    sourceFile.open(sourcePath, std::ios::trunc);
+    headerFile.open(headerPath, std::ios::trunc);
 
     headerFile << "#pragma once\n\n#include \"cppexecutablecode.h\"\n\n";
 
     sourceFile << codeGenerator.finalize(headerPath.filename().string());
     headerFile << codeGenerator.generatedClassDeclaration() << "\n";
+    sourceFile.close();
+    headerFile.close();
 }

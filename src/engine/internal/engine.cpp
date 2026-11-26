@@ -24,6 +24,7 @@
 #include <scratchcpp/thread.h>
 #include <cassert>
 #include <iostream>
+#include <stdexcept>
 #ifdef CODEGEN_BACKEND_CPP
 #include <filesystem>
 #endif
@@ -324,23 +325,21 @@ void Engine::compile()
 
 void Engine::save(const std::string &destination)
 {
-    if (destination.empty()) {
-        std::cerr << "error: output destination cannot be empty" << std::endl;
-        return;
-    }
+    if (destination.empty())
+        throw std::invalid_argument("output destination cannot be empty");
 
 #ifdef CODEGEN_BACKEND_CPP
-    std::error_code error;
-    std::filesystem::remove_all(std::filesystem::path(destination) / "src", error);
-
-    if (error) {
-        std::cerr << "error: could not clear generated C++ output: " << error.message() << std::endl;
-        return;
-    }
+    if (!std::filesystem::create_directories(destination))
+        throw std::runtime_error("output destination already exists: " + destination);
 #endif
 
     m_saveDestination = destination;
-    compile();
+    try {
+        compile();
+    } catch (...) {
+        m_saveDestination.clear();
+        throw;
+    }
     m_saveDestination.clear();
 }
 
