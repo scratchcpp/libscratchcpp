@@ -12,21 +12,31 @@
 #include <scratchcpp/igraphicseffect.h>
 #include <cassert>
 #include <utility>
+#include <stdexcept>
 
 #include "cppexecutablecode.h"
 #include "cppcompilercontext.h"
 #include "cppexecutioncontext.h"
+#include "cppcodesaver.h"
 
 using namespace libscratchcpp;
 
-CppExecutableCode::CppExecutableCode(CppCompilerContext *ctx, std::vector<CppObjectPointerDescriptor> objectPointers) :
+CppExecutableCode::CppExecutableCode(CppCompilerContext *ctx, std::vector<CppObjectPointerDescriptor> objectPointers, std::shared_ptr<const CppCodeSource> source) :
     m_ctx(ctx),
+    m_source(std::move(source)),
     m_objectPointerDescriptors(std::move(objectPointers))
 {
     assert(m_ctx);
 
     if (m_ctx && !m_objectPointerDescriptors.empty())
         getObjectPointers(m_ctx->engine());
+}
+
+void CppExecutableCode::save(const std::string &destination) const
+{
+    if (!m_source)
+        throw std::runtime_error("C++ export artifacts are not available for this executable");
+    CppCodeSaver::save(*m_source, m_ctx, destination);
 }
 
 void CppExecutableCode::run(ExecutionContext *context)

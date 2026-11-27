@@ -1,17 +1,8 @@
 #include <scratchcpp/project.h>
-#include <scratchcpp/block.h>
-#include <scratchcpp/sprite.h>
-#include <scratchcpp/stage.h>
-#include <scratchcpp/compilercontext.h>
 #include <enginemock.h>
 #include <projectdownloaderfactorymock.h>
 #include <projectdownloadermock.h>
-#include <extensionmock.h>
-#include <codebuilderfactorymock.h>
-#include <codebuildermock.h>
-#include <engine/compiler_p.h>
-#include <engine/internal/engine.h>
-#include <filesystem>
+#include <stdexcept>
 
 #include "project_p.h"
 #include "../common.h"
@@ -83,38 +74,28 @@ TEST_F(ProjectTest, Load)
     testing::Mock::AllowLeak(m_engine.get());
 }
 
-TEST_F(ProjectTest, SaveDelegatesThroughEngineAndCodeBuilder)
+TEST_F(ProjectTest, SaveDelegatesToEngine)
 {
-    Project project;
-    auto engine = std::dynamic_pointer_cast<Engine>(project.engine());
-    ASSERT_TRUE(engine);
+    ProjectPrivate project;
+    project.engine = m_engine;
+    const std::string destination = "generated/project";
 
-    auto target = std::make_shared<Sprite>();
-    auto stage = std::make_shared<Stage>();
-    auto block = std::make_shared<Block>("save-script", "save_test");
-    target->addBlock(block);
-    engine->setTargets({ stage, target });
+    EXPECT_CALL(*m_engine, compile).Times(0);
+    EXPECT_CALL(*m_engine, save(destination)).Times(1);
 
-    ExtensionMock extension;
-    engine->addCompileFunction(&extension, "save_test", [](Compiler *) -> CompilerValue * { return nullptr; });
+    project.save(destination);
+}
 
-    CodeBuilderFactoryMock builderFactory;
-    auto stageCompilerContext = std::make_shared<CompilerContext>(engine.get(), stage.get());
-    auto targetCompilerContext = std::make_shared<CompilerContext>(engine.get(), target.get());
-    auto codeBuilder = std::make_shared<CodeBuilderMock>();
-    const std::filesystem::path destination = std::filesystem::temp_directory_path() / "libscratchcpp-project-save-test";
-    CompilerPrivate::setBuilderFactory(&builderFactory);
+TEST_F(ProjectTest, SavePropagatesEngineErrors)
+{
+    ProjectPrivate project;
+    project.engine = m_engine;
+    const std::string destination = "generated/project";
 
-    EXPECT_CALL(builderFactory, createCtx(engine.get(), stage.get(), testing::_)).WillOnce(testing::Return(stageCompilerContext));
-    EXPECT_CALL(builderFactory, createCtx(engine.get(), target.get(), testing::_)).WillOnce(testing::Return(targetCompilerContext));
-    EXPECT_CALL(builderFactory, create(targetCompilerContext.get(), nullptr, Compiler::CodeType::Script)).WillOnce(testing::Return(codeBuilder));
-    EXPECT_CALL(*codeBuilder, build()).WillOnce(testing::Return(std::shared_ptr<ExecutableCode>()));
-    EXPECT_CALL(*codeBuilder, save(destination.string())).Times(1);
+    EXPECT_CALL(*m_engine, compile).Times(0);
+    EXPECT_CALL(*m_engine, save(destination)).WillOnce(testing::Throw(std::runtime_error("export failed")));
 
-    project.save(destination.string());
-
-    CompilerPrivate::setBuilderFactory(nullptr);
-    std::filesystem::remove_all(destination);
+    EXPECT_THROW(project.save(destination), std::runtime_error);
 }
 
 TEST_F(ProjectTest, Start)

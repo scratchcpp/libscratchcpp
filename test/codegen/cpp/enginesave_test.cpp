@@ -4,12 +4,17 @@
 #include <engine/internal/engine.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/stage.h>
+#include <scratchcpp/script.h>
+#include <scratchcpp/monitor.h>
+#include <scratchcpp/compiler.h>
+#include <scratchcpp/compilerconstant.h>
 #include <extensionmock.h>
 
 #include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <map>
 #include <stdexcept>
 
 using namespace libscratchcpp;
@@ -28,6 +33,7 @@ class EngineSaveTest : public testing::Test
             stage->addBlock(std::make_shared<Block>("save-block", "save_test"));
             m_engine.setTargets({ stage });
             m_engine.addCompileFunction(&m_extension, "save_test", [](Compiler *) -> CompilerValue * { return nullptr; });
+            m_engine.compile();
         }
 
         void TearDown() override
@@ -92,28 +98,56 @@ TEST_F(EngineSaveTest, ThrowsWhenParentIsAFile)
     EXPECT_TRUE(std::filesystem::is_regular_file(parent));
 }
 
-TEST_F(EngineSaveTest, ExportFailurePropagatesAndClearsExportState)
+TEST_F(EngineSaveTest, RepeatedExportsUseRetainedArtifacts)
 {
-    class BlockingEngine : public Engine
-    {
-        public:
-            void compile() override
-            {
-                if (blockOutput)
-                    std::ofstream(destination / "src") << "blocked";
-                Engine::compile();
-            }
+    auto *script = m_engine.scripts().begin()->second.get();
+    m_engine.addCompileFunction(&m_extension, "save_test", [](Compiler *) -> CompilerValue * {
+        throw std::runtime_error("export must not compile blocks");
+    });
 
-            std::filesystem::path destination;
-            bool blockOutput = true;
-    } engine;
+    const auto first = m_directory / "first";
+    const auto second = m_directory / "second";
+    ASSERT_NO_THROW(m_engine.save(first.string()));
+    ASSERT_NO_THROW(m_engine.save(second.string()));
+    EXPECT_EQ(m_engine.scripts().begin()->second.get(), script);
 
-    engine.destination = m_directory / "export";
-    engine.setTargets(m_engine.targets());
-    engine.addCompileFunction(&m_extension, "save_test", [](Compiler *) -> CompilerValue * { return nullptr; });
+    const auto readFiles = [](const std::filesystem::path &directory) {
+        std::map<std::string, std::string> files;
+        for (const auto &entry : std::filesystem::recursive_directory_iterator(directory)) {
+            if (!entry.is_regular_file())
+                continue;
+            std::ifstream file(entry.path());
+            files[std::filesystem::relative(entry.path(), directory).generic_string()] = std::string(std::istreambuf_iterator<char>(file), {});
+        }
+        return files;
+    };
+    const auto files = readFiles(first);
+    EXPECT_EQ(files.size(), 2);
+    EXPECT_EQ(readFiles(second), files);
+}
 
-    EXPECT_THROW(engine.save(engine.destination.string()), std::filesystem::filesystem_error);
-    engine.blockOutput = false;
-    EXPECT_NO_THROW(engine.compile());
-    EXPECT_NO_THROW(engine.save((m_directory / "retry").string()));
+TEST_F(EngineSaveTest, RetainsPredicateAndMonitorArtifacts)
+{
+    m_engine.addHatPredicateCompileFunction(&m_extension, "save_test", [](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(true); });
+    m_engine.addCompileFunction(&m_extension, "save_monitor", [](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(42); });
+    auto monitor = std::make_shared<Monitor>("monitor", "save_monitor");
+    m_engine.setMonitors({ monitor });
+    m_engine.compile();
+    auto *script = m_engine.scripts().begin()->second.get();
+    auto *predicate = script->hatPredicateCode();
+    auto *reporter = monitor->script()->code();
+    ASSERT_NE(predicate, nullptr);
+    ASSERT_NE(reporter, nullptr);
+
+    const auto destination = m_directory / "export";
+    ASSERT_NO_THROW(m_engine.save(destination.string()));
+    EXPECT_EQ(m_engine.scripts().begin()->second.get(), script);
+    EXPECT_EQ(script->hatPredicateCode(), predicate);
+    EXPECT_EQ(monitor->script()->code(), reporter);
+    size_t sourceCount = 0;
+    for (const auto &file : std::filesystem::recursive_directory_iterator(destination)) {
+        if (file.path().extension() == ".cpp")
+            ++sourceCount;
+    }
+    EXPECT_EQ(sourceCount, 3);
 }

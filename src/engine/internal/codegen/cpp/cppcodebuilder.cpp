@@ -115,7 +115,8 @@ std::shared_ptr<ExecutableCode> CppCodeBuilder::build()
         }
     }
 
-    return std::make_shared<CppExecutableCode>(m_ctx);
+    auto source = std::make_shared<CppCodeSource>(CppCodeSaver::generate(m_codeGen));
+    return std::make_shared<CppExecutableCode>(m_ctx, std::vector<CppObjectPointerDescriptor>{}, std::move(source));
 }
 
 void CppCodeBuilder::save(const std::string &destination)

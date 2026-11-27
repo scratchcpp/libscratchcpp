@@ -45,7 +45,22 @@ std::filesystem::path targetOutputDirectory(const std::filesystem::path &root, c
 
 } // namespace
 
+CppCodeSource CppCodeSaver::generate(CppCodeGenerator &codeGenerator)
+{
+    std::lock_guard<std::mutex> lock(outputMutex);
+    CppCodeSource code;
+    code.fileName = codeGenerator.generatedFileName();
+    code.source = codeGenerator.finalize(code.fileName + ".h");
+    code.header = "#pragma once\n\n#include \"cppexecutablecode.h\"\n\n" + codeGenerator.generatedClassDeclaration() + "\n";
+    return code;
+}
+
 void CppCodeSaver::save(CppCodeGenerator &codeGenerator, CppCompilerContext *ctx, const std::string &destination)
+{
+    save(generate(codeGenerator), ctx, destination);
+}
+
+void CppCodeSaver::save(const CppCodeSource &code, CppCompilerContext *ctx, const std::string &destination)
 {
     std::lock_guard<std::mutex> lock(outputMutex);
 
@@ -53,7 +68,7 @@ void CppCodeSaver::save(CppCodeGenerator &codeGenerator, CppCompilerContext *ctx
         throw std::invalid_argument("C++ output destination cannot be empty");
 
     const std::filesystem::path outputDirectory = targetOutputDirectory(std::filesystem::path(destination), ctx);
-    const std::string baseName = codeGenerator.generatedFileName();
+    const std::string &baseName = code.fileName;
     const std::filesystem::path sourcePath = outputDirectory / (baseName + ".cpp");
     const std::filesystem::path headerPath = outputDirectory / (baseName + ".h");
     std::filesystem::create_directories(outputDirectory);
@@ -65,10 +80,8 @@ void CppCodeSaver::save(CppCodeGenerator &codeGenerator, CppCompilerContext *ctx
     sourceFile.open(sourcePath, std::ios::trunc);
     headerFile.open(headerPath, std::ios::trunc);
 
-    headerFile << "#pragma once\n\n#include \"cppexecutablecode.h\"\n\n";
-
-    sourceFile << codeGenerator.finalize(headerPath.filename().string());
-    headerFile << codeGenerator.generatedClassDeclaration() << "\n";
+    sourceFile << code.source;
+    headerFile << code.header;
     sourceFile.close();
     headerFile.close();
 }

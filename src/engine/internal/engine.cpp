@@ -27,6 +27,7 @@
 #include <stdexcept>
 #ifdef CODEGEN_BACKEND_CPP
 #include <filesystem>
+#include "codegen/cpp/cppexecutablecode.h"
 #endif
 
 #include "engine.h"
@@ -290,15 +291,8 @@ void Engine::compile()
                     m_scripts[block.get()] = script;
                     script->setCode(compiler.compile(block.get()));
 
-                    if (!m_saveDestination.empty())
-                        compiler.save(m_saveDestination);
-
-                    if (block->hatPredicateCompileFunction()) {
+                    if (block->hatPredicateCompileFunction())
                         script->setHatPredicateCode(compiler.compile(block.get(), Compiler::CodeType::HatPredicate));
-
-                        if (!m_saveDestination.empty())
-                            compiler.save(m_saveDestination);
-                    }
                 } else {
                     std::cout << "warning: unsupported top level block: " << block->opcode() << std::endl;
                     m_unsupportedBlocks.insert(block->opcode());
@@ -325,22 +319,33 @@ void Engine::compile()
 
 void Engine::save(const std::string &destination)
 {
+#ifndef CODEGEN_BACKEND_CPP
+    throw std::runtime_error("saving generated C++ code is not supported by this backend");
+#else
     if (destination.empty())
         throw std::invalid_argument("output destination cannot be empty");
 
-#ifdef CODEGEN_BACKEND_CPP
     if (!std::filesystem::create_directories(destination))
         throw std::runtime_error("output destination already exists: " + destination);
-#endif
 
-    m_saveDestination = destination;
-    try {
-        compile();
-    } catch (...) {
-        m_saveDestination.clear();
-        throw;
+    const auto saveCode = [&destination](ExecutableCode *code) {
+        auto *cppCode = dynamic_cast<CppExecutableCode *>(code);
+        if (!cppCode)
+            throw std::runtime_error("C++ export artifacts are not available for this executable");
+        cppCode->save(destination);
+    };
+
+    for (const auto &[block, script] : m_scripts) {
+        saveCode(script->code());
+        if (script->hatPredicateCode())
+            saveCode(script->hatPredicateCode());
     }
-    m_saveDestination.clear();
+
+    for (const auto &monitor : m_monitors) {
+        if (auto script = monitor->script())
+            saveCode(script->code());
+    }
+#endif
 }
 
 void Engine::start()
@@ -1859,8 +1864,6 @@ void Engine::compileMonitor(std::shared_ptr<Monitor> monitor)
         monitor->setScript(script);
         auto code = compiler.compile(block.get(), Compiler::CodeType::Reporter);
         script->setCode(code);
-        if (!m_saveDestination.empty())
-            compiler.save(m_saveDestination);
         m_monitorCompilerContexts[monitor.get()] = ctx;
 
         const auto &unsupportedBlocks = compiler.unsupportedBlocks();

@@ -302,7 +302,6 @@ class LIBSCRATCHCPP_TEST_EXPORT Engine : public IEngine
         sigslot::signal<const std::string &> m_questionAnswered;
 
         std::unordered_set<std::string> m_unsupportedBlocks;
-        std::string m_saveDestination;
 };
 
 } // namespace libscratchcpp
