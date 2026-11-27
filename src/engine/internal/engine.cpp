@@ -335,15 +335,31 @@ void Engine::save(const std::string &destination)
         cppCode->save(destination);
     };
 
-    for (const auto &[block, script] : m_scripts) {
-        saveCode(script->code());
-        if (script->hatPredicateCode())
-            saveCode(script->hatPredicateCode());
+    // Cached scripts may outlive removed targets or blocks. Only consult cache
+    // entries selected through the current, eligible project blocks.
+    for (const auto &target : m_targets) {
+        for (const auto &block : target->blocks()) {
+            if (!block->topLevel() || block->isTopLevelReporter() || block->shadow() || !blockExtension(block->opcode()))
+                continue;
+
+            const auto it = m_scripts.find(block.get());
+            if (it == m_scripts.end() || it->second->target() != target.get())
+                continue;
+
+            const auto &script = it->second;
+            saveCode(script->code());
+            if (script->hatPredicateCode())
+                saveCode(script->hatPredicateCode());
+        }
     }
 
     for (const auto &monitor : m_monitors) {
-        if (auto script = monitor->script())
-            saveCode(script->code());
+        if (auto script = monitor->script()) {
+            // Compare target addresses before any exporter can dereference one.
+            const bool currentTarget = std::any_of(m_targets.begin(), m_targets.end(), [&](const auto &target) { return target.get() == script->target(); });
+            if (currentTarget && script->topBlock() == monitor->block().get() && blockExtension(monitor->block()->opcode()))
+                saveCode(script->code());
+        }
     }
 #endif
 }

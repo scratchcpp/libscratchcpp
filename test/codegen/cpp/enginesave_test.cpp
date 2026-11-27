@@ -4,6 +4,7 @@
 #include <engine/internal/engine.h>
 #include <scratchcpp/block.h>
 #include <scratchcpp/stage.h>
+#include <scratchcpp/sprite.h>
 #include <scratchcpp/script.h>
 #include <scratchcpp/monitor.h>
 #include <scratchcpp/compiler.h>
@@ -40,6 +41,48 @@ class EngineSaveTest : public testing::Test
         {
             if (!m_directory.empty())
                 std::filesystem::remove_all(m_directory);
+        }
+
+        size_t sourceCount(const std::filesystem::path &directory)
+        {
+            size_t count = 0;
+            for (const auto &entry : std::filesystem::recursive_directory_iterator(directory)) {
+                if (entry.path().extension() == ".cpp")
+                    ++count;
+            }
+            return count;
+        }
+
+        void checkRemovedSpriteExport(bool destroyRemoved)
+        {
+            auto stage = m_engine.targets().front();
+            auto removed = std::make_shared<Sprite>();
+            auto remaining = std::make_shared<Sprite>();
+            removed->addBlock(std::make_shared<Block>("removed-script", "save_green_flag"));
+            remaining->addBlock(std::make_shared<Block>("remaining-script", "save_green_flag"));
+            m_engine.addCompileFunction(&m_extension, "save_green_flag", [](Compiler *compiler) -> CompilerValue * {
+                compiler->engine()->addGreenFlagScript(compiler->block());
+                return nullptr;
+            });
+            m_engine.setTargets({ stage, removed, remaining });
+            m_engine.compile();
+
+            std::weak_ptr<Sprite> removedWeak = removed;
+            m_engine.setTargets({ stage, remaining });
+            if (destroyRemoved) {
+                removed.reset();
+                ASSERT_TRUE(removedWeak.expired());
+            }
+            m_engine.compile();
+
+            const auto destination = m_directory / "export";
+            ASSERT_NO_THROW(m_engine.save(destination.string()));
+            EXPECT_EQ(sourceCount(destination), 2);
+            ASSERT_TRUE(std::filesystem::is_directory(destination / "src/stage"));
+            EXPECT_EQ(sourceCount(destination / "src/stage"), 1);
+            ASSERT_TRUE(std::filesystem::is_directory(destination / "src/sprites/sprite0"));
+            EXPECT_EQ(sourceCount(destination / "src/sprites/sprite0"), 1);
+            EXPECT_FALSE(std::filesystem::exists(destination / "src/sprites/sprite1"));
         }
 
         std::filesystem::path m_directory;
@@ -150,4 +193,47 @@ TEST_F(EngineSaveTest, RetainsPredicateAndMonitorArtifacts)
             ++sourceCount;
     }
     EXPECT_EQ(sourceCount, 3);
+}
+
+TEST_F(EngineSaveTest, ExportExcludesRemovedSprite)
+{
+    checkRemovedSpriteExport(false);
+}
+
+TEST_F(EngineSaveTest, ExportExcludesDestroyedSprite)
+{
+    checkRemovedSpriteExport(true);
+}
+
+TEST_F(EngineSaveTest, ExportExcludesBlocksThatAreNoLongerEligible)
+{
+    m_engine.targets().front()->blocks().front()->setShadow(true);
+    m_engine.compile();
+
+    const auto destination = m_directory / "export";
+    ASSERT_NO_THROW(m_engine.save(destination.string()));
+    EXPECT_EQ(sourceCount(destination), 0);
+}
+
+TEST_F(EngineSaveTest, ExportExcludesMonitorsForRemovedSprites)
+{
+    auto stage = m_engine.targets().front();
+    auto removed = std::make_shared<Sprite>();
+    m_engine.setTargets({ stage, removed });
+    m_engine.addCompileFunction(&m_extension, "save_monitor", [](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(42); });
+    auto monitor = std::make_shared<Monitor>("removed-monitor", "save_monitor");
+    monitor->setSprite(removed.get());
+    m_engine.setMonitors({ monitor });
+    m_engine.compile();
+
+    m_engine.setTargets({ stage });
+    m_engine.compile();
+    std::weak_ptr<Sprite> removedWeak = removed;
+    removed.reset();
+    ASSERT_TRUE(removedWeak.expired());
+
+    const auto destination = m_directory / "export";
+    ASSERT_NO_THROW(m_engine.save(destination.string()));
+    EXPECT_EQ(sourceCount(destination), 1);
+    EXPECT_FALSE(std::filesystem::exists(destination / "src/sprites"));
 }
