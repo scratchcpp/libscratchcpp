@@ -5,8 +5,8 @@
 set(OLD_PROJECT_NAME ${PROJECT_NAME})
 set(PROJECT_NAME "")
 
-set(HUNTER_URL "https://github.com/scratchcpp/hunter/archive/89fd3c4dfc0f74027c8735d88c8f402ee98fb2ab.zip")
-set(HUNTER_SHA1 "C359E0CF3EE58F2AC7C004A7FDDD39F8AB5BA8C0")
+set(HUNTER_URL "https://github.com/scratchcpp/hunter/archive/9dabeee8fc497d54b9d13b37a8410a49d05c31b0.zip")
+set(HUNTER_SHA1 "6A63EFF0CF84A7B9C7203BC57F2234A8020B109F")
 
 set(HUNTER_ROOT "${CMAKE_BINARY_DIR}/_hunter" CACHE PATH "Hunter root directory")
 
