@@ -46,6 +46,7 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
             StringPtr,
             ValueData,
             ValueFunctions,
+            OwnedValue,
             ExecutionContext,
             Target
         };
@@ -91,6 +92,7 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
         CppCodeStream m_codeStream;
 
         std::unordered_map<CppValue *, std::shared_ptr<CppIdentifier>> m_identifiers;
+        std::unordered_set<const CppIdentifier *> m_ownedValues;
         std::unordered_map<std::string, std::string> m_functionDeclarations;
         std::unordered_map<CppValue *, const CppNamedIdentifier *> m_valueDataIdentifiers;
         std::unordered_map<std::string, unsigned int> m_identifierNameCounts;

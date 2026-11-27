@@ -2,6 +2,7 @@ add_executable(
   cpp_test
   main.cpp
   cppcodegenerator_test.cpp
+  cppownedvalue_test.cpp
   enginesave_test.cpp
   ../../engine/engine_save_start_test.cpp
   cppexecutioncontext_test.cpp

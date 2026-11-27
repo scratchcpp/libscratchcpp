@@ -27,6 +27,7 @@ const std::unordered_map<CppCodeGenerator::Header, std::string> CppCodeGenerator
     { Header::StringPtr, "<scratchcpp/stringptr.h>" },
     { Header::ValueData, "<scratchcpp/valuedata.h>" },
     { Header::ValueFunctions, "<scratchcpp/value_functions.h>" },
+    { Header::OwnedValue, "\"cppownedvalue.h\"" },
     { Header::ExecutionContext, "<scratchcpp/executioncontext.h>" },
     { Header::Target, "<scratchcpp/target.h>" }
 };
@@ -162,7 +163,7 @@ std::string CppCodeGenerator::finalize(const std::string &headerName)
         if (named->name.rfind("objects[", 0) == 0)
             return;
 
-        source << "    " << identifier->typeString();
+        source << "    " << (m_ownedValues.count(identifier) ? "CppOwnedValue" : identifier->typeString());
         source << " " << named->name << ";\n";
     };
 
@@ -406,7 +407,12 @@ void CppCodeGenerator::createCall(const std::string &name, CppIdentifier::Type r
     std::unique_ptr<CppAssignment> strAssignment;
 
     if (retType != CppIdentifier::Type::StringPtr) {
-        strAssignment = std::make_unique<CppAssignment>(m_codeStream, getNamedIdentifier(retValue, retType, "ret", true));
+        const auto *result = getNamedIdentifier(retValue, retType, "ret", true);
+        if (retType == CppIdentifier::Type::ValueData) {
+            includeHeader(Header::OwnedValue);
+            m_ownedValues.insert(result);
+        }
+        strAssignment = std::make_unique<CppAssignment>(m_codeStream, result);
     }
 
     createCall(name, strRet, ctxArg, targetArg, preparedArgs);

@@ -21,6 +21,7 @@ target_sources(scratchcpp
     cppidentifier.h
     cppconstidentifier.h
     cppnamedidentifier.h
+    cppownedvalue.h
     cppassignment.h
     cppfunctioncall.h
     cppswitch.h

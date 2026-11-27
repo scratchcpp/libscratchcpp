@@ -76,6 +76,19 @@ TEST(CppCodeGeneratorTest, ReporterReturnsBoxedResult)
     EXPECT_NE(declaration.find("ValueData runReporter("), std::string::npos);
 }
 
+TEST(CppCodeGeneratorTest, NativeValueResultsHaveScopedOwnership)
+{
+    CppCodeGenerator codeGen;
+    CppValue result(Compiler::StaticType::Unknown);
+    codeGen.createCall("native_value", CppIdentifier::Type::ValueData, &result, false, false, {});
+    codeGen.setCodeType(Compiler::CodeType::Reporter, &result);
+
+    const std::string source = codeGen.finalize();
+    EXPECT_NE(source.find("#include \"cppownedvalue.h\""), std::string::npos);
+    EXPECT_NE(source.find("CppOwnedValue ret0;"), std::string::npos);
+    EXPECT_NE(source.find("value_assign_copy(&returnValue, &ret0);"), std::string::npos);
+}
+
 TEST(CppCodeGeneratorTest, ReporterCanBeConvertedAndBoxedWithoutChangingItsOriginalValue)
 {
     CppCodeGenerator codeGen;
@@ -99,6 +112,7 @@ TEST(CppCodeGeneratorTest, ReporterCanBeConvertedAndBoxedWithoutChangingItsOrigi
     EXPECT_NE(source.find("value0.numberValue = ret0;"), std::string::npos) << source;
     EXPECT_NE(source.find("value0.type = ValueType::Number;"), std::string::npos) << source;
     EXPECT_NE(source.find("test_print_unknown(&value0)"), std::string::npos) << source;
+    EXPECT_NE(source.find("ValueData value0;"), std::string::npos) << source;
 }
 
 TEST(CppCodeSaverTest, WritesOnePairOfFilesPerScriptInTargetDirectories)
