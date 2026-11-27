@@ -3,6 +3,8 @@
 #include <scratchcpp/value_functions.h>
 #include <scratchcpp/irandomgenerator.h>
 #include <scratchcpp/stringptr.h>
+#include <scratchcpp/string_pool.h>
+#include <utility>
 #include <utf8.h>
 #include <iostream>
 
@@ -42,6 +44,20 @@ extern "C"
     LIBSCRATCHCPP_EXPORT void llvm_pop_string_stack(ExecutionContext *ctx)
     {
         return ctx->popStringStack();
+    }
+
+    LIBSCRATCHCPP_EXPORT void llvm_move_native_string(ValueData *value, StringPtr *storage)
+    {
+        if (value->type != ValueType::String)
+            return;
+
+        // Move the owned payload into the string stack, returning its pool slot.
+        StringPtr *owned = value->stringValue;
+        std::swap(storage->data, owned->data);
+        std::swap(storage->size, owned->size);
+        std::swap(storage->allocatedSize, owned->allocatedSize);
+        string_pool_free(owned);
+        value->stringValue = storage;
     }
 
     LIBSCRATCHCPP_EXPORT void llvm_mark_thread_as_finished(ExecutionContext *ctx)
@@ -84,6 +100,11 @@ llvm::FunctionCallee LLVMFunctions::resolve_value_init()
 llvm::FunctionCallee LLVMFunctions::resolve_value_free()
 {
     return resolveFunction("value_free", llvm::FunctionType::get(m_builder->getVoidTy(), m_valueDataType->getPointerTo(), false));
+}
+
+llvm::FunctionCallee LLVMFunctions::resolve_llvm_move_native_string()
+{
+    return resolveFunction("llvm_move_native_string", llvm::FunctionType::get(m_builder->getVoidTy(), { m_valueDataType->getPointerTo(), m_stringPtrType->getPointerTo() }, false));
 }
 
 llvm::FunctionCallee LLVMFunctions::resolve_value_assign_long()

@@ -2013,11 +2013,22 @@ TEST_F(SensingBlocksTest, Of_VariableOfTarget_Runtime)
     script.setCode(code);
     Thread thread(targetMock.get(), &m_engineMock, &script);
 
-    EXPECT_CALL(m_engineMock, findTarget("test")).WillOnce(Return(4));
-    EXPECT_CALL(m_engineMock, targetAt(4)).WillOnce(Return(&target));
+    EXPECT_CALL(m_engineMock, findTarget("test")).WillRepeatedly(Return(4));
+    EXPECT_CALL(m_engineMock, targetAt(4)).WillRepeatedly(Return(&target));
     ValueData value = thread.runReporter();
     ASSERT_EQ(value_toDouble(&value), 98.0);
     value_free(&value);
+
+    for (int i = 0; i < 20; ++i) {
+        v2->setValue("ready");
+        value = thread.runReporter();
+        EXPECT_EQ(v2->value().toString(), "ready");
+        v2->setValue("changed");
+        EXPECT_TRUE(value_isString(&value));
+        EXPECT_EQ(Value(value).toString(), "ready");
+        value_free(&value);
+        EXPECT_EQ(v2->value().toString(), "changed");
+    }
 }
 
 TEST_F(SensingBlocksTest, Of_BackdropNumberOfStage_CompileTime)
