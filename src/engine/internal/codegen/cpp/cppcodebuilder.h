@@ -23,6 +23,7 @@ class CppCodeBuilder : public ICodeBuilder
         CppCodeBuilder(CppCompilerContext *ctx, BlockPrototype *procedurePrototype = nullptr, Compiler::CodeType codeType = Compiler::CodeType::Script);
 
         std::shared_ptr<ExecutableCode> build() override;
+        void save(const std::string &destination) override;
 
         CompilerValue *addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
         CompilerValue *addTargetFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) override;
@@ -127,10 +128,12 @@ class CppCodeBuilder : public ICodeBuilder
         CppValue *createOp(const CppInstruction &ins, Compiler::StaticType retType, const Compiler::ArgTypes &argTypes = {}, const Compiler::Args &args = {});
 
         CppCompilerContext *m_ctx = nullptr;
+        std::string m_testCodeId;
         BlockPrototype *m_procedurePrototype = nullptr;
         Compiler::CodeType m_codeType = Compiler::CodeType::Script;
 
         std::vector<std::shared_ptr<CppValue>> m_values;
+        CppValue *m_lastConstValue = nullptr;
         std::vector<std::shared_ptr<CompilerLocalVariable>> m_localVars;
         CppInstructionList m_instructions;
         CppCodeGenerator m_codeGen;

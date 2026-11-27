@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <llvm/IR/Verifier.h>
+#include <iostream>
 
 #include <scratchcpp/stage.h>
 #include <scratchcpp/iengine.h>
@@ -98,6 +99,12 @@ std::shared_ptr<ExecutableCode> LLVMCodeBuilder::build()
     verifyFunction(m_function);
 
     return std::make_shared<LLVMExecutableCode>(m_ctx, m_utils.scriptFunctionId(), m_function->getName().str(), m_ctx->coroutineResumeFunction()->getName().str(), m_codeType);
+}
+
+void LLVMCodeBuilder::save(const std::string &destination)
+{
+    (void)destination;
+    std::cerr << "error: saving generated C++ code is not supported by the LLVM backend" << std::endl;
 }
 
 CompilerValue *LLVMCodeBuilder::addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args)

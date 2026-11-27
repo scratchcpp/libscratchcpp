@@ -49,6 +49,7 @@ class LLVMFunctions
         llvm::FunctionCallee resolve_llvm_random_bool();
         llvm::FunctionCallee resolve_llvm_push_string_stack();
         llvm::FunctionCallee resolve_llvm_pop_string_stack();
+        llvm::FunctionCallee resolve_llvm_move_native_string();
         llvm::FunctionCallee resolve_llvm_mark_thread_as_finished();
         llvm::FunctionCallee resolve_llvm_is_thread_finished();
         llvm::FunctionCallee resolve_llvm_print();

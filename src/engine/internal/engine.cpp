@@ -24,6 +24,11 @@
 #include <scratchcpp/thread.h>
 #include <cassert>
 #include <iostream>
+#include <stdexcept>
+#ifdef CODEGEN_BACKEND_CPP
+#include <filesystem>
+#include "codegen/cpp/cppexecutablecode.h"
+#endif
 
 #include "engine.h"
 #include "timer.h"
@@ -310,6 +315,53 @@ void Engine::compile()
 
     for (auto monitor : m_monitors)
         compileMonitor(monitor);
+}
+
+void Engine::save(const std::string &destination)
+{
+#ifndef CODEGEN_BACKEND_CPP
+    throw std::runtime_error("saving generated C++ code is not supported by this backend");
+#else
+    if (destination.empty())
+        throw std::invalid_argument("output destination cannot be empty");
+
+    if (!std::filesystem::create_directories(destination))
+        throw std::runtime_error("output destination already exists: " + destination);
+
+    const auto saveCode = [&destination](ExecutableCode *code) {
+        auto *cppCode = dynamic_cast<CppExecutableCode *>(code);
+        if (!cppCode)
+            throw std::runtime_error("C++ export artifacts are not available for this executable");
+        cppCode->save(destination);
+    };
+
+    // Cached scripts may outlive removed targets or blocks. Only consult cache
+    // entries selected through the current, eligible project blocks.
+    for (const auto &target : m_targets) {
+        for (const auto &block : target->blocks()) {
+            if (!block->topLevel() || block->isTopLevelReporter() || block->shadow() || !blockExtension(block->opcode()))
+                continue;
+
+            const auto it = m_scripts.find(block.get());
+            if (it == m_scripts.end() || it->second->target() != target.get())
+                continue;
+
+            const auto &script = it->second;
+            saveCode(script->code());
+            if (script->hatPredicateCode())
+                saveCode(script->hatPredicateCode());
+        }
+    }
+
+    for (const auto &monitor : m_monitors) {
+        if (auto script = monitor->script()) {
+            // Compare target addresses before any exporter can dereference one.
+            const bool currentTarget = std::any_of(m_targets.begin(), m_targets.end(), [&](const auto &target) { return target.get() == script->target(); });
+            if (currentTarget && script->topBlock() == monitor->block().get() && blockExtension(monitor->block()->opcode()))
+                saveCode(script->code());
+        }
+    }
+#endif
 }
 
 void Engine::start()

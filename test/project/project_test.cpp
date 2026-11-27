@@ -2,6 +2,7 @@
 #include <enginemock.h>
 #include <projectdownloaderfactorymock.h>
 #include <projectdownloadermock.h>
+#include <stdexcept>
 
 #include "project_p.h"
 #include "../common.h"
@@ -71,6 +72,30 @@ TEST_F(ProjectTest, Load)
     ASSERT_TRUE(p3.load());
 
     testing::Mock::AllowLeak(m_engine.get());
+}
+
+TEST_F(ProjectTest, SaveDelegatesToEngine)
+{
+    ProjectPrivate project;
+    project.engine = m_engine;
+    const std::string destination = "generated/project";
+
+    EXPECT_CALL(*m_engine, compile).Times(0);
+    EXPECT_CALL(*m_engine, save(destination)).Times(1);
+
+    project.save(destination);
+}
+
+TEST_F(ProjectTest, SavePropagatesEngineErrors)
+{
+    ProjectPrivate project;
+    project.engine = m_engine;
+    const std::string destination = "generated/project";
+
+    EXPECT_CALL(*m_engine, compile).Times(0);
+    EXPECT_CALL(*m_engine, save(destination)).WillOnce(testing::Throw(std::runtime_error("export failed")));
+
+    EXPECT_THROW(project.save(destination), std::runtime_error);
 }
 
 TEST_F(ProjectTest, Start)

@@ -24,7 +24,7 @@
     ASSERT_TRUE(block->fieldAt(block->findField(fieldName)))
 #define GET_FIELD(block, fieldName) block->fieldAt(block->findField(fieldName))
 
-std::string readFileStr(const std::string &fileName)
+inline std::string readFileStr(const std::string &fileName)
 {
     std::ifstream file(fileName);
     if (!file.is_open()) {
@@ -37,9 +37,11 @@ std::string readFileStr(const std::string &fileName)
     return buffer.str();
 }
 
+#if !defined(LIBSCRATCHCPP_CPP_TEST_GENERATOR) && !defined(LIBSCRATCHCPP_CPP_TEST_GENERATED_CODE)
 int main(int argc, char **argv)
 {
     std::filesystem::current_path(DATA_DIR);
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+#endif

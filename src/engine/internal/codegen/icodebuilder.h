@@ -19,6 +19,7 @@ class ICodeBuilder
         virtual ~ICodeBuilder() { }
 
         virtual std::shared_ptr<ExecutableCode> build() = 0;
+        virtual void save(const std::string &destination) = 0;
 
         virtual CompilerValue *addFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) = 0;
         virtual CompilerValue *addTargetFunctionCall(const std::string &functionName, Compiler::StaticType returnType, const Compiler::ArgTypes &argTypes, const Compiler::Args &args) = 0;

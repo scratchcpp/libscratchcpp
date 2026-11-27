@@ -177,12 +177,12 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
 
     // End branch
     m_builder.SetInsertPoint(m_endBranch);
-    m_builder.CreateCall(m_functions.resolve_llvm_pop_string_stack(), { m_executionContextPtr });
 
     llvm::PointerType *pointerType = llvm::PointerType::get(llvm::Type::getInt8Ty(m_llvmCtx), 0);
 
     switch (m_codeType) {
         case Compiler::CodeType::Script:
+            m_builder.CreateCall(m_functions.resolve_llvm_pop_string_stack(), { m_executionContextPtr });
             if (m_warp)
                 m_builder.CreateRet(llvm::ConstantPointerNull::get(pointerType));
             else
@@ -194,27 +194,28 @@ void LLVMBuildUtils::end(LLVMInstruction *lastInstruction, LLVMRegister *lastCon
             assert(lastInstruction || lastConstant);
             LLVMRegister *ret = lastInstruction ? lastInstruction->getFunctionReturnReg() : lastConstant;
             llvm::Value *copy = createNewValue(ret);
+            m_builder.CreateCall(m_functions.resolve_llvm_pop_string_stack(), { m_executionContextPtr });
             m_builder.CreateRet(m_builder.CreateLoad(m_valueDataType, copy));
             break;
         }
 
-        case Compiler::CodeType::HatPredicate:
+        case Compiler::CodeType::HatPredicate: {
             // Use last instruction return value (or last constant)
             assert(lastInstruction || lastConstant);
 
-            if (lastInstruction)
-                m_builder.CreateRet(castValue(lastInstruction->getFunctionReturnReg(), Compiler::StaticType::Bool));
-            else
-                m_builder.CreateRet(castValue(lastConstant, Compiler::StaticType::Bool));
+            llvm::Value *result = castValue(lastInstruction ? lastInstruction->getFunctionReturnReg() : lastConstant, Compiler::StaticType::Bool);
+            m_builder.CreateCall(m_functions.resolve_llvm_pop_string_stack(), { m_executionContextPtr });
+            m_builder.CreateRet(result);
             break;
+        }
     }
 
     // Thread end branch (stop the entire thread, including procedure callers)
     m_builder.SetInsertPoint(m_endThreadBranch);
-    m_builder.CreateCall(m_functions.resolve_llvm_pop_string_stack(), { m_executionContextPtr });
 
     switch (m_codeType) {
         case Compiler::CodeType::Script:
+            m_builder.CreateCall(m_functions.resolve_llvm_pop_string_stack(), { m_executionContextPtr });
             // Mark the thread as finished
             m_builder.CreateCall(m_functions.resolve_llvm_mark_thread_as_finished(), { m_executionContextPtr });
 

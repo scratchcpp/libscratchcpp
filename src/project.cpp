@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <scratchcpp/project.h>
+#include <scratchcpp/iengine.h>
 #include <iostream>
 
 #include "project_p.h"
@@ -27,6 +28,12 @@ Project::Project(const std::string &fileName) :
 bool Project::load()
 {
     return impl->load();
+}
+
+/*! Saves the project as generated C++ source code. */
+void Project::save(const std::string &destination)
+{
+    impl->save(destination);
 }
 
 /*! Cancels project loading if loading in another thread. */

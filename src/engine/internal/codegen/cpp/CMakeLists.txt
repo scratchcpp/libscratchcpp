@@ -12,6 +12,8 @@ target_sources(scratchcpp
     cppconstant.h
     cppcodebuilder.cpp
     cppcodebuilder.h
+    cppcodesaver.cpp
+    cppcodesaver.h
     cppcodegenerator.cpp
     cppcodegenerator.h
     cppcodestream.h
@@ -19,6 +21,7 @@ target_sources(scratchcpp
     cppidentifier.h
     cppconstidentifier.h
     cppnamedidentifier.h
+    cppownedvalue.h
     cppassignment.h
     cppfunctioncall.h
     cppswitch.h

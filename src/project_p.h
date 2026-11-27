@@ -23,6 +23,7 @@ class LIBSCRATCHCPP_TEST_EXPORT ProjectPrivate
         ProjectPrivate(const ProjectPrivate &) = delete;
 
         bool load();
+        void save(const std::string &destination);
         bool tryLoad(IProjectReader *reader);
         void loadingAborted();
 

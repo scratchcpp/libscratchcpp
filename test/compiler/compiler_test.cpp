@@ -71,6 +71,14 @@ TEST_F(CompilerTest, Engine)
     ASSERT_EQ(m_compiler->engine(), &m_engine);
 }
 
+TEST_F(CompilerTest, SaveDelegatesToCodeBuilder)
+{
+    compile(m_compiler.get(), nullptr);
+
+    EXPECT_CALL(*m_builder, save("output-directory")).Times(1);
+    m_compiler->save("output-directory");
+}
+
 TEST_F(CompilerTest, Target)
 {
     ASSERT_EQ(m_compiler->target(), &m_target);

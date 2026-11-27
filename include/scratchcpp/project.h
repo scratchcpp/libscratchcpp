@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <functional>
+#include <string>
 #include "spimpl.h"
 
 #include "global.h"
@@ -29,6 +30,7 @@ class LIBSCRATCHCPP_EXPORT Project
         Project(const Project &) = delete;
 
         bool load();
+        void save(const std::string &destination);
         void stopLoading();
 
         void start();

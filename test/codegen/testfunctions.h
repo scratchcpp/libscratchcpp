@@ -21,6 +21,8 @@ extern "C"
 
     void test_empty_function();
     void test_ctx_function(ExecutionContext *ctx, const StringPtr *arg);
+    void test_print(const StringPtr *str);
+    bool test_condition();
 
     void test_function_no_args(Target *target);
     void test_function_no_args_ret(StringPtr *ret, Target *target);

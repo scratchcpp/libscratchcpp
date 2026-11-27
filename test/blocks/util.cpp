@@ -68,9 +68,11 @@ extern "C" bool test_condition()
     return conditionReturnValue;
 }
 
+#if !defined(LIBSCRATCHCPP_CPP_TEST_GENERATOR) && !defined(LIBSCRATCHCPP_CPP_TEST_GENERATED_CODE)
 extern "C" void test_const_string(StringPtr *ret, const StringPtr *str)
 {
     string_assign(ret, str);
 }
+#endif
 
 } // namespace libscratchcpp

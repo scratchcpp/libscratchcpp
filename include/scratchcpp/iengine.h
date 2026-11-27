@@ -52,6 +52,14 @@ class LIBSCRATCHCPP_EXPORT IEngine
         virtual void compile() = 0;
 
         /*!
+         * Saves the compiled project to the given destination directory without recompiling.
+         * Uses export artifacts retained by the latest compilation.
+         * For C++ export, the destination must not already exist.
+         * Throws an exception if export is unsupported, the destination is empty, or C++ export fails.
+         */
+        virtual void save(const std::string &destination) = 0;
+
+        /*!
          * Calls all "when green flag clicked" blocks.
          * \note Nothing will happen until the event loop is started.
          */

@@ -73,6 +73,10 @@ LLVMInstruction *Functions::buildFunctionCall(LLVMInstruction *ins)
         else {
             ins->getFunctionReturnReg()->value = m_utils.addAlloca(retType);
             m_builder.CreateStore(ret, ins->getFunctionReturnReg()->value);
+            if ((ins->getFunctionReturnReg()->type() & Compiler::StaticType::String) != Compiler::StaticType::Void) {
+                llvm::Value *storage = m_utils.addStringAlloca();
+                m_builder.CreateCall(m_utils.functions().resolve_llvm_move_native_string(), { ins->getFunctionReturnReg()->value, storage });
+            }
         }
     }
 

@@ -5,6 +5,7 @@
 #include <scratchcpp/executablecode.h>
 
 #include <mutex>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -19,11 +20,14 @@ class List;
 class IEngine;
 class CppCompilerContext;
 class CppExecutionContext;
+struct CppCodeSource;
 
 class LIBSCRATCHCPP_TEST_EXPORT CppExecutableCode : public ExecutableCode
 {
     public:
-        CppExecutableCode(CppCompilerContext *ctx, std::vector<CppObjectPointerDescriptor> objectPointers = {});
+        CppExecutableCode(CppCompilerContext *ctx, std::vector<CppObjectPointerDescriptor> objectPointers = {}, std::shared_ptr<const CppCodeSource> source = nullptr);
+
+        void save(const std::string &destination) const;
 
         virtual void run(ExecutionContext *context) override final;
         virtual ValueData runReporter(ExecutionContext *context) override final;
@@ -45,6 +49,7 @@ class LIBSCRATCHCPP_TEST_EXPORT CppExecutableCode : public ExecutableCode
         void **getObjectPointers(IEngine *engine) const;
 
         CppCompilerContext *m_ctx = nullptr;
+        std::shared_ptr<const CppCodeSource> m_source;
         std::vector<CppObjectPointerDescriptor> m_objectPointerDescriptors;
         mutable std::mutex m_objectPointerMutex;
         mutable std::unordered_map<IEngine *, std::vector<void *>> m_objectPointersByEngine;

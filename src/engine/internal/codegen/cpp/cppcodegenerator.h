@@ -23,11 +23,17 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
         CppCodeGenerator();
         ~CppCodeGenerator();
 
-        inline CppIdentifier::Type getType(Compiler::StaticType type) const { return m_valueTypeMap.at(type); }
+        CppIdentifier::Type getType(Compiler::StaticType type) const;
 
         const CppIdentifier *castValue(CppValue *value, Compiler::StaticType targetType);
 
-        std::string finalize();
+        void setCodeType(Compiler::CodeType codeType, CppValue *returnValue = nullptr);
+        void setGeneratedName(const std::string &className, const std::string &fileName);
+        bool hasIdentifier(CppValue *value) const { return m_identifiers.find(value) != m_identifiers.cend(); }
+
+        std::string finalize(const std::string &headerName = "");
+        const std::string &generatedFileName();
+        const std::string &generatedClassDeclaration() const { return m_generatedClassDeclaration; }
 
         void createCall(const std::string &name, bool ctxArg, bool targetArg, const std::vector<const CppIdentifier *> &args);
         void createCall(const std::string &name, CppIdentifier::Type retType, CppValue *retValue, bool ctxArg, bool targetArg, const std::vector<const CppIdentifier *> &args);
@@ -37,9 +43,12 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
         {
             Limits,
             Value,
+            StringPtr,
             ValueData,
             ValueFunctions,
-            ExecutionContext
+            OwnedValue,
+            ExecutionContext,
+            Target
         };
 
         enum class FuncParam
@@ -51,6 +60,8 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
         };
 
         void createCall(const std::string &name, const CppNamedIdentifier *strRet, bool ctxArg, bool targetArg, const std::vector<const CppIdentifier *> &args);
+        std::vector<const CppIdentifier *> prepareCallArgs(const std::string &name, const std::vector<const CppIdentifier *> &args);
+        void addFunctionDeclaration(const std::string &name, CppIdentifier::Type returnType, bool stringReturn, bool voidReturn, bool ctxArg, bool targetArg, const std::vector<const CppIdentifier *> &args);
 
         const CppNamedIdentifier *getParam(FuncParam param);
         const CppIdentifier *getIdentifier(CppValue *value);
@@ -59,6 +70,7 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
         const CppIdentifier *addPointerValue(CppValue *value, const CppObjectPointerDescriptor &descriptor);
         std::string getNewIdentifierName(const std::string &name);
         void includeHeader(Header header);
+        void ensureScriptName();
 
         inline bool identifierExists(CppValue *value) const { return m_identifiers.find(value) != m_identifiers.cend(); }
 
@@ -80,12 +92,19 @@ class LIBSCRATCHCPP_TEST_EXPORT CppCodeGenerator
         CppCodeStream m_codeStream;
 
         std::unordered_map<CppValue *, std::shared_ptr<CppIdentifier>> m_identifiers;
+        std::unordered_set<const CppIdentifier *> m_ownedValues;
+        std::unordered_map<std::string, std::string> m_functionDeclarations;
         std::unordered_map<CppValue *, const CppNamedIdentifier *> m_valueDataIdentifiers;
         std::unordered_map<std::string, unsigned int> m_identifierNameCounts;
         std::unordered_set<Header> m_includedHeaders;
         std::vector<std::shared_ptr<CppIdentifier>> m_internalIdentifiers;
         std::vector<std::shared_ptr<CppConstIdentifier>> m_constants;
         std::vector<CppObjectPointerDescriptor> m_objectPointers;
+        std::string m_scriptName;
+        std::string m_generatedFileName;
+        std::string m_generatedClassDeclaration;
+        Compiler::CodeType m_codeType = Compiler::CodeType::Script;
+        CppValue *m_returnValue = nullptr;
 
         CppNamedIdentifier m_stringArray;
         std::vector<std::shared_ptr<CppNamedIdentifier>> m_strings;
