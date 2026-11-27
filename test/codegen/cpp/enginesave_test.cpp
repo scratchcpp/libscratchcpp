@@ -237,3 +237,36 @@ TEST_F(EngineSaveTest, ExportExcludesMonitorsForRemovedSprites)
     EXPECT_EQ(sourceCount(destination), 1);
     EXPECT_FALSE(std::filesystem::exists(destination / "src/sprites"));
 }
+
+TEST_F(EngineSaveTest, ExportExcludesCachedMonitorsWithoutRecompiling)
+{
+    auto stage = m_engine.targets().front();
+    auto removed = std::make_shared<Sprite>();
+    m_engine.setTargets({ stage, removed });
+    m_engine.addCompileFunction(&m_extension, "save_monitor", [](Compiler *compiler) -> CompilerValue * { return compiler->addConstValue(42); });
+    auto monitor = std::make_shared<Monitor>("cached-monitor", "save_monitor");
+    monitor->setSprite(removed.get());
+    m_engine.setMonitors({ monitor });
+    m_engine.compile();
+
+    auto *cachedScript = monitor->script().get();
+    ASSERT_NE(cachedScript, nullptr);
+    auto *cachedCode = cachedScript->code();
+    ASSERT_NE(cachedCode, nullptr);
+    ASSERT_EQ(cachedScript->target(), removed.get());
+
+    m_engine.setTargets({ stage });
+    std::weak_ptr<Sprite> removedWeak = removed;
+    removed.reset();
+    ASSERT_TRUE(removedWeak.expired());
+
+    // Export with the original monitor script still cached for the destroyed sprite.
+    const auto destination = m_directory / "export";
+    ASSERT_NO_THROW(m_engine.save(destination.string()));
+    EXPECT_EQ(sourceCount(destination), 1);
+    EXPECT_FALSE(std::filesystem::exists(destination / "src/sprites"));
+    ASSERT_EQ(m_engine.monitors().size(), 1);
+    EXPECT_EQ(m_engine.monitors().front(), monitor);
+    ASSERT_EQ(monitor->script().get(), cachedScript);
+    EXPECT_EQ(monitor->script()->code(), cachedCode);
+}
