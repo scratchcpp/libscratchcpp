@@ -20,10 +20,11 @@ constexpr size_t SCRIPT_CHUNK_COUNT = 64;
 bool writeGeneratedFactory(const std::filesystem::path &destination)
 {
     std::map<std::string, std::pair<std::string, std::string>> scripts;
-    // Analyzer-only selections do not create any executable scripts or manifest.
     std::ifstream manifest(destination / "test_scripts.txt");
-    if (!manifest && std::filesystem::exists(destination / "test_scripts.txt"))
+    if (!manifest) {
+        std::cerr << "error: generated C++ test script manifest is missing or unreadable" << std::endl;
         return false;
+    }
     std::string id;
     std::string className;
     std::string sourcePath;
@@ -35,7 +36,7 @@ bool writeGeneratedFactory(const std::filesystem::path &destination)
         }
     }
 
-    if (scripts.size() > SCRIPT_CHUNK_SIZE * SCRIPT_CHUNK_COUNT) {
+    if (scripts.empty() || scripts.size() > SCRIPT_CHUNK_SIZE * SCRIPT_CHUNK_COUNT) {
         std::cerr << "error: invalid generated C++ test script count: " << scripts.size() << std::endl;
         return false;
     }
@@ -90,6 +91,7 @@ bool writeGeneratedFactory(const std::filesystem::path &destination)
 
     header.close();
     source.close();
+    std::cout << "Generated " << scripts.size() << " C++ test scripts" << std::endl;
     return header.good() && source.good();
 }
 

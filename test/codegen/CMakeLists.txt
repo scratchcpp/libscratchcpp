@@ -71,6 +71,8 @@ if (NOT LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "cpp")
 endif()
 
 if (LIBSCRATCHCPP_CODEGEN_BACKEND STREQUAL "cpp")
+    # Exercise generated executables even when engine/block suites are disabled.
+    target_sources(codegen_test PRIVATE cpp/generatedexecution_test.cpp)
     get_property(CPP_EXTRA_TEST_SOURCES GLOBAL PROPERTY LIBSCRATCHCPP_CPP_TEST_SOURCES)
     if (CPP_EXTRA_TEST_SOURCES)
       target_sources(codegen_test PRIVATE ${CPP_EXTRA_TEST_SOURCES})
